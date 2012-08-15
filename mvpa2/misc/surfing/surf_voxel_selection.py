@@ -7,10 +7,10 @@ Created on Feb 13, 2012
 
 References
 ----------
-NN Oosterhof, T Wiestler, PE Downing (2011). A comparison of volume-based 
+NN Oosterhof, T Wiestler, PE Downing (2011). A comparison of volume-based
 and surface-based multi-voxel pattern analysis. Neuroimage, 56(2), pp. 593-600
 
-'Surfing' toolbox: http://surfing.sourceforge.net 
+'Surfing' toolbox: http://surfing.sourceforge.net
 (and the associated documentation)
 '''
 
@@ -39,14 +39,14 @@ if __debug__:
 class VoxelSelector():
     '''
     Voxel selection using the surfaces
-    
+
     Parameters
     ----------
     radius: int or float
         Searchlight radius. If the type is int, then this set the number of voxels
-        in each searchlight (with variable radii (in metric distance) across searchlights). 
+        in each searchlight (with variable radii (in metric distance) across searchlights).
         If the type is float, then this sets the radius in metric distance (with variable number of
-        voxels across searchlights). In the latter case, the distance unit is usually in milimeters 
+        voxels across searchlights). In the latter case, the distance unit is usually in milimeters
         (which is the unit used for Freesurfer surfaces)
     surf: surf.Surface
         A surface to be used for distance measurement. Usually this is the intermediate distance
@@ -55,8 +55,8 @@ class VoxelSelector():
         Mapping from center nodes to surrounding voxels (and their distances). Usually this
         is the output from volsurf.node2voxels(...)
     distancemetric: str
-        Distance measure used to define distances between nodes on the surface. 
-        Currently supports 'dijkstra' and 'euclidian'     
+        Distance measure used to define distances between nodes on the surface.
+        Currently supports 'dijkstra' and 'euclidian'
     '''
 
     def __init__(self, radius, surf, n2v, distancemetric='dijkstra'):
@@ -81,17 +81,17 @@ class VoxelSelector():
     def _select_approx(self, voxprops, count=None):
         '''
         Select approximately a certain number of voxels.
-        
+
         Parameters
         ----------
         voxprops: dict
             Various voxel properties, where voxprops[key] is a list with
-            voxprops[key][i] property key for voxel i. 
+            voxprops[key][i] property key for voxel i.
             Should at least have a key 'distances'.
             Each of voxprops[key] should be list-like of equal length.
         count: int (default: None)
             How many voxels should be selected, approximately
-            
+
         Returns
         -------
         v2d_sel: dict
@@ -99,10 +99,10 @@ class VoxelSelector():
             with the smallest distance in 'voxprops'
             If 'count is None' then 'v2d_sel is None'
             If voxprops has fewer than 'count' elemens then 'v2d_sel' is None
-            
+
         Note
         ----
-        Distances are only computed along the surface; the relative position of 
+        Distances are only computed along the surface; the relative position of
         a voxel within the gray matter is ignored. Therefore, multiple voxels
         can have the same distance from a center node. See node2voxels
         '''
@@ -115,7 +115,7 @@ class VoxelSelector():
             raise KeyError("voxprops has no distance key %s in it - cannot select voxels" % distkey)
         allds = voxprops[distkey]
 
-        #assert sorted(allds)==allds #that's what voxprops should give us 
+        #assert sorted(allds)==allds #that's what voxprops should give us
 
         n = len(allds)
 
@@ -128,7 +128,7 @@ class VoxelSelector():
         prevd = allds[0]
         chunkcount = 1
         for i in xrange(n):
-            d = allds[i] # distance  
+            d = allds[i] # distance
             if i > 0 and prevd != d:
                 if i >= count: # we're done, use the chunk we have now
                     break
@@ -139,7 +139,7 @@ class VoxelSelector():
 
             prevd = d
 
-        # see if the last chunk should be added or not to be as close as 
+        # see if the last chunk should be added or not to be as close as
         # possible to count
         firstpos = curchunk[0]
         lastpos = curchunk[-1]
@@ -165,17 +165,17 @@ class VoxelSelector():
     def disc_voxel_attributes(self, src):
         '''
         Voxel selection for single center node
-        
+
         Parameters
         ----------
         src: int
             Index of center node to be used as searchlight center
-            
+
         Returns
         -------
         voxprops: dict
             Various voxel properties, where voxprops[key] is a list with
-            voxprops[key][i] property key for voxel i. 
+            voxprops[key][i] property key for voxel i.
             Has at least a key 'distances'.
             Each of voxprops[key] should be list-like of equal length.
         '''
@@ -209,7 +209,7 @@ class VoxelSelector():
                     voxel_attributes = self._select_approx(allvxdist, count=radius)
 
                 if voxel_attributes is None:
-                    # coult not find enough voxels, stay in loop and try again 
+                    # coult not find enough voxels, stay in loop and try again
                     # with bigger radius
                     radius_mm = optimizer.get_next()
                 else:
@@ -225,8 +225,8 @@ class VoxelSelector():
 
     def nodes2voxel_attributes(self, n2d, n2v, distancesummary=min):
         '''
-        Computes voxel distances 
-        
+        Computes voxel distances
+
         Parameters
         ----------
         n2d: dict
@@ -243,9 +243,9 @@ class VoxelSelector():
             This is by default the min function. It is used to summarize
             cases where a single voxels has multiple distances (and nodes)
             associated with it. By default we take the minimum distance, and
-            the node that gives rise to this distance, as a representative 
+            the node that gives rise to this distance, as a representative
             for the distance.
-            
+
         Returns
         -------
         voxelprops: dict
@@ -254,8 +254,8 @@ class VoxelSelector():
             It has at least a key sparse_volmasks._VOXIDXSLABEL which maps to
             the linear voxel indices. It may also have 'distances' (distance from
             center node along the cortex)  and 'gmpositions' (relative position in
-            the gray matter) 
-        
+            the gray matter)
+
         '''
 
 
@@ -270,7 +270,7 @@ class VoxelSelector():
         # mapping from voxel indices to all distances
         v2dps = collections.defaultdict(set)
 
-        # get node indices and associated (distance, grey matter positions) 
+        # get node indices and associated (distance, grey matter positions)
         for nd, d in n2d.iteritems():
             if nd in n2v:
                 vps = n2v[nd] # all voxels associated with this node
@@ -286,7 +286,7 @@ class VoxelSelector():
             return vx, d, p
 
 
-        # make triples of (voxel index, distance to center node, relative position in grey matter)            
+        # make triples of (voxel index, distance to center node, relative position in grey matter)
         vdp = [unpack_dp(vx, dp) for vx, dp in v2dps.iteritems()]
 
         # sort triples by distance to center node
@@ -306,26 +306,27 @@ class VoxelSelector():
 
         return voxel_attributes
 
-def voxel_selection(vol_surf, surf_srcs, radius, srcs=None, start=0., stop=1., steps=10, distancemetric='dijkstra', intermediateat=.5, etastep=1):
-        '''
+def voxel_selection(vol_surf, surf_srcs, radius, srcs=None, start=0., stop=1., steps=10,
+                    distancemetric='dijkstra', intermediateat=.5, etastep=1):
+        """
         Voxel selection for multiple center nodes
-        
+
         Parameters
         ----------
-        srcs: array-like
+        srcs: array-like, optional
             Indices of center nodes to be used as searchlight center.
             If None, then all center nodes are used as a center.
         etastep: int or None
-            After how many searchlights the the estimated remaining time 
+            After how many searchlights the the estimated remaining time
             are printed.
             If None, then no messages are printed.
-        
+
         Returns
         -------
         n2vs: sparse_volmasks.SparseVolMask
-            node to voxel properties mapping, as represented in a set of 
+            node to voxel properties mapping, as represented in a set of
             sparse volume masks.
-        '''
+        """
 
 
         # outer and inner surface
@@ -349,7 +350,7 @@ def voxel_selection(vol_surf, surf_srcs, radius, srcs=None, start=0., stop=1., s
 
         # if no sources are given, then visit all ndoes
         if srcs is None:
-            srcs = np.arange(len(surf_srcs.nv()))
+            srcs = np.arange(surf_srcs.nv())
 
         n = len(srcs)
 
@@ -373,7 +374,7 @@ def voxel_selection(vol_surf, surf_srcs, radius, srcs=None, start=0., stop=1., s
             debug('SVS', "Instantiated voxel selector (radius %r)" % radius)
 
 
-        # structure to keep output data. Initialize with None, then 
+        # structure to keep output data. Initialize with None, then
         # make a sparse_attributes instance when we know what the attribtues are
         node2volume_attributes = None
 
@@ -413,9 +414,9 @@ def voxel_selection(vol_surf, surf_srcs, radius, srcs=None, start=0., stop=1., s
 
 
 def run_voxelselection(epifn, whitefn, pialfn, srcfn, radius, srcs=None, start=0, stop=1, steps=10, distancemetric='dijkstra', intermediateat=.5, etastep=1):
-    '''Wrapper function that is supposed to make voxel selection 
+    '''Wrapper function that is supposed to make voxel selection
     on the surface easy.
-    
+
     Parameters
     ----------
     epifn: str
@@ -432,17 +433,17 @@ def run_voxelselection(epifn, whitefn, pialfn, srcfn, radius, srcs=None, start=0
         Searchlight radius with number of voxels (if int) or maximum distance
         from searchlight center in metric units (if float)
     srcs: list-like or None
-        Node indices of searchlight centers. If None, then all nodes are used 
+        Node indices of searchlight centers. If None, then all nodes are used
         as a center
     start: float (default: 0)
             Relative start position of line in gray matter, 0.=white surface, 1.=pial surface
-            CheckMe: it might be the other way around 
+            CheckMe: it might be the other way around
     stop: float (default: 1)
         Relative stop position of line, in gray matter, 0.=white surface, 1.=pial surface
     require_center_in_gm: bool (default: False)
         Only select voxels that are 'truly' in between the white and pial matter.
         Specifically, each voxel's position is projected on the line connecting pial-
-        white matter pairs, and only voxels in between 'start' and 'stop' are selected    
+        white matter pairs, and only voxels in between 'start' and 'stop' are selected
     distancemetric: str
         Distance metric between nodes. 'euclidian' or 'dijksta'
     intermediateat: float (default: .5)
@@ -451,7 +452,7 @@ def run_voxelselection(epifn, whitefn, pialfn, srcfn, radius, srcs=None, start=0
     etastep: int (default: 1)
         After how many searchlights an estimate should be printed of the remaining
         time until completion of all searchlights
-    
+
     Returns
     -------
     sel: sparse_volmasks.SparseVolMask
@@ -480,23 +481,23 @@ def run_voxelselection(epifn, whitefn, pialfn, srcfn, radius, srcs=None, start=0
 class _RadiusOptimizer():
     '''
     Internal class to optimize the initial radius used for voxel selection.
-    
-    In the case of selecting a fixed number of voxels in each searchlight, the 
+
+    In the case of selecting a fixed number of voxels in each searchlight, the
     required radius will vary across searchlights. The general strategy is to take
-    some initial radius, find the nodes that are within that radius, select the 
-    corresponding voxels, and see if enough voxels are selected. If not, the radius is 
+    some initial radius, find the nodes that are within that radius, select the
+    corresponding voxels, and see if enough voxels are selected. If not, the radius is
     increased and these steps repeated.
-    
-    A larger initial radius means a decrease in the probability that not enough voxels are 
+
+    A larger initial radius means a decrease in the probability that not enough voxels are
     selected, but an increase in time to compute distances and select voxels.
-    
+
     The challenge therefore to find the optimal initial radius so that overall computational
     time is minimized.
-    
-    The present implementation is very stupid and just increases the radius every time 
+
+    The present implementation is very stupid and just increases the radius every time
     by a factor of 1.5.
-    
-    
+
+
     '''
     def __init__(self, initradius):
         '''new instance, with certain initial radius'''
@@ -525,7 +526,7 @@ class _RadiusOptimizer():
 
 
 if __name__ == "__main__":
-    #from mvpa2.tutorial_suite import * 
+    #from mvpa2.tutorial_suite import *
 
     if __debug__:
         debug.active += ["SVS"]

@@ -20,18 +20,6 @@ As always, we first have to import PyMVPA.
 
 from mvpa2.suite import *
 
-"""
-Also load additional modules"
-"""
-from mvpa2.misc.surfing import utils, volsurf, afni_niml_dset, afni_niml, \
-     sparse_attributes, surf_fs_asc, volgeom, surf_voxel_selection
-
-"""To store voxel selection results (for later re-use), we use pickle"""
-import cPickle as pickle
-
-"""Use nibabel and numpy"""
-import nibabel as ni
-import numpy as np
 
 """As searchlight analyses are usually quite expensive in term of computational
 resources, we are going to enable some progress output to entertain us while
@@ -40,9 +28,6 @@ we are waiting."""
 # enable debug output for searchlight call
 if __debug__:
     from mvpa2.base import debug
-    if not "SVS" in debug.registered:
-        debug.register('SVS',
-                       "Surface-based voxel selection (a.k.a. 'surfing')")
     debug.active += ["SVS", "SLC"]
 
 """The next few calls load an fMRI dataset, while assigning associated class
@@ -58,7 +43,7 @@ datapath = os.path.join(pymvpa_datadbroot,
                         'tutorial_data', 'tutorial_data', 'data', 'surfing')
 
 """First set up surface stuff"""
-epi_ref_fn = os.path.join(datapath, '..', 'bold_mean.nii')
+epi_ref_fn = os.path.join(datapath, '..', 'mask_brain.nii.gz')
 
 """
 We're concerned with the left hemisphere only.
@@ -131,7 +116,7 @@ pial_surf = surf_fs_asc.read(pial_surf_fn)
 intermediate_surf = surf_fs_asc.read(intermediate_surf_fn)
 
 """
-Load the volume geamotry information
+Load the volume geometry information
 """
 vg = volgeom.from_nifti_file(epi_ref_fn)
 
@@ -150,19 +135,19 @@ voxsel = surf_voxel_selection.voxel_selection(vs, intermediate_surf, radius, src
 
 """
 For MVPA, use all centers that have voxels associated with them.
-In this example that means all centers, but in the case of partial 
+In this example that means all centers, but in the case of partial
 volume coverage there may be center nodes without voxels
 """
 center_ids = voxsel.keys()
 """
 Define the mask, which contains all voxels that are selected at least once
-during voxel selection (If there are fewer voxels selected than there are 
-nodes, then the mask is extended to ensure we have sufficient 'features' 
+during voxel selection (If there are fewer voxels selected than there are
+nodes, then the mask is extended to ensure we have sufficient 'features'
 in the dataset). Based on the mask we define the neighboorhood, which takes
-the masking operation into account. 
+the masking operation into account.
 
-The voxel_ids_label argument is optional 
-and defaults to "lin_vox_idxs". 
+The voxel_ids_label argument is optional
+and defaults to "lin_vox_idxs".
 """
 voxel_ids_label = 'lin_vox_idxs'
 mask = voxsel.get_niftiimage_mask(voxel_ids_label=voxel_ids_label)
@@ -170,7 +155,7 @@ nbrhood = voxsel.get_neighborhood(mask, voxel_ids_label=voxel_ids_label)
 
 """
 From now on we simply follow the example in searchlight.py.
-First we load and preprocess the data. Note that we use the 
+First we load and preprocess the data. Note that we use the
 mask that came from the voxel selection.
 """
 attr = SampleAttributes(os.path.join(datapath, '..', 'attributes.txt'))

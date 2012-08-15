@@ -8,17 +8,18 @@ Provides functionality to:
 - convert freesurfer surfaces to AFNI/SUMA format (using SUMA_Make_Spec_FS)
 - resample surfaces to standard topology (using MapIcosahedron)
 - generate additional surfaces by averaging existing ones
-- find the transformation from freesurfer 
+- find the transformation from freesurfer
 - make SUMA specification files, and see_suma* shell scripts
 
-At the moment we assume a processing stream with freesurfer for surface 
+At the moment we assume a processing stream with freesurfer for surface
 reconstruction, and AFNI/SUMA for coregistration and visualization.
 
-If EPIs from multiple sessions are aligned, this script should use different directories 
+If EPIs from multiple sessions are aligned, this script should use different directories
 for refdir for each session, otherwise naming conflicts may occur
 '''
 
-import os, fnmatch, datetime, re, argparse, utils, surf_fs_asc, surf, afni_suma_spec
+import os, fnmatch, datetime, re, argparse
+import utils, surf_fs_asc, surf, afni_suma_spec
 from utils import afni_fileparts
 
 def getdefaults():
@@ -54,36 +55,36 @@ def augmentconfig(c):
 
     # ensure surfdir is set properly.
     # normally it should end in 'surf'
-    
+
     # try to be smart and deduce subject id from surfdir (if not set explicitly)
     surfdir = c['surfdir']
     if surfdir:
         surfdir=os.path.abspath(surfdir)
         parent, nm = os.path.split(surfdir)
-        
+
         if nm != 'surf':
             jn = os.path.join(surfdir, 'surf')
             if os.path.exists(jn):
                 surfdir = jn
         elif nm == 'SUMA':
             surfdir = parent
-    
+
         if not (os.path.exists(surfdir) or os.path.split(surfdir)[1] == 'surf'):
             print('Warning: surface directory %s not does exist or does not end in "surf"' % surfdir)
             surfdir = None
-    
+
         c['surfdir'] = surfdir
-    
+
         # set SUMADIR as well
         c['sumadir'] = '%(surfdir)s/SUMA/' % c
 
     # derive subject id from surfdir
 
     sid = os.path.split(os.path.split(surfdir)[0])[1] if surfdir else None
-    
+
     if c.get('sid') is None:
         c['sid']=sid
-        
+
     if c['sid'] is None:
         print"Warning: no subject id specified"
 
@@ -127,7 +128,7 @@ def augmentconfig(c):
                     print("Warning: no anatomical or functional experimental voume defined")
 
         def yesno2bool(d, k): # dict, key
-            '''Assuming d[k] contains the word 'yes' or 'no', makes d[k] a boolean 
+            '''Assuming d[k] contains the word 'yes' or 'no', makes d[k] a boolean
             (True=='yes',False=='no'); otherwise an exception is thrown. The dict is updated'''
             val = d[k]
             if val is None:
@@ -182,7 +183,7 @@ def run_toafni(config, env):
     if sid is None:
         raise ValueError("Subject id is not set, cannot continue")
 
-    # files that should exist if Make_Spec_FS was run successfully    
+    # files that should exist if Make_Spec_FS was run successfully
     checkfns = ['brainmask.nii',
               'T1.nii',
               'aseg.nii',
@@ -266,7 +267,7 @@ def run_skullstrip(config, env):
 
     # process the surfvol anatomical.
     # because it's already skull stripped by freesurfer
-    # simply copy it over; rename brain.nii to surfvol_ss 
+    # simply copy it over; rename brain.nii to surfvol_ss
     surfvol_srcs = ['%s/%s' % (sumadir, fn)
                   for fn in ['brain.nii',
                              '%s_SurfVol+orig.HEAD' % sid]]
@@ -284,7 +285,7 @@ def run_skullstrip(config, env):
             cmds.append('cd "%s"; 3dcopy -overwrite %s ./%s' %
                         (refdir, src, trg_short))
 
-    # process experimental volume. 
+    # process experimental volume.
     expvol_src = config['expvol']
     do_ss = config['expvol_ss']
     [e_p, e_n, e_o, e_e] = utils.afni_fileparts(expvol_src)
@@ -307,7 +308,7 @@ def run_skullstrip(config, env):
         cmds.append('cd "%s"; 3dbucket -prefix ./%s.nii %s' % (refdir, e_n, expvol_src))
 
     if overwrite or not utils.afni_fileexists('%s/%s+orig.HEAD' % (refdir, expvol_trg_prefix)):
-        cmds.append('cd "%s";%s -overwrite -prefix ./%s+orig %s %s' % 
+        cmds.append('cd "%s";%s -overwrite -prefix ./%s+orig %s %s' %
                             (refdir, cmd, expvol_trg_prefix, input, expvol_src))
     else:
         print "%s already exists" % expvol_trg_prefix
@@ -316,8 +317,8 @@ def run_skullstrip(config, env):
 
 def run_alignment(config, env):
     '''Aligns anat (which is assumed to be aligned with EPI data) to Freesurfer SurfVol
-    
-    This function strips the anatomicals (by default), then uses @SUMA_AlignToExperiment 
+
+    This function strips the anatomicals (by default), then uses @SUMA_AlignToExperiment
     to estimate the alignment, then applies this transformation to the non-skull-stripped
     SurfVol and also to the surfaces. Some alignment headers will be nuked'''
     overwrite = config['overwrite']
@@ -342,16 +343,16 @@ def run_alignment(config, env):
     for volin in volsin:
         if not os.path.exists(volin):
             raise ValueError('File %s does not exist' % volin)
-    '''    
+    '''
 
     allvols = [surfvol, config['expvol']]
     allvols_ss = [config[s] for s in ['surfvol_ss', 'expvol_ss']] # skulls strip?
     myvolsin = []
 
-    
+
 
     alignsuffix = config['al2expsuffix']
-    volsin = [] # keeps the 2 output files (surfvol, experimental vol) used for alignment 
+    volsin = [] # keeps the 2 output files (surfvol, experimental vol) used for alignment
 
     # determine which volume to use. if there is a skull stripped version, use that one. Otherwise
     # take the original volume and assume it is skull stripped
@@ -404,7 +405,7 @@ def run_alignment(config, env):
             twovolsuffix = twovolpat % (volsin[0], volsin[1])
 
             aea_opts = config['aea_opts']
-            # align_epi_anat.py 
+            # align_epi_anat.py
             cmd = 'cd "%s"; align_epi_anat.py -overwrite -suffix %s %s %s' % (refdir, alignsuffix, twovolsuffix, aea_opts)
             cmds.append(cmd)
 
@@ -460,7 +461,7 @@ def run_alignment(config, env):
 
             refitcmd = "3drefit -atrfloat %s '%s' %s" % (field, unity, fn)
 
-            # only refit if not already in AFNI history (which is stored in HEADfile) 
+            # only refit if not already in AFNI history (which is stored in HEADfile)
             cmd = 'cd "%s"; m=`grep "%s" %s | wc -w`; if [ $m -eq 0 ]; then %s; else echo "File %s seems already 3drefitted"; fi' % (refdir, refitcmd, fn, refitcmd, fn)
             cmds.append(cmd)
 
@@ -498,7 +499,7 @@ def run_alignment(config, env):
         else:
             print "AddEdge seems to have been run already"
 
-    # because AFNI uses RAI orientation but Freesurfer LPI, make a new 
+    # because AFNI uses RAI orientation but Freesurfer LPI, make a new
     # affine transformation matrix in which the signs of
     # x and y coordinates are negated before and after the transformation
     matrixfn_LPI2RAI = '%s.A2E_LPI.1D' % ssalprefix
@@ -528,13 +529,13 @@ def run_alignment(config, env):
                         cmd = 'cd "%s";ConvertSurface -overwrite -i_fs %s/%s -o_fs ./%s -ixmat_1D %s' % \
                               (refdir, sumadir, sumafile, alsumafile, matrixfn_LPI2RAI)
                         cmds.append(cmd)
-                        
+
                     # as of June 2012 copy the original sphere.reg (not aligned) as well
                     if sumafile==('%s.sphere.reg.asc' % pat):
                         if config['overwrite'] or not os.path.exists('%s/%s' % (refdir, sumafile)):
-                            cmds.append('cp %s/%s %s/%s' % (sumadir, sumafile, refdir, sumafile)) 
-                        
-                    
+                            cmds.append('cp %s/%s %s/%s' % (sumadir, sumafile, refdir, sumafile))
+
+
 
     utils.run_cmds(cmds, env)
 
@@ -604,7 +605,7 @@ def suma_makerunsuma(fnout, specfn, surfvol):
 
 
 def suma_makespec(indir, surfprefix, fnout=None):
-    '''Generates a SUMA specification file that contains information about 
+    '''Generates a SUMA specification file that contains information about
     the different surfaces'''
     postfix = '.asc'
     pat = '%s.?*%s' % (surfprefix, postfix)
@@ -751,7 +752,7 @@ if __name__ == '__main__':
     # in the future, allow for setting these on command line
     config = getdefaults()
     options = getoptions()
-    config.update(options) # overwrite default input arguments 
+    config.update(options) # overwrite default input arguments
 
     # check config
     checkconfig(config)
@@ -761,7 +762,7 @@ if __name__ == '__main__':
         print '  %s = %r' % (v, config[v])
 
 
-    # add auxiliry configuration settings that are *derived* from config 
+    # add auxiliry configuration settings that are *derived* from config
     config = augmentconfig(config)
 
     # get path stuff; try to get matlab, freesurfer, afni in path
