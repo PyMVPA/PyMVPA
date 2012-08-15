@@ -5,7 +5,6 @@ from collections import Mapping
 import nibabel as ni, numpy as np
 import collections
 import volgeom
-import cPickle as pickle
 import utils
 import operator
 
@@ -395,7 +394,7 @@ class SparseNeighborhood():
         return a_tuples
 
 def searchlight(datameasure, neighborhood, center_ids=None,
-                       space='voxel_indices', **kwargs):
+                space='voxel_indices', **kwargs):
     """Creates a `Searchlight` to run a scalar `Measure` on
     all possible spheres of a certain size within a dataset.
 
