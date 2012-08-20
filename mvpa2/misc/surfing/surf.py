@@ -374,6 +374,24 @@ class Surface(object):
         return Surface(v=self._v * other, f=self._f)
 
     def rotate(self, theta, center=None, unit='rad'):
+        '''Rotates the surface
+        
+        Parameters
+        ----------
+        theta:
+            np.array with 3 values for rotation along x, y, z axes
+        center:
+            np.array with center around which surface is rotated. If None,
+            then rotation is around the origin (0,0,0).
+        unit:
+            'rad' or 'deg' for angles in theta in either radians or degrees.
+        
+        Returns
+        -------
+        surf.Surface
+            the result after rotating with angles theta around center.
+        '''
+
         if unit.startswith('rad'):
             fac = 1.
         elif unit.startswith('deg'):
@@ -401,15 +419,39 @@ class Surface(object):
             center = 0
         center = np.reshape(np.asarray(center), (1, -1))
 
-
         v_rotate = center + np.dot(self._v - center, m)
 
         return Surface(v=v_rotate, f=self._f)
 
     def center_of_mass(self):
+        '''Computes the center of mass
+        
+        Returns
+        -------
+        np.array
+            3-value vector with x,y,z coordinates of center of masss
+        '''
         return np.mean(self.v(), axis=0)
 
     def merge(self, *others):
+        '''Merges the present surface with other surfaces
+        
+        Parameters
+        ----------
+        others:
+            List of other surfaces to be merged with present one
+        
+        Returns
+        -------
+        surf.Surface
+            A surface that has all the nodes of the current surface
+            and the surfaces in others, and has the topologies combined
+            from these surfaces as well. 
+            If the current surface has v_0 vertices and f_0 faces, and the 
+            i-th surface has v_i and f_i faces, then the output has
+            sum_j (v_j) vertices and sum_j (f_j) faces.
+        '''
+
         all = [self]
         all.extend(list(others))
         n = len(all)
