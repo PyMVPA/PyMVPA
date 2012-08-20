@@ -111,7 +111,7 @@ def write(surf, fn, overwrite=False, comment=None):
         comment = '# Created %s' % str(datetime.datetime.now())
     s.append(comment)
 
-    nv, nf, v, f = surf.nv(), surf.nf(), surf.v(), surf.f()
+    nv, nf, v, f = surf.nvertices(), surf.nfaces(), surf.vertices(), surf.faces()
 
     # number of vertices and faces
     s.append('%d %d' % (nv, nf))
@@ -131,7 +131,7 @@ def hemi_pairs_reposition(surf_left, surf_right, touching_side, min_distance=10.
     touching side should be 'm','i','s','a', or 'p'
     returns a tuple of left and right hemispheres that can be viewed together
     and have a space of min_distance in between them'''
-    
+
     touching_side = touching_side[0].lower()
 
     mn, mx = np.min, np.max
@@ -178,42 +178,42 @@ def sphere_reg_leftrightmapping(surf_sphere_reg_left, surf_sphere_reg_right):
     (the mapping is symmetric)
     
     this only works on sphere.reg.asc files made with AFNI/SUMA's mapicosehedron'''
-    
-    vL, vR=surf_sphere_reg_left.v(), surf_sphere_reg_right.v()
-    
+
+    vL, vR = surf_sphere_reg_left.v(), surf_sphere_reg_right.v()
+
     def _check_is_sphere(v, eps=.0001):
-        com=np.mean(vL,axis=0)
-        
-        if max(abs(com))>eps:
+        com = np.mean(vL, axis=0)
+
+        if max(abs(com)) > eps:
             raise ValueError('Center of Mass not origin: %r' % com)
-        
-        dst=np.sum(v**2,axis=1)**.5
-        
-        if min(dst)<99 or max(dst)>101:
+
+        dst = np.sum(v ** 2, axis=1) ** .5
+
+        if min(dst) < 99 or max(dst) > 101:
             raise ValueError('Not a sphere with approximately radius of 100')
-    
-    map(_check_is_sphere,(vL, vR))
-    
+
+    map(_check_is_sphere, (vL, vR))
+
     # swap left and right, to make righth 'like' left
-    swapX=np.array([[-1, 1, 1]])
-    vS=vR*swapX
-    n=vS.shape[0]
-    
+    swapX = np.array([[-1, 1, 1]])
+    vS = vR * swapX
+    n = vS.shape[0]
+
     # make a mapping so that node i on the left surface is corresponding to L2R[i] 
     # on the right surface
-    left2right=np.zeros((n,),dtype=np.int)
-    
+    left2right = np.zeros((n,), dtype=np.int)
+
     # find corresponding nodes
     for i in xrange(n):
-        d2=np.sum((vL[i,:]-vS)**2,axis=1) # squared distance
-        minidx=np.argmin(d2)
-        left2right[i]=minidx
-        
-        if d2[minidx]>.001:
-            raise ValueError('no mapping found for node %r: min distance %r' % (i, d2[minidx]**.5))
-    
+        d2 = np.sum((vL[i, :] - vS) ** 2, axis=1) # squared distance
+        minidx = np.argmin(d2)
+        left2right[i] = minidx
+
+        if d2[minidx] > .001:
+            raise ValueError('no mapping found for node %r: min distance %r' % (i, d2[minidx] ** .5))
+
     # just one final check     
-    if not all(left2right[left2right[i]]==i for i in xrange(n)):
+    if not all(left2right[left2right[i]] == i for i in xrange(n)):
         raise ValueError('unsymmetric mapping - this should not happen')
-    
+
     return left2right

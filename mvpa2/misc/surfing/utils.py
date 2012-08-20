@@ -189,17 +189,17 @@ def which(f, env=None):
             if is_executable(fullfn):
                 return fullfn
         return None
-    
+
 def foldr(f, y, xs):
     ''' returns f(x_0, f(x_1, f(..., f(x_{n-1}, y)))) '''
     if not type(xs) is list:
-        xs=list(xs)
-    n=len(xs)
-    if n==0:
+        xs = list(xs)
+    n = len(xs)
+    if n == 0:
         return y
     else:
-        return f(xs[0], foldr(f,y,xs[1:]))
-    
+        return f(xs[0], foldr(f, y, xs[1:]))
+
 
 def tictoc():
     '''Measure time a la matlab
@@ -301,13 +301,4 @@ def eta(starttime, progress, msg=None, show=True):
 
     return fullmsg
 
-
-if __name__ == '__main__':
-    fn = "my/dir/file.nii"
-    fn = '/Users/nick/Downloads/fingerdata-0.2/sef/anat_al+orig.HEAD'
-    p = afni_fileparts(fn)
-    print afni_fileexists(fn)
-    
-    print foldr(lambda x, y:x+y,0,[1,2,3,4])
-    
 
