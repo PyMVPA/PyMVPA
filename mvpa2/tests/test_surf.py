@@ -6,7 +6,9 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Unit tests for PyMVPA stats helpers"""
+"""Unit tests for PyMVPA surface searchlight and related utilities"""
+
+import numpy as np
 
 from mvpa2.testing import *
 from mvpa2.testing.datasets import datasets
@@ -19,11 +21,11 @@ import mvpa2.misc.surfing.surf as surf
 
 class SurfTests(unittest.TestCase):
     """Test for surfaces
-    
+
     NNO Aug 2012
-    
+
     added as requested by Yarik and Michael
-    
+
     'Ground truth' is whatever output is returned by the implementation
     as of mid-Aug 2012"""
 
@@ -49,7 +51,7 @@ class SurfTests(unittest.TestCase):
 
         assert_array_equal(v * 10 + 2, t.vertices())
 
-        # allow updatintg, but should not affect original array
+        # allow updating, but should not affect original array
         # CHECKME: maybe we want to throw an exception instead
         v[-1, -1] = 0
         assert_false((v * 10 + 2 == t.vertices()).all().all())
@@ -96,8 +98,8 @@ class SurfTests(unittest.TestCase):
             assert_true(low2high[k] == v)
 
         #  should fail if epsilon is too small
-        self.assertRaises(ValueError,
-                          lambda x:x.map_to_high_resolution_surf(h, .01), s)
+        assert_raises(ValueError,
+                      lambda x:x.map_to_high_resolution_surf(h, .01), s)
 
         n2f = s.node2faces()
         for i in xrange(s.nvertices()):
@@ -111,7 +113,7 @@ class SurfTests(unittest.TestCase):
                  52: 1.87458018, 53: 2.0487004817, 54: 2.222820777,
                  99: 3.32854360, 100: 3.328543604, 101: 3.3285436042}
 
-        eps = .000001
+        eps = np.finfo('f').eps
         for k, v in some_ds.iteritems():
             assert_true(abs(v - ds2[k]) < eps)
 
