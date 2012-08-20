@@ -26,17 +26,17 @@ class Surface(object):
     
     Parameters
     ----------
-    v : numpy.ndarray (float)
+    vertices : numpy.ndarray (float)
         Px3 array with coordinates for P vertices
-    f : numpy.ndarray (int)
+    faces : numpy.ndarray (int)
         Qx3 array with vertex indices for Q faces (triangles)
     check: boolean (default=True)
-        Do some sanity checks to ensure that v and f have proper size and values
+        Do some sanity checks to ensure that vertices and faces have proper size and values
         
     Returns
     -------
     s : Surface
-        a surface specified by v and f
+        a surface specified by vertices and faces
     '''
     def __init__(self, v=None, f=None, check=True):
         if not (v is None or f is None):
@@ -56,11 +56,19 @@ class Surface(object):
         fields = ['_v', '_f', '_nv', '_nf']
         if not all(hasattr(self, field) for field in fields):
             raise Exception("Incomplete surface!")
+
         if self._v.shape != (self._nv, 3):
             raise Exception("Wrong shape for vertices")
+
         if self._f.shape != (self._nf, 3):
             raise Exception("Wrong shape for faces")
-        if (np.unique(self._f) != np.arange(self._nv)).any():
+
+        unqf = np.unique(self._f)
+        if unqf.size != self._nv:
+            raise Exception("Count mismatch for face range (%d!=%d)" %
+                            (unqf.size, self._nv))
+
+        if (unqf != np.arange(self._nv)).any():
             raise Exception("Missing values in faces")
 
     def node2faces(self):
@@ -77,7 +85,7 @@ class Surface(object):
 
         if not hasattr(self, '_n2f'):
             # run the first time this function is called
-            n2f = collections.defaultdict(set)
+            n2f = collections.defaultdict(list)
             for i in xrange(self._nf):
                 fi = self._f[i]
                 for j in xrange(3):
@@ -405,7 +413,7 @@ class Surface(object):
         sx, sy, sz = np.sin(theta)
 
         # rotation matrix *in row-first order*
-        # in other words, we compute v*R' 
+        # in other words, we compute vertices*R' 
         m = np.asarray([[cy * cz, -cy * sz, sy],
                       [cx * sz + sx * sy * cz, cx * cz - sx * sy * sz, -sx * cy],
                       [sx * sz - cx * sy * cz, sx * cz + cx * sy * sz, cx * cy]])
@@ -431,14 +439,14 @@ class Surface(object):
         np.array
             3-value vector with x,y,z coordinates of center of masss
         '''
-        return np.mean(self.v(), axis=0)
+        return np.mean(self.vertices(), axis=0)
 
     def merge(self, *others):
         '''Merges the present surface with other surfaces
         
         Parameters
         ----------
-        others:
+        others: list of surf.Surface
             List of other surfaces to be merged with present one
         
         Returns
@@ -458,7 +466,7 @@ class Surface(object):
 
         def border_positions(xs, f):
             # positions of transitiions between surface
-            # f should return number of relevant values (nodes or vertices) 
+            # faces should return number of relevant values (nodes or vertices) 
             n = len(xs)
 
             fxs = map(f, all)
@@ -467,20 +475,18 @@ class Surface(object):
             for i in xrange(n):
                 positions.append(positions[i] + fxs[i])
 
-            zeros_arr = np.zeros((positions[-1], xs[0].v().shape[1]))
+            zeros_arr = np.zeros((positions[-1], xs[0].vertices().shape[1]))
             return positions, zeros_arr
 
 
-        pos_v, all_v = border_positions(all, lambda x:x.nv())
-        pos_f, all_f = border_positions(all, lambda x:x.nf())
+        pos_v, all_v = border_positions(all, lambda x:x.nvertices())
+        pos_f, all_f = border_positions(all, lambda x:x.nfaces())
 
         for i in xrange(n):
-            all_v[pos_v[i]:pos_v[i + 1], :] = all[i].v()
-            all_f[pos_f[i]:pos_f[i + 1], :] = all[i].f() + pos_v[i]
+            all_v[pos_v[i]:pos_v[i + 1], :] = all[i].vertices()
+            all_f[pos_f[i]:pos_f[i + 1], :] = all[i].faces() + pos_v[i]
 
         return Surface(v=all_v, f=all_f)
-
-
 
 
 
@@ -488,49 +494,73 @@ class Surface(object):
     # yoh: is it intentional to return copies instead of just
     #      original arrays?  why?
     #
-    def v(self):
+    def vertices(self):
         '''
         Returns
         -------
-        v: numpy.ndarray (int)
+        vertices: numpy.ndarray (int)
             Px3 coordinates for P vertices
         '''
         return np.array(self._v)
 
-    def f(self):
+    def faces(self):
         '''
         Returns
         -------
-        f: numpy.ndarray (float)
+        faces: numpy.ndarray (float)
             Qx3 coordinates for Q vertices
         '''
         return np.array(self._f)
 
-    # yoh: would you mind if they become @property
-    #      and spelled out fully, i.e. nvertices, nfaces
-    #      to stay coherent with Dataset.nfeatures, .nsamples?
-    #      and I guess the same for above v, f?
-    def nv(self):
+    def nvertices(self):
         '''
         Returns
         -------
-        nv: int
+        nvertices: int
             Number of vertices
         '''
         return self._nv
 
-    def nf(self):
+    def nfaces(self):
         '''
         Returns
         -------
-        nf: int
+        nfaces: int
             Number of faces
         '''
         return self._nf
 
-    def map_to_high_resolution_surf(self, highres, epsilon=.001, accept_only_icosahedron=False):
-        nx = self.nv()
-        ny = highres.nv()
+    def map_to_high_resolution_surf(self, highres, epsilon=.001,
+                                    accept_only_icosahedron=False):
+        '''
+        Finds a mapping to a higher resolution (denser) surface.
+        A typical use case is mappings between surfaces generated by 
+        MapIcosahedron, where the lower resolution surface defines centers
+        in a searchlight whereas the higher resolution surfaces is used to
+        delineate the grey matter for voxel selection.
+        
+        Parameters
+        ----------
+        highres: surf.Surface
+            high resolution surface
+        epsilon: float
+            maximum margin (distance) between nodes mapped from low to
+            high resolution surface
+        accept_only_icosahedron: bool
+            if True, then this function raises an error if the number of
+            nodes does not match those which would be expected from
+            MapIcosahedorn. 
+        
+        Returns
+        -------
+        low2high: dict
+            mapping so that low2high[i]==j means that node i in the current
+            (low-resolution) surface is mapped to node j in the highres 
+            surface. 
+            
+        '''
+        nx = self.nvertices()
+        ny = highres.nvertices()
 
         if accept_only_icosahedron:
             def getld(n):
@@ -550,8 +580,8 @@ class Surface(object):
                                  (ldy, ldx))
 
         mapping = dict()
-        x = self.v()
-        y = highres.v()
+        x = self.vertices()
+        y = highres.vertices()
 
         # shortcut in case the surfaces are the same
         # if this fails, then we just continue normally
@@ -565,7 +595,7 @@ class Surface(object):
 
         if nx > ny:
             raise ValueError("Other surface has fewer nodes (%d) than this one (%d)" %
-                             nx, ny)
+                             (nx, ny))
 
         for i in xrange(nx):
             ds = np.sum((x[i, :] - y) ** 2, axis=1)
@@ -575,10 +605,111 @@ class Surface(object):
 
             if not epsilon is None and mind > epsilon:
                 raise ValueError("Not found near node for node %i (min distance %f > %f)" %
-                                 i, mind, epsilon)
+                                 (i, mind, epsilon))
             mapping[i] = minpos
 
         return mapping
+
+
+def merge(*surfs):
+    if not surfs:
+        return None
+    s0 = surfs[0]
+    return s0.merge(*surfs[1:])
+
+def generate_cube():
+    vs = [(-1, 1, 0), (1, 1, 0), (-1, -1, 0), (1, -1, 0)]
+    fs = np.array([(0, 1, 2), (1, 2, 3)])
+
+    planes = []
+
+    # a cube has six planes
+    for i in xrange(6):
+        d = i / 2             # dimension
+        s = (i % 2) * 2 - 1   # side (-1 or +1)
+
+        # adjust third cooordinate
+        vs_move = map(lambda x:(x[0], x[1], x[2] + s), vs)
+
+        # rotate coordinates
+        vs_rot = map(lambda x:(x[d], x[(d + 1) % 3], x[(d + 2) % 3]),
+                                        vs_move)
+
+        s = Surface(np.array(vs_move), fs)
+        planes.append(s)
+
+    cube = merge(*planes)
+    return cube
+
+
+def generate_sphere(density=10):
+    hsteps = density
+    vsteps = density
+
+    vs = [(0., 0., 1.), (0., 0., -1)] # top and bottom nodes
+    fs = []
+
+    # z values for each ring (excluding top and bottom), equally spaced
+    zs = [-1. + 2 * (1. / (vsteps + 1)) * (i + 1) for i in xrange(vsteps)]
+
+    # angles for x and y
+    alphastep = 2. * math.pi / hsteps
+    alphas = [float(i) * alphastep for i in xrange(hsteps)]
+
+    # generate coordinates, one ring at a time
+    for vi in xrange(vsteps):
+        z = math.sin(zs[vi] * math.pi * .5) # z coordinate
+        scz = (1 - z * z) ** .5 # scaling for z
+
+        alphaplus = vi * alphastep * .5 # each next ring is offset by half
+                                        # of the length of a triangle
+
+        # x and y coordinates
+        xs = map(lambda x:scz * math.cos(x + alphaplus), alphas)
+        ys = map(lambda x:scz * math.sin(x + alphaplus), alphas)
+
+        vs.extend((xs[i], ys[i], z) for i in xrange(hsteps))
+
+    # set topology, one ring at a time
+    top = [1] * hsteps
+    cur = [2 + i for i in xrange(hsteps)]
+
+    for vi in xrange(vsteps):
+        bot = ([0] * hsteps if vi == vsteps - 1
+                            else map(lambda x:x + hsteps, cur))
+
+        for hi in xrange(hsteps):
+            left = cur[hi]
+            right = cur[(hi + 1) % hsteps]
+
+            fs.append((left, right, top[hi]))
+            fs.append((left, right, bot[hi]))
+
+        top, cur = cur, [bot[-1]] + bot[:-1]
+
+    return Surface(np.array(vs), np.array(fs))
+
+
+
+if __name__ == '__main__':
+    size = 100
+
+
+    s = generate_sphere(10) * 100
+    t = generate_sphere(20) * 100
+
+    mp = s.map_to_high_resolution_surf(t, epsilon=11.)
+    print mp
+
+
+
+    import surf_fs_asc
+    fnout = '/Users/nick/tmp/s.asc'
+    surf_fs_asc.write(s, fnout, True)
+
+
+
+
 
 
 '''    
