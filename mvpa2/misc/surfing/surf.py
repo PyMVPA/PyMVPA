@@ -439,7 +439,7 @@ class Surface(object):
         np.array
             3-value vector with x,y,z coordinates of center of mass
         '''
-        return np.mean(self.vertices(), axis=0)
+        return np.mean(self.vertices, axis=0)
 
     def merge(self, *others):
         '''Merges the present surface with other surfaces
@@ -475,7 +475,7 @@ class Surface(object):
             for i in xrange(n):
                 positions.append(positions[i] + fxs[i])
 
-            zeros_arr = np.zeros((positions[-1], xs[0].vertices().shape[1]))
+            zeros_arr = np.zeros((positions[-1], xs[0].vertices.shape[1]))
             return positions, zeros_arr
 
 
@@ -483,17 +483,14 @@ class Surface(object):
         pos_f, all_f = border_positions(all, lambda x:x.nfaces)
 
         for i in xrange(n):
-            all_v[pos_v[i]:pos_v[i + 1], :] = all[i].vertices()
-            all_f[pos_f[i]:pos_f[i + 1], :] = all[i].faces() + pos_v[i]
+            all_v[pos_v[i]:pos_v[i + 1], :] = all[i].vertices
+            all_f[pos_f[i]:pos_f[i + 1], :] = all[i].faces + pos_v[i]
 
         return Surface(v=all_v, f=all_f)
 
 
 
-    # return copies of internal values
-    # yoh: is it intentional to return copies instead of just
-    #      original arrays?  why?
-    #
+    @property
     def vertices(self):
         '''
         Returns
@@ -501,8 +498,13 @@ class Surface(object):
         vertices: numpy.ndarray (int)
             Px3 coordinates for P vertices
         '''
-        return np.array(self._v)
 
+        v = self._v.view()
+        v.flags.writeable = False
+
+        return v
+
+    @property
     def faces(self):
         '''
         Returns
@@ -510,7 +512,10 @@ class Surface(object):
         faces: numpy.ndarray (float)
             Qx3 coordinates for Q vertices
         '''
-        return np.array(self._f)
+        f = self._f.view()
+        f.flags.writeable = False
+
+        return f
 
     @property
     def nvertices(self):
@@ -582,8 +587,8 @@ class Surface(object):
                                  (ldy, ldx))
 
         mapping = dict()
-        x = self.vertices()
-        y = highres.vertices()
+        x = self.vertices
+        y = highres.vertices
 
         # shortcut in case the surfaces are the same
         # if this fails, then we just continue normally

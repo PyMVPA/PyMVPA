@@ -38,8 +38,8 @@ class SurfTests(unittest.TestCase):
         assert_true(s.nvertices == 102)
         assert_true(s.nfaces == 200)
 
-        v = s.vertices()
-        f = s.faces()
+        v = s.vertices
+        f = s.faces
 
         assert_true(v.shape == (102, 3))
         assert_true(v.shape == (102, 3))
@@ -47,15 +47,14 @@ class SurfTests(unittest.TestCase):
         # another surface
         t = s * 10 + 2
         assert_true(t.same_topology(s))
-        assert_array_equal(f, t.faces())
+        assert_array_equal(f, t.faces)
 
-        assert_array_equal(v * 10 + 2, t.vertices())
+        assert_array_equal(v * 10 + 2, t.vertices)
 
         # allow updating, but should not affect original array
         # CHECKME: maybe we want to throw an exception instead
-        v[-1, -1] = 0
-        assert_false((v * 10 + 2 == t.vertices()).all().all())
-        assert_true((s.vertices() * 10 + 2 == t.vertices()).all().all())
+        assert_true((v * 10 + 2 == t.vertices).all().all())
+        assert_true((s.vertices * 10 + 2 == t.vertices).all().all())
 
         # a few checks on vertices and nodes
         v_check = {40:(0.86511144 , -0.28109175, -0.41541501),
@@ -63,8 +62,8 @@ class SurfTests(unittest.TestCase):
         f_check = {10:(7, 8, 1), 40:(30, 31, 21)}
 
 
-        vf_checks = [(v_check, lambda x:x.vertices()),
-                     (f_check, lambda x:x.faces())]
+        vf_checks = [(v_check, lambda x:x.vertices),
+                     (f_check, lambda x:x.faces)]
 
         eps = .0001
         for cmap, f in vf_checks:
@@ -86,8 +85,12 @@ class SurfTests(unittest.TestCase):
             for i, j, k in n_check:
                 assert_true(abs(nbrs[i][j] - k) < eps)
 
-            s.faces()[:, :] = 0
 
+        def assign_zero(x):
+            x.faces[:, :] = 0
+            return None
+
+        assert_raises(RuntimeError, assign_zero, s)
 
         # see if mapping to high res works
         h = surf.generate_sphere(40)
