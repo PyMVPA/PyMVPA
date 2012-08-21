@@ -18,6 +18,7 @@ from mvpa2.testing.clfs import *
 from mvpa2.testing.datasets import *
 
 from mvpa2.datasets import Dataset, hstack
+from mvpa2.base.types import is_datasetlike
 from mvpa2.base import externals
 from mvpa2.clfs.transerror import ConfusionMatrix
 from mvpa2.measures.searchlight import sphere_searchlight, Searchlight
@@ -516,6 +517,13 @@ class SearchlightTests(unittest.TestCase):
                 res.append(x)
                 print_("R: ", x)
                 for r in x:
+                    # Can happen if we requested those .ca's enabled
+                    # -- then automagically _proc_block would wrap
+                    # results in a dataset... Originally detected by
+                    # running with MVPA_DEBUG=.* which triggered
+                    # enabling all ca's
+                    if is_datasetlike(r):
+                        r = np.asscalar(r.samples)
                     os.unlink(r)         # remove generated file
                 print_("WAITING")
             return res
