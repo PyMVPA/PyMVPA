@@ -130,10 +130,7 @@ class BaseSearchlight(Measure):
             roi_ids = np.arange(dataset.nfeatures)
 
         # pass to subclass
-        results, roi_sizes = self._sl_call(dataset, roi_ids, nproc)
-
-        if not roi_sizes is None:
-            self.ca.roi_sizes = roi_sizes
+        results = self._sl_call(dataset, roi_ids, nproc)
 
         if 'mapper' in dataset.a:
             # since we know the space we can stick the original mapper into the
@@ -162,7 +159,6 @@ class BaseSearchlight(Measure):
 
     queryengine = property(fget=lambda self: self._queryengine)
     roi_ids = property(fget=lambda self: self.__roi_ids)
-
 
 class Searchlight(BaseSearchlight):
     """The implementation of a generic searchlight measure.
@@ -253,18 +249,12 @@ class Searchlight(BaseSearchlight):
 
             # collect results
             results = []
-            if self.ca.is_enabled('roi_sizes'):
-                roi_sizes = []
-            else:
-                roi_sizes = None
 
-            for r, rsizes in p_results:
+            for r in p_results:
                 results += self.__handle_results(r)
-                if not roi_sizes is None:
-                    roi_sizes += rsizes
         else:
             # otherwise collect the results in a list
-            results, roi_sizes = \
+            results = \
                     self._proc_block(roi_ids, dataset, self.__datameasure)
             results = self.__handle_results(results)
 
@@ -280,11 +270,13 @@ class Searchlight(BaseSearchlight):
         result_ds = hstack(results)
         if self.ca.is_enabled('roi_feature_ids'):
             self.ca.roi_feature_ids = [r.a.roi_feature_ids for r in results]
+        if self.ca.is_enabled('roi_sizes'):
+            self.ca.roi_sizes = [r.a.roi_sizes for r in results]
 
         if __debug__:
             debug('SLC', " hstacked shape %s" % (result_ds.shape,))
 
-        return result_ds, roi_sizes
+        return result_ds
 
 
     def _proc_block(self, block, ds, measure, iblock='main'):
@@ -302,11 +294,10 @@ class Searchlight(BaseSearchlight):
             debug_slc_ = 'SLC_' in debug.active
             debug('SLC',
                   "Starting computing block for %i elements" % len(block))
-        if self.ca.is_enabled('roi_sizes'):
-            roi_sizes = []
-        else:
-            roi_sizes = None
         results = []
+        store_roi_feature_ids = self.ca.is_enabled('roi_feature_ids')
+        store_roi_sizes = self.ca.is_enabled('roi_sizes')
+        assure_dataset = store_roi_feature_ids or store_roi_sizes
         # put rois around all features in the dataset and compute the
         # measure within them
         for i, f in enumerate(block):
@@ -328,17 +319,16 @@ class Searchlight(BaseSearchlight):
 
             # compute the datameasure and store in results
             res = measure(roi)
-            if self.ca.is_enabled('roi_feature_ids'):
-                if not is_datasetlike(res):
-                    res = Dataset(np.atleast_1d(res))
+
+            if assure_dataset and not is_datasetlike(res):
+                res = Dataset(np.atleast_1d(res))
+            if store_roi_feature_ids:
                 # add roi feature ids to intermediate result dataset for later
                 # aggregation
                 res.a['roi_feature_ids'] = roi_fids
+            if store_roi_sizes:
+                res.a['roi_sizes'] = roi.nfeatures
             results.append(res)
-
-            # store the size of the roi dataset
-            if not roi_sizes is None:
-                roi_sizes.append(roi.nfeatures)
 
             if __debug__:
                 debug('SLC', "Doing %i ROIs: %i (%i features) [%i%%]" \
@@ -361,7 +351,7 @@ class Searchlight(BaseSearchlight):
             results = results_file
         else:
             raise RuntimeError("Must not reach this point")
-        return results, roi_sizes
+        return results
 
 
     def __set_datameasure(self, datameasure):
