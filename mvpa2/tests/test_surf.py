@@ -49,7 +49,7 @@ class SurfTests(unittest.TestCase):
         f = s.faces
 
         assert_true(v.shape == (102, 3))
-        assert_true(v.shape == (102, 3))
+        assert_true(f.shape == (200, 3))
 
 
 
