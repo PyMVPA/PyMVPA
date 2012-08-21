@@ -49,7 +49,8 @@ class BaseSearchlight(Measure):
     """Indicate that this measure is always trained."""
 
 
-    def __init__(self, queryengine, roi_ids=None, nproc=None, **kwargs):
+    def __init__(self, queryengine, roi_ids=None, nproc=None,
+                 **kwargs):
         """
         Parameters
         ----------
@@ -169,9 +170,25 @@ class Searchlight(BaseSearchlight):
     interest, which is ran at each spatial location.
     """
 
+    @staticmethod
+    def _concat_results(sl=None, dataset=None, roi_ids=None, results=None):
+        """The simplest implementation for collecting the results --
+        just put them into a list
+
+        This this implementation simply collects them into a list,
+        thus not using any of sl, ds, nor roi_ids.  But custom
+        implementation might make use of them.  Implemented as
+        @staticmethod just to emphasize that in principle it is
+        independent of the actual searchlight instance
+        """
+        # collect results
+        return sum(results, [])
+
     def __init__(self, datameasure, queryengine, add_center_fa=False,
                  results_backend='native',
+                 results_fx=None,
                  tmp_prefix='tmpsl',
+                 nblocks=None,
                  **kwargs):
         """
         Parameters
@@ -190,10 +207,18 @@ class Searchlight(BaseSearchlight):
           in case of nproc > 1. 'native' is pickling/unpickling of results by
           pprocess, while 'hdf5' would use h5save/h5load functionality.
           'hdf5' might be more time and memory efficient in some cases.
+        results_fx : callable, optional
+          Function to process/combine results of each searchlight
+          block run.  By default it would simply append them all into
+          the list.  It receives as keyword arguments sl, dataset,
+          roi_ids, and results (iterable of lists)
         tmp_prefix : str, optional
           If specified -- serves as a prefix for temporary files storage
           if results_backend == 'hdf5'.  Thus can specify the directory to use
           (trailing file path separator is not added automagically).
+        nblocks : None or int
+          Into how many blocks to split the computation (could be larger than
+          nproc).  If None -- nproc is used.
         **kwargs
           In addition this class supports all keyword arguments of its
           base-class :class:`~mvpa2.measures.searchlight.BaseSearchlight`.
@@ -204,7 +229,10 @@ class Searchlight(BaseSearchlight):
         if self.results_backend == 'hdf5':
             # Assure having hdf5
             externals.exists('h5py', raise_=True)
+        self.results_fx = Searchlight._concat_results \
+                          if results_fx is None else results_fx
         self.tmp_prefix = tmp_prefix
+        self.nblocks = nblocks
         if isinstance(add_center_fa, str):
             self.__add_center_fa = add_center_fa
         elif add_center_fa:
@@ -218,6 +246,7 @@ class Searchlight(BaseSearchlight):
             + _repr_attrs(self, ['datameasure'])
             + _repr_attrs(self, ['add_center_fa'], default=False)
             + _repr_attrs(self, ['results_backend'], default='native')
+            + _repr_attrs(self, ['results_fx', 'nblocks'])
             )
 
 
@@ -229,7 +258,9 @@ class Searchlight(BaseSearchlight):
         if nproc is not None and nproc > 1:
             # split all target ROIs centers into `nproc` equally sized blocks
             nproc_needed = min(len(roi_ids), nproc)
-            roi_blocks = np.array_split(roi_ids, nproc_needed)
+            nblocks = nproc_needed \
+                      if self.nblocks is None else self.nblocks
+            roi_blocks = np.array_split(roi_ids, nblocks)
 
             # the next block sets up the infrastructure for parallel computing
             # this can easily be changed into a ParallelPython loop, if we
@@ -237,8 +268,8 @@ class Searchlight(BaseSearchlight):
             import pprocess
             p_results = pprocess.Map(limit=nproc_needed)
             if __debug__:
-                debug('SLC', "Starting off child processes for nproc=%i"
-                      % nproc_needed)
+                debug('SLC', "Starting off %s child processes for nblocks=%i"
+                      % (nproc_needed, nblocks))
             compute = p_results.manage(
                         pprocess.MakeParallel(self._proc_block))
             for iblock, block in enumerate(roi_blocks):
@@ -246,17 +277,16 @@ class Searchlight(BaseSearchlight):
                 # independent one per process?
                 compute(block, dataset, copy.copy(self.__datameasure),
                         iblock=iblock)
-
-            # collect results
-            results = []
-
-            for r in p_results:
-                results += self.__handle_results(r)
         else:
             # otherwise collect the results in a list
-            results = \
-                    self._proc_block(roi_ids, dataset, self.__datameasure)
-            results = self.__handle_results(results)
+            p_results = [
+                    self._proc_block(roi_ids, dataset, self.__datameasure)]
+
+        # finally collect and possibly process results
+        results = self.results_fx(sl=self,
+                                  dataset=dataset,
+                                  roi_ids=roi_ids,
+                                  results=self.__handle_all_results(p_results))
 
         if __debug__ and 'SLC' in debug.active:
             debug('SLC', '')            # just newline
@@ -373,6 +403,14 @@ class Searchlight(BaseSearchlight):
             return results_data
         else:
             return results
+
+    def __handle_all_results(self, results):
+        """Helper generator to decorate passing the results out to
+        results_fx
+        """
+        for r in results:
+            yield self.__handle_results(r)
+
 
     datameasure = property(fget=lambda self: self.__datameasure,
                            fset=__set_datameasure)
