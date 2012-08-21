@@ -94,6 +94,7 @@ class VolGeom():
 
         return ijk
 
+    @property
     def affine(self):
         '''Returns the affine transformation matrix
         
@@ -103,7 +104,9 @@ class VolGeom():
             4x4 array that maps voxel to world coorinates
         '''
 
-        return self._affine
+        a = self._affine.view()
+        a.flags.writeable = False
+        return a
 
 
     def xyz2ijk(self, xyz):
@@ -121,7 +124,7 @@ class VolGeom():
             World coordinates outside the volume are set to 
             sub voxel indices outside the volume too
         '''
-        m = self.affine()
+        m = self.affine
         minv = np.linalg.inv(m)
 
         ijkfloat = self.apply_affine3(minv, xyz)
@@ -155,7 +158,7 @@ class VolGeom():
             Voxel indices outside the volume are set to NaN
         '''
 
-        m = self.affine()
+        m = self.affine
         ijkfloat = np.array(ijk, dtype=float)
         xyz = self.apply_affine3(m, ijkfloat)
 
@@ -289,66 +292,8 @@ class VolGeom():
         sh4d = (sh[0], sh[1], sh[2], nt)
 
         data = np.zeros(sh4d)
-        img = ni.Nifti1Image(data, self.affine())
+        img = ni.Nifti1Image(data, self.affine)
         return img
-
-
-
-    def _testlindices(self):
-        '''just for testing'''
-        data = self._img.get_data()
-        shape = np.shape(data)
-        nt = np.prod(shape[3:])
-        print nt
-        datars = np.reshape(data, (-1, nt))
-
-        c = np.array([[10, 10, 10]])
-        r = range(-2, 3)
-
-        datars[:] = 0
-        print np.shape(datars)
-        for i in r:
-            for j in r:
-                for k in r:
-                    ijk = np.array([[i, j, k]]) + c
-                    linindex = self.ijk2lin(ijk)
-                    ijk2 = self.lin2ijk(linindex)
-                    if (ijk2 != ijk).any():
-                        raise Exception("Unexpected")
-
-                    datars[linindex, 0] = i
-                    datars[linindex, 1] = j
-                    datars[linindex, 2] = k
-                    datars[linindex, 3] = linindex
-
-        databack = np.reshape(datars, np.shape(data))
-
-        img = ni.Nifti1Image(databack, self._img.get_affine())
-        return img
-
-
-    def _getmaskedimage(self, xyz):
-        '''just for testing'''
-        data = self._img.get_data();
-        datars = np.reshape(data, (-1, self.ntimepoints()))
-
-        ijk = self.xyz2ijk(xyz)
-
-        nrows = np.shape(ijk)[0]
-        sh = self.shape()
-
-        msk = self.contains_ijk(ijk)
-
-        data[:] = 0
-        data[ijk[msk]] = [1, 2, 3]
-
-        img = ni.Nifti1Image(np.reshape(data, self.shape()), self._img.get_affine())
-        return img
-
-def _readonly_view(x):
-    v = x.view()
-    v.flags.writeable = False
-    return v
 
 def from_nifti_file(fn):
     '''
@@ -383,151 +328,3 @@ def from_image(img):
 
     return VolGeom(shape=img.get_shape(), affine=img.get_affine())
 
-
-
-if __name__ == '__main__':
-    d = '/Users/nick/Downloads/fingerdata-0.2/glm/'
-    fn = d + "rall_vol00.nii"
-    surffn = d + "ico100_lh.smoothwm_al.asc"
-    Surface = surf_fs_asc.read(surffn)
-    vg = from_nifti_file(fn)
-
-    data = np.zeros(vg.shape())
-
-    xyz = Surface.v()
-    ijk = vg.xyz2ijk(xyz)
-
-    nv = ijk.shape[0]
-    invol = vg.contains_ijk(ijk)
-
-    for kk in [43247]: #xrange(nvoxels):
-        i, j, k = ijk[kk, 0], ijk[kk, 1], ijk[kk, 2]
-        sh = data.shape
-
-        if 0 <= i and i < sh[0] and 0 <= j and j < sh[1] and 0 <= k and k < sh[2]:
-            data[i, j, k] += 1
-
-    fnout = d + "__q4.nii"
-    img = ni.Nifti1Image(data, vg.affine())
-    img.to_filename(fnout)
-
-
-''' *** ONLY TESTING FROM HERE *** '''
-
-if __name__ == '__main__':
-    d = '%s/glm/' % utils._get_fingerdata_dir()
-    fn = d + "rall_vol00.nii"
-    surffn = d + "ico100_lh.smoothwm_al.asc"
-    Surface = surf_fs_asc.read(surffn)
-    nodeidx = 43247
-    xyz = np.reshape(Surface.v()[nodeidx, :], (-1, 3))
-    print "xyz %r" % xyz
-
-    linidx = 109543
-    i, j, k = 48, 31, 21
-    ijk = np.asarray([[i, j, k]], dtype=int)
-
-
-    vg = from_nifti_file(fn)
-    linX = vg.ijk2lin(ijk)
-    print "lin %r %r (or %r) " % (linidx, linX, vg.nvoxels() - linidx)
-
-    linY = vg.xyz2lin(xyz)
-    ijkY = vg.xyz2ijk(xyz)
-    print "xyz2 %r %r (expected ijk %r)" % (linY, ijkY, ijk)
-
-    m = vg.affine()
-
-
-    tf = vg.apply_affine3(m, ijk)
-    print "orig/expected %r / %r" % (ijk, tf)
-
-    mi = np.linalg.inv(m)
-    tfa = vg.apply_affine3(mi, xyz)
-
-    linarray = np.asarray([linidx])
-    print linarray
-    myijk = vg.lin2ijk(linarray)
-
-    print "orig/expected %r (%r) / %r" % (myijk, ijk, tfa)
-
-    print vg.contains_ijk(ijk)
-
-
-
-
-
-
-if __name__ == '__mainX__':
-    d = '/Users/nick/Downloads/fingerdata-0.2/glm/'
-    fn = d + "rall_vol00.nii"
-    fn2 = d + "rall.nii"
-    fn3 = d + "__anat_hires.nii"
-    fn3 = d + "anat_al.nii"
-    fn3 = d + "__anat10.nii"
-    fnout = d + "__test9b.nii"
-    #surffn=d+"../ref/ico100_lh.pial_al.asc"
-    surffn = d + "../ref/ico100_lh.smoothwm_al.asc"
-    v = from_nifti_file(fn)
-    print "started"
-
-
-    print v
-    print v.shape()
-    ijk = np.array([[1, 7, 20], [2, 7, 20], [1, 8, 20], [1, 7, 21]])
-
-    msk = np.empty((4, 3), dtype=bool)
-    m2 = np.empty((4,), dtype=bool)
-
-
-    #img=v._testlindices()
-    s = surf_fs_asc.read(surffn)
-
-    ijk = v.xyz2ijk(s.v())
-
-    invol = v.contains_ijk(ijk)
-    print invol
-    print invol.shape
-
-    lin = v.ijk2lin(ijk)
-    invol2 = v.contains_lin(lin)
-    print invol2.shape
-
-
-    nrows = np.shape(ijk)[0]
-    sh = v.shape()
-
-    msk = v.contains_ijk(ijk)
-    data = v._img.get_data()
-    xyz = s.v()
-    lin = v.xyz2lin(xyz)
-    rs = np.reshape(data, (-1, v.ntimepoints()))
-    rs[:] = 0
-    rs[lin[msk]] = 1
-    data = np.reshape(rs, v.shape())
-    img = ni.Nifti1Image(data, v.affine())
-
-    #img=v._getmaskedimage(s.v())
-    img.to_filename(fnout)
-    print fnout
-    '''
-    
-    
-    
-    ijk=v.xyz2ijk(m)
-    xyz=v.ijk2xyz(ijk)
-    
-    s=surf_fs_asc.read(surffn)
-    _img=v.getmaskedimage(s.v())
-    
-    fnout=d+"__vol1.nii"
-    _img.to_filename(fnout)
-    
-    lin=v.ijk2lin(ijk)
-    ijk2=v.lin2ijk(lin)
-    
-    print ijk
-    print ijk2
-    
-    msk=v.contains_ijk(v.xyz2ijk(s._v))
-    '''

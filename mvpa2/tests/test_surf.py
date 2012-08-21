@@ -258,7 +258,24 @@ class SurfTests(unittest.TestCase):
                 _assert_array_equal_eps(lin_d, lin)
 
 
+        # some I/O testing
 
+        img = vg.empty_nifti_img()
+        _, fn = tempfile.mkstemp('.nii', 'test')
+        img.to_filename(fn)
+
+        assert_true(os.path.exists(fn))
+
+        vg2 = volgeom.from_image(img)
+        vg3 = volgeom.from_nifti_file(fn)
+
+        _assert_array_equal_eps(vg.affine, vg2.affine, 0)
+        _assert_array_equal_eps(vg.affine, vg3.affine, 0)
+
+        assert_equal(vg.shape[:3], vg2.shape[:3], 0)
+        assert_equal(vg.shape[:3], vg3.shape[:3], 0)
+
+        os.remove(fn)
 
 
 
