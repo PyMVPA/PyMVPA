@@ -35,8 +35,8 @@ class SurfTests(unittest.TestCase):
 
         s = surf.generate_sphere(10)
 
-        assert_true(s.nvertices() == 102)
-        assert_true(s.nfaces() == 200)
+        assert_true(s.nvertices == 102)
+        assert_true(s.nfaces == 200)
 
         v = s.vertices()
         f = s.faces()
@@ -102,7 +102,7 @@ class SurfTests(unittest.TestCase):
                       lambda x:x.map_to_high_resolution_surf(h, .01), s)
 
         n2f = s.node2faces()
-        for i in xrange(s.nvertices()):
+        for i in xrange(s.nvertices):
             nf = [10] if i < 2 else [5, 6] # number of faces expected
 
             assert_true(len(n2f[i]) in nf)
