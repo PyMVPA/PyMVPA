@@ -479,8 +479,8 @@ class Surface(object):
             return positions, zeros_arr
 
 
-        pos_v, all_v = border_positions(all, lambda x:x.nvertices())
-        pos_f, all_f = border_positions(all, lambda x:x.nfaces())
+        pos_v, all_v = border_positions(all, lambda x:x.nvertices)
+        pos_f, all_f = border_positions(all, lambda x:x.nfaces)
 
         for i in xrange(n):
             all_v[pos_v[i]:pos_v[i + 1], :] = all[i].vertices()
@@ -512,6 +512,7 @@ class Surface(object):
         '''
         return np.array(self._f)
 
+    @property
     def nvertices(self):
         '''
         Returns
@@ -521,6 +522,7 @@ class Surface(object):
         '''
         return self._nv
 
+    @property
     def nfaces(self):
         '''
         Returns
@@ -559,8 +561,8 @@ class Surface(object):
             surface. 
             
         '''
-        nx = self.nvertices()
-        ny = highres.nvertices()
+        nx = self.nvertices
+        ny = highres.nvertices
 
         if accept_only_icosahedron:
             def getld(n):

@@ -111,7 +111,7 @@ def write(surf, fn, overwrite=False, comment=None):
         comment = '# Created %s' % str(datetime.datetime.now())
     s.append(comment)
 
-    nv, nf, v, f = surf.nvertices(), surf.nfaces(), surf.vertices(), surf.faces()
+    nv, nf, v, f = surf.nvertices, surf.nfaces, surf.vertices(), surf.faces()
 
     # number of vertices and faces
     s.append('%d %d' % (nv, nf))
