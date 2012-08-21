@@ -161,6 +161,7 @@ class BaseSearchlight(Measure):
     queryengine = property(fget=lambda self: self._queryengine)
     roi_ids = property(fget=lambda self: self.__roi_ids)
 
+
 class Searchlight(BaseSearchlight):
     """The implementation of a generic searchlight measure.
 
@@ -175,14 +176,36 @@ class Searchlight(BaseSearchlight):
         """The simplest implementation for collecting the results --
         just put them into a list
 
-        This this implementation simply collects them into a list,
-        thus not using any of sl, ds, nor roi_ids.  But custom
-        implementation might make use of them.  Implemented as
-        @staticmethod just to emphasize that in principle it is
-        independent of the actual searchlight instance
+        This this implementation simply collects them into a list and
+        uses only sl. for assigning conditional attributes.  But
+        custom implementation might make use of more/less of them.
+        Implemented as @staticmethod just to emphasize that in
+        principle it is independent of the actual searchlight instance
         """
         # collect results
-        return sum(results, [])
+        results = sum(results, [])
+
+        if __debug__ and 'SLC' in debug.active:
+            debug('SLC', '')            # just newline
+            resshape = len(results) and np.asanyarray(results[0]).shape or 'N/A'
+            debug('SLC', ' hstacking %d results of shape %s'
+                  % (len(results), resshape))
+
+        # but be careful: this call also serves as conversion from parallel maps
+        # to regular lists!
+        # this uses the Dataset-hstack
+        result_ds = hstack(results)
+
+        if __debug__:
+            debug('SLC', " hstacked shape %s" % (result_ds.shape,))
+
+        if sl.ca.is_enabled('roi_feature_ids'):
+            sl.ca.roi_feature_ids = [r.a.roi_feature_ids for r in results]
+        if sl.ca.is_enabled('roi_sizes'):
+            sl.ca.roi_sizes = [r.a.roi_sizes for r in results]
+
+        return result_ds
+
 
     def __init__(self, datameasure, queryengine, add_center_fa=False,
                  results_backend='native',
@@ -211,7 +234,8 @@ class Searchlight(BaseSearchlight):
           Function to process/combine results of each searchlight
           block run.  By default it would simply append them all into
           the list.  It receives as keyword arguments sl, dataset,
-          roi_ids, and results (iterable of lists)
+          roi_ids, and results (iterable of lists).  It is the one to take
+          care of assigning roi_* ca's
         tmp_prefix : str, optional
           If specified -- serves as a prefix for temporary files storage
           if results_backend == 'hdf5'.  Thus can specify the directory to use
@@ -278,33 +302,22 @@ class Searchlight(BaseSearchlight):
                 compute(block, dataset, copy.copy(self.__datameasure),
                         iblock=iblock)
         else:
-            # otherwise collect the results in a list
+            # otherwise collect the results in an 1-item list
             p_results = [
                     self._proc_block(roi_ids, dataset, self.__datameasure)]
 
-        # finally collect and possibly process results
-        results = self.results_fx(sl=self,
-                                  dataset=dataset,
-                                  roi_ids=roi_ids,
-                                  results=self.__handle_all_results(p_results))
+        # Finally collect and possibly process results
+        # p_results here is either a generator from pprocess.Map or a list.
+        # In case of a generator it allows to process results as they become
+        # available
+        result_ds = self.results_fx(sl=self,
+                                    dataset=dataset,
+                                    roi_ids=roi_ids,
+                                    results=self.__handle_all_results(p_results))
 
-        if __debug__ and 'SLC' in debug.active:
-            debug('SLC', '')            # just newline
-            resshape = len(results) and np.asanyarray(results[0]).shape or 'N/A'
-            debug('SLC', ' hstacking %d results of shape %s'
-                  % (len(results), resshape))
-
-        # but be careful: this call also serves as conversion from parallel maps
-        # to regular lists!
-        # this uses the Dataset-hstack
-        result_ds = hstack(results)
-        if self.ca.is_enabled('roi_feature_ids'):
-            self.ca.roi_feature_ids = [r.a.roi_feature_ids for r in results]
-        if self.ca.is_enabled('roi_sizes'):
-            self.ca.roi_sizes = [r.a.roi_sizes for r in results]
-
-        if __debug__:
-            debug('SLC', " hstacked shape %s" % (result_ds.shape,))
+        # Assure having a dataset (for paranoid ones)
+        if not is_datasetlike(result_ds):
+            result_ds = Dataset(np.atleast_1d(result_ds))
 
         return result_ds
 
