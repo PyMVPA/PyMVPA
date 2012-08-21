@@ -11,11 +11,14 @@
 import tempfile, time
 import numpy.random as rnd
 
+from math import ceil
+
 from mvpa2.testing import *
 from mvpa2.testing.clfs import *
 from mvpa2.testing.datasets import *
 
 from mvpa2.datasets import Dataset, hstack
+from mvpa2.base.types import is_datasetlike
 from mvpa2.base import externals
 from mvpa2.clfs.transerror import ConfusionMatrix
 from mvpa2.measures.searchlight import sphere_searchlight, Searchlight
@@ -455,6 +458,112 @@ class SearchlightTests(unittest.TestCase):
         assert_equal(len(tempfiles), 0)
 
 
+    def test_nblocks(self):
+        skip_if_no_external('pprocess')
+        # just a basic test to see that we are getting the same
+        # results with different nblocks
+        ds = datasets['3dsmall'].copy(deep=True)[:, :13]
+        ds.fa['voxel_indices'] = ds.fa.myspace
+        cv = CrossValidation(GNB(), OddEvenPartitioner())
+        res1 = sphere_searchlight(cv, radius=1, nproc=2)(ds)
+        res2 = sphere_searchlight(cv, radius=1, nproc=2, nblocks=5)(ds)
+        assert_array_equal(res1, res2)
+
+
+    def test_custom_results_fx_logic(self):
+        # results_fx was introduced for the blow-up-the-memory-Swaroop
+        # where keeping all intermediate results of the dark-magic SL
+        # hyperalignment is not feasible.  So it is desired to split
+        # searchlight computation in more blocks while composing the
+        # target result "on-the-fly" from available so far results.
+        #
+        # Implementation relies on using generators feeding the
+        # results_fx with fresh results whenever those become
+        # available.
+        #
+        # This test/example's "measure" creates files which should be
+        # handled by the results_fx function and removed in this case
+        # to check if we indeed have desired high number of blocks while
+        # only limited nproc.
+        skip_if_no_external('pprocess')
+
+        tfile = tempfile.mktemp('mvpa', 'test-sl')
+
+        ds = datasets['3dsmall'].copy()[:, :71] # smaller copy
+        ds.fa['voxel_indices'] = ds.fa.myspace
+        ds.fa['feature_id'] = np.arange(ds.nfeatures)
+
+        nproc = 3 # it is not about computing -- so we will can
+                  # start more processes than possibly having CPUs just to test
+        nblocks = nproc * 7
+        # figure out max number of features to be given to any proc_block
+        # yoh: not sure why I had to +1 here... but now it became more robust and
+        # still seems to be doing what was demanded so be it
+        max_block = int(ceil(ds.nfeatures  / float(nblocks))+1)
+
+        def print_(s, *args):
+            """For local debugging"""
+            #print s, args
+            pass
+
+        def results_fx(sl=None, dataset=None, roi_ids=None, results=None):
+            """It will "process" the results by removing those files
+               generated inside the measure
+            """
+            res = []
+            print_("READY")
+            for x in results:
+                ok_(isinstance(x, list))
+                res.append(x)
+                print_("R: ", x)
+                for r in x:
+                    # Can happen if we requested those .ca's enabled
+                    # -- then automagically _proc_block would wrap
+                    # results in a dataset... Originally detected by
+                    # running with MVPA_DEBUG=.* which triggered
+                    # enabling all ca's
+                    if is_datasetlike(r):
+                        r = np.asscalar(r.samples)
+                    os.unlink(r)         # remove generated file
+                print_("WAITING")
+            return res
+
+        def measure(ds):
+            """The "measure" will check if a run with the same "index" from
+               previous block has been processed by now
+            """
+            f = '%s+%03d' % (tfile, ds.fa.feature_id[0] % (max_block*nproc))
+            print_("FID:%d f:%s" % (ds.fa.feature_id[0], f))
+
+            # allow for up to few seconds to wait for the file to
+            # disappear -- i.e. its result from previous "block" was
+            # processed
+            t0 = time.time()
+            while os.path.exists(f) and time.time() - t0 < 2.:
+                time.sleep(0.5) # so it does take time to compute the measure
+            if os.path.exists(f):
+                print_("ERROR: ", f)
+                raise AssertionError("File %s must have been processed by now"
+                                     % f)
+            open(f, 'w').write('XXX')   # signal that we have computing this measure
+            print_("RES: %s" % f)
+            return f
+
+        sl = sphere_searchlight(measure,
+                                radius=0,
+                                nproc=nproc,
+                                nblocks=nblocks,
+                                results_fx=results_fx,
+                                center_ids=np.arange(ds.nfeatures)
+                                )
+
+        assert_equal(len(glob.glob(tfile + '*')), 0) # so no junk around
+        try:
+            res = sl(ds)
+        finally:
+            # remove those generated left-over files
+            for f in glob.glob(tfile +'*'):
+                os.unlink(f)
 
 def suite():
     return unittest.makeSuite(SearchlightTests)

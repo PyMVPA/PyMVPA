@@ -513,7 +513,8 @@ class GNBSearchlight(BaseSearchlight):
             debug('SLC', "GNBSearchlight is done in %.3g sec" %
                   (time.time() - time_start))
 
-        return Dataset(results), roi_sizes
+        self.ca.roi_sizes = roi_sizes
+        return Dataset(results)
 
     gnb = property(fget=lambda self: self._gnb)
     generator = property(fget=lambda self: self._generator)
