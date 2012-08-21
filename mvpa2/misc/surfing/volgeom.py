@@ -39,7 +39,7 @@ class VolGeom():
 
     def _ijkmultfac(self):
         '''multiplication factors for ijk <--> linear indices conversion'''
-        sh = self.shape()
+        sh = self.shape
         return [sh[1] * sh[2], sh[2], 1]
 
     def ijk2lin(self, ijk):
@@ -79,7 +79,7 @@ class VolGeom():
         '''
 
         lin = lin.copy() # we'll change lin, don't want to mess with input
-        outsidemsk = np.logical_or(lin < 0, lin >= self.nv())
+        outsidemsk = np.logical_or(lin < 0, lin >= self.nvoxels)
 
         n = np.shape(lin)[0]
         fs = self._ijkmultfac()
@@ -90,8 +90,7 @@ class VolGeom():
             ijk[:, i] = v[:]
             lin -= v * f
 
-
-        ijk[outsidemsk, :] = self.shape()[:3]
+        ijk[outsidemsk, :] = self.shape[:3]
 
         return ijk
 
@@ -129,13 +128,14 @@ class VolGeom():
 
         # add .5 so that positions are rounded instead of floored CHECKME
         ijk = np.array(ijkfloat + .5, dtype=int)
+
         #ijk=np.array(ijkfloat,dtype=int)
-        outsidemsk = np.logical_not(self.ijkinvol(ijk)) # invert means logical not
+        outsidemsk = np.logical_not(self.contains_ijk(ijk)) # invert means logical not
 
 
         # assign value of shape, which should give an out of bounds exception
         # if this value is actually used to index voxels in the volume
-        sh = self.shape()[:3]
+        sh = self.shape[:3]
 
         ijk[outsidemsk, :] = sh
         return ijk
@@ -159,7 +159,7 @@ class VolGeom():
         ijkfloat = np.array(ijk, dtype=float)
         xyz = self.apply_affine3(m, ijkfloat)
 
-        outsidemsk = np.invert(self.ijkinvol(ijk))
+        outsidemsk = np.invert(self.contains_ijk(ijk))
         xyz[outsidemsk, :] = np.NaN
         return xyz
 
@@ -220,33 +220,37 @@ class VolGeom():
 
         return np.dot(v, r) + t
 
-    def nt(self):
+    @property
+    def ntimepoints(self):
         '''
         Returns
         -------
         int
             Number of time points
         '''
-        return np.prod(self.shape()[3:])
-
-    def nv(self):
+        return np.prod(self.shape[3:])
+    @property
+    def nvoxels(self):
         '''
         Returns
         -------
         int
             Number of spatial points (i.e. number of voxels)
         '''
-        return np.prod(self.shape()[:3])
+        return np.prod(self.shape[:3])
 
+    @property
     def shape(self):
         '''
         Returns
         -------
         tuple: int
             Number of values in each dimension'''
+
+
         return self._shape
 
-    def ijkinvol(self, ijk):
+    def contains_ijk(self, ijk):
         '''
         Parameters
         ----------
@@ -258,13 +262,13 @@ class VolGeom():
         numpy.ndarray (boolean)
             P boolean values indicating which voxels are within the volume
         '''
-        shape = self.shape()
+        shape = self.shape
 
         return reduce(np.logical_and, [0 <= ijk[:, 0], ijk[:, 0] < shape[0],
                                       0 <= ijk[:, 1], ijk[:, 1] < shape[1],
                                       0 <= ijk[:, 2], ijk[:, 2] < shape[2]])
 
-    def lininvol(self, lin):
+    def contains_lin(self, lin):
         '''
         Parameters
         ----------
@@ -277,16 +281,17 @@ class VolGeom():
             P boolean values indicating which voxels are within the volume
         '''
 
-        nv = self.nv()
+        nv = self.nvoxels()
         return np.logical_and(0 <= lin, lin < nv)
 
     def empty_nifti_img(self, nt=1):
-        sh = self.shape()
+        sh = self.shape
         sh4d = (sh[0], sh[1], sh[2], nt)
 
         data = np.zeros(sh4d)
         img = ni.Nifti1Image(data, self.affine())
         return img
+
 
 
     def _testlindices(self):
@@ -325,24 +330,25 @@ class VolGeom():
     def _getmaskedimage(self, xyz):
         '''just for testing'''
         data = self._img.get_data();
-        datars = np.reshape(data, (-1, self.nt()))
+        datars = np.reshape(data, (-1, self.ntimepoints()))
 
         ijk = self.xyz2ijk(xyz)
 
         nrows = np.shape(ijk)[0]
         sh = self.shape()
 
-        msk = self.ijkinvol(ijk)
-
-        print np.shape(datars)
-        print np.shape(msk)
+        msk = self.contains_ijk(ijk)
 
         data[:] = 0
         data[ijk[msk]] = [1, 2, 3]
 
-
         img = ni.Nifti1Image(np.reshape(data, self.shape()), self._img.get_affine())
         return img
+
+def _readonly_view(x):
+    v = x.view()
+    v.flags.writeable = False
+    return v
 
 def from_nifti_file(fn):
     '''
@@ -392,9 +398,9 @@ if __name__ == '__main__':
     ijk = vg.xyz2ijk(xyz)
 
     nv = ijk.shape[0]
-    invol = vg.ijkinvol(ijk)
+    invol = vg.contains_ijk(ijk)
 
-    for kk in [43247]: #xrange(nv):
+    for kk in [43247]: #xrange(nvoxels):
         i, j, k = ijk[kk, 0], ijk[kk, 1], ijk[kk, 2]
         sh = data.shape
 
@@ -424,7 +430,7 @@ if __name__ == '__main__':
 
     vg = from_nifti_file(fn)
     linX = vg.ijk2lin(ijk)
-    print "lin %r %r (or %r) " % (linidx, linX, vg.nv() - linidx)
+    print "lin %r %r (or %r) " % (linidx, linX, vg.nvoxels() - linidx)
 
     linY = vg.xyz2lin(xyz)
     ijkY = vg.xyz2ijk(xyz)
@@ -445,7 +451,7 @@ if __name__ == '__main__':
 
     print "orig/expected %r (%r) / %r" % (myijk, ijk, tfa)
 
-    print vg.ijkinvol(ijk)
+    print vg.contains_ijk(ijk)
 
 
 
@@ -479,23 +485,23 @@ if __name__ == '__mainX__':
 
     ijk = v.xyz2ijk(s.v())
 
-    invol = v.ijkinvol(ijk)
+    invol = v.contains_ijk(ijk)
     print invol
     print invol.shape
 
     lin = v.ijk2lin(ijk)
-    invol2 = v.lininvol(lin)
+    invol2 = v.contains_lin(lin)
     print invol2.shape
 
 
     nrows = np.shape(ijk)[0]
     sh = v.shape()
 
-    msk = v.ijkinvol(ijk)
+    msk = v.contains_ijk(ijk)
     data = v._img.get_data()
     xyz = s.v()
     lin = v.xyz2lin(xyz)
-    rs = np.reshape(data, (-1, v.nt()))
+    rs = np.reshape(data, (-1, v.ntimepoints()))
     rs[:] = 0
     rs[lin[msk]] = 1
     data = np.reshape(rs, v.shape())
@@ -523,5 +529,5 @@ if __name__ == '__mainX__':
     print ijk
     print ijk2
     
-    msk=v.ijkinvol(v.xyz2ijk(s._v))
+    msk=v.contains_ijk(v.xyz2ijk(s._v))
     '''

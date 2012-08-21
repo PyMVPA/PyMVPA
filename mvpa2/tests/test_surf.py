@@ -22,6 +22,7 @@ from mvpa2.datasets import Dataset
 
 import mvpa2.misc.surfing.surf as surf
 import mvpa2.misc.surfing.surf_fs_asc as surf_fs_asc
+import mvpa2.misc.surfing.volgeom as volgeom
 
 
 
@@ -164,16 +165,118 @@ class SurfTests(unittest.TestCase):
             eps = 666 if side_facing == 'm' else .001
             assert_true((abs(m.center_of_mass) < eps).all())
 
+    def test_volgeom(self):
+        sz = (17, 71, 37, 73) # size of 4-D 'brain volume'
+        d = 2. # voxel size
+        xo, yo, zo = -6., -12., -20. # origin
+        mx = np.identity(4, np.float) * d # affine transformation matrix
+        mx[3, 3] = 1
+        mx[0, 3] = xo
+        mx[1, 3] = yo
+        mx[2, 3] = zo
+        vg = volgeom.VolGeom(sz, mx) # initialize volgeom
+
+        nv = sz[0] * sz[1] * sz[2] # number of voxels
+        nt = sz[3] # number of time points
+        assert_equal(vg.nvoxels, nv)
+        assert_equal(vg.ntimepoints, nt)
+
+        # a couple of hard-coded test cases
+        # last two are outside the volume
+        linidxs = [0, 1, sz[2], sz[1] * sz[2], nv - 1, -1 , nv]
+        subidxs = ([(0, 0, 0), (0, 0, 1), (0, 1, 0), (1, 0, 0),
+                    (sz[0] - 1, sz[1] - 1, sz[2] - 1)]
+                   + [(sz[0], sz[1], sz[2])] * 2)
+
+        xyzs = ([(xo, yo, zo), (xo, yo, zo + d), (xo, yo + d, zo),
+                 (xo + d, yo, zo),
+                 (xo + d * (sz[0] - 1), yo + d * (sz[1] - 1), zo + d * (sz[2] - 1))]
+                + [(np.nan, np.nan, np.nan)] * 2)
+
+        for i, linidx in enumerate(linidxs):
+            lin = np.asarray([linidx])
+            ijk = vg.lin2ijk(lin)
+
+
+            ijk_expected = np.reshape(np.asarray(subidxs[i]), (1, 3))
+            _assert_array_equal_eps(ijk, ijk_expected)
+
+            xyz = vg.lin2xyz(lin)
+
+            xyz_expected = np.reshape(np.asarray(xyzs[i]), (1, 3))
+            _assert_array_equal_eps(xyz, xyz_expected)
+
+
+        # check that some identities hold
+        ab, bc, ac = vg.lin2ijk, vg.ijk2xyz, vg.lin2xyz
+        ba, cb, ca = vg.ijk2lin, vg.xyz2ijk, vg.xyz2lin
+        identities = [lambda x:ab(ba(x)),
+                      lambda x:bc(cb(x)),
+                      lambda x:ac(ca(x)),
+                      lambda x:ba(ab(x)),
+                      lambda x:cb(bc(x)),
+                      lambda x:ca(ac(x)),
+                      lambda x:bc(ab(ca(x))),
+                      lambda x:ba(cb(ac(x)))]
+
+        # 0=lin, 1=ijk, 2=xyz
+        identities_input = [1, 2, 2, 0, 1, 0, 2, 0]
+        identities_input_eps = [0., 0., 0.] # how much difference we allow
+
+        # voxel indices to test
+        linrange = [0, 1, sz[2], sz[1] * sz[2]] + range(0, nv, nv / 100)
+
+        lin = np.reshape(np.asarray(linrange), (-1,))
+        ijk = vg.lin2ijk(lin)
+        xyz = vg.ijk2xyz(ijk)
+
+        for j, identity in enumerate(identities):
+            inp = identities_input[j]
+            if inp == 0:
+                x = lin
+            elif inp == 1:
+                x = ijk
+            elif inp == 2:
+                x = xyz
+
+            eps = identities_input_eps[inp]
+            _assert_array_equal_eps(x, identity(x), eps)
+
+        # ensure that we have no rounding issues
+        deltas = [-.51, -.49, 0., .49, .51]
+        should_raise = [True, False, False, False, True]
+
+        for delta, r in zip(deltas, should_raise):
+            xyz_d = xyz + delta * d
+            lin_d = vg.xyz2lin(xyz_d)
+
+            if r:
+                assert_raises(ValueError,
+                              lambda x, y:_assert_array_equal_eps(x, y),
+                              lin_d, lin)
+            else:
+                _assert_array_equal_eps(lin_d, lin)
+
+
+
+
+
+
+
 
 
 def _assert_array_equal_eps(x, y, eps=.0001):
     if x.shape != y.shape:
-        raise ValueError('not equal size')
+        raise ValueError('not equal size: %r != %r' % (x.shape, y.shape))
 
     xr = np.reshape(x, (-1,))
     yr = np.reshape(y, (-1,))
 
-    if ((xr - yr) > eps).any():
+    delta = np.abs(xr - yr)
+
+    m = -(delta <= eps)
+
+    if ((any(-np.isnan(xr[m])) or any(-np.isnan(yr[m])))):
         raise ValueError('arrays differ more than %r' % eps)
 
 
