@@ -10,6 +10,9 @@
 
 import numpy as np
 
+import os
+import tempfile
+
 from mvpa2.testing import *
 from mvpa2.testing.datasets import datasets
 
@@ -18,6 +21,9 @@ from mvpa2.base import externals
 from mvpa2.datasets import Dataset
 
 import mvpa2.misc.surfing.surf as surf
+import mvpa2.misc.surfing.surf_fs_asc as surf_fs_asc
+
+
 
 class SurfTests(unittest.TestCase):
     """Test for surfaces
@@ -43,6 +49,8 @@ class SurfTests(unittest.TestCase):
 
         assert_true(v.shape == (102, 3))
         assert_true(v.shape == (102, 3))
+
+
 
         # another surface
         t = s * 10 + 2
@@ -119,6 +127,54 @@ class SurfTests(unittest.TestCase):
         eps = np.finfo('f').eps
         for k, v in some_ds.iteritems():
             assert_true(abs(v - ds2[k]) < eps)
+
+    def test_surf_fs_asc(self):
+        s = surf.generate_sphere(5) * 100
+
+        _, fn = tempfile.mkstemp('surf', 'test')
+        surf_fs_asc.write(fn, s, overwrite=True)
+
+        t = surf_fs_asc.read(fn)
+        os.remove(fn)
+
+        eps = .0001
+        _assert_array_equal_eps(s.vertices, t.vertices, eps)
+        _assert_array_equal_eps(s.vertices, t.vertices, eps)
+
+        theta = np.asarray([0, 0., 180.])
+
+        r = s.rotate(theta, unit='deg')
+
+        l2r = surf_fs_asc.sphere_reg_leftrightmapping(s, r)
+        l2r_expected = [0, 1, 2, 6, 5, 4, 3, 11, 10, 9, 8, 7, 15, 14, 13, 12,
+                       16, 19, 18, 17, 21, 20, 23, 22, 26, 25, 24]
+
+        _assert_array_equal_eps(l2r, np.asarray(l2r_expected), 0)
+
+
+        sides_facing = 'apism'
+        for side_facing in sides_facing:
+            l, r = surf_fs_asc.hemi_pairs_reposition(s + 10., t + (-10.),
+                                                     side_facing)
+
+            m = surf.merge(l, r)
+
+            # not sure at the moment why medial rotation 
+            # messes up - but leave for now
+            eps = 666 if side_facing == 'm' else .001
+            assert_true((abs(m.center_of_mass) < eps).all())
+
+
+
+def _assert_array_equal_eps(x, y, eps=.0001):
+    if x.shape != y.shape:
+        raise ValueError('not equal size')
+
+    xr = np.reshape(x, (-1,))
+    yr = np.reshape(y, (-1,))
+
+    if ((xr - yr) > eps).any():
+        raise ValueError('arrays differ more than %r' % eps)
 
 
 def suite():

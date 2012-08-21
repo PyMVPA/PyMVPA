@@ -409,6 +409,7 @@ class Surface(object):
 
         theta = map(lambda x:x * fac, theta)
 
+
         cx, cy, cz = np.cos(theta)
         sx, sy, sz = np.sin(theta)
 
@@ -431,6 +432,7 @@ class Surface(object):
 
         return Surface(v=v_rotate, f=self._f)
 
+    @property
     def center_of_mass(self):
         '''Computes the center of mass
         
