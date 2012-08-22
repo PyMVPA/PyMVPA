@@ -308,7 +308,7 @@ class VoxelSelector():
 
         return voxel_attributes
 
-def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
+def voxel_selection(vol_surf, radius, srcs=None, surf_srcs=None,
                     start=0., stop=1., steps=10,
                     distancemetric='dijkstra', intermediateat=.5, etastep=1):
         """
@@ -321,11 +321,11 @@ def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
         radius: int or float
             Size of searchlight. If an integer, then it indicates the number of
             voxels. If a float, then it indicates the radius of the disc
+        srcs: list of int or numpy array
+            node indices that serve as searchlight center             
         surf_srcs: surf.Surface
             Surface used to compute distance between nodes. If omitted, it is 
             the average of the gray and white surfaces 
-        srcs: list of int or numpy array
-            node indices that serve as searchlight center             
         start: float (default: 0)
                 Relative start position of line in gray matter, 0.=white 
                 surface, 1.=pial surface
@@ -396,7 +396,7 @@ def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
                   " to intersecting voxels.")
 
         # build voxel selector
-        voxel_selector = VoxelSelector(radius, n2v, surf_intermediate,
+        voxel_selector = VoxelSelector(radius, surf_intermediate, n2v,
                                        distancemetric)
 
         if __debug__:
@@ -441,7 +441,7 @@ def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
 
         return node2volume_attributes
 
-def run_voxelselection(epifn, whitefn, pialfn, radius, srcfn=None, srcs=None,
+def run_voxelselection(epifn, whitefn, pialfn, radius, srcs=None, srcfn=None,
                        start=0, stop=1, steps=10, distancemetric='dijkstra',
                        intermediateat=.5, etastep=1):
     '''Wrapper function that is supposed to make voxel selection
@@ -455,16 +455,16 @@ def run_voxelselection(epifn, whitefn, pialfn, radius, srcfn=None, srcs=None,
     whitefn: str
         Filename of white matter surface. Only .asc files at the moment
     pialfn: str
-        Filename of pial surface. Only .asc files at the moment
-    srcfn: str
-        Filename of surface with searchlight centers, possibly with fewer nodes
-        than pialfn and whitefn.
+        Filename of pial surface. Only .asc files at the moment.
     radius: int or float
         Searchlight radius with number of voxels (if int) or maximum distance
         from searchlight center in metric units (if float)
     srcs: list-like or None
         Node indices of searchlight centers. If None, then all nodes are used
         as a center
+    srcfn: str
+        Filename of surface with searchlight centers, possibly with fewer nodes
+        than pialfn and whitefn.        
     start: float (default: 0)
             Relative start position of line in gray matter, 0.=white surface, 1.=pial surface
             CheckMe: it might be the other way around
