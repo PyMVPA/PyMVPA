@@ -23,6 +23,7 @@ from mvpa2.datasets import Dataset
 import mvpa2.misc.surfing.surf as surf
 import mvpa2.misc.surfing.surf_fs_asc as surf_fs_asc
 import mvpa2.misc.surfing.volgeom as volgeom
+import mvpa2.misc.surfing.volsurf as volsurf
 
 
 
@@ -242,6 +243,14 @@ class SurfTests(unittest.TestCase):
             eps = identities_input_eps[inp]
             _assert_array_equal_eps(x, identity(x), eps)
 
+        # check that masking works
+        assert_true(vg.contains_lin(lin).all())
+        assert_false(vg.contains_lin(-lin - 1).any())
+
+        assert_true(vg.contains_ijk(ijk).all())
+        assert_false(vg.contains_ijk(-ijk - 1).any())
+
+
         # ensure that we have no rounding issues
         deltas = [-.51, -.49, 0., .49, .51]
         should_raise = [True, False, False, False, True]
@@ -276,6 +285,56 @@ class SurfTests(unittest.TestCase):
         assert_equal(vg.shape[:3], vg3.shape[:3], 0)
 
         os.remove(fn)
+
+    def test_volsurf(self):
+        vg = volgeom.VolGeom((50, 50, 50), np.identity(4))
+
+        density = 40
+        outer = surf.generate_sphere(density) * 25. + 25
+        inner = surf.generate_sphere(density) * 20. + 25
+
+
+        vs = volsurf.VolSurf(vg, outer, inner)
+
+        # increasingly select more voxels in 'grey matter'
+        steps_start_stop = [(1, .5, .5), (5, .5, .5), (3, .3, .7),
+                          (5, .3, .7), (5, 0., 1.), (10, 0., 1.)]
+
+        mp = None
+        expected_keys = set(range(density ** 2 + 2))
+        selection_counter = []
+        voxel_counter = []
+        for sp, sa, so in steps_start_stop:
+            n2v = vs.node2voxels(sp, sa, so)
+
+            if mp is None:
+                mp = n2v
+
+
+            assert_equal(expected_keys, set(n2v.keys()))
+
+            counter = 0
+            for k, v2pos in n2v.iteritems():
+                for v, pos in v2pos.iteritems():
+                    # should be close to grey matter
+                    assert_true(-1. <= pos and pos <= 2.)
+                    counter += 1
+
+            selection_counter.append(counter)
+            img = vs.voxel_count_image(n2v)
+
+            voxel_counter.append(np.sum(img.get_data() > 0))
+
+        # hard coded number of expected voxels
+        selection_expected = [1602, 1602, 4618, 5298, 7867, 10801]
+        assert_equal(selection_counter, selection_expected)
+
+        voxel_expected = [1498, 1498, 4322, 4986, 7391, 10141]
+        assert_equal(voxel_counter, voxel_expected)
+
+
+
+
 
 
 
