@@ -49,7 +49,8 @@ class BaseSearchlight(Measure):
     """Indicate that this measure is always trained."""
 
 
-    def __init__(self, queryengine, roi_ids=None, nproc=None, **kwargs):
+    def __init__(self, queryengine, roi_ids=None, nproc=None,
+                 **kwargs):
         """
         Parameters
         ----------
@@ -130,10 +131,7 @@ class BaseSearchlight(Measure):
             roi_ids = np.arange(dataset.nfeatures)
 
         # pass to subclass
-        results, roi_sizes = self._sl_call(dataset, roi_ids, nproc)
-
-        if not roi_sizes is None:
-            self.ca.roi_sizes = roi_sizes
+        results = self._sl_call(dataset, roi_ids, nproc)
 
         if 'mapper' in dataset.a:
             # since we know the space we can stick the original mapper into the
@@ -173,9 +171,47 @@ class Searchlight(BaseSearchlight):
     interest, which is ran at each spatial location.
     """
 
+    @staticmethod
+    def _concat_results(sl=None, dataset=None, roi_ids=None, results=None):
+        """The simplest implementation for collecting the results --
+        just put them into a list
+
+        This this implementation simply collects them into a list and
+        uses only sl. for assigning conditional attributes.  But
+        custom implementation might make use of more/less of them.
+        Implemented as @staticmethod just to emphasize that in
+        principle it is independent of the actual searchlight instance
+        """
+        # collect results
+        results = sum(results, [])
+
+        if __debug__ and 'SLC' in debug.active:
+            debug('SLC', '')            # just newline
+            resshape = len(results) and np.asanyarray(results[0]).shape or 'N/A'
+            debug('SLC', ' hstacking %d results of shape %s'
+                  % (len(results), resshape))
+
+        # but be careful: this call also serves as conversion from parallel maps
+        # to regular lists!
+        # this uses the Dataset-hstack
+        result_ds = hstack(results)
+
+        if __debug__:
+            debug('SLC', " hstacked shape %s" % (result_ds.shape,))
+
+        if sl.ca.is_enabled('roi_feature_ids'):
+            sl.ca.roi_feature_ids = [r.a.roi_feature_ids for r in results]
+        if sl.ca.is_enabled('roi_sizes'):
+            sl.ca.roi_sizes = [r.a.roi_sizes for r in results]
+
+        return result_ds
+
+
     def __init__(self, datameasure, queryengine, add_center_fa=False,
                  results_backend='native',
+                 results_fx=None,
                  tmp_prefix='tmpsl',
+                 nblocks=None,
                  **kwargs):
         """
         Parameters
@@ -194,10 +230,19 @@ class Searchlight(BaseSearchlight):
           in case of nproc > 1. 'native' is pickling/unpickling of results by
           pprocess, while 'hdf5' would use h5save/h5load functionality.
           'hdf5' might be more time and memory efficient in some cases.
+        results_fx : callable, optional
+          Function to process/combine results of each searchlight
+          block run.  By default it would simply append them all into
+          the list.  It receives as keyword arguments sl, dataset,
+          roi_ids, and results (iterable of lists).  It is the one to take
+          care of assigning roi_* ca's
         tmp_prefix : str, optional
           If specified -- serves as a prefix for temporary files storage
           if results_backend == 'hdf5'.  Thus can specify the directory to use
           (trailing file path separator is not added automagically).
+        nblocks : None or int
+          Into how many blocks to split the computation (could be larger than
+          nproc).  If None -- nproc is used.
         **kwargs
           In addition this class supports all keyword arguments of its
           base-class :class:`~mvpa2.measures.searchlight.BaseSearchlight`.
@@ -208,7 +253,10 @@ class Searchlight(BaseSearchlight):
         if self.results_backend == 'hdf5':
             # Assure having hdf5
             externals.exists('h5py', raise_=True)
+        self.results_fx = Searchlight._concat_results \
+                          if results_fx is None else results_fx
         self.tmp_prefix = tmp_prefix
+        self.nblocks = nblocks
         if isinstance(add_center_fa, str):
             self.__add_center_fa = add_center_fa
         elif add_center_fa:
@@ -222,6 +270,7 @@ class Searchlight(BaseSearchlight):
             + _repr_attrs(self, ['datameasure'])
             + _repr_attrs(self, ['add_center_fa'], default=False)
             + _repr_attrs(self, ['results_backend'], default='native')
+            + _repr_attrs(self, ['results_fx', 'nblocks'])
             )
 
 
@@ -233,7 +282,9 @@ class Searchlight(BaseSearchlight):
         if nproc is not None and nproc > 1:
             # split all target ROIs centers into `nproc` equally sized blocks
             nproc_needed = min(len(roi_ids), nproc)
-            roi_blocks = np.array_split(roi_ids, nproc_needed)
+            nblocks = nproc_needed \
+                      if self.nblocks is None else self.nblocks
+            roi_blocks = np.array_split(roi_ids, nblocks)
 
             # the next block sets up the infrastructure for parallel computing
             # this can easily be changed into a ParallelPython loop, if we
@@ -241,8 +292,8 @@ class Searchlight(BaseSearchlight):
             import pprocess
             p_results = pprocess.Map(limit=nproc_needed)
             if __debug__:
-                debug('SLC', "Starting off child processes for nproc=%i"
-                      % nproc_needed)
+                debug('SLC', "Starting off %s child processes for nblocks=%i"
+                      % (nproc_needed, nblocks))
             compute = p_results.manage(
                         pprocess.MakeParallel(self._proc_block))
             for iblock, block in enumerate(roi_blocks):
@@ -250,41 +301,25 @@ class Searchlight(BaseSearchlight):
                 # independent one per process?
                 compute(block, dataset, copy.copy(self.__datameasure),
                         iblock=iblock)
-
-            # collect results
-            results = []
-            if self.ca.is_enabled('roi_sizes'):
-                roi_sizes = []
-            else:
-                roi_sizes = None
-
-            for r, rsizes in p_results:
-                results += self.__handle_results(r)
-                if not roi_sizes is None:
-                    roi_sizes += rsizes
         else:
-            # otherwise collect the results in a list
-            results, roi_sizes = \
-                    self._proc_block(roi_ids, dataset, self.__datameasure)
-            results = self.__handle_results(results)
+            # otherwise collect the results in an 1-item list
+            p_results = [
+                    self._proc_block(roi_ids, dataset, self.__datameasure)]
 
-        if __debug__ and 'SLC' in debug.active:
-            debug('SLC', '')            # just newline
-            resshape = len(results) and np.asanyarray(results[0]).shape or 'N/A'
-            debug('SLC', ' hstacking %d results of shape %s'
-                  % (len(results), resshape))
+        # Finally collect and possibly process results
+        # p_results here is either a generator from pprocess.Map or a list.
+        # In case of a generator it allows to process results as they become
+        # available
+        result_ds = self.results_fx(sl=self,
+                                    dataset=dataset,
+                                    roi_ids=roi_ids,
+                                    results=self.__handle_all_results(p_results))
 
-        # but be careful: this call also serves as conversion from parallel maps
-        # to regular lists!
-        # this uses the Dataset-hstack
-        result_ds = hstack(results)
-        if self.ca.is_enabled('roi_feature_ids'):
-            self.ca.roi_feature_ids = [r.a.roi_feature_ids for r in results]
+        # Assure having a dataset (for paranoid ones)
+        if not is_datasetlike(result_ds):
+            result_ds = Dataset(np.atleast_1d(result_ds))
 
-        if __debug__:
-            debug('SLC', " hstacked shape %s" % (result_ds.shape,))
-
-        return result_ds, roi_sizes
+        return result_ds
 
 
     def _proc_block(self, block, ds, measure, iblock='main'):
@@ -302,11 +337,10 @@ class Searchlight(BaseSearchlight):
             debug_slc_ = 'SLC_' in debug.active
             debug('SLC',
                   "Starting computing block for %i elements" % len(block))
-        if self.ca.is_enabled('roi_sizes'):
-            roi_sizes = []
-        else:
-            roi_sizes = None
         results = []
+        store_roi_feature_ids = self.ca.is_enabled('roi_feature_ids')
+        store_roi_sizes = self.ca.is_enabled('roi_sizes')
+        assure_dataset = store_roi_feature_ids or store_roi_sizes
         # put rois around all features in the dataset and compute the
         # measure within them
         for i, f in enumerate(block):
@@ -328,17 +362,16 @@ class Searchlight(BaseSearchlight):
 
             # compute the datameasure and store in results
             res = measure(roi)
-            if self.ca.is_enabled('roi_feature_ids'):
-                if not is_datasetlike(res):
-                    res = Dataset(np.atleast_1d(res))
+
+            if assure_dataset and not is_datasetlike(res):
+                res = Dataset(np.atleast_1d(res))
+            if store_roi_feature_ids:
                 # add roi feature ids to intermediate result dataset for later
                 # aggregation
                 res.a['roi_feature_ids'] = roi_fids
+            if store_roi_sizes:
+                res.a['roi_sizes'] = roi.nfeatures
             results.append(res)
-
-            # store the size of the roi dataset
-            if not roi_sizes is None:
-                roi_sizes.append(roi.nfeatures)
 
             if __debug__:
                 debug('SLC', "Doing %i ROIs: %i (%i features) [%i%%]" \
@@ -361,7 +394,7 @@ class Searchlight(BaseSearchlight):
             results = results_file
         else:
             raise RuntimeError("Must not reach this point")
-        return results, roi_sizes
+        return results
 
 
     def __set_datameasure(self, datameasure):
@@ -383,6 +416,14 @@ class Searchlight(BaseSearchlight):
             return results_data
         else:
             return results
+
+    def __handle_all_results(self, results):
+        """Helper generator to decorate passing the results out to
+        results_fx
+        """
+        for r in results:
+            yield self.__handle_results(r)
+
 
     datameasure = property(fget=lambda self: self.__datameasure,
                            fset=__set_datameasure)
