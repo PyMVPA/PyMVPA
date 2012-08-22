@@ -24,7 +24,8 @@ import mvpa2.misc.surfing.surf as surf
 import mvpa2.misc.surfing.surf_fs_asc as surf_fs_asc
 import mvpa2.misc.surfing.volgeom as volgeom
 import mvpa2.misc.surfing.volsurf as volsurf
-
+import mvpa2.misc.surfing.sparse_attributes as sparse_attributes
+import mvpa2.misc.surfing.surf_voxel_selection as surf_voxel_selection
 
 
 class SurfTests(unittest.TestCase):
@@ -333,7 +334,138 @@ class SurfTests(unittest.TestCase):
         assert_equal(voxel_counter, voxel_expected)
 
 
+    def test_sparse_attributes(self):
 
+        payload = {1:([1, 2], [.2, .3]),
+                   2:([3, 4, 5], [.4, .7, .8]),
+                   6:([3, 4, 8, 9], [.1, .3, .2, .2])}
+
+        payload_labels = ['lin_vox_idxs', 'center_distances']
+
+        sa = sparse_attributes.SparseAttributes(payload_labels)
+        for k, v in payload.iteritems():
+            d = dict()
+            for i, label in enumerate(payload_labels):
+                d[label] = v[i]
+            sa.add(k, d)
+
+        sa.a['some general attribute'] = 'voxel selection example'
+
+        assert_equal(set(payload_labels), set(sa.sa_labels()))
+
+        for i, label in enumerate(payload_labels):
+            it = sa.get_attr_mapping(label)
+            for k, v in it.iteritems():
+                assert_equal(v, it[k])
+                assert_equal(v, payload[k][i])
+                assert_equal(sa.get(k, label), v)
+
+        # test I/O
+        _, fn = tempfile.mkstemp('.pickle', 'test')
+
+        sparse_attributes.to_file(fn, sa)
+        sb = sparse_attributes.from_file(fn)
+        os.remove(fn)
+
+        # check stuff in file is the same
+        for label in payload_labels:
+            ma = sa.get_attr_mapping(label)
+            mb = sb.get_attr_mapping(label)
+
+            for k in ma:
+                assert_equal(ma[k], mb[k])
+
+    def test_surf_voxel_selection(self):
+        return
+        vg = volgeom.VolGeom((50, 50, 50), np.identity(4))
+
+        density = 40
+        outer = surf.generate_sphere(density) * 25. + 25
+        inner = surf.generate_sphere(density) * 20. + 25
+
+        vs = volsurf.VolSurf(vg, outer, inner)
+
+        nv = outer.nvertices
+
+        srcs = range(nv)
+
+
+#        voxel_selection(vs, surf_srcs, radius, srcs=src, start=0., stop=1., steps=10,
+ #                   distancemetric='dijkstra', intermediateat=.5, etastep=1):
+
+
+
+        sel = surf_voxel_selection = run_voxelselection(epifn, whitefn, pialfn, intermediatefn, radius, srcs)
+
+        vg = attr.a['volgeom']
+
+        nv = vg.nv()
+        datalin = np.zeros((nv, 1))
+
+        mp = attr.get_attr_mapping('lin_vox_idxs')
+        for k, idxs in mp.iteritems():
+            if idxs is not None:
+                datalin[idxs] += 1
+
+        datars = np.reshape(datalin, vg.shape())
+
+        img = ni.Nifti1Image(datars, vg.affine())
+
+        fnout = d + "__test_n2v4.nii"
+        img.to_filename(fnout)
+
+        attrfn = d + "voxsel.pickle"
+        sparse_attributes.to_file(attrfn, attr)
+
+'''
+if __name__ == "__main__":
+    #from mvpa2.tutorial_suite import *
+
+    if __debug__:
+        debug.active += ["SVS"]
+
+
+    d = '%s/qref/' % utils._get_fingerdata_dir()
+    epifn = d + "../glm/rall_vol00.nii"
+
+    ld = 36 # mapicosahedron linear divisions
+    smallld = 9
+    hemi = 'l'
+    nodecount = 10 * smallld ** 2 + 2
+
+    pialfn = d + "ico%d_%sh.pial_al.asc" % (ld, hemi)
+    whitefn = d + "ico%d_%sh.smoothwm_al.asc" % (ld, hemi)
+    intermediatefn = d + "ico%d_%sh.intermediate_al.asc" % (smallld, hemi)
+
+    fnoutprefix = d + "_voxsel1_ico%d_%sh_" % (ld, hemi)
+    radius = 100 # 100 voxels per searchlight
+    srcs = range(nodecount) # use all nodes as a center
+
+    attr = run_voxelselection(epifn, whitefn, pialfn, intermediatefn, radius, srcs)
+
+    vg = attr.a['volgeom']
+
+    nv = vg.nv()
+    datalin = np.zeros((nv, 1))
+
+    mp = attr.get_attr_mapping('lin_vox_idxs')
+    for k, idxs in mp.iteritems():
+        if idxs is not None:
+            datalin[idxs] += 1
+
+    datars = np.reshape(datalin, vg.shape())
+
+    img = ni.Nifti1Image(datars, vg.affine())
+
+    fnout = d + "__test_n2v4.nii"
+    img.to_filename(fnout)
+
+    attrfn = d + "voxsel.pickle"
+    sparse_attributes.to_file(attrfn, attr)
+
+    print fnout
+    print attrfn
+    '''
 
 
 
@@ -352,6 +484,7 @@ def _assert_array_equal_eps(x, y, eps=.0001):
 
     m = -(delta <= eps)
 
+    # deal with NaNs
     if ((any(-np.isnan(xr[m])) or any(-np.isnan(yr[m])))):
         raise ValueError('arrays differ more than %r' % eps)
 

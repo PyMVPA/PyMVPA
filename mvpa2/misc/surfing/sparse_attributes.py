@@ -154,7 +154,7 @@ def voxel2nearest_node(sp_attrs, sort_by_label=[
     in a typical use case, the first input argument is the result
     from running voxel_selection
     
-    the result is a mapping for which 
+    added for swaroop
     
     TODO better documentation
     '''
@@ -395,6 +395,7 @@ class SparseNeighborhood():
 
 def searchlight(datameasure, neighborhood, center_ids=None,
                 space='voxel_indices', **kwargs):
+
     """Creates a `Searchlight` to run a scalar `Measure` on
     all possible spheres of a certain size within a dataset.
 
@@ -452,64 +453,6 @@ def from_file(fn):
     with open(fn) as f:
         r = pickle.load(f)
     return r
-
-
-def _test_roi():
-    sa = SparseAttributes(["lin_vox_idxs", "center_distances"])
-    sa.add(1, dict(lin_vox_idxs=[1, 2], center_distances=[.2, .3]))
-    sa.add(2, dict(lin_vox_idxs=[3, 4, 5], center_distances=[.2, .3, .5]))
-    sa.add(6, dict(lin_vox_idxs=[3, 4, 8, 9], center_distances=[.1, .3, .2, .2]))
-    sa.a['some general attribute'] = 'voxel selection example'
-
-    print sa
-
-    it = sa.get_attr_mapping("lin_vox_idxs")
-    for k, v in it.iteritems():
-        print "%r -> %r==%r" % (k, v, it[k])
-
-    fn = "/tmp/foo.pickle"
-    to_file(fn, sa)
-    sb = from_file(fn)
-
-    print sb
-
-    it2 = sb.get_attr_mapping("center_distances")
-    for k, v in it2.iteritems():
-        print "%r -> distances=%r, idxs==%r)" % (k, v, it[k])
-
-if __name__ == "__main__":
-    #_test_roi()
-
-    d = '/Users/nick/Downloads/fingerdata-0.3/pyref/'
-    fn = d + 'voxsel_ico32_lh.pickle'
-
-    attr = from_file(fn)
-    vg = attr.get_volgeom()
-
-    a = attr.minimal_mask_mapping()
-
-    if False:
-        voxel_ids_label = 'lin_vox_idxs'
-        linmask = attr.get_linear_mask(voxel_ids_label)
-
-        rng = np.nonzero(linmask)
-        big2small = dict()
-        small2big = dict()
-        for s, b in enumerate(rng[0]):
-            small2big[s] = b
-            big2small[b] = s
-
-        bigmap = attr.get_attr_mapping(voxel_ids_label)
-        bigkeys = attr.keys()
-
-        smallmap = dict()
-        for bigk in bigkeys:
-            print bigk
-
-            smallk = big2small[bigk]
-            bigvs = bigmap[bigk]
-            smallv = [big2small[v] for v in bigvs]
-            smallmap[smallk] = smallv
 
 
 
