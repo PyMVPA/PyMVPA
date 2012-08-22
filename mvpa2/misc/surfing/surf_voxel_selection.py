@@ -43,17 +43,19 @@ class VoxelSelector():
     Parameters
     ----------
     radius: int or float
-        Searchlight radius. If the type is int, then this set the number of voxels
-        in each searchlight (with variable radii (in metric distance) across searchlights).
-        If the type is float, then this sets the radius in metric distance (with variable number of
-        voxels across searchlights). In the latter case, the distance unit is usually in milimeters
-        (which is the unit used for Freesurfer surfaces)
+        Searchlight radius. If the type is int, then this set the number of 
+        voxels in each searchlight (with variable size of the disc across 
+        searchlights). If the type is float, then this sets the disc radius in 
+        metric distance (with variable number of voxels across searchlights). 
+        In the latter case, the distance unit is usually in milimeters
+        (which is the unit used for Freesurfer surfaces).
     surf: surf.Surface
-        A surface to be used for distance measurement. Usually this is the intermediate distance
-        constructed by taking the node-wise average of the pial and white surface
+        A surface to be used for distance measurement. Usually this is the 
+        intermediate distance constructed by taking the node-wise average of 
+        the pial and white surface.
     n2v: dict
-        Mapping from center nodes to surrounding voxels (and their distances). Usually this
-        is the output from volsurf.node2voxels(...)
+        Mapping from center nodes to surrounding voxels (and their distances). 
+        Usually this is the output from volsurf.node2voxels.
     distancemetric: str
         Distance measure used to define distances between nodes on the surface.
         Currently supports 'dijkstra' and 'euclidian'
@@ -306,26 +308,44 @@ class VoxelSelector():
 
         return voxel_attributes
 
-def voxel_selection(vol_surf, surf_srcs, radius, srcs=None, start=0., stop=1., steps=10,
+def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
+                    start=0., stop=1., steps=10,
                     distancemetric='dijkstra', intermediateat=.5, etastep=1):
         """
-        Voxel selection for multiple center nodes
+        Voxel selection for multiple center nodes on the surface
 
         Parameters
         ----------
-        srcs: array-like, optional
-            Indices of center nodes to be used as searchlight center.
-            If None, then all center nodes are used as a center.
-        etastep: int or None
-            After how many searchlights the the estimated remaining time
-            are printed.
-            If None, then no messages are printed.
+        vol_surf: volsurf.VolSurf
+            Contains gray and white matter surface, and volume geometry
+        radius: int or float
+            Size of searchlight. If an integer, then it indicates the number of
+            voxels. If a float, then it indicates the radius of the disc
+        surf_srcs: surf.Surface
+            Surface used to compute distance between nodes. If omitted, it is 
+            the average of the gray and white surfaces 
+        srcs: list of int or numpy array
+            node indices that serve as searchlight center             
+        start: float (default: 0)
+                Relative start position of line in gray matter, 0.=white 
+                surface, 1.=pial surface
+                CheckMe: it might be the other way around
+        stop: float (default: 1)
+            Relative stop position of line (as in see start)
+        distancemetric: str
+            Distance metric between nodes. 'euclidian' or 'dijksta'
+        intermediateat: float (default: .5)
+            Relative positiion of intermediate surface that is used to measure distances.
+            By default this is the average of the pial and white surface
+        etastep: int (default: 1)
+            After how many searchlights an estimate should be printed of the remaining
+            time until completion of all searchlights
 
         Returns
         -------
-        n2vs: sparse_volmasks.SparseVolMask
-            node to voxel properties mapping, as represented in a set of
-            sparse volume masks.
+        sel: sparse_volmasks.SparseVolMask
+            Voxel selection results, that associates, which each node, the indices
+            of the surrounding voxels.
         """
 
 
@@ -334,28 +354,35 @@ def voxel_selection(vol_surf, surf_srcs, radius, srcs=None, start=0., stop=1., s
         surf_white = vol_surf._white
 
         # construc the intermediate surface, which is used to measure distances
-        surf_intermediate = surf_pial * intermediateat + surf_white * (1 - intermediateat)
+        surf_intermediate = (surf_pial * intermediateat +
+                             surf_white * (1 - intermediateat))
+
+        if surf_srcs is None:
+            surf_srcs = surf_intermediate
 
         if __debug__:
-            debug('SVS', "Generated high-res intermediate surface: %d nodes, %d faces" %
-                  (surf_intermediate.nv(), surf_intermediate.nf()))
+            debug('SVS', "Generated high-res intermediate surface: "
+                  "%d nodes, %d faces" %
+                  (surf_intermediate.nvertices, surf_intermediate.nfaces))
 
         if __debug__:
             debug('SVS', "Looking for mapping from source to high-res surface:"
                   " %d nodes, %d faces" %
-                  (surf_srcs.nv(), surf_srcs.nf()))
+                  (surf_srcs.nvertices, surf_srcs.nfaces))
 
         # find a mapping from nondes in surf_srcs to those in intermediate surface
         src2intermediate = surf_srcs.map_to_high_resolution_surf(surf_intermediate)
 
         # if no sources are given, then visit all ndoes
         if srcs is None:
-            srcs = np.arange(surf_srcs.nv())
+            srcs = np.arange(surf_srcs.nvertices)
 
         n = len(srcs)
 
         if __debug__:
-            debug('SVS', "Performing surface-based voxel selection for %d centers." % n)
+            debug('SVS',
+                  "Performing surface-based voxel selection"
+                  " for %d centers." % n)
 
 
         # visit in random order, for for better ETA estimate
@@ -365,10 +392,12 @@ def voxel_selection(vol_surf, surf_srcs, radius, srcs=None, start=0., stop=1., s
         n2v = vol_surf.node2voxels()
 
         if __debug__:
-            debug('SVS', "Generated mapping from nodes to intersecting voxels.")
+            debug('SVS', "Generated mapping from nodes"
+                  " to intersecting voxels.")
 
         # build voxel selector
-        voxel_selector = VoxelSelector(radius, surf_intermediate, n2v, distancemetric)
+        voxel_selector = VoxelSelector(radius, n2v, surf_intermediate,
+                                       distancemetric)
 
         if __debug__:
             debug('SVS', "Instantiated voxel selector (radius %r)" % radius)
@@ -392,8 +421,8 @@ def voxel_selection(vol_surf, surf_srcs, radius, srcs=None, start=0., stop=1., s
             # find voxel attribues for this node
             attrs = voxel_selector.disc_voxel_attributes(intermediate)
 
-            # first time that attributes are set, get the labels return from the voxel_selector
-            # to initiate the attribtues instance
+            # first time that attributes are set, get the labels return from
+            # the voxel_selector to initiate the attributes instance
             if attrs:
                 if  node2volume_attributes is None:
                     sa_labels = attrs.keys()
@@ -404,16 +433,17 @@ def voxel_selection(vol_surf, surf_srcs, radius, srcs=None, start=0., stop=1., s
 
             if etastep and (i % etastep == 0 or i == n - 1):
                 if __debug__:
-                    msg = utils.eta(tstart, float(i + 1) / n, '%d/%d (node #%d->#%d)' % (i + 1, n, src, intermediate), show=False)
+                    msg = utils.eta(tstart, float(i + 1) / n,
+                                    '%d/%d (node #%d->#%d)' %
+                                    (i + 1, n, src, intermediate), show=False)
                     if __debug__:
                         debug('SVS', msg)
 
         return node2volume_attributes
 
-
-
-
-def run_voxelselection(epifn, whitefn, pialfn, srcfn, radius, srcs=None, start=0, stop=1, steps=10, distancemetric='dijkstra', intermediateat=.5, etastep=1):
+def run_voxelselection(epifn, whitefn, pialfn, radius, srcfn=None, srcs=None,
+                       start=0, stop=1, steps=10, distancemetric='dijkstra',
+                       intermediateat=.5, etastep=1):
     '''Wrapper function that is supposed to make voxel selection
     on the surface easy.
 
@@ -466,14 +496,18 @@ def run_voxelselection(epifn, whitefn, pialfn, srcfn, radius, srcs=None, start=0
     # read surfaces
     whitesurf = surf_fs_asc.read(whitefn)
     pialsurf = surf_fs_asc.read(pialfn)
-    srcsurf = surf_fs_asc.read(srcfn)
 
+    if srcfn is None:
+        srcsurf = whitesurf * .5 + pialsurf * .5
+    else:
+        srcsurf = surf_fs_asc.read(srcfn)
 
     # make a volume surface instance
     vs = volsurf.VolSurf(vg, whitesurf, pialsurf)
 
     # run voxel selection
-    sel = voxel_selection(vs, srcsurf, radius, srcs, start, stop, steps, distancemetric, intermediateat, etastep)
+    sel = voxel_selection(vs, srcsurf, radius, srcs, start, stop, steps,
+                          distancemetric, intermediateat, etastep)
 
     return sel
 
@@ -497,7 +531,8 @@ class _RadiusOptimizer():
     The present implementation is very stupid and just increases the radius every time
     by a factor of 1.5.
 
-
+    NNO: as of August 2012 it seems that voxel selection is actually quite fast,
+    so maybe this function is good as is
     '''
     def __init__(self, initradius):
         '''new instance, with certain initial radius'''
@@ -524,51 +559,3 @@ class _RadiusOptimizer():
         return 'radius is %f, %d steps' % (self._curradius, self._count)
 
 
-
-if __name__ == "__main__":
-    #from mvpa2.tutorial_suite import *
-
-    if __debug__:
-        debug.active += ["SVS"]
-
-
-    d = '%s/qref/' % utils._get_fingerdata_dir()
-    epifn = d + "../glm/rall_vol00.nii"
-
-    ld = 36 # mapicosahedron linear divisions
-    smallld = 9
-    hemi = 'l'
-    nodecount = 10 * smallld ** 2 + 2
-
-    pialfn = d + "ico%d_%sh.pial_al.asc" % (ld, hemi)
-    whitefn = d + "ico%d_%sh.smoothwm_al.asc" % (ld, hemi)
-    intermediatefn = d + "ico%d_%sh.intermediate_al.asc" % (smallld, hemi)
-
-    fnoutprefix = d + "_voxsel1_ico%d_%sh_" % (ld, hemi)
-    radius = 100 # 100 voxels per searchlight
-    srcs = range(nodecount) # use all nodes as a center
-
-    attr = run_voxelselection(epifn, whitefn, pialfn, intermediatefn, radius, srcs)
-
-    vg = attr.a['volgeom']
-
-    nv = vg.nv()
-    datalin = np.zeros((nv, 1))
-
-    mp = attr.get_attr_mapping('lin_vox_idxs')
-    for k, idxs in mp.iteritems():
-        if idxs is not None:
-            datalin[idxs] += 1
-
-    datars = np.reshape(datalin, vg.shape())
-
-    img = ni.Nifti1Image(datars, vg.affine())
-
-    fnout = d + "__test_n2v4.nii"
-    img.to_filename(fnout)
-
-    attrfn = d + "voxsel.pickle"
-    sparse_attributes.to_file(attrfn, attr)
-
-    print fnout
-    print attrfn
