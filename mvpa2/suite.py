@@ -138,6 +138,7 @@ from mvpa2 import mappers
 from mvpa2.mappers.base import *
 from mvpa2.mappers.slicing import *
 from mvpa2.mappers.flatten import *
+from mvpa2.mappers.shape import *
 from mvpa2.mappers.prototype import *
 from mvpa2.mappers.projection import *
 from mvpa2.mappers.svd import *
