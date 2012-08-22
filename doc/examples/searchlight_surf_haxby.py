@@ -56,7 +56,7 @@ These surfaces were resampled using AFNI's MapIcosahedron; ld refers to
 the number of linear divisions of the 'large' triangles of the original
 icosahedron (ld=x means there are 10*x**2+2 nodes and 20*x**2 triangles).
 """
-highres_ld = 32 # 64 or 128 is reasonable
+highres_ld = 128 # 64 or 128 is reasonable
 
 pial_surf_fn = os.path.join(datapath, "ico%d_%sh.pial_al.asc"
                                      % (highres_ld, hemi))
@@ -83,7 +83,7 @@ are 2*(10*8^2+2)=1284 nodes across the two hemispheres, and thus 823686 unique
 pairs of nodes. A higher number for lowres_ld may be  suited for single-center
 searchlight analyses.
 """
-lowres_ld = 16 # 16, 32 or 64 is reasonable
+lowres_ld = 32 # 16, 32 or 64 is reasonable
 
 intermediate_surf_fn = os.path.join(datapath, "ico%d_%sh.intermediate_al.asc"
                                              % (lowres_ld, hemi))
