@@ -4,9 +4,10 @@ Associate volume geometry with surface meshes
 @author: nick
 """
 
-import surf, volgeom, collections, surf_fs_asc, numpy as np, utils, time, nibabel as ni, operator, random
-import sparse_attributes, afni_niml_dset, cPickle as pickle
-import collections
+import surf, volgeom, sparse_attributes
+
+import nibabel as ni
+import numpy as np
 
 class VolSurf():
     '''
@@ -107,7 +108,7 @@ class VolSurf():
 
 
 
-        center_ids = range(self._pial.nv())
+        center_ids = range(self._pial.nvertices)
         nv = len(center_ids) # number of nodes on the surface
         n2vs = dict() # node to voxel indices mapping
         for j in xrange(nv):
@@ -123,11 +124,11 @@ class VolSurf():
             # compute weighted intermediate surface in between pial and white
             surf = self._pial * pialweight + self._white * whiteweight
 
-            surf_xyz = surf.v() # coordinates
+            surf_xyz = surf.vertices # coordinates
 
             lin_vox = volgeom.xyz2lin(surf_xyz) # linear indices of voxels containing nodes
 
-            is_vox_in_vol = volgeom.lininvol(lin_vox) # which of these voxels are actually in the volume
+            is_vox_in_vol = volgeom.contains_lin(lin_vox) # which of these voxels are actually in the volume
 
             vol_xyz = volgeom.lin2xyz(lin_vox) # coordinates of voxels
 
@@ -166,7 +167,7 @@ class VolSurf():
             is closest to xyz[i,:] of all points on this line.   
         '''
 
-        pxyz = self._pial.v()
+        pxyz = self._pial.vertices
         weights = self.surf_project_weights(xyz)
         return pxyz + np.reshape(weights, (-1, 1)) * pxyz
 
@@ -186,8 +187,8 @@ class VolSurf():
         '''
 
         # compute relative to pial_xyz
-        pxyz = self._pial.v()
-        qxyz = self._white.v()
+        pxyz = self._pial.vertices
+        qxyz = self._white.vertices
 
         dxyz = qxyz - pxyz # difference vector
 
@@ -200,181 +201,31 @@ class VolSurf():
 
 
 
-    def _img_count_voxels(self, c2v):
-        '''just for testing that centernode to voxel mapping actually works'''
+    def voxel_count_image(self, n2v=None):
+        '''
+        Returns a NIFTI image indicating how often each voxel is selected
+        
+        Parameters
+        ----------
+        n2v: node to voxel mapping, typically from node2voxels. If omitted
+            then the output from node2voxels() is used.
+        
+        Returns:
+            img: nifti.Nifti1Image
+            image where the value in each voxel indicates how often
+            each voxel was selected
+        '''
+
         v = self._volgeom
-        nv, nt = v.nv(), v.nt()
+        nv = v.nvoxels
 
         voldata = np.zeros((nv,), dtype=float)
 
-        for i, vx2d in c2v.iteritems():
-            #vxf=[x for x in vx if x==x]
+        for i, vx2d in n2v.iteritems():
             if vx2d:
                 for vx in vx2d:
                     voldata[vx] += 1
 
-        rs = np.reshape(voldata, v.shape())
-        img = ni.Nifti1Image(rs, v.affine())
+        rs = np.reshape(voldata, v.shape)
+        img = ni.Nifti1Image(rs, v.affine)
         return img
-
-def _test_voxsel():
-    d = '%s/qref/' % utils._get_fingerdata_dir()
-    epifn = d + "../glm/rall_vol00.nii"
-
-    ld = 36 * 4 # mapicosahedron linear divisions
-    smallld = 9
-    hemi = 'l'
-    nodecount = 10 * ld ** 2 + 2
-
-    pialfn = d + "ico%d_%sh.pial_al.asc" % (ld, hemi)
-    whitefn = d + "ico%d_%sh.smoothwm_al.asc" % (ld, hemi)
-
-    intermediatefn = d + "ico%d_%sh.intermediate_al.asc" % (smallld, hemi)
-
-    fnoutprefix = d + "_voxsel1_ico%d_%sh_" % (ld, hemi)
-    radius = 100 # 100 voxels per searchlight
-    srcs = range(nodecount) # use all nodes as a center
-
-    vg = volgeom.from_nifti_file(epifn)
-
-    p, i, w = map(surf_fs_asc.read, (pialfn, intermediatefn, whitefn))
-
-    vs = VolSurf(vg, p, w)
-    print "Made vs"
-    n2v = vs.node2voxels()
-    print "Done n2v"
-    #print n2v
-
-    img = vs._img_count_voxels(n2v)
-    print "Made image"
-
-    fnout = d + "__test_n2v2.nii"
-    img.to_filename(fnout)
-
-    '''
-    sel=run_voxelselection(epifn, whitefn, pialfn, radius, srcs,require_center_in_gm=require_center_in_gm)
-    print "Completed voxel selection"
-    
-    # save voxel selection results
-    f=open(fnoutprefix + ".pickle",'w')
-    pickle.dump(sel, f, protocol=pickle.HIGHEST_PROTOCOL)
-    f.close()
-    
-    _voxelselection_write_vol_and_surf_files(sel,fnoutprefix)
-    print "Data saved to %s.{pickle,nii,niml.dset}" % fnoutprefix
-    '''
-
-def _demo_small_voxelsection():
-    d = '%s/qref/' % utils._get_fingerdata_dir()
-    epifn = d + "../glm/rall_vol00.nii"
-
-    ld = 36 # mapicosahedron linear divisions
-    hemi = 'l'
-    nodecount = 10 * ld ** 2 + 2
-
-
-    pialfn = d + "ico%d_%sh.pial_al.asc" % (ld, hemi)
-    whitefn = d + "ico%d_%sh.smoothwm_al.asc" % (ld, hemi)
-
-    fnoutprefix = d + "_voxsel1_ico%d_%sh_" % (ld, hemi)
-    radius = 100 # 100 voxels per searchlight
-    srcs = range(nodecount) # use all nodes as a center
-
-    require_center_in_gm = False # setting this to True is not a good idea at the moment - not well tested
-
-    print "Starting voxel selection"
-    sel = run_voxelselection(epifn, whitefn, pialfn, radius, srcs, require_center_in_gm=require_center_in_gm)
-    print "Completed voxel selection"
-
-    # save voxel selection results
-    f = open(fnoutprefix + ".pickle", 'w')
-    pickle.dump(sel, f, protocol=pickle.HIGHEST_PROTOCOL)
-    f.close()
-
-    _voxelselection_write_vol_and_surf_files(sel, fnoutprefix)
-    print "Data saved to %s.{pickle,nii,niml.dset}" % fnoutprefix
-
-
-def _demo_voxelsection():
-    d = '%s/glm/' % utils._get_fingerdata_dir()
-    epifn = d + "rall_vol00.nii"
-
-    pialfn = d + "ico100_lh.pial_al.asc"
-    whitefn = d + "ico100_lh.smoothwm_al.asc"
-
-    fnoutprefix = d + "_voxsel1_"
-    radius = 100 # 100 voxels per searchlight
-    srcs = range(100002) # use all nodes as a center
-
-    require_center_in_gm = False # setting this to True is not a good idea at the moment - not well tested
-
-    print "Starting voxel selection"
-    sel = run_voxelselection(epifn, whitefn, pialfn, radius, srcs, require_center_in_gm=require_center_in_gm)
-    print "Completed voxel selection"
-
-    # save voxel selection results
-    f = open(fnoutprefix + ".pickle", 'w')
-    pickle.dump(sel, f, protocol=pickle.HIGHEST_PROTOCOL)
-    f.close()
-
-    _voxelselection_write_vol_and_surf_files(sel, fnoutprefix)
-    print "Data saved to %s.{pickle,nii,niml.dset}" % fnoutprefix
-
-
-def _voxelselection_write_vol_and_surf_files(sel, fnoutprefix):
-    # write a couple of files to store results:
-    # - volume file with number of times each voxel was selected
-    # - surface file with searchlight radius
-
-    vg = sel.getvolgeom() # volume geometry
-    nvox = vg.nv() # number of voxels
-    voldata = np.zeros((nvox, 2), dtype=np.float) # allocate space for volume file, in linear shape
-
-    roilabels = sel.getroilabels() # these are actually the node indices (0..100001)
-    nlabels = len(roilabels) # number of ROIs (nodes), 100002
-
-    surfdata = np.zeros((nlabels, 1)) # allocate space for surface file
-
-    # go over the surface nodes
-    for i, roilabel in enumerate(roilabels):
-        # get a binary mask for this ROI (indexed by roilabel)
-        msk = sel.getbinaryroimask(roilabel)
-
-        # add 1 to all voxels that are around the present nodes 
-        voldata[msk, 0] += 1.
-
-        # alternative way to get the linear voxel indices associated with this
-        # center node (ROI)
-        idxs = sel.getroimeta(roilabel, sparse_volmasks._VOXIDXSLABEL)
-
-        # get the distances for each voxel from this node
-        ds = sel.getroimeta(roilabel, sparse_volmasks._VOXDISTLABEL)
-
-        # set distances for these voxels (overwrite if the distances are 
-        # already set for these voxels 
-        voldata[idxs, 1] = ds
-
-        # for the node on the surfae, set the maximum distance 
-        # (i.e. searchlight radius) 
-        surfdata[i, 0] = ds[-1]
-
-    print "Prepared voldata and surfdata"
-
-    sh = list(vg.shape()) # get the shape of the original volume (3 dimensions)
-    sh.append(voldata.shape[-1]) # last dimension 
-    datars = np.reshape(voldata, tuple(sh)) # reshape it to 4D
-
-    # save volume data
-    img = ni.Nifti1Image(datars, vg.affine())
-    img.to_filename(fnoutprefix + ".nii")
-    print "Written volume voldata"
-
-    # save surface data
-    s = dict(data=surfdata, node_indices=roilabels)
-    afni_niml_dset.write(fnoutprefix + ".niml.dset", s, 'text')
-    print "Written surface voldata"
-
-if __name__ == '__main__':
-    #_demo_voxelsection()
-    _test_voxsel()
-

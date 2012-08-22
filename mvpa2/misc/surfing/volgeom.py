@@ -284,7 +284,7 @@ class VolGeom():
             P boolean values indicating which voxels are within the volume
         '''
 
-        nv = self.nvoxels()
+        nv = self.nvoxels
         return np.logical_and(0 <= lin, lin < nv)
 
     def empty_nifti_img(self, nt=1):
