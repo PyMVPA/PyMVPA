@@ -167,7 +167,7 @@ def voxel2nearest_node(sp_attrs, sort_by_label=[
     if sort_by_proc is None:
         sort_by_proc = [None for _ in xrange(sort_by_count)]
 
-    sort_by_proc = [id if f is None else f for f in sort_by_proc]
+    sort_by_proc = [f or id for f in sort_by_proc]
 
 
     sort_by_getter = lambda x: tuple([f(x[i]) for i, f in enumerate(sort_by_proc)])
@@ -240,7 +240,7 @@ class SparseVolumeAttributes(SparseAttributes):
                 mask = mask.get_data()
 
             vg = self.get_volgeom()
-            nv = vg.nv()
+            nv = vg.nvoxels
             mask = np.reshape(mask, (nv,))
             mask_idxs = np.nonzero(mask)[0]
             center_ids = self.keys() # these are only nodes with voxels associated
@@ -292,7 +292,7 @@ class SparseVolumeAttributes(SparseAttributes):
         # This  is necessary when it is used in a searchlight
         vg = self.get_volgeom()
 
-        linmask = np.zeros(shape=(vg.nv(),), dtype=np.int8)
+        linmask = np.zeros(shape=(vg.nvoxels,), dtype=np.int8)
 
         keys = self.keys()
         map = self.get_attr_mapping(voxel_ids_label)
@@ -304,15 +304,15 @@ class SparseVolumeAttributes(SparseAttributes):
         nkeys = len(keys)
         delta = nkeys - nmask
 
-        print "made maks, %d keys, %d in mask" % (len(keys), nmask)
+        #print "made masks, %d keys, %d in mask" % (len(keys), nmask)
 
         if auto_grow and delta > 0:
             # not enough values in the mask, have to add
-            if nkeys > vg.nv():
+            if nkeys > vg.nvoxels:
                 raise ValueError("%r keys but volume has too few voxels (%r)" %
-                                 nkeys, vg.nv())
+                                 nkeys, vg.nvoxels)
             print "Adding %r more" % delta
-            for k in xrange(vg.nv()):
+            for k in xrange(vg.nvoxels):
                 if not linmask[k]:
                     linmask[k] = 2
                     delta -= 1
@@ -324,12 +324,12 @@ class SparseVolumeAttributes(SparseAttributes):
 
     def get_niftiimage_mask(self, voxel_ids_label='lin_vox_idxs', auto_grow=True):
         vg = self.get_volgeom()
-        shape = vg.shape()[:3]
+        shape = vg.shape[:3]
 
         linmask = self.get_linear_mask(voxel_ids_label, auto_grow)
         mask = np.reshape(linmask, shape)
 
-        img = ni.Nifti1Image(mask, vg.affine())
+        img = ni.Nifti1Image(mask, vg.affine)
         return img
 
 
@@ -368,7 +368,7 @@ class SparseNeighborhood():
             raise ValueError('Coordinate should be an length-3 iterable')
 
         vg = self._attr.a['volgeom']
-        if not vg.ijkinvol(c_ijk): # illegal value (too big, probably), return nothing
+        if not vg.contains_ijk(c_ijk): # illegal value (too big, probably), return nothing
             return tuple()
 
         c_lin = vg.ijk2lin(c_ijk)

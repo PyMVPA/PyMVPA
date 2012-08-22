@@ -376,7 +376,7 @@ class SurfTests(unittest.TestCase):
                 assert_equal(ma[k], mb[k])
 
     def test_surf_voxel_selection(self):
-        return
+
         vg = volgeom.VolGeom((50, 50, 50), np.identity(4))
 
         density = 40
@@ -387,35 +387,40 @@ class SurfTests(unittest.TestCase):
 
         nv = outer.nvertices
 
-        srcs = range(nv)
+        # select under variety of parameters
+        # parameters are distance metric (dijkstra or euclidian), 
+        # radius, and number of searchlight  centers
+        params = [('d', 1., 50), ('d', 1., 100), ('d', 2., 100),
+                  ('e', 2., 100), ('d', 2., 100), ('d', 20, 100),
+                  ('dijkstra', 5, None), ('euclidian', 10, None)]
 
 
-#        voxel_selection(vs, surf_srcs, radius, srcs=src, start=0., stop=1., steps=10,
- #                   distancemetric='dijkstra', intermediateat=.5, etastep=1):
+
+        voxcount = []
+        for distancemetric, radius, ncenters in params:
+            srcs = range(0, nv, nv / (ncenters or nv))
+            sel = surf_voxel_selection.voxel_selection(vs, radius, srcs=srcs,
+                                            distancemetric=distancemetric)
+
+            vg = sel.a['volgeom']
+
+
+            datalin = np.zeros((vg.nvoxels, 1))
+
+            mp = sel.get_attr_mapping('lin_vox_idxs')
+            for k, idxs in mp.iteritems():
+                if idxs is not None:
+                    datalin[idxs] = 1
+
+            voxcount.append(np.sum(datalin))
+
+        expected_voxcount = [397, 817, 1893, 1962, 1893, 2060, 10141, 10141]
+        assert_equal(voxcount, expected_voxcount)
 
 
 
-        sel = surf_voxel_selection = run_voxelselection(epifn, whitefn, pialfn, intermediatefn, radius, srcs)
 
-        vg = attr.a['volgeom']
-
-        nv = vg.nv()
-        datalin = np.zeros((nv, 1))
-
-        mp = attr.get_attr_mapping('lin_vox_idxs')
-        for k, idxs in mp.iteritems():
-            if idxs is not None:
-                datalin[idxs] += 1
-
-        datars = np.reshape(datalin, vg.shape())
-
-        img = ni.Nifti1Image(datars, vg.affine())
-
-        fnout = d + "__test_n2v4.nii"
-        img.to_filename(fnout)
-
-        attrfn = d + "voxsel.pickle"
-        sparse_attributes.to_file(attrfn, attr)
+        #sparse_attributes.to_file(attrfn, attr)
 
 '''
 if __name__ == "__main__":
