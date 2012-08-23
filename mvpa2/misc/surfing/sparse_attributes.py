@@ -16,7 +16,14 @@ This class is intended for general use of storing sparse attributes
 associated with keys in a dictionary. 
 
 Instantiation requires a set of labels (called sa_labels to mimick Dataset)
-and every entry added has to be a dict with the keys matching sa_labels.  
+and every entry added has to be a dict with the keys matching sa_labels.
+It is assumed, but not enforced, that the different values in such a dict 
+have the same number of elements.
+
+The rationale is to make a general class that associates keys of ROIs with
+properties of voxels (their index, distance from center, position in grey 
+matter, etc). ROIs can in principle be either from a volume or a 
+surface searchlight, or manually drawn in e.g. AFNI's SUMA.   
 '''
 class SparseAttributes(object):
     def __init__(self, sa_labels):
