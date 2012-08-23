@@ -69,7 +69,6 @@ class SparseAttributes(object):
 
         return zip(*vs)
 
-
     def get_attr_mapping(self, roi_attr):
         '''Provides a dict-like object with lookup for a 
         single ROI attribute'''
@@ -101,6 +100,26 @@ class SparseAttributes(object):
     def __repr__(self):
         return ("SparseAttributes with %i entries, %i labels (%r)\nGeneral attributes: %r" %
                 (len(self.sa), len(self._sa_labels), self._sa_labels, self.a.keys()))
+
+    def __eq__(self, other):
+        if not isinstance(other, SparseAttributes):
+            return False
+
+        if set(self.keys()) != set(other.keys()):
+            return False
+        if set(self.all_keys()) != set(other.all_keys()):
+            return False
+        if set(self.sa_labels()) != set(other.sa_labels()):
+            return False
+
+        labs = self.sa_labels()
+        for k in self.keys():
+            if self.get_tuple(k, labs) != other.get_tuple(k, labs):
+                return False
+
+        return True
+
+
 
 class AttrMapping(Mapping):
     def __init__(self, cls, roi_attr):
@@ -195,6 +214,155 @@ def voxel2nearest_node(sp_attrs, sort_by_label=[
 
     return n2v
 
+class SparseVolumeNeighborhood():
+    def __init__(self, attr, vg, voxel_ids_label='lin_vox_idxs'):
+        mp = attr.get_attr_mapping(voxel_ids_label)
+        self._keys = list(mp.keys())
+        self._n2vs = dict(mp) # node 2 voxel mapping
+        self._volgeom = vg
+
+        self._setup()
+
+    def _setup(self):
+        # compute the mask, once and forever
+        linmask = np.zeros((self._volgeom.nvoxels,), np.int32)
+
+        for k in self._keys:
+            linmask[self._n2vs[k]] = 1
+
+        keys = self._keys
+        nkeys = len(keys)
+        nmask = np.sum(linmask > 0)
+
+        if nkeys > len(linmask):
+            raise ValueError('Unsupported: more centers (%d) than voxels (%d)'
+                             % (nkeys, len(linmask)))
+
+        delta = nmask - nkeys
+        maskpos = 0
+        while delta < 0:
+            if linmask[maskpos] == 0:
+                linmask[maskpos] = 1
+                delta += 1
+            maskpos += 1
+
+        self._linmask = linmask
+
+        masknonzero = np.asarray(np.nonzero(linmask)[0][:nkeys])
+        maskijk = self._volgeom.lin2ijk(masknonzero)
+
+        self._ijk2vs = dict()
+        for i in xrange(nkeys):
+            ijk = tuple(maskijk[i, :])
+            self._ijk2vs[ijk] = self._n2vs[keys[i]]
+
+        print self._ijk2vs
+
+        # mapping for center_ids to position in mask
+        self._center_ids2maskpos = dict((v, i) for i, v in enumerate(self._keys))
+
+    @property
+    def keys(self):
+        return list(self._keys)
+
+    @property
+    def volgeom(self):
+        return self._volgeom
+
+    @property
+    def mask(self):
+        vg = self._volgeom
+        shape = vg.shape[:3]
+
+        mask = np.reshape(self._linmask, shape)
+
+        return ni.Nifti1Image(mask, vg.affine)
+
+
+    def __call__(self, coordinate):
+        print coordinate
+        print type(coordinate)
+        center_array = np.asanyarray(coordinate)[np.newaxis][0]
+        center_tuple = (center_array[0], center_array[1], center_array[2])
+
+        if not center_tuple in self._ijk2vs:
+            raise ValueError('Not in keys: %r' % (center_tuple,))
+
+        lin = self._ijk2vs[center_tuple]
+        ijk = self._volgeom.lin2ijk(lin)
+        return map(tuple, ijk)
+
+    def searchlight(self, datameasure, center_ids=None,
+                space='voxel_indices', **kwargs):
+        """Creates a `Searchlight` to run a scalar `Measure` on
+        all neighborhoods within a dataset.
+        
+        The idea for a searchlight algorithm stems from a paper by
+        :ref:`Kriegeskorte et al. (2006) <KGB06>`.
+        
+        This implementation supports surface-based searchlights as well,
+        as described in Oosterhof, Wiestler, Downing & Diedrichsen,
+        2011, Neuroimage.
+        
+        Parameters
+        ----------
+        datameasure : callable
+          Any object that takes a :class:`~mvpa2.datasets.base.Dataset`
+          and returns some measure when called.
+        neighborhood : callable
+          A class that implements a call() function, which should accept
+          3-tuples a la the tradtional volume-based searchlight.
+        center_ids : list of int
+          List of feature ids (not coordinates) the shall serve as sphere
+          centers. Alternatively, this can be the name of a feature attribute
+          of the input dataset, whose non-zero values determine the feature
+          ids.  By default all features will be used (it is passed as ``roi_ids``
+          argument of Searchlight).
+        space : str
+          Name of a feature attribute of the input dataset that defines the spatial
+          coordinates of all features.
+        **kwargs
+          In addition this class supports all keyword arguments of its
+          base-class :class:`~mvpa2.measures.base.Measure`.
+        
+        Notes
+        -----
+        If `Searchlight` is used as `SensitivityAnalyzer` one has to make
+        sure that the specified scalar `Measure` returns large
+        (absolute) values for high sensitivities and small (absolute) values
+        for low sensitivities. Especially when using error functions usually
+        low values imply high performance and therefore high sensitivity.
+        This would in turn result in sensitivity maps that have low
+        (absolute) values indicating high sensitivities and this conflicts
+        with the intended behavior of a `SensitivityAnalyzer`.
+        """
+        # build a matching query engine from the arguments
+        print center_ids
+        print self._center_ids2maskpos
+        roi_ids = [self._center_ids2maskpos[center_id] for center_id in center_ids]
+
+        print "c", center_ids
+        print "r", roi_ids
+
+
+
+        neighborhood = self
+        kwa = {space: neighborhood}
+        qe = IndexQueryEngine(**kwa)
+        # init the searchlight with the queryengine
+        return Searchlight(datameasure, queryengine=qe, roi_ids=roi_ids,
+                           **kwargs)
+
+
+
+
+
+
+
+
+
+
+
 class SparseVolumeAttributes(SparseAttributes):
     """
     Sparse attributes with volume geometry. 
@@ -229,7 +397,27 @@ class SparseVolumeAttributes(SparseAttributes):
         neighbors for searchlight centers stored in this instance
     """
 
+    def get_neighborhood_NEWER(self, voxel_ids_label='lin_vox_idxs'):
+        mask = self.get_linear_mask(voxel_ids_label=voxel_ids_label,
+                            auto_grow=True)
+        vg = self.get_volgeom()
+        mask_idxs = np.nonzero(mask)[0]
+
+        center_ids = self.keys()
+        if len(mask_idxs) < len(center_ids):
+            raise ValueError("Too many center ids (%r > %r)" %
+                                    (len(mask_idxs), len(center_ids)))
+
+        attr = SparseVolumeAttributes([voxel_ids_label], vg)
+        for i, center_id in enumerate(center_ids):
+            vs = self.get(center_id, voxel_ids_label)
+            attr.add(mask_idxs[i], {voxel_ids_label:vs})
+
+        return SparseNeighborhood(attr, voxel_ids_label)
+
+
     def get_neighborhood(self, mask=None, voxel_ids_label='lin_vox_idxs'):
+        mask = self.get_niftiimage_mask(voxel_ids_label=voxel_ids_label)
         if mask:
             # take into account that masking means we have
             # to translate our center ids. We do so by creating a fresh
@@ -243,6 +431,7 @@ class SparseVolumeAttributes(SparseAttributes):
             nv = vg.nvoxels
             mask = np.reshape(mask, (nv,))
             mask_idxs = np.nonzero(mask)[0]
+
             center_ids = self.keys() # these are only nodes with voxels associated
 
             if len(mask_idxs) < len(center_ids):
@@ -256,25 +445,25 @@ class SparseVolumeAttributes(SparseAttributes):
                 attr.add(mask_idxs[i], {voxel_ids_label:vs})
             """
             ## (Andy Connoly July 2012) Trying the following change :
-            for center_id in center_ids:
-                vs = self.get(center_id, voxel_ids_label)
-                attr.add(mask_idxs[center_id], {voxel_ids_label:vs})
+            #for center_id in center_ids:
+            #    vs = self.get(center_id, voxel_ids_label)
+            #    print center_id
+            #    print mask_idxs.shape
+            #    attr.add(mask_idxs[center_id], {voxel_ids_label:vs})
 
-#            for i, center_id in enumerate(center_ids):
-#                vs = self.get(center_id, voxel_ids_label)
-#                attr.add(mask_idxs[i], {voxel_ids_label:vs})
+
+            # NNO still seems that the proper way is to use
+            # the indices of the voxels that survive the mask
+            for i, center_id in enumerate(center_ids):
+                vs = self.get(center_id, voxel_ids_label)
+                attr.add(mask_idxs[i], {voxel_ids_label:vs})
 
         else:
             attr = self
 
         return SparseNeighborhood(attr, voxel_ids_label)
 
-    """
-    Returns
-    =======
-    volgeom: volgem.VolGeom
-        volume geometry stored in this instance
-    """
+
     def get_volgeom(self):
         return self.a['volgeom']
 
@@ -285,20 +474,36 @@ class SparseVolumeAttributes(SparseAttributes):
         volume geometry stored in this instance
     """
 
-
     def get_linear_mask(self, voxel_ids_label='lin_vox_idxs', auto_grow=True):
-        # if auto_grow=True, then we add enough positive values to the mask 
-        # so that it reaches at least the number of self.keys().
-        # This  is necessary when it is used in a searchlight
+        """
+        Returns the linear indices that are selected at least one
+         
+        Parameters
+        ==========
+        voxel_ids_label
+            key used to store linear voxel indices
+        auto_grow: bool
+            if True, then it is assued that at least len(self.keys()) elements
+            in the output have a non-zero value. The typical use case is 
+            using it for a mask in a searchlight
+         
+        Returns
+        =======
+        linear_mask: np.ndarray 
+            Q-element array (where get_volgeom.nvoxels==Q), with non-zero
+            values for voxels that are selected at least once
+        """
+
         vg = self.get_volgeom()
 
-        linmask = np.zeros(shape=(vg.nvoxels,), dtype=np.int8)
-
+        linmask = np.zeros(shape=(vg.nvoxels,), dtype=np.int32)
         keys = self.keys()
         map = self.get_attr_mapping(voxel_ids_label)
 
         for key in keys:
-            linmask[map[key]] = 1
+            linmask[map[key]] += 1
+
+        linmask[linmask > 0] += 1
 
         nmask = np.sum(linmask)
         nkeys = len(keys)
@@ -314,7 +519,7 @@ class SparseVolumeAttributes(SparseAttributes):
             print "Adding %r more" % delta
             for k in xrange(vg.nvoxels):
                 if not linmask[k]:
-                    linmask[k] = 2
+                    linmask[k] = 1
                     delta -= 1
                 if delta == 0:
                     break
@@ -323,6 +528,13 @@ class SparseVolumeAttributes(SparseAttributes):
 
 
     def get_niftiimage_mask(self, voxel_ids_label='lin_vox_idxs', auto_grow=True):
+        '''
+         Returns
+        -------
+        mask: nifti.Nifti1Image
+            a volume where voxels with non-zero values indicate they
+            have been selected
+        '''
         vg = self.get_volgeom()
         shape = vg.shape[:3]
 
@@ -332,6 +544,60 @@ class SparseVolumeAttributes(SparseAttributes):
         img = ni.Nifti1Image(mask, vg.affine)
         return img
 
+    def get_neighborhood_NEW(self, voxel_ids_label='lin_vox_idxs'):
+        mask = self.get_linear_mask(voxel_ids_label=voxel_ids_label,
+                            auto_grow=True)
+
+        vg = self.get_volgeom()
+        mask_idxs_lin = np.nonzero(mask)[0]
+        mask_idxs_ijk = vg.lin2ijk(mask_idxs_lin)
+
+        print "MMXX", mask_idxs_lin[:20]
+
+        center_ids = sorted(self.keys())
+        print center_ids
+        if len(mask_idxs_lin) < len(center_ids):
+            raise ValueError("Too many center ids (%r > %r)" %
+                                    (len(mask_idxs), len(center_ids)))
+
+        attr = SparseVolumeAttributes([voxel_ids_label], vg)
+        ijk2src = dict()
+        for i, center_id in enumerate(center_ids):
+            vs = self.get(center_id, voxel_ids_label)
+            ijk = tuple(mask_idxs_ijk[i])
+            ijk2src[ijk] = center_id
+            attr.add(center_id, {voxel_ids_label:vs})
+
+            #print mask_idxs_lin[i], ijk, ' -> ', center_id
+
+        return SparseNeighborhood(attr, ijk2src, voxel_ids_label)
+
+
+class SparseNeighborhood_NEW():
+    def __init__(self, attr, ijk2src, voxel_ids_label='lin_vox_idxs'):
+        if not voxel_ids_label in attr.sa_labels():
+            raise ValueError("%r is not a valid key in %r" % (voxel_ids_label, attr))
+
+        self._attr = attr
+        self._ijk2src = ijk2src
+        self._voxel_ids_label = voxel_ids_label
+
+    def __call__(self, coordinate):
+        print "coordinate %r" % coordinate
+        src = self._ijk2src[coordinate]
+
+        vg = self._attr.get_volgeom()
+
+        print ">>", coordinate, src
+
+        a_lin = self._attr.get(src, self._voxel_ids_label)
+        if a_lin is None:
+            return tuple()
+
+        a_ijk = vg.lin2ijk(a_lin)
+
+        a_tuples = [tuple(p) for p in a_ijk]
+        return a_tuples
 
 
 class SparseNeighborhood():
@@ -373,10 +639,10 @@ class SparseNeighborhood():
 
         c_lin = vg.ijk2lin(c_ijk)
 
-        print c_lin, c_ijk
+        print "call", c_ijk, c_lin,
 
         if not c_lin in self._attr.keys(): # no nodes associated
-            print "Not in keys!"
+            print
             return tuple()
 
         if len(c_lin) != 1:
@@ -391,26 +657,30 @@ class SparseNeighborhood():
 
         a_tuples = [tuple(p) for p in a_ijk]
 
+        print " -> ", a_lin
         return a_tuples
 
 def searchlight(datameasure, neighborhood, center_ids=None,
                 space='voxel_indices', **kwargs):
 
     """Creates a `Searchlight` to run a scalar `Measure` on
-    all possible spheres of a certain size within a dataset.
+    all neighborhoods within a dataset.
 
     The idea for a searchlight algorithm stems from a paper by
     :ref:`Kriegeskorte et al. (2006) <KGB06>`.
+    
+    This implementation supports surface-based searchlights as well,
+    as described in Oosterhof, Wiestler, Downing & Diedrichsen,
+    2011, Neuroimage.
 
     Parameters
     ----------
     datameasure : callable
       Any object that takes a :class:`~mvpa2.datasets.base.Dataset`
       and returns some measure when called.
-    radius : int
-      All features within this radius around the center will be part
-      of a sphere. Radius is in grid-indices, i.e. ``1`` corresponds
-      to all immediate neighbors, regardless of the physical distance.
+    neighborhood : callable
+      A class that implements a call() function, which should accept
+      3-tuples a la the tradtional volume-based searchlight.
     center_ids : list of int
       List of feature ids (not coordinates) the shall serve as sphere
       centers. Alternatively, this can be the name of a feature attribute
@@ -443,13 +713,36 @@ def searchlight(datameasure, neighborhood, center_ids=None,
                        **kwargs)
 
 
-
-
 def to_file(fn, a):
+    '''
+    Stores attributes in a file
+    
+    Parameters
+    ----------
+    fn: str
+        Output filename
+    a: SparseAttributes
+        attributes to be stored
+    '''
+
     with open(fn, 'w') as f:
         pickle.dump(a, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 def from_file(fn):
+    '''
+    Reads attributes from a file
+    
+    Parameters
+    ----------
+    fn: str
+        Input filename
+    
+    Returns
+    -------
+    a: SparseAttributes
+        attributes to be stored
+    '''
+
     with open(fn) as f:
         r = pickle.load(f)
     return r

@@ -19,6 +19,8 @@ from mvpa2.testing.datasets import datasets
 from mvpa2 import cfg
 from mvpa2.base import externals
 from mvpa2.datasets import Dataset
+from mvpa2.measures.base import Measure
+from mvpa2.datasets.mri import fmri_dataset
 
 import mvpa2.misc.surfing.surf as surf
 import mvpa2.misc.surfing.surf_fs_asc as surf_fs_asc
@@ -26,6 +28,9 @@ import mvpa2.misc.surfing.volgeom as volgeom
 import mvpa2.misc.surfing.volsurf as volsurf
 import mvpa2.misc.surfing.sparse_attributes as sparse_attributes
 import mvpa2.misc.surfing.surf_voxel_selection as surf_voxel_selection
+
+import nibabel as ni
+
 
 
 class SurfTests(unittest.TestCase):
@@ -336,6 +341,7 @@ class SurfTests(unittest.TestCase):
 
     def test_sparse_attributes(self):
 
+        # generate a very small dataset
         payload = {1:([1, 2], [.2, .3]),
                    2:([3, 4, 5], [.4, .7, .8]),
                    6:([3, 4, 8, 9], [.1, .3, .2, .2])}
@@ -353,6 +359,8 @@ class SurfTests(unittest.TestCase):
 
         assert_equal(set(payload_labels), set(sa.sa_labels()))
 
+        # getting data in different ways should always give
+        # expected results
         for i, label in enumerate(payload_labels):
             it = sa.get_attr_mapping(label)
             for k, v in it.iteritems():
@@ -377,11 +385,12 @@ class SurfTests(unittest.TestCase):
 
     def test_surf_voxel_selection(self):
 
+        # make simple surfaces and volume geometry
         vg = volgeom.VolGeom((50, 50, 50), np.identity(4))
 
-        density = 40
-        outer = surf.generate_sphere(density) * 25. + 25
-        inner = surf.generate_sphere(density) * 20. + 25
+        density = 20
+        outer = surf.generate_sphere(density) * 25. + 15
+        inner = surf.generate_sphere(density) * 20. + 15
 
         vs = volsurf.VolSurf(vg, outer, inner)
 
@@ -390,11 +399,14 @@ class SurfTests(unittest.TestCase):
         # select under variety of parameters
         # parameters are distance metric (dijkstra or euclidian), 
         # radius, and number of searchlight  centers
-        params = [('d', 1., 50), ('d', 1., 100), ('d', 2., 100),
+        params = [('d', 1., 10), ('d', 1., 50), ('d', 1., 100), ('d', 2., 100),
                   ('e', 2., 100), ('d', 2., 100), ('d', 20, 100),
-                  ('dijkstra', 5, None), ('euclidian', 10, None)]
+                  ('euclidian', 5, None), ('dijkstra', 10, None)]
 
 
+        expected_labs = ['lin_vox_idxs',
+                         'grey_matter_position',
+                         'center_distances']
 
         voxcount = []
         for distancemetric, radius, ncenters in params:
@@ -402,9 +414,8 @@ class SurfTests(unittest.TestCase):
             sel = surf_voxel_selection.voxel_selection(vs, radius, srcs=srcs,
                                             distancemetric=distancemetric)
 
+            # see how many voxels were selected
             vg = sel.a['volgeom']
-
-
             datalin = np.zeros((vg.nvoxels, 1))
 
             mp = sel.get_attr_mapping('lin_vox_idxs')
@@ -413,70 +424,146 @@ class SurfTests(unittest.TestCase):
                     datalin[idxs] = 1
 
             voxcount.append(np.sum(datalin))
-
-        expected_voxcount = [397, 817, 1893, 1962, 1893, 2060, 10141, 10141]
-        assert_equal(voxcount, expected_voxcount)
-
+            assert_equal(voxcount[-1],
+                         np.sum(sel.get_niftiimage_mask().get_data() > 1))
 
 
+            # see if voxels containing inner and outer 
+            # nodes were selected
+            for sf in [inner, outer]:
+                for k, idxs in mp.iteritems():
+                    xyz = np.reshape(sf.vertices[k, :], (1, 3))
+                    linidx = vg.xyz2lin(xyz)
 
-        #sparse_attributes.to_file(attrfn, attr)
+                    # only required if xyz is actually within the volume
+                    assert_equal(linidx in idxs, vg.contains_lin(linidx))
 
-'''
-if __name__ == "__main__":
-    #from mvpa2.tutorial_suite import *
+            # check that it has all the attributes
+            labs = sel.sa_labels()
+            assert_true(all([lab in labs for lab in expected_labs]))
 
-    if __debug__:
-        debug.active += ["SVS"]
+            attr_maps = [sel.get_attr_mapping(lab) for lab in labs]
 
+            # require same number of values for each attribute
+            # and that tuples contain the right info
+            for k in sel.keys():
+                tp = sel.get_tuple(k)
+                for i, map in enumerate(attr_maps):
 
-    d = '%s/qref/' % utils._get_fingerdata_dir()
-    epifn = d + "../glm/rall_vol00.nii"
+                    mapk = map[k]
+                    if i == 0:
+                        c = len(mapk)
+                    else:
+                        assert_true(c == len(mapk))
 
-    ld = 36 # mapicosahedron linear divisions
-    smallld = 9
-    hemi = 'l'
-    nodecount = 10 * smallld ** 2 + 2
+                    for j, v in enumerate(tp):
+                        assert_equal(v[i], mapk[j])
 
-    pialfn = d + "ico%d_%sh.pial_al.asc" % (ld, hemi)
-    whitefn = d + "ico%d_%sh.smoothwm_al.asc" % (ld, hemi)
-    intermediatefn = d + "ico%d_%sh.intermediate_al.asc" % (smallld, hemi)
+                if labs[i] == 'center_distances':
+                    if type(radius) is float:
+                        pass
+                        #assert_true(all(abs(v - radius)))
 
-    fnoutprefix = d + "_voxsel1_ico%d_%sh_" % (ld, hemi)
-    radius = 100 # 100 voxels per searchlight
-    srcs = range(nodecount) # use all nodes as a center
+            # check that inverse function works
+            attr_maps_inv = [sel.get_inv_attr_mapping(lab) for lab in labs]
 
-    attr = run_voxelselection(epifn, whitefn, pialfn, intermediatefn, radius, srcs)
+            for i, map in enumerate(attr_maps):
+                pam = attr_maps_inv[i]
+                for j, vals in pam.iteritems():
+                    for val in vals:
+                        assert_true(j in map[val])
 
-    vg = attr.a['volgeom']
+            # some I/O testing
+            _, fn = tempfile.mkstemp('.pickle', 'test')
+            sparse_attributes.to_file(fn, sel)
 
-    nv = vg.nv()
-    datalin = np.zeros((nv, 1))
+            sel2 = sparse_attributes.from_file(fn)
+            os.remove(fn)
 
-    mp = attr.get_attr_mapping('lin_vox_idxs')
-    for k, idxs in mp.iteritems():
-        if idxs is not None:
-            datalin[idxs] += 1
+            assert_equal(sel, sel2)
 
-    datars = np.reshape(datalin, vg.shape())
+            # test I/O with surfaces
+            _, outerfn = tempfile.mkstemp('outer.asc', 'test')
+            _, innerfn = tempfile.mkstemp('inner.asc', 'test')
+            _, volfn = tempfile.mkstemp('vol.nii', 'test')
 
-    img = ni.Nifti1Image(datars, vg.affine())
+            surf_fs_asc.write(outerfn, outer, overwrite=True)
+            surf_fs_asc.write(innerfn, inner, overwrite=True)
 
-    fnout = d + "__test_n2v4.nii"
-    img.to_filename(fnout)
+            img = sel.get_volgeom().empty_nifti_img()
+            img.to_filename(volfn)
 
-    attrfn = d + "voxsel.pickle"
-    sparse_attributes.to_file(attrfn, attr)
+            sel3 = surf_voxel_selection.run_voxelselection(volfn, outerfn,
+                            innerfn, radius, srcs=srcs,
+                            distancemetric=distancemetric)
 
-    print fnout
-    print attrfn
-    '''
+            outer4 = surf_fs_asc.read(outerfn)
+            inner4 = surf_fs_asc.read(innerfn)
+            vs4 = vs = volsurf.VolSurf(vg, outer4, inner4)
 
+            # check that two ways of voxel selection match
+            sel4 = surf_voxel_selection.voxel_selection(vs4, radius, srcs=srcs,
+                                                distancemetric=distancemetric)
 
+            assert_equal(sel3, sel4)
 
+            os.remove(outerfn)
+            os.remove(innerfn)
+            os.remove(volfn)
 
+            lab = 'lin_vox_idxs'
 
+            # compare sel3 with other selection results
+            # NOTE: which voxels are precisely selected by sel can be quite
+            #       off from those in sel3, as writing the surfaces imposes
+            #       rounding errors and the sphere is very symmetric, which
+            #       means that different neighboring nodes are selected
+            #       to select a certain number of voxels.
+            sel3cmp_difference_ratio = {sel:.3, sel4:0.}
+            for selcmp, ratio in sel3cmp_difference_ratio.iteritems():
+                nunion = ndiff = 0
 
+                for k in selcmp.keys():
+                    p = set(sel3.get(k, lab))
+                    q = set(selcmp.get(k, lab))
+                    nunion += len(p.union(q))
+                    ndiff += len(p.symmetric_difference(q))
+
+                assert_true(float(ndiff) / float(nunion) <= ratio)
+
+            # check searchlight call
+            lab = 'lin_vox_idxs'
+            nbrhood = sparse_attributes.SparseVolumeNeighborhood(sel, vg, lab)
+            mask = nbrhood.mask
+            keys = nbrhood.keys
+
+            dset_data = np.reshape(np.arange(vg.nvoxels), vg.shape)
+            dset_img = ni.Nifti1Image(dset_data, vg.affine)
+            dset = fmri_dataset(samples=dset_img, mask=mask)
+
+            voxelcounter = _Voxel_Count_Measure()
+            searchlight = nbrhood.searchlight(voxelcounter, center_ids=keys)
+            sl_dset = searchlight(dset)
+
+            print sl_dset.samples
+                # check whether number of voxels were selected is as expected
+        expected_voxcount = [235, 466, 1033, 1073, 1033, 1344, 5956, 5956]
+
+        #assert_equal(voxcount, expected_voxcount)
+
+class _Voxel_Count_Measure(Measure):
+    is_trained = True
+    def __init__(self, **kwargs):
+        Measure.__init__(self, **kwargs)
+
+    def _call(self, dset):
+        return dset.nfeatures
+
+def _CoM_dataset(vg, mask):
+    data = np.reshape(np.arange(vg.nvoxels), vg.shape)
+    img = ni.Nifti1Image(data, vg.affine)
+    dset = fmri_dataset(samples=img, mask=mask)
+    return dset
 
 def _assert_array_equal_eps(x, y, eps=.0001):
     if x.shape != y.shape:
@@ -501,4 +588,68 @@ def suite():
 
 if __name__ == '__main__':
     import runner
+    '''
+    from mvpa2.base import debug
+    debug.active += ["SVS", "SLC"]
+    vg = volgeom.VolGeom((50, 50, 50), np.identity(4))
+
+
+
+    density = 20
+    outer = surf.generate_sphere(density) * 25. + 15
+    inner = surf.generate_sphere(density) * 25. + 15
+
+    outer = outer.merge(outer)
+    inner = inner.merge(inner)
+    vs = volsurf.VolSurf(vg, outer, inner)
+
+    nv = outer.nvertices
+
+    # select under variety of parameters
+    # parameters are distance metric (dijkstra or euclidian), 
+    # radius, and number of searchlight  centers
+    params = [('d', 1., 10), ('d', 1., 50), ('d', 1., 100), ('d', 2., 100),
+              ('e', 2., 100), ('d', 2., 100), ('d', 20, 100),
+              ('euclidian', 5, None), ('dijkstra', 10, None)]
+
+
+    expected_labs = ['lin_vox_idxs',
+                     'grey_matter_position',
+                     'center_distances']
+
+    voxcount = []
+    for distancemetric, radius, ncenters in params:
+        srcs = range(0, nv, nv / (ncenters or nv))
+        #srcs = range(nv)
+        sel = surf_voxel_selection.voxel_selection(vs, radius, srcs=srcs,
+                                        distancemetric=distancemetric)
+
+        lab = 'lin_vox_idxs'
+
+        nn = sparse_attributes.SparseVolumeNeighborhood(sel, vg, lab)
+        mask = nn.mask
+        keys = nn.keys
+
+        dset_data = np.reshape(np.arange(vg.nvoxels), vg.shape)
+        dset_img = ni.Nifti1Image(dset_data, vg.affine)
+        dset = fmri_dataset(samples=dset_img, mask=mask)
+
+        voxelcounter = _Voxel_Count_Measure()
+        sl = nn.searchlight(voxelcounter, center_ids=keys)
+        rr = sl(dset)
+
+
+
+
+        mp = sel.get_attr_mapping('lin_vox_idxs')
+
+
+
+
+
+
+        print rr.samples
+
+'''
+
 
