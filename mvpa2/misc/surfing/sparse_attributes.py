@@ -256,8 +256,6 @@ class SparseVolumeNeighborhood():
             ijk = tuple(maskijk[i, :])
             self._ijk2vs[ijk] = self._n2vs[keys[i]]
 
-        print self._ijk2vs
-
         # mapping for center_ids to position in mask
         self._center_ids2maskpos = dict((v, i) for i, v in enumerate(self._keys))
 
@@ -280,8 +278,6 @@ class SparseVolumeNeighborhood():
 
 
     def __call__(self, coordinate):
-        print coordinate
-        print type(coordinate)
         center_array = np.asanyarray(coordinate)[np.newaxis][0]
         center_tuple = (center_array[0], center_array[1], center_array[2])
 
@@ -309,15 +305,10 @@ class SparseVolumeNeighborhood():
         datameasure : callable
           Any object that takes a :class:`~mvpa2.datasets.base.Dataset`
           and returns some measure when called.
-        neighborhood : callable
-          A class that implements a call() function, which should accept
-          3-tuples a la the tradtional volume-based searchlight.
         center_ids : list of int
-          List of feature ids (not coordinates) the shall serve as sphere
-          centers. Alternatively, this can be the name of a feature attribute
-          of the input dataset, whose non-zero values determine the feature
-          ids.  By default all features will be used (it is passed as ``roi_ids``
-          argument of Searchlight).
+          List of feature ids (typically node indices, for a surface-based
+          searchlight) that serve as neighboorhood identifiers (for the 
+          surface-based searchlight, these are the centers of the discs)
         space : str
           Name of a feature attribute of the input dataset that defines the spatial
           coordinates of all features.
@@ -336,16 +327,12 @@ class SparseVolumeNeighborhood():
         (absolute) values indicating high sensitivities and this conflicts
         with the intended behavior of a `SensitivityAnalyzer`.
         """
-        # build a matching query engine from the arguments
-        print center_ids
-        print self._center_ids2maskpos
+        if center_ids is None:
+            center_ids = self.keys
+
         roi_ids = [self._center_ids2maskpos[center_id] for center_id in center_ids]
 
-        print "c", center_ids
-        print "r", roi_ids
-
-
-
+        # build a matching query engine from the arguments
         neighborhood = self
         kwa = {space: neighborhood}
         qe = IndexQueryEngine(**kwa)
