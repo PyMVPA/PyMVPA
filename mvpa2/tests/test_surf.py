@@ -389,8 +389,12 @@ class SurfTests(unittest.TestCase):
         vg = volgeom.VolGeom((50, 50, 50), np.identity(4))
 
         density = 20
+
         outer = surf.generate_sphere(density) * 25. + 15
         inner = surf.generate_sphere(density) * 20. + 15
+
+        #outer = surf.merge(outer, outer)
+        #inner = surf.merge(inner, inner)
 
         vs = volsurf.VolSurf(vg, outer, inner)
 
@@ -487,7 +491,7 @@ class SurfTests(unittest.TestCase):
             surf_fs_asc.write(outerfn, outer, overwrite=True)
             surf_fs_asc.write(innerfn, inner, overwrite=True)
 
-            img = sel.get_volgeom().empty_nifti_img()
+            img = sel.volgeom.empty_nifti_img()
             img.to_filename(volfn)
 
             sel3 = surf_voxel_selection.run_voxelselection(volfn, outerfn,
@@ -530,7 +534,7 @@ class SurfTests(unittest.TestCase):
 
             # check searchlight call
             lab = 'lin_vox_idxs'
-            nbrhood = sparse_attributes.SparseVolumeNeighborhood(sel, vg, lab)
+            nbrhood = sparse_attributes.SparseVolumeNeighborhood(sel, lab)
             mask = nbrhood.mask
             keys = None if ncenters is None else nbrhood.keys
 
@@ -549,6 +553,23 @@ class SurfTests(unittest.TestCase):
                 assert_equal(selected_count[i], len(mp[k]))
 
 
+            # check nearest node is *really* the nearest node
+            vox2nearest = sparse_attributes.voxel2nearest_node(sel)
+            intermediate = outer * .5 + inner * .5
+            for vx in xrange(vg.nvoxels):
+                if vx in vox2nearest:
+                    nearest = vox2nearest[vx]
+
+                    xyz = intermediate.vertices[nearest, :]
+                    sqsum = np.sum((xyz - intermediate.vertices) ** 2, 1)
+
+                    idx = np.argmin(sqsum)
+                    assert_equal(idx, nearest)
+
+
+
+
+
                 # check whether number of voxels were selected is as expected
         expected_voxcount = [58, 210, 418, 474, 474, 474, 978, 1603, 1603]
 
@@ -561,12 +582,6 @@ class _Voxel_Count_Measure(Measure):
 
     def _call(self, dset):
         return dset.nfeatures
-
-def _CoM_dataset(vg, mask):
-    data = np.reshape(np.arange(vg.nvoxels), vg.shape)
-    img = ni.Nifti1Image(data, vg.affine)
-    dset = fmri_dataset(samples=img, mask=mask)
-    return dset
 
 def _assert_array_equal_eps(x, y, eps=.0001):
     if x.shape != y.shape:

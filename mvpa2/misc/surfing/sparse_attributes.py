@@ -119,6 +119,53 @@ class SparseAttributes(object):
 
         return True
 
+class SparseVolumeAttributes(SparseAttributes):
+    """
+    Sparse attributes with volume geometry. 
+    This class can be used to store the result of surface-based voxel 
+    selection.
+    
+    TODO: consider whether we integrate this with SparseAttributes
+    
+    Parameters
+    ==========
+    sa_labels: list
+        labels of attributes stored in this instance
+    volgeom: volgeom.VolGeom
+        volume geometry
+    """
+    def __init__(self, sa_labels, volgeom):
+        super(self.__class__, self).__init__(sa_labels)
+        self.a['volgeom'] = volgeom
+
+    """
+    Returns a neighboorhood function
+    
+    Parameters
+    ==========
+    mask
+        volume mask (usually from get_niftiimage_mask)
+    voxel_ids_label
+        label of voxel ids of neighboors
+    
+    
+    Returns
+    =======
+    neighboorhood: SparseNeighborhood 
+        neighboorhood function that can be used to access the 
+        neighbors for searchlight centers stored in this instance
+    """
+
+    @property
+    def volgeom(self):
+        return self.a['volgeom']
+
+    """
+    Returns
+    =======
+    volgeom: volgem.VolGeom
+        volume geometry stored in this instance
+    """
 
 
 class AttrMapping(Mapping):
@@ -141,7 +188,7 @@ class AttrMapping(Mapping):
 def paired_common_attributes_count(sp_attrs, roi_attr):
     '''function to count how often the same attribute is shared across keys in
     the input sparse_attributes. Useful to count how many voxels are shared across 
-    center nodes'''
+    pairs of center nodes'''
     inv = sp_attrs.get_inv_attr_mapping(roi_attr)
     swp = lambda x, y: (x, y) if x < y else (y, x)
 
@@ -215,15 +262,28 @@ def voxel2nearest_node(sp_attrs, sort_by_label=[
     return n2v
 
 class SparseVolumeNeighborhood():
-    def __init__(self, attr, vg, voxel_ids_label='lin_vox_idxs'):
+    '''Defines a neighborhood based on voxel selection results.
+    This class provides support for use with a Searchlight
+        
+    Parameters
+    ==========
+    attr: SparseAttributes
+        typically voxel selection results, as obtained 
+        from surf_voxel_selection.voxel_selection
+    voxel_ids_label: str 
+        label of voxel ids of neighboors
+    '''
+    def __init__(self, attr, voxel_ids_label='lin_vox_idxs'):
         mp = attr.get_attr_mapping(voxel_ids_label)
-        self._keys = list(mp.keys())
+        self._keys = list(mp.keys()) # ensure we things in order throughout
         self._n2vs = dict(mp) # node 2 voxel mapping
-        self._volgeom = vg
+        self._volgeom = attr.volgeom
 
         self._setup()
 
     def _setup(self):
+        # helper function to set up more internal fields
+
         # compute the mask, once and forever
         linmask = np.zeros((self._volgeom.nvoxels,), np.int32)
 
@@ -234,10 +294,15 @@ class SparseVolumeNeighborhood():
         nkeys = len(keys)
         nmask = np.sum(linmask > 0)
 
+        # require there are enough voxels in the dataset
+        # this is required because we use the standard searchlight machinery
+        # as provided by pyMVPA (hack suggested by Michael Hanke)
         if nkeys > len(linmask):
             raise ValueError('Unsupported: more centers (%d) than voxels (%d)'
                              % (nkeys, len(linmask)))
 
+        # if not enough voxels are selected by voxel selection, then add
+        # some other voxels to the mask so that we have enough
         delta = nmask - nkeys
         maskpos = 0
         while delta < 0:
@@ -246,11 +311,14 @@ class SparseVolumeNeighborhood():
                 delta += 1
             maskpos += 1
 
+        # store the mask
         self._linmask = linmask
 
         masknonzero = np.asarray(np.nonzero(linmask)[0][:nkeys])
         maskijk = self._volgeom.lin2ijk(masknonzero)
 
+        # prepare the mapping from center nodes (represented by
+        # sub-indices of voxels) to indices of nearby voxels 
         self._ijk2vs = dict()
         for i in xrange(nkeys):
             ijk = tuple(maskijk[i, :])
@@ -261,14 +329,33 @@ class SparseVolumeNeighborhood():
 
     @property
     def keys(self):
+        '''
+        Returns
+        =======
+        keys: list of int
+            list of center nodes (typically)
+            
+        '''
         return list(self._keys)
 
     @property
     def volgeom(self):
+        '''
+        Returns
+        =======
+        vg: volgeom.VolGeom
+            volume geometry 
+        '''
         return self._volgeom
 
     @property
     def mask(self):
+        '''
+        Returns
+        =======
+        mask : nibabel.Nifti1Image
+            mask with voxels that are used in this class. 
+        '''
         vg = self._volgeom
         shape = vg.shape[:3]
 
@@ -278,6 +365,10 @@ class SparseVolumeNeighborhood():
 
 
     def __call__(self, coordinate):
+        '''
+        Function that provides interface for searchlight
+        '''
+
         center_array = np.asanyarray(coordinate)[np.newaxis][0]
         center_tuple = (center_array[0], center_array[1], center_array[2])
 
@@ -316,6 +407,12 @@ class SparseVolumeNeighborhood():
           In addition this class supports all keyword arguments of its
           base-class :class:`~mvpa2.measures.base.Measure`.
         
+        Returns
+        -------
+        dataset : Dataset
+          results from running the searchlight
+          
+        
         Notes
         -----
         If `Searchlight` is used as `SensitivityAnalyzer` one has to make
@@ -330,7 +427,8 @@ class SparseVolumeNeighborhood():
         if center_ids is None:
             center_ids = self.keys
 
-        roi_ids = [self._center_ids2maskpos[center_id] for center_id in center_ids]
+        roi_ids = [self._center_ids2maskpos[center_id]
+                        for center_id in center_ids]
 
         # build a matching query engine from the arguments
         neighborhood = self
@@ -341,58 +439,6 @@ class SparseVolumeNeighborhood():
                            **kwargs)
 
 
-
-
-
-
-
-
-
-
-
-class SparseVolumeAttributes(SparseAttributes):
-    """
-    Sparse attributes with volume geometry. 
-    This class can store the result of surface-based voxel selection.
-    
-    Parameters
-    ==========
-    sa_labels: list
-        labels of attributes stored in this instance
-    volgeom: volgeom.VolGeom
-        volume geometry
-    """
-    def __init__(self, sa_labels, volgeom):
-        super(self.__class__, self).__init__(sa_labels)
-        self.a['volgeom'] = volgeom
-
-    """
-    Returns a neighboorhood function
-    
-    Parameters
-    ==========
-    mask
-        volume mask (usually from get_niftiimage_mask)
-    voxel_ids_label
-        label of voxel ids of neighboors
-    
-    
-    Returns
-    =======
-    neighboorhood: SparseNeighborhood 
-        neighboorhood function that can be used to access the 
-        neighbors for searchlight centers stored in this instance
-    """
-
-    def get_volgeom(self):
-        return self.a['volgeom']
-
-    """
-    Returns
-    =======
-    volgeom: volgem.VolGeom
-        volume geometry stored in this instance
-    """
 
 def to_file(fn, a):
     '''
