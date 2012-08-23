@@ -535,7 +535,7 @@ class SurfTests(unittest.TestCase):
             lab = 'lin_vox_idxs'
             nbrhood = sparse_attributes.SparseVolumeNeighborhood(sel, vg, lab)
             mask = nbrhood.mask
-            keys = nbrhood.keys
+            keys = None if ncenters is None else nbrhood.keys
 
             dset_data = np.reshape(np.arange(vg.nvoxels), vg.shape)
             dset_img = ni.Nifti1Image(dset_data, vg.affine)
@@ -545,11 +545,16 @@ class SurfTests(unittest.TestCase):
             searchlight = nbrhood.searchlight(voxelcounter, center_ids=keys)
             sl_dset = searchlight(dset)
 
-            print sl_dset.samples
-                # check whether number of voxels were selected is as expected
-        expected_voxcount = [235, 466, 1033, 1073, 1033, 1344, 5956, 5956]
+            selected_count = sl_dset.samples[0, :]
+            mp = sel.get_attr_mapping('lin_vox_idxs')
+            for i, k in enumerate(nbrhood.keys):
+                assert_equal(selected_count[i], len(mp[k]))
 
-        #assert_equal(voxcount, expected_voxcount)
+
+                # check whether number of voxels were selected is as expected
+        expected_voxcount = [58, 210, 418, 474, 474, 474, 978, 1603, 1603]
+
+        assert_equal(voxcount, expected_voxcount)
 
 class _Voxel_Count_Measure(Measure):
     is_trained = True
