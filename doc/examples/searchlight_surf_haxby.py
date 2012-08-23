@@ -56,7 +56,7 @@ These surfaces were resampled using AFNI's MapIcosahedron; ld refers to
 the number of linear divisions of the 'large' triangles of the original
 icosahedron (ld=x means there are 10*x**2+2 nodes and 20*x**2 triangles).
 """
-highres_ld = 16 # 64 or 128 is reasonable
+highres_ld = 128 # 64 or 128 is reasonable
 
 pial_surf_fn = os.path.join(datapath, "ico%d_%sh.pial_al.asc"
                                      % (highres_ld, hemi))
@@ -83,7 +83,7 @@ are 2*(10*8^2+2)=1284 nodes across the two hemispheres, and thus 823686 unique
 pairs of nodes. A higher number for lowres_ld may be  suited for single-center
 searchlight analyses.
 """
-lowres_ld = 8 # 16, 32 or 64 is reasonable
+lowres_ld = 32 # 16, 32 or 64 is reasonable
 
 intermediate_surf_fn = os.path.join(datapath, "ico%d_%sh.intermediate_al.asc"
                                              % (lowres_ld, hemi))
@@ -140,18 +140,18 @@ volume coverage there may be center nodes without voxels
 """
 center_ids = voxsel.keys()
 """
-Define the mask, which contains all voxels that are selected at least once
-during voxel selection (If there are fewer voxels selected than there are
-nodes, then the mask is extended to ensure we have sufficient 'features'
-in the dataset). Based on the mask we define the neighboorhood, which takes
-the masking operation into account.
+Define the neighboorhood, that is which voxels are near each of the center nodes
+This implies a voxel mask as well, which is subequently used for loading the
+data.
 
 The voxel_ids_label argument is optional
 and defaults to "lin_vox_idxs".
 """
 voxel_ids_label = 'lin_vox_idxs'
-mask = voxsel.get_niftiimage_mask(voxel_ids_label=voxel_ids_label)
-nbrhood = voxsel.get_neighborhood(voxel_ids_label=voxel_ids_label)
+
+nbrhood = nbrhood = sparse_attributes.SparseVolumeNeighborhood(voxsel,
+                                    voxel_ids_label=voxel_ids_label)
+mask = nbrhood.mask
 
 """
 From now on we simply follow the example in searchlight.py.
@@ -192,9 +192,8 @@ cv = CrossValidation(clf, NFoldPartitioner(),
 """
 The interesting part: define and run the searchlight
 """
-searchlight = sparse_attributes.searchlight(cv, nbrhood,
-                                           postproc=mean_sample(),
-                                           center_ids=center_ids)
+searchlight = nbrhood.searchlight(cv, postproc=mean_sample(),
+                                      center_ids=center_ids)
 
 
 sl_dset = searchlight(dataset)
