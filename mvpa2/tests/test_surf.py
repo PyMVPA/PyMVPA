@@ -424,9 +424,6 @@ class SurfTests(unittest.TestCase):
                     datalin[idxs] = 1
 
             voxcount.append(np.sum(datalin))
-            assert_equal(voxcount[-1],
-                         np.sum(sel.get_niftiimage_mask().get_data() > 1))
-
 
             # see if voxels containing inner and outer 
             # nodes were selected
@@ -519,7 +516,7 @@ class SurfTests(unittest.TestCase):
             #       rounding errors and the sphere is very symmetric, which
             #       means that different neighboring nodes are selected
             #       to select a certain number of voxels.
-            sel3cmp_difference_ratio = {sel:.3, sel4:0.}
+            sel3cmp_difference_ratio = {sel:.2, sel4:0.}
             for selcmp, ratio in sel3cmp_difference_ratio.iteritems():
                 nunion = ndiff = 0
 
@@ -548,6 +545,7 @@ class SurfTests(unittest.TestCase):
             selected_count = sl_dset.samples[0, :]
             mp = sel.get_attr_mapping('lin_vox_idxs')
             for i, k in enumerate(nbrhood.keys):
+                # check that number of selected voxels matches
                 assert_equal(selected_count[i], len(mp[k]))
 
 
