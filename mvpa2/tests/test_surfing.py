@@ -569,7 +569,6 @@ class SurfTests(unittest.TestCase):
 
                 # check whether number of voxels were selected is as expected
         expected_voxcount = [58, 210, 418, 474, 474, 474, 978, 1603, 1603]
-
         assert_equal(voxcount, expected_voxcount)
 
 class _Voxel_Count_Measure(Measure):
@@ -604,68 +603,3 @@ def suite():
 
 if __name__ == '__main__':
     import runner
-    '''
-    from mvpa2.base import debug
-    debug.active += ["SVS", "SLC"]
-    vg = volgeom.VolGeom((50, 50, 50), np.identity(4))
-
-
-
-    density = 20
-    outer = surf.generate_sphere(density) * 25. + 15
-    inner = surf.generate_sphere(density) * 25. + 15
-
-    outer = outer.merge(outer)
-    inner = inner.merge(inner)
-    vs = volsurf.VolSurf(vg, outer, inner)
-
-    nv = outer.nvertices
-
-    # select under variety of parameters
-    # parameters are distance metric (dijkstra or euclidian), 
-    # radius, and number of searchlight  centers
-    params = [('d', 1., 10), ('d', 1., 50), ('d', 1., 100), ('d', 2., 100),
-              ('e', 2., 100), ('d', 2., 100), ('d', 20, 100),
-              ('euclidian', 5, None), ('dijkstra', 10, None)]
-
-
-    expected_labs = ['lin_vox_idxs',
-                     'grey_matter_position',
-                     'center_distances']
-
-    voxcount = []
-    for distancemetric, radius, ncenters in params:
-        srcs = range(0, nv, nv / (ncenters or nv))
-        #srcs = range(nv)
-        sel = surf_voxel_selection.voxel_selection(vs, radius, srcs=srcs,
-                                        distancemetric=distancemetric)
-
-        lab = 'lin_vox_idxs'
-
-        nn = sparse_attributes.SparseVolumeNeighborhood(sel, vg, lab)
-        mask = nn.mask
-        keys = nn.keys
-
-        dset_data = np.reshape(np.arange(vg.nvoxels), vg.shape)
-        dset_img = ni.Nifti1Image(dset_data, vg.affine)
-        dset = fmri_dataset(samples=dset_img, mask=mask)
-
-        voxelcounter = _Voxel_Count_Measure()
-        sl = nn.searchlight(voxelcounter, center_ids=keys)
-        rr = sl(dset)
-
-
-
-
-        mp = sel.get_attr_mapping('lin_vox_idxs')
-
-
-
-
-
-
-        print rr.samples
-
-'''
-
-
