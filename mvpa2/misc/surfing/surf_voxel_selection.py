@@ -442,7 +442,7 @@ def voxel_selection(vol_surf, radius, srcs=None, surf_srcs=None,
         return node2volume_attributes
 
 def run_voxelselection(epifn, whitefn, pialfn, radius, srcs=None, srcfn=None,
-                       start=0, stop=1, steps=10, distancemetric='dijkstra',
+                       start=0., stop=1., steps=10, distancemetric='dijkstra',
                        intermediateat=.5, etastep=1):
     '''Wrapper function that is supposed to make voxel selection
     on the surface easy.
@@ -453,7 +453,7 @@ def run_voxelselection(epifn, whitefn, pialfn, radius, srcs=None, srcfn=None,
         Filename of functional volume in which voxel selection is performed.
         At the moment only nifti (.nii) files are supported
     whitefn: str
-        Filename of white matter surface. Only .asc files at the moment
+        Filename of white matter surface. Only .asc files at the moment.
     pialfn: str
         Filename of pial surface. Only .asc files at the moment.
     radius: int or float
@@ -466,10 +466,10 @@ def run_voxelselection(epifn, whitefn, pialfn, radius, srcs=None, srcfn=None,
         Filename of surface with searchlight centers, possibly with fewer nodes
         than pialfn and whitefn.        
     start: float (default: 0)
-            Relative start position of line in gray matter, 0.=white surface, 1.=pial surface
-            CheckMe: it might be the other way around
+            Relative start position of line in gray matter, 0.=white surface, 
+            1.=pial surface CheckMe: it might be the other way around
     stop: float (default: 1)
-        Relative stop position of line, in gray matter, 0.=white surface, 1.=pial surface
+        Relative stop position of line (as in start)
     require_center_in_gm: bool (default: False)
         Only select voxels that are 'truly' in between the white and pial matter.
         Specifically, each voxel's position is projected on the line connecting pial-
@@ -506,7 +506,7 @@ def run_voxelselection(epifn, whitefn, pialfn, radius, srcs=None, srcfn=None,
     vs = volsurf.VolSurf(vg, whitesurf, pialsurf)
 
     # run voxel selection
-    sel = voxel_selection(vs, srcsurf, radius, srcs, start, stop, steps,
+    sel = voxel_selection(vs, radius, srcs, srcsurf, start, stop, steps,
                           distancemetric, intermediateat, etastep)
 
     return sel

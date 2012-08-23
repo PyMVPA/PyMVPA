@@ -121,6 +121,7 @@ class VolSurf():
             pialweight = start + step * i
             whiteweight = 1 - pialweight
 
+            pialweight, whiteweight = whiteweight, pialweight
             # compute weighted intermediate surface in between pial and white
             surf = self._pial * pialweight + self._white * whiteweight
 
