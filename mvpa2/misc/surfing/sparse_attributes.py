@@ -365,7 +365,10 @@ class SparseVolumeNeighborhood():
         Returns
         =======
         mask : nibabel.Nifti1Image
-            mask with voxels that are used in this class. 
+            mask with voxels that are used in this class. This mask contains
+            all voxels that have been selected, and possibly more. It is ensured
+            that the number of voxels is not less than the number of
+            keys.
         '''
         vg = self._volgeom
         shape = vg.shape[:3]

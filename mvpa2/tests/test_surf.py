@@ -567,15 +567,14 @@ class SurfTests(unittest.TestCase):
                     assert_equal(idx, nearest)
 
 
-
-
-
                 # check whether number of voxels were selected is as expected
         expected_voxcount = [58, 210, 418, 474, 474, 474, 978, 1603, 1603]
 
         assert_equal(voxcount, expected_voxcount)
 
 class _Voxel_Count_Measure(Measure):
+    # used to check voxel selection results
+
     is_trained = True
     def __init__(self, **kwargs):
         Measure.__init__(self, **kwargs)
