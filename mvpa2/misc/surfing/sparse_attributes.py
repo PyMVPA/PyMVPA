@@ -23,7 +23,11 @@ have the same number of elements.
 The rationale is to make a general class that associates keys of ROIs with
 properties of voxels (their index, distance from center, position in grey 
 matter, etc). ROIs can in principle be either from a volume or a 
-surface searchlight, or manually drawn in e.g. AFNI's SUMA.   
+surface searchlight, or manually drawn in e.g. AFNI's SUMA.
+
+TODO: consider whether we use a standard sa_label, such as the one
+used for linear voxel indices.
+TODO: consider using constants frmo surf_voxel_selection   
 '''
 class SparseAttributes(object):
     def __init__(self, sa_labels):

@@ -27,6 +27,8 @@ import mvpa2.misc.surfing.volgeom as volgeom
 import utils
 import surf_fs_asc
 
+# TODO: see if we use these contants, or let it be up to the user
+# possibly also rename them
 LINEAR_VOXEL_INDICES = "lin_vox_idxs"
 CENTER_DISTANCES = "center_distances"
 GREY_MATTER_POSITION = "grey_matter_position"
