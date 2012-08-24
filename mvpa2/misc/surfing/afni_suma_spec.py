@@ -8,7 +8,7 @@ Includes I/O support and generating spec files that combine both hemispheres'''
 import re, datetime, os, copy
 import utils, surf_fs_asc
 
-_COMPREFIX = 'CoM'
+_COMPREFIX = 'CoM' #  for surfaces that were rotated around center of mass
 
 class SurfaceSpec(object):
     def __init__(self, surfaces, states=None, groups=None, indir=None):
@@ -16,7 +16,7 @@ class SurfaceSpec(object):
         self.indir = indir
 
         if states is None:
-            states = list(set(surfaces[k]['SurfaceState'] for k in surfaces))
+            states = list(set(surface['SurfaceState'] for surface in surfaces))
 
         self.states = states
 
@@ -96,13 +96,13 @@ def hemi_pairs_add_views(spec_left, spec_right, state, indir=None, overwrite=Fal
     #views = collections.OrderedDict(m='medial', s='superior', i='inferior', a='anterior', p='posterior')
     # for compatibility use a normal dict
     views = dict(m='medial', s='superior', i='inferior', a='anterior', p='posterior')
-    viewkeys=['m','s','i','a','p']
+    viewkeys = ['m', 's', 'i', 'a', 'p']
 
     spec_both = [spec_left, spec_right]
     spec_both_new = map(copy.deepcopy, spec_both)
 
     for view in viewkeys:
-        longname=views[view]
+        longname = views[view]
         oldfns = []
         newfns = []
         for i, spec in enumerate(spec_both):
@@ -144,7 +144,9 @@ def hemi_pairs_add_views(spec_left, spec_right, state, indir=None, overwrite=Fal
             print "Output already exist for %s" % longname
         else:
             surf_left, surf_right = map(surf_fs_asc.read, oldfns)
-            surf_both_moved = surf_fs_asc.hemi_pairs_reposition(surf_left, surf_right, view)
+            surf_both_moved = surf_fs_asc.hemi_pairs_reposition(surf_left,
+                                                                surf_right,
+                                                                view)
 
             for fn, surf in zip(newfns, surf_both_moved):
                 surf_fs_asc.write(surf, fn, overwrite)
@@ -157,7 +159,8 @@ def merge_left_right(left, right):
     if set(left.states) != set(right.states):
         raise ValueError('Incompatible states')
 
-    mergeable = lambda x : (x['Anatomical'] == 'Y') or x['SurfaceState'].startswith(_COMPREFIX)
+    mergeable = lambda x : ((x['Anatomical'] == 'Y') or
+                             x['SurfaceState'].startswith(_COMPREFIX))
     to_merge = map(mergeable, left.surfaces)
 
     s_left, s_right = left.surfaces, right.surfaces
@@ -170,7 +173,8 @@ def merge_left_right(left, right):
 
         # for now assume they are in the same order for left and right
         if ll['SurfaceState'] != rr['SurfaceState']:
-            raise ValueError('Different states for left (%r) and right (%r)' % (ll, rr))
+            raise ValueError('Different states for left (%r) and right (%r)' %
+                                                                     (ll, rr))
 
         if merge:
             state = ll['SurfaceState']
@@ -198,9 +202,9 @@ def read(fn):
     states = []
     groups = []
     current_surface = None
-    
-    
-    surface_names=[]
+
+
+    surface_names = []
 
     with open(fn) as f:
         lines = f.read().split('\n')
@@ -217,7 +221,7 @@ def read(fn):
             elif 'NewSurface' in line:
                 #current_surface = collections.OrderedDict()
                 # for comppatibility use a normal dict (which loses the order)
-                current_surface=dict()
+                current_surface = dict()
                 surfaces.append(current_surface)
 
     return SurfaceSpec(surfaces=surfaces or None,

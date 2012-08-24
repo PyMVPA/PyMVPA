@@ -9,7 +9,6 @@ Created on Feb 12, 2012
 import numpy as np
 
 def write(fnout, data, nodeidxs=None):
-
     data = np.array(data)
     nv = data.shape[0]
     nt = 1 if data.ndim == 1 else data.shape[1]
@@ -21,7 +20,7 @@ def write(fnout, data, nodeidxs=None):
         nodeidxs = np.reshape(np.array(nodeidxs), (-1, 1))
         data = np.reshape(data, (nv, -1))
 
-        # put in alldata
+        # first column for node indices, remaining columns for data
         alldata[:, 0] = nodeidxs[:, 0]
         alldata[:, 1:] = data[:]
         data = alldata
@@ -29,7 +28,7 @@ def write(fnout, data, nodeidxs=None):
     else:
         fmt = []
 
-    # by default store with 5 decimals precision
+    # 5 decimal places should be enough for everyone
     fmt.extend(['%.5f' for _ in xrange(nt)])
 
     np.savetxt(fnout, data, fmt, ' ')
