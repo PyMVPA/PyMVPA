@@ -9,6 +9,7 @@
 """Unit tests for PyMVPA surface searchlight and related utilities"""
 
 import numpy as np
+import nibabel as ni
 
 import os
 import tempfile
@@ -28,9 +29,6 @@ import mvpa2.misc.surfing.volgeom as volgeom
 import mvpa2.misc.surfing.volsurf as volsurf
 import mvpa2.misc.surfing.sparse_attributes as sparse_attributes
 import mvpa2.misc.surfing.surf_voxel_selection as surf_voxel_selection
-
-import nibabel as ni
-
 
 
 class SurfTests(unittest.TestCase):
