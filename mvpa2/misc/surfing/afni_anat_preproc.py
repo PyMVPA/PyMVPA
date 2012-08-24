@@ -26,7 +26,6 @@ def getdefaults():
     '''set up default parameters - for testing now'''
     rootdir = '/Users/nick/Downloads/fingerdata-0.2/'
     d = { #  options that must be set properly
-       'sid':'s88', # subject id
        'ld': '4+8+16+32+64+128', # (list of) number of linear divisions for mapicoshedron
        'steps':'all', # one or more of: toafni+mapico+moresurfs+align+makespec
                       # or 'all' to run all steps
@@ -59,7 +58,7 @@ def augmentconfig(c):
     # try to be smart and deduce subject id from surfdir (if not set explicitly)
     surfdir = c['surfdir']
     if surfdir:
-        surfdir=os.path.abspath(surfdir)
+        surfdir = os.path.abspath(surfdir)
         parent, nm = os.path.split(surfdir)
 
         if nm != 'surf':
@@ -83,7 +82,7 @@ def augmentconfig(c):
     sid = os.path.split(os.path.split(surfdir)[0])[1] if surfdir else None
 
     if c.get('sid') is None:
-        c['sid']=sid
+        c['sid'] = sid
 
     if c['sid'] is None:
         print"Warning: no subject id specified"
@@ -105,8 +104,6 @@ def augmentconfig(c):
 
         if hasexpvol:
             if hasanatvol or hasepivol:
-                print config
-                print hasanatvol, hasepivol, hasexpvol, hasisepi
                 raise Exception("expvol specified, but also anatvol or epivol - illegal!")
             if not hasisepi:
                 raise Exception("not specified whether expvol is EPI (yes) or anat (no)")
@@ -132,7 +129,7 @@ def augmentconfig(c):
             (True=='yes',False=='no'); otherwise an exception is thrown. The dict is updated'''
             val = d[k]
             if val is None:
-                b=False
+                b = False
             elif type(val) == bool:
                 b = val
             else:
@@ -162,12 +159,7 @@ def getenv():
     '''returns the path environment
     As a side effect we ensure to set for Freesurfer's HOME'''
     env = os.environ
-    #p=env.get('PATH','')
 
-    # add for both local machine (NNO) and Hydra. This is a bit clumsy at the moment
-    # FIXME
-    #p+=':/sw/afni:/Applications/Freesurfer/bin:/Applications/MATLAB_R2011a.app/bin/:/apps/freesurfer/bin:/apps/afni'
-    #env['PATH']=p
     if 'FREESURFER_HOME' not in env:
         env['FREESURFER_HOME'] = env['HOME'] # Freesurfer requires this var, even though we don't use it
 
@@ -343,49 +335,7 @@ def run_alignment(config, env):
     for volin in volsin:
         if not os.path.exists(volin):
             raise ValueError('File %s does not exist' % volin)
-    '''
 
-    allvols = [surfvol, config['expvol']]
-    allvols_ss = [config[s] for s in ['surfvol_ss', 'expvol_ss']] # skulls strip?
-    myvolsin = []
-
-
-
-    alignsuffix = config['al2expsuffix']
-    volsin = [] # keeps the 2 output files (surfvol, experimental vol) used for alignment
-
-    # determine which volume to use. if there is a skull stripped version, use that one. Otherwise
-    # take the original volume and assume it is skull stripped
-
-    for volfn in allvols:
-        if volfn is None:
-            if not config['identity']:
-                raise ValueError("Empty volfn")
-            volfn_in = None
-        else:
-            [a_p, a_n, a_o, a_e] = utils.afni_fileparts(volfn)
-            volfn_ss = '%s_ss%s%s' % (a_n, a_o, a_e) # skull stripped version
-            shortvolfn = '%s%s%s' % (a_n, a_o, a_e) # ensure there is a HEAD extension
-
-            # make list of potential file names, in order of preference
-            fullfns = ['%s/%s' % (refdir, volfn_ss), '%s/%s' % (a_p, shortvolfn)]
-            print fullfns
-            volfn_in = None
-
-            for fullfn in fullfns:
-                if os.path.exists(fullfn):
-                    volfn_in = os.path.split(fullfn)[1]
-                    break
-
-            if not volfn_in:
-                utils.run_cmds('ls', env)
-                utils.run_cmds('ls %s' % volfn, env)
-                raise Exception("Did not find volume for %s" % volfn)
-        volsin.append(volfn_in)
-    # our two volumes are skull stripped now; run alignment
-    '''
-
-    # _,a_n,_,_=utils.afni_fileparts(volsin[0]) # surfvol input name
     a_n = utils.afni_fileparts(volsin[0])[1] # surfvol input root name
     ssalprefix = '%s%s' % (a_n, alignsuffix)
 
@@ -479,8 +429,6 @@ def run_alignment(config, env):
 
         addedge_fns = ['_ae.ExamineList.log']
 
-        print n, n_dset, dset
-
         exts = ['HEAD', 'BRIK']
         addedge_rootfns = ['%s_%s+orig' % (n, postfix)
                             for postfix in ['e3', 'ec', n_dset + '_ec']]
@@ -511,7 +459,7 @@ def run_alignment(config, env):
 
     # apply transformation to surfaces
     [icolds, hemis] = _get_hemis_icolds(config)
-    sumadir=config['sumadir']
+    sumadir = config['sumadir']
     sumafiles = os.listdir(sumadir)
 
     # process all hemispheres and ld values
@@ -531,7 +479,7 @@ def run_alignment(config, env):
                         cmds.append(cmd)
 
                     # as of June 2012 copy the original sphere.reg (not aligned) as well
-                    if sumafile==('%s.sphere.reg.asc' % pat):
+                    if sumafile == ('%s.sphere.reg.asc' % pat):
                         if config['overwrite'] or not os.path.exists('%s/%s' % (refdir, sumafile)):
                             cmds.append('cp %s/%s %s/%s' % (sumadir, sumafile, refdir, sumafile))
 
@@ -575,7 +523,8 @@ def run_makespec_bothhemis(config, env):
             specfn = '%s/%s.spec' % (refdir, surfprefix)
             specs.append(afni_suma_spec.read(specfn))
 
-        specs = afni_suma_spec.hemi_pairs_add_views(specs[0], specs[1], 'inflated', refdir, overwrite=overwrite)
+        specs = afni_suma_spec.hemi_pairs_add_views(specs[0], specs[1],
+                            'inflated', refdir, overwrite=overwrite)
         spec_both = afni_suma_spec.merge_left_right(specs[0], specs[1])
 
         surfprefix = '%s%sh' % (config['mi_icopat'] % icold, 'b')
@@ -600,8 +549,6 @@ def suma_makerunsuma(fnout, specfn, surfvol):
 
     if config['verbose']:
         print 'Generated run suma file in %s' % fnout
-
-
 
 
 def suma_makespec(indir, surfprefix, fnout=None):
@@ -701,10 +648,7 @@ def run_all(config, env):
         else:
             raise ValueError('Step not recognized: %r' % step)
 
-    # this may be a security hazard - but we trust the input
     return cmds
-
-
 
 def getoptions():
     yesno = ["yes", "no"]
@@ -725,29 +669,12 @@ def getoptions():
     parser.add_argument('-I', '--identity', action="store_true", default=False, help="Use identity transformation between SurfVol and anat/epivol (no alignment)")
     parser.add_argument('-A', '--AddEdge', default='yes', choices=yesno, help="Run AddEdge on aligned volumes")
 
-    # for testing
-    if True:
-        args = None
-    else:
-        args = "-s s88 --surfdir /Users/nick/Downloads/fingerdata-0.2/fs/s88/surf -a /Users/nick/Downloads/fingerdata-0.2/glm/anat_al+orig -r /Users/nick/Downloads/fingerdata-0.2/refC"
+    args = None
 
     namespace = parser.parse_args(args)
     return vars(namespace)
 
-if __name__ == '__Xmain__':
-    d = '/Users/nick/Downloads/subj1/ref4'
-    left = _get_surface_defs(d, 'ico32_lh')
-    right = _get_surface_defs(d, 'ico32_rh')
-
-    print left
-
-    _add_multiview_surfaces(d, left, right)
-
-
 if __name__ == '__main__':
-
-
-
     # get default configuration (for testing)
     # in the future, allow for setting these on command line
     config = getdefaults()
@@ -757,25 +684,20 @@ if __name__ == '__main__':
     # check config
     checkconfig(config)
 
-    print "Using these options:\n"
-    for v in options.keys():
-        print '  %s = %r' % (v, config[v])
-
+    if config['verbose']:
+        print "Using these options:\n"
+        for v in options.keys():
+            print '  %s = %r' % (v, config[v])
 
     # add auxiliry configuration settings that are *derived* from config
     config = augmentconfig(config)
 
-    # get path stuff; try to get matlab, freesurfer, afni in path
+    # get path stuff; try to get freesurfer and afni in path
     env = getenv()
 
     # run commands based on config
     cmds = run_all(config, env)
     #cmds='cd /Users/nick/Downloads/fingerdata-0.2/refZ/||exit 1;align_epi_anat.py -overwrite -dset1 ./anat_al_ss+orig -dset2 ./s88_SurfVol_ss+orig -dset1to2 -giant_move -suffix _al2SV -Allineate_opts "-warp shr -VERB -weight_frac 1.0"  -epi_strip None -anat_has_skull no'
     utils.run_cmds(cmds, env)
-    if False:
-        d = '/Users/nick/Downloads/fingerdata-0.2/refA/'
-        fn = d + 'ico96_lh.tqinflated_al.asc'
-        average_fs_asc_surfs(fn, fn, 'foo')
-
 
 
