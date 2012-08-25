@@ -326,5 +326,5 @@ def from_image(img):
     if not isinstance(img, ni.spatialimages.SpatialImage):
         raise TypeError("Image is not a spatial image: %r" % img)
 
-    return VolGeom(shape=img.get_shape(), affine=img.get_affine())
+    return VolGeom(shape=img.shape, affine=img.affine)
 
