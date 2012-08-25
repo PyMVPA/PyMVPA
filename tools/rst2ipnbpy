@@ -63,14 +63,16 @@ class ReST2IPyNB(object):
                        'need_new_codecell': False}
         self._currcell = None
         self._buffer = ''
+        self._notebook = None
 
     def __call__(self, rest):
-        notebook = deepcopy(ReST2IPyNB.ipynb_template)
+        self._notebook = deepcopy(ReST2IPyNB.ipynb_template)
         doctree = publish_doctree(
                     doc, settings_overrides=self._doctree_parser_settings)
-        self._currcells = notebook['worksheets'][0]['cells']
+        self._currcells = self._notebook['worksheets'][0]['cells']
         self._parse(doctree)
         self._store_currcell()
+        notebook = self._notebook
         self._reset_state()
         return notebook
 
@@ -110,6 +112,8 @@ class ReST2IPyNB(object):
             if tag == 'title':
                 self._add_headingcell(self._state['sec_depth'])
                 self._parse(child)
+                if not len(self._notebook['metadata']['name']):
+                    self._notebook['metadata']['name'] = self._buffer
             elif tag == '#text':
                 self._add2buffer(child.astext())
             elif tag == 'paragraph':
