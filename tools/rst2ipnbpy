@@ -1,0 +1,187 @@
+#!/usr/bin/python
+
+import sys
+import re
+from docutils.core import publish_doctree
+from doctest import script_from_examples, DocTestParser
+
+parser_settings = {
+    'report_level': 5
+}
+
+apiref_baseurl = 'http://pymvpa.org/generated'
+
+dt_parser = DocTestParser()
+
+doc = open(sys.argv[1]).read()
+# some preproc on the raw string
+doc = re.subn(r'^.. index.*$', '', doc, flags=re.MULTILINE)[0]
+# fold text roles inside to turn them into a ref
+subns = 1
+while not subns == 0:
+    doc, subns = re.subn(r':([a-z]+):`(.*)`', '`:\\1:\\2`', doc,
+                         flags=re.MULTILINE | re.DOTALL)
+
+doctree = publish_doctree(doc, settings_overrides=parser_settings)
+
+default_settings = {
+    'sec_depth': 1,
+    'indent': 0,
+    'in_markdowncell': False,
+    'need_new_codecell': False,
+}
+
+def comment_breaks(text, indent=''):
+    return ('\n#%s ' % indent).join(text.split('\n'))
+
+def open_markdowncell(kwa):
+    if kwa['in_markdowncell']:
+        return ''
+    else:
+        kwa['in_markdowncell'] = True
+        kwa['needs_new_codecell'] = False
+        return '\n\n# <markdowncell>\n'
+
+def close_markdowncell(kwa):
+    if kwa['in_markdowncell']:
+        kwa['in_markdowncell'] = False
+        return '\n'
+    else:
+        return ''
+
+def make_apiref(reftext):
+    # try to determine what kind of ref we got
+    if reftext.startswith(':'):
+        rtype, ref = re.match(':([a-z]+):(.*)', reftext).groups()
+    else:
+        rtype = None
+        ref = reftext
+    if rtype is None:
+        # function?
+        if ref.endswith('()'):
+            rtype = 'func'
+            ref = ref[:-2]
+    refid = ref.lstrip('~').rstrip('()')
+    if rtype == 'meth':
+        ref_url = '%s/%s.html#%s' % (apiref_baseurl,
+                                     '.'.join(refid.split('.')[:-1]),
+                                     refid)
+    else:
+        ref_url = '%s/%s.html#%s' % (apiref_baseurl, refid, refid.replace('.', '-').replace('_', '-').lower())
+    ref_label = None
+    if ref.startswith('~'):
+        if rtype == 'meth':
+            ref_label = '%s()' % '.'.join(refid.split('.')[-2:])
+        elif rtype == 'func':
+            ref_label = '%s()' % refid.split('.')[-1]
+        else:
+            ref_label = '%s' % refid.split('.')[-1]
+    return '[%s](%s)' % (ref_label, ref_url)
+
+def consume_children(root, **kwa):
+    val = ''
+    for child in root.children:
+        tag = child.tagname
+        if tag == 'title':
+            val += close_markdowncell(kwa)
+            val += '\n\n# <headingcell level=%i>\n\n# %s' \
+                    % (kwa['sec_depth'], consume_children(child, **kwa))
+        elif tag == '#text':
+            val += child.astext()
+        elif tag == 'paragraph':
+            indent = ' ' * kwa['indent']
+            content = consume_children(child, **kwa)
+            val += open_markdowncell(kwa)
+            val += '\n\n#%s %s' \
+                    % (indent, comment_breaks(content, indent))
+        elif tag == 'doctest_block':
+            #val += '\n\n# <codecell>\n\n%s\n' % script_from_examples(child.rawsource)
+            for ex in dt_parser.get_examples(child.rawsource):
+                if kwa['in_markdowncell'] or kwa['needs_new_codecell']:
+                    val += '\n\n# <codecell>\n\n'
+                val += '%s%s' % (' ' * ex.indent, ex.source)
+                kwa['in_markdowncell'] = False
+                kwa['needs_new_codecell'] = len(ex.want) > 0
+        elif tag == 'section':
+            nkwa = kwa.copy()
+            nkwa['sec_depth'] = kwa['sec_depth'] + 1
+            val += consume_children(child, **nkwa)
+        elif tag == 'note':
+            nkwa = kwa.copy()
+            #nkwa['indent'] += 5
+            # strip out the contained paragraph
+            node_content = consume_children(child, **nkwa)
+            val += '\n\n# - - -\n# *Note* %s\n# - - -\n' % node_content
+        elif tag == 'title_reference':
+            ref_text = consume_children(child, **kwa)
+            if ref_text.startswith(':term:'):
+                # link to glossary
+                term = re.match(':term:(.*)', ref_text).groups()[0]
+                val += '[%s](%s#term-%s)' % (term,
+                                             'http://pymvpa.org/glossary.html',
+                                             term.lower().replace(' ', '-'))
+            elif ref_text.startswith('~mvpa') \
+                 or ref_text.startswith('mvpa') \
+                 or ref_text.startswith(':meth:') \
+                 or ref_text.startswith(':mod:') \
+                 or ref_text.startswith(':class:') \
+                 or ref_text.startswith(':func:'):
+                # various API reference link variants
+                val += make_apiref(ref_text)
+            # XXX for the rest I have no idea how to link them without huge
+            # effort
+            elif ref_text.startswith(':ref:'):
+                val += '*%s*' % re.match(':ref:(.*)', ref_text).groups()[0]
+            elif re.match(':([a-z]+):', ref_text):
+                # catch other ref type we should handle, but do not yet
+                raise RuntimeError("unhandled reference type '%s'" % ref_text)
+            else:
+                # plain refs seems to be mostly used for external API
+                val += '`%s`' % ref_text
+        elif tag == 'emphasis':
+            val += '*%s*' % consume_children(child, **kwa)
+        elif tag == 'strong':
+            val += '**%s**' % consume_children(child, **kwa)
+        elif tag == 'literal':
+            # strip one layer of backticks
+            val += child.rawsource[1:-1]
+        elif tag == 'problematic':
+            print 'PROBLEMATIC: %s' % child
+            val += consume_children(child, **kwa)
+        elif tag == 'reference':
+            val += '[%s][%s]' % (consume_children(child, **kwa),
+                                 child.attributes['name'])
+        elif tag in ['comment', 'target']:
+            pass
+        elif tag == 'system_message':
+            if child.attributes['type'] == 'INFO':
+                pass
+            elif child.children[0].astext() == 'Unknown directive type "exercise".':
+                val += open_markdowncell(kwa)
+                exercise_text = \
+                    '\n'.join([l.strip()
+                        for l in child.children[1][0].astext().split('\n')][2:])
+                exercise_content = consume_children(
+                                        publish_doctree(exercise_text), **kwa)
+                val += '\n\n# - - -\n# *Exercise* %s\n# - - -\n' \
+                       % exercise_content
+            elif child.children[0].astext() == 'Unknown directive type "todo".':
+                pass
+            else:
+                raise RuntimeError("cannot handle system message '%s'"
+                                   % child.astext())
+        else:
+            if hasattr(child, 'line') and child.line:
+                line = ' on line %i' % child.line
+            else:
+                line = ''
+            raise RuntimeError("Unkown tag '%s'%s" % (tag, line))
+    return val
+
+nbsrc = '# -*- coding: utf-8 -*-\n# <nbformat>3.0</nbformat>\n'
+nbsrc += consume_children(doctree, **default_settings)
+open('nbtest.py', 'w').write(nbsrc)
+print nbsrc
+
+
+
