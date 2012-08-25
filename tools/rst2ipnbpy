@@ -4,184 +4,264 @@ import sys
 import re
 from docutils.core import publish_doctree
 from doctest import script_from_examples, DocTestParser
+import json
+from copy import deepcopy
 
-parser_settings = {
-    'report_level': 5
-}
+def prep_rest(rest):
+    # some preproc on the raw string
+    doc = re.subn(r'^.. index.*$', '', rest, flags=re.MULTILINE)[0]
+    # fold text roles inside to turn them into a ref
+    subns = 1
+    while not subns == 0:
+        doc, subns = re.subn(r':([a-z]+):`(.*)`', '`:\\1:\\2`', doc,
+                             flags=re.MULTILINE | re.DOTALL)
+    return doc
 
-apiref_baseurl = 'http://pymvpa.org/generated'
 
-dt_parser = DocTestParser()
+class ReST2IPyNB(object):
+    ipynb_template = {
+        "metadata": {"name": ""},
+        "nbformat": 3,
+        "nbformat_minor": 0,
+        "worksheets": [{"cells": [], "metadata": {}}]
+    }
+    codecell_template = {
+        "cell_type": "code",
+        "collapsed": False,
+        "input": [],
+        "language": "python",
+        "metadata": {},
+        "outputs": []
+    }
+    markdowncell_template = {
+        "cell_type": "markdown",
+        "metadata": {},
+        "source": []
+    }
+    headingcell_template = {
+        "cell_type": "heading",
+        "level": None,
+        "metadata": {},
+        "source": []
+    }
+
+    def __init__(self,
+                 apiref_baseurl='',
+                 glossary_baseurl='',
+                 doctree_parser_settings=None):
+        self._doctree_parser_settings = None
+        if doctree_parser_settings is None:
+            # shut up
+            self._doctree_parser_settings = {'report_level': 5}
+        self._apiref_baseurl = apiref_baseurl
+        self._glossary_baseurl = glossary_baseurl
+        self._doctest_parser = DocTestParser()
+        self._reset_state()
+
+    def _reset_state(self):
+        self._state = {'sec_depth': 1, 'indent': 0, 'in_markdowncell': False,
+                       'need_new_codecell': False}
+        self._currcell = None
+        self._buffer = ''
+
+    def __call__(self, rest):
+        notebook = deepcopy(ReST2IPyNB.ipynb_template)
+        doctree = publish_doctree(
+                    doc, settings_overrides=self._doctree_parser_settings)
+        self._currcells = notebook['worksheets'][0]['cells']
+        self._parse(doctree)
+        self._store_currcell()
+        self._reset_state()
+        return notebook
+
+    def _ref2apiref(self, reftext):
+        apiref_baseurl = self._apiref_baseurl
+        # try to determine what kind of ref we got
+        if reftext.startswith(':'):
+            rtype, ref = re.match(':([a-z]+):(.*)', reftext).groups()
+        else:
+            rtype = None
+            ref = reftext
+        if rtype is None:
+            # function?
+            if ref.endswith('()'):
+                rtype = 'func'
+                ref = ref[:-2]
+        refid = ref.lstrip('~').rstrip('()')
+        if rtype == 'meth':
+            ref_url = '%s/%s.html#%s' % (apiref_baseurl,
+                                         '.'.join(refid.split('.')[:-1]),
+                                         refid)
+        else:
+            ref_url = '%s/%s.html#%s' % (apiref_baseurl, refid, refid.replace('.', '-').replace('_', '-').lower())
+        ref_label = None
+        if ref.startswith('~'):
+            if rtype == 'meth':
+                ref_label = '%s()' % '.'.join(refid.split('.')[-2:])
+            elif rtype == 'func':
+                ref_label = '%s()' % refid.split('.')[-1]
+            else:
+                ref_label = '%s' % refid.split('.')[-1]
+        return '[%s](%s)' % (ref_label, ref_url)
+
+    def _parse(self, doctree):
+        for child in doctree.children:
+            tag = child.tagname
+            if tag == 'title':
+                self._add_headingcell(self._state['sec_depth'])
+                self._parse(child)
+            elif tag == '#text':
+                self._add2buffer(child.astext())
+            elif tag == 'paragraph':
+                self._add_markdowncell()
+                self._add2buffer('\n\n')
+                self._flush_buffer()
+                self._parse(child)
+            elif tag == 'doctest_block':
+                self._add_codecell()
+                needs_new_codecell = False
+                for ex in self._doctest_parser.get_examples(child.rawsource):
+                    if needs_new_codecell:
+                        self._add_codecell()
+                    self._add2buffer('%s%s' % (' ' * ex.indent, ex.source))
+                    self._flush_buffer(startnew=True)
+                    needs_new_codecell = len(ex.want) > 0
+            elif tag == 'section':
+                self._state['sec_depth'] += 1
+                self._parse(child)
+                self._state['sec_depth'] -= 1
+            elif tag == 'note':
+                self._add_markdowncell(force=True)
+                self._parse(child)
+                self._flush_buffer()
+                self._currcell['source'].insert(0, '- - -\n*Note*')
+                self._currcell['source'].append('- - -\n')
+                self._store_currcell()
+            elif tag == 'title_reference':
+                self._flush_buffer()
+                self._parse(child)
+                if self._buffer.startswith(':term:'):
+                    # link to glossary
+                    term = re.match(':term:(.*)', self._buffer).groups()[0]
+                    self._buffer = '[%s](%s#term-%s)' % (term,
+                                                 self._glossary_baseurl,
+                                                 term.lower().replace(' ', '-'))
+                elif self._buffer.startswith('~mvpa') \
+                     or self._buffer.startswith('mvpa') \
+                     or self._buffer.startswith(':meth:') \
+                     or self._buffer.startswith(':mod:') \
+                     or self._buffer.startswith(':class:') \
+                     or self._buffer.startswith(':func:'):
+                    # various API reference link variants
+                    self._buffer = self._ref2apiref(self._buffer)
+                # XXX for the rest I have no idea how to link them without huge
+                # effort
+                elif self._buffer.startswith(':ref:'):
+                    self._buffer = '*%s*' % re.match(':ref:(.*)', self._buffer).groups()[0]
+                elif re.match(':([a-z]+):', self._buffer):
+                    # catch other ref type we should handle, but do not yet
+                    raise RuntimeError("unhandled reference type '%s'" % self._buffer)
+                else:
+                    # plain refs seems to be mostly used for external API
+                    self._buffer = '`%s`' % self._buffer
+            elif tag == 'emphasis':
+                self._flush_buffer()
+                self._parse(child)
+                self._buffer = '*%s*' % self._buffer
+            elif tag == 'strong':
+                self._flush_buffer()
+                self._parse(child)
+                self._buffer = '**%s**' % self._buffer
+            elif tag == 'literal':
+                # strip one layer of backticks
+                self._add2buffer(child.rawsource[1:-1])
+            elif tag == 'problematic':
+                print 'PROBLEMATIC: %s' % child
+                self._parse(child)
+            elif tag == 'reference':
+                self._flush_buffer()
+                self._parse(child)
+                self._buffer = '[%s][%s]' % (self._buffer,
+                                             child.attributes['name'])
+            elif tag in ['comment', 'target']:
+                pass
+            elif tag == 'system_message':
+                if child.attributes['type'] == 'INFO':
+                    pass
+                elif child.children[0].astext() == 'Unknown directive type "exercise".':
+                    exercise_text = \
+                        '\n'.join([l.strip()
+                            for l in child.children[1][0].astext().split('\n')][2:])
+
+                    self._add_markdowncell(force=True)
+                    self._parse(publish_doctree(
+                                    exercise_text,
+                                    settings_overrides=self._doctree_parser_settings))
+                    self._flush_buffer()
+                    self._currcell['source'].insert(0, '- - -\n*Exercise*')
+                    self._currcell['source'].append('- - -\n')
+                    self._store_currcell()
+                elif child.children[0].astext() == 'Unknown directive type "todo".':
+                    pass
+                else:
+                    raise RuntimeError("cannot handle system message '%s'"
+                                       % child.astext())
+            else:
+                if hasattr(child, 'line') and child.line:
+                    line = ' on line %i' % child.line
+                else:
+                    line = ''
+                raise RuntimeError("Unkown tag '%s'%s" % (tag, line))
+
+    def _store_currcell(self):
+        if not self._currcell is None:
+            self._flush_buffer()
+            if self._currcell['cell_type'] == 'code':
+                # remove last newline to save on vertical space
+                self._currcell['input'][-1] = self._currcell['input'][-1].rstrip('\n')
+            self._currcells.append(self._currcell)
+        self._currcell = None
+
+    def _add_headingcell(self, level):
+        self._store_currcell()
+        self._currcell = deepcopy(ReST2IPyNB.headingcell_template)
+        self._currcell['level'] = level
+
+    def _add_codecell(self):
+        self._store_currcell()
+        self._currcell = deepcopy(ReST2IPyNB.codecell_template)
+
+    def _add_markdowncell(self, force=False):
+        if self._currcell is None \
+           or not self._currcell['cell_type'] == 'markdown' \
+           or force:
+            # we need a new cell
+            self._store_currcell()
+            self._currcell = deepcopy(ReST2IPyNB.markdowncell_template)
+
+    def _add2buffer(self, value):
+        self._buffer += value
+
+    def _flush_buffer(self, startnew=True):
+        if not len(self._buffer):
+            return
+        if self._currcell['cell_type'] == 'code':
+            target_field = 'input'
+        else:
+            target_field = 'source'
+        if startnew or not len(self._currcell[target_field]):
+            self._currcell[target_field].append(self._buffer)
+        else:
+            self._currcell[target_field][-1] += self._buffer
+        self._buffer = ''
 
 doc = open(sys.argv[1]).read()
-# some preproc on the raw string
-doc = re.subn(r'^.. index.*$', '', doc, flags=re.MULTILINE)[0]
-# fold text roles inside to turn them into a ref
-subns = 1
-while not subns == 0:
-    doc, subns = re.subn(r':([a-z]+):`(.*)`', '`:\\1:\\2`', doc,
-                         flags=re.MULTILINE | re.DOTALL)
+doc = prep_rest(doc)
 
-doctree = publish_doctree(doc, settings_overrides=parser_settings)
+conv = ReST2IPyNB(apiref_baseurl='http://pymvpa.org/generated',
+                  glossary_baseurl='http://pymvpa.org/glossary.html')
+notebook = conv(doc)
 
-default_settings = {
-    'sec_depth': 1,
-    'indent': 0,
-    'in_markdowncell': False,
-    'need_new_codecell': False,
-}
-
-def comment_breaks(text, indent=''):
-    return ('\n#%s ' % indent).join(text.split('\n'))
-
-def open_markdowncell(kwa):
-    if kwa['in_markdowncell']:
-        return ''
-    else:
-        kwa['in_markdowncell'] = True
-        kwa['needs_new_codecell'] = False
-        return '\n\n# <markdowncell>\n'
-
-def close_markdowncell(kwa):
-    if kwa['in_markdowncell']:
-        kwa['in_markdowncell'] = False
-        return '\n'
-    else:
-        return ''
-
-def make_apiref(reftext):
-    # try to determine what kind of ref we got
-    if reftext.startswith(':'):
-        rtype, ref = re.match(':([a-z]+):(.*)', reftext).groups()
-    else:
-        rtype = None
-        ref = reftext
-    if rtype is None:
-        # function?
-        if ref.endswith('()'):
-            rtype = 'func'
-            ref = ref[:-2]
-    refid = ref.lstrip('~').rstrip('()')
-    if rtype == 'meth':
-        ref_url = '%s/%s.html#%s' % (apiref_baseurl,
-                                     '.'.join(refid.split('.')[:-1]),
-                                     refid)
-    else:
-        ref_url = '%s/%s.html#%s' % (apiref_baseurl, refid, refid.replace('.', '-').replace('_', '-').lower())
-    ref_label = None
-    if ref.startswith('~'):
-        if rtype == 'meth':
-            ref_label = '%s()' % '.'.join(refid.split('.')[-2:])
-        elif rtype == 'func':
-            ref_label = '%s()' % refid.split('.')[-1]
-        else:
-            ref_label = '%s' % refid.split('.')[-1]
-    return '[%s](%s)' % (ref_label, ref_url)
-
-def consume_children(root, **kwa):
-    val = ''
-    for child in root.children:
-        tag = child.tagname
-        if tag == 'title':
-            val += close_markdowncell(kwa)
-            val += '\n\n# <headingcell level=%i>\n\n# %s' \
-                    % (kwa['sec_depth'], consume_children(child, **kwa))
-        elif tag == '#text':
-            val += child.astext()
-        elif tag == 'paragraph':
-            indent = ' ' * kwa['indent']
-            content = consume_children(child, **kwa)
-            val += open_markdowncell(kwa)
-            val += '\n\n#%s %s' \
-                    % (indent, comment_breaks(content, indent))
-        elif tag == 'doctest_block':
-            #val += '\n\n# <codecell>\n\n%s\n' % script_from_examples(child.rawsource)
-            for ex in dt_parser.get_examples(child.rawsource):
-                if kwa['in_markdowncell'] or kwa['needs_new_codecell']:
-                    val += '\n\n# <codecell>\n\n'
-                val += '%s%s' % (' ' * ex.indent, ex.source)
-                kwa['in_markdowncell'] = False
-                kwa['needs_new_codecell'] = len(ex.want) > 0
-        elif tag == 'section':
-            nkwa = kwa.copy()
-            nkwa['sec_depth'] = kwa['sec_depth'] + 1
-            val += consume_children(child, **nkwa)
-        elif tag == 'note':
-            nkwa = kwa.copy()
-            #nkwa['indent'] += 5
-            # strip out the contained paragraph
-            node_content = consume_children(child, **nkwa)
-            val += '\n\n# - - -\n# *Note* %s\n# - - -\n' % node_content
-        elif tag == 'title_reference':
-            ref_text = consume_children(child, **kwa)
-            if ref_text.startswith(':term:'):
-                # link to glossary
-                term = re.match(':term:(.*)', ref_text).groups()[0]
-                val += '[%s](%s#term-%s)' % (term,
-                                             'http://pymvpa.org/glossary.html',
-                                             term.lower().replace(' ', '-'))
-            elif ref_text.startswith('~mvpa') \
-                 or ref_text.startswith('mvpa') \
-                 or ref_text.startswith(':meth:') \
-                 or ref_text.startswith(':mod:') \
-                 or ref_text.startswith(':class:') \
-                 or ref_text.startswith(':func:'):
-                # various API reference link variants
-                val += make_apiref(ref_text)
-            # XXX for the rest I have no idea how to link them without huge
-            # effort
-            elif ref_text.startswith(':ref:'):
-                val += '*%s*' % re.match(':ref:(.*)', ref_text).groups()[0]
-            elif re.match(':([a-z]+):', ref_text):
-                # catch other ref type we should handle, but do not yet
-                raise RuntimeError("unhandled reference type '%s'" % ref_text)
-            else:
-                # plain refs seems to be mostly used for external API
-                val += '`%s`' % ref_text
-        elif tag == 'emphasis':
-            val += '*%s*' % consume_children(child, **kwa)
-        elif tag == 'strong':
-            val += '**%s**' % consume_children(child, **kwa)
-        elif tag == 'literal':
-            # strip one layer of backticks
-            val += child.rawsource[1:-1]
-        elif tag == 'problematic':
-            print 'PROBLEMATIC: %s' % child
-            val += consume_children(child, **kwa)
-        elif tag == 'reference':
-            val += '[%s][%s]' % (consume_children(child, **kwa),
-                                 child.attributes['name'])
-        elif tag in ['comment', 'target']:
-            pass
-        elif tag == 'system_message':
-            if child.attributes['type'] == 'INFO':
-                pass
-            elif child.children[0].astext() == 'Unknown directive type "exercise".':
-                val += open_markdowncell(kwa)
-                exercise_text = \
-                    '\n'.join([l.strip()
-                        for l in child.children[1][0].astext().split('\n')][2:])
-                exercise_content = consume_children(
-                                        publish_doctree(exercise_text), **kwa)
-                val += '\n\n# - - -\n# *Exercise* %s\n# - - -\n' \
-                       % exercise_content
-            elif child.children[0].astext() == 'Unknown directive type "todo".':
-                pass
-            else:
-                raise RuntimeError("cannot handle system message '%s'"
-                                   % child.astext())
-        else:
-            if hasattr(child, 'line') and child.line:
-                line = ' on line %i' % child.line
-            else:
-                line = ''
-            raise RuntimeError("Unkown tag '%s'%s" % (tag, line))
-    return val
-
-nbsrc = '# -*- coding: utf-8 -*-\n# <nbformat>3.0</nbformat>\n'
-nbsrc += consume_children(doctree, **default_settings)
-open('nbtest.py', 'w').write(nbsrc)
-print nbsrc
-
-
+json_notebook = json.dumps(notebook, sort_keys=True, indent=2)
+open('nbtest.ipynb', 'w').write(json_notebook)
 
