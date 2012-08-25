@@ -131,26 +131,6 @@ class SurfTests(unittest.TestCase):
                                 _assert_array_equal_eps(v, v2, eps)
 
 
-
-
-
-
-
-
-
-
-
-
-
-class _Voxel_Count_Measure(Measure):
-    # used to check voxel selection results
-    is_trained = True
-    def __init__(self, **kwargs):
-        Measure.__init__(self, **kwargs)
-
-    def _call(self, dset):
-        return dset.nfeatures
-
 def _assert_array_equal_eps(x, y, eps=.0001):
     if x.shape != y.shape:
         raise ValueError('not equal size: %r != %r' % (x.shape, y.shape))
