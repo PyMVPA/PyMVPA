@@ -8,88 +8,45 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """
-Surface-based voxel selection and searchlight example
-=====================================================
+Searchlight on fMRI data
+========================
 
-.. index:: searchlight, cross-validation
+.. index:: Searchlight
 
-This scripts shows how to use a searchlight (:ref:`Kriegeskorte et al. (2006)
-<KGB06>`) on the cortical surface. For more details about the procedure,
-explanation of the algorithm, and a Matlab implementation,
-see http://surfing.sourceforge.net.
+This example is adapted from doc/searchlight.py.
 
-Anatomical preprocessing can be done in various ways; the method describes here,
-uses Freesurfer and AFNI/SUMA (for the pipeline, see the documentation at
-http://surfing.sourceforge.net for details). Specifically, the command used to
-produce the surfaces used here is::
-
-  python mvpa2/misc/surfing/anatpreproc.py -e bold_mean.nii -A -r surfing \
-  -d subj1/subj1
-         
-where bold_mean.nii is an averaged bold image from bold.nii.gz, subj1/subj1
-the output directory from Freesurfer's recon-all, and surfing the directory
-in which aligned volumes and surfaces are being stored.
-
-The example here consists of two steps:
-(1) voxel selection using cortical surfaces (which associates, with each node
-on the surface, a set of neighboring voxels);
-(2) running a searchlight based on the voxel selection
-
-In this example we use the Haxby 2001 tutorial dataset subj1-2010.01.14.tar.gz  
-
-References
-----------
-NN Oosterhof, T Wiestler, PE Downing (2011). A comparison of volume-based
-and surface-based multi-voxel pattern analysis. Neuroimage, 56(2), pp. 593-600
-
-'Surfing' toolbox: http://surfing.sourceforge.net
-(and the associated documentation)
+As always, we first have to import PyMVPA.
 """
 
-"""First import all the ingredients"""
-
-#from mvpa2.tutorial_suite import *
 from mvpa2.suite import *
 
-# not needed due to above import * from the suite
-#from mvpa2.measures.base import CrossValidation
-#from mvpa2.generators.partition import NFoldPartitioner
-#from mvpa2.mappers.fx import mean_sample
-#from mvpa2.datasets.mri import fmri_dataset
 
-from mvpa2.misc.surfing import utils, volsurf, afni_niml_dset, afni_niml, \
-     sparse_attributes, surf_fs_asc, volgeom, surf_voxel_selection
+"""As searchlight analyses are usually quite expensive in term of computational
+resources, we are going to enable some progress output to entertain us while
+we are waiting."""
 
-"""To store voxel selection results (for later re-use), we use pickle"""
-import cPickle as pickle
-import nibabel as ni
-import numpy as np
-
+# enable debug output for searchlight call
 if __debug__:
     from mvpa2.base import debug
-    if not "SVS" in debug.registered:
-        debug.register('SVS',
-                       "Surface-based voxel selection (a.k.a. 'surfing')")
     debug.active += ["SVS", "SLC"]
 
-"""
-We start with defining all files we use as input.
-For now, we use the fingerdata dataset available from
-http://surfing.sourceforge.net. In the experiment, the participant pressed with the
-index finger during some trials and middle finger during other trials.
-After preprocessing and a GLM, this dataset contains 32 volumes with odd volumes
-corresponding to the index finger and even volumes to the middle finger.
-"""
+"""The next few calls load an fMRI dataset, while assigning associated class
+targets and chunks (experiment runs) to each volume in the 4D timeseries.  One
+aspect is worth mentioning. When loading the fMRI data with
+:func:`~mvpa2.datasets.mri.fmri_dataset()` additional feature attributes can be
+added, by providing a dictionary with names and source pairs to the `add_fa`
+arguments. In this case we are loading a thresholded zstat-map of a category
+selectivity contrast for voxels ventral temporal cortex."""
 
-datadir = os.path.join(utils._get_fingerdata_dir(), 'pyref')
-"""
-Use an arbitrary volume from the dataset. We only use this to get the
-volume geometry (voxel size and voxel-to-world mapping)
-"""
-epi_ref_fn = os.path.join(datadir, '..', 'glm', 'rall_vol00.nii')
+# data path
+datapath = os.path.join(pymvpa_datadbroot,
+                        'tutorial_data', 'tutorial_data', 'data', 'surfing')
+
+"""First set up surface stuff"""
+epi_ref_fn = os.path.join(datapath, '..', 'mask_brain.nii.gz')
 
 """
-We're concerned with the left hemisphere only
+We're concerned with the left hemisphere only.
 """
 hemi = 'l'
 
@@ -99,11 +56,11 @@ These surfaces were resampled using AFNI's MapIcosahedron; ld refers to
 the number of linear divisions of the 'large' triangles of the original
 icosahedron (ld=x means there are 10*x**2+2 nodes and 20*x**2 triangles).
 """
-highres_ld = 64
+highres_ld = 128 # 64 or 128 is reasonable
 
-pial_surf_fn = os.path.join(datadir, "ico%d_%sh.pial_al.asc"
+pial_surf_fn = os.path.join(datapath, "ico%d_%sh.pial_al.asc"
                                      % (highres_ld, hemi))
-white_surf_fn = os.path.join(datadir, "ico%d_%sh.smoothwm_al.asc"
+white_surf_fn = os.path.join(datapath, "ico%d_%sh.smoothwm_al.asc"
                                       % (highres_ld, hemi))
 
 """
@@ -126,9 +83,9 @@ are 2*(10*8^2+2)=1284 nodes across the two hemispheres, and thus 823686 unique
 pairs of nodes. A higher number for lowres_ld may be  suited for single-center
 searchlight analyses.
 """
-lowres_ld = 32
+lowres_ld = 32 # 16, 32 or 64 is reasonable
 
-intermediate_surf_fn = os.path.join(datadir, "ico%d_%sh.intermediate_al.asc"
+intermediate_surf_fn = os.path.join(datapath, "ico%d_%sh.intermediate_al.asc"
                                              % (lowres_ld, hemi))
 
 """
@@ -143,13 +100,13 @@ actual number will vary slightly
 """
 radius = 100
 
+
 """
-Set the prefix for output
+Set the prefixes for output
 """
-voxel_selection_fn_prefix = os.path.join(datadir, "voxsel_ico%d_%sh"
-                                                  % (lowres_ld, hemi))
-searchlight_fn_prefix = os.path.join(datadir, "searchlight_ico%d_%sh"
-                                              % (lowres_ld, hemi))
+fn_infix = 'ico%d_%sh_%dvx' % (lowres_ld, hemi, radius)
+voxel_selection_fn_prefix = os.path.join(datapath, fn_infix)
+searchlight_fn_prefix = os.path.join(datapath, fn_infix)
 
 """
 Load the surfaces
@@ -159,17 +116,10 @@ pial_surf = surf_fs_asc.read(pial_surf_fn)
 intermediate_surf = surf_fs_asc.read(intermediate_surf_fn)
 
 """
-Load the volume geamotry information
+Load the volume geometry information
 """
 vg = volgeom.from_nifti_file(epi_ref_fn)
 
-"""
-Define which nodes to use as a searchlight center. In this example, we
-use all nodes.
-"""
-node_count = intermediate_surf.nv()
-
-src_ids = range(node_count)
 """
 Make a volsurf instance, which is useful for mapping between surface
 and volume locations
@@ -177,134 +127,76 @@ and volume locations
 vs = volsurf.VolSurf(vg, white_surf, pial_surf)
 
 """
-Run voxel selection...
+Use all centers and run voxel selection...
 """
-voxsel = surf_voxel_selection.voxel_selection(vs, intermediate_surf, radius, src_ids)\
-
-print "Voxel selection results:"
-print voxsel
-"""
->>>SparseAttributes with 2562 entries, 3 labels (['lin_vox_idxs', 'grey_matter_position', 'center_distances'])
->>>General attributes: ['volgeom']
-...and save voxel selection results.
-"""
-sparse_attributes.to_file(voxel_selection_fn_prefix + ".pickle", voxsel)
-"""
-The following just generates some files as a sanity check; they are not
-necessary for a typical voxel selection pipeline.
-
-(1) Count how often each voxel was selected in a searchlight.
-We use linear indexing (akin to FlattenMapper), then reshape
-our data to make it 3D
-"""
-vg = voxsel.a['volgeom']
-voxel_count = vg.nv()
-
-vol_data_lin = np.zeros((voxel_count, 1)) # use linear voxel indexing
-
-vol_map = voxsel.get_attr_mapping('lin_vox_idxs')
-for node_idx, voxel_idxs in vol_map.iteritems():
-    if voxel_idxs is not None:
-        vol_data_lin[voxel_idxs] += 1
-
-vol_data_sub = np.reshape(vol_data_lin, vg.shape()) # 3D shape
-
-img = ni.Nifti1Image(vol_data_sub, vg.affine())
-img.to_filename(voxel_selection_fn_prefix + ".nii")
+nv = intermediate_surf.nvertices
+src_ids = range(nv)
+voxsel = surf_voxel_selection.voxel_selection(vs, radius, src_ids, intermediate_surf)
 
 """
-Generate another mapping from node indices to the distances of
-each voxel to the center. Here we are concerned with the maximal
-distance (i.e. radius in millimeters) of each searchlight).
+For MVPA, use all centers that have voxels associated with them.
+In this example that means all centers, but in the case of partial
+volume coverage there may be center nodes without voxels
 """
-surf_data = np.zeros((node_count, 2))
-
-radius_map = voxsel.get_attr_mapping('center_distances')
-for node_idx, distances in radius_map.iteritems():
-    if distances is not None:
-        surf_data[node_idx, 0] = max(distances)
-        surf_data[node_idx, 1] = sum(distances) / len(distances)
-
-
-surf_dset = dict(data=surf_data, labels=["max_d", "mean_d"])
-afni_niml_dset.write(voxel_selection_fn_prefix + "_full.niml.dset", surf_dset)
+center_ids = voxsel.keys()
 """
-Do exactly the same thing, but now we write a sparse dataset that only contains
-data for nodes that have voxels associated with them (some nodes are outside
-the functional volume and have no voxels associated with them).
+Define the neighboorhood, that is which voxels are near each of the center nodes
+This implies a voxel mask as well, which is subequently used for loading the
+data.
+
+The voxel_ids_label argument is optional
+and defaults to "lin_vox_idxs".
 """
-nonempty_nodes = voxsel.keys()
-nonempty_node_count = len(nonempty_nodes)
+voxel_ids_label = 'lin_vox_idxs'
 
-surf_data_sparse = np.zeros((nonempty_node_count, 2))
-
-radius_map = voxsel.get_attr_mapping('center_distances')
-for i, node_idx in enumerate(nonempty_nodes):
-    distances = radius_map[node_idx]
-
-    surf_data_sparse[i, 0] = max(distances)
-    surf_data_sparse[i, 1] = sum(distances) / len(distances)
-
-
-surf_dset_sparse = dict(data=surf_data_sparse, labels=["max_d", "mean_d"], node_indices=nonempty_nodes)
-afni_niml_dset.write(voxel_selection_fn_prefix + "_sparse.niml.dset", surf_dset_sparse)
+nbrhood = nbrhood = sparse_attributes.SparseVolumeNeighborhood(voxsel,
+                                    voxel_ids_label=voxel_ids_label)
+mask = nbrhood.mask
 
 """
-Delete the voxel selection results, then reload them from disk
+From now on we simply follow the example in searchlight.py.
+First we load and preprocess the data. Note that we use the
+mask that came from the voxel selection.
 """
-del voxsel
-
-print "Loading voxel selection data from disk:"
-voxsel = sparse_attributes.from_file(voxel_selection_fn_prefix + ".pickle")
-print voxsel
-
-"""
-Load functional data for running the searchlight,
-and make it into an fmri_dataset
-"""
-epi_data_fn = '%s/../glm/rall_4D_nibabel.nii' % datadir
-nsamples = 32
-targetnames = ['index', 'middle']
-targets = [targetnames[i % 2] for i in xrange(nsamples)]
-chunks = [i / 4 for i in xrange(nsamples)]
-ds = fmri_dataset(samples=epi_data_fn, targets=targets,
-                chunks=chunks)
+attr = SampleAttributes(os.path.join(datapath, '..', 'attributes.txt'))
 
 
+dataset = fmri_dataset(
+                samples=os.path.join(datapath, '..', 'bold.nii.gz'),
+                targets=attr.targets,
+                chunks=attr.chunks,
+                mask=mask)
+
+
+poly_detrend(dataset, polyord=1, chunks_attr='chunks')
+
+dataset = dataset[np.array([l in ['rest', 'house', 'scrambledpix']
+                           for l in dataset.targets], dtype='bool')]
+
+zscore(dataset, chunks_attr='chunks', param_est=('targets', ['rest']), dtype='float32')
+
+dataset = dataset[dataset.sa.targets != 'rest']
+
 """
-As in the volume-based searchlight example, set up
-a classifier and cross-validation
+Define classifier and crossvalidation
 """
+
 clf = LinearCSVMC()
-cvte = CrossValidation(clf, NFoldPartitioner(),
+
+cv = CrossValidation(clf, NFoldPartitioner(),
                      errorfx=lambda p, t: np.mean(p == t),
                      enable_ca=['stats'])
 
 
 
 """
-Set up the searchlight
+The interesting part: define and run the searchlight
 """
-nbrhood = voxsel.get_neighborhood()
-center_ids = voxsel.keys() # these are only nodes with voxels associated
-
-searchlight = sparse_attributes.searchlight(cvte, nbrhood,
-                                           postproc=mean_sample(),
-                                           center_ids=center_ids)
-"""
-As in the volume-based searchlight example, make a copy
-of the dataset with only necessary attributes
-"""
-sds = ds.copy(deep=False,
-                   sa=['targets', 'chunks'],
-                   fa=['voxel_indices'],
-                   a=['mapper'])
+searchlight = nbrhood.searchlight(cv, postproc=mean_sample(),
+                                      center_ids=center_ids)
 
 
-"""
-Run the searchlight
-"""
-sl_dset = searchlight(sds)
+sl_dset = searchlight(dataset)
 
 """
 For visualization of results, make a NIML dset that can be viewed
@@ -315,8 +207,11 @@ to nodes (features) and columns to datapoints (samples)
 surf_sl_dset = dict(data=np.asarray(sl_dset).transpose(),
                   node_indices=center_ids)
 
-afni_niml_dset.write(searchlight_fn_prefix + "_%dvx.niml.dset" % radius,
-                     surf_sl_dset)
+dset_fn = searchlight_fn_prefix + '.niml.dset'
 
-print ("To view results, cd to '%s' and run ./%sh_ico%d_seesuma.sh" %
-       (datadir, hemi, lowres_ld))
+afni_niml_dset.write(dset_fn, surf_sl_dset)
+
+print ("To view results, cd to '%s' and run ./%sh_ico%d_seesuma.sh,"
+       "click on 'dset', and select %s" %
+       (datapath, hemi, lowres_ld, dset_fn))
+
