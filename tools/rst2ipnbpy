@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import sys
+import os
 import re
 from docutils.core import publish_doctree
 from doctest import script_from_examples, DocTestParser
@@ -46,6 +47,7 @@ class ReST2IPyNB(object):
     }
 
     def __init__(self,
+                 baseurl='',
                  apiref_baseurl='',
                  glossary_baseurl='',
                  doctree_parser_settings=None):
@@ -53,6 +55,7 @@ class ReST2IPyNB(object):
         if doctree_parser_settings is None:
             # shut up
             self._doctree_parser_settings = {'report_level': 5}
+        self._baseurl = baseurl
         self._apiref_baseurl = apiref_baseurl
         self._glossary_baseurl = glossary_baseurl
         self._doctest_parser = DocTestParser()
@@ -60,12 +63,16 @@ class ReST2IPyNB(object):
 
     def _reset_state(self):
         self._state = {'sec_depth': 1, 'indent': 0, 'in_markdowncell': False,
-                       'need_new_codecell': False}
+                'need_new_codecell': False, 'need_hanging_indent': False}
         self._currcell = None
         self._buffer = ''
         self._notebook = None
+        self._filename = None
 
-    def __call__(self, rest):
+    def __call__(self, filename):
+        self._filename = filename
+        rest = open(filename).read()
+        doc = prep_rest(rest)
         self._notebook = deepcopy(ReST2IPyNB.ipynb_template)
         doctree = publish_doctree(
                     doc, settings_overrides=self._doctree_parser_settings)
@@ -118,7 +125,10 @@ class ReST2IPyNB(object):
                 self._add2buffer(child.astext())
             elif tag == 'paragraph':
                 self._add_markdowncell()
-                self._add2buffer('\n\n')
+                if self._state['need_hanging_indent']:
+                    self._state['need_hanging_indent'] = False
+                else:
+                    self._add2buffer('', newline=True, paragraph=True)
                 self._flush_buffer()
                 self._parse(child)
             elif tag == 'doctest_block':
@@ -127,7 +137,8 @@ class ReST2IPyNB(object):
                 for ex in self._doctest_parser.get_examples(child.rawsource):
                     if needs_new_codecell:
                         self._add_codecell()
-                    self._add2buffer('%s%s' % (' ' * ex.indent, ex.source))
+                    self._add2buffer('%s%s' % (' ' * ex.indent, ex.source),
+                                     newline=False)
                     self._flush_buffer(startnew=True)
                     needs_new_codecell = len(ex.want) > 0
             elif tag == 'section':
@@ -146,8 +157,14 @@ class ReST2IPyNB(object):
                 self._parse(child)
                 if self._buffer.startswith(':term:'):
                     # link to glossary
-                    term = re.match(':term:(.*)', self._buffer).groups()[0]
-                    self._buffer = '[%s](%s#term-%s)' % (term,
+                    term = re.match('.*<(.*)>', self._buffer)
+                    if term is None:
+                        term = re.match(':term:(.*)', self._buffer).groups()[0]
+                        term_text = term
+                    else:
+                        term = term.groups()[0]
+                        term_text = re.match(':term:(.*) <', self._buffer).groups()[0]
+                    self._buffer = '[%s](%s#term-%s)' % (term_text,
                                                  self._glossary_baseurl,
                                                  term.lower().replace(' ', '-'))
                 elif self._buffer.startswith('~mvpa') \
@@ -161,7 +178,10 @@ class ReST2IPyNB(object):
                 # XXX for the rest I have no idea how to link them without huge
                 # effort
                 elif self._buffer.startswith(':ref:'):
-                    self._buffer = '*%s*' % re.match(':ref:(.*)', self._buffer).groups()[0]
+                    self._buffer = '*%s*' \
+                            % [m for m in re.match(':ref:(.*) <|:ref:(.*)',
+                                                   self._buffer).groups()
+                                                        if not m is None][0]
                 elif re.match(':([a-z]+):', self._buffer):
                     # catch other ref type we should handle, but do not yet
                     raise RuntimeError("unhandled reference type '%s'" % self._buffer)
@@ -189,6 +209,50 @@ class ReST2IPyNB(object):
                                              child.attributes['name'])
             elif tag in ['comment', 'target']:
                 pass
+            elif tag == 'definition_list':
+                self._add_markdowncell()
+                for item in child.children:
+                    self._flush_buffer()
+                    self._parse(item.children[0])
+                    term = self._buffer
+                    self._buffer = ''
+                    self._parse(item.children[1])
+                    self._buffer = '\n%s: %s' % (term, self._buffer)
+            elif tag in ['enumerated_list', 'bullet_list']:
+                self._add_markdowncell()
+                for i, item in enumerate(child.children):
+                    if tag == 'enumerated_list':
+                        prefix = '%i.' % (i + 1,)
+                    else:
+                        prefix = '*'
+                    self._flush_buffer()
+                    self._add2buffer('%s ' % prefix,
+                                     newline=True, paragraph=True)
+                    self._state['indent'] += 4
+                    self._state['need_hanging_indent'] = True
+                    self._parse(item)
+                    self._state['indent'] -= 4
+                self._flush_buffer()
+            elif tag == 'list_item':
+                for c in child.children:
+                    self._parse(c)
+            elif tag == 'term':
+                self._parse(child.children[0])
+            elif tag == 'figure':
+                # this can't be expressed in markown
+                self._flush_buffer()
+                file_url = '%s/%s.html' % (self._baseurl,
+                                           os.path.splitext(os.path.basename(self._filename))[0])
+                self._add2buffer('\[Visit [%s](%s) to view this figure\]' % (file_url, file_url),
+                                 newline=True, paragraph=True)
+            elif tag == 'block_quote':
+                self._flush_buffer()
+                first_line = len(self._currcell['source'])
+                # skip the wrapping paragraph
+                self._parse(child.children[0])
+                self._flush_buffer()
+                self._currcell['source'][first_line] = \
+                        '\n\n> %s' % self._currcell['source'][first_line]
             elif tag == 'system_message':
                 if child.attributes['type'] == 'INFO':
                     pass
@@ -203,8 +267,10 @@ class ReST2IPyNB(object):
                                     settings_overrides=self._doctree_parser_settings))
                     self._flush_buffer()
                     self._currcell['source'].insert(0, '- - -\n*Exercise*')
+                    self._add_codecell()
+                    self._add2buffer('# you can use this cell to for this exercise\n')
+                    self._add_markdowncell()
                     self._currcell['source'].append('- - -\n')
-                    self._store_currcell()
                 elif child.children[0].astext() == 'Unknown directive type "todo".':
                     pass
                 else:
@@ -243,8 +309,15 @@ class ReST2IPyNB(object):
             self._store_currcell()
             self._currcell = deepcopy(ReST2IPyNB.markdowncell_template)
 
-    def _add2buffer(self, value):
-        self._buffer += value
+    def _add2buffer(self, value, newline=False, paragraph=False):
+        if paragraph:
+            nl = '\n\n'
+        else:
+            nl = '\n'
+        if newline:
+            self._buffer += '%s%s%s' % (nl, ' ' * self._state['indent'], value)
+        else:
+            self._buffer += value
 
     def _flush_buffer(self, startnew=True):
         if not len(self._buffer):
@@ -259,13 +332,12 @@ class ReST2IPyNB(object):
             self._currcell[target_field][-1] += self._buffer
         self._buffer = ''
 
-doc = open(sys.argv[1]).read()
-doc = prep_rest(doc)
 
-conv = ReST2IPyNB(apiref_baseurl='http://pymvpa.org/generated',
+conv = ReST2IPyNB(baseurl='http://pymvpa.org',
+                  apiref_baseurl='http://pymvpa.org/generated',
                   glossary_baseurl='http://pymvpa.org/glossary.html')
-notebook = conv(doc)
+notebook = conv(sys.argv[1])
 
 json_notebook = json.dumps(notebook, sort_keys=True, indent=2)
-open('nbtest.ipynb', 'w').write(json_notebook)
+open(sys.argv[2], 'w').write(json_notebook)
 
