@@ -36,8 +36,6 @@ class SurfTests(unittest.TestCase):
 
     NNO Aug 2012
 
-    added as requested by Yarik and Michael
-
     'Ground truth' is whatever output is returned by the implementation
     as of mid-Aug 2012"""
 
@@ -568,6 +566,7 @@ class SurfTests(unittest.TestCase):
                 # check whether number of voxels were selected is as expected
         expected_voxcount = [58, 210, 418, 474, 474, 474, 978, 1603, 1603]
         assert_equal(voxcount, expected_voxcount)
+
 
 class _Voxel_Count_Measure(Measure):
     # used to check voxel selection results

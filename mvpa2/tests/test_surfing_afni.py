@@ -39,8 +39,6 @@ class SurfTests(unittest.TestCase):
 
     NNO Aug 2012
 
-    added as requested by Yarik and Michael
-
     'Ground truth' is whatever output is returned by the implementation
     as of mid-Aug 2012"""
 
@@ -51,6 +49,10 @@ class SurfTests(unittest.TestCase):
         np.random.set_state(('MT19937', keys, 0))
 
     def test_afni_niml_dset(self):
+        # yoh: could the size be reduced for testing?
+        #      with e.g. 100-1000? ;) unfortunately it would fail the test due to
+        #      some quite huge differences and I am not 100% sure why test of IO
+        #      functionality should necessarily test on large data here
         sz = (10000, 45)
         self._set_rng()
 
@@ -130,14 +132,17 @@ class SurfTests(unittest.TestCase):
                             if mode != 'sparse2full' or k == 'data':
                                 _assert_array_equal_eps(v, v2, eps)
 
-def test_afni_suma_spec(self):
+def _test_afni_suma_spec():
     datapath = os.path.join(pymvpa_datadbroot,
                         'tutorial_data', 'tutorial_data', 'data', 'surfing')
     # TODO: test on surfing data
 
 
 
-
+# yoh:
+#  1. have you looked at assert_array_almost_equal? provided by numpy.testing
+#     and exposed by mvpa2.testing
+#  2. common helpers for testing should go under mvpa2.testing
 def _assert_array_equal_eps(x, y, eps=.0001):
     if x.shape != y.shape:
         raise ValueError('not equal size: %r != %r' % (x.shape, y.shape))
