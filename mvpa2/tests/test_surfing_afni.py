@@ -50,7 +50,7 @@ class SurfTests(unittest.TestCase):
         keys = np.asanyarray(keys, dtype=np.uint32)
         np.random.set_state(('MT19937', keys, 0))
 
-    def test_afni_niml_dset(self):
+    def _test_afni_niml_dset(self):
         sz = (10000, 45)
         self._set_rng()
 
@@ -129,6 +129,12 @@ class SurfTests(unittest.TestCase):
                             eps = .0001
                             if mode != 'sparse2full' or k == 'data':
                                 _assert_array_equal_eps(v, v2, eps)
+
+def test_afni_suma_spec(self):
+    datapath = os.path.join(pymvpa_datadbroot,
+                        'tutorial_data', 'tutorial_data', 'data', 'surfing')
+
+
 
 
 def _assert_array_equal_eps(x, y, eps=.0001):
