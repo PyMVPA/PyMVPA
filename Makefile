@@ -189,6 +189,8 @@ manpages: mkdir-MAN_DIR
 		bin/mvpa-prep-fmri > $(MAN_DIR)/mvpa-prep-fmri.1
 	PYTHONPATH=. help2man -N -n 'query stereotaxic atlases' \
 		bin/atlaslabeler > $(MAN_DIR)/atlaslabeler.1
+	PYTHONPATH=. help2man -N -n 'start a PyMVPA tutorial session' \
+		bin/pymvpa2-tutorial > $(MAN_DIR)/pymvpa2-tutorial.1
 
 references:
 	@echo "I: Generating references"
