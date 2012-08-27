@@ -244,3 +244,5 @@ class kNN(Classifier):
         self.__data = None
         self.__weights = None
         super(kNN, self)._untrain()
+
+    dfx = property(fget=lambda self: self.__dfx)
