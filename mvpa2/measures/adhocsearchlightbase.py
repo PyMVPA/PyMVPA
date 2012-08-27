@@ -121,7 +121,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
     TODO
     ----
 
-    some stats are not needed (eg per sample X^2's) for MNN, so we
+    some stats are not needed (eg per sample X^2's) for M1NN, so we
     should make them optional depending on the derived class
 
     Note
