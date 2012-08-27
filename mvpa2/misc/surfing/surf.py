@@ -71,6 +71,7 @@ class Surface(object):
         if (unqf != np.arange(self._nv)).any():
             raise Exception("Missing values in faces")
 
+    @property
     def node2faces(self):
         '''
         A mapping from node indices to the faces that contain those nodes.
@@ -95,7 +96,8 @@ class Surface(object):
 
         return self._n2f
 
-    def nbrs(self):
+    @property
+    def neighbors(self):
         '''Finds the neighbours for each node and their (Euclidian) distance.
         
         Returns
@@ -206,7 +208,7 @@ class Surface(object):
         candidates = []
         heapq.heappush(candidates, (0, src)) # queue of candidates, sorted by tentative distance
 
-        nbrs = self.nbrs()
+        nbrs = self.neighbors
 
         # algorithm from wikipedia (http://en.wikipedia.org/wiki/Dijkstra's_algorithm)
         while candidates:
@@ -290,7 +292,7 @@ class Surface(object):
         
          
         '''
-        n2f = self.node2faces()
+        n2f = self.node2faces
 
         msk = self.euclidian_distance(src) <= radius
 

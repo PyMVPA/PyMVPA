@@ -103,7 +103,7 @@ class DSMatrix(object):
         self.full_matrix = []
         self.u_triangle = None
         self.vector_form = None
-        self.u_triangle_vec = None
+        self.u_triangle_vec = None # vectorized versions
 
         # this one we know straight away, so set it
         self.metric = metric
@@ -177,15 +177,18 @@ class DSMatrix(object):
         # use k=1 to get values above the diagonal
         # use k=0 to include the diagonal
 
+        n = self.full_matrix.shape[0]
+        if k < -n or k > n:
+            raise IndexError("Require %d < k % %d" % (-n, n))
+
         if self.u_triangle_vec is None:
             self.u_triangle_vec = dict()
 
         if not k in self.u_triangle_vec:
-            n = self.full_matrix.shape[0]
             msk = np.zeros((n, n), dtype=np.bool_)
             for i in range(n):
                 for j in range(n):
-                    if i >= j + k:
+                    if i < j + k:
                         break
                     msk[i, j] = np.True_
 

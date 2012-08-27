@@ -90,7 +90,7 @@ class SurfTests(unittest.TestCase):
         # check that neighbours are computed correctly
         # even if we nuke the topology afterwards
         for _ in [0, 1]:
-            nbrs = s.nbrs()
+            nbrs = s.neighbors
             n_check = [(0, 96, 0.284629),
                        (40, 39, 0.56218349),
                        (100, 99, 0.1741202)]
@@ -116,7 +116,7 @@ class SurfTests(unittest.TestCase):
         assert_raises(ValueError,
                       lambda x:x.map_to_high_resolution_surf(h, .01), s)
 
-        n2f = s.node2faces()
+        n2f = s.node2faces
         for i in xrange(s.nvertices):
             nf = [10] if i < 2 else [5, 6] # number of faces expected
 
