@@ -53,26 +53,30 @@ class SurfTests(unittest.TestCase):
         #      with e.g. 100-1000? ;) unfortunately it would fail the test due to
         #      some quite huge differences and I am not 100% sure why test of IO
         #      functionality should necessarily test on large data here
-        sz = (10000, 45)
+        sz = (100, 45)
         self._set_rng()
 
-        expected_vals = {(0, 0):-2.13856 , (sz[0] - 1, sz[1] - 1): 0.81124502,
+        expected_vals = {(0, 0):-2.13856 , (sz[0] - 1, sz[1] - 1):-1.92434,
                          (sz[0], sz[1] - 1):None, (sz[0] - 1, sz[1]):None,
                          sz:None}
 
-
+        # test for different formats in which the data is stored
         fmts = ['text', 'binary', 'base64']
+
+        # also test for different datatypes
         tps = [np.int32, np.int64, np.float32, np.float64]
 
+        # generated random data
         data = np.random.normal(size=sz)
 
+        # set labels for samples, and set node indices
         labels = ['lab_%d' % round(np.random.uniform() * 1000)
                         for _ in xrange(sz[1])]
         node_indices = np.argsort(np.random.uniform(size=(sz[0],)))
         node_indices = np.reshape(node_indices, (sz[0], 1))
 
 
-        eps = np.finfo('f').eps
+        eps = .00001
 
         # test I/O
         _, fn = tempfile.mkstemp('data.niml.dset', 'test')
@@ -82,29 +86,36 @@ class SurfTests(unittest.TestCase):
         for fmt in fmts:
             for tp in tps:
                 for mode in modes:
+                    # make a dataset
                     dset = dict(data=np.asarray(data, tp),
                                 labels=labels,
                                 node_indices=node_indices)
                     dset_keys = dset.keys()
 
                     if mode == 'skipio':
+                        # try conversion to/from raw NIML
+                        # do not write to disk
                         r = afni_niml_dset.dset2rawniml(dset)
                         s = afni_niml.rawniml2string(r)
                         r2 = afni_niml.string2rawniml(s)
                         dset2 = afni_niml_dset.rawniml2dset(r2)[0]
 
                     else:
+                        # write and read from disk
                         afni_niml_dset.write(fn, dset, fmt)
                         dset2 = afni_niml_dset.read(fn)
                         os.remove(fn)
 
-
+                    # data in dset and dset2 should be identical
                     for k in dset_keys:
                         v = dset[k]
                         v2 = dset2[k]
 
                         if k == 'data':
                             if mode == 'sparse2full':
+                                # test the sparse2full feature
+                                # this changes the order of the data in each row
+                                # we skip testing whether dset2 is equal to dset
                                 nfull = 2 * sz[0]
 
                                 dset3 = afni_niml_dset.sparse2full(dset2,
@@ -128,9 +139,9 @@ class SurfTests(unittest.TestCase):
                         if type(v) is list:
                             assert_equal(v, v2)
                         else:
-                            eps = .0001
+                            eps_dec = 4
                             if mode != 'sparse2full' or k == 'data':
-                                assert_array_almost_equal(v, v2, eps)
+                                assert_array_almost_equal(v, v2, eps_dec)
 
 def _test_afni_suma_spec():
     datapath = os.path.join(pymvpa_datadbroot,
