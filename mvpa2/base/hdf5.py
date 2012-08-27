@@ -173,6 +173,11 @@ def hdf2obj(hdf, memo=None):
             obj = np.array(obj, dtype=np.object)
         else:
             obj = asobjarray(obj)
+        if 'shape' in hdf.attrs:
+            shape = tuple(hdf.attrs['shape'])
+            if shape != obj.shape:
+                obj = obj.reshape(shape)
+
     # track if desired
     if objref:
         memo[objref] = obj
@@ -224,11 +229,6 @@ def _recon_customobj_customrecon(hdf, memo):
     # to be reconstructed
     mod_name = hdf.attrs['module']
     recon_name = hdf.attrs['recon']
-    if mod_name == '__builtin__':
-        raise NotImplementedError(
-                "Built-in reconstructors are not supported (yet). "
-                "Got: '%s'" % recon_name)
-
     if __debug__:
         debug('HDF5', "Load from custom reconstructor '%s.%s' [%s]"
                       % (mod_name, recon_name, hdf.name))
@@ -474,6 +474,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
     is_ndarray = isinstance(obj, np.ndarray)
     if is_ndarray:
         if obj.dtype == np.object:
+            shape = obj.shape
             if not len(obj.shape):
                 # even worse: 0d array
                 # we store 0d object arrays just by content
@@ -484,7 +485,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
                 # proper arrays can become lists
                 if __debug__:
                     debug('HDF5', "array(objects) -> list(objects)")
-                obj = list(obj)
+                obj = list(obj.flatten())
                 # make sure we don't ref this temporary list object
                 noid = True
             # flag that we messed with the original type
@@ -519,9 +520,15 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
             memo[obj_id] = obj
             if __debug__:
                 debug('HDF5', "Record objref in memo-dict (%i)" % obj_id)
-        if is_objarray:
-            # we need to confess the true origin
-            hdf[name].attrs.create('is_objarray', True)
+        ## yoh: was not sure why we have to assign here as well as below to grp
+        ##      so commented out and seems to work just fine ;)
+        ## if is_objarray:
+        ##     # we need to confess the true origin
+        ##     hdf[name].attrs.create('is_objarray', True)
+        ##     ## if len(objarray_shape) > 1:
+        ##     ##     # it was of more than 1 dimension
+        ##     ##     hdf[name].attrs.create('objarray_shape', objarray_shape)
+
         # handle scalars giving numpy scalars different flag
         if is_numpy_scalar:
             hdf[name].attrs.create('is_numpy_scalar', True)
@@ -557,6 +564,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
     if is_objarray:
         # we need to confess the true origin
         grp.attrs.create('is_objarray', True)
+        grp.attrs.create('shape', shape)
 
     # standard containers need special treatment
     if not hasattr(obj, '__reduce__'):

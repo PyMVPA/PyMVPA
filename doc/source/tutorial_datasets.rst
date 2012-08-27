@@ -448,7 +448,7 @@ of this format is also used by recent versions of Matlab to store data.
 
 For HDF5 support PyMVPA depends on the h5py_ package. If it is available,
 any dataset can be saved to a file by simply calling
-`~mvpa2.base.dataset.AttrDataset.save()` with the desired filename.
+:meth:`~mvpa2.base.dataset.AttrDataset.save()` with the desired filename.
 
 >>> import tempfile, shutil
 >>> # create a temporary directory
@@ -457,9 +457,9 @@ any dataset can be saved to a file by simply calling
 
 HDF5 is a flexible format that also supports, for example, data
 compression. To enable it, you can pass additional arguments to
-`~mvpa2.base.dataset.AttrDataset.save()` that are supported by
+:meth:`~mvpa2.base.dataset.AttrDataset.save()` that are supported by
 `Group.create_dataset()`. Instead of using
-`~mvpa2.base.dataset.AttrDataset.save()` one can also use the `~mvpa2.base.hdf5.h5save()`
+:meth:`~mvpa2.base.dataset.AttrDataset.save()` one can also use the `~mvpa2.base.hdf5.h5save()`
 function in a similar way. Saving the same dataset with maximum
 gzip-compression looks like this:
 

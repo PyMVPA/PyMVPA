@@ -131,3 +131,50 @@ if not externals.exists('good scipy.stats.rv_discrete.ppf'):
         warning("rv_discrete.ppf was not fixed with a monkey-patch. "
                 "It remains broken")
     cfg.set('externals', 'have good scipy.stats.rv_discrete.ppf', 'no')
+
+if externals.versions['scipy'] >= '0.8.0' and \
+       not externals.exists('good scipy.stats.rv_continuous._reduce_func(floc,fscale)'):
+    if __debug__:
+        debug("EXT", "Fixing up scipy.stats.rv_continuous._reduce_func")
+
+    # Borrowed from scipy v0.4.3-5978-gce90df2
+    # Copyright: 2001, 2002 Enthought, Inc.; 2003-2012 SciPy developers
+    # License: BSD-3
+    def _reduce_func_fixed(self, args, kwds):
+        args = list(args)
+        Nargs = len(args)
+        fixedn = []
+        index = range(Nargs)
+        names = ['f%d' % n for n in range(Nargs - 2)] + ['floc', 'fscale']
+        x0 = []
+        for n, key in zip(index, names):
+            if kwds.has_key(key):
+                fixedn.append(n)
+                args[n] = kwds[key]
+            else:
+                x0.append(args[n])
+
+        if len(fixedn) == 0:
+            func = self.nnlf
+            restore = None
+        else:
+            if len(fixedn) == len(index):
+                raise ValueError("All parameters fixed. There is nothing to optimize.")
+            def restore(args, theta):
+                # Replace with theta for all numbers not in fixedn
+                # This allows the non-fixed values to vary, but
+                #  we still call self.nnlf with all parameters.
+                i = 0
+                for n in range(Nargs):
+                    if n not in fixedn:
+                        args[n] = theta[i]
+                        i += 1
+                return args
+
+            def func(theta, x):
+                newtheta = restore(args[:], theta)
+                return self.nnlf(newtheta, x)
+
+        return x0, func, restore, args
+
+    stats.rv_continuous._reduce_func = _reduce_func_fixed

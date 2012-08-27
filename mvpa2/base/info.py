@@ -278,7 +278,7 @@ def wtf(filename=None, **kwargs):
 
     info = WTF(**kwargs)
     if filename is not None:
-        _ = file(filename, 'w').write(str(info))
+        _ = open(filename, 'w').write(str(info))
     else:
         return info
 

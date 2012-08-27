@@ -37,7 +37,7 @@ TODO:
 #      names of Collectables are actually the keys in Collections
 __docformat__ = 'restructuredtext'
 
-import operator
+from mvpa2.base.types import is_sequence_type
 import mvpa2.support.copy as copy
 from textwrap import TextWrapper
 
@@ -265,7 +265,7 @@ class Collection(BaseCollection):
                     if missingok:
                         return
                     raise
-        elif operator.isSequenceType(key):
+        elif is_sequence_type(key):
             for item in key:
                 self._action(item, func, missingok=missingok, **kwargs)
         else:
@@ -440,7 +440,11 @@ class ConditionalAttributesCollection(Collection):
                 #if fromstate.has_key(name):
                 self[name].value = operation(fromstate[name].value)
         else:
-            has_key = fromstate.has_key
+            # workaround for supporting py2 and py3 dictionary interface
+            try:
+                has_key = fromstate.has_key
+            except AttributeError:
+                has_key = fromstate.__contains__
             for name in key:
                 if has_key(name):
                     self[name].value = operation(fromstate[name].value)
@@ -633,7 +637,7 @@ class AttributesCollector(type):
                 baseclassname = value.__class__.__name__
                 col = _known_collections[baseclassname][0]
                 # XXX should we allow to throw exceptions here?
-                if not collections.has_key(col):
+                if col not in collections:
                     collections[col] = {}
                 collections[col][name] = value
                 # and assign name if not yet was set
@@ -648,8 +652,8 @@ class AttributesCollector(type):
         # TODO
 
         for base in bases:
-            if hasattr(base, "__metaclass__") and \
-                   base.__metaclass__ == AttributesCollector:
+            if hasattr(base, "__class__") and \
+                   base.__class__ == AttributesCollector:
                 # TODO take care about overriding one from super class
                 # for state in base.ca:
                 #    if state[0] =
@@ -661,7 +665,7 @@ class AttributesCollector(type):
                           "Collect collections %s for %s from %s",
                           (newcollections, cls, base))
                 for col, collection in newcollections.iteritems():
-                    if collections.has_key(col):
+                    if col in collections:
                         collections[col].update(collection)
                     else:
                         collections[col] = collection
@@ -713,7 +717,7 @@ class AttributesCollector(type):
         paramsdoc = []
         paramscols = []
         for col in ('params', 'kernel_params'):
-            if collections.has_key(col):
+            if col in collections:
                 paramscols.append(col)
                 # lets at least sort the parameters for consistent output
                 col_items = collections[col]
@@ -730,7 +734,7 @@ class AttributesCollector(type):
 
         # States doc
         cadoc = ""
-        if collections.has_key('ca'):
+        if 'ca' in collections:
             paramsdoc += [
                 ('enable_ca',
                  "enable_ca : None or list of str\n  "
@@ -789,7 +793,7 @@ class ClassWithCollections(object):
         # need to check to avoid override of enabled ca in the case
         # of multiple inheritance, like both ClassWithCollectionsl and
         # Harvestable
-        if not s__dict__.has_key('_collections'):
+        if '_collections' not in s__dict__:
             s__class__ = self.__class__
 
             collections = copy.deepcopy(s__class__._collections_template)

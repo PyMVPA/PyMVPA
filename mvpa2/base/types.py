@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Things concerned with types and type-checking in PyMVPA"""
 
+import sys
 import numpy as np
 
 
@@ -51,3 +52,31 @@ def asobjarray(x):
     res = np.empty(len(x), dtype=object)
     res[:] = x
     return res
+
+# compatibility layer for Python3
+if sys.version_info[0] < 3:
+
+    from operator import isSequenceType as is_sequence_type
+
+    def as_char(x):
+        """Identity mapping in python2"""
+        return x
+
+else:
+
+    def is_sequence_type(inst):
+        """Return True if an instance is of an iterable type
+
+        Verified by wrapping with iter() call
+        """
+        try:
+            _ = iter(inst)
+            return True
+        except:
+            return False
+
+    import codecs
+
+    def as_char(x):
+        """Return character representation for a unicode symbol"""
+        return codecs.latin_1_encode(x)[0]

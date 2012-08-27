@@ -370,7 +370,7 @@ class GNBSearchlight(BaseSearchlight):
                 assert(block_labels[ib] == l)
         block_labels = np.asanyarray(block_labels)
         # additional silly tests for paranoid
-        assert(block_labels.dtype.kind is 'i')
+        assert(block_labels.dtype.kind == 'i')
 
         # 4. Lets deduce all neighbors... might need to be RF into the
         #    parallel part later on
@@ -513,7 +513,8 @@ class GNBSearchlight(BaseSearchlight):
             debug('SLC', "GNBSearchlight is done in %.3g sec" %
                   (time.time() - time_start))
 
-        return Dataset(results), roi_sizes
+        self.ca.roi_sizes = roi_sizes
+        return Dataset(results)
 
     gnb = property(fget=lambda self: self._gnb)
     generator = property(fget=lambda self: self._generator)

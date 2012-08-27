@@ -152,9 +152,9 @@ class Classifier(Learner):
         # low-level implementations that need it
         self._attrmap = AttributeMap()
 
-        self.__trainednfeatures = None
+        self.__trainednfeatures = 0
         """Stores number of features for which classifier was trained.
-        If None -- it wasn't trained at all"""
+        If 0 -- it wasn't trained at all"""
 
         self._set_retrainable(self.params.retrainable, force=True)
 
@@ -449,7 +449,7 @@ class Classifier(Learner):
         MUST BE USED WITH CARE IF EVER"""
         if dataset is None:
             # simply return if it was trained on anything
-            return not self.__trainednfeatures is None
+            return not self.__trainednfeatures == 0
         else:
             res = (self.__trainednfeatures == dataset.nfeatures)
             if __debug__ and 'CHECK_TRAINED' in debug.active:
@@ -472,7 +472,7 @@ class Classifier(Learner):
         # any previous apping is obsolete now
         self._attrmap.clear()
 
-        self.__trainednfeatures = None
+        self.__trainednfeatures = 0
         # probably not needed... retrainable shouldn't be fully untrained
         # or should be???
         #if self.params.retrainable:

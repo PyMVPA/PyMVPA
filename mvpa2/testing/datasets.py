@@ -75,7 +75,7 @@ def generate_testing_datasets(specs):
         labels = np.concatenate( ( np.repeat( 0, spec['perlabel'] ),
                                   np.repeat( 1, spec['perlabel'] ) ) )
         data[:, 1, 0, 0] += 2*labels           # add some signal
-        chunks = np.asarray(range(nchunks)*(total/nchunks))
+        chunks = np.asarray(range(nchunks)*(total//nchunks))
         mask = np.ones((3, 6, 6), dtype='bool')
         mask[0, 0, 0] = 0
         mask[1, 3, 2] = 0
@@ -83,7 +83,7 @@ def generate_testing_datasets(specs):
                                  mask=mask, space='myspace')
         # and to stress tests on manipulating sa/fa possibly containing
         # attributes of dtype object
-        ds.sa['test_object'] = [['a'], [1, 2]] * (ds.nsamples/2)
+        ds.sa['test_object'] = [['a'], [1, 2]] * (ds.nsamples//2)
         datasets['3d%s' % kind] = ds
 
 

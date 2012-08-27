@@ -14,9 +14,9 @@ __docformat__ = 'restructuredtext'
 
 import copy, re
 import numpy as np
-from operator import isSequenceType
 
 from mvpa2.base.dochelpers import _str, borrowdoc
+from mvpa2.base.types import is_sequence_type
 
 if __debug__:
     # we could live without, but it would be nicer with it
@@ -224,14 +224,30 @@ class SequenceCollectable(Collectable):
 
     @property
     def unique(self):
+        """Return unique values
+        """
         if self.value is None:
             return None
         if self._unique_values is None:
-            # XXX we might better use Set, but yoh recalls that
-            #     np.unique was more efficient. May be we should check
-            #     on the the class and use Set only if we are not
-            #     dealing with ndarray (or lists/tuples)
-            self._unique_values = np.unique(self.value)
+            try:
+                self._unique_values = np.unique(self.value)
+            except TypeError:
+                # We are probably on Python 3 and value contains None's
+                # or any other different type breaking the comparison
+                # so operate through set()
+                # See http://projects.scipy.org/numpy/ticket/2188
+
+                # Get a 1-D array
+                #  list around set is required for Python3
+                value_unique = list(set(np.asanyarray(self.value).ravel()))
+                try:
+                    self._unique_values = np.array(value_unique)
+                except ValueError:
+                    # without forced dtype=object it might have failed due to
+                    # something related to
+                    # http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=679948
+                    # which was fixed recently...
+                    self._unique_values = np.array(value_unique, dtype=object)
         return self._unique_values
 
 
@@ -265,7 +281,7 @@ class ArrayCollectable(SequenceCollectable):
 
     def _set(self, val):
         if not hasattr(val, 'view'):
-            if isSequenceType(val):
+            if is_sequence_type(val):
                 try:
                     val = np.asanyarray(val)
                 except ValueError, e:
@@ -420,9 +436,9 @@ class Collection(dict):
 
                 if copyvalues is None:
                     self[name] = value
-                elif copyvalues is 'shallow':
+                elif copyvalues == 'shallow':
                     self[name] = copy.copy(value)
-                elif copyvalues is 'deep':
+                elif copyvalues == 'deep':
                     self[name] = copy.deepcopy(value, memo)
                 else:
                     raise ValueError("Unknown value ('%s') for copy argument."
@@ -439,9 +455,9 @@ class Collection(dict):
                 # add the attribute with optional docs
                 if copyvalues is None:
                     self[k] = v
-                elif copyvalues is 'shallow':
+                elif copyvalues == 'shallow':
                     self[k] = copy.copy(v)
-                elif copyvalues is 'deep':
+                elif copyvalues == 'deep':
                     self[k] = copy.deepcopy(v, memo)
                 else:
                     raise ValueError("Unknown value ('%s') for copy argument."
@@ -538,7 +554,7 @@ class UniformLengthCollection(Collection):
         # XXX should we check whether it is some other Collectable?
         if not isinstance(value, ArrayCollectable):
             # if it is only a single element iterable, attempt broadcasting
-            if isSequenceType(value) and len(value) == 1 \
+            if is_sequence_type(value) and len(value) == 1 \
                     and not ulength is None:
                 if ulength > 1:
                     # cannot use np.repeat, because it destroys dimensionality
