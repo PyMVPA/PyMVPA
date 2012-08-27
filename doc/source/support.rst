@@ -53,6 +53,6 @@ without the need for any type of account).
 If you don't like either way, please post to the user mailing list (see above).
 
 .. _GitHub: http://github.com
-.. _issue tracker: http://github.com/hanke/PyMVPA/issues
+.. _issue tracker: http://github.com/PyMVPA/PyMVPA/issues
 
 

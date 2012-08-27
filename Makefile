@@ -7,6 +7,7 @@ DOC_DIR=$(CURDIR)/doc
 TUT_DIR=$(CURDIR)/datadb/tutorial_data/tutorial_data
 DOCSRC_DIR=$(DOC_DIR)/source
 DOCBUILD_DIR=$(BUILDDIR)/doc
+NOTEBOOKBUILD_DIR=$(BUILDDIR)/notebooks
 MAN_DIR=$(BUILDDIR)/man
 APIDOC_DIR=$(HTML_DIR)/api
 PDF_DIR=$(BUILDDIR)/pdf
@@ -188,6 +189,8 @@ manpages: mkdir-MAN_DIR
 		bin/mvpa-prep-fmri > $(MAN_DIR)/mvpa-prep-fmri.1
 	PYTHONPATH=. help2man -N -n 'query stereotaxic atlases' \
 		bin/atlaslabeler > $(MAN_DIR)/atlaslabeler.1
+	PYTHONPATH=. help2man -N -n 'start a PyMVPA tutorial session' \
+		bin/pymvpa2-tutorial > $(MAN_DIR)/pymvpa2-tutorial.1
 
 references:
 	@echo "I: Generating references"
@@ -234,6 +237,17 @@ examples2rst-stamp: mkdir-DOCBUILD_DIR
 		--outdir $(DOCSRC_DIR)/examples \
 		--exclude doc/examples/searchlight_app.py \
 		doc/examples
+	touch $@
+
+tutorial2notebooks: tutorial2notebooks-stamp
+tutorial2notebooks-stamp: mkdir-NOTEBOOKBUILD_DIR
+	tools/rst2ipnbpy \
+		--baseurl http://pymvpa.org \
+		--apiref_baseurl http://pymvpa.org/generated \
+		--glossary_baseurl http://pymvpa.org/glossary.html \
+		--outdir $(NOTEBOOKBUILD_DIR) \
+		--exclude doc/source/tutorial_prerequisites.rst \
+		doc/source/tutorial_*.rst
 	touch $@
 
 apidoc: apidoc-stamp

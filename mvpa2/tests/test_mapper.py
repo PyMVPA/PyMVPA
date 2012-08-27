@@ -302,3 +302,62 @@ def test_strip_boundary():
     assert_equal(len(sds), len(ds) - 3)
     for i in [19, 20, 21]:
         assert_false(i in sds.samples.sid)
+
+def test_transpose():
+    from mvpa2.mappers.shape import TransposeMapper
+    ds = Dataset(np.arange(24).reshape(2,3,4),
+                 sa={'testsa': np.arange(2)},
+                 fa={'testfa': np.arange(3)})
+    tp = TransposeMapper()
+    tds = tp(ds)
+    assert_equal(tds.shape, (3, 2, 4))
+    assert_true('testfa' in tds.sa)
+    assert_true('testsa' in tds.fa)
+    assert_false(tds.fa is tds.sa)
+    # and back
+    ttds = tp(tds)
+    assert_array_equal(ttds.samples, ds.samples)
+    assert_equal(ttds.sa, ds.sa)
+    assert_equal(ttds.fa, ds.fa)
+    # or this way
+    rds = tp.reverse(tds)
+    assert_array_equal(rds.samples, ds.samples)
+    assert_equal(rds.sa, ds.sa)
+    assert_equal(rds.fa, ds.fa)
+    assert_array_equal(rds.samples, ttds.samples)
+    assert_equal(rds.sa, ttds.sa)
+    assert_equal(rds.fa, ttds.fa)
+
+def test_addaxis():
+    from mvpa2.mappers.shape import AddAxisMapper
+    ds = Dataset(np.arange(24).reshape(2,3,4),
+                 sa={'testsa': np.arange(2)},
+                 fa={'testfa': np.arange(3)})
+    ds0 = AddAxisMapper(pos=0)(ds)
+    assert_array_equal(ds0.shape, (1,) + ds.shape)
+    # sas have extra dimension
+    assert_array_equal(ds0.sa.testsa[0], ds.sa.testsa)
+    # fas are duplicated
+    assert_array_equal(ds0.fa.testfa[0], ds0.fa.testfa[1])
+    ds1 = AddAxisMapper(pos=1)(ds)
+    assert_array_equal(ds1.shape, (2, 1, 3, 4))
+    # same sample attribute
+    assert_equal(ds1.sa, ds.sa)
+    # fas have extra dimension
+    assert_array_equal(ds1.fa.testfa[0], ds.fa.testfa)
+    ds2 = AddAxisMapper(pos=2)(ds)
+    assert_array_equal(ds2.shape, (2, 3, 1, 4))
+    # no change to attribute collections
+    assert_equal(ds2.sa, ds.sa)
+    assert_equal(ds2.fa, ds.fa)
+    # append an axis
+    ds3 = AddAxisMapper(pos=3)(ds)
+    assert_array_equal(ds3.shape, ds.shape + (1,))
+    # reverse indexing
+    ds_1 = AddAxisMapper(pos=-1)(ds)
+    assert_array_equal(ds3.samples, ds_1.samples)
+    assert_equal(ds3.sa, ds_1.sa)
+    assert_equal(ds3.fa, ds_1.fa)
+    # add multiple axes
+    ds4 = AddAxisMapper(pos=4)(ds)
+    assert_array_equal(ds4.shape, ds.shape + (1, 1))

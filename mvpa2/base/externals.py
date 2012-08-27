@@ -311,6 +311,14 @@ def __check_rv_discrete_ppf():
     except TypeError:
         raise RuntimeError, "pmf is broken in discrete dists of scipy.stats"
 
+def __check_rv_continuous_reduce_func():
+    """Unfortunately scipy 0.10.1 pukes when fitting with two params fixed
+    """
+    import scipy.stats as ss
+    try:
+        ss.t.fit(np.arange(6), floc=0.0, fscale=1.)
+    except IndexError, e:
+        raise RuntimeError("rv_continuous.fit can't candle 2 fixed params")
 
 def __check_in_ipython():
     # figure out if ran within IPython
@@ -497,6 +505,7 @@ _KNOWN = {'libsvm':'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'scipy': "__check_scipy()",
           'good scipy.stats.rdist': "__check_stablerdist()",
           'good scipy.stats.rv_discrete.ppf': "__check_rv_discrete_ppf()",
+          'good scipy.stats.rv_continuous._reduce_func(floc,fscale)': "__check_rv_continuous_reduce_func()",
           'weave': "__check_weave()",
           'pywt': "import pywt as __",
           'pywt wp reconstruct': "__check_pywt(['wp reconstruct'])",

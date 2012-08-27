@@ -943,7 +943,7 @@ if externals.exists('scipy'):
                     if __debug__:
                         res_sum = 'D=%.2f' % D
                 elif test == 'kstest':
-                    D, p = kstest(data, d, args=dist_params)
+                    D, p = kstest(data, dist_gen, args=dist_params)
                     if __debug__:
                         res_sum = 'D=%.3f p=%.3f' % (D, p)
             except (TypeError, ValueError, AttributeError,
@@ -966,7 +966,7 @@ if externals.exists('scipy'):
                 continue
 
         # sort in ascending order, so smaller is better
-        results.sort()
+        results.sort(key=lambda x:x[0])
 
         if __debug__ and 'STAT' in debug.active:
             # find the best and report it

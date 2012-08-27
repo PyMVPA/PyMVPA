@@ -138,6 +138,7 @@ from mvpa2 import mappers
 from mvpa2.mappers.base import *
 from mvpa2.mappers.slicing import *
 from mvpa2.mappers.flatten import *
+from mvpa2.mappers.shape import *
 from mvpa2.mappers.prototype import *
 from mvpa2.mappers.projection import *
 from mvpa2.mappers.svd import *
@@ -166,6 +167,7 @@ from mvpa2.measures.noiseperturbation import *
 from mvpa2.misc.neighborhood import *
 from mvpa2.measures.searchlight import *
 from mvpa2.measures.gnbsearchlight import *
+from mvpa2.measures.nnsearchlight import *
 from mvpa2.measures.corrstability import *
 
 __sdebug('misc')
