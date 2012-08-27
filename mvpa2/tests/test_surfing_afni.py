@@ -49,12 +49,8 @@ class SurfTests(unittest.TestCase):
         np.random.set_state(('MT19937', keys, 0))
 
     def test_afni_niml_dset(self):
-        # yoh: could the size be reduced for testing?
-        #      with e.g. 100-1000? ;) unfortunately it would fail the test due to
-        #      some quite huge differences and I am not 100% sure why test of IO
-        #      functionality should necessarily test on large data here
-        sz = (100, 45)
-        self._set_rng()
+        sz = (100, 45) # dataset size
+        self._set_rng() # generate random data
 
         expected_vals = {(0, 0):-2.13856 , (sz[0] - 1, sz[1] - 1):-1.92434,
                          (sz[0], sz[1] - 1):None, (sz[0] - 1, sz[1]):None,
@@ -81,6 +77,7 @@ class SurfTests(unittest.TestCase):
         # test I/O
         _, fn = tempfile.mkstemp('data.niml.dset', 'test')
 
+        # depending on the mode we do different tests (but on the same data)
         modes = ['normal', 'skipio', 'sparse2full']
 
         for fmt in fmts:
@@ -114,8 +111,8 @@ class SurfTests(unittest.TestCase):
                         if k == 'data':
                             if mode == 'sparse2full':
                                 # test the sparse2full feature
-                                # this changes the order of the data in each row
-                                # we skip testing whether dset2 is equal to dset
+                                # this changes the order of the data over columns
+                                # so we skip testing whether dset2 is equal to dset
                                 nfull = 2 * sz[0]
 
                                 dset3 = afni_niml_dset.sparse2full(dset2,
@@ -130,6 +127,7 @@ class SurfTests(unittest.TestCase):
                                 v = vbig
                                 v2 = dset3['data'][idxs3, :]
                             else:
+                                # check that data is as expected
                                 for pos, val in expected_vals.iteritems():
                                     if val is None:
                                         assert_raises(IndexError, lambda x:x[pos], v2)
