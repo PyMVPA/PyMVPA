@@ -167,6 +167,7 @@ from mvpa2.measures.noiseperturbation import *
 from mvpa2.misc.neighborhood import *
 from mvpa2.measures.searchlight import *
 from mvpa2.measures.gnbsearchlight import *
+from mvpa2.measures.nnsearchlight import *
 from mvpa2.measures.corrstability import *
 
 __sdebug('misc')

@@ -230,7 +230,7 @@ def _chk_asanyarray(a, axis):
     return a, outaxis
 
 
-def ttest_1samp(a, popmean, axis=0, mask=None, tail='both'):
+def ttest_1samp(a, popmean=0, axis=0, mask=None, alternative='two-sided'):
     """
     Calculates the T-test for the mean of ONE group of scores `a`.
 
@@ -265,8 +265,8 @@ def ttest_1samp(a, popmean, axis=0, mask=None, tail='both'):
         over which to operate on a).
     mask : array_like, bool
         bool array to specify which measurements should participate in the test
-    tail : ('both', 'left', 'right')
-        tail to test
+    alternative : ('two-sided', 'greater', 'less')
+        alternative two test
 
     Returns
     -------
@@ -298,7 +298,7 @@ def ttest_1samp(a, popmean, axis=0, mask=None, tail='both'):
         # why bother doing anything?
         n = a.shape[axis]
 
-    df= n - 1
+    df = n - 1
 
     d = np.mean(a, axis) - popmean
     # yoh: there is a bug in old (e.g. 1.4.1) numpy's while operating on
@@ -323,22 +323,22 @@ def ttest_1samp(a, popmean, axis=0, mask=None, tail='both'):
         else:
             return a
 
-    t, prob = _ttest_finish(_filled(df), _filled(t), tail=tail)
+    t, prob = _ttest_finish(_filled(df), _filled(t), alternative=alternative)
 
     return t, prob
 
 
-def _ttest_finish(df, t, tail='both'):
+def _ttest_finish(df, t, alternative):
     """Common code between all 3 t-test functions."""
     dist_gen = st.distributions.t
-    if tail == 'both':
-        prob = dist_gen.sf(np.abs(t), df) * 2 #use np.abs to get upper tail
-    elif tail == 'left':
+    if alternative == 'two-sided':
+        prob = dist_gen.sf(np.abs(t), df) * 2 # use np.abs to get upper alternative
+    elif alternative == 'greater':
         prob = dist_gen.sf(t, df)
-    elif tail == 'right':
+    elif alternative == 'less':
         prob = dist_gen.cdf(t, df)
     else:
-        raise ValueError("Unknown tail %r" % tail)
+        raise ValueError("Unknown alternative %r" % alternative)
 
     t_isnan = np.isnan(t)
     if np.any(t_isnan) and __scipy_prior0101:

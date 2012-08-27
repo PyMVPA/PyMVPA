@@ -217,6 +217,14 @@ experiments.
   DOI: http://dx.doi.org/10.1038/nrn1931
 
 
+.. _HBL+12:
+
+**Hiroyuki, A., Brian, M., Li, N., Yumiko, S. & Massimo, P.** (2012). Decoding Semantics across fMRI sessions with Different Stimulus Modalities: A practical MVPA Study. *Frontiers in Neuroinformatics*, *6*.
+  Keywords: :keyword:`pymvpa`, :keyword:`fmri`
+
+  DOI: http://dx.doi.org/10.3389/fninf.2012.00024
+
+
 .. _Ioa05:
 
 **Ioannidis, J. P. A.** (2005). Why most published research findings are false. *PLoS Med*, *2*, e124.
