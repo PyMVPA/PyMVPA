@@ -70,11 +70,11 @@ def chisquare(obs, exp='uniform'):
     # compute chisquare value
     exp_zeros = exp == 0
     exp_nonzeros = np.logical_not(exp_zeros)
-    if np.sum(exp_zeros) !=0 and (obs[exp_zeros] != 0).any():
+    if np.sum(exp_zeros) != 0 and (obs[exp_zeros] != 0).any():
         raise ValueError, \
               "chisquare: Expected values have 0-values, but there are actual" \
               " observations -- chi^2 cannot be computed"
-    chisq = np.sum(((obs - exp )**2)[exp_nonzeros] / exp[exp_nonzeros])
+    chisq = np.sum(((obs - exp) ** 2)[exp_nonzeros] / exp[exp_nonzeros])
 
     # return chisq and probability (upper tail)
     # taking only the elements with something expected
@@ -103,6 +103,7 @@ class DSMatrix(object):
         self.full_matrix = []
         self.u_triangle = None
         self.vector_form = None
+        self.u_triangle_vec = None
 
         # this one we know straight away, so set it
         self.metric = metric
@@ -141,7 +142,7 @@ class DSMatrix(object):
                 # across columns
                 for j in range(num_exem):
                     dsmatrix[i, j] = 1 - st.spearmanr(
-                        data_vectors[i,:], data_vectors[j,:])[0]
+                        data_vectors[i, :], data_vectors[j, :])[0]
 
         elif (metric == 'pearson'):
             dsmatrix = np.corrcoef(data_vectors)
@@ -170,6 +171,27 @@ class DSMatrix(object):
             self.u_triangle = np.triu(self.full_matrix)
 
         return self.u_triangle
+
+    def get_triangle_vector_form(self, k=0):
+        # NNO added Aug 2012
+        # use k=1 to get values above the diagonal
+        # use k=0 to include the diagonal
+
+        if self.u_triangle_vec is None:
+            self.u_triangle_vec = dict()
+
+        if not k in self.u_triangle_vec:
+            n = self.full_matrix.shape[0]
+            msk = np.zeros((n, n), dtype=np.bool_)
+            for i in range(n):
+                for j in range(n):
+                    if i >= j + k:
+                        break
+                    msk[i, j] = np.True_
+
+            self.u_triangle_vec[k] = self.full_matrix[msk]
+
+        return self.u_triangle_vec[k]
 
     # create the dissimilarity matrix on the (upper) triangle of the two
     # two dissimilarity matrices; we can just reuse the same dissimilarity
