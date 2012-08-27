@@ -155,7 +155,7 @@ def hemi_pairs_add_views(spec_left, spec_right, state, indir=None, overwrite=Fal
     return tuple(spec_both_new)
 
 
-def merge_left_right(left, right):
+def combine_left_right(left, right):
     if set(left.states) != set(right.states):
         raise ValueError('Incompatible states')
 
@@ -190,6 +190,62 @@ def merge_left_right(left, right):
     spec = SurfaceSpec(surfaces, states, groups=left.groups)
 
     return spec
+
+def merge_left_right(both):
+    # merges the result form combine_left_right
+    # output is a tuple with the surface defintion, and a list
+    # of pairs of filenames of surfaces that have to be merged
+
+    lr_infixes = ['_lh', '_rh']
+    m_infix = '_mh'
+
+    m_surfaces = []
+    m_states = []
+    m_groups = both.groups
+
+    # mapping from output filename to tuples with input file names
+    # of surfaces to be merged
+    merge_filenames = dict()
+
+    _STATE = 'SurfaceState'
+    _NAME = 'SurfaceName'
+
+    for i, left in enumerate(both.surfaces):
+        for j, right in enumerate(both.surfaces):
+            if j <= i:
+                continue
+
+            if left[_STATE] == right[_STATE]:
+                # apply transformation in naming to both
+                # surfaces. result should be the same
+
+                fns = []
+                mrg = [] # versions ok to be merged
+
+                for ii, surf in enumerate([left, right]):
+                    newsurf = dict()
+                    fns.append(surf[_NAME])
+                    for k, v in surf.iteritems():
+                        newsurf[k] = v.replace(lr_infixes[ii], m_infix)
+
+                        # ensure that right hemi identical to left
+                        if ii > 0 and newsurf[k] != mrg[ii - 1][k]:
+                            raise ValueError("No match: %r -> %r" % (k, v))
+                    mrg.append(newsurf)
+
+                m_states.append(left[_STATE])
+                m_surfaces.append(mrg[0])
+                merge_filenames[newsurf[_NAME]] = tuple(fns)
+
+    m = SurfaceSpec(m_surfaces, states=m_states, groups=m_groups)
+
+    return m, merge_filenames
+
+
+
+
+
+
 
 
 def write(fnout, spec, overwrite=False):
@@ -229,3 +285,30 @@ def read(fn):
                       groups=groups or None)
 
 
+def canonical_filename(icold=None, hemi=None, suffix=None):
+    if suffix is None:
+        suffix = ''
+    return '%sh_ico%d%s.spec' % (hemi, icold, suffix)
+
+def find_file(directory, icold=None, hemi=None, suffix=None):
+    fn = os.path.join(directory, canonical_filename(icold=icold,
+                                                    hemi=hemi,
+                                                    suffix=suffix))
+    if not os.path.exists(fn):
+        raise ValueError("not found: %s" % fn)
+    return fn
+
+
+if __name__ == '__main__':
+    fL = '/Users/nick/_tmp/newref/lh_ico32_al.spec'
+    fR = '/Users/nick/_tmp/newref/rh_ico32_al.spec'
+    fB = '/Users/nick/_tmp/newref/bh_ico32_al.spec'
+
+    import mvpa2.misc.surfing.afni_suma_spec as spec
+    sL = spec.read(fL)
+    sR = spec.read(fR)
+    sB = spec.read(fB)
+
+    print sB
+    mm = spec.merge_left_right(sB)
+    print mm

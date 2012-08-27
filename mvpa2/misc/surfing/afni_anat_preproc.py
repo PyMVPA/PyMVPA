@@ -38,7 +38,8 @@ def getdefaults():
        'expvol_ss':True,
        'verbose':True,
        'al2expsuffix':'_al2exp',
-       'sssuffix':'_ss'
+       'sssuffix':'_ss',
+       'alsuffix':'_al'
        }
 
     return d
@@ -469,7 +470,7 @@ def run_alignment(config, env):
             for sumafile in sumafiles:
                 if fnmatch.fnmatch(sumafile, pat):
                     s = sumafile.split(".")
-                    s[len(s) - 2] += "_al" # insert '_al' just before last dot
+                    s[len(s) - 2] += config['alsuffix'] # insert '_al' just before last dot
                     alsumafile = ".".join(s)
 
                     if config['overwrite'] or not os.path.exists('%s/%s' % (refdir, alsumafile)):
@@ -497,9 +498,14 @@ def run_makespec(config, env):
 
             # make spec file
             surfprefix = '%s%sh' % (config['mi_icopat'] % icold, hemi)
-            specfn = '%s/%s.spec' % (refdir, surfprefix)
-            if config['overwrite'] or not os.path.exists(specfn):
-                suma_makespec(refdir, surfprefix, specfn)
+            specfn = afni_suma_spec.canonical_filename(icold, hemi,
+                                                       config['alsuffix'])
+            specpathfn = os.path.join(refdir, specfn)
+
+            if config['overwrite'] or not os.path.exists(specpathfn):
+                suma_makespec(refdir, surfprefix, specpathfn)
+            else:
+                print "Skipping spec for %s" % specpathfn
 
             # make simple script to run afni and suma
             runsumafn = '%s/%sh_ico%d_runsuma.sh' % (refdir, hemi, icold)
@@ -519,17 +525,41 @@ def run_makespec_bothhemis(config, env):
     for icold in icolds:
         specs = []
         for hemi in hemis:
-            surfprefix = '%s%sh' % (config['mi_icopat'] % icold, hemi)
-            specfn = '%s/%s.spec' % (refdir, surfprefix)
-            specs.append(afni_suma_spec.read(specfn))
+            #surfprefix = '%s%sh' % (config['mi_icopat'] % icold, hemi)
+            specfn = afni_suma_spec.canonical_filename(icold, hemi,
+                                                       config['alsuffix'])
+            specpathfn = os.path.join(refdir, specfn)
+            specs.append(afni_suma_spec.read(specpathfn))
 
         specs = afni_suma_spec.hemi_pairs_add_views(specs[0], specs[1],
                             'inflated', refdir, overwrite=overwrite)
-        spec_both = afni_suma_spec.merge_left_right(specs[0], specs[1])
+        spec_both = afni_suma_spec.combine_left_right(specs[0], specs[1])
 
-        surfprefix = '%s%sh' % (config['mi_icopat'] % icold, 'b')
-        specfn = '%s/%s.spec' % (refdir, surfprefix)
-        spec_both.write(specfn, overwrite=overwrite)
+        # generate spec files for both hemispheres
+        hemiboth = 'b'
+        specfn = afni_suma_spec.canonical_filename(icold, hemiboth, config['alsuffix'])
+        specpathfn = os.path.join(refdir, specfn)
+        spec_both.write(specpathfn, overwrite=overwrite)
+
+        # merge left and right into one surface
+        # and generate the spec files as well
+        hemimerged = 'm'
+        specfn = afni_suma_spec.canonical_filename(icold, hemimerged, config['alsuffix'])
+        specpathfn = os.path.join(refdir, specfn)
+
+        if config['overwrite'] or not os.path.exists(specpathfn):
+            spec_merged, surfs_to_join = afni_suma_spec.merge_left_right(spec_both)
+            spec_merged.write(specpathfn, overwrite=overwrite)
+
+            full_path = lambda x:os.path.join(refdir, x)
+            for fn_out, fns_in in surfs_to_join.iteritems():
+                surfs_in = [surf_fs_asc.read(full_path(fn)) for fn in fns_in]
+                surf_merged = surf.merge(*surfs_in)
+                if config['overwrite'] or not os.path.exists(full_path(fn_out)):
+                    surf_fs_asc.write(surf_merged, full_path(fn_out),
+                                                overwrite=overwrite)
+                    print "Merged surfaces written to %s" % fn_out
+
 
 def suma_makerunsuma(fnout, specfn, surfvol):
     '''Generate a simple script to launch AFNI and SUMA with NIML enabled
@@ -557,7 +587,7 @@ def suma_makespec(indir, surfprefix, fnout=None):
     postfix = '.asc'
     pat = '%s.?*%s' % (surfprefix, postfix)
 
-    removepostfix = '_al'
+    removepostfix = config['alsuffix']
 
     fns = os.listdir(indir)
     surfname2filename = dict()
@@ -570,7 +600,8 @@ def suma_makespec(indir, surfprefix, fnout=None):
             surfname2filename[surfname] = fn
 
     # only include these surfaces
-    usesurfs = ['smoothwm', 'intermediate', 'pial', 'semiinflated', 'tqinflated', 'inflated', 'sphere.reg']
+    usesurfs = ['smoothwm', 'intermediate', 'pial', 'semiinflated',
+                 'tqinflated', 'inflated', 'sphere.reg']
     isanatomical = dict(zip(usesurfs, [True, True, True] + [False] * 4))
 
 
@@ -586,7 +617,8 @@ def suma_makespec(indir, surfprefix, fnout=None):
     localdomainparent = surfname2filename.get('smoothwm', None)
     for surfname in usesurfs:
         if surfname in surfname2filename:
-            ldp = ('SAME' if (not localdomainparent or localdomainparent == surfname2filename[surfname])
+            ldp = ('SAME' if (not localdomainparent or
+                              localdomainparent == surfname2filename[surfname])
                          else localdomainparent)
             lines.extend(['NewSurface',
                           'SurfaceFormat = ASCII',
@@ -601,15 +633,19 @@ def suma_makespec(indir, surfprefix, fnout=None):
             if localdomainparent is None:
                 localdomainparent = surfname2filename[surfname]
 
+
+
     if fnout:
         f = open(fnout, 'w')
         f.write('\n'.join(lines))
         f.close()
         if config['verbose']:
             print 'Generated SUMA spec file in %s' % fnout
+    else:
+        print "No output"
 
 
-    return lines
+
 
 def average_fs_asc_surfs(fn1, fn2, fnout):
     '''averages two surfaces'''
