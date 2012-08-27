@@ -105,6 +105,7 @@ class SurfTests(unittest.TestCase):
 
                     # data in dset and dset2 should be identical
                     for k in dset_keys:
+                        # general idea is to test whether v is equal to v2
                         v = dset[k]
                         v2 = dset2[k]
 
