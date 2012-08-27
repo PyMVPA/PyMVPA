@@ -141,9 +141,8 @@ class SurfTests(unittest.TestCase):
         t = surf_fs_asc.read(fn)
         os.remove(fn)
 
-        eps = .0001
-        _assert_array_equal_eps(s.vertices, t.vertices, eps)
-        _assert_array_equal_eps(s.vertices, t.vertices, eps)
+        assert_array_almost_equal(s.vertices, t.vertices)
+        assert_array_almost_equal(s.vertices, t.vertices)
 
         theta = np.asarray([0, 0., 180.])
 
@@ -153,7 +152,7 @@ class SurfTests(unittest.TestCase):
         l2r_expected = [0, 1, 2, 6, 5, 4, 3, 11, 10, 9, 8, 7, 15, 14, 13, 12,
                        16, 19, 18, 17, 21, 20, 23, 22, 26, 25, 24]
 
-        _assert_array_equal_eps(l2r, np.asarray(l2r_expected), 0)
+        assert_array_equal(l2r, np.asarray(l2r_expected))
 
 
         sides_facing = 'apism'
@@ -202,12 +201,12 @@ class SurfTests(unittest.TestCase):
 
 
             ijk_expected = np.reshape(np.asarray(subidxs[i]), (1, 3))
-            _assert_array_equal_eps(ijk, ijk_expected)
+            assert_array_almost_equal(ijk, ijk_expected)
 
             xyz = vg.lin2xyz(lin)
 
             xyz_expected = np.reshape(np.asarray(xyzs[i]), (1, 3))
-            _assert_array_equal_eps(xyz, xyz_expected)
+            assert_array_almost_equal(xyz, xyz_expected)
 
 
         # check that some identities hold
@@ -224,7 +223,6 @@ class SurfTests(unittest.TestCase):
 
         # 0=lin, 1=ijk, 2=xyz
         identities_input = [1, 2, 2, 0, 1, 0, 2, 0]
-        identities_input_eps = [0., 0., 0.] # how much difference we allow
 
         # voxel indices to test
         linrange = [0, 1, sz[2], sz[1] * sz[2]] + range(0, nv, nv / 100)
@@ -235,15 +233,11 @@ class SurfTests(unittest.TestCase):
 
         for j, identity in enumerate(identities):
             inp = identities_input[j]
-            if inp == 0:
-                x = lin
-            elif inp == 1:
-                x = ijk
-            elif inp == 2:
-                x = xyz
+            x = {0: lin,
+                 1: ijk,
+                 2: xyz}[inp]
 
-            eps = identities_input_eps[inp]
-            _assert_array_equal_eps(x, identity(x), eps)
+            assert_array_equal(x, identity(x))
 
         # check that masking works
         assert_true(vg.contains_lin(lin).all())
@@ -262,11 +256,10 @@ class SurfTests(unittest.TestCase):
             lin_d = vg.xyz2lin(xyz_d)
 
             if r:
-                assert_raises(ValueError,
-                              lambda x, y:_assert_array_equal_eps(x, y),
-                              lin_d, lin)
+                assert_raises(AssertionError,
+                              assert_array_almost_equal, lin_d, lin)
             else:
-                _assert_array_equal_eps(lin_d, lin)
+                assert_array_almost_equal(lin_d, lin)
 
 
         # some I/O testing
@@ -280,8 +273,8 @@ class SurfTests(unittest.TestCase):
         vg2 = volgeom.from_image(img)
         vg3 = volgeom.from_nifti_file(fn)
 
-        _assert_array_equal_eps(vg.affine, vg2.affine, 0)
-        _assert_array_equal_eps(vg.affine, vg3.affine, 0)
+        assert_array_equal(vg.affine, vg2.affine)
+        assert_array_equal(vg.affine, vg3.affine)
 
         assert_equal(vg.shape[:3], vg2.shape[:3], 0)
         assert_equal(vg.shape[:3], vg3.shape[:3], 0)
@@ -576,21 +569,6 @@ class _Voxel_Count_Measure(Measure):
 
     def _call(self, dset):
         return dset.nfeatures
-
-def _assert_array_equal_eps(x, y, eps=.0001):
-    if x.shape != y.shape:
-        raise ValueError('not equal size: %r != %r' % (x.shape, y.shape))
-
-    xr = np.reshape(x, (-1,))
-    yr = np.reshape(y, (-1,))
-
-    delta = np.abs(xr - yr)
-
-    m = -(delta <= eps)
-
-    # deal with NaNs
-    if ((any(-np.isnan(xr[m])) or any(-np.isnan(yr[m])))):
-        raise ValueError('arrays differ more than %r' % eps)
 
 
 def suite():
