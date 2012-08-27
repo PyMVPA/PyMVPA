@@ -7,6 +7,7 @@ from docutils.core import publish_doctree
 from doctest import script_from_examples, DocTestParser
 import json
 from copy import deepcopy
+from optparse import OptionParser
 
 def prep_rest(rest):
     # some preproc on the raw string
@@ -333,11 +334,99 @@ class ReST2IPyNB(object):
         self._buffer = ''
 
 
-conv = ReST2IPyNB(baseurl='http://pymvpa.org',
-                  apiref_baseurl='http://pymvpa.org/generated',
-                  glossary_baseurl='http://pymvpa.org/glossary.html')
-notebook = conv(sys.argv[1])
+def main():
+    parser = OptionParser( \
+        usage="%prog [options] <filename|directory> [...]", \
+        version="%prog 0.1", description="""\
+%prog converts Python scripts into restructered text (ReST) format suitable for
+integration into the Sphinx documentation framework. Its key feature is that it
+extracts stand-alone (unassigned) single, or multiline triple-quote docstrings
+and moves them out of the code listing so that they are rendered as regular
+ReST, while at the same time maintaining their position relative to the
+listing.
 
-json_notebook = json.dumps(notebook, sort_keys=True, indent=2)
-open(sys.argv[2], 'w').write(json_notebook)
+The detection of such docstrings is exclusively done by parsing the raw code so
+it is never actually imported into a running Python session. Docstrings have to
+be written using triple quotes (both forms " and ' are possible).
 
+It is recommend that such docstrings are preceded and followed by an empty line.
+Intended docstring can make use of the full linewidth from the second docstring
+line on. If the indentation of multiline docstring is maintained for all lines,
+the respective indentation is removed in the ReST output.
+
+The parser algorithm automatically excludes file headers and starts with the
+first (module-level) docstring instead.
+""" )
+
+    # define options
+    parser.add_option('--verbose', action='store_true', dest='verbose',
+                      default=False, help='print status messages')
+    parser.add_option('-x', '--exclude', action='append', dest='excluded',
+                      help="""\
+Use this option to exclude single files from the to be parsed files. This is
+especially useful to exclude files when parsing complete directories. This
+option can be specified multiple times.
+""")
+    parser.add_option('-o', '--outdir', action='store', dest='outdir',
+                      type='string', default=None, help="""\
+Target directory to write the ReST output to. This is a required option.
+""")
+    parser.add_option('--baseurl', action='store', dest='baseurl',
+                      type='string', default=None, help="""\
+Base URL for references to the online HTML version of a file. Default=''
+""")
+    parser.add_option('--apiref_baseurl', action='store', dest='apiref_baseurl',
+                      type='string', default=None, help="""\
+Base URL for links to the online API reference. Default=''
+""")
+    parser.add_option('--glossary_baseurl', action='store', dest='glossary_baseurl',
+                      type='string', default=None, help="""\
+Base URL for links to the online glossary. Default=''
+""")
+
+    # parse options
+    (opts, args) = parser.parse_args() # read sys.argv[1:] by default
+
+    # check for required options
+    if opts.outdir is None:
+        print('Required option -o, --outdir not specified.')
+        sys.exit(1)
+
+    # build up list of things to parse
+    toparse = []
+    for t in args:
+        # expand dirs
+        if os.path.isdir(t):
+            # add all python files in that dir
+            toparse += glob.glob(os.path.join(t, '*.rst'))
+        else:
+            toparse.append(t)
+
+    # filter parse list
+    if not opts.excluded is None:
+        toparse = [t for t in toparse if not t in opts.excluded]
+
+    toparse_list = toparse
+    toparse = set(toparse)
+
+    if len(toparse) != len(toparse_list):
+        print('Ignoring duplicate parse targets.')
+
+    if not os.path.exists(opts.outdir):
+        os.mkdir(opts.outdir)
+
+    conv = ReST2IPyNB(baseurl=opts.baseurl,
+                      apiref_baseurl=opts.apiref_baseurl,
+                      glossary_baseurl=opts.glossary_baseurl)
+
+    # finally process all examples
+    for t in toparse:
+        notebook = conv(t)
+        json_notebook = json.dumps(notebook, sort_keys=True, indent=2)
+        open(os.path.join(
+                opts.outdir,
+                '%s.ipynb' % os.path.splitext(os.path.basename(t))[0]),
+             'w').write(json_notebook)
+
+if __name__ == '__main__':
+    main()
