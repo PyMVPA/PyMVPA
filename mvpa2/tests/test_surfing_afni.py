@@ -50,7 +50,7 @@ class SurfTests(unittest.TestCase):
         keys = np.asanyarray(keys, dtype=np.uint32)
         np.random.set_state(('MT19937', keys, 0))
 
-    def _test_afni_niml_dset(self):
+    def test_afni_niml_dset(self):
         sz = (10000, 45)
         self._set_rng()
 
@@ -133,6 +133,7 @@ class SurfTests(unittest.TestCase):
 def test_afni_suma_spec(self):
     datapath = os.path.join(pymvpa_datadbroot,
                         'tutorial_data', 'tutorial_data', 'data', 'surfing')
+    # TODO: test on surfing data
 
 
 
