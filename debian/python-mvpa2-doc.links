@@ -1,2 +1,5 @@
 usr/share/javascript/jquery/jquery.js         usr/share/doc/python-mvpa2-doc/html/_static/jquery.js
 usr/share/javascript/underscore/underscore.js usr/share/doc/python-mvpa2-doc/html/_static/underscore.js
+usr/share/doc/python-mvpa2-doc/html           usr/share/doc/python-mvpa2/html
+usr/share/doc/python-mvpa2-doc/examples       usr/share/doc/python-mvpa2/examples
+usr/share/doc/python-mvpa2-doc/notebooks      usr/share/doc/python-mvpa2/notebooks
