@@ -90,7 +90,7 @@ intermediate_surf_fn = os.path.join(datapath, "ico%d_%sh.intermediate_al.asc"
 
 """
 Radius is specified as either an int (referring to a fixed number of voxels
-across searchlights, with a variable radius in milimeters (or whatever unit
+across searchlights, with a variable radius in millimeters (or whatever unit
 is used in the files that define the surfaces), or a float (referring to the
 radius in millimeters, with a variable number of voxels).
 
@@ -140,8 +140,8 @@ volume coverage there may be center nodes without voxels
 """
 center_ids = voxsel.keys()
 """
-Define the neighboorhood, that is which voxels are near each of the center nodes
-This implies a voxel mask as well, which is subequently used for loading the
+Define the neighborhood, that is which voxels are near each of the center nodes
+This implies a voxel mask as well, which is subsequently used for loading the
 data.
 
 The voxel_ids_label argument is optional
@@ -178,7 +178,7 @@ zscore(dataset, chunks_attr='chunks', param_est=('targets', ['rest']), dtype='fl
 dataset = dataset[dataset.sa.targets != 'rest']
 
 """
-Define classifier and crossvalidation
+Define classifier and cross-validation
 """
 
 clf = LinearCSVMC()
