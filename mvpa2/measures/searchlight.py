@@ -16,6 +16,7 @@ if __debug__:
 import numpy as np
 
 from mvpa2.base import externals, warning
+from mvpa2.base.types import is_datasetlike
 from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
 
 from mvpa2.datasets import hstack
@@ -287,13 +288,24 @@ class Searchlight(BaseSearchlight):
         for i, f in enumerate(block):
             # retrieve the feature ids of all features in the ROI from the query
             # engine
-            roi_fids = self._queryengine[f]
+            roi_specs = self._queryengine[f]
 
             if __debug__ and  debug_slc_:
                 debug('SLC_', 'For %r query returned ids %r' % (f, roi_fids))
 
+            if is_datasetlike(roi_specs):
+                # TODO: unittest
+                assert(len(roi_specs) == 1)
+                roi_fids = roi_specs.samples[0]
+            else:
+                roi_fids = roi_specs
+
             # slice the dataset
             roi = ds[:, roi_fids]
+
+            if is_datasetlike(roi_specs):
+                for n,v in roi_specs.fa.iteritems():
+                    roi.fa[n] = v
 
             if self.__add_center_fa:
                 # add fa to indicate ROI seed if requested
