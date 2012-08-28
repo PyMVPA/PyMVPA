@@ -138,6 +138,7 @@ from mvpa2 import mappers
 from mvpa2.mappers.base import *
 from mvpa2.mappers.slicing import *
 from mvpa2.mappers.flatten import *
+from mvpa2.mappers.shape import *
 from mvpa2.mappers.prototype import *
 from mvpa2.mappers.projection import *
 from mvpa2.mappers.svd import *
@@ -158,13 +159,15 @@ if externals.exists('mdp ge 2.4'):
 __sdebug('measures')
 from mvpa2 import measures
 from mvpa2.measures.anova import *
-from mvpa2.measures.glm import *
+if externals.exists('statsmodels'):
+    from mvpa2.measures.statsmodels_adaptor import *
 from mvpa2.measures.irelief import *
 from mvpa2.measures.base import *
 from mvpa2.measures.noiseperturbation import *
 from mvpa2.misc.neighborhood import *
 from mvpa2.measures.searchlight import *
 from mvpa2.measures.gnbsearchlight import *
+from mvpa2.measures.nnsearchlight import *
 from mvpa2.measures.corrstability import *
 
 __sdebug('misc')
@@ -186,6 +189,7 @@ from mvpa2.misc.bv import *
 from mvpa2.misc.bv.base import *
 from mvpa2.misc.support import *
 from mvpa2.misc.transformers import *
+from mvpa2.misc.dcov import dCOV, dcorcoef
 
 __sdebug("nibabel")
 if externals.exists("nibabel"):
@@ -237,6 +241,16 @@ def suite_stats():
 
     glbls = globals()
     import types
+    # Compatibility layer for Python3
+    try: 
+        from io import FileIO as BuiltinFileType
+    except ImportError:
+        BuiltinFileType = types.FileType
+
+    try:
+        from types import ClassType as OldStyleClassType
+    except ImportError:
+        OldStyleClassType = type(None)
 
     def _get_path(e):
         """Figure out basic path for the beast... probably there is already smth which could do that for me
@@ -248,7 +262,7 @@ def suite_stats():
         elif hasattr(e, '__path__'):
             return e.__path__[0]
         elif hasattr(e, '__module__'):
-            if isinstance(e.__module__, types.StringType):
+            if isinstance(e.__module__, str):
                 return e.__module__
             else:
                 return _get_path(e.__module__)
@@ -266,17 +280,17 @@ def suite_stats():
             for k, e in d.iteritems():
                 found = False
                 for ty, tk, check_path in (
-                    (types.ListType, "lists", False),
-                    (types.StringType, "strings", False),
-                    (types.UnicodeType, "strings", False),
-                    (types.FileType, "files", False),
+                    (list, "lists", False),
+                    (str, "strings", False),
+                    (unicode, "strings", False),
+                    (BuiltinFileType, "files", False),
                     (types.BuiltinFunctionType, None, True),
                     (types.BuiltinMethodType, None, True),
                     (types.ModuleType, "modules", True),
-                    (types.ClassType, "classes", True),
-                    (types.TypeType, "types", True),
+                    (OldStyleClassType, "classes", True),
+                    (type, "types", True),
                     (types.LambdaType, "functions", True),
-                    (types.ObjectType, "objects", True),
+                    (object, "objects", True),
                     ):
                     if isinstance(e, ty):
                         found = True

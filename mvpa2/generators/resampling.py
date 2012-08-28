@@ -132,7 +132,7 @@ class Balancer(Node):
             # select determined number of elements per unique attribute value
             selected = []
             for ua in uattr_limited:
-                selected += random.sample((attr_limited == ua).nonzero()[0],
+                selected += random.sample(list((attr_limited == ua).nonzero()[0]),
                                           epa[ua])
 
             # determine the final indices of selected elements and store
@@ -183,5 +183,5 @@ class Balancer(Node):
 
 
     def __str__(self):
-        return _str(self, self._amount, n=self._attr, count=self.nruns,
+        return _str(self, str(self._amount), n=self._attr, count=self.nruns,
                     apply_selection=self._apply_selection)

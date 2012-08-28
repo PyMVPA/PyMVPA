@@ -54,6 +54,8 @@ def get_haxby2001_data(path=None, roi='vt'):
     # aka "constructive interference"
     ds = ds.get_mapped(mean_group_sample(['targets', 'runtype']))
 
+    # XXX suboptimal order: should be zscore->avg
+    # but then: where is the difference between this and _alternative()?
     # zscore dataset relative to baseline ('rest') mean
     zscore(ds, param_est=('targets', ['rest']))
 
@@ -63,7 +65,7 @@ def get_haxby2001_data(path=None, roi='vt'):
     return ds
 
 
-def get_haxby2001_data_alternative(path=None, roi='vt'):
+def get_haxby2001_data_alternative(path=None, roi='vt', grp_avg=True):
     if path is None:
         ds = get_raw_haxby2001_data(roi=roi)
     else:
@@ -82,9 +84,10 @@ def get_haxby2001_data_alternative(path=None, roi='vt'):
     rnames = {0: 'even', 1: 'odd'}
     ds.sa['runtype'] = [rnames[c % 2] for c in ds.sa.chunks]
 
-    # compute the mean sample per condition and odd vs. even runs
-    # aka "constructive interference"
-    ds = ds.get_mapped(mean_group_sample(['targets', 'runtype']))
+    if grp_avg:
+        # compute the mean sample per condition and odd vs. even runs
+        # aka "constructive interference"
+        ds = ds.get_mapped(mean_group_sample(['targets', 'runtype']))
 
     return ds
 

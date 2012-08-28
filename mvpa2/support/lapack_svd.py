@@ -2,13 +2,15 @@
 import numpy
 
 from mvpa2.base import externals
+from mvpa2.base.types import as_char
 
 if externals.exists('ctypes', raise_=True):
     from ctypes import cdll, c_char, c_int, c_double, c_void_p, byref
 
 from numpy.linalg import LinAlgError
 
-lapacklib = cdll.LoadLibrary('liblapack.so')
+if externals.exists('liblapack.so'):
+    lapacklib = cdll.LoadLibrary('liblapack.so')
 
 __all__ = ['svd']
 
@@ -40,8 +42,8 @@ def svd(a, full_matrices=True, algo='svd', **kwargs):
         flag='A'
     else:
         flag='S'
-    jobu=c_char(flag)
-    jobv=c_char(flag)
+    jobu=c_char(as_char(flag))
+    jobv=c_char(as_char(flag))
     info=c_int(0)
     x, y = a.shape
     m=c_int(x)

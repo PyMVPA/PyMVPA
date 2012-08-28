@@ -16,6 +16,8 @@ import re, copy
 
 import numpy as np
 
+from mvpa2.base.types import is_sequence_type
+
 from mvpa2.clfs.libsvmc import _svmc as svmc
 from mvpa2.clfs.libsvmc._svmc import C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, \
                                   NU_SVR, LINEAR, POLY, RBF, SIGMOID, \
@@ -180,7 +182,6 @@ SVMParameter._register_properties()
 ##REF: Name was automagically refactored
 def seq_to_svm_node(x):
     """convert a sequence or mapping to an SVMNode array"""
-    import operator
 
     length = len(x)
 
@@ -193,7 +194,7 @@ def seq_to_svm_node(x):
     elif isinstance(x, dict):
         iter_range = list(x).sort()
         iter_values = np.ndarray(x.values())
-    elif operator.isSequenceType(x):
+    elif is_sequence_type(x):
         iter_range = range(length)
         iter_values = np.asarray(x)
     else:
@@ -408,8 +409,11 @@ class SVMModel:
 
     def __del__(self):
         if __debug__:
-            debug('SVM_', 'Destroying libsvm v. %s SVMModel %s'
-                  % (svmc.__version__, `self`))
+            # TODO: place libsvm versioning information into externals
+            debug('SVM_', 'Destroying libsvm v. %s SVMModel %s',
+                  (hasattr(svmc, '__version__') \
+                   and svmc.__version__ or "unknown",
+                   `self`))
         try:
             svmc.svm_destroy_model_helper(self.model)
         except Exception, e:
@@ -485,4 +489,4 @@ class SVMModel:
     def get_rho(self):
         """Return constant(s) in decision function(s) (if multi-class)"""
         return double_array_to_list(svmc.svm_model_rho_get(self.model),
-                                self.nr_class * (self.nr_class-1)/2)
+                                self.nr_class * (self.nr_class-1)//2)

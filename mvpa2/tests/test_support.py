@@ -262,6 +262,11 @@ def test_limit_filter():
                        np.logical_or(ds.sa.chunks == 3,
                                      ds.sa.chunks == 1))
 
+def test_mask2slice():
+    slc = np.repeat(False, 5)
+    assert_equal(mask2slice(slc), slice(None, 0, None))
+
+
 def suite():
     return unittest.makeSuite(SupportFxTests)
 

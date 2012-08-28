@@ -20,8 +20,8 @@ from mvpa2.kernels.sg import RbfSGKernel, LinearSGKernel
 
 from mvpa2.misc.data_generators import normal_feature_dataset
 
-from mvpa2.clfs.libsvmc import SVM as lsSVM
-from mvpa2.clfs.sg import SVM as sgSVM
+from mvpa2.clfs.libsvmc.svm import SVM as lsSVM
+from mvpa2.clfs.sg.svm import SVM as sgSVM
 
 from mvpa2.generators.splitters import Splitter
 from mvpa2.generators.partition import NFoldPartitioner

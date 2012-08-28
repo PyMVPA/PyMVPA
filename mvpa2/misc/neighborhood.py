@@ -10,11 +10,11 @@
 
 import numpy as np
 from numpy import array
-import operator
 import sys
 import itertools
 
 from mvpa2.base import warning
+from mvpa2.base.types import is_sequence_type
 from mvpa2.base.dochelpers import borrowkwargs, borrowdoc, _repr_attrs, _repr
 from mvpa2.clfs.distance import cartesian_distance
 
@@ -628,7 +628,6 @@ class CachedQueryEngine(QueryEngineInterface):
     def query(self, **kwargs):
         def to_hashable(x):
             """Convert x to something which dict wouldn't mind"""
-            import operator
             try:
                 # silly attempt
                 d = {x: None}
@@ -641,7 +640,7 @@ class CachedQueryEngine(QueryEngineInterface):
                 # and sort for deterministic order
                 return tuple((k, to_hashable(v))
                              for (k, v) in sorted(x.iteritems()))
-            elif operator.isSequenceType(x):
+            elif is_sequence_type(x):
                 return tuple(i for i in x)
             elif np.isscalar(x):
                 return x
@@ -701,7 +700,7 @@ def scatter_neighborhoods(neighbor_gen, coords, deterministic=False):
       contains the indices of the respective seeds coordinates in the input
       coordinate list. If particular coordinates are present multiple times
       the index list will contain all indices corresponding to these
-      cooridnates.
+      coordinates.
     """
     hasher = dict
     if deterministic:
@@ -732,5 +731,7 @@ def scatter_neighborhoods(neighbor_gen, coords, deterministic=False):
     # unzip coords and idx again
     coords, idx = zip(*seeds)
     # we need a flat idx list
-    idx = list(itertools.chain.from_iterable(idx))
+    # yoh: sum trick replaced list(itertools.chain.from_iterable(idx))
+    #      which is not python2.5-compatible
+    idx = sum(idx, [])
     return coords, idx

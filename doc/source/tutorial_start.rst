@@ -87,9 +87,9 @@ recode them into numerical values.
 
   Besides the collection of sample attributes ``sa``, each dataset has two
   additional collections: ``fa`` for feature attributes and ``a`` for general
-  dataset attributes. All these collections are actually instances of a Python
-  `dict`. Investigate what additional attributes are stored in this particular
-  dataset.
+  dataset attributes. All these collections are actually instances of a
+  Python `dict`. Investigate what additional attributes are stored in this
+  particular dataset.
 
 
 Dealing With A Classifier

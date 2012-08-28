@@ -14,7 +14,7 @@ if __debug__:
     from mvpa2.base import debug
     debug('INIT', 'mvpa2.clfs.libsvmc')
 
-from mvpa2.clfs.libsvmc.svm import SVM
+#from mvpa2.clfs.libsvmc.svm import SVM
 
 if __debug__:
     debug('INIT', 'mvpa2.clfs.libsvmc end')

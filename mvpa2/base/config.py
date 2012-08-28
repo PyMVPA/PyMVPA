@@ -196,9 +196,14 @@ class ConfigManager(SafeConfigParser):
             if isinstance(default, bool):
                 return default
             else:
-                if default.lower() not in self._boolean_states:
+                # compatibility layer for py3 version of ConfigParser
+                if hasattr(self, '_boolean_states'):
+                    boolean_states = self._boolean_states
+                else:
+                    boolean_states = self.BOOLEAN_STATES
+                if default.lower() not in boolean_states:
                     raise ValueError, 'Not a boolean: %s' % default
-                return self._boolean_states[default.lower()]
+                return boolean_states[default.lower()]
 
         return SafeConfigParser.getboolean(self, section, option)
 

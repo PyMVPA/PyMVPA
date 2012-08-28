@@ -292,11 +292,16 @@ def test_nifti_dataset_from3_d():
     # test loading from a list of filenames
 
     # for now we should fail if trying to load a mix of 4D and 3D volumes
-    assert_raises(ValueError, fmri_dataset, (masrc, tssrc),
-                  mask=masrc, targets=1)
+    # TODO: nope -- it should work and we should test here if correctly
+    dsfull_plusone = fmri_dataset((masrc, tssrc), mask=masrc, targets=1)
 
     # Lets prepare some custom NiftiImage
     dsfull = fmri_dataset(tssrc, mask=masrc, targets=1)
+    assert_equal(len(dsfull)+1, len(dsfull_plusone))
+    assert_equal(dsfull.nfeatures, dsfull_plusone.nfeatures)
+    # skip 3d mask in 0th sample
+    
+    assert_array_equal(dsfull.samples, dsfull_plusone[1:].samples)
     ds_selected = dsfull[3]
     nifti_selected = map2nifti(ds_selected)
 

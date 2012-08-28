@@ -107,57 +107,76 @@ if bind_libsvm:
 # Version scheme is: major.minor.patch<suffix>
 
 # define the setup
-setup(name         = 'pymvpa2',
-      version      = '2.0.1',
-      author       = 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
-      author_email = 'pkg-exppsy-pymvpa@lists.alioth.debian.org',
-      license      = 'MIT License',
-      url          = 'http://www.pymvpa.org',
-      description  = 'Multivariate pattern analysis',
-      long_description = \
-          "PyMVPA is a Python module intended to ease pattern classification " \
-          "analyses of large datasets. It provides high-level abstraction of " \
-          "typical processing steps and a number of implementations of some " \
-          "popular algorithms. While it is not limited to neuroimaging data " \
-          "it is eminently suited for such datasets.\n" \
-          "PyMVPA is truly free software (in every respect) and " \
-          "additionally requires nothing but free-software to run.",
-      # please maintain alphanumeric order
-      packages     = [ 'mvpa2',
-                       'mvpa2.algorithms',
-                       'mvpa2.atlases',
-                       'mvpa2.base',
-                       'mvpa2.clfs',
-                       'mvpa2.clfs.libsmlrc',
-                       'mvpa2.clfs.libsvmc',
-                       'mvpa2.clfs.skl',
-                       'mvpa2.clfs.sg',
-                       'mvpa2.datasets',
-                       'mvpa2.featsel',
-                       'mvpa2.kernels',
-                       'mvpa2.mappers',
-                       'mvpa2.generators',
-                       'mvpa2.measures',
-                       'mvpa2.misc',
-                       'mvpa2.misc.bv',
-                       'mvpa2.misc.fsl',
-                       'mvpa2.misc.io',
-                       'mvpa2.misc.plot',
-                       'mvpa2.support',
-                       'mvpa2.support.nipy',
-                       'mvpa2.support.ipython',
-                       'mvpa2.testing',
-                       'mvpa2.tests',
-                       'mvpa2.tests.badexternals',
-                       ],
-      data_files = [('mvpa2', ['mvpa2/COMMIT_HASH']),
-                    ('mvpa2/data',
-                     [f for f in glob(os.path.join('mvpa2', 'data', '*'))
-                         if os.path.isfile(f)]),
-                    ('mvpa2/data/bv',
-                     [f for f in glob(os.path.join('mvpa2', 'data', 'bv', '*'))
-                         if os.path.isfile(f)])],
-      scripts      = glob(os.path.join('bin', '*')),
-      ext_modules  = ext_modules
-      )
+def setup_package():
+    # Perform 2to3 if needed
+    local_path = os.path.dirname(os.path.abspath(sys.argv[0]))
+    src_path = local_path
+    if sys.version_info[0] == 3:
+        src_path = os.path.join(local_path, 'build', 'py3k')
+        import py3tool
+        print("Converting to Python3 via 2to3...")
+        py3tool.sync_2to3('mvpa2', os.path.join(src_path, 'mvpa2'))
+        py3tool.sync_2to3('3rd', os.path.join(src_path, '3rd'))
 
+    # Run build
+    os.chdir(src_path)
+    sys.path.insert(0, src_path)
+
+    setup(name         = 'pymvpa2',
+          version      = '2.0.1',
+          author       = 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
+          author_email = 'pkg-exppsy-pymvpa@lists.alioth.debian.org',
+          license      = 'MIT License',
+          url          = 'http://www.pymvpa.org',
+          description  = 'Multivariate pattern analysis',
+          long_description = \
+              "PyMVPA is a Python module intended to ease pattern classification " \
+              "analyses of large datasets. It provides high-level abstraction of " \
+              "typical processing steps and a number of implementations of some " \
+              "popular algorithms. While it is not limited to neuroimaging data " \
+              "it is eminently suited for such datasets.\n" \
+              "PyMVPA is truly free software (in every respect) and " \
+              "additionally requires nothing but free-software to run.",
+          # please maintain alphanumeric order
+          packages     = [ 'mvpa2',
+                           'mvpa2.algorithms',
+                           'mvpa2.atlases',
+                           'mvpa2.base',
+                           'mvpa2.clfs',
+                           'mvpa2.clfs.libsmlrc',
+                           'mvpa2.clfs.libsvmc',
+                           'mvpa2.clfs.skl',
+                           'mvpa2.clfs.sg',
+                           'mvpa2.datasets',
+                           'mvpa2.featsel',
+                           'mvpa2.kernels',
+                           'mvpa2.mappers',
+                           'mvpa2.generators',
+                           'mvpa2.measures',
+                           'mvpa2.misc',
+                           'mvpa2.misc.bv',
+                           'mvpa2.misc.fsl',
+                           'mvpa2.misc.io',
+                           'mvpa2.misc.plot',
+                           'mvpa2.support',
+                           'mvpa2.support.bayes',
+                           'mvpa2.support.nipy',
+                           'mvpa2.support.ipython',
+                           'mvpa2.testing',
+                           'mvpa2.tests',
+                           'mvpa2.tests.badexternals',
+                           ],
+          data_files = [('mvpa2', ['mvpa2/COMMIT_HASH']),
+                        ('mvpa2/data',
+                         [f for f in glob(os.path.join('mvpa2', 'data', '*'))
+                             if os.path.isfile(f)]),
+                        ('mvpa2/data/bv',
+                         [f for f in glob(os.path.join('mvpa2', 'data', 'bv', '*'))
+                             if os.path.isfile(f)])],
+          scripts      = glob(os.path.join('bin', '*')),
+          ext_modules  = ext_modules
+          )
+
+
+if __name__ == '__main__':
+    setup_package()

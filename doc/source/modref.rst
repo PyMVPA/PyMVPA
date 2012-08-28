@@ -79,6 +79,7 @@ Mappers: Data Transformations
    mappers.filters
    mappers.flatten
    mappers.fx
+   mappers.fxy
    mappers.lle
    mappers.mdp_adaptor
    mappers.procrustean
@@ -160,13 +161,14 @@ Measures: Searchlights and Sensitivties
    measures.corrcoef
    measures.corrstability
    measures.ds
-   measures.glm
-   measures.gnbsearchlight
    measures.irelief
    measures.noiseperturbation
    measures.pls
-   measures.searchlight
+   measures.adhocsearchlightbase
    measures.gnbsearchlight
+   measures.nnsearchlight
+   measures.searchlight
+   measures.statsmodels_adaptor
 
 
 Feature Selection
@@ -201,6 +203,7 @@ Miscellaneous
    misc.attrmap
    misc.cmdline
    misc.data_generators
+   misc.dcov
    misc.errorfx
    misc.exceptions
    misc.fx
