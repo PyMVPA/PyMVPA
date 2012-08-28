@@ -11,7 +11,10 @@
 
 __docformat__ = 'restructuredtext'
 
+import numpy as np
+
 from mvpa2.base.dataset import AttrDataset
+from mvpa2.misc.neighborhood import QueryEngineInterface
 if __debug__:
     from mvpa2.base import debug
 
