@@ -131,27 +131,9 @@ Use all centers and run voxel selection...
 """
 nv = intermediate_surf.nvertices
 src_ids = range(nv)
+# big TODO:  voxsel must be QueryEngine
 voxsel = surf_voxel_selection.voxel_selection(vs, radius, src_ids, intermediate_surf)
 
-"""
-For MVPA, use all centers that have voxels associated with them.
-In this example that means all centers, but in the case of partial
-volume coverage there may be center nodes without voxels
-"""
-center_ids = voxsel.keys()
-"""
-Define the neighborhood, that is which voxels are near each of the center nodes
-This implies a voxel mask as well, which is subsequently used for loading the
-data.
-
-The voxel_ids_label argument is optional
-and defaults to "lin_vox_idxs".
-"""
-voxel_ids_label = 'lin_vox_idxs'
-
-nbrhood = nbrhood = sparse_attributes.SparseVolumeNeighborhood(voxsel,
-                                    voxel_ids_label=voxel_ids_label)
-mask = nbrhood.mask
 
 """
 From now on we simply follow the example in searchlight.py.
@@ -193,10 +175,23 @@ cv = CrossValidation(clf, NFoldPartitioner(),
 The interesting part: define and run the searchlight
 """
 searchlight = nbrhood.searchlight(cv, postproc=mean_sample(),
-                                      center_ids=center_ids)
+                                      center_ids=[0,1,2,3])#center_ids)
 
 
 sl_dset = searchlight(dataset)
+
+qe = SurfaceVerticesQueryEngine(voxsel,
+                                # you can optionally add additional
+                                # information about each near-disk-voxels
+                                add_fa=['center_distances',
+                                        'grey_matter_position'])
+sl = Searchlight(cv, queryengine=qe, postproc=mean_sample(),
+                 # if you care to specify custom subset of vertices
+                 # roi_ids=voxsel.keys()
+                 )
+
+sl_dset = sl(dataset)
+
 
 """
 For visualization of results, make a NIML dset that can be viewed
