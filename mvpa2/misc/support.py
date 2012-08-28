@@ -17,14 +17,13 @@ import re, os, sys
 
 # for SmartVersion
 from distutils.version import Version
-from types import StringType, TupleType, ListType
 
 import numpy as np
 #import numpy.random as npr
 
 from mvpa2.base import warning
 from mvpa2.support.copy import copy, deepcopy
-from operator import isSequenceType
+from mvpa2.base.types import is_sequence_type
 
 if __debug__:
     from mvpa2.base import debug
@@ -250,7 +249,12 @@ def idhash(val):
     elif isinstance(val, dict):
         val = tuple(val.items())
     try:
-        res += ":%s" % hash(buffer(val))
+        if sys.version_info[0] >= 3:
+            # TODO: bytes is just a workaround and is slower
+            # Anyway -- research joblib for hashing
+            res += ":%s" % hash(bytes(val))
+        else:
+            res += ":%s" % hash(buffer(val))
     except:
         try:
             res += ":%s" % hash(val)
@@ -377,7 +381,7 @@ class SmartVersion(Version):
             return ""
 
     def __cmp__(self, other):
-        if isinstance(other, (StringType, TupleType, ListType)):
+        if isinstance(other, (str, tuple, list)):
             other = SmartVersion(other)
         elif isinstance(other, SmartVersion):
             pass
@@ -386,6 +390,17 @@ class SmartVersion(Version):
         else:
             raise ValueError("Do not know how to treat version %s"
                              % str(other))
+
+        if sys.version >= '3':
+            def cmp(a, b):
+                """Compatibility with Python3 -- regular (deprecated
+                in 3) cmp operation should be sufficient for our needs"""
+                return (a > b) - (a < b)
+        else:
+            # having above cmp overloads builtin cmp for this function so we
+            # need manually rebind it or just resort to above cmp in general
+            # (why not?)
+            from __builtin__ import cmp
 
         # Do ad-hoc comparison of strings
         i = 0
@@ -404,7 +419,7 @@ class SmartVersion(Version):
                 if x is None:
                     if isinstance(y, int):
                         return -mult #  we got '.1' suffix
-                    if isinstance(y, StringType):
+                    if isinstance(y, str):
                         if (regex_prerelease.match(y)):
                             return mult        # so we got something to signal
                                                # pre-release, so first one won
@@ -418,10 +433,17 @@ class SmartVersion(Version):
                     if not isinstance(y, int):
                         return mult
                     return mult*cmp(x, y) # both are ints
-                elif isinstance(x, StringType):
-                    if isinstance(y, StringType):
+                elif isinstance(x, str):
+                    if isinstance(y, str):
                         return mult*cmp(x,y)
         return 0
+
+    if sys.version >= '3':
+        # version.py logic in python3 does not rely on deprecated
+        # __cmp__ but renames it into _cmp  and wraps in those various
+        # comparators...  thus our good old __cmp__ should be ok for our
+        # purposes here
+        _cmp = __cmp__
 
 ##REF: Name was automagically refactored
 def get_break_points(items, contiguous=True):
@@ -669,6 +691,8 @@ def mask2slice(mask):
         raise ValueError("Got an empty mask.")
     # get indices of non-zero filter elements
     idx = mask.nonzero()[0]
+    if not len(idx):
+        return slice(0)
     idx_start = idx[0]
     idx_end = idx[-1] + 1
     idx_step = None
@@ -730,7 +754,7 @@ def get_limit_filter(limit, collection):
     elif isinstance(limit, dict):
         limit_filter = np.zeros(attr_length, dtype='bool')
         for a in limit:
-            if isSequenceType(limit[a]):
+            if is_sequence_type(limit[a]):
                 for v in limit[a]:
                     # enable the samples matching the value 'v' of the
                     # current limit attribute 'a'
@@ -773,3 +797,4 @@ def get_nelements_per_value(data):
         result[l] += 1
 
     return result
+

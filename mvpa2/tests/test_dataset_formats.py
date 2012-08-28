@@ -28,7 +28,7 @@ def test_format_lightsvm_basic():
         ds_ = from_lightsvm_format(f_, am=am)
         # Lets do checks now
         ok_(ds.targets.dtype == ds_.targets.dtype)
-        if ds.targets.dtype.char in ['i', 'S']:
+        if ds.targets.dtype.char in ['i', 'S', 'U']:
             assert_array_equal(ds.targets, ds_.targets)
         else:
             assert_array_almost_equal(ds.targets, ds_.targets, decimal=3)

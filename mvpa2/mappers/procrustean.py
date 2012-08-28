@@ -12,10 +12,11 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 from mvpa2.base import externals
+from mvpa2.base.param import Parameter
+from mvpa2.base.types import is_datasetlike
 from mvpa2.mappers.projection import ProjectionMapper
-from mvpa2.datasets import Dataset
-from mvpa2.featsel.helpers import ElementSelector
 
+from mvpa2.base import warning
 if __debug__:
     from mvpa2.base import debug
 
@@ -23,77 +24,53 @@ if __debug__:
 
 class ProcrusteanMapper(ProjectionMapper):
     """Mapper to project from one space to another using Procrustean
-    transformation (shift + scaling + rotation)
+    transformation (shift + scaling + rotation).
+
+    Training this mapper requires data for both source and target space to be
+    present in the training dataset. The source space data is taken from the
+    training dataset's ``samples``, while the target space is taken from a
+    sample attribute corresponding to the ``space`` setting of the
+    ProcrusteanMapper.
+
+    See: http://en.wikipedia.org/wiki/Procrustes_transformation
     """
+    scaling = Parameter(True, allowedtype='bool',
+                doc="""Estimate a global scaling factor for the transformation
+                       (no longer rigid body)""")
+    reflection = Parameter(True, allowedtype='bool',
+                 doc="""Allow for the data to be reflected (so it might not be
+                     a rotation. Effective only for non-oblique transformations.
+                     """)
+    reduction = Parameter(True, allowedtype='bool',
+                 doc="""If true, it is allowed to map into lower-dimensional
+                     space. Forward transformation might be suboptimal then and
+                     reverse transformation might not recover all original
+                     variance.""")
+    oblique = Parameter(False, allowedtype='bool',
+                 doc="""Either to allow non-orthogonal transformation -- might
+                     heavily overfit the data if there is less samples than
+                     dimensions. Use `oblique_rcond`.""")
+    oblique_rcond = Parameter(-1, allowedtype='float',
+                 doc="""Cutoff for 'small' singular values to regularize the
+                     inverse. See :class:`~numpy.linalg.lstsq` for more
+                     information.""")
+    svd = Parameter('numpy', allowedtype='string (numpy, scipy, dgesvd)',
+                 doc="""Implementation of SVD to use. dgesvd requires ctypes to
+                 be available.""")
+    def __init__(self, space='targets', **kwargs):
+        ProjectionMapper.__init__(self, space=space, **kwargs)
 
-    _DEV__doc__ = """Possibly revert back to inherit from ProjectionMapper"""
-
-    def __init__(self, scaling=True, reflection=True, reduction=True,
-                 oblique=False, oblique_rcond=-1, svd='numpy', **kwargs):
-        """Initialize the ProcrusteanMapper
-
-        Parameters
-        ----------
-        scaling : bool
-          Scale data for the transformation (no longer rigid body
-          transformation)
-        reflection : bool
-          Allow for the data to be reflected (so it might not be a rotation).
-          Effective only for non-oblique transformations
-        reduction : bool
-          If true, it is allowed to map into lower-dimensional
-          space. Forward transformation might be suboptimal then and reverse
-          transformation might not recover all original variance
-        oblique : bool
-          Either to allow non-orthogonal transformation -- might heavily overfit
-          the data if there is less samples than dimensions. Use `oblique_rcond`.
-        oblique_rcond : float
-          Cutoff for 'small' singular values to regularize the inverse. See
-          :class:`~numpy.linalg.lstsq` for more information.
-        svd : string (numpy, scipy, dgesvd), optional
-          Implementation of SVD to use.  dgesvd requires ctypes to be available.
-        **kwargs
-          To be passed to ProjectionMapper
-        """
-        ProjectionMapper.__init__(self, **kwargs)
-
-        self._scaling = scaling
-        """Either to determine the scaling factor"""
-
-        self._reduction = reduction
-        self._reflection = reflection
-        self._oblique = oblique
-        self._oblique_rcond = oblique_rcond
         self._scale = None
         """Estimated scale"""
-        self._svd = svd
+        if self.params.svd == 'dgesvd' and not externals.exists('liblapack.so'):
+            warning("Reverting choice of svd for ProcrusteanMapper to be default "
+                    "'numpy' since liblapack.so seems not to be available for "
+                    "'dgesvd'")
+            self.params.svd = 'numpy'
 
-    # XXX we should just use beautiful ClassWithCollections everywhere... makes
-    # life so easier... for now -- manual
-    def __repr__(self):
-        s = ProjectionMapper.__repr__(self).rstrip(' )')
-        if not s[-1] == '(': s += ', '
-        s += "scaling=%r, reflection=%r, reduction=%r, " \
-             "oblique=%r, oblique_rcond=%r)" % \
-             (self._scaling, self._reflection, self._reduction,
-              self._oblique, self._oblique_rcond)
-        return s
 
-    # XXX we have to override train since now we have multiple datasets
-    #     alternative way is to assign target to the labels of the source
-    #     dataset
-    def _train(self, source, target=None):
-        """Train Procrustean transformation
-
-        Parameters
-        ----------
-        source : dataset or ndarray
-          Source space for determining the transformation. If target
-          is None, then labels of 'source' dataset are taken as the target
-        target : dataset or ndarray or Null
-          Target space for determining the transformation
-        """
-
+    def _train(self, source):
+        params = self.params
         # Since it is unsupervised, we don't care about labels
         datas = ()
         odatas = ()
@@ -102,11 +79,10 @@ class ProcrusteanMapper(ProjectionMapper):
 
         assess_residuals = __debug__ and 'MAP_' in debug.active
 
-        if target is None:
-            target = source.targets
+        target = source.sa[self.get_space()].value
 
         for i, ds in enumerate((source, target)):
-            if isinstance(ds, Dataset):
+            if is_datasetlike(ds):
                 data = np.asarray(ds.samples)
             else:
                 data = ds
@@ -149,7 +125,7 @@ class ProcrusteanMapper(ProjectionMapper):
             normed[0] = np.hstack( (normed[0], np.zeros((sn, tm-sm))) )
 
         if sm > tm:
-            if self._reduction:
+            if params.reduction:
                 normed[1] = np.hstack( (normed[1], np.zeros((sn, sm-tm))) )
             else:
                 raise ValueError, "reduction=False, so mapping from " \
@@ -158,35 +134,35 @@ class ProcrusteanMapper(ProjectionMapper):
                       "while target %d dimensions (features)" % (sm, tm)
 
         source, target = normed
-        if self._oblique:
+        if params.oblique:
             # Just do silly linear system of equations ;) or naive
             # inverse problem
             if sn == sm and tm == 1:
                 T = np.linalg.solve(source, target)
             else:
-                T = np.linalg.lstsq(source, target, rcond=self._oblique_rcond)[0]
+                T = np.linalg.lstsq(source, target, rcond=params.oblique_rcond)[0]
             ss = 1.0
         else:
             # Orthogonal transformation
             # figure out optimal rotation
-            if self._svd == 'numpy':
+            if params.svd == 'numpy':
                 U, s, Vh = np.linalg.svd(np.dot(target.T, source),
                                full_matrices=False)
-            elif self._svd == 'scipy':
+            elif params.svd == 'scipy':
                 # would raise exception if not present
                 externals.exists('scipy', raise_=True)
                 import scipy
                 U, s, Vh = scipy.linalg.svd(np.dot(target.T, source),
                                full_matrices=False)
-            elif self._svd == 'dgesvd':
+            elif params.svd == 'dgesvd':
                 from mvpa2.support.lapack_svd import svd as dgesvd
                 U, s, Vh = dgesvd(np.dot(target.T, source),
                                     full_matrices=True, algo='svd')
             else:
-                raise ValueError('Unknown type of svd %r'%(self._svd))
+                raise ValueError('Unknown type of svd %r'%(params.svd))
             T = np.dot(Vh.T, U.T)
 
-            if not self._reflection:
+            if not params.reflection:
                 # then we need to assure that it is only rotation
                 # "recipe" from
                 # http://en.wikipedia.org/wiki/Orthogonal_Procrustes_problem
@@ -210,7 +186,7 @@ class ProcrusteanMapper(ProjectionMapper):
 
         self._scale = scale = ss * norms[1] / norms[0]
         # Assign projection
-        if self._scaling:
+        if self.params.scaling:
             proj = scale * T
         else:
             proj = T

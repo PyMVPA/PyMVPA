@@ -14,6 +14,7 @@ import numpy as np
 from mvpa2.support.copy import copy
 
 from mvpa2.base.dataset import vstack
+from mvpa2.datasets import Dataset
 from mvpa2.base import externals, warning
 from mvpa2.generators.partition import OddEvenPartitioner, NFoldPartitioner
 from mvpa2.generators.base import Repeater
@@ -666,6 +667,78 @@ class ErrorsTests(unittest.TestCase):
                     # need to look at the other tail
                     assert_array_less(0.9,
                                       cvnp[(np.array([0,1]), np.array([1,0]))])
+
+
+def test_confusion_as_node():
+    from mvpa2.misc.data_generators import normal_feature_dataset
+    from mvpa2.clfs.gnb import GNB
+    from mvpa2.clfs.transerror import Confusion
+    ds = normal_feature_dataset(snr=2.0, perlabel=42, nchunks=3,
+                                nonbogus_features=[0,1], nfeatures=2)
+    clf = GNB()
+    cv = CrossValidation(
+        clf, NFoldPartitioner(),
+        errorfx=None,
+        postproc=Confusion(labels=ds.UT),
+        enable_ca=['stats'])
+    res = cv(ds)
+    # needs to be identical to CA
+    assert_array_equal(res.samples, cv.ca.stats.matrix)
+    assert_array_equal(res.sa.predictions, ds.UT)
+    assert_array_equal(res.fa.targets, ds.UT)
+
+    skip_if_no_external('scipy')
+
+    from mvpa2.clfs.transerror import BayesConfusionHypothesis
+    from mvpa2.base.node import ChainNode
+    # same again, but this time with Bayesian hypothesis testing at the end
+    cv = CrossValidation(
+        clf, NFoldPartitioner(),
+        errorfx=None,
+        postproc=ChainNode((Confusion(labels=ds.UT),
+                            BayesConfusionHypothesis())))
+    res = cv(ds)
+    # only two possible hypothesis with two classes
+    assert_equals(len(res), 2)
+    # the first hypothesis is the can't discriminate anything
+    assert_equal(len(res.sa.hypothesis[0]), 1)
+    assert_equal(len(res.sa.hypothesis[0][0]), 2)
+    # and the hypothesis is actually less likely than the other one
+    # (both classes can be distinguished)
+    assert(np.e**res.samples[0,0] < np.e**res.samples[1,0])
+
+
+def test_bayes_confusion_hyp():
+    from mvpa2.clfs.transerror import BayesConfusionHypothesis
+    conf = np.array([
+            [ 10,  0,  5,  5],
+            [  0, 10,  5,  5],
+            [  5,  5, 10,  0],
+            [  5,  5,  0, 10]
+            ])
+    conf = Dataset(conf, sa={'labels': ['A', 'B', 'C', 'D']})
+    bayes = BayesConfusionHypothesis(labels_attr='labels')
+    hyptest = bayes(conf)
+    # by default comes with all hypothesis and posterior probs
+    assert_equal(hyptest.shape, (15,2))
+    assert_array_equal(hyptest.fa.stat, ['log(p(C|H))', 'log(p(H|C))'])
+    # check order of hypothesis (coarse)
+    assert_array_equal(hyptest.sa.hypothesis[0], [['A', 'B', 'C', 'D']])
+    assert_array_equal(hyptest.sa.hypothesis[-1], [['A'], ['B'], ['C'], ['D']])
+    # now with limited hypothesis (given with literal labels), set and in
+    # non-log scale
+    bayes = BayesConfusionHypothesis(labels_attr='labels', log=False,
+                hypotheses=[[['A', 'B', 'C', 'D']],
+                            [['A', 'C',], ['B', 'D']],
+                            [['A', 'D',], ['B', 'C']],
+                            [['A'], ['B'], ['C'], ['D']]])
+    hyptest = bayes(conf)
+    # also with custom hyp the post-probs must add up to 1
+    post_prob = hyptest.samples[:,1]
+    assert_almost_equal(np.sum(post_prob), 1)
+    # in this particular case ...
+    assert(post_prob[3] - np.sum(post_prob[1:3]) < 0.02)
+
 
 def suite():
     return unittest.makeSuite(ErrorsTests)

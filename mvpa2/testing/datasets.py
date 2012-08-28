@@ -75,7 +75,7 @@ def generate_testing_datasets(specs):
         labels = np.concatenate( ( np.repeat( 0, spec['perlabel'] ),
                                   np.repeat( 1, spec['perlabel'] ) ) )
         data[:, 1, 0, 0] += 2*labels           # add some signal
-        chunks = np.asarray(range(nchunks)*(total/nchunks))
+        chunks = np.asarray(range(nchunks)*(total//nchunks))
         mask = np.ones((3, 6, 6), dtype='bool')
         mask[0, 0, 0] = 0
         mask[1, 3, 2] = 0
@@ -83,7 +83,7 @@ def generate_testing_datasets(specs):
                                  mask=mask, space='myspace')
         # and to stress tests on manipulating sa/fa possibly containing
         # attributes of dtype object
-        ds.sa['test_object'] = [['a'], [1, 2]] * (ds.nsamples/2)
+        ds.sa['test_object'] = [['a'], [1, 2]] * (ds.nsamples//2)
         datasets['3d%s' % kind] = ds
 
 
@@ -144,34 +144,6 @@ def saveload_warehouse():
     # return the reconstructed datasets (for use in datasets warehouse)
     return rc_ds
 
-
-def get_random_rotation(ns, nt=None, data=None):
-    """Return some random rotation (or rotation + dim reduction) matrix
-
-    Parameters
-    ----------
-    ns : int
-      Dimensionality of source space
-    nt : int, optional
-      Dimensionality of target space
-    data : array, optional
-      Some data (should have rank high enough) to derive
-      rotation
-    """
-    if nt is None:
-        nt = ns
-    # figure out some "random" rotation
-    d = max(ns, nt)
-    if data is None:
-        data = np.random.normal(size=(d*10, d))
-    _u, _s, _vh = np.linalg.svd(data[:, :d])
-    R = _vh[:ns, :nt]
-    if ns == nt:
-        # Test if it is indeed a rotation matrix ;)
-        # Lets flip first axis if necessary
-        if np.linalg.det(R) < 0:
-            R[:, 0] *= -1.0
-    return R
 
 datasets = generate_testing_datasets(specs)
 

@@ -78,6 +78,12 @@ experiments.
   DOI: http://dx.doi.org/10.3389/fnhum.2010.00047
 
 
+.. _CGG+12:
+
+**Connolly, A. C., Guntupalli, J. S., Gors, J., Hanke, M., Halchenko, Y. O., Wu, Y., Abdi, H. & Haxby, J. V.** (2012). The Representation of Biological Classes in the Human Brain. *Journal of Neuroscience*, *32*, 2608-2618.
+  DOI: http://dx.doi.org/10.1523/JNEUROSCI.5547-11.2012
+
+
 .. _Dem06:
 
 **Demšar, J.** (2006). Statistical Comparisons of Classifiers over Multiple Data Sets. *Journal of Machine Learning Research*, *7*, 1–30.
@@ -115,6 +121,12 @@ experiments.
 
 **Gilliam, T., Wilson, R. C. & Clark, J. A.** (2010). Scribe Identification in Medieval English Manuscripts.  Proceedings of the International Conference on Pattern Recognition.
   URL: ftp://ftp.computer.org/press/outgoing/proceedings/juan/icpr10b/data/4109b880.pdf
+
+
+.. _GMS+12:
+
+**Gorlin, S., Meng, M., Sharma, J., Sugihara, H., Sur, M. & Sinha, P.** (2012). Imaging prior information in the brain. *Proceedings of the National Academy of Sciences*, *109*, 7935-7940.
+  DOI: http://dx.doi.org/10.1073/pnas.1111224109
 
 
 .. _GE03:
@@ -203,6 +215,14 @@ experiments.
   concerning the privacy of personal thought.*
 
   DOI: http://dx.doi.org/10.1038/nrn1931
+
+
+.. _HBL+12:
+
+**Hiroyuki, A., Brian, M., Li, N., Yumiko, S. & Massimo, P.** (2012). Decoding Semantics across fMRI sessions with Different Stimulus Modalities: A practical MVPA Study. *Frontiers in Neuroinformatics*, *6*.
+  Keywords: :keyword:`pymvpa`, :keyword:`fmri`
+
+  DOI: http://dx.doi.org/10.3389/fninf.2012.00024
 
 
 .. _Ioa05:
@@ -532,6 +552,10 @@ experiments.
 
   DOI: http://dx.doi.org/10.1111/j.1745-6924.2009.01167.x
 
+
+.. _XLR2012:
+
+**Xu, H., Lorbert, A., Ramadge, P. J., Guntupalli, J. S. & Haxby, J. V.** (2012). Regularized hyperalignment of multi-set fMRI data. Proceedings of the 2012 IEEE Signal Processing Workshop.
 
 .. _ZH05:
 

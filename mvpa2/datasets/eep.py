@@ -100,12 +100,15 @@ class EEPBin(DataReader):
         # non-critical header components stored in temp dict
         hdr = {}
 
-        infile = open(source, "r")
+        infile = open(source, "rb")
 
         # read file the end of header of EOF
         while True:
             # one line at a time
-            line = infile.readline()
+            try:
+                line = infile.readline().decode('ascii')
+            except UnicodeDecodeError:
+                break
 
             # stop if EOH or EOF
             if not line or line.startswith(';EOH;'):

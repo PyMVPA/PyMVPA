@@ -51,7 +51,8 @@ class CorrCoef(FeaturewiseMeasure):
         """Computes featurewise scores."""
 
         attrdata = dataset.sa[self.__attr].value
-        if np.issubdtype(attrdata.dtype, 'c'):
+        if ( np.issubdtype(attrdata.dtype, 'c') or
+             np.issubdtype(attrdata.dtype, 'U') ):
             raise ValueError("Correlation coefficent measure is not meaningful "
                              "for datasets with literal labels.")
 
