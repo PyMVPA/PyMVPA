@@ -357,12 +357,16 @@ class QueryEngine(QueryEngineInterface):
         super(QueryEngine, self).__init__()
         self._queryobjs = kwargs
         self._queryattrs = {}
+        self._len = 0
 
 
     def __repr__(self, prefixes=[]):
         return super(QueryEngine, self).__repr__(
             prefixes=prefixes
             + ['%s=%r' % v for v in self._queryobjs.iteritems()])
+
+    def __len__(self):
+        return self._len
 
     def train(self, dataset):
         # reset first
@@ -372,6 +376,10 @@ class QueryEngine(QueryEngineInterface):
             self._queryattrs[space] = dataset.fa[space].value
         # execute subclass training
         self._train(dataset)
+        # by default all QueryEngines should with all features of the dataset
+        # Situation might be different in case of e.g. Surface-based
+        # searchlights.
+        self._len = dataset.nfeatures
 
 
     def query_byid(self, fid):

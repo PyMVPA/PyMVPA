@@ -112,13 +112,14 @@ class BaseSearchlight(Measure):
             roi_ids = self.__roi_ids
             # safeguard against stupidity
             if __debug__:
-                if max(roi_ids) >= dataset.nfeatures:
-                    raise IndexError, \
-                          "Maximal center_id found is %s whenever given " \
-                          "dataset has only %d features" \
-                          % (max(roi_ids), dataset.nfeatures)
+                if max(roi_ids) >= len(self._queryengine):
+                    raise IndexError(
+                          "Maximal center_id found is %s whenever query "
+                          "engine %s knows only about %d"
+                          % (max(roi_ids), self._queryengine,
+                             len(self._queryengine)))
         else:
-            roi_ids = np.arange(dataset.nfeatures)
+            roi_ids = np.arange(len(self._queryengine))
 
         # pass to subclass
         results, roi_sizes = self._sl_call(dataset, roi_ids, nproc)
