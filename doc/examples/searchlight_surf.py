@@ -147,7 +147,8 @@ dataset = fmri_dataset(
                 samples=os.path.join(datapath, '..', 'bold.nii.gz'),
                 targets=attr.targets,
                 chunks=attr.chunks,
-                mask=mask)
+#                mask=epi_ref_fn # but it can come from voxsel.get_masked_voxels
+    )
 
 
 poly_detrend(dataset, polyord=1, chunks_attr='chunks')
@@ -174,12 +175,6 @@ cv = CrossValidation(clf, NFoldPartitioner(),
 """
 The interesting part: define and run the searchlight
 """
-searchlight = nbrhood.searchlight(cv, postproc=mean_sample(),
-                                      center_ids=[0,1,2,3])#center_ids)
-
-
-sl_dset = searchlight(dataset)
-
 qe = SurfaceVerticesQueryEngine(voxsel,
                                 # you can optionally add additional
                                 # information about each near-disk-voxels
