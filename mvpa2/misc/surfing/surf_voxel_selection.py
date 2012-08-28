@@ -355,7 +355,7 @@ def voxel_selection(vol_surf, radius, srcs=None, surf_srcs=None,
         surf_pial = vol_surf._pial
         surf_white = vol_surf._white
 
-        # construc the intermediate surface, which is used to measure distances
+        # construct the intermediate surface, which is used to measure distances
         surf_intermediate = (surf_pial * intermediateat +
                              surf_white * (1 - intermediateat))
 
