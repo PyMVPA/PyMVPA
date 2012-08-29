@@ -490,8 +490,8 @@ class SurfTests(unittest.TestCase):
             _, innerfn = tempfile.mkstemp('inner.asc', 'test')
             _, volfn = tempfile.mkstemp('vol.nii', 'test')
 
-            surf_fs_asc.write(outerfn, outer, overwrite=True)
-            surf_fs_asc.write(innerfn, inner, overwrite=True)
+            surf.write(outerfn, outer, overwrite=True)
+            surf.write(innerfn, inner, overwrite=True)
 
             img = sel.volgeom.empty_nifti_img()
             img.to_filename(volfn)
@@ -500,8 +500,8 @@ class SurfTests(unittest.TestCase):
                             innerfn, radius, srcs=srcs,
                             distancemetric=distancemetric)
 
-            outer4 = surf_fs_asc.read(outerfn)
-            inner4 = surf_fs_asc.read(innerfn)
+            outer4 = surf.read(outerfn)
+            inner4 = surf.read(innerfn)
             vs4 = vs = volsurf.VolSurf(vg, outer4, inner4)
 
             # check that two ways of voxel selection match

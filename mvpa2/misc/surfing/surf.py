@@ -14,6 +14,9 @@ Created on Feb 11, 2012
 import numpy as np, os, collections, datetime, time, \
        heapq, afni_suma_1d, math
 
+import mvpa2.misc.surfing.surf_fs_asc as surf_fs_asc
+import nibabel.freesurfer.io as fsio
+
 class Surface(object):
     '''Cortical surface mesh
     
@@ -654,6 +657,12 @@ def generate_cube():
 
 
 def generate_sphere(density=10):
+    '''generates a sphere with density**2+2 nodes and density**2*2 faces
+    seen as planet earth, node 0 and 1 are the south and north pole.
+    density circles of latitude are constructed, each with density points
+    of them.
+    '''
+
     hsteps = density
     vsteps = density
 
@@ -706,10 +715,8 @@ def read(fn):
     For now only supports ascii (as used in AFNI's SUMA) and freesurfer formats
     '''
     if fn.endswith('.asc'):
-        import mvpa2.misc.surfing.surf_fs_asc as surf_fs_asc
         return surf_fs_asc.read(fn)
     else:
-        import nibabel.freesurfer.io as fsio
         coords, faces = fsio.read_geometry(fn)
         return Surface(coords, faces)
 

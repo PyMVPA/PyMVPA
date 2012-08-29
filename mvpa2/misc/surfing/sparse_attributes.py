@@ -167,11 +167,11 @@ class SparseVolumeAttributes(SparseAttributes):
 
     def get_linear_mask(self, sa_label='linear_voxel_indices'):
         vg = self.volgeom
-        linear_mask = np.zeros((vg.nvoxels,), dtype=np.int8)
+        linear_mask = np.zeros((vg.nvoxels,), dtype=np.int32)
 
         for k in self.keys:
             vox_idxs = self.get(k, sa_label)
-            linear_mask[vox_idxs] = 1
+            linear_mask[vox_idxs] += 1
 
         return linear_mask
 
