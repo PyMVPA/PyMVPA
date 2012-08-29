@@ -6,11 +6,12 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-from numpy.testing.utils import assert_array_almost_equal
 """Unit tests for PyMVPA surface searchlight and related utilities"""
 
 import numpy as np
-import nibabel as ni
+from numpy.testing.utils import assert_array_almost_equal
+
+import nibabel as nb
 
 import os
 import tempfile
@@ -543,7 +544,7 @@ class SurfTests(unittest.TestCase):
             keys = None if ncenters is None else sel.keys
 
             dset_data = np.reshape(np.arange(vg.nvoxels), vg.shape)
-            dset_img = ni.Nifti1Image(dset_data, vg.affine)
+            dset_img = nb.Nifti1Image(dset_data, vg.affine)
             dset = fmri_dataset(samples=dset_img, mask=mask)
 
             qe = queryengine.SurfaceVerticesQueryEngine(sel,
