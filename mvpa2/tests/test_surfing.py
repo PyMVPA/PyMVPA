@@ -29,6 +29,9 @@ import mvpa2.misc.surfing.volgeom as volgeom
 import mvpa2.misc.surfing.volsurf as volsurf
 import mvpa2.misc.surfing.sparse_attributes as sparse_attributes
 import mvpa2.misc.surfing.surf_voxel_selection as surf_voxel_selection
+import mvpa2.misc.surfing.queryengine as queryengine
+
+from mvpa2.measures.searchlight import Searchlight
 
 
 class SurfTests(unittest.TestCase):
@@ -335,7 +338,7 @@ class SurfTests(unittest.TestCase):
                    2:([3, 4, 5], [.4, .7, .8]),
                    6:([3, 4, 8, 9], [.1, .3, .2, .2])}
 
-        payload_labels = ['lin_vox_idxs', 'center_distances']
+        payload_labels = ['linear_voxel_indices', 'center_distances']
 
         sa = sparse_attributes.SparseAttributes(payload_labels)
         for k, v in payload.iteritems():
@@ -346,7 +349,7 @@ class SurfTests(unittest.TestCase):
 
         sa.a['some general attribute'] = 'voxel selection example'
 
-        assert_equal(set(payload_labels), set(sa.sa_labels()))
+        assert_equal(set(payload_labels), set(sa.sa_labels))
 
         # getting data in different ways should always give
         # expected results
@@ -374,7 +377,6 @@ class SurfTests(unittest.TestCase):
 
     def test_surf_voxel_selection(self):
 
-        # make simple surfaces and volume geometry
         vg = volgeom.VolGeom((50, 50, 50), np.identity(4))
 
         density = 20
@@ -397,7 +399,7 @@ class SurfTests(unittest.TestCase):
                   ('euclidian', 5, None), ('dijkstra', 10, None)]
 
 
-        expected_labs = ['lin_vox_idxs',
+        expected_labs = ['linear_voxel_indices',
                          'grey_matter_position',
                          'center_distances']
 
@@ -411,7 +413,7 @@ class SurfTests(unittest.TestCase):
             vg = sel.a['volgeom']
             datalin = np.zeros((vg.nvoxels, 1))
 
-            mp = sel.get_attr_mapping('lin_vox_idxs')
+            mp = sel.get_attr_mapping('linear_voxel_indices')
             for k, idxs in mp.iteritems():
                 if idxs is not None:
                     datalin[idxs] = 1
@@ -429,14 +431,14 @@ class SurfTests(unittest.TestCase):
                     assert_equal(linidx in idxs, vg.contains_lin(linidx))
 
             # check that it has all the attributes
-            labs = sel.sa_labels()
+            labs = sel.sa_labels
             assert_true(all([lab in labs for lab in expected_labs]))
 
             attr_maps = [sel.get_attr_mapping(lab) for lab in labs]
 
             # require same number of values for each attribute
             # and that tuples contain the right info
-            for k in sel.keys():
+            for k in sel.keys:
                 tp = sel.get_tuple(k)
                 for i, map in enumerate(attr_maps):
 
@@ -501,7 +503,7 @@ class SurfTests(unittest.TestCase):
             os.remove(innerfn)
             os.remove(volfn)
 
-            lab = 'lin_vox_idxs'
+            lab = 'linear_voxel_indices'
 
             # compare sel3 with other selection results
             # NOTE: which voxels are precisely selected by sel can be quite
@@ -513,7 +515,7 @@ class SurfTests(unittest.TestCase):
             for selcmp, ratio in sel3cmp_difference_ratio.iteritems():
                 nunion = ndiff = 0
 
-                for k in selcmp.keys():
+                for k in selcmp.keys:
                     p = set(sel3.get(k, lab))
                     q = set(selcmp.get(k, lab))
                     nunion += len(p.union(q))
@@ -522,22 +524,29 @@ class SurfTests(unittest.TestCase):
                 assert_true(float(ndiff) / float(nunion) <= ratio)
 
             # check searchlight call
-            lab = 'lin_vox_idxs'
-            nbrhood = sparse_attributes.SparseVolumeNeighborhood(sel, lab)
-            mask = nbrhood.mask
-            keys = None if ncenters is None else nbrhood.keys
+            # as of late Aug 2012, this is with the fancy query engine
+            # as implemented by Yarik
+            lab = 'linear_voxel_indices'
+
+            mask = sel.get_mask(lab)
+            keys = None if ncenters is None else sel.keys
 
             dset_data = np.reshape(np.arange(vg.nvoxels), vg.shape)
             dset_img = ni.Nifti1Image(dset_data, vg.affine)
             dset = fmri_dataset(samples=dset_img, mask=mask)
 
+            qe = queryengine.SurfaceVerticesQueryEngine(sel,
+                                # you can optionally add additional
+                                # information about each near-disk-voxels
+                                add_fa=['center_distances',
+                                        'grey_matter_position'])
             voxelcounter = _Voxel_Count_Measure()
-            searchlight = nbrhood.searchlight(voxelcounter, center_ids=keys)
+            searchlight = Searchlight(voxelcounter, queryengine=qe, roi_ids=keys)
             sl_dset = searchlight(dset)
 
             selected_count = sl_dset.samples[0, :]
-            mp = sel.get_attr_mapping('lin_vox_idxs')
-            for i, k in enumerate(nbrhood.keys):
+            mp = sel.get_attr_mapping('linear_voxel_indices')
+            for i, k in enumerate(sel.keys):
                 # check that number of selected voxels matches
                 assert_equal(selected_count[i], len(mp[k]))
 

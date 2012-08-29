@@ -51,16 +51,19 @@ class SparseAttributes(object):
         self.sa[roi_label] = roi_attrs_dict
 
     def add(self, roi_label, roi_attrs_dict):
-        if roi_label in self.sa.keys():
+        if roi_label in self.keys:
             raise ValueError("name clash: key %s already present" % roi_label)
         self.set(roi_label, roi_attrs_dict)
 
+    @property
     def sa_labels(self):
         return list(self._sa_labels)
 
+    @property
     def keys(self):
-        return filter(lambda x : not self.sa[x] is None, self.all_keys())
+        return filter(lambda x : not self.sa[x] is None, self.all_keys)
 
+    @property
     def all_keys(self):
         return self.sa.keys()
 
@@ -84,7 +87,7 @@ class SparseAttributes(object):
         '''Provides a dict-like object with lookup for a 
         single ROI attribute'''
 
-        if not roi_attr in self.sa_labels():
+        if not roi_attr in self.sa_labels:
             raise KeyError("attribute %r not in map" % roi_attr)
 
         return AttrMapping(self, roi_attr)
@@ -116,15 +119,15 @@ class SparseAttributes(object):
         if not isinstance(other, SparseAttributes):
             return False
 
-        if set(self.keys()) != set(other.keys()):
+        if set(self.keys) != set(other.keys):
             return False
-        if set(self.all_keys()) != set(other.all_keys()):
+        if set(self.all_keys) != set(other.all_keys):
             return False
-        if set(self.sa_labels()) != set(other.sa_labels()):
+        if set(self.sa_labels) != set(other.sa_labels):
             return False
 
-        labs = self.sa_labels()
-        for k in self.keys():
+        labs = self.sa_labels
+        for k in self.keys:
             if self.get_tuple(k, labs) != other.get_tuple(k, labs):
                 return False
 
@@ -149,34 +152,35 @@ class SparseVolumeAttributes(SparseAttributes):
         super(self.__class__, self).__init__(sa_labels)
         self.a['volgeom'] = volgeom
 
-    """
-    Returns a neighboorhood function
-    
-    Parameters
-    ==========
-    mask
-        volume mask (usually from get_niftiimage_mask)
-    voxel_ids_label
-        label of voxel ids of neighboors
-    
-    
-    Returns
-    =======
-    neighboorhood: SparseNeighborhood 
-        neighboorhood function that can be used to access the 
-        neighbors for searchlight centers stored in this instance
-    """
-
     @property
     def volgeom(self):
+        """
+        Returns
+        =======
+        volgeom: volgem.VolGeom
+            volume geometry stored in this instance
+        """
+
         return self.a['volgeom']
 
-    """
-    Returns
-    =======
-    volgeom: volgem.VolGeom
-        volume geometry stored in this instance
-    """
+
+
+    def get_linear_mask(self, sa_label='linear_voxel_indices'):
+        vg = self.volgeom
+        linear_mask = np.zeros((vg.nvoxels,), dtype=np.int8)
+
+        for k in self.keys:
+            vox_idxs = self.get(k, sa_label)
+            linear_mask[vox_idxs] = 1
+
+        return linear_mask
+
+
+    def get_mask(self, sa_label='linear_voxel_indices'):
+        linear_mask = self.get_linear_mask(sa_label)
+        vg = self.volgeom
+        volsize = vg.shape[:3]
+        return np.reshape(linear_mask, volsize)
 
 
 class AttrMapping(Mapping):
@@ -188,10 +192,10 @@ class AttrMapping(Mapping):
         return self._cls.get(key, self._roi_attr)
 
     def __len__(self):
-        return len(self.__keys__())
+        return len(self.__keys__)
 
     def __keys__(self):
-        return list(self._cls.keys())
+        return list(self._cls.keys)
 
     def __iter__(self):
         return iter(self.__keys__())
@@ -219,7 +223,7 @@ def voxel2nearest_node(sp_attrs, sort_by_label=[
                                     'center_distances',
                                     'grey_matter_position'],
                             sort_by_proc=[None, lambda x : abs(x - .5)],
-                            return_label='lin_vox_idxs'):
+                            return_label='linear_voxel_indices'):
 
     '''finds for each voxel the nearest node
     
@@ -252,7 +256,7 @@ def voxel2nearest_node(sp_attrs, sort_by_label=[
     #key_getter = operator.itemgetter(*range(sort_by_count))
     value_getter = operator.itemgetter(sort_by_getter_count) # item after sort_by 
 
-    node_idxs = sp_attrs.keys()
+    node_idxs = sp_attrs.keys
     vox2node_and_attrs = dict()
 
     for node_idx in node_idxs:
@@ -271,7 +275,7 @@ def voxel2nearest_node(sp_attrs, sort_by_label=[
     n2v = dict((k, v[0]) for k, v in vox2node_and_attrs.iteritems())
 
     return n2v
-
+"""
 class SparseVolumeNeighborhood():
     '''Defines a neighborhood based on voxel selection results.
     This class provides support for use with a Searchlight
@@ -284,7 +288,7 @@ class SparseVolumeNeighborhood():
     voxel_ids_label: str 
         label of voxel ids of neighboors
     '''
-    def __init__(self, attr, voxel_ids_label='lin_vox_idxs'):
+    def __init__(self, attr, voxel_ids_label='linear_voxel_indices'):
         mp = attr.get_attr_mapping(voxel_ids_label)
         self._keys = list(mp.keys()) # ensure we things in order throughout
         self._n2vs = dict(mp) # node 2 voxel mapping
@@ -395,7 +399,7 @@ class SparseVolumeNeighborhood():
 
     def searchlight(self, datameasure, center_ids=None,
                 space='voxel_indices', **kwargs):
-        """Creates a `Searchlight` to run a scalar `Measure` on
+        '''Creates a `Searchlight` to run a scalar `Measure` on
         all neighborhoods within a dataset.
         
         The idea for a searchlight algorithm stems from a paper by
@@ -437,7 +441,7 @@ class SparseVolumeNeighborhood():
         This would in turn result in sensitivity maps that have low
         (absolute) values indicating high sensitivities and this conflicts
         with the intended behavior of a `SensitivityAnalyzer`.
-        """
+        '''
         if center_ids is None:
             center_ids = self.keys
 
@@ -451,7 +455,7 @@ class SparseVolumeNeighborhood():
         # init the searchlight with the queryengine
         return Searchlight(datameasure, queryengine=qe, roi_ids=roi_ids,
                            **kwargs)
-
+"""
 
 
 def to_file(fn, a):

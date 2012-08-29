@@ -29,7 +29,7 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
         self._map_voxel_coord = None
 
         if add_fa is not None:
-            if not set(voxsel.sa_labels()).issuperset(add_fa):
+            if not set(voxsel.sa_labels).issuperset(add_fa):
                 raise ValueError(
                     "add_fa should list only those known to voxsel %s"
                     % voxsel)
@@ -38,8 +38,12 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
 
     def __len__(self):
         # TODO : here it is a copy -- make it faster avoiding copies
-        return len(self.voxsel.keys())
+        return len(self.voxsel.keys)
 
+    # NNO because not necesarily all keys have a value associated with
+    # them 
+    def keys(self):
+        return list(self.voxsel.keys)
 
     def train(self, dataset):
         vg = self.voxsel.volgeom
@@ -59,8 +63,10 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
     def query_byid(self, vertexid):
         """Given a vertex ID give us indices of dataset features (voxels)
         """
-        # TODO: make lin_vox_idxs a parameter
-        voxel_unmasked_ids = self.voxsel.get(vertexid, 'lin_vox_idxs')
+        # TODO: make linear_voxel_indices a parameter
+
+        voxel_unmasked_ids = self.voxsel.get(vertexid, 'linear_voxel_indices')
+
         # map into dataset
         voxel_dataset_ids = [self._map_voxel_coord[i]
                              for i in voxel_unmasked_ids]
