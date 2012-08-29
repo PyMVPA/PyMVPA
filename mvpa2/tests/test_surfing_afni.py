@@ -42,15 +42,17 @@ class SurfTests(unittest.TestCase):
     'Ground truth' is whatever output is returned by the implementation
     as of mid-Aug 2012"""
 
-    def _set_rng(self):
+    def _get_rng(self):
         keys = [(17 * i ** 5 + 78234745 * i + 8934) % (2 ** 32 - 1)
                         for i in xrange(624)]
         keys = np.asanyarray(keys, dtype=np.uint32)
-        np.random.set_state(('MT19937', keys, 0))
+        rng = np.random.RandomState()
+        rng.set_state(('MT19937', keys, 0))
+        return rng
 
     def test_afni_niml_dset(self):
         sz = (100, 45) # dataset size
-        self._set_rng() # generate random data
+        rng = self._get_rng() # generate random data
 
         expected_vals = {(0, 0):-2.13856 , (sz[0] - 1, sz[1] - 1):-1.92434,
                          (sz[0], sz[1] - 1):None, (sz[0] - 1, sz[1]):None,
@@ -63,12 +65,12 @@ class SurfTests(unittest.TestCase):
         tps = [np.int32, np.int64, np.float32, np.float64]
 
         # generated random data
-        data = np.random.normal(size=sz)
+        data = rng.normal(size=sz)
 
         # set labels for samples, and set node indices
-        labels = ['lab_%d' % round(np.random.uniform() * 1000)
+        labels = ['lab_%d' % round(rng.uniform() * 1000)
                         for _ in xrange(sz[1])]
-        node_indices = np.argsort(np.random.uniform(size=(sz[0],)))
+        node_indices = np.argsort(rng.uniform(size=(sz[0],)))
         node_indices = np.reshape(node_indices, (sz[0], 1))
 
 
