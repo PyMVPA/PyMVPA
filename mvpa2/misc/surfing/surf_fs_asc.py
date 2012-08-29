@@ -24,7 +24,8 @@ Created on Feb 12, 2012
 
 import numpy as np, os, datetime, utils, afni_suma_1d, afni_niml_dset
 
-from surf import Surface
+#from surf import Surface
+import surf
 
 def read(fn):
     '''
@@ -81,15 +82,15 @@ def read(fn):
     ffloat = getrows(nf, "\n".join(r[(row + nv):(row + nv + nf)]))
     f = ffloat.astype(int)
 
-    return Surface(v=v, f=f)
+    return surf.Surface(v=v, f=f)
 
-def write(surf, fn, overwrite=False, comment=None):
+def write(fn, surface, overwrite=False, comment=None):
     '''
     Writes a AFNI SUMA ASCII surface
     
     Parameters
     ----------
-    surf: surf.Surface
+    surface: surface.Surface
         surface to be written
     fn : str
         Output filename of ASCII surface file
@@ -99,8 +100,8 @@ def write(surf, fn, overwrite=False, comment=None):
         Comments to add to 'fn'
     '''
 
-    if isinstance(surf, str) and isinstance(fn, Surface):
-        surf, fn = fn, surf
+    if isinstance(surface, str) and isinstance(fn, surf.Surface):
+        surface, fn = fn, surface
 
     if not overwrite and os.path.exists(fn):
         raise Exception("File already exists: %s" % fn)
@@ -110,7 +111,8 @@ def write(surf, fn, overwrite=False, comment=None):
         comment = '# Created %s' % str(datetime.datetime.now())
     s.append(comment)
 
-    nv, nf, v, f = surf.nvertices, surf.nfaces, surf.vertices, surf.faces
+    nv, nf = surface.nvertices, surface.nfaces,
+    v, f = surface.vertices, surface.faces
 
     # number of vertices and faces
     s.append('%d %d' % (nv, nf))
