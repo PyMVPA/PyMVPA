@@ -357,7 +357,7 @@ class QueryEngine(QueryEngineInterface):
         super(QueryEngine, self).__init__()
         self._queryobjs = kwargs
         self._queryattrs = {}
-        self._len = 0
+        self._ids = None
 
 
     def __repr__(self, prefixes=[]):
@@ -366,7 +366,11 @@ class QueryEngine(QueryEngineInterface):
             + ['%s=%r' % v for v in self._queryobjs.iteritems()])
 
     def __len__(self):
-        return self._len
+        return len(self._ids) if self._ids is not None else 0
+
+    @property
+    def ids(self):
+        return self._ids
 
     def train(self, dataset):
         # reset first
@@ -379,7 +383,7 @@ class QueryEngine(QueryEngineInterface):
         # by default all QueryEngines should with all features of the dataset
         # Situation might be different in case of e.g. Surface-based
         # searchlights.
-        self._len = dataset.nfeatures
+        self._ids = range(dataset.nfeatures)
 
 
     def query_byid(self, fid):

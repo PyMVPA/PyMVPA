@@ -36,14 +36,9 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
         self._add_fa = add_fa
 
 
-    def __len__(self):
-        # TODO : here it is a copy -- make it faster avoiding copies
-        return len(self.voxsel.keys)
-
-    # NNO because not necesarily all keys have a value associated with
-    # them 
-    def keys(self):
-        return list(self.voxsel.keys)
+    @property
+    def ids(self):
+        return self.voxsel.keys
 
     def train(self, dataset):
         vg = self.voxsel.volgeom
