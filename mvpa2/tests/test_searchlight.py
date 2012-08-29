@@ -140,6 +140,9 @@ class SearchlightTests(unittest.TestCase):
             roi_ids = np.arange(nroi)
             result_all = None
 
+        if results_backend == 'hdf5':
+            skip_if_no_external('h5py')
+
         sls = [sphere_searchlight(cv, results_backend=results_backend,
                                   **skwargs),
                #GNBSearchlight(gnb, NFoldPartitioner(cvtype=1))
@@ -246,6 +249,7 @@ class SearchlightTests(unittest.TestCase):
         slkwargs = dict(radius=1, postproc=mean_sample())
 
         sl_nodistr = sphere_m1nnsearchlight(*slargs, **slkwargs)
+        skip_if_no_external('scipy')    # needed for null_t
         sl = sphere_m1nnsearchlight(
             *slargs,
             null_dist=distr_est,
