@@ -364,7 +364,8 @@ class Searchlight(BaseSearchlight):
             roi_specs = self._queryengine[f]
 
             if __debug__ and  debug_slc_:
-                debug('SLC_', 'For %r query returned ids %r' % (f, roi_fids))
+                debug('SLC_', 'For %r query returned roi_specs %r'
+                      % (f, roi_specs))
 
             if is_datasetlike(roi_specs):
                 # TODO: unittest
