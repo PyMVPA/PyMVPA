@@ -23,8 +23,8 @@ Created on Feb 12, 2012
 '''
 
 import numpy as np, os, datetime, utils, afni_suma_1d, afni_niml_dset
-from surf import Surface
 
+from surf import Surface
 
 def read(fn):
     '''

@@ -1,4 +1,4 @@
-# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# emacs: -*- mode: pyt    hon; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 '''
 General support for cortical surface meshes
@@ -699,6 +699,30 @@ def generate_sphere(density=10):
         top, cur = cur, [bot[-1]] + bot[:-1]
 
     return Surface(np.array(vs), np.array(fs))
+
+def read(fn):
+    '''General read function for surfaces
+    
+    For now only supports ascii (as used in AFNI's SUMA) and freesurfer formats
+    '''
+    if fn.endswith('.asc'):
+        import mvpa2.misc.surfing.surf_fs_asc as surf_fs_asc
+        return surf_fs_asc.read(fn)
+    else:
+        import surfer.io
+        coords, faces = surfer.io.read_geometry(fn)
+        return Surface(coords, faces)
+
+def write(fn, s, overwrite=False):
+    '''General write function for surfaces
+    
+    For now only supports ascii (as used in AFNI's SUMA)
+    '''
+    if fn.endswith('.asc'):
+        import mvpa2.misc.surfing.surf_fs_asc as surf_fs_asc
+        surf_fs_asc.write(s, fn, overwrite=overwrite)
+    else:
+        raise ValueError("Not implemented (based on extension): %r" % fn)
 
 
 
