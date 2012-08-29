@@ -123,14 +123,25 @@ class BaseSearchlight(Measure):
             roi_ids = self.__roi_ids
             # safeguard against stupidity
             if __debug__:
-                if max(roi_ids) >= len(self._queryengine):
+                # NNO Aug 2012 as we can have sparse voxel selection
+                # it's possible to have few roi_ids but with some of them
+                # having large values - therefor changed the guard 
+                #if max(roi_ids) >= len(self._queryengine):
+                if len(roi_ids) > len(self._queryengine):
                     raise IndexError(
                           "Maximal center_id found is %s whenever query "
                           "engine %s knows only about %d"
                           % (max(roi_ids), self._queryengine,
                              len(self._queryengine)))
         else:
-            roi_ids = np.arange(len(self._queryengine))
+            # NNO Aug 2012 for surface-based searchlight even when None
+            # is provided not necesarily the node_indices go 0..(n-1).
+            # see if query engine provide a keys() method, otherwise
+            # use range
+            try:
+                roi_ids = self._queryengine.keys()
+            except AttributeError:
+                roi_ids = np.arange(len(self._queryengine))
 
         # pass to subclass
         results = self._sl_call(dataset, roi_ids, nproc)
@@ -144,21 +155,21 @@ class BaseSearchlight(Measure):
                 # there is an additional selection step that needs to be
                 # expressed by another mapper
                 mapper = copy.copy(dataset.a.mapper)
-                
+
                 # NNO if the orignal mapper has no append (because it's not a
                 # chainmapper, for example), we make our own chainmapper.
                 #
                 # THe original code was:
                 # mapper.append(StaticFeatureSelection(roi_ids,
                 #                                     dshape=dataset.shape[1:])) 
-                feat_sel_mapper=StaticFeatureSelection(roi_ids,
+                feat_sel_mapper = StaticFeatureSelection(roi_ids,
                                                      dshape=dataset.shape[1:])
                 if 'append' in dir(mapper):
                     mapper.append(feat_sel_mapper)
                 else:
                     mapper = ChainMapper([dataset.a.mapper,
                                           feat_sel_mapper])
-                    
+
                 results.a['mapper'] = mapper
 
         # charge state
@@ -377,7 +388,7 @@ class Searchlight(BaseSearchlight):
             roi = ds[:, roi_fids]
 
             if is_datasetlike(roi_specs):
-                for n,v in roi_specs.fa.iteritems():
+                for n, v in roi_specs.fa.iteritems():
                     roi.fa[n] = v
 
             if self.__add_center_fa:
@@ -402,9 +413,9 @@ class Searchlight(BaseSearchlight):
             if __debug__:
                 debug('SLC', "Doing %i ROIs: %i (%i features) [%i%%]" \
                     % (len(block),
-                       f+1,
+                       f + 1,
                        roi.nfeatures,
-                       float(i+1)/len(block)*100,), cr=True)
+                       float(i + 1) / len(block) * 100,), cr=True)
 
         if self.results_backend == 'native':
             pass                        # nothing special
