@@ -6,6 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+from numpy.testing.utils import assert_array_almost_equal
 """Unit tests for PyMVPA surface searchlight and related utilities"""
 
 import numpy as np
@@ -134,6 +135,16 @@ class SurfTests(unittest.TestCase):
         eps = np.finfo('f').eps
         for k, v in some_ds.iteritems():
             assert_true(abs(v - ds2[k]) < eps)
+
+        # test I/O (throught ascii files)
+        _, fn = tempfile.mkstemp('surf.asc', 'surftest')
+        surf.write(fn, s, overwrite=True)
+        s2 = surf.read(fn)
+        os.remove(fn)
+
+        assert_array_almost_equal(s.vertices, s2.vertices, 4)
+        assert_array_almost_equal(s.faces, s2.faces, 4)
+
 
     def test_surf_fs_asc(self):
         s = surf.generate_sphere(5) * 100
