@@ -310,7 +310,7 @@ class VoxelSelector():
 
         return voxel_attributes
 
-def voxel_selection(vol_surf, radius, srcs=None, surf_srcs=None,
+def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
                     start=0., stop=1., steps=10,
                     distancemetric='dijkstra', intermediateat=.5, etastep=1):
         """
@@ -322,12 +322,12 @@ def voxel_selection(vol_surf, radius, srcs=None, surf_srcs=None,
             Contains gray and white matter surface, and volume geometry
         radius: int or float
             Size of searchlight. If an integer, then it indicates the number of
-            voxels. If a float, then it indicates the radius of the disc
-        srcs: list of int or numpy array
-            node indices that serve as searchlight center             
+            voxels. If a float, then it indicates the radius of the disc      
         surf_srcs: surf.Surface
             Surface used to compute distance between nodes. If omitted, it is 
             the average of the gray and white surfaces 
+        srcs: list of int or numpy array
+            node indices that serve as searchlight center       
         start: float (default: 0)
                 Relative start position of line in gray matter, 0.=white 
                 surface, 1.=pial surface
@@ -443,7 +443,7 @@ def voxel_selection(vol_surf, radius, srcs=None, surf_srcs=None,
 
         return node2volume_attributes
 
-def run_voxelselection(epifn, whitefn, pialfn, radius, srcs=None, srcfn=None,
+def run_voxel_selection(epifn, whitefn, pialfn, radius, srcfn=None, srcs=None,
                        start=0., stop=1., steps=10, distancemetric='dijkstra',
                        intermediateat=.5, etastep=1):
     '''Wrapper function that is supposed to make voxel selection
@@ -455,9 +455,10 @@ def run_voxelselection(epifn, whitefn, pialfn, radius, srcs=None, srcfn=None,
         Filename of functional volume in which voxel selection is performed.
         At the moment only nifti (.nii) files are supported
     whitefn: str
-        Filename of white matter surface. Only .asc files at the moment.
+        Filename of white matter surface. Only .asc or freesurfer files
+        are supported at the moment.
     pialfn: str
-        Filename of pial surface. Only .asc files at the moment.
+        Filename of pial surface. 
     radius: int or float
         Searchlight radius with number of voxels (if int) or maximum distance
         from searchlight center in metric units (if float)
@@ -505,10 +506,10 @@ def run_voxelselection(epifn, whitefn, pialfn, radius, srcs=None, srcfn=None,
         srcsurf = surf.read(srcfn)
 
     # make a volume surface instance
-    vs = volsurf.VolSurf(vg, whitesurf, pialsurf)
+    vs = volsurf.VolSurf(vg, pialsurf, whitesurf)
 
     # run voxel selection
-    sel = voxel_selection(vs, radius, srcs, srcsurf, start, stop, steps,
+    sel = voxel_selection(vs, radius, srcsurf, srcs, start, stop, steps,
                           distancemetric, intermediateat, etastep)
 
     return sel
