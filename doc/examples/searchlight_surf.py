@@ -42,8 +42,8 @@ selectivity contrast for voxels ventral temporal cortex."""
 datapath = os.path.join(pymvpa_datadbroot,
                         'tutorial_data', 'tutorial_data', 'data', 'surfing')
 
-"""First set up surface stuff"""
-epi_ref_fn = os.path.join(datapath, '..', 'mask_brain.nii.gz')
+"""Define functional data volume filename"""
+epi_fn = os.path.join(datapath, '..', 'bold.nii.gz')
 
 """
 We're concerned with the left hemisphere only.
@@ -100,7 +100,6 @@ actual number will vary slightly
 """
 radius = 100
 
-
 """
 Set the prefixes for output
 """
@@ -108,33 +107,75 @@ fn_infix = 'ico%d_%sh_%dvx' % (lowres_ld, hemi, radius)
 voxel_selection_fn_prefix = os.path.join(datapath, fn_infix)
 searchlight_fn_prefix = os.path.join(datapath, fn_infix)
 
+
+"""We're all set to go to run voxel selection - that is, determine for
+each node which voxels are near it. 
+
+As a reminder, the only essential values we have set are the 
+filenames of three surfaces (high-res inner and outer,
+and low-res intermediate), and the searchlight radius.
+
+Note that settng the low-res intermediate surface can be omitted 
+(i.e. set it to None), in which case it is computed as the average from the 
+high-res outer and inner. The searchlight would then be based on
+a high-res intermedaite surface with a lot of nodes, which means that it takes
+longer to run the searchlight.
 """
-Load the surfaces
-"""
-white_surf = surf_fs_asc.read(white_surf_fn)
-pial_surf = surf_fs_asc.read(pial_surf_fn)
-intermediate_surf = surf_fs_asc.read(intermediate_surf_fn)
+
+voxsel = surf_voxel_selection.run_voxel_selection(epi_fn,
+                                                  white_surf_fn, pial_surf_fn,
+                                                  radius,
+                                                  intermediate_surf_fn)
+
+
+'''Voxel selection now contains the results, which can be stored on disk
+for later re-use (using surf_voxel_selection.to_file()).
+
+We omit this I/O stuff here and go straight into preparing for the searchlight.
+
+The next step is to define the query-engine.
+'''
+qe = SurfaceVerticesQueryEngine(voxsel,
+                                # you can optionally add additional
+                                # information about each near-disk-voxels
+                                add_fa=['center_distances',
+                                        'grey_matter_position'])
+
+
+
+'''As in the example in searchlight.py, define cross-validation 
+using a classifier
+
+'''
+clf = LinearCSVMC()
+
+cv = CrossValidation(clf, NFoldPartitioner(),
+                     errorfx=lambda p, t: np.mean(p == t),
+                     enable_ca=['stats'])
+
+
 
 """
-Load the volume geometry information
+Combining the query-engine and the cross-validation defines the 
+searchlight. The postproc-step averages the classification accuracies
+in each cross-validation fold to a single overall classification accuracy.
 """
-vg = volgeom.from_nifti_file(epi_ref_fn)
 
-"""
-Make a volsurf instance, which is useful for mapping between surface
-and volume locations
-"""
-vs = volsurf.VolSurf(vg, white_surf, pial_surf)
+sl = Searchlight(cv, queryengine=qe, postproc=mean_sample())
 
-"""
-Use all centers and run voxel selection...
-"""
-nv = intermediate_surf.nvertices
-src_ids = range(nv)
-# big TODO:  voxsel must be QueryEngine
-voxsel = surf_voxel_selection.voxel_selection(vs, radius, src_ids, intermediate_surf)
+
+
+'''
+Next step is to load the functional data. But before that we can reduce
+memory requirements significantly by considering which voxels to load.
+Since we will only use voxels that were selected at least once by the 
+voxel selection step, a mask is taken from the voxel selection results 
+and used when loading the functional data 
+'''
+
 mask = voxsel.get_mask()
-center_ids = voxsel.keys
+print ("Voxel selection: %d / %d voxels are selected at least once" %
+        (np.sum(mask > 0), mask.size))
 
 """
 From now on we simply follow the example in searchlight.py.
@@ -143,13 +184,11 @@ mask that came from the voxel selection.
 """
 attr = SampleAttributes(os.path.join(datapath, '..', 'attributes.txt'))
 
-
 dataset = fmri_dataset(
-                samples=os.path.join(datapath, '..', 'bold.nii.gz'),
+                samples=epi_fn,
                 targets=attr.targets,
                 chunks=attr.chunks,
-                mask=mask # but it can come from voxsel.get_masked_voxels
-    )
+                mask=mask)
 
 
 poly_detrend(dataset, polyord=1, chunks_attr='chunks')
@@ -162,29 +201,8 @@ zscore(dataset, chunks_attr='chunks', param_est=('targets', ['rest']), dtype='fl
 dataset = dataset[dataset.sa.targets != 'rest']
 
 """
-Define classifier and cross-validation
+Run the searchlight on the dataset. 
 """
-
-clf = LinearCSVMC()
-
-cv = CrossValidation(clf, NFoldPartitioner(),
-                     errorfx=lambda p, t: np.mean(p == t),
-                     enable_ca=['stats'])
-
-
-
-"""
-The interesting part: define and run the searchlight
-"""
-qe = SurfaceVerticesQueryEngine(voxsel,
-                                # you can optionally add additional
-                                # information about each near-disk-voxels
-                                add_fa=['center_distances',
-                                        'grey_matter_position'])
-sl = Searchlight(cv, queryengine=qe, postproc=mean_sample(),
-                 # if you care to specify custom subset of vertices
-                 # roi_ids=voxsel.keys()
-                 )
 
 sl_dset = sl(dataset)
 
@@ -192,17 +210,24 @@ sl_dset = sl(dataset)
 """
 For visualization of results, make a NIML dset that can be viewed
 by AFNI. Results are transposed because in NIML, rows correspond
-to nodes (features) and columns to datapoints (samples)
+to nodes (features) and columns to datapoints (samples).
+
+In certain cases (though not in this example) some nodes may have no
+voxels associated with them (in case of partial brain coverage, for example).
+Therefore center_ids is based on the keys used in the query engine. 
 """
 
+center_ids = qe.keys()
+
 surf_sl_dset = dict(data=np.asarray(sl_dset).transpose(),
-                  node_indices=center_ids)
+                    node_indices=center_ids,
+                    labels=['HOUSvsSCRM'])
 
 dset_fn = searchlight_fn_prefix + '.niml.dset'
 
 afni_niml_dset.write(dset_fn, surf_sl_dset)
 
-print ("To view results, cd to '%s' and run ./%sh_ico%d_seesuma.sh,"
+print ("To view results, cd to '%s' and run ./%sh_ico%d_runsuma.sh,"
        "click on 'dset', and select %s" %
        (datapath, hemi, lowres_ld, dset_fn))
 

@@ -496,8 +496,8 @@ class SurfTests(unittest.TestCase):
             img = sel.volgeom.empty_nifti_img()
             img.to_filename(volfn)
 
-            sel3 = surf_voxel_selection.run_voxelselection(volfn, outerfn,
-                            innerfn, radius, srcs=srcs,
+            sel3 = surf_voxel_selection.run_voxel_selection(volfn, innerfn,
+                            outerfn, radius, srcs=srcs,
                             distancemetric=distancemetric)
 
             outer4 = surf.read(outerfn)
