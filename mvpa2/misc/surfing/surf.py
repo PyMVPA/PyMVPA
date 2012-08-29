@@ -709,8 +709,8 @@ def read(fn):
         import mvpa2.misc.surfing.surf_fs_asc as surf_fs_asc
         return surf_fs_asc.read(fn)
     else:
-        import surfer.io
-        coords, faces = surfer.io.read_geometry(fn)
+        import nibabel.freesurfer.io as fsio
+        coords, faces = fsio.read_geometry(fn)
         return Surface(coords, faces)
 
 def write(fn, s, overwrite=False):
@@ -725,31 +725,4 @@ def write(fn, s, overwrite=False):
         raise ValueError("Not implemented (based on extension): %r" % fn)
 
 
-
-if __name__ == '__main__':
-    size = 100
-
-
-    s = generate_sphere(10) * 100
-    t = generate_sphere(20) * 100
-
-    mp = s.map_to_high_resolution_surf(t, epsilon=11.)
-    print mp
-
-
-
-    import surf_fs_asc
-    fnout = '/Users/nick/tmp/s.asc'
-    surf_fs_asc.write(s, fnout, True)
-
-
-
-
-
-
-'''    
-#  yoh: tests would be nearly mandatory and should go under mvpa2/tests
-#       so why not start by refactoring these with some rudimentary example
-#       files if necessary under mvpa2/data?
-'''
 
