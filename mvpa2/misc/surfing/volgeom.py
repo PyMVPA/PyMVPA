@@ -1,3 +1,11 @@
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''
 Volume geometry to map between world and voxel coordinates.
 
@@ -10,7 +18,7 @@ Created on Feb 12, 2012
 @author: nick
 '''
 
-import nibabel as ni, numpy as np, surf_fs_asc, utils
+import nibabel as nb, numpy as np, surf_fs_asc, utils
 
 class VolGeom():
     '''
@@ -292,7 +300,7 @@ class VolGeom():
         sh4d = (sh[0], sh[1], sh[2], nt)
 
         data = np.zeros(sh4d)
-        img = ni.Nifti1Image(data, self.affine)
+        img = nb.Nifti1Image(data, self.affine)
         return img
 
 def from_nifti_file(fn):
@@ -308,7 +316,7 @@ def from_nifti_file(fn):
         Volume geometry associated with 'fn'
     '''
 
-    img = ni.load(fn)
+    img = nb.load(fn)
     return from_image(img)
 
 def from_image(img):
@@ -323,7 +331,7 @@ def from_image(img):
         Volume geometry assocaited with img
     '''
 
-    if not isinstance(img, ni.spatialimages.SpatialImage):
+    if not isinstance(img, nb.spatialimages.SpatialImage):
         raise TypeError("Image is not a spatial image: %r" % img)
 
     return VolGeom(shape=img.shape, affine=img.get_affine())

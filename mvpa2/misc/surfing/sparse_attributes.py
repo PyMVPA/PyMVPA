@@ -1,19 +1,14 @@
-import cPickle as pickle
-import volgeom
-from collections import Mapping
-
-import nibabel as ni, numpy as np
-import collections
-import volgeom
-import utils
-import operator
-
-from mvpa2.misc.neighborhood import IndexQueryEngine
-from mvpa2.measures.searchlight import Searchlight
-
-'''
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""
 This class is intended for general use of storing sparse attributes
-associated with keys in a dictionary. 
+associated with keys in a dictionary.
 
 Instantiation requires a set of labels (called sa_labels to mimick Dataset)
 and every entry added has to be a dict with the keys matching sa_labels.
@@ -22,13 +17,27 @@ have the same number of elements.
 
 The rationale is to make a general class that associates keys of ROIs with
 properties of voxels (their index, distance from center, position in grey 
-matter, etc). ROIs can in principle be either from a volume or a 
+matter, etc). ROIs can in principle be either from a volume or a
 surface searchlight, or manually drawn in e.g. AFNI's SUMA.
 
 TODO: consider whether we use a standard sa_label, such as the one
 used for linear voxel indices.
 TODO: consider using constants frmo surf_voxel_selection   
-'''
+"""
+
+import cPickle as pickle
+from collections import Mapping
+
+import nibabel as nb, numpy as np
+import collections
+import operator
+
+from mvpa2.misc.neighborhood import IndexQueryEngine
+from mvpa2.measures.searchlight import Searchlight
+
+from mvpa2.misc.surfing import volgeom
+from mvpa2.misc.surfing import utils
+
 class SparseAttributes(object):
     def __init__(self, sa_labels):
         self._sa_labels = list(sa_labels)
@@ -379,7 +388,7 @@ class SparseVolumeNeighborhood():
 
         mask = np.reshape(self._linmask, shape)
 
-        return ni.Nifti1Image(mask, vg.affine)
+        return nb.Nifti1Image(mask, vg.affine)
 
 
     def __call__(self, coordinate):
