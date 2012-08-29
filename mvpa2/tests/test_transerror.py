@@ -718,6 +718,7 @@ def test_bayes_confusion_hyp():
             ])
     conf = Dataset(conf, sa={'labels': ['A', 'B', 'C', 'D']})
     bayes = BayesConfusionHypothesis(labels_attr='labels')
+    skip_if_no_external('scipy')        # uses factorial from scipy.misc
     hyptest = bayes(conf)
     # by default comes with all hypothesis and posterior probs
     assert_equal(hyptest.shape, (15,2))
