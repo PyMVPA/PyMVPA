@@ -32,6 +32,8 @@ import nibabel as nb, numpy as np
 import collections
 import operator
 
+from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
+
 from mvpa2.misc.neighborhood import IndexQueryEngine
 from mvpa2.measures.searchlight import Searchlight
 
@@ -39,10 +41,10 @@ from mvpa2.misc.surfing import volgeom
 from mvpa2.misc.surfing import utils
 
 class SparseAttributes(object):
-    def __init__(self, sa_labels):
+    def __init__(self, sa_labels, sa=None, a=None):
         self._sa_labels = list(sa_labels)
-        self.sa = dict()
-        self.a = dict()
+        self.sa = dict() if sa is None else sa
+        self.a = dict() if a is None else a
 
     def set(self, roi_label, roi_attrs_dict):
         if not roi_attrs_dict:
@@ -119,8 +121,16 @@ class SparseAttributes(object):
 
         return backward
 
+    def __repr__(self, prefixes=[]):
+        # do no bother for complete repr of the beast for now
+        # prefixes = prefixes + _repr_attrs(self, ['sa', 'a'])
+        suffix = ''
+        if len(prefixes):
+            suffix = ', '.join([''] + prefixes)
+        return "%s(%r%s) #" % (self.__class__.__name__,
+                           self._sa_labels, suffix)
 
-    def __repr__(self):
+    def __str__(self):
         return ("SparseAttributes with %i entries, %i labels (%r)\nGeneral attributes: %r" %
                 (len(self.sa), len(self._sa_labels), self._sa_labels, self.a.keys()))
 
@@ -157,9 +167,13 @@ class SparseVolumeAttributes(SparseAttributes):
     volgeom: volgeom.VolGeom
         volume geometry
     """
-    def __init__(self, sa_labels, volgeom):
-        super(self.__class__, self).__init__(sa_labels)
+    def __init__(self, sa_labels, volgeom, **kwargs):
+        super(self.__class__, self).__init__(sa_labels, **kwargs)
         self.a['volgeom'] = volgeom
+
+    def __repr__(self, prefixes=[]):
+        return super(SparseVolumeAttributes, self).__repr__(
+            prefixes + ['volgeom=%r' % self.a['volgeom']])
 
     @property
     def volgeom(self):
