@@ -25,7 +25,7 @@ import volsurf
 import mvpa2.misc.surfing.sparse_attributes as sparse_attributes
 import mvpa2.misc.surfing.volgeom as volgeom
 import utils
-import surf_fs_asc
+import surf
 
 # TODO: see if we use these contants, or let it be up to the user
 # possibly also rename them
@@ -496,13 +496,13 @@ def run_voxelselection(epifn, whitefn, pialfn, radius, srcs=None, srcfn=None,
     vg = volgeom.from_nifti_file(epifn)
 
     # read surfaces
-    whitesurf = surf_fs_asc.read(whitefn)
-    pialsurf = surf_fs_asc.read(pialfn)
+    whitesurf = surf.read(whitefn)
+    pialsurf = surf.read(pialfn)
 
     if srcfn is None:
         srcsurf = whitesurf * .5 + pialsurf * .5
     else:
-        srcsurf = surf_fs_asc.read(srcfn)
+        srcsurf = surf.read(srcfn)
 
     # make a volume surface instance
     vs = volsurf.VolSurf(vg, whitesurf, pialsurf)
