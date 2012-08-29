@@ -123,25 +123,14 @@ class BaseSearchlight(Measure):
             roi_ids = self.__roi_ids
             # safeguard against stupidity
             if __debug__:
-                # NNO Aug 2012 as we can have sparse voxel selection
-                # it's possible to have few roi_ids but with some of them
-                # having large values - therefor changed the guard 
-                #if max(roi_ids) >= len(self._queryengine):
-                if len(roi_ids) > len(self._queryengine):
+                qe_ids = self._queryengine.ids # known to qe
+                if not set(qe_ids).issuperset(roi_ids):
                     raise IndexError(
-                          "Maximal center_id found is %s whenever query "
-                          "engine %s knows only about %d"
-                          % (max(roi_ids), self._queryengine,
-                             len(self._queryengine)))
+                          "Some roi_ids are not known to the query engine %s: %s"
+                          % (self._queryengine,
+                             set(roi_ids).difference(qe_ids)))
         else:
-            # NNO Aug 2012 for surface-based searchlight even when None
-            # is provided not necesarily the node_indices go 0..(n-1).
-            # see if query engine provide a keys() method, otherwise
-            # use range
-            try:
-                roi_ids = self._queryengine.keys()
-            except AttributeError:
-                roi_ids = np.arange(len(self._queryengine))
+            roi_ids = self._queryengine.ids
 
         # pass to subclass
         results = self._sl_call(dataset, roi_ids, nproc)
