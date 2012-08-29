@@ -43,6 +43,8 @@ experiments.
 
   DOI: http://dx.doi.org/10.1093/cercor/bhr061
 
+  URL: http://cercor.oxfordjournals.org/content/early/2011/06/27/cercor.bhr061.short
+
 
 .. _CPL+06:
 
@@ -55,11 +57,15 @@ experiments.
 
   DOI: http://dx.doi.org/10.1002/hbm.20243
 
+  URL: http://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?cmd=prlinks&dbfrom=pubmed&retmode=ref&id=16565951
+
 
 .. _CSM+10:
 
 **Clithero, J. A., Smith, D. V., Carter, R. M. & Huettel, S. A.** (2010). Within- and cross-participant classifiers reveal different neural coding of information. *NeuroImage*.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2010.03.057
+
+  URL: http://www.ncbi.nlm.nih.gov/pubmed/20347995
 
 
 .. _Coh94:
@@ -77,11 +83,15 @@ experiments.
 **Cohen, J. R., Asarnow, R. F., Sabb, F. W., Bilder, R. M., Bookheimer, S. Y., Knowlton, B. J. & Poldrack, R. A.** (2010). Decoding developmental differences and individual variability in response inhibition through predictive analyses across individuals. *Frontiers in Human Neuroscience*, *4:47*.
   DOI: http://dx.doi.org/10.3389/fnhum.2010.00047
 
+  URL: http://www.ncbi.nlm.nih.gov/pubmed/20661296
+
 
 .. _CGG+12:
 
 **Connolly, A. C., Guntupalli, J. S., Gors, J., Hanke, M., Halchenko, Y. O., Wu, Y., Abdi, H. & Haxby, J. V.** (2012). The Representation of Biological Classes in the Human Brain. *Journal of Neuroscience*, *32*, 2608-2618.
   DOI: http://dx.doi.org/10.1523/JNEUROSCI.5547-11.2012
+
+  URL: http://www.jneurosci.org/content/32/8/2608#aff-4
 
 
 .. _Dem06:
@@ -116,6 +126,8 @@ experiments.
 **Garcia, S. & Fourcaud-Trocmé, N.** (2009). OpenElectrophy: An Electrophysiological Data- and Analysis-Sharing Framework. *Front Neuroinformatics*, *3*, 14.
   DOI: http://dx.doi.org/10.3389/neuro.11.014.2009
 
+  URL: http://www.ncbi.nlm.nih.gov/pubmed/19521545
+
 
 .. _GWC10:
 
@@ -127,6 +139,8 @@ experiments.
 
 **Gorlin, S., Meng, M., Sharma, J., Sugihara, H., Sur, M. & Sinha, P.** (2012). Imaging prior information in the brain. *Proceedings of the National Academy of Sciences*, *109*, 7935-7940.
   DOI: http://dx.doi.org/10.1073/pnas.1111224109
+
+  URL: http://www.pnas.org/content/109/20/7935.abstract
 
 
 .. _GE03:
@@ -189,9 +203,11 @@ experiments.
 **Hastie, T., Tibshirani, R. & Friedman, J. H.** (2009). The Elements of Statistical Learning: Data Mining, Inference, and Prediction. Springer: New York.
   *Excellent summary of virtually all techniques relevant to the field. A free PDF
   version of this book is available from the authors' website at
-  http://www-stat.stanford.edu/ tibs/ElemStatLearn/*
+  http://www-stat.stanford.edu/%7Etibs/ElemStatLearn/*
 
   DOI: http://dx.doi.org/10.1007/b94608
+
+  URL: http://www-stat.stanford.edu/%7Etibs/ElemStatLearn/
 
 
 .. _HGF+01:
@@ -206,6 +222,8 @@ experiments.
 
 **Haxby, J. V., Guntupalli, J. S., Connolly, A. C., Halchenko, Y. O., Conroy, B. R., Gobbini, M. I., Hanke, M. & Ramadge, P. J.** (2011). A Common, High-Dimensional Model of the Representational Space in Human Ventral Temporal Cortex. *Neuron*, *72*, 404–416.
   DOI: http://dx.doi.org/10.1016/j.neuron.2011.08.026
+
+  URL: http://www.cell.com/neuron/abstract/S0896-6273%2811%2900781-1
 
 
 .. _HR06:
@@ -223,6 +241,8 @@ experiments.
   Keywords: :keyword:`pymvpa`, :keyword:`fmri`
 
   DOI: http://dx.doi.org/10.3389/fninf.2012.00024
+
+  URL: http://www.frontiersin.org/Neuroinformatics/10.3389/fninf.2012.00024/full
 
 
 .. _Ioa05:
@@ -260,6 +280,8 @@ experiments.
 
   DOI: http://dx.doi.org/10.1016/j.tics.2009.06.002
 
+  URL: http://www.sciencedirect.com/science/article/B6VH9-4X4R9BC-1/2/e2e90008d0a8887878c72777462335fd
+
 
 .. _KT05:
 
@@ -276,6 +298,8 @@ experiments.
   Keywords: :keyword:`pymvpa`, :keyword:`eeg`
 
   DOI: http://dx.doi.org/10.3389/fpsyg.2011.00198
+
+  URL: http://www.frontiersin.org/perception_science/10.3389/fpsyg.2011.00198/full
 
 
 .. _KFS+09:
@@ -308,6 +332,8 @@ experiments.
 
   DOI: http://dx.doi.org/10.1109/TPAMI.2005.127
 
+  URL: http://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?cmd=prlinks&dbfrom=pubmed&retmode=ref&id=15943426
+
 
 .. _KWO11:
 
@@ -332,6 +358,8 @@ experiments.
 
 **Laconte, S. M.** (2010). Decoding fMRI brain states in real-time. *Neuroimage*.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2010.06.052
+
+  URL: http://www.ncbi.nlm.nih.gov/pubmed/20600972
 
 
 .. _LBB+98:
@@ -370,11 +398,15 @@ experiments.
 **Margulies, D. S., Böttger, J., Long, X., Lv, Y., Kelly, C., Schäfer, A., Goldhahn, D., Abbushi, A., Milham, M. P., Lohmann, G. & Villringer, A.** (2010). Resting developments: a review of fMRI post-processing methodologies for spontaneous brain activity. *Magnetic Resonance Materials in Physics, Biology and Medicine*, *23*, 289–307.
   DOI: http://dx.doi.org/10.1007/s10334-010-0228-5
 
+  URL: http://www.ncbi.nlm.nih.gov/pubmed/20972883
+
 
 .. _MKE+11:
 
 **Meyer, K., Kaplan, J. T., Essex, R., Damasio, H. & Damasio, A.** (2011). Seeing Touch Is Correlated with Content-Specific Activity in Primary Somatosensory Cortex. *Cerebral Cortex*.
   DOI: http://dx.doi.org/10.1093/cercor/bhq289
+
+  URL: http://www.ncbi.nlm.nih.gov/pubmed/21330469
 
 
 .. _MKE10:
@@ -431,6 +463,8 @@ experiments.
 **Pereira, F., Mitchell, T. & Botvinick, M.** (2009). Machine learning classifiers and fMRI: A tutorial overview. *NeuroImage*, *45*, 199–209.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2008.11.007
 
+  URL: http://www.ncbi.nlm.nih.gov/pmc/articles/PMC2892746/
+
 
 .. _PSR11:
 
@@ -478,6 +512,8 @@ experiments.
 
 **Shackman, A. J., Salomons, T. V., Slagter, H. A., Fox, A. S., Winter, J. J. & Davidson, R. J.** (2011). The integration of negative affect, pain and cognitive control in the cingulate cortex. *Nature Reviews Neuroscience*, *12*, 154–167.
   DOI: http://dx.doi.org/10.1038/nrn2994
+
+  URL: http://www.ncbi.nlm.nih.gov/pubmed/21331082
 
 
 .. _Shi10:
@@ -527,6 +563,8 @@ experiments.
 
   DOI: http://dx.doi.org/10.1186/1471-2105-7-91
 
+  URL: http://www.ncbi.nlm.nih.gov/pubmed/16504092
+
 
 .. _WCW+07:
 
@@ -540,6 +578,8 @@ experiments.
 
 **Woolgar, A., Thompson, R., Bor, D. & Duncan, J.** (2010). Multi-voxel coding of stimuli, rules, and responses in human frontoparietal cortex. *Neuroimage*.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2010.04.035
+
+  URL: http://www.ncbi.nlm.nih.gov/pubmed/20406690
 
 
 .. _Wri09:
