@@ -88,6 +88,9 @@ def main():
         if os.path.lexists(dst):
             print "Use existing tutorial 'data' path already exists at '%s'." % dst
             continue
+        if not os.path.exists(src):
+            print "Cannot find tutorial data at '%s'" % src
+            sys.exit(1)
         if hasattr(os, 'symlink'):
             os.symlink(src, dst)
         else:
@@ -103,7 +106,7 @@ def main():
         ipy_args.insert(0, 'qtconsole')
 
     if want_notebook:
-        notebook_dstdir = os.path.join(workdir, 'notebooks')
+        notebook_dstdir = workdir
         ipy_args.append('--notebook-dir=%s' % notebook_dstdir)
         if not os.path.exists(notebook_dstdir):
             os.makedirs(notebook_dstdir)
