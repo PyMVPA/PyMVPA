@@ -69,6 +69,9 @@ class VolGeom():
         mask: np.ndarray
             boolean vector indicating which voxels are included
         '''
+        if self._mask is None:
+            return None
+
         m = self._mask.view()
         m.flags.writeable = False
         return m
@@ -117,7 +120,7 @@ class VolGeom():
         ijk: numpy.ndarray
             Px3 array with sub voxel indices
         '''
-
+        outsidemsk = np.invert(self.contains_lin(lin))
         lin = lin.copy() # we'll change lin, don't want to mess with input
         #outsidemsk = np.logical_or(lin < 0, lin >= self.nvoxels)
 
@@ -130,7 +133,6 @@ class VolGeom():
             ijk[:, i] = v[:]
             lin -= v * f
 
-        outsidemsk = np.invert(self.contains_lin(lin))
         ijk[outsidemsk, :] = self.shape[:3]
 
         return ijk
