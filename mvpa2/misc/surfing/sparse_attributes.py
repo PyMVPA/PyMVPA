@@ -205,6 +205,42 @@ class SparseVolumeAttributes(SparseAttributes):
         volsize = vg.shape[:3]
         return np.reshape(linear_mask, volsize)
 
+    def get_masked_instance(self, mask, sa_label='linear_voxel_indices',
+                            mask_function=lambda x:x != 0):
+        '''Allows for post-hoc application of a mask on voxels
+        This is not very efficient as we copy all the data over
+        TODO: consider allowing this in initial voxel selection
+        '''
+        if not type(mask) is np.ndarray:
+            raise TypeError('Only numpy arrays are supported (for now)')
+
+        vg = self.volgeom
+        if mask.size != vg.nvoxels:
+            raise ValueError('Mask size (%d) mismatches volgeom size (%d)' %
+                              (mask.size, vg.nvoxels))
+
+        # make a linear mask - so that indexing works
+        mask_lin = np.reshape(mask, (mask.size,))
+        labs = self.sa_labels
+        if not sa_label in labs:
+            raise ValueError("Illegal sa_label: %s" % sa_label)
+        # make a new instance
+        attr = SparseVolumeAttributes(labs, self.volgeom)
+
+        # copy values over - except if no voxels survive the mask
+        for k in self.keys:
+            idxs = self.get(k, sa_label)
+            mask_idxs = mask_function(mask_lin[idxs])
+            if np.sum(mask_idxs) == 0:
+                continue # no indices in mask - continue
+
+            d = dict()
+            for lab in labs:
+                d[lab] = self.get(k, lab)[mask_idxs]
+            attr.add(k, d)
+        return attr
+
+
 
 class AttrMapping(Mapping):
     def __init__(self, cls, roi_attr):

@@ -14,9 +14,6 @@ Created on Feb 11, 2012
 import numpy as np, os, collections, datetime, time, \
        heapq, afni_suma_1d, math
 
-import mvpa2.misc.surfing.surf_fs_asc as surf_fs_asc
-import nibabel.freesurfer.io as fsio
-
 class Surface(object):
     '''Cortical surface mesh
     
@@ -709,14 +706,70 @@ def generate_sphere(density=10):
 
     return Surface(np.array(vs), np.array(fs))
 
+def generate_plane(x00, x01, x10, n01, n10):
+    '''
+    Generates a plane
+    
+    Parameters
+        ----------
+        x00: np.array with 3 values
+            origin
+        x01: np.array with 3 values
+            vector indicating first direction of plane
+        x10: np.array with 3 values
+            vector indicating second direction of plane
+        n01: int
+            number of points in first direction
+        n10: int
+            number of points in second direction
+        
+        Returns
+        -------
+        surf.Surface
+            surface with (n01+1)*(n10+1) nodes and n01*n10*2 faces. 
+            The (i,j)-th point is at coordinate x01+i*x01+j*x10 and
+            is stored as the i*(n10+1)*j-th vertex.
+    '''
+    def as_three_vec(v):
+        a = np.reshape(np.asarray(v), (-1,))
+        if len(a) != 3:
+            raise ValueError('expected three values for %r' % v)
+        return a
+
+    # ensure they are proper vectors
+    x00, x01, x10 = map(as_three_vec, (x00, x01, x10))
+
+    vs = np.zeros(((n01 + 1) * (n10 + 1), 3))
+    fs = np.zeros((2 * n01 * n10, 3), dtype=np.int)
+    for i in xrange(n01 + 1):
+        for j in xrange(n10 + 1):
+            vpos = i * (n10 + 1) + j
+            vs[vpos, :] = x00 + i * x01 + j * x10
+            if i < n01 and j < n10: # not at upper borders
+                # make a square pqrs from two triangles
+                p = vpos
+                q = vpos + 1
+                r = vpos + n10 + 1
+                s = r + 1
+
+                fpos = (i * n10 + j) * 2
+                fs[fpos, :] = [p, q, r]
+                fs[fpos + 1, :] = [q, r, s]
+
+    return Surface(vs, fs)
+    pass
+
+
 def read(fn):
     '''General read function for surfaces
     
     For now only supports ascii (as used in AFNI's SUMA) and freesurfer formats
     '''
     if fn.endswith('.asc'):
+        import mvpa2.misc.surfing.surf_fs_asc as surf_fs_asc
         return surf_fs_asc.read(fn)
     else:
+        import nibabel.freesurfer.io as fsio
         coords, faces = fsio.read_geometry(fn)
         return Surface(coords, faces)
 
@@ -727,9 +780,20 @@ def write(fn, s, overwrite=False):
     '''
     if fn.endswith('.asc'):
         import mvpa2.misc.surfing.surf_fs_asc as surf_fs_asc
-        surf_fs_asc.write(s, fn, overwrite=overwrite)
+        surf_fs_asc.write(fn, s, overwrite=overwrite)
     else:
         raise ValueError("Not implemented (based on extension): %r" % fn)
+
+
+
+
+
+
+
+
+
+
+
 
 
 

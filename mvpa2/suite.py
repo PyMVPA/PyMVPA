@@ -227,7 +227,7 @@ if externals.exists("lxml") and externals.exists("nibabel"):
 
 __sdebug("surface searchlight")
 from mvpa2.misc.surfing import volsurf, afni_niml_dset, afni_niml, \
-     sparse_attributes, surf_fs_asc, volgeom, surf_voxel_selection
+     sparse_attributes, surf_fs_asc, volgeom, surf_voxel_selection, surf
 from mvpa2.misc.surfing.queryengine import SurfaceVerticesQueryEngine
 
 __sdebug("ipython goodies")
@@ -242,7 +242,7 @@ def suite_stats():
     glbls = globals()
     import types
     # Compatibility layer for Python3
-    try: 
+    try:
         from io import FileIO as BuiltinFileType
     except ImportError:
         BuiltinFileType = types.FileType
@@ -324,7 +324,7 @@ def suite_stats():
                             ind = doc.index('\n')
                         except:
                             ind = 1000
-                        s+= ": " + doc[:min(ind, 80)]
+                        s += ": " + doc[:min(ind, 80)]
                     except:
                         pass
             return s

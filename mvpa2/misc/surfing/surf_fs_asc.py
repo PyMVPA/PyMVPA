@@ -25,7 +25,7 @@ Created on Feb 12, 2012
 import numpy as np, os, datetime, utils, afni_suma_1d, afni_niml_dset
 
 #from surf import Surface
-import surf
+import mvpa2.misc.surfing.surf as surf
 
 def read(fn):
     '''
