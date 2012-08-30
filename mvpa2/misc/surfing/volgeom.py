@@ -20,19 +20,35 @@ Created on Feb 12, 2012
 
 import nibabel as nb, numpy as np, surf_fs_asc, utils
 
+from mvpa2.datasets.mri import fmri_dataset
+
 class VolGeom():
     '''
     Parameters
     ----------
     shape: tuple
         Number of items in each dimension.
-        Typically the first three dimensions are spatial and the remaining ones temporal
+        Typically the first three dimensions are spatial and the remaining ones 
+        temporal.
     affine: numpy.ndarray
-        4x4 affine transformation array that maps voxel to world coordinates
+        4x4 affine transformation array that maps voxel to world coordinates.
+    mask: numpy.ndarray (default: None)
+        voxel mask that indicates which voxels are included. By default all 
+        voxels are included.
+    
     '''
-    def __init__(self, shape, affine):
+    def __init__(self, shape, affine, mask=None):
         self._shape = shape
         self._affine = affine
+        if not mask is None:
+            # convert into linear numpy array of type boolean
+            if not type(mask) is np.ndarray:
+                raise ValueError("Mask not understood: not an numpy.ndarray")
+            if mask.size != self.nvoxels:
+                raise ValueError("%d voxels, but mask has %d" %
+                                 (self.nvoxels, mask.size))
+            mask = np.reshape(mask != 0, (-1,))
+        self._mask = mask
 
     def as_pickable(self):
         '''
@@ -42,8 +58,20 @@ class VolGeom():
             A dictionary that contains all information from this instance (and can be 
             saved using pickle)
         '''
-        d = dict(shape=self.shape(), affine=self.affine())
+        d = dict(shape=self.shape, affine=self.affine, mask=self.mask)
         return d
+
+    @property
+    def mask(self):
+        '''
+        Returns
+        -------
+        mask: np.ndarray
+            boolean vector indicating which voxels are included
+        '''
+        m = self._mask.view()
+        m.flags.writeable = False
+        return m
 
     def _ijkmultfac(self):
         '''multiplication factors for ijk <--> linear indices conversion'''
@@ -71,6 +99,10 @@ class VolGeom():
             m[i] = f
 
         r = np.dot(ijk, m)
+
+        outsidemsk = np.invert(self.contains_lin(r)) #self.contains_ijk(ijk)
+        r[outsidemsk] = self.nvoxels
+
         return r
 
     def lin2ijk(self, lin):
@@ -87,7 +119,7 @@ class VolGeom():
         '''
 
         lin = lin.copy() # we'll change lin, don't want to mess with input
-        outsidemsk = np.logical_or(lin < 0, lin >= self.nvoxels)
+        #outsidemsk = np.logical_or(lin < 0, lin >= self.nvoxels)
 
         n = np.shape(lin)[0]
         fs = self._ijkmultfac()
@@ -98,6 +130,7 @@ class VolGeom():
             ijk[:, i] = v[:]
             lin -= v * f
 
+        outsidemsk = np.invert(self.contains_lin(lin))
         ijk[outsidemsk, :] = self.shape[:3]
 
         return ijk
@@ -261,6 +294,15 @@ class VolGeom():
 
         return self._shape
 
+    @property
+    def nvoxels_mask(self):
+        '''
+        Returns
+        -------
+        int
+            Number of voxels that survive the mask'''
+        return self.nvoxels if self.mask is None else np.sum(self.mask)
+
     def contains_ijk(self, ijk):
         '''
         Parameters
@@ -273,11 +315,17 @@ class VolGeom():
         numpy.ndarray (boolean)
             P boolean values indicating which voxels are within the volume
         '''
-        shape = self.shape
 
-        return reduce(np.logical_and, [0 <= ijk[:, 0], ijk[:, 0] < shape[0],
-                                      0 <= ijk[:, 1], ijk[:, 1] < shape[1],
-                                      0 <= ijk[:, 2], ijk[:, 2] < shape[2]])
+        lin = self.ijk2lin(ijk)
+
+        return self.contains_lin(lin)
+
+        #shape = self.shape
+
+        #return reduce(np.logical_and, [0 <= ijk[:, 0], ijk[:, 0] < shape[0],
+        #                              0 <= ijk[:, 1], ijk[:, 1] < shape[1],
+        #                              0 <= ijk[:, 2], ijk[:, 2] < shape[2]],
+        #                              self.mask)
 
     def contains_lin(self, lin):
         '''
@@ -293,7 +341,10 @@ class VolGeom():
         '''
 
         nv = self.nvoxels
-        return np.logical_and(0 <= lin, lin < nv)
+        c = np.logical_and(0 <= lin, lin < nv)
+        if not self.mask is None:
+            c[c] = self.mask[lin[c]]
+        return c
 
     def empty_nifti_img(self, nt=1):
         sh = self.shape
@@ -303,7 +354,22 @@ class VolGeom():
         img = nb.Nifti1Image(data, self.affine)
         return img
 
-def from_nifti_file(fn):
+    def masked_nifti_img(self, nt=1):
+        data_lin = np.zeros(self.nvoxels, self.ntimepoints)
+        if self.mask is None:
+            data_lin[:] = 1
+        else:
+            data_lin[self.mask] = 1
+
+        sh = self.shape
+        sh4d = (sh[0], sh[1], sh[2], nt)
+
+        data = np.reshape(data_lin, sh4d)
+        img = nb.Nifti1Image(data, self.affine)
+        return img
+
+
+def from_nifti_file(fn, mask_volume_index=None):
     '''
     Parameters
     ----------
@@ -317,9 +383,9 @@ def from_nifti_file(fn):
     '''
 
     img = nb.load(fn)
-    return from_image(img)
+    return from_image(img, mask_volume_index=mask_volume_index)
 
-def from_image(img):
+def from_image(img, mask_volume_index=None):
     '''
     Parameters
     ----------
@@ -334,5 +400,15 @@ def from_image(img):
     if not isinstance(img, nb.spatialimages.SpatialImage):
         raise TypeError("Image is not a spatial image: %r" % img)
 
-    return VolGeom(shape=img.shape, affine=img.get_affine())
+    if mask_volume_index is None:
+        mask = None
+    else:
+        data = img.get_data()
+        if len(data.shape) == 3:
+            mask = data
+        else:
+            idx = mask_volume_index if type(mask_volume_index) is int else 0
+            mask = img.get_data()[:, :, :, idx]
+
+    return VolGeom(shape=img.shape, affine=img.get_affine(), mask=mask)
 
