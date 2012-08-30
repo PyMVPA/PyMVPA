@@ -726,12 +726,12 @@ def generate_plane(x00, x01, x10, n01, n10):
         Returns
         -------
         surf.Surface
-            surface with (n01+1)*(n10+1) nodes and n01*n10*2 faces. 
+            surface with n01*n10 nodes and (n01-1)*(n10-1)*2 faces. 
             The (i,j)-th point is at coordinate x01+i*x01+j*x10 and
             is stored as the i*(n10+1)*j-th vertex.
     '''
     def as_three_vec(v):
-        a = np.reshape(np.asarray(v), (-1,))
+        a = np.reshape(np.asarray(v, dtype=np.float), (-1,))
         if len(a) != 3:
             raise ValueError('expected three values for %r' % v)
         return a
@@ -739,20 +739,20 @@ def generate_plane(x00, x01, x10, n01, n10):
     # ensure they are proper vectors
     x00, x01, x10 = map(as_three_vec, (x00, x01, x10))
 
-    vs = np.zeros(((n01 + 1) * (n10 + 1), 3))
-    fs = np.zeros((2 * n01 * n10, 3), dtype=np.int)
-    for i in xrange(n01 + 1):
-        for j in xrange(n10 + 1):
-            vpos = i * (n10 + 1) + j
+    vs = np.zeros((n01 * n10, 3))
+    fs = np.zeros((2 * (n01 - 1) * (n10 - 1), 3), dtype=np.int)
+    for i in xrange(n01):
+        for j in xrange(n10):
+            vpos = i * n10 + j
             vs[vpos, :] = x00 + i * x01 + j * x10
-            if i < n01 and j < n10: # not at upper borders
+            if i < n01 - 1 and j < n10 - 1: # not at upper borders
                 # make a square pqrs from two triangles
                 p = vpos
                 q = vpos + 1
-                r = vpos + n10 + 1
+                r = vpos + n10
                 s = r + 1
 
-                fpos = (i * n10 + j) * 2
+                fpos = (i * (n10 - 1) + j) * 2
                 fs[fpos, :] = [p, q, r]
                 fs[fpos + 1, :] = [q, r, s]
 

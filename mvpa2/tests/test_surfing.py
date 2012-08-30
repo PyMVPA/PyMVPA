@@ -128,6 +128,7 @@ class SurfTests(unittest.TestCase):
             assert_true(len(n2f[i]) in nf)
 
 
+        # test dijkstra disances
         ds2 = s.dijkstra_distance(2)
         some_ds = {0: 3.613173280799, 1: 0.2846296765, 2: 0.,
                  52: 1.87458018, 53: 2.0487004817, 54: 2.222820777,
@@ -145,6 +146,13 @@ class SurfTests(unittest.TestCase):
 
         assert_array_almost_equal(s.vertices, s2.vertices, 4)
         assert_array_almost_equal(s.faces, s2.faces, 4)
+
+        # test plane (new feature end of August 2012)
+        s3 = surf.generate_plane((0, 0, 0), (2, 0, 0), (0, 1, 0), 10, 20)
+        assert_equal(s3.nvertices, 200)
+        assert_equal(s3.nfaces, 342)
+        assert_array_almost_equal(s3.vertices[-1, :], np.array([18., 19, 0.]))
+        assert_array_almost_equal(s3.faces[-1, :], np.array([179, 198, 199]))
 
 
     def test_surf_fs_asc(self):
