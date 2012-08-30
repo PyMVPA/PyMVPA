@@ -28,9 +28,10 @@ if __debug__:
 
 Note that the current value is a float; if it were int, it would specify
 the number of voxels in each searchlight'''
-
 radius = 10.
 
+
+'''Define input filenames'''
 epi_fn = os.path.join(pymvpa_dataroot, 'bold.nii.gz')
 maskfn = os.path.join(pymvpa_dataroot, 'mask.nii.gz')
 
@@ -76,7 +77,7 @@ voxsel_masked = voxsel.get_masked_instance(epi_mask)
 '''Define the query engine, cross validation, and searchligyht'''
 
 qe = SurfaceVerticesQueryEngine(voxsel_masked)
-cv = CrossValidation(SMLR(), NFoldPartitioner(),
+cv = CrossValidation(SMLR(), OddEvenPartitioner(),
                      errorfx=lambda p, t: np.mean(p == t))
 
 sl = Searchlight(cv, queryengine=qe, postproc=mean_sample())
