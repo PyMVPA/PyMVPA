@@ -210,6 +210,10 @@ class SparseVolumeAttributes(SparseAttributes):
         '''Allows for post-hoc application of a mask on voxels
         This is not very efficient as we copy all the data over
         TODO: consider allowing this in initial voxel selection
+        
+        NOTE: this function is not suitable if voxel selection was run with
+        a fixed number of voxels, as voxels are most likely to masked out
+        with this function
         '''
         if not type(mask) is np.ndarray:
             raise TypeError('Only numpy arrays are supported (for now)')
