@@ -47,17 +47,25 @@ from mvpa2.mappers.zscore import zscore
 from mvpa2.misc.neighborhood import Sphere, IndexQueryEngine
 
 
+#from mvpa2.suite import *
+#from mvpa2.datasets.mri import fmri_dataset
+
+
 class SurfVoxelSelectionTests(unittest.TestCase):
     # runs voxel selection and searchlight (surface-based) on haxby 2001 
     # single plane data using a synthetic planar surface 
 
-    # TODO make this an actual test to see if voxel and surface based
-    # voxel selection matches
+    # checks to see if results are 'pretty much' similar for surface
+    # and volume base searchlights (currently disagreemnt in classification
+    # accuracies up to 4 precent)
+
     def test_voxel_selection(self):
         '''Define searchlight radius (in mm)
         
         Note that the current value is a float; if it were int, it would specify
         the number of voxels in each searchlight'''
+
+
         radius = 10.
 
 
@@ -70,7 +78,9 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         The surface has as many nodes as there are voxels
         and is parallel to the volume 'slice'
         '''
-        vg = volgeom.from_nifti_file(epi_fn)
+        vg = volgeom.from_nifti_file(maskfn, 0)
+        #vg = volgeom.from_nifti_file(maskfn)
+
         aff = vg.affine
         nx, ny, nz = vg.shape[:3]
 
@@ -78,11 +88,14 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         from the affine transformation matrix of the volume'''
         plane = surf.generate_plane(aff[:3, 3], aff[:3, 0], aff[:3, 1], nx, ny)
 
+
+
         '''
         Simulate pial and white matter as just above and below the central plane
         '''
-        outer = plane + aff[2, 2]
-        inner = plane + -aff[2, 2]
+        normal_vec = aff[:3, 2]
+        outer = plane + normal_vec
+        inner = plane + -normal_vec
 
         '''
         Combine volume and surface information
@@ -92,33 +105,48 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         '''
         Run voxel selection with specified radius (in mm)
         '''
-        voxsel = surf_voxel_selection.voxel_selection(vs, radius)
+        surf_voxsel = surf_voxel_selection.voxel_selection(vs, radius, distancemetric='e')
 
         '''
-        Load an apply a volume-metric mask, and get a new instance
+        Load an apply a volume - metric mask, and get a new instance
         of voxel selection results.
         In this new instance, only voxels that survive the epi mask
         are kept
         '''
-        maskfn = os.path.join(pymvpa_dataroot, 'mask.nii.gz')
-        epi_mask = fmri_dataset(maskfn).samples[0]
-        voxsel_masked = voxsel.get_masked_instance(epi_mask)
+        #epi_mask = fmri_dataset(maskfn).samples[0]
+        #voxsel_masked = voxsel.get_masked_instance(epi_mask)
 
-        '''Define the query engine, cross validation, and searchligyht'''
 
-        qe = SurfaceVerticesQueryEngine(voxsel_masked)
+        '''Define cross validation'''
         cv = CrossValidation(SMLR(), OddEvenPartitioner(),
-                             errorfx=lambda p, t: np.mean(p == t))
+                                  errorfx=lambda p, t: np.mean(p == t))
 
-        sl = Searchlight(cv, queryengine=qe, postproc=mean_sample())
+        '''
+        Surface analysis: define the query engine, cross validation, and searchlight
+        '''
+        surf_qe = SurfaceVerticesQueryEngine(surf_voxsel)
+        surf_sl = Searchlight(cv, queryengine=surf_qe, postproc=mean_sample())
+
+        '''
+        Same for the volume analysis
+        '''
+        element_sizes = tuple(map(abs, (aff[0, 0], aff[1, 1], aff[2, 2])))
+        sph = Sphere(radius, element_sizes=element_sizes)
+        kwa = {'voxel_indices': sph}
+
+        vol_qe = IndexQueryEngine(**kwa)
+        vol_sl = Searchlight(cv, queryengine=vol_qe, postproc=mean_sample())
+
 
         '''The following steps are similar to start_easy.py'''
         attr = SampleAttributes(os.path.join(pymvpa_dataroot,
                                 'attributes_literal.txt'))
 
+        mask = surf_voxsel.get_mask()
+
         dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
                                targets=attr.targets, chunks=attr.chunks,
-                               mask=voxsel_masked.get_mask())
+                               mask=mask)
 
         # do chunkswise linear detrending on dataset
         poly_detrend(dataset, polyord=1, chunks_attr='chunks')
@@ -128,41 +156,19 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         # select class face and house for this demo analysis
         # would work with full datasets (just a little slower)
-        dataset = dataset[np.array([l in ['face', 'house'] for l in dataset.sa.targets],
-                                  dtype='bool')]
+        dataset = dataset[np.array([l in ['face', 'house']
+                                    for l in dataset.sa.targets], dtype='bool')]
 
-        '''Apply searchlight to dataset'''
-        dset_out = sl(dataset)
+        '''Apply searchlight to datasets'''
+        surf_dset = surf_sl(dataset)
+        vol_dset = vol_sl(dataset)
 
+        surf_data = surf_dset.samples
+        vol_data = vol_dset.samples
 
-
-        # now define a similar searchlight for the volume
-        a = np.abs(vg.affine) # to get voxel sizes
-        sph = Sphere(radius, element_sizes=(a[0, 0], a[1, 1], a[2, 2])) # sphere
-        kwa = {'voxel_indices': sph}
-
-        qevol = IndexQueryEngine(**kwa)
-        slvol = Searchlight(cv, queryengine=qevol, postproc=mean_sample())
-        dsvol = slvol(dataset)
-
-        '''Make ready for storing in AFNI NIML dataset'''
-        niml_dset = dict(data=dset_out.samples.transpose(), node_indices=qe.ids)
-
-        '''
-        
-        Additional commands, not executed here:
-        
-        1) to save surface geometry:
-        # surf.write('surf.asc',plane)
-        
-        2) to save surface data in AFNI's NIML format:
-        # afni_niml_dset.write('surfdata.niml.dset', niml_dset)
-        
-        3) To load in AFNI's SUMA (on the terminal):
-        # suma -i surf.asc
-        and load Dset and select surfdata.niml.dset')
-        
-        '''
+        # TODO see why agreement is not perfect - hopefully get precision
+        # to more decimals
+        assert_array_almost_equal(surf_data, vol_data, 1)
 
 def suite():
     """Create the suite"""

@@ -36,7 +36,8 @@ GREY_MATTER_POSITION = "grey_matter_position"
 if __debug__:
     from mvpa2.base import debug
     if not "SVS" in debug.registered:
-        debug.register("SVS", "Surface-based voxel selection (a.k.a. 'surfing')")
+        debug.register("SVS", "Surface-based voxel selection "
+                       " (a.k.a. 'surfing')")
 
 class VoxelSelector():
     '''
@@ -116,7 +117,8 @@ class VoxelSelector():
 
         distkey = CENTER_DISTANCES
         if not distkey in voxprops:
-            raise KeyError("voxprops has no distance key %s in it - cannot select voxels" % distkey)
+            raise KeyError("No distance key %s in it - cannot select voxels" %
+                           distkey)
         allds = voxprops[distkey]
 
         #assert sorted(allds)==allds #that's what voxprops should give us
@@ -126,8 +128,9 @@ class VoxelSelector():
         if n < count or n == 0:
             return None
 
-        # here, a 'chunk' is a set of voxels at the same distance. voxels are selected in chunks
-        # with increasing distance. either all voxels in a chunk are selected or none.
+        # here, a 'chunk' is a set of voxels at the same distance. voxels are 
+        # selected in chunks with increasing distance. either all voxels in a 
+        # chunk are selected or none.
         curchunk = []
         prevd = allds[0]
         chunkcount = 1
@@ -190,7 +193,8 @@ class VoxelSelector():
         if not src in n2v or n2v[src] is None:
             # no voxels associated with this node, skip
             if __debug__:
-                debug("SVS", "Skipping node #%d (no voxels associated)" % src)
+                debug("SVS", "Skipping node #%d (no voxels associated)" % src,
+                      cr=True)
 
             voxel_attributes = []
         else:
@@ -198,7 +202,8 @@ class VoxelSelector():
             radius = self._targetradius
 
             while True:
-                around_n2d = surf.circlearound_n2d(src, radius_mm, self._distancemetric)
+                around_n2d = surf.circlearound_n2d(src, radius_mm,
+                                                   self._distancemetric)
 
                 allvxdist = self.nodes2voxel_attributes(around_n2d, n2v)
 
@@ -410,6 +415,18 @@ def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
         node2volume_attributes = None
 
         # keep track of time
+        if __debug__ :
+            # preparte for pretty printing progress
+            # pattern for printing progress
+            import math
+            ipat = '%% %dd' % math.ceil(math.log10(n))
+
+            maxsrc = max(srcs)
+            npat = '%% %dd' % math.ceil(math.log10(maxsrc))
+
+            progresspat = '%s /%s (node %s ->%s)' % (ipat, ipat, npat, npat)
+
+        # start the clock
         tstart = time.time()
 
         # walk over all nodes
@@ -433,13 +450,11 @@ def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
                 # store attribtues results
                 node2volume_attributes.add(src, attrs)
 
-            if etastep and (i % etastep == 0 or i == n - 1):
-                if __debug__:
+            if __debug__ and etastep and (i % etastep == 0 or i == n - 1):
                     msg = utils.eta(tstart, float(i + 1) / n,
-                                    '%d/%d (node #%d->#%d)' %
+                                    progresspat %
                                     (i + 1, n, src, intermediate), show=False)
-                    if __debug__:
-                        debug('SVS', msg)
+                    debug('SVS', msg, cr=True)
 
         return node2volume_attributes
 
