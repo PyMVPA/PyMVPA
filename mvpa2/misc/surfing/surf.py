@@ -17,21 +17,22 @@ import numpy as np, os, collections, datetime, time, \
 class Surface(object):
     '''Cortical surface mesh
     
-    A surface consists of a set of vertices (each with an x, y, and z coordinate)
-    and a set of faces (triangles; each has three indices referring to the vertices
-    that make up a triangle)
+    A surface consists of a set of vertices (each with an x, y, and z 
+    coordinate) and a set of faces (triangles; each has three indices
+    referring to the vertices that make up a triangle).
     
-    In the present implementation new surfaces should be made using the __init__
-    constructor; internal fields should not be changed manually
+    In the present implementation new surfaces should be made using the 
+    __init__ constructor; internal fields should not be changed manually
     
     Parameters
     ----------
     vertices : numpy.ndarray (float)
-        Px3 array with coordinates for P vertices
+        Px3 array with coordinates for P vertices.
     faces : numpy.ndarray (int)
-        Qx3 array with vertex indices for Q faces (triangles)
+        Qx3 array with vertex indices for Q faces (triangles).
     check: boolean (default=True)
-        Do some sanity checks to ensure that vertices and faces have proper size and values
+        Do some sanity checks to ensure that vertices and faces have proper 
+        size and values.
         
     Returns
     -------
@@ -103,11 +104,11 @@ class Surface(object):
         Returns
         -------
         nbrs : dict
-            A dict "nbrs" so that "nbrs[i]=n2d" contains the distances from node i
-            to the neighbours of node "i" in "n2d". "n2d" is, in turn, a dict
-            so that "n2d[k]=d" is the distance "d" from node "i" to node "j".
-            In other words, nbrs[i][j]=d means that the distance from node i
-            to node j is d. It holds that nbrs[i][j]=nbrs[j][i].
+            A dict "nbrs" so that "nbrs[i]=n2d" contains the distances from 
+            node i to the neighbours of node "i" in "n2d". "n2d" is, in turn, 
+            a dict so that "n2d[k]=d" is the distance "d" from node "i" to 
+            node "j". In other words, nbrs[i][j]=d means that the distance from 
+            node i to node j is d. It holds that nbrs[i][j]=nbrs[j][i].
         
         Note
         ----
@@ -144,14 +145,15 @@ class Surface(object):
         return self._nbrs
 
     def circlearound_n2d(self, src, radius, metric='euclidian'):
-        '''Finds the distances from a center node to surrounding nodes
+        '''Finds the distances from a center node to surrounding nodes.
         
         Parameters
         ----------
         src : int
             Index of center node
         radius : float
-            Maximum distance for other nodes to qualify as a 'surrounding' node.
+            Maximum distance for other nodes to qualify as a 'surrounding' 
+            node.
         metric : string (default: euclidian)
             'euclidian' or 'dijkstra': distance metric
              
@@ -159,7 +161,8 @@ class Surface(object):
         Returns
         -------
         n2d : dict
-            A dict "n2d" so that n2d[j]=d" is the distance "d" from node "src" to node "j"
+            A dict "n2d" so that n2d[j]=d" is the distance "d" from node 
+            "src" to node "j".
         '''
 
         if radius == 0:
@@ -189,12 +192,14 @@ class Surface(object):
             Index of center (source) node
         maxdistance: float (default: None)
             Maximum distance for a node to qualify as a 'surrounding' node.
-            If 'maxdistance is None' then the distances to all nodes is returned
+            If 'maxdistance is None' then the distances to all nodes is 
+            returned/
         
         Returns:
         --------
         n2d : dict
-            A dict "n2d" so that n2d[j]=d" is the distance "d" from node "src" to node "j"
+            A dict "n2d" so that n2d[j]=d" is the distance "d" from node 
+            "src" to node "j".
             
         Note
         ----
@@ -206,13 +211,17 @@ class Surface(object):
         tdist = {src:0} # tentative distances
         fdist = dict()  # final distances
         candidates = []
-        heapq.heappush(candidates, (0, src)) # queue of candidates, sorted by tentative distance
+
+        # queue of candidates, sorted by tentative distance
+        heapq.heappush(candidates, (0, src))
 
         nbrs = self.neighbors
 
-        # algorithm from wikipedia (http://en.wikipedia.org/wiki/Dijkstra's_algorithm)
+        # algorithm from wikipedia 
+        # (http://en.wikipedia.org/wiki/Dijkstra's_algorithm)
         while candidates:
-            d, i = heapq.heappop(candidates) # distance and index of current candidate
+            # distance and index of current candidate
+            d, i = heapq.heappop(candidates)
 
             if i in fdist:
                 continue # we already have a final distance for this node
@@ -234,6 +243,73 @@ class Surface(object):
 
         return fdist
 
+    def dijkstra_shortest_path(self, src, maxdistance=None):
+        '''Computes Dijkstra shortest path from one node to surrounding nodes.
+        
+        Parameters
+        ----------
+        src : int
+            Index of center (source) node
+        maxdistance: float (default: None)
+            Maximum distance for a node to qualify as a 'surrounding' node.
+            If 'maxdistance is None' then the shortest path to all nodes is 
+            returned.
+        
+        Returns:
+        --------
+        n2dp : dict
+            A dict "n2d" so that n2d[j]=(d,p)" contains the distance "d" from 
+            node  "src" to node "j", and p is a list of the nodes of the path
+            with p[0]==src and p[-1]==j.
+            
+        Note
+        ----
+        Preliminary analyses show that the Dijkstra distance gives very similar
+        results to geodesic distances (unpublished results, NNO)
+        '''
+
+
+        tdist = {src:(0, [src])} # tentative distances and path
+        fdist = dict()  # final distances
+        candidates = []
+
+        # queue of candidates, sorted by tentative distance
+        heapq.heappush(candidates, (0, src))
+
+        nbrs = self.neighbors
+
+        # algorithm from wikipedia 
+        #(http://en.wikipedia.org/wiki/Dijkstra's_algorithm)
+        c = 0
+        while candidates:
+            # distance and index of current candidate
+            d, i = heapq.heappop(candidates)
+
+            if i in fdist:
+                continue # we already have a final distance for this node
+
+            nbr = nbrs[i] # neighbours of current candidate
+
+            for nbr_i, nbr_d in nbr.items():
+                dnew = d + nbr_d
+
+                if not maxdistance is None and dnew > maxdistance:
+                    continue # skip if too far away
+
+                if nbr_i not in tdist or dnew < tdist[nbr_i][0]:
+                    # set distance and append to queue
+                    pnew = tdist[i][1] + [nbr_i] # append current node to path
+                    tdist[nbr_i] = (dnew, pnew)
+                    heapq.heappush(candidates, (tdist[nbr_i][0], nbr_i))
+
+            fdist[i] = tdist[i] # set final distance
+            c += 1
+            if c < 0:
+                return
+        return fdist
+
+
+
     def euclidian_distance(self, src, trg=None):
         '''Computes Euclidian distance from one node to other nodes
         
@@ -248,7 +324,8 @@ class Surface(object):
         Returns:
         --------
         n2d : dict
-            A dict "n2d" so that n2d[j]=d" is the distance "d" from node "src" to node "j"
+            A dict "n2d" so that n2d[j]=d" is the distance "d" from node 
+            "src" to node "j".
         '''
 
         if trg is None:
@@ -270,8 +347,8 @@ class Surface(object):
             Index of center (source) node
         radius : float
             Lower bound of (Euclidean) distance to 'src' in order to be part
-            of the smaller surface. In other words, if a node 'j' is within 'radius'
-            from 'src', then 'j' is also part of the resulting surface.
+            of the smaller surface. In other words, if a node 'j' is within 
+            'radius' from 'src', then 'j' is also part of the resulting surface.
         
         Returns
         -------
@@ -286,9 +363,11 @@ class Surface(object):
             
         Note
         ----
-        This function is a port from the Matlab surfing toolbox function 'surfing_subsurface'.
+        This function is a port from the Matlab surfing toolbox function 
+        'surfing_subsurface' (see http://surfing.sourceforge.net)
         
-        With the 'dijkstra_distance' function, this function is more or less obsolete.
+        With the 'dijkstra_distance' function, this function is more or 
+        less obsolete.
         
          
         '''
@@ -296,11 +375,17 @@ class Surface(object):
 
         msk = self.euclidian_distance(src) <= radius
 
-        vidxs = [i for i, m in enumerate(msk) if m] # node indices of those within distance r
+        # node indices of those within distance r
+        vidxs = [i for i, m in enumerate(msk) if m]
 
-        funq = list(set.union(*[n2f[vidx] for vidx in vidxs])) # unique face indices that contain nodes within that distance
-        fsel = self._f[funq, :] # these are the node indices contained in one of the faces
-        nsel, q = np.unique(fsel, return_inverse=True) # selected nodes
+        # unique face indices that contain nodes within that distance
+        funq = list(set.union(*[n2f[vidx] for vidx in vidxs]))
+
+        # these are the node indices contained in one of the faces
+        fsel = self._f[funq, :]
+
+        # selected nodes
+        nsel, q = np.unique(fsel, return_inverse=True)
 
         nsel = np.array(nsel, dtype=int)
         fsel = np.array(fsel, dtype=int)
@@ -417,9 +502,10 @@ class Surface(object):
 
         # rotation matrix *in row-first order*
         # in other words, we compute vertices*R' 
-        m = np.asarray([[cy * cz, -cy * sz, sy],
-                      [cx * sz + sx * sy * cz, cx * cz - sx * sy * sz, -sx * cy],
-                      [sx * sz - cx * sy * cz, sx * cz + cx * sy * sz, cx * cy]])
+        m = np.asarray(
+                [[cy * cz, -cy * sz, sy],
+                 [cx * sz + sx * sy * cz, cx * cz - sx * sy * sz, -sx * cy],
+                 [sx * sz - cx * sy * cz, sx * cz + cx * sy * sz, cx * cy]])
         '''
         m=np.asarray([[cx*cz - sx*cy*sz, cx*sz + sx*cy*cz, sx*sy],
                      [-sx*cz - cx*cy*sz, -sx*sz + cx*cy*cz, cx*sy],
@@ -621,6 +707,48 @@ class Surface(object):
 
         return mapping
 
+    @property
+    def face2area(self):
+        if not hasattr(self, '_face2area'):
+            f = self.faces
+            v = self.vertices
+
+            # consider three sides of each triangles
+            a = v[f[:, 0]]
+            b = v[f[:, 1]]
+            c = v[f[:, 2]]
+
+            # vectors of two sides
+            ab = a - b
+            ac = a - c
+
+            # area (from wikipedia)
+            f2a = .5 * np.sqrt(np.sum(ab * ab, 1) *
+                                           np.sum(ac * ac, 1) -
+                                           np.sum(ab * ac, 1) ** 2)
+
+            vw = f2a.view()
+            vw.flags.writeable = False
+            self._face2area = vw
+
+        return self._face2area
+
+    @property
+    def node2area(self):
+        if not hasattr(self, '_node2area'):
+            f2a = self.face2area
+
+            # area is one third of sum of faces that contain the node
+            n2a = np.zeros((self.nvertices,))
+            for v, fs in self.node2faces.iteritems():
+                n2a[v] = sum(f2a[fs]) / 3.
+
+            vw = n2a.view()
+            vw.flags.writeable = False
+            self._node2area = vw
+
+        return self._node2area
+
 
 def merge(*surfs):
     if not surfs:
@@ -757,7 +885,6 @@ def generate_plane(x00, x01, x10, n01, n10):
                 fs[fpos + 1, :] = [q, r, s]
 
     return Surface(vs, fs)
-    pass
 
 
 def read(fn):
@@ -783,17 +910,4 @@ def write(fn, s, overwrite=False):
         surf_fs_asc.write(fn, s, overwrite=overwrite)
     else:
         raise ValueError("Not implemented (based on extension): %r" % fn)
-
-
-
-
-
-
-
-
-
-
-
-
-
 
