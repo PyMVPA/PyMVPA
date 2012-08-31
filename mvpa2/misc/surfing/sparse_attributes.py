@@ -338,187 +338,24 @@ def voxel2nearest_node(sp_attrs, sort_by_label=[
     n2v = dict((k, v[0]) for k, v in vox2node_and_attrs.iteritems())
 
     return n2v
-"""
-class SparseVolumeNeighborhood():
-    '''Defines a neighborhood based on voxel selection results.
-    This class provides support for use with a Searchlight
-        
-    Parameters
-    ==========
-    attr: SparseAttributes
-        typically voxel selection results, as obtained 
-        from surf_voxel_selection.voxel_selection
-    voxel_ids_label: str 
-        label of voxel ids of neighboors
-    '''
-    def __init__(self, attr, voxel_ids_label='linear_voxel_indices'):
-        mp = attr.get_attr_mapping(voxel_ids_label)
-        self._keys = list(mp.keys()) # ensure we things in order throughout
-        self._n2vs = dict(mp) # node 2 voxel mapping
-        self._volgeom = attr.volgeom
 
-        self._setup()
+def _get_redundancy_statistics(attr, sa_label='linear_voxel_indices'):
+    m = attr.get_attr_mapping(sa_label)
 
-    def _setup(self):
-        # helper function to set up more internal fields
+    vs = map(set, m.values())
+    n = len(vs)
 
-        # compute the mask, once and forever
-        linmask = np.zeros((self._volgeom.nvoxels,), np.int32)
-
-        for k in self._keys:
-            linmask[self._n2vs[k]] = 1
-
-        keys = self._keys
-        nkeys = len(keys)
-        nmask = np.sum(linmask > 0)
-
-        # require there are enough voxels in the dataset
-        # this is required because we use the standard searchlight machinery
-        # as provided by pyMVPA (hack suggested by Michael Hanke)
-        if nkeys > len(linmask):
-            raise ValueError('Unsupported: more centers (%d) than voxels (%d)'
-                             % (nkeys, len(linmask)))
-
-        # if not enough voxels are selected by voxel selection, then add
-        # some other voxels to the mask so that we have enough
-        delta = nmask - nkeys
-        maskpos = 0
-        while delta < 0:
-            if linmask[maskpos] == 0:
-                linmask[maskpos] = 1
-                delta += 1
-            maskpos += 1
-
-        # store the mask
-        self._linmask = linmask
-
-        masknonzero = np.asarray(np.nonzero(linmask)[0][:nkeys])
-        maskijk = self._volgeom.lin2ijk(masknonzero)
-
-        # prepare the mapping from center nodes (represented by
-        # sub-indices of voxels) to indices of nearby voxels 
-        self._ijk2vs = dict()
-        for i in xrange(nkeys):
-            ijk = tuple(maskijk[i, :])
-            self._ijk2vs[ijk] = self._n2vs[keys[i]]
-
-        # mapping for center_ids to position in mask
-        self._center_ids2maskpos = dict((v, i) for i, v in enumerate(self._keys))
-
-    @property
-    def keys(self):
-        '''
-        Returns
-        =======
-        keys: list of int
-            list of center nodes (typically)
-            
-        '''
-        return list(self._keys)
-
-    @property
-    def volgeom(self):
-        '''
-        Returns
-        =======
-        vg: volgeom.VolGeom
-            volume geometry 
-        '''
-        return self._volgeom
-
-    @property
-    def mask(self):
-        '''
-        Returns
-        =======
-        mask : nibabel.Nifti1Image
-            mask with voxels that are used in this class. This mask contains
-            all voxels that have been selected, and possibly more. It is ensured
-            that the number of voxels is not less than the number of
-            keys.
-        '''
-        vg = self._volgeom
-        shape = vg.shape[:3]
-
-        mask = np.reshape(self._linmask, shape)
-
-        return nb.Nifti1Image(mask, vg.affine)
+    r = 0 # number of redundant items
+    for i in xrange(n):
+        # see if item i is redundant (i.e. covered by another item)
+        for j in xrange(i + 1, n):
+            if vs[i] == vs[j]:
+                r += 1
+                break
 
 
-    def __call__(self, coordinate):
-        '''
-        Function that provides interface for searchlight
-        '''
-
-        center_array = np.asanyarray(coordinate)[np.newaxis][0]
-        center_tuple = (center_array[0], center_array[1], center_array[2])
-
-        if not center_tuple in self._ijk2vs:
-            raise ValueError('Not in keys: %r' % (center_tuple,))
-
-        lin = self._ijk2vs[center_tuple]
-        ijk = self._volgeom.lin2ijk(lin)
-        return map(tuple, ijk)
-
-    def searchlight(self, datameasure, center_ids=None,
-                space='voxel_indices', **kwargs):
-        '''Creates a `Searchlight` to run a scalar `Measure` on
-        all neighborhoods within a dataset.
-        
-        The idea for a searchlight algorithm stems from a paper by
-        :ref:`Kriegeskorte et al. (2006) <KGB06>`.
-        
-        This implementation supports surface-based searchlights as well,
-        as described in Oosterhof, Wiestler, Downing & Diedrichsen,
-        2011, Neuroimage.
-        
-        Parameters
-        ----------
-        datameasure : callable
-          Any object that takes a :class:`~mvpa2.datasets.base.Dataset`
-          and returns some measure when called.
-        center_ids : list of int
-          List of feature ids (typically node indices, for a surface-based
-          searchlight) that serve as neighboorhood identifiers (for the 
-          surface-based searchlight, these are the centers of the discs)
-        space : str
-          Name of a feature attribute of the input dataset that defines the spatial
-          coordinates of all features.
-        **kwargs
-          In addition this class supports all keyword arguments of its
-          base-class :class:`~mvpa2.measures.base.Measure`.
-        
-        Returns
-        -------
-        dataset : Dataset
-          results from running the searchlight
-          
-        
-        Notes
-        -----
-        If `Searchlight` is used as `SensitivityAnalyzer` one has to make
-        sure that the specified scalar `Measure` returns large
-        (absolute) values for high sensitivities and small (absolute) values
-        for low sensitivities. Especially when using error functions usually
-        low values imply high performance and therefore high sensitivity.
-        This would in turn result in sensitivity maps that have low
-        (absolute) values indicating high sensitivities and this conflicts
-        with the intended behavior of a `SensitivityAnalyzer`.
-        '''
-        if center_ids is None:
-            center_ids = self.keys
-
-        roi_ids = [self._center_ids2maskpos[center_id]
-                        for center_id in center_ids]
-
-        # build a matching query engine from the arguments
-        neighborhood = self
-        kwa = {space: neighborhood}
-        qe = IndexQueryEngine(**kwa)
-        # init the searchlight with the queryengine
-        return Searchlight(datameasure, queryengine=qe, roi_ids=roi_ids,
-                           **kwargs)
-"""
+    return ('%d items, %d unique (redundancy %.1f%%) for "%s"' %
+                                (n, r, 100. * r / n, sa_label))
 
 
 def to_file(fn, a):
