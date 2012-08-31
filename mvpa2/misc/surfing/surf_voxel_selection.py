@@ -458,10 +458,8 @@ def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
                                 (i + 1, n, src, intermediate), show=False)
                 debug('SVS', msg, cr=True)
 
-                if i == n - 1:
-                    print
-
         if __debug__:
+            debug('SVS', "")
             debug("SVS", "Voxel selection completed: %d / %d nodes have "
                          "voxels associated)" %
                          (len(node2volume_attributes.keys), len(visitorder)))
