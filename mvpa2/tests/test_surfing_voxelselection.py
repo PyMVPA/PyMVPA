@@ -45,7 +45,7 @@ from mvpa2.misc.io.base import SampleAttributes
 from mvpa2.mappers.detrend import poly_detrend
 from mvpa2.mappers.zscore import zscore
 from mvpa2.misc.neighborhood import Sphere, IndexQueryEngine
-
+from mvpa2.clfs.gnb import GNB
 
 #from mvpa2.suite import *
 #from mvpa2.datasets.mri import fmri_dataset
@@ -118,7 +118,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
 
         '''Define cross validation'''
-        cv = CrossValidation(SMLR(), OddEvenPartitioner(),
+        cv = CrossValidation(GNB(), OddEvenPartitioner(),
                                   errorfx=lambda p, t: np.mean(p == t))
 
         '''
@@ -166,9 +166,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         surf_data = surf_dset.samples
         vol_data = vol_dset.samples
 
-        # TODO see why agreement is not perfect - hopefully get precision
-        # to more decimals
-        assert_array_almost_equal(surf_data, vol_data, 1)
+        assert_array_equal(surf_data, vol_data)
 
 def suite():
     """Create the suite"""
