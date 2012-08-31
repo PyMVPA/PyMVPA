@@ -1,4 +1,15 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+# emacs: -*- coding: utf-8; mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Helper to convert ReST Sphinx documents into IPython notebooks"""
+
+__docformat__ = 'restructuredtext'
 
 import sys
 import os
@@ -240,7 +251,7 @@ class ReST2IPyNB(object):
             elif tag == 'term':
                 self._parse(child.children[0])
             elif tag == 'figure':
-                # this can't be expressed in markown
+                # this can't be expressed in markdown
                 self._flush_buffer()
                 file_url = '%s/%s.html' % (self._baseurl,
                                            os.path.splitext(os.path.basename(self._filename))[0])
@@ -282,7 +293,7 @@ class ReST2IPyNB(object):
                     line = ' on line %i' % child.line
                 else:
                     line = ''
-                raise RuntimeError("Unkown tag '%s'%s" % (tag, line))
+                raise RuntimeError("Unknown tag '%s'%s" % (tag, line))
 
     def _store_currcell(self):
         if not self._currcell is None:
@@ -337,25 +348,9 @@ class ReST2IPyNB(object):
 def main():
     parser = OptionParser( \
         usage="%prog [options] <filename|directory> [...]", \
-        version="%prog 0.1", description="""\
-%prog converts Python scripts into restructered text (ReST) format suitable for
-integration into the Sphinx documentation framework. Its key feature is that it
-extracts stand-alone (unassigned) single, or multiline triple-quote docstrings
-and moves them out of the code listing so that they are rendered as regular
-ReST, while at the same time maintaining their position relative to the
-listing.
-
-The detection of such docstrings is exclusively done by parsing the raw code so
-it is never actually imported into a running Python session. Docstrings have to
-be written using triple quotes (both forms " and ' are possible).
-
-It is recommend that such docstrings are preceded and followed by an empty line.
-Intended docstring can make use of the full linewidth from the second docstring
-line on. If the indentation of multiline docstring is maintained for all lines,
-the respective indentation is removed in the ReST output.
-
-The parser algorithm automatically excludes file headers and starts with the
-first (module-level) docstring instead.
+        version="%prog 0.1", description="""
+%prog converts Sphinx documentation pages in restructered text (ReST) format
+into IPython notebooks.
 """ )
 
     # define options
@@ -419,7 +414,7 @@ Base URL for links to the online glossary. Default=''
                       apiref_baseurl=opts.apiref_baseurl,
                       glossary_baseurl=opts.glossary_baseurl)
 
-    # finally process all examples
+    # finally process provided files
     for t in toparse:
         notebook = conv(t)
         json_notebook = json.dumps(notebook, sort_keys=True, indent=2)
