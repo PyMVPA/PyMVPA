@@ -416,6 +416,9 @@ def from_nifti_file(fn, mask_volume_index=None):
     ----------
     fn : str
         Nifti filename
+    mask_volume_index: int or None (default)
+        which volume in fn to use as a voxel mask. None means no mask. 
+    
     
     Returns
     -------
@@ -436,6 +439,9 @@ def from_image(img, mask_volume_index=None):
     -------
     vg: VolGeom
         Volume geometry assocaited with img
+    mask_volume_index: int or None (default)
+        which volume in img to use as a voxel mask. None means no mask. 
+    
     '''
 
     if not isinstance(img, nb.spatialimages.SpatialImage):
