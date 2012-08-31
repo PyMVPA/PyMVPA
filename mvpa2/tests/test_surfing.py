@@ -336,10 +336,7 @@ class SurfTests(unittest.TestCase):
                 for v, pos in v2pos.iteritems():
                     # should be close to grey matter
 
-                    # NNO 
-                    # TODO enable this one for voxel position
-                    # have to figrue out why sometimes we get big values
-                    #assert_true(-1. <= pos and pos <= 2.)
+                    assert_true(-1. <= pos and pos <= 2.)
                     counter += 1
 
             selection_counter.append(counter)
@@ -349,13 +346,10 @@ class SurfTests(unittest.TestCase):
 
         # hard coded number of expected voxels
         selection_expected = [1602, 1602, 4618, 5298, 7867, 10801]
+        assert_equal(selection_counter, selection_expected)
 
-        # NNO
-        # TODO enable this one (see above)
-        #assert_equal(selection_counter, selection_expected)
-
-        #voxel_expected = [1498, 1498, 4322, 4986, 7391, 10141]
-        #assert_equal(voxel_counter, voxel_expected)
+        voxel_expected = [1498, 1498, 4322, 4986, 7391, 10141]
+        assert_equal(voxel_counter, voxel_expected)
 
 
     def test_sparse_attributes(self):
@@ -410,9 +404,6 @@ class SurfTests(unittest.TestCase):
 
         outer = surf.generate_sphere(density) * 25. + 15
         inner = surf.generate_sphere(density) * 20. + 15
-
-        #outer = surf.merge(outer, outer)
-        #inner = surf.merge(inner, inner)
 
         vs = volsurf.VolSurf(vg, outer, inner)
 
@@ -594,10 +585,8 @@ class SurfTests(unittest.TestCase):
 
                 # check whether number of voxels were selected is as expected
         expected_voxcount = [58, 210, 418, 474, 474, 474, 978, 1603, 1603]
-        # NNO:
-        # TODO fix changes since introducing mask support 
-        # for some reason this changed the voxel counts 
-        #assert_equal(voxcount, expected_voxcount)
+
+        assert_equal(voxcount, expected_voxcount)
 
 
 class _Voxel_Count_Measure(Measure):
