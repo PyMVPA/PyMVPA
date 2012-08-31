@@ -445,16 +445,28 @@ def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
             if attrs:
                 if  node2volume_attributes is None:
                     sa_labels = attrs.keys()
-                    node2volume_attributes = sparse_attributes.SparseVolumeAttributes(sa_labels, vol_surf._volgeom)
+                    node2volume_attributes = \
+                            sparse_attributes.SparseVolumeAttributes(sa_labels,
+                                                            vol_surf._volgeom)
 
                 # store attribtues results
                 node2volume_attributes.add(src, attrs)
 
             if __debug__ and etastep and (i % etastep == 0 or i == n - 1):
-                    msg = utils.eta(tstart, float(i + 1) / n,
-                                    progresspat %
-                                    (i + 1, n, src, intermediate), show=False)
-                    debug('SVS', msg, cr=True)
+                msg = utils.eta(tstart, float(i + 1) / n,
+                                progresspat %
+                                (i + 1, n, src, intermediate), show=False)
+                debug('SVS', msg, cr=True)
+
+                if i == n - 1:
+                    print
+
+        if __debug__:
+            debug("SVS", "Voxel selection completed: %d / %d nodes have "
+                         "voxels associated)" %
+                         (len(node2volume_attributes.keys), len(visitorder)))
+
+
 
         return node2volume_attributes
 
