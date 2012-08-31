@@ -92,6 +92,7 @@ class VolGeom():
     def _outside_vol(self, ijk, lin):
         invol = self._contains_ijk_unmasked(ijk)
         invol[np.logical_or(lin < 0, lin >= self.nvoxels)] = np.False_
+        invol[np.isnan(lin)] = np.False_
 
         if not self.mask is None:
             #invol = np.logical_and(invol, self.mask[lin])
@@ -110,7 +111,7 @@ class VolGeom():
         lin = np.dot(ijk, m)
         return lin
 
-    def _lin2ijk(self, lin):
+    def _lin2ijk_unmasked(self, lin):
         '''Converts sub to linear voxel indices
         
         Parameters
@@ -168,7 +169,7 @@ class VolGeom():
             Px3 array with sub voxel indices
         '''
 
-        ijk = self._lin2ijk(lin)
+        ijk = self._lin2ijk_unmasked(lin)
         ijk[self._outside_vol(ijk, lin), :] = self.shape[:3]
 
         return ijk
@@ -349,21 +350,10 @@ class VolGeom():
         numpy.ndarray (boolean)
             P boolean values indicating which voxels are within the volume
         '''
+        lin = self._ijk2lin_unmasked(ijk)
 
-        #lin = self.ijk2lin(ijk)
+        return np.logical_not(self._outside_vol(ijk, lin))
 
-        #return self.contains_lin(lin)
-
-        shape = self.shape
-
-        m = reduce(np.logical_and, [0 <= ijk[:, 0], ijk[:, 0] < shape[0],
-                                   0 <= ijk[:, 1], ijk[:, 1] < shape[1],
-                                   0 <= ijk[:, 2], ijk[:, 2] < shape[2]])
-
-        if not self.mask is None:
-            m = np.logical_and(m, self.mask)
-
-        return m
 
 
     def contains_lin(self, lin):
@@ -379,8 +369,9 @@ class VolGeom():
             P boolean values indicating which voxels are within the volume
         '''
 
-        ijk = self.lin2ijk(lin)
-        return self.contains_ijk(ijk)
+        ijk = self._lin2ijk_unmasked(lin)
+
+        return np.logical_not(self._outside_vol(ijk, lin))
         #nv = self.nvoxels
         #c = np.logical_and(0 <= lin, lin < nv)
         #if not self.mask is None:
