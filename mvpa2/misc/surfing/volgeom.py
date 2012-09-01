@@ -372,11 +372,6 @@ class VolGeom():
         ijk = self._lin2ijk_unmasked(lin)
 
         return np.logical_not(self._outside_vol(ijk, lin))
-        #nv = self.nvoxels
-        #c = np.logical_and(0 <= lin, lin < nv)
-        #if not self.mask is None:
-        #    c[c] = self.mask[lin[c]]
-        #return c
 
     def empty_nifti_img(self, nt=1):
         sh = self.shape
