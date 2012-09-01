@@ -713,7 +713,7 @@ class Surface(object):
             f = self.faces
             v = self.vertices
 
-            # consider three sides of each triangles
+            # consider three sides of each triangle
             a = v[f[:, 0]]
             b = v[f[:, 1]]
             c = v[f[:, 2]]
@@ -723,9 +723,8 @@ class Surface(object):
             ac = a - c
 
             # area (from wikipedia)
-            f2a = .5 * np.sqrt(np.sum(ab * ab, 1) *
-                                           np.sum(ac * ac, 1) -
-                                           np.sum(ab * ac, 1) ** 2)
+            f2a = .5 * np.sqrt(np.sum(ab * ab, 1) * np.sum(ac * ac, 1) -
+                               np.sum(ab * ac, 1) ** 2)
 
             vw = f2a.view()
             vw.flags.writeable = False
@@ -757,39 +756,60 @@ def merge(*surfs):
     return s0.merge(*surfs[1:])
 
 def generate_cube():
-    vs = [(-1, 1, 0), (1, 1, 0), (-1, -1, 0), (1, -1, 0)]
-    fs = np.array([(0, 1, 2), (1, 2, 3)])
+    '''
+    Generates a cube with sides 2 centered at the origin.
+    
+    Returns:
+    cube: surf.Surface
+        A cube with 8 vertices at coordinates (+/-1,+/-1,+/-1),
+        and with 12 faces (two for each side).
+    '''
 
-    planes = []
+    # map (0,1) to (-1.,1.)
+    f = lambda x:float(x) * 2 - 1
 
-    # a cube has six planes
-    for i in xrange(6):
-        d = i / 2             # dimension
-        s = (i % 2) * 2 - 1   # side (-1 or +1)
+    # compute coordinates
+    cs = [[f(i / (2 ** j) % 2) for j in xrange(3)] for i in xrange(8)]
+    vs = np.asarray(cs)
 
-        # adjust third cooordinate
-        vs_move = map(lambda x:(x[0], x[1], x[2] + s), vs)
+    # compute faces (triangles). Offsets are relative values for node indices
+    deltas = [[1, 2, 3], [0, 2, 2], [0, 0, 0]]
+    trias = []
 
-        # rotate coordinates
-        vs_rot = map(lambda x:(x[d], x[(d + 1) % 3], x[(d + 2) % 3]),
-                                        vs_move)
+    for i in xrange(2): # side (-1 or 1)
+        for j, delta in enumerate(deltas): # direction (up/left/forward)
+            rect = [i * 2 ** j] # first point
+            rect.extend([rect[0] + k + 1 + d for k, d in enumerate(delta)])
 
-        s = Surface(np.array(vs_move), fs)
-        planes.append(s)
+             # two triangles make a square
+            trias.extend([rect[k:(k + 3)] for k in xrange(2)])
 
-    cube = merge(*planes)
-    return cube
+    fs = np.asarray(trias, dtype=np.int)
+
+    return Surface(vs, fs)
 
 
 def generate_sphere(density=10):
-    '''generates a sphere with density**2+2 nodes and density**2*2 faces
-    seen as planet earth, node 0 and 1 are the south and north pole.
-    density circles of latitude are constructed, each with density points
-    of them.
+    '''
+    Generates a sphere-like surface with unit radius centered at the origin.
+    
+    Parameters
+    ----------
+    d: int (default: 10)
+        Level of detail
+    
+    Returns
+    -------
+    sphere: surf.Surface
+        A sphere with d**2+2 vertices and 2*d**2 faces. Seen as the planet
+        Earth, node 0 and 1 correspond to the north and south poles. 
+        The remaining d**2 vertices are in d circles of latitute, each with
+        d vertices in them. 
     '''
 
-    hsteps = density
-    vsteps = density
+    hsteps = density # 'horizontal' steps (in each circle of latitude)
+    vsteps = density # 'vertical' steps (number of circles of latitude, 
+                     #                   excluding north and south poles)
 
     vs = [(0., 0., 1.), (0., 0., -1)] # top and bottom nodes
     fs = []
@@ -836,27 +856,27 @@ def generate_sphere(density=10):
 
 def generate_plane(x00, x01, x10, n01, n10):
     '''
-    Generates a plane
+    Generates a plane.
     
     Parameters
-        ----------
-        x00: np.array with 3 values
-            origin
-        x01: np.array with 3 values
-            vector indicating first direction of plane
-        x10: np.array with 3 values
-            vector indicating second direction of plane
-        n01: int
-            number of points in first direction
-        n10: int
-            number of points in second direction
-        
-        Returns
-        -------
-        surf.Surface
-            surface with n01*n10 nodes and (n01-1)*(n10-1)*2 faces. 
-            The (i,j)-th point is at coordinate x01+i*x01+j*x10 and
-            is stored as the i*(n10+1)*j-th vertex.
+    ----------
+    x00: np.array with 3 values
+        origin
+    x01: np.array with 3 values
+        vector indicating first direction of plane
+    x10: np.array with 3 values
+        vector indicating second direction of plane
+    n01: int
+        number of points in first direction
+    n10: int
+        number of points in second direction
+    
+    Returns
+    -------
+    surf.Surface
+        surface with n01*n10 nodes and (n01-1)*(n10-1)*2 faces. 
+        The (i,j)-th point is at coordinate x01+i*x01+j*x10 and
+        is stored as the (i*n10+j)-th vertex.
     '''
     def as_three_vec(v):
         a = np.reshape(np.asarray(v, dtype=np.float), (-1,))
@@ -911,3 +931,8 @@ def write(fn, s, overwrite=False):
     else:
         raise ValueError("Not implemented (based on extension): %r" % fn)
 
+
+if __name__ == '__main__':
+
+    s = generate_cube() * 100
+    write('/Users/nick/_tmp/cube.asc', s, True)
