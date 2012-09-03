@@ -531,9 +531,13 @@ def run_makespec_bothhemis(config, env):
             specpathfn = os.path.join(refdir, specfn)
             specs.append(afni_suma_spec.read(specpathfn))
 
-        specs = afni_suma_spec.hemi_pairs_add_views(specs[0], specs[1],
+        specs = afni_suma_spec.hemi_pairs_add_views(specs,
                             'inflated', refdir, overwrite=overwrite)
-        spec_both = afni_suma_spec.combine_left_right(specs[0], specs[1])
+        specs = afni_suma_spec.hemi_pairs_add_views(specs,
+                            'sphere.reg', refdir, overwrite=overwrite)
+
+
+        spec_both = afni_suma_spec.combine_left_right(specs)
 
         # generate spec files for both hemispheres
         hemiboth = 'b'
