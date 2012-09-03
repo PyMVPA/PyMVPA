@@ -81,9 +81,11 @@ class SurfaceSpec(object):
         with open(fnout, 'w') as f:
             f.write(self.as_string())
 
-def hemi_pairs_add_views(spec_left, spec_right, state, indir=None, overwrite=False):
+def hemi_pairs_add_views(spec_both, state, indir=None, overwrite=False):
     '''adds views for medial, superior, inferior, anterior, posterior viewing
     of two surfaces together. Also generates these surfaces'''
+
+    spec_left, spec_right = spec_both[0], spec_both[1]
 
     ext = '.asc'
 
@@ -95,8 +97,13 @@ def hemi_pairs_add_views(spec_left, spec_right, state, indir=None, overwrite=Fal
 
     #views = collections.OrderedDict(m='medial', s='superior', i='inferior', a='anterior', p='posterior')
     # for compatibility use a normal dict
-    views = dict(m='medial', s='superior', i='inferior', a='anterior', p='posterior')
-    viewkeys = ['m', 's', 'i', 'a', 'p']
+
+    if state == 'inflated':
+        views = dict(m='medial', s='superior', i='inferior', a='anterior', p='posterior')
+        viewkeys = ['m', 's', 'i', 'a', 'p']
+    elif state == 'sphere.reg':
+        views = dict(m='medial')
+        viewkeys = 'm'
 
     spec_both = [spec_left, spec_right]
     spec_both_new = map(copy.deepcopy, spec_both)
@@ -155,7 +162,9 @@ def hemi_pairs_add_views(spec_left, spec_right, state, indir=None, overwrite=Fal
     return tuple(spec_both_new)
 
 
-def combine_left_right(left, right):
+def combine_left_right(leftright):
+    left, right = leftright[0], leftright[1]
+
     if set(left.states) != set(right.states):
         raise ValueError('Incompatible states')
 

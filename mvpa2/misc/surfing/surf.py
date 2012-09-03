@@ -934,5 +934,12 @@ def write(fn, s, overwrite=False):
 
 if __name__ == '__main__':
 
-    s = generate_cube() * 100
-    write('/Users/nick/_tmp/cube.asc', s, True)
+    d = '/Users/nick/organized/212_raiders_fmri/ref/ab/'
+    fns = ['%s/ico%d_mh.sphere.reg_alCoMmedial.asc' % (d, i) for i in [8, 128]]
+
+    surfs = map(read, fns)
+
+
+
+    mp = surfs[0].map_to_high_resolution_surf(surfs[1])
+    print mp

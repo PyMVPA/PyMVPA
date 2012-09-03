@@ -184,7 +184,7 @@ def hemi_pairs_reposition(surf_left, surf_right, facing_side,
 
     return tuple(surfs)
 
-def sphere_reg_leftrightmapping(surf_sphere_reg_left, surf_sphere_reg_right):
+def sphere_reg_leftrightmapping(surf_sphere_reg_left, surf_sphere_reg_right, eps=.001):
     '''finds the mapping from left to right hemispehre and vice versa
     (the mapping is symmetric)
     
@@ -192,7 +192,13 @@ def sphere_reg_leftrightmapping(surf_sphere_reg_left, surf_sphere_reg_right):
 
     vL, vR = surf_sphere_reg_left.vertices, surf_sphere_reg_right.vertices
 
-    def _check_is_sphere(v, eps=.0001):
+    def _center(vs):
+        return vs - np.mean(vs, 0)
+
+    vL, vR = _center(vL), _center(vR)
+
+
+    def _check_is_sphere(v, eps=eps):
         com = np.mean(vL, axis=0)
 
         if max(abs(com)) > eps:
@@ -200,7 +206,7 @@ def sphere_reg_leftrightmapping(surf_sphere_reg_left, surf_sphere_reg_right):
 
         dst = np.sum(v ** 2, axis=1) ** .5
 
-        if min(dst) < 99 or max(dst) > 101:
+        if min(dst) < 90 or max(dst) > 110:
             raise ValueError('Not a sphere with approximately radius of 100. '
                              'Check this surface is from AFNI MapIcosahedron')
 
@@ -221,7 +227,7 @@ def sphere_reg_leftrightmapping(surf_sphere_reg_left, surf_sphere_reg_right):
         minidx = np.argmin(d2)
         left2right[i] = minidx
 
-        if d2[minidx] > .001:
+        if d2[minidx] > eps ** 2:
             raise ValueError('no mapping found for node %r: min distance %r' % (i, d2[minidx] ** .5))
 
     # just one final check     
