@@ -651,7 +651,7 @@ class SearchlightTests(unittest.TestCase):
             # disappear -- i.e. its result from previous "block" was
             # processed
             t0 = time.time()
-            while os.path.exists(f) and time.time() - t0 < 2.:
+            while os.path.exists(f) and time.time() - t0 < 4.:
                 time.sleep(0.5) # so it does take time to compute the measure
             if os.path.exists(f):
                 print_("ERROR: ", f)
