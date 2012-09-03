@@ -41,7 +41,7 @@ for b in origin/maint/0.4; do
 done
 # development branches
 for b in origin/master yarikoptic/master hanke/master; do
-    TESTS_BRANCHES["$b"]="$TESTS_COMMON testdatadb testourcfg testdocstrings testmvpa-prep-fmri"
+    TESTS_BRANCHES["$b"]="$TESTS_COMMON testdatadb testourcfg testdocstrings test-prep-fmri"
 done
 
 # Python3 testing -- origin and tiziano
