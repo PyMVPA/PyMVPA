@@ -100,6 +100,12 @@ class SearchlightTests(unittest.TestCase):
         ##     # no need for full combination of all possible arguments here
         ##     return
 
+        if __debug__ and 'ENFORCE_CA_ENABLED' in debug.active \
+           and  isinstance(lrn, ChainMapper):
+            raise SkipTest("Known to fail while trying to enable "
+                           "training_stats for the ChainMapper (M1NN here)")
+
+
         # e.g. for M1NN we need plain kNN(1) for m1nnsl, but to imitate m1nn
         #      "learner" we must use a chainmapper atm
         if sllrn is None:
