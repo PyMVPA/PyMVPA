@@ -39,7 +39,7 @@ if __debug__:
         debug.register("SVS", "Surface-based voxel selection "
                        " (a.k.a. 'surfing')")
 
-class VoxelSelector():
+class VoxelSelector(object):
     '''
     Voxel selection using the surfaces
 
@@ -53,18 +53,18 @@ class VoxelSelector():
         In the latter case, the distance unit is usually in milimeters
         (which is the unit used for Freesurfer surfaces).
     surf: surf.Surface
-        A surface to be used for distance measurement. Usually this is the 
-        intermediate distance constructed by taking the node-wise average of 
+        A surface to be used for distance measurement. Usually this is the
+        intermediate distance constructed by taking the node-wise average of
         the pial and white surface.
     n2v: dict
-        Mapping from center nodes to surrounding voxels (and their distances). 
+        Mapping from center nodes to surrounding voxels (and their distances).
         Usually this is the output from volsurf.node2voxels.
-    distancemetric: str
+    distance_metric: str
         Distance measure used to define distances between nodes on the surface.
         Currently supports 'dijkstra' and 'euclidean'
     '''
 
-    def __init__(self, radius, surf, n2v, distancemetric='dijkstra'):
+    def __init__(self, radius, surf, n2v, distance_metric='dijkstra'):
         tp = type(radius)
         if tp is int: # fixed number of voxels
             self._fixedradius = False
@@ -79,7 +79,7 @@ class VoxelSelector():
         self._targetradius = radius # radius to achieve (float or int)
         self._initradius_mm = initradius_mm # initial radius in mm
         self._optimizer = _RadiusOptimizer(initradius_mm)
-        self._distancemetric = distancemetric # }
+        self._distance_metric = distance_metric # }
         self._surf = surf                     # } save input
         self._n2v = n2v                       # }
 
@@ -203,7 +203,7 @@ class VoxelSelector():
 
             while True:
                 around_n2d = surf.circlearound_n2d(src, radius_mm,
-                                                   self._distancemetric)
+                                                   self._distance_metric)
 
                 allvxdist = self.nodes2voxel_attributes(around_n2d, n2v)
 
@@ -317,7 +317,7 @@ class VoxelSelector():
 
 def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
                     start=0., stop=1., steps=10,
-                    distancemetric='dijkstra', intermediateat=.5, etastep=1):
+                    distance_metric='dijkstra', intermediateat=.5, etastep=1):
         """
         Voxel selection for multiple center nodes on the surface
 
@@ -339,7 +339,7 @@ def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
                 CheckMe: it might be the other way around
         stop: float (default: 1)
             Relative stop position of line (as in see start)
-        distancemetric: str
+        distance_metric: str
             Distance metric between nodes. 'euclidean' or 'dijksta'
         intermediateat: float (default: .5)
             Relative positiion of intermediate surface that is used to measure distances.
@@ -404,7 +404,7 @@ def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
 
         # build voxel selector
         voxel_selector = VoxelSelector(radius, surf_intermediate, n2v,
-                                       distancemetric)
+                                       distance_metric)
 
         if __debug__:
             debug('SVS', "Instantiated voxel selector (radius %r)" % radius)
@@ -469,7 +469,7 @@ def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
         return node2volume_attributes
 
 def run_voxel_selection(epifn, whitefn, pialfn, radius, srcfn=None, srcs=None,
-                       start=0., stop=1., steps=10, distancemetric='dijkstra',
+                       start=0., stop=1., steps=10, distance_metric='dijkstra',
                        intermediateat=.5, etastep=1):
     '''Wrapper function that is supposed to make voxel selection
     on the surface easy.
@@ -502,7 +502,7 @@ def run_voxel_selection(epifn, whitefn, pialfn, radius, srcfn=None, srcs=None,
         Only select voxels that are 'truly' in between the white and pial matter.
         Specifically, each voxel's position is projected on the line connecting pial-
         white matter pairs, and only voxels in between 'start' and 'stop' are selected
-    distancemetric: str
+    distance_metric: str
         Distance metric between nodes. 'euclidean' or 'dijksta'
     intermediateat: float (default: .5)
         Relative positiion of intermediate surface that is used to measure distances.
@@ -535,7 +535,7 @@ def run_voxel_selection(epifn, whitefn, pialfn, radius, srcfn=None, srcs=None,
 
     # run voxel selection
     sel = voxel_selection(vs, radius, srcsurf, srcs, start, stop, steps,
-                          distancemetric, intermediateat, etastep)
+                          distance_metric, intermediateat, etastep)
 
     return sel
 
