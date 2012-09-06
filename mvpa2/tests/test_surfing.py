@@ -410,11 +410,11 @@ class SurfTests(unittest.TestCase):
         nv = outer.nvertices
 
         # select under variety of parameters
-        # parameters are distance metric (dijkstra or euclidian), 
+        # parameters are distance metric (dijkstra or euclidean), 
         # radius, and number of searchlight  centers
         params = [('d', 1., 10), ('d', 1., 50), ('d', 1., 100), ('d', 2., 100),
                   ('e', 2., 100), ('d', 2., 100), ('d', 20, 100),
-                  ('euclidian', 5, None), ('dijkstra', 10, None)]
+                  ('euclidean', 5, None), ('dijkstra', 10, None)]
 
 
         expected_labs = ['linear_voxel_indices',
