@@ -105,7 +105,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         '''
         Run voxel selection with specified radius (in mm)
         '''
-        surf_voxsel = surf_voxel_selection.voxel_selection(vs, radius, distancemetric='e')
+        surf_voxsel = surf_voxel_selection.voxel_selection(vs, radius, distance_metric='e')
 
         '''
         Load an apply a volume - metric mask, and get a new instance

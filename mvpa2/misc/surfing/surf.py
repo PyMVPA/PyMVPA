@@ -99,7 +99,7 @@ class Surface(object):
 
     @property
     def neighbors(self):
-        '''Finds the neighbours for each node and their (Euclidian) distance.
+        '''Finds the neighbours for each node and their (Euclidean) distance.
         
         Returns
         -------
@@ -144,7 +144,7 @@ class Surface(object):
 
         return self._nbrs
 
-    def circlearound_n2d(self, src, radius, metric='euclidian'):
+    def circlearound_n2d(self, src, radius, metric='euclidean'):
         '''Finds the distances from a center node to surrounding nodes.
         
         Parameters
@@ -154,8 +154,8 @@ class Surface(object):
         radius : float
             Maximum distance for other nodes to qualify as a 'surrounding' 
             node.
-        metric : string (default: euclidian)
-            'euclidian' or 'dijkstra': distance metric
+        metric : string (default: euclidean)
+            'euclidean' or 'dijkstra': distance metric
              
         
         Returns
@@ -171,7 +171,7 @@ class Surface(object):
         shortmetric = metric.lower()[0] # only take first letter - for now
 
         if shortmetric == 'e':
-            ds = self.euclidian_distance(src)
+            ds = self.euclidean_distance(src)
             c = dict((nd, d) for (nd, d) in zip(xrange(self._nv), ds) if d <= radius)
 
         elif shortmetric == 'd':
@@ -310,8 +310,8 @@ class Surface(object):
 
 
 
-    def euclidian_distance(self, src, trg=None):
-        '''Computes Euclidian distance from one node to other nodes
+    def euclidean_distance(self, src, trg=None):
+        '''Computes Euclidean distance from one node to other nodes
         
         Parameters
         ----------
@@ -373,7 +373,7 @@ class Surface(object):
         '''
         n2f = self.node2faces
 
-        msk = self.euclidian_distance(src) <= radius
+        msk = self.euclidean_distance(src) <= radius
 
         # node indices of those within distance r
         vidxs = [i for i, m in enumerate(msk) if m]
@@ -708,8 +708,8 @@ class Surface(object):
         return mapping
 
     @property
-    def face2area(self):
-        if not hasattr(self, '_face2area'):
+    def face_areas(self):
+        if not hasattr(self, '_face_areas'):
             f = self.faces
             v = self.vertices
 
@@ -728,14 +728,14 @@ class Surface(object):
 
             vw = f2a.view()
             vw.flags.writeable = False
-            self._face2area = vw
+            self._face_areas = vw
 
-        return self._face2area
+        return self._face_areas
 
     @property
-    def node2area(self):
-        if not hasattr(self, '_node2area'):
-            f2a = self.face2area
+    def node_areas(self):
+        if not hasattr(self, '_node_areas'):
+            f2a = self.face_areas
 
             # area is one third of sum of faces that contain the node
             n2a = np.zeros((self.nvertices,))
@@ -744,9 +744,9 @@ class Surface(object):
 
             vw = n2a.view()
             vw.flags.writeable = False
-            self._node2area = vw
+            self._node_areas = vw
 
-        return self._node2area
+        return self._node_areas
 
 
 def merge(*surfs):

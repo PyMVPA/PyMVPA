@@ -1,3 +1,11 @@
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''
 Created on Jan 29, 2012
 
@@ -612,7 +620,7 @@ def suma_makerunsuma(fnout, specfn, surfvol):
         print 'Generated run suma file in %s' % fnout
 
 
-def suma_makespec(indir, surfprefix, fnout=None):
+def suma_makespec(directory, surfprefix, fnout=None):
     '''Generates a SUMA specification file that contains information about
     the different surfaces'''
     postfix = '.asc'
@@ -620,7 +628,7 @@ def suma_makespec(indir, surfprefix, fnout=None):
 
     removepostfix = config['alsuffix']
 
-    fns = os.listdir(indir)
+    fns = os.listdir(directory)
     surfname2filename = dict()
     for fn in fns:
         if fnmatch.fnmatch(fn, pat):
