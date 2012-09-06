@@ -539,6 +539,20 @@ def run_makespec_bothhemis(config, env):
 
         spec_both = afni_suma_spec.combine_left_right(specs)
 
+        # save the mapping from left to right
+        spheres_lr = []
+        for spec in specs:
+            sphere_fn = spec.surface_file('sphere.reg')
+            spheres_lr.append(surf.read(sphere_fn))
+
+        # TODO: see if we want to use the original SUMA version, which allows for using eps=0.001
+        map_left2right = surf_fs_asc.sphere_reg_leftrightmapping(spheres_lr[0], spheres_lr[1], 100.)
+
+        fn = os.path.join(refdir, 'between_hemispheres_bijection_ico%d.1D' % icold)
+        if overwrite or not os.path.exists(fn):
+            with open(fn, 'w') as f:
+                f.write('\n'.join(map(str, map_left2right)))
+
         # generate spec files for both hemispheres
         hemiboth = 'b'
         specfn = afni_suma_spec.canonical_filename(icold, hemiboth, config['alsuffix'])
