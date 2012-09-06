@@ -5,15 +5,15 @@
 Includes I/O support and generating spec files that combine both hemispheres'''
 
 
-import re, datetime, os, copy
+import re, datetime, os, copy, glob
 import utils, surf_fs_asc
 
 _COMPREFIX = 'CoM' #  for surfaces that were rotated around center of mass
 
 class SurfaceSpec(object):
-    def __init__(self, surfaces, states=None, groups=None, indir=None):
+    def __init__(self, surfaces, states=None, groups=None, directory=None):
         self.surfaces = surfaces
-        self.indir = indir
+        self.indir = directory
 
         if states is None:
             states = list(set(surface['SurfaceState'] for surface in surfaces))
@@ -43,7 +43,13 @@ class SurfaceSpec(object):
 
 
     def __repr__(self):
-        return '%d surfaces' % len(self.surfaces)
+        return 'SurfaceSpec(%r)' % self.surfaces
+
+    def __str__(self):
+        return ('SurfaceSpec instance with %d surfaces, %d states (%s), ' %
+                        (len(self.surfaces), len(self.states),
+                         ", ".join(self.states)))
+
 
     def as_string(self):
         lines = []
@@ -73,13 +79,91 @@ class SurfaceSpec(object):
                  if surface['SurfaceState'] == surfacestate]
 
     def same_states(self, other):
+        '''
+        Returns whether another surface has the same surface states
+        
+        Parameters
+        ----------
+        other: SurfaceSpec
+        
+        Returns
+        -------
+            True iff other has the same states
+        '''
+
         return set(self.states) == set(other.states)
 
     def write(self, fnout, overwrite=False):
+        '''
+        Writes spec to a file
+        
+        Parameters
+        ----------
+        fn: str
+            filename where the spec is written to
+        overwrite: boolean (default: False)
+            overwrite the file even if it exists already.
+        '''
+
         if not overwrite and os.path.exists(fnout):
             print '%s already exists - not overwriting' % fnout
         with open(fnout, 'w') as f:
             f.write(self.as_string())
+
+    @property
+    def directory(self):
+        '''
+        Returns
+        -------
+            The directory of the spec file (or None, if this spec
+            was generated from scratch)
+        '''
+        return self.indir
+
+    def surface_file(self, *args):
+        '''
+        Wizard-like function to get the filename of a surface
+         
+        Parameters
+        ----------
+        *args: list of str 
+            parts of the surface file name or description, such as 
+            'pial' (for pial surface), 'wm' (for white matter), or 
+            'lh' (for left hemisphere').
+        
+        Returns
+        -------
+        filename: str
+            filename of the surface specified, or None if no unique
+            match was found.
+        '''
+
+        _FIELD_MATCH_ORDER = ['SurfaceState', 'SurfaceName']
+
+        # start with all surfaces
+        # then take fist field and see for which args match
+        # if just one left, return it
+        # if not succesful, try second field. etc etc
+
+        surfs = list(self.surfaces) # list of all candidates
+
+        for field in _FIELD_MATCH_ORDER:
+            for arg in args:
+                if not arg is str:
+                    arg = '%s' % arg
+                funcs = [lambda x: x.startswith(arg), lambda x: arg in x]
+                for func in funcs:
+                    surfs_filter = filter(lambda x:func(x[field]), surfs)
+                    if not surfs_filter:
+                        continue
+                    elif len(surfs_filter) == 1:
+                        return os.path.join(self.directory,
+                                            surfs_filter[0]['SurfaceName'])
+                    # reduce list of candidates
+                    surfs = surfs_filter
+
+        return None # (redundant code, just for clarity)
+
 
 def hemi_pairs_add_views(spec_both, state, indir=None, overwrite=False):
     '''adds views for medial, superior, inferior, anterior, posterior viewing
@@ -246,14 +330,10 @@ def merge_left_right(both):
                 m_surfaces.append(mrg[0])
                 merge_filenames[newsurf[_NAME]] = tuple(fns)
 
-    m = SurfaceSpec(m_surfaces, states=m_states, groups=m_groups)
+    m = SurfaceSpec(m_surfaces, states=m_states, groups=m_groups,
+                    directory=both.directory)
 
     return m, merge_filenames
-
-
-
-
-
 
 
 
@@ -289,9 +369,12 @@ def read(fn):
                 current_surface = dict()
                 surfaces.append(current_surface)
 
+    d = os.path.abspath(os.path.split(fn)[0])
+
     return SurfaceSpec(surfaces=surfaces or None,
                       states=states or None,
-                      groups=groups or None)
+                      groups=groups or None,
+                      directory=d)
 
 
 def canonical_filename(icold=None, hemi=None, suffix=None):
@@ -304,20 +387,19 @@ def find_file(directory, icold=None, hemi=None, suffix=None):
                                                     hemi=hemi,
                                                     suffix=suffix))
     if not os.path.exists(fn):
-        raise ValueError("not found: %s" % fn)
+        suffix = '*'
+        pat = os.path.join(directory, canonical_filename(icold=icold,
+                                                         hemi=hemi,
+                                                         suffix=suffix))
+        fn = glob.glob(pat)
+
+        if not fn:
+            raise ValueError("not found: %s" % fn)
+        elif len(fn) > 1:
+            raise ValueError("not unique: %s" % fn)
+
+        fn = fn[0]
+
     return fn
 
 
-if __name__ == '__main__':
-    fL = '/Users/nick/_tmp/newref/lh_ico32_al.spec'
-    fR = '/Users/nick/_tmp/newref/rh_ico32_al.spec'
-    fB = '/Users/nick/_tmp/newref/bh_ico32_al.spec'
-
-    import mvpa2.misc.surfing.afni_suma_spec as spec
-    sL = spec.read(fL)
-    sR = spec.read(fR)
-    sB = spec.read(fB)
-
-    print sB
-    mm = spec.merge_left_right(sB)
-    print mm

@@ -145,14 +145,14 @@ def afni_niml_zscore_makefull_wizard(cfg):
 
     groupfnsout = ['%s.grpincorr.%s' % (fullname, ext) for ext in ['niml', 'data']]
 
-    if any(map(os.path.exists,groupfnsout)):
+    if any(map(os.path.exists, groupfnsout)):
         if overwrite:
             cmds.extend('rm %s;' % fn for fn in groupfnsout)
             cmds.append('%s -prefix ./%s' % (instacorrbin, fullprefix))
             cmds.extend(' %s' % fn for fn in fnouts)
         else:
             print("Some or all of output files (%s) already exists (use '--overwrite' to override)" % (" ".join(groupfnsout)))
-    
+
     cmd = "".join(cmds)
 
     utils.run_cmds(cmd)
@@ -207,17 +207,3 @@ def _augment_config(cfg):
     cfg['group_prefix'] = _full_path(cfg['group_prefix'])
 
 
-
-if __name__ == '__main__':
-    '''
-    d='/Users/nick/organized/_tmp/andyak12/groupdata/'
-    fnin=d+'ab00_ico32_lh_100vx.niml.dset'
-    fnout=d+'__tmp_f_ab00_ico32_lh_100vx.niml.dset'
-    
-    ico_ld=32
-    '''
-    cfg = _get_options()
-    _augment_config(cfg)
-
-    #cfg=dict(filenames=_fns(),prefix="z_full_",group_prefix=d+'ALL',overwrite=True)
-    afni_niml_zscore_makefull_wizard(cfg)
