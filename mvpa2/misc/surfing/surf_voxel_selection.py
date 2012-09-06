@@ -61,7 +61,7 @@ class VoxelSelector():
         Usually this is the output from volsurf.node2voxels.
     distancemetric: str
         Distance measure used to define distances between nodes on the surface.
-        Currently supports 'dijkstra' and 'euclidian'
+        Currently supports 'dijkstra' and 'euclidean'
     '''
 
     def __init__(self, radius, surf, n2v, distancemetric='dijkstra'):
@@ -340,7 +340,7 @@ def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
         stop: float (default: 1)
             Relative stop position of line (as in see start)
         distancemetric: str
-            Distance metric between nodes. 'euclidian' or 'dijksta'
+            Distance metric between nodes. 'euclidean' or 'dijksta'
         intermediateat: float (default: .5)
             Relative positiion of intermediate surface that is used to measure distances.
             By default this is the average of the pial and white surface
@@ -503,7 +503,7 @@ def run_voxel_selection(epifn, whitefn, pialfn, radius, srcfn=None, srcs=None,
         Specifically, each voxel's position is projected on the line connecting pial-
         white matter pairs, and only voxels in between 'start' and 'stop' are selected
     distancemetric: str
-        Distance metric between nodes. 'euclidian' or 'dijksta'
+        Distance metric between nodes. 'euclidean' or 'dijksta'
     intermediateat: float (default: .5)
         Relative positiion of intermediate surface that is used to measure distances.
         By default this is the average of the pial and white surface
