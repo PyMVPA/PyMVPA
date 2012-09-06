@@ -190,7 +190,6 @@ def sphere_reg_leftrightmapping(sL, sR, eps=.001):
     
     this only works on sphere.reg.asc files made with AFNI/SUMA's mapicosehedron'''
 
-    eps = .001
     if not sL.same_topology(sR):
         raise ValueError('topology mismatch')
 
@@ -240,7 +239,7 @@ def sphere_reg_leftrightmapping(sL, sR, eps=.001):
         # get the corresponding node of sourceL on the other hemisphere
         sourceR = l2r[sourceL]
 
-        # of the neighbors of sourceR, one of them should be 
+        # of all the neighbors of sourceR, one of them should be 
         # corresponding to pivotL
         nbrsR = nR[sourceR].keys()
         nearestR = nbrsR[find_nearest(vL[pivotL, :], vR[nbrsR, :])]
@@ -254,12 +253,14 @@ def sphere_reg_leftrightmapping(sL, sR, eps=.001):
             if not nbrL in l2r:
                 to_visit2source[nbrL] = pivotL
 
+    # store values in an array - this is easier for indexing
     l2r_arr = np.zeros((nv,), dtype=np.int32)
     for p, q in l2r.iteritems():
         l2r_arr[p] = q
 
     v_range = np.arange(nv)
 
+    # final check: make sure it's a bijection
     if not np.all(l2r_arr[l2r_arr] == v_range):
         raise ValueError('Not found a bijection - this should not happen')
 
