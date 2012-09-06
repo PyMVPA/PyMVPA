@@ -445,3 +445,38 @@ def from_image(img, mask_volume_index=None):
 
     return VolGeom(shape=img.shape, affine=img.get_affine(), mask=mask)
 
+def from_any(s, mask_volume=False):
+    if isinstance(s, VolGeom):
+        return s
+
+    if mask_volume:
+        mask_volume_index = mask_volume if type(mask_volume) is int else 0
+
+    if type(s) is str:
+        return from_any(s.from_filename(fname), mask_volume)
+
+    try:
+        # assume something data behaves like a spatial image
+        shape = s.shape
+        affine = s.affine()
+
+        if mask_volume:
+            mask = s.get_data()[:, :, :, mask_volume]
+        else:
+            mask = None
+        return VolGeom(shape=shape, affine=affine, mask=mask)
+    except:
+        hdr = s.a.imghdr
+
+        shape = hdr.get_data_shape()
+        affine = hdr.get_base_affine()
+
+        if mask_volume:
+            mask = s.samples[mask_volume, :]
+        else:
+            mask = None
+        return VolGeom(shape=shape, affine=affine, mask=mask)
+
+
+
+
