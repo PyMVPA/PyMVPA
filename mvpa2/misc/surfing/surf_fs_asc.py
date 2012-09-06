@@ -184,7 +184,90 @@ def hemi_pairs_reposition(surf_left, surf_right, facing_side,
 
     return tuple(surfs)
 
-def sphere_reg_leftrightmapping(surf_sphere_reg_left, surf_sphere_reg_right, eps=.001):
+def sphere_reg_leftrightmapping(sL, sR, eps=.001):
+    '''finds the mapping from left to right hemispehre and vice versa
+    (the mapping is symmetric)
+    
+    this only works on sphere.reg.asc files made with AFNI/SUMA's mapicosehedron'''
+
+    eps = .001
+    if not sL.same_topology(sR):
+        raise ValueError('topology mismatch')
+
+    nv = sL.nvertices
+
+    # to swap right surface along x-axis (i.e. mirror along x=0 plane)
+    swapLR = np.array([[-1, 1, 1]])
+
+    vL, vR = sL.vertices, sR.vertices * swapLR
+    nL, nR = sL.neighbors, sR.neighbors
+
+
+    # flip along x-axis
+    #vR = vR * np.asarray([[-1., 1., 1.]])
+
+    def find_nearest(src_coords, trgs_coords, eps=eps):
+        # finds the index of the nearest node in trgs_coords to src_coords.
+        # if the distance is more than eps, an exception is thrown
+        d2 = np.sum((src_coords - trgs_coords) ** 2, 1)
+        nearest = np.argmin(d2)
+        if d2[nearest] > eps ** 2:
+            raise ValueError('eps too big: %r > %r' % (d2[nearest] ** .5, eps))
+        return nearest
+
+    # get a (random) starting point
+    pivotL = 0
+    pivotR = find_nearest(vL[pivotL, :], vR)
+
+    # mapping from left to right
+    l2r = {pivotL:pivotR}
+    to_visit = nL[pivotL].keys()
+
+    # for each node (in the left hemispehre) still to visit, keep track of its 
+    # 'parent'
+    to_visit2source = dict(zip(to_visit, [pivotL] * len(to_visit)))
+
+    # invariants:
+    # 1) if to_visit2source[v]==s, then s in l2r.keys()
+    # 2) if to_visit2source[v]==s, then v in nL[s].keys()
+
+    while to_visit2source:
+        # find the corresponding node in right hemi for pivotL,
+        # using sourceL as a neighbor which a corresponding node
+        # on the other hemisphere is already known
+        pivotL, sourceL = to_visit2source.popitem()
+
+        # get the corresponding node of sourceL on the other hemisphere
+        sourceR = l2r[sourceL]
+
+        # of the neighbors of sourceR, one of them should be 
+        # corresponding to pivotL
+        nbrsR = nR[sourceR].keys()
+        nearestR = nbrsR[find_nearest(vL[pivotL, :], vR[nbrsR, :])]
+
+        # store result
+        l2r[pivotL] = nearestR
+
+        # add new neighbors to to_visit2source; but not those that
+        # have already a corresponding node on the other hemisphere
+        for nbrL in nL[pivotL].keys():
+            if not nbrL in l2r:
+                to_visit2source[nbrL] = pivotL
+
+    l2r_arr = np.zeros((nv,), dtype=np.int32)
+    for p, q in l2r.iteritems():
+        l2r_arr[p] = q
+
+    v_range = np.arange(nv)
+
+    if not np.all(l2r_arr[l2r_arr] == v_range):
+        raise ValueError('Not found a bijection - this should not happen')
+
+    return l2r_arr
+
+
+"""
+def _sphere_reg_leftrightmapping(surf_sphere_reg_left, surf_sphere_reg_right, eps=.001):
     '''finds the mapping from left to right hemispehre and vice versa
     (the mapping is symmetric)
     
@@ -196,7 +279,6 @@ def sphere_reg_leftrightmapping(surf_sphere_reg_left, surf_sphere_reg_right, eps
         return vs - np.mean(vs, 0)
 
     vL, vR = _center(vL), _center(vR)
-
 
     def _check_is_sphere(v, eps=eps):
         com = np.mean(vL, axis=0)
@@ -235,3 +317,5 @@ def sphere_reg_leftrightmapping(surf_sphere_reg_left, surf_sphere_reg_right, eps
         raise ValueError('asymmetric mapping - this should not happen')
 
     return left2right
+
+"""
