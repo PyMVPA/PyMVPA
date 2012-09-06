@@ -1,3 +1,11 @@
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''
 Created on Jan 30, 2012
 
@@ -103,18 +111,18 @@ def afni_fileexists(fn):
     else:
         return (e in ['.nii', '.nii.gz']) and os.path.isfile(fn)
 
-def run_matlabcommand(matlabcmd, env=None, indir='.'):
+def run_matlabcommand(matlabcmd, env=None, directory='.'):
     '''wrapper to run a single matlab command in the shell'''
 
     if env is None:
         env = os.environ
 
-    # ensure matlabcmd ends with semicolon        
+    # ensure matlabcmd ends with semicolon
     lastchar = matlabcmd.strip()[-1];
     if lastchar not in [',', ';']:
         matlabcmd += ';'
 
-    cmd = 'cd %s;matlab -nosplash -nodisplay -r "%sexit"' % (indir, matlabcmd)
+    cmd = 'cd %s;matlab -nosplash -nodisplay -r "%sexit"' % (directory, matlabcmd)
     run_cmds(cmd, env)
 
 def run_cmds(cmds, env=None, dryrun=False):

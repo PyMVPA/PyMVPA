@@ -708,8 +708,8 @@ class Surface(object):
         return mapping
 
     @property
-    def face2area(self):
-        if not hasattr(self, '_face2area'):
+    def face_areas(self):
+        if not hasattr(self, '_face_areas'):
             f = self.faces
             v = self.vertices
 
@@ -728,14 +728,14 @@ class Surface(object):
 
             vw = f2a.view()
             vw.flags.writeable = False
-            self._face2area = vw
+            self._face_areas = vw
 
-        return self._face2area
+        return self._face_areas
 
     @property
-    def node2area(self):
-        if not hasattr(self, '_node2area'):
-            f2a = self.face2area
+    def node_areas(self):
+        if not hasattr(self, '_node_areas'):
+            f2a = self.face_areas
 
             # area is one third of sum of faces that contain the node
             n2a = np.zeros((self.nvertices,))
@@ -744,9 +744,9 @@ class Surface(object):
 
             vw = n2a.view()
             vw.flags.writeable = False
-            self._node2area = vw
+            self._node_areas = vw
 
-        return self._node2area
+        return self._node_areas
 
 
 def merge(*surfs):

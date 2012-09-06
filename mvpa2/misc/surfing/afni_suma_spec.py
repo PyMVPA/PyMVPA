@@ -13,7 +13,7 @@ _COMPREFIX = 'CoM' #  for surfaces that were rotated around center of mass
 class SurfaceSpec(object):
     def __init__(self, surfaces, states=None, groups=None, directory=None):
         self.surfaces = surfaces
-        self.indir = directory
+        self.directory = directory
 
         if states is None:
             states = list(set(surface['SurfaceState'] for surface in surfaces))
@@ -110,15 +110,6 @@ class SurfaceSpec(object):
         with open(fnout, 'w') as f:
             f.write(self.as_string())
 
-    @property
-    def directory(self):
-        '''
-        Returns
-        -------
-            The directory of the spec file (or None, if this spec
-            was generated from scratch)
-        '''
-        return self.indir
 
     def surface_file(self, *args):
         '''
@@ -165,7 +156,7 @@ class SurfaceSpec(object):
         return None # (redundant code, just for clarity)
 
 
-def hemi_pairs_add_views(spec_both, state, indir=None, overwrite=False):
+def hemi_pairs_add_views(spec_both, state, directory=None, overwrite=False):
     '''adds views for medial, superior, inferior, anterior, posterior viewing
     of two surfaces together. Also generates these surfaces'''
 
@@ -173,8 +164,8 @@ def hemi_pairs_add_views(spec_both, state, indir=None, overwrite=False):
 
     ext = '.asc'
 
-    if indir is None:
-        indir = os.path.curdir
+    if directory is None:
+        directory = os.path.curdir
 
     if not spec_left.same_states(spec_right):
         raise ValueError('Incompatible states for left and right')
@@ -208,7 +199,7 @@ def hemi_pairs_add_views(spec_both, state, indir=None, overwrite=False):
             surfnamelabels = ['SurfaceName', 'FreeSurferSurface']
             surfname = utils.foldr(surfdef.get, None, surfnamelabels)
 
-            fn = os.path.join(indir, surfname)
+            fn = os.path.join(directory, surfname)
             if not os.path.exists(fn):
                 raise ValueError("File not found: %s" % fn)
 
@@ -218,7 +209,7 @@ def hemi_pairs_add_views(spec_both, state, indir=None, overwrite=False):
 
             shortfn = surfname[:-(len(ext))]
             newsurfname = '%s%s%s%s' % (shortfn, _COMPREFIX, longname, ext)
-            newfn = os.path.join(indir, newsurfname)
+            newfn = os.path.join(directory, newsurfname)
 
             newsurfdef = copy.deepcopy(surfdef)
 
