@@ -422,10 +422,10 @@ class SurfTests(unittest.TestCase):
                          'center_distances']
 
         voxcount = []
-        for distancemetric, radius, ncenters in params:
+        for distance_metric, radius, ncenters in params:
             srcs = range(0, nv, nv / (ncenters or nv))
             sel = surf_voxel_selection.voxel_selection(vs, radius, srcs=srcs,
-                                            distancemetric=distancemetric)
+                                            distance_metric=distance_metric)
 
             # see how many voxels were selected
             vg = sel.a['volgeom']
@@ -505,7 +505,7 @@ class SurfTests(unittest.TestCase):
 
             sel3 = surf_voxel_selection.run_voxel_selection(volfn, innerfn,
                             outerfn, radius, srcs=srcs,
-                            distancemetric=distancemetric)
+                            distance_metric=distance_metric)
 
             outer4 = surf.read(outerfn)
             inner4 = surf.read(innerfn)
@@ -513,7 +513,7 @@ class SurfTests(unittest.TestCase):
 
             # check that two ways of voxel selection match
             sel4 = surf_voxel_selection.voxel_selection(vs4, radius, srcs=srcs,
-                                                distancemetric=distancemetric)
+                                                distance_metric=distance_metric)
 
             assert_equal(sel3, sel4)
 
