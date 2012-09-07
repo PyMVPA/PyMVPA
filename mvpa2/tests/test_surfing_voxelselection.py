@@ -34,7 +34,8 @@ import mvpa2.misc.surfing.surf_voxel_selection as surf_voxel_selection
 import mvpa2.misc.surfing.queryengine as queryengine
 
 from mvpa2.measures.searchlight import Searchlight
-from mvpa2.misc.surfing.queryengine import SurfaceVerticesQueryEngine
+from mvpa2.misc.surfing.queryengine import SurfaceVerticesQueryEngine, \
+                                            disc_surface_queryengine
 
 from mvpa2.measures.base import Measure, \
         TransferMeasure, RepeatedMeasure, CrossValidation
@@ -127,6 +128,16 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         surf_qe = SurfaceVerticesQueryEngine(surf_voxsel)
         surf_sl = Searchlight(cv, queryengine=surf_qe, postproc=mean_sample())
 
+
+        '''
+        new (Sep 2012): try 'simple' queryengine solution
+        '''
+
+        surf_qe2 = disc_surface_queryengine(radius, maskfn, inner, outer, plane,
+                                            volume_mask=True, distance_metric='euclidian')
+        surf_sl2 = Searchlight(cv, queryengine=surf_qe2, postproc=mean_sample())
+
+
         '''
         Same for the volume analysis
         '''
@@ -161,11 +172,14 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         '''Apply searchlight to datasets'''
         surf_dset = surf_sl(dataset)
+        surf_dset2 = surf_sl2(dataset)
         vol_dset = vol_sl(dataset)
 
         surf_data = surf_dset.samples
+        surf_data2 = surf_dset2.samples
         vol_data = vol_dset.samples
 
+        assert_array_equal(surf_data, surf_data2)
         assert_array_equal(surf_data, vol_data)
 
 def suite():

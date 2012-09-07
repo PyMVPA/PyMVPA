@@ -229,7 +229,8 @@ __sdebug("surface searchlight")
 from mvpa2.misc.surfing import volsurf, afni_niml_dset, afni_niml, \
      sparse_attributes, surf_fs_asc, volgeom, surf_voxel_selection, \
      surf, afni_suma_spec
-from mvpa2.misc.surfing.queryengine import SurfaceVerticesQueryEngine
+from mvpa2.misc.surfing.queryengine import SurfaceVerticesQueryEngine, \
+                                            disc_surface_queryengine
 
 __sdebug("ipython goodies")
 if externals.exists("running ipython env"):
