@@ -107,42 +107,32 @@ fn_infix = 'ico%d_%sh_%dvx' % (lowres_ld, hemi, radius)
 searchlight_fn_prefix = os.path.join(datapath, fn_infix)
 
 
-"""We're all set to go to run voxel selection - that is, determine for
-each node which voxels are near it. 
+"""We're all set to go to create a query engine to determine for
+each node which voxels are near it.
 
-As a reminder, the only essential values we have set are the 
+As a reminder, the only essential values we have set are the
 filenames of three surfaces (high-res inner and outer,
 and low-res intermediate), and the searchlight radius.
 
-Note that settng the low-res intermediate surface can be omitted 
-(i.e. set it to None), in which case it is computed as the average from the 
+Note that setting the low-res intermediate surface can be omitted
+(i.e. set it to None), in which case it is computed as the average from the
 high-res outer and inner. The searchlight would then be based on
-a high-res intermedaite surface with a lot of nodes, which means that it takes
+a high-res intermediate surface with a lot of nodes, which means that it takes
 longer to run the searchlight.
 """
 
-voxsel = surf_voxel_selection.run_voxel_selection(epi_fn,
-                                                  white_surf_fn, pial_surf_fn,
-                                                  radius,
-                                                  intermediate_surf_fn)
-
-
-'''Voxel selection now contains the results, which can be stored on disk
-for later re-use (using surf_voxel_selection.to_file()).
-
-We omit this I/O stuff here and go straight into preparing for the searchlight.
-
-The next step is to define the query-engine.
-'''
-qe = SurfaceVerticesQueryEngine(voxsel,
-                                # you can optionally add additional
-                                # information about each near-disk-voxels
-                                add_fa=['center_distances',
-                                        'grey_matter_position'])
+qe = disc_surface_queryengine(
+    radius,
+    epi_fn,
+    white_surf_fn, pial_surf_fn, intermediate_surf_fn,
+    # you can optionally add additional
+    # information about each near-disk-voxels
+    add_fa=['center_distances',
+            'grey_matter_position'])
 
 
 
-'''As in the example in searchlight.py, define cross-validation 
+'''As in the example in searchlight.py, define cross-validation
 using a classifier
 
 '''
