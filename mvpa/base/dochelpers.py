@@ -29,10 +29,21 @@ if __in_ipython:
     __rst_mode = 0                           # either to do ReST links at all
     _rst_sep = ""
     _rst_sep2 = ""
-    from IPython import Release
+    # Candidate for deprecation since this is only for special feature
+    # on older ipythons.  ATM such ipython 0.8.1 is present only on
+    # Ubuntu hardy 08.04
+    from mvpa.misc.support import SmartVersion
+    release = None
+    try:
+        from IPython import Release as release
+    except:
+        try:
+            from IPython import release
+        except:
+            pass
     # XXX figure out exact version when init doc started to be added to class
     # description
-    if Release.version <= '0.8.1':
+    if release is not None and SmartVersion(release.version) <= '0.8.1':
         __add_init2doc = True
 else:
     __rst_mode = 1
