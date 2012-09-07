@@ -93,7 +93,7 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf, source_surf=
     pial_surf = surf.from_any(pial_surf)
 
     if source_surf is None:
-        source_surf = whitesurf * .5 + pialsurf * .5
+        source_surf = white_surf * .5 + pial_surf * .5
     else:
         source_surf = surf.from_any(source_surf)
 
