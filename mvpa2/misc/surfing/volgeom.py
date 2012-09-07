@@ -453,15 +453,20 @@ def from_any(s, mask_volume=False):
         mask_volume_index = mask_volume if type(mask_volume) is int else 0
 
     if type(s) is str:
-        return from_any(s.from_filename(fname), mask_volume)
+        return from_any(nb.load(s), mask_volume)
 
     try:
-        # assume something data behaves like a spatial image
+        # assume something data behaves like a spatial image (nifti image)
         shape = s.shape
-        affine = s.affine()
+        affine = s.get_affine()
 
         if mask_volume:
-            mask = s.get_data()[:, :, :, mask_volume]
+            data = s.get_data()
+            ndim = len(data.shape)
+            if ndim <= 3:
+                mask = data
+            else:
+                mask = data[:, :, :, mask_volume]
         else:
             mask = None
         return VolGeom(shape=shape, affine=affine, mask=mask)

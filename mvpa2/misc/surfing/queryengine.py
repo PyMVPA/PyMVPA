@@ -15,6 +15,9 @@ import numpy as np
 
 from mvpa2.base.dataset import AttrDataset
 from mvpa2.misc.neighborhood import QueryEngineInterface
+
+from mvpa2.misc.surfing import volgeom, surf, volsurf, surf_voxel_selection
+
 if __debug__:
     from mvpa2.base import debug
 
@@ -76,3 +79,34 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
 
     def query(self, **kwargs):
         raise NotImplemented
+
+def disc_surface_queryengine(radius, volume, white_surf, pial_surf, source_surf=None,
+                             source_surf_nodes=None, volume_mask=False, add_fa=None,
+                             distance_metric='dijkstra'):
+
+    vg = volgeom.from_any(volume, volume_mask)
+
+    # read surfaces
+    white_surf = surf.from_any(white_surf)
+    pial_surf = surf.from_any(pial_surf)
+
+    if source_surf is None:
+        source_surf = whitesurf * .5 + pialsurf * .5
+    else:
+        source_surf = surf.from_any(source_surf)
+
+    # make a volume surface instance
+    vs = volsurf.VolSurf(vg, pial_surf, white_surf)
+
+    # run voxel selection
+    voxsel = surf_voxel_selection.voxel_selection(vs, radius, source_surf,
+                                            source_surf_nodes,
+                                            distance_metric=distance_metric)
+
+    qe = SurfaceVerticesQueryEngine(voxsel, add_fa=add_fa)
+
+    return qe
+
+
+
+
