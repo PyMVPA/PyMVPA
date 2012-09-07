@@ -21,8 +21,8 @@ And that is despite the fact that we have analyzed the data repeatedly,
 with different classifiers and investigated error rates and confusion
 matrices. So what can we do?
 
-Ideally, we would like to have something that estimates per each feature a
-score that indicates how important that particular feature (most of the time a
+Ideally, we would like to have something that estimates a score per each feature
+that indicates how important that particular feature (most of the time a
 voxel) is in the context of a certain classification task. There are various
 possibilities to get a vector of such per feature scores in PyMVPA. We could
 simply compute an ANOVA_ F-score per each feature, yielding scores that would
@@ -150,7 +150,7 @@ temporal ROI. Let's now run it on a much larger volume, so we can actually
 localize something (even loading and preprocessing will take a few seconds).
 We will reuse the same searchlight setup and run it on this data as well.
 Due to the size of the data it might take a few minutes to compute the
-results, depending on the number of CPU in the system.
+results, depending on the number of CPUs in the system.
 
 >>> # alt: `ds = load_tutorial_results('ds_haxby2001_alt_roi0')`
 >>> ds = get_haxby2001_data_alternative(roi=0)
@@ -261,7 +261,9 @@ From the :ref:`previous tutorial part <chap_tutorial_classifiers>` we know
 that there is a way out of this dilemma. We can look at the confusion
 matrix of a classifier to get a lot more information that is otherwise
 hidden. However, we cannot reasonably do this for thousands of searchlight
-spheres. It becomes obvious that a searchlight analysis is probably not the
+spheres (Note that this is not completely true. See e.g. :ref:`Connolly et al.,
+2012 <CGG+12>` for some creative use-cases for searchlights).
+It becomes obvious that a searchlight analysis is probably not the
 end of a data exploration but rather a crude take off,
 as it raises more questions than it answers.
 

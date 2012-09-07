@@ -14,7 +14,7 @@
 Part 1: A Gentle Start
 **********************
 
-The purpose of this first tutorial part is to make your familiar with a few basic
+The purpose of this first tutorial part is to make you familiar with a few basic
 properties and building blocks of PyMVPA. Let's have a slow start and compute a
 :term:`cross-validation` analysis.
 
@@ -31,7 +31,7 @@ Getting the data
 As a first step, we will load an fMRI dataset that is the first subject of the
 classic study of :ref:`Haxby et al. (2001) <HGF+01>`. For the sake of
 simplicity we are using a helper function that loads and pre-processes the data
-in a way similar as the original authors did. Later on we will get
+in a way that is similar to what the original authors did. Later on we will get
 back to this point and look at what was done in greater detail, but for now it is
 as simple as:
 
@@ -41,7 +41,7 @@ What we get as ``ds`` is a PyMVPA dataset that contains the fMRI data, and a lot
 of additional information which we will investigate later on. In the original
 study the authors split the dataset in half (in odd and even runs), and
 computed a *pattern of activation* for each stimulus category in each half.
-Hence the dataset consists of 16 patterns which are called :term:`sample`\s in
+Hence, the dataset consists of 16 patterns which are called :term:`sample`\s in
 PyMVPA (one for each of the eight categories in each half of the experiment).
 The number of samples in a dataset is equivalent to its length, and can be
 queried by:
@@ -59,7 +59,7 @@ the actual features of this dataset, and hence we have 577 of them.
 >>> print ds.nfeatures
 577
 
-We can also access the information via the
+We can also access this information via the
 `~mvpa2.base.dataset.AttrDataset.shape` property of the dataset:
 
 >>> print ds.shape
@@ -70,8 +70,8 @@ are the so-called :term:`label`\s or :term:`target`\s that are assigned to the
 samples, since they define the model that should be learned by a
 :term:`classifier`, and serve as target values to assess the prediction
 accuracy. The dataset stores these targets in its collection of **s**\ample
-**a**\ttributes (hence collection name ``sa``), and they can be accessed by the
-attribute name, either through the collection, or via a shortcut.
+**a**\ttributes (hence the collection name ``sa``), and they can be accessed by
+their attribute name, either through the collection, or via a shortcut.
 
 >>> print ds.sa.targets
 ['bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe'
@@ -117,7 +117,7 @@ assigned to these neighbors.
   Access the built-in help to inspect the ``kNN`` class regarding additional
   configuration options.
 
-Now that we have a classifier instance it can easily be trained by passing the
+Now that we have a classifier instance it can be easily trained by passing the
 dataset to its ``train()`` method.
 
 >>> clf.train(ds)
@@ -170,8 +170,8 @@ Now we could repeat the steps above: call ``train()`` with one dataset half and
 ``predict()`` with the other, and compute the prediction accuracy manually.
 However, a more convenient way is to let the classifier do this for us.  Many
 objects in PyMVPA support a post-processing step that we can use to compute
-something from the actual results. The example below computes the *mean
-mismatch error* of classifier predictions and the *target* values stored in our
+something from the actual results. The example below computes the
+*mismatch error* of classifier predictions and the *target* values stored in our
 dataset. To make this work, we do not call the classifier's ``predict()``
 method anymore, but "call" the classifier directly with the test dataset. This
 is a very common usage pattern in PyMVPA that we shall see a lot over the
