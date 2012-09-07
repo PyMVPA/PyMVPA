@@ -20,6 +20,7 @@ Created on Feb 12, 2012
 
 import nibabel as nb, numpy as np, surf_fs_asc, utils
 
+from mvpa2.base import warning
 from mvpa2.datasets.mri import fmri_dataset
 
 class VolGeom():
@@ -449,38 +450,41 @@ def from_any(s, mask_volume=False):
     if isinstance(s, VolGeom):
         return s
 
-    if mask_volume:
-        mask_volume_index = mask_volume if type(mask_volume) is int else 0
+    if mask_volume is True:
+        # assign a specific index -- the very first volume
+        mask_volume = 0
 
-    if type(s) is str:
+    if isinstance(s, str):
         return from_any(nb.load(s), mask_volume)
 
     try:
-        # assume something data behaves like a spatial image (nifti image)
+        # assume data behaves like a spatial image (nifti image)
         shape = s.shape
         affine = s.get_affine()
 
-        if mask_volume:
+        if isinstance(mask_volume, int):
             data = s.get_data()
             ndim = len(data.shape)
             if ndim <= 3:
                 mask = data
+                if mask_volume > 0:
+                    warning("There is no 4th dimension (t) to select %d-th volume."
+                            % (mask_volume,))
             else:
                 mask = data[:, :, :, mask_volume]
         else:
             mask = None
-        return VolGeom(shape=shape, affine=affine, mask=mask)
     except:
         hdr = s.a.imghdr
 
         shape = hdr.get_data_shape()
         affine = hdr.get_base_affine()
 
-        if mask_volume:
+        if isinstance(mask_volume, int):
             mask = s.samples[mask_volume, :]
         else:
             mask = None
-        return VolGeom(shape=shape, affine=affine, mask=mask)
+    return VolGeom(shape=shape, affine=affine, mask=mask)
 
 
 
