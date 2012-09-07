@@ -47,12 +47,14 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
         vg = self.voxsel.volgeom
         # We are creating a map from big unmasked indices of voxels
         # known to voxsel into the dataset's feature indexes
-        # TODO:  this would fail in case of spatio-temporal analysis
-        #        we would need to have a map from long vertex id to
-        #        lists of dataset feature ids
-        self._map_voxel_coord = dict(
-            zip(vg.ijk2lin(dataset.fa[self.space].value),
-                xrange(dataset.nfeatures)))
+        self._map_voxel_coord = map_voxel_coord = {}
+        for long_i, i in zip(
+            vg.ijk2lin(dataset.fa[self.space].value),
+            xrange(dataset.nfeatures)):
+            if long_i in map_voxel_coord:
+                map_voxel_coord[long_i].append(i)
+            else:
+                map_voxel_coord[long_i] = [i]
 
     def untrain(self):
         self._map_voxel_coord = None
@@ -66,8 +68,8 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
         voxel_unmasked_ids = self.voxsel.get(vertexid, 'linear_voxel_indices')
 
         # map into dataset
-        voxel_dataset_ids = [self._map_voxel_coord[i]
-                             for i in voxel_unmasked_ids]
+        voxel_dataset_ids = sum([self._map_voxel_coord[i]
+                                 for i in voxel_unmasked_ids], [])
         if self._add_fa is not None:
             # optionally add additional information from voxsel
             ds = AttrDataset(np.asarray(voxel_dataset_ids)[np.newaxis])
