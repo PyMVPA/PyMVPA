@@ -36,7 +36,7 @@ a cross-validated classification analysis.
 5. Inspect results
 
 Our previous choice of the classifier was guided by the intention to
-replicate the :ref:`Haxby et al. (2001) <HGF+01>`, but what if we want to
+replicate :ref:`Haxby et al. (2001) <HGF+01>`, but what if we want to
 try a different algorithm? In this case a nice feature of PyMVPA comes into
 play. All classifiers implement a common interface that makes them easily
 exchangeable without the need to adapt any other part of the analysis code.
@@ -50,7 +50,7 @@ If, for example, we want to try the popular :mod:`support vector machine <mvpa2.
 0.1875
 
 Instead of k-nearest-neighbor, we create a linear SVM classifier,
-internally using popular LIBSVM library (note that PyMVPA provides
+internally using the popular LIBSVM library (note that PyMVPA provides
 additional SVM implementations). The rest of the code remains identical.
 SVM with its default settings seems to perform slightly worse than the
 simple kNN-classifier. We'll get back to the classifiers shortly. Let's
@@ -148,7 +148,7 @@ the results of the cross-validation analysis a bit further.
 
 The returned value is actually a `~mvpa2.datasets.base.Dataset` with the
 results for all cross-validation folds. Since our error function computes
-only a single scalar value for each fold the dataset only contain a single
+only a single scalar value for each fold the dataset only contains a single
 feature (in this case the accuracy), and a sample per each fold.
 
 ..

@@ -47,9 +47,9 @@ What Do I Need To Get Python Running
 ------------------------------------
 
 PyMVPA code is compatible with Python 2.X series (more precisely >= 2.4).
-Python 3.x is not yet supported. For most stable performance we recommend
-Python 2.6 since that is the version we are using for the development, but,
-once again, anything from 2.5 to 2.7 should be fine.
+Python 3.x is supported as well, but not as widely used (yet), and many
+3rd-party Python modules are still lacking Python 3 support. For now, we
+recommend Python 2.7 for production, but Python 2.6 should work equally well.
 
 Any machine which has Python 2.X available can be used for PyMVPA-based
 processing (see :ref:`Download section <chap_download>` on how to deploy
@@ -79,9 +79,9 @@ as AFNI_ and FSL_.
 
 For those who just want to quickly try PyMVPA, or do not want to deal with
 installing multiple software package we recommend the `NeuroDebian Virtual
-Machine`_. This is a virtual Debian installation that can be ran on Linux,
-Windows, and MacOS X. It includes many Python packages, PyMVPA, and other
-neuroscience software (including AFNI_ and FSL_).
+Machine`_. This is a virtual Debian installation that can be deployed on Linux,
+Windows, and MacOS X in a matter of minutes. It includes many Python packages,
+PyMVPA, and other neuroscience software (including AFNI_ and FSL_).
 
 .. _NeuroDebian Virtual Machine: http://neuro.debian.net/vm.html
 .. _AFNI: http://afni.nimh.nih.gov/afni
@@ -168,8 +168,8 @@ to explore an enhanced interactive environment for Python -- IPython_.
 
 http://fperez.org/papers/ipython07_pe-gr_cise.pdf
 
-  An article from the author of IPython in the Computing in Science and Engineering
-  journal, describing goals and basic features of IPython.
+  An article from one of the authors of IPython in the *Computing in Science and
+  Engineering* journal, describing goals and basic features of IPython.
 
 http://showmedo.com/videotutorials/series?name=CnluURUTV
 
