@@ -43,8 +43,9 @@ class VolGeom():
         self._affine = affine
         if not mask is None:
             # convert into linear numpy array of type boolean
-            if not type(mask) is np.ndarray:
-                raise ValueError("Mask not understood: not an numpy.ndarray")
+#            if not type(mask) is np.ndarray:
+#                raise ValueError("Mask not understood: not an numpy.ndarray"
+#                                 " but %r" % type(mask))
             if mask.size != self.nvoxels:
                 raise ValueError("%d voxels, but mask has %d" %
                                  (self.nvoxels, mask.size))
@@ -454,11 +455,11 @@ def from_any(s, mask_volume=False):
         # assign a specific index -- the very first volume
         mask_volume = 0
 
-    if isinstance(s, str):
+    if isinstance(s, basestring):
         return from_any(nb.load(s), mask_volume)
 
     try:
-        # assume data behaves like a spatial image (nifti image)
+        # see if s behaves like a spatial image (nifti image)
         shape = s.shape
         affine = s.get_affine()
 
@@ -475,15 +476,17 @@ def from_any(s, mask_volume=False):
         else:
             mask = None
     except:
+        # see if s behaves like a Dataset with image header
         hdr = s.a.imghdr
 
         shape = hdr.get_data_shape()
-        affine = hdr.get_base_affine()
+        affine = hdr.get_best_affine()
 
         if isinstance(mask_volume, int):
-            mask = s.samples[mask_volume, :]
+            mask = np.asarray(s.samples[mask_volume, :])
         else:
             mask = None
+
     return VolGeom(shape=shape, affine=affine, mask=mask)
 
 

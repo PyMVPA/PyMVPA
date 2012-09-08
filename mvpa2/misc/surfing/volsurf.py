@@ -44,13 +44,13 @@ class VolSurf():
     'pial' and 'white' should have the same topology. 
     '''
 
-    def __init__(self, volgeom, pial, white):
-        if not pial.same_topology(white):
-            raise Exception("Not same topology for white and pial")
+    def __init__(self, vg, pial, white):
+        self._volgeom = volgeom.from_any(vg)
+        self._pial = surf.from_any(pial)
+        self._white = surf.from_any(white)
 
-        self._volgeom = volgeom
-        self._pial = pial
-        self._white = white
+        if not self._pial.same_topology(self._white):
+            raise Exception("Not same topology for white and pial")
 
     def __repr__(self):
         r = ("volgeom: %r\npial: %rwhite:%r" %
@@ -220,7 +220,7 @@ class VolSurf():
             then the output from node2voxels() is used.
         
         Returns:
-            img: nifti.Nifti1Image
+        img: nifti.Nifti1Image
             image where the value in each voxel indicates how often
             each voxel was selected
         '''
