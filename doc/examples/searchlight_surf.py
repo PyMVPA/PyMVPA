@@ -77,11 +77,7 @@ or almost the same, spatial coordinate) on the high-res surface.
 Choice of lowres_ld and highres_ld is somewhat arbitrary and always application
 specific. For highres_ld a value of at least 64 may be advisable as this
 ensures enough anatomical detail is available to select voxels in the grey
-matter accurately. For lowres_ld, a low number may be advisable for functional
-or information-based connectivity analyses; e.g. lowres_ld=8 means there
-are 2*(10*8^2+2)=1284 nodes across the two hemispheres, and thus 823686 unique
-pairs of nodes. A higher number for lowres_ld may be  suited for single-center
-searchlight analyses.
+matter accurately. 
 """
 lowres_ld = 8 # 16, 32 or 64 is reasonable. 8 is really fast
 
@@ -96,7 +92,7 @@ radius in millimeters, with a variable number of voxels).
 
 Note that "a fixed number of voxels" in this context actually means an
 approximation, in that on average that number of voxels is selected but the
-actual number will vary slightly
+actual number will vary slightly (typically in the range +/- 2 voxels)
 """
 radius = 100
 
@@ -124,11 +120,7 @@ longer to run the searchlight.
 qe = disc_surface_queryengine(
     radius,
     epi_fn,
-    white_surf_fn, pial_surf_fn, intermediate_surf_fn,
-    # you can optionally add additional
-    # information about each near-disk-voxels
-    add_fa=['center_distances',
-            'grey_matter_position'])
+    white_surf_fn, pial_surf_fn, intermediate_surf_fn)
 
 
 
@@ -162,7 +154,7 @@ voxel selection step, a mask is taken from the voxel selection results
 and used when loading the functional data 
 '''
 
-mask = voxsel.get_mask()
+mask = qe.voxsel.get_mask()
 print ("Voxel selection: %d / %d voxels are selected at least once" %
         (np.sum(mask > 0), mask.size))
 
@@ -185,7 +177,8 @@ poly_detrend(dataset, polyord=1, chunks_attr='chunks')
 dataset = dataset[np.array([l in ['rest', 'house', 'scrambledpix']
                            for l in dataset.targets], dtype='bool')]
 
-zscore(dataset, chunks_attr='chunks', param_est=('targets', ['rest']), dtype='float32')
+zscore(dataset, chunks_attr='chunks', param_est=('targets', ['rest']),
+        dtype='float32')
 
 dataset = dataset[dataset.sa.targets != 'rest']
 
@@ -198,7 +191,7 @@ sl_dset = sl(dataset)
 
 """
 For visualization of results, make a NIML dset that can be viewed
-by AFNI. Results are transposed because in NIML, rows correspond
+by AFNI's SUMA. Results are transposed because in NIML, rows correspond
 to nodes (features) and columns to datapoints (samples).
 
 In certain cases (though not in this example) some nodes may have no
