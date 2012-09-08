@@ -932,12 +932,11 @@ def write(fn, s, overwrite=False):
         raise ValueError("Not implemented (based on extension): %r" % fn)
 
 def from_any(s):
-    ts = type(s)
     if isinstance(s, Surface):
         return s
-    elif ts is str:
+    elif isinstance(s, basestring):
         return read(s)
-    elif ts is tuple and len(ts) == 2:
+    elif type(s) is tuple and len(ts) == 2:
         return Surface(ts[0], ts[1])
     else:
         raise ValueError("Not understood: %r" % s)

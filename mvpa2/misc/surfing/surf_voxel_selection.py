@@ -366,6 +366,8 @@ def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
 
         if surf_srcs is None:
             surf_srcs = surf_intermediate
+        else:
+            surf_srcs = surf.from_any(surf_srcs)
 
         if __debug__:
             debug('SVS', "Generated high-res intermediate surface: "
