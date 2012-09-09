@@ -521,16 +521,16 @@ def run_voxel_selection(epifn, whitefn, pialfn, radius, srcfn=None, srcs=None,
     '''
 
     # read volume geometry
-    vg = volgeom.from_nifti_file(epifn)
+    vg = volgeom.from_any(epifn)
 
     # read surfaces
-    whitesurf = surf.read(whitefn)
-    pialsurf = surf.read(pialfn)
+    whitesurf = surf.from_any(whitefn)
+    pialsurf = surf.from_any(pialfn)
 
     if srcfn is None:
         srcsurf = whitesurf * .5 + pialsurf * .5
     else:
-        srcsurf = surf.read(srcfn)
+        srcsurf = surf.from_any(srcfn)
 
     # make a volume surface instance
     vs = volsurf.VolSurf(vg, pialsurf, whitesurf)

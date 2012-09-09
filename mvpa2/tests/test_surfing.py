@@ -293,8 +293,8 @@ class SurfTests(unittest.TestCase):
 
         assert_true(os.path.exists(fn))
 
-        vg2 = volgeom.from_image(img)
-        vg3 = volgeom.from_nifti_file(fn)
+        vg2 = volgeom.from_any(img)
+        vg3 = volgeom.from_any(fn)
 
         assert_array_equal(vg.affine, vg2.affine)
         assert_array_equal(vg.affine, vg3.affine)
