@@ -469,23 +469,27 @@ def from_any(s, mask_volume=False):
             if ndim <= 3:
                 mask = data
                 if mask_volume > 0:
-                    warning("There is no 4th dimension (t) to select %d-th volume."
-                            % (mask_volume,))
+                    warning("There is no 4th dimension (t) to select "
+                            "the %d-th volume." % (mask_volume,))
             else:
                 mask = data[:, :, :, mask_volume]
         else:
             mask = None
     except:
-        # see if s behaves like a Dataset with image header
-        hdr = s.a.imghdr
+        try:
+            # see if s behaves like a Dataset with image header
+            hdr = s.a.imghdr
 
-        shape = hdr.get_data_shape()
-        affine = hdr.get_best_affine()
+            shape = hdr.get_data_shape()
+            affine = hdr.get_best_affine()
 
-        if isinstance(mask_volume, int):
-            mask = np.asarray(s.samples[mask_volume, :])
-        else:
-            mask = None
+            if isinstance(mask_volume, int):
+                mask = np.asarray(s.samples[mask_volume, :])
+            else:
+                mask = None
+        except:
+            raise ValueError('Unrecognized input %r - not a VolGeom, '
+                             'string, Nifti image, or Dataset')
 
     return VolGeom(shape=shape, affine=affine, mask=mask)
 
