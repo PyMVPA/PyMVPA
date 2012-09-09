@@ -7,7 +7,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """
-Associate volume geometry with two surface meshes (ypically pial and white 
+Associate volume geometry with two surface meshes (typically pial and white 
 matter boundaries of the grey matter).
 
 @author: nick
@@ -223,6 +223,9 @@ class VolSurf():
             Image where the value in each voxel indicates how often
             each voxel was selected by n2v.
         '''
+
+        if n2v is None:
+            n2v = self.node2voxels()
 
         v = self._volgeom
         nv = v.nvoxels
