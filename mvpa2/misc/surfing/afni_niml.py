@@ -1,3 +1,11 @@
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''
 General AFNI NIML I/O support
 
@@ -13,6 +21,7 @@ For specific types of data, consider afni_niml_annot or afni_niml_annot
 files which provide easier access to the data.
 
 '''
+
 import re, numpy as np, afni_niml_types as types, random, os, time, sys, base64, afni_niml_dset as dset, copy
 
 _RE_FLAGS = re.DOTALL # regular expression matching spans across new lines
@@ -144,7 +153,7 @@ def _datastring2rawniml(s, niml):
             s = base64.decodestring(s)
         elif not 'binary' in niform:
             raise ValueError('Illegal niform %s' % niform)
-        
+
         data_1d = np.fromstring(s, dtype=tp)
         data = np.reshape(data_1d, (nrows, ncols))
 
