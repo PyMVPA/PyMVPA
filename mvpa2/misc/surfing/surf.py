@@ -6,15 +6,13 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##'''
+'''
 General support for cortical surface meshes
 
 Created on Feb 11, 2012
 
 @author: nick
 '''
-
-# yoh: nick, do you have any preference to have trailing whitespace
-#      lines through out the code or would be it be ok to remove them?
 
 import numpy as np, os, collections, datetime, time, \
        heapq, afni_suma_1d, math
