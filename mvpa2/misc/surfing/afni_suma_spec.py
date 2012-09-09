@@ -416,21 +416,23 @@ def find_file(directory, icold=None, hemi=None, suffix=None):
 
 def from_any(*args):
     '''Wizard-like function to get a SurfaceSpec instance from any
-    kind of reasonable input
+    kind of reasonable input.
     
     Parameters:
     *args: one or multiple arguments.
-        If a string, then this could refer to either a full filename
-        or a path. If an int, this is interpreted as icold.
-        If one of 'l','r','b','m', this is interpreted as the hemisphere.
+        If one argument and a SurfaceSpec, this is returned immediately.
+        If one argument and the name of a file, it returns the contents
+        of the file.
+        Otherwise each argument may refer to a path, a hemisphere (if one 
+        of 'l','r','b','m', optionally followed by the string 'h'), a 
+        suffix, or an int (this is interpreted as icold); these elments
+        are used to construct a canonical filename using 
+        afni_suma_spec.canonical_filename whose result is returned.
     
     Returns:
     spec: SurfaceSpec
         spec as defined by parameters (if it is found)
     '''
-
-
-
 
     if args is None or not args:
         return None
@@ -444,14 +446,14 @@ def from_any(*args):
                 if os.path.isfile(fn):
                     return read(fn)
 
-    # try to be smart
+    # try to be smart 
     directory = icold = suffix = hemi = None
     for arg in args:
         if type(arg) is int:
             icold = arg
-        if arg in ['l', 'r', 'b', 'm']:
-            hemi = arg
-        if isinstance(arg, basestring):
+        elif arg in ['l', 'r', 'b', 'm', 'lh', 'rh', 'bh', 'mh']:
+            hemi = arg[0]
+        elif isinstance(arg, basestring):
             if os.path.isdir(arg):
                 directory = arg
             else:
