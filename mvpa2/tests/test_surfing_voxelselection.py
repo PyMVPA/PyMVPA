@@ -76,8 +76,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         The surface has as many nodes as there are voxels
         and is parallel to the volume 'slice'
         '''
-        vg = volgeom.from_nifti_file(maskfn, 0)
-        #vg = volgeom.from_nifti_file(maskfn)
+        vg = volgeom.from_any(maskfn, mask_volume=True)
 
         aff = vg.affine
         nx, ny, nz = vg.shape[:3]
