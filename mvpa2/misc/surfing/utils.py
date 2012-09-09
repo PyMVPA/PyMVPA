@@ -7,6 +7,8 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''
+A few utility functions for mvpa2.misc.surfing
+
 Created on Jan 30, 2012
 
 @author: nick
