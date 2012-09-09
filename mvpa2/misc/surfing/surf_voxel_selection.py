@@ -27,6 +27,8 @@ import mvpa2.misc.surfing.volgeom as volgeom
 import utils
 import surf
 
+from mvpa2.base import warning
+
 # TODO: see if we use these contants, or let it be up to the user
 # possibly also rename them
 LINEAR_VOXEL_INDICES = "linear_voxel_indices"
@@ -462,17 +464,27 @@ def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
 
         if __debug__:
             debug('SVS', "")
-            debug("SVS", "Voxel selection completed: %d / %d nodes have "
-                         "voxels associated)" %
-                         (len(node2volume_attributes.keys), len(visitorder)))
+
+            if node2volume_attributes is None:
+                msg = ("Voxel selection completed: none of %d nodes have "
+                     "voxels associated" % len(visitorder))
+            else:
+                msg = ("Voxel selection completed: %d / %d nodes have "
+                     "voxels associated" %
+                     (len(node2volume_attributes.keys), len(visitorder)))
+
+            debug("SVS", msg)
 
 
+        if node2volume_attributes is None:
+            warning('No voxels associated with any of %d nodes' %
+                            len(visitorder))
 
         return node2volume_attributes
 
 def run_voxel_selection(epifn, whitefn, pialfn, radius, srcfn=None, srcs=None,
                        start=0., stop=1., steps=10, distance_metric='dijkstra',
-                       intermediateat=.5, etastep=1):
+                       intermediateat=.5, etastep=1, volume_mask=False):
     '''Wrapper function that is supposed to make voxel selection
     on the surface easy.
 
@@ -512,12 +524,16 @@ def run_voxel_selection(epifn, whitefn, pialfn, radius, srcfn=None, srcs=None,
     etastep: int (default: 1)
         After how many searchlights an estimate should be printed of the remaining
         time until completion of all searchlights
+    volume_mask: None or boolean or int
+        If an int, use the volume_mask-th volume of epifn as a voxel mask. True is
+        equivalent to 0. If False or None, no mask is used. 
 
     Returns
     -------
-    sel: sparse_volmasks.SparseVolMask
+    sel: sparse_volmasks.SparseVolMask or None
         Voxel selection results, that associates, which each node, the indices
-        of the surrounding voxels.
+        of the surrounding voxels. If no node has any voxels associated, then
+        None is returned.
     '''
 
     # read volume geometry
