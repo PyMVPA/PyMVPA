@@ -6,7 +6,7 @@ Includes I/O support and generating spec files that combine both hemispheres'''
 
 
 import re, datetime, os, copy, glob
-import utils, surf_fs_asc
+import utils, surf_fs_asc, surf
 
 _COMPREFIX = 'CoM' #  for surfaces that were rotated around center of mass
 
@@ -74,7 +74,7 @@ class SurfaceSpec(object):
         if not surfstate in self.states:
             self.states.append(surfstate)
 
-    def find_surface(self, surfacestate):
+    def find_surface_from_state(self, surfacestate):
         return [(i, surface) for (i, surface) in enumerate(self.surfaces)
                  if surface['SurfaceState'] == surfacestate]
 
@@ -111,7 +111,25 @@ class SurfaceSpec(object):
             f.write(self.as_string())
 
 
-    def surface_file(self, *args):
+    def get_surface(self, *args):
+        '''
+        Wizard-like function to get a surface
+         
+        Parameters
+        ----------
+        *args: list of str 
+            parts of the surface file name or description, such as 
+            'pial' (for pial surface), 'wm' (for white matter), or 
+            'lh' (for left hemisphere').
+        
+        Returns
+        -------
+        surf: surf.Surface
+            
+        '''
+        return surf.from_any(self.get_surface_file(*args))
+
+    def get_surface_file(self, *args):
         '''
         Wizard-like function to get the filename of a surface
          
@@ -142,7 +160,8 @@ class SurfaceSpec(object):
             for arg in args:
                 if not arg is str:
                     arg = '%s' % arg
-                funcs = [lambda x: x.startswith(arg), lambda x: arg in x]
+                funcs = [lambda x: x.startswith(arg),
+                         lambda x: arg in x]
                 for func in funcs:
                     surfs_filter = filter(lambda x:func(x[field]), surfs)
                     if not surfs_filter:
@@ -189,7 +208,7 @@ def hemi_pairs_add_views(spec_both, state, directory=None, overwrite=False):
         newfns = []
         for i, spec in enumerate(spec_both):
 
-            idxdef = spec.find_surface(state)
+            idxdef = spec.find_surface_from_state(state)
             if len(idxdef) != 1:
                 raise ValueError('Not unique surface with state %s' % state)
             surfidx, surfdef = idxdef[0]
@@ -371,6 +390,8 @@ def read(fn):
 def canonical_filename(icold=None, hemi=None, suffix=None):
     if suffix is None:
         suffix = ''
+    if icold is None or hemi is None:
+        raise ValueError('icold (%s) or hemi (%s) are None' % (icold, hemi))
     return '%sh_ico%d%s.spec' % (hemi, icold, suffix)
 
 def find_file(directory, icold=None, hemi=None, suffix=None):
@@ -385,12 +406,59 @@ def find_file(directory, icold=None, hemi=None, suffix=None):
         fn = glob.glob(pat)
 
         if not fn:
-            raise ValueError("not found: %s" % fn)
+            raise ValueError("not found: %s " % pat)
         elif len(fn) > 1:
-            raise ValueError("not unique: %s" % fn)
+            raise ValueError("not unique: %s (found %d)" % (pat, len(fn)))
 
         fn = fn[0]
 
     return fn
 
+def from_any(*args):
+    '''Wizard-like function to get a SurfaceSpec instance from any
+    kind of reasonable input
+    
+    Parameters:
+    *args: one or multiple arguments.
+        If a string, then this could refer to either a full filename
+        or a path. If an int, this is interpreted as icold.
+        If one of 'l','r','b','m', this is interpreted as the hemisphere.
+    
+    Returns:
+    spec: SurfaceSpec
+        spec as defined by parameters (if it is found)
+    '''
 
+
+
+
+    if args is None or not args:
+        return None
+    if len(args) == 1:
+        a = args[0]
+        if isinstance(a, SurfaceSpec):
+            return a
+        if (isinstance(a, basestring)):
+            for ext in ['', '.spec']:
+                fn = a + ext
+                if os.path.isfile(fn):
+                    return read(fn)
+
+    # try to be smart
+    directory = icold = suffix = hemi = None
+    for arg in args:
+        if type(arg) is int:
+            icold = arg
+        if arg in ['l', 'r', 'b', 'm']:
+            hemi = arg
+        if isinstance(arg, basestring):
+            if os.path.isdir(arg):
+                directory = arg
+            else:
+                suffix = arg
+
+    if directory is None:
+        directory = '.'
+
+    fn = find_file(directory, icold=icold, suffix=suffix, hemi=hemi)
+    return read(fn)

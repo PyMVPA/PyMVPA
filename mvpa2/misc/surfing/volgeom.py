@@ -438,7 +438,7 @@ def from_any(s, mask_volume=False):
     vg: VolGeom
         Volume geometry associated with s.
     """
-    if isinstance(s, VolGeom):
+    if s is None or isinstance(s, VolGeom):
         return s
 
     if isinstance(s, basestring):

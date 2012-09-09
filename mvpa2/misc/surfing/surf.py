@@ -932,7 +932,7 @@ def write(fn, s, overwrite=False):
         raise ValueError("Not implemented (based on extension): %r" % fn)
 
 def from_any(s):
-    if isinstance(s, Surface):
+    if s is None or isinstance(s, Surface):
         return s
     elif isinstance(s, basestring):
         return read(s)
