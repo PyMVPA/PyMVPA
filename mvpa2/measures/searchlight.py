@@ -343,7 +343,17 @@ class Searchlight(BaseSearchlight):
 
         # Assure having a dataset (for paranoid ones)
         if not is_datasetlike(result_ds):
-            result_ds = Dataset(np.atleast_1d(result_ds))
+            try:
+                result_a = np.atleast_1d(result_ds)
+            except ValueError, e:
+                if 'setting an array element with a sequence' in str(e):
+                    # try forcing object array.  Happens with
+                    # test_custom_results_fx_logic on numpy 1.4.1 on Debian
+                    # squeeze
+                    result_a = np.array(result_ds, dtype=object)
+                else:
+                    raise
+            result_ds = Dataset(result_a)
 
         return result_ds
 
