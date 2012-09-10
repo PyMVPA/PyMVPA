@@ -362,10 +362,26 @@ class SplitterTests(unittest.TestCase):
             # partitioned dataset shared the data
             assert_true(s.samples.base is self.data.samples)
         splits = [ list(spl.generate(p)) for p in hs.generate(self.data) ]
+
+        # with numpy 1.7.0b1 "chaining" was deprecated so let's create
+        # check function appropriate for the given numpy version
+        _a = np.arange(5)
+        __a = _a[:4][:3]
+        if __a.base is _a:
+            # 1.7.0b1
+            def is_the_same_base(x, base=self.data.samples):
+                return x.base is base
+        elif __a.base.base is _a:
+            # prior 1.7.0b1
+            def is_the_same_base(x, base=self.data.samples):
+                return x.base.base is base
+        else:
+            raise RuntimeError("Uknown handling of .base by numpy")
+
         for s in splits:
             # we get slicing all the time
-            assert_true(s[0].samples.base.base is self.data.samples)
-            assert_true(s[1].samples.base.base is self.data.samples)
+            assert_true(is_the_same_base(s[0].samples))
+            assert_true(is_the_same_base(s[1].samples))
         spl = Splitter(attr='partitions', noslicing=True)
         splits = [ list(spl.generate(p)) for p in hs.generate(self.data) ]
         for s in splits:
@@ -378,7 +394,7 @@ class SplitterTests(unittest.TestCase):
         for i, s in enumerate(splits):
             # training only first and last split
             if i == 0 or i == len(splits) - 1:
-                assert_true(s[0].samples.base.base is self.data.samples)
+                assert_true(is_the_same_base(s[0].samples))
             else:
                 assert_true(s[0].samples.base is None)
             # we get slicing all the time

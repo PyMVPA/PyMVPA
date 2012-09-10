@@ -30,7 +30,8 @@ if sys.platform == "darwin":
 
 if sys.platform.startswith('linux'):
     # need to look for numpy (header location changes with v1.3)
-    libsvmc_include_dirs += ['/usr/include/numpy']
+    from numpy.distutils.misc_util import get_numpy_include_dirs
+    libsvmc_include_dirs += get_numpy_include_dirs()
 
 # when libsvm is forced -- before it was used only in cases
 # when libsvm was available at system level, hence we switch
