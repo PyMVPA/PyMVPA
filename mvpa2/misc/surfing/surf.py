@@ -15,7 +15,7 @@ Created on Feb 11, 2012
 '''
 
 import numpy as np, os, collections, datetime, time, \
-       heapq, afni_suma_1d, math
+       heapq, math
 
 class Surface(object):
     '''Cortical surface mesh

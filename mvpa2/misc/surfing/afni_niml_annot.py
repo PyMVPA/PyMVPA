@@ -14,7 +14,11 @@ Created on Feb 19, 2012
 @author: Nikolaas. N. Oosterhof (nikolaas.oosterhof@unitn.it)
 '''
 
-import afni_niml as niml, afni_niml_dset as dset, numpy as np
+
+import numpy as np
+
+import mvpa2.misc.surfing.afni_niml as niml
+import mvpa2.misc.surfing.afni_niml_dset as dset
 
 def rawniml2annot(p):
     if type(p) is list:
