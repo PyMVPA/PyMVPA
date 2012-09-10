@@ -37,9 +37,6 @@ from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
 from mvpa2.misc.neighborhood import IndexQueryEngine
 from mvpa2.measures.searchlight import Searchlight
 
-from mvpa2.misc.surfing import volgeom
-from mvpa2.misc.surfing import utils
-
 class SparseAttributes(object):
     def __init__(self, sa_labels, sa=None, a=None):
         self._sa_labels = list(sa_labels)
