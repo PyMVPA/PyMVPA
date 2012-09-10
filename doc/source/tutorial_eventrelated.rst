@@ -312,7 +312,7 @@ voxel features``.
 
 That was it. Perhaps you are scared by the amount of code. Please note that
 it could have been done shorter, but this way allows to plot any other voxel
-coordinate combination as well. matplotlib allows to stored this figure in
+coordinate combination as well. matplotlib allows for saving this figure in
 SVG_ format that allows for convenient post-processing in Inkscape_ -- a
 publication quality figure is only minutes away.
 
@@ -368,7 +368,7 @@ correct this is a spatio-temporal searchlight. The searchlight focus
 travels along all possible locations in our ventral temporal ROI, but at
 the same time also along the peristimulus time segment covered by the
 events. The spatial searchlight extent is the center voxel and its
-immediate neighbors and the temporal dimension comprises two time-points in
+immediate neighbors and the temporal dimension comprises of two additional ime-points in
 each direction. The result is again a dataset. Its shape is compatible
 with the mapper of ``evds``, hence it can also be back-projected into the
 original 4D fMRI brain space.
