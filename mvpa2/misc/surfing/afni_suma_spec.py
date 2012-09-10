@@ -6,7 +6,7 @@ Includes I/O support and generating spec files that combine both hemispheres'''
 
 
 import re, datetime, os, copy, glob
-import utils, surf_fs_asc, surf
+from mvpa2.misc.surfing import utils, surf_fs_asc, surf
 
 _COMPREFIX = 'CoM' #  for surfaces that were rotated around center of mass
 

@@ -29,7 +29,9 @@ Similarly, such a dict can be saved to a .niml.dset file using the
 afni_niml_dset.write function
 '''
 
-import afni_niml, random, numpy as np, afni_niml_types as types, os, time, sys, afni_niml as niml
+import random, numpy as np, os, time, sys
+import mvpa2.misc.surfing.afni_niml_types as types
+import mvpa2.misc.surfing.afni_niml as niml
 
 def _string2list(s, SEP=";"):
     '''splits a string by SEP; if the last element is empty then it is not returned
@@ -275,10 +277,4 @@ def sparse2full(dset, pad_to_ico_ld=None, pad_to_node=None):
     fulldset['node_indices'] = full_node_indices
 
     return fulldset
-
-if __name__ == "__main__":
-    fn = "/Users/nick/_tmp/weird.niml.dset"
-    raw = afni_niml.read(fn)
-
-    dset = read(fn)
 

@@ -22,8 +22,9 @@ files which provide easier access to the data.
 
 '''
 
-import re, numpy as np, afni_niml_types as types, random, os, time, sys, base64, afni_niml_dset as dset, copy
+import re, numpy as np, random, os, time, sys, base64, copy
 
+import mvpa2.misc.surfing.afni_niml_types as types
 _RE_FLAGS = re.DOTALL # regular expression matching spans across new lines
 
 

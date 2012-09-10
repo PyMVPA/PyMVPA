@@ -13,7 +13,7 @@ matter boundaries of the grey matter).
 @author: nick
 """
 
-import surf, volgeom, sparse_attributes
+from mvpa2.misc.surfing import surf, volgeom, sparse_attributes
 
 import nibabel as nb
 import numpy as np

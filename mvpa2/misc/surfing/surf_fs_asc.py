@@ -30,10 +30,12 @@ Created on Feb 12, 2012
 @author: nick
 '''
 
-import numpy as np, os, datetime, utils, afni_suma_1d, afni_niml_dset
+import numpy as np, os, datetime, utils
+
+from mvpa2.misc.surfing import afni_suma_1d, surf
 
 #from surf import Surface
-import mvpa2.misc.surfing.surf as surf
+#import mvpa2.misc.surfing.surf as surf
 
 def read(fn):
     '''
