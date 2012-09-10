@@ -149,6 +149,7 @@ def setup_package():
                            'mvpa2.clfs.skl',
                            'mvpa2.clfs.sg',
                            'mvpa2.datasets',
+                           'mvpa2.datasets.sources',
                            'mvpa2.featsel',
                            'mvpa2.kernels',
                            'mvpa2.mappers',

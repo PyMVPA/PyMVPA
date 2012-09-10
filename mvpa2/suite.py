@@ -117,6 +117,7 @@ from mvpa2.datasets.eep import *
 from mvpa2.datasets.eventrelated import *
 if externals.exists('nibabel') :
     from mvpa2.datasets.mri import *
+from mvpa2.datasets.sources import *
 
 __sdebug('generators')
 from mvpa2.generators.base import *
