@@ -64,6 +64,7 @@ Datasets: Input, Output, Storage and Preprocessing
    datasets.formats
    datasets.mri
    datasets.miscfx
+   datasets.sources
 
 
 Mappers: Data Transformations
