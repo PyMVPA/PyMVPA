@@ -98,3 +98,31 @@ def test_sifter_superord_usecase():
     # I don't think that this would ever fail, so not marking it labile
     assert(np.mean(accs_regular) > .8)
     assert(np.mean(accs_super)   < .6)
+
+def _test_edmund_chong_20120907():
+    from mvpa2.suite import *
+    from mvpa2.testing.datasets import datasets
+    repeater = Repeater(count=20)
+
+    partitioner = ChainNode([NFoldPartitioner(cvtype=1),
+                             Balancer(attr='targets',
+                                      count=1, # for real data > 1
+                                      limit='partitions',
+                                      apply_selection=True
+                                      )],
+                            space='partitions')
+
+    clf = LinearCSVMC() #choice of classifier
+    permutator = AttributePermutator('targets', limit={'partitions': 1},
+                                     count=1)
+    null_cv = CrossValidation(
+        clf,
+        ChainNode([partitioner, permutator], space=partitioner.get_space()),
+        errorfx=mean_mismatch_error)
+    distr_est = MCNullDist(repeater, tail='left', measure=null_cv,
+                           enable_ca=['dist_samples'])
+    cvte = CrossValidation(clf, partitioner,
+                           errorfx=mean_mismatch_error,
+                           null_dist=distr_est,
+                           enable_ca=['stats'])
+    errors = cvte(datasets['uni2small'])
