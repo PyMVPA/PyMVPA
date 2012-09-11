@@ -88,6 +88,18 @@ News
  </script>
 
 
+Contributing
+============
+
+We welcome all kinds of contributions, and you do **not need to be a
+programmer** to contribute! If you have some feature in mind that is missing,
+some example use case that you want to share, you spotted a typo in the
+documentation, or you have an idea how to improve the user experience all
+together -- do not hesitate and :ref:`contact us <chap_support>`. We will then
+figure out how your contribution can be best incorporated. Any contributor will
+be acknowledged and will appear in the list of people who have helped to
+develop PyMVPA on the front-page of the `pymvpa.org <http://www.pymvpa.org>`_.
+
 License
 =======
 
