@@ -379,7 +379,7 @@ class MCNullDist(NullDist):
             #
             if __debug__:
                 debug('STATMC', "Doing %i permutations: %i" \
-                      % (self.__permutator.nruns, p+1), cr=True)
+                      % (self.__permutator.count, p+1), cr=True)
 
             # compute and store the measure of this permutation
             # assume it has `TransferError` interface
