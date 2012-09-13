@@ -194,8 +194,6 @@ def run_toafni(config, env):
         if config['overwrite']:
             if filesexist:
                 cmds.append('rm -rf "%s"' % sd)
-            else:
-                raise Exception("Dir %s exists but does not seem to be SUMA dir for subject %s, don't know what do to now" % (sd, sid))
         cmds.append('cd %(surfdir)s;@SUMA_Make_Spec_FS -sid %(sid)s -no_ld' % config)
         utils.run_cmds(cmds, env)
     else:
