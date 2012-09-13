@@ -65,32 +65,3 @@ def _rawniml_labeltable2annot(p):
 def read(fn, itemifsingletonlist=True):
     return niml.read(fn, itemifsingletonlist, rawniml2annot)
 
-if __name__ == '__main__':
-    d = '/Users/nick/Downloads/fingerdata-0.2/fs/s88/surf/SUMA/'
-    fn = d + 'lh.aparc.a2005s.annot.niml.dset'
-    fnout = d + '__o.niml.dset'
-    f = open(fn)
-    s = f.read()
-    f.close()
-
-    raw = niml.string2rawniml(s)
-    b = rawniml2annot(raw)
-
-    print b
-
-    print fn
-
-    t = raw[0]['nodes'][-1]
-    s = t['nodes']
-    dd = dset.rawniml2dset(t)
-    #print b
-
-    #a=rawniml2annot(raw)
-
-    #rawt=raw['nodes'][6]
-    #t=_rawniml_labeltable2annot(raw)
-    #print a
-
-    #annot=rawniml2annot(raw)
-
-    pass
