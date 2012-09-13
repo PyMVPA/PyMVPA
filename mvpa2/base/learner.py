@@ -137,6 +137,10 @@ class Learner(Node):
         # finally flag as trained
         self._set_trained()
 
+        if __debug__:
+            debug("LRN", "Finished training learner %(lrn)s on dataset %(dataset)s",
+                  msgargs={'lrn':self, 'dataset': ds})
+
 
     def untrain(self):
         """Reverts changes in the state of this node caused by previous training

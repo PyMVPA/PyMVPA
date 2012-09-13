@@ -359,16 +359,24 @@ class AttrDataset(object):
           inside the __deepcopy__() method and refers to the dict-argument
           `memo` in the Python documentation.
         """
+        if __debug__:
+            debug('DS_', "Duplicating samples shaped %s"
+                         % str(self.samples.shape))
         if deep:
             samples = copy.deepcopy(self.samples, memo)
         else:
             samples = self.samples.view()
 
+        if __debug__:
+            debug('DS_', "Create new dataset instance for copy")
         # call the generic init
         out = self.__class__(samples,
                              sa=self.sa.copy(a=sa, deep=deep, memo=memo),
                              fa=self.fa.copy(a=fa, deep=deep, memo=memo),
                              a =self.a.copy(a=a,   deep=deep, memo=memo))
+        if __debug__:
+            debug('DS_', "Return dataset copy (ID: %s) of source (ID: %s)"
+                         % (id(out), id(self)))
         return out
 
 
