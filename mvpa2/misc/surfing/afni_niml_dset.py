@@ -278,3 +278,144 @@ def sparse2full(dset, pad_to_ico_ld=None, pad_to_node=None):
 
     return fulldset
 
+def from_any(s, itemifsingletonlist=True):
+    if isinstance(s, dict) and 'data' in s:
+        return s
+    elif isinstance(s, basestring):
+        return read(s, itemifsingletonlist)
+    elif isinstance(s, np.array):
+        return dict(data=s)
+    else:
+        raise ValueError('not recognized input: %r' % s)
+
+
+def label2index(dset, label):
+    if type(label) is list:
+        return [label2index(dset, x) for x in label]
+
+    if type(label) is int:
+        sh = dset['data'].shape
+        if label < 0 or label >= sh[1]:
+            raise ValueError('label index %d out of bounds (0.. %d)' %
+                                    (label, sh[1]))
+        return label
+
+    labels = dset.get('labels', None)
+    if labels is None:
+        raise ValueError('No labels found')
+
+    for i, k in enumerate(labels):
+        if k == label:
+            return i
+
+    return None
+
+def ttest(dsets, sa_labels=None, return_values='mt'):
+    '''Runs a one-sample t-test across datasets
+    
+    Parameters
+    ----------
+    dsets: str or list of dicts
+        (filenames of) NIML dsets, each referrint to PxQ data for
+        P nodes (features) and Q values per node (samples)
+    sa_labels: list of (int or str)
+        indices or labels of columns to compare
+    return_values: str (default: 'mt')
+        'm' or 't' or 'mt' to return sample mean, t-value, or both
+    
+    Returns
+    -------
+    dset: dict
+        NIML dset-compatible structure, with fields .data, .labels,
+        .stats and .node_indices set.
+    '''
+
+    do_m = 'm' in return_values
+    do_t = 't' in return_values
+
+    if not (do_m or do_t):
+        raise ValueError("Have to return at least m or t")
+
+    ns = len(dsets)
+
+    for i, dset in enumerate(dsets):
+        dset = from_any(dset)
+        dset_data = dset['data']
+        if i == 0:
+            sh = dset_data.shape
+            if sa_labels is None:
+                if 'labels' in dset:
+                    sa_labels = sa_labels
+                else:
+                    sa_labels = ['%d' % i in xrange(sh[1])]
+            nc = len(sa_labels)
+            nn = sh[0]
+
+            data = np.zeros((nn, nc, ns), dset_data.dtype) # number of nodes, columns, subjects
+
+        if 'node_indices' in dset:
+            node_idxs = np.reshape(dset['node_indices'], (-1,))
+        else:
+            node_idxs = np.arange(nn)
+
+        if i == 0:
+            node_idxs0 = node_idxs
+        else:
+            if set(node_idxs0) != set(node_idxs):
+                raise ValueError("non-matching node indices for %d and %d" %
+                                    (0, i))
+
+        col_idxs = np.asarray(label2index(dset, sa_labels))
+        data[node_idxs, :, i] = dset_data[:, col_idxs]
+
+
+
+    if do_m:
+        m = np.mean(data, axis=2)
+
+    if do_t:
+        from scipy import stats
+        t = stats.ttest_1samp(data, 0., axis=2)[0]
+
+    if do_m and do_t:
+        r = np.zeros((nn, 2 * nc), dtype=m.dtype)
+        r[:, np.arange(0, 2 * nc, 2)] = m
+        r[:, np.arange(1, 2 * nc, 2)] = t
+    elif do_t:
+        r = t
+    elif do_m:
+        r = m
+
+    pf = []
+    stats = []
+    if do_m:
+        pf.append('m')
+        stats.append('None')
+    if do_t:
+        pf.append('t')
+        stats.append('Ttest(%d)' % (ns - 1))
+
+    labs = sum([['%s_%s' % (p, lab) for p in pf] for lab in sa_labels], [])
+    stats = stats * nc
+
+    return dict(data=r, labels=labels, stats=stats, node_indices=node_idxs0)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
