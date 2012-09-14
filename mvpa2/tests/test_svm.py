@@ -10,6 +10,8 @@
 
 import numpy as np
 
+from mvpa2.datasets import dataset_wizard
+
 from mvpa2.testing import *
 from mvpa2.testing.clfs import *
 from mvpa2.testing.datasets import *
@@ -173,6 +175,12 @@ class SVMTests(unittest.TestCase):
             self.assertRaises(TypeError, sg.SVM, C=1.0, nu=2.3)
             self.assertRaises(TypeError, sg.SVM, C=10, kernel_type='RBF',
                                   coef0=3)
+
+    @sweepargs(clf=clfswh['svm', 'linear', '!meta', 'C_SVC'][:1])
+    def test_C_on_int_dataset(self, clf):
+        a = np.arange(8, dtype=np.int16).reshape(4,-1)
+        a[0,0] = 322           # the value which would overflow
+        self.assertTrue(np.isfinite(clf._get_default_c(a)))
 
 def suite():
     return unittest.makeSuite(SVMTests)
