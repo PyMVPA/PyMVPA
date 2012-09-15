@@ -19,6 +19,7 @@ install:
     - sudo easy_install$PYSUF nibabel # Latest pypi
     - sudo apt-get install $PYTHON-nose
     - sudo apt-get install shogun-python-modular
+    - sudo apt-get install $PYTHON-mdp $PYTHON-psutil $PYTHON-sklearn liblapack-dev
     - make
 script:
     # Run only nonlabile tests
