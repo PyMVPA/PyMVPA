@@ -16,7 +16,9 @@ import glob
 import getopt
 import subprocess
 import signal
+
 import mvpa2
+from mvpa2.misc.support import SmartVersion
 
 def getandkillopt(opt):
     for i, arg in enumerate(sys.argv[1:]):
@@ -56,6 +58,28 @@ Options:
   --tutorial-notebooks-path
                         path to the tutorial notebooks
 """ % sys.argv[0]
+
+def get_latest_ipython(ipythons=['ipython01x', 'ipython']):
+    """Choose the latest available ipython according to -V
+    """
+    avail = []
+    for ipython in ipythons:
+        try:
+            p = subprocess.Popen([ipython, '-V'],
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE)
+            l = p.stdout.read().split('\n')
+            l = [x for x in l if len(x)]    # strip empty lines
+            if len(l):
+                ver = SmartVersion(l[-1])
+                avail.append((ver, ipython))
+        except OSError:
+            pass
+    avail = sorted(avail)
+    if len(avail):
+        return avail[-1]
+    else:
+        return None, None
 
 def main():
     if getandkillopt('--version'):
@@ -117,11 +141,16 @@ def main():
             else:
                 print "Keep existing notebook at '%s'" % nb_dst_filepath
 
+    ipython_ver, ipython = get_latest_ipython()
+    if ipython_ver is None:
+        raise SystemExit("No reasonably versioned IPython was found")
+    if ipython_ver < '0.12' and want_notebook:
+        raise SystemExit(
+            "ERROR: no notebook facilities are available in IPython prior " \
+            "version 0.12. Detected version of IPython on the system %s " \
+            "by %s" % (ipython_ver.vstring, ipython))
     try:
-        ipy = subprocess.Popen(['ipython'] + ipy_args, cwd=workdir)
-    except OSError:
-        ipy = subprocess.Popen(['ipython01x'] + ipy_args, cwd=workdir)
-    try:
+        ipy = subprocess.Popen([ipython] + ipy_args, cwd=workdir)
         ipy.wait()
     except KeyboardInterrupt:
         ipy.terminate()
