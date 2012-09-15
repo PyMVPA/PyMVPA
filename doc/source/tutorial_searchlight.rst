@@ -14,6 +14,12 @@
 Part 5: Searchlite
 ******************
 
+.. note::
+
+  This tutorial part is also available for download as an `IPython notebook
+  <http://ipython.org/ipython-doc/dev/interactive/htmlnotebook.html>`_:
+  [`ipynb <notebooks/tutorial_searchlight.ipynb>`_]
+
 The :ref:`previous tutorial part <chap_tutorial_classifiers>` ended with
 the insight that we still have no clue about where in the brain (or our
 chosen ROIs) the signal is located that is picked up by the classifier.

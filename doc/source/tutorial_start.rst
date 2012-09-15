@@ -14,6 +14,12 @@
 Part 1: A Gentle Start
 **********************
 
+.. note::
+
+  This tutorial part is also available for download as an `IPython notebook
+  <http://ipython.org/ipython-doc/dev/interactive/htmlnotebook.html>`_:
+  [`ipynb <notebooks/tutorial_start.ipynb>`_]
+
 The purpose of this first tutorial part is to make you familiar with a few basic
 properties and building blocks of PyMVPA. Let's have a slow start and compute a
 :term:`cross-validation` analysis.

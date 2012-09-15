@@ -14,6 +14,12 @@
 Part 2: Dataset Basics and Concepts
 ***********************************
 
+.. note::
+
+  This tutorial part is also available for download as an `IPython notebook
+  <http://ipython.org/ipython-doc/dev/interactive/htmlnotebook.html>`_:
+  [`ipynb <notebooks/tutorial_datasets.ipynb>`_]
+
 A `~mvpa2.datasets.base.Dataset` is the basic data container in PyMVPA. It
 serves as the primary form of input data storage, but also as container for
 more complex results returned by some algorithm. In this tutorial part we will
