@@ -14,6 +14,12 @@
 Part 4: Classifiers -- All Alike, Yet Different
 ***********************************************
 
+.. note::
+
+  This tutorial part is also available for download as an `IPython notebook
+  <http://ipython.org/ipython-doc/dev/interactive/htmlnotebook.html>`_:
+  [`ipynb <notebooks/tutorial_classifiers.ipynb>`_]
+
 This is already the second time that we will engage in a classification
 analysis, so let's first recap what we did before in the :ref:`first tutorial
 part <chap_tutorial_start>`:

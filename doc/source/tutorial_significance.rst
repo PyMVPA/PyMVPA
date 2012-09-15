@@ -14,6 +14,12 @@
 Part 8: The Earth Is Round -- Significance Testing
 **************************************************
 
+.. note::
+
+  This tutorial part is also available for download as an `IPython notebook
+  <http://ipython.org/ipython-doc/dev/interactive/htmlnotebook.html>`_:
+  [`ipynb <notebooks/tutorial_significance.ipynb>`_]
+
 *Null* hypothesis testing
 =========================
 

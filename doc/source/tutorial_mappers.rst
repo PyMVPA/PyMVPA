@@ -14,6 +14,12 @@
 Part 3: Mappers -- The Swiss Army Knife
 ***************************************
 
+.. note::
+
+  This tutorial part is also available for download as an `IPython notebook
+  <http://ipython.org/ipython-doc/dev/interactive/htmlnotebook.html>`_:
+  [`ipynb <notebooks/tutorial_mappers.ipynb>`_]
+
 In the :ref:`previous tutorial part <chap_tutorial_datasets>` we have discovered a
 magic ingredient of datasets: a mapper. Mappers are probably the most
 powerful concept in PyMVPA, and there is little one would do without them.

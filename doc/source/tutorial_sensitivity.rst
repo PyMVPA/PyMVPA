@@ -14,6 +14,12 @@
 Part 6: Looking Without Searching -- Sensitivity Analysis
 *********************************************************
 
+.. note::
+
+  This tutorial part is also available for download as an `IPython notebook
+  <http://ipython.org/ipython-doc/dev/interactive/htmlnotebook.html>`_:
+  [`ipynb <notebooks/tutorial_sensitivity.ipynb>`_]
+
 In the :ref:`previous tutorial part <chap_tutorial_searchlight>` we made a
 first attempt to localize information in the brain that is relevant to a
 particular classification analyses. While we were relatively successful,

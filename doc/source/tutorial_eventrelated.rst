@@ -14,6 +14,12 @@
 Part 7: "When Is The Signal" -- Event-related Data Analysis
 ***********************************************************
 
+.. note::
+
+  This tutorial part is also available for download as an `IPython notebook
+  <http://ipython.org/ipython-doc/dev/interactive/htmlnotebook.html>`_:
+  [`ipynb <notebooks/tutorial_eventrelated.ipynb>`_]
+
 In all previous tutorial parts we have analyzed the same fMRI data. We
 analyzed it using a number of different strategies, but they all had one
 thing in common: A sample in each dataset was always a single fMRI volume.
