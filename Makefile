@@ -247,6 +247,7 @@ tutorial2notebooks-stamp: mkdir-NOTEBOOKBUILD_DIR
 		--glossary_baseurl http://pymvpa.org/glossary.html \
 		--outdir $(NOTEBOOKBUILD_DIR) \
 		--exclude doc/source/tutorial_prerequisites.rst \
+		--verbose \
 		doc/source/tutorial_*.rst
 	touch $@
 
