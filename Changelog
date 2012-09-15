@@ -33,20 +33,28 @@ Releases
 
 * 2.2.0 (Sun, Sep 16 2012)
 
-  * API changes
+  * New functionality (14 commits)
 
-    - All command line tools have been renamed to have a consistent 'pymvpa2-'
-      prefix.
-
-  * Fixes (77 commits)
-
-    - HDF5 now properly stores object-type ndarray, where it the array shape
-      was unintentionally modified on-load before (Fixes #84).
-    - HDF5 can now reconstruct 'builtin' objects (Fixes #86).
-    - Check value data type and convert to float when collecting performance
-      statistics to avoid numerical problems.
-    - Do not fail in :class:`~mvpa2.clfs.transerror.BayesConfusionHypothesis`
-      when a dataset does not provide class labels.
+   - New HDF5-based storage backend for
+     :class:`~mvpa2.measures.searchlight.Searchlight` the can significantly
+     speed up serialization of large result dataset in parallelized
+     computations.
+   - New fast searchlight
+     :class:`~mvpa2.measures.nnsearchlight.M1NNSearchlight` (and
+     helper :func:`~mvpa2.measures.nnsearchlight.sphere_m1nnsearchlight`) to
+     run mean-1-nearest-neighbor searchlights.
+   - New mappers for adding an axis to a dataset
+     (:class:`~mvpa2.mappers.shape.AddAxisMapper`), and for transposing a
+     dataset (:class:`~mvpa2.mappers.shape.TransposeMapper`).
+   - Improved implementation of SciPy's :func:`~mvpa2.misc.stats.ttest_1samp`
+     with support for masked arrays and alternative hypotheses.
+   - Individual tutorial chapters are now available for download as IPython
+     notebooks. A ``rst2ipynb`` converter is available in ``tools/``.
+   - New ``pymvpa2-tutorial`` command line utility to start a PyMVPA tutorial
+     session, either in a console IPython session, or using the IPython
+     notebook server.
+   - New wrapper functions for data generators/loaders in ``sklearn.datasets``,
+     available in :mod:`mvpa2.datasets.sources.sklearn_data`.
 
   * Enhancements (89 commits)
 
@@ -72,28 +80,20 @@ Releases
       optional posterior probabilities, and supports hypothesis definitions
       using literal labels.
 
-  * New functionality (14 commits)
+  * API changes
 
-   - New HDF5-based storage backend for
-     :class:`~mvpa2.measures.searchlight.Searchlight` the can significantly
-     speed up serialization of large result dataset in parallelized
-     computations.
-   - New fast searchlight
-     :class:`~mvpa2.measures.nnsearchlight.M1NNSearchlight` (and
-     helper :func:`~mvpa2.measures.nnsearchlight.sphere_m1nnsearchlight`) to
-     run mean-1-nearest-neighbor searchlights.
-   - New mappers for adding an axis to a dataset
-     (:class:`~mvpa2.mappers.shape.AddAxisMapper`), and for transposing a
-     dataset (:class:`~mvpa2.mappers.shape.TransposeMapper`).
-   - Improved implementation of SciPy's :func:`~mvpa2.misc.stats.ttest_1samp`
-     with support for masked arrays and alternative hypotheses.
-   - Individual tutorial chapters are now available for download as IPython
-     notebooks. A ``rst2ipynb`` converter is available in ``tools/``.
-   - New ``pymvpa2-tutorial`` command line utility to start a PyMVPA tutorial
-     session, either in a console IPython session, or using the IPython
-     notebook server.
-   - New wrapper functions for data generators/loaders in ``sklearn.datasets``,
-     available in :mod:`mvpa2.datasets.sources.sklearn_data`.
+    - All command line tools have been renamed to have a consistent 'pymvpa2-'
+      prefix.
+
+  * Fixes (77 commits)
+
+    - HDF5 now properly stores object-type ndarray, where it the array shape
+      was unintentionally modified on-load before (Fixes #84).
+    - HDF5 can now reconstruct 'builtin' objects (Fixes #86).
+    - Check value data type and convert to float when collecting performance
+      statistics to avoid numerical problems.
+    - Do not fail in :class:`~mvpa2.clfs.transerror.BayesConfusionHypothesis`
+      when a dataset does not provide class labels.
 
 * 2.1.0 (Fri, June 29 2012)
 
