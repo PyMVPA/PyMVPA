@@ -47,9 +47,9 @@ What Do I Need To Get Python Running
 ------------------------------------
 
 PyMVPA code is compatible with Python 2.X series (more precisely >= 2.4).
-Python 3.x is not yet supported. For most stable performance we recommend
-Python 2.6 since that is the version we are using for the development, but,
-once again, anything from 2.5 to 2.7 should be fine.
+Python 3.x is supported as well, but not as widely used (yet), and many
+3rd-party Python modules are still lacking Python 3 support. For now, we
+recommend Python 2.7 for production, but Python 2.6 should work equally well.
 
 Any machine which has Python 2.X available can be used for PyMVPA-based
 processing (see :ref:`Download section <chap_download>` on how to deploy
@@ -79,9 +79,9 @@ as AFNI_ and FSL_.
 
 For those who just want to quickly try PyMVPA, or do not want to deal with
 installing multiple software package we recommend the `NeuroDebian Virtual
-Machine`_. This is a virtual Debian installation that can be ran on Linux,
-Windows, and MacOS X. It includes many Python packages, PyMVPA, and other
-neuroscience software (including AFNI_ and FSL_).
+Machine`_. This is a virtual Debian installation that can be deployed on Linux,
+Windows, and MacOS X in a matter of minutes. It includes many Python packages,
+PyMVPA, and other neuroscience software (including AFNI_ and FSL_).
 
 .. _NeuroDebian Virtual Machine: http://neuro.debian.net/vm.html
 .. _AFNI: http://afni.nimh.nih.gov/afni
@@ -114,7 +114,7 @@ http://www.ibiblio.org/swaroopch/byteofpython/read/
 
   We recommend reading the PDF version that is a lot better formatted.
 
-http://diveintopython.org
+http://www.diveintopython.net
 
   A famous tutorial that served as the entry-point into Python for many people.
   However, it has a relatively steep learning curve, and also covers various
@@ -164,12 +164,12 @@ Interactive Python Shell
 To make interactive use of Python more enjoyable and productive, we suggest
 to explore an enhanced interactive environment for Python -- IPython_.
 
-.. _IPython: http://ipython.scipy.org
+.. _IPython: http://ipython.org
 
 http://fperez.org/papers/ipython07_pe-gr_cise.pdf
 
-  An article from the author of IPython in the Computing in Science and Engineering
-  journal, describing goals and basic features of IPython.
+  An article from one of the authors of IPython in the *Computing in Science and
+  Engineering* journal, describing goals and basic features of IPython.
 
 http://showmedo.com/videotutorials/series?name=CnluURUTV
 
@@ -178,8 +178,30 @@ http://showmedo.com/videotutorials/series?name=CnluURUTV
   Python, so you might like to watch this video whenever you already have
   basic programming experience with any programming language.
 
-http://ipython.scipy.org/moin/Documentation
+http://ipython.org/documentation.html
 
   IPython documentation page which references additional materials, such as
   the main IPython documentation which extensively covers features of IPython.
 
+
+Multivariate Analysis of Neuroimaging Data
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There is a constantly growing number of interesting articles related to the
+field -- visit :ref:`chap_references` for an extended but not exhaustive list
+of related publications.  For a quick introduction into the topic read
+:ref:`Pereira et. al. 2009 <PMB09>`.  For the generic reference on machine
+learning methods we would recommend a great text book :ref:`The Elements of
+Statistical Learning: Data Mining, Inference, and Prediction <HTF09>` by
+`Trevor Hastie`_, `Robert Tibshirani`_, and `Jerome Friedman`_ , PDF of which
+was generously made available online_ free of charge.  For an overview of
+recent advances in computational approaches for modeling and decoding of
+stimulus and cognitive spaces we recommend video recordings from `Neural
+Computation 2011 Workshop at Dartmouth College
+<http://haxbylab.dartmouth.edu/meetings/ncworkshop11.html>`_.
+
+.. _online:
+.. _The Elements of Statistical Learning\: Data Mining, Inference, and Prediction: http://www-stat.stanford.edu/~tibs/ElemStatLearn/
+.. _Trevor Hastie: http://www-stat.stanford.edu/~hastie/
+.. _Robert Tibshirani: http://www-stat.stanford.edu/~tibs/
+.. _Jerome Friedman: http://www-stat.stanford.edu/~jhf/

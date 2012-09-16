@@ -7,7 +7,7 @@ DOC_DIR=$(CURDIR)/doc
 TUT_DIR=$(CURDIR)/datadb/tutorial_data/tutorial_data
 DOCSRC_DIR=$(DOC_DIR)/source
 DOCBUILD_DIR=$(BUILDDIR)/doc
-NOTEBOOKBUILD_DIR=$(BUILDDIR)/notebooks
+NOTEBOOKBUILD_DIR=$(HTML_DIR)/notebooks
 MAN_DIR=$(BUILDDIR)/man
 APIDOC_DIR=$(HTML_DIR)/api
 PDF_DIR=$(BUILDDIR)/pdf
@@ -186,9 +186,11 @@ pics:
 manpages: mkdir-MAN_DIR
 	@echo "I: Creating manpages"
 	PYTHONPATH=$(LPYTHONPATH) help2man -N -n 'preprocess fMRI data for PyMVPA' \
-		bin/mvpa-prep-fmri > $(MAN_DIR)/mvpa-prep-fmri.1
-	PYTHONPATH=. help2man -N -n 'query stereotaxic atlases' \
-		bin/atlaslabeler > $(MAN_DIR)/atlaslabeler.1
+		bin/pymvpa2-prep-fmri > $(MAN_DIR)/pymvpa2-prep-fmri.1
+	PYTHONPATH=$(LPYTHONPATH) help2man -N -n 'query stereotaxic atlases' \
+		bin/pymvpa2-atlaslabeler > $(MAN_DIR)/pymvpa2-atlaslabeler.1
+	PYTHONPATH=$(LPYTHONPATH) help2man -N -n 'start a PyMVPA tutorial session' \
+		bin/pymvpa2-tutorial > $(MAN_DIR)/pymvpa2-tutorial.1
 
 references:
 	@echo "I: Generating references"
@@ -199,7 +201,7 @@ mpl-stamp: build
 	echo "backend : Agg" >| $(CURDIR)/build/matplotlibrc
 	touch $@
 
-htmldoc: examples2rst build pics mpl-stamp
+htmldoc: examples2rst build pics mpl-stamp tutorial2notebooks
 	@echo "I: Creating an HTML version of documentation"
 	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off \
 		PYTHONPATH=$(CURDIR):$(PYTHONPATH) \
@@ -238,13 +240,15 @@ examples2rst-stamp: mkdir-DOCBUILD_DIR
 	touch $@
 
 tutorial2notebooks: tutorial2notebooks-stamp
-tutorial2notebooks-stamp: mkdir-NOTEBOOKBUILD_DIR
+tutorial2notebooks-stamp:
+	mkdir -p $(NOTEBOOKBUILD_DIR)
 	tools/rst2ipnbpy \
 		--baseurl http://pymvpa.org \
 		--apiref_baseurl http://pymvpa.org/generated \
 		--glossary_baseurl http://pymvpa.org/glossary.html \
 		--outdir $(NOTEBOOKBUILD_DIR) \
 		--exclude doc/source/tutorial_prerequisites.rst \
+		--verbose \
 		doc/source/tutorial_*.rst
 	touch $@
 
@@ -534,14 +538,14 @@ testourcfg: build
 	@echo "+I: Run non-labile testing to verify safety of shipped configuration"
 	@cd $(TEST_DIR) && PYTHONPATH=$(LPYTHONPATH) MVPACONFIG=doc/examples/pymvpa2.cfg MVPA_TESTS_LABILE=no $(PYTHON) mvpa2/tests/__init__.py
 
-testmvpa-prep-fmri:
-	@echo "+I: Smoke test the functionality of the mvpa-prep-fmri script"
+test-prep-fmri:
+	@echo "+I: Smoke test the functionality of the pymvpa2-prep-fmri script"
 	@td=`(mktemp -d)`; trap "rm -rf $$td" exit; \
 	ln -s $(CURDIR)/mvpa2/data/example4d.nii.gz $$td/; \
 	cd $$td; \
 	PYTHONPATH=$(CURDIR):$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
-		$(CURDIR)/bin/mvpa-prep-fmri -p -e first -s T -b '-f 0.4' example4d.nii.gz; \
+		$(CURDIR)/bin/pymvpa2-prep-fmri -p -e first -s T -b '-f 0.4' example4d.nii.gz; \
 	[ -e $$td/T ] \
 	&& [ -e $$td/T/func_mc.pdf ] \
 	&& [ -e $$td/T/func_mc.nii.gz ] \

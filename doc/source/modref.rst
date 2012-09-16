@@ -64,6 +64,7 @@ Datasets: Input, Output, Storage and Preprocessing
    datasets.formats
    datasets.mri
    datasets.miscfx
+   datasets.sources.sklearn_data
 
 
 Mappers: Data Transformations
@@ -85,6 +86,7 @@ Mappers: Data Transformations
    mappers.procrustean
    mappers.projection
    mappers.prototype
+   mappers.shape
    mappers.slicing
    mappers.som
    mappers.svd
@@ -99,6 +101,7 @@ Generators: Repetitive Data Processing
    :toctree: generated
 
    generators
+   generators.base
    generators.partition
    generators.permutation
    generators.resampling
@@ -161,10 +164,12 @@ Measures: Searchlights and Sensitivties
    measures.corrcoef
    measures.corrstability
    measures.ds
-   measures.gnbsearchlight
    measures.irelief
    measures.noiseperturbation
    measures.pls
+   measures.adhocsearchlightbase
+   measures.gnbsearchlight
+   measures.nnsearchlight
    measures.searchlight
    measures.statsmodels_adaptor
 

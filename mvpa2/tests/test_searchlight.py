@@ -13,6 +13,7 @@ import numpy.random as rnd
 
 from math import ceil
 
+import mvpa2
 from mvpa2.testing import *
 from mvpa2.testing.clfs import *
 from mvpa2.testing.datasets import *
@@ -20,17 +21,23 @@ from mvpa2.testing.datasets import *
 from mvpa2.datasets import Dataset, hstack
 from mvpa2.base.types import is_datasetlike
 from mvpa2.base import externals
+from mvpa2.mappers.base import ChainMapper
+from mvpa2.mappers.fx import mean_group_sample
 from mvpa2.clfs.transerror import ConfusionMatrix
 from mvpa2.measures.searchlight import sphere_searchlight, Searchlight
-from mvpa2.measures.gnbsearchlight import sphere_gnbsearchlight,\
+from mvpa2.measures.gnbsearchlight import sphere_gnbsearchlight, \
      GNBSearchlight
+from mvpa2.clfs.gnb import GNB
+
+from mvpa2.measures.nnsearchlight import sphere_m1nnsearchlight, \
+     M1NNSearchlight
+from mvpa2.clfs.knn import kNN
 
 from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
 from mvpa2.misc.errorfx import corr_error
 from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner
 from mvpa2.generators.permutation import AttributePermutator
 from mvpa2.measures.base import CrossValidation
-from mvpa2.clfs.gnb import GNB
 
 
 class SearchlightTests(unittest.TestCase):
@@ -40,6 +47,8 @@ class SearchlightTests(unittest.TestCase):
         # give the feature coord a more common name, matching the default of
         # the searchlight
         self.dataset.fa['voxel_indices'] = self.dataset.fa.myspace
+        self._tested_pprocess = False
+
 
     # https://github.com/PyMVPA/PyMVPA/issues/67
     # https://github.com/PyMVPA/PyMVPA/issues/69
@@ -53,29 +62,70 @@ class SearchlightTests(unittest.TestCase):
         ok_(    'nproc' in Searchlight.__init__.__doc__)
 
 
-    @sweepargs(common_variance=(True, False))
+
+    #def _test_searchlights(self, ds, sls, roi_ids, result_all):
+
+    @sweepargs(lrn_sllrn_SL_partitioner=
+               [(GNB(common_variance=v, descr='GNB'), None,
+                 sphere_gnbsearchlight,
+                 NFoldPartitioner(cvtype=1))
+                 for v in (True, False)] +
+               # Mean 1 NN searchlights
+               [(ChainMapper(
+                   [mean_group_sample(['targets', 'partitions']),
+                    kNN(1)], space='targets', descr='M1NN'),
+                 kNN(1),
+                 sphere_m1nnsearchlight,
+                 NFoldPartitioner(0.5, selection_strategy='random', count=20)),
+                # the same but with NFold(1) partitioner since it still should work
+                (ChainMapper(
+                   [mean_group_sample(['targets', 'partitions']),
+                    kNN(1)], space='targets', descr='NF-M1NN'),
+                 kNN(1),
+                 sphere_m1nnsearchlight,
+                 NFoldPartitioner(1)),
+                ]
+               )
     @sweepargs(do_roi=(False, True))
     @sweepargs(results_backend=('native', 'hdf5'))
     @reseed_rng()
-    def test_spatial_searchlight(self, common_variance=True, do_roi=False,
+    def test_spatial_searchlight(self, lrn_sllrn_SL_partitioner, do_roi=False,
                                  results_backend='native'):
-        """Tests both generic and GNBSearchlight
-        Test of GNBSearchlight anyways requires a ground-truth
+        """Tests both generic and ad-hoc searchlights (e.g. GNBSearchlight)
+        Test of and adhoc searchlight anyways requires a ground-truth
         comparison to the generic version, so we are doing sweepargs here
         """
-        if results_backend == 'hdf5' and not common_variance:
-            # no need for full combination of all possible arguments here
-            return
+        lrn, sllrn, SL, partitioner = lrn_sllrn_SL_partitioner
+        ## if results_backend == 'hdf5' and not common_variance:
+        ##     # no need for full combination of all possible arguments here
+        ##     return
+
+        if __debug__ and 'ENFORCE_CA_ENABLED' in debug.active \
+           and  isinstance(lrn, ChainMapper):
+            raise SkipTest("Known to fail while trying to enable "
+                           "training_stats for the ChainMapper (M1NN here)")
+
+
+        # e.g. for M1NN we need plain kNN(1) for m1nnsl, but to imitate m1nn
+        #      "learner" we must use a chainmapper atm
+        if sllrn is None:
+            sllrn = lrn
+        ds = datasets['3dsmall'].copy()
+        # Let's test multiclass here, so boost # of labels
+        ds[6:18].T += 2
+        ds.fa['voxel_indices'] = ds.fa.myspace
+
+        # To assure that users do not run into incorrect operation due to overflows
+        ds.samples += 5000
+        ds.samples *= 1000
+        ds.samples = ds.samples.astype(np.int16)
+
         # compute N-1 cross-validation for each sphere
         # YOH: unfortunately sample_clf_lin is not guaranteed
         #      to provide exactly the same results due to inherent
         #      iterative process.  Therefore lets use something quick
         #      and pure Python
-        gnb = GNB(common_variance=common_variance)
-        cv = CrossValidation(gnb, NFoldPartitioner())
-
-        ds = datasets['3dsmall'].copy()
-        ds.fa['voxel_indices'] = ds.fa.myspace
+        cv = CrossValidation(lrn, partitioner)
 
         skwargs = dict(radius=1, enable_ca=['roi_sizes', 'raw_results',
                                             'roi_feature_ids'])
@@ -86,46 +136,62 @@ class SearchlightTests(unittest.TestCase):
             # and lets compute the full one as well once again so we have a reference
             # which will be excluded itself from comparisons but values will be compared
             # for selected roi_id
-            sl_all = sphere_gnbsearchlight(gnb, NFoldPartitioner(cvtype=1),
-                                           **skwargs)
+            sl_all = SL(sllrn, partitioner, **skwargs)
             result_all = sl_all(ds)
             # select random features
             roi_ids = rnd.permutation(range(ds.nfeatures))[:nroi]
             skwargs['center_ids'] = roi_ids
         else:
             nroi = ds.nfeatures
+            roi_ids = np.arange(nroi)
+            result_all = None
+
+        if results_backend == 'hdf5':
+            skip_if_no_external('h5py')
 
         sls = [sphere_searchlight(cv, results_backend=results_backend,
                                   **skwargs),
                #GNBSearchlight(gnb, NFoldPartitioner(cvtype=1))
-               sphere_gnbsearchlight(gnb, NFoldPartitioner(cvtype=1),
-                                     indexsum='fancy', **skwargs)
+               SL(sllrn, partitioner, indexsum='fancy', **skwargs)
                ]
 
         if externals.exists('scipy'):
-            sls += [ sphere_gnbsearchlight(gnb, NFoldPartitioner(cvtype=1),
-                                           indexsum='sparse', **skwargs)]
+            sls += [ SL(sllrn, partitioner, indexsum='sparse', **skwargs)]
 
-        # Just test nproc whenever common_variance is True
-        if externals.exists('pprocess') and common_variance:
+        # Test nproc just once
+        if externals.exists('pprocess') and not self._tested_pprocess:
             sls += [sphere_searchlight(cv, nproc=2, **skwargs)]
+            self._tested_pprocess = True
 
+        # Provide the dataset and all those searchlights for testing
+        #self._test_searchlights(ds, sls, roi_ids, result_all)
+        #nroi = len(roi_ids)
+        #do_roi = nroi != ds.nfeatures
         all_results = []
         for sl in sls:
             # run searchlight
+            mvpa2.seed()                # reseed rng again for m1nnsl
             results = sl(ds)
             all_results.append(results)
             #print `sl`
             # check for correct number of spheres
             self.assertTrue(results.nfeatures == nroi)
             # and measures (one per xfold)
-            self.assertTrue(len(results) == len(ds.UC))
-
+            if partitioner.cvtype == 1:
+                self.assertTrue(len(results) == len(ds.UC))
+            elif partitioner.cvtype == 0.5:
+                # here we had 4 unique chunks, so 6 combinations
+                # even though 20 max was specified for NFold
+                self.assertTrue(len(results) == 6)
+            else:
+                raise RuntimeError("Unknown yet type of partitioner to check")
             # check for chance-level performance across all spheres
             # makes sense only if number of features was big enough
             # to get some stable estimate of mean
             if not do_roi or nroi > 20:
-                self.assertTrue(0.4 < results.samples.mean() < 0.6)
+                # was for binary, somewhat labile with M1NN
+                #self.assertTrue(0.4 < results.samples.mean() < 0.6)
+                self.assertTrue(0.68 < results.samples.mean() < 0.82)
 
             mean_errors = results.samples.mean(axis=0)
             # that we do get different errors ;)
@@ -151,8 +217,6 @@ class SearchlightTests(unittest.TestCase):
             if do_roi:
                 assert_array_equal(result_all[:, roi_ids], results)
 
-
-
         if len(all_results) > 1:
             # if we had multiple searchlights, we can check either they all
             # gave the same result (they should have)
@@ -161,6 +225,60 @@ class SearchlightTests(unittest.TestCase):
             dmax = np.max(dresults)
             self.assertTrue(dmax <= 1e-13)
 
+        # Test the searchlight's reuse of neighbors
+        for indexsum in ['fancy'] + (
+            externals.exists('scipy') and ['sparse'] or []):
+            sl = SL(sllrn, partitioner, indexsum='fancy',
+                    reuse_neighbors=True, **skwargs)
+            mvpa2.seed()
+            result1 = sl(ds)
+            mvpa2.seed()
+            result2 = sl(ds)                # must be faster
+            assert_array_equal(result1, result2)
+
+    def test_adhocsearchlight_perm_testing(self):
+        # just a smoke test pretty much
+        ds = datasets['3dmedium'].copy()
+        #ds.samples += np.random.normal(size=ds.samples.shape)*10
+        mvpa2.seed()
+        ds.fa['voxel_indices'] = ds.fa.myspace
+        from mvpa2.mappers.fx import mean_sample
+        from mvpa2.clfs.stats import MCNullDist
+        permutator = AttributePermutator('targets', count=8,
+                                         limit='chunks')
+        distr_est = MCNullDist(permutator, tail='left',
+                               enable_ca=['dist_samples'])
+        slargs = (kNN(1),
+                  NFoldPartitioner(0.5,
+                                   selection_strategy='random',
+                                   count=9))
+        slkwargs = dict(radius=1, postproc=mean_sample())
+
+        sl_nodistr = sphere_m1nnsearchlight(*slargs, **slkwargs)
+        skip_if_no_external('scipy')    # needed for null_t
+        sl = sphere_m1nnsearchlight(
+            *slargs,
+            null_dist=distr_est,
+            enable_ca=['null_t'],
+            reuse_neighbors=True,
+            **slkwargs
+            )
+        mvpa2.seed()
+        res_nodistr = sl_nodistr(ds)
+        mvpa2.seed()
+        res = sl(ds)
+        # verify that we at least got the same main result
+        # ah (yoh) -- null dist is estimated before the main
+        # estimate so we can't guarantee correspondence :-/
+        # assert_array_equal(res_nodistr, res)
+        # only resemblance (TODO, may be we want to get/setstate
+        # for rng before null_dist.fit?)
+
+        # and dimensions correspond
+        assert_array_equal(distr_est.ca.dist_samples.shape,
+                           (1, ds.nfeatures, 8))
+        assert_array_equal(sl.ca.null_t.samples.shape,
+                           (1, ds.nfeatures))
 
     def test_partial_searchlight_with_full_report(self):
         ds = self.dataset.copy()
@@ -539,7 +657,7 @@ class SearchlightTests(unittest.TestCase):
             # disappear -- i.e. its result from previous "block" was
             # processed
             t0 = time.time()
-            while os.path.exists(f) and time.time() - t0 < 2.:
+            while os.path.exists(f) and time.time() - t0 < 4.:
                 time.sleep(0.5) # so it does take time to compute the measure
             if os.path.exists(f):
                 print_("ERROR: ", f)

@@ -40,20 +40,20 @@ class Repeater(Node):
           in the yielded datasets.
         """
         Node.__init__(self, space=space, **kwargs)
-        self.nruns = count
+        self.count = count
 
 
     def generate(self, ds):
         """Generate the desired number of repetitions."""
         space = self.get_space()
-        for i in xrange(self.nruns):
+        for i in xrange(self.count):
             out = ds.copy(deep=False)
             out.a[space] = i
             yield out
 
 
     def __str__(self):
-        return _str(self, str(self.nruns))
+        return _str(self, str(self.count))
 
 
 class Sifter(Node):
@@ -175,8 +175,7 @@ class Sifter(Node):
 
                     # exit if resultant attributes do no match
                     uvalues_selected = np.unique(attr[mask])
-                    #if 'control' in uvalues:
-                    #    raise ValueError
+
                     # use set() so we could compare results of different lengths as well
                     # and not worry about sorting etc
                     if not (set(uvalues_selected) == set(uvalues) and len(uvalues_selected)):

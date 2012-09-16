@@ -109,12 +109,12 @@ def test_ttest_1samp_masked():
     # we do not yet support >2D
     ##assert_raises(AssertionError, ttest_1samp_masked, d[None,...], 0)
 
-    # basic test different tails
+    # basic test different alternatives
     d = range(10)
-    tl, pl = ttest_1samp_masked(d, 0, tail='left')
+    tl, pl = ttest_1samp_masked(d, 0, alternative='greater')
 
-    tr, pr = ttest_1samp_masked(d, 0, tail='right')
-    tb, pb = ttest_1samp_masked(d, 0, tail='both')
+    tr, pr = ttest_1samp_masked(d, 0, alternative='less')
+    tb, pb = ttest_1samp_masked(d, 0, alternative='two-sided')
 
     assert_equal(tl, tr)
     assert_equal(tl, tb)

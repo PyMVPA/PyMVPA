@@ -358,8 +358,8 @@ def bib2rst_references(bib):
                 rst += 'http://dx.doi.org/'
             rst += prop['doi']
             rst += '\n'
-        # use URL if no DOI available
-        elif prop.has_key('url'):
+        # use URL (even if DOI is available -- might lead to a copy outside of the paywall)
+        if prop.has_key('url'):
             rst += '\n  URL: ' + prop['url'] + '\n'
 
         rst += '\n\n'

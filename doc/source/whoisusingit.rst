@@ -49,6 +49,10 @@ Institutions Where PyMVPA Is Known To Be Used
 Studies employing PyMVPA
 ========================
 
+* :ref:`Hiroyuki et al., Frontiers in Neuroinformatics (2012) <HBL+12>`:
+  Decoding Semantics across fMRI sessions with Different Stimulus Modalities:
+  A practical MVPA Study.
+
 * :ref:`Gorlin et al., PNAS (2012) <GMS+12>`: Imaging prior information in the
   brain.
 

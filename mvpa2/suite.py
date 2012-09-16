@@ -117,6 +117,7 @@ from mvpa2.datasets.eep import *
 from mvpa2.datasets.eventrelated import *
 if externals.exists('nibabel') :
     from mvpa2.datasets.mri import *
+from mvpa2.datasets.sources import *
 
 __sdebug('generators')
 from mvpa2.generators.base import *
@@ -167,6 +168,7 @@ from mvpa2.measures.noiseperturbation import *
 from mvpa2.misc.neighborhood import *
 from mvpa2.measures.searchlight import *
 from mvpa2.measures.gnbsearchlight import *
+from mvpa2.measures.nnsearchlight import *
 from mvpa2.measures.corrstability import *
 
 __sdebug('misc')

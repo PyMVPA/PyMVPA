@@ -1,0 +1,166 @@
+#!/usr/bin/env python
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Script to start a PyMVPA tutorial session"""
+
+import sys
+import os
+import shutil
+import glob
+import getopt
+import subprocess
+import signal
+
+import mvpa2
+from mvpa2.misc.support import SmartVersion
+
+def getandkillopt(opt):
+    for i, arg in enumerate(sys.argv[1:]):
+        if arg.startswith(opt):
+            if opt.endswith('='):
+                val = '='.join(sys.argv[i + 1].split('=')[1:])
+            else:
+                val = True
+            del sys.argv[i + 1]
+            return val
+    return False
+
+def print_help():
+    print """
+Usage: %s [options] [ipython options]
+
+Wrapper around the IPython executable creating a session directory for working
+with the PyMVPA tutorial. The necessary tutorial data is copied (or symlinked,
+if possible) into the session directory. If the tutorial shall run in IPython's
+notebook the relevant notebook files are copied into the session directory as
+well. Any additional options are passed on to IPython. IPython is executed
+in the tutorial session directory, and any potential relative path
+configurations (such as PYTHONPATH) need to take this into account.
+
+Options:
+  --help                print this help and exit
+  --version             show program's version number and exit
+  --use-qtconsole       start an IPython qtconsole
+  --use-notebook        start an IPython notebook server
+  --workdir             path to the tutorial session directory.
+                        Default: $HOME/pymvpa2_tutorial
+  --clean-workdir       delete tutorial session data on exit
+  --overwrite-notebook  overwrite existing notebook files in the tutorial
+                        session directory
+  --tutorial-data-path  path to the tutorial data (need to contain
+                        'data' and 'results' directories)
+  --tutorial-notebooks-path
+                        path to the tutorial notebooks
+""" % sys.argv[0]
+
+def get_latest_ipython(ipythons=['ipython01x', 'ipython']):
+    """Choose the latest available ipython according to -V
+    """
+    avail = []
+    for ipython in ipythons:
+        try:
+            p = subprocess.Popen([ipython, '-V'],
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE)
+            l = p.stdout.read().split('\n')
+            l = [x for x in l if len(x)]    # strip empty lines
+            if len(l):
+                ver = SmartVersion(l[-1])
+                avail.append((ver, ipython))
+        except OSError:
+            pass
+    avail = sorted(avail)
+    if len(avail):
+        return avail[-1]
+    else:
+        return None, None
+
+def main():
+    if getandkillopt('--version'):
+        print mvpa2.__version__
+        sys.exit(0)
+    if getandkillopt('--help'):
+        print_help()
+        sys.exit(0)
+
+    want_qtconsole = getandkillopt('--use-qtconsole')
+    want_notebook = getandkillopt('--use-notebook')
+    want_clean = getandkillopt('--clean-workdir')
+    want_overwrite_notebooks = getandkillopt('--overwrite-notebooks')
+    workdir = getandkillopt('--workdir=')
+    if workdir is False:
+        # TODO create tmpdir
+        workdir=os.path.expanduser('~/pymvpa2_tutorial')
+    if not os.path.exists(workdir):
+        os.makedirs(workdir)
+    tutorial_datadir = getandkillopt('--tutorial-data-path=')
+    if tutorial_datadir is False:
+        tutorial_datadir = '/usr/share/data/pymvpa2-tutorial'
+    notebook_srcdir = getandkillopt('--tutorial-notebooks-path=')
+    if notebook_srcdir is False:
+        notebook_srcdir = '/usr/share/doc/python-mvpa2/notebooks'
+    # assemble session dir
+    for dir in ('data', 'results'):
+        src = os.path.join(os.path.abspath(tutorial_datadir), dir)
+        dst = os.path.join(os.path.abspath(workdir), dir)
+        if os.path.lexists(dst):
+            print "Use existing tutorial '%s' path at '%s'." \
+                  % (dir, dst)
+            continue
+        if not os.path.exists(src):
+            print "Cannot find tutorial data at '%s'" % src
+            sys.exit(1)
+        if hasattr(os, 'symlink'):
+            os.symlink(src, dst)
+        else:
+            shutil.copytree(src, dst)
+    ipy_args = sys.argv[1:]
+    ipy_args.append('--quiet')
+    if not sum([arg.startswith('--pylab') for arg in ipy_args]):
+        # user might want something like --pylab=inline
+        ipy_args.append('--pylab')
+    if want_notebook:
+        ipy_args.insert(0, 'notebook')
+    elif want_qtconsole:
+        ipy_args.insert(0, 'qtconsole')
+
+    if want_notebook:
+        notebook_dstdir = workdir
+        ipy_args.append('--notebook-dir=%s' % notebook_dstdir)
+        if not os.path.exists(notebook_dstdir):
+            os.makedirs(notebook_dstdir)
+        notebook_files = glob.glob(os.path.join(notebook_srcdir, '*.ipynb'))
+        if not len(notebook_files):
+            print "Beware: no notebooks found under %s" % notebook_srcdir
+        for nb in notebook_files:
+            nb_dst_filepath = os.path.join(notebook_dstdir, os.path.basename(nb))
+            if not os.path.exists(nb_dst_filepath) or want_overwrite_notebooks:
+                shutil.copyfile(nb, nb_dst_filepath)
+            else:
+                print "Keep existing notebook at '%s'" % nb_dst_filepath
+
+    ipython_ver, ipython = get_latest_ipython()
+    if ipython_ver is None:
+        raise SystemExit("No reasonably versioned IPython was found")
+    if ipython_ver < '0.12' and want_notebook:
+        raise SystemExit(
+            "ERROR: no notebook facilities are available in IPython prior " \
+            "version 0.12. Detected version of IPython on the system %s " \
+            "by %s" % (ipython_ver.vstring, ipython))
+    try:
+        ipy = subprocess.Popen([ipython] + ipy_args, cwd=workdir)
+        ipy.wait()
+    except KeyboardInterrupt:
+        ipy.terminate()
+    if want_clean:
+        shutil.rmtree(workdir)
+
+if __name__ == '__main__':
+    main()
+
