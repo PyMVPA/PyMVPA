@@ -59,7 +59,7 @@ endif
 			rm $$so ; \
 		done
 	: # Do not install some existing scripts yet for now
-	find debian -wholename */bin -o -wholename */man \
+	find debian -wholename */bin/* -o -wholename */man/* \
 	| grep -e 'pymvpa2-\(analysis\)' \
 	| xargs -r rm -rf
 
