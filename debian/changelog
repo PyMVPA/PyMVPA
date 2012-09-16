@@ -1,3 +1,11 @@
+pymvpa2 (2.2.0-1) unstable; urgency=low
+
+  * Fresh upstream release:
+    - provides tutorial (in -doc package) as ipython notebooks.
+      Added ipython-notebook into Suggests
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 16 Sep 2012 06:23:51 -0400
+
 pymvpa2 (2.1.0-1) unstable; urgency=low
 
   * Fresh upstream release

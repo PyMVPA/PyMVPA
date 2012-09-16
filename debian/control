@@ -82,7 +82,7 @@ Package: python-mvpa2-doc
 Architecture: all
 Section: doc
 Depends: ${misc:Depends}, libjs-jquery, libjs-underscore
-Suggests: python-mvpa2, python-mvpa2-tutorialdata
+Suggests: python-mvpa2, python-mvpa2-tutorialdata, ipython-notebook
 Description: documentation and examples for PyMVPA v. 2
  This is an add-on package for the PyMVPA framework. It provides a
  HTML documentation (tutorial, FAQ etc.), and example scripts.
