@@ -24,7 +24,7 @@ override_dh_auto_configure:
 
 override_dh_auto_build:
 	dh_auto_build -- --with-libsvm
-	# $(MAKE) manpages
+	$(MAKE) manpages
 ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 	$(MAKE) htmldoc
 	-rm build/html/_static/jquery.js build/html/_static/underscore.js
@@ -58,9 +58,10 @@ endif
 			install -D $$so $${so#../tmp/*} ; \
 			rm $$so ; \
 		done
-	: # temporarily (for this Debian release) remove cmdline tools and
-	: # their manpages
-	find debian -wholename */bin -o -wholename */man | xargs -r rm -rf
+	: # Do not install some existing scripts yet for now
+	find debian -wholename */bin -o -wholename */man \
+	| grep -e 'pymvpa2-\(analysis\)' \
+	| xargs -r rm -rf
 
 override_dh_pysupport:
 	dh_pysupport
