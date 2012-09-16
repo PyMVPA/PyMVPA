@@ -75,7 +75,7 @@ class Balancer(Node):
         Node.__init__(self, space=space, **kwargs)
         self._amount = amount
         self._attr = attr
-        self.nruns = count
+        self.count = count
         self._limit = limit
         self._limit_filter = None
         self._apply_selection = apply_selection
@@ -175,7 +175,7 @@ class Balancer(Node):
         attr, collection = ds.get_attr(self._attr)
         self._limit_filter = get_limit_filter(self._limit, collection)
         # permute as often as requested
-        for i in xrange(self.nruns):
+        for i in xrange(self.count):
             yield self(ds)
 
         # reset filter to do the right thing upon next call to object
@@ -183,5 +183,5 @@ class Balancer(Node):
 
 
     def __str__(self):
-        return _str(self, str(self._amount), n=self._attr, count=self.nruns,
+        return _str(self, str(self._amount), n=self._attr, count=self.count,
                     apply_selection=self._apply_selection)

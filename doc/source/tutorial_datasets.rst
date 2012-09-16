@@ -14,6 +14,12 @@
 Part 2: Dataset Basics and Concepts
 ***********************************
 
+.. note::
+
+  This tutorial part is also available for download as an `IPython notebook
+  <http://ipython.org/ipython-doc/dev/interactive/htmlnotebook.html>`_:
+  [`ipynb <notebooks/tutorial_datasets.ipynb>`_]
+
 A `~mvpa2.datasets.base.Dataset` is the basic data container in PyMVPA. It
 serves as the primary form of input data storage, but also as container for
 more complex results returned by some algorithm. In this tutorial part we will
@@ -253,8 +259,8 @@ array([[ 1,  1, -1],
 .. _NumPy documentation: http://docs.scipy.org/doc/
 
 
-All three slicing-styles equally applicable to the selection of feature subsets
-within a dataset. Remember, features are represented on the second axis
+All three slicing-styles are equally applicable to the selection of feature
+subsets within a dataset. Remember, features are represented on the second axis
 of a dataset.
 
 >>> ds[:, [1,2]].samples
@@ -266,7 +272,7 @@ array([[ 1, -1],
 By applying a selection by indices to the second axis, we can easily get
 the last two features of our example dataset. Please note the `:` is supplied
 as first axis slicing. This is the Python way to indicate *take everything
-along this axis*, hence take all samples.
+along this axis*, hence including all samples.
 
 As you can guess, it is also possible to select subsets of samples and
 features at the same time.
@@ -284,7 +290,7 @@ array([1, 0])
 
 The above code applies the same slicing directly to the NumPy array with
 the samples, and the result is fundamentally different. For NumPy arrays
-the style of slicing allows to select specific elements by their indices on
+this style of slicing allows to select specific elements by their indices on
 each axis of an array. For PyMVPA's datasets this mode is not very useful,
 instead we typically want to select rows and columns, i.e. samples and
 features given by their indices.
@@ -376,7 +382,7 @@ explore this dataset a little further.
 
 Besides samples the dataset offers number of attributes that enhance the
 data with information that is present in the NIfTI image header in the file. Each sample has
-information about its volume id in the time series and the actual acquisition
+information about its volume ID in the time series and the actual acquisition
 time (relative to the beginning of the file). Moreover, the original voxel
 index (sometimes referred to as ``ijk``) for each feature is available too.
 Finally, the dataset also contains information about the dimensionality
