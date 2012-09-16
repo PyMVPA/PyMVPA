@@ -110,7 +110,8 @@ def main():
         src = os.path.join(os.path.abspath(tutorial_datadir), dir)
         dst = os.path.join(os.path.abspath(workdir), dir)
         if os.path.lexists(dst):
-            print "Use existing tutorial 'data' path already exists at '%s'." % dst
+            print "Use existing tutorial '%s' path at '%s'." \
+                  % (dir, dst)
             continue
         if not os.path.exists(src):
             print "Cannot find tutorial data at '%s'" % src
@@ -134,7 +135,10 @@ def main():
         ipy_args.append('--notebook-dir=%s' % notebook_dstdir)
         if not os.path.exists(notebook_dstdir):
             os.makedirs(notebook_dstdir)
-        for nb in glob.glob(os.path.join(notebook_srcdir, '*.ipynb')):
+        notebook_files = glob.glob(os.path.join(notebook_srcdir, '*.ipynb'))
+        if not len(notebook_files):
+            print "Beware: no notebooks found under %s" % notebook_srcdir
+        for nb in notebook_files:
             nb_dst_filepath = os.path.join(notebook_dstdir, os.path.basename(nb))
             if not os.path.exists(nb_dst_filepath) or want_overwrite_notebooks:
                 shutil.copyfile(nb, nb_dst_filepath)
