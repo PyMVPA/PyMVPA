@@ -100,7 +100,8 @@ def test_sifter_superord_usecase():
     assert(np.mean(accs_super)   < .6)
 
 def _test_edmund_chong_20120907():
-    from mvpa2.suite import *
+    # commented out to avoid syntax warnings while compiling
+    # from mvpa2.suite import *
     from mvpa2.testing.datasets import datasets
     repeater = Repeater(count=20)
 
