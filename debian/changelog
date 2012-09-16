@@ -5,6 +5,7 @@ pymvpa2 (2.2.0-1) unstable; urgency=low
       Added ipython-notebook into Suggests
     - all cmdline tools have disambiguating prefix thus are
       installed now without conflict with pymvpa (0.4.x) package.
+  * Dropping support of python 2.5 (failing tests) -- added X-Python-Version
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 16 Sep 2012 06:23:51 -0400
 

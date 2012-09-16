@@ -18,6 +18,7 @@ Standards-Version: 3.9.3
 Homepage: http://www.pymvpa.org
 Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/pymvpa.git
 Vcs-Git: git://git.debian.org/git/pkg-exppsy/pymvpa.git
+X-Python-Version: >= 2.6
 
 
 Package: python-mvpa2
