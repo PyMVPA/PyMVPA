@@ -21,13 +21,18 @@ from copy import deepcopy
 from optparse import OptionParser
 
 def prep_rest(rest):
-    # some preproc on the raw string
-    doc = re.subn(r'^.. index.*$', '', rest, flags=re.MULTILINE)[0]
+    # implementing above in python 2.6 compatible fashion
+    # which lacks flags keyword argument for re.subn
+    # We will first replace all newlines with a unique %%%
+    # which we will use as a new line symbol in our expressions
+    assert(not '%%%' in rest)           # at least some checking
+    doc = rest.replace('\n', '%%%')
+    doc, _ = re.subn(r'%%%.. index.*?%%%', '', doc)
     # fold text roles inside to turn them into a ref
     subns = 1
     while not subns == 0:
-        doc, subns = re.subn(r':([a-z]+):`(.*)`', '`:\\1:\\2`', doc,
-                             flags=re.MULTILINE | re.DOTALL)
+        doc, subns = re.subn(r':([a-z]+):`(.*)`', '`:\\1:\\2`', doc)
+    doc = doc.replace('%%%', '\n')      # replace %%% back
     return doc
 
 
