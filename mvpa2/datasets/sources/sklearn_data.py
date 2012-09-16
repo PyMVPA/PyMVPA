@@ -86,7 +86,7 @@ def %s(%s):
             else:
                 ds.sa['targets'] = data['target']
     return ds
-    ''' % (pymvpa_fxname,
+''' % (pymvpa_fxname,
            sig,
            fx.__doc__,
            fx.__name__,
