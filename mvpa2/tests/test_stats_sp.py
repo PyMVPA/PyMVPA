@@ -296,7 +296,10 @@ class StatsTestsScipy(unittest.TestCase):
         t = scipy.stats.t
         d = t(10, 1, 10).rvs(10)
         params = t.fit(d, floc=1, fscale=10.)
-        self.assertEqual(params[1:], (1, 10.))
+        # assured result to be a tuple due to failure on
+        # travis-ci (ubuntu precise)
+        # http://travis-ci.org/#!/PyMVPA/PyMVPA/builds/2459017
+        self.assertEqual(tuple(params[1:]), (1, 10.))
         # df's are apparently quite difficult to assess unless plenty
         # of samples
         #self.assertTrue(abs(params[0] - 10) < 7) # estimate df at least in the right ball park

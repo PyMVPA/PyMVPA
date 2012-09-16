@@ -405,7 +405,11 @@ class MCNullDist(NullDist):
         if __debug__:
             debug('STATMC', ' Skipped: %d permutations' % skipped)
 
-
+        if not len(dist_samples) and skipped > 0:
+            raise RuntimeError(
+                'Failed to obtain any value from %s. %d measurements were '
+                'skipped. Check above warnings, and your code/data'
+                % (measure, skipped))
         # store samples as (npermutations x nsamples x nfeatures)
         dist_samples = np.asanyarray(dist_samples)
         # for the ca storage use a dataset with
