@@ -416,6 +416,8 @@ Base URL for links to the online glossary. Default=''
 
     # finally process provided files
     for t in toparse:
+        if opts.verbose:
+            print "Processing '%s'" % t
         notebook = conv(t)
         json_notebook = json.dumps(notebook, sort_keys=True, indent=2)
         open(os.path.join(

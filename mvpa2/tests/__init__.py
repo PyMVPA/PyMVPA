@@ -175,6 +175,7 @@ def collect_nose_tests(verbosity=1):
         'test_niftidataset',
         'test_eepdataset',
         'test_erdataset',
+        'test_datasrcs',
 
         # Classifiers
         'test_multiclf',
