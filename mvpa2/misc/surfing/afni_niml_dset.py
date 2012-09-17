@@ -152,7 +152,7 @@ def _dset2rawniml_history(s):
                                 time.asctime()))
     # history
     history = s.get('history', '')
-    if history and history[-1] != '\n':
+    if history and not history.endswith('\n'):
         history += ('\n')
     history += '%s Saved by %s:%s' % (logprefix,
                                     __file__,
@@ -310,7 +310,7 @@ def label2index(dset, label):
 
     return None
 
-def ttest(dsets, sa_labels=None, return_values='mt'):
+def ttest(dsets, sa_labels=None, return_values='mt', set_NaN_to=0.):
     '''Runs a one-sample t-test across datasets
     
     Parameters
@@ -398,24 +398,8 @@ def ttest(dsets, sa_labels=None, return_values='mt'):
     labs = sum([['%s_%s' % (p, lab) for p in pf] for lab in sa_labels], [])
     stats = stats * nc
 
+    if not set_NaN_to is None:
+        r[np.logical_not(np.isfinite(r))] = set_NaN_to
+
     return dict(data=r, labels=labels, stats=stats, node_indices=node_idxs0)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
