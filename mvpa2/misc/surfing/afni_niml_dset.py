@@ -283,7 +283,7 @@ def from_any(s, itemifsingletonlist=True):
         return s
     elif isinstance(s, basestring):
         return read(s, itemifsingletonlist)
-    elif isinstance(s, np.array):
+    elif isinstance(s, np.ndarray):
         return dict(data=s)
     else:
         raise ValueError('not recognized input: %r' % s)
