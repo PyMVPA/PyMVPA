@@ -346,8 +346,13 @@ def ttest(dsets, sa_labels=None, return_values='mt', set_NaN_to=0.):
             if sa_labels is None:
                 if 'labels' in dset:
                     sa_labels = sa_labels
+                    dset_labels = sa_labels
                 else:
-                    sa_labels = ['%d' % i in xrange(sh[1])]
+                    sa_labels = range(sh[1])
+                    dset_labels = ['%d' % j for j in sa_labels]
+            else:
+                dset_labels = sa_labels
+
             nc = len(sa_labels)
             nn = sh[0]
 
@@ -395,11 +400,10 @@ def ttest(dsets, sa_labels=None, return_values='mt', set_NaN_to=0.):
         pf.append('t')
         stats.append('Ttest(%d)' % (ns - 1))
 
-    labs = sum([['%s_%s' % (p, lab) for p in pf] for lab in sa_labels], [])
+    labs = sum([['%s_%s' % (p, lab) for p in pf] for lab in dset_labels], [])
     stats = stats * nc
 
     if not set_NaN_to is None:
         r[np.logical_not(np.isfinite(r))] = set_NaN_to
 
-    return dict(data=r, labels=labels, stats=stats, node_indices=node_idxs0)
-
+    return dict(data=r, labels=labs, stats=stats, node_indices=node_idxs0)
