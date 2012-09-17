@@ -298,7 +298,7 @@ features given by their indices.
 
 .. exercise::
 
-  Try to select samples [0,1] and features [0,2,3] simultaneously using
+  Try to select samples [0,1] and features [0,2] simultaneously using
   dataset slicing.  Now apply the same slicing to the samples array itself
   (``ds.samples``) -- make sure that the result doesn't surprise you and find
   a pure NumPy way to achieve similar selection.
