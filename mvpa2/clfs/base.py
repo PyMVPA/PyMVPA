@@ -338,9 +338,9 @@ class Classifier(Learner):
         if not ('notrain2predict' in self.__tags__):
             # check if classifier was trained if that is needed
             if not self.trained:
-                raise ValueError, \
-                      "Classifier %s wasn't yet trained, therefore can't " \
-                      "predict" % self
+                raise FailedToPredictError(
+                      "Classifier %s wasn't yet trained, therefore can't "
+                      "predict" % self)
             nfeatures = dataset.nfeatures #data.shape[1]
             # check if number of features is the same as in the data
             # it was trained on

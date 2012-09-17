@@ -40,10 +40,10 @@ class FailedToTrainError(LearnerError):
 
 
 class FailedToPredictError(LearnerError):
-    """Learner exception if it fails to predictions.
+    """Learner exception if it fails to predict.
 
     Usually happens if it was trained on degenerate data but without any
-    complaints.
+    complaints, or was not trained prior calling predict().
     """
     pass
 
