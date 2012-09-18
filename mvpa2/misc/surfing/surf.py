@@ -101,6 +101,39 @@ class Surface(object):
         return self._n2f
 
     @property
+    def edge2faces(self):
+        '''A mapping from edges to the face that contains that edge
+        
+        Returns
+        -------
+        e2f: dict
+            a mapping from edges to faces. e2f[(i,j)]==f means that
+            the edge connecting nodes i and j contains node f.
+            It is assumed that faces are consistent with respect to 
+            the direction of their normals: if self.faces[j,:]==[p,q,r]
+            then the normal of vectors pq and pr should all either point
+            'inwards' or 'outwards'.
+        '''
+
+        if not hasattr(self, '_e2f'):
+            faces = self.faces
+
+
+            e2f = dict()
+            for i in xrange(self.nfaces):
+                for j in xrange(3):
+                    e = (faces[i, j], faces[i, (j + 1) % 3])
+                    if e in e2f:
+                        raise ValueError('duplicate key (%d,%d). Do all normals'
+                                         ' point in the same "direction"?' % e)
+                    e2f[e] = i
+            self._e2f = e2f
+
+        return dict(self._e2f) # make a copy
+
+
+
+    @property
     def neighbors(self):
         '''Finds the neighbours for each node and their (Euclidean) distance.
         
@@ -283,7 +316,6 @@ class Surface(object):
 
         # algorithm from wikipedia 
         #(http://en.wikipedia.org/wiki/Dijkstra's_algorithm)
-        c = 0
         while candidates:
             # distance and index of current candidate
             d, i = heapq.heappop(candidates)
@@ -306,10 +338,74 @@ class Surface(object):
                     heapq.heappush(candidates, (tdist[nbr_i][0], nbr_i))
 
             fdist[i] = tdist[i] # set final distance
-            c += 1
-            if c < 0:
-                return
         return fdist
+
+    def dijkstra_shortest_path_visiting(self, to_visit):
+        '''Computes a list of paths that visit specific nodes
+        
+        Parameters
+        ----------
+        to_visit: list of int
+            P indices of nodes to visit
+        
+        Returns
+        -------
+        path_distances: list of tuple (int, list of int)
+            List with (P-1) elements, where the i-th element is a tuple
+            (d_i, q_i) with distance d_i between nodes i and (i+1), and 
+            q_i a list of node indices on the path between nodes i and (i+1)
+            so that q_i[0]==i and q_i[-1]==(i+1)
+        '''
+        if not to_visit:
+            raise ValueError("Cannot operate on empty list")
+
+        src = to_visit[0]
+        if len(to_visit) == 1:
+            return []
+
+        trg = to_visit[1]
+
+        tdist = {src:(0, [src])} # tentative distances and path
+        fdist = dict()  # final distances
+        candidates = []
+
+        # queue of candidates, sorted by tentative distance
+        heapq.heappush(candidates, (0, src))
+
+        nbrs = self.neighbors
+
+        # algorithm from wikipedia 
+        #(http://en.wikipedia.org/wiki/Dijkstra's_algorithm)
+        while candidates:
+            # distance and index of current candidate
+            d, i = heapq.heappop(candidates)
+
+            if i in fdist:
+                if i == trg:
+                    break
+                else:
+                    continue # we already have a final distance for this node
+
+            nbr = nbrs[i] # neighbours of current candidate
+
+            for nbr_i, nbr_d in nbr.items():
+                dnew = d + nbr_d
+
+                if nbr_i not in tdist or dnew < tdist[nbr_i][0]:
+                    # set distance and append to queue
+                    pnew = tdist[i][1] + [nbr_i] # append current node to path
+                    tdist[nbr_i] = (dnew, pnew)
+                    heapq.heappush(candidates, (tdist[nbr_i][0], nbr_i))
+
+            fdist[i] = tdist[i] # set final distance
+            if i == trg:
+                break
+
+        pth = [fdist[i]]
+
+        # recursion to find remaining paths (if any)
+        pth.extend(self.dijkstra_shortest_path_visiting(to_visit[1:]))
+        return pth
 
 
 
@@ -764,8 +860,8 @@ def generate_cube():
     
     Returns:
     cube: surf.Surface
-        A cube with 8 vertices at coordinates (+/-1,+/-1,+/-1),
-        and with 12 faces (two for each side).
+        A cube with 8 vertices at coordinates (+/-1.,+/-1.,+/-1.),
+        and with 12 faces (two for each square side).
     '''
 
     # map (0,1) to (-1.,1.)
@@ -775,18 +871,10 @@ def generate_cube():
     cs = [[f(i / (2 ** j) % 2) for j in xrange(3)] for i in xrange(8)]
     vs = np.asarray(cs)
 
-    # compute faces (triangles). Offsets are relative values for node indices
-    deltas = [[1, 2, 3], [0, 2, 2], [0, 0, 0]]
-    trias = []
-
-    for i in xrange(2): # side (-1 or 1)
-        for j, delta in enumerate(deltas): # direction (up/left/forward)
-            rect = [i * 2 ** j] # first point
-            rect.extend([rect[0] + k + 1 + d for k, d in enumerate(delta)])
-
-             # two triangles make a square
-            trias.extend([rect[k:(k + 3)] for k in xrange(2)])
-
+    # manually set topology
+    trias = [(2, 3, 0), (0, 1, 2), (0, 4, 1), (1, 4, 5),
+             (1, 5, 2), (2, 5, 6), (2, 6, 3), (3, 6, 7),
+             (3, 7, 0), (0, 7, 4), (4, 7, 5), (5, 7, 6)]
     fs = np.asarray(trias, dtype=np.int)
 
     return Surface(vs, fs)
@@ -851,7 +939,7 @@ def generate_sphere(density=10):
             right = cur[(hi + 1) % hsteps]
 
             fs.append((left, right, top[hi]))
-            fs.append((left, right, bot[hi]))
+            fs.append((right, left, bot[hi]))
 
         top, cur = cur, [bot[-1]] + bot[:-1]
 
@@ -905,7 +993,7 @@ def generate_plane(x00, x01, x10, n01, n10):
 
                 fpos = (i * (n10 - 1) + j) * 2
                 fs[fpos, :] = [p, q, r]
-                fs[fpos + 1, :] = [q, r, s]
+                fs[fpos + 1, :] = [s, r, q]
 
     return Surface(vs, fs)
 
@@ -943,3 +1031,8 @@ def from_any(s):
         return Surface(ts[0], ts[1])
     else:
         raise ValueError("Not understood: %r" % s)
+
+
+
+
+
