@@ -16,7 +16,7 @@ def test_sklearn_data_wrappers():
     if externals.versions['skl'] >= '0.9':
         from sklearn import datasets as skldata
     else:
-        from scitkits.learn import datasets as skldata
+        from scikits.learn import datasets as skldata
     import inspect
     found_fx = 0
     for fx in skldata.__dict__:
