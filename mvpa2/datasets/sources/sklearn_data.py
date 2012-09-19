@@ -16,7 +16,7 @@ if externals.exists('skl', raise_=True):
     if externals.versions['skl'] >= '0.9':
         from sklearn import datasets as sklds
     else:
-        from scitkits.learn import datasets as sklds
+        from scikits.learn import datasets as sklds
 
     import inspect
 
