@@ -243,11 +243,38 @@ def write(fnout, dset, form='binary'):
     dset['filename'] = fn
     niml.write(fnout, dset, form, dset2rawniml)
 
-def sparse2full(dset, pad_to_ico_ld=None, pad_to_node=None):
+def sparse2full(dset, pad_to_ico_ld=None, pad_to_node=None,
+                ico_ld_surface_count=1, set_missing_values=0):
+    '''
+    Creates a 'full' dataset which has values associated with all nodes
+    
+    Parameters
+    ----------
+    dset: dict
+        afni_niml_dset-like dictionary with at least a field 'data'
+    pad_to_node_ico_ld: int
+        number of linear divisions (only applicable if used through 
+        AFNI's MapIcosehedron) of the surface this dataset refers to. 
+    pad_to_node: int
+        number of nodes of the surface this data
+    ico_ld_surface_count: int (default: 1)
+        if pad_to_ico_ld is set, this sets the number of surfaces that
+        were origingally used. The typical use case is using a 'merged'
+        surface originally based on a left and right hemisphere
+    set_missing_values: int or float (default: 0)
+        value to which nodes not present in dset are set.
+    
+    Returns
+    -------
+    dset: dict
+        afni_niml_dset-like dictionaryu with at least fields 'data' and 
+        'node_indices'.
+    '''
+
     if not pad_to_ico_ld is None:
         if pad_to_node:
             raise ValueError("Cannot have both ico_ld and pad_to_node")
-        pad_to_node = pad_to_ico_ld ** 2 * 10 + 2
+        pad_to_node = ico_ld_surface_count * (pad_to_ico_ld ** 2 * 10 + 2)
     else:
         if pad_to_node is None:
             raise ValueError("Need either pad_to_ico_ld or pad_to_node")
@@ -255,25 +282,29 @@ def sparse2full(dset, pad_to_ico_ld=None, pad_to_node=None):
     data = dset['data']
     nrows, ncols = data.shape
 
-    node_indices = dset.get('node_indices', np.reshape(np.arange(nrows), (-1, 1)))
+    node_indices = dset.get('node_indices', np.reshape(np.arange(nrows),
+                                                            (-1, 1)))
 
     # a few sanity checks
     n = len(node_indices)
 
     if nrows != n:
-        error('size mismatch between data and node indices')
+        raise ValueError('element count mismatch between data (%d) and '
+                         'node indices (%d)' % (nrows, n))
 
     if n > pad_to_node:
-        error('data has more rows (%d) than there pad_to_node (%d)', (n, pad_to_node))
+        raise ValueError('data has more rows (%d) than pad_to_node (%d)',
+                                                (n, pad_to_node))
 
-    full_node_indices = np.reshape(np.arange(pad_to_node), (pad_to_node, 1))
-    #full_node_indices_vec = np.reshape(full_node_indices, (pad_to_node,))
+    full_node_indices_vec = np.arange(pad_to_node)
+    full_node_indices = np.reshape(full_node_indices, (pad_to_node, 1))
 
-    fulldata = np.zeros((pad_to_node, ncols), dtype=data.dtype)
-    fulldata[np.reshape(node_indices, (n,)), :] = data[:, :]
+    full_data = np.zeros((pad_to_node, ncols), dtype=data.dtype) + \
+                                                        set_missing_values
+    full_data[np.reshape(node_indices, (n,)), :] = data[:, :]
 
-    fulldset = dset
-    fulldset['data'] = fulldata
+    fulldset = dict(dset) # make a (superficial) copy
+    fulldset['data'] = full_data
     fulldset['node_indices'] = full_node_indices
 
     return fulldset
@@ -316,7 +347,7 @@ def ttest(dsets, sa_labels=None, return_values='mt', set_NaN_to=0.):
     Parameters
     ----------
     dsets: str or list of dicts
-        (filenames of) NIML dsets, each referrint to PxQ data for
+        (filenames of) NIML dsets, each referring to PxQ data for
         P nodes (features) and Q values per node (samples)
     sa_labels: list of (int or str)
         indices or labels of columns to compare
@@ -326,8 +357,8 @@ def ttest(dsets, sa_labels=None, return_values='mt', set_NaN_to=0.):
     Returns
     -------
     dset: dict
-        NIML dset-compatible structure, with fields .data, .labels,
-        .stats and .node_indices set.
+        NIML dset-compatible dict with fields 'data', 'labels',
+        'stats' and 'node_indices' set.
     '''
 
     do_m = 'm' in return_values
@@ -406,4 +437,6 @@ def ttest(dsets, sa_labels=None, return_values='mt', set_NaN_to=0.):
     if not set_NaN_to is None:
         r[np.logical_not(np.isfinite(r))] = set_NaN_to
 
+
     return dict(data=r, labels=labs, stats=stats, node_indices=node_idxs0)
+

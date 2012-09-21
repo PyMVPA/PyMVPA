@@ -69,8 +69,9 @@ class Surface(object):
 
         unqf = np.unique(self._f)
         if unqf.size != self._nv:
-            raise Exception("Count mismatch for face range (%d!=%d)" %
-                            (unqf.size, self._nv))
+            raise Exception("Count mismatch for face range (%d!=%d), "
+                            "missing %r" % (unqf.size, self._nv,
+                                            set(range(self._nv)) - set(unqf)))
 
         if (unqf != np.arange(self._nv)).any():
             raise Exception("Missing values in faces")
@@ -101,7 +102,7 @@ class Surface(object):
         return self._n2f
 
     @property
-    def edge2faces(self):
+    def edge2face(self):
         '''A mapping from edges to the face that contains that edge
         
         Returns
@@ -1031,8 +1032,4 @@ def from_any(s):
         return Surface(ts[0], ts[1])
     else:
         raise ValueError("Not understood: %r" % s)
-
-
-
-
 
