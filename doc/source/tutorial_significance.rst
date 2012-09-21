@@ -325,7 +325,7 @@ would look like this. Actually, only a single modification is necessary
 >>> make_null_dist_plot(cv_mc_norm.null_dist.ca.dist_samples,
 ...                     np.asscalar(err))
 >>> x = np.linspace(0,1,100)
->>> pl.plot(x, distr.pdf(x), color='black', lw=2)
+>>> _ = pl.plot(x, distr.pdf(x), color='black', lw=2)
 
 
 Family-friendly
