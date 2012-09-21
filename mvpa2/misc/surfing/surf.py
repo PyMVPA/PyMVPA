@@ -67,14 +67,19 @@ class Surface(object):
         if self._f.shape != (self._nf, 3):
             raise Exception("Wrong shape for faces")
 
+        # see if all faces have a corresponding node.
+        # actually this would not invalidate the surface, so
+        # we only give a warning
         unqf = np.unique(self._f)
         if unqf.size != self._nv:
-            raise Exception("Count mismatch for face range (%d!=%d), "
-                            "missing %r" % (unqf.size, self._nv,
+            from mvpa2.base import warning
+            warning("Count mismatch for face range (%d!=%d), "
+                            "faces without node: %r" % (unqf.size, self._nv,
                                             set(range(self._nv)) - set(unqf)))
 
         if (unqf != np.arange(self._nv)).any():
-            raise Exception("Missing values in faces")
+            from mvpa2.base import warning
+            warning("Missing values in faces")
 
     @property
     def node2faces(self):
