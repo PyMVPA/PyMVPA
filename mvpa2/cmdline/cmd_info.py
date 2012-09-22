@@ -31,6 +31,6 @@ def run(args):
     if args.externals:
         print mvpa2.wtf(include=['externals'])
     elif args.debug:
-        print mvpa2.debug.print_registered()
+        mvpa2.debug.print_registered()
     else:
         print mvpa2.wtf()
