@@ -1,0 +1,82 @@
+#!/usr/bin/python
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+""""""
+
+__docformat__ = 'restructuredtext'
+
+import sys
+import argparse
+import mvpa2.cmdline as mvcmd
+from mvpa2.base import verbose
+if __debug__:
+    from mvpa2.base import debug
+
+
+# what version are we talking
+from mvpa2.base.info import get_pymvpa_gitversion
+pymvpa_version = get_pymvpa_gitversion()
+if not pymvpa_version:
+    import mvpa2
+    pymvpa_version = mvpa.__version__
+
+# handler for common/non-command-specific cmdline arguments
+def _proc_common_args(args):
+    # debug
+    if __debug__ and args.common_debug:
+        for dbg in args.common_debug:
+            debug.active += dbg
+    # verbosity
+    if __debug__:
+        debug("CMDLINE", "Setting verbose.level to %s" % str(args.common_verbose))
+    verbose.level = args.common_verbose
+
+
+# setup cmdline args parser
+# main parser
+parser = argparse.ArgumentParser(
+                fromfile_prefix_chars='@',
+               # usage="%(prog)s ..."
+            )
+# common options
+parser.add_argument('--version', action='version',
+                    version='PyMVPA %s' % pymvpa_version)
+if __debug__:
+    parser.add_argument(
+        '--dbg', action='append', nargs=1, type=str, dest='common_debug',
+        help="enable debug channel (see 'info' command for available channels)")
+parser.add_argument('--verbose', action='store', nargs='?', type=int,
+                    dest='common_verbose',
+                    default=0, help='output verbosity level')
+
+# subparsers
+subparsers = parser.add_subparsers(
+                title='commands',
+                description="""\
+Detailed usage information for individual commands is availble via
+command-specific help options, i.e.: %s <command> --help""" % sys.argv[0])
+# for all subcommand modules it can find
+for cmd in sorted([c for c in dir(mvcmd) if c.startswith('cmd_')]):
+    subcmdmod = getattr(__import__('mvpa2.cmdline',
+                                   globals(), locals(),
+                                   [cmd], -1),
+                        cmd)
+    # create subparser, use module suffix as cmd name
+    subparser = subparsers.add_parser(cmd[4:], **subcmdmod.parser_args)
+    # let module configure the parser
+    subparser = subcmdmod.setup_parser(subparser)
+    # configure 'run' function for this command
+    subparser.set_defaults(func=subcmdmod.run)
+
+# parse cmd args
+args = parser.parse_args()
+# process common arguments
+_proc_common_args(args)
+# run the function associated with the selected command
+args.func(args)
