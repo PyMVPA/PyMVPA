@@ -77,7 +77,7 @@ class Surface(object):
                             "faces without node: %r" % (unqf.size, self._nv,
                                             set(range(self._nv)) - set(unqf)))
 
-        if (unqf != np.arange(self._nv)).any():
+        if (unqf != np.arange(self._nv)):
             from mvpa2.base import warning
             warning("Missing values in faces")
 
