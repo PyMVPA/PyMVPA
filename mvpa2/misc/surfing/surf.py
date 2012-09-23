@@ -133,7 +133,6 @@ class Surface(object):
             v = f2el.view()
             v.flags.writeable = False
             self._f2el = v
-            print v
 
         return self._f2el
 
