@@ -108,6 +108,36 @@ class Surface(object):
         return self._n2f
 
     @property
+    def face2edge_length(self):
+        '''
+        Length of edges associated with each face
+        
+        Returns
+        f2el: np.ndarray
+            Px3 array where P==self.nfaces. f2el[i,:] contains the
+            length of the (three) edges that make up face i. 
+        '''
+
+        if not hasattr(self, '_f2el'):
+            n, f, v = self.nfaces, self.faces, self.vertices
+
+            f2el = np.zeros((n, 3))
+            p = v[f[:, 0]] # first coordinate
+            for i in xrange(3):
+                q = v[f[:, (i + 1) % 3]] # second coordinate
+                d = p - q # difference vector
+
+                f2el[:, i] = np.sum(d * d, 1) ** .5 # length
+                p = q
+
+            v = f2el.view()
+            v.flags.writeable = False
+            self._f2el = v
+            print v
+
+        return self._f2el
+
+    @property
     def edge2face(self):
         '''A mapping from edges to the face that contains that edge
         
