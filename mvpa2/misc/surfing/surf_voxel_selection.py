@@ -408,7 +408,7 @@ def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
         visitorder = list(np.random.permutation(len(srcs)))
 
         # construct mapping from nodes to enclosing voxels
-        n2v = vol_surf.node2voxels()
+        n2v = vol_surf.node2voxels(steps=steps, start=start, stop=stop)
 
         if __debug__:
             debug('SVS', "Generated mapping from nodes"
