@@ -10,5 +10,5 @@
 
 __docformat__ = 'restructuredtext'
 
-import cmd_hyperalignment
+import cmd_hyperalign
 import cmd_info
