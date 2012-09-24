@@ -10,12 +10,30 @@
 
 __docformat__ = 'restructuredtext'
 
+
+from mvpa2.base import verbose
+if __debug__:
+    from mvpa2.base import debug
+from mvpa2.cmdline.helpers import parser_add_common_args, args2datasets
+
 parser_args = {
     'description': 'subparse descr'
 }
 
 def setup_parser(parser):
+    parser_add_common_args(
+            parser,
+            pos=['multidata'],
+            opt=['multimask']
+        )
     return parser
+
 
 def run(args):
     print 'Running with', repr(args)
+    dss = args2datasets(args.data, args.masks)
+    verbose(1, "Loaded %i input datasets" % len(dss))
+    print [str(ds) for ds in dss]
+
+
+
