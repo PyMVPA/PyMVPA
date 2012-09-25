@@ -18,11 +18,12 @@ __docformat__ = 'restructuredtext'
 
 multidata = (
     'data', '--data',
-    {'nargs': '+'}
+    {'nargs': '+',
+     'help': 'awesome description is pending'
+    }
 )
 
 multimask = (
     'masks', '--masks',
     {'nargs': '+'}
 )
-
