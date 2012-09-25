@@ -96,7 +96,7 @@ class HyperAlignmentTests(unittest.TestCase):
             self.assertEqual(idhashes_targets, idhashes_targets_,
                 msg="Hyperalignment must not change original data targets.")
 
-            self.assertEqual(ref_ds, ha.ca.choosen_ref_ds)
+            self.assertEqual(ref_ds, ha.ca.chosen_ref_ds)
 
             # Map data back
 
