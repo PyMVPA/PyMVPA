@@ -14,7 +14,7 @@ __docformat__ = 'restructuredtext'
 import sys
 import argparse
 import mvpa2.cmdline as mvcmd
-from mvpa2.base import verbose
+from mvpa2.base import verbose, error
 if __debug__:
     from mvpa2.base import debug
 
@@ -79,4 +79,7 @@ args = parser.parse_args()
 # process common arguments
 _proc_common_args(args)
 # run the function associated with the selected command
-args.func(args)
+try:
+    args.func(args)
+except Exception as exc:
+    error(str(exc))
