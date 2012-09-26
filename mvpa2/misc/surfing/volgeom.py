@@ -406,11 +406,11 @@ class VolGeom():
         return img
 
     def masked_nifti_img(self, nt=1):
-        data_lin = np.zeros((self.nvoxels, self.ntimepoints), dtype=np.float32)
+        data_lin = np.zeros((self.nvoxels, nt), dtype=np.float32)
         if self.mask is None:
-            data_lin[:] = 1
+            data_lin[:, :] = 1
         else:
-            data_lin[self.mask] = 1
+            data_lin[self.mask, :] = 1
 
         sh = self.shape
         sh4d = (sh[0], sh[1], sh[2], nt)
