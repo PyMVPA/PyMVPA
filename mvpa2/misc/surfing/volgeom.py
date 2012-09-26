@@ -480,11 +480,20 @@ def from_any(s, mask_volume=False):
 
             if isinstance(mask_volume, int):
                 mask = np.asarray(s.samples[mask_volume, :])
+            elif isinstance(mask_volume, basestring):
+                if not mask_volume in s.fa:
+                    raise ValueError('Key not found in s.fa: %r' % mask_volume)
+
+                sh = shape[:3]
+                mask = np.zeros(sh)
+
+                for idx in s.fa[mask_volume].value:
+                    mask[tuple(idx)] = 1
             else:
                 mask = None
         except:
             # no idea what type of beast this is.
             raise ValueError('Unrecognized input %r - not a VolGeom, '
-                             '(filename of) Nifti image, or (mri-)Dataset')
+                             '(filename of) Nifti image, or (mri-)Dataset' % s)
 
     return VolGeom(shape=shape, affine=affine, mask=mask)
