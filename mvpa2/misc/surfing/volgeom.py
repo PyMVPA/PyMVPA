@@ -406,7 +406,7 @@ class VolGeom():
         return img
 
     def masked_nifti_img(self, nt=1):
-        data_lin = np.zeros(self.nvoxels, self.ntimepoints)
+        data_lin = np.zeros((self.nvoxels, self.ntimepoints), dtype=np.float32)
         if self.mask is None:
             data_lin[:] = 1
         else:
