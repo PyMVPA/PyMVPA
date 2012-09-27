@@ -108,11 +108,12 @@ class Surface(object):
         return self._n2f
 
     @property
-    def face2edge_length(self):
+    def face_edge_length(self):
         '''
         Length of edges associated with each face
         
         Returns
+        -------
         f2el: np.ndarray
             Px3 array where P==self.nfaces. f2el[i,:] contains the
             length of the (three) edges that make up face i. 
@@ -135,6 +136,48 @@ class Surface(object):
             self._f2el = v
 
         return self._f2el
+
+    @property
+    def average_node_edge_length(self):
+        '''
+        Average length of edges associated with each face
+        
+        Returns
+        -------
+        n2el: np.ndarray
+            P-valued vector where P==self.nvertices, where n2el[i] is the 
+            average length of the edges that contain node i.
+        '''
+        if not hasattr(self, '_n2ael'):
+            n, v, f = self.nvertices, self.vertices, self.faces
+
+            sum_dist = np.zeros((n,))
+            count_dist = np.zeros((n,))
+            a = f[:, 0]
+            p = v[a]
+            for j in xrange(3):
+                b = f[:, (j + 1) % 3]
+                q = v[b]
+
+                d = np.sum((p - q) ** 2, 1) ** .5
+
+                count_dist[a] += 1
+                count_dist[b] += 1
+
+                sum_dist[a] += d
+                sum_dist[b] += d
+
+                a = b
+
+            sum_dist[count_dist == 0] = 0
+            count_dist[count_dist == 0] = 1
+
+            v = (sum_dist / count_dist).view()
+            v.flags.writeable = False
+            self._v2ael = v
+
+        return self._v2ael
+
 
     @property
     def edge2face(self):
@@ -882,6 +925,7 @@ class Surface(object):
             self._node_areas = vw
 
         return self._node_areas
+
 
 
 def merge(*surfs):
