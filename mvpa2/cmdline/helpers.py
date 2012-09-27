@@ -26,7 +26,7 @@ def parser_add_common_args(parser, pos=None, opt=None):
     if not opt is None:
         for arg in opt:
             arg_tmpl = getattr(common_args, arg)
-            parser.add_argument(arg_tmpl[1], **arg_tmpl[2])
+            parser.add_argument(*arg_tmpl[1], **arg_tmpl[2])
     return parser
 
 def _load_if_hdf5(arg):
