@@ -17,13 +17,21 @@ __docformat__ = 'restructuredtext'
 #)
 
 multidata = (
-    'data', '--data',
+    'data', ('-d', '--data'),
     {'nargs': '+',
      'help': 'awesome description is pending'
     }
 )
 
 multimask = (
-    'masks', '--masks',
+    'masks', ('-m', '--masks'),
     {'nargs': '+'}
+)
+
+output_prefix = (
+    'outprefix', ('-o', '--output-prefix'),
+    {'type': str,
+     'metavar': 'PREFIX',
+     'help': 'prefix for all output file'
+    }
 )
