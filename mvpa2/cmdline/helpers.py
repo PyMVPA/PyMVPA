@@ -18,16 +18,18 @@ if __debug__:
 from mvpa2.base.types import is_datasetlike
 from mvpa2.cmdline import common_args
 
-def parser_add_common_args(parser, pos=None, opt=None):
-    if not pos is None:
-        for arg in pos:
+def parser_add_common_args(parser, pos=None, opt=None, **kwargs):
+    for i, args in enumerate((pos, opt)):
+        if args is None:
+            continue
+        for arg in args:
             arg_tmpl = getattr(common_args, arg)
-            parser.add_argument(arg_tmpl[0], **arg_tmpl[2])
-    if not opt is None:
-        for arg in opt:
-            arg_tmpl = getattr(common_args, arg)
-            parser.add_argument(*arg_tmpl[1], **arg_tmpl[2])
-    return parser
+            arg_kwargs = arg_tmpl[2].copy()
+            arg_kwargs.update(kwargs)
+            if i:
+                parser.add_argument(*arg_tmpl[i], **arg_kwargs)
+            else:
+                parser.add_argument(arg_tmpl[i], **arg_kwargs)
 
 def _load_if_hdf5(arg):
     # just try it, who knows whether we can trust file extensions and whether
