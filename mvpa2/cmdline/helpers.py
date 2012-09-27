@@ -117,11 +117,14 @@ def param2arg(parser, klass, param, arg_names=None):
                         default=param.default,
                         type=CmdArg2ParameterType(param))
 
-def ca2arg(parser, klass, ca, arg_names=None):
+def ca2arg(parser, klass, ca, arg_names=None, help=None):
     ca = klass._collections_template['ca'][ca]
     if arg_names is None:
         arg_names = ('--%s' % ca.name.replace('_', '-'),)
-    parser.add_argument(*arg_names, help=ca.__doc__, default=False,
+    help_ = ca.__doc__
+    if help:
+        help_ = help_ + help
+    parser.add_argument(*arg_names, help=help_, default=False,
                         action='store_true')
 
 

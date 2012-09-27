@@ -82,7 +82,12 @@ args = parser.parse_args()
 # process common arguments
 _proc_common_args(args)
 # run the function associated with the selected command
-try:
+if args.common_debug:
+    # if we are debugging anyway, make no attempt to catch exceptions
+    # but let it fail in all its glory
     args.func(args)
-except Exception as exc:
-    error(str(exc))
+else:
+    try:
+        args.func(args)
+    except Exception as exc:
+        error(str(exc))
