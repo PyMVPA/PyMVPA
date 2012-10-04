@@ -6,17 +6,14 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-""""""
+"""Query various information about a PyMVPA installation.
+
+If no option is given, a  useful subset of the available information is printed.
+"""
 
 import mvpa2
 
 __docformat__ = 'restructuredtext'
-
-parser_args = {
-    'description':
-"""Query various information about this PyMVPA installation. If no option is
-given useful subset of the available information is printed."""
-}
 
 def setup_parser(parser):
     excl = parser.add_mutually_exclusive_group()

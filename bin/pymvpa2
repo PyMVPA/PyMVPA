@@ -79,8 +79,16 @@ for cmd in sorted([c for c in dir(mvcmd) if c.startswith('cmd_')]):
                                    globals(), locals(),
                                    [cmd], -1),
                         cmd)
+    # deal with optional parser args
+    if 'parser_args' in subcmdmod.__dict__:
+        parser_args = subcmdmod.parser_args
+    else:
+        parser_args = dict()
+    # use module description, if no explicit description is available
+    if not 'description' in parser_args and len(subcmdmod.__doc__):
+        parser_args['description'] = subcmdmod.__doc__
     # create subparser, use module suffix as cmd name
-    subparser = subparsers.add_parser(cmd[4:], **subcmdmod.parser_args)
+    subparser = subparsers.add_parser(cmd[4:], **parser_args)
     # all subparser can report the version
     subparser.add_argument('--version', action='version',
                            version='PyMVPA %s' % pymvpa_version)
