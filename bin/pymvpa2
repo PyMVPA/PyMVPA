@@ -57,7 +57,7 @@ if __debug__:
         '--dbg', action='append', nargs=1, type=str, dest='common_debug',
         help="enable debug channel (see 'info' command for available channels)")
 parser.add_argument(
-    '--preload', action='append', type=argparse.FileType('r'),
+    '--preload', action='append', type=argparse.FileType('r'), default=tuple(),
     help="""filename of a custom Python script that is executed prior to, and in
     the same session as the actual command. This can be used to modify the
     execution environment, for example creating a custom classifier
