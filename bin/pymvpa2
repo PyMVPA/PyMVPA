@@ -36,6 +36,11 @@ def _proc_common_args(args):
     if __debug__:
         debug("CMDLINE", "Setting verbose.level to %s" % str(args.common_verbose))
     verbose.level = args.common_verbose
+    for pl in args.preload:
+        if __debug__:
+            debug("CMDLINE", "Executing preload script '%s'" % pl)
+        exec pl
+        pl.close()
 
 
 # setup cmdline args parser
@@ -51,6 +56,13 @@ if __debug__:
     parser.add_argument(
         '--dbg', action='append', nargs=1, type=str, dest='common_debug',
         help="enable debug channel (see 'info' command for available channels)")
+parser.add_argument(
+    '--preload', action='append', type=argparse.FileType('r'),
+    help="""filename of a custom Python script that is executed prior to, and in
+    the same session as the actual command. This can be used to modify the
+    execution environment, for example creating a custom classifier
+    instance. This option can be given multiple times, and the associated
+    scripts are ran in order of their appearance on the command line.""")
 parser.add_argument('--verbose', action='store', nargs='?', type=int,
                     dest='common_verbose',
                     default=0, help='output verbosity level')
