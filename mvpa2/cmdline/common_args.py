@@ -35,3 +35,15 @@ output_prefix = (
      'help': 'prefix for all output file'
     }
 )
+
+from mvpa2.cmdline.helpers import arg2learner
+classifier = (
+    'classifier', ('--clf',),
+    {'type': arg2learner,
+     'help': """select a classifier via its description in the learner
+             warehouse (see 'info' command for a listing), a colon-separated
+             list of capabilities, or by a file path to a Python script that
+             creates a classifier instance (advanced)."""
+    }
+)
+
