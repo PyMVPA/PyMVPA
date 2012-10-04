@@ -150,14 +150,16 @@ class Warehouse(object):
         """
         return [(x.descr, x.__tags__) for x in self.__items]
 
-    def print_registered(self):
+    def print_registered(self, *args):
+        if not len(args):
+            args = (slice(None))
         import numpy as np
         import textwrap
         # sort by description
-        for lrn in sorted(self.listing(), key=lambda x: x[0].lower()):
+        for lrn in sorted(self.__getitem__(args), key=lambda x: x.descr.lower()):
             print '%s\n%s' % (
-                    lrn[0],
-                    textwrap.fill(', '.join(np.unique(lrn[1])), 70,
+                    lrn.descr,
+                    textwrap.fill(', '.join(np.unique(lrn.__tags__)), 70,
                                   initial_indent=' ' * 4,
                                   subsequent_indent=' ' * 4)
                 )
