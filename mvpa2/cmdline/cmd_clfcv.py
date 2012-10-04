@@ -10,6 +10,17 @@
 
 __docformat__ = 'restructuredtext'
 
-import cmd_hyperalign
-import cmd_info
-import cmd_clfcv
+from mvpa2.base import verbose
+if __debug__:
+    from mvpa2.base import debug
+from mvpa2.cmdline.helpers \
+        import parser_add_common_args
+
+
+def setup_parser(parser):
+    # order of calls is relevant!
+    parser_add_common_args(parser, pos=['multidata'],
+                           opt=['multimask', 'classifier'])
+
+def run(args):
+    print args.clf
