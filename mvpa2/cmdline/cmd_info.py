@@ -25,6 +25,9 @@ def setup_parser(parser):
     if __debug__:
         excl.add_argument('--debug', action='store_true',
                           help='list available debug channels')
+    excl.add_argument(
+            '--learner-warehouse', action='store_true',
+            help='list available algorithms in the learner warehouse')
     return parser
 
 def run(args):
@@ -32,5 +35,8 @@ def run(args):
         print mvpa2.wtf(include=['externals'])
     elif args.debug:
         mvpa2.debug.print_registered()
+    elif args.learner_warehouse:
+        from mvpa2.clfs.warehouse import clfswh
+        clfswh.print_registered()
     else:
         print mvpa2.wtf()

@@ -150,6 +150,18 @@ class Warehouse(object):
         """
         return [(x.descr, x.__tags__) for x in self.__items]
 
+    def print_registered(self):
+        import numpy as np
+        import textwrap
+        # sort by description
+        for lrn in sorted(self.listing(), key=lambda x: x[0].lower()):
+            print '%s\n%s' % (
+                    lrn[0],
+                    textwrap.fill(', '.join(np.unique(lrn[1])), 70,
+                                  initial_indent=' ' * 4,
+                                  subsequent_indent=' ' * 4)
+                )
+
     @property
     def items(self):
         """Registered items
