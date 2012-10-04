@@ -16,9 +16,9 @@ from mvpa2.base import verbose
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.base.types import is_datasetlike
-from mvpa2.cmdline import common_args
 
 def parser_add_common_args(parser, pos=None, opt=None, **kwargs):
+    from mvpa2.cmdline import common_args
     for i, args in enumerate((pos, opt)):
         if args is None:
             continue
@@ -221,3 +221,41 @@ def arg2none(arg):
         raise argparse.ArgumentTypeError(
                 "'%s' cannot be converted into `None`" % arg)
 
+def arg2learner(arg, index=0):
+    from mvpa2.clfs.warehouse import clfswh
+    import os.path
+    if arg in clfswh.descriptions:
+        # arg is a description
+        return clfswh.get_by_descr(arg)
+    elif os.path.isfile(arg) and arg.endswith('.py'):
+        # arg is a script filepath
+        return script2obj(arg)
+    else:
+        # warehouse tag collection?
+        try:
+            learner = clfswh.__getitem__(*arg.split(':'))
+            if not len(learner):
+                raise argparse.ArgumentTypeError(
+                    "not match for given learner capabilities %s in the warehouse" % arg)
+            return learner[index]
+        except ValueError:
+            # unknown tag
+            raise argparse.ArgumentTypeError(
+                "'%s' is neither a known classifier description, nor a script, "
+                "nor a sequence of valid learner capabilities" % arg)
+
+def script2obj(filepath):
+    locals = {}
+    execfile(filepath, dict(), locals)
+    if not len(locals):
+        raise argparse.ArgumentTypeError(
+            "executing script '%s' did not create at least one object" % filepath)
+    elif len(locals) > 1 and not 'obj' in locals:
+        raise argparse.ArgumentTypeError(
+            "executing script '%s' " % filepath
+            + "did create multiple objects %s " % locals.keys()
+            + "but none is named 'obj'")
+    if len(locals) == 1:
+        return locals.values()[0]
+    else:
+        return locals['obj']
