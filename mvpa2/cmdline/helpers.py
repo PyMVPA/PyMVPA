@@ -31,6 +31,16 @@ def parser_add_common_args(parser, pos=None, opt=None, **kwargs):
             else:
                 parser.add_argument(arg_tmpl[i], **arg_kwargs)
 
+def parser_add_common_opt(parser, opt, names=None, **kwargs):
+    from mvpa2.cmdline import common_args
+    opt_tmpl = getattr(common_args, opt)
+    opt_kwargs = opt_tmpl[2].copy()
+    opt_kwargs.update(kwargs)
+    if names is None:
+        parser.add_argument(*arg_tmpl[1], **opt_kwargs)
+    else:
+        parser.add_argument(*names, **opt_kwargs)
+
 def _load_if_hdf5(arg):
     # just try it, who knows whether we can trust file extensions and whether
     # we have HDF5
