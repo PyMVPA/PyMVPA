@@ -47,3 +47,17 @@ classifier = (
     }
 )
 
+from mvpa2.cmdline.helpers import arg2partitioner
+partitioner = (
+    'partitioner', ('--partitioner',),
+    {'type': arg2partitioner,
+     'help': """select a partitioner. Supported arguments are: 'half' for
+             split-half, partitioning, 'oddeven' for partitioning into odd and
+             even chunks, 'group-X' where X can be any positive integer for
+             partitioning in X groups, 'n-X' where X can be any positive
+             integer for leave-X-chunks out partitioning, or a file path to a
+             Python script that creates a custom partitioner instance
+             (advanced)."""
+    }
+)
+

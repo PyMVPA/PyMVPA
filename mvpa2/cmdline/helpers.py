@@ -259,3 +259,23 @@ def script2obj(filepath):
         return locals.values()[0]
     else:
         return locals['obj']
+
+def arg2partitioner(arg):
+    arg = arg.lower()
+    import mvpa2.generators.partition as part
+    if arg == 'oddeven':
+        return part.OddEvenPartitioner()
+    elif arg == 'half':
+        return part.HalfPartitioner()
+    elif arg.startswith('group-'):
+        ngroups = int(arg[6:])
+        return part.NGroupPartitioner(ngroups)
+    elif arg.startswith('n-'):
+        nfolds = int(arg[2:])
+        return part.NFoldPartitioner(nfolds)
+    elif os.path.isfile(arg) and arg.endswith('.py'):
+        # arg is a script filepath
+        return script2obj(arg)
+    else:
+        raise argparse.ArgumentTypeError(
+            "'%s' does not describe a supported partitioner type" % arg)
