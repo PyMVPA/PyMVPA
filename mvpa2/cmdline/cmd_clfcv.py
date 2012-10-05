@@ -14,13 +14,14 @@ from mvpa2.base import verbose
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
-        import parser_add_common_args
+        import parser_add_common_args, parser_add_common_opt
 
 
 def setup_parser(parser):
     # order of calls is relevant!
     parser_add_common_args(parser, pos=['multidata'],
-                           opt=['multimask', 'classifier'])
+                           opt=['multimask', 'classifier', 'partitioner'])
+    parser_add_common_opt(parser, 'partitioner', names=('-p', '--part'))
 
 def run(args):
-    print args.clf
+    print args
