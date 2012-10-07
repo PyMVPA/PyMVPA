@@ -28,6 +28,12 @@ multimask = (
     {'nargs': '+'}
 )
 
+mask = (
+    'mask', ('-m', '--mask'),
+    {'help': 'single mask item'}
+)
+
+
 output_prefix = (
     'outprefix', ('-o', '--output-prefix'),
     {'type': str,
@@ -61,3 +67,10 @@ partitioner = (
     }
 )
 
+from mvpa2.cmdline.helpers import arg2hdf5compression
+hdf5compression = (
+    'compression', ('--compression',),
+    dict(type=arg2hdf5compression, default=None, help="""\
+compression type for HDF5 storage. Available values depend on the specific HDF5
+installation. Typical values are: 'gzip', 'lzf', 'szip', or integers from 1 to
+9 indicating gzip compression levels."""))
