@@ -289,3 +289,9 @@ def arg2partitioner(arg):
     else:
         raise argparse.ArgumentTypeError(
             "'%s' does not describe a supported partitioner type" % arg)
+
+def arg2hdf5compression(arg):
+    try:
+        return int(arg)
+    except:
+        return arg
