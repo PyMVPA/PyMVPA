@@ -21,7 +21,23 @@ from mvpa2.base.types import is_datasetlike
 
 class HelpAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
-        helpstr = parser.format_help()
+        if option_string == '--help':
+            # lets use the manpage on mature systems ...
+            try:
+                import subprocess
+                subprocess.check_call(
+                        'man %s 2> /dev/null' % parser.prog.replace(' ', '-'),
+                        shell=True)
+                sys.exit(0)
+            except (subprocess.CalledProcessError, OSError):
+                # ...but silently fall back if it doesn't work
+                pass
+        if option_string == '-h':
+            helpstr = "%s\n%s" \
+                    % (parser.format_usage(),
+                       "Use '--help' to get more comprehensive information.")
+        else:
+            helpstr = parser.format_help()
         # better for help2man
         helpstr = re.sub(r'optional arguments:', 'options:', helpstr)
         # convert all heading to have the first character uppercase
