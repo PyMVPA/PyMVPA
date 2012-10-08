@@ -48,7 +48,7 @@ class HelpAction(argparse.Action):
                helpstr)[0]
         # usage is on the same line
         helpstr = re.sub(r'^usage:', 'Usage:', helpstr)
-        if option_string == '--help-mrf':
+        if option_string == '--help-np':
             helpstr = re.subn('\n\s+\[', ' [', helpstr)[0]
         print helpstr
         sys.exit(0)
@@ -73,7 +73,7 @@ def parser_add_common_opt(parser, opt, names=None, **kwargs):
     opt_kwargs = opt_tmpl[2].copy()
     opt_kwargs.update(kwargs)
     if names is None:
-        parser.add_argument(*arg_tmpl[1], **opt_kwargs)
+        parser.add_argument(*opt_tmpl[1], **opt_kwargs)
     else:
         parser.add_argument(*names, **opt_kwargs)
 

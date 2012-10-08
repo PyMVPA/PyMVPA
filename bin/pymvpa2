@@ -15,7 +15,7 @@ import sys
 import argparse
 import textwrap
 import mvpa2.cmdline as mvcmd
-from mvpa2.cmdline.helpers import HelpAction
+from mvpa2.cmdline import helpers, common_args
 from mvpa2.base import verbose, error
 if __debug__:
     from mvpa2.base import debug
@@ -54,8 +54,7 @@ parser = argparse.ArgumentParser(
                 add_help=False
             )
 # common options
-parser.add_argument('-h', '--help', '--help-mrf', nargs=0, action=HelpAction,
-                    help='show this help message and exit')
+helpers.parser_add_common_opt(parser, 'help')
 parser.add_argument('--version', action='version',
                     version='PyMVPA %s' % pymvpa_version)
 if __debug__:
@@ -97,9 +96,7 @@ for cmd in sorted([c for c in dir(mvcmd) if c.startswith('cmd_')]):
     subparser.add_argument('--version', action='version',
                            version='PyMVPA %s' % pymvpa_version)
     # our own custom help for all commands
-    subparser.add_argument('-h', '--help', '--help-mrf', nargs=0,
-                           action=HelpAction,
-                           help='show this help message and exit')
+    helpers.parser_add_common_opt(subparser, 'help')
     # let module configure the parser
     subcmdmod.setup_parser(subparser)
     # configure 'run' function for this command
