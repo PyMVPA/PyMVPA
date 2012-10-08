@@ -15,10 +15,10 @@ import sys
 import argparse
 import textwrap
 import mvpa2.cmdline as mvcmd
+from mvpa2.cmdline.helpers import HelpAction
 from mvpa2.base import verbose, error
 if __debug__:
     from mvpa2.base import debug
-
 
 # what version are we talking
 from mvpa2.base.info import get_pymvpa_gitversion
@@ -51,8 +51,11 @@ parser = argparse.ArgumentParser(
                 # usage="%(prog)s ...",
                 epilog='',
                 formatter_class=argparse.RawDescriptionHelpFormatter,
+                add_help=False
             )
 # common options
+parser.add_argument('-h', '--help', '--help-mrf', nargs=0, action=HelpAction,
+                    help='show this help message and exit')
 parser.add_argument('--version', action='version',
                     version='PyMVPA %s' % pymvpa_version)
 if __debug__:
@@ -89,10 +92,14 @@ for cmd in sorted([c for c in dir(mvcmd) if c.startswith('cmd_')]):
     if not 'description' in parser_args:
         parser_args['description'] = subcmdmod.__doc__
     # create subparser, use module suffix as cmd name
-    subparser = subparsers.add_parser(cmd[4:], **parser_args)
+    subparser = subparsers.add_parser(cmd[4:], add_help=False, **parser_args)
     # all subparser can report the version
     subparser.add_argument('--version', action='version',
                            version='PyMVPA %s' % pymvpa_version)
+    # our own custom help for all commands
+    subparser.add_argument('-h', '--help', '--help-mrf', nargs=0,
+                           action=HelpAction,
+                           help='show this help message and exit')
     # let module configure the parser
     subcmdmod.setup_parser(subparser)
     # configure 'run' function for this command
