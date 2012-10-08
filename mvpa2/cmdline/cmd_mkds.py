@@ -44,7 +44,7 @@ read by memory-mapping, i.e. not read (immediately) into memory. Enable with
 Examples:
 
 Load 4D MRI image, assign atlas labels to a feature attribute, and attach class
-labels from a text file. The resulting dataset is stored as 'dataset.hdf5' in
+labels from a text file. The resulting dataset is stored as 'ds.hdf5' in
 the current directory.
 
   $ pymvpa2 mkds -o ds --from-mri bold.nii.gz --vol-attr area harvox.nii.gz --sa-txt targets labels.txt
