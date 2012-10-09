@@ -166,6 +166,37 @@ class VolGeom():
 
         return ijk
 
+    def ijk2triples(self, ijk):
+        '''Converts sub indices to a list of triples
+        
+        Parameters
+        ----------
+        ijk: np.ndarray (Px3)
+            sub indices
+            
+        Returns
+        -------
+        triples: list with P triples
+            the indices from ijk, so that triples[i][j]==ijk[i,j]
+        '''
+
+        return map(tuple, ijk)
+
+    def triples2ijk(self, tuples):
+        '''Converts triples to sub indices
+        
+        Parameters
+        ----------
+        triples: list with P triples
+        
+        Returns
+        -------
+        ijk: np.ndarray(Px3)
+            an array from triples, so that ijk[i,j]==triples[i][j]
+        '''
+
+        return np.asarray(tuples)
+
     def ijk2lin(self, ijk):
         '''Converts sub to linear voxel indices.
         
