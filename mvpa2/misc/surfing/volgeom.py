@@ -83,6 +83,21 @@ class VolGeom():
         m.flags.writeable = False
         return m
 
+    @property
+    def linear_mask(self):
+        '''Returns the mask as a vector
+        
+        Returns
+        -------
+        mask: np.ndarray (vector with P values)
+            boolean vector indicating which voxels are included.
+            If no mask is associated with this instance then mask is None.
+        '''
+        if self._mask is None:
+            return None
+
+        return np.reshape(self.mask, (self.nvoxels,))
+
     def _ijkmultfac(self):
         '''multiplication factors for ijk <--> linear indices conversion'''
         sh = self.shape
@@ -356,6 +371,8 @@ class VolGeom():
         int
             Number of voxels that survive the mask'''
         return self.nvoxels if self.mask is None else np.sum(self.mask)
+
+
 
     def contains_ijk(self, ijk):
         '''
