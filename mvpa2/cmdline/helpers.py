@@ -40,6 +40,7 @@ class HelpAction(argparse.Action):
             helpstr = parser.format_help()
         # better for help2man
         helpstr = re.sub(r'optional arguments:', 'options:', helpstr)
+        helpstr = re.sub(r'positional arguments:\n.*\n', '', helpstr)
         # convert all heading to have the first character uppercase
         headpat = re.compile(r'^([a-z])(.*):$',  re.MULTILINE)
         helpstr = re.subn(headpat,
@@ -49,7 +50,10 @@ class HelpAction(argparse.Action):
         # usage is on the same line
         helpstr = re.sub(r'^usage:', 'Usage:', helpstr)
         if option_string == '--help-np':
-            helpstr = re.subn('\n\s+\[', ' [', helpstr)[0]
+            usagestr = re.split(r'\n\n[A-Z]+', helpstr, maxsplit=1)[0]
+            usage_length = len(usagestr)
+            usagestr = re.subn(r'\s+', ' ', usagestr.replace('\n', ' '))[0]
+            helpstr = '%s\n%s' % (usagestr, helpstr[usage_length:])
         print helpstr
         sys.exit(0)
 

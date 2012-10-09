@@ -8,6 +8,9 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """"""
 
+# magic line for manpage summary
+# man: -*- % align the features across multiple datasets into a common space
+
 __docformat__ = 'restructuredtext'
 
 import numpy as np

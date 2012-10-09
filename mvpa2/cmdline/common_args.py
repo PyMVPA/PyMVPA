@@ -24,6 +24,12 @@ help = (
                  the use of a pager for displaying the help.""")
 )
 
+version = (
+    'version', ('--version',),
+    dict(action='version',
+         help="show program's version and license information and exit")
+)
+
 multidata = (
     'data', ('-d', '--data'),
     {'nargs': '+',

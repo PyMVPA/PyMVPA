@@ -11,6 +11,9 @@
 If no option is given, a  useful subset of the available information is printed.
 """
 
+# magic line for manpage summary
+# man: -*- % query various information about a PyMVPA installation
+
 import mvpa2
 
 __docformat__ = 'restructuredtext'
