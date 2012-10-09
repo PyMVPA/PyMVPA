@@ -266,7 +266,24 @@ class _SVM(Classifier):
         """
 
         if self.params.kernel.__kernel_name__ == 'linear':
-            datasetnorm = np.mean(np.sqrt(np.sum(data*data, axis=1)))
+            # TODO: move into a function wrapper for
+            #       np.linalg.norm
+            if np.issubdtype(data.dtype, np.integer):
+                # we are dealing with integers and overflows are
+                # possible, so assure working with floats
+                def sq_func(x):
+                    y = x.astype(float) # copy as float
+                    y *= y              # in-place square
+                    return y
+            else:
+                sq_func = np.square
+            # perform it per each sample so we do not double memory
+            # with calling sq_func on full data
+            # Having a list of norms here automagically resolves issue
+            # with memmapped operations on which return
+            # in turn another memmap
+            datasetnorm = np.mean([np.sqrt(np.sum(sq_func(s)))
+                                   for s in data])
             if datasetnorm == 0:
                 warning("Obtained degenerate data with zero norm for training "
                         "of %s.  Scaling of C cannot be done." % self)

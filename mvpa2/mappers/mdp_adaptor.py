@@ -14,8 +14,11 @@ into PyMVPA.
 
 __docformat__ = 'restructuredtext'
 
+from mvpa2.base import externals
+if externals.exists('mdp', raise_=True):
+    import mdp
+
 import numpy as np
-import mdp
 
 from mvpa2.base.dataset import DatasetAttributeExtractor
 from mvpa2.mappers.base import Mapper, accepts_dataset_as_samples
@@ -71,9 +74,9 @@ class MDPNodeMapper(Mapper):
         # NOTE: trailing spaces in above docstring must not be pruned
         # for correct parsing
 
-        # TODO: starting from MDP2.5 this check should become:
-        # TODO:   if node.has_multiple_training_phases():      
-        if not len(node._train_seq) == 1:
+        if (externals.versions['mdp'] >= (2, 5) \
+                and node.has_multiple_training_phases()) \
+            or not len(node._train_seq) == 1:
             raise ValueError("MDPNodeMapper does not support MDP nodes with "
                              "multiple training phases.")
         Mapper.__init__(self, **kwargs)

@@ -14,6 +14,12 @@
 Part 3: Mappers -- The Swiss Army Knife
 ***************************************
 
+.. note::
+
+  This tutorial part is also available for download as an `IPython notebook
+  <http://ipython.org/ipython-doc/dev/interactive/htmlnotebook.html>`_:
+  [`ipynb <notebooks/tutorial_mappers.ipynb>`_]
+
 In the :ref:`previous tutorial part <chap_tutorial_datasets>` we have discovered a
 magic ingredient of datasets: a mapper. Mappers are probably the most
 powerful concept in PyMVPA, and there is little one would do without them.
@@ -153,7 +159,7 @@ acquired. However, there are more complicated scenarios which we will look
 at later on. Chunks of independent data correspond to what fMRI volumes are
 assumed to be independent. The properties of the MRI acquisition process
 cause subsequently acquired volumes to be *very* similar, hence they cannot
-be considered as independent. Ideally, the experiment is split into several
+be considered independent. Ideally, the experiment is split into several
 acquisition sessions, where the sessions define the corresponding data
 chunks.
 
@@ -195,8 +201,8 @@ directly:
 We got the dataset that we already know from the last part, but this time
 is also has information about chunks and targets.
 
-The next step is to extract the *patterns of activation* that we are
-interested in from the dataset. But wait! We know that fMRI data is
+The next step is to extract the *patterns of activation* from the dataset
+that we are interested in. But wait! We know that fMRI data is
 typically contaminated with a lot of noise, or actually *information* that
 we are not interested in. For example, there are temporal drifts in the
 data (the signal tends to increase when the scanner is warming up). We
@@ -317,7 +323,7 @@ independently.
 
 To achieve this, we first add a new sample attribute to assign a
 corresponding label to each sample in the dataset, indication to which of
-both run-types is belongs to:
+both run-types it belongs to:
 
 >>> rnames = {0: 'even', 1: 'odd'}
 >>> fds.sa['runtype'] = [rnames[c % 2] for c in fds.sa.chunks]

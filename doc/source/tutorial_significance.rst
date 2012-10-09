@@ -7,12 +7,475 @@
   #
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-.. index:: Tutorial
+.. index:: Tutorial, statistical testing, monte-carlo, permutation
 .. _chap_tutorial_significance:
 
 **************************************************
 Part 8: The Earth Is Round -- Significance Testing
 **************************************************
+
+.. note::
+
+  This tutorial part is also available for download as an `IPython notebook
+  <http://ipython.org/ipython-doc/dev/interactive/htmlnotebook.html>`_:
+  [`ipynb <notebooks/tutorial_significance.ipynb>`_]
+
+*Null* hypothesis testing
+=========================
+
+It is often desirable to be able to make statements like *"Performance is
+significantly above chance-level"*. To help with that PyMVPA supports *Null*
+hypothesis (aka *H0*) testing for any :class:`~mvpa2.measures.base.Measure`.
+
+However, as with other applications of statistics in classifier-based analyses
+there is the problem that we typically do not know the distribution of a
+variable like error or performance under the *Null* hypothesis (i.e. the
+probability of a result given that there is no signal), hence we cannot easily
+assign the adored p-values. Even worse, the chance-level or guess probability
+of a classifier depends on the content of a validation dataset, e.g. balanced
+or unbalanced number of samples per label, total number of labels, as well as
+the peculiarities of "independence" of training and testing data -- especially
+in the neuroimaging domain.
+
+Monte Carlo -- here I come!
+---------------------------
+
+One approach to deal with this situation is to *estimate* the *Null*
+distribution using permutation testing. The *Null* distribution is then
+estimated by computing the measure of interest multiple times using original
+data samples but with permuted targets, presumably scrambling or destroying the
+signal of interest.  Since quite often the exploration of all permutations is
+unfeasible, Monte-Carlo testing (see :ref:`Nichols et al. (2006) <NH02>`)
+allows to obtain stable estimate with only a limited number of random
+permutations.
+
+Given the results computed using permuted targets one can now determine the
+probability of the empirical result (i.e. the one computed from the original
+training dataset) under the *no signal* condition. This is simply the fraction
+of results from the permutation runs that is larger or smaller than the
+empirical (depending on whether one is looking at performances or errors).
+
+Here we take a look at how this is done for a simple cross-validated
+classification in PyMVPA.  We start by generating a dataset with 200 samples
+and 3 features of which only two carry some relevant signal. Afterwards we set
+up a standard leave-one-chunk-out cross-validation procedure for an SVM
+classifier. At this point we have seen this numerous times, and the code should
+be easy to read:
+
+>>> # lazy import
+>>> from mvpa2.suite import *
+>>> # some example data with signal
+>>> ds = normal_feature_dataset(perlabel=100, nlabels=2, nfeatures=3,
+...                             nonbogus_features=[0,1], snr=0.3, nchunks=2)
+>>> # classifier
+>>> clf = LinearCSVMC()
+>>> # data folding
+>>> partitioner = NFoldPartitioner()
+>>> # complete cross-validation setup
+>>> cv = CrossValidation(clf,
+...                      partitioner,
+...                      postproc=mean_sample(),
+...                      enable_ca=['stats'])
+>>> err = cv(ds)
+
+.. exercise::
+
+  Take a look at the performance statistics of the classifier. Explore how it
+  changes with different values of the signal-to-noise (``snr``) parameter
+  of the dataset generator function.
+
+Now we want to run this analysis again, but more often and with a fresh
+permuation of the classifier for each run. We need two pieces for the Monte
+Carlo shuffling. The first of them is an instance of an
+:class:`~mvpa2.generators.permutation.AttributePermutator` that will
+permute the target attribute of the dataset for each iteration.  We
+will instruct it to perform 200 permutations. In a real analysis, the
+number of permutations will often be more than that.
+
+>>> permutator = AttributePermutator('targets', count=200)
+
+.. exercise::
+
+  The ``permutator`` is a generator. Try generating all 200 permuted
+  datasets.
+
+The second necessary component for a Monte-Carlo-style estimation of the *Null*
+distribution is the actual "estimator".  :class:`~mvpa2.clfs.stats.MCNullDist`
+will use the already created ``permutator`` to shuffle the targets and later on
+report p-value from the left tail of the *Null* distribution, because we are
+going to compute errors and we are interested in them being *lower* than chance.
+Finally we also ask for all results from Monte-Carlo shuffling to be stored for
+subsequent visualization of the distribution.
+
+>>> distr_est = MCNullDist(permutator, tail='left', enable_ca=['dist_samples'])
+
+The rest is easy. Measures take an optional constructor argument ``null_dist``
+that can be used to provide an instance of some
+:class:`~mvpa2.clfs.stats.NullDist` estimator -- and we have just created one!
+Because a cross-validation is nothing but a measure, we can assign it our *Null*
+distribution estimator, and it will also perform permutation testing, in
+addition to the regular classification analysis on the "real" dataset.
+Consequently, the code hasn't changed much:
+
+>>> cv_mc = CrossValidation(clf,
+...                         partitioner,
+...                         postproc=mean_sample(),
+...                         null_dist=distr_est,
+...                         enable_ca=['stats'])
+>>> err = cv_mc(ds)
+>>> cv.ca.stats.stats['ACC'] == cv_mc.ca.stats.stats['ACC']
+True
+
+Other than it taking a bit longer to compute, the performance did not change.
+But the additional waiting wasn't in vain, as we get the results of the
+statistical evaluation. The ``cv_mc`` :term:`conditional attribute`
+``null_prob`` has a dataset that contains the p-values representing the
+likelihood of an empirical value (i.e. result from analysing the original
+dataset) being equal or lower to one under the *Null* hypothesis, i.e. no
+actual relevant signal in the data. Or in more concrete terms, the p-value
+is the fraction of results from the permutation analysis that is less or
+equal to the empirical result.
+
+
+>>> p = cv_mc.ca.null_prob
+>>> # should be exactly one p-value
+>>> p.shape
+(1, 1)
+>>> np.asscalar(p) < 0.1
+True
+
+.. exercise::
+
+  How many cross-validation analyses were computed when running ``cv_mc``?
+  Make sure you are not surprised that it is more than 200.
+  What is the minimum p-value that we can get from 200 permutations?
+
+Let's practise our visualization skills a bit and create a quick plot to
+showing the *Null* distribution and how "significant" our
+empirical result is. And let's make a function for plotting to show off
+our Python-foo!
+
+>>> def make_null_dist_plot(dist_samples, empirical):
+...     pl.hist(dist_samples, bins=20, normed=True, alpha=0.8)
+...     pl.axvline(empirical, color='red')
+...     # chance-level for a binary classification with balanced samples
+...     pl.axvline(0.5, color='black', ls='--')
+...     # scale x-axis to full range of possible error values
+...     pl.xlim(0,1)
+...     pl.xlabel('Average cross-validated classification error')
+>>>
+>>> # make new figure ('_ =' is only used to swallow unnecessary output)
+>>> _ = pl.figure()
+>>> make_null_dist_plot(np.ravel(cv_mc.null_dist.ca.dist_samples),
+...                     np.asscalar(err))
+>>> # run pl.show() if the figure doesn't appear automatically
+
+You have seen that we created a histogram of the "distribution samples" stored
+in the *Null* distribution (because we asked for it previously).  We can also
+see that the *Null* or chance distribution is centered around the expected
+chance-level and the empirical error value is in the far left tail, thus
+relatively unlikely to be a *Null* result, hence the low-ish p-value.
+
+This wasn't too bad, right? We could stop here. But there is this smell....
+
+.. exercise::
+
+  The p-value that we have just computed, and the *Null* distribution we looked
+  at is, unfortunately, **invalid** -- at least if we want to know how likely
+  it is to obtain our **empirical** result under a no-signal condition. Can you
+  figure out why?
+
+  PS: The answer is obviously in the next section, so do not spoil your learning
+  experience by reading it, before you thought about this issue!
+
+
+Avoiding the trap OR Advanced magic 101
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Here is what went wrong: The dataset's class labels (aka targets) were shuffled
+repeatedly, and for each iteration a full cross-validation of classification
+error was computed. However, the shuffling was done on the *full* dataset,
+hence target values were permuted in both training *and* testing dataset
+portions in each CV-fold. This basically means that for each Monte Carlo
+iteration the classifier was **tested** on new data/signal.
+However, we are actually interested in what the classifier has to say about the
+*actual* data, but when it was **trained** on randomly permuted data.
+
+Doing a whole-dataset permutation is a common mistake with very beneficial 
+side-effects -- as you see in a bit. Sadly, doing the permuting rights (i.e.
+in the training portion of the dataset only) is a bit more complicated due to
+the data-folding scheme that we have to deal with. Here is how it goes:
+
+>>> repeater = Repeater(count=200)
+
+A ``repeater`` is a simple node that returns any given dataset a configurable
+number of times. We use this helper to configure the number of Monte Carlo
+iterations.
+
+.. exercise::
+
+  A :class:`~mvpa2.generators.base.Repeater` is also a generator. Try calling it
+  with our dataset. What does it do? How can you get it to produce the 200
+  datasets?
+
+The new ``permutator`` is again configured to shuffle the ``targets``
+attribute. But this time only *once* and only for samples that were labeled as
+being part of the training set in a particular CV-fold. The ``partitions``
+sample attribute is created by the NFoldPartitioner that we have already
+configured earlier (or any other partitioner in PyMVPA for that matter).
+
+>>> permutator = AttributePermutator('targets',
+...                                  limit={'partitions': 1},
+...                                  count=1)
+
+The most significant difference is that we are now going to use a dedicate
+measure to estimate the *Null* distribution. That measure is very similar
+to the cross-validation we have used before, but differs in an important twist:
+we use a chained generator to perform the data-folding. This chain comprises
+of our typical partitioner (marks one chunk as testing data and the rest as
+training, for all chunks) and the new one-time permutator. This chain-generator
+causes the cross-validation procedure to permute the training data only for each
+data-fold and leave the testing data untouched. Note, that we make the chain use
+the ``space`` of the partitioner, to let the ``CrossValidation`` know which
+samples attribute defines training and testing partitions.
+
+>>> null_cv = CrossValidation(
+...            clf,
+...            ChainNode(
+...                 [partitioner, permutator],
+...                 space=partitioner.get_space()),
+...            postproc=mean_sample())
+
+.. exercise::
+
+  Create a separate chain-generator and explore what it does. Remember: it is
+  just a generator.
+
+Now we create our new and improved distribution estimator. This looks similar
+to what we did before, but we now use our dedicated *Null* cross-validation
+measure, and run it as often as ``repeater`` is configured to estimate the
+*Null* performance.
+
+>>> distr_est = MCNullDist(repeater, tail='left',
+...                        measure=null_cv,
+...                        enable_ca=['dist_samples'])
+
+On the "outside" the cross-validation measure for computing the empricial
+performance estimate is 100% identical to what we have used before. All the
+magic happens inside the distribution estimator.
+
+>>> cv_mc_corr = CrossValidation(clf,
+...                              partitioner,
+...                              postproc=mean_sample(),
+...                              null_dist=distr_est,
+...                              enable_ca=['stats'])
+>>> err = cv_mc_corr(ds)
+>>> cv_mc_corr.ca.stats.stats['ACC'] == cv_mc.ca.stats.stats['ACC']
+True
+>>> cv_mc.ca.null_prob < cv_mc_corr.ca.null_prob
+True
+
+After running it we see that there is no change in the empirical performance
+(great!), but our significance did suffer (poor thing!). We can take a look
+at the whole picture by plotting our previous *Null* distribution estimate
+and the new, improved one as an overlay.
+
+>>> make_null_dist_plot(cv_mc.null_dist.ca.dist_samples, np.asscalar(err))
+>>> make_null_dist_plot(cv_mc_corr.null_dist.ca.dist_samples, np.asscalar(err))
+>>> # run pl.show() if the figure doesn't appear automatically
+
+It should be obvious that there is a substantial difference in the two
+estimates, but only the latter/wider distribution is valid!
+
+.. exercise::
+
+  Keep it in mind. Keep it in mind. Keep it in mind.
+
+
+
+The following content is incomplete and experimental
+====================================================
+
+
+If you have a clue
+------------------
+
+There a many ways to further tweak the statistical evaluation. For example, if
+the family of the distribution is known (e.g. Gaussian/Normal) and provided via
+the ``dist_class`` parameter of ``MCNullDist``, then permutation tests samples
+will be used to fit this particular distribution and estimate distribution
+parameters. This could yield enormous speed-ups. Under the (strong) assumption
+of Gaussian distribution, 20-30 permutations should be sufficient to get
+sensible estimates of the distribution parameters. Fitting a normal distribution
+would look like this. Actually, only a single modification is necessary
+(the ``dist_class`` argument), but we will also reduce the number permutations.
+
+>>> distr_est = MCNullDist(Repeater(count=200),
+...                        dist_class=scipy.stats.norm,
+...                        tail='left',
+...                        measure=null_cv,
+...                        enable_ca=['dist_samples'])
+>>> cv_mc_norm = CrossValidation(clf,
+...                              partitioner,
+...                              postproc=mean_sample(),
+...                              null_dist=distr_est,
+...                              enable_ca=['stats'])
+>>> err = cv_mc_norm(ds)
+>>> distr = cv_mc_norm.null_dist.dists()[0]
+>>> make_null_dist_plot(cv_mc_norm.null_dist.ca.dist_samples,
+...                     np.asscalar(err))
+>>> x = np.linspace(0,1,100)
+>>> _ = pl.plot(x, distr.pdf(x), color='black', lw=2)
+
+
+Family-friendly
+---------------
+
+When going through this chapter you might have thought: "Jeez, why do they need
+to return a single p-value in a freaking dataset?" But there is a good reason
+for this. Let set up another cross-validation procedure. This one is basically
+identical to the last one, except for not averaging classifier performances
+across data-folds (i.e. ``postproc=mean_sample()``).
+
+>>> cvf = CrossValidation(
+...         clf,
+...         partitioner,
+...         null_dist=MCNullDist(
+...                     repeater,
+...                     tail='left',
+...                     measure=CrossValidation(
+...                                 clf,
+...                                 ChainNode([partitioner, permutator],
+...                                           space=partitioner.get_space()))
+...                     )
+...         )
+
+If we run this on our dataset, we no longer get a single performance value,
+but one per data-fold (chunk) instead:
+
+>>> err = cvf(ds)
+>>> len(err) == len(np.unique(ds.sa.chunks))
+True
+
+But here comes the interesting bit:
+
+>>> len(cvf.ca.null_prob) == len(err)
+True
+
+So we get one p-value for each element in the datasets returned by the
+cross-validation run. More generally speaking, the distribution estimation
+happens independently for each value returned by a measure -- may this be
+multiple samples, or multiple features, or both. Consequently, it is possible
+to test a large variety of measure with this facility.
+
+
+Evaluating multi-class classifications
+======================================
+
+So far we have mostly looked at the situation where a classifier is trying to
+discriminate data from two possible classes. In many cases we can assume that a
+classifier that *cannot* discriminate these two classes would perform at a
+chance-level of 0.5 (ACC). If it does that we would conclude that there is no
+signal of interest in the data, or our classifier of choice cannot pick it up.
+However, there is a whole universe of classification problems, where it is not
+that simple.
+
+Let's revisit the classification problem from :ref:`the chapter on classifiers
+<chap_tutorial_classifiers>`.
+
+>>> from mvpa2.tutorial_suite import *
+>>> ds = get_haxby2001_data_alternative(roi='vt', grp_avg=False)
+>>> print ds.sa['targets'].unique
+['bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe']
+>>> clf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
+>>> cv = CrossValidation(clf, NFoldPartitioner(), errorfx=mean_mismatch_error,
+...                      enable_ca=['stats'])
+>>> cv_results = cv(ds)
+>>> print '%.2f' % np.mean(cv_results)
+0.53
+
+So here we have an 8-way classification problem, and during the cross-validation
+procedure the chosen classifier makes correct predictions for approximately
+half of the data points. The big question is now: **What does that tell us?**
+
+There are many scenarios that could lead to this prediction performance. It
+could be that the fitted classifier model is very good, but only capture the
+data variance for half of the data categories/classes. It could also be that
+the classifier model quality is relatively poor and makes an equal amount of
+errors for all classes. In both cases the average accuracy will be around 50%,
+and most likely **highly significant**, given a chance performance of 1/8.  We
+could now spend some time testing this significance with expensive permutation
+tests, or making assumptions on the underlying distribution. However, that
+would only give us a number telling us that the average accuracy is really
+different from chance, but it doesn't help with the problem that the accuracy
+really doesn't tell us much about what we are interested in.
+
+Interesting hypotheses in the context of this dataset could be whether the data
+carry a signal that can be used to distinguish brain response patterns from
+animate vs.  inanimate stimulus categories, or whether data from object-like
+stimuli are all alike and can only be distinguished from random noise, etc. One
+can imagine to run such an analysis on data from different parts of the brain
+and the results change -- without necessarily having a big impact on the
+overall classification accuracy.
+
+A lot more interesting information is available from the confusion matrix, a
+contingency table showing prediction targets vs. actual predictions.
+
+>>> print cv.ca.stats.matrix
+[[36  7 18  4  1 18 15 18]
+ [ 3 56  6 18  0  3  7  5]
+ [ 2  2 21  0  4  0  3  1]
+ [ 3 16  0 76  4  5  3  1]
+ [ 1  1  6  1 97  1  4  0]
+ [20  5 15  4  0 29 15 11]
+ [ 0  1  0  0  0  2 19  0]
+ [43 20 42  5  2 50 42 72]]
+
+We can see a strong diagonal, but also block-like structure, and have to
+realize that simply staring at the matrix doesn't help us to easily assess the
+likelihood of any of our hypothesis being true or false. It is trivial to do a
+Chi-square test of the confusion table...
+
+>>> print 'Chi^2: %.3f (p=%.3f)' % cv.ca.stats.stats["CHI^2"]
+Chi^2: 1942.519 (p=0.000)
+
+... but, again, it doesn't tell us anything other than the classifier not just
+doing random guesses. It would be much more useful, if we could estimate how
+likely it is, given the observed confusion matrix, that the employed classifier
+is able to discriminate *all* stimulus classes from each other, and not just a
+subset. Even more useful would be, if we could relate this probability to
+specific alternative hypotheses, such as an animate/inanimate-only distinction.
+
+:ref:`Olivetto et al. (2012) <OGA2012>` have devised a method that allows for
+doing exactly that. The confusion matrix is analyzed in a Bayesian framework
+regarding the statistical dependency of observed and predicted class labels.
+Confusions within a set of classes that cannot be discriminated should be
+independently distributed, while there should be a statistical dependency of
+confusion patterns within any set of classes that can all be discriminated from
+each other.
+
+This algorithm is available in the
+:class:`~mvpa2.clfs.transerror.BayesConfusionHypothesis` node.
+
+>>> cv = CrossValidation(clf, NFoldPartitioner(),
+...                      errorfx=None,
+...                      postproc=ChainNode((Confusion(labels=ds.UT),
+...                                          BayesConfusionHypothesis())))
+>>> cv_results = cv(ds)
+>>> print cv_results.fa.stat
+['log(p(C|H))' 'log(p(H|C))']
+
+Most likely hypothesis to explain this confusion matrix
+
+print cv_results.sa.hypothesis[np.argsort(cv_results.samples[:,1])[-1]]
+[['bottle'], ['cat'], ['chair'], ['face'], ['house'], ['scissors'], ['scrambledpix'], ['shoe']]
+
+
+
+
+
+Previously in part 8
+====================
 
 Previously, :ref:`while looking at classification <chap_tutorial_classifiers>`
 we have observed that classification error depends on the chosen

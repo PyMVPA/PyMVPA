@@ -14,6 +14,12 @@
 Part 6: Looking Without Searching -- Sensitivity Analysis
 *********************************************************
 
+.. note::
+
+  This tutorial part is also available for download as an `IPython notebook
+  <http://ipython.org/ipython-doc/dev/interactive/htmlnotebook.html>`_:
+  [`ipynb <notebooks/tutorial_sensitivity.ipynb>`_]
+
 In the :ref:`previous tutorial part <chap_tutorial_searchlight>` we made a
 first attempt to localize information in the brain that is relevant to a
 particular classification analyses. While we were relatively successful,
@@ -57,7 +63,7 @@ It's A Kind Of Magic
 
 One way to get such a measure is to inspect the classifier itself. Each
 classifier creates a model to map from the training data onto the
-respective target values. In this model classifiers typically associate
+respective target values. In this model, classifiers typically associate
 some sort of weight with each feature that is an indication of its impact
 on the classifiers decision. How we can get this information from a
 classifier will be the topic of this tutorial.
@@ -107,7 +113,7 @@ classifier wouldn't have to deal with all the noise anymore. A simple
 approach would be to compute a full-brain ANOVA and only go with the
 voxels that show some level of variance between categories. From the
 :ref:`previous tutorial part <chap_tutorial_searchlight>` we know how to
-compute the desired F-scores and could use them to manually select features
+compute the desired F-scores and we could use them to manually select features
 with some threshold. However, PyMVPA offers a more convenient way --
 feature selectors:
 
@@ -185,8 +191,8 @@ features show category differences in the whole dataset, including our
 supposed-to-be independent testing data. Once we have found these
 differences, we are trying to rediscover them with a classifier.  Being able
 to do that is not surprising, and precisely constitutes the *double-dipping*
-procedure. As a result, obtained prediction
-accuracy and the created model potentially are completely meaningless.
+procedure. As a result, both the obtained prediction
+accuracy and the created model are potentially completely meaningless.
 
 
 
@@ -415,7 +421,7 @@ data samples that are *most tricky* to model. The extracted sensitivities
 reflect this property. Other algorithms, such as "Gaussian Naive Bayes"
 (:class:`~mvpa2.clfs.gnb.GNB`) make assumptions about the distribution of
 the samples in each category. GNB sensitivities *might* look completely
-different, even if both classifiers perform at comparable accuracy levels.
+different, even if GNB and SVM classifiers both perform at comparable accuracy levels.
 Note, however, that these properties can also be used to address related
 research questions.
 

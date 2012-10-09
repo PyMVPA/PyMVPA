@@ -7,7 +7,7 @@ DOC_DIR=$(CURDIR)/doc
 TUT_DIR=$(CURDIR)/datadb/tutorial_data/tutorial_data
 DOCSRC_DIR=$(DOC_DIR)/source
 DOCBUILD_DIR=$(BUILDDIR)/doc
-NOTEBOOKBUILD_DIR=$(BUILDDIR)/notebooks
+NOTEBOOKBUILD_DIR=$(HTML_DIR)/notebooks
 MAN_DIR=$(BUILDDIR)/man
 APIDOC_DIR=$(HTML_DIR)/api
 PDF_DIR=$(BUILDDIR)/pdf
@@ -201,7 +201,7 @@ mpl-stamp: build
 	echo "backend : Agg" >| $(CURDIR)/build/matplotlibrc
 	touch $@
 
-htmldoc: examples2rst build pics mpl-stamp
+htmldoc: examples2rst build pics mpl-stamp tutorial2notebooks
 	@echo "I: Creating an HTML version of documentation"
 	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off \
 		PYTHONPATH=$(CURDIR):$(PYTHONPATH) \
@@ -240,13 +240,15 @@ examples2rst-stamp: mkdir-DOCBUILD_DIR
 	touch $@
 
 tutorial2notebooks: tutorial2notebooks-stamp
-tutorial2notebooks-stamp: mkdir-NOTEBOOKBUILD_DIR
+tutorial2notebooks-stamp:
+	mkdir -p $(NOTEBOOKBUILD_DIR)
 	tools/rst2ipnbpy \
 		--baseurl http://pymvpa.org \
 		--apiref_baseurl http://pymvpa.org/generated \
 		--glossary_baseurl http://pymvpa.org/glossary.html \
 		--outdir $(NOTEBOOKBUILD_DIR) \
 		--exclude doc/source/tutorial_prerequisites.rst \
+		--verbose \
 		doc/source/tutorial_*.rst
 	touch $@
 

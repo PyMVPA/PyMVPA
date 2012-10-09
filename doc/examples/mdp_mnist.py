@@ -17,7 +17,7 @@ Classifying the MNIST handwritten digits with MDP
 This example will demonstrate how to embed MDP_'s flows_ into a PyMVPA-based
 analysis. We will perform a classification of a large number of images of
 handwritten digits from the :ref:`MNIST <datadb_mnist>` database. To get a
-better sense on how MDP blends into PyMVPA, we will do the same analysis with
+better sense of how MDP blends into PyMVPA, we will do the same analysis with
 MDP only first, and then redo it in PyMVPA -- only using particular bits from
 MDP.
 

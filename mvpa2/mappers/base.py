@@ -113,6 +113,8 @@ class Mapper(Learner):
                            fa=self._fa_filter,
                            a=self._a_filter)
         mds.samples = msamples
+        if __debug__:
+            debug('MAP_', "Return forward-mapped dataset.")
         return mds
 
 

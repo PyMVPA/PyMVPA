@@ -117,6 +117,7 @@ from mvpa2.datasets.eep import *
 from mvpa2.datasets.eventrelated import *
 if externals.exists('nibabel') :
     from mvpa2.datasets.mri import *
+from mvpa2.datasets.sources import *
 
 __sdebug('generators')
 from mvpa2.generators.base import *
@@ -234,8 +235,11 @@ from mvpa2.misc.surfing.queryengine import SurfaceVerticesQueryEngine, \
 
 __sdebug("ipython goodies")
 if externals.exists("running ipython env"):
-    from mvpa2.support.ipython import *
-    ipy_activate_pymvpa_goodies()
+    try:
+        from mvpa2.support.ipython import *
+        ipy_activate_pymvpa_goodies()
+    except Exception, e:
+        warning("Failed to activate custom IPython completions due to %s" % e)
 
 def suite_stats():
     """Return cruel dict of things which evil suite provides

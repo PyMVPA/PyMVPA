@@ -302,7 +302,7 @@ def plot_samples_distance(dataset, sortbyattr=None):
 
     ed = np.sqrt(squared_euclidean_distance(samples))
 
-    pl.imshow(ed)
+    pl.imshow(ed, interpolation='nearest')
     pl.colorbar()
 
 
