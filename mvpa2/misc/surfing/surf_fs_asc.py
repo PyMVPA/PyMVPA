@@ -32,7 +32,8 @@ Created on Feb 12, 2012
 
 import numpy as np, os, datetime, utils
 
-from mvpa2.misc.surfing import afni_suma_1d, surf
+import surf
+#from mvpa2.misc.surfing import surf
 
 #from surf import Surface
 #import mvpa2.misc.surfing.surf as surf

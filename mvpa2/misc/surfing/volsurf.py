@@ -49,6 +49,41 @@ class VolSurf():
                 (self._volgeom, self._pial, self._white))
         return r
 
+    @property
+    def pial_surface(self):
+        '''
+        Returns the pial surface
+        
+        Returns
+        -------
+        pial: surf.Surface
+        '''
+        return self._pial
+
+    @property
+    def white_surface(self):
+        '''
+        Returns the white surface
+        
+        Returns
+        -------
+        white: surf.Surface
+        '''
+
+        return self._white
+
+    @property
+    def volgeom(self):
+        '''
+        Returns the volume geometry
+        
+        Returns
+        -------
+        vg: volgeom.VolGeom
+        '''
+
+        return self._volgeom
+
     def node2voxels(self, steps=10, start=0.0, stop=1.0):
         '''
         Generates a mapping from node indices to voxels that are at or near

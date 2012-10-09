@@ -23,7 +23,12 @@ At the moment we assume a processing stream with freesurfer for surface
 reconstruction, and AFNI/SUMA for coregistration and visualization.
 
 If EPIs from multiple sessions are aligned, this script should use different directories
-for refdir for each session, otherwise naming conflicts may occur
+for refdir for each session, otherwise naming conflicts may occur.
+
+In its most simple usage, it requires three arguments:
+(1) "-e epi_filename"  or  "-a anat_filename"
+(2) "-d freesurfer/directory/surf" 
+(3) "-r outputdir
 '''
 
 import os, fnmatch, datetime, re, argparse

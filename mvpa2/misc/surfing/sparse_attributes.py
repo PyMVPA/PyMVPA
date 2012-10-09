@@ -241,6 +241,35 @@ class SparseVolumeAttributes(SparseAttributes):
             attr.add(k, d)
         return attr
 
+    def map_all_to_masked(self, sa_label='linear_voxel_indices'):
+        '''Creates a mapping from all voxels to those in the mask
+        
+        Typical use case is applying this to the output of voxel2nearest_node.
+        
+        Returns
+        -------
+        all2masked: np.ndarray (P-vector)
+            all2masked[i]==j means that voxel with in linear index i is the
+            j-th voxel that survives the mask, if j>0. If j<0, then there
+        '''
+        msk = self.get_linear_mask(sa_label)
+        msk_nonzero = np.nonzero(msk)
+
+        a2m = dict()
+        for i, v in msk_nonzero:
+            a2m[v] = i
+
+
+        n = m.shape[0]
+        n_nonzero = np.sum(msk_nonzero)
+
+        a2m = np.zeros((n,), dtype=np.int) - 1
+        a2m[msk_nonzero] = np.arange(n_nonzero)
+
+        return a2m
+
+
+
 
 
 class AttrMapping(Mapping):
@@ -283,7 +312,8 @@ def voxel2nearest_node(sp_attrs, sort_by_label=[
                                     'center_distances',
                                     'grey_matter_position'],
                             sort_by_proc=[None, lambda x : abs(x - .5)],
-                            return_label='linear_voxel_indices'):
+                            return_label='linear_voxel_indices',
+                            apply_mask=False):
 
     '''finds for each voxel the nearest node
     
@@ -333,6 +363,23 @@ def voxel2nearest_node(sp_attrs, sort_by_label=[
             vox2node_and_attrs[v] = (node_idx, k)
 
     n2v = dict((k, v[0]) for k, v in vox2node_and_attrs.iteritems())
+
+    if apply_mask:
+        if isinstance(apply_mask, basestring):
+            msk = sa_attr.get_linear_mask(apply_mask)
+        else:
+            msk = sa_attr.get_linear_mask()
+
+        n = msk.shape[0]
+        nz = np.nonzero(msk)
+        nm = len(nm)
+
+        all2inmask = np.zeros((n,), dtype=np.int)
+        all2inmask[nz] = np.arange(nm)
+
+        ks = n2v.keys()
+        for k in ks:
+            n2v[k] = all2inmask[n2v[k]]
 
     return n2v
 

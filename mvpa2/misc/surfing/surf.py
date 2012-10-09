@@ -516,6 +516,52 @@ class Surface(object):
         d = np.power(ss, .5)
         return d
 
+    def nearest_node_index(self, src_coords, node_mask=None):
+        '''Computes index of nearest node to src
+        
+        Parameters
+        ----------
+        src_coords: numpy.ndarray (Px3 array)
+            Coordinates of center
+        node_mask (default: None):
+            Mask of nodes to consider. By default all nodes are considered
+        
+        Returns
+        -------
+        idxs: numpy.ndarray (P-valued vector)
+            Indices of nearest nodes
+        '''
+
+        if not isinstance(src_coords, np.ndarray):
+            src_coords = np.asarray(src_coords)
+        if len(src_coords.shape) == 1:
+            if src_coords.shape[0] != 3:
+                raise ValueError("no three values for src_coords")
+            else:
+                src_coords = np.reshape(src_coords, (1, -1))
+        elif len(src_coords.shape) != 2 or src_coords.shape[1] != 3:
+            raise ValueError("Expected Px3 array for src_coords")
+
+        use_mask = not node_mask is None
+        # vertices to consider
+        v = self.vertices[node_mask] if use_mask else self.vertices
+
+        # indices of these vertices
+        all_idxs = np.arange(self.nvertices)
+        masked_idxs = all_idxs[node_mask] if use_mask else all_idxs
+
+        n = src_coords.shape[0]
+        idxs = np.zeros((n,), dtype=np.int)
+        for i in xrange(n):
+            delta = v - src_coords[i]
+            minidx = np.argmin(np.sum(delta ** 2, 1))
+            idxs[i] = masked_idxs[minidx]
+
+        return idxs
+
+
+
+
     def sub_surface(self, src, radius):
         '''Makes a smaller surface consisting of nodes around a center node
         
