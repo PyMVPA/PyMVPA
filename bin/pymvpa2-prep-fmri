@@ -30,7 +30,6 @@ from subprocess import call
 import mvpa2
 
 import numpy as np
-import pylab as pl
 
 from mvpa2.base import verbose, externals, error
 from mvpa2.misc.cmdline import parser, opt
@@ -170,6 +169,8 @@ def main():
     if options.mcflirt_plots:
         verbose(2, "Plot motion parameters estimates")
         externals.exists('pylab', raise_=True)
+        import pylab as pl
+
         mc = McFlirtParams(os.path.join(opath, 'func_mc.par'))
 
         for k, (title, fields, ylabel) in enumerate(

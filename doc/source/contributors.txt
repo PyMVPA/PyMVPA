@@ -13,9 +13,15 @@ The PyMVPA developers team currently consists of:
 We are very grateful to the following people, who have contributed
 valuable advice, code or documentation to PyMVPA:
 
+* Florian Baumgartner, University of Magdeburg, Germany
+* Michael W. Cole, Washington University in St. Louis, USA
+* Reka Daniel, Princeton University, USA
 * `Greg Detre`_, Princeton University, USA
+* Matthias Ekman, Donders Institute, Netherlands
 * `Ingo Fründ`_, TU Berlin, Germany
+* Christoph Gohlke, University of California, Irvine, USA
 * `Scott Gorlin`_, MIT, USA
+* Satrajit Ghosh, MIT, USA
 * `Jyothi Swaroop Guntupalli`_, Dartmouth College, USA
 * `Valentin Haenel`_, TU Berlin, Germany
 * `Stephen José Hanson`_, Rutgers University, USA
@@ -24,6 +30,7 @@ valuable advice, code or documentation to PyMVPA:
 * `James Kyle`_, UCLA, USA
 * `Russell Poldrack`_, University of Texas, USA
 * `Stefan Pollmann`_, University of Magdeburg, Germany
+* Geethapriya Raghavan, University of Texas Austin, USA
 * `Rajeev Raizada`_, Dartmouth College, USA
 * `Per B. Sederberg`_, Princeton University, USA
 * `Tiziano Zito`_, BCCN, Germany

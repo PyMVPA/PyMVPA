@@ -98,3 +98,68 @@ def test_sifter_superord_usecase():
     # I don't think that this would ever fail, so not marking it labile
     assert(np.mean(accs_regular) > .8)
     assert(np.mean(accs_super)   < .6)
+
+def _test_edmund_chong_20120907():
+    # commented out to avoid syntax warnings while compiling
+    # from mvpa2.suite import *
+    from mvpa2.testing.datasets import datasets
+    repeater = Repeater(count=20)
+
+    partitioner = ChainNode([NFoldPartitioner(cvtype=1),
+                             Balancer(attr='targets',
+                                      count=1, # for real data > 1
+                                      limit='partitions',
+                                      apply_selection=True
+                                      )],
+                            space='partitions')
+
+    clf = LinearCSVMC() #choice of classifier
+    permutator = AttributePermutator('targets', limit={'partitions': 1},
+                                     count=1)
+    null_cv = CrossValidation(
+        clf,
+        ChainNode([partitioner, permutator], space=partitioner.get_space()),
+        errorfx=mean_mismatch_error)
+    distr_est = MCNullDist(repeater, tail='left', measure=null_cv,
+                           enable_ca=['dist_samples'])
+    cvte = CrossValidation(clf, partitioner,
+                           errorfx=mean_mismatch_error,
+                           null_dist=distr_est,
+                           enable_ca=['stats'])
+    errors = cvte(datasets['uni2small'])
+
+
+def test_chained_crossvalidation_searchlight():
+    from mvpa2.clfs.gnb import GNB
+    from mvpa2.clfs.meta import MappedClassifier
+    from mvpa2.generators.partition import NFoldPartitioner
+    from mvpa2.mappers.base import ChainMapper
+    from mvpa2.mappers.base import Mapper
+    from mvpa2.measures.base import CrossValidation
+    from mvpa2.measures.searchlight import sphere_searchlight
+    from mvpa2.testing.datasets import datasets
+
+    dataset = datasets['3dlarge'].copy()
+    dataset.fa['voxel_indices'] = dataset.fa.myspace
+    sample_clf = GNB()              # fast and deterministic
+
+    class ZScoreFeaturesMapper(Mapper):
+        """Very basic mapper which would take care about standardizing
+        all features within each sample separately
+        """
+        def _forward_data(self, data):
+            return (data - np.mean(data, axis=1)[:, None])/np.std(data, axis=1)[:, None]
+
+    # only do partial to save time
+    sl_kwargs = dict(radius=2, center_ids=[3, 50])
+    clf_mapped = MappedClassifier(sample_clf, ZScoreFeaturesMapper())
+    cv = CrossValidation(clf_mapped, NFoldPartitioner())
+    sl = sphere_searchlight(cv, **sl_kwargs)
+    results_mapped = sl(dataset)
+
+    cv_chained = ChainMapper([ZScoreFeaturesMapper(auto_train=True),
+                              CrossValidation(sample_clf, NFoldPartitioner())])
+    sl_chained = sphere_searchlight(cv_chained, **sl_kwargs)
+    results_chained = sl_chained(dataset)
+
+    assert_array_equal(results_mapped, results_chained)

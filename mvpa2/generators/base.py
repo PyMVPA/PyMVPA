@@ -40,20 +40,20 @@ class Repeater(Node):
           in the yielded datasets.
         """
         Node.__init__(self, space=space, **kwargs)
-        self.nruns = count
+        self.count = count
 
 
     def generate(self, ds):
         """Generate the desired number of repetitions."""
         space = self.get_space()
-        for i in xrange(self.nruns):
+        for i in xrange(self.count):
             out = ds.copy(deep=False)
             out.a[space] = i
             yield out
 
 
     def __str__(self):
-        return _str(self, str(self.nruns))
+        return _str(self, str(self.count))
 
 
 class Sifter(Node):

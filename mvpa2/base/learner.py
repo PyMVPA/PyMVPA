@@ -40,10 +40,10 @@ class FailedToTrainError(LearnerError):
 
 
 class FailedToPredictError(LearnerError):
-    """Learner exception if it fails to predictions.
+    """Learner exception if it fails to predict.
 
     Usually happens if it was trained on degenerate data but without any
-    complaints.
+    complaints, or was not trained prior calling predict().
     """
     pass
 
@@ -136,6 +136,10 @@ class Learner(Node):
 
         # finally flag as trained
         self._set_trained()
+
+        if __debug__:
+            debug("LRN", "Finished training learner %(lrn)s on dataset %(dataset)s",
+                  msgargs={'lrn':self, 'dataset': ds})
 
 
     def untrain(self):
