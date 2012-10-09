@@ -27,6 +27,31 @@ if not pymvpa_version:
     import mvpa2
     pymvpa_version = mvpa.__version__
 
+def _license_info():
+    return """\
+Copyright (c) 2006-2012 PyMVPA developers
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+Written by Michael Hanke & Yaroslav Halchenko, and numerous other contributors.
+"""
+
 # handler for common/non-command-specific cmdline arguments
 def _proc_common_args(args):
     # debug
@@ -49,14 +74,20 @@ def _proc_common_args(args):
 parser = argparse.ArgumentParser(
                 fromfile_prefix_chars='@',
                 # usage="%(prog)s ...",
+                description="""\
+Here is an initial description that clearly needs improvement.
+Anyway, here are the currently available commands:
+""",
                 epilog='',
                 formatter_class=argparse.RawDescriptionHelpFormatter,
                 add_help=False
             )
 # common options
 helpers.parser_add_common_opt(parser, 'help')
-parser.add_argument('--version', action='version',
-                    version='PyMVPA %s' % pymvpa_version)
+helpers.parser_add_common_opt(parser,
+                              'version',
+                              version='pymvpa2 %s\n\n%s' % (pymvpa_version,
+                                                          _license_info()))
 if __debug__:
     parser.add_argument(
         '--dbg', action='append', nargs=1, type=str, dest='common_debug',
@@ -78,6 +109,7 @@ subparsers = parser.add_subparsers()
 # for all subcommand modules it can find
 cmd_short_description = []
 for cmd in sorted([c for c in dir(mvcmd) if c.startswith('cmd_')]):
+    cmd_name = cmd[4:]
     subcmdmod = getattr(__import__('mvpa2.cmdline',
                                    globals(), locals(),
                                    [cmd], -1),
@@ -91,10 +123,12 @@ for cmd in sorted([c for c in dir(mvcmd) if c.startswith('cmd_')]):
     if not 'description' in parser_args:
         parser_args['description'] = subcmdmod.__doc__
     # create subparser, use module suffix as cmd name
-    subparser = subparsers.add_parser(cmd[4:], add_help=False, **parser_args)
+    subparser = subparsers.add_parser(cmd_name, add_help=False, **parser_args)
     # all subparser can report the version
-    subparser.add_argument('--version', action='version',
-                           version='PyMVPA %s' % pymvpa_version)
+    helpers.parser_add_common_opt(
+            subparser, 'version',
+            version='pymvpa2-%s %s\n\n%s' % (cmd_name, pymvpa_version,
+                                             _license_info()))
     # our own custom help for all commands
     helpers.parser_add_common_opt(subparser, 'help')
     # let module configure the parser
@@ -104,23 +138,25 @@ for cmd in sorted([c for c in dir(mvcmd) if c.startswith('cmd_')]):
     # store short description for later
     sdescr = getattr(subcmdmod, 'short_description',
                      parser_args['description'].split('\n')[0])
-    cmd_short_description.append((cmd[4:], sdescr))
+    cmd_short_description.append((cmd_name, sdescr))
 
 # create command summary
 cmd_summary = []
 for cd in cmd_short_description:
-    cmd_summary.append('  %s\n%s' \
+    cmd_summary.append('%s\n%s\n\n' \
                        % (cd[0],
                           textwrap.fill(cd[1], 75,
-                              initial_indent=' ' * 6,
-                              subsequent_indent=' ' * 6)))
-parser.epilog = 'commands:\n%s\n\n%s' % ('\n'.join(cmd_summary),
-                            textwrap.fill("""\
+                              initial_indent=' ' * 4,
+                              subsequent_indent=' ' * 4)))
+parser.description = '%s\n%s\n\n%s' \
+        % (parser.description,
+           '\n'.join(cmd_summary),
+           textwrap.fill("""\
 Detailed usage information for individual commands is
 available via command-specific help options, i.e.:
 %s <command> --help""" % sys.argv[0],
-                            75, initial_indent='  ',
-                            subsequent_indent='  '))
+                            75, initial_indent='',
+                            subsequent_indent=''))
 
 # parse cmd args
 args = parser.parse_args()

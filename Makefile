@@ -191,6 +191,15 @@ manpages: mkdir-MAN_DIR
 		bin/pymvpa2-atlaslabeler > $(MAN_DIR)/pymvpa2-atlaslabeler.1
 	PYTHONPATH=$(LPYTHONPATH) help2man -N -n 'start a PyMVPA tutorial session' \
 		bin/pymvpa2-tutorial > $(MAN_DIR)/pymvpa2-tutorial.1
+	PYTHONPATH=$(LPYTHONPATH) help2man --no-discard-stderr \
+		--help-option="--help-np" -N -n "command line interface for PyMVPA" \
+			bin/pymvpa2 > $(MAN_DIR)/pymvpa2.1
+	for cmd in $$(grep import < mvpa2/cmdline/__init__.py | cut -d _ -f 2-); do \
+		summary="$$(grep 'man: -*-' < mvpa2/cmdline/cmd_$${cmd}.py | cut -d '%' -f 2-)"; \
+		PYTHONPATH=$(LPYTHONPATH) help2man --no-discard-stderr \
+			--help-option="--help-np" -N -n "$$summary" \
+				"bin/pymvpa2 $${cmd}" > $(MAN_DIR)/pymvpa2-$${cmd}.1 ; \
+	done
 
 references:
 	@echo "I: Generating references"

@@ -51,6 +51,9 @@ the current directory.
 
 """
 
+# magic line for manpage summary
+# man: -*- % create a PyMVPA dataset from various sources
+
 __docformat__ = 'restructuredtext'
 
 import numpy as np
