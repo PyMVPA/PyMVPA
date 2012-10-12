@@ -47,6 +47,12 @@ mask = (
     {'help': 'single mask item'}
 )
 
+output_file = (
+    'output', ('-o', '--output'),
+    dict(type=str,
+         help="""output filename ('.hdf5' extension is added automatically
+        if necessary).""")
+)
 
 output_prefix = (
     'outprefix', ('-o', '--output-prefix'),

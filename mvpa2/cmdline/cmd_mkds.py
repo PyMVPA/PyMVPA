@@ -64,7 +64,7 @@ from mvpa2.datasets import Dataset
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
-        import parser_add_common_args, strip_from_docstring, arg2bool
+        import parser_add_common_args, parser_add_common_opt, arg2bool
 
 def _load_from_txt(args):
     defaults = dict(dtype=None, delimiter=None, skiprows=0, comments=None)
@@ -172,9 +172,7 @@ def setup_parser(parser):
         for opt in src[1][1:]:
             srcgrp.add_argument(opt[0], **opt[1])
     outputgrp = parser.add_argument_group('output options')
-    outputgrp.add_argument('-o', '--output', type=str, required=True,
-        help="""output filename ('.hdf5' extension is added automatically
-        if necessary).""")
+    parser_add_common_opt(outputgrp, 'output_file', required=True)
     parser_add_common_args(outputgrp, opt=['hdf5compression'])
 
 def run(args):
