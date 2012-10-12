@@ -66,8 +66,6 @@ if __debug__:
 from mvpa2.cmdline.helpers \
         import parser_add_common_args, strip_from_docstring, arg2bool
 
-from mvpa2.algorithms.hyperalignment import Hyperalignment
-
 def _load_from_txt(args):
     defaults = dict(dtype=None, delimiter=None, skiprows=0, comments=None)
     if len(args) > 1:
