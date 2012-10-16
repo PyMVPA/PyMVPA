@@ -15,6 +15,7 @@ valuable advice, code or documentation to PyMVPA:
 
 * Florian Baumgartner, University of Magdeburg, Germany
 * Michael W. Cole, Washington University in St. Louis, USA
+* Ceyhun Çakar
 * Reka Daniel, Princeton University, USA
 * `Greg Detre`_, Princeton University, USA
 * Matthias Ekman, Donders Institute, Netherlands
