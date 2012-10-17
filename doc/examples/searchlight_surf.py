@@ -20,6 +20,8 @@ As always, we first have to import PyMVPA.
 
 from mvpa2.suite import *
 
+# to write output that AFNI's SUMA can understand
+from mvpa2.support.nibabel import afni_niml_dset
 
 """As searchlight analyses are usually quite expensive in term of computational
 resources, we are going to enable some progress output to entertain us while

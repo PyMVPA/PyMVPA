@@ -30,8 +30,8 @@ afni_niml_dset.write function
 '''
 
 import random, numpy as np, os, time, sys
-import mvpa2.misc.surfing.afni_niml_types as types
-import mvpa2.misc.surfing.afni_niml as niml
+import mvpa2.support.nibabel.afni_niml_types as types
+import mvpa2.support.nibabel.afni_niml as niml
 
 def _string2list(s, SEP=";"):
     '''splits a string by SEP; if the last element is empty then it is not returned
@@ -297,7 +297,7 @@ def sparse2full(dset, pad_to_ico_ld=None, pad_to_node=None,
                                                 (n, pad_to_node))
 
     full_node_indices_vec = np.arange(pad_to_node)
-    full_node_indices = np.reshape(full_node_indices, (pad_to_node, 1))
+    full_node_indices = np.reshape(full_node_indices_vec, (pad_to_node, 1))
 
     full_data = np.zeros((pad_to_node, ncols), dtype=data.dtype) + \
                                                         set_missing_values

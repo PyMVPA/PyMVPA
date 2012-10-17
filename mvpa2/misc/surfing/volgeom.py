@@ -21,8 +21,6 @@ Created on Feb 12, 2012
 
 import nibabel as nb, numpy as np
 
-from mvpa2.misc.surfing import surf_fs_asc, utils
-
 from mvpa2.base import warning
 from mvpa2.datasets.mri import fmri_dataset
 

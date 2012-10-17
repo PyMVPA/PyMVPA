@@ -17,8 +17,8 @@ Created on Feb 19, 2012
 
 import numpy as np
 
-import mvpa2.misc.surfing.afni_niml as niml
-import mvpa2.misc.surfing.afni_niml_dset as dset
+import mvpa2.support.nibabel.afni_niml as niml
+import mvpa2.support.nibabel.afni_niml_dset as dset
 
 def rawniml2annot(p):
     if type(p) is list:

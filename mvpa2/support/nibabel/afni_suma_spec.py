@@ -1,5 +1,11 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 '''Support for ANFI SUMA surface specification (.spec) files
 Includes I/O support and generating spec files that combine both hemispheres'''
@@ -7,7 +13,8 @@ Includes I/O support and generating spec files that combine both hemispheres'''
 
 import re, datetime, os, copy, glob
 #from mvpa2.misc.surfing import utils, surf_fs_asc, surf
-import utils, surf_fs_asc, surf
+#import mvpa2.support.nibabel.afni_utils as utils
+from mvpa2.support.nibabel import surf_fs_asc, surf
 
 _COMPREFIX = 'CoM' #  for surfaces that were rotated around center of mass
 
@@ -217,7 +224,11 @@ def hemi_pairs_add_views(spec_both, state, directory=None, overwrite=False):
             # take whichever is there (in order of preference)
             # shame that python has no builtin foldr
             surfnamelabels = ['SurfaceName', 'FreeSurferSurface']
-            surfname = utils.foldr(surfdef.get, None, surfnamelabels)
+            for surfnamelabel in surfnamelabels:
+                surfname = surfdef.get(surfnamelabel)
+                if not surfname is None:
+                    break
+            #surfname = utils.foldr(surfdef.get, None, surfnamelabels)
 
             fn = os.path.join(directory, surfname)
             if not os.path.exists(fn):
