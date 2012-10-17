@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -32,8 +33,61 @@ In its most simple usage, it requires three arguments:
 '''
 
 import os, fnmatch, datetime, re, argparse
-import utils, surf_fs_asc, surf, afni_suma_spec
-from utils import afni_fileparts
+from mvpa2.support.nibabel import surf_fs_asc, surf, afni_suma_spec
+import afni_utils as utils
+
+def afni_fileparts(fn):
+    '''File parts for afni filenames.
+    
+    Returns a tuple with these four parts.
+    
+    Also works for .nii files, in which case the third part is the empty
+    
+    Not tested for other file types
+    
+    Parameters
+    ----------
+    whole filename
+      PATH/TO/FILE/NAME+orig.HEAD
+      
+    
+    Returns
+    -------
+    fullpath: str
+      PATH/TO/FILE
+    rootname: str
+      NAME
+    orientation: str
+      +orig
+    extensions: str
+      .HEAD
+    
+    '''
+
+    tail, head = os.path.split(fn)
+
+    s = head.split('+')
+    name = s[0]
+    orient = '+' + s[1] if len(s) == 2  else ''
+
+    afniorients = ['+orig', '+tlrc', '+acpc']
+    ext = None
+    for a in afniorients:
+        if orient.startswith(a):
+                       #ext=orient[len(a):]
+            orient = a
+            ext = ".HEAD"
+
+    if ext is None:
+        s = name.split(".")
+        if len(s) > 1:
+            ext = "." + ".".join(s[1:])
+            name = s[0]
+        else:
+            ext = ''
+
+    return tail, name, orient, ext
+
 
 def getdefaults():
     '''set up default parameters - for testing now'''

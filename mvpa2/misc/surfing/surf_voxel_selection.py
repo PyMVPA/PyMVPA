@@ -25,17 +25,17 @@ and surface-based multi-voxel pattern analysis. Neuroimage, 56(2), pp. 593-600
 import time
 import collections
 import operator
+import datetime
 
 import nibabel as ni
 import numpy as np
 
-import volsurf
-import mvpa2.misc.surfing.sparse_attributes as sparse_attributes
-import mvpa2.misc.surfing.volgeom as volgeom
-import utils
-import surf
-
 from mvpa2.base import warning
+
+from mvpa2.misc.surfing import sparse_attributes, volgeom, volsurf
+from mvpa2.support.nibabel import surf
+
+
 
 # TODO: see if we use these contants, or let it be up to the user
 # possibly also rename them
@@ -465,7 +465,7 @@ def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
                 node2volume_attributes.add(src, attrs)
 
             if __debug__ and etastep and (i % etastep == 0 or i == n - 1):
-                msg = utils.eta(tstart, float(i + 1) / n,
+                msg = _eta(tstart, float(i + 1) / n,
                                 progresspat %
                                 (i + 1, n, src, intermediate), show=False)
                 debug('SVS', msg, cr=True)
@@ -489,6 +489,45 @@ def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
                             len(visitorder))
 
         return node2volume_attributes
+
+def _eta(starttime, progress, msg=None, show=True):
+    '''Simple linear extrapolation to estimate how much time is needed 
+    to complete a task.
+    
+    Parameters
+    ----------
+    starttime
+        Time the tqsk started, from 'time.time()'
+    progress: float
+        Between 0 (nothing completed) and 1 (fully completed)
+    msg: str (optional)
+        Message that describes progress
+    show: bool (optional, default=True)
+        Show the message and the estimated time until completion
+    
+    Returns
+    -------
+    eta
+        Estimated time until completion
+    
+    Note
+    ----
+    ETA refers to estimated time of arrival
+    '''
+    if msg is None:
+        msg = ""
+
+    now = time.time()
+    took = now - starttime
+    eta = -1 if progress == 0 else took * (1 - progress) / progress
+
+    f = lambda t:str(datetime.timedelta(seconds=t))
+
+    fullmsg = '%s, took %s, remaining %s' % (msg, f(took), f(eta))
+    if show:
+        print fullmsg
+
+    return fullmsg
 
 def run_voxel_selection(epifn, whitefn, pialfn, radius, srcfn=None, srcs=None,
                        start=0., stop=1., steps=10, distance_metric='dijkstra',

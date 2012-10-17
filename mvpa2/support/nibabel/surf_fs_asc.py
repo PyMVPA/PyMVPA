@@ -30,7 +30,7 @@ Created on Feb 12, 2012
 @author: nick
 '''
 
-import numpy as np, os, datetime, utils
+import numpy as np, os, datetime
 
 import surf
 #from mvpa2.misc.surfing import surf

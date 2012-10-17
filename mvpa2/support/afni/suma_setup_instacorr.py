@@ -1,11 +1,13 @@
 
 
-import afni_niml_dset
+
 import numpy as np
 import os
 import re
-import utils
 import argparse
+
+from .nibabel import afni_niml_dset
+from .nibabel import afni_utils as utils
 
 # Wrapper for 3dSetupGrpInCorr for surface-based dataets in SUMA (in NIML format)
 # also makes input dataset 'full' (i.e. so that all nodes have a value)

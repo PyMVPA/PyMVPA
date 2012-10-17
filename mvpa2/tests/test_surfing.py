@@ -25,13 +25,11 @@ from mvpa2.datasets import Dataset
 from mvpa2.measures.base import Measure
 from mvpa2.datasets.mri import fmri_dataset
 
-import mvpa2.misc.surfing.surf as surf
-import mvpa2.misc.surfing.surf_fs_asc as surf_fs_asc
-import mvpa2.misc.surfing.volgeom as volgeom
-import mvpa2.misc.surfing.volsurf as volsurf
-import mvpa2.misc.surfing.sparse_attributes as sparse_attributes
-import mvpa2.misc.surfing.surf_voxel_selection as surf_voxel_selection
-import mvpa2.misc.surfing.queryengine as queryengine
+from mvpa2.misc.surfing import sparse_attributes, volgeom, volsurf, \
+                                sparse_attributes, surf_voxel_selection, \
+                                queryengine
+
+from mvpa2.support.nibabel import surf, surf_fs_asc
 
 from mvpa2.measures.searchlight import Searchlight
 
@@ -152,7 +150,7 @@ class SurfTests(unittest.TestCase):
         assert_equal(s3.nvertices, 200)
         assert_equal(s3.nfaces, 342)
         assert_array_almost_equal(s3.vertices[-1, :], np.array([18., 19, 0.]))
-        assert_array_almost_equal(s3.faces[-1, :], np.array([179, 198, 199]))
+        assert_array_almost_equal(s3.faces[-1, :], np.array([199, 198, 179]))
 
 
     def test_surf_fs_asc(self):
