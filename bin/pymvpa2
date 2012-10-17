@@ -171,4 +171,4 @@ else:
     try:
         args.func(args)
     except Exception as exc:
-        error(str(exc))
+        error('%s (%s)' % (str(exc), exc.__class__.__name__))
