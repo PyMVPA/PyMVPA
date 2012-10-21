@@ -15,6 +15,7 @@ Created on Feb 19, 2012
 '''
 
 import os, subprocess, time, datetime, collections
+import os.path as op
 
 def as_list(v):
     '''makes this a singleton list if the input is not a list'''
@@ -148,3 +149,126 @@ def which(f, env=None):
             if is_executable(fullfn):
                 return fullfn
         return None
+
+
+
+def _package_afni_nibabel_for_standalone(outputdir):
+    '''
+    helper function to put mvpa2.support.{afni,nibabel} into another
+    directory (outputdir) where it can function as a stand-alone package
+    '''
+
+    if not os.path.exists(outputdir):
+        os.mkdir(outputdir)
+
+    fullpath = op.realpath(__file__)
+    fullpath_parts = fullpath.split('/')
+    if (len(fullpath_parts) < 4 or
+            fullpath.split('/')[-4:-1] != ['mvpa2', 'support', 'afni']):
+        raise ValueError('This script is not in mvpa2.support.afni. '
+                         'Packaging for stand-alone is not supported')
+
+    replacements = {'from mvpa2.base import warning':'def warning(x): print x'}
+
+    rootdir = os.path.join(op.split(fullpath)[0], '..')
+    parent_pkg = 'mvpa2.support'
+    pkgs = ['afni', 'nibabel']
+    srcdirs = [os.path.join(rootdir, pkg) for pkg in pkgs]
+
+    outputfns = []
+    for srcdir in srcdirs:
+        for fn in os.listdir(srcdir):
+            if fn.startswith('__') or not fn.endswith('.py'):
+                continue
+
+            path_fn = os.path.join(srcdir, fn)
+            with open(path_fn) as f:
+                lines = f.read().split('\n')
+
+            newlines = []
+            for line in lines:
+                newline = None
+
+                for old, new in replacements.iteritems():
+                    line = line.replace(old, new)
+
+                if 'import' in line:
+                    words = line.split()
+
+                    for pkg in pkgs:
+                        full_pkg = parent_pkg + '.' + pkg
+                        trgwords = ['from', full_pkg, 'import']
+                        n = len(trgwords)
+
+                        if len(words) >= n and words[:n] == trgwords:
+                            # find how many trailing spaces
+                            i = 0
+                            while line.find(' ', i) == i:
+                                i += 1
+                            # get everything from import to end of line
+                            # with enough spaces in front
+                            newline = (' ' * i) + ' '.join(words[(n - 1):])
+                            print line
+                            print ' -> ', newline
+                            break
+                        else:
+                            if pkg in words:
+                                raise ValueError("Not supported in %s: %s" % (path_fn, line))
+
+                if newline is None:
+                    newline = line
+
+                newlines.append(newline)
+
+            trgfn = op.join(outputdir, fn)
+            with open(trgfn, 'w') as f:
+                f.write('\n'.join(newlines))
+
+            is_executable = lines[0].startswith('#!')
+            if is_executable:
+                os.chmod(trgfn, 0777)
+
+            print "Written file %s in %s" % (fn, outputdir)
+            outputfns.append(fn)
+
+
+    readme = ('''
+    AFNI I/O and wrapper functions in python
+    
+    Copyright 2010-2012 Nikolaas N. Oosterhof <nikolaas.oosterhof@unitn.it>
+    
+    The software in the following files is covered under the MIT License
+    (included below):
+''' +
+    '\n'.join(map(lambda x:'      - ' + x, outputfns)) +
+    '''
+    Parts of this software is or will be included in pyMVPA. For information,
+    see www.pymvpa.org. 
+    
+    -------------------------------------------------------------------------
+    The MIT License
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+    THE SOFTWARE.
+
+    ''')
+
+    readmefn = op.join(outputdir, 'COPYING')
+    with open(readmefn, 'w') as f:
+        f.write(readme)
+

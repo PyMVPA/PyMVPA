@@ -32,11 +32,7 @@ Created on Feb 12, 2012
 
 import numpy as np, os, datetime
 
-import surf
-#from mvpa2.misc.surfing import surf
-
-#from surf import Surface
-#import mvpa2.misc.surfing.surf as surf
+from mvpa2.support.nibabel import surf
 
 def read(fn):
     '''

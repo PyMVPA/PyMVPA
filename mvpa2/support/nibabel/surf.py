@@ -14,8 +14,9 @@ Created on Feb 11, 2012
 @author: nick
 '''
 
-import numpy as np, os, collections, datetime, time, \
-       heapq, math
+import os, collections, datetime, time, heapq, math
+
+import numpy as np
 
 class Surface(object):
     '''Cortical surface mesh
@@ -1130,7 +1131,7 @@ def read(fn):
     For now only supports ascii (as used in AFNI's SUMA) and freesurfer formats
     '''
     if fn.endswith('.asc'):
-        import mvpa2.support.nibabel.surf_fs_asc as surf_fs_asc
+        from mvpa2.support.nibabel import surf_fs_asc
         return surf_fs_asc.read(fn)
     else:
         import nibabel.freesurfer.io as fsio
@@ -1143,7 +1144,7 @@ def write(fn, s, overwrite=False):
     For now only supports ascii (as used in AFNI's SUMA)
     '''
     if fn.endswith('.asc'):
-        import mvpa2.support.nibabel.surf_fs_asc as surf_fs_asc
+        from mvpa2.support.nibabel import surf_fs_asc
         surf_fs_asc.write(fn, s, overwrite=overwrite)
     else:
         raise ValueError("Not implemented (based on extension): %r" % fn)
