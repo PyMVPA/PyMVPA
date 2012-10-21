@@ -14,11 +14,10 @@ Created on Feb 19, 2012
 @author: Nikolaas. N. Oosterhof (nikolaas.oosterhof@unitn.it)
 '''
 
-
 import numpy as np
 
-import mvpa2.support.nibabel.afni_niml as niml
-import mvpa2.support.nibabel.afni_niml_dset as dset
+from mvpa2.support.nibabel import afni_niml as niml
+from mvpa2.support.nibabel import afni_niml_dset as dset
 
 def rawniml2annot(p):
     if type(p) is list:

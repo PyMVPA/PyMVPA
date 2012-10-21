@@ -12,12 +12,14 @@
 attempt for simple alphasim based on simple 2nd level residuals (a la SPM)
 uses SUMA's SurfClust, SurfFWHM, and a couple of other AFNI programs
 
+Note: this method has not been validated properly yet.
+
 NNO Oct 2012
 '''
 
 import os, fnmatch, datetime, re, argparse, math
 
-from .nibabel import afni_utils as utils
+from mvpa2.support.afni import afni_utils as utils
 
 
 def _fn(config, infix, ext=None):
@@ -418,7 +420,7 @@ def get_options():
     (4) A cluster from (0) survive pthr if a smaller ratio than pthr of the
     null maps generated in (3) have a maximum cluster size.
     
-    Oct 2012, Nikolaas N. Oosterhof <nikolaas.oosterhof@unitn.it>'
+    Copyright 2012 Nikolaas N. Oosterhof <nikolaas.oosterhof@unitn.it>
     '''
 
     epilog = '''This function is *experimental* and may delete files in output_dir or elsewhere.

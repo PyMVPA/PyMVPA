@@ -1,24 +1,32 @@
+#!/usr/bin/python
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+'''
+Wrapper for 3dSetupGrpInCorr for surface-based dataets in SUMA (in NIML format)
+also makes input dataset 'full' (i.e. so that all nodes have a value)
 
+Requires by default only the input datasets from individual participants, as long
+as they are named with something like "ico32_lh" in the name. Otherwise it's 
+required to provide ico_ld as well to make the datasets 'full'
 
+This code is *experimental*
+
+NNO May 2012
+'''
 
 import numpy as np
 import os
 import re
 import argparse
 
-from .nibabel import afni_niml_dset
-from .nibabel import afni_utils as utils
-
-# Wrapper for 3dSetupGrpInCorr for surface-based dataets in SUMA (in NIML format)
-# also makes input dataset 'full' (i.e. so that all nodes have a value)
-#
-# Requires by default only the input datasets from individual participants, as long
-# as they are named with something like "ico32_lh" in the name. Otherwise it's 
-# required to provide ico_ld as well to make the datasets 'full'
-#
-# NNO May 2012
-
-
+from mvpa2.support.nibabel import afni_niml_dset
+from mvpa2.support.afni import afni_utils as utils
 
 
 def afni_niml_zscore_data(dset, axis=1):

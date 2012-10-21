@@ -30,8 +30,8 @@ afni_niml_dset.write function
 '''
 
 import random, numpy as np, os, time, sys
-import mvpa2.support.nibabel.afni_niml_types as types
-import mvpa2.support.nibabel.afni_niml as niml
+from mvpa2.support.nibabel import afni_niml_types as types
+from mvpa2.support.nibabel import afni_niml as niml
 
 def _string2list(s, SEP=";"):
     '''splits a string by SEP; if the last element is empty then it is not returned
