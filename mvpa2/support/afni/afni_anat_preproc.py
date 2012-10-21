@@ -286,6 +286,7 @@ def run_mapico(config, env):
         if cmds:
             cmd = '%s;%s' % (firstcmd, ';'.join(cmds))
             utils.run_cmds(cmd, env)
+            cmds = []
         if len(spherefns) == 2 and 'l' in hemis and 'r' in hemis:
             spheres = map(surf.read, spherefns)
 
