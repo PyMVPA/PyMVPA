@@ -15,7 +15,7 @@ from mvpa2.base import externals
 if externals.exists('scipy', raise_=True):
     import scipy.stats as st
     # evaluate once the fact of life
-    __scipy_prior0101 =  externals.versions['scipy'] < '0.10.1'
+    __scipy_prior0101 = externals.versions['scipy'] < '0.10.1'
 
 import numpy as np
 import copy
@@ -105,7 +105,7 @@ class DSMatrix(object):
         self.full_matrix = []
         self.u_triangle = None
         self.vector_form = None
-        self.u_triangle_vec = None # vectorized versions
+        self._u_triangle_vecs = None # vectorized versions
 
         # this one we know straight away, so set it
         self.metric = metric
@@ -175,18 +175,31 @@ class DSMatrix(object):
         return self.u_triangle
 
     def get_triangle_vector_form(self, k=0):
-        # NNO added Aug 2012
-        # use k=1 to get values above the diagonal
-        # use k=0 to include the diagonal
+        '''
+        Returns values from a triangular part of the matrix in vector form
+        
+        Parameters
+        ----------
+        k: int
+            offset from diagonal. k=0 means all values from the diagonal and those
+            above it, k=1 all values from the cells above the diagonal, etc
+        
+        Returns
+        -------
+        v: np.ndarray (vector)
+            array with values from the similarity matrix. If the matrix is shaped
+            p xp, then if k>=0, then v has (p-k)*(p-k+1)/2 elements. If k<0, it has
+            p*p-(p+k)*(p+k-1)/2 elements.
+        '''
 
         n = self.full_matrix.shape[0]
         if k < -n or k > n:
-            raise IndexError("Require %d < k % %d" % (-n, n))
+            raise IndexError("Require %d <= k <= %d" % (-n, n))
 
-        if self.u_triangle_vec is None:
-            self.u_triangle_vec = dict()
+        if self._u_triangle_vecs is None:
+            self._u_triangle_vecs = dict()
 
-        if not k in self.u_triangle_vec:
+        if not k in self._u_triangle_vecs:
             msk = np.zeros((n, n), dtype=np.bool_)
             for i in range(n):
                 for j in range(n):
@@ -194,9 +207,9 @@ class DSMatrix(object):
                         break
                     msk[i, j] = np.True_
 
-            self.u_triangle_vec[k] = self.full_matrix[msk]
+            self._u_triangle_vecs[k] = self.full_matrix[msk]
 
-        return self.u_triangle_vec[k]
+        return self._u_triangle_vecs[k]
 
     # create the dissimilarity matrix on the (upper) triangle of the two
     # two dissimilarity matrices; we can just reuse the same dissimilarity
@@ -317,7 +330,7 @@ def ttest_1samp(a, popmean=0, axis=0, mask=None, alternative='two-sided'):
         n = a.count(axis=axis)
     elif mask is not None:
         # Create masked array
-        a = np.ma.masked_array(a, mask=~np.asanyarray(mask))
+        a = np.ma.masked_array(a, mask= ~np.asanyarray(mask))
         n = a.count(axis=axis)
     else:
         # why bother doing anything?
