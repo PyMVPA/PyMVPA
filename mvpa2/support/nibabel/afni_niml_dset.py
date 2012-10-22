@@ -376,7 +376,7 @@ def ttest(dsets, sa_labels=None, return_values='mt', set_NaN_to=0.):
             sh = dset_data.shape
             if sa_labels is None:
                 if 'labels' in dset:
-                    sa_labels = sa_labels
+                    sa_labels = dset['labels']
                     dset_labels = sa_labels
                 else:
                     sa_labels = range(sh[1])
@@ -384,9 +384,11 @@ def ttest(dsets, sa_labels=None, return_values='mt', set_NaN_to=0.):
             else:
                 dset_labels = sa_labels
 
-            nc = len(sa_labels)
+
+            nc = len(dset_labels) if dset_labels else sh[1]
             nn = sh[0]
 
+            print "SH", nc
             data = np.zeros((nn, nc, ns), dset_data.dtype) # number of nodes, columns, subjects
 
         if 'node_indices' in dset:
@@ -402,6 +404,7 @@ def ttest(dsets, sa_labels=None, return_values='mt', set_NaN_to=0.):
                                     (0, i))
 
         col_idxs = np.asarray(label2index(dset, sa_labels))
+
         data[node_idxs, :, i] = dset_data[:, col_idxs]
 
 

@@ -83,6 +83,12 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
     def query(self, **kwargs):
         raise NotImplemented
 
+    def masked_nifti_img(self):
+        msk = self.voxsel.get_mask()
+        import nibabel as nb
+        img = nb.Nifti1Image(msk, self.voxsel.volgeom.affine)
+        return img
+
 def disc_surface_queryengine(radius, volume, white_surf, pial_surf, source_surf=None,
                              source_surf_nodes=None, volume_mask=False, add_fa=None,
                              distance_metric='dijkstra'):
