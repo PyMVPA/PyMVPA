@@ -144,6 +144,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         ----------
         generator : `Generator`
           Some `Generator` to prepare partitions for cross-validation.
+          It must not change "targets", thus e.g. no AttributePermutator's
         qe : `QueryEngine`
           Query engine which would provide neighborhood information
         errorfx : func, optional
@@ -349,9 +350,19 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         # XXX we could make it even more lightweight I guess...
         dataset_indicies = Dataset(np.arange(nsamples), sa=dataset.sa)
         splitter = Splitter(attr=generator.get_space())
-        splits = list(tuple(splitter.generate(ds_))
-                      for ds_ in generator.generate(dataset_indicies))
-        nsplits = len(splits)
+        partitions = list(generator.generate(dataset_indicies))
+        if __debug__:
+            for p in partitions:
+                if not (np.all(p.sa[targets_sa_name].value == labels)):
+                    raise NotImplementedError(
+                        "%s does not yet support partitioners altering the targets "
+                        "(e.g. permutators)" % self.__class__)
+
+        nsplits = len(partitions)
+        # ATM we need to keep the splits instead since they are used
+        # in two places in the code: step 2 and 5
+        splits = list(tuple(splitter.generate(ds_)) for ds_ in partitions)
+        del partitions                    # not used any longer
 
         # 2. Figure out the new 'chunks x labels' blocks of combinations
         #    of samples

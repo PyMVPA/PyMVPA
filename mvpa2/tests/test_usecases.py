@@ -163,3 +163,74 @@ def test_chained_crossvalidation_searchlight():
     results_chained = sl_chained(dataset)
 
     assert_array_equal(results_mapped, results_chained)
+
+def test_gnbsearchlight_permutations():
+    #import sys; sys.path.insert(1, '/home/yoh/proj/pymvpa/pymvpa')
+    import mvpa2
+    from mvpa2.base.node import ChainNode
+    from mvpa2.clfs.gnb import GNB
+    from mvpa2.generators.base import  Repeater
+    from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner
+    from mvpa2.generators.permutation import AttributePermutator
+    from mvpa2.testing.datasets import datasets
+    from mvpa2.measures.base import CrossValidation
+    from mvpa2.measures.gnbsearchlight import sphere_gnbsearchlight
+    from mvpa2.measures.searchlight import sphere_searchlight
+    from mvpa2.mappers.fx import mean_sample
+    from mvpa2.misc.errorfx import mean_mismatch_error
+    from mvpa2.clfs.stats import MCNullDist
+    from mvpa2.testing.tools import assert_raises
+
+    count = 3
+    ds = datasets['3dsmall'].copy()
+    ds.fa['voxel_indices'] = ds.fa.myspace
+
+    mvpa2.seed(mvpa2._random_seed)
+    clf  = GNB()
+    splt = NFoldPartitioner(cvtype=2, attr='chunks')
+
+    slkwargs = dict(radius=3, space='voxel_indices',  enable_ca=['roi_sizes'],
+                    center_ids=[1, 10, 70, 100])
+    repeater   = Repeater(count=count)
+    permutator = AttributePermutator('targets', limit={'partitions': 1}, count=1)
+
+    null_sl = sphere_gnbsearchlight(clf, ChainNode([splt, permutator], space=splt.get_space()),
+                                    postproc=mean_sample(), errorfx=mean_mismatch_error,
+                                    **slkwargs)
+
+    distr_est = MCNullDist(repeater, tail='left', measure=null_sl,
+                           enable_ca=['dist_samples'])
+    sl = sphere_gnbsearchlight(clf, splt,
+                               reuse_neighbors=True,
+                               null_dist=distr_est, postproc=mean_sample(),
+                               errorfx=mean_mismatch_error,
+                               **slkwargs)
+    assert_raises(NotImplementedError, sl, ds)
+    # "ad-hoc searchlights can't handle yet varying targets across partitions"
+    if False:
+        # after above limitation is removed -- enable
+        sl_map = sl(ds)
+        sl_null_prob = sl.ca.null_prob.samples.copy()
+    else:
+        return                            # done for now
+
+    mvpa2.seed(mvpa2._random_seed)
+    ### 'normal' Searchlight
+    clf  = GNB()
+    splt = NFoldPartitioner(cvtype=2, attr='chunks')
+
+    repeater   = Repeater(count=count)
+    permutator = AttributePermutator('targets', limit={'partitions': 1}, count=1)
+    null_cv = CrossValidation(clf, ChainNode([splt, permutator],space=splt.get_space()),
+                              postproc=mean_sample())
+    null_sl_normal = sphere_searchlight(null_cv, nproc=2, **slkwargs)
+    distr_est_normal = MCNullDist(repeater, tail='left', measure=null_sl_normal,
+                           enable_ca=['dist_samples'])
+
+    cv = CrossValidation(clf, splt, errorfx=mean_mismatch_error,
+                         enable_ca=['stats'], postproc=mean_sample() )
+    sl = sphere_searchlight(cv, nproc=2, null_dist=distr_est_normal, **slkwargs)
+    sl_map_normal = sl(ds)
+    sl_null_prob_normal = sl.ca.null_prob.samples.copy()
+
+    # TODO: add comparison to sl_null_prob etc
