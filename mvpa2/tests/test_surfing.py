@@ -115,6 +115,11 @@ class SurfTests(unittest.TestCase):
         for k, v in partmap.iteritems():
             assert_true(low2high[k] == v)
 
+        # ensure that slow implementation gives same results as fast one
+        low2high_slow = s.map_to_high_resolution_surf_slow(h, .1)
+        for k, v in low2high.iteritems():
+            assert_true(low2high_slow[k] == v)
+
         #  should fail if epsilon is too small
         assert_raises(ValueError,
                       lambda x:x.map_to_high_resolution_surf(h, .01), s)

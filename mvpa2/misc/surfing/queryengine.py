@@ -63,9 +63,23 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
 
     def query_byid(self, vertexid):
         """Given a vertex ID give us indices of dataset features (voxels)
+        
+        Parameters
+        ----------
+        vertexid: int
+            Index of searchlight center vertex on the surface. 
+            This value should be an element in self.ids
+            
+        Returns
+        -------
+        voxel_ids: list of int or AttrDataset
+            The linear indices of voxels near the vertex with index vertexid.
+            If the instance was constructed with add_fa=None, then voxel_ids
+            is a list; otherwise it is a AttrDataset with additional feature
+            attributes stored in voxel_ids.fa. 
+            
         """
         # TODO: make linear_voxel_indices a parameter
-
         voxel_unmasked_ids = self.voxsel.get(vertexid, 'linear_voxel_indices')
 
         # map into dataset
@@ -83,11 +97,20 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
     def query(self, **kwargs):
         raise NotImplemented
 
-    def masked_nifti_img(self):
+    def get_masked_nifti_image(self):
+        '''Returns a nifti image indicating which voxels were selected
+        
+        Returns
+        -------
+        img: nibabel.Nifti1Image
+            Nifti image with value zero for voxels that we not selected, and 
+            non-zero values for selected voxels. 
+        '''
         msk = self.voxsel.get_mask()
         import nibabel as nb
         img = nb.Nifti1Image(msk, self.voxsel.volgeom.affine)
         return img
+
 
 def disc_surface_queryengine(radius, volume, white_surf, pial_surf, source_surf=None,
                              source_surf_nodes=None, volume_mask=False, add_fa=None,
