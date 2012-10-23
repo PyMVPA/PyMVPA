@@ -73,6 +73,16 @@ class VolSurf():
 
         return self._white
 
+    def intermediate_surface(self):
+        '''
+        Returns the node-wise average of the pial and white surface
+        
+        Returns
+        -------
+        intermediate: surf.Surface
+        '''
+        return pial_surface * .5 + white_surface * .5
+
     @property
     def volgeom(self):
         '''
