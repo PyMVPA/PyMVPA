@@ -180,7 +180,7 @@ def test_gnbsearchlight_permutations():
     from mvpa2.mappers.fx import mean_sample
     from mvpa2.misc.errorfx import mean_mismatch_error
     from mvpa2.clfs.stats import MCNullDist
-    from mvpa2.testing.tools import assert_raises, ok_
+    from mvpa2.testing.tools import assert_raises, ok_, assert_array_less
 
     # mvpa2.debug.active = ['APERM', 'SLC'] #, 'REPM']
     # mvpa2.debug.metrics += ['pid']
