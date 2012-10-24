@@ -836,7 +836,7 @@ class ClassifiersTests(unittest.TestCase):
             batch_test(retest=not('gamma' in clf.kernel_params))
 
         # should retrain nicely if we change labels
-        permute = AttributePermutator('targets', assure=True, rng=np.random)
+        permute = AttributePermutator('targets', assure=True)
         oldlabels = dstrain.targets[:]
         dstrain = permute(dstrain)
         self.assertTrue((oldlabels != dstrain.targets).any(),

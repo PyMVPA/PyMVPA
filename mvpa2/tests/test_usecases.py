@@ -223,7 +223,7 @@ def test_gnbsearchlight_permutations():
     splt = NFoldPartitioner(cvtype=2, attr='chunks')
     repeater   = Repeater(count=count)
     permutator = AttributePermutator('targets', limit={'partitions': 1}, count=1)
-    # rng=np.random) # to trigger failure since the same np.random state
+    # rng=np.random.RandomState(0)) # to trigger failure since the same np.random state
     # would be reused across all pprocesses
     null_cv = CrossValidation(clf, ChainNode([splt, permutator], space=splt.get_space()),
                               postproc=mean_sample())
