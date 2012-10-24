@@ -735,6 +735,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
     @sweepargs(clf=clfswh['retrainable'])
+    @reseed_rng()
     def test_retrainables(self, clf):
         # XXX we agreed to not worry about this for the initial 0.6 release
         raise SkipTest
@@ -835,7 +836,7 @@ class ClassifiersTests(unittest.TestCase):
             batch_test(retest=not('gamma' in clf.kernel_params))
 
         # should retrain nicely if we change labels
-        permute = AttributePermutator('targets', assure=True)
+        permute = AttributePermutator('targets', assure=True, rng=np.random)
         oldlabels = dstrain.targets[:]
         dstrain = permute(dstrain)
         self.assertTrue((oldlabels != dstrain.targets).any(),
