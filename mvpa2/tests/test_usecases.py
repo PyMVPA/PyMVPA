@@ -165,12 +165,13 @@ def test_chained_crossvalidation_searchlight():
     assert_array_equal(results_mapped, results_chained)
 
 def test_gnbsearchlight_permutations():
-    #import sys; sys.path.insert(1, '/home/yoh/proj/pymvpa/pymvpa')
     import mvpa2
     from mvpa2.base.node import ChainNode
     from mvpa2.clfs.gnb import GNB
     from mvpa2.generators.base import  Repeater
     from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner
+    #import mvpa2.generators.permutation
+    #reload(mvpa2.generators.permutation)
     from mvpa2.generators.permutation import AttributePermutator
     from mvpa2.testing.datasets import datasets
     from mvpa2.measures.base import CrossValidation
@@ -179,18 +180,22 @@ def test_gnbsearchlight_permutations():
     from mvpa2.mappers.fx import mean_sample
     from mvpa2.misc.errorfx import mean_mismatch_error
     from mvpa2.clfs.stats import MCNullDist
-    from mvpa2.testing.tools import assert_raises
+    from mvpa2.testing.tools import assert_raises, ok_
 
-    count = 3
+    # mvpa2.debug.active = ['APERM', 'SLC'] #, 'REPM']
+    # mvpa2.debug.metrics += ['pid']
+    count = 10
+    nproc = 1 + int(mvpa2.externals.exists('pprocess'))
     ds = datasets['3dsmall'].copy()
     ds.fa['voxel_indices'] = ds.fa.myspace
+
+    slkwargs = dict(radius=3, space='voxel_indices',  enable_ca=['roi_sizes'],
+                    center_ids=[1, 10, 70, 100])
 
     mvpa2.seed(mvpa2._random_seed)
     clf  = GNB()
     splt = NFoldPartitioner(cvtype=2, attr='chunks')
 
-    slkwargs = dict(radius=3, space='voxel_indices',  enable_ca=['roi_sizes'],
-                    center_ids=[1, 10, 70, 100])
     repeater   = Repeater(count=count)
     permutator = AttributePermutator('targets', limit={'partitions': 1}, count=1)
 
@@ -211,26 +216,34 @@ def test_gnbsearchlight_permutations():
         # after above limitation is removed -- enable
         sl_map = sl(ds)
         sl_null_prob = sl.ca.null_prob.samples.copy()
-    else:
-        return                            # done for now
 
     mvpa2.seed(mvpa2._random_seed)
     ### 'normal' Searchlight
     clf  = GNB()
     splt = NFoldPartitioner(cvtype=2, attr='chunks')
-
     repeater   = Repeater(count=count)
     permutator = AttributePermutator('targets', limit={'partitions': 1}, count=1)
-    null_cv = CrossValidation(clf, ChainNode([splt, permutator],space=splt.get_space()),
+    # rng=np.random) # to trigger failure since the same np.random state
+    # would be reused across all pprocesses
+    null_cv = CrossValidation(clf, ChainNode([splt, permutator], space=splt.get_space()),
                               postproc=mean_sample())
-    null_sl_normal = sphere_searchlight(null_cv, nproc=2, **slkwargs)
+    null_sl_normal = sphere_searchlight(null_cv, nproc=nproc, **slkwargs)
     distr_est_normal = MCNullDist(repeater, tail='left', measure=null_sl_normal,
                            enable_ca=['dist_samples'])
 
     cv = CrossValidation(clf, splt, errorfx=mean_mismatch_error,
                          enable_ca=['stats'], postproc=mean_sample() )
-    sl = sphere_searchlight(cv, nproc=2, null_dist=distr_est_normal, **slkwargs)
+    sl = sphere_searchlight(cv, nproc=nproc, null_dist=distr_est_normal, **slkwargs)
     sl_map_normal = sl(ds)
     sl_null_prob_normal = sl.ca.null_prob.samples.copy()
 
-    # TODO: add comparison to sl_null_prob etc
+    # For every feature -- we should get some variance in estimates In
+    # case of failure they are all really close to each other (up to
+    # numerical precision), so variance will be close to 0
+    assert_array_less(-np.var(distr_est_normal.ca.dist_samples.samples[0],
+                              axis=1), -1e-5)
+    for s in distr_est_normal.ca.dist_samples.samples[0]:
+        ok_(len(np.unique(s)) > 1)
+
+    # TODO: compare two results, although might become tricky with
+    #       nproc=2 and absent way to control RNG across child processes

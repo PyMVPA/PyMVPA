@@ -71,9 +71,13 @@ class CrossValidationTests(unittest.TestCase):
         # do crossval with permuted regressors
         cv = CrossValidation(sample_clf_nl,
                         ChainNode([NFoldPartitioner(),
-                            AttributePermutator('targets', count=10)],
+                            AttributePermutator('targets', count=10, rng=np.random)],
                                   space='partitions'))
         results = cv(data)
+
+        # results must not be the same
+        # Added after seeding permutator above with rng=np.random
+        self.assertTrue(len(np.unique(results.samples))>1)
 
         # must be at chance level
         pmean = np.array(results).mean()

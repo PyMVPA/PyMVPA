@@ -19,6 +19,9 @@ from mvpa2.misc.support import get_limit_filter
 
 from mvpa2.support.utils import deprecated
 
+if __debug__:
+    from mvpa2.base import debug
+
 class AttributePermutator(Node):
     """Node to permute one a more attributes in a dataset.
 
@@ -32,7 +35,7 @@ class AttributePermutator(Node):
     The permuted output dataset shares the samples container with the input
     dataset.
     """
-    def __init__(self, attr, count=1, limit=None, assure=False, **kwargs):
+    def __init__(self, attr, count=1, limit=None, assure=False, rng=None, **kwargs):
         """
         Parameters
         ----------
@@ -63,6 +66,7 @@ class AttributePermutator(Node):
         self._limit = limit
         self._pcfg = None
         self._assure_permute = assure
+        self._rng = rng
 
 
     def _get_pcfg(self, ds):
@@ -94,7 +98,7 @@ class AttributePermutator(Node):
 
         # shallow copy of the dataset for output
         out = ds.copy(deep=False)
-
+        rng = self._rng or np.random.RandomState()
         for limit_value in np.unique(pcfg):
             if pcfg.dtype == np.bool:
                 # simple boolean filter -> do nothing on False
@@ -112,7 +116,7 @@ class AttributePermutator(Node):
             if assure_permute:
                 proceed = False
                 for i in range(10):
-                    perm_idx = np.random.permutation(limit_idx)
+                    perm_idx = rng.permutation(limit_idx)
                     if not np.all(perm_idx == limit_idx):
                         proceed = True
                         break
@@ -122,7 +126,10 @@ class AttributePermutator(Node):
                           "some reason (dataset %s). Should not happen"
                           % (pattr, ds))
             else:
-                perm_idx = np.random.permutation(limit_idx)
+                perm_idx = rng.permutation(limit_idx)
+            if __debug__:
+                debug('APERM', "Obtained permutation %s for %s using %s",
+                      (perm_idx, limit_value, rng))
 
             # need list to index properly
             limit_idx = list(limit_idx)
@@ -149,6 +156,8 @@ class AttributePermutator(Node):
         self._pcfg = self._get_pcfg(ds)
         # permute as often as requested
         for i in xrange(self.count):
+            ## if __debug__:
+            ##     debug('APERM', "%s generating %i-th permutation", (self, i))
             yield self(ds)
 
         # reset permutation setup to do the right thing upon next call to object
