@@ -98,7 +98,7 @@ class AttributePermutator(Node):
 
         # shallow copy of the dataset for output
         out = ds.copy(deep=False)
-        rng = self._rng or np.random.RandomState()
+        rng = self._rng or np.random
         for limit_value in np.unique(pcfg):
             if pcfg.dtype == np.bool:
                 # simple boolean filter -> do nothing on False
