@@ -549,10 +549,10 @@ class CombinedClassifier(BoostedClassifier):
           dict of keyworded arguments which might get used
           by State or Classifier
 
-        NB: `combiner` might need to operate not on 'predictions' descrete
+        NB: `combiner` might need to operate not on 'predictions' discrete
             labels but rather on raw 'class' estimates classifiers
             estimate (which is pretty much what is stored under
-            `estimates`
+            `estimates`)
         """
         if clfs == None:
             clfs = []
@@ -1047,7 +1047,7 @@ class MulticlassClassifier(CombinedClassifier):
     """`CombinedClassifier` to perform multiclass using a list of
     `BinaryClassifier`.
 
-    such as 1-vs-1 (ie in pairs like libsvm doesn) or 1-vs-all (which
+    such as 1-vs-1 (ie in pairs like LIBSVM does) or 1-vs-all (which
     is yet to think about)
     """
 
@@ -1080,9 +1080,9 @@ class MulticlassClassifier(CombinedClassifier):
         elif bclf_type == "1-vs-all": # TODO
             raise NotImplementedError
         else:
-            raise ValueError, \
-                  "Unknown type of classifier %s for " % bclf_type + \
-                  "BoostedMulticlassClassifier"
+            raise ValueError(
+                  "Unknown type of classifier %s for " % bclf_type +
+                  "MulticlassClassifier")
         self.__bclf_type = bclf_type
 
     # XXX fix it up a bit... it seems that MulticlassClassifier should
