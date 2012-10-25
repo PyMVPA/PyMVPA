@@ -347,6 +347,7 @@ class PredictionsCombiner(ClassWithCollections):
         dataset : Dataset
           training data in this case
         """
+        # TODO: implement stacking to help with resolving ties
         pass
 
 
@@ -437,8 +438,9 @@ class MaximalVote(PredictionsCombiner):
 
             if len(maxk) > 1:
                 warning("We got multiple labels %s which have the " % maxk +
-                        "same maximal vote %d. XXX disambiguate" % maxv)
-            predictions.append(maxk[0])
+                        "same maximal vote %d. XXX disambiguate. " % maxv +
+                        "Meanwhile selecting the first in sorted order")
+            predictions.append(sorted(maxk)[0])
 
         ca = self.ca
         ca.estimates = all_label_counts
@@ -458,7 +460,7 @@ class MeanPrediction(PredictionsCombiner):
         doc="Predictions from all classifiers are stored")
 
     def __call__(self, clfs, dataset):
-        """Actuall callable - perform meaning
+        """Actual callable - perform meaning
 
         """
         if len(clfs)==0:
