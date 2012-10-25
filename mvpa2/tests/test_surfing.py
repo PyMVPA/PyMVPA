@@ -116,7 +116,7 @@ class SurfTests(unittest.TestCase):
             assert_true(low2high[k] == v)
 
         # ensure that slow implementation gives same results as fast one
-        low2high_slow = s.map_to_high_resolution_surf_slow(h, .1)
+        low2high_slow = s.map_to_high_resolution_surf(h, .1)
         for k, v in low2high.iteritems():
             assert_true(low2high_slow[k] == v)
 
@@ -343,7 +343,7 @@ class SurfTests(unittest.TestCase):
                     counter += 1
 
             selection_counter.append(counter)
-            img = vs.voxel_count_image(n2v)
+            img = vs.voxel_count_nifti_image(n2v)
 
             voxel_counter.append(np.sum(img.get_data() > 0))
 
@@ -427,7 +427,8 @@ class SurfTests(unittest.TestCase):
         voxcount = []
         for distance_metric, radius, ncenters in params:
             srcs = range(0, nv, nv / (ncenters or nv))
-            sel = surf_voxel_selection.voxel_selection(vs, radius, srcs=srcs,
+            sel = surf_voxel_selection.voxel_selection(vs, radius,
+                                            source_surf_nodes=srcs,
                                             distance_metric=distance_metric)
 
             # see how many voxels were selected
@@ -506,16 +507,17 @@ class SurfTests(unittest.TestCase):
             img = sel.volgeom.empty_nifti_img()
             img.to_filename(volfn)
 
-            sel3 = surf_voxel_selection.run_voxel_selection(volfn, innerfn,
-                            outerfn, radius, srcs=srcs,
+            sel3 = surf_voxel_selection.run_voxel_selection(radius, volfn, innerfn,
+                            outerfn, source_surf_nodes=srcs,
                             distance_metric=distance_metric)
 
             outer4 = surf.read(outerfn)
             inner4 = surf.read(innerfn)
-            vs4 = vs = volsurf.VolSurf(vg, outer4, inner4)
+            vs4 = vs = volsurf.VolSurf(vg, inner4, outer4)
 
             # check that two ways of voxel selection match
-            sel4 = surf_voxel_selection.voxel_selection(vs4, radius, srcs=srcs,
+            sel4 = surf_voxel_selection.voxel_selection(vs4, radius,
+                                                source_surf_nodes=srcs,
                                                 distance_metric=distance_metric)
 
             assert_equal(sel3, sel4)

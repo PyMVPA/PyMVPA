@@ -269,8 +269,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                                                           volume_mask_)
                                     vs = volsurf.VolSurf(vg, s_i, s_o)
                                     sel = surf_voxel_selection.voxel_selection(
-                                            vs, radius, surf_srcs=s_m,
-                                            srcs=center_nodes_)
+                                            vs, radius, source_surf=s_m,
+                                            source_surf_nodes=center_nodes_)
                                     qe = SurfaceVerticesQueryEngine(sel)
                                     sl = Searchlight(m, queryengine=qe)
                                     r = sl(ds).samples
@@ -281,8 +281,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                                                           volume_mask_)
                                     vs = volsurf.VolSurf(vg, s_i, s_o)
                                     sel = surf_voxel_selection.voxel_selection(
-                                            vs, radius, surf_srcs=s_m,
-                                            srcs=center_nodes_)
+                                            vs, radius, source_surf=s_m,
+                                            source_surf_nodes=center_nodes_)
                                     mp = sel.get_attr_mapping(
                                                 'linear_voxel_indices')
 

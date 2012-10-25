@@ -27,17 +27,17 @@ class VolSurf():
     ----------
     volgeom: volgeom.VolGeom
         Volume geometry
-    pial: surf.Surface
-        Surface representing pial-grey matter boundary
     white: surf.Surface
         Surface representing white-grey matter boundary
+    pial: surf.Surface
+        Surface representing pial-grey matter boundary
         
     Note
     ----
     'pial' and 'white' should have the same topology. 
     '''
 
-    def __init__(self, vg, pial, white):
+    def __init__(self, vg, white, pial):
         self._volgeom = volgeom.from_any(vg)
         self._pial = surf.from_any(pial)
         self._white = surf.from_any(white)
@@ -73,6 +73,7 @@ class VolSurf():
 
         return self._white
 
+    @property
     def intermediate_surface(self):
         '''
         Returns the node-wise average of the pial and white surface
@@ -81,7 +82,7 @@ class VolSurf():
         -------
         intermediate: surf.Surface
         '''
-        return pial_surface * .5 + white_surface * .5
+        return (self.pial_surface * .5) + (self.white_surface * .5)
 
     @property
     def volgeom(self):
@@ -95,17 +96,17 @@ class VolSurf():
 
         return self._volgeom
 
-    def node2voxels(self, steps=10, start=0.0, stop=1.0):
+    def node2voxels(self, nsteps=10, start_fr=0.0, stop_fr=1.0, start_mm=0, stop_mm=0):
         '''
         Generates a mapping from node indices to voxels that are at or near
         the nodes at the pial and white surface.
         
         Parameters
         ----------
-        steps: int (default: 10)
-            Number of steps from pial to white matter. For each node pair
+        nsteps: int (default: 10)
+            Number of nsteps from pial to white matter. For each node pair
             across the 'pial' and 'white' surface, a line is constructed 
-            connecting the pairs. Subsequently 'steps' steps are taken from 
+            connecting the pairs. Subsequently 'nsteps' nsteps are taken from 
             'pial' to 'white' and the voxel at that position at the line is 
             associated with that node pair.
         start: float (default: 0)
@@ -132,19 +133,19 @@ class VolSurf():
         ----
         The typical use case is selecting voxels in the grey matter. The 
         rationale of this method is that (assuming a sufficient dense cortical
-        surface mesh, combined with a sufficient number of steps, the grey 
+        surface mesh, combined with a sufficient number of nsteps, the grey 
         matter is sampled dense enough so that 'no voxels are left out'. 
          
         '''
-        if start > stop or steps < 1:
-            raise ValueError("Illegal start/stop combination, or not enough steps")
+        if start_fr > stop_fr or nsteps < 1:
+            raise ValueError("Illegal start/stop combination, or not enough nsteps")
 
         # make a list of the different relative gray matter positions
-        if steps > 1:
-            step = (stop - start) / float(steps - 1)
+        if nsteps > 1:
+            step = (stop_fr - start_fr) / float(nsteps - 1)
         else:
-            step = 0
-            start = stop = .5
+            step = 0.
+            start_fr = stop_fr = .5
 
         # node to voxels mapping
         # if n2v[i]=vs, then node i is associated with the voxels vs
@@ -164,13 +165,16 @@ class VolSurf():
 
         volgeom = self._volgeom
 
+        surf_start = self.white_surface + start_mm
+        surf_stop = self.pial_surface + stop_mm
+
         # different 'layers' (depths) in the grey matter
-        for i in xrange(steps):
-            whiteweight = start + step * float(i) # ensure float
+        for i in xrange(nsteps):
+            whiteweight = start_fr + step * float(i) # ensure float
             pialweight = 1 - whiteweight
 
             # compute weighted intermediate surface in between pial and white
-            surf = self._pial * pialweight + self._white * whiteweight
+            surf = surf_stop * pialweight + surf_start * whiteweight
 
             # coordinates
             surf_xyz = surf.vertices
@@ -255,7 +259,7 @@ class VolSurf():
 
         return proj / scale
 
-    def voxel_count_image(self, n2v=None):
+    def voxel_count_nifti_image(self, n2v=None):
         '''
         Returns a NIFTI image indicating how often each voxel is selected.
         
