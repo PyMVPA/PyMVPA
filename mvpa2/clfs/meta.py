@@ -27,6 +27,8 @@ from mvpa2.misc.args import group_kwargs
 from mvpa2.base.types import is_sequence_type
 from mvpa2.base.param import Parameter
 
+from mvpa2.datasets import Dataset
+
 from mvpa2.generators.splitters import Splitter
 from mvpa2.generators.partition import NFoldPartitioner
 from mvpa2.datasets.miscfx import get_samples_by_attr
@@ -55,7 +57,7 @@ if __debug__:
 class BoostedClassifier(Classifier):
     """Classifier containing the farm of other classifiers.
 
-    Should rarely be used directly. Use one of its childs instead
+    Should rarely be used directly. Use one of its children instead
     """
 
     # should not be needed if we have prediction_estimates upstairs
@@ -1053,6 +1055,12 @@ class MulticlassClassifier(CombinedClassifier):
     is yet to think about)
     """
 
+    raw_predictions_ds = ConditionalAttribute(enabled=False,
+        doc="Wraps raw_predictions into a Dataset with .fa.(neg,pos) "
+        "describing actual labels used in each binary classification task "
+        "and samples containing actual decision labels per each input "
+        "sample")
+
     def __init__(self, clf, bclf_type="1-vs-1", **kwargs):
         """Initialize the instance
 
@@ -1094,36 +1102,56 @@ class MulticlassClassifier(CombinedClassifier):
                                             repr(self.__clf))
         return super(MulticlassClassifier, self).__repr__([prefix] + prefixes)
 
-
-    def _train(self, dataset):
-        """Train classifier
+    def _get_binary_pairs(self, dataset):
+        """Return a list of pairs of categories lists to be used in binary classification
         """
         targets_sa_name = self.get_space()
 
         # construct binary classifiers
         ulabels = dataset.sa[targets_sa_name].unique
+
         if self.__bclf_type == "1-vs-1":
             # generate pairs and corresponding classifiers
-            biclfs = []
-            for i in xrange(len(ulabels)):
-                for j in xrange(i+1, len(ulabels)):
-                    clf = self.__clf.clone()
-                    biclfs.append(
-                        BinaryClassifier(
-                            clf,
-                            poslabels=[ulabels[i]], neglabels=[ulabels[j]]))
+            # could use _product but let's stay inline with previuos
+            # implementation
+            label_pairs = [([ulabels[i]], [ulabels[j]])
+                           for i in xrange(len(ulabels))
+                           for j in xrange(i+1, len(ulabels))]
             if __debug__:
-                debug("CLFMC", "Created %d binary classifiers for %d labels",
-                      (len(biclfs), len(ulabels)))
-
-            self.clfs = biclfs
-
+                debug("CLFMC", "Created %d label pairs for original %d labels",
+                      (len(label_pairs), len(ulabels)))
         elif self.__bclf_type == "1-vs-all":
             raise NotImplementedError
+
+        return label_pairs
+
+    def _train(self, dataset):
+        """Train classifier
+        """
+        # construct binary classifiers
+        self.clfs = biclfs = []
+        for poslabels, neglabels in self._get_binary_pairs(dataset):
+            biclfs.append(
+                BinaryClassifier(self.__clf.clone(),
+                                 poslabels=poslabels,
+                                 neglabels=neglabels))
 
         # perform actual training
         CombinedClassifier._train(self, dataset)
 
+    def _predict(self, dataset):
+        ca = self.ca
+        if ca.is_enabled("raw_predictions_ds"):
+            ca.enable("raw_predictions")
+
+        predictions = super(MulticlassClassifier, self)._predict(dataset)
+
+        if ca.is_enabled("raw_predictions_ds"):
+            ca.raw_predictions_ds = \
+                Dataset(np.array(ca.raw_predictions).T,
+                    fa={'pos': [clf.poslabels for clf in self.clfs],
+                        'neg': [clf.neglabels for clf in self.clfs]})
+        return predictions
 
 
 class SplitClassifier(CombinedClassifier):
