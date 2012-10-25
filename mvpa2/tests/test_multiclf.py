@@ -159,3 +159,26 @@ def test_multiclass_classifier_cv(clf, ds):
     else:
         assert_equal(str(cv.ca.stats), str(mcv.ca.stats))
     
+
+def test_multiclass_classifier_pass_ds_attributes():
+    # TODO: replicate/extend basic testing of pass_attr
+    #       in some more "basic" test_*
+    clf = LinearCSVMC(C=1)
+    ds = datasets['uni3small'].copy()
+    ds.sa['ids'] = np.arange(len(ds))
+    mclf = MulticlassClassifier(
+        clf,
+        pass_attr=['ids', 'sa.chunks', 'a.bogus_features',
+                  # 'ca.raw_estimates' # this one is binary_clf x samples list ATM
+                  'ca.estimates', # this one is ok
+                  'ca.predictions'
+                  ],
+        enable_ca=['all'])
+    mcv  = CrossValidation(mclf, NFoldPartitioner(), errorfx=None)
+    res = mcv(ds)
+
+    assert_array_equal(sorted(res.sa.ids), ds.sa.ids)
+    assert_array_equal(res.chunks, ds.chunks[res.sa.ids])
+    assert_array_equal(res.sa.predictions, res.samples[:, 0])
+    assert_array_equal(res.sa.cvfolds,
+                       np.repeat(range(len(ds.UC)), len(ds)/len(ds.UC)))
