@@ -149,6 +149,12 @@ class SparseAttributes(object):
 
         return True
 
+    def set_attribute(self, k, v):
+        self.a[k] = v
+
+    def get_attribute(self, k):
+        return self.a[k]
+
 class SparseVolumeAttributes(SparseAttributes):
     """
     Sparse attributes with volume geometry. 
@@ -164,9 +170,10 @@ class SparseVolumeAttributes(SparseAttributes):
     volgeom: volgeom.VolGeom
         volume geometry
     """
-    def __init__(self, sa_labels, volgeom, **kwargs):
+    def __init__(self, sa_labels, volgeom, source_surf, **kwargs):
         super(self.__class__, self).__init__(sa_labels, **kwargs)
-        self.a['volgeom'] = volgeom
+        self.set_attribute('volgeom', volgeom)
+        self.set_attribute('source_surf', source_surf)
 
     def __repr__(self, prefixes=[]):
         return super(SparseVolumeAttributes, self).__repr__(
@@ -181,9 +188,11 @@ class SparseVolumeAttributes(SparseAttributes):
             volume geometry stored in this instance
         """
 
-        return self.a['volgeom']
+        return self.get_attribute('volgeom')
 
-
+    @property
+    def source_surf(self):
+        return self.get_attribute('source_surf')
 
     def get_linear_mask(self, sa_label='linear_voxel_indices'):
         vg = self.volgeom
@@ -194,7 +203,6 @@ class SparseVolumeAttributes(SparseAttributes):
             linear_mask[vox_idxs] += 1
 
         return linear_mask
-
 
     def get_mask(self, sa_label='linear_voxel_indices'):
         linear_mask = self.get_linear_mask(sa_label)
@@ -435,6 +443,3 @@ def from_file(fn):
     with open(fn) as f:
         r = pickle.load(f)
     return r
-
-
-

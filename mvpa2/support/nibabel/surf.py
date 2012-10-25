@@ -779,7 +779,7 @@ class Surface(object):
         all.extend(list(others))
         n = len(all)
 
-        def border_positions(xs, f):
+        def border_positions(xs, f, dt):
             # positions of transitions between surface
             # faces should return number of relevant values (nodes or vertices)
             n = len(xs)
@@ -790,12 +790,15 @@ class Surface(object):
             for i in xrange(n):
                 positions.append(positions[i] + fxs[i])
 
-            zeros_arr = np.zeros((positions[-1], xs[0].vertices.shape[1]))
+            zeros_arr = np.zeros((positions[-1], xs[0].vertices.shape[1]),
+                                        dtype=dt)
             return positions, zeros_arr
 
 
-        pos_v, all_v = border_positions(all, lambda x:x.nvertices)
-        pos_f, all_f = border_positions(all, lambda x:x.nfaces)
+        pos_v, all_v = border_positions(all, lambda x:x.nvertices,
+                                                self.vertices.dtype)
+        pos_f, all_f = border_positions(all, lambda x:x.nfaces,
+                                                self.faces.dtype)
 
         for i in xrange(n):
             all_v[pos_v[i]:pos_v[i + 1], :] = all[i].vertices
@@ -929,21 +932,21 @@ class Surface(object):
             mind = ds[minpos] ** .5
 
             if not epsilon is None and mind > epsilon:
+                print minpos
                 raise ValueError("Not found near node for node %i (min distance %f > %f)" %
                                  (i, mind, epsilon))
             mapping[i] = minpos
 
         return mapping
 
-    def coordinates_to_box_indices(self, nboxes, min_coord=None,
-                                                 max_coord=None,
-                                                 master=None):
+    def coordinates_to_box_indices(self, box_size, min_coord=None,
+                                                   master=None):
         ''''Boxes' coordinates into triples
         
         Parameters
         ----------
-        nboxes: int or triple of int
-            Number of boxes in each spatial dimension.
+        box_sizes: 
+            
         min_coord: triple or ndarray
             Minimum coordinates; maps to (0,0,0). 
             If omitted, it defaults to the mininum coordinates in this surface.
@@ -959,16 +962,11 @@ class Surface(object):
             Array of size Px3, where P is the number of vertices
         '''
 
-        if type(nboxes) is int:
-            nboxes = (nboxes, nboxes, nboxes)
-
-        nboxes = np.asarray(nboxes, dtype=np.float).ravel()
-
-        if len(nboxes) != 3:
-            raise ValueError('nboxes should be triple of ints')
+        box_sizes = np.asarray([box_size, box_size, box_size]).ravel()
+        box_sizes = np.reshape(box_sizes, (1, 3))
 
         if not master is None:
-            if min_coord or max_coord:
+            if min_coord:
                 raise ValueError('Cannot have both {min,max}_coord and master')
             c = master.vertices
         else:
@@ -979,14 +977,7 @@ class Surface(object):
         else:
             min_coord = np.asarray(min_coord).ravel()
 
-        if max_coord is None:
-            max_coord = np.max(c, 0)
-        else:
-            max_coord = np.asarray(max_coord).ravel()
-
-        delta = (max_coord - min_coord) / np.reshape(nboxes - 1, (1, 3))
-
-        return (self.vertices - min_coord) / delta
+        return (self.vertices - min_coord) / box_sizes
 
 
     def map_to_high_resolution_surf(self, highres, epsilon=.001,
@@ -1023,6 +1014,7 @@ class Surface(object):
             
         '''
 
+        #return self.map_to_high_resolution_surf_slow(highres, epsilon, accept_only_icosahedron)
 
         nx = self.nvertices
         ny = highres.nvertices
@@ -1067,44 +1059,54 @@ class Surface(object):
         # slice up the high and low res in smaller boxes
         # and index them, so that when finding the nearest coordinates
         # it only requires to consider a limited number of nodes
-        nboxes = 20 # just an arbitrary value
+        n_boxes = 20
+        box_size = max(np.max(x, 0) - np.min(x, 0)) / n_boxes
 
-        x_boxed = self.coordinates_to_box_indices(nboxes, master=highres) + .5
-        y_boxed = highres.coordinates_to_box_indices(nboxes) + .5
+        x_boxed = self.coordinates_to_box_indices(box_size, master=highres) + .5
+        y_boxed = highres.coordinates_to_box_indices(box_size) + .5
 
         # get indices of nodes that are very near a box boundary
-        on_borders = list(np.nonzero(np.logical_or(\
-                      np.floor(y_boxed + epsilon) - np.floor(y_boxed) > 0,
-                      np.floor(y_boxed) - np.floor(y_boxed - epsilon) > 0)))[0]
+        delta = epsilon / box_size
+        on_borders = np.nonzero(np.logical_or(\
+                        np.floor(y_boxed + delta) - np.floor(y_boxed) > 0,
+                        np.floor(y_boxed) - np.floor(y_boxed - delta) > 0))[0]
 
+        # on_borders may have duplicates - so get rid of those.
+        msk = np.zeros((ny,), dtype=np.int)
+        msk[on_borders] = 1
+        on_borders = np.nonzero(msk)[0]
+
+        # convert to tuples with integers for indexing
+        # (tuples are hashable so can be used as keys in dictionary)
         x_tuples = map(tuple, np.asarray(x_boxed, dtype=np.int))
         y_tuples = map(tuple, np.asarray(y_boxed, dtype=np.int))
 
         # maps box indices in low-resolution surface to indices
         # of potentially nearby nodes in highres surface 
-        y2index = dict()
+        x_tuple2near_indices = dict()
 
         # add border nodes to all low-res surface
         # this is a bit inefficient 
         # TODO optimize to consider neighboorhood
         for x_tuple in x_tuples:
-            y2index[x_tuple] = list(on_borders)
+            x_tuple2near_indices[x_tuple] = list(on_borders)
 
         # for non-border nodes in high-res surface, add them to
         # a single box 
         for i, y_tuple in enumerate(y_tuples):
             if i in on_borders:
-                continue
-            if not y_tuple in y2index:
-                y2index[y_tuple] = list()
-            y2index[y_tuple].append(i)
+                continue # because it was added above
+
+            if not y_tuple in x_tuple2near_indices:
+                x_tuple2near_indices[y_tuple] = list()
+            x_tuple2near_indices[y_tuple].append(i)
 
         # it now holds that for every node i in low-res surface (which is
         # identified by t=x_tuples[i]), there is no node j in the high-res surface
-        # within distance epsilon for which j in y2index[t]  
+        # within distance epsilon for which j in x_tuple2near_indices[t]  
 
         for i, x_tuple in enumerate(x_tuples):
-            idxs = np.asarray(y2index[x_tuple])
+            idxs = np.asarray(x_tuple2near_indices[x_tuple])
 
             ds = np.sum((x[i, :] - y[idxs, :]) ** 2, axis=1)
             minpos = np.argmin(ds)
@@ -1118,7 +1120,6 @@ class Surface(object):
             mapping[i] = idxs[minpos]
 
         return mapping
-
 
     @property
     def face_areas(self):
@@ -1161,6 +1162,120 @@ class Surface(object):
 
         return self._node_areas
 
+    def connected_components(self):
+        nv = self.nvertices
+
+        components = []
+        visited = set()
+
+        nbrs = self.neighbors
+        for i in xrange(nv):
+            if i in visited:
+                continue
+
+            component = set([i])
+            components.append(component)
+
+            nbr = nbrs[i]
+            print nbr
+            candidates = set(nbr)
+
+            visited.add(i)
+            while candidates:
+                candidate = candidates.pop()
+                component.add(candidate)
+                visited.add(candidate)
+                nbr = nbrs[candidate]
+
+                for n in nbr:
+                    if not n in visited:
+                        candidates.add(n)
+
+        return components
+
+    def connected_components_slow(self):
+        f, nv, nf = self.faces, self.nvertices, self.nfaces
+
+        node2component = dict()
+
+        def index_component(x):
+            if not x in node2component:
+                return x, None
+
+            k, v = x, node2component[x]
+            while not type(v) is set:
+                k, v = v, node2component[v]
+                #print k, v, node2component
+
+            return k, v
+
+        for i in xrange(nf):
+            p, q, r = f[i]
+
+            #print p, q, r
+            #print node2component
+
+            pk, pv = index_component(p)
+            qk, qv = index_component(q)
+            rk, rv = index_component(r)
+
+            #print pk, pv, " - ", qk, qv, ' - ', rk, rv
+
+            if pv is None:
+                if qv is None:
+                    if rv is None:
+                        node2component[p] = set([p, q, r])
+                        node2component[q] = node2component[r] = p
+                    else:
+                        rv.add(p)
+                        rv.add(q)
+                        node2component[p] = node2component[q] = rk
+                else:
+                    if rv is None:
+                        qv.add(p)
+                        qv.add(r)
+                        node2component[p] = node2component[r] = qk
+                    else:
+                        qv.add(p)
+                        node2component[p] = qk
+                        if qk != rk:
+                            qv.update(rv)
+                            node2component[rk] = qk
+            else:
+                if qv is None:
+                    if rv is None:
+                        pv.add(q)
+                        pv.add(r)
+                        node2component[q] = node2component[r] = pk
+                    else:
+                        if pk != rk:
+                            pv.update(rv)
+                            node2component[rk] = pk
+                        pv.add(q)
+                        node2component[q] = pk
+                else:
+                    if rv is None:
+                        if pk != qk:
+                            pv.update(qv)
+                            node2component[qk] = pk
+                        pv.add(r)
+                        node2component[r] = pk
+                    else:
+                        if pk != qk:
+                            pv.update(qv)
+                            node2component[qk] = pk
+                        if pk != rk:
+                            if rk != qk:
+                                pv.update(rv)
+                            node2component[rk] = pk
+
+        components = list()
+        for node in xrange(nv):
+            v = node2component[node]
+            if type(v) is set:
+                components.append(v)
+
+        return components
 
 
 def merge(*surfs):
@@ -1346,4 +1461,3 @@ def from_any(s):
         return Surface(ts[0], ts[1])
     else:
         raise ValueError("Not understood: %r" % s)
-

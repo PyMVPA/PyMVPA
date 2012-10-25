@@ -325,9 +325,18 @@ class VoxelSelector(object):
 
         return voxel_attributes
 
-def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
-                    start=0., stop=1., steps=10,
-                    distance_metric='dijkstra', intermediateat=.5, etastep=1):
+def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
+                    distance_metric='dijkstra',
+                    start_fr=0., stop_fr=1., start_mm=0, stop_mm=0,
+                    nsteps=10, eta_step=1):
+        '''
+    radius, volume, white_surf, pial_surf,
+                             source_surf=None, source_surf_nodes=None,
+                             volume_mask=False, distance_metric='dijkstra',
+                             start_mm=0, stop_mm=0, start_fr=0., stop_fr=1.,
+                             nsteps=10, 
+        '''
+
         """
         Voxel selection for multiple center nodes on the surface
 
@@ -338,22 +347,24 @@ def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
         radius: int or float
             Size of searchlight. If an integer, then it indicates the number of
             voxels. If a float, then it indicates the radius of the disc      
-        surf_srcs: surf.Surface
+        source_surf: surf.Surface
             Surface used to compute distance between nodes. If omitted, it is 
             the average of the gray and white surfaces 
-        srcs: list of int or numpy array
-            node indices that serve as searchlight center       
-        start: float (default: 0)
+        source_surf_nodes: list of int or numpy array
+            node indices that serve as searchlight center
+        distance_metric: str
+            Distance metric between nodes. 'euclidean' or 'dijksta' (default)           
+        start_fr: float (default: 0)
                 Relative start position of line in gray matter, 0.=white 
                 surface, 1.=pial surface
-                CheckMe: it might be the other way around
-        stop: float (default: 1)
+        stop_fr: float (default: 1)
             Relative stop position of line (as in see start)
-        distance_metric: str
-            Distance metric between nodes. 'euclidean' or 'dijksta'
-        intermediateat: float (default: .5)
-            Relative positiion of intermediate surface that is used to measure distances.
-            By default this is the average of the pial and white surface
+        start_mm: float (default: 0) 
+            Absolute start position offset (as in start_fr)
+        sttop_mm: float (default: 0)
+            Absolute start position offset (as in start_fr)
+        nsteps: int (default: 10)
+            Number of steps from white to pial surface
         etastep: int (default: 1)
             After how many searchlights an estimate should be printed of the remaining
             time until completion of all searchlights
@@ -367,36 +378,38 @@ def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
 
 
         # outer and inner surface
-        surf_pial = vol_surf._pial
-        surf_white = vol_surf._white
+        surf_pial = vol_surf.pial_surface
+        surf_white = vol_surf.white_surface
 
-        # construct the intermediate surface, which is used to measure distances
-        surf_intermediate = (surf_pial * intermediateat +
-                             surf_white * (1 - intermediateat))
+        # construct the intermediate surface, which is used 
+        # to measure distances
+        intermediate_surf = vol_surf.intermediate_surface
 
-        if surf_srcs is None:
-            surf_srcs = surf_intermediate
+        if source_surf is None:
+            source_surf = intermediate_surf
         else:
-            surf_srcs = surf.from_any(surf_srcs)
+            source_surf = surf.from_any(source_surf)
 
         if __debug__:
             debug('SVS', "Generated high-res intermediate surface: "
                   "%d nodes, %d faces" %
-                  (surf_intermediate.nvertices, surf_intermediate.nfaces))
+                  (intermediate_surf.nvertices, intermediate_surf.nfaces))
 
         if __debug__:
             debug('SVS', "Looking for mapping from source to high-res surface:"
                   " %d nodes, %d faces" %
-                  (surf_srcs.nvertices, surf_srcs.nfaces))
+                  (source_surf.nvertices, source_surf.nfaces))
 
-        # find a mapping from nondes in surf_srcs to those in intermediate surface
-        src2intermediate = surf_srcs.map_to_high_resolution_surf(surf_intermediate)
+        # find a mapping from nondes in source_surf to those in
+        # intermediate surface
+        src2intermediate = source_surf.map_to_high_resolution_surf(\
+                                                            intermediate_surf)
 
         # if no sources are given, then visit all ndoes
-        if srcs is None:
-            srcs = np.arange(surf_srcs.nvertices)
+        if source_surf_nodes is None:
+            source_surf_nodes = np.arange(source_surf.nvertices)
 
-        n = len(srcs)
+        n = len(source_surf_nodes)
 
         if __debug__:
             debug('SVS',
@@ -405,17 +418,19 @@ def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
 
 
         # visit in random order, for for better ETA estimate
-        visitorder = list(np.random.permutation(len(srcs)))
+        visitorder = list(np.random.permutation(len(source_surf_nodes)))
 
         # construct mapping from nodes to enclosing voxels
-        n2v = vol_surf.node2voxels(steps=steps, start=start, stop=stop)
+        n2v = vol_surf.node2voxels(nsteps=nsteps, \
+                                        start_fr=start_fr, stop_fr=stop_fr,
+                                        start_mm=start_mm, stop_mm=stop_mm)
 
         if __debug__:
             debug('SVS', "Generated mapping from nodes"
                   " to intersecting voxels.")
 
         # build voxel selector
-        voxel_selector = VoxelSelector(radius, surf_intermediate, n2v,
+        voxel_selector = VoxelSelector(radius, intermediate_surf, n2v,
                                        distance_metric)
 
         if __debug__:
@@ -433,8 +448,9 @@ def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
             import math
             ipat = '%% %dd' % math.ceil(math.log10(n))
 
-            maxsrc = max(srcs)
-            npat = '%% %dd' % math.ceil(math.log10(maxsrc))
+            maxsrc = max(source_surf_nodes)
+            maxtrg = max(src2intermediate.values())
+            npat = '%% %dd' % math.ceil(math.log10(max(maxsrc, maxtrg)))
 
             progresspat = '%s /%s (node %s ->%s)' % (ipat, ipat, npat, npat)
 
@@ -443,8 +459,8 @@ def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
 
         # walk over all nodes
         for i, order in enumerate(visitorder):
-            # source node on surf_srcs
-            src = srcs[order]
+            # source node on source_surf
+            src = source_surf_nodes[order]
 
             # corresponding node on high-resolution intermediate surface
             intermediate = src2intermediate[src]
@@ -459,12 +475,13 @@ def voxel_selection(vol_surf, radius, surf_srcs=None, srcs=None,
                     sa_labels = attrs.keys()
                     node2volume_attributes = \
                             sparse_attributes.SparseVolumeAttributes(sa_labels,
-                                                            vol_surf._volgeom)
+                                                            vol_surf.volgeom,
+                                                            source_surf)
 
                 # store attribtues results
                 node2volume_attributes.add(src, attrs)
 
-            if __debug__ and etastep and (i % etastep == 0 or i == n - 1):
+            if __debug__ and eta_step and (i % eta_step == 0 or i == n - 1):
                 msg = _eta(tstart, float(i + 1) / n,
                                 progresspat %
                                 (i + 1, n, src, intermediate), show=False)
@@ -529,9 +546,30 @@ def _eta(starttime, progress, msg=None, show=True):
 
     return fullmsg
 
-def run_voxel_selection(epifn, whitefn, pialfn, radius, srcfn=None, srcs=None,
-                       start=0., stop=1., steps=10, distance_metric='dijkstra',
-                       intermediateat=.5, etastep=1, volume_mask=False):
+def run_voxel_selection(radius, volume, white_surf, pial_surf,
+                         source_surf=None, source_surf_nodes=None,
+                         volume_mask=False, distance_metric='dijkstra',
+                         start_mm=0, stop_mm=0, start_fr=0., stop_fr=1.,
+                         nsteps=10, eta_step=1):
+
+    vg = volgeom.from_any(volume, volume_mask)
+
+    vs = volsurf.VolSurf(vg, white_surf, pial_surf)
+
+    sel = voxel_selection(vol_surf=vs, radius=radius,
+                          source_surf=source_surf,
+                          source_surf_nodes=source_surf_nodes,
+                          distance_metric=distance_metric,
+                          start_fr=start_fr, stop_fr=stop_fr,
+                          start_mm=start_mm, stop_mm=stop_mm,
+                          nsteps=nsteps, eta_step=1)
+
+    return sel
+
+    '''
+
+    '''
+
     '''Wrapper function that is supposed to make voxel selection
     on the surface easy.
 
@@ -583,6 +621,7 @@ def run_voxel_selection(epifn, whitefn, pialfn, radius, srcfn=None, srcs=None,
         None is returned.
     '''
 
+    '''
     # read volume geometry
     vg = volgeom.from_any(epifn)
 
@@ -596,13 +635,13 @@ def run_voxel_selection(epifn, whitefn, pialfn, radius, srcfn=None, srcs=None,
         srcsurf = surf.from_any(srcfn)
 
     # make a volume surface instance
-    vs = volsurf.VolSurf(vg, pialsurf, whitesurf)
+    vs = volsurf.VolSurf(vg, whitesurf, pialsurf)
 
     # run voxel selection
     sel = voxel_selection(vs, radius, srcsurf, srcs, start, stop, steps,
                           distance_metric, intermediateat, etastep)
+    '''
 
-    return sel
 
 
 class _RadiusOptimizer():

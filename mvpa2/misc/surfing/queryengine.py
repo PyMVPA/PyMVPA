@@ -112,28 +112,24 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
         return img
 
 
-def disc_surface_queryengine(radius, volume, white_surf, pial_surf, source_surf=None,
-                             source_surf_nodes=None, volume_mask=False, add_fa=None,
-                             distance_metric='dijkstra'):
 
-    vg = volgeom.from_any(volume, volume_mask)
 
-    # read surfaces
-    white_surf = surf.from_any(white_surf)
-    pial_surf = surf.from_any(pial_surf)
+def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
+                             source_surf=None, source_surf_nodes=None,
+                             volume_mask=False, distance_metric='dijkstra',
+                             start_mm=0, stop_mm=0, start_fr=0., stop_fr=1.,
+                             nsteps=10, eta_step=1, add_fa=None):
 
-    if source_surf is None:
-        source_surf = white_surf * .5 + pial_surf * .5
-    else:
-        source_surf = surf.from_any(source_surf)
-
-    # make a volume surface instance
-    vs = volsurf.VolSurf(vg, pial_surf, white_surf)
-
-    # run voxel selection
-    voxsel = surf_voxel_selection.voxel_selection(vs, radius, source_surf,
-                                            source_surf_nodes,
-                                            distance_metric=distance_metric)
+    voxsel = surf_voxel_selection.run_voxel_selection(
+                                radius=radius, volume=volume,
+                                white_surf=white_surf, pial_surf=pial_surf,
+                                source_surf=source_surf,
+                                source_surf_nodes=source_surf_nodes,
+                                volume_mask=volume_mask,
+                                distance_metric=distance_metric,
+                                start_fr=start_fr, stop_fr=stop_fr,
+                                start_mm=start_mm, stop_mm=stop_mm,
+                                nsteps=nsteps, eta_step=1)
 
     qe = SurfaceVerticesQueryEngine(voxsel, add_fa=add_fa)
 

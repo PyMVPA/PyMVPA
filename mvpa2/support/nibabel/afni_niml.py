@@ -37,6 +37,8 @@ _ESCAPE = {'&lt;':'<',
          '&amp;':'&',
          '&apos;':"'"}
 
+_ESCAPE = {}
+
 def decode_escape(s):
     for k, v in _ESCAPE.iteritems():
         s = s.replace(k, v)
