@@ -170,15 +170,18 @@ def test_multiclass_classifier_pass_ds_attributes():
         clf,
         pass_attr=['ids', 'sa.chunks', 'a.bogus_features',
                   # 'ca.raw_estimates' # this one is binary_clf x samples list ATM
+                  # that is why raw_predictions_ds was born
+                  'ca.raw_predictions_ds',
                   'ca.estimates', # this one is ok
-                  'ca.predictions'
+                  'ca.predictions',
                   ],
         enable_ca=['all'])
     mcv  = CrossValidation(mclf, NFoldPartitioner(), errorfx=None)
     res = mcv(ds)
-
     assert_array_equal(sorted(res.sa.ids), ds.sa.ids)
     assert_array_equal(res.chunks, ds.chunks[res.sa.ids])
     assert_array_equal(res.sa.predictions, res.samples[:, 0])
     assert_array_equal(res.sa.cvfolds,
                        np.repeat(range(len(ds.UC)), len(ds)/len(ds.UC)))
+
+
