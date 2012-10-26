@@ -160,6 +160,7 @@ def setup_package():
                            'mvpa2.misc.fsl',
                            'mvpa2.misc.io',
                            'mvpa2.misc.plot',
+                           'mvpa2.sandbox',
                            'mvpa2.support',
                            'mvpa2.support.bayes',
                            'mvpa2.support.nipy',

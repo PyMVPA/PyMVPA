@@ -496,7 +496,7 @@ testsuite:
 	 sed -e 's/^.*from *\(mvpa[^ ]*\) im.*/from \1 import/g' | \
 	 sort | uniq | \
 	 grep -v -e 'mvpa.\.base\.dochelpers' \
-			 -e 'mvpa.\.\(tests\|testing\|support\)' \
+			 -e 'mvpa.\.\(tests\|testing\|sandbox\|support\)' \
 			 -e 'mvpa.\.misc\.args' \
 			 -e 'mvpa.\.clfs\.\(libsvmc\|sg\|spam\)' \
 	| while read i; do \
