@@ -247,3 +247,88 @@ def test_gnbsearchlight_permutations():
 
     # TODO: compare two results, although might become tricky with
     #       nproc=2 and absent way to control RNG across child processes
+
+def test_multiclass_pairs_svm_searchlight():
+    from mvpa2.measures.searchlight import sphere_searchlight
+    import mvpa2.clfs.meta
+    reload(mvpa2.clfs.meta)
+    from mvpa2.clfs.meta import MulticlassClassifier
+
+    from mvpa2.datasets import Dataset
+    from mvpa2.clfs.svm import LinearCSVMC
+    import mvpa2.testing.datasets
+    reload(mvpa2.testing.datasets)
+    from mvpa2.testing.datasets import datasets
+    from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner
+    from mvpa2.measures.base import CrossValidation
+
+    from mvpa2.testing import ok_, assert_equal, assert_array_equal
+    from mvpa2.sandbox.multiclass import get_pairwise_accuracies
+
+    # Some parameters used in the test below
+    nproc = 2
+    ntargets = 4                                # number of targets
+    npairs = ntargets*(ntargets-1)/2
+    center_ids = [35, 55, 1]
+    ds = datasets['3dsmall'].copy()
+
+    # redefine C,T so we have a multiclass task
+    nsamples = len(ds)
+    ds.sa.targets = range(ntargets) * (nsamples//ntargets)
+    ds.sa.chunks = np.arange(nsamples) // ntargets
+    # and add some obvious signal where it is due
+    ds.samples[:, 55] += 10*ds.sa.targets   # for all 4 targets
+    ds.samples[:, 35] += 10*(ds.sa.targets % 2) # so we have conflicting labels
+    # while 35 would still be just for 2 categories which would conflict
+
+    mclf = MulticlassClassifier(LinearCSVMC(),
+                                pass_attr=['sa.chunks', 'ca.raw_predictions_ds'],
+                                enable_ca=['raw_predictions_ds'])
+
+    label_pairs = mclf._get_binary_pairs(ds)
+
+    def place_sa_as_samples(ds):
+        # add a degenerate dimension for the hstacking in the searchlight
+        ds.samples = ds.sa.raw_predictions_ds[:, None]
+        ds.sa.pop('raw_predictions_ds')   # no need to drag the copy
+        return ds
+
+    mcv = CrossValidation(mclf, OddEvenPartitioner(), errorfx=None,
+                          postproc=place_sa_as_samples)
+    sl = sphere_searchlight(mcv, nproc=nproc, radius=2, space='myspace',
+                            center_ids=center_ids)
+    slmap = sl(ds)
+
+
+    ok_('chunks' in slmap.sa)
+    ok_('cvfolds' in slmap.sa)
+    ok_('targets' in slmap.sa)
+    # so for each SL we got all pairwise tests
+    assert_equal(slmap.shape, (nsamples, len(center_ids), npairs))
+    assert_array_equal(np.unique(slmap.sa.cvfolds), [0, 1])
+
+    # Verify that we got right labels in each 'pair'
+    # all searchlights should have the same set of labels for a given
+    # pair of targets
+    label_pairs_ = np.apply_along_axis(
+        np.unique, 0,
+        ## reshape slmap so we have only simple pairs in the columns
+        np.reshape(slmap, (-1, npairs))).T
+
+    # need to prep that list of pairs obtained from MulticlassClassifier
+    # and since it is 1-vs-1, they all should be just pairs of lists of
+    # 1 element so should work
+    assert_equal(len(label_pairs_), npairs)
+    assert_array_equal(np.squeeze(np.array(label_pairs)), label_pairs_)
+    assert_equal(label_pairs_.shape, (npairs, 2))   # for this particular case
+
+
+    out    = get_pairwise_accuracies(slmap)
+    out123 = get_pairwise_accuracies(slmap, select=[1, 2, 3])
+
+    assert_array_equal(np.unique(out123.T), np.arange(1, 4))   # so we got at least correct targets
+    # test that we extracted correct accuracies
+    # First 3 in out.T should have category 0, so skip them and compare otherwise
+    assert_array_equal(out.samples[3:], out123.samples)
+
+    ok_(np.all(out.samples[:, 1] == 1.), "This was with super-strong result")
