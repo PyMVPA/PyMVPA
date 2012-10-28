@@ -219,7 +219,7 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
                              nsteps=10, eta_step=1, add_fa=None):
 
     """
-    Voxel selection wrapperfor multiple center nodes on the surface
+    Voxel selection wrapper for multiple center nodes on the surface
     
     Parameters
     ----------
@@ -252,7 +252,7 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
             Relative start position of line in gray matter, 0.=white 
             surface, 1.=pial surface
     stop_fr: float (default: 1)
-        Relative stop position of line (as in see start)
+        Relative stop position of line (as in start_fr)
     start_mm: float (default: 0) 
         Absolute start position offset (as in start_fr)
     sttop_mm: float (default: 0)
