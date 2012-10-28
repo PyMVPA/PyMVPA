@@ -16,6 +16,7 @@ if __debug__:
 import numpy as np
 import tempfile, os
 
+import mvpa2
 from mvpa2.base import externals, warning
 from mvpa2.base.types import is_datasetlike
 from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
@@ -314,8 +315,9 @@ class Searchlight(BaseSearchlight):
             for iblock, block in enumerate(roi_blocks):
                 # should we maybe deepcopy the measure to have a unique and
                 # independent one per process?
+                seed = mvpa2.get_random_seed()
                 compute(block, dataset, copy.copy(self.__datameasure),
-                        iblock=iblock)
+                        seed=seed, iblock=iblock)
         else:
             # otherwise collect the results in an 1-item list
             p_results = [
@@ -347,17 +349,23 @@ class Searchlight(BaseSearchlight):
         return result_ds
 
 
-    def _proc_block(self, block, ds, measure, iblock='main'):
+    def _proc_block(self, block, ds, measure, seed=None, iblock='main'):
         """Little helper to capture the parts of the computation that can be
         parallelized
 
         Parameters
         ----------
+        seed
+          RNG seed.  Should be provided e.g. in child process invocations
+          to guarantee that they all seed differently to not keep generating
+          the same sequencies due to reusing the same copy of numpy's RNG
         iblock
           Critical for generating non-colliding temp filenames in case
           of hdf5 backend.  Otherwise RNGs of different processes might
           collide in their temporary file names leading to problems.
         """
+        if seed is not None:
+            mvpa2.seed(seed)
         if __debug__:
             debug_slc_ = 'SLC_' in debug.active
             debug('SLC',

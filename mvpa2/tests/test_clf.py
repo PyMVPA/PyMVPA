@@ -735,6 +735,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
     @sweepargs(clf=clfswh['retrainable'])
+    @reseed_rng()
     def test_retrainables(self, clf):
         # XXX we agreed to not worry about this for the initial 0.6 release
         raise SkipTest
