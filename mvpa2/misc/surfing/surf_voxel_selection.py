@@ -341,13 +341,6 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                     distance_metric='dijkstra',
                     start_fr=0., stop_fr=1., start_mm=0, stop_mm=0,
                     nsteps=10, eta_step=1):
-        '''
-    radius, volume, white_surf, pial_surf,
-                             source_surf=None, source_surf_nodes=None,
-                             volume_mask=False, distance_metric='dijkstra',
-                             start_mm=0, stop_mm=0, start_fr=0., stop_fr=1.,
-                             nsteps=10, 
-        '''
 
         """
         Voxel selection for multiple center nodes on the surface
@@ -359,11 +352,12 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
         radius: int or float
             Size of searchlight. If an integer, then it indicates the number of
             voxels. If a float, then it indicates the radius of the disc      
-        source_surf: surf.Surface
+        source_surf: surf.Surface or None
             Surface used to compute distance between nodes. If omitted, it is 
-            the average of the gray and white surfaces 
-        source_surf_nodes: list of int or numpy array
-            node indices that serve as searchlight center
+            the average of the gray and white surfaces. 
+        source_surf_nodes: list of int or numpy array or None
+            Indices of nodes in source_surf that serve as searchlight center. 
+            By default every node serves as a searchlight center.
         distance_metric: str
             Distance metric between nodes. 'euclidean' or 'dijksta' (default)           
         start_fr: float (default: 0)
@@ -377,17 +371,16 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             Absolute start position offset (as in start_fr)
         nsteps: int (default: 10)
             Number of steps from white to pial surface
-        etastep: int (default: 1)
-            After how many searchlights an estimate should be printed of the remaining
-            time until completion of all searchlights
+        eta_step: int (default: 1)
+            After how many searchlights an estimate should be printed of the 
+            remaining time until completion of all searchlights
 
         Returns
         -------
-        sel: sparse_volmasks.SparseVolMask
+        sel: volume_mask_dict.VolumeMaskDictionary
             Voxel selection results, that associates, which each node, the indices
             of the surrounding voxels.
         """
-
 
         # outer and inner surface
         surf_pial = vol_surf.pial_surface
@@ -469,6 +462,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
         # start the clock
         tstart = time.time()
 
+        attribute_mapper = voxel_selector.disc_voxel_indices_and_attributes
         # walk over all nodes
         for i, order in enumerate(visitorder):
             # source node on source_surf
@@ -477,11 +471,13 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             # corresponding node on high-resolution intermediate surface
             intermediate = src2intermediate[src]
 
-            idxs, misc_attrs = voxel_selector.disc_voxel_indices_and_attributes(intermediate)
+            idxs, misc_attrs = attribute_mapper(intermediate)
 
             if idxs is not None:
                 if node2volume_attributes is None:
-                    node2volume_attributes = volume_mask_dict.VolumeMaskDictionary(vol_surf.volgeom, vol_surf.intermediate_surface)
+                    node2volume_attributes = \
+                        volume_mask_dict.VolumeMaskDictionary(vol_surf.volgeom,
+                                                vol_surf.intermediate_surface)
 
                     # store attribtues results
                 node2volume_attributes.add(int(src), idxs, misc_attrs)
@@ -553,9 +549,61 @@ def _eta(starttime, progress, msg=None, show=True):
 
 def run_voxel_selection(radius, volume, white_surf, pial_surf,
                          source_surf=None, source_surf_nodes=None,
-                         volume_mask=False, distance_metric='dijkstra',
+                         volume_mask=None, distance_metric='dijkstra',
                          start_mm=0, stop_mm=0, start_fr=0., stop_fr=1.,
                          nsteps=10, eta_step=1):
+
+    """
+    Voxel selection wrapperfor multiple center nodes on the surface
+    
+    Parameters
+    ----------
+    radius: int or float
+        Size of searchlight. If an integer, then it indicates the number of
+        voxels. If a float, then it indicates the radius of the disc
+    volume: Dataset or NiftiImage or volgeom.Volgeom
+        Volume in which voxels are selected.
+    white_surf: str of surf.Surface
+        Surface of white-matter to grey-matter boundary, or filename
+        of file containing such a surface.
+    pial_surf: str of surf.Surface
+        Surface of grey-matter to pial-matter boundary, or filename
+        of file containing such a surface.
+    source_surf: surf.Surface or None
+        Surface used to compute distance between nodes. If omitted, it is 
+        the average of the gray and white surfaces. 
+    source_surf_nodes: list of int or numpy array or None
+        Indices of nodes in source_surf that serve as searchlight center. 
+        By default every node serves as a searchlight center.
+    volume_mask: None (default) or False or int
+        Mask from volume to apply from voxel selection results. By default
+        no mask is applied. If volume_mask is an integer k, then the k-th
+        volume from volume is used to mask the data. If volume is a Dataset
+        and has a property volume.fa.voxel_indices, then these indices
+        are used to mask the data, unless volume_mask is False or an integer.
+    distance_metric: str
+        Distance metric between nodes. 'euclidean' or 'dijksta' (default)           
+    start_fr: float (default: 0)
+            Relative start position of line in gray matter, 0.=white 
+            surface, 1.=pial surface
+    stop_fr: float (default: 1)
+        Relative stop position of line (as in see start)
+    start_mm: float (default: 0) 
+        Absolute start position offset (as in start_fr)
+    sttop_mm: float (default: 0)
+        Absolute start position offset (as in start_fr)
+    nsteps: int (default: 10)
+        Number of steps from white to pial surface
+    eta_step: int (default: 1)
+        After how many searchlights an estimate should be printed of the 
+        remaining time until completion of all searchlights
+    
+    Returns
+    -------
+    sel: volume_mask_dict.VolumeMaskDictionary
+        Voxel selection results, that associates, which each node, the indices
+        of the surrounding voxels.
+    """
 
     vg = volgeom.from_any(volume, volume_mask)
 
@@ -570,84 +618,6 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
                           nsteps=nsteps, eta_step=1)
 
     return sel
-
-    '''
-
-    '''
-
-    '''Wrapper function that is supposed to make voxel selection
-    on the surface easy.
-
-    Parameters
-    ----------
-    epifn: str
-        Filename of functional volume in which voxel selection is performed.
-        At the moment only nifti (.nii) files are supported
-    whitefn: str
-        Filename of white matter surface. Only .asc or freesurfer files
-        are supported at the moment.
-    pialfn: str
-        Filename of pial surface. 
-    radius: int or float
-        Searchlight radius with number of voxels (if int) or maximum distance
-        from searchlight center in metric units (if float)
-    srcs: list-like or None
-        Node indices of searchlight centers. If None, then all nodes are used
-        as a center
-    srcfn: str
-        Filename of surface with searchlight centers, possibly with fewer nodes
-        than pialfn and whitefn.        
-    start: float (default: 0)
-            Relative start position of line in gray matter, 0.=white surface, 
-            1.=pial surface CheckMe: it might be the other way around
-    stop: float (default: 1)
-        Relative stop position of line (as in start)
-    require_center_in_gm: bool (default: False)
-        Only select voxels that are 'truly' in between the white and pial matter.
-        Specifically, each voxel's position is projected on the line connecting pial-
-        white matter pairs, and only voxels in between 'start' and 'stop' are selected
-    distance_metric: str
-        Distance metric between nodes. 'euclidean' or 'dijksta'
-    intermediateat: float (default: .5)
-        Relative positiion of intermediate surface that is used to measure distances.
-        By default this is the average of the pial and white surface
-    etastep: int (default: 1)
-        After how many searchlights an estimate should be printed of the remaining
-        time until completion of all searchlights
-    volume_mask: None or boolean or int
-        If an int, use the volume_mask-th volume of epifn as a voxel mask. True is
-        equivalent to 0. If False or None, no mask is used. 
-
-    Returns
-    -------
-    sel: sparse_volmasks.SparseVolMask or None
-        Voxel selection results, that associates, which each node, the indices
-        of the surrounding voxels. If no node has any voxels associated, then
-        None is returned.
-    '''
-
-    '''
-    # read volume geometry
-    vg = volgeom.from_any(epifn)
-
-    # read surfaces
-    whitesurf = surf.from_any(whitefn)
-    pialsurf = surf.from_any(pialfn)
-
-    if srcfn is None:
-        srcsurf = whitesurf * .5 + pialsurf * .5
-    else:
-        srcsurf = surf.from_any(srcfn)
-
-    # make a volume surface instance
-    vs = volsurf.VolSurf(vg, whitesurf, pialsurf)
-
-    # run voxel selection
-    sel = voxel_selection(vs, radius, srcsurf, srcs, start, stop, steps,
-                          distance_metric, intermediateat, etastep)
-    '''
-
-
 
 class _RadiusOptimizer():
     '''

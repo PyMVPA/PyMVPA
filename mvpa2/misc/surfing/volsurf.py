@@ -46,8 +46,7 @@ class VolSurf():
             raise Exception("Not same topology for white and pial")
 
     def __repr__(self):
-        r = ("volgeom: %r\npial: %rwhite:%r" %
-                (self._volgeom, self._pial, self._white))
+        r = ("VolSurf(%r,%r,%r)" % (self._volgeom, self._pial, self._white))
         return r
 
     @property
@@ -99,7 +98,8 @@ class VolSurf():
     def __reduce__(self):
         return (self.__class__, (self._volgeom, self._white, self._pial))
 
-    def node2voxels(self, nsteps=10, start_fr=0.0, stop_fr=1.0, start_mm=0, stop_mm=0):
+    def node2voxels(self, nsteps=10, start_fr=0.0,
+                    stop_fr=1.0, start_mm=0, stop_mm=0):
         '''
         Generates a mapping from node indices to voxels that are at or near
         the nodes at the pial and white surface.
@@ -141,7 +141,8 @@ class VolSurf():
          
         '''
         if start_fr > stop_fr or nsteps < 1:
-            raise ValueError("Illegal start/stop combination, or not enough nsteps")
+            raise ValueError("Illegal start/stop combination, "
+                             "or not enough steps")
 
         # make a list of the different relative gray matter positions
         if nsteps > 1:
