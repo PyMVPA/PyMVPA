@@ -742,11 +742,6 @@ class Surface(object):
                 [[cy * cz, -cy * sz, sy],
                  [cx * sz + sx * sy * cz, cx * cz - sx * sy * sz, -sx * cy],
                  [sx * sz - cx * sy * cz, sx * cz + cx * sy * sz, cx * cy]])
-        '''
-        m=np.asarray([[cx*cz - sx*cy*sz, cx*sz + sx*cy*cz, sx*sy],
-                     [-sx*cz - cx*cy*sz, -sx*sz + cx*cy*cz, cx*sy],
-                     [sy*sz, -sy*cz, cy]])
-        '''
 
         if center is None:
             center = 0
@@ -1025,8 +1020,6 @@ class Surface(object):
             
         '''
 
-        #return self.map_to_high_resolution_surf_slow(highres, epsilon, accept_only_icosahedron)
-
         nx = self.nvertices
         ny = highres.nvertices
 
@@ -1223,14 +1216,9 @@ class Surface(object):
         for i in xrange(nf):
             p, q, r = f[i]
 
-            #print p, q, r
-            #print node2component
-
             pk, pv = index_component(p)
             qk, qv = index_component(q)
             rk, rv = index_component(r)
-
-            #print pk, pv, " - ", qk, qv, ' - ', rk, rv
 
             if pv is None:
                 if qv is None:
