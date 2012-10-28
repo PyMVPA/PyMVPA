@@ -75,6 +75,9 @@ class CrossValidationTests(unittest.TestCase):
                                   space='partitions'))
         results = cv(data)
 
+        # results must not be the same
+        self.assertTrue(len(np.unique(results.samples))>1)
+
         # must be at chance level
         pmean = np.array(results).mean()
         self.assertTrue( pmean < 0.58 and pmean > 0.42 )
