@@ -283,10 +283,9 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                                     sel = surf_voxel_selection.voxel_selection(
                                             vs, radius, source_surf=s_m,
                                             source_surf_nodes=center_nodes_)
-                                    mp = sel.get_attr_mapping(
-                                                'linear_voxel_indices')
+                                    mp = sel
 
-                                    ks = sel.keys
+                                    ks = sel.keys()
                                     nk = len(ks)
                                     r = np.zeros((1, nk))
                                     for i, k in enumerate(ks):
