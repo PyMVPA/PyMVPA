@@ -32,9 +32,8 @@ import numpy as np
 
 from mvpa2.base import warning
 
-from mvpa2.misc.surfing import sparse_attributes, volgeom, volsurf
+from mvpa2.misc.surfing import volgeom, volsurf, volume_mask_dict
 from mvpa2.support.nibabel import surf
-
 
 
 # TODO: see if we use these contants, or let it be up to the user
@@ -241,6 +240,19 @@ class VoxelSelector(object):
             optimizer.set_final(maxradius)
 
         return voxel_attributes
+
+    def disc_voxel_indices_and_attributes(self, src):
+        ''' For now this is a wrapper
+        TODO integrate with calling function'''
+        attrs = self.disc_voxel_attributes(src)
+
+        if not attrs:
+            return None, None
+
+        idxs = attrs.pop(LINEAR_VOXEL_INDICES)
+
+        return idxs, attrs
+
 
     def nodes2voxel_attributes(self, n2d, n2v, distancesummary=min):
         '''
@@ -465,21 +477,15 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             # corresponding node on high-resolution intermediate surface
             intermediate = src2intermediate[src]
 
-            # find voxel attribues for this node
-            attrs = voxel_selector.disc_voxel_attributes(intermediate)
+            idxs, misc_attrs = voxel_selector.disc_voxel_indices_and_attributes(intermediate)
 
-            # first time that attributes are set, get the labels return from
-            # the voxel_selector to initiate the attributes instance
-            if attrs:
-                if  node2volume_attributes is None:
-                    sa_labels = attrs.keys()
-                    node2volume_attributes = \
-                            sparse_attributes.SparseVolumeAttributes(sa_labels,
-                                                            vol_surf.volgeom,
-                                                            source_surf)
+            if idxs is not None:
+                if node2volume_attributes is None:
+                    node2volume_attributes = volume_mask_dict.VolumeMaskDictionary(vol_surf.volgeom, vol_surf.intermediate_surface)
 
-                # store attribtues results
-                node2volume_attributes.add(src, attrs)
+                    # store attribtues results
+                node2volume_attributes.add(int(src), idxs, misc_attrs)
+
 
             if __debug__ and eta_step and (i % eta_step == 0 or i == n - 1):
                 msg = _eta(tstart, float(i + 1) / n,
@@ -496,7 +502,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             else:
                 msg = ("Voxel selection completed: %d / %d nodes have "
                      "voxels associated" %
-                     (len(node2volume_attributes.keys), len(visitorder)))
+                     (len(node2volume_attributes.keys()), len(visitorder)))
 
             debug("SVS", msg)
 
@@ -504,7 +510,6 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
         if node2volume_attributes is None:
             warning('No voxels associated with any of %d nodes' %
                             len(visitorder))
-
         return node2volume_attributes
 
 def _eta(starttime, progress, msg=None, show=True):

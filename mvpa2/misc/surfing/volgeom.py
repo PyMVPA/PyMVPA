@@ -50,6 +50,18 @@ class VolGeom():
             mask = np.reshape(mask != 0, (-1,))
         self._mask = mask
 
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+
+        return (self.shape == other.shape and
+                np.all(self.mask == other.mask) and
+                np.all(self.affine == other.affine))
+
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def as_pickable(self):
         '''
         Returns a pickable instance.
@@ -62,6 +74,9 @@ class VolGeom():
         '''
         d = dict(shape=self.shape, affine=self.affine, mask=self.mask)
         return d
+
+    def __reduce__(self):
+        return (self.__class__, (self._shape, self._affine, self._mask))
 
     @property
     def mask(self):
@@ -151,7 +166,12 @@ class VolGeom():
         ijk: numpy.ndarray
             Px3 array with sub voxel indices
         '''
-        lin = lin.copy() # we'll change lin, don't want to mess with input
+
+        if not isinstance(lin, np.ndarray):
+            lin = np.asarray(lin, dtype=np.int)
+        else:
+            lin = np.copy(lin)
+        lin = lin.ravel()
 
         n = np.shape(lin)[0]
         fs = self._ijkmultfac()
@@ -443,30 +463,33 @@ class VolGeom():
 
         return np.logical_not(self._outside_vol(ijk, lin))
 
-    def empty_nifti_img(self, nt=1):
+    def empty_nifti_img(self, nt=None):
         sh = self.shape
-        sh4d = (sh[0], sh[1], sh[2], nt)
 
-        data = np.zeros(sh4d)
+        if not nt is None:
+            sh = (sh[0], sh[1], sh[2], nt)
+
+        data = np.zeros(sh)
         img = nb.Nifti1Image(data, self.affine)
         return img
 
-    def masked_nifti_img(self, nt=1):
-        data_lin = np.zeros((self.nvoxels, nt), dtype=np.float32)
+    def masked_nifti_img(self, nt=None):
+        data_lin = np.zeros((self.nvoxels, nt or 1), dtype=np.float32)
         if self.mask is None:
             data_lin[:, :] = 1
         else:
             data_lin[self.mask, :] = 1
 
         sh = self.shape
-        sh4d = (sh[0], sh[1], sh[2], nt)
+        if not nt is None:
+            sh = (sh[0], sh[1], sh[2], nt)
 
-        data = np.reshape(data_lin, sh4d)
+        data = np.reshape(data_lin, sh)
         img = nb.Nifti1Image(data, self.affine)
         return img
 
 
-def from_any(s, mask_volume=False):
+def from_any(s, mask_volume=None):
     """
     Constructs a VolGeom instance from any reasonable type of input.
     
@@ -509,6 +532,8 @@ def from_any(s, mask_volume=False):
         shape = s.shape
         affine = s.get_affine()
 
+
+
         if isinstance(mask_volume, int):
             data = s.get_data()
             ndim = len(data.shape)
@@ -531,7 +556,16 @@ def from_any(s, mask_volume=False):
 
             if isinstance(mask_volume, int):
                 mask = np.asarray(s.samples[mask_volume, :])
+            elif mask_volume is None and (hasattr(s, 'sa') and
+                                           hasattr(s.sa, 'voxel_indices')):
+                mask_volume = 'voxel_indices'
+                warning("Found a Dataset-like structure with sample attributes"
+                        "'voxel_indices' - using these to define voxel mask. "
+                        "(To disable this behaviour, use "
+                        "'volgeom.from_any(..., mask_volume=False)').")
+
             elif isinstance(mask_volume, basestring):
+
                 if not mask_volume in s.fa:
                     raise ValueError('Key not found in s.fa: %r' % mask_volume)
 
@@ -548,3 +582,40 @@ def from_any(s, mask_volume=False):
                              '(filename of) Nifti image, or (mri-)Dataset' % s)
 
     return VolGeom(shape=shape, affine=affine, mask=mask)
+
+
+def distance(p, q, r=2):
+    '''Returns the distances between vectors in two arrays
+    
+    Parameters
+    ----------
+    p: np.ndarray (PxM)
+        first array
+    q: np.ndarray (QxM)
+        second array
+    nrm: float (default: 2)
+        Norm used for distance computation. By default Euclidian distances
+        are computed.
+        
+    Returns
+    -------
+    pq: np.ndarray (PxQ)
+        Distance between p[j] and q[j] is in pq[i,j]
+    '''
+
+    if p.shape[1] != q.shape[1]:
+        raise ValueError("Shape mismatch")
+
+    m, n = len(p), len(q)
+    ds = np.zeros((m, n), dtype=p.dtype)
+
+    def dist_func(a, b, r):
+        delta = a - b
+        if np.isinf(r):
+            return np.max(np.abs(delta))
+        return np.sum(delta ** r, 1) ** (1. / r)
+
+    for i, pi in enumerate(p):
+        ds[i, :] = dist_func(pi, q, r)
+
+    return ds

@@ -16,8 +16,11 @@ import numpy as np
 from mvpa2.base.dataset import AttrDataset
 from mvpa2.misc.neighborhood import QueryEngineInterface
 
-from mvpa2.misc.surfing import volgeom, volsurf, surf_voxel_selection
+from mvpa2.misc.surfing import volgeom, volsurf, surf_voxel_selection, \
+                                        volume_mask_dict
 from mvpa2.support.nibabel import surf
+
+from mvpa2.misc.support import is_sorted
 
 if __debug__:
     from mvpa2.base import debug
@@ -33,32 +36,48 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
         self._map_voxel_coord = None
 
         if add_fa is not None:
-            if not set(voxsel.sa_labels).issuperset(add_fa):
+            if not set(voxsel.aux_keys()).issuperset(add_fa):
                 raise ValueError(
                     "add_fa should list only those known to voxsel %s"
                     % voxsel)
         self._add_fa = add_fa
 
 
+    def __reduce__(self):
+        return (self.__class__, (self.voxsel, self.space, self.add_fa))
+
     @property
     def ids(self):
-        return self.voxsel.keys
+        return self.voxsel.keys()
 
     def train(self, dataset):
         vg = self.voxsel.volgeom
         # We are creating a map from big unmasked indices of voxels
         # known to voxsel into the dataset's feature indexes
+        #self._map_voxel_coord = map_voxel_coord = {}
+        #for long_i, i in zip(
+        #    vg.ijk2lin(dataset.fa[self.space].value),
+        #    xrange(dataset.nfeatures)):
+        #    if long_i in map_voxel_coord:
+        #        map_voxel_coord[long_i].append(i)
+        #    else:
+        #        map_voxel_coord[long_i] = [i]
+
         self._map_voxel_coord = map_voxel_coord = {}
-        for long_i, i in zip(
-            vg.ijk2lin(dataset.fa[self.space].value),
-            xrange(dataset.nfeatures)):
+        long_i = vg.ijk2lin(dataset.fa[self.space].value)
+        long_i_invol = vg.contains_lin(long_i)
+        for i, long_i in enumerate(long_i):
+            if not long_i_invol[i]:
+                continue
             if long_i in map_voxel_coord:
                 map_voxel_coord[long_i].append(i)
             else:
                 map_voxel_coord[long_i] = [i]
 
+
     def untrain(self):
         self._map_voxel_coord = None
+        self._long_voxel_to_node = None
 
 
     def query_byid(self, vertexid):
@@ -80,7 +99,9 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
             
         """
         # TODO: make linear_voxel_indices a parameter
-        voxel_unmasked_ids = self.voxsel.get(vertexid, 'linear_voxel_indices')
+        voxel_unmasked_ids = self.voxsel.get(vertexid)
+        #print voxel_unmasked_ids
+        #voxel_unmasked_ids = self.voxsel.get(vertexid)
 
         # map into dataset
         voxel_dataset_ids = sum([self._map_voxel_coord[i]
@@ -89,7 +110,7 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
             # optionally add additional information from voxsel
             ds = AttrDataset(np.asarray(voxel_dataset_ids)[np.newaxis])
             for n in self._add_fa:
-                ds.fa[n] = self.voxsel.get(vertexid, n)
+                ds.fa[n] = self.voxsel.aux_get(vertexid, n)
             return ds
         return voxel_dataset_ids
 
@@ -110,6 +131,48 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
         import nibabel as nb
         img = nb.Nifti1Image(msk, self.voxsel.volgeom.affine)
         return img
+
+    def linear_voxel_id2feature_id(self, linear_voxel_id):
+        if type(linear_voxel_id) in (list, tuple):
+            return map(self.linear_voxel_id2feature_id, linear_voxel_id)
+
+        return self._map_voxel_coord[linear_voxel_id]
+
+    def feature_id2linear_voxel_ids(self, feature_id):
+        if type(feature_id) in (list, tuple):
+            return map(self.feature_id2linear_voxel_ids, feature_id)
+
+        return [i for i, j in self._map_voxel_coord.iteritems()
+                                  if feature_id in j]
+
+    def feature_id2nearest_vertex_id(self, feature_id):
+        '''Computes the index of the nearest searchlight center
+        
+        Parameters
+        ----------
+        feature_id: int
+            Feature index.
+            
+        Returns
+        -------
+        vertex_id: int
+            Vertex index of vertex nearest to the feature with id feature_id.
+        '''
+
+        if type(feature_id) in (list, tuple):
+            return map(self.feature_id2nearest_vertex_id(feature_id))
+
+        lin_voxs = self.feature_id2linear_voxel_ids(feature_id)
+
+        return self.voxsel.target2nearest_source(lin_voxs)
+
+    def vertex_id2nearest_feature_id(self, vertex_id):
+        if type(vertex_id) in (list, tuple):
+            return map(self.vertex_id2nearest_feature_id(vertex_id))
+
+        lin_vox = self.voxsel.source2nearest_target(vertex_id)
+
+        return self.linear_voxel_id2feature_id(lin_vox)
 
 
 
@@ -134,7 +197,3 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
     qe = SurfaceVerticesQueryEngine(voxsel, add_fa=add_fa)
 
     return qe
-
-
-
-

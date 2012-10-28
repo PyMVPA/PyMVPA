@@ -517,15 +517,15 @@ class Surface(object):
         d = np.power(ss, .5)
         return d
 
-    def nearest_node_index(self, src_coords, node_mask=None):
+    def nearest_node_index(self, src_coords, node_mask_indices=None):
         '''Computes index of nearest node to src
         
         Parameters
         ----------
         src_coords: numpy.ndarray (Px3 array)
             Coordinates of center
-        node_mask (default: None):
-            Mask of nodes to consider. By default all nodes are considered
+        node_mask_idxs numpy.ndarray (default: None):
+            Indices of nodes to consider. By default all nodes are considered
         
         Returns
         -------
@@ -543,13 +543,13 @@ class Surface(object):
         elif len(src_coords.shape) != 2 or src_coords.shape[1] != 3:
             raise ValueError("Expected Px3 array for src_coords")
 
-        use_mask = not node_mask is None
+        use_mask = not node_mask_indices is None
         # vertices to consider
-        v = self.vertices[node_mask] if use_mask else self.vertices
+        v = self.vertices[node_mask_indices] if use_mask else self.vertices
 
         # indices of these vertices
         all_idxs = np.arange(self.nvertices)
-        masked_idxs = all_idxs[node_mask] if use_mask else all_idxs
+        masked_idxs = all_idxs[node_mask_indices] if use_mask else all_idxs
 
         n = src_coords.shape[0]
         idxs = np.zeros((n,), dtype=np.int)
@@ -658,7 +658,18 @@ class Surface(object):
 
         return "\n".join(s)
 
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
 
+        return (np.all(self.vertices == other.vertices) and
+                np.all(self.faces == other.faces))
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __reduce__(self):
+        return (self.__class__, (self._v, self._f))
 
     def same_topology(self, other):
         '''

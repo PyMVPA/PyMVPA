@@ -354,8 +354,11 @@ class SurfTests(unittest.TestCase):
         voxel_expected = [1498, 1498, 4322, 4986, 7391, 10141]
         assert_equal(voxel_counter, voxel_expected)
 
+        ''' disabled (for now) as we on't use spare attributes anymore
 
-    def test_sparse_attributes(self):
+    
+
+    def _test_sparse_attributes(self):
 
         # generate a very small dataset
         payload = {1:([1, 2], [.2, .3]),
@@ -398,9 +401,9 @@ class SurfTests(unittest.TestCase):
 
             for k in ma:
                 assert_equal(ma[k], mb[k])
+    '''
 
     def test_surf_voxel_selection(self):
-
         vg = volgeom.VolGeom((50, 50, 50), np.identity(4))
 
         density = 20
@@ -420,8 +423,7 @@ class SurfTests(unittest.TestCase):
                   ('euclidean', 5, None), ('dijkstra', 10, None)]
 
 
-        expected_labs = ['linear_voxel_indices',
-                         'grey_matter_position',
+        expected_labs = ['grey_matter_position',
                          'center_distances']
 
         voxcount = []
@@ -432,10 +434,10 @@ class SurfTests(unittest.TestCase):
                                             distance_metric=distance_metric)
 
             # see how many voxels were selected
-            vg = sel.a['volgeom']
+            vg = sel.volgeom
             datalin = np.zeros((vg.nvoxels, 1))
 
-            mp = sel.get_attr_mapping('linear_voxel_indices')
+            mp = sel
             for k, idxs in mp.iteritems():
                 if idxs is not None:
                     datalin[idxs] = 1
@@ -453,39 +455,9 @@ class SurfTests(unittest.TestCase):
                     assert_equal(linidx in idxs, vg.contains_lin(linidx))
 
             # check that it has all the attributes
-            labs = sel.sa_labels
+            labs = sel.aux_keys()
             assert_true(all([lab in labs for lab in expected_labs]))
 
-            attr_maps = [sel.get_attr_mapping(lab) for lab in labs]
-
-            # require same number of values for each attribute
-            # and that tuples contain the right info
-            for k in sel.keys:
-                tp = sel.get_tuple(k)
-                for i, map in enumerate(attr_maps):
-
-                    mapk = map[k]
-                    if i == 0:
-                        c = len(mapk)
-                    else:
-                        assert_true(c == len(mapk))
-
-                    for j, v in enumerate(tp):
-                        assert_equal(v[i], mapk[j])
-
-                if labs[i] == 'center_distances':
-                    if type(radius) is float:
-                        pass
-                        #assert_true(all(abs(v - radius)))
-
-            # check that inverse function works
-            attr_maps_inv = [sel.get_inv_attr_mapping(lab) for lab in labs]
-
-            for i, map in enumerate(attr_maps):
-                pam = attr_maps_inv[i]
-                for j, vals in pam.iteritems():
-                    for val in vals:
-                        assert_true(j in map[val])
 
             # some I/O testing
             _, fn = tempfile.mkstemp('.pickle', 'test')
@@ -526,7 +498,6 @@ class SurfTests(unittest.TestCase):
             os.remove(innerfn)
             os.remove(volfn)
 
-            lab = 'linear_voxel_indices'
 
             # compare sel3 with other selection results
             # NOTE: which voxels are precisely selected by sel can be quite
@@ -534,13 +505,13 @@ class SurfTests(unittest.TestCase):
             #       rounding errors and the sphere is very symmetric, which
             #       means that different neighboring nodes are selected
             #       to select a certain number of voxels.
-            sel3cmp_difference_ratio = {sel:.2, sel4:0.}
-            for selcmp, ratio in sel3cmp_difference_ratio.iteritems():
+            sel3cmp_difference_ratio = [(sel, .2), (sel4, 0.)]
+            for selcmp, ratio in sel3cmp_difference_ratio:
                 nunion = ndiff = 0
 
-                for k in selcmp.keys:
-                    p = set(sel3.get(k, lab))
-                    q = set(selcmp.get(k, lab))
+                for k in selcmp.keys():
+                    p = set(sel3.get(k))
+                    q = set(selcmp.get(k))
                     nunion += len(p.union(q))
                     ndiff += len(p.symmetric_difference(q))
 
@@ -549,10 +520,9 @@ class SurfTests(unittest.TestCase):
             # check searchlight call
             # as of late Aug 2012, this is with the fancy query engine
             # as implemented by Yarik
-            lab = 'linear_voxel_indices'
 
-            mask = sel.get_mask(lab)
-            keys = None if ncenters is None else sel.keys
+            mask = sel.get_mask()
+            keys = None if ncenters is None else sel.keys()
 
             dset_data = np.reshape(np.arange(vg.nvoxels), vg.shape)
             dset_img = nb.Nifti1Image(dset_data, vg.affine)
@@ -568,24 +538,26 @@ class SurfTests(unittest.TestCase):
             sl_dset = searchlight(dset)
 
             selected_count = sl_dset.samples[0, :]
-            mp = sel.get_attr_mapping('linear_voxel_indices')
-            for i, k in enumerate(sel.keys):
+            mp = sel
+            for i, k in enumerate(sel.keys()):
                 # check that number of selected voxels matches
                 assert_equal(selected_count[i], len(mp[k]))
 
 
             # check nearest node is *really* the nearest node
-            vox2nearest = sparse_attributes.voxel2nearest_node(sel)
+            #vox2nearest = sparse_attributes.voxel2nearest_node(sel)
+            allvx = sel.get_targets()
             intermediate = outer * .5 + inner * .5
-            for vx in xrange(vg.nvoxels):
-                if vx in vox2nearest:
-                    nearest = vox2nearest[vx]
 
-                    xyz = intermediate.vertices[nearest, :]
-                    sqsum = np.sum((xyz - intermediate.vertices) ** 2, 1)
+            for vx in allvx:
+                nearest = sel.target2nearest_source(vx)
 
-                    idx = np.argmin(sqsum)
-                    assert_equal(idx, nearest)
+                xyz = intermediate.vertices[nearest, :]
+                sqsum = np.sum((xyz - intermediate.vertices) ** 2, 1)
+
+                idx = np.argmin(sqsum)
+                assert_equal(idx, nearest)
+
 
 
                 # check whether number of voxels were selected is as expected
@@ -611,3 +583,9 @@ def suite():
 
 if __name__ == '__main__':
     import runner
+
+
+
+
+
+

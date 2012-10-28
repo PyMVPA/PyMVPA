@@ -13,7 +13,7 @@ matter boundaries of the grey matter).
 @author: nick
 """
 
-from mvpa2.misc.surfing import volgeom, sparse_attributes
+from mvpa2.misc.surfing import volgeom
 from mvpa2.support.nibabel import surf
 
 import nibabel as nb
@@ -95,6 +95,9 @@ class VolSurf():
         '''
 
         return self._volgeom
+
+    def __reduce__(self):
+        return (self.__class__, (self._volgeom, self._white, self._pial))
 
     def node2voxels(self, nsteps=10, start_fr=0.0, stop_fr=1.0, start_mm=0, stop_mm=0):
         '''
