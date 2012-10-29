@@ -210,7 +210,9 @@ def test_gnbsearchlight_permutations():
                                null_dist=distr_est, postproc=mean_sample(),
                                errorfx=mean_mismatch_error,
                                **slkwargs)
-    assert_raises(NotImplementedError, sl, ds)
+    if __debug__:                         # assert is done only without -O mode
+        assert_raises(NotImplementedError, sl, ds)
+
     # "ad-hoc searchlights can't handle yet varying targets across partitions"
     if False:
         # after above limitation is removed -- enable
@@ -266,7 +268,7 @@ def test_multiclass_pairs_svm_searchlight():
     from mvpa2.sandbox.multiclass import get_pairwise_accuracies
 
     # Some parameters used in the test below
-    nproc = 2
+    nproc = 1 + int(mvpa2.externals.exists('pprocess'))
     ntargets = 4                                # number of targets
     npairs = ntargets*(ntargets-1)/2
     center_ids = [35, 55, 1]
