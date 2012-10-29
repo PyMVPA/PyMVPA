@@ -117,7 +117,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # TODO: those few do not expose biases
         if not len(set(clf.__tags__).intersection(('lars', 'glmnet', 'gpr' ))):
             assert('biases' in sens.sa)
-            print sens.sa.biases
+            # print sens.sa.biases
         # It should return either ...
         #  nlabels * nsplits
         req_nsamples = [ nlabels * nsplits ]
