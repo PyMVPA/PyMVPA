@@ -52,7 +52,8 @@ def get_pairwise_hits_misses(a, targets, pairs=None, select=None, axis=-1):
     result_pairs = []
     a = np.asanyarray(a)
     assert axis == -1, "others not implemented yet"
-    pairs = pairs or _get_unique_in_axis(a)
+    if pairs is None:
+        pairs = _get_unique_in_axis(a)
     # This is a somewhat slow implementation for now. optimize later
     for i, p in enumerate(pairs):
         if select is not None and len(set(p).difference(select)):
