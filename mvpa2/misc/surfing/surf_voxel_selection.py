@@ -459,10 +459,18 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
 
             progresspat = '%s /%s (node %s ->%s)' % (ipat, ipat, npat, npat)
 
-        # start the clock
-        tstart = time.time()
 
         attribute_mapper = voxel_selector.disc_voxel_indices_and_attributes
+
+        srcs_order = [source_surf_nodes[node] for node in visitorder]
+        src_trg_nodes = [(src, src2intermediate[src]) for src in srcs_order]
+
+        empty_dict = volume_mask_dict.VolumeMaskDictionary(vol_surf.volgeom,
+                                                vol_surf.intermediate_surface)
+        node2volume_attributes = _reduce_mapper(empty_dict, attribute_mapper,
+                                                src_trg_nodes)
+        '''
+        tstart = time.time()
         # walk over all nodes
         for i, order in enumerate(visitorder):
             # source node on source_surf
@@ -488,7 +496,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                                 progresspat %
                                 (i + 1, n, src, intermediate), show=False)
                 debug('SVS', msg, cr=True)
-
+        '''
         if __debug__:
             debug('SVS', "")
 
@@ -513,6 +521,32 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             warning('No voxels associated with any of %d nodes' %
                             len(visitorder))
         return node2volume_attributes
+
+def _reduce_mapper(node2volume_attributes, attribute_mapper,
+                   src_trg_indices, eta_step=1):
+    '''applies voxel selection to a list of src_trg_indices
+    results are added to node2volume_attributes.
+    '''
+
+    progresspat = '% 5d / % 5d (node % 5d->% 5d)'
+
+    # start the clock
+    tstart = time.time()
+    n = len(src_trg_indices)
+    for i, (src, trg) in enumerate(src_trg_indices):
+        idxs, misc_attrs = attribute_mapper(trg)
+
+        if idxs is not None:
+            node2volume_attributes.add(int(src), idxs, misc_attrs)
+
+        if __debug__ and eta_step and (i % eta_step == 0 or i == n - 1):
+                msg = _eta(tstart, float(i + 1) / n,
+                                progresspat %
+                                (i + 1, n, src, trg), show=False)
+                debug('SVS', msg, cr=True)
+
+    return node2volume_attributes
+
 
 def _eta(starttime, progress, msg=None, show=True):
     '''Simple linear extrapolation to estimate how much time is needed 
@@ -545,7 +579,7 @@ def _eta(starttime, progress, msg=None, show=True):
     took = now - starttime
     eta = -1 if progress == 0 else took * (1 - progress) / progress
 
-    f = lambda t:str(datetime.timedelta(seconds=t))
+    f = lambda t:str(datetime.timedelta(seconds=round(t)))
 
     fullmsg = '%s, took %s, remaining %s' % (msg, f(took), f(eta))
     if show:
