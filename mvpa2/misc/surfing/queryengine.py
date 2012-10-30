@@ -216,7 +216,7 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
                              source_surf=None, source_surf_nodes=None,
                              volume_mask=False, distance_metric='dijkstra',
                              start_mm=0, stop_mm=0, start_fr=0., stop_fr=1.,
-                             nsteps=10, eta_step=1, add_fa=None):
+                             nsteps=10, eta_step=1, add_fa=None, nproc=None):
 
     """
     Voxel selection wrapper for multiple center nodes on the surface

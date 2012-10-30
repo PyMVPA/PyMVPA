@@ -340,7 +340,7 @@ class VoxelSelector(object):
 def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                     distance_metric='dijkstra',
                     start_fr=0., stop_fr=1., start_mm=0, stop_mm=0,
-                    nsteps=10, eta_step=1):
+                    nsteps=10, eta_step=1, nproc=None):
 
         """
         Voxel selection for multiple center nodes on the surface
@@ -399,8 +399,6 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             debug('SVS', "Generated high-res intermediate surface: "
                   "%d nodes, %d faces" %
                   (intermediate_surf.nvertices, intermediate_surf.nfaces))
-
-        if __debug__:
             debug('SVS', "Looking for mapping from source to high-res surface:"
                   " %d nodes, %d faces" %
                   (source_surf.nvertices, source_surf.nfaces))
@@ -446,18 +444,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
         # make a sparse_attributes instance when we know what the attribtues are
         node2volume_attributes = None
 
-        # keep track of time
-        if __debug__ :
-            # preparte for pretty printing progress
-            # pattern for printing progress
-            import math
-            ipat = '%% %dd' % math.ceil(math.log10(n))
 
-            maxsrc = max(source_surf_nodes)
-            maxtrg = max(src2intermediate.values())
-            npat = '%% %dd' % math.ceil(math.log10(max(maxsrc, maxtrg)))
-
-            progresspat = '%s /%s (node %s ->%s)' % (ipat, ipat, npat, npat)
 
 
         attribute_mapper = voxel_selector.disc_voxel_indices_and_attributes
@@ -465,10 +452,55 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
         srcs_order = [source_surf_nodes[node] for node in visitorder]
         src_trg_nodes = [(src, src2intermediate[src]) for src in srcs_order]
 
-        empty_dict = volume_mask_dict.VolumeMaskDictionary(vol_surf.volgeom,
+
+        if nproc is None:
+            try:
+                import pprocess
+                nproc = pprocess.get_number_of_cores() or 1
+                if __debug__ :
+                    debug("SVS", 'Using %d cores' % nproc)
+            except:
+                warning("Could not import pprocess, using nproc=1")
+                nproc = 1
+
+        if nproc > 1:
+            n_srcs = len(src_trg_nodes)
+            blocks = np.array_split(np.arange(n_srcs), nproc)
+
+            results = pprocess.Map(limit=nproc)
+            reducer = results.manage(pprocess.MakeParallel(_reduce_mapper))
+
+            for i, block in enumerate(blocks):
+                empty_dict = volume_mask_dict.VolumeMaskDictionary(
+                                                vol_surf.volgeom,
                                                 vol_surf.intermediate_surface)
-        node2volume_attributes = _reduce_mapper(empty_dict, attribute_mapper,
-                                                src_trg_nodes)
+
+                src_trg = []
+                for idx in block:
+                    src_trg.append(src_trg_nodes[idx])
+
+                if __debug__:
+                    debug('SVS', "Starting block %d/%d: %d centers" %
+                                (i + 1, nproc, len(src_trg)))
+
+                reducer(empty_dict, attribute_mapper, src_trg,
+                        eta_step=eta_step, proc_id='%d / %d' % (i + 1, nproc))
+
+            for i, result in enumerate(results):
+                if i == 0:
+                    node2volume_attributes = result
+                else:
+                    node2volume_attributes.merge(result)
+                if __debug__:
+                    debug('SVS', "Merging result block %d/%d" % (i + 1, nproc))
+        else:
+            empty_dict = volume_mask_dict.VolumeMaskDictionary(
+                                                vol_surf.volgeom,
+                                                vol_surf.intermediate_surface)
+            node2volume_attributes = _reduce_mapper(empty_dict,
+                                                    attribute_mapper,
+                                                    src_trg_nodes,
+                                                    eta_step=eta_step)
         '''
         tstart = time.time()
         # walk over all nodes
@@ -523,7 +555,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
         return node2volume_attributes
 
 def _reduce_mapper(node2volume_attributes, attribute_mapper,
-                   src_trg_indices, eta_step=1):
+                   src_trg_indices, eta_step=1, proc_id=None):
     '''applies voxel selection to a list of src_trg_indices
     results are added to node2volume_attributes.
     '''
@@ -543,6 +575,8 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
                 msg = _eta(tstart, float(i + 1) / n,
                                 progresspat %
                                 (i + 1, n, src, trg), show=False)
+                if not proc_id is None:
+                    msg += ' (process %s)' % proc_id
                 debug('SVS', msg, cr=True)
 
     return node2volume_attributes
@@ -591,7 +625,7 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
                          source_surf=None, source_surf_nodes=None,
                          volume_mask=None, distance_metric='dijkstra',
                          start_mm=0, stop_mm=0, start_fr=0., stop_fr=1.,
-                         nsteps=10, eta_step=1):
+                         nsteps=10, eta_step=1, nproc=None):
 
     """
     Voxel selection wrapperfor multiple center nodes on the surface
