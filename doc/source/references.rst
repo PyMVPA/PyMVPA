@@ -102,6 +102,12 @@ experiments.
   URL: http://portal.acm.org/citation.cfm?id=1248548
 
 
+.. _DTM+11:
+
+**Duff, E. P., Trachtenberg, A. J., CE, C. E. M., Howard, M. A., Wilson, F., Smith, S. M. & Woolrich, M. W.** (2011). Task-driven ICA feature generation for accurate and interpretable prediction using fMRI. *NeuroImage*, *60*, 189-203.
+  URL: http://www.ncbi.nlm.nih.gov/pubmed/22227050
+
+
 .. _EHJ+04:
 
 **Efron, B., Trevor, H., Johnstone, I. & Tibshirani, R.** (2004). Least Angle Regression. *Annals of Statistics*, *32*, 407–499.
@@ -356,7 +362,7 @@ experiments.
 
 .. _LaC10:
 
-**Laconte, S. M.** (2010). Decoding fMRI brain states in real-time. *Neuroimage*.
+**Laconte, S. M.** (2010). Decoding fMRI brain states in real-time. *NeuroImage*.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2010.06.052
 
   URL: http://www.ncbi.nlm.nih.gov/pubmed/20600972
@@ -576,7 +582,7 @@ experiments.
 
 .. _WTB+10:
 
-**Woolgar, A., Thompson, R., Bor, D. & Duncan, J.** (2010). Multi-voxel coding of stimuli, rules, and responses in human frontoparietal cortex. *Neuroimage*.
+**Woolgar, A., Thompson, R., Bor, D. & Duncan, J.** (2010). Multi-voxel coding of stimuli, rules, and responses in human frontoparietal cortex. *NeuroImage*.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2010.04.035
 
   URL: http://www.ncbi.nlm.nih.gov/pubmed/20406690
