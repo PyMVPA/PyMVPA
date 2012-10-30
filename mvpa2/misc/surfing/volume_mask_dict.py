@@ -1,0 +1,247 @@
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Dictionary (mapping) for storing several volume masks.
+A typical use case is storing results from (surface-based) 
+voxel selection.
+
+@author: nick
+"""
+
+
+__docformat__ = 'restructuredtext'
+
+import cPickle as pickle
+from collections import Mapping
+
+import nibabel as nb, numpy as np
+import collections
+import operator
+
+from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
+from mvpa2.misc.surfing import volgeom
+
+class VolumeMaskDictionary(Mapping):
+    """TODO
+
+    """
+    def __init__(self, vg, source):
+        self._volgeom = volgeom.from_any(vg)
+        self._source = source
+
+        self._src2nbr = dict()
+        self._src2aux = dict()
+        self._nbr2src = dict()
+        self._aux_keys = set()
+
+    def add(self, src, nbrs, aux=None):
+        if not type(src) in [int, basestring]:
+            # for now to avoid unhasbable type
+            raise TypeError("src should be int or str")
+
+        if src in self._src2nbr:
+            raise ValueError('%r already in %r' % (src, self))
+
+        self._src2nbr[src] = nbrs
+
+        n = len(nbrs)
+        contains = self.volgeom.contains_lin(np.asarray(nbrs))
+        for i, nbr in enumerate(nbrs):
+            if not contains[i]:
+                raise ValueError("Target not in volume: %s" % nbr)
+            if not nbr in self._nbr2src:
+                self._nbr2src[nbr] = set()
+            self._nbr2src[nbr].add(src)
+
+        if aux:
+            if self._aux_keys and (set(aux) != self._aux_keys):
+                raise ValuError("aux label mismatch: %r != %r" %
+                                (set(aux), self._aux_keys))
+            for k, v in aux.iteritems():
+                if len(v) not in (n, 1):
+                    raise ValueError('size mismatch: size %d != %d or 1' %
+                                        (len(v), n))
+                if not k in self._src2aux:
+                    self._src2aux[k] = dict()
+                self._src2aux[k][src] = v
+                self._aux_keys.add(k)
+
+    def get(self, src):
+        return list(self._src2nbr[src])
+
+    def aux_get(self, src, label):
+        labels = self._aux_keys
+        if not label in labels:
+            raise ValueError("%s not in %r" % (label, labels))
+        if not label in self._src2aux:
+            msg = ("Mismatch for key %r" if src in self._src2nbr
+                                        else "Unknown key %r")
+            raise ValueError((msg + ', label %r') % (src, label))
+        return self._src2aux[label][src]
+
+    def aux_keys(self):
+        return list(self._aux_keys)
+
+    def target2sources(self, nbr):
+        if type(nbr) in (list, tuple):
+            return map(self.target2sources, nbr)
+        return self._nbr2src[nbr]
+
+    def get_targets(self):
+        return self._nbr2src.keys()
+
+    def get_mask(self):
+        m_lin = np.zeros((self.volgeom.nvoxels, 1))
+        for src, nbrs in self._src2nbr.iteritems():
+            for nbr in nbrs:
+                m_lin[nbr] = 1
+
+        return np.reshape(m_lin, self.volgeom.shape[:3])
+
+    def get_nifti_image_mask(self):
+        return nb.Nifti1Image(self.get_mask(), self.volgeom.affine)
+
+    def __getitem__(self, key):
+        return self.get(key)
+
+    def __len__(self):
+        return len(self.__keys__)
+
+    def __keys__(self):
+        return list(self._src2nbr)
+
+    def __iter__(self):
+        return iter(self.__keys__())
+
+    def __reduce__(self):
+        return (self.__class__, (self._volgeom, self._source), self.__getstate__())
+
+    def __getstate__(self):
+        return (self._volgeom, self._source, self._src2nbr, self._src2aux, self._nbr2src)
+
+    def __setstate__(self, s):
+        self._volgeom, self._source, self._src2nbr, self._src2aux, self._nbr2src = s
+
+    def __eq__(self, other):
+        if not self.same_layout(other):
+            return False
+
+        if set(self.keys()) != set(other.keys()):
+            return False
+
+        for k in self.keys():
+            if self[k] != other[k]:
+                return False
+
+        return True
+
+    def same_layout(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+
+        return self.volgeom == other.volgeom and self.source == other.source
+
+    def merge(self, other):
+        if not self.same_layout(other):
+            raise ValueError("Cannot merge %r with %r" % (self, other))
+
+        aks = self.aux_keys()
+
+        for k in other.keys():
+            idxs = other[k]
+
+            a_dict = dict()
+            for ak in aks:
+                a_dict[ak] = other.aux_get(k, ak)
+
+            if not a_dict:
+                a_dict = None
+
+            self.add(k, idxs, a_dict)
+
+    def xyz_target(self, ts=None):
+        if ts is None:
+            ts = list(self.get_targets())
+        t_arr = np.reshape(np.asarray(ts), (-1,))
+        return self.volgeom.lin2xyz(t_arr)
+
+    def xyz_source(self, ss=None):
+        # assume coordinates are stored in a numpy ndarray
+        # either source_surf is such an array, or it may
+        # have them as an attribute
+        # TODO add dataset and volgeom support
+        coordinate_labels = [None, 'vertices', 'coordinates']
+        coordinates = None
+        for coordinate_label in coordinate_labels:
+            s = self.source
+            if coordinate_label and hasattr(s, coordinate_label):
+                s = getattr(s, coordinate_label)
+            if isinstance(s, np.ndarray):
+                coordinates = s
+
+        if coordinates is None:
+            raise ValueError("Cannot find coordinates in %r" % self.source)
+
+        if ss is None:
+            ss = self.keys()
+        if not isinstance(ss, np.ndarray):
+            if type(ss) in (int, basestring):
+                ss = [ss]
+            ss = np.asarray(list(ss)).ravel()
+
+        return coordinates[ss]
+
+    @property
+    def volgeom(self):
+        return self._volgeom
+
+    @property
+    def source(self):
+        return self._source
+
+    def target2nearest_source(self, target):
+        targets = []
+        if type(target) in (list, tuple):
+            for t in target:
+                targets.append(t)
+        else:
+            targets = [target]
+
+        xyz_trg = self.xyz_target(np.asarray(targets))
+
+        src = self.target2sources(targets)
+        flat_srcs = []
+        for s in src:
+            for j in s:
+                flat_srcs.append(j)
+
+        xyz_srcs = self.xyz_source(flat_srcs)
+        d = volgeom.distance(xyz_srcs, xyz_trg)
+        i = np.argmin(d)
+
+        return flat_srcs[i / xyz_trg.shape[0]]
+
+    def source2nearest_target(self, source):
+        trgs = self.__getitem__(source)
+        trg_xyz = self.xyz_target(trgs)
+
+        src_xyz = self.xyz_source(source)
+        d = volgeom.distance(trg_xyz, src_xyz)
+        i = np.argmin(d)
+
+        return trgs[i / src_xyz.shape[0]]
+
+
+def save(fn, attr):
+    with open(fn, 'w') as f:
+        pickle.dump(attr, fn, protocol=pickle.HIGHEST_PROTOCOL)
+
+def read(fn):
+    with open(fn) as f:
+        r = pickle.load(fn)
+    return r
