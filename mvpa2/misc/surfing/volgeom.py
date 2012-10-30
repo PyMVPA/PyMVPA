@@ -58,7 +58,6 @@ class VolGeom():
                 np.all(self.mask == other.mask) and
                 np.all(self.affine == other.affine))
 
-
     def __ne__(self, other):
         return not self.__eq__(other)
 

@@ -176,8 +176,12 @@ def null_clustersize(config):
     # smooth all data at once, using estimated FWHM
     smooth_fn = _fn(config, 'rand_buck_smooth', ext1D)
     if is_surf:
+        if config['sigma'] > 0:
+            sigma_str = '-sigma %s' % config['sigma']
+        else:
+            sigma_str = ''
         cmds.append('; SurfSmooth -overwrite %s -met HEAT_07 -i_fs %s -input %s '
-                    ' -fwhm %f -output %s' % (msk, surf_fn, buck_fn, fwhm, smooth_fn))
+                    ' -fwhm %f -output %s %s' % (msk, surf_fn, buck_fn, fwhm, smooth_fn, sigma_str))
     else:
         cmds.append('; 3dBlurInMask -overwrite %s -FWHM %f -prefix %s -input %s' %
                       (msk, fwhm, smooth_fn, buck_fn))
@@ -218,6 +222,21 @@ def null_clustersize(config):
         sz = 0. # CHECKME whether this makes sense
 
     print "Null data: maximum size %f" % sz
+
+    if is_surf:
+        smoothing_fn_rec = os.path.join(output_dir, _fn(config, 'rand_buck_smooth', '.1D.dset.1D.smrec'))
+        if not os.path.exists(smoothing_fn_rec):
+            raise ValueError("Smoothing did not succeed. Please check the error"
+                             " messaged. You may have to set sigma manually")
+        with open(smoothing_fn_rec) as f:
+            s = f.read()
+
+        final_fwhm = float(s.split()[-2])
+        ratio = fwhm / final_fwhm
+        thr = 0.9
+        if ratio < thr or 1. / ratio < thr:
+            raise ValueError('FWHM converged to %s but expected %s. Consider '
+                             'setting sigma manually' % (final_fwhm, fwhm))
 
     # clean up - remove all temporary files
 
@@ -440,6 +459,7 @@ def get_options():
     parser.add_argument("-m", "--mask", required=False, help="Mask dataset", default=None)
     parser.add_argument("-k", "--keep_files", required=False, help="Keep temporary files", default=False, action="store_true")
     parser.add_argument("-N", "--pad_to_node", required=False, help="pad_to_node (for surfaces)", default=0, type=int)
+    parser.add_argument('-S', "--sigma", required=False, help='sigma for SurfSmooth', default=0., type=float)
 
     args = None
     namespace = parser.parse_args(args)
