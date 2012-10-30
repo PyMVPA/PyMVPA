@@ -220,6 +220,7 @@ if __debug__:
     debug.register('DS_ID',   "ID Datasets")
     debug.register('DS_STATS',"Datasets statistics")
     debug.register('SPL',   "*Splitter")
+    debug.register('APERM', "AttributePermutator")
 
     debug.register('TRAN',  "Transformers")
     debug.register('TRAN_', "Transformers (verbose)")
