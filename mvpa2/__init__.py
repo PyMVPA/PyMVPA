@@ -98,7 +98,7 @@ else:
 # RNGs control
 #
 
-from mvpa2._random import _random_seed, seed
+from mvpa2._random import _random_seed, seed, get_random_seed
 
 #
 # Testing
