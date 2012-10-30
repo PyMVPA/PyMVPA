@@ -25,7 +25,7 @@ from mvpa2.base.info import get_pymvpa_gitversion
 pymvpa_version = get_pymvpa_gitversion()
 if not pymvpa_version:
     import mvpa2
-    pymvpa_version = mvpa.__version__
+    pymvpa_version = mvpa2.__version__
 
 def _license_info():
     return """\
