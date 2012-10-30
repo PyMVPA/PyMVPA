@@ -157,8 +157,6 @@ and used when loading the functional data
 '''
 
 mask = qe.voxsel.get_mask()
-print ("Voxel selection: %d / %d voxels are selected at least once" %
-        (np.sum(mask > 0), mask.size))
 
 """
 From now on we simply follow the example in searchlight.py.

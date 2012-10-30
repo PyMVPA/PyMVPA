@@ -1181,7 +1181,6 @@ class Surface(object):
             components.append(component)
 
             nbr = nbrs[i]
-            print nbr
             candidates = set(nbr)
 
             visited.add(i)
@@ -1209,7 +1208,6 @@ class Surface(object):
             k, v = x, node2component[x]
             while not type(v) is set:
                 k, v = v, node2component[v]
-                #print k, v, node2component
 
             return k, v
 

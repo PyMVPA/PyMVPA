@@ -496,9 +496,15 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                 msg = ("Voxel selection completed: none of %d nodes have "
                      "voxels associated" % len(visitorder))
             else:
+                nvox_selected = np.sum(node2volume_attributes.get_mask() != 0)
+                vg = vol_surf.volgeom
+
                 msg = ("Voxel selection completed: %d / %d nodes have "
-                     "voxels associated" %
-                     (len(node2volume_attributes.keys()), len(visitorder)))
+                     "voxels associated, %d / %d voxels in the voxel mask (out"
+                     " of %d voxels total) were selected at least once." %
+                     (len(node2volume_attributes.keys()), len(visitorder),
+                      nvox_selected, vg.nvoxels_mask,
+                             vg.nvoxels_mask))
 
             debug("SVS", msg)
 
