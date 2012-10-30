@@ -481,10 +481,13 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
 
                 if __debug__:
                     debug('SVS', "Starting block %d/%d: %d centers" %
-                                (i + 1, nproc, len(src_trg)))
+                                (i + 1, nproc, len(src_trg)), cr=True)
 
                 reducer(empty_dict, attribute_mapper, src_trg,
                         eta_step=eta_step, proc_id='%d / %d' % (i + 1, nproc))
+
+            if __debug__:
+                debug('SVS', '')
 
             for i, result in enumerate(results):
                 if i == 0:
@@ -492,7 +495,11 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                 else:
                     node2volume_attributes.merge(result)
                 if __debug__:
-                    debug('SVS', "Merging result block %d/%d" % (i + 1, nproc))
+                    debug('SVS', "Merging result block %d/%d" % (i + 1, nproc),
+                                    cr=True)
+            if __debug__:
+                debug('SVS', '')
+
         else:
             empty_dict = volume_mask_dict.VolumeMaskDictionary(
                                                 vol_surf.volgeom,
@@ -576,7 +583,7 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
                                 progresspat %
                                 (i + 1, n, src, trg), show=False)
                 if not proc_id is None:
-                    msg += ' (process %s)' % proc_id
+                    msg += ' (%s)' % proc_id
                 debug('SVS', msg, cr=True)
 
     return node2volume_attributes
@@ -615,7 +622,7 @@ def _eta(starttime, progress, msg=None, show=True):
 
     f = lambda t:str(datetime.timedelta(seconds=round(t)))
 
-    fullmsg = '%s, took %s, remaining %s' % (msg, f(took), f(eta))
+    fullmsg = '%s, after %s ETA %s' % (msg, f(took), f(eta))
     if show:
         print fullmsg
 
