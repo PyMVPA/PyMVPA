@@ -429,7 +429,7 @@ class RFETests(unittest.TestCase):
         percent = 80
         dataset = datasets['uni4large']
         #dataset = dataset[:, dataset.a.nonbogus_features]
-        
+
         rfesvm_split = LinearCSVMC()
         fs = \
             RFE(rfesvm_split.get_sensitivity_analyzer(
@@ -512,6 +512,30 @@ class RFETests(unittest.TestCase):
         error = cv(datasets['uni2small'])
         self.assertTrue(error < 0.4)
         self.assertTrue(cv.ca.null_prob < 0.05)
+
+    @reseed_rng()
+    def test_RFELearner(self):
+        # just a smoke test ATM
+        from mvpa2.clfs.svm import LinearCSVMC
+        from mvpa2.misc.data_generators import normal_feature_dataset
+        from mvpa2.featsel.rfe import RFE, RFELearner
+        from mvpa2.generators.partition import OddEvenPartitioner
+        from mvpa2.featsel.helpers import FractionTailSelector
+
+        clf = LinearCSVMC(C=1)
+        dataset = normal_feature_dataset(perlabel=20, nlabels=2, nfeatures=30,
+                                         snr=1., nonbogus_features=[1,5])
+        # flip one of the meaningful features around to see
+        # if we are still getting proper selection
+        dataset.samples[:, dataset.a.nonbogus_features[1]] *= -1
+        partitioner = OddEvenPartitioner()#count=1)
+
+        rfeclf = RFELearner(clf, partitioner,
+                            fselector=FractionTailSelector(
+                                0.2, mode='discard', tail='lower'))
+        rfeclf.train(dataset)
+        predictions = rfeclf(dataset).samples
+
 
 def suite():
     return unittest.makeSuite(RFETests)
