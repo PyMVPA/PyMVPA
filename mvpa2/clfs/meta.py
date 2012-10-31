@@ -162,7 +162,9 @@ class BoostedClassifier(Classifier):
         was actually created. It will be used by
         MulticlassClassifier
         """
-        self.__clfs = clfs
+        # tuple to guarantee immutability since we are asssigning
+        # __tags__ below and rely on having clfs populated already
+        self.__clfs = tuple(clfs) if clfs is not None else tuple()
         """Classifiers to use"""
 
         if len(clfs):
@@ -1129,13 +1131,13 @@ class MulticlassClassifier(CombinedClassifier):
         """Train classifier
         """
         # construct binary classifiers
-        self.clfs = biclfs = []
+        biclfs = []
         for poslabels, neglabels in self._get_binary_pairs(dataset):
             biclfs.append(
                 BinaryClassifier(self.__clf.clone(),
                                  poslabels=poslabels,
                                  neglabels=neglabels))
-
+        self.clfs = biclfs                # need to be set after, not operated in-place
         # perform actual training
         CombinedClassifier._train(self, dataset)
 
