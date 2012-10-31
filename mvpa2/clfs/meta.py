@@ -33,7 +33,7 @@ from mvpa2.generators.splitters import Splitter
 from mvpa2.generators.partition import NFoldPartitioner
 from mvpa2.datasets.miscfx import get_samples_by_attr
 from mvpa2.misc.attrmap import AttributeMap
-from mvpa2.base.dochelpers import _str
+from mvpa2.base.dochelpers import _str, _repr_attrs
 from mvpa2.base.state import ConditionalAttribute, ClassWithCollections
 
 from mvpa2.clfs.base import Classifier
@@ -1375,9 +1375,14 @@ class MappedClassifier(ProxyClassifier):
         return ProxyClassifier._predict(self, self.__mapper.forward(dataset))
 
 
-    def __str__(self):
-        return _str(self, '%s-%s' % (self.mapper, self.clf))
+    def __repr__(self, prefixes=[]):
+        return super(MappedClassifier, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['mapper']))
 
+    def __str__(self, *args, **kwargs):
+        return super(MappedClassifier, self).__str__(
+              str(self.mapper), *args, **kwargs)
 
     mapper = property(lambda x:x.__mapper, doc="Used mapper")
 
