@@ -17,6 +17,17 @@ from mvpa2.featsel.base import IterativeFeatureSelection
 from mvpa2.featsel.helpers import BestDetector, \
                                  NBackHistoryStopCrit, \
                                  FractionTailSelector
+
+# For RFELearner
+from mvpa2.clfs.meta import ProxyClassifier, FeatureSelectionClassifier
+from mvpa2.misc.errorfx import mean_mismatch_error
+from mvpa2.measures.base import ProxyMeasure
+from mvpa2.generators.splitters import Splitter
+from mvpa2.mappers.fx import maxofabs_sample, BinaryFxNode
+from mvpa2.base.dochelpers import _str
+from mvpa2.generators.base import Repeater
+
+
 import numpy as np
 from mvpa2.base.state import ConditionalAttribute
 
@@ -101,6 +112,7 @@ class RFE(IterativeFeatureSelection):
                  splitter,
                  fselector=FractionTailSelector(0.05),
                  update_sensitivity=True,
+                 nfeatures_min=0,
                  **kwargs):
         # XXX Allow for multiple stopping criterions, e.g. error not decreasing
         # anymore OR number of features less than threshold
@@ -127,6 +139,8 @@ class RFE(IterativeFeatureSelection):
           If False the sensitivity map is only computed once and reused
           for each iteration. Otherwise the senstitivities are
           recomputed at each selection step.
+        nfeatures_min : int
+          Number of features for RFE to stop if reached.
         """
         # bases init first
         IterativeFeatureSelection.__init__(self, fmeasure, pmeasure, splitter,
@@ -135,6 +149,7 @@ class RFE(IterativeFeatureSelection):
         self.__update_sensitivity = update_sensitivity
         """Flag whether sensitivity map is recomputed for each step."""
 
+        self.nfeatures_min = nfeatures_min
 
     def _train(self, ds):
         """Proceed and select the features recursively eliminating less
@@ -205,6 +220,10 @@ class RFE(IterativeFeatureSelection):
         default -- all features are there"""
         selected_ids = result_selected_ids
 
+        isthebest = True
+        """By default (e.g. no errors even estimated) every step is the best one
+        """
+
         while wdataset.nfeatures > 0:
 
             if __debug__:
@@ -229,15 +248,19 @@ class RFE(IterativeFeatureSelection):
             if ca.is_enabled("sensitivities"):
                 ca.sensitivities.append(sensitivity)
 
-            # get error for current feature set (handles optional retraining)
-            error = self._evaluate_pmeasure(wdataset, wtestdataset)
-            # Record the error
-            errors.append(np.asscalar(error))
+            if self._pmeasure:
+                # get error for current feature set (handles optional retraining)
+                error = np.asscalar(self._evaluate_pmeasure(wdataset, wtestdataset))
+                # Record the error
+                errors.append(error)
 
-            # Check if it is time to stop and if we got
-            # the best result
-            stop = self._stopping_criterion(errors)
-            isthebest = self._bestdetector(errors)
+                # Check if it is time to stop and if we got
+                # the best result
+                if self._stopping_criterion is not None:
+                    stop = self._stopping_criterion(errors)
+                isthebest = self._bestdetector(errors)
+            else:
+                error = None
 
             nfeatures = wdataset.nfeatures
 
@@ -250,11 +273,11 @@ class RFE(IterativeFeatureSelection):
 
             if __debug__:
                 debug('RFEC',
-                      "Step %d: nfeatures=%d error=%.4f best/stop=%d/%d " %
-                      (step, nfeatures, np.asscalar(error), isthebest, stop))
+                      "Step %d: nfeatures=%d error=%s best/stop=%d/%d " %
+                      (step, nfeatures, error, isthebest, stop))
 
             # stop if it is time to finish
-            if nfeatures == 1 or stop:
+            if nfeatures == 1 or nfeatures <= self.nfeatures_min or stop:
                 break
 
             # Select features to preserve
@@ -294,7 +317,9 @@ class RFE(IterativeFeatureSelection):
 
             # we already have the initial sensitivities, so even for a shared
             # classifier we can cleanup here
-            self._pmeasure.untrain()
+            if self._pmeasure:
+                self._pmeasure.untrain()
+
         # charge conditional attributes
         self.ca.errors = errors
         self.ca.selected_ids = result_selected_ids
@@ -306,3 +331,115 @@ class RFE(IterativeFeatureSelection):
         # announce desired features to the underlying slice mapper
         # do copy to survive later selections
         self._safe_assign_slicearg(copy(result_selected_ids))
+
+
+class RFELearner(ProxyClassifier):
+    """Construct for the most common usecase of RFE as a feature selection.
+
+    Given a classifier with a sensitivity analyzer and a partitioner, during
+    training it first performs nested cross-validation with RFE to estimate
+    optimal number of features which should survive in RFE.  Then it applies
+    RFE again on the full training dataset stopping at the estimated optimal
+    number of features to provide a feature-selection classifier.
+    """
+
+    __sa_class__ = None # TODO
+
+    def __init__(self, clf, partitioner, fselector, errorfx=mean_mismatch_error,
+                 analyzer_postproc=maxofabs_sample(),
+                 # callback?
+                 **kwargs):
+        """TODO
+        """
+        ProxyClassifier.__init__(self, clf, **kwargs)
+        self.partitioner = partitioner
+        self.fselector = fselector
+        self.errorfx = errorfx
+        self.analyzer_postproc = analyzer_postproc
+        # this will be the mapped classifier to delegate to
+        self._mclf = None
+
+
+    def _train(self, dataset):
+        sens_ana = self.clf.get_sensitivity_analyzer(postproc=self.analyzer_postproc)
+        pmeasure = ProxyMeasure(self.clf,
+                                postproc=BinaryFxNode(self.errorfx,
+                                                      self.clf.space),
+                                skip_train=True   # do not train since sens_ana will
+            )
+        rfe = RFE(sens_ana,
+                  pmeasure,
+                  Splitter('partitions'),
+                  fselector=self.fselector,
+                  train_pmeasure=False,
+                  stopping_criterion=None,   # full "track"
+                  update_sensitivity=True,
+                  enable_ca=['errors', 'nfeatures'])
+
+        errors, nfeatures = [], []
+
+        if __debug__:
+            debug("RFEC", "Starting with the %s", (dataset,))
+
+        for partition in self.partitioner.generate(dataset):
+            rfe.train(partition)
+            errors.append(rfe.ca.errors)
+            nfeatures.append(rfe.ca.nfeatures)
+
+        # mean errors across splits and find optimal number
+        errors_mean = np.mean(errors, axis=0)
+        nfeatures_mean = np.mean(nfeatures, axis=0)
+        # we will take the "mean location" of the min to stay
+        # within the most 'stable' choice
+
+        mins_idx = np.where(errors_mean==np.min(errors_mean))[0]
+        min_idx = mins_idx[int(len(mins_idx)/2)]
+        min_error = errors_mean[min_idx]
+        assert(min_error == np.min(errors_mean))
+        nfeatures_min = nfeatures_mean[min_idx]
+
+        if __debug__:
+            debug("RFEC",
+                  "Choosing among %d choices to have %d features with "
+                  "mean error=%.2g (initial mean error %.2g)",
+                  (len(mins_idx), nfeatures_min, min_error, errors_mean[0]))
+
+        # Now perform 2nd RFE -- until optimal_n
+        # so we should provide an alternative stopping criterion
+        self._mclf = FeatureSelectionClassifier(
+            self.clf,
+            RFE(sens_ana,
+                None, # we do not have anything to transfer to
+                Repeater(2),
+                fselector=self.fselector,
+                train_pmeasure=False,
+                stopping_criterion=None,
+                nfeatures_min=nfeatures_min,
+                update_sensitivity=True,
+                enable_ca=['nfeatures']))
+        self._mclf.train(dataset)
+
+    def _untrain(self):
+        super(RFELearner, self)._untrain()
+        if self._mclf is not None:
+            self._mclf.untrain()
+            self._mclf = None
+
+
+    def _predict(self, dataset):
+        mclf = self._mclf
+
+        if self.ca.is_enabled('estimates'):
+            mclf.ca.enable(['estimates'])
+
+        result = mclf._predict(dataset)
+        # for the ease of access
+        self.ca._copy_ca_(mclf, ['estimates'], deep=False)
+        return result
+
+
+    def __str__(self):
+        return _str(self, '%s' % (self._mclf,))
+
+
+
