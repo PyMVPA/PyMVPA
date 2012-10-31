@@ -51,6 +51,9 @@ class FeatureSelection(SliceMapper):
     >>> fs0(ds).samples
     array([[1, 3]])
     """
+
+    __init__doc__exclude__ = ['slicearg']
+
     def __init__(self, filler=0, **kwargs):
         """
         Parameters
@@ -363,14 +366,12 @@ class IterativeFeatureSelection(FeatureSelection):
           Given a list of error values it has to return whether the
           criterion is fulfilled.
         fselector : Functor
-        train_clf : bool
-          Flag whether the classifier in `transfer_error` should be
-          trained before computing the error. In general this is
-          required, but if the `sensitivity_analyzer` and
-          `transfer_error` share and make use of the same classifier it
-          can be switched off to save CPU cycles. Default `None` checks
-          if sensitivity_analyzer is based on a classifier and doesn't train
-          if so.
+        train_pmeasure : bool
+          Flag whether the `pmeasure` should be trained before
+          computing the error. In general this is required, but if the
+          `fmeasure` and `pmeasure` share and make use of the same
+          classifier AND `pmeasure` does not really need training, it
+          can be switched off to save CPU cycles.
         """
         # bases init first
         FeatureSelection.__init__(self, **kwargs)
