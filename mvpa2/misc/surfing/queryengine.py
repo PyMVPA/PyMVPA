@@ -265,6 +265,10 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
     add_fa: None or list of strings
         Feature attribtues from a dataset that should be returned if the 
         queryengine is called with a dataset.
+    nproc: int or None
+            Number of parallel threads. None means as many threads as the 
+            system supports. The pprocess is required for parallel threads; if
+            it cannot be used, then a single thread is used.
     
     Returns
     -------
@@ -282,7 +286,7 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
                                 distance_metric=distance_metric,
                                 start_fr=start_fr, stop_fr=stop_fr,
                                 start_mm=start_mm, stop_mm=stop_mm,
-                                nsteps=nsteps, eta_step=1)
+                                nsteps=nsteps, eta_step=1, nproc=nproc)
 
     qe = SurfaceVerticesQueryEngine(voxsel, add_fa=add_fa)
 
