@@ -10,6 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
+from mvpa2.base.dochelpers import _repr_attrs
 from mvpa2.support.copy import copy
 from mvpa2.clfs.transerror import ClassifierError
 from mvpa2.measures.base import Sensitivity
@@ -149,7 +150,14 @@ class RFE(IterativeFeatureSelection):
         self.__update_sensitivity = update_sensitivity
         """Flag whether sensitivity map is recomputed for each step."""
 
-        self.nfeatures_min = nfeatures_min
+        self._nfeatures_min = nfeatures_min
+
+
+    def __repr__(self, prefixes=[]):
+        return super(RFE, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['update_sensitivity'], default=True))
+
 
     def _train(self, ds):
         """Proceed and select the features recursively eliminating less
@@ -258,7 +266,8 @@ class RFE(IterativeFeatureSelection):
                 # the best result
                 if self._stopping_criterion is not None:
                     stop = self._stopping_criterion(errors)
-                isthebest = self._bestdetector(errors)
+                if self._bestdetector is not None:
+                    isthebest = self._bestdetector(errors)
             else:
                 error = None
 
@@ -331,55 +340,118 @@ class RFE(IterativeFeatureSelection):
         # announce desired features to the underlying slice mapper
         # do copy to survive later selections
         self._safe_assign_slicearg(copy(result_selected_ids))
+        # call super to set _Xshape etc
+        super(RFE, self)._train(dataset)
+
+    def _get_nfeatures_min(self):
+        return self._nfeatures_min
+
+    def _set_nfeatures_min(self, v):
+        if self.is_trained:
+            self.untrain()
+        if v < 0:
+            raise ValueError("nfeatures_min must not be negative. Got %s" % v)
+        self._nfeatures_min = v
+
+    nfeatures_min = property(fget=_get_nfeatures_min, fset=_set_nfeatures_min)
+    update_sensitivity = property(fget=lambda self: self.__update_sensitivity)
 
 
-class RFELearner(ProxyClassifier):
-    """Construct for the most common usecase of RFE as a feature selection.
+class SplitRFE(RFE):
+    """RFE with the nested cross-validation to estimate optimal number of features.
 
-    Given a classifier with a sensitivity analyzer and a partitioner, during
-    training it first performs nested cross-validation with RFE to estimate
-    optimal number of features which should survive in RFE.  Then it applies
-    RFE again on the full training dataset stopping at the estimated optimal
-    number of features to provide a feature-selection classifier.
+    Given a learner (classifier) with a sensitivity analyzer and a
+    partitioner, during training SplitRFE first performs a
+    cross-validation with RFE to later estimate optimal number of
+    features which should survive in RFE.  Optimal number is chosen as
+    the mid-point among all minimums of the average errors across
+    splits.  After deducing optimal number of features, SplitRFE
+    applies regular RFE again on the full training dataset stopping at
+    the estimated optimal number of features.
     """
 
-    __sa_class__ = None # TODO
+    # exclude those since we are really an adapter here
+    __init__doc__exclude__ = RFE.__init__doc__exclude__ + \
+      ['fmeasure', 'pmeasure', 'splitter',
+       'train_pmeasure', 'stopping_criterion',
+       'bestdetector',   # now it is a diff strategy
+       'nfeatures_min'   # will get 'trained'
+       ]
 
-    def __init__(self, clf, partitioner, fselector, errorfx=mean_mismatch_error,
+    def __init__(self, lrn, partitioner,
+                 fselector,
+                 errorfx=mean_mismatch_error,
                  analyzer_postproc=maxofabs_sample(),
                  # callback?
                  **kwargs):
-        """TODO
         """
-        ProxyClassifier.__init__(self, clf, **kwargs)
+        Parameters
+        ----------
+        lrn : Learner
+          Learner with a sensitivity analyzer which will be used both
+          for the sensitivity analysis and transfer error estimation
+        partitioner : Partitioner
+          Used to generate cross-validation partitions for cross-validation
+          to deduce optimal number of features to maintain
+        errorfx : func, optional
+          Functor to use for estimation of cross-validation error
+        analyzer_postproc : func, optional
+          Function to provide to the sensitivity analyzer as postproc
+        """
+        # Initialize itself preparing for the 2nd invocation
+        # with determined number of nfeatures_min
+        fmeasure = lrn.get_sensitivity_analyzer(postproc=analyzer_postproc)
+
+        RFE.__init__(self,
+                     fmeasure,
+                     None,
+                     Repeater(2),
+                     fselector=fselector,
+                     bestdetector=None,
+                     train_pmeasure=False,
+                     stopping_criterion=None,
+                     **kwargs)
+        self._lrn = lrn                   # should not be modified, thus _
         self.partitioner = partitioner
-        self.fselector = fselector
         self.errorfx = errorfx
         self.analyzer_postproc = analyzer_postproc
-        # this will be the mapped classifier to delegate to
-        self._mclf = None
 
+    def __repr__(self, prefixes=[]):
+        return super(SplitRFE, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['lrn', 'partitioner'])
+            + _repr_attrs(self, ['errorfx'], default=mean_mismatch_error)
+            + _repr_attrs(self, ['analyzer_postproc'], default=maxofabs_sample())
+            )
+
+
+    @property
+    def lrn(self):
+        return self._lrn
 
     def _train(self, dataset):
-        sens_ana = self.clf.get_sensitivity_analyzer(postproc=self.analyzer_postproc)
-        pmeasure = ProxyMeasure(self.clf,
+        pmeasure = ProxyMeasure(self.lrn,
                                 postproc=BinaryFxNode(self.errorfx,
-                                                      self.clf.space),
-                                skip_train=True   # do not train since sens_ana will
-            )
-        rfe = RFE(sens_ana,
+                                                      self.lrn.space),
+                                skip_train=True   # do not train since fmeasure will
+                                )
+
+        # First we need to replicate our RFE construct but this time
+        # with pmeasure for the classifier
+        rfe = RFE(self.fmeasure,
                   pmeasure,
                   Splitter('partitions'),
                   fselector=self.fselector,
+                  bestdetector=None,
                   train_pmeasure=False,
                   stopping_criterion=None,   # full "track"
-                  update_sensitivity=True,
+                  update_sensitivity=self.update_sensitivity,
                   enable_ca=['errors', 'nfeatures'])
 
         errors, nfeatures = [], []
 
         if __debug__:
-            debug("RFEC", "Starting with the %s", (dataset,))
+            debug("RFEC", "Stage 1: initial nested CV/RFE for %s", (dataset,))
 
         for partition in self.partitioner.generate(dataset):
             rfe.train(partition)
@@ -404,42 +476,16 @@ class RFELearner(ProxyClassifier):
                   "mean error=%.2g (initial mean error %.2g)",
                   (len(mins_idx), nfeatures_min, min_error, errors_mean[0]))
 
-        # Now perform 2nd RFE -- until optimal_n
-        # so we should provide an alternative stopping criterion
-        self._mclf = FeatureSelectionClassifier(
-            self.clf,
-            RFE(sens_ana,
-                None, # we do not have anything to transfer to
-                Repeater(2),
-                fselector=self.fselector,
-                train_pmeasure=False,
-                stopping_criterion=None,
-                nfeatures_min=nfeatures_min,
-                update_sensitivity=True,
-                enable_ca=['nfeatures']))
-        self._mclf.train(dataset)
+        self.nfeatures_min = nfeatures_min
+
+        if __debug__:
+            debug("RFEC", "Stage 2: running RFE on full training dataset to "
+                  "distil best %d features" % nfeatures_min)
+
+        super(SplitRFE, self)._train(dataset)
+
 
     def _untrain(self):
-        super(RFELearner, self)._untrain()
-        if self._mclf is not None:
-            self._mclf.untrain()
-            self._mclf = None
-
-
-    def _predict(self, dataset):
-        mclf = self._mclf
-
-        if self.ca.is_enabled('estimates'):
-            mclf.ca.enable(['estimates'])
-
-        result = mclf._predict(dataset)
-        # for the ease of access
-        self.ca._copy_ca_(mclf, ['estimates'], deep=False)
-        return result
-
-
-    def __str__(self):
-        return _str(self, '%s' % (self._mclf,))
-
-
+        super(SplitRFE, self)._untrain()
+        self.nfeatures_min = 0            # reset the knowledge
 
