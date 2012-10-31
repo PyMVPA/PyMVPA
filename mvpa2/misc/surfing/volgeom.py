@@ -408,8 +408,8 @@ class VolGeom():
             Number of values in each dimension
         '''
 
-
         return self._shape
+
 
     @property
     def nvoxels_mask(self):
@@ -419,7 +419,6 @@ class VolGeom():
         int
             Number of voxels that survive the mask'''
         return self.nvoxels if self.mask is None else np.sum(self.mask)
-
 
 
     def contains_ijk(self, ijk):
@@ -611,8 +610,9 @@ def distance(p, q, r=2):
     def dist_func(a, b, r):
         delta = a - b
         if np.isinf(r):
-            return np.max(np.abs(delta))
-        return np.sum(delta ** r, 1) ** (1. / r)
+            return np.max(np.abs(delta), 1)
+        else:
+            return np.sum(delta ** r, 1) ** (1. / r)
 
     for i, pi in enumerate(p):
         ds[i, :] = dist_func(pi, q, r)
