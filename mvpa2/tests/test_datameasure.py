@@ -425,7 +425,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                   feature_selector=FeatureSelectionPipeline(
                       [FractionTailSelector(0.5),
                        FixedNElementTailSelector(1)]),
-                  train_clf=True)
+                  train_pmeasure=True)
 
         # and we get sensitivity analyzer which works on splits and uses
         # sensitivity
