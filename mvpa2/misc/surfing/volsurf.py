@@ -45,9 +45,12 @@ class VolSurf():
         if not self._pial.same_topology(self._white):
             raise Exception("Not same topology for white and pial")
 
-    def __repr__(self):
-        r = ("VolSurf(%r,%r,%r)" % (self._volgeom, self._pial, self._white))
-        return r
+    def __repr__(self, prefixes=[]):
+        prefixes_ = ['vg=%r' % self._volgeom,
+                     'white=%r' % self._white,
+                     'pial=%r' % self._pial] + prefixes
+        return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
+
 
     @property
     def pial_surface(self):

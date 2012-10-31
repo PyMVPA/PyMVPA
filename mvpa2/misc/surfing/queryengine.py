@@ -182,6 +182,11 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
         -------
         vertex_id: int
             Vertex index of vertex nearest to the feature with id feature_id.
+            
+        Notes
+        -----
+        This function assumes that the feature_id provided was selected
+        at least by one vertex_id.
         '''
 
         if type(feature_id) in (list, tuple):
@@ -203,6 +208,11 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
         -------
         feature_id: int
             Index of feature nearest to the vertex with id vertex_id.
+            
+        Notes
+        -----
+        This function only considers feature ids that are selected by
+        at least one vertex_id..
         '''
         if type(vertex_id) in (list, tuple):
             return map(self.vertex_id2nearest_feature_id, vertex_id)

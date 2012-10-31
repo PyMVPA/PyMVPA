@@ -61,6 +61,15 @@ class VolGeom():
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __repr__(self, prefixes=[]):
+        prefixes_ = ['shape=%r' % self._shape,
+                     'affine=%r' % self.affine] + prefixes
+        if not mask is None:
+            prefixes_ += ['mask=%r' % self._mask]
+        return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
+
+
+
     def as_pickable(self):
         '''
         Returns a pickable instance.
