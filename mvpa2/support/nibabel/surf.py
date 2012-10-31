@@ -630,9 +630,12 @@ class Surface(object):
 
         return ss, nsel, fsel, ss_src
 
-    def __repr__(self):
-        s = []
-        s.append("%d nodes, %d faces" % (self._nv, self._nf))
+    def __repr__(self, prefixes=[]):
+        prefixes_ = ['v=%r' % self._v, 'f=%r' % self._f] + prefixes
+        return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
+
+    def __str__(self):
+        s = ['%r' % self]
 
         nfirst = 3 # how many of first and last nodes and faces to show
 
