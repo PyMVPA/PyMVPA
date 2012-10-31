@@ -22,7 +22,7 @@ from mvpa2.clfs.gda import LDA, QDA
 from mvpa2.clfs.gnb import GNB
 from mvpa2.kernels.np import LinearKernel, SquaredExponentialKernel, \
      GeneralizedLinearKernel
-from mvpa2.featsel.rfe import RFELearner
+from mvpa2.featsel.rfe import SplitRFE
 
 
 # Helpers
@@ -492,12 +492,15 @@ if len(clfswh['linear', 'svm']) > 0:
                 RangeElementSelector(mode='select')),
              descr="LinSVM on SMLR(lm=0.1) non-0")
 
+    _rfeclf = linearSVMC.clone()
     clfswh += \
-         RFELearner(
-             linearSVMC.clone(),
-             OddEvenPartitioner(),
-             fselector=FractionTailSelector(
-                 0.2, mode='discard', tail='lower'),
+         FeatureSelectionClassifier(
+             _rfeclf,
+             SplitRFE(
+                 _rfeclf,
+                 OddEvenPartitioner(),
+                 fselector=FractionTailSelector(
+                     0.2, mode='discard', tail='lower')),
              descr="LinSVM with nested-CV RFE")
 
     clfswh += \
