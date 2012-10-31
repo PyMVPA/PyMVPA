@@ -374,6 +374,10 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
         eta_step: int (default: 1)
             After how many searchlights an estimate should be printed of the 
             remaining time until completion of all searchlights
+        nproc: int or None
+            Number of parallel threads. None means as many threads as the 
+            system supports. The pprocess is required for parallel threads; if
+            it cannot be used, then a single thread is used. 
 
         Returns
         -------
@@ -464,6 +468,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                 nproc = 1
 
         if nproc > 1:
+            import pprocess
             n_srcs = len(src_trg_nodes)
             blocks = np.array_split(np.arange(n_srcs), nproc)
 
@@ -508,34 +513,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                                                     attribute_mapper,
                                                     src_trg_nodes,
                                                     eta_step=eta_step)
-        '''
-        tstart = time.time()
-        # walk over all nodes
-        for i, order in enumerate(visitorder):
-            # source node on source_surf
-            src = source_surf_nodes[order]
 
-            # corresponding node on high-resolution intermediate surface
-            intermediate = src2intermediate[src]
-
-            idxs, misc_attrs = attribute_mapper(intermediate)
-
-            if idxs is not None:
-                if node2volume_attributes is None:
-                    node2volume_attributes = \
-                        volume_mask_dict.VolumeMaskDictionary(vol_surf.volgeom,
-                                                vol_surf.intermediate_surface)
-
-                    # store attribtues results
-                node2volume_attributes.add(int(src), idxs, misc_attrs)
-
-
-            if __debug__ and eta_step and (i % eta_step == 0 or i == n - 1):
-                msg = _eta(tstart, float(i + 1) / n,
-                                progresspat %
-                                (i + 1, n, src, intermediate), show=False)
-                debug('SVS', msg, cr=True)
-        '''
         if __debug__:
             debug('SVS', "")
 
@@ -678,6 +656,10 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
     eta_step: int (default: 1)
         After how many searchlights an estimate should be printed of the 
         remaining time until completion of all searchlights
+    nproc: int or None
+            Number of parallel threads. None means as many threads as the 
+            system supports. The pprocess is required for parallel threads; if
+            it cannot be used, then a single thread is used.
     
     Returns
     -------
@@ -696,7 +678,7 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
                           distance_metric=distance_metric,
                           start_fr=start_fr, stop_fr=stop_fr,
                           start_mm=start_mm, stop_mm=stop_mm,
-                          nsteps=nsteps, eta_step=1)
+                          nsteps=nsteps, eta_step=1, nproc=nproc)
 
     return sel
 
