@@ -62,9 +62,9 @@ class VolGeom():
         return not self.__eq__(other)
 
     def __repr__(self, prefixes=[]):
-        prefixes_ = ['shape=%r' % self._shape,
-                     'affine=%r' % self.affine] + prefixes
-        if not mask is None:
+        prefixes_ = ['shape=(%s)' % ','.join(['%r' % i for i in self._shape]),
+                     'affine=%r' % self._affine] + prefixes
+        if not self._mask is None:
             prefixes_ += ['mask=%r' % self._mask]
         return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
 
