@@ -95,17 +95,10 @@ class VolumeMaskDictionary(Mapping):
             raise ValueError('%r already in %r' % (src, self))
 
         self._src2nbr[src] = nbrs
-
-        n = len(nbrs)
-        contains = self.volgeom.contains_lin(np.asarray(nbrs))
-        for i, nbr in enumerate(nbrs):
-            if not contains[i]:
-                raise ValueError("Target not in volume: %s" % nbr)
-            if not nbr in self._nbr2src:
-                self._nbr2src[nbr] = set()
-            self._nbr2src[nbr].add(src)
+        self._add_target2source(src)
 
         if aux:
+            n = len(nbrs)
             if self._aux_keys and (set(aux) != self._aux_keys):
                 raise ValuError("aux label mismatch: %r != %r" %
                                 (set(aux), self._aux_keys))
@@ -117,6 +110,17 @@ class VolumeMaskDictionary(Mapping):
                     self._src2aux[k] = dict()
                 self._src2aux[k][src] = v
                 self._aux_keys.add(k)
+
+    def _add_target2source(self, src):
+        targets = self[src]
+        n = len(targets)
+        contains = self.volgeom.contains_lin(np.asarray(targets))
+        for i, target in enumerate(targets):
+            if not contains[i]:
+                raise ValueError("Target not in volume: %s" % target)
+            if not target in self._nbr2src:
+                self._nbr2src[target] = set()
+            self._nbr2src[target].add(src)
 
     def get_tuple_list(self, src, *labels):
         '''
@@ -283,7 +287,7 @@ class VolumeMaskDictionary(Mapping):
         return self.get(key)
 
     def __len__(self):
-        return len(self.__keys__)
+        return len(self.__keys__())
 
     def __keys__(self):
         return list(self._src2nbr)
@@ -297,12 +301,19 @@ class VolumeMaskDictionary(Mapping):
                 self.__getstate__())
 
     def __getstate__(self):
+        # due to issues with saving self_nbr2src, it is not returned as part
+        # of the current state. instead it is derived when __setstate__ is 
+        # called.
         return (self._volgeom, self._source, self._src2nbr,
-                self._src2aux, self._nbr2src)
+                self._src2aux)
 
     def __setstate__(self, s):
         self._volgeom, self._source, self._src2nbr, \
-                                self._src2aux, self._nbr2src = s
+                                self._src2aux = s
+        # storing the target2source information seems impossible with h5save.
+        # therefore re-generate this information
+        for src in self.keys():
+            self._add_target2source(src)
 
     def __eq__(self, other):
         if not self.same_layout(other):
@@ -481,3 +492,4 @@ def read(fn):
     with open(fn) as f:
         r = pickle.load(fn)
     return r
+

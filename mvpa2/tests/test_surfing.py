@@ -26,12 +26,13 @@ from mvpa2.measures.base import Measure
 from mvpa2.datasets.mri import fmri_dataset
 
 from mvpa2.misc.surfing import volgeom, volsurf, \
-                                volume_mask, surf_voxel_selection, \
+                                volume_mask_dict, surf_voxel_selection, \
                                 queryengine
 
 from mvpa2.support.nibabel import surf, surf_fs_asc
 
 from mvpa2.measures.searchlight import Searchlight
+from mvpa2.base.hdf5 import h5save, h5load
 
 
 class SurfTests(unittest.TestCase):
@@ -358,47 +359,48 @@ class SurfTests(unittest.TestCase):
 
     def test_volume_mask_dict(self):
         sh = (20, 20, 20)
-    msk = np.zeros(sh)
-    for i in xrange(0, sh[0], 2):
-        msk[i, :, :] = 1
-    vg = volgeom.VolGeom(sh, np.identity(4), mask=msk)
+        msk = np.zeros(sh)
+        for i in xrange(0, sh[0], 2):
+            msk[i, :, :] = 1
+        vg = volgeom.VolGeom(sh, np.identity(4), mask=msk)
 
-    density = 20
+        density = 20
 
-    outer = surf.generate_sphere(density) * 10. + 5
-    inner = surf.generate_sphere(density) * 5. + 5
+        outer = surf.generate_sphere(density) * 10. + 5
+        inner = surf.generate_sphere(density) * 5. + 5
 
-    intermediate = outer * .5 + inner * .5
-    xyz = intermediate.vertices
+        intermediate = outer * .5 + inner * .5
+        xyz = intermediate.vertices
 
-    radius = 50
+        radius = 50
 
-    sel = surf_voxel_selection.run_voxel_selection(radius, vg, inner, outer)
-    assert_equal(intermediate, sel.source)
-    assert_equal(len(sel.keys()), 360)
-    assert_true(set(sel.aux_keys()).issubset(set(['center_distances',
-                                                  'grey_matter_position'])))
+        sel = surf_voxel_selection.run_voxel_selection(radius, vg, inner, outer)
+        assert_equal(intermediate, sel.source)
+        assert_equal(len(sel.keys()), 360)
+        assert_true(set(sel.aux_keys()).issubset(set(['center_distances',
+                                                      'grey_matter_position'])))
 
-    msk_lin = msk.ravel()
-    sel_msk_lin = sel.get_mask().ravel()
-    for i in xrange(vg.nvoxels):
-        if msk_lin[i]:
-            src = sel.target2nearest_source(i)
-            assert_false((src is None) ^ (sel_msk_lin[i] == 0))
 
-            if src is None:
-                continue
+        msk_lin = msk.ravel()
+        sel_msk_lin = sel.get_mask().ravel()
+        for i in xrange(vg.nvoxels):
+            if msk_lin[i]:
+                src = sel.target2nearest_source(i)
+                assert_false((src is None) ^ (sel_msk_lin[i] == 0))
 
-            src_anywhere = sel.target2nearest_source(i, fallback_euclidian_distance=True)
-            xyz_src = xyz[src_anywhere]
-            xyz_trg = vg.lin2xyz(np.asarray([i]))
+                if src is None:
+                    continue
 
-            ds = volgeom.distance(xyz, xyz_trg)
-            d = volgeom.distance(np.reshape(xyz_src, (1, 3)), xyz_trg)
+                src_anywhere = sel.target2nearest_source(i, fallback_euclidian_distance=True)
+                xyz_src = xyz[src_anywhere]
+                xyz_trg = vg.lin2xyz(np.asarray([i]))
 
-            ii = np.argmin(ds)
+                ds = volgeom.distance(xyz, xyz_trg)
+                d = volgeom.distance(np.reshape(xyz_src, (1, 3)), xyz_trg)
 
-            assert_false(np.min(ds) != d and ii in sel.get_targets())
+                ii = np.argmin(ds)
+
+                assert_false(np.min(ds) != d and ii in sel.get_targets())
 
 
 
@@ -459,11 +461,12 @@ class SurfTests(unittest.TestCase):
             assert_true(all([lab in labs for lab in expected_labs]))
 
 
-            # some I/O testing
-            _, fn = tempfile.mkstemp('.pickle', 'test')
-            sparse_attributes.to_file(fn, sel)
 
-            sel2 = sparse_attributes.from_file(fn)
+            # some I/O testing
+            _, fn = tempfile.mkstemp('.h5py', 'test')
+            h5save(fn, sel)
+
+            sel2 = h5load(fn)
             os.remove(fn)
 
             assert_equal(sel, sel2)
@@ -545,7 +548,7 @@ class SurfTests(unittest.TestCase):
 
 
             # check nearest node is *really* the nearest node
-            #vox2nearest = sparse_attributes.voxel2nearest_node(sel)
+
             allvx = sel.get_targets()
             intermediate = outer * .5 + inner * .5
 
