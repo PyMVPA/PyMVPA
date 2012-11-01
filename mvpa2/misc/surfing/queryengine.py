@@ -170,23 +170,26 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
         return [i for i, j in self._map_voxel_coord.iteritems()
                                   if feature_id in j]
 
-    def feature_id2nearest_vertex_id(self, feature_id):
+    def feature_id2nearest_vertex_id(self, feature_id,
+                                     fallback_euclidian_distance=False):
         '''Computes the index of the vertex nearest to a given voxel.
         
         Parameters
         ----------
         feature_id: int
             Feature index (referring to a voxel).
+        fallback_euclidian_distance: bool (default: False)
+            If the voxel indexed by feature_id was not selected by any searchlight,
+            then None is returned if fallback_euclidian_distance is False, but 
+            vertex_id with the nearest Euclidian distance is returned if True. 
             
         Returns
         -------
         vertex_id: int
             Vertex index of vertex nearest to the feature with id feature_id.
+            By default this function only considers vertices that are in one
+            or more searchlights
             
-        Notes
-        -----
-        This function assumes that the feature_id provided was selected
-        at least by one vertex_id.
         '''
 
         if type(feature_id) in (list, tuple):
@@ -194,7 +197,8 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
 
         lin_voxs = self.feature_id2linear_voxel_ids(feature_id)
 
-        return self.voxsel.target2nearest_source(lin_voxs)
+        return self.voxsel.target2nearest_source(lin_voxs,
+                      fallback_euclidian_distance=fallback_euclidian_distance)
 
     def vertex_id2nearest_feature_id(self, vertex_id):
         '''Computes the index of the voxel nearest to a given vertex.

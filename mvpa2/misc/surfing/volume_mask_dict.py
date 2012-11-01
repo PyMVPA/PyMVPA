@@ -416,7 +416,7 @@ class VolumeMaskDictionary(Mapping):
         if ss is None:
             ss = self.keys()
         if not isinstance(ss, np.ndarray):
-            if type(ss) in (int, basestring):
+            if type(ss) is int:
                 ss = [ss]
             ss = np.asarray(list(ss)).ravel()
 
@@ -430,7 +430,7 @@ class VolumeMaskDictionary(Mapping):
     def source(self):
         return self._source
 
-    def target2nearest_source(self, target):
+    def target2nearest_source(self, target, fallback_euclidian_distance=False):
         targets = []
         if type(target) in (list, tuple):
             for t in target:
@@ -443,14 +443,24 @@ class VolumeMaskDictionary(Mapping):
         src = self.target2sources(targets)
         flat_srcs = []
         for s in src:
-            for j in s:
-                flat_srcs.append(j)
+            if s:
+                for j in s:
+                    flat_srcs.append(j)
+
+        if not flat_srcs:
+            if fallback_euclidian_distance:
+                flat_srcs = self.keys()
+            else:
+                return None
 
         xyz_srcs = self.xyz_source(flat_srcs)
         d = volgeom.distance(xyz_srcs, xyz_trg)
         i = np.argmin(d)
 
-        return flat_srcs[i / xyz_trg.shape[0]]
+        # d is a 2D array, get the row number with the lowest d
+        source = flat_srcs[i / xyz_trg.shape[0]]
+
+        return source
 
     def source2nearest_target(self, source):
         trgs = self.__getitem__(source)
