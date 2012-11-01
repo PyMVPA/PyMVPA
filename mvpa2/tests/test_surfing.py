@@ -25,8 +25,8 @@ from mvpa2.datasets import Dataset
 from mvpa2.measures.base import Measure
 from mvpa2.datasets.mri import fmri_dataset
 
-from mvpa2.misc.surfing import sparse_attributes, volgeom, volsurf, \
-                                sparse_attributes, surf_voxel_selection, \
+from mvpa2.misc.surfing import volgeom, volsurf, \
+                                volume_mask, surf_voxel_selection, \
                                 queryengine
 
 from mvpa2.support.nibabel import surf, surf_fs_asc
@@ -354,54 +354,54 @@ class SurfTests(unittest.TestCase):
         voxel_expected = [1498, 1498, 4322, 4986, 7391, 10141]
         assert_equal(voxel_counter, voxel_expected)
 
-        ''' disabled (for now) as we on't use spare attributes anymore
 
-    
 
-    def _test_sparse_attributes(self):
+    def test_volume_mask_dict(self):
+        sh = (20, 20, 20)
+    msk = np.zeros(sh)
+    for i in xrange(0, sh[0], 2):
+        msk[i, :, :] = 1
+    vg = volgeom.VolGeom(sh, np.identity(4), mask=msk)
 
-        # generate a very small dataset
-        payload = {1:([1, 2], [.2, .3]),
-                   2:([3, 4, 5], [.4, .7, .8]),
-                   6:([3, 4, 8, 9], [.1, .3, .2, .2])}
+    density = 20
 
-        payload_labels = ['linear_voxel_indices', 'center_distances']
+    outer = surf.generate_sphere(density) * 10. + 5
+    inner = surf.generate_sphere(density) * 5. + 5
 
-        sa = sparse_attributes.SparseAttributes(payload_labels)
-        for k, v in payload.iteritems():
-            d = dict()
-            for i, label in enumerate(payload_labels):
-                d[label] = v[i]
-            sa.add(k, d)
+    intermediate = outer * .5 + inner * .5
+    xyz = intermediate.vertices
 
-        sa.a['some general attribute'] = 'voxel selection example'
+    radius = 50
 
-        assert_equal(set(payload_labels), set(sa.sa_labels))
+    sel = surf_voxel_selection.run_voxel_selection(radius, vg, inner, outer)
+    assert_equal(intermediate, sel.source)
+    assert_equal(len(sel.keys()), 360)
+    assert_true(set(sel.aux_keys()).issubset(set(['center_distances',
+                                                  'grey_matter_position'])))
 
-        # getting data in different ways should always give
-        # expected results
-        for i, label in enumerate(payload_labels):
-            it = sa.get_attr_mapping(label)
-            for k, v in it.iteritems():
-                assert_equal(v, it[k])
-                assert_equal(v, payload[k][i])
-                assert_equal(sa.get(k, label), v)
+    msk_lin = msk.ravel()
+    sel_msk_lin = sel.get_mask().ravel()
+    for i in xrange(vg.nvoxels):
+        if msk_lin[i]:
+            src = sel.target2nearest_source(i)
+            assert_false((src is None) ^ (sel_msk_lin[i] == 0))
 
-        # test I/O
-        _, fn = tempfile.mkstemp('.pickle', 'test')
+            if src is None:
+                continue
 
-        sparse_attributes.to_file(fn, sa)
-        sb = sparse_attributes.from_file(fn)
-        os.remove(fn)
+            src_anywhere = sel.target2nearest_source(i, fallback_euclidian_distance=True)
+            xyz_src = xyz[src_anywhere]
+            xyz_trg = vg.lin2xyz(np.asarray([i]))
 
-        # check stuff in file is the same
-        for label in payload_labels:
-            ma = sa.get_attr_mapping(label)
-            mb = sb.get_attr_mapping(label)
+            ds = volgeom.distance(xyz, xyz_trg)
+            d = volgeom.distance(np.reshape(xyz_src, (1, 3)), xyz_trg)
 
-            for k in ma:
-                assert_equal(ma[k], mb[k])
-    '''
+            ii = np.argmin(ds)
+
+            assert_false(np.min(ds) != d and ii in sel.get_targets())
+
+
+
 
     def test_surf_voxel_selection(self):
         vg = volgeom.VolGeom((50, 50, 50), np.identity(4))
