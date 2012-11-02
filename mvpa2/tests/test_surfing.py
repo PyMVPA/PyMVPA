@@ -374,33 +374,37 @@ class SurfTests(unittest.TestCase):
 
         radius = 50
 
-        sel = surf_voxel_selection.run_voxel_selection(radius, vg, inner, outer)
-        assert_equal(intermediate, sel.source)
-        assert_equal(len(sel.keys()), 360)
-        assert_true(set(sel.aux_keys()).issubset(set(['center_distances',
-                                                      'grey_matter_position'])))
+        outside_node_margins = [None, 0, 100.]
+        expected_center_count = [360, 360, intermediate.nvertices]
+        for k, outside_node_margin in enumerate(outside_node_margins):
 
+            sel = surf_voxel_selection.run_voxel_selection(radius, vg, inner, outer,
+                                            outside_node_margin=outside_node_margin)
+            assert_equal(intermediate, sel.source)
+            assert_equal(len(sel.keys()), expected_center_count[k])
+            assert_true(set(sel.aux_keys()).issubset(set(['center_distances',
+                                                          'grey_matter_position'])))
 
-        msk_lin = msk.ravel()
-        sel_msk_lin = sel.get_mask().ravel()
-        for i in xrange(vg.nvoxels):
-            if msk_lin[i]:
-                src = sel.target2nearest_source(i)
-                assert_false((src is None) ^ (sel_msk_lin[i] == 0))
+            msk_lin = msk.ravel()
+            sel_msk_lin = sel.get_mask().ravel()
+            for i in xrange(vg.nvoxels):
+                if msk_lin[i]:
+                    src = sel.target2nearest_source(i)
+                    assert_false((src is None) ^ (sel_msk_lin[i] == 0))
 
-                if src is None:
-                    continue
+                    if src is None:
+                        continue
 
-                src_anywhere = sel.target2nearest_source(i, fallback_euclidian_distance=True)
-                xyz_src = xyz[src_anywhere]
-                xyz_trg = vg.lin2xyz(np.asarray([i]))
+                    src_anywhere = sel.target2nearest_source(i, fallback_euclidian_distance=True)
+                    xyz_src = xyz[src_anywhere]
+                    xyz_trg = vg.lin2xyz(np.asarray([i]))
 
-                ds = volgeom.distance(xyz, xyz_trg)
-                d = volgeom.distance(np.reshape(xyz_src, (1, 3)), xyz_trg)
+                    ds = volgeom.distance(xyz, xyz_trg)
+                    d = volgeom.distance(np.reshape(xyz_src, (1, 3)), xyz_trg)
 
-                ii = np.argmin(ds)
+                    ii = np.argmin(ds)
 
-                assert_false(np.min(ds) != d and ii in sel.get_targets())
+                    assert_false(np.min(ds) != d and ii in sel.get_targets())
 
 
 
@@ -583,12 +587,6 @@ def suite():
     """Create the suite"""
     return unittest.makeSuite(SurfTests)
 
-
 if __name__ == '__main__':
     import runner
-
-
-
-
-
 

@@ -230,7 +230,8 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
                              source_surf=None, source_surf_nodes=None,
                              volume_mask=False, distance_metric='dijkstra',
                              start_mm=0, stop_mm=0, start_fr=0., stop_fr=1.,
-                             nsteps=10, eta_step=1, add_fa=None, nproc=None):
+                             nsteps=10, eta_step=1, add_fa=None, nproc=None,
+                             outside_node_margin=None):
 
     """
     Voxel selection wrapper for multiple center nodes on the surface
@@ -280,9 +281,15 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
         Feature attribtues from a dataset that should be returned if the 
         queryengine is called with a dataset.
     nproc: int or None
-            Number of parallel threads. None means as many threads as the 
-            system supports. The pprocess is required for parallel threads; if
-            it cannot be used, then a single thread is used.
+        Number of parallel threads. None means as many threads as the 
+        system supports. The pprocess is required for parallel threads; if
+        it cannot be used, then a single thread is used.
+    outside_node_margin: float or None (default)
+        By default nodes outside the volume are skipped; using this 
+        parameters allows for a marign. If this value is not none,
+        then all nodes within outside_node_margin Dijkstra distance from
+        any node within the volume are still assigned associated voxels.
+
     
     Returns
     -------
@@ -300,7 +307,8 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
                                 distance_metric=distance_metric,
                                 start_fr=start_fr, stop_fr=stop_fr,
                                 start_mm=start_mm, stop_mm=stop_mm,
-                                nsteps=nsteps, eta_step=1, nproc=nproc)
+                                nsteps=nsteps, eta_step=1, nproc=nproc,
+                                outside_node_margin=outside_node_margin)
 
     qe = SurfaceVerticesQueryEngine(voxsel, add_fa=add_fa)
 
