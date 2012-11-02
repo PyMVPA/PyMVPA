@@ -8,20 +8,23 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """
-Searchlight on fMRI data
+Surface-based searchlight on fMRI data
 ========================
 
-.. index:: Searchlight
+.. index:: SurfaceSearchlight
 
-This example is adapted from doc/searchlight.py.
+This example is adapted from doc/searchlight.py. It employs a surface-based
+searchlight as described in :ref:`Oosterhof et al. (2011) <OWD+11>`, with a 
+minor difference that distances are currently computed using a Dijkstra 
+distance metric rather than a geodesic one.
+
+More details can be found at the `Surfing <http://surfing.sourceforge.net>`_  
+website. 
 
 As always, we first have to import PyMVPA.
 """
 
 from mvpa2.suite import *
-
-# to write output that AFNI's SUMA can understand
-from mvpa2.support.nibabel import afni_niml_dset
 
 """As searchlight analyses are usually quite expensive in term of computational
 resources, we are going to enable some progress output to entertain us while
@@ -32,24 +35,19 @@ if __debug__:
     from mvpa2.base import debug
     debug.active += ["SVS", "SLC"]
 
-"""The next few calls load an fMRI dataset, while assigning associated class
-targets and chunks (experiment runs) to each volume in the 4D timeseries.  One
-aspect is worth mentioning. When loading the fMRI data with
-:func:`~mvpa2.datasets.mri.fmri_dataset()` additional feature attributes can be
-added, by providing a dictionary with names and source pairs to the `add_fa`
-arguments. In this case we are loading a thresholded zstat-map of a category
-selectivity contrast for voxels ventral temporal cortex."""
+"""Define surface and volume data paths"""
 
-# data path
 datapath = os.path.join(pymvpa_datadbroot,
                         'tutorial_data', 'tutorial_data', 'data', 'surfing')
 
 """Define functional data volume filename"""
+
 epi_fn = os.path.join(datapath, '..', 'bold.nii.gz')
 
 """
 We're concerned with the left hemisphere only.
 """
+
 hemi = 'l'
 
 """
@@ -58,6 +56,7 @@ These surfaces were resampled using AFNI's MapIcosahedron; ld refers to
 the number of linear divisions of the 'large' triangles of the original
 icosahedron (ld=x means there are 10*x**2+2 nodes and 20*x**2 triangles).
 """
+
 highres_ld = 128 # 64 or 128 is reasonable
 
 pial_surf_fn = os.path.join(datapath, "ico%d_%sh.pial_al.asc"
@@ -66,11 +65,8 @@ white_surf_fn = os.path.join(datapath, "ico%d_%sh.smoothwm_al.asc"
                                       % (highres_ld, hemi))
 
 """
-The surface on which the nodes are centers of the searchlight. We use a
-coarser surface (fewer nodes). A limitation of the current surface-based
-searchlight implementation in PyMVPA is that the number of voxels cannot
-exceed the number of nodes (i.e. 10*lowres_ld**2+2 should not exceed the
-number of nodes.
+Define the surface on which the nodes are centers of the searchlight. In this
+example a coarser surface (fewer nodes) is employed. 
 
 It is crucial here that highres_ld is a multiple of lowres_ld, so that
 all nodes in the low-res surface have a corresponding node (i.e., with the same,
@@ -81,6 +77,7 @@ specific. For highres_ld a value of at least 64 may be advisable as this
 ensures enough anatomical detail is available to select voxels in the grey
 matter accurately. 
 """
+
 lowres_ld = 8 # 16, 32 or 64 is reasonable. 8 is really fast
 
 intermediate_surf_fn = os.path.join(datapath, "ico%d_%sh.intermediate_al.asc"
@@ -96,11 +93,13 @@ Note that "a fixed number of voxels" in this context actually means an
 approximation, in that on average that number of voxels is selected but the
 actual number will vary slightly (typically in the range +/- 2 voxels)
 """
+
 radius = 100
 
 """
 Set the prefixes for output
 """
+
 fn_infix = 'ico%d_%sh_%dvx' % (lowres_ld, hemi, radius)
 searchlight_fn_prefix = os.path.join(datapath, fn_infix)
 
@@ -124,12 +123,10 @@ qe = disc_surface_queryengine(
     epi_fn,
     white_surf_fn, pial_surf_fn, intermediate_surf_fn)
 
-
-
 '''As in the example in searchlight.py, define cross-validation
-using a classifier
-
+using an (SVM) classifier
 '''
+
 clf = LinearCSVMC()
 
 cv = CrossValidation(clf, NFoldPartitioner(),
@@ -163,6 +160,7 @@ From now on we simply follow the example in searchlight.py.
 First we load and preprocess the data. Note that we use the
 mask that came from the voxel selection.
 """
+
 attr = SampleAttributes(os.path.join(datapath, '..', 'attributes.txt'))
 
 dataset = fmri_dataset(
@@ -206,6 +204,7 @@ surf_sl_dset = dict(data=np.asarray(sl_dset).transpose(),
                     labels=['HOUSvsSCRM'])
 
 dset_fn = searchlight_fn_prefix + '.niml.dset'
+from mvpa2.support.nibabel import afni_niml_dset
 
 afni_niml_dset.write(dset_fn, surf_sl_dset)
 

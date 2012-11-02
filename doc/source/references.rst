@@ -464,6 +464,12 @@ experiments.
 
 **Olivetti, E., Veeramachaneni, S., Greiner, S. & Avesani, P.** (2010). Brain Connectivity Analysis by Reduction to Pair Classification. The 2nd IAPR International Workshop on Cognitive Information Processing.
 
+
+.. _OWD+11:
+
+**Oosterhof, N. N., Wiestler, T., Downing, P. E. and Diedrichsen, J.** (2011). A comparison of volume-based and surface-based multi-voxel pattern analysis. NeuroImage, 56, 593–600.
+
+
 .. _PMB09:
 
 **Pereira, F., Mitchell, T. & Botvinick, M.** (2009). Machine learning classifiers and fMRI: A tutorial overview. *NeuroImage*, *45*, 199–209.
