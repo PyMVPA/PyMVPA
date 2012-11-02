@@ -77,13 +77,13 @@ class VolumeMaskDictionary(Mapping):
             for k in self._src2nbr.keys():
                 _add_target2source(src)
 
-    def __repr__(self, postfixes=[]):
-        postfixes_ = ['vg=%r' % self._volgeom,
-                    'source=%r' % self._source] + postfixes
+    def __repr__(self, prefixes=[]):
+        prefixes_ = ['vg=%r' % self._volgeom,
+                    'source=%r' % self._source] + prefixes
         if not self._src2nbr is None:
-            postfixes_.append('src2nbr=%r' % self._src2nbr)
+            prefixes_.append('src2nbr=%r' % self._src2nbr)
         if not self._src2aux is None:
-            postfixes_.append('src2aux=%r' % self._src2aux)
+            prefixes_.append('src2aux=%r' % self._src2aux)
 
         return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
 

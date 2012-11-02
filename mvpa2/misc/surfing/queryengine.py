@@ -286,10 +286,11 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
         it cannot be used, then a single thread is used.
     outside_node_margin: float or None (default)
         By default nodes outside the volume are skipped; using this 
-        parameters allows for a marign. If this value is not none,
-        then all nodes within outside_node_margin Dijkstra distance from
-        any node within the volume are still assigned associated voxels.
-
+        parameters allows for a marign. If this value is a float (possibly
+        np.inf), then all nodes within outside_node_margin Dijkstra 
+        distance from any node within the volume are still assigned 
+        associated voxels. If outside_node_margin is True, then a node is
+        always assigned voxels regardless of its position in the volume. 
     
     Returns
     -------
