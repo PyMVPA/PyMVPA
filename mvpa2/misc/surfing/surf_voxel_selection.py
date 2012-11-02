@@ -26,6 +26,7 @@ import time
 import collections
 import operator
 import datetime
+import math
 
 import nibabel as ni
 import numpy as np
@@ -71,6 +72,13 @@ class VoxelSelector(object):
     distance_metric: str
         Distance measure used to define distances between nodes on the surface.
         Currently supports 'dijkstra' and 'euclidean'
+    outside_node_margin: float or True or None (default)
+        By default nodes outside the volume are skipped; using this 
+        parameter allows for a marign. If this value is a float (possibly
+        np.inf), then all nodes within outside_node_margin Dijkstra 
+        distance from any node within the volume are still assigned 
+        associated voxels. If outside_node_margin is True, then a node is
+        always assigned voxels regardless of its position in the volume. 
     '''
 
     def __init__(self, radius, surf, n2v, distance_metric='dijkstra',
@@ -202,21 +210,33 @@ class VoxelSelector(object):
         n2v = self._n2v
         outside_node_margin = self._outside_node_margin
 
-        if not src in n2v or n2v[src] is None:
+        def node_in_vol(nd):
+            return nd in n2v and not n2v[nd] is None
+
+        if not node_in_vol(src) and not outside_node_margin is True:
             skip = True
             if not outside_node_margin is None:
-                node_distances = surf.dijkstra_distance(src,
-                                            maxdistance=outside_node_margin)
-                debug("SVS", "")
-                debug("SVS", "node #%d is outside - considering %d distances"
-                            " to other nodes that may be inside." % (src, len(node_distances)))
-                for nd, d in node_distances.iteritems():
-                    if nd in n2v and not n2v[nd] is None and d <= outside_node_margin:
-                        debug("SVS", "node #%d is distance %s <= %s from #%d "
-                              " and kept" %
-                                (src, d, outside_node_margin, nd))
-                        skip = False
-                        break
+                if math.isinf(outside_node_margin):
+                    debug("SVS", "")
+                    debug("SVS", "node #%d is outside - considering all other "
+                                 "nodes that may be inside" % src)
+                    for nd in n2v:
+                        if node_in_vol(nd):
+                            skip = False
+                            break
+                else:
+                    node_distances = surf.dijkstra_distance(src,
+                                                maxdistance=outside_node_margin)
+                    debug("SVS", "")
+                    debug("SVS", "node #%d is outside - considering %d distances"
+                                " to other nodes that may be inside." % (src, len(node_distances)))
+                    for nd, d in node_distances.iteritems():
+                        if nd in n2v and not n2v[nd] is None and d <= outside_node_margin:
+                            debug("SVS", "node #%d is distance %s <= %s from #%d "
+                                  " and kept" %
+                                    (src, d, outside_node_margin, nd))
+                            skip = False
+                            break
 
             if skip:
                 # no voxels associated with this node, skip
@@ -402,12 +422,13 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             Number of parallel threads. None means as many threads as the 
             system supports. The pprocess is required for parallel threads; if
             it cannot be used, then a single thread is used.
-        outside_node_margin: float or None (default)
+        outside_node_margin: float or True or None (default)
             By default nodes outside the volume are skipped; using this 
-            parameters allows for a marign. If this value is not none,
-            then all nodes within outside_node_margin Dijkstra distance from
-            any node within the volume are still assigned associated voxels. 
-            
+            parameter allows for a marign. If this value is a float (possibly
+            np.inf), then all nodes within outside_node_margin Dijkstra 
+            distance from any node within the volume are still assigned 
+            associated voxels. If outside_node_margin is True, then a node is
+            always assigned voxels regardless of its position in the volume. 
 
         Returns
         -------
@@ -696,9 +717,11 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
         it cannot be used, then a single thread is used.
     outside_node_margin: float or None (default)
         By default nodes outside the volume are skipped; using this 
-        parameters allows for a marign. If this value is not none,
-        then all nodes within outside_node_margin Dijkstra distance from
-        any node within the volume are still assigned associated voxels.
+        parameter allows for a marign. If this value is a float (possibly
+        np.inf), then all nodes within outside_node_margin Dijkstra 
+        distance from any node within the volume are still assigned 
+        associated voxels. If outside_node_margin is True, then a node is
+        always assigned voxels regardless of its position in the volume. 
 
     Returns
     -------

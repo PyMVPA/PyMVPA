@@ -358,6 +358,7 @@ class SurfTests(unittest.TestCase):
 
 
     def test_volume_mask_dict(self):
+        # also tests the outside_node_margin feature
         sh = (20, 20, 20)
         msk = np.zeros(sh)
         for i in xrange(0, sh[0], 2):
@@ -374,16 +375,16 @@ class SurfTests(unittest.TestCase):
 
         radius = 50
 
-        outside_node_margins = [None, 0, 100.]
-        expected_center_count = [360, 360, intermediate.nvertices]
+        outside_node_margins = [None, 0, 100., np.inf, True]
+        expected_center_count = [360] * 2 + [intermediate.nvertices] * 3
         for k, outside_node_margin in enumerate(outside_node_margins):
 
-            sel = surf_voxel_selection.run_voxel_selection(radius, vg, inner, outer,
-                                            outside_node_margin=outside_node_margin)
+            sel = surf_voxel_selection.run_voxel_selection(radius, vg, inner,
+                                outer, outside_node_margin=outside_node_margin)
             assert_equal(intermediate, sel.source)
             assert_equal(len(sel.keys()), expected_center_count[k])
             assert_true(set(sel.aux_keys()).issubset(set(['center_distances',
-                                                          'grey_matter_position'])))
+                                                    'grey_matter_position'])))
 
             msk_lin = msk.ravel()
             sel_msk_lin = sel.get_mask().ravel()
@@ -395,7 +396,8 @@ class SurfTests(unittest.TestCase):
                     if src is None:
                         continue
 
-                    src_anywhere = sel.target2nearest_source(i, fallback_euclidian_distance=True)
+                    src_anywhere = sel.target2nearest_source(i,
+                                            fallback_euclidian_distance=True)
                     xyz_src = xyz[src_anywhere]
                     xyz_trg = vg.lin2xyz(np.asarray([i]))
 
@@ -589,4 +591,5 @@ def suite():
 
 if __name__ == '__main__':
     import runner
-
+        #from mvpa2.base import debug
+        #debug.active += ["SVS", "SLC"]
