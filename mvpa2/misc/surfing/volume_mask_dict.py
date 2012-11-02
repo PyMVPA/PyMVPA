@@ -59,14 +59,34 @@ class VolumeMaskDictionary(Mapping):
         (the centers of) each mask. In the case of surface-searchlights this
         should be a surface used as the center for searchlights. 
     """
-    def __init__(self, vg, source):
+    def __init__(self, vg, source, src2nbr=None, src2aux=None):
         self._volgeom = volgeom.from_any(vg)
         self._source = source
 
-        self._src2nbr = dict()
-        self._src2aux = dict()
+
+        self._src2nbr = dict() if src2nbr is None else src2nbr
+        self._src2aux = dict() if src2nbr is None else src2aux
         self._nbr2src = dict()
         self._aux_keys = set()
+
+        if not self._src2aux is None:
+            for k in self._src2aux.keys():
+                self._src2aux.add(k)
+
+        if not self._src2nbr is None:
+            for k in self._src2nbr.keys():
+                _add_target2source(src)
+
+    def __repr__(self, postfixes=[]):
+        postfixes_ = ['vg=%r' % self._volgeom,
+                    'source=%r' % self._source] + postfixes
+        if not self._src2nbr is None:
+            postfixes_.append('src2nbr=%r' % self._src2nbr)
+        if not self._src2aux is None:
+            postfixes_.append('src2aux=%r' % self._src2aux)
+
+        return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
+
 
     def add(self, src, nbrs, aux=None):
         '''

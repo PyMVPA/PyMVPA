@@ -73,7 +73,8 @@ class VoxelSelector(object):
         Currently supports 'dijkstra' and 'euclidean'
     '''
 
-    def __init__(self, radius, surf, n2v, distance_metric='dijkstra'):
+    def __init__(self, radius, surf, n2v, distance_metric='dijkstra',
+                            outside_node_margin=None):
         tp = type(radius)
         if tp is int: # fixed number of voxels
             self._fixedradius = False
@@ -91,6 +92,7 @@ class VoxelSelector(object):
         self._distance_metric = distance_metric # }
         self._surf = surf                     # } save input
         self._n2v = n2v                       # }
+        self._outside_node_margin = outside_node_margin
 
     def _select_approx(self, voxprops, count=None):
         '''
@@ -198,41 +200,62 @@ class VoxelSelector(object):
         optimizer = self._optimizer
         surf = self._surf
         n2v = self._n2v
+        outside_node_margin = self._outside_node_margin
 
         if not src in n2v or n2v[src] is None:
-            # no voxels associated with this node, skip
-            if __debug__:
-                debug("SVS", "Skipping node #%d (no voxels associated)" % src,
-                      cr=True)
+            skip = True
+            if not outside_node_margin is None:
+                node_distances = surf.dijkstra_distance(src,
+                                            maxdistance=outside_node_margin)
+                debug("SVS", "")
+                debug("SVS", "node #%d is outside - considering %d distances"
+                            " to other nodes that may be inside." % (src, len(node_distances)))
+                for nd, d in node_distances.iteritems():
+                    if nd in n2v and not n2v[nd] is None and d <= outside_node_margin:
+                        debug("SVS", "node #%d is distance %s <= %s from #%d "
+                              " and kept" %
+                                (src, d, outside_node_margin, nd))
+                        skip = False
+                        break
 
-            voxel_attributes = []
-        else:
-            radius_mm = optimizer.get_start()
-            radius = self._targetradius
+            if skip:
+                # no voxels associated with this node, skip
+                if __debug__:
+                    debug("SVS", "Skipping node #%d (no voxels associated)" %
+                                        src, cr=True)
 
-            while True:
-                around_n2d = surf.circlearound_n2d(src, radius_mm,
-                                                   self._distance_metric)
+                return []
 
-                allvxdist = self.nodes2voxel_attributes(around_n2d, n2v)
+        radius_mm = optimizer.get_start()
+        radius = self._targetradius
 
-                if not allvxdist:
-                    voxel_attributes = []
+        maxiter = 100
+        for iter in xrange(maxiter):
+            around_n2d = surf.circlearound_n2d(src, radius_mm,
+                                               self._distance_metric)
 
-                if self._fixedradius:
-                    # select all voxels
-                    voxel_attributes = self._select_approx(allvxdist, count=None)
-                else:
-                    # select only certain number
-                    voxel_attributes = self._select_approx(allvxdist, count=radius)
+            allvxdist = self.nodes2voxel_attributes(around_n2d, n2v)
 
-                if voxel_attributes is None:
-                    # coult not find enough voxels, stay in loop and try again
-                    # with bigger radius
-                    radius_mm = optimizer.get_next()
-                else:
-                    break
+            if not allvxdist:
+                voxel_attributes = []
 
+            if self._fixedradius:
+                # select all voxels
+                voxel_attributes = self._select_approx(allvxdist, count=None)
+            else:
+                # select only certain number
+                voxel_attributes = self._select_approx(allvxdist, count=radius)
+
+            if voxel_attributes is None:
+                # coult not find enough voxels, stay in loop and try again
+                # with bigger radius
+                radius_mm = optimizer.get_next()
+            else:
+                break
+
+        if iter + 1 >= maxiter:
+            raise ValueError("Failure to increase radius to get %d voxels for "
+                             " node #%d" (radius, src))
 
         if voxel_attributes:
             # found at least one voxel; update our ioptimizer
@@ -340,7 +363,8 @@ class VoxelSelector(object):
 def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                     distance_metric='dijkstra',
                     start_fr=0., stop_fr=1., start_mm=0, stop_mm=0,
-                    nsteps=10, eta_step=1, nproc=None):
+                    nsteps=10, eta_step=1, nproc=None,
+                    outside_node_margin=None):
 
         """
         Voxel selection for multiple center nodes on the surface
@@ -377,7 +401,13 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
         nproc: int or None
             Number of parallel threads. None means as many threads as the 
             system supports. The pprocess is required for parallel threads; if
-            it cannot be used, then a single thread is used. 
+            it cannot be used, then a single thread is used.
+        outside_node_margin: float or None (default)
+            By default nodes outside the volume are skipped; using this 
+            parameters allows for a marign. If this value is not none,
+            then all nodes within outside_node_margin Dijkstra distance from
+            any node within the volume are still assigned associated voxels. 
+            
 
         Returns
         -------
@@ -438,7 +468,8 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
 
         # build voxel selector
         voxel_selector = VoxelSelector(radius, intermediate_surf, n2v,
-                                       distance_metric)
+                                       distance_metric,
+                                       outside_node_margin=outside_node_margin)
 
         if __debug__:
             debug('SVS', "Instantiated voxel selector (radius %r)" % radius)
@@ -518,20 +549,22 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             debug('SVS', "")
 
             if node2volume_attributes is None:
-                msg = ("Voxel selection completed: none of %d nodes have "
-                     "voxels associated" % len(visitorder))
+                msgs = ["Voxel selection completed: none of %d nodes have "
+                        "voxels associated" % len(visitorder)]
             else:
                 nvox_selected = np.sum(node2volume_attributes.get_mask() != 0)
                 vg = vol_surf.volgeom
 
-                msg = ("Voxel selection completed: %d / %d nodes have "
-                     "voxels associated, %d / %d voxels in the voxel mask (out"
-                     " of %d voxels total) were selected at least once." %
-                     (len(node2volume_attributes.keys()), len(visitorder),
-                      nvox_selected, vg.nvoxels_mask,
-                             vg.nvoxels_mask))
+                msgs = ["Voxel selection completed: %d / %d nodes have "
+                        "voxels associated" %
+                        (len(node2volume_attributes.keys()), len(visitorder)),
+                        "%d / %d voxels in the voxel mask (out"
+                        " of %d voxels total) were selected at least once." %
+                        (nvox_selected, vg.nvoxels_mask,
+                             vg.nvoxels_mask)]
 
-            debug("SVS", msg)
+            for msg in msgs:
+                debug("SVS", msg)
 
 
         if node2volume_attributes is None:
@@ -610,7 +643,8 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
                          source_surf=None, source_surf_nodes=None,
                          volume_mask=None, distance_metric='dijkstra',
                          start_mm=0, stop_mm=0, start_fr=0., stop_fr=1.,
-                         nsteps=10, eta_step=1, nproc=None):
+                         nsteps=10, eta_step=1, nproc=None,
+                         outside_node_margin=None):
 
     """
     Voxel selection wrapperfor multiple center nodes on the surface
@@ -657,10 +691,15 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
         After how many searchlights an estimate should be printed of the 
         remaining time until completion of all searchlights
     nproc: int or None
-            Number of parallel threads. None means as many threads as the 
-            system supports. The pprocess is required for parallel threads; if
-            it cannot be used, then a single thread is used.
-    
+        Number of parallel threads. None means as many threads as the 
+        system supports. The pprocess is required for parallel threads; if
+        it cannot be used, then a single thread is used.
+    outside_node_margin: float or None (default)
+        By default nodes outside the volume are skipped; using this 
+        parameters allows for a marign. If this value is not none,
+        then all nodes within outside_node_margin Dijkstra distance from
+        any node within the volume are still assigned associated voxels.
+
     Returns
     -------
     sel: volume_mask_dict.VolumeMaskDictionary
@@ -678,7 +717,8 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
                           distance_metric=distance_metric,
                           start_fr=start_fr, stop_fr=stop_fr,
                           start_mm=start_mm, stop_mm=stop_mm,
-                          nsteps=nsteps, eta_step=1, nproc=nproc)
+                          nsteps=nsteps, eta_step=1, nproc=nproc,
+                          outside_node_margin=outside_node_margin)
 
     return sel
 
