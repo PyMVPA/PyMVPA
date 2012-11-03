@@ -9,9 +9,9 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """
 Surface-based searchlight on fMRI data
-========================
+======================================
 
-.. index:: SurfaceSearchlight
+.. index:: surface, searchlight, cross-validation
 
 This example is adapted from doc/searchlight.py. It employs a surface-based
 searchlight as described in :ref:`Oosterhof et al. (2011) <OWD+11>`, with a 
