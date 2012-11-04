@@ -13,7 +13,6 @@ voxel selection.
 @author: nick
 """
 
-
 __docformat__ = 'restructuredtext'
 
 import cPickle as pickle

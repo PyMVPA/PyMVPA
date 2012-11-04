@@ -6,9 +6,10 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""AFNI/SUMA file format I/O functions
-Hopefully in the future these can be included in nibabel
-"""
+"""AFNI/SUMA file format I/O functions"""
 
-#import afni_niml_annot, afni_niml_dset, afni_niml_types, afni_niml, \
-#        afni_suma_1d, afni_suma_spec, surf_fs_asc, surf
+__docformat__ = 'restructuredtext'
+
+
+# TODO: unit tests for these scripts
+# TODO: in the future, maybe integrate with nibabel

@@ -234,6 +234,7 @@ from mvpa2.misc.surfing.queryengine import SurfaceVerticesQueryEngine, \
                                             disc_surface_queryengine
 
 from mvpa2.misc.surfing import surf_voxel_selection
+from mvpa2.misc import surfing
 
 __sdebug("ipython goodies")
 if externals.exists("running ipython env"):

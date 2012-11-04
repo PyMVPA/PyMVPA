@@ -6,7 +6,9 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Preprocessing/postprocessing wrappers for use with AFNI/SUMA
+"""Preprocessing/postprocessing wrappers for use with AFNI/SUMA"""
 
-TODO: unit tests for these scripts
-"""
+__docformat__ = 'restructuredtext'
+
+
+# TODO: unit tests for these scripts
