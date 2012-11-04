@@ -217,7 +217,8 @@ Miscellaneous
    misc.surfing
    misc.transformers
    misc.vproperty
-
+   support.nibabel
+   support.afni
 
 Testing
 =======
