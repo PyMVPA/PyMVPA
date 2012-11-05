@@ -280,14 +280,12 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
 
         self.__train_analyzer = train_analyzer
 
+    def _get_selected_ids(self, dataset):
+        """Given a dataset actually select the features
 
-    def _train(self, dataset):
-        """Select the most important features
-
-        Parameters
-        ----------
-        dataset : Dataset
-          used to compute sensitivity maps
+        Returns
+        -------
+        indexes of the selected features
         """
         # optionally train the analyzer first
         if self.__train_analyzer:
@@ -295,7 +293,6 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
 
         sensitivity = self.__sensitivity_analyzer(dataset)
         """Compute the sensitivity map."""
-
         self.ca.sensitivity = sensitivity
 
         # Select features to preserve
@@ -307,6 +304,18 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
 
         # XXX not sure if it really has to be sorted
         selected_ids.sort()
+        return selected_ids
+
+    def _train(self, dataset):
+        """Select the most important features
+
+        Parameters
+        ----------
+        dataset : Dataset
+          used to compute sensitivity maps
+        """
+        # Get selected feature ids
+        selected_ids = self._get_selected_ids(dataset)
         # announce desired features to the underlying slice mapper
         self._safe_assign_slicearg(selected_ids)
         # and perform its own training
