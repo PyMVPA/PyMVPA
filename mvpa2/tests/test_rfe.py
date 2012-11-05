@@ -553,7 +553,8 @@ class RFETests(unittest.TestCase):
         # check repr to have all needed pieces
         r = repr(rfeclf)
         s = str(rfeclf)
-        ok_('partitioner=NFoldP' in r)
+        ok_(('partitioner=NFoldP' in r) or
+            ('partitioner=mvpa2.generators.partition.NFoldPartitioner' in r))
         ok_('lrn=' in r)
         ok_(not 'slicearg=' in r)
         assert_equal(r, r0)
