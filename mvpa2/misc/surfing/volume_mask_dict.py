@@ -454,13 +454,37 @@ class VolumeMaskDictionary(Mapping):
 
     @property
     def volgeom(self):
-        return self._volgeom
+        '''Data structure that contains volume geometry information.'''
+
 
     @property
     def source(self):
+        '''Structure that contains the geometric information of 
+        (the centers of) each mask. In the case of surface-searchlights this
+        should be a surface used as the center for searchlights. 
+        return self._volgeom'''
         return self._source
 
     def target2nearest_source(self, target, fallback_euclidian_distance=False):
+        """Finds the voxel nearest to a mask center
+        
+        Parameters
+        ==========
+        target: int
+            linear index of a voxel
+        fallback_euclidian_distance: bool (default: False)
+            Whether to use a euclidian distance metric if target is not in
+            any of the masks in this instance
+        
+        Returns
+        =======
+        src: int
+            key index for the mask that contains target and is nearest to 
+            target. If target is not contained in any mask, then None is 
+            returned if fallback_euclidian_distance is False, and the 
+            index of the source nearest to target using a Euclidian distance
+            metric is returned if fallback_euclidian_distance is True
+        """
         targets = []
         if type(target) in (list, tuple):
             for t in target:
@@ -493,6 +517,20 @@ class VolumeMaskDictionary(Mapping):
         return source
 
     def source2nearest_target(self, source):
+        """Finds the voxel nearest to a mask center
+        
+        Parameters
+        ==========
+        src: int
+            mask index
+        
+        Returns
+        =======
+        target: int
+            linear index of the voxel that is contained in the mask associated
+            with src and nearest (Euclidian distance) to src.
+        """
+
         trgs = self.__getitem__(source)
         trg_xyz = self.xyz_target(trgs)
 
@@ -501,14 +539,3 @@ class VolumeMaskDictionary(Mapping):
         i = np.argmin(d)
 
         return trgs[i / src_xyz.shape[0]]
-
-
-def save(fn, attr):
-    with open(fn, 'w') as f:
-        pickle.dump(attr, fn, protocol=pickle.HIGHEST_PROTOCOL)
-
-def read(fn):
-    with open(fn) as f:
-        r = pickle.load(fn)
-    return r
-

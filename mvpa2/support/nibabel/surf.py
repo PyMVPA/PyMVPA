@@ -1288,7 +1288,8 @@ def generate_cube():
     '''
     Generates a cube with sides 2 centered at the origin.
     
-    Returns:
+    Returns
+    -------
     cube: surf.Surface
         A cube with 8 vertices at coordinates (+/-1.,+/-1.,+/-1.),
         and with 12 faces (two for each square side).

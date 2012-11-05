@@ -19,12 +19,15 @@ Created on Feb 12, 2012
 @author: nick
 '''
 
+__docformat__ = 'restructuredtext'
+
+
 import nibabel as nb, numpy as np
 
 from mvpa2.base import warning
 from mvpa2.datasets.mri import fmri_dataset
 
-class VolGeom():
+class VolGeom(object):
     '''
     Parameters
     ----------

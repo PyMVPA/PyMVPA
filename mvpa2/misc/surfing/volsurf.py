@@ -13,13 +13,16 @@ matter boundaries of the grey matter).
 @author: nick
 """
 
+__docformat__ = 'restructuredtext'
+
+
 from mvpa2.misc.surfing import volgeom
 from mvpa2.support.nibabel import surf
 
 import nibabel as nb
 import numpy as np
 
-class VolSurf():
+class VolSurf(object):
     '''
     Associates a volume geometry with two surfaces (pial and white).
     
@@ -272,7 +275,8 @@ class VolSurf():
         
         Parameters
         ----------
-        n2v: node to voxel mapping, typically from node2voxels. If omitted
+        n2v: dict
+            Node to voxel mapping, typically from node2voxels. If omitted
             then the output from node2voxels() is used.
         
         Returns:
