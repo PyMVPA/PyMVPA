@@ -22,6 +22,9 @@ and surface-based multi-voxel pattern analysis. Neuroimage, 56(2), pp. 593-600
 (and the associated documentation)
 '''
 
+__docformat__ = 'restructuredtext'
+
+
 import time
 import collections
 import operator
@@ -500,14 +503,10 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
         # make a sparse_attributes instance when we know what the attribtues are
         node2volume_attributes = None
 
-
-
-
         attribute_mapper = voxel_selector.disc_voxel_indices_and_attributes
 
         srcs_order = [source_surf_nodes[node] for node in visitorder]
         src_trg_nodes = [(src, src2intermediate[src]) for src in srcs_order]
-
 
         if nproc is None:
             try:
@@ -527,6 +526,8 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             results = pprocess.Map(limit=nproc)
             reducer = results.manage(pprocess.MakeParallel(_reduce_mapper))
 
+            debug('SVS', "Starting %d child processes" % len(blocks))
+
             for i, block in enumerate(blocks):
                 empty_dict = volume_mask_dict.VolumeMaskDictionary(
                                                 vol_surf.volgeom,
@@ -537,22 +538,25 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                     src_trg.append(src_trg_nodes[idx])
 
                 if __debug__:
-                    debug('SVS', "Starting block %d/%d: %d centers" %
+                    debug('SVS', "  starting block %d/%d: %d centers" %
                                 (i + 1, nproc, len(src_trg)), cr=True)
 
                 reducer(empty_dict, attribute_mapper, src_trg,
                         eta_step=eta_step, proc_id='%d / %d' % (i + 1, nproc))
 
-            if __debug__:
-                debug('SVS', '')
 
             for i, result in enumerate(results):
                 if i == 0:
                     node2volume_attributes = result
+                    if __debug__:
+                        debug('SVS', '')
+                        debug('SVS', "Merging results from %d child "
+                                        "processes" % len(blocks))
+
                 else:
                     node2volume_attributes.merge(result)
                 if __debug__:
-                    debug('SVS', "Merging result block %d/%d" % (i + 1, nproc),
+                    debug('SVS', "  merging result block %d/%d" % (i + 1, nproc),
                                     cr=True)
             if __debug__:
                 debug('SVS', '')

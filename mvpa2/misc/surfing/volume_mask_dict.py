@@ -76,6 +76,7 @@ class VolumeMaskDictionary(Mapping):
             for k in self._src2nbr.keys():
                 _add_target2source(src)
 
+
     def __repr__(self, prefixes=[]):
         prefixes_ = ['vg=%r' % self._volgeom,
                     'source=%r' % self._source] + prefixes
@@ -455,7 +456,7 @@ class VolumeMaskDictionary(Mapping):
     @property
     def volgeom(self):
         '''Data structure that contains volume geometry information.'''
-
+        return self._volgeom
 
     @property
     def source(self):

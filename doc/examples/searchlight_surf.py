@@ -13,24 +13,34 @@ Surface-based searchlight on fMRI data
 
 .. index:: surface, searchlight, cross-validation
 
-This example is adapted from doc/searchlight.py. It employs a surface-based
-searchlight as described in :ref:`Oosterhof et al. (2011) <OWD+11>`, with a 
-minor difference that distances are currently computed using a Dijkstra 
-distance metric rather than a geodesic one.
+This example employs a surface-based searchlight as described in 
+:ref:`Oosterhof et al. (2011) <OWD+11>` (with a minor difference that distances
+are currently computed using a Dijkstra distance metric rather than a geodesic 
+one. For more details, see the `Surfing <http://surfing.sourceforge.net>`_  
+website.
 
-More details can be found at the `Surfing <http://surfing.sourceforge.net>`_  
-website. 
+Surfaces used in this example were reconstructed using Freesurfer and 
+subsequently preprocessed using with AFNI and SUMA using the 
+afni_anat_preproc.py wrapper script, which resamples the surfaces to standard 
+topologies (with different resolutions), aligns surfaces to a reference 
+functional volume, and merges left and right hemispheres into single surface 
+files.
+
+If you the surface-based searchlight code for a publication, please cite both
+:ref:`pyMVPA <HHS+09a> and :ref:`Oosterhof et al. (2011) <OWD+11>` 
+
+
 
 As always, we first have to import PyMVPA.
 """
 
 from mvpa2.suite import *
+from mvpa2.clfs.svm import LinearCSVMC
 
 """As searchlight analyses are usually quite expensive in term of computational
 resources, we are going to enable some progress output to entertain us while
 we are waiting."""
 
-# enable debug output for searchlight call
 if __debug__:
     from mvpa2.base import debug
     debug.active += ["SVS", "SLC"]
@@ -48,7 +58,7 @@ epi_fn = os.path.join(datapath, '..', 'bold.nii.gz')
 We're concerned with the left hemisphere only.
 """
 
-hemi = 'l'
+hemi = 'm'
 
 """
 Surfaces that enclose the grey matter. These are used for voxel selection.
@@ -66,16 +76,19 @@ white_surf_fn = os.path.join(datapath, "ico%d_%sh.smoothwm_al.asc"
 
 """
 Define the surface on which the nodes are centers of the searchlight. In this
-example a coarser surface (fewer nodes) is employed. 
+example a surface coarser (fewer nodes) than the grey matter-enclosing
+surfaces is employed. 
 
 It is crucial here that highres_ld is a multiple of lowres_ld, so that
 all nodes in the low-res surface have a corresponding node (i.e., with the same,
 or almost the same, spatial coordinate) on the high-res surface.
 
-Choice of lowres_ld and highres_ld is somewhat arbitrary and always application
-specific. For highres_ld a value of at least 64 may be advisable as this
-ensures enough anatomical detail is available to select voxels in the grey
-matter accurately. 
+Choice of lowres_ld and highres_ld is somewhat arbitrary and a trade-off 
+between spatial specificity and execution speed. For highres_ld a value of at 
+least 64 is be advisable as this ensures enough anatomical detail is available 
+to select voxels in the grey matter accurately. Typical values for lowres_ld 
+range from 8 to 64.
+ 
 """
 
 lowres_ld = 8 # 16, 32 or 64 is reasonable. 8 is really fast
@@ -96,36 +109,37 @@ actual number will vary slightly (typically in the range +/- 2 voxels)
 
 radius = 100
 
-"""
-Set the prefixes for output
-"""
-
-fn_infix = 'ico%d_%sh_%dvx' % (lowres_ld, hemi, radius)
-searchlight_fn_prefix = os.path.join(datapath, fn_infix)
-
 
 """We're all set to go to create a query engine to determine for
-each node which voxels are near it.
+each node which voxels are near it (that is, in the corresponding searchlight
+disc).
 
 As a reminder, the only essential values we have set are the
 filenames of three surfaces (high-res inner and outer,
-and low-res intermediate), and the searchlight radius.
+and low-res intermediate) and the funcitonal volume, and the searchlight 
+radius.
 
 Note that setting the low-res intermediate surface can be omitted
-(i.e. set it to None), in which case it is computed as the average from the
+(i.e. set to None), in which case it is computed as the average from the
 high-res outer and inner. The searchlight would then be based on
 a high-res intermediate surface with a lot of nodes, which means that it takes
 longer to run the searchlight.
 """
 
 qe = disc_surface_queryengine(
-    radius,
-    epi_fn,
-    white_surf_fn, pial_surf_fn, intermediate_surf_fn)
+     radius,
+     epi_fn,
+     white_surf_fn, pial_surf_fn, intermediate_surf_fn)
 
-'''As in the example in searchlight.py, define cross-validation
-using an (SVM) classifier
-'''
+"""
+Voxel selection is now completed; each node has been assigned a list of 
+voxels in the searchlight. These result are stored in 'qe.voxsel' and
+can be saved with h5save for later re-use. 
+
+From now on we follow the example as in doc/examples/searchlight.py.
+
+First, cross-validation is defined using an (SVM) classifier
+"""
 
 clf = LinearCSVMC()
 
@@ -156,8 +170,7 @@ and used when loading the functional data
 mask = qe.voxsel.get_mask()
 
 """
-From now on we simply follow the example in searchlight.py.
-First we load and preprocess the data. Note that we use the
+Load the functional data. Note that we use the
 mask that came from the voxel selection.
 """
 
@@ -169,6 +182,10 @@ dataset = fmri_dataset(
                 chunks=attr.chunks,
                 mask=mask)
 
+
+"""
+Apply some typical preprocessing steps
+"""
 
 poly_detrend(dataset, polyord=1, chunks_attr='chunks')
 
@@ -188,6 +205,10 @@ sl_dset = sl(dataset)
 
 
 """
+Searchlight results are now stored in sl_dset.
+
+The remainder of this example provides a data file that 
+can be visualized using AFNI's SUMA.
 For visualization of results, make a NIML dset that can be viewed
 by AFNI's SUMA. Results are transposed because in NIML, rows correspond
 to nodes (features) and columns to datapoints (samples).
@@ -203,12 +224,21 @@ surf_sl_dset = dict(data=np.asarray(sl_dset).transpose(),
                     node_indices=center_ids,
                     labels=['HOUSvsSCRM'])
 
+
+"""
+Set the prefix filename for output
+"""
+
+fn_infix = 'ico%d_%sh_%dvx' % (lowres_ld, hemi, radius)
+searchlight_fn_prefix = os.path.join(datapath, fn_infix)
+
+
 dset_fn = searchlight_fn_prefix + '.niml.dset'
 from mvpa2.support.nibabel import afni_niml_dset
 
 afni_niml_dset.write(dset_fn, surf_sl_dset)
 
-print ("To view results, cd to '%s' and run ./%sh_ico%d_runsuma.sh,"
+print ("To view results, cd to '%s', run 'suma -i "
+      "'ico%d_%sh.intermediate_al.asc',"
        "click on 'dset', and select %s" %
-       (datapath, hemi, lowres_ld, dset_fn))
-
+       (datapath, hemi, lowres_ld, hemi, lowres_ld, dset_fn))

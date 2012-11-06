@@ -274,12 +274,13 @@ class VolSurf(object):
         Returns a NIFTI image indicating how often each voxel is selected.
         
         Parameters
-        ----------
+        ==========
         n2v: dict
             Node to voxel mapping, typically from node2voxels. If omitted
             then the output from node2voxels() is used.
         
-        Returns:
+        Returns
+        =======
         img: nifti.Nifti1Image
             Image where the value in each voxel indicates how often
             each voxel was selected by n2v.
