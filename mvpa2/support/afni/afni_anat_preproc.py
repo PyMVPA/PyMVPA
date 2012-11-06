@@ -8,11 +8,8 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''
-Created on Jan 29, 2012
+Anatomical preprocessing for surface-based voxel selection
 
-@author: nick
-
-Purpose: anatomical preprocessing for surface-based voxel selection
 Provides functionality to:
 - convert freesurfer surfaces to AFNI/SUMA format (using SUMA_Make_Spec_FS)
 - resample surfaces to standard topology (using MapIcosahedron)
@@ -23,71 +20,28 @@ Provides functionality to:
 At the moment we assume a processing stream with freesurfer for surface
 reconstruction, and AFNI/SUMA for coregistration and visualization.
 
-If EPIs from multiple sessions are aligned, this script should use different directories
-for refdir for each session, otherwise naming conflicts may occur.
+If EPIs from multiple sessions are aligned, this script should use 
+different directories for refdir for each session, otherwise naming 
+conflicts may occur.
 
-In its most simple usage, it requires three arguments:
-(1) "-e epi_filename"  or  "-a anat_filename"
-(2) "-d freesurfer/directory/surf" 
-(3) "-r outputdir"
+Called on the command line, it requires at least three arguments:
+(1) "--epivol epi_filename"  or  "--anatvol anat_filename"
+(2) "--surfdir freesurfer/directory/surf" 
+(3) "--refdir outputdir"
+
+Called through the method run_afni_anat_preproc, it supports these
+arguments as well (without the '--' prefixes). 
+
+Created on Jan 29, 2012
+
+@author: nick
 '''
 
 import os, fnmatch, datetime, re, argparse, sys
 from mvpa2.support.nibabel import surf_fs_asc, surf, afni_suma_spec
 from mvpa2.support.afni import afni_utils as utils
 
-def afni_fileparts(fn):
-    '''File parts for afni filenames.
-    
-    Returns a tuple with these four parts.
-    
-    Also works for .nii files, in which case the third part is the empty
-    
-    Not tested for other file types
-    
-    Parameters
-    ----------
-    whole filename
-      PATH/TO/FILE/NAME+orig.HEAD
-      
-    
-    Returns
-    -------
-    fullpath: str
-      PATH/TO/FILE
-    rootname: str
-      NAME
-    orientation: str
-      +orig
-    extensions: str
-      .HEAD
-    
-    '''
-
-    tail, head = os.path.split(fn)
-
-    s = head.split('+')
-    name = s[0]
-    orient = '+' + s[1] if len(s) == 2  else ''
-
-    afniorients = ['+orig', '+tlrc', '+acpc']
-    ext = None
-    for a in afniorients:
-        if orient.startswith(a):
-                       #ext=orient[len(a):]
-            orient = a
-            ext = ".HEAD"
-
-    if ext is None:
-        s = name.split(".")
-        if len(s) > 1:
-            ext = "." + ".".join(s[1:])
-            name = s[0]
-        else:
-            ext = ''
-
-    return tail, name, orient, ext
-
+__all__ = ['run_afni_anat_preproc']
 
 def getdefaults():
     '''set up default parameters - for testing now'''
@@ -552,14 +506,14 @@ def run_alignment(config, env):
     # run AddEdge so that volumes can be inspected visually for alignment
     if config['AddEdge']:
         basedset = volsin[1]
-        [d, n, o, e] = afni_fileparts(basedset)
+        [d, n, o, e] = utils.afni_fileparts(basedset)
         if 'nii' in e:
             o = '+orig'
             if overwrite or not os.path.exists('%s/%s+orig.HEAD' % refdir, n):
                 cmds.append('cd %s; 3dcopy -overwrite %s.nii %s%s' % (refdir, n, n, o))
 
         dset = '%s+orig.HEAD' % alprefix
-        n_dset = afni_fileparts(dset)[1]
+        n_dset = utils.afni_fileparts(dset)[1]
 
         addedge_fns = ['_ae.ExamineList.log']
 
@@ -832,7 +786,7 @@ def run_all(config, env):
 
     return cmds
 
-def getoptions():
+def getparser():
     description = '''
     Anatomical preprocessing to align freesurfer surfaces with AFNI data
     This is a wrapper script for usage with AFNI/SUMA.
@@ -867,7 +821,8 @@ def getoptions():
     (3) "-r outputdir"'
     '''
 
-    epilog = '''This function is *experimental* and may delete files in refdir or elsewhere.'''
+    epilog = '''This function is *experimental* and may delete files in refdir 
+                or elsewhere.'''
 
     yesno = ["yes", "no"]
     parser = argparse.ArgumentParser(description=description, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -886,7 +841,10 @@ def getoptions():
     parser.add_argument('--aea_opts', default='-cmass cmass+xyz -big_move', help="Options given to align_epi_anat ([-cmass cmass+xyz -big_move])")
     parser.add_argument('-I', '--identity', action="store_true", default=False, help="Use identity transformation between SurfVol and anat/epivol (no alignment)")
     parser.add_argument('-A', '--AddEdge', default='yes', choices=yesno, help="Run AddEdge on aligned volumes ([yes])")
+    return parser
 
+def getoptions():
+    parser = getparser()
     args = None
 
     namespace = parser.parse_args(args)
@@ -921,6 +879,58 @@ def _test_me(config):
         print c
         run_all(c, env)
 
+def run_afni_anat_preproc(**config_dict):
+    config = getdefaults()
+    config.update(config_dict) # overwrite default input arguments
+
+    p = getparser()
+    actions = p._actions
+    for action in actions:
+        d = action.default
+        if not d is None:
+            config[action.dest] = d
+
+    print config
+
+
+    checkconfig(config)
+    print config
+    augmentconfig(config)
+
+    environment = getenv()
+
+    run_all(config, environment)
+
+# this is a little hack so that python documentation
+# is added from the parser defined above
+def _set_run_afni_anat_preproc_doc():
+    import textwrap
+    p = getparser()
+    aa = p._actions
+    ds = []
+    for a in aa:
+        if a.nargs != 0:
+            ch = 'str'
+            if a.choices:
+                ch = ' or '.join('%r' % c for c in a.choices)
+
+            if a.default:
+                ch += ' [%r]' % a.default
+
+            bd = map(lambda x:'    ' + x, textwrap.wrap(a.help))
+            ds.append('%s: %s\n%s' % (a.dest, ch, '\n'.join(bd)))
+
+    # text to include in between the modules' docstring and the
+    # generated parameter documentation
+    intermediate = '''
+Parameters
+----------
+'''
+
+    run_afni_anat_preproc.__doc__ = __doc__ + intermediate + '\n'.join(ds)
+
+# apply setting the documentation
+_set_run_afni_anat_preproc_doc()
 
 if __name__ == '__main__':
     if len(sys.argv) >= 2 and sys.argv[1] == '__test__':
@@ -948,6 +958,8 @@ if __name__ == '__main__':
     # get path stuff; try to get freesurfer and afni in path
     env = getenv()
     run_all(config, env)
+
+    config = None
 
     # run commands based on config
     #cmds = run_all(config, env)

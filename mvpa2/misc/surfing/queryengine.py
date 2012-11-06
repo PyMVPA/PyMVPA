@@ -16,6 +16,7 @@ and surface-based multi-voxel pattern analysis. Neuroimage, 56(2), pp. 593-600
 'Surfing' toolbox: http://surfing.sourceforge.net
 (and the associated documentation)
 """
+
 __docformat__ = 'restructuredtext'
 
 import numpy as np

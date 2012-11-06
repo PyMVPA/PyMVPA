@@ -267,6 +267,7 @@ Basic Plotting Utilities
    misc.io.hamster
    misc.io.meg
    support.afni
+   support.afni.afni_anat_preproc
    support.nibabel
    support.nibabel.afni_niml_annot
    support.nibabel.afni_niml_dset
