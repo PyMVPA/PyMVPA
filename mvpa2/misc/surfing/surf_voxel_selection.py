@@ -550,7 +550,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                     node2volume_attributes = result
                     if __debug__:
                         debug('SVS', '')
-                        debug('SVS', "Merging results from %d child "
+                        debug('SVS', "Merged results from %d child "
                                         "processes" % len(blocks))
 
                 else:
@@ -608,20 +608,23 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
     # start the clock
     tstart = time.time()
     n = len(src_trg_indices)
+
     for i, (src, trg) in enumerate(src_trg_indices):
         idxs, misc_attrs = attribute_mapper(trg)
 
         if idxs is not None:
             node2volume_attributes.add(int(src), idxs, misc_attrs)
 
-        if __debug__ and eta_step and (i % eta_step == 0 or i == n - 1):
+        if __debug__ and 'SVS' in debug.active and eta_step and (i % eta_step == 0 or i == n - 1):
                 msg = _eta(tstart, float(i + 1) / n,
                                 progresspat %
                                 (i + 1, n, src, trg), show=False)
                 if not proc_id is None:
                     msg += ' (%s)' % proc_id
                 debug('SVS', msg, cr=True)
-
+    if __debug__:
+        debug('SVS', '')
+        debug('SVS', 'Completed child %s with %d indicies', (proc_id or '?', n))
     return node2volume_attributes
 
 
