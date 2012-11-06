@@ -14,6 +14,9 @@ import os
 import sys
 from glob import glob
 
+if sys.version_info[:2] < (2, 6):
+    raise RuntimeError("PyMVPA requires Python 2.6 or higher")
+
 # some config settings
 bind_libsvm = 'local' # choices: 'local', 'system', None
 
@@ -124,7 +127,7 @@ def setup_package():
     sys.path.insert(0, src_path)
 
     setup(name         = 'pymvpa2',
-          version      = '2.0.1',
+          version      = '2.2.0',
           author       = 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
           author_email = 'pkg-exppsy-pymvpa@lists.alioth.debian.org',
           license      = 'MIT License',
