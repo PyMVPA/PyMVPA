@@ -24,7 +24,7 @@ from mvpa2.datasets import Dataset
 from mvpa2.measures.base import Measure
 from mvpa2.datasets.mri import fmri_dataset
 
-from mvpa2.misc.surfing import volgeom, volsurf, sparse_attributes, \
+from mvpa2.misc.surfing import volgeom, volsurf, \
                                         surf_voxel_selection
 
 from mvpa2.support.nibabel import surf, surf_fs_asc, afni_niml, afni_niml_dset
