@@ -241,4 +241,4 @@ afni_niml_dset.write(dset_fn, surf_sl_dset)
 print ("To view results, cd to '%s', run 'suma -i "
       "'ico%d_%sh.intermediate_al.asc',"
        "click on 'dset', and select %s" %
-       (datapath, hemi, lowres_ld, hemi, lowres_ld, dset_fn))
+       (datapath, lowres_ld, hemi, dset_fn))
