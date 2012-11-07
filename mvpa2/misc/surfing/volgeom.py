@@ -71,6 +71,12 @@ class VolGeom(object):
             prefixes_ += ['mask=%r' % self._mask]
         return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
 
+    def __str__(self):
+        sh = self.shape[:3]
+        s = '%s, %s = %d voxels' % (self.__class__.name,
+                             '%d x %d x %d' % sh, self.nvoxels)
+        if not self.mask is None:
+            s += ', %d voxels survive the mask' % self.nvoxels_mask
 
 
     def as_pickable(self):
