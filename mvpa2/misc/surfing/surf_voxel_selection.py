@@ -495,7 +495,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                                        distance_metric,
                                        outside_node_margin=outside_node_margin)
 
-        if __debug__:
+        if _debug():
             debug('SVS', "Instantiated voxel selector (radius %r)" % radius)
 
 
@@ -512,7 +512,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             try:
                 import pprocess
                 nproc = pprocess.get_number_of_cores() or 1
-                if __debug__ :
+                if _debug() :
                     debug("SVS", 'Using %d cores' % nproc)
             except:
                 warning("Could not import pprocess, using nproc=1")
@@ -526,7 +526,8 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             results = pprocess.Map(limit=nproc)
             reducer = results.manage(pprocess.MakeParallel(_reduce_mapper))
 
-            debug('SVS', "Starting %d child processes" % len(blocks))
+            if _debug():
+                debug('SVS', "Starting %d child processes" % len(blocks))
 
             for i, block in enumerate(blocks):
                 empty_dict = volume_mask_dict.VolumeMaskDictionary(
@@ -537,29 +538,26 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                 for idx in block:
                     src_trg.append(src_trg_nodes[idx])
 
-                if __debug__:
+                if _debug():
                     debug('SVS', "  starting block %d/%d: %d centers" %
                                 (i + 1, nproc, len(src_trg)), cr=True)
 
                 reducer(empty_dict, attribute_mapper, src_trg,
-                        eta_step=eta_step, proc_id='%d / %d' % (i + 1, nproc))
-
+                        eta_step=eta_step, proc_id='%d' % (i + 1,))
 
             for i, result in enumerate(results):
                 if i == 0:
                     node2volume_attributes = result
-                    if __debug__:
+                    if _debug():
                         debug('SVS', '')
-                        debug('SVS', "Merged results from %d child "
+                        debug('SVS', "Merging results from %d child "
                                         "processes" % len(blocks))
 
                 else:
                     node2volume_attributes.merge(result)
-                if __debug__:
-                    debug('SVS', "  merging result block %d/%d" % (i + 1, nproc),
+                if _debug():
+                    debug('SVS', "  merged result block %d/%d" % (i + 1, nproc),
                                     cr=True)
-            if __debug__:
-                debug('SVS', '')
 
         else:
             empty_dict = volume_mask_dict.VolumeMaskDictionary(
@@ -570,7 +568,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                                                     src_trg_nodes,
                                                     eta_step=eta_step)
 
-        if __debug__:
+        if _debug():
             debug('SVS', "")
 
             if node2volume_attributes is None:
@@ -603,7 +601,15 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
     results are added to node2volume_attributes.
     '''
 
-    progresspat = '% 5d / % 5d (node % 5d->% 5d)'
+    def _pat(index, xs=src_trg_indices, f=max):
+        y = f(x[index] for x in xs)
+        return '%%%dd' % math.ceil(math.log10(y))
+
+    minsrc = max(st[0] for st in src_trg_indices)
+    mintrg = max(st[1] for st in src_trg_indices)
+
+    progresspat = 'node %s -> %s [%%3d%%%%]' % (_pat(0), _pat(1))
+
 
     # start the clock
     tstart = time.time()
@@ -615,17 +621,18 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
         if idxs is not None:
             node2volume_attributes.add(int(src), idxs, misc_attrs)
 
-        if __debug__ and 'SVS' in debug.active and eta_step and (i % eta_step == 0 or i == n - 1):
+        if _debug() and eta_step and (i % eta_step == 0 or i == n - 1):
                 msg = _eta(tstart, float(i + 1) / n,
                                 progresspat %
-                                (i + 1, n, src, trg), show=False)
+                                (src, trg, 100.*(i + 1) / n), show=False)
                 if not proc_id is None:
-                    msg += ' (%s)' % proc_id
+                    msg += ' (#%s)' % proc_id
                 debug('SVS', msg, cr=True)
-    if __debug__:
-        debug('SVS', '')
-        debug('SVS', 'Completed child %s with %d indicies', (proc_id or '?', n))
+
     return node2volume_attributes
+
+def _debug():
+    return __debug__ and 'SVS' in debug.active
 
 
 def _eta(starttime, progress, msg=None, show=True):
@@ -661,7 +668,15 @@ def _eta(starttime, progress, msg=None, show=True):
 
     f = lambda t:str(datetime.timedelta(seconds=round(t)))
 
-    fullmsg = '%s, after %s ETA %s' % (msg, f(took), f(eta))
+    barlength = 10
+    if barlength:
+        nstars = int(math.floor(progress * barlength))
+        fullmsg = '%s  +%s [%s] -%s' % (msg, f(took),
+                                '=' * nstars + '_' * (barlength - nstars),
+                                f(eta))
+    else:
+        fullmsg = '%s, after %s ETA %s' % (msg, f(took), f(eta))
+
     if show:
         print fullmsg
 
