@@ -278,7 +278,7 @@ class VoxelSelector(object):
 
         if iter + 1 >= maxiter:
             raise ValueError("Failure to increase radius to get %d voxels for "
-                             " node #%d" (radius, src))
+                             " node #%d" % (radius, src))
 
         if voxel_attributes:
             # found at least one voxel; update our ioptimizer
@@ -457,7 +457,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             debug('SVS', "Generated high-res intermediate surface: "
                   "%d nodes, %d faces" %
                   (intermediate_surf.nvertices, intermediate_surf.nfaces))
-            debug('SVS', "Looking for mapping from source to high-res surface:"
+            debug('SVS', "Mapping source to high-res surface:"
                   " %d nodes, %d faces" %
                   (source_surf.nvertices, source_surf.nfaces))
 
@@ -475,8 +475,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
         if __debug__:
             debug('SVS',
                   "Performing surface-based voxel selection"
-                  " for %d centers." % n)
-
+                  " for %d centers" % n)
 
         # visit in random order, for for better ETA estimate
         visitorder = list(np.random.permutation(len(source_surf_nodes)))
@@ -488,7 +487,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
 
         if __debug__:
             debug('SVS', "Generated mapping from nodes"
-                  " to intersecting voxels.")
+                  " to intersecting voxels")
 
         # build voxel selector
         voxel_selector = VoxelSelector(radius, intermediate_surf, n2v,
@@ -581,10 +580,9 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                 msgs = ["Voxel selection completed: %d / %d nodes have "
                         "voxels associated" %
                         (len(node2volume_attributes.keys()), len(visitorder)),
-                        "%d / %d voxels in the voxel mask (out"
-                        " of %d voxels total) were selected at least once." %
+                        "Selected %d / %d  voxels (%.0f%%) in the mask at least once" %
                         (nvox_selected, vg.nvoxels_mask,
-                             vg.nvoxels_mask)]
+                         100. * nvox_selected / vg.nvoxels_mask)]
 
             for msg in msgs:
                 debug("SVS", msg)
@@ -668,7 +666,7 @@ def _eta(starttime, progress, msg=None, show=True):
 
     f = lambda t:str(datetime.timedelta(seconds=round(t)))
 
-    barlength = 10
+    barlength = 10 # should be good up to 10^6 nodes
     if barlength:
         nstars = int(math.floor(progress * barlength))
         fullmsg = '%s  +%s [%s] -%s' % (msg, f(took),
@@ -690,7 +688,7 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
                          outside_node_margin=None):
 
     """
-    Voxel selection wrapperfor multiple center nodes on the surface
+    Voxel selection wrapper for multiple center nodes on the surface
     
     Parameters
     ----------
