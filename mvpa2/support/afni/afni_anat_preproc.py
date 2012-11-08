@@ -890,11 +890,8 @@ def run_afni_anat_preproc(**config_dict):
         if not d is None:
             config[action.dest] = d
 
-    print config
-
-
     checkconfig(config)
-    print config
+
     augmentconfig(config)
 
     environment = getenv()

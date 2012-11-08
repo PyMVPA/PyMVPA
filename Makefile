@@ -657,9 +657,9 @@ bdist_mpkg: 3rd
 #
 
 fetch-data:
-	@echo "I: fetching data from datadb"
-	@[ -e datadb ] || mkdir -p datadb
-	@rsync $(RSYNC_OPTS) $(DATA_URI)/tutorial_data $(DATA_URI)/mnist \
+	echo "I: fetching data from datadb"
+	[ -e datadb ] || mkdir -p datadb
+	rsync $(RSYNC_OPTS) $(DATA_URI)/tutorial_data $(DATA_URI)/mnist \
 		$(DATA_URI)/face_inversion_demo \
   	      	$(DATA_URI)/hyperalignment_tutorial_data \
 		datadb/ 

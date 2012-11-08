@@ -47,12 +47,15 @@ if __debug__:
 
 """Define surface and volume data paths"""
 
-datapath = os.path.join(pymvpa_datadbroot,
-                        'tutorial_data', 'tutorial_data', 'data', 'surfing')
+rootpath = os.path.join(pymvpa_datadbroot,
+                        'tutorial_data', 'tutorial_data')
+
+datapath = os.path.join(rootpath, 'data')
+surfpath = os.path.join(rootpath, 'suma_surfaces')
 
 """Define functional data volume filename"""
 
-epi_fn = os.path.join(datapath, '..', 'bold.nii.gz')
+epi_fn = os.path.join(datapath, 'bold.nii.gz')
 
 """
 We're concerned with the left hemisphere only.
@@ -69,9 +72,9 @@ icosahedron (ld=x means there are 10*x**2+2 nodes and 20*x**2 triangles).
 
 highres_ld = 128 # 64 or 128 is reasonable
 
-pial_surf_fn = os.path.join(datapath, "ico%d_%sh.pial_al.asc"
+pial_surf_fn = os.path.join(surfpath, "ico%d_%sh.pial_al.asc"
                                      % (highres_ld, hemi))
-white_surf_fn = os.path.join(datapath, "ico%d_%sh.smoothwm_al.asc"
+white_surf_fn = os.path.join(surfpath, "ico%d_%sh.smoothwm_al.asc"
                                       % (highres_ld, hemi))
 
 """
@@ -91,9 +94,9 @@ range from 8 to 64.
  
 """
 
-lowres_ld = 8 # 16, 32 or 64 is reasonable. 8 is really fast
+lowres_ld = 16 # 16, 32 or 64 is reasonable. 8 is really fast
 
-intermediate_surf_fn = os.path.join(datapath, "ico%d_%sh.intermediate_al.asc"
+intermediate_surf_fn = os.path.join(surfpath, "ico%d_%sh.intermediate_al.asc"
                                              % (lowres_ld, hemi))
 
 """
@@ -129,7 +132,7 @@ longer to run the searchlight.
 qe = disc_surface_queryengine(
      radius,
      epi_fn,
-     white_surf_fn, pial_surf_fn, intermediate_surf_fn)
+     white_surf_fn, pial_surf_fn, intermediate_surf_fn, eta_step=1)
 
 """
 Voxel selection is now completed; each node has been assigned a list of 
@@ -174,7 +177,7 @@ Load the functional data. Note that we use the
 mask that came from the voxel selection.
 """
 
-attr = SampleAttributes(os.path.join(datapath, '..', 'attributes.txt'))
+attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
 
 dataset = fmri_dataset(
                 samples=epi_fn,
@@ -231,7 +234,6 @@ Set the prefix filename for output
 
 fn_infix = 'ico%d_%sh_%dvx' % (lowres_ld, hemi, radius)
 searchlight_fn_prefix = os.path.join(datapath, fn_infix)
-
 
 dset_fn = searchlight_fn_prefix + '.niml.dset'
 from mvpa2.support.nibabel import afni_niml_dset
