@@ -61,7 +61,7 @@ epi_fn = os.path.join(datapath, 'bold.nii.gz')
 We're concerned with the left hemisphere only.
 """
 
-hemi = 'm'
+hemi = 'l'
 
 """
 Surfaces that enclose the grey matter. These are used for voxel selection.
@@ -229,18 +229,18 @@ surf_sl_dset = dict(data=np.asarray(sl_dset).transpose(),
 
 
 """
-Set the prefix filename for output
+Set the filename for output.
+Searchlight results are stored in the surface directory for easy visualization.
 """
 
-fn_infix = 'ico%d_%sh_%dvx' % (lowres_ld, hemi, radius)
-searchlight_fn_prefix = os.path.join(datapath, fn_infix)
+fn = 'ico%d_%sh_%dvx.niml.dset' % (lowres_ld, hemi, radius)
+path_fn = os.path.join(surfpath, fn)
 
-dset_fn = searchlight_fn_prefix + '.niml.dset'
 from mvpa2.support.nibabel import afni_niml_dset
 
-afni_niml_dset.write(dset_fn, surf_sl_dset)
+afni_niml_dset.write(path_fn, surf_sl_dset)
 
-print ("To view results, cd to '%s', run 'suma -i "
-      "'ico%d_%sh.intermediate_al.asc',"
+print ("To view results in SUMA, cd to '%s', run 'suma -spec "
+      "%sh_ico%d_al.spec',"
        "click on 'dset', and select %s" %
-       (datapath, lowres_ld, hemi, dset_fn))
+       (datapath, hemi, lowres_ld, fn))
