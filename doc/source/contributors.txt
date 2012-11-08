@@ -29,6 +29,7 @@ valuable advice, code or documentation to PyMVPA:
 * `James V. Haxby`_, Dartmouth College, USA
 * `James M. Hughes`_, Dartmouth College, USA
 * `James Kyle`_, UCLA, USA
+* `Nikolaas N. Oosterhof`_, Dartmouth College, USA
 * `Russell Poldrack`_, University of Texas, USA
 * `Stefan Pollmann`_, University of Magdeburg, Germany
 * Geethapriya Raghavan, University of Texas Austin, USA
