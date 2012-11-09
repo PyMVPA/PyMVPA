@@ -227,14 +227,15 @@ if externals.exists("lxml") and externals.exists("nibabel"):
     from mvpa2.atlases import *
 
 __sdebug("surface searchlight")
-#from mvpa2.misc.surfing import volsurf, afni_niml_dset, afni_niml, \
-#     sparse_attributes, surf_fs_asc, volgeom, surf_voxel_selection, \
-#     surf, afni_suma_spec
 from mvpa2.misc.surfing.queryengine import SurfaceVerticesQueryEngine, \
                                             disc_surface_queryengine
 
-from mvpa2.misc.surfing import surf_voxel_selection
-from mvpa2.misc import surfing
+from mvpa2.misc.surfing import surf_voxel_selection, volgeom, volsurf
+
+__sdebug("nibabel afni")
+from mvpa2.support.nibabel import afni_niml_dset, afni_suma_1d, \
+                                    afni_suma_spec, surf_fs_asc
+
 
 __sdebug("ipython goodies")
 if externals.exists("running ipython env"):

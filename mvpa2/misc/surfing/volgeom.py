@@ -506,8 +506,7 @@ class VolGeom(object):
 
 
 def from_any(s, mask_volume=None):
-    """
-    Constructs a VolGeom instance from any reasonable type of input.
+    """Constructs a VolGeom instance from any reasonable type of input.
     
     Parameters
     ----------
@@ -519,7 +518,6 @@ def from_any(s, mask_volume=None):
         If an int is provided, then the mask-volume-th volume in s
         is used as a voxel mask. True is equivalent to 0. If None or
         False are provided, no mask is applied.
-        
         In the special case that s is fmri_dataset-like and mask_volume
         is a string (such as 'voxel_indices'), then it is assumed
         that s.fa[mask_volume] is a list with voxel coordinates to be
