@@ -603,6 +603,8 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
 
     def _pat(index, xs=src_trg_indices, f=max):
         y = f(x[index] for x in xs)
+        if y < 1:
+            y = 1
         return '%%%dd' % math.ceil(math.log10(y))
 
     minsrc = max(st[0] for st in src_trg_indices)
