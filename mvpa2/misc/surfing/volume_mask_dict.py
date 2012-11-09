@@ -71,7 +71,6 @@ class VolumeMaskDictionary(Mapping):
         self._src2nbr = dict() if src2nbr is None else src2nbr
         self._src2aux = dict() if src2nbr is None else src2aux
         self._nbr2src = dict()
-        self._aux_keys = set()
 
         if not self._src2aux is None:
             for k in self._src2aux.keys():
@@ -125,7 +124,8 @@ class VolumeMaskDictionary(Mapping):
 
         if aux:
             n = len(nbrs)
-            if self._aux_keys and (set(aux) != self._aux_keys):
+            expected_keys = set(self.aux_keys())
+            if self.expected_keys() and (set(aux) != expected_keys):
                 raise ValuError("aux label mismatch: %r != %r" %
                                 (set(aux), self._aux_keys))
             for k, v in aux.iteritems():
@@ -135,7 +135,6 @@ class VolumeMaskDictionary(Mapping):
                 if not k in self._src2aux:
                     self._src2aux[k] = dict()
                 self._src2aux[k][src] = v
-                self._aux_keys.add(k)
 
     def _add_target2source(self, src):
         targets = self[src]
@@ -248,7 +247,7 @@ class VolumeMaskDictionary(Mapping):
         keys: list of str
             Names of auxiliary labels that are supported by aux_get
         '''
-        return list(self._aux_keys)
+        return self._src2aux.keys()
 
     def target2sources(self, nbr):
         '''Finds the indices of masks that map to a linear voxel index
