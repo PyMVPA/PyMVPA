@@ -10,9 +10,9 @@
 
 import os
 
+from mvpa.base import warning
 from mvpa.atlases.base import *
 from mvpa.atlases.fsl import *
-
 
 KNOWN_ATLAS_FAMILIES = {
     'pymvpa': (["talairach", "talairach-dist"],
@@ -60,7 +60,9 @@ def Atlas(filename=None, name=None, *args, **kwargs):
             'PyMVPA': {"Label" : LabelsAtlas,
                        "Reference": ReferencesAtlas},
             'FSL': {"Label" : FSLLabelsAtlas,
-                    "Probabalistic": FSLProbabilisticAtlas}
+                    "Probabalistic": FSLProbabilisticAtlas,
+                    "Probabilistic": FSLProbabilisticAtlas,
+                    }
             }[atlas_source]
         atlasType = tempAtlas.header.type.text
         if atlasTypes.has_key(atlasType):
@@ -68,9 +70,9 @@ def Atlas(filename=None, name=None, *args, **kwargs):
             return atlasTypes[atlasType](filename=filename, *args, **kwargs)
             #return ReferencesAtlas(filename)
         else:
-            printdebug("Unknown %s type '%s' of atlas in %s." " Known are %s" %
-                       (atlas_source, atlasType, filename,
-                        atlasTypes.keys()), 2)
+            warning("Unknown %s type '%s' of atlas in %s." " Known are %s" %
+                    (atlas_source, atlasType, filename,
+                     atlasTypes.keys()), 2)
             return tempAtlas
     except XMLAtlasException, e:
         print "File %s is not a valid XML based atlas due to %s" \
