@@ -206,6 +206,11 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         volimg.to_filename(volfn)
         volds = fmri_dataset(volfn)
 
+        _, volfngz = tempfile.mkstemp('vol.nii.gz', 'test')
+        volimg.to_filename(volfngz)
+        voldsgz = fmri_dataset(volfngz)
+
+
         # make the surfaces
         sphere_density = 10
 
@@ -244,7 +249,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         # start a combinatorial explosion
         for intermediate_ in [intermediate, intermediatefn, None]:
             for center_nodes_ in [None, range(nv)]:
-                for volume_ in [volimg, volfn, volds]:
+                for volume_ in [volimg, volfn, volds, volfngz, voldsgz]:
                     for surf_src_ in ['filename', 'surf']:
                         if surf_src_ == 'filename':
                             s_i, s_m, s_o = inner, intermediate, outer
@@ -295,7 +300,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                                 assert_array_equal(r_expected, r)
 
         # clean up
-        all_fns = [volfn, outerfn, innerfn, intermediatefn]
+        all_fns = [volfn, volfngz, outerfn, innerfn, intermediatefn]
         map(os.remove, all_fns)
 
 
