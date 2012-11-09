@@ -125,7 +125,7 @@ class VolumeMaskDictionary(Mapping):
         if aux:
             n = len(nbrs)
             expected_keys = set(self.aux_keys())
-            if self.expected_keys() and (set(aux) != expected_keys):
+            if expected_keys and (set(aux) != expected_keys):
                 raise ValuError("aux label mismatch: %r != %r" %
                                 (set(aux), self._aux_keys))
             for k, v in aux.iteritems():
