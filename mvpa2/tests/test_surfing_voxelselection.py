@@ -55,7 +55,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
     # checks to see if results are identical for surface
     # and volume base searchlights (the former using Euclidian distance
 
-    def test_voxel_selection(self):
+    def _test_voxel_selection(self):
         '''Define searchlight radius (in mm)
         
         Note that the current value is a float; if it were int, it would 
@@ -254,17 +254,27 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                     call_method_=("qe", "rvs", "gam"))
 
         combis = _cartprod(params) # compute all possible combinations
-        combistep = 17 # some fine prime number to speed things up
-                       # FIXME: currently not checking whether all variables 
-                       # are tested
+        combistep = 173 # some fine prime number to speed things up
+                        # if this value becomes too big then not all
+                        # cases are covered
+                        # the unit test tests itself whether all values
+                        # occur at least once
+
         tested_params = dict()
+        def val2str(x):
+            return '%r:%r' % (type(x), x)
 
         for i in xrange(0, len(combis), combistep):
             combi = combis[i]
 
             # assign values
             for k in combi.keys():
-                exec('%s=combi["%s"]' % (k, k))
+                exec '%s=combi["%s"]' % (k, k) in locals(), globals()
+                if not k in tested_params:
+                    tested_params[k] = set()
+                tested_params[k].add(val2str(combi[k]))
+
+            print i
 
             if surf_src_ == 'filename':
                 s_i, s_m, s_o = inner, intermediate, outer
@@ -317,6 +327,15 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         # clean up
         all_fns = [volfn, volfngz, outerfn, innerfn, intermediatefn]
         map(os.remove, all_fns)
+
+        for k, vs in params.iteritems():
+            if not k in tested_params:
+                raise ValueError("Missing key: %r" % k)
+            for v in vs:
+                vstr = val2str(v)
+                if not vstr in tested_params[k]:
+                    raise ValueError("Missing value %r for %s" %
+                                        (tested_params[k], k))
 
 def _cartprod(d):
     '''makes a combinatorial explosion from a dictionary
