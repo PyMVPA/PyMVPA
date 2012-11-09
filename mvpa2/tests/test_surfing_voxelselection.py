@@ -246,63 +246,95 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                                 51, 49, 48, 48, 55, 55, 55, 55, 55, 55, 55,
                                 55, 55, 55]])
 
-        # start a combinatorial explosion
-        for intermediate_ in [intermediate, intermediatefn, None]:
-            for center_nodes_ in [None, range(nv)]:
-                for volume_ in [volimg, volfn, volds, volfngz, voldsgz]:
-                    for surf_src_ in ['filename', 'surf']:
-                        if surf_src_ == 'filename':
-                            s_i, s_m, s_o = inner, intermediate, outer
-                        elif surf_src_ == 'surf':
-                                s_i, s_m, s_o = innerfn, intermediatefn, outerfn
+        params = dict(intermediate_=(intermediate, intermediatefn, None),
+                    center_nodes_=(None, range(nv)),
+                    volume_=(volimg, volfn, volds, volfngz, voldsgz),
+                    surf_src_=('filename', 'surf'),
+                    volume_mask_=(None, True, 0, 2),
+                    call_method_=("qe", "rvs", "gam"))
 
-                        for volume_mask_ in [None, True, 0, 2]:
-                            for call_method_ in ["qe", "rvs", "gam"]:
-                                if call_method_ == "qe":
-                                    # use the fancy query engine wrapper
-                                    qe = disc_surface_queryengine(radius,
-                                            volume_, s_i, s_o, s_m,
-                                            source_surf_nodes=center_nodes_,
-                                            volume_mask=volume_mask_)
-                                    sl = Searchlight(m, queryengine=qe)
-                                    r = sl(ds).samples
+        combis = _cartprod(params) # compute all possible combinations
+        combistep = 17 # some fine prime number to speed things up
+                       # FIXME: currently not checking whether all variables 
+                       # are tested
+        tested_params = dict()
 
-                                elif call_method_ == 'rvs':
-                                    # use query-engine but build the 
-                                    # ingredients by hand
-                                    vg = volgeom.from_any(volume_,
-                                                          volume_mask_)
-                                    vs = volsurf.VolSurf(vg, s_i, s_o)
-                                    sel = surf_voxel_selection.voxel_selection(
-                                            vs, radius, source_surf=s_m,
-                                            source_surf_nodes=center_nodes_)
-                                    qe = SurfaceVerticesQueryEngine(sel)
-                                    sl = Searchlight(m, queryengine=qe)
-                                    r = sl(ds).samples
+        for i in xrange(0, len(combis), combistep):
+            combi = combis[i]
 
-                                elif call_method_ == 'gam':
-                                    # build everything from the ground up
-                                    vg = volgeom.from_any(volume_,
-                                                          volume_mask_)
-                                    vs = volsurf.VolSurf(vg, s_i, s_o)
-                                    sel = surf_voxel_selection.voxel_selection(
-                                            vs, radius, source_surf=s_m,
-                                            source_surf_nodes=center_nodes_)
-                                    mp = sel
+            # assign values
+            for k in combi.keys():
+                exec('%s=combi["%s"]' % (k, k))
 
-                                    ks = sel.keys()
-                                    nk = len(ks)
-                                    r = np.zeros((1, nk))
-                                    for i, k in enumerate(ks):
-                                        r[0, i] = len(mp[k])
+            if surf_src_ == 'filename':
+                s_i, s_m, s_o = inner, intermediate, outer
+            elif surf_src_ == 'surf':
+                s_i, s_m, s_o = innerfn, intermediatefn, outerfn
+            else:
+                raise ValueError('this should not happen')
 
-                                # check if result is as expected
-                                assert_array_equal(r_expected, r)
+            if call_method_ == "qe":
+                # use the fancy query engine wrapper
+                qe = disc_surface_queryengine(radius,
+                        volume_, s_i, s_o, s_m,
+                        source_surf_nodes=center_nodes_,
+                        volume_mask=volume_mask_)
+                sl = Searchlight(m, queryengine=qe)
+                r = sl(ds).samples
+
+            elif call_method_ == 'rvs':
+                # use query-engine but build the 
+                # ingredients by hand
+                vg = volgeom.from_any(volume_,
+                                      volume_mask_)
+                vs = volsurf.VolSurf(vg, s_i, s_o)
+                sel = surf_voxel_selection.voxel_selection(
+                        vs, radius, source_surf=s_m,
+                        source_surf_nodes=center_nodes_)
+                qe = SurfaceVerticesQueryEngine(sel)
+                sl = Searchlight(m, queryengine=qe)
+                r = sl(ds).samples
+
+            elif call_method_ == 'gam':
+                # build everything from the ground up
+                vg = volgeom.from_any(volume_,
+                                      volume_mask_)
+                vs = volsurf.VolSurf(vg, s_i, s_o)
+                sel = surf_voxel_selection.voxel_selection(
+                        vs, radius, source_surf=s_m,
+                        source_surf_nodes=center_nodes_)
+                mp = sel
+
+                ks = sel.keys()
+                nk = len(ks)
+                r = np.zeros((1, nk))
+                for i, k in enumerate(ks):
+                    r[0, i] = len(mp[k])
+
+            # check if result is as expected
+            assert_array_equal(r_expected, r)
 
         # clean up
         all_fns = [volfn, volfngz, outerfn, innerfn, intermediatefn]
         map(os.remove, all_fns)
 
+def _cartprod(d):
+    '''makes a combinatorial explosion from a dictionary
+    only combinations are made from values in tuples'''
+    if not d:
+        return [dict()]
+
+    r = []
+    k, vs = d.popitem()
+    itervals = vs if type(vs) is tuple else [vs]
+    for v in itervals:
+        cps = _cartprod(d)
+        for cp in cps:
+            kv = {k:v}
+            kv.update(cp)
+            r.append(kv)
+    d[k] = vs
+    return r
 
 class _Voxel_Count_Measure(Measure):
     # used to check voxel selection results
