@@ -427,10 +427,12 @@ def find_file(directory, icold=None, hemi=None, suffix=None):
     return fn
 
 def from_any(*args):
-    '''Wizard-like function to get a SurfaceSpec instance from any
+    """
+    Wizard-like function to get a SurfaceSpec instance from any
     kind of reasonable input.
     
-    Parameters:
+    Parameters
+    ==========
     *args: one or multiple arguments.
         If one argument and a SurfaceSpec, this is returned immediately.
         If one argument and the name of a file, it returns the contents
@@ -441,10 +443,11 @@ def from_any(*args):
         are used to construct a canonical filename using 
         afni_suma_spec.canonical_filename whose result is returned.
     
-    Returns:
+    Returns
+    =======
     spec: SurfaceSpec
         spec as defined by parameters (if it is found)
-    '''
+    """
 
     if args is None or not args:
         return None

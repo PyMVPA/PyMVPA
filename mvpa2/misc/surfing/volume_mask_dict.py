@@ -11,6 +11,11 @@ A typical use case is storing results from (surface-based)
 voxel selection.
 
 @author: nick
+
+WiP.
+TODO: make target to sources dictionary computations 'lazy'-only
+compute the first time this is asked. XXX How to deal with __setstate__
+and __getstate__ - have to flag somehow whether this mapping was present. 
 """
 
 __docformat__ = 'restructuredtext'
@@ -92,7 +97,8 @@ class VolumeMaskDictionary(Mapping):
         '''
         Adds a volume mask
         
-        Parameters:
+        Parameters
+        ----------
         src: int or str
             index or name of volume mask. src should not be already
             present in this dictionary
@@ -269,6 +275,7 @@ class VolumeMaskDictionary(Mapping):
         '''The list of voxels that are in one or more masks
         
         Returns
+        -------
         idxs: list of int
             Linear indices of voxels in one or more masks
         '''
@@ -336,6 +343,20 @@ class VolumeMaskDictionary(Mapping):
             self._add_target2source(src)
 
     def __eq__(self, other):
+        """Compares this instance with another instance
+        
+        Parameters
+        ----------
+        other: VolumeMaskDictionary
+            instance with which the current instance is compared. 
+        
+        Returns
+        -------
+        eq: bool
+            True iff the current instance has the same layout as other,
+            the same keys, and matching masks.
+            This function does *not* consider auxiliary properties.
+        """
         if not self.same_layout(other):
             return False
 

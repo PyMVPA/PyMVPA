@@ -27,7 +27,7 @@ functional volume, and merges left and right hemispheres into single surface
 files.
 
 If you the surface-based searchlight code for a publication, please cite both
-:ref:`pyMVPA <HHS+09a> and :ref:`Oosterhof et al. (2011) <OWD+11>` 
+:ref:`pyMVPA <HHS+09a>`_ and :ref:`Oosterhof et al. (2011) <OWD+11>` 
 
 
 
