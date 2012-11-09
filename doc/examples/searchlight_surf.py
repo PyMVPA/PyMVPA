@@ -241,6 +241,6 @@ from mvpa2.support.nibabel import afni_niml_dset
 afni_niml_dset.write(path_fn, surf_sl_dset)
 
 print ("To view results in SUMA, cd to '%s', run 'suma -spec "
-      "%sh_ico%d_al.spec',"
+      "%sh_ico%d_al.spec', press ctrl+s, "
        "click on 'dset', and select %s" %
-       (datapath, hemi, lowres_ld, fn))
+       (surfpath, hemi, lowres_ld, fn))
