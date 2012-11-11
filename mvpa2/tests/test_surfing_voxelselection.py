@@ -254,7 +254,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                     call_method_=("qe", "rvs", "gam"))
 
         combis = _cartprod(params) # compute all possible combinations
-        combistep = 173 # some fine prime number to speed things up
+        combistep = 17  #173 
+                        # some fine prime number to speed things up
                         # if this value becomes too big then not all
                         # cases are covered
                         # the unit test tests itself whether all values
@@ -269,12 +270,13 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
             # assign values
             for k in combi.keys():
+                # put these values in globals
+                # at the end of this testing function they
+                # are popped (assuming it passed the test)
                 exec '%s=combi["%s"]' % (k, k) in locals(), globals()
                 if not k in tested_params:
                     tested_params[k] = set()
                 tested_params[k].add(val2str(combi[k]))
-
-            print i
 
             if surf_src_ == 'filename':
                 s_i, s_m, s_o = inner, intermediate, outer
@@ -336,6 +338,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                 if not vstr in tested_params[k]:
                     raise ValueError("Missing value %r for %s" %
                                         (tested_params[k], k))
+            globals().pop(k)
 
 def _cartprod(d):
     '''makes a combinatorial explosion from a dictionary

@@ -18,6 +18,9 @@ import os, collections, datetime, time, heapq, math
 
 import numpy as np
 
+_COORD_EPS = 1e-14 # maximum allowed difference between coordinates
+                   # in order to be considered equal
+
 class Surface(object):
     '''Cortical surface mesh
     
@@ -665,8 +668,8 @@ class Surface(object):
         if not isinstance(other, self.__class__):
             return False
 
-        return (np.all(self.vertices == other.vertices) and
-                np.all(self.faces == other.faces))
+        return (np.all(np.abs(self.vertices - other.vertices) < _COORD_EPS)
+                and np.all(self.faces == other.faces))
 
     def __ne__(self, other):
         return not self.__eq__(other)
