@@ -16,19 +16,20 @@ Surface-based searchlight on fMRI data
 This example employs a surface-based searchlight as described in 
 :ref:`Oosterhof et al. (2011) <OWD+11>` (with a minor difference that distances
 are currently computed using a Dijkstra distance metric rather than a geodesic 
-one. For more details, see the `Surfing <http://surfing.sourceforge.net>`_  
+one). For more details, see the `Surfing <http://surfing.sourceforge.net>`_  
 website.
 
-Surfaces used in this example were reconstructed using Freesurfer and 
-subsequently preprocessed using with AFNI and SUMA using the 
-afni_anat_preproc.py wrapper script, which resamples the surfaces to standard 
-topologies (with different resolutions), aligns surfaces to a reference 
-functional volume, and merges left and right hemispheres into single surface 
-files.
+Surfaces used in this example are available in the tutorial dataset files; 
+either the tutorial_data_surf_minimal or tutorial_data_surf_complete version.
+The surfaces were reconstructed using Freesurfer and 
+subsequently preprocessed with AFNI and SUMA using the 
+afni_anat_preproc.py wrapper script in mvpa2/support/afni, which resamples 
+the surfaces to standard topologies (with different resolutions), 
+aligns surfaces to a reference functional volume, and merges left and right
+hemispheres into single surface files.
 
-If you the surface-based searchlight code for a publication, please cite both
-:ref:`pyMVPA <HHS+09a>`_ and :ref:`Oosterhof et al. (2011) <OWD+11>` 
-
+If you use the surface-based searchlight code for a publication, please cite 
+both :ref:`PyMVPA <HHS+09a>`_ and :ref:`Oosterhof et al. (2011) <OWD+11>`. 
 
 
 As always, we first have to import PyMVPA.
@@ -66,8 +67,9 @@ hemi = 'l'
 """
 Surfaces that enclose the grey matter. These are used for voxel selection.
 These surfaces were resampled using AFNI's MapIcosahedron; ld refers to
-the number of linear divisions of the 'large' triangles of the original
-icosahedron (ld=x means there are 10*x**2+2 nodes and 20*x**2 triangles).
+the number of linear divisions of the twenty 'large' triangles of the original
+icosahedron (ld=x means there are 10*x**2+2 nodes (a.k.a. vertices)
+and 20*x**2 triangles (a.k.a. faces)).
 """
 
 highres_ld = 128 # 64 or 128 is reasonable
@@ -78,11 +80,17 @@ white_surf_fn = os.path.join(surfpath, "ico%d_%sh.smoothwm_al.asc"
                                       % (highres_ld, hemi))
 
 """
-Define the surface on which the nodes are centers of the searchlight. In this
-example a surface coarser (fewer nodes) than the grey matter-enclosing
-surfaces is employed. 
+Define the surface on which the nodes are centers of the searchlight. This
+surface should be an 'intermediate' surface, which is formed by the 
+node-wise average spatial coordinates of the inner (white) and outer (pial)
+surfaces. 
 
-It is crucial here that highres_ld is a multiple of lowres_ld, so that
+In this example a surface coarser (fewer nodes) than the grey matter-enclosing
+surfaces is employed. Of course one could also use a surface that has the same
+number of nodes as the grey-matter enclosing surfaces; this is in fact the 
+default and enabled when 
+
+It is required that highres_ld is an integer multiple of lowres_ld, so that
 all nodes in the low-res surface have a corresponding node (i.e., with the same,
 or almost the same, spatial coordinate) on the high-res surface.
 
@@ -96,7 +104,7 @@ range from 8 to 64.
 
 lowres_ld = 16 # 16, 32 or 64 is reasonable. 8 is really fast
 
-intermediate_surf_fn = os.path.join(surfpath, "ico%d_%sh.intermediate_al.asc"
+source_surf_fn = os.path.join(surfpath, "ico%d_%sh.intermediate_al.asc"
                                              % (lowres_ld, hemi))
 
 """
@@ -119,20 +127,19 @@ disc).
 
 As a reminder, the only essential values we have set are the
 filenames of three surfaces (high-res inner and outer,
-and low-res intermediate) and the funcitonal volume, and the searchlight 
+and low-res source surface), the functional volume, and the searchlight 
 radius.
 
-Note that setting the low-res intermediate surface can be omitted
+Note that setting the low-res source surface can be omitted
 (i.e. set to None), in which case it is computed as the average from the
 high-res outer and inner. The searchlight would then be based on
 a high-res intermediate surface with a lot of nodes, which means that it takes
 longer to run the searchlight.
 """
 
-qe = disc_surface_queryengine(
-     radius,
-     epi_fn,
-     white_surf_fn, pial_surf_fn, intermediate_surf_fn, eta_step=1)
+qe = disc_surface_queryengine(radius, epi_fn,
+                              white_surf_fn, pial_surf_fn,
+                              source_surf_fn)
 
 """
 Voxel selection is now completed; each node has been assigned a list of 
@@ -242,5 +249,5 @@ afni_niml_dset.write(path_fn, surf_sl_dset)
 
 print ("To view results in SUMA, cd to '%s', run 'suma -spec "
       "%sh_ico%d_al.spec', press ctrl+s, "
-       "click on 'dset', and select %s" %
+       "click on 'Load Dset', and select %s" %
        (surfpath, hemi, lowres_ld, fn))

@@ -396,18 +396,55 @@ class SurfTests(unittest.TestCase):
                     if src is None:
                         continue
 
+                    # index of node nearest to voxel i
                     src_anywhere = sel.target2nearest_source(i,
                                             fallback_euclidian_distance=True)
+
+                    # coordinates of node nearest to voxel i
                     xyz_src = xyz[src_anywhere]
+
+                    # coordinates of voxel i
                     xyz_trg = vg.lin2xyz(np.asarray([i]))
 
-                    ds = volgeom.distance(xyz, xyz_trg)
+                    # distance between node nearest to voxel i, and voxel i
+                    # this should be the smallest distancer
                     d = volgeom.distance(np.reshape(xyz_src, (1, 3)), xyz_trg)
 
+
+                    # distances between all nodes and voxel i
+                    ds = volgeom.distance(xyz, xyz_trg)
+
+                    # order of the distances
+                    is_ds = np.argsort(ds.ravel())
+
+                    # go over all the nodes
+                    # require that the node is in the volume
+                    # mask
+                    #for i_ds in is_ds:
+
+                    #    if not  
+
+                    # index of node nearest to voxel i
                     ii = np.argmin(ds)
 
-                    assert_false(np.min(ds) != d and ii in sel.get_targets())
+                    xyz_min = xyz[ii]
+                    lin_min = vg.xyz2lin([xyz_min])
 
+
+
+
+                    # linear index of voxel that contains xyz_src
+                    lin_src = vg.xyz2lin(np.reshape(xyz_src, (1, 3)))
+
+                    # when using multi-core support,
+                    # pickling and unpickling can reduce the precision
+                    # a little bit, causing rounding errors
+                    eps = 1e-14
+
+                    delta = np.abs(ds[ii] - d)
+                    assert_false(delta > eps and ii in sel and
+                                 i in sel[ii] and
+                                 vg.contains_lin(lin_min))
 
 
 

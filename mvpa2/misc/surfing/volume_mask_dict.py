@@ -70,16 +70,11 @@ class VolumeMaskDictionary(Mapping):
 
         self._src2nbr = dict() if src2nbr is None else src2nbr
         self._src2aux = dict() if src2nbr is None else src2aux
-        self._nbr2src = dict()
 
-        if not self._src2aux is None:
-            for k in self._src2aux.keys():
-                self._src2aux.add(k)
-
-        if not self._src2nbr is None:
-            for k in self._src2nbr.keys():
-                _add_target2source(src)
-
+        # this attribute is initially set to None
+        # upon the first call that requires an inverse mapping
+        # it is generated.
+        self._lazy_nbr2src = dict()
 
     def __repr__(self, prefixes=[]):
         prefixes_ = ['vg=%r' % self._volgeom,
@@ -120,7 +115,9 @@ class VolumeMaskDictionary(Mapping):
             raise ValueError('%r already in %r' % (src, self))
 
         self._src2nbr[src] = nbrs
-        self._add_target2source(src)
+
+        if not self._lazy_nbr2src is None:
+            self._add_target2source(src)
 
         if aux:
             n = len(nbrs)
@@ -129,6 +126,8 @@ class VolumeMaskDictionary(Mapping):
                 raise ValuError("aux label mismatch: %r != %r" %
                                 (set(aux), self._aux_keys))
             for k, v in aux.iteritems():
+                if type(v) is np.ndarray:
+                    v = list(v.ravel())
                 if len(v) not in (n, 1):
                     raise ValueError('size mismatch: size %d != %d or 1' %
                                         (len(v), n))
@@ -136,16 +135,7 @@ class VolumeMaskDictionary(Mapping):
                     self._src2aux[k] = dict()
                 self._src2aux[k][src] = v
 
-    def _add_target2source(self, src):
-        targets = self[src]
-        n = len(targets)
-        contains = self.volgeom.contains_lin(np.asarray(targets))
-        for i, target in enumerate(targets):
-            if not contains[i]:
-                raise ValueError("Target not in volume: %s" % target)
-            if not target in self._nbr2src:
-                self._nbr2src[target] = set()
-            self._nbr2src[target].add(src)
+
 
     def get_tuple_list(self, src, *labels):
         '''
@@ -249,6 +239,27 @@ class VolumeMaskDictionary(Mapping):
         '''
         return self._src2aux.keys()
 
+    def _ensure_has_target2sources(self):
+        if self._lazy_nbr2src is None:
+            self._lazy_nbr2src = dict()
+            for src in self.keys():
+                self._add_target2source(src)
+
+    def _add_target2source(self, src, targets=None):
+        if targets is None:
+            targets = self[src]
+        n = len(targets)
+        contains = self.volgeom.contains_lin(np.asarray(targets))
+        for i, target in enumerate(targets):
+            if not contains[i]:
+                raise ValueError("Target not in volume: %s" % target)
+            #if self._lazy_nbr2src is None:
+            #    self._lazy_nbr2src = dict()
+            if not target in self._lazy_nbr2src:
+                self._lazy_nbr2src[target] = set()
+            self._lazy_nbr2src[target].add(src)
+
+
     def target2sources(self, nbr):
         '''Finds the indices of masks that map to a linear voxel index
         
@@ -265,10 +276,12 @@ class VolumeMaskDictionary(Mapping):
         if type(nbr) in (list, tuple):
             return map(self.target2sources, nbr)
 
-        if not nbr in self._nbr2src:
+        self._ensure_has_target2sources()
+
+        if not nbr in self._lazy_nbr2src:
             return None
 
-        return self._nbr2src[nbr]
+        return self._lazy_nbr2src[nbr]
 
     def get_targets(self):
         '''The list of voxels that are in one or more masks
@@ -278,7 +291,9 @@ class VolumeMaskDictionary(Mapping):
         idxs: list of int
             Linear indices of voxels in one or more masks
         '''
-        return sorted(self._nbr2src.keys())
+        self._ensure_has_target2sources()
+
+        return sorted(self._lazy_nbr2src.keys())
 
     def get_mask(self):
         '''A mask of voxels that are included in one or more masks
@@ -289,10 +304,12 @@ class VolumeMaskDictionary(Mapping):
             Three-dimensional array with the value 1 for voxels that are
             included in one or more masks, and 0 elsewhere
         '''
+
+        self._ensure_has_target2sources()
+
         m_lin = np.zeros((self.volgeom.nvoxels, 1))
-        for src, nbrs in self._src2nbr.iteritems():
-            for nbr in nbrs:
-                m_lin[nbr] = 1
+        for nbr in self._lazy_nbr2src.iterkeys():
+            m_lin[nbr] = 1
 
         return np.reshape(m_lin, self.volgeom.shape[:3])
 
@@ -330,16 +347,10 @@ class VolumeMaskDictionary(Mapping):
         # due to issues with saving self_nbr2src, it is not returned as part
         # of the current state. instead it is derived when __setstate__ is 
         # called.
-        return (self._volgeom, self._source, self._src2nbr,
-                self._src2aux)
+        return (self._volgeom, self._source, self._src2nbr, self._src2aux)
 
     def __setstate__(self, s):
-        self._volgeom, self._source, self._src2nbr, \
-                                self._src2aux = s
-        # storing the target2source information seems impossible with h5save.
-        # therefore re-generate this information
-        for src in self.keys():
-            self._add_target2source(src)
+        self._volgeom, self._source, self._src2nbr, self._src2aux = s
 
     def __eq__(self, other):
         """Compares this instance with another instance
@@ -365,6 +376,14 @@ class VolumeMaskDictionary(Mapping):
         for k in self.keys():
             if self[k] != other[k]:
                 return False
+
+        if set(self.aux_keys()) != set(other.aux_keys()):
+            return False
+
+        for lab in self.aux_keys():
+            for k in self.keys():
+                if self.aux_get(k, lab) != other.aux_get(k, lab):
+                    return False
 
         return True
 
@@ -404,6 +423,20 @@ class VolumeMaskDictionary(Mapping):
             raise ValueError("Cannot merge %r with %r" % (self, other))
 
         aks = self.aux_keys()
+
+# TODO: optimization in case either one or both already have the
+#       inverse mapping from voxels to nodes
+#       For now simply set everything to empty 
+#        if self._lazy_nbr2src is None and not other._lazy_nbr2src is None:
+#            self._ensure_has_target2sources()
+#        elif other._lazy_nbr2src is None and not self._lazy_nbr2src is None:
+#            other._ensure_has_target2sources()
+#        elif not (other._lazy_nbr2src is None or self._lazy_nbr2src is None):
+#            for k, vs in other._lazy_nbr2src.iteritems():
+#                self._add_target2source(k, vs)
+
+        self._lazy_nbr2src = None
+        other._lazy_nbr2src = None
 
         for k in other.keys():
             idxs = other[k]
@@ -528,10 +561,11 @@ class VolumeMaskDictionary(Mapping):
             else:
                 return None
 
+
+
         xyz_srcs = self.xyz_source(flat_srcs)
         d = volgeom.distance(xyz_srcs, xyz_trg)
         i = np.argmin(d)
-
         # d is a 2D array, get the row number with the lowest d
         source = flat_srcs[i / xyz_trg.shape[0]]
 
