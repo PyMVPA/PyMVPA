@@ -64,6 +64,9 @@ Studies employing PyMVPA
 * :ref:`Connolly et al., Journal of Neuroscience (2012) <CGG+12>`:
   Representation of Biological Classes in the Human Brain.
 
+* :ref:`Duff et al., NeuroImage (2011) <DTM+11>`: Task-driven ICA feature
+  generation for accurate and interpretable prediction using fMRI.
+
 * :ref:`Haxby et al., Neuron (2011) <HGC+11>`: A common, high-dimensional model
   of the representational space in human ventral temporal cortex.
 

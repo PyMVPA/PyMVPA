@@ -64,7 +64,9 @@ def get_pairwise_hits_misses(a, targets, pairs=None, select=None, axis=-1):
         p_samples = a[idx, ..., i]
         p_targets = targets[idx]
 
-        hits_all = (p_samples == p_targets[:, None])
+        if p_samples.ndim > 1:
+            p_targets = p_targets[:, None]
+        hits_all = (p_samples == p_targets)
         hits = np.sum(hits_all, axis=0)
         misses = len(hits_all) - hits
         results.append((hits, misses))
@@ -101,6 +103,6 @@ def get_pairwise_accuracies(ds, stat='acc', pairs=None, select=None, space='targ
         stat_values = hits_misses
         stat_fa = ['hits', 'misses']
     else:
-        raise NotImplemented("%s statistic not there yet" % stat)
+        raise NotImplementedError("%s statistic not there yet" % stat)
 
     return Dataset(stat_values, sa={space: pairs}, fa={'stat': stat_fa})
