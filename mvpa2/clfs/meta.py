@@ -27,11 +27,13 @@ from mvpa2.misc.args import group_kwargs
 from mvpa2.base.types import is_sequence_type
 from mvpa2.base.param import Parameter
 
+from mvpa2.datasets import Dataset
+
 from mvpa2.generators.splitters import Splitter
 from mvpa2.generators.partition import NFoldPartitioner
 from mvpa2.datasets.miscfx import get_samples_by_attr
 from mvpa2.misc.attrmap import AttributeMap
-from mvpa2.base.dochelpers import _str
+from mvpa2.base.dochelpers import _str, _repr_attrs
 from mvpa2.base.state import ConditionalAttribute, ClassWithCollections
 
 from mvpa2.clfs.base import Classifier
@@ -55,7 +57,7 @@ if __debug__:
 class BoostedClassifier(Classifier):
     """Classifier containing the farm of other classifiers.
 
-    Should rarely be used directly. Use one of its childs instead
+    Should rarely be used directly. Use one of its children instead
     """
 
     # should not be needed if we have prediction_estimates upstairs
@@ -160,7 +162,9 @@ class BoostedClassifier(Classifier):
         was actually created. It will be used by
         MulticlassClassifier
         """
-        self.__clfs = clfs
+        # tuple to guarantee immutability since we are asssigning
+        # __tags__ below and rely on having clfs populated already
+        self.__clfs = tuple(clfs) if clfs is not None else tuple()
         """Classifiers to use"""
 
         if len(clfs):
@@ -347,6 +351,7 @@ class PredictionsCombiner(ClassWithCollections):
         dataset : Dataset
           training data in this case
         """
+        # TODO: implement stacking to help with resolving ties
         pass
 
 
@@ -437,8 +442,9 @@ class MaximalVote(PredictionsCombiner):
 
             if len(maxk) > 1:
                 warning("We got multiple labels %s which have the " % maxk +
-                        "same maximal vote %d. XXX disambiguate" % maxv)
-            predictions.append(maxk[0])
+                        "same maximal vote %d. XXX disambiguate. " % maxv +
+                        "Meanwhile selecting the first in sorted order")
+            predictions.append(sorted(maxk)[0])
 
         ca = self.ca
         ca.estimates = all_label_counts
@@ -458,7 +464,7 @@ class MeanPrediction(PredictionsCombiner):
         doc="Predictions from all classifiers are stored")
 
     def __call__(self, clfs, dataset):
-        """Actuall callable - perform meaning
+        """Actual callable - perform meaning
 
         """
         if len(clfs)==0:
@@ -549,10 +555,10 @@ class CombinedClassifier(BoostedClassifier):
           dict of keyworded arguments which might get used
           by State or Classifier
 
-        NB: `combiner` might need to operate not on 'predictions' descrete
+        NB: `combiner` might need to operate not on 'predictions' discrete
             labels but rather on raw 'class' estimates classifiers
             estimate (which is pretty much what is stored under
-            `estimates`
+            `estimates`)
         """
         if clfs == None:
             clfs = []
@@ -1047,9 +1053,15 @@ class MulticlassClassifier(CombinedClassifier):
     """`CombinedClassifier` to perform multiclass using a list of
     `BinaryClassifier`.
 
-    such as 1-vs-1 (ie in pairs like libsvm doesn) or 1-vs-all (which
+    such as 1-vs-1 (ie in pairs like LIBSVM does) or 1-vs-all (which
     is yet to think about)
     """
+
+    raw_predictions_ds = ConditionalAttribute(enabled=False,
+        doc="Wraps raw_predictions into a Dataset with .fa.(neg,pos) "
+        "describing actual labels used in each binary classification task "
+        "and samples containing actual decision labels per each input "
+        "sample")
 
     def __init__(self, clf, bclf_type="1-vs-1", **kwargs):
         """Initialize the instance
@@ -1080,9 +1092,9 @@ class MulticlassClassifier(CombinedClassifier):
         elif bclf_type == "1-vs-all": # TODO
             raise NotImplementedError
         else:
-            raise ValueError, \
-                  "Unknown type of classifier %s for " % bclf_type + \
-                  "BoostedMulticlassClassifier"
+            raise ValueError(
+                  "Unknown type of classifier %s for " % bclf_type +
+                  "MulticlassClassifier")
         self.__bclf_type = bclf_type
 
     # XXX fix it up a bit... it seems that MulticlassClassifier should
@@ -1092,36 +1104,56 @@ class MulticlassClassifier(CombinedClassifier):
                                             repr(self.__clf))
         return super(MulticlassClassifier, self).__repr__([prefix] + prefixes)
 
-
-    def _train(self, dataset):
-        """Train classifier
+    def _get_binary_pairs(self, dataset):
+        """Return a list of pairs of categories lists to be used in binary classification
         """
         targets_sa_name = self.get_space()
 
         # construct binary classifiers
         ulabels = dataset.sa[targets_sa_name].unique
+
         if self.__bclf_type == "1-vs-1":
             # generate pairs and corresponding classifiers
-            biclfs = []
-            for i in xrange(len(ulabels)):
-                for j in xrange(i+1, len(ulabels)):
-                    clf = self.__clf.clone()
-                    biclfs.append(
-                        BinaryClassifier(
-                            clf,
-                            poslabels=[ulabels[i]], neglabels=[ulabels[j]]))
+            # could use _product but let's stay inline with previuos
+            # implementation
+            label_pairs = [([ulabels[i]], [ulabels[j]])
+                           for i in xrange(len(ulabels))
+                           for j in xrange(i+1, len(ulabels))]
             if __debug__:
-                debug("CLFMC", "Created %d binary classifiers for %d labels",
-                      (len(biclfs), len(ulabels)))
-
-            self.clfs = biclfs
-
+                debug("CLFMC", "Created %d label pairs for original %d labels",
+                      (len(label_pairs), len(ulabels)))
         elif self.__bclf_type == "1-vs-all":
             raise NotImplementedError
 
+        return label_pairs
+
+    def _train(self, dataset):
+        """Train classifier
+        """
+        # construct binary classifiers
+        biclfs = []
+        for poslabels, neglabels in self._get_binary_pairs(dataset):
+            biclfs.append(
+                BinaryClassifier(self.__clf.clone(),
+                                 poslabels=poslabels,
+                                 neglabels=neglabels))
+        self.clfs = biclfs                # need to be set after, not operated in-place
         # perform actual training
         CombinedClassifier._train(self, dataset)
 
+    def _predict(self, dataset):
+        ca = self.ca
+        if ca.is_enabled("raw_predictions_ds"):
+            ca.enable("raw_predictions")
+
+        predictions = super(MulticlassClassifier, self)._predict(dataset)
+
+        if ca.is_enabled("raw_predictions_ds"):
+            ca.raw_predictions_ds = \
+                Dataset(np.array(ca.raw_predictions).T,
+                    fa={'pos': [clf.poslabels for clf in self.clfs],
+                        'neg': [clf.neglabels for clf in self.clfs]})
+        return predictions
 
 
 class SplitClassifier(CombinedClassifier):
@@ -1343,9 +1375,14 @@ class MappedClassifier(ProxyClassifier):
         return ProxyClassifier._predict(self, self.__mapper.forward(dataset))
 
 
-    def __str__(self):
-        return _str(self, '%s-%s' % (self.mapper, self.clf))
+    def __repr__(self, prefixes=[]):
+        return super(MappedClassifier, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['mapper']))
 
+    def __str__(self, *args, **kwargs):
+        return super(MappedClassifier, self).__str__(
+              str(self.mapper), *args, **kwargs)
 
     mapper = property(lambda x:x.__mapper, doc="Used mapper")
 

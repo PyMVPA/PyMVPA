@@ -51,6 +51,9 @@ class FeatureSelection(SliceMapper):
     >>> fs0(ds).samples
     array([[1, 3]])
     """
+
+    __init__doc__exclude__ = ['slicearg']
+
     def __init__(self, filler=0, **kwargs):
         """
         Parameters
@@ -183,6 +186,8 @@ class FeatureSelection(SliceMapper):
 class StaticFeatureSelection(FeatureSelection):
     """Feature selection by static slicing argument.
     """
+
+    __init__doc__exclude__ = []           # slicearg is relevant again
     def __init__(self, slicearg, dshape=None, oshape=None, **kwargs):
         """
         Parameters
@@ -275,14 +280,12 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
 
         self.__train_analyzer = train_analyzer
 
+    def _get_selected_ids(self, dataset):
+        """Given a dataset actually select the features
 
-    def _train(self, dataset):
-        """Select the most important features
-
-        Parameters
-        ----------
-        dataset : Dataset
-          used to compute sensitivity maps
+        Returns
+        -------
+        indexes of the selected features
         """
         # optionally train the analyzer first
         if self.__train_analyzer:
@@ -290,7 +293,6 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
 
         sensitivity = self.__sensitivity_analyzer(dataset)
         """Compute the sensitivity map."""
-
         self.ca.sensitivity = sensitivity
 
         # Select features to preserve
@@ -302,6 +304,18 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
 
         # XXX not sure if it really has to be sorted
         selected_ids.sort()
+        return selected_ids
+
+    def _train(self, dataset):
+        """Select the most important features
+
+        Parameters
+        ----------
+        dataset : Dataset
+          used to compute sensitivity maps
+        """
+        # Get selected feature ids
+        selected_ids = self._get_selected_ids(dataset)
         # announce desired features to the underlying slice mapper
         self._safe_assign_slicearg(selected_ids)
         # and perform its own training
@@ -363,14 +377,12 @@ class IterativeFeatureSelection(FeatureSelection):
           Given a list of error values it has to return whether the
           criterion is fulfilled.
         fselector : Functor
-        train_clf : bool
-          Flag whether the classifier in `transfer_error` should be
-          trained before computing the error. In general this is
-          required, but if the `sensitivity_analyzer` and
-          `transfer_error` share and make use of the same classifier it
-          can be switched off to save CPU cycles. Default `None` checks
-          if sensitivity_analyzer is based on a classifier and doesn't train
-          if so.
+        train_pmeasure : bool
+          Flag whether the `pmeasure` should be trained before
+          computing the error. In general this is required, but if the
+          `fmeasure` and `pmeasure` share and make use of the same
+          classifier AND `pmeasure` does not really need training, it
+          can be switched off to save CPU cycles.
         """
         # bases init first
         FeatureSelection.__init__(self, **kwargs)
@@ -388,7 +400,8 @@ class IterativeFeatureSelection(FeatureSelection):
         if __debug__:
             debug("FS_", "Untraining Iterative FS: %s" % self)
         self._fmeasure.untrain()
-        self._pmeasure.untrain()
+        if self._pmeasure is not None:
+            self._pmeasure.untrain()
         # ask base class to do its untrain
         super(IterativeFeatureSelection, self)._untrain()
 

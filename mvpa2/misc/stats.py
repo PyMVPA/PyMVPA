@@ -382,7 +382,11 @@ def _ttest_finish(df, t, alternative):
     if np.any(t_isnan) and __scipy_prior0101:
         # older scipy's would return 0 for nan values of the argument
         # which is incorrect
-        prob[t_isnan] = np.nan
+        if np.isscalar(prob):
+            prob = np.nan
+        else:
+            prob[t_isnan] = np.nan
+
     if t.ndim == 0:
         t = np.asscalar(t)
 
