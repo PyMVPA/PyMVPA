@@ -611,6 +611,37 @@ class SurfTests(unittest.TestCase):
 
         assert_equal(voxcount, expected_voxcount)
 
+    def test_h5support(self):
+
+        sh = (20, 20, 20)
+        msk = np.zeros(sh)
+        for i in xrange(0, sh[0], 2):
+            msk[i, :, :] = 1
+        vg = volgeom.VolGeom(sh, np.identity(4), mask=msk)
+
+        density = 20
+
+        outer = surf.generate_sphere(density) * 10. + 5
+        inner = surf.generate_sphere(density) * 5. + 5
+
+        intermediate = outer * .5 + inner * .5
+        xyz = intermediate.vertices
+
+        radius = 50
+
+        backends = ['native', 'hdf5']
+
+        for i, backend in enumerate(backends):
+            sel = surf_voxel_selection.run_voxel_selection(radius, vg, inner,
+                            outer, results_backend=backend)
+
+            if i == 0:
+                sel0 = sel
+            else:
+                assert_equal(sel0, sel)
+
+
+
 
 class _Voxel_Count_Measure(Measure):
     # used to check voxel selection results
@@ -628,5 +659,3 @@ def suite():
 
 if __name__ == '__main__':
     import runner
-        #from mvpa2.base import debug
-        #debug.active += ["SVS", "SLC"]

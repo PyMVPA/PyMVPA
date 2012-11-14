@@ -41,6 +41,11 @@ from mvpa2.base import warning
 from mvpa2.misc.surfing import volgeom, volsurf, volume_mask_dict
 from mvpa2.support.nibabel import surf
 
+from mvpa2.base.hdf5 import h5save, h5load
+
+import os
+import random
+
 
 # TODO: see if we use these contants, or let it be up to the user
 # possibly also rename them
@@ -389,7 +394,8 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                     distance_metric='dijkstra',
                     start_fr=0., stop_fr=1., start_mm=0, stop_mm=0,
                     nsteps=10, eta_step=1, nproc=None,
-                    outside_node_margin=None):
+                    outside_node_margin=None,
+                    results_backend='native', tmp_prefix='tmpvoxsel'):
 
         """
         Voxel selection for multiple center nodes on the surface
@@ -434,6 +440,15 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             distance from any node within the volume are still assigned 
             associated voxels. If outside_node_margin is True, then a node is
             always assigned voxels regardless of its position in the volume. 
+        results_backend : ('native', 'hdf5'), optional
+          Specifies the way results are provided back from a processing block
+          in case of nproc > 1. 'native' is pickling/unpickling of results by
+          pprocess, while 'hdf5' would use h5save/h5load functionality.
+          'hdf5' might be more time and memory efficient in some cases.
+        tmp_prefix : str, optional
+          If specified -- serves as a prefix for temporary files storage
+          if results_backend == 'hdf5'.  Thus can specify the directory to use
+          (trailing file path separator is not added automagically).    
 
         Returns
         -------
@@ -441,6 +456,10 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             Voxel selection results, that associates, which each node, the indices
             of the surrounding voxels.
         """
+
+        if nproc > 1 and results_backend == 'hdf5':
+            # Assure having hdf5
+            externals.exists('h5py', raise_=True)
 
         # outer and inner surface
         surf_pial = vol_surf.pial_surface
@@ -520,6 +539,9 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                 nproc = 1
 
         if nproc > 1:
+            if not results_backend in ('native', 'hdf5'):
+                raise ValueError('Illegal results backend %r' % results_backend)
+
             import pprocess
             n_srcs = len(src_trg_nodes)
             blocks = np.array_split(np.arange(n_srcs), nproc)
@@ -544,13 +566,20 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                                 (i + 1, nproc, len(src_trg)), cr=True)
 
                 reducer(empty_dict, attribute_mapper, src_trg,
-                        eta_step=eta_step, proc_id='%d' % (i + 1,))
+                        eta_step=eta_step, proc_id='%d' % (i + 1,),
+                        results_backend=results_backend, tmp_prefix=tmp_prefix)
             if _debug():
                 debug('SVS', '')
                 debug('SVS', 'Started all %d child processes' % (len(blocks)))
                 tstart = time.time()
 
             for i, result in enumerate(results):
+
+                if results_backend == 'hdf5':
+                    result_fn = result
+                    result = h5load(result_fn)
+                    os.remove(result_fn)
+
 
                 if i == 0:
                     node2volume_attributes = result
@@ -580,10 +609,9 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                                                     attribute_mapper,
                                                     src_trg_nodes,
                                                     eta_step=eta_step)
-
-        if _debug():
             debug('SVS', "")
 
+        if _debug():
             if node2volume_attributes is None:
                 msgs = ["Voxel selection completed: none of %d nodes have "
                         "voxels associated" % len(visitorder)]
@@ -608,10 +636,15 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
         return node2volume_attributes
 
 def _reduce_mapper(node2volume_attributes, attribute_mapper,
-                   src_trg_indices, eta_step=1, proc_id=None):
+                   src_trg_indices, eta_step=1, proc_id=None,
+                   results_backend='native', tmp_prefix='tmpvoxsel'):
     '''applies voxel selection to a list of src_trg_indices
     results are added to node2volume_attributes.
     '''
+
+    if not results_backend in ('native', 'hdf5'):
+        raise ValueError('Illegal results backend %r' % results_backend)
+
 
     def _pat(index, xs=src_trg_indices, f=max):
         y = f(x[index] for x in xs)
@@ -623,7 +656,6 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
     mintrg = max(st[1] for st in src_trg_indices)
 
     progresspat = 'node %s -> %s [%%3d%%%%]' % (_pat(0), _pat(1))
-
 
     # start the clock
     tstart = time.time()
@@ -643,7 +675,13 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
                     msg += ' (#%s)' % proc_id
                 debug('SVS', msg, cr=True)
 
-    return node2volume_attributes
+    if results_backend == 'hdf5':
+        tmp_postfix = '%d_%s.h5py' % (math.floor(random.uniform(0, 100000)), proc_id)
+        tmp_fn = os.path.join(tmp_prefix, tmp_postfix)
+        h5save(tmp_fn, node2volume_attributes)
+        return tmp_fn
+    else:
+        return node2volume_attributes
 
 def _debug():
     return __debug__ and 'SVS' in debug.active
@@ -704,7 +742,8 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
                          volume_mask=None, distance_metric='dijkstra',
                          start_mm=0, stop_mm=0, start_fr=0., stop_fr=1.,
                          nsteps=10, eta_step=1, nproc=None,
-                         outside_node_margin=None):
+                         outside_node_margin=None,
+                         results_backend='native', tmp_prefix='tmpvoxsel'):
 
     """
     Voxel selection wrapper for multiple center nodes on the surface
@@ -761,6 +800,15 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
         distance from any node within the volume are still assigned 
         associated voxels. If outside_node_margin is True, then a node is
         always assigned voxels regardless of its position in the volume. 
+    results_backend : ('native', 'hdf5'), optional
+          Specifies the way results are provided back from a processing block
+          in case of nproc > 1. 'native' is pickling/unpickling of results by
+          pprocess, while 'hdf5' would use h5save/h5load functionality.
+          'hdf5' might be more time and memory efficient in some cases.
+    tmp_prefix : str, optional
+          If specified -- serves as a prefix for temporary files storage
+          if results_backend == 'hdf5'.  Thus can specify the directory to use
+          (trailing file path separator is not added automagically).    
 
     Returns
     -------
@@ -780,7 +828,9 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
                           start_fr=start_fr, stop_fr=stop_fr,
                           start_mm=start_mm, stop_mm=stop_mm,
                           nsteps=nsteps, eta_step=1, nproc=nproc,
-                          outside_node_margin=outside_node_margin)
+                          outside_node_margin=outside_node_margin,
+                          results_backend=results_backend,
+                          tmp_prefix=tmp_prefix)
 
     return sel
 
