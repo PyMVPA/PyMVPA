@@ -74,7 +74,7 @@ class VolumeMaskDictionary(Mapping):
         # this attribute is initially set to None
         # upon the first call that requires an inverse mapping
         # it is generated.
-        self._lazy_nbr2src = dict()
+        self._lazy_nbr2src = None
 
     def __repr__(self, prefixes=[]):
         prefixes_ = ['vg=%r' % self._volgeom,
@@ -84,7 +84,7 @@ class VolumeMaskDictionary(Mapping):
         if not self._src2aux is None:
             prefixes_.append('src2aux=%r' % self._src2aux)
 
-        return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
+        return "%s(%s)" % (self.__class__.__name__, ','.join(prefixes_))
 
 
     def add(self, src, nbrs, aux=None):
@@ -114,7 +114,8 @@ class VolumeMaskDictionary(Mapping):
         if src in self._src2nbr:
             raise ValueError('%r already in %r' % (src, self))
 
-        self._src2nbr[src] = nbrs
+
+        self._src2nbr[src] = np.asarray(nbrs, dtype=np.int)
 
         if not self._lazy_nbr2src is None:
             self._add_target2source(src)
@@ -127,13 +128,18 @@ class VolumeMaskDictionary(Mapping):
                                 (set(aux), self._aux_keys))
             for k, v in aux.iteritems():
                 if type(v) is np.ndarray:
-                    v = list(v.ravel())
-                if len(v) not in (n, 1):
+                    v_arr = v.ravel()
+                elif type(v) in (list, tuple, int, float):
+                    v_arr = np.asarray(v).ravel()
+
+                if len(v_arr) not in (n, 1):
                     raise ValueError('size mismatch: size %d != %d or 1' %
-                                        (len(v), n))
+                                        (len(v_arr), n))
+
                 if not k in self._src2aux:
                     self._src2aux[k] = dict()
-                self._src2aux[k][src] = v
+
+                self._src2aux[k][src] = v_arr
 
 
 
@@ -162,12 +168,16 @@ class VolumeMaskDictionary(Mapping):
         tuple_lists = []
         for label in labels:
             if label is None:
-                tuple_lists.append(idxs)
+                tuple_list_elem = idxs.tolist()
             else:
                 vs = self.aux_get(src, label)
                 if len(vs) == 1:
-                    vs = vs * n
-                tuple_lists.append(vs)
+                    tuple_list_elem = [vs[0]] * n
+                else:
+                    tuple_list_elem = vs.tolist()
+
+            tuple_lists.append(tuple_list_elem)
+
         return zip(*tuple_lists)
 
     def get_tuple_list_dict(self, *labels):
@@ -203,7 +213,7 @@ class VolumeMaskDictionary(Mapping):
         idxs: list of int
             linear voxel indices indexed by src
         '''
-        return list(self._src2nbr[src])
+        return self._src2nbr[src].tolist()
 
     def aux_get(self, src, label):
         '''Auxiliary information of a mask
@@ -227,7 +237,7 @@ class VolumeMaskDictionary(Mapping):
             msg = ("Mismatch for key %r" if src in self._src2nbr
                                         else "Unknown key %r")
             raise ValueError((msg + ', label %r') % (src, label))
-        return self._src2aux[label][src]
+        return self._src2aux[label][src].tolist()
 
     def aux_keys(self):
         '''Names of auxiliary labels
@@ -426,7 +436,7 @@ class VolumeMaskDictionary(Mapping):
 
 # TODO: optimization in case either one or both already have the
 #       inverse mapping from voxels to nodes
-#       For now simply set everything to empty 
+#       For now simply set everything to empty. 
 #        if self._lazy_nbr2src is None and not other._lazy_nbr2src is None:
 #            self._ensure_has_target2sources()
 #        elif other._lazy_nbr2src is None and not self._lazy_nbr2src is None:
