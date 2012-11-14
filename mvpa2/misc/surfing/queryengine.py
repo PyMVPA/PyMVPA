@@ -310,7 +310,7 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
                                 distance_metric=distance_metric,
                                 start_fr=start_fr, stop_fr=stop_fr,
                                 start_mm=start_mm, stop_mm=stop_mm,
-                                nsteps=nsteps, eta_step=1, nproc=nproc,
+                                nsteps=nsteps, eta_step=eta_step, nproc=nproc,
                                 outside_node_margin=outside_node_margin)
 
     qe = SurfaceVerticesQueryEngine(voxsel, add_fa=add_fa)
