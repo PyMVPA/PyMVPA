@@ -245,7 +245,7 @@ class VoxelSelector(object):
 
             if skip:
                 # no voxels associated with this node, skip
-                if __debug__:
+                if _debug():
                     debug("SVS", "Skipping node #%d (no voxels associated)" %
                                         src, cr=True)
 
@@ -455,7 +455,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
         else:
             source_surf = surf.from_any(source_surf)
 
-        if __debug__:
+        if _debug():
             debug('SVS', "Generated high-res intermediate surface: "
                   "%d nodes, %d faces" %
                   (intermediate_surf.nvertices, intermediate_surf.nfaces))
@@ -474,7 +474,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
 
         n = len(source_surf_nodes)
 
-        if __debug__:
+        if _debug():
             debug('SVS',
                   "Performing surface-based voxel selection"
                   " for %d centers" % n)
@@ -487,7 +487,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                                         start_fr=start_fr, stop_fr=stop_fr,
                                         start_mm=start_mm, stop_mm=stop_mm)
 
-        if __debug__:
+        if _debug():
             debug('SVS', "Generated mapping from nodes"
                   " to intersecting voxels")
 
@@ -545,6 +545,9 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
 
                 reducer(empty_dict, attribute_mapper, src_trg,
                         eta_step=eta_step, proc_id='%d' % (i + 1,))
+            if debug():
+                debug('SVS', '')
+                debug('SVS', 'Started all %d child processes' % (len(blocks)))
 
             for i, result in enumerate(results):
                 tstart = time.time()
@@ -552,7 +555,6 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                     node2volume_attributes = result
                     if _debug():
 
-                        debug('SVS', '')
                         debug('SVS', "Merging results from %d child "
                                         "processes" % len(blocks))
 
