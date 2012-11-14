@@ -543,8 +543,8 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                     results_backend = 'hdf5'
                 else:
                     results_backend = 'native'
-                if _debug():
-                    debug('SVS', "Using '%s' backend" % (results_backend))
+            if _debug():
+                debug('SVS', "Using '%s' backend" % (results_backend))
 
             if not results_backend in ('native', 'hdf5'):
                 raise ValueError('Illegal results backend %r' % results_backend)
