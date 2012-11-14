@@ -139,7 +139,7 @@ longer to run the searchlight.
 
 qe = disc_surface_queryengine(radius, epi_fn,
                               white_surf_fn, pial_surf_fn,
-                              source_surf_fn, nproc=1)
+                              source_surf_fn)
 
 """
 Voxel selection is now completed; each node has been assigned a list of 
