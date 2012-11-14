@@ -547,9 +547,11 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                         eta_step=eta_step, proc_id='%d' % (i + 1,))
 
             for i, result in enumerate(results):
+                tstart = time.time()
                 if i == 0:
                     node2volume_attributes = result
                     if _debug():
+
                         debug('SVS', '')
                         debug('SVS', "Merging results from %d child "
                                         "processes" % len(blocks))
@@ -559,6 +561,12 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                 if _debug():
                     debug('SVS', "  merged result block %d/%d" % (i + 1, nproc),
                                     cr=True)
+
+            if _debug():
+                telapsed = time.time() - tstart()
+                debug('SVS', 'Merged results from %d child processed - '
+                             'took %s' %
+                             (len(blocks), _seconds2prettystring(telapsed)))
 
         else:
             empty_dict = volume_mask_dict.VolumeMaskDictionary(
@@ -636,6 +644,9 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
 def _debug():
     return __debug__ and 'SVS' in debug.active
 
+def _seconds2prettystring(t):
+    # XXX put in a general module?
+    return str(datetime.timedelta(seconds=round(t)))
 
 def _eta(starttime, progress, msg=None, show=True):
     '''Simple linear extrapolation to estimate how much time is needed 
@@ -668,7 +679,7 @@ def _eta(starttime, progress, msg=None, show=True):
     took = now - starttime
     eta = -1 if progress == 0 else took * (1 - progress) / progress
 
-    f = lambda t:str(datetime.timedelta(seconds=round(t)))
+    f = _seconds2prettystring
 
     barlength = 10 # should be good up to 10^6 nodes
     if barlength:
