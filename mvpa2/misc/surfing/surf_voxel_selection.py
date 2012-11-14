@@ -567,6 +567,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
 
             if _debug():
                 telapsed = time.time() - tstart
+                debug('SVS', "")
                 debug('SVS', 'Merged results from %d child processed - '
                              'took %s' %
                              (len(blocks), _seconds2prettystring(telapsed)))
