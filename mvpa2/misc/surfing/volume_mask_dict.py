@@ -250,7 +250,7 @@ class VolumeMaskDictionary(Mapping):
         return self._src2aux.keys()
 
     def _ensure_has_target2sources(self):
-        if self._lazy_nbr2src is None:
+        if not self._lazy_nbr2src:
             self._lazy_nbr2src = dict()
             for src in self.keys():
                 self._add_target2source(src)

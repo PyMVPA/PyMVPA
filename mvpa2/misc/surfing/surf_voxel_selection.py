@@ -466,6 +466,8 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                     results_backend = 'hdf5'
                 else:
                     results_backend = 'native'
+                if _debug():
+                    debug('SVS', "Using '%s' backend" % (results_backend))
 
         # outer and inner surface
         surf_pial = vol_surf.pial_surface
@@ -683,7 +685,7 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
 
     if results_backend == 'hdf5':
         tmp_postfix = ('__tmp__%d_%s.h5py' %
-                                 (hash(time.time(), proc_id)))
+                                 (hash(time.time()), proc_id))
         tmp_fn = tmp_prefix + tmp_postfix
         h5save(tmp_fn, node2volume_attributes)
         return tmp_fn
