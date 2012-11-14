@@ -233,7 +233,9 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
                              volume_mask=False, distance_metric='dijkstra',
                              start_mm=0, stop_mm=0, start_fr=0., stop_fr=1.,
                              nsteps=10, eta_step=1, add_fa=None, nproc=None,
-                             outside_node_margin=None):
+                             outside_node_margin=None,
+                             results_backend='native',
+                             tmp_prefix='tmpvoxsel'):
 
     """
     Voxel selection wrapper for multiple center nodes on the surface
@@ -293,6 +295,15 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
         distance from any node within the volume are still assigned 
         associated voxels. If outside_node_margin is True, then a node is
         always assigned voxels regardless of its position in the volume. 
+    results_backend : ('native', 'hdf5'), optional
+          Specifies the way results are provided back from a processing block
+          in case of nproc > 1. 'native' is pickling/unpickling of results by
+          pprocess, while 'hdf5' would use h5save/h5load functionality.
+          'hdf5' might be more time and memory efficient in some cases.
+    tmp_prefix : str, optional
+          If specified -- serves as a prefix for temporary files storage
+          if results_backend == 'hdf5'.  Thus can specify the directory to use
+          (trailing file path separator is not added automagically).    
     
     Returns
     -------
@@ -311,7 +322,9 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
                                 start_fr=start_fr, stop_fr=stop_fr,
                                 start_mm=start_mm, stop_mm=stop_mm,
                                 nsteps=nsteps, eta_step=eta_step, nproc=nproc,
-                                outside_node_margin=outside_node_margin)
+                                outside_node_margin=outside_node_margin,
+                                results_backend=results_backend,
+                                tmp_prefix=tmp_prefix)
 
     qe = SurfaceVerticesQueryEngine(voxsel, add_fa=add_fa)
 
