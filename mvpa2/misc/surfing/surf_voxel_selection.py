@@ -593,7 +593,8 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                     if _debug():
                         debug('SVS', '')
                         debug('SVS', "Merging results from %d child "
-                                        "processes" % len(blocks))
+                                     "processes using '%s' backend" %
+                                     (len(blocks), results_backend))
 
                 else:
                     node2volume_attributes.merge(result)
