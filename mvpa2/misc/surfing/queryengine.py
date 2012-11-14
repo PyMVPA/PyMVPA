@@ -234,7 +234,7 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
                              start_mm=0, stop_mm=0, start_fr=0., stop_fr=1.,
                              nsteps=10, eta_step=1, add_fa=None, nproc=None,
                              outside_node_margin=None,
-                             results_backend='native',
+                             results_backend=None,
                              tmp_prefix='tmpvoxsel'):
 
     """

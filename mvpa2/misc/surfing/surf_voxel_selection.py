@@ -752,7 +752,7 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
                          start_mm=0, stop_mm=0, start_fr=0., stop_fr=1.,
                          nsteps=10, eta_step=1, nproc=None,
                          outside_node_margin=None,
-                         results_backend='native', tmp_prefix='tmpvoxsel'):
+                         results_backend=None, tmp_prefix='tmpvoxsel'):
 
     """
     Voxel selection wrapper for multiple center nodes on the surface
