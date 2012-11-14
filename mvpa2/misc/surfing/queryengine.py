@@ -295,16 +295,17 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
         distance from any node within the volume are still assigned 
         associated voxels. If outside_node_margin is True, then a node is
         always assigned voxels regardless of its position in the volume. 
-    results_backend : ('native', 'hdf5'), optional
-          Specifies the way results are provided back from a processing block
-          in case of nproc > 1. 'native' is pickling/unpickling of results by
-          pprocess, while 'hdf5' would use h5save/h5load functionality.
-          'hdf5' might be more time and memory efficient in some cases.
+    results_backend : 'native' or 'hdf5' or None (default).
+        Specifies the way results are provided back from a processing block
+        in case of nproc > 1. 'native' is pickling/unpickling of results by
+        pprocess, while 'hdf5' would use h5save/h5load functionality.
+        'hdf5' might be more time and memory efficient in some cases.
+        If None, then 'hdf5' if used if available, else 'native'.    
     tmp_prefix : str, optional
-          If specified -- serves as a prefix for temporary files storage
-          if results_backend == 'hdf5'.  Thus can specify the directory to use
-          (trailing file path separator is not added automagically).    
-    
+        If specified -- serves as a prefix for temporary files storage
+        if results_backend == 'hdf5'.  Thus can specify the directory to use
+        (trailing file path separator is not added automagically).    
+
     Returns
     -------
     qe: SurfaceVerticesQueryEngine

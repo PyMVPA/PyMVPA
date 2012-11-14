@@ -395,7 +395,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                     start_fr=0., stop_fr=1., start_mm=0, stop_mm=0,
                     nsteps=10, eta_step=1, nproc=None,
                     outside_node_margin=None,
-                    results_backend='native', tmp_prefix='tmpvoxsel'):
+                    results_backend=None, tmp_prefix='tmpvoxsel'):
 
         """
         Voxel selection for multiple center nodes on the surface
@@ -440,15 +440,16 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             distance from any node within the volume are still assigned 
             associated voxels. If outside_node_margin is True, then a node is
             always assigned voxels regardless of its position in the volume. 
-        results_backend : ('native', 'hdf5'), optional
-          Specifies the way results are provided back from a processing block
-          in case of nproc > 1. 'native' is pickling/unpickling of results by
-          pprocess, while 'hdf5' would use h5save/h5load functionality.
-          'hdf5' might be more time and memory efficient in some cases.
+        results_backend : 'native' or 'hdf5' or None (default).
+            Specifies the way results are provided back from a processing block
+            in case of nproc > 1. 'native' is pickling/unpickling of results by
+            pprocess, while 'hdf5' would use h5save/h5load functionality.
+            'hdf5' might be more time and memory efficient in some cases.
+            If None, then 'hdf5' if used if available, else 'native'.
         tmp_prefix : str, optional
-          If specified -- serves as a prefix for temporary files storage
-          if results_backend == 'hdf5'.  Thus can specify the directory to use
-          (trailing file path separator is not added automagically).    
+            If specified -- serves as a prefix for temporary files storage
+            if results_backend == 'hdf5'.  Thus can specify the directory to use
+            (trailing file path separator is not added automagically).    
 
         Returns
         -------
@@ -457,9 +458,14 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             of the surrounding voxels.
         """
 
-        if nproc > 1 and results_backend == 'hdf5':
-            # Assure having hdf5
-            externals.exists('h5py', raise_=True)
+        if nproc > 1:
+            if results_backend == 'hdf5':
+                externals.exists('h5py', raise_=True)
+            elif results_backend is None:
+                if externals.exists('h5py'):
+                    results_backend = 'hdf5'
+                else:
+                    results_backend = 'native'
 
         # outer and inner surface
         surf_pial = vol_surf.pial_surface
@@ -676,8 +682,9 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
                 debug('SVS', msg, cr=True)
 
     if results_backend == 'hdf5':
-        tmp_postfix = '%d_%s.h5py' % (math.floor(random.uniform(0, 100000)), proc_id)
-        tmp_fn = os.path.join(tmp_prefix, tmp_postfix)
+        tmp_postfix = ('__tmp__%d_%s.h5py' %
+                                 (hash(time.time(), proc_id)))
+        tmp_fn = tmp_prefix + tmp_postfix
         h5save(tmp_fn, node2volume_attributes)
         return tmp_fn
     else:
@@ -800,15 +807,16 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
         distance from any node within the volume are still assigned 
         associated voxels. If outside_node_margin is True, then a node is
         always assigned voxels regardless of its position in the volume. 
-    results_backend : ('native', 'hdf5'), optional
-          Specifies the way results are provided back from a processing block
-          in case of nproc > 1. 'native' is pickling/unpickling of results by
-          pprocess, while 'hdf5' would use h5save/h5load functionality.
-          'hdf5' might be more time and memory efficient in some cases.
+    results_backend : 'native' or 'hdf5' or None (default).
+        Specifies the way results are provided back from a processing block
+        in case of nproc > 1. 'native' is pickling/unpickling of results by
+        pprocess, while 'hdf5' would use h5save/h5load functionality.
+        'hdf5' might be more time and memory efficient in some cases.
+        If None, then 'hdf5' if used if available, else 'native'.
     tmp_prefix : str, optional
-          If specified -- serves as a prefix for temporary files storage
-          if results_backend == 'hdf5'.  Thus can specify the directory to use
-          (trailing file path separator is not added automagically).    
+        If specified -- serves as a prefix for temporary files storage
+        if results_backend == 'hdf5'.  Thus can specify the directory to use
+        (trailing file path separator is not added automagically).    
 
     Returns
     -------
