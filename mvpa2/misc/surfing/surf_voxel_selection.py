@@ -545,7 +545,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
 
                 reducer(empty_dict, attribute_mapper, src_trg,
                         eta_step=eta_step, proc_id='%d' % (i + 1,))
-            if debug():
+            if _debug():
                 debug('SVS', '')
                 debug('SVS', 'Started all %d child processes' % (len(blocks)))
 
