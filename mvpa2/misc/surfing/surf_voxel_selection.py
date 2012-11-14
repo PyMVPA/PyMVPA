@@ -458,17 +458,6 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             of the surrounding voxels.
         """
 
-        if nproc > 1:
-            if results_backend == 'hdf5':
-                externals.exists('h5py', raise_=True)
-            elif results_backend is None:
-                if externals.exists('h5py'):
-                    results_backend = 'hdf5'
-                else:
-                    results_backend = 'native'
-                if _debug():
-                    debug('SVS', "Using '%s' backend" % (results_backend))
-
         # outer and inner surface
         surf_pial = vol_surf.pial_surface
         surf_white = vol_surf.white_surface
@@ -547,6 +536,16 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                 nproc = 1
 
         if nproc > 1:
+            if results_backend == 'hdf5':
+                externals.exists('h5py', raise_=True)
+            elif results_backend is None:
+                if externals.exists('h5py'):
+                    results_backend = 'hdf5'
+                else:
+                    results_backend = 'native'
+                if _debug():
+                    debug('SVS', "Using '%s' backend" % (results_backend))
+
             if not results_backend in ('native', 'hdf5'):
                 raise ValueError('Illegal results backend %r' % results_backend)
 
