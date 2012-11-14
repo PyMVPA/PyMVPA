@@ -36,7 +36,7 @@ import math
 import nibabel as ni
 import numpy as np
 
-from mvpa2.base import warning
+from mvpa2.base import warning, externals
 
 from mvpa2.misc.surfing import volgeom, volsurf, volume_mask_dict
 from mvpa2.support.nibabel import surf
