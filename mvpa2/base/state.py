@@ -996,8 +996,12 @@ class ClassWithCollections(object):
         """
         prefixes = prefixes or []
         prefixes = prefixes[:]          # copy list
+        # filter using __init__doc__exclude__
+        for f in getattr(self, '__init__doc__exclude__', []):
+            prefixes = [x for x in prefixes if not x.startswith(f+'=')]
         id_str = ""
         module_str = ""
+
         if __debug__:
             if 'MODULE_IN_REPR' in debug.active:
                 fullname = True
