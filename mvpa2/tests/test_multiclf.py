@@ -130,3 +130,58 @@ def test_multiclass_ties(clf):
     #hits_ndiff = abs(float(hits[1]-hits[0]))/max(hits)
     #thr = 0.9   # let's be generous and pretty much just request absent 0s
     #ok_(hits_ndiff < thr)
+
+@sweepargs(clf=clfswh['linear', 'svm', 'libsvm', '!meta', 'multiclass'])
+@sweepargs(ds=[datasets['uni%dsmall' % i] for i in 2,3,4])
+def test_multiclass_classifier_cv(clf, ds):
+    # Extending test_clf.py:ClassifiersTests.test_multiclass_classifier
+    # Compare performance with our MaximalVote to the one done natively
+    # by e.g. LIBSVM
+    clf = clf.clone()
+    clf.params.C = 1                      # so it doesn't auto-adjust
+    mclf = MulticlassClassifier(clf=clf.clone())
+    part = NFoldPartitioner()
+    cv  = CrossValidation(clf , part, enable_ca=['stats', 'training_stats'])
+    mcv = CrossValidation(mclf, part, enable_ca=['stats', 'training_stats'])
+
+    er  =  cv(ds)
+    mer = mcv(ds)
+
+    # errors should be the same
+    assert_array_equal(er, mer)
+    assert_equal(str(cv.ca.training_stats), str(mcv.ca.training_stats))
+    # if it was a binary task, cv.ca.stats would also have AUC column
+    # while mcv would not  :-/  TODO
+    if len(ds.UT) == 2:
+        # so just compare the matrix and ACC
+        assert_array_equal(cv.ca.stats.matrix, mcv.ca.stats.matrix)
+        assert_equal(cv.ca.stats.stats['ACC'], mcv.ca.stats.stats['ACC'])
+    else:
+        assert_equal(str(cv.ca.stats), str(mcv.ca.stats))
+    
+
+def test_multiclass_classifier_pass_ds_attributes():
+    # TODO: replicate/extend basic testing of pass_attr
+    #       in some more "basic" test_*
+    clf = LinearCSVMC(C=1)
+    ds = datasets['uni3small'].copy()
+    ds.sa['ids'] = np.arange(len(ds))
+    mclf = MulticlassClassifier(
+        clf,
+        pass_attr=['ids', 'sa.chunks', 'a.bogus_features',
+                  # 'ca.raw_estimates' # this one is binary_clf x samples list ATM
+                  # that is why raw_predictions_ds was born
+                  'ca.raw_predictions_ds',
+                  'ca.estimates', # this one is ok
+                  'ca.predictions',
+                  ],
+        enable_ca=['all'])
+    mcv  = CrossValidation(mclf, NFoldPartitioner(), errorfx=None)
+    res = mcv(ds)
+    assert_array_equal(sorted(res.sa.ids), ds.sa.ids)
+    assert_array_equal(res.chunks, ds.chunks[res.sa.ids])
+    assert_array_equal(res.sa.predictions, res.samples[:, 0])
+    assert_array_equal(res.sa.cvfolds,
+                       np.repeat(range(len(ds.UC)), len(ds)/len(ds.UC)))
+
+
