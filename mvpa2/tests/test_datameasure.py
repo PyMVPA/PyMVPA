@@ -107,6 +107,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                enable_ca=['training_stats',
                                               'stats'])
         sana = mclf.get_sensitivity_analyzer(# postproc=absolute_features(),
+                                           pass_attr=['fa.nonbogus_targets'],
                                            enable_ca=["sensitivities"])
 
         ulabels = ds.uniquetargets
@@ -114,10 +115,11 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # Can't rely on splitcfg since count-limit is done in __call__
         assert(nsplits == len(list(partitioner.generate(ds))))
         sens = sana(ds)
+        assert('nonbogus_targets' in sens.fa) # were they passsed?
         # TODO: those few do not expose biases
         if not len(set(clf.__tags__).intersection(('lars', 'glmnet', 'gpr' ))):
             assert('biases' in sens.sa)
-            print sens.sa.biases
+            # print sens.sa.biases
         # It should return either ...
         #  nlabels * nsplits
         req_nsamples = [ nlabels * nsplits ]
@@ -425,7 +427,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                   feature_selector=FeatureSelectionPipeline(
                       [FractionTailSelector(0.5),
                        FixedNElementTailSelector(1)]),
-                  train_clf=True)
+                  train_pmeasure=True)
 
         # and we get sensitivity analyzer which works on splits and uses
         # sensitivity

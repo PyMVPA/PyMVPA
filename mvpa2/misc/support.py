@@ -719,7 +719,7 @@ def get_limit_filter(limit, collection):
     Parameters
     -----------
     limit : None or str or dict
-      If ``None`` all elements wil be included in the filter. If an single
+      If ``None`` all elements will be included in the filter. If an single
       attribute name is given, its unique values will be used to define
       chunks of data that are marked in the filter as unique integers. Finally,
       if a dictionary is provided, its keys define attribute names and its
@@ -735,7 +735,7 @@ def get_limit_filter(limit, collection):
     -------
     array
       This array is either boolean, where a `True` elements represent including
-      in the filter, or the array is numerical, where it unqiue integer values
+      in the filter, or the array is numerical, where it unique integer values
       defines individual chunks of a filter.
     """
     attr_length = collection.attr_length

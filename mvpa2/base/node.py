@@ -16,6 +16,10 @@ from mvpa2.support import copy
 from mvpa2.base.dochelpers import _str, _repr, _repr_attrs
 from mvpa2.base.state import ClassWithCollections, ConditionalAttribute
 
+from mvpa2.base.collections import SampleAttributesCollection, \
+     FeatureAttributesCollection, DatasetAttributesCollection
+
+
 if __debug__:
     from mvpa2.base import debug
 
@@ -40,16 +44,22 @@ class Node(ClassWithCollections):
         doc="Computed results before invoking postproc. " +
             "Stored only if postproc is not None.")
 
-    def __init__(self, space=None, postproc=None, **kwargs):
+    def __init__(self, space=None, pass_attr=None, postproc=None, **kwargs):
         """
         Parameters
         ----------
-        space: str, optional
+        space : str, optional
           Name of the 'processing space'. The actual meaning of this argument
           heavily depends on the sub-class implementation. In general, this is
           a trigger that tells the node to compute and store information about
           the input data that is "interesting" in the context of the
           corresponding processing in the output dataset.
+        pass_attr : str, list of str, optional
+          What attribute(s) (from sa, fa, a collections, see
+          :meth:`Dataset.get_attr`) to pass from original dataset
+          provided to __call__ (before applying postproc), or from
+          'ca' collection of this instance (use 'ca.' prefix)
+          into the resultant dataset.
         postproc : Node instance, optional
           Node to perform post-processing of results. This node is applied
           in `__call__()` to perform a final processing step on the to be
@@ -62,6 +72,9 @@ class Node(ClassWithCollections):
                   (self.__class__.__name__, space, str(postproc)))
         self.set_space(space)
         self.set_postproc(postproc)
+        if isinstance(pass_attr, basestring):
+            pass_attr = (pass_attr,)
+        self.__pass_attr = pass_attr
 
 
     def __call__(self, ds):
@@ -125,6 +138,42 @@ class Node(ClassWithCollections):
         -------
         Dataset
         """
+
+        pass_attr = self.__pass_attr
+        if pass_attr is not None:
+            ca = self.ca
+            ca_keys = self.ca.keys()
+            for a in pass_attr:
+                # It might come from .ca of this instance
+                if a.startswith('ca.'):
+                    a = a[3:]
+                if a in ca_keys:
+                    # We will assign it to .sa for now
+                    # Later on we might/should characterize .ca's
+                    # as being sample- or feature- or ds- related
+                    rcol = result.sa
+                    attr = ca[a]
+                else:
+                    # look in the ds
+                    # find it in the original ds
+                    attr, col = ds.get_attr(a)
+                    # deduce corresponding collection in results
+                    # Since isinstance would take longer (eg 200 us vs 4)
+                    # for now just use 'is' on the __class__
+                    col_class = col.__class__
+                    if col_class is SampleAttributesCollection:
+                        rcol = result.sa
+                    elif col_class is FeatureAttributesCollection:
+                        rcol = result.fa
+                    elif col_class is DatasetAttributesCollection:
+                        rcol = result.a
+                    else:
+                        raise ValueError("Cannot determine origin of %s collection"
+                                         % col)
+                # "shallow copy" into the result
+                # this way we also invoke checks for the correct length etc
+                rcol[attr.name] = attr.value
+
         if not self.__postproc is None:
             if __debug__:
                 debug("NO",
@@ -187,10 +236,14 @@ class Node(ClassWithCollections):
     def __repr__(self, prefixes=[]):
         return super(Node, self).__repr__(
             prefixes=prefixes
-            + _repr_attrs(self, ['space', 'postproc']))
+            + _repr_attrs(self, ['space', 'pass_attr', 'postproc']))
 
     space = property(get_space, set_space,
                      doc="Processing space name of this node")
+
+    pass_attr = property(lambda self: self.__pass_attr,
+                         doc="Which attributes of the dataset or self.ca "
+                         "to pass into result dataset upon call")
 
     postproc = property(get_postproc, set_postproc,
                         doc="Node to perform post-processing of results")

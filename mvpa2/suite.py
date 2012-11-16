@@ -229,8 +229,11 @@ if externals.exists("lxml") and externals.exists("nibabel"):
 
 __sdebug("ipython goodies")
 if externals.exists("running ipython env"):
-    from mvpa2.support.ipython import *
-    ipy_activate_pymvpa_goodies()
+    try:
+        from mvpa2.support.ipython import *
+        ipy_activate_pymvpa_goodies()
+    except Exception, e:
+        warning("Failed to activate custom IPython completions due to %s" % e)
 
 def suite_stats():
     """Return cruel dict of things which evil suite provides
