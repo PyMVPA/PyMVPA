@@ -37,6 +37,13 @@ multidata = (
     }
 )
 
+data = (
+    'data', ('-d', '--data'),
+    {'help': 'awesome description is pending'
+    }
+)
+
+
 multimask = (
     'masks', ('-m', '--masks'),
     {'nargs': '+'}
