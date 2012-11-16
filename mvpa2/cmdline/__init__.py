@@ -14,3 +14,4 @@ import cmd_hyperalign
 import cmd_info
 import cmd_clfcv
 import cmd_mkds
+import cmd_preproc
