@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -8,9 +7,10 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''
-Anatomical preprocessing for surface-based voxel selection
+This is a library for anatomical preprocessing for surface-based voxel 
+selection. Typically it is used by a wrapper function afni_surf_preproc.
 
-Provides functionality to:
+It provides functionality to:
 - convert freesurfer surfaces to AFNI/SUMA format (using SUMA_Make_Spec_FS)
 - resample surfaces to standard topology (using MapIcosahedron)
 - generate additional surfaces by averaging existing ones
@@ -29,7 +29,7 @@ Called on the command line, it requires at least three arguments:
 (2) "--surfdir freesurfer/directory/surf" 
 (3) "--refdir outputdir"
 
-Called through the method run_afni_anat_preproc, it supports these
+Called through the method run_afni_surf_preproc, it supports these
 arguments as well (without the '--' prefixes). 
 
 Created on Jan 29, 2012
@@ -37,9 +37,19 @@ Created on Jan 29, 2012
 @author: nick
 '''
 
-import os, fnmatch, datetime, re, argparse, sys
+
 from mvpa2.support.nibabel import surf_fs_asc, surf, afni_suma_spec
 from mvpa2.support.afni import afni_utils as utils
+
+
+import os
+import fnmatch
+import datetime
+import re
+import argparse
+import sys
+
+_VERSION = "0.1"
 
 __all__ = ['run_afni_anat_preproc']
 
@@ -349,51 +359,6 @@ def run_skullstrip(config, env):
         print "No skull strip because already exists: %s+orig" % expvol_trg_prefix
 
     utils.run_cmds(cmds, env)
-
-    '''
-    if do_ss:
-        expvol_trg_prefix = '%s%s' % (e_n, config['sssuffix'])
-        cmd = '3dSkullStrip'
-        input = '-input'
-    else:
-        expvol_trg_prefix = e_n
-        cmd = '3dbucket'
-        input = ''
-
-    if 'nii' in e_e:
-        if overwrite or not utils.afni_fileexists('%s/%s+orig.HEAD' % (refdir, e_n)):
-            print "Converting %s from NIFTI to AFNI format" % e_n
-            cmds.append('cd "%s"; 3dbucket -overwrite -prefix ./%s+orig %s' % (refdir, e_n, expvol_src))
-            cmds.append('if [ -e %s/%s+tlrc.HEAD ]; then 3drefit -view orig -space ORIG %s/%s+tlrc; else echo "File in orig orientation - no refit necessary"; fi' % (refdir, e_n, refdir, e_n))
-    elif overwrite or not utils.afni_fileexists('%s/%s.nii' % (refdir, e_n)):
-        print "Converting %s from AFNI to NIFTI format" % e_n
-        cmds.append('cd "%s"; 3dbucket -overwrite -prefix ./%s.nii %s' % (refdir, e_n, expvol_src))
-
-    if overwrite or not utils.afni_fileexists('%s/%s+orig.HEAD' % (refdir, expvol_trg_prefix)):
-
-        #cmds.append('cd "%s";%s -overwrite -prefix ./%s+orig %s %s' %
-        #                    (refdir, cmd, expvol_trg_prefix, input, expvol_src))
-        cmds.append('cd "%s";%s -overwrite -prefix ./%s+orig %s %s+orig' %
-                            (refdir, cmd, expvol_trg_prefix, input, e_n))
-    else:
-        print "%s already exists" % expvol_trg_prefix
-
-    #utils.run_cmds(cmds, env)
-
-    # As of Oct 2012 it seems that when using NIFTI files, the converted files
-    # in AFNI format have the +tlrc view rather than +orig
-    # here we ensure that they have +tlrc
-
-    #cmd = 'cd "%s";' % refdir
-    #for postfix in ['', config['sssuffix']]:
-    #    srcfn = os.path.join(refdir, '%s%s+tlrc.HEAD' % (e_n, postfix))
-    #    if os.path.exists(srcfn):
-    #        trgfn = os.path.join(refdir, '%s%s+orig.HEAD' % (e_n, postfix))
-    #        if overwrite or not utils.afni_fileexists(trgfn):
-    #            cmd += ('3drefit -view orig -space ORIG %s;' % srcfn)
-
-    #utils.run_cmds(cmd, env)
-    '''
 
 def run_alignment(config, env):
     '''Aligns anat (which is assumed to be aligned with EPI data) to Freesurfer SurfVol
@@ -788,29 +753,31 @@ def run_all(config, env):
 
 def getparser():
     description = '''
-    Anatomical preprocessing to align freesurfer surfaces with AFNI data
-    This is a wrapper script for usage with AFNI/SUMA.
+    Anatomical preprocessing to align Freesurfer surfaces with AFNI data
     
     Copyright 2010-2012 Nikolaas N. Oosterhof <nikolaas.oosterhof@unitn.it>
     
     It provides functionality to:
-    - convert freesurfer surfaces to AFNI/SUMA format (using SUMA_Make_Spec_FS)
-    - resample surfaces to standard topology (using MapIcosahedron) at various
+    - convert freesurfer surfaces to AFNI/SUMA format (using SUMA_Make_Spec_FS).
+    - resample surfaces to standard topology (using MapIcosahedron) at various 
       resolutions. 
-    - generate additional surfaces by averaging existing ones
-    - coregistration of freesurfer output to AFNI/SUMA anatomical or 
-      functional volume (using align_epi_anat.py)
-    - run @AddEdge to visualize coregistration
-    - merge left (lh) and right (rh) hemispheres into single files (mh)
-    - generate various views of left+right inflated surfaces 
-    - generate SUMA specification files, and see_suma* shell scripts
+    - generate additional surfaces by averaging existing ones.
+    - coregistration of freesurfer output to AFNI/SUMA anatomical or functional 
+      volume (using align_epi_anat.py).
+    - run @AddEdge to visualize coregistration.
+    - merge left (lh) and right (rh) hemispheres into single files (mh).
+    - generate various views of left+right inflated surfaces.
+    - generate SUMA specification files, and see_suma* shell scripts.
     
-    This script assumes a processing pipeline with freesurfer for surface
+    This script assumes a processing pipeline with Freesurfer for surface
     reconstruction, and AFNI/SUMA for coregistration and visualization.
-    More details can be found in the documentation of surfing.sourceforge.net
+    Specifically it is assumed that surfaces have been reconstructed
+    using Freesurfer's recon-all. More details can be found in the 
+    documentation available at http://surfing.sourceforge.net
     
-    If EPIs from multiple sessions are aligned, this script should use different 
-    directories for refdir for each session, otherwise naming conflicts may occur.
+    If EPIs from multiple sessions are aligned, this script should use 
+    different directories for refdir for each session, otherwise naming 
+    conflicts may occur.
     
     This function does not resample or transform any functional data. Instead,
     surfaces are transformed to be in alignment with ANATVOL or EPIVOL.
@@ -819,25 +786,33 @@ def getparser():
     (1) "-e epi_filename"  or  "-a anat_filename"
     (2) "-d freesurfer/directory/surf" 
     (3) "-r outputdir"'
+    
+    Notes:
+    - Please check alignment visually.
+    - Nifti (.nii or .nii.gz) files are supported, but AFNI may not be able
+      to read the {S,Q}-form information properly. If functional data was 
+      preprocessed with a program other than AFNI, please check alignment
+      visually with another program than AFNI, such as MRIcron. 
     '''
 
-    epilog = '''This function is *experimental* and may delete files in refdir 
-                or elsewhere.'''
+    epilog = '''This function is *experimental* and may delete files in 
+                refdir or elsewhere.'''
 
     yesno = ["yes", "no"]
     parser = argparse.ArgumentParser(description=description, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('-v', '--version', action='version', version='afni_surf_preproc %s' % _VERSION)
     parser.add_argument("-s", "--sid", required=False, help="subject id used in @SUMA_Make_Spec_FS ")
     parser.add_argument("-d", "--surfdir", required=False, help="Freesurfer surf/ directory")
     parser.add_argument("-a", "--anatvol", required=False, help="Anatomical that is assumed to be in alignment with the EPI data of interest")
     parser.add_argument("-e", "--epivol", required=False, help="EPI data of interest")
-    parser.add_argument('-v', "--expvol", required=False, help="Experimental volume to which SurfVol is aligned")
+    parser.add_argument('-x', "--expvol", required=False, help="Experimental volume to which SurfVol is aligned")
     parser.add_argument('-E', "--isepi", required=False, choices=yesno, help="Is the experimental volume an EPI (yes) or anatomical (no)")
     parser.add_argument("-r", "--refdir", required=True, help="Output directory in which volumes and surfaces are in reference to ANATVOL or EPIVOL")
     parser.add_argument("-p", "--steps", default='all', help='Processing steps separated by "+"-characters. "all" is the default and equivalent to "toafni+mapico+moresurfs+skullstrip+align+makespec+makespecboth"')
-    parser.add_argument("-l", "--ld", default="4+8+16+32+64+128", help="MapIcosahedron linear devisions, e.g. 80, or 16+96 (for both 16 or 96)")
+    parser.add_argument("-l", "--ld", default="4+8+16+32+64+128", help="MapIcosahedron linear devisions, e.g. 80, or 16+96 (for both 16 or 96). The default is 4+8+16+32+64+128")
     parser.add_argument("-o", "--overwrite", action='store_true', default=False, help="Overwrite existing files")
     parser.add_argument('--hemi', default='l+r', choices=['l', 'r', 'l+r'], help='Hemispheres to process ([l+r])')
-    parser.add_argument("--expvol_ss", default='yes', choices=yesno, help='Skull strip experimental volume ([yes],no)')
+    parser.add_argument('-S', "--expvol_ss", default='yes', choices=yesno, help='Skull strip experimental volume ([yes],no)')
     parser.add_argument('--aea_opts', default='-cmass cmass+xyz -big_move', help="Options given to align_epi_anat ([-cmass cmass+xyz -big_move])")
     parser.add_argument('-I', '--identity', action="store_true", default=False, help="Use identity transformation between SurfVol and anat/epivol (no alignment)")
     parser.add_argument('-A', '--AddEdge', default='yes', choices=yesno, help="Run AddEdge on aligned volumes ([yes])")
@@ -879,28 +854,19 @@ def _test_me(config):
         print c
         run_all(c, env)
 
-def run_afni_anat_preproc(**config_dict):
+def run_afni_surf_preproc(config_dict):
     config = getdefaults()
     config.update(config_dict) # overwrite default input arguments
 
-    p = getparser()
-    actions = p._actions
-    for action in actions:
-        d = action.default
-        if not d is None:
-            config[action.dest] = d
-
     checkconfig(config)
-
     augmentconfig(config)
 
     environment = getenv()
-
     run_all(config, environment)
 
 # this is a little hack so that python documentation
 # is added from the parser defined above
-def _set_run_afni_anat_preproc_doc():
+def _set_run_surf_anat_preproc_doc():
     import textwrap
     p = getparser()
     aa = p._actions
@@ -924,43 +890,9 @@ Parameters
 ----------
 '''
 
-    run_afni_anat_preproc.__doc__ = __doc__ + intermediate + '\n'.join(ds)
+    run_afni_surf_preproc.__doc__ = __doc__ + intermediate + '\n'.join(ds)
 
 # apply setting the documentation
-_set_run_afni_anat_preproc_doc()
-
-if __name__ == '__main__':
-    if len(sys.argv) >= 2 and sys.argv[1] == '__test__':
-        config = dict() if len(sys.argv) == 2 else dict(refdir=sys.argv[2])
-        _test_me(config)
-        sys.exit(0)
-
-    # get default configuration (for testing)
-    # in the future, allow for setting these on command line
-    config = getdefaults()
-    options = getoptions()
-    config.update(options) # overwrite default input arguments
-
-    # check config
-    checkconfig(config)
-
-    if config['verbose']:
-        print "Using these options:\n"
-        for v in options.keys():
-            print '  %s = %r' % (v, config[v])
-
-    # add auxiliry configuration settings that are *derived* from config
-    config = augmentconfig(config)
-
-    # get path stuff; try to get freesurfer and afni in path
-    env = getenv()
-    run_all(config, env)
-
-    config = None
-
-    # run commands based on config
-    #cmds = run_all(config, env)
-    #cmds='cd /Users/nick/Downloads/fingerdata-0.2/refZ/||exit 1;align_epi_anat.py -overwrite -dset1 ./anat_al_ss+orig -dset2 ./s88_SurfVol_ss+orig -dset1to2 -giant_move -suffix _al2SV -Allineate_opts "-warp shr -VERB -weight_frac 1.0"  -epi_strip None -anat_has_skull no'
-    #utils.run_cmds(cmds, env)
+_set_run_surf_anat_preproc_doc()
 
 
