@@ -100,8 +100,9 @@ class ConfigManager(SafeConfigParser):
         homedir = os.path.expanduser('~')
         user_configfile = os.path.join(homedir, '.pymvpa2.cfg')
         user_configfile_old = os.path.join(homedir, '.pymvpa.cfg')
-        filenames = self.__cfg_filenames \
-                    + ['pymvpa2.cfg', user_configfile]
+        # first load user config and then overwrite by local and custom config
+        # files.
+        filenames = [user_configfile, 'pymvpa2.cfg'] + self.__cfg_filenames
 
         # Check if config for previous version exists, we need to
         # warn users since they might need to copy it over
