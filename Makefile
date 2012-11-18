@@ -191,6 +191,10 @@ manpages: mkdir-MAN_DIR
 		bin/pymvpa2-atlaslabeler > $(MAN_DIR)/pymvpa2-atlaslabeler.1
 	PYTHONPATH=$(LPYTHONPATH) help2man -N -n 'start a PyMVPA tutorial session' \
 		bin/pymvpa2-tutorial > $(MAN_DIR)/pymvpa2-tutorial.1
+	PYTHONPATH=$(LPYTHONPATH) help2man --no-discard-stderr -N -n \
+			'preprocess Freesurfer surfaces for AFNI/SUMA' \
+			bin/afni_surf_preproc > $(MAN_DIR)/afni_surf_preproc.1
+	
 
 references:
 	@echo "I: Generating references"
