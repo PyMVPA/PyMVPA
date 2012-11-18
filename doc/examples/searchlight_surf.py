@@ -23,12 +23,12 @@ Surfaces used in this example are available in the tutorial dataset files;
 either the tutorial_data_surf_minimal or tutorial_data_surf_complete version.
 The surfaces were reconstructed using Freesurfer and 
 subsequently preprocessed with AFNI and SUMA using the 
-afni_anat_preproc.py wrapper script in mvpa2/support/afni, which resamples 
-the surfaces to standard topologies (with different resolutions) using
-MapIcosehedron, aligns surfaces to a reference functional volume, and merges 
-left and right hemispheres into single surface files. A more detailed 
+afni_surf_preproc.py wrapper script in PyMVPA's 'bin' directory, which 
+resamples the surfaces to standard topologies (with different resolutions) 
+using MapIcosehedron, aligns surfaces to a reference functional volume, and 
+merges left and right hemispheres into single surface files. A more detailed 
 description of the steps that this script takes is provided in the 
-documentation on the Surfing <http://surfing.sourceforge.net>`_  
+documentation on the `Surfing <http://surfing.sourceforge.net>`_  
 website.
 
 If you use the surface-based searchlight code for a publication, please cite 
@@ -50,7 +50,7 @@ if __debug__:
     from mvpa2.base import debug
     debug.active += ["SVS", "SLC"]
 
-"""Define surface and volume data paths"""
+"""Define surface and volume data paths:"""
 
 rootpath = os.path.join(pymvpa_datadbroot,
                         'tutorial_data', 'tutorial_data')
@@ -58,7 +58,7 @@ rootpath = os.path.join(pymvpa_datadbroot,
 datapath = os.path.join(rootpath, 'data')
 surfpath = os.path.join(rootpath, 'suma_surfaces')
 
-"""Define functional data volume filename"""
+"""Define functional data volume filename:"""
 
 epi_fn = os.path.join(datapath, 'bold.nii.gz')
 
@@ -140,18 +140,28 @@ actual number will vary slightly (typically in the range +/- 2 voxels)
 radius = 100
 
 
-"""We're all set to go to create a query engine to determine for
-each node which voxels are near it (that is, in the corresponding searchlight
-disc).
+"""We're all set to go to create a query engine that performs 'voxel
+selection', that is determines, for each node, which voxels are near it 
+(that is, in the corresponding searchlight disc).
 
 As a reminder, the only essential values we have set so far are the
 filenames of three surfaces (high-res inner and outer,
 and low-res source surface), the functional volume, and the searchlight 
 radius.
 
-(As noted above, the argument defining the low-res source surface can be 
-omitted, in which case it is computed as the node-wise average of the white 
-and pial surface.) 
+Note that if the functional data was preprocessed and subsequently masked,
+voxel selection should take into account this mask. To do so, the 
+instantiation of the query engine below takes an optional argument
+'volume_mask' (which can be a PyMVPA dataset, a numpy array, a Nifti
+volume, or a string representing the file name of a Nifti volume). It is, 
+however, recommended to *not* mask the functional data prior to voxel 
+selection, because the voxel selection uses (implicitly) a mask based on the 
+grey-matter enclosing surfaces already, and this mask is assumed to be more 
+precise than typical volume-based masking implementations.   
+
+Also note that, as described above, the argument defining the low-res source 
+surface can be omitted, in which case it is computed as the node-wise 
+average of the white and pial surface.) 
 """
 
 qe = disc_surface_queryengine(radius, epi_fn,
@@ -163,18 +173,19 @@ Voxel selection is now completed; each node has been assigned a list of
 linear voxel indices in the searchlight. These result are stored in 
 'qe.voxsel' and can be saved with h5save for later re-use. 
 
-Linear voxel indices mean that each voxel is indexed by a value between
+(Linear voxel indices mean that each voxel is indexed by a value between
 0 (inclusive) and N (exclusive), where N is the number of voxels in the 
 volume (N = NX * NY * NZ, where NX, NY and NZ are the number of voxels in
 the three spatial dimensions). For certain analyses one may want to index
 voxels by 'sub indices' (triples (i,j,k) with 0<=i<NX, 0<=j<=NY,
-and 0<=k<NZ) or spatial coordinates; such conversions amont
-linear and sub indices and spatial coordinates is provided by 
-a VolGeom (volume geometry) instance stored in 'qe.voxsel.volgeom'.   
+and 0<=k<NZ) or spatial coordinates; conversions amongst
+linear and sub indices and spatial coordinates is provided by
+functions in the  VolGeom (volume geometry) instance stored in 
+'qe.voxsel.volgeom'.)   
 
 From now on we follow the example as in doc/examples/searchlight.py.
 
-First, cross-validation is defined using a (SVM) classifier
+First, cross-validation is defined using a (SVM) classifier.
 """
 
 clf = LinearCSVMC()
@@ -196,7 +207,7 @@ sl = Searchlight(cv, queryengine=qe, postproc=mean_sample())
 
 
 '''
-Next step is to load the functional data. We can reduce
+In the next step the functional data is loaded. We can reduce
 memory requirements significantly by considering which voxels to load:
 since the searchlight analysis will only use data from voxels that 
 were selected (at least once) by the voxel selection step, a mask is 
@@ -235,7 +246,7 @@ zscore(dataset, chunks_attr='chunks', param_est=('targets', ['rest']),
 dataset = dataset[dataset.sa.targets != 'rest']
 
 """
-Run the searchlight on the dataset. Also add 
+Run the searchlight on the dataset. 
 """
 
 sl_dset = sl(dataset)
@@ -244,11 +255,12 @@ sl_dset = sl(dataset)
 Although not strictly required, in this example the indices of the nodes 
 that formed the center for each searchlight are stored in the output dataset. 
 
-Note that in this example there was full brain coverage, meaning that every 
+Note that in this example there was full brain coverage---meaning that every
+node was contained in the functional volume---and thus every 
 node had a searchlight disc associated with them. In other cases, with partial
 brain coverage for example, there may be nodes without associated voxels
 in the searchlight, and these nodes have thus no searchlight results.
-(Note that disc_surface_queryengine provides an optional argument 
+(disc_surface_queryengine provides an optional argument 
 'outside_node_margin' that defines under which circumstances a node will 
 have a searchlight associated with it. The default is that a node has
 to be in the functional volume.)   
@@ -275,7 +287,9 @@ surf_sl_dset = dict(data=np.asarray(sl_dset).transpose(),
 
 """
 Set the filename for output.
-Searchlight results are stored in the surface directory for easy visualization.
+Searchlight results are stored in the surface directory for easy 
+visualization. Finally print an informative message on how the
+generated data can be visualized using SUMA.
 """
 
 fn = 'ico%d_%sh_%dvx.niml.dset' % (lowres_ld, hemi, radius)
