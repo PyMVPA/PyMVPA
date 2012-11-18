@@ -128,10 +128,17 @@ def compute_fwhm(config):
     with open(fwhm_fn) as f:
         fwhms = f.read().split()
 
+    print fwhms
+    print fwhm_fn
+
     config['all_fwhms'] = fwhms # all FWHMs (for each participant)
     config['fwhm'] = sum(map(float, fwhms)) / len(fwhms) # average FWHM
     config['buck_fn'] = buck_fn
     config['buck_fn_1D'] = buck_fn_1D
+
+    mean_fwhm_fn = os.path.join(output_dir, _fn(config, 'mean_fwhm', '.1D'))
+    with open(mean_fwhm_fn, 'w') as f:
+        f.write('%.3f\n' % config['fwhm'])
 
     tmpfns = resid_fns + pad_files + [mean_fn]
     print "TEMP"
