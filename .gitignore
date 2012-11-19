@@ -47,3 +47,8 @@ doc/source/examples
 doc/source/generated
 doc/api
 /datadb
+_nno
+.DS_Store
+.project
+.pydevproject
+searchlight_surfnew.py
