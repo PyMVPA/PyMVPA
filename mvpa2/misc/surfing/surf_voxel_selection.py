@@ -663,8 +663,8 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
             y = 1
         return '%%%dd' % math.ceil(math.log10(y))
 
-    minsrc = max(st[0] for st in src_trg_indices)
-    mintrg = max(st[1] for st in src_trg_indices)
+    minsrc = max(st[0] for st in src_trg_indices) if src_trg_indices else 1
+    mintrg = max(st[1] for st in src_trg_indices) if src_trg_indices else 1
 
     progresspat = 'node %s -> %s [%%3d%%%%]' % (_pat(0), _pat(1))
 
