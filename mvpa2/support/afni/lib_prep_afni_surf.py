@@ -7,35 +7,67 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''
-This is a library for anatomical preprocessing for surface-based voxel 
+This is a library for anatomical preprocessing for surface-based voxel
 selection. Typically it is used by a wrapper function prep_afni_surf.
 
-It provides functionality to:
-- convert freesurfer surfaces to AFNI/SUMA format (using SUMA_Make_Spec_FS)
-- resample surfaces to standard topology (using MapIcosahedron)
-- generate additional surfaces by averaging existing ones
-- find the transformation from freesurfer
-- make SUMA specification files, and see_suma* shell scripts
-
-At the moment we assume a processing stream with freesurfer for surface
-reconstruction, and AFNI/SUMA for coregistration and visualization.
-
-If EPIs from multiple sessions are aligned, this script should use 
-different directories for refdir for each session, otherwise naming 
-conflicts may occur.
-
-Called on the command line, it requires at least three arguments:
-(1) "--epivol epi_filename"  or  "--anatvol anat_filename"
-(2) "--surfdir freesurfer/directory/surf" 
-(3) "--refdir outputdir"
-
-Called through the method run_prep_afni_surf, it supports these
-arguments as well (without the '--' prefixes). 
+%s
 
 Created on Jan 29, 2012
 
 @author: nick
 '''
+
+__usage_doc__ = """
+It provides functionality to:
+
+- convert FreeSurfer surfaces to AFNI/SUMA format (using SUMA_Make_Spec_FS).
+
+- resample surfaces to standard topology (using MapIcosahedron) at various
+resolutions.
+
+- generate additional surfaces by averaging existing ones.
+
+- coregistration of freesurfer output to AFNI/SUMA anatomical or functional
+volume (using align_epi_anat.py).
+
+- run @AddEdge to visualize coregistration.
+
+- merge left (lh) and right (rh) hemispheres into single files (mh).
+
+- generate various views of left+right inflated surfaces.
+
+- generate SUMA specification files, and see_suma* shell scripts.
+
+This script assumes a processing pipeline with FreeSurfer for surface
+reconstruction, and AFNI/SUMA for coregistration and visualization.
+Specifically it is assumed that surfaces have been reconstructed
+using FreeSurfer's recon-all. More details can be found in the
+documentation available at http://surfing.sourceforge.net
+
+If EPIs from multiple sessions are aligned, this script should use
+different directories for refdir for each session, otherwise naming
+conflicts may occur.
+
+This function does not resample or transform any functional data. Instead,
+surfaces are transformed to be in alignment with ANATVOL or EPIVOL.
+
+For typical usage it requires three arguments:
+(1) "-e epi_filename"  or  "-a anat_filename"
+(2) "-d freesurfer/directory/surf"
+(3) "-r outputdir"'
+
+Notes:
+
+- Please check alignment visually.
+
+- Nifti (.nii or .nii.gz) files are supported, but AFNI may not be able
+to read the {S,Q}-form information properly. If functional data was
+preprocessed with a program other than AFNI, please check alignment
+visually with another program than AFNI, such as MRIcron.
+
+"""
+
+__doc__ %= __usage_doc__
 
 
 from mvpa2.support.nibabel import surf_fs_asc, surf, afni_suma_spec
@@ -753,56 +785,22 @@ def run_all(config, env):
 
 def getparser():
     description = '''
-    Anatomical preprocessing to align Freesurfer surfaces with AFNI data
-    
-    Copyright 2010-2012 Nikolaas N. Oosterhof <nikolaas.oosterhof@unitn.it>
-    
-    It provides functionality to:
-    - convert freesurfer surfaces to AFNI/SUMA format (using SUMA_Make_Spec_FS).
-    - resample surfaces to standard topology (using MapIcosahedron) at various 
-      resolutions. 
-    - generate additional surfaces by averaging existing ones.
-    - coregistration of freesurfer output to AFNI/SUMA anatomical or functional 
-      volume (using align_epi_anat.py).
-    - run @AddEdge to visualize coregistration.
-    - merge left (lh) and right (rh) hemispheres into single files (mh).
-    - generate various views of left+right inflated surfaces.
-    - generate SUMA specification files, and see_suma* shell scripts.
-    
-    This script assumes a processing pipeline with Freesurfer for surface
-    reconstruction, and AFNI/SUMA for coregistration and visualization.
-    Specifically it is assumed that surfaces have been reconstructed
-    using Freesurfer's recon-all. More details can be found in the 
-    documentation available at http://surfing.sourceforge.net
-    
-    If EPIs from multiple sessions are aligned, this script should use 
-    different directories for refdir for each session, otherwise naming 
-    conflicts may occur.
-    
-    This function does not resample or transform any functional data. Instead,
-    surfaces are transformed to be in alignment with ANATVOL or EPIVOL.
-    
-    For typical usage it requires three arguments:
-    (1) "-e epi_filename"  or  "-a anat_filename"
-    (2) "-d freesurfer/directory/surf" 
-    (3) "-r outputdir"'
-    
-    Notes:
-    - Please check alignment visually.
-    - Nifti (.nii or .nii.gz) files are supported, but AFNI may not be able
-      to read the {S,Q}-form information properly. If functional data was 
-      preprocessed with a program other than AFNI, please check alignment
-      visually with another program than AFNI, such as MRIcron. 
-    '''
+Anatomical preprocessing to align Freesurfer surfaces with AFNI data.
 
-    epilog = '''This function is *experimental* and may delete files in 
-                refdir or elsewhere.'''
+%s
+
+Copyright 2010-2012 Nikolaas N. Oosterhof <nikolaas.oosterhof@unitn.it>
+
+''' % __usage_doc__
+
+    epilog = '''
+This function is *experimental* and may delete files in refdir or elsewhere.'''
 
     yesno = ["yes", "no"]
     parser = argparse.ArgumentParser(description=description, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-v', '--version', action='version', version='prep_afni_surf %s' % _VERSION)
     parser.add_argument("-s", "--sid", required=False, help="subject id used in @SUMA_Make_Spec_FS ")
-    parser.add_argument("-d", "--surfdir", required=False, help="Freesurfer surf/ directory")
+    parser.add_argument("-d", "--surfdir", required=False, help="FreeSurfer surf/ directory")
     parser.add_argument("-a", "--anatvol", required=False, help="Anatomical that is assumed to be in alignment with the EPI data of interest")
     parser.add_argument("-e", "--epivol", required=False, help="EPI data of interest")
     parser.add_argument('-x', "--expvol", required=False, help="Experimental volume to which SurfVol is aligned")
