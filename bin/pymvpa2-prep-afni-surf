@@ -7,7 +7,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Wrapper script for surface-based preprocessing using AFNI and Freesurfer  
+"""Wrapper script for surface-based preprocessing using AFNI and FreeSurfer  
 """
 
 from mvpa2.support.afni.lib_prep_afni_surf import run_prep_afni_surf,\
