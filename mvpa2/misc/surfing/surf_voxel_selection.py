@@ -580,15 +580,19 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                 debug('SVS', 'Started all %d child processes' % (len(blocks)))
                 tstart = time.time()
 
+            node2volume_attributes = None
             for i, result in enumerate(results):
+                if result is None:
+                    continue
 
                 if results_backend == 'hdf5':
                     result_fn = result
                     result = h5load(result_fn)
                     os.remove(result_fn)
 
-
-                if i == 0:
+                if node2volume_attributes is None:
+                    # first time we have actual results. 
+                    # Use as a starting point
                     node2volume_attributes = result
                     if _debug():
                         debug('SVS', '')
@@ -597,6 +601,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                                      (len(blocks), results_backend))
 
                 else:
+                    # merge new with current data
                     node2volume_attributes.merge(result)
                 if _debug():
                     debug('SVS', "  merged result block %d/%d" % (i + 1, nproc),
@@ -649,6 +654,9 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
     '''applies voxel selection to a list of src_trg_indices
     results are added to node2volume_attributes.
     '''
+
+    if not src_trg_indices:
+        return None
 
     if not results_backend in ('native', 'hdf5'):
         raise ValueError('Illegal results backend %r' % results_backend)
