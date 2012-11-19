@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''
 This is a library for anatomical preprocessing for surface-based voxel 
-selection. Typically it is used by a wrapper function afni_surf_preproc.
+selection. Typically it is used by a wrapper function prep_afni_surf.
 
 It provides functionality to:
 - convert freesurfer surfaces to AFNI/SUMA format (using SUMA_Make_Spec_FS)
@@ -29,7 +29,7 @@ Called on the command line, it requires at least three arguments:
 (2) "--surfdir freesurfer/directory/surf" 
 (3) "--refdir outputdir"
 
-Called through the method run_afni_surf_preproc, it supports these
+Called through the method run_prep_afni_surf, it supports these
 arguments as well (without the '--' prefixes). 
 
 Created on Jan 29, 2012
@@ -800,7 +800,7 @@ def getparser():
 
     yesno = ["yes", "no"]
     parser = argparse.ArgumentParser(description=description, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('-v', '--version', action='version', version='afni_surf_preproc %s' % _VERSION)
+    parser.add_argument('-v', '--version', action='version', version='prep_afni_surf %s' % _VERSION)
     parser.add_argument("-s", "--sid", required=False, help="subject id used in @SUMA_Make_Spec_FS ")
     parser.add_argument("-d", "--surfdir", required=False, help="Freesurfer surf/ directory")
     parser.add_argument("-a", "--anatvol", required=False, help="Anatomical that is assumed to be in alignment with the EPI data of interest")
@@ -854,7 +854,7 @@ def _test_me(config):
         print c
         run_all(c, env)
 
-def run_afni_surf_preproc(config_dict):
+def run_prep_afni_surf(config_dict):
     config = getdefaults()
     config.update(config_dict) # overwrite default input arguments
 
@@ -890,7 +890,7 @@ Parameters
 ----------
 '''
 
-    run_afni_surf_preproc.__doc__ = __doc__ + intermediate + '\n'.join(ds)
+    run_prep_afni_surf.__doc__ = __doc__ + intermediate + '\n'.join(ds)
 
 # apply setting the documentation
 _set_run_surf_anat_preproc_doc()

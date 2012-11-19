@@ -23,7 +23,7 @@ Surfaces used in this example are available in the tutorial dataset files;
 either the tutorial_data_surf_minimal or tutorial_data_surf_complete version.
 The surfaces were reconstructed using Freesurfer and 
 subsequently preprocessed with AFNI and SUMA using the 
-afni_surf_preproc.py wrapper script in PyMVPA's 'bin' directory, which 
+pymvpa2-prep-afni-surf wrapper script in PyMVPA's 'bin' directory, which 
 resamples the surfaces to standard topologies (with different resolutions) 
 using MapIcosehedron, aligns surfaces to a reference functional volume, and 
 merges left and right hemispheres into single surface files. A more detailed 
