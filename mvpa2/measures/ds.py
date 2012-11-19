@@ -17,7 +17,7 @@ from mvpa2.measures.base import Measure
 from mvpa2.misc.stats import DSMatrix
 
 class DSMMeasure(Measure):
-    """DSMMeasure creates a Measure object
+    """DSMMeasure creates     a Measure object
        where metric can be one of 'euclidean', 'spearman', 'pearson'
        or 'confusion'"""
 
@@ -29,7 +29,7 @@ class DSMMeasure(Measure):
         self.output_metric = output_metric
         self.dset_dsm = []
 
-
+    
     def __call__(self, dataset):
         # create the dissimilarity matrix for the data in the input dataset
         self.dset_dsm = DSMatrix(dataset.samples, self.dset_metric)

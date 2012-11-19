@@ -51,6 +51,7 @@ Analysis
    examples/searchlight_minimal
    examples/searchlight
    examples/searchlight_dsm
+   examples/searchlight_surf
    examples/sensanas
    examples/svdclf
    examples/permutation_test
