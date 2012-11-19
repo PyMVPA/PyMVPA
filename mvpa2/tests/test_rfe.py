@@ -514,6 +514,7 @@ class RFETests(unittest.TestCase):
         self.assertTrue(cv.ca.null_prob < 0.05)
 
     @reseed_rng()
+    @labile(3, 1)
     def test_SplitRFE(self):
         # just a smoke test ATM
         from mvpa2.clfs.svm import LinearCSVMC
