@@ -167,7 +167,6 @@ def setup_package():
                            'mvpa2.sandbox',
                            'mvpa2.support',
                            'mvpa2.support.afni',
-			               'mvpa2.support.afni.afni_anat_preproc.py'
                            'mvpa2.support.bayes',
                            'mvpa2.support.nipy',
                            'mvpa2.support.ipython',
