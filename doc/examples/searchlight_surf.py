@@ -267,7 +267,7 @@ to be in the functional volume.)
 """
 
 center_ids = qe.ids
-sl_dset['center_ids'] = center_ids
+sl_dset.fa['center_ids'] = center_ids
 
 """
 Searchlight results are now stored in sl_dset. As sl_dset is just like

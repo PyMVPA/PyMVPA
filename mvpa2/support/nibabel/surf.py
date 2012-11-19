@@ -699,16 +699,23 @@ class Surface(object):
         if isinstance(other, Surface):
             if not self.same_topology(other):
                 raise Exception("Different topologies - cannot add")
-            vother = other._v
+            vother = other.vertices
         else:
             vother = other
 
-        return Surface(v=self._v + vother, f=self._f, check=False)
+        return Surface(v=self.vertices + vother, f=self.faces, check=False)
 
     def __mul__(self, other):
         '''coordinate-wise scaling'''
+        return Surface(v=self._v * other, f=self.faces)
 
-        return Surface(v=self._v * other, f=self._f)
+    def __neg__(self, other):
+        '''coordinate-wise inversion with respect to addition'''
+        return Surface(v= -self.vertices, f=self.faces)
+
+    def __sub__(self, other):
+        '''coordiante-wise subtraction'''
+        return self +(-other)
 
     def rotate(self, theta, center=None, unit='rad'):
         '''Rotates the surface
@@ -866,6 +873,8 @@ class Surface(object):
             Number of faces
         '''
         return self._nf
+
+
 
     def map_to_high_resolution_surf_slow(self, highres, epsilon=.001,
                                          accept_only_icosahedron=False):
@@ -1172,6 +1181,54 @@ class Surface(object):
 
         return self._node_areas
 
+    @property
+    def face_normals(self):
+        if not hasattr(self, '_face_normals'):
+            f = self.faces
+            v = self.vertices
+
+             # consider three sides of each triangle
+            a = v[f[:, 0]]
+            b = v[f[:, 1]]
+            c = v[f[:, 2]]
+
+            # vectors of two sides
+            ab = a - b
+            ac = a - c
+
+            abXac = np.cross(ab, ac)
+            n = normalized(abXac)
+
+            vw = n.view()
+            vw.flags.writeable = False
+
+            self._face_normals = vw
+
+        return self._face_normals
+
+    @property
+    def node_normals(self):
+        if not hasattr(self, '_node_normals'):
+            f = self.faces
+            v = self.vertices
+            n = self.nfaces
+
+            f_nrm = self.face_normals
+
+            v_sum = np.zeros(v.shape, dtype=v.dtype)
+            for i in xrange(3):
+                for j in xrange(n):
+                    v_sum[f[j, i]] += f_nrm[j]
+
+            v_nrm = normalized(v_sum)
+
+            vw = v_nrm.view()
+            vw.flags.writeable = False
+
+            self._node_normals = vw
+
+        return self._node_normals
+
     def connected_components(self):
         nv = self.nvertices
 
@@ -1280,6 +1337,24 @@ class Surface(object):
 
         return components
 
+def normalized(v):
+    '''Normalizes vectors
+    
+    Parameters
+    ==========
+    v: np.ndarray
+        PxQ matrix for P vectors that are all Q-dimensional
+    
+    Returns
+    =======
+    n: np.ndarray
+        P-valued vector with the norm for each vector
+    '''
+
+    v_norm = np.sqrt(np.sum(v ** 2, 1))
+    return v / np.reshape(v_norm, (-1, 1))
+
+
 
 def merge(*surfs):
     if not surfs:
@@ -1306,9 +1381,11 @@ def generate_cube():
     vs = np.asarray(cs)
 
     # manually set topology
-    trias = [(2, 3, 0), (0, 1, 2), (0, 4, 1), (1, 4, 5),
-             (1, 5, 2), (2, 5, 6), (2, 6, 3), (3, 6, 7),
-             (3, 7, 0), (0, 7, 4), (4, 7, 5), (5, 7, 6)]
+    trias = [(0, 1, 3), (0, 3, 2), (1, 0, 5), (5, 0, 4),
+           (3, 1, 5), (3, 5, 7), (3, 7, 6), (3, 6, 2),
+           (2, 6, 0), (0, 6, 4), (5, 4, 6), (5, 6, 7)]
+
+
     fs = np.asarray(trias, dtype=np.int)
 
     return Surface(vs, fs)
@@ -1465,3 +1542,4 @@ def from_any(s):
         return Surface(ts[0], ts[1])
     else:
         raise ValueError("Not understood: %r" % s)
+
