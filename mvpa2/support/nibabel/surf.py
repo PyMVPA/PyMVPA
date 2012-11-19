@@ -261,7 +261,7 @@ class Surface(object):
 
             self._nbrs = nbrs
 
-        return self._nbrs
+        return dict(self._nbrs) # make a copy
 
     def circlearound_n2d(self, src, radius, metric='euclidean'):
         '''Finds the distances from a center node to surrounding nodes.
