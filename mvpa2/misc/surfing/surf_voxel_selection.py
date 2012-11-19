@@ -71,7 +71,7 @@ class VoxelSelector(object):
         searchlights). If the type is float, then this sets the disc radius in 
         metric distance (with variable number of voxels across searchlights). 
         In the latter case, the distance unit is usually in milimeters
-        (which is the unit used for Freesurfer surfaces).
+        (which is the unit used for FreeSurfer surfaces).
     surf: surf.Surface
         A surface to be used for distance measurement. Usually this is the
         intermediate distance constructed by taking the node-wise average of

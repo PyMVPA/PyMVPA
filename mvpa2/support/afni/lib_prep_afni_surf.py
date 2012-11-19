@@ -220,11 +220,11 @@ def augmentconfig(c):
 
 def getenv():
     '''returns the path environment
-    As a side effect we ensure to set for Freesurfer's HOME'''
+    As a side effect we ensure to set for FreeSurfer's HOME'''
     env = os.environ
 
     if 'FREESURFER_HOME' not in env:
-        env['FREESURFER_HOME'] = env['HOME'] # Freesurfer requires this var, even though we don't use it
+        env['FREESURFER_HOME'] = env['HOME'] # FreeSurfer requires this var, even though we don't use it
 
     return env
 
@@ -393,7 +393,7 @@ def run_skullstrip(config, env):
     utils.run_cmds(cmds, env)
 
 def run_alignment(config, env):
-    '''Aligns anat (which is assumed to be aligned with EPI data) to Freesurfer SurfVol
+    '''Aligns anat (which is assumed to be aligned with EPI data) to FreeSurfer SurfVol
 
     This function strips the anatomicals (by default), then uses @SUMA_AlignToExperiment
     to estimate the alignment, then applies this transformation to the non-skull-stripped
@@ -532,7 +532,7 @@ def run_alignment(config, env):
         else:
             print "AddEdge seems to have been run already"
 
-    # because AFNI uses RAI orientation but Freesurfer LPI, make a new
+    # because AFNI uses RAI orientation but FreeSurfer LPI, make a new
     # affine transformation matrix in which the signs of
     # x and y coordinates are negated before and after the transformation
     matrixfn_LPI2RAI = '%s.A2E_LPI.1D' % ssalprefix
@@ -785,7 +785,7 @@ def run_all(config, env):
 
 def getparser():
     description = '''
-Anatomical preprocessing to align Freesurfer surfaces with AFNI data.
+Anatomical preprocessing to align FreeSurfer surfaces with AFNI data.
 
 %s
 

@@ -21,7 +21,7 @@ website.
 
 Surfaces used in this example are available in the tutorial dataset files; 
 either the tutorial_data_surf_minimal or tutorial_data_surf_complete version.
-The surfaces were reconstructed using Freesurfer and 
+The surfaces were reconstructed using FreeSurfer and 
 subsequently preprocessed with AFNI and SUMA using the 
 pymvpa2-prep-afni-surf wrapper script in PyMVPA's 'bin' directory, which 
 resamples the surfaces to standard topologies (with different resolutions) 
