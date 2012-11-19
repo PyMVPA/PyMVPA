@@ -192,7 +192,7 @@ manpages: mkdir-MAN_DIR
 	PYTHONPATH=$(LPYTHONPATH) help2man -N -n 'start a PyMVPA tutorial session' \
 		bin/pymvpa2-tutorial > $(MAN_DIR)/pymvpa2-tutorial.1
 	PYTHONPATH=$(LPYTHONPATH) help2man --no-discard-stderr -N -n \
-			'preprocess Freesurfer surfaces for AFNI/SUMA' \
+			'preprocess FreeSurfer surfaces for AFNI/SUMA' \
 			bin/pymvpa2-prep-afni-surf > $(MAN_DIR)/pymvpa2-prep-afni-surf.1
 
 
@@ -665,7 +665,7 @@ fetch-data:
 	[ -e datadb ] || mkdir -p datadb
 	rsync $(RSYNC_OPTS) $(DATA_URI)/tutorial_data $(DATA_URI)/mnist \
 		$(DATA_URI)/face_inversion_demo \
-  	      	$(DATA_URI)/hyperalignment_tutorial_data \
+	      	$(DATA_URI)/hyperalignment_tutorial_data \
 		datadb/ 
 	@for ds in datadb/*; do \
 		echo " I: looking at $$ds"; \
