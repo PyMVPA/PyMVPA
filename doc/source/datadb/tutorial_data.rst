@@ -25,13 +25,13 @@ anatomical image has also been projected and resampled into the subjects
 functional space.
 
 For surface-based mapping two other archives are distributed, called
-'tutorial_data_surf_minimal-0.1.tar' and 
-'tutorial_data_surf_complete-0.1.tar'. Both contain surfaces that
+'tutorial_data_surf_minimal-0.1.tar.gz' and 
+'tutorial_data_surf_complete-0.1.tar.gz'. Both contain surfaces that
 were reconstructed using FreeSurfer and preprocessed using AFNI and SUMA.
 The 'minimal' archive contains the minimal
 set of surfaces to run doc/examples/searchlight_surf.py. The latter
 contains the full output from FreeSurfer's recon-all and the full output
-from the anatomical preprocessing and alignment script in 
+from the anatomical preprocessing by the alignment script in 
 bin/pymvpa2-prep-afni-surf. This output includes left, right, 
 and merged (left combined with right) hemispheres at various resolutions.
 Surfaces produced by the alignment script are stored in ASCII format and can
@@ -110,7 +110,7 @@ freesurfer/
       recon-all -subject subj1 -i anat_nii.nii -all -cw256
       
     Note that the environmental variable SUBJECTS_DIR was set to point
-    to the current working directory (data/freesurfer). The version of   
+    to the current working directory (freesurfer). The version of   
     FreeSurfer used for reconstruction is: 
     freesurfer-Linux-centos4_x86_64-stable-pub-v5.0.0.
     
@@ -142,7 +142,7 @@ suma_surfaces/
   infix '_al' in the file name.
   The contents of this directory can be generated with:
   
-    PyMVPAROOT/bin/afni_surf_anat_preproc.py \
+    PyMVPAROOT/bin/pymvpa-prep-afni-surf.py \
     --refdir suma_surfaces \
     --surfdir data/freesurfer/subj1/surf \
     --epivol data/bold_mean.nii.gz
@@ -151,7 +151,7 @@ suma_surfaces/
   Using this script requires that FreeSurfer, AFNI and SUMA are installed.
   The prefixes icoXX_Yh indicates that the surface was generated using
   AFNI's MapIcosahedron with XX linear divisions (ld parameter) and 
-  representes the Y hemisphere (l=left, r=right, m=merged). Such
+  represents the Y hemisphere (l=left, r=right, m=merged). Such
   a surface has 10*XX**2+2 nodes and 20*XX*2 surfaces for a single
   hemisphere, and twice that number for merged hemispheres. Merged 
   hemispheres contain first the nodes of the left hemispheres, followed
