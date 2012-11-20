@@ -570,16 +570,15 @@ def from_any(s, mask_volume=None):
 
             if isinstance(mask_volume, int):
                 mask = np.asarray(s.samples[mask_volume, :])
-            elif mask_volume is None and (hasattr(s, 'sa') and
-                                           hasattr(s.sa, 'voxel_indices')):
+            elif mask_volume is None and (hasattr(s, 'fa') and
+                                           hasattr(s.fa, 'voxel_indices')):
                 mask_volume = 'voxel_indices'
                 warning("Found a Dataset-like structure with sample attributes"
                         "'voxel_indices' - using these to define voxel mask. "
                         "(To disable this behaviour, use "
                         "'volgeom.from_any(..., mask_volume=False)').")
 
-            elif isinstance(mask_volume, basestring):
-
+            if isinstance(mask_volume, basestring):
                 if not mask_volume in s.fa:
                     raise ValueError('Key not found in s.fa: %r' % mask_volume)
 
