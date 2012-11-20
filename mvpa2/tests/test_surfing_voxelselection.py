@@ -196,8 +196,13 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         # This method does not test for mask functionality.
 
         # define the volume
-        vol_shape = (50, 50, 50, 3)
+        #vol_shape = (50, 50, 50, 3)
+        #vol_affine = np.identity(4)
+        vol_shape = (10, 10, 10, 3)
         vol_affine = np.identity(4)
+        vol_affine[0, 0] = vol_affine[1, 1] = vol_affine[2, 2] = 5
+
+
 
         # four versions: array, nifti image, file name, fmri dataset
         volarr = np.ones(vol_shape)
@@ -238,13 +243,20 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         m = _Voxel_Count_Measure()
 
         # number of voxels expected in each searchlight
-        r_expected = np.array([[76, 20, 22, 22, 13, 2, 9, 7, 7, 16, 20,
-                                35, 37, 29, 14, 20, 32, 32, 34, 34, 15, 5,
-                                25, 34, 35, 34, 25, 5, 15, 34, 34, 35, 33,
-                                20, 14, 29, 37, 35, 33, 30, 21, 21, 23, 16,
-                                27, 36, 36, 34, 35, 45, 43, 45, 43, 43, 49,
-                                51, 49, 48, 48, 55, 55, 55, 55, 55, 55, 55,
-                                55, 55, 55]])
+        r_expected = np.array([[18, 9, 10, 9, 9, 9, 9, 10, 9,
+                                 9, 9, 9, 11, 11, 11, 11, 10,
+                                10, 10, 9, 10, 11, 9, 10, 10,
+                                8, 7, 8, 8, 8, 9, 10, 12, 12,
+                                11, 7, 7, 8, 5, 9, 11, 11, 12,
+                                12, 9, 5, 8, 7, 7, 12, 12, 13,
+                                12, 12, 7, 7, 8, 5, 9, 12, 12,
+                                13, 11, 9, 5, 8, 7, 7, 11, 12,
+                                12, 11, 12, 10, 10, 11, 9, 11,
+                                12, 12, 12, 12, 16, 13, 16, 16,
+                                16, 17, 15, 17, 17, 17, 16, 16,
+                                16, 18, 16, 16, 16, 16, 18, 16]])
+
+
 
         params = dict(intermediate_=(intermediate, intermediatefn, None),
                     center_nodes_=(None, range(nv)),

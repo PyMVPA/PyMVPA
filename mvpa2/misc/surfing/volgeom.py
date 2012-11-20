@@ -632,10 +632,10 @@ def from_any(s, mask_volume=None):
                     sh = shape[:3]
                     mask = np.zeros(sh)
 
-                    for idx in s.fa[mask_volume].value:
+                    for idx in mask_volume_indices.value:
                         mask[tuple(idx)] = 1
         except:
-            # no idea what type of beast this is.
+            #no idea what type of beast this is.
             raise ValueError('Unrecognized input %r - not a VolGeom, '
                              '(filename of) Nifti image, or (mri-)Dataset' % s)
 
