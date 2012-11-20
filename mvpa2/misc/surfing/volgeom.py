@@ -489,7 +489,30 @@ class VolGeom(object):
         img = nb.Nifti1Image(data, self.affine)
         return img
 
-    def masked_nifti_img(self, nt=None):
+    def masked_nifti_img(self, nt=None, neighborhood_func=None):
+        '''Provides a masked nifti image
+        
+        Parameters
+        ----------
+        nt: int or None
+            Number of timepoints (or samples). Each feature has the
+            same value (1 if in the mask, 0 otherwise) for each
+            sample. If nt is None, then the output is 3D; otherwise
+            it is 4D with 'nt' values in the last dimension.
+        neighborhood_func: callable or None
+            A neighborhood function (like Sphere(..) that can map 
+            a single coordinate (represented as a triple of 3D indices
+            to a list of triples that define the neighboorhood of that
+            coordinate. For example, Sphere(3) can be used to dilate the
+            original mask by 3 voxels.
+            
+        Returns
+        -------
+        msk: Nifti1image
+            a nifti image with values 1. for values inside the mask
+            and values of 0 elsewhere. If the instance has no mask,
+            then all values are 1. 
+        '''
         data_lin = np.zeros((self.nvoxels, nt or 1), dtype=np.float32)
         if self.mask is None:
             data_lin[:, :] = 1
@@ -501,6 +524,15 @@ class VolGeom(object):
             sh = (sh[0], sh[1], sh[2], nt)
 
         data = np.reshape(data_lin, sh)
+
+        if not neighborhood_func is None and \
+                    self.nvoxels_mask != self.nvoxels:
+
+            for ijk_center in zip(*np.nonzero(data)):
+                ijks_around = neighborhood_func(ijk_center)
+                for ijk_around in ijks_around:
+                    data[ijk_around] = 1
+
         img = nb.Nifti1Image(data, self.affine)
         return img
 
@@ -545,8 +577,6 @@ def from_any(s, mask_volume=None):
         # see if s behaves like a spatial image (nifti image)
         shape = s.shape
         affine = s.get_affine()
-
-
 
         if isinstance(mask_volume, int):
             data = s.get_data()
