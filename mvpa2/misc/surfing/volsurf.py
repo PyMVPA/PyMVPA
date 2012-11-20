@@ -25,22 +25,22 @@ import numpy as np
 class VolSurf(object):
     '''
     Associates a volume geometry with two surfaces (pial and white).
-    
-    Parameters
-    ----------
-    volgeom: volgeom.VolGeom
-        Volume geometry
-    white: surf.Surface
-        Surface representing white-grey matter boundary
-    pial: surf.Surface
-        Surface representing pial-grey matter boundary
-        
-    Note
-    ----
-    'pial' and 'white' should have the same topology. 
     '''
-
     def __init__(self, vg, white, pial):
+        '''
+        Parameters
+        ----------
+        volgeom: volgeom.VolGeom
+            Volume geometry
+        white: surf.Surface
+            Surface representing white-grey matter boundary
+        pial: surf.Surface
+            Surface representing pial-grey matter boundary
+            
+        Note
+        ----
+        'pial' and 'white' should have the same topology. 
+        '''
         self._volgeom = volgeom.from_any(vg)
         self._pial = surf.from_any(pial)
         self._white = surf.from_any(white)

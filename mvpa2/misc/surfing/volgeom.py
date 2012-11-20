@@ -28,22 +28,25 @@ from mvpa2.base import warning
 from mvpa2.datasets.mri import fmri_dataset
 
 class VolGeom(object):
-    '''
-    Parameters
-    ----------
-    shape: tuple
-        Number of values in each dimension.
-        Typically the first three dimensions are spatial and the remaining ones
-        temporal.
-    affine: numpy.ndarray
-        4x4 affine transformation array that maps voxel to world coordinates.
-    mask: numpy.ndarray (default: None)
-        voxel mask that indicates which voxels are included. Values of zero in 
-        mask mean that a voxel is not included. If mask is None, then all 
-        voxels are included.
-    
-    '''
+    '''Defines a mapping between sub and linear indices and world coordinate
+    in volumatric fmri datasets'''
+
     def __init__(self, shape, affine, mask=None):
+        '''
+        Parameters
+        ----------
+        shape: tuple
+            Number of values in each dimension.
+            Typically the first three dimensions are spatial and the remaining ones
+            temporal.
+        affine: numpy.ndarray
+            4x4 affine transformation array that maps voxel to world coordinates.
+        mask: numpy.ndarray (default: None)
+            voxel mask that indicates which voxels are included. Values of zero in 
+            mask mean that a voxel is not included. If mask is None, then all 
+            voxels are included.
+        
+        '''
         self._shape = shape
         self._affine = affine
         if not mask is None:
@@ -489,7 +492,30 @@ class VolGeom(object):
         img = nb.Nifti1Image(data, self.affine)
         return img
 
-    def masked_nifti_img(self, nt=None):
+    def masked_nifti_img(self, nt=None, neighborhood_func=None):
+        '''Provides a masked nifti image
+        
+        Parameters
+        ----------
+        nt: int or None
+            Number of timepoints (or samples). Each feature has the
+            same value (1 if in the mask, 0 otherwise) for each
+            sample. If nt is None, then the output is 3D; otherwise
+            it is 4D with 'nt' values in the last dimension.
+        neighborhood_func: callable or None
+            A neighborhood function (like Sphere(..) that can map 
+            a single coordinate (represented as a triple of 3D indices
+            to a list of triples that define the neighboorhood of that
+            coordinate. For example, Sphere(3) can be used to dilate the
+            original mask by 3 voxels.
+            
+        Returns
+        -------
+        msk: Nifti1image
+            a nifti image with values 1. for values inside the mask
+            and values of 0 elsewhere. If the instance has no mask,
+            then all values are 1. 
+        '''
         data_lin = np.zeros((self.nvoxels, nt or 1), dtype=np.float32)
         if self.mask is None:
             data_lin[:, :] = 1
@@ -501,6 +527,15 @@ class VolGeom(object):
             sh = (sh[0], sh[1], sh[2], nt)
 
         data = np.reshape(data_lin, sh)
+
+        if not neighborhood_func is None and \
+                    self.nvoxels_mask != self.nvoxels:
+
+            for ijk_center in zip(*np.nonzero(data)):
+                ijks_around = neighborhood_func(ijk_center)
+                for ijk_around in ijks_around:
+                    data[ijk_around] = 1
+
         img = nb.Nifti1Image(data, self.affine)
         return img
 
@@ -546,8 +581,6 @@ def from_any(s, mask_volume=None):
         shape = s.shape
         affine = s.get_affine()
 
-
-
         if isinstance(mask_volume, int):
             data = s.get_data()
             ndim = len(data.shape)
@@ -570,16 +603,15 @@ def from_any(s, mask_volume=None):
 
             if isinstance(mask_volume, int):
                 mask = np.asarray(s.samples[mask_volume, :])
-            elif mask_volume is None and (hasattr(s, 'sa') and
-                                           hasattr(s.sa, 'voxel_indices')):
+            elif mask_volume is None and (hasattr(s, 'fa') and
+                                           hasattr(s.fa, 'voxel_indices')):
                 mask_volume = 'voxel_indices'
                 warning("Found a Dataset-like structure with sample attributes"
-                        "'voxel_indices' - using these to define voxel mask. "
+                        " 'voxel_indices' - using these to define voxel mask. "
                         "(To disable this behaviour, use "
                         "'volgeom.from_any(..., mask_volume=False)').")
 
-            elif isinstance(mask_volume, basestring):
-
+            if isinstance(mask_volume, basestring):
                 if not mask_volume in s.fa:
                     raise ValueError('Key not found in s.fa: %r' % mask_volume)
 
