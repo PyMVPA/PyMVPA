@@ -37,15 +37,28 @@ if __debug__:
     from mvpa2.base import debug
 
 class SurfaceVerticesQueryEngine(QueryEngineInterface):
-    """
+    '''
     Query-engine that maps center nodes to indices of features
-        (voxels) that are near each center node.  
+    (voxels) that are near each center node.  
     
     In a typical use case such an instance is generated using
     the function 'disc_surface_queryengine'
-    
-    """
+    '''
+
     def __init__(self, voxsel, space='voxel_indices', add_fa=None):
+        '''Makes a new SurfaceVerticesQueryEngine
+        
+        Parameters
+        ----------
+        voxsel: volume_mask_dict.VolumeMaskDictionary
+            mapping from center node indices to indices of voxels
+            in a searchlight
+        space: str (default: 'voxel_indices')
+            defines by which space voxels are indexed.
+        add_fa: list of str
+            additional feature attributes that should be returned
+            when this instance is called with a center node id.
+        '''
         super(SurfaceVerticesQueryEngine, self).__init__()
         self.voxsel = voxsel
         self.space = space
@@ -236,7 +249,6 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
                              outside_node_margin=None,
                              results_backend=None,
                              tmp_prefix='tmpvoxsel'):
-
     """
     Voxel selection wrapper for multiple center nodes on the surface
     

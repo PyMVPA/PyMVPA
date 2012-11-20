@@ -60,39 +60,40 @@ if __debug__:
                        " (a.k.a. 'surfing')")
 
 class VoxelSelector(object):
-    '''
-    Voxel selection using the surfaces
-
-    Parameters
-    ----------
-    radius: int or float
-        Searchlight radius. If the type is int, then this set the number of 
-        voxels in each searchlight (with variable size of the disc across 
-        searchlights). If the type is float, then this sets the disc radius in 
-        metric distance (with variable number of voxels across searchlights). 
-        In the latter case, the distance unit is usually in milimeters
-        (which is the unit used for FreeSurfer surfaces).
-    surf: surf.Surface
-        A surface to be used for distance measurement. Usually this is the
-        intermediate distance constructed by taking the node-wise average of
-        the pial and white surface.
-    n2v: dict
-        Mapping from center nodes to surrounding voxels (and their distances).
-        Usually this is the output from volsurf.node2voxels.
-    distance_metric: str
-        Distance measure used to define distances between nodes on the surface.
-        Currently supports 'dijkstra' and 'euclidean'
-    outside_node_margin: float or True or None (default)
-        By default nodes outside the volume are skipped; using this 
-        parameter allows for a marign. If this value is a float (possibly
-        np.inf), then all nodes within outside_node_margin Dijkstra 
-        distance from any node within the volume are still assigned 
-        associated voxels. If outside_node_margin is True, then a node is
-        always assigned voxels regardless of its position in the volume. 
-    '''
+    '''Voxel selection for surface-based searchlights'''
 
     def __init__(self, radius, surf, n2v, distance_metric='dijkstra',
                             outside_node_margin=None):
+        '''
+        Voxel selection using cortical surfaces.
+    
+        Parameters
+        ----------
+        radius: int or float
+            Searchlight radius. If the type is int, then this set the number of 
+            voxels in each searchlight (with variable size of the disc across 
+            searchlights). If the type is float, then this sets the disc radius in 
+            metric distance (with variable number of voxels across searchlights). 
+            In the latter case, the distance unit is usually in milimeters
+            (which is the unit used for FreeSurfer surfaces).
+        surf: surf.Surface
+            A surface to be used for distance measurement. Usually this is the
+            intermediate distance constructed by taking the node-wise average of
+            the pial and white surface.
+        n2v: dict
+            Mapping from center nodes to surrounding voxels (and their distances).
+            Usually this is the output from volsurf.node2voxels.
+        distance_metric: str
+            Distance measure used to define distances between nodes on the surface.
+            Currently supports 'dijkstra' and 'euclidean'
+        outside_node_margin: float or True or None (default)
+            By default nodes outside the volume are skipped; using this 
+            parameter allows for a marign. If this value is a float (possibly
+            np.inf), then all nodes within outside_node_margin Dijkstra 
+            distance from any node within the volume are still assigned 
+            associated voxels. If outside_node_margin is True, then a node is
+            always assigned voxels regardless of its position in the volume. 
+        '''
         tp = type(radius)
         if tp is int: # fixed number of voxels
             self._fixedradius = False
@@ -532,7 +533,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                 if _debug() :
                     debug("SVS", 'Using %d cores' % nproc)
             except:
-                warning("Could not import pprocess, using nproc=1")
+                #warning("Could not import pprocess, using nproc=1")
                 nproc = 1
 
         if nproc > 1:

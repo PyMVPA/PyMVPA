@@ -28,22 +28,25 @@ from mvpa2.base import warning
 from mvpa2.datasets.mri import fmri_dataset
 
 class VolGeom(object):
-    '''
-    Parameters
-    ----------
-    shape: tuple
-        Number of values in each dimension.
-        Typically the first three dimensions are spatial and the remaining ones
-        temporal.
-    affine: numpy.ndarray
-        4x4 affine transformation array that maps voxel to world coordinates.
-    mask: numpy.ndarray (default: None)
-        voxel mask that indicates which voxels are included. Values of zero in 
-        mask mean that a voxel is not included. If mask is None, then all 
-        voxels are included.
-    
-    '''
+    '''Defines a mapping between sub and linear indices and world coordinate
+    in volumatric fmri datasets'''
+
     def __init__(self, shape, affine, mask=None):
+        '''
+        Parameters
+        ----------
+        shape: tuple
+            Number of values in each dimension.
+            Typically the first three dimensions are spatial and the remaining ones
+            temporal.
+        affine: numpy.ndarray
+            4x4 affine transformation array that maps voxel to world coordinates.
+        mask: numpy.ndarray (default: None)
+            voxel mask that indicates which voxels are included. Values of zero in 
+            mask mean that a voxel is not included. If mask is None, then all 
+            voxels are included.
+        
+        '''
         self._shape = shape
         self._affine = affine
         if not mask is None:
@@ -604,7 +607,7 @@ def from_any(s, mask_volume=None):
                                            hasattr(s.fa, 'voxel_indices')):
                 mask_volume = 'voxel_indices'
                 warning("Found a Dataset-like structure with sample attributes"
-                        "'voxel_indices' - using these to define voxel mask. "
+                        " 'voxel_indices' - using these to define voxel mask. "
                         "(To disable this behaviour, use "
                         "'volgeom.from_any(..., mask_volume=False)').")
 
