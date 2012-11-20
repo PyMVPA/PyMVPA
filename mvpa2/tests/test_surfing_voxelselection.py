@@ -196,8 +196,6 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         # This method does not test for mask functionality.
 
         # define the volume
-        #vol_shape = (50, 50, 50, 3)
-        #vol_affine = np.identity(4)
         vol_shape = (10, 10, 10, 3)
         vol_affine = np.identity(4)
         vol_affine[0, 0] = vol_affine[1, 1] = vol_affine[2, 2] = 5
@@ -280,12 +278,20 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         for i in xrange(0, len(combis), combistep):
             combi = combis[i]
 
-            # assign values
+            intermediate_ = combi['intermediate_']
+            center_nodes_ = combi['center_nodes_']
+            volume_ = combi['volume_']
+            surf_src_ = combi['surf_src_']
+            volume_mask_ = combi['volume_mask_']
+            call_method_ = combi['call_method_']
+
+
+
+
+            # keep track of which values were used - 
+            # so that this unit test tests itself
+
             for k in combi.keys():
-                # put these values in globals
-                # at the end of this testing function they
-                # are popped (assuming it passed the test)
-                exec '%s=combi["%s"]' % (k, k) in locals(), globals()
                 if not k in tested_params:
                     tested_params[k] = set()
                 tested_params[k].add(val2str(combi[k]))
@@ -350,7 +356,6 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                 if not vstr in tested_params[k]:
                     raise ValueError("Missing value %r for %s" %
                                         (tested_params[k], k))
-            globals().pop(k)
 
 def _cartprod(d):
     '''makes a combinatorial explosion from a dictionary
