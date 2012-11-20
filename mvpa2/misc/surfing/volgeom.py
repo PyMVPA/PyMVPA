@@ -567,8 +567,22 @@ def from_any(s, mask_volume=None):
         return s
 
     if isinstance(s, basestring):
-        # assume file name of nifti image - do a recursive call
-        return from_any(nb.load(s), mask_volume=mask_volume)
+        # try to find a function to load the data
+        load_function = None
+
+        if s.endswith('.nii') or s.endswith('.nii.gz'):
+            load_function = nb.load
+        elif s.endswith('.h5py'):
+            if externals.exists('h5py'):
+                from mvpa2.base.hdf5 import h5load
+            else:
+                raise ValueError("Cannot load h5py file - no externals")
+
+        if load_function:
+            # do a recursive call
+            return from_any(load_function(s), mask_volume=mask_volume)
+
+        raise ValueError("Unrecognized extension for file %s" % s)
 
     if mask_volume is True:
         # assign a specific index -- the very first volume
