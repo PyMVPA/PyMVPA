@@ -794,7 +794,8 @@ Copyright 2010-2012 Nikolaas N. Oosterhof <nikolaas.oosterhof@unitn.it>
 ''' % __usage_doc__
 
     epilog = '''
-This function is *experimental* and may delete files in refdir or elsewhere.'''
+This function is *experimental*; using the --overwrite option may
+remove and/or overwrite existing files.'''
 
     yesno = ["yes", "no"]
     parser = argparse.ArgumentParser(description=description, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter)

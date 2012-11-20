@@ -44,7 +44,7 @@ def setup_module(module, verbosity=None):
             print('T: Testing for availability of external software packages.')
 
     # fully test of externals
-    externals.check_all_dependencies(verbosity=max(0, verbosity-1))
+    externals.check_all_dependencies(verbosity=max(0, verbosity - 1))
 
     # So we could see all warnings about missing dependencies
     _sys_settings['maxcount'] = warning.maxcount
@@ -226,6 +226,7 @@ def collect_nose_tests(verbosity=1):
         'test_usecases',
         'test_surfing',
         'test_surfing_afni',
+        'test_surfing_voxelselection'
         ]
 
     if not cfg.getboolean('tests', 'lowmem', default='no'):
@@ -255,7 +256,7 @@ def run_tests_using_nose(limit=None, verbosity=1, exit_=False):
     tests = collect_unit_tests(verbosity=verbosity) + nosetests
 
     config = nose.config.Config(
-        verbosity=max(0, verbosity-1),
+        verbosity=max(0, verbosity - 1),
         plugins=nose.plugins.DefaultPluginManager())
     if limit is None:
         # Lets see if we aren't missing any:
