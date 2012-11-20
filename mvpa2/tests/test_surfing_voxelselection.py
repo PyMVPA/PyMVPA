@@ -49,19 +49,19 @@ from mvpa2.clfs.gnb import GNB
 
 
 class SurfVoxelSelectionTests(unittest.TestCase):
-    # runs voxel selection and searchlight (surface-based) on haxby 2001 
-    # single plane data using a synthetic planar surface 
-
-    # checks to see if results are identical for surface
-    # and volume base searchlights (the former using Euclidian distance
 
     def test_voxel_selection(self):
-        '''Define searchlight radius (in mm)
-        
+        '''Compare surface and volume based searchlight'''
+
+        '''
+        Tests to see whether results are identical for surface-based
+        searchlight (just one plane; Euclidian distnace) and volume-based 
+        searchlight.
+            
         Note that the current value is a float; if it were int, it would 
         specify the number of voxels in each searchlight'''
-        radius = 10.
 
+        radius = 10.
 
         '''Define input filenames'''
         epi_fn = os.path.join(pymvpa_dataroot, 'bold.nii.gz')
@@ -104,26 +104,27 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         surf_voxsel = surf_voxel_selection.voxel_selection(vs, radius,
                                                     distance_metric='e')
 
-        '''
-        Load an apply a volume - metric mask, and get a new instance
-        of voxel selection results.
-        In this new instance, only voxels that survive the epi mask
-        are kept
-        '''
-        #epi_mask = fmri_dataset(maskfn).samples[0]
-        #voxsel_masked = voxsel.get_masked_instance(epi_mask)
+        '''Define the measure'''
 
+        # run_slow=True would give an actual cross-validation with meaningful
+        # accuracies. Because this is a unit-test only the number of voxels
+        # in each searchlight is tested.
+        run_slow = False
 
-        '''Define cross validation'''
-        cv = CrossValidation(GNB(), OddEvenPartitioner(),
-                                  errorfx=lambda p, t: np.mean(p == t))
+        if run_slow:
+            meas = CrossValidation(GNB(), OddEvenPartitioner(),
+                                   errorfx=lambda p, t: np.mean(p == t))
+            postproc = mean_sample
+        else:
+            meas = _Voxel_Count_Measure()
+            postproc = lambda x:x
 
         '''
         Surface analysis: define the query engine, cross validation, 
         and searchlight
         '''
         surf_qe = SurfaceVerticesQueryEngine(surf_voxsel)
-        surf_sl = Searchlight(cv, queryengine=surf_qe, postproc=mean_sample())
+        surf_sl = Searchlight(meas, queryengine=surf_qe, postproc=postproc)
 
 
         '''
@@ -133,8 +134,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         surf_qe2 = disc_surface_queryengine(radius, maskfn, inner, outer,
                                             plane, volume_mask=True,
                                             distance_metric='euclidian')
-        surf_sl2 = Searchlight(cv, queryengine=surf_qe2,
-                               postproc=mean_sample())
+        surf_sl2 = Searchlight(meas, queryengine=surf_qe2,
+                               postproc=postproc)
 
 
         '''
@@ -145,7 +146,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         kwa = {'voxel_indices': sph}
 
         vol_qe = IndexQueryEngine(**kwa)
-        vol_sl = Searchlight(cv, queryengine=vol_qe, postproc=mean_sample())
+        vol_sl = Searchlight(meas, queryengine=vol_qe, postproc=postproc)
 
 
         '''The following steps are similar to start_easy.py'''
@@ -284,8 +285,6 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             surf_src_ = combi['surf_src_']
             volume_mask_ = combi['volume_mask_']
             call_method_ = combi['call_method_']
-
-
 
 
             # keep track of which values were used - 
