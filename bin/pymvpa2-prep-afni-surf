@@ -7,20 +7,20 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Wrapper script for surface-based preprocessing using AFNI and Freesurfer  
+"""Wrapper script for surface-based preprocessing using AFNI and FreeSurfer  
 """
 
-from mvpa2.support.afni.lib_afni_surf_preproc import run_afni_surf_preproc,\
+from mvpa2.support.afni.lib_prep_afni_surf import run_prep_afni_surf,\
 													 getparser
 
 import sys
 
-__doc__=run_afni_surf_preproc.__doc__
+__doc__=run_prep_afni_surf.__doc__
 
 if __name__ == '__main__':
 	p=getparser()
 	d=p.parse_args(sys.argv[1:])
 	print ">", d
 	
-	run_afni_surf_preproc(vars(d))
+	run_prep_afni_surf(vars(d))
 	
