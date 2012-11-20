@@ -55,7 +55,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
     # checks to see if results are identical for surface
     # and volume base searchlights (the former using Euclidian distance
 
-    def _test_voxel_selection(self):
+    def test_voxel_selection(self):
         '''Define searchlight radius (in mm)
         
         Note that the current value is a float; if it were int, it would 
