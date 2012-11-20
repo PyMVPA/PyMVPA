@@ -53,17 +53,18 @@ class VolumeMaskDictionary(Mapping):
     Besides storing voxel indices, each mask can also have additional 
     'auxiliary' information associated, such as distance from the center
     or its relative position in grey matter.
-
-    Parameters
-    ----------
-    vg: volgeom.VolGeom or fmri_dataset-like or str
-        data structure that contains volume geometry information.
-    source: Surface.surf or numpy.ndarray or None
-        structure that contains the geometric information of 
-        (the centers of) each mask. In the case of surface-searchlights this
-        should be a surface used as the center for searchlights. 
     """
     def __init__(self, vg, source, src2nbr=None, src2aux=None):
+        """
+        Parameters
+        ----------
+        vg: volgeom.VolGeom or fmri_dataset-like or str
+            data structure that contains volume geometry information.
+        source: Surface.surf or numpy.ndarray or None
+            structure that contains the geometric information of 
+            (the centers of) each mask. In the case of surface-searchlights this
+            should be a surface used as the center for searchlights. 
+        """
         self._volgeom = volgeom.from_any(vg)
         self._source = source
 
