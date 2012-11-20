@@ -32,7 +32,9 @@ from mvpa2.misc.surfing import volgeom, volsurf, \
 from mvpa2.support.nibabel import surf, surf_fs_asc
 
 from mvpa2.measures.searchlight import Searchlight
-from mvpa2.base.hdf5 import h5save, h5load
+
+if externals.exists('h5py'):
+    from mvpa2.base.hdf5 import h5save, h5load
 
 
 class SurfTests(unittest.TestCase):
@@ -505,14 +507,18 @@ class SurfTests(unittest.TestCase):
             labs = sel.aux_keys()
             assert_true(all([lab in labs for lab in expected_labs]))
 
-            # some I/O testing
-            _, fn = tempfile.mkstemp('.h5py', 'test')
-            h5save(fn, sel)
 
-            sel2 = h5load(fn)
-            os.remove(fn)
+            if externals.exists('h5py'):
+                # some I/O testing
+                _, fn = tempfile.mkstemp('.h5py', 'test')
+                h5save(fn, sel)
 
-            assert_equal(sel, sel2)
+                sel2 = h5load(fn)
+                os.remove(fn)
+
+                assert_equal(sel, sel2)
+            else:
+                sel2 = sel
 
             # check that mask is OK even after I/O
             assert_array_equal(sel.get_mask(), sel2.get_mask())
