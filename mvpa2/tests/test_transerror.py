@@ -220,7 +220,8 @@ class ErrorsTests(unittest.TestCase):
         train = datasets['uni2medium']
 
         num_perm = 10
-        permutator = AttributePermutator('targets', count=num_perm)
+        permutator = AttributePermutator('targets', count=num_perm,
+                                         limit='chunks')
         # define class to estimate NULL distribution of errors
         # use left tail of the distribution since we use MeanMatchFx as error
         # function and lower is better
