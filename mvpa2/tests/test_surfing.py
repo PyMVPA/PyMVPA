@@ -361,13 +361,17 @@ class SurfTests(unittest.TestCase):
 
     def test_volume_mask_dict(self):
         # also tests the outside_node_margin feature
-        sh = (20, 20, 20)
+        sh = (10, 10, 10)
         msk = np.zeros(sh)
         for i in xrange(0, sh[0], 2):
             msk[i, :, :] = 1
-        vg = volgeom.VolGeom(sh, np.identity(4), mask=msk)
 
-        density = 20
+        vol_affine = np.identity(4)
+        vol_affine[0, 0] = vol_affine[1, 1] = vol_affine[2, 2] = 2
+
+        vg = volgeom.VolGeom(sh, vol_affine, mask=msk)
+
+        density = 10
 
         outer = surf.generate_sphere(density) * 10. + 5
         inner = surf.generate_sphere(density) * 5. + 5
@@ -378,7 +382,7 @@ class SurfTests(unittest.TestCase):
         radius = 50
 
         outside_node_margins = [None, 0, 100., np.inf, True]
-        expected_center_count = [360] * 2 + [intermediate.nvertices] * 3
+        expected_center_count = [87] * 2 + [intermediate.nvertices] * 3
         for k, outside_node_margin in enumerate(outside_node_margins):
 
             sel = surf_voxel_selection.run_voxel_selection(radius, vg, inner,
@@ -422,9 +426,6 @@ class SurfTests(unittest.TestCase):
                     # go over all the nodes
                     # require that the node is in the volume
                     # mask
-                    #for i_ds in is_ds:
-
-                    #    if not  
 
                     # index of node nearest to voxel i
                     ii = np.argmin(ds)
@@ -451,9 +452,13 @@ class SurfTests(unittest.TestCase):
 
 
     def test_surf_voxel_selection(self):
-        vg = volgeom.VolGeom((50, 50, 50), np.identity(4))
+        vol_shape = (10, 10, 10)
+        vol_affine = np.identity(4)
+        vol_affine[0, 0] = vol_affine[1, 1] = vol_affine[2, 2] = 5
 
-        density = 20
+        vg = volgeom.VolGeom(vol_shape, vol_affine)
+
+        density = 10
 
         outer = surf.generate_sphere(density) * 25. + 15
         inner = surf.generate_sphere(density) * 20. + 15
@@ -469,12 +474,15 @@ class SurfTests(unittest.TestCase):
                   ('e', 2., 100), ('d', 2., 100), ('d', 20, 100),
                   ('euclidean', 5, None), ('dijkstra', 10, None)]
 
+        # function that indicates for which parameters the full test is run
+        test_full = lambda x:len(x[0]) > 1 or x[2] == 100
 
         expected_labs = ['grey_matter_position',
                          'center_distances']
 
         voxcount = []
-        for distance_metric, radius, ncenters in params:
+        for param in params:
+            distance_metric, radius, ncenters = param
             srcs = range(0, nv, nv / (ncenters or nv))
             sel = surf_voxel_selection.voxel_selection(vs, radius,
                                             source_surf_nodes=srcs,
@@ -491,133 +499,133 @@ class SurfTests(unittest.TestCase):
 
             voxcount.append(np.sum(datalin))
 
-            assert_equal(np.sum(datalin), np.sum(sel.get_mask()))
+            if test_full(param):
+                assert_equal(np.sum(datalin), np.sum(sel.get_mask()))
 
-            # see if voxels containing inner and outer 
-            # nodes were selected
-            for sf in [inner, outer]:
-                for k, idxs in mp.iteritems():
-                    xyz = np.reshape(sf.vertices[k, :], (1, 3))
-                    linidx = vg.xyz2lin(xyz)
+                # see if voxels containing inner and outer 
+                # nodes were selected
+                for sf in [inner, outer]:
+                    for k, idxs in mp.iteritems():
+                        xyz = np.reshape(sf.vertices[k, :], (1, 3))
+                        linidx = vg.xyz2lin(xyz)
 
-                    # only required if xyz is actually within the volume
-                    assert_equal(linidx in idxs, vg.contains_lin(linidx))
+                        # only required if xyz is actually within the volume
+                        assert_equal(linidx in idxs, vg.contains_lin(linidx))
 
-            # check that it has all the attributes
-            labs = sel.aux_keys()
-            assert_true(all([lab in labs for lab in expected_labs]))
-
-
-            if externals.exists('h5py'):
-                # some I/O testing
-                _, fn = tempfile.mkstemp('.h5py', 'test')
-                h5save(fn, sel)
-
-                sel2 = h5load(fn)
-                os.remove(fn)
-
-                assert_equal(sel, sel2)
-            else:
-                sel2 = sel
-
-            # check that mask is OK even after I/O
-            assert_array_equal(sel.get_mask(), sel2.get_mask())
+                # check that it has all the attributes
+                labs = sel.aux_keys()
+                assert_true(all([lab in labs for lab in expected_labs]))
 
 
-            # test I/O with surfaces
-            _, outerfn = tempfile.mkstemp('outer.asc', 'test')
-            _, innerfn = tempfile.mkstemp('inner.asc', 'test')
-            _, volfn = tempfile.mkstemp('vol.nii', 'test')
+                if externals.exists('h5py'):
+                    # some I/O testing
+                    _, fn = tempfile.mkstemp('.h5py', 'test')
+                    h5save(fn, sel)
 
-            surf.write(outerfn, outer, overwrite=True)
-            surf.write(innerfn, inner, overwrite=True)
+                    sel2 = h5load(fn)
+                    os.remove(fn)
 
-            img = sel.volgeom.empty_nifti_img()
-            img.to_filename(volfn)
+                    assert_equal(sel, sel2)
+                else:
+                    sel2 = sel
 
-            sel3 = surf_voxel_selection.run_voxel_selection(radius, volfn, innerfn,
-                            outerfn, source_surf_nodes=srcs,
-                            distance_metric=distance_metric)
-
-            outer4 = surf.read(outerfn)
-            inner4 = surf.read(innerfn)
-            vs4 = vs = volsurf.VolSurf(vg, inner4, outer4)
-
-            # check that two ways of voxel selection match
-            sel4 = surf_voxel_selection.voxel_selection(vs4, radius,
-                                                source_surf_nodes=srcs,
-                                                distance_metric=distance_metric)
-
-            assert_equal(sel3, sel4)
-
-            os.remove(outerfn)
-            os.remove(innerfn)
-            os.remove(volfn)
+                # check that mask is OK even after I/O
+                assert_array_equal(sel.get_mask(), sel2.get_mask())
 
 
-            # compare sel3 with other selection results
-            # NOTE: which voxels are precisely selected by sel can be quite
-            #       off from those in sel3, as writing the surfaces imposes
-            #       rounding errors and the sphere is very symmetric, which
-            #       means that different neighboring nodes are selected
-            #       to select a certain number of voxels.
-            sel3cmp_difference_ratio = [(sel, .2), (sel4, 0.)]
-            for selcmp, ratio in sel3cmp_difference_ratio:
-                nunion = ndiff = 0
+                # test I/O with surfaces
+                _, outerfn = tempfile.mkstemp('outer.asc', 'test')
+                _, innerfn = tempfile.mkstemp('inner.asc', 'test')
+                _, volfn = tempfile.mkstemp('vol.nii', 'test')
 
-                for k in selcmp.keys():
-                    p = set(sel3.get(k))
-                    q = set(selcmp.get(k))
-                    nunion += len(p.union(q))
-                    ndiff += len(p.symmetric_difference(q))
+                surf.write(outerfn, outer, overwrite=True)
+                surf.write(innerfn, inner, overwrite=True)
 
-                assert_true(float(ndiff) / float(nunion) <= ratio)
+                img = sel.volgeom.empty_nifti_img()
+                img.to_filename(volfn)
 
-            # check searchlight call
-            # as of late Aug 2012, this is with the fancy query engine
-            # as implemented by Yarik
+                sel3 = surf_voxel_selection.run_voxel_selection(radius, volfn, innerfn,
+                                outerfn, source_surf_nodes=srcs,
+                                distance_metric=distance_metric)
 
-            mask = sel.get_mask()
-            keys = None if ncenters is None else sel.keys()
+                outer4 = surf.read(outerfn)
+                inner4 = surf.read(innerfn)
+                vs4 = vs = volsurf.VolSurf(vg, inner4, outer4)
 
-            dset_data = np.reshape(np.arange(vg.nvoxels), vg.shape)
-            dset_img = nb.Nifti1Image(dset_data, vg.affine)
-            dset = fmri_dataset(samples=dset_img, mask=mask)
+                # check that two ways of voxel selection match
+                sel4 = surf_voxel_selection.voxel_selection(vs4, radius,
+                                                    source_surf_nodes=srcs,
+                                                    distance_metric=distance_metric)
 
-            qe = queryengine.SurfaceVerticesQueryEngine(sel,
-                                # you can optionally add additional
-                                # information about each near-disk-voxels
-                                add_fa=['center_distances',
-                                        'grey_matter_position'])
-            voxelcounter = _Voxel_Count_Measure()
-            searchlight = Searchlight(voxelcounter, queryengine=qe, roi_ids=keys)
-            sl_dset = searchlight(dset)
+                assert_equal(sel3, sel4)
 
-            selected_count = sl_dset.samples[0, :]
-            mp = sel
-            for i, k in enumerate(sel.keys()):
-                # check that number of selected voxels matches
-                assert_equal(selected_count[i], len(mp[k]))
+                os.remove(outerfn)
+                os.remove(innerfn)
+                os.remove(volfn)
 
 
-            # check nearest node is *really* the nearest node
+                # compare sel3 with other selection results
+                # NOTE: which voxels are precisely selected by sel can be quite
+                #       off from those in sel3, as writing the surfaces imposes
+                #       rounding errors and the sphere is very symmetric, which
+                #       means that different neighboring nodes are selected
+                #       to select a certain number of voxels.
+                sel3cmp_difference_ratio = [(sel, .2), (sel4, 0.)]
+                for selcmp, ratio in sel3cmp_difference_ratio:
+                    nunion = ndiff = 0
 
-            allvx = sel.get_targets()
-            intermediate = outer * .5 + inner * .5
+                    for k in selcmp.keys():
+                        p = set(sel3.get(k))
+                        q = set(selcmp.get(k))
+                        nunion += len(p.union(q))
+                        ndiff += len(p.symmetric_difference(q))
 
-            for vx in allvx:
-                nearest = sel.target2nearest_source(vx)
+                    assert_true(float(ndiff) / float(nunion) <= ratio)
 
-                xyz = intermediate.vertices[nearest, :]
-                sqsum = np.sum((xyz - intermediate.vertices) ** 2, 1)
+                # check searchlight call
+                # as of late Aug 2012, this is with the fancy query engine
+                # as implemented by Yarik
 
-                idx = np.argmin(sqsum)
-                assert_equal(idx, nearest)
+                mask = sel.get_mask()
+                keys = None if ncenters is None else sel.keys()
+
+                dset_data = np.reshape(np.arange(vg.nvoxels), vg.shape)
+                dset_img = nb.Nifti1Image(dset_data, vg.affine)
+                dset = fmri_dataset(samples=dset_img, mask=mask)
+
+                qe = queryengine.SurfaceVerticesQueryEngine(sel,
+                                    # you can optionally add additional
+                                    # information about each near-disk-voxels
+                                    add_fa=['center_distances',
+                                            'grey_matter_position'])
+                voxelcounter = _Voxel_Count_Measure()
+                searchlight = Searchlight(voxelcounter, queryengine=qe, roi_ids=keys)
+                sl_dset = searchlight(dset)
+
+                selected_count = sl_dset.samples[0, :]
+                mp = sel
+                for i, k in enumerate(sel.keys()):
+                    # check that number of selected voxels matches
+                    assert_equal(selected_count[i], len(mp[k]))
 
 
+                # check nearest node is *really* the nearest node
 
-                # check whether number of voxels were selected is as expected
-        expected_voxcount = [58, 210, 418, 474, 474, 474, 978, 1603, 1603]
+                allvx = sel.get_targets()
+                intermediate = outer * .5 + inner * .5
+
+                for vx in allvx:
+                    nearest = sel.target2nearest_source(vx)
+
+                    xyz = intermediate.vertices[nearest, :]
+                    sqsum = np.sum((xyz - intermediate.vertices) ** 2, 1)
+
+                    idx = np.argmin(sqsum)
+                    assert_equal(idx, nearest)
+
+
+        # check whether number of voxels were selected is as expected
+        expected_voxcount = [22, 93, 183, 183, 183, 183, 183, 183, 183]
 
         assert_equal(voxcount, expected_voxcount)
 
@@ -642,6 +650,9 @@ class SurfTests(unittest.TestCase):
         backends = ['native', 'hdf5']
 
         for i, backend in enumerate(backends):
+            if backend == 'hdf5' and not externals.exists('h5py'):
+                continue
+
             sel = surf_voxel_selection.run_voxel_selection(radius, vg, inner,
                             outer, results_backend=backend)
 
