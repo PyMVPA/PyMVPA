@@ -22,6 +22,12 @@ install:
     - sudo apt-get install shogun-python-modular
     - sudo apt-get install $PYTHON-mdp $PYTHON-psutil $PYTHON-sklearn liblapack-dev
     - make
+env:
+ matrix:
+    PYTHONPATH=
+    PYTHONPATH=mvpa2/tests/badexternals
+    MVPA_DEBUG=
+    MVPA_DEBUG=ENFORCE_CA_ENABLED
 script:
     # Run only nonlabile tests
     - make unittest-nonlabile
