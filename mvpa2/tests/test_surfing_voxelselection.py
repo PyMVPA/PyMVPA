@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA surface searchlight voxel selection"""
 
+from mvpa2.testing import *
 skip_if_no_external('nibabel')
 
 import numpy as np
@@ -18,7 +19,6 @@ import nibabel as nb
 import os
 import tempfile
 
-from mvpa2.testing import *
 from mvpa2.testing.datasets import datasets
 
 from mvpa2 import cfg
@@ -27,7 +27,7 @@ from mvpa2.datasets import Dataset
 from mvpa2.measures.base import Measure
 from mvpa2.datasets.mri import fmri_dataset
 
-from mvpa2.support.nibabel import surf, surf_fs_asc
+from mvpa2.support.nibabel import surf
 from mvpa2.misc.surfing import surf_voxel_selection, queryengine, volgeom, \
                                 volsurf
 
