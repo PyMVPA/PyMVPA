@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA surface searchlight voxel selection"""
 
+skip_if_no_external('nibabel')
+
 import numpy as np
 from numpy.testing.utils import assert_array_almost_equal
 
