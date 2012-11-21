@@ -9,25 +9,15 @@
 """Unit tests for PyMVPA surface searchlight functions specific for 
 handling AFNI datasets"""
 
+
 import numpy as np
-import nibabel as ni
 
 import os
 import tempfile
 
 from mvpa2.testing import *
-from mvpa2.testing.datasets import datasets
 
-from mvpa2 import cfg
-from mvpa2.base import externals
-from mvpa2.datasets import Dataset
-from mvpa2.measures.base import Measure
-from mvpa2.datasets.mri import fmri_dataset
-
-from mvpa2.misc.surfing import volgeom, volsurf, \
-                                        surf_voxel_selection
-
-from mvpa2.support.nibabel import surf, surf_fs_asc, afni_niml, afni_niml_dset
+from mvpa2.support.nibabel import afni_niml, afni_niml_dset
 
 class SurfTests(unittest.TestCase):
     """Test for AFNI I/O together with surface-based stuff
