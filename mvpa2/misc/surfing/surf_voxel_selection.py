@@ -531,10 +531,10 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                 import pprocess
                 nproc = pprocess.get_number_of_cores() or 1
                 if _debug() :
-                    debug("SVS", 'Using %d cores' % nproc)
+                    debug("SVS", 'Using pprocess with %d cores' % nproc)
             except:
-                #warning("Could not import pprocess, using nproc=1")
                 nproc = 1
+                debug("SVS", 'Using %d cores - pprocess not available' % nproc)
 
         if nproc > 1:
             if results_backend == 'hdf5':
