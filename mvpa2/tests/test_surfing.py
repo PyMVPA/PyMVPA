@@ -8,7 +8,9 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA surface searchlight and related utilities"""
 
+from mvpa2.testing import *
 skip_if_no_external('nibabel')
+
 
 import numpy as np
 from numpy.testing.utils import assert_array_almost_equal
@@ -18,7 +20,6 @@ import nibabel as nb
 import os
 import tempfile
 
-from mvpa2.testing import *
 from mvpa2.testing.datasets import datasets
 
 from mvpa2 import cfg
