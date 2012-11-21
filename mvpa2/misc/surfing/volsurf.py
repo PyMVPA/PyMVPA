@@ -15,12 +15,14 @@ matter boundaries of the grey matter).
 
 __docformat__ = 'restructuredtext'
 
+import numpy as np
 
+from mvpa2.base import externals
 from mvpa2.misc.surfing import volgeom
 from mvpa2.support.nibabel import surf
 
-import nibabel as nb
-import numpy as np
+if externals.exists('nibabel'):
+    import nibabel as nb
 
 class VolSurf(object):
     '''
