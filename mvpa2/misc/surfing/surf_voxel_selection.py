@@ -32,8 +32,9 @@ import collections
 import operator
 import datetime
 import math
+import os
+import random
 
-import nibabel as ni
 import numpy as np
 
 from mvpa2.base import warning, externals
@@ -41,10 +42,8 @@ from mvpa2.base import warning, externals
 from mvpa2.misc.surfing import volgeom, volsurf, volume_mask_dict
 from mvpa2.support.nibabel import surf
 
-from mvpa2.base.hdf5 import h5save, h5load
-
-import os
-import random
+if externals.exists('h5py'):
+    from mvpa2.base.hdf5 import h5save, h5load
 
 
 # TODO: see if we use these contants, or let it be up to the user

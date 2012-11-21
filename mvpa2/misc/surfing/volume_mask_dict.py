@@ -23,12 +23,16 @@ __docformat__ = 'restructuredtext'
 import cPickle as pickle
 from collections import Mapping
 
-import nibabel as nb, numpy as np
+import numpy as np
 import collections
 import operator
 
+from mvpa2.base import externals
 from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
 from mvpa2.misc.surfing import volgeom
+
+if externals.exists('nibabel'):
+    import nibabel as nb
 
 class VolumeMaskDictionary(Mapping):
     """A VolumeMaskDictionary is a collection of 3D volume masks, indexed
