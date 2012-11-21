@@ -46,7 +46,7 @@ done
 
 # Python3 testing -- origin and tiziano
 TESTS_BRANCHES["origin/master"]+=" unittest-py3"
-TESTS_BRANCHES["tiziano/master"]=" unittest-py3"
+# TESTS_BRANCHES["tiziano/master"]=" unittest-py3"
 
 # all known tests
 TESTS_ALL=`echo "${TESTS_BRANCHES[*]}" | tr ' ' '\n' | sort | uniq`
