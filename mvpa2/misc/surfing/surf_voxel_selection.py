@@ -227,9 +227,10 @@ class VoxelSelector(object):
             skip = True
             if not outside_node_margin is None:
                 if math.isinf(outside_node_margin):
-                    debug("SVS", "")
-                    debug("SVS", "node #%d is outside - considering all other "
-                                 "nodes that may be inside" % src)
+                    if __debug__:
+                        debug("SVS", "")
+                        debug("SVS", "node #%d is outside - considering all other "
+                                     "nodes that may be inside" % src)
                     for nd in n2v:
                         if node_in_vol(nd):
                             skip = False
@@ -237,20 +238,22 @@ class VoxelSelector(object):
                 else:
                     node_distances = surf.dijkstra_distance(src,
                                                 maxdistance=outside_node_margin)
-                    debug("SVS", "")
-                    debug("SVS", "node #%d is outside - considering %d distances"
-                                " to other nodes that may be inside." % (src, len(node_distances)))
+                    if __debug__:
+                        debug("SVS", "")
+                        debug("SVS", "node #%d is outside - considering %d distances"
+                                    " to other nodes that may be inside." % (src, len(node_distances)))
                     for nd, d in node_distances.iteritems():
                         if nd in n2v and not n2v[nd] is None and d <= outside_node_margin:
-                            debug("SVS", "node #%d is distance %s <= %s from #%d "
-                                  " and kept" %
-                                    (src, d, outside_node_margin, nd))
+                            if __debug__:
+                                debug("SVS", "node #%d is distance %s <= %s from #%d "
+                                      " and kept" %
+                                      (src, d, outside_node_margin, nd))
                             skip = False
                             break
 
             if skip:
                 # no voxels associated with this node, skip
-                if _debug():
+                if __debug__:
                     debug("SVS", "Skipping node #%d (no voxels associated)" %
                                         src, cr=True)
 
@@ -503,7 +506,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                                         start_fr=start_fr, stop_fr=stop_fr,
                                         start_mm=start_mm, stop_mm=stop_mm)
 
-        if _debug():
+        if __debug__:
             debug('SVS', "Generated mapping from nodes"
                   " to intersecting voxels")
 
@@ -544,7 +547,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                 else:
                     results_backend = 'native'
             if _debug():
-                debug('SVS', "Using '%s' backend" % (results_backend))
+                debug('SVS', "Using '%s' backend" % (results_backend,))
 
             if not results_backend in ('native', 'hdf5'):
                 raise ValueError('Illegal results backend %r' % results_backend)
@@ -556,8 +559,8 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             results = pprocess.Map(limit=nproc)
             reducer = results.manage(pprocess.MakeParallel(_reduce_mapper))
 
-            if _debug():
-                debug('SVS', "Starting %d child processes" % len(blocks))
+            if __debug__:
+                debug('SVS', "Starting %d child processes", (len(blocks),))
 
             for i, block in enumerate(blocks):
                 empty_dict = volume_mask_dict.VolumeMaskDictionary(
