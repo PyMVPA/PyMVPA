@@ -22,10 +22,14 @@ Created on Feb 12, 2012
 __docformat__ = 'restructuredtext'
 
 
-import nibabel as nb, numpy as np
+import numpy as np
 
-from mvpa2.base import warning
-from mvpa2.datasets.mri import fmri_dataset
+from mvpa2.base import warning, externals
+
+if externals.exists('nibabel'):
+    # nibabel is optional dependency here, those how would reach those points
+    # without having nibabel should suffer
+    import nibabel as nb
 
 class VolGeom(object):
     '''Defines a mapping between sub and linear indices and world coordinate
