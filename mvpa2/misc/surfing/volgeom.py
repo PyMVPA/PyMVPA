@@ -27,6 +27,8 @@ import nibabel as nb, numpy as np
 from mvpa2.base import warning
 from mvpa2.datasets.mri import fmri_dataset
 
+from mvpa2.misc.neighborhood import Sphere
+
 class VolGeom(object):
     '''Defines a mapping between sub and linear indices and world coordinate
     in volumatric fmri datasets'''
@@ -60,7 +62,11 @@ class VolGeom(object):
         if not isinstance(other, self.__class__):
             return False
 
-        return (self.shape == other.shape and
+        same_shape = self.shape == other.shape or \
+                        tuple(list(self.shape) + [1]) == other.shape \
+                        or tuple(list(other.shape) + [1]) == self.shape
+
+        return (same_shape and
                 np.all(self.mask == other.mask) and
                 np.all(self.affine == other.affine))
 
@@ -76,10 +82,11 @@ class VolGeom(object):
 
     def __str__(self):
         sh = self.shape[:3]
-        s = '%s, %s = %d voxels' % (self.__class__.name,
+        s = '%s, %s = %d voxels' % (self.__class__.__name__,
                              '%d x %d x %d' % sh, self.nvoxels)
         if not self.mask is None:
             s += ', %d voxels survive the mask' % self.nvoxels_mask
+        return s
 
 
     def as_pickable(self):
@@ -145,7 +152,7 @@ class VolGeom(object):
                                    0 <= ijk[:, 2], ijk[:, 2] < shape[2]])
         return m
 
-    def _outside_vol(self, ijk, lin):
+    def _outside_vol(self, ijk, lin, apply_mask=True):
         '''helper function to see if ijk and lin indices are in the volume.
         It is assumed that these indices are matched (i.e. ijk[i,:] and lin[i]
         refer to the same voxel, for all i).
@@ -157,7 +164,7 @@ class VolGeom(object):
         invol[np.logical_or(lin < 0, lin >= self.nvoxels)] = np.False_
         invol[np.isnan(lin)] = np.False_
 
-        if not self.mask is None:
+        if apply_mask and not self.mask is None:
             invol[invol] = np.logical_and(invol[invol], self.mask[lin[invol]])
 
         return np.logical_not(invol)
@@ -248,6 +255,7 @@ class VolGeom(object):
         lin: Px1 array with linear voxel indices.
             If ijk[i,:] is outside the volume, then lin[i]==self.nvoxels.
         '''
+        ijk = to_three_column_array(ijk)
 
         lin = self._ijk2lin_unmasked(ijk)
         lin[self._outside_vol(ijk, lin)] = self.nvoxels
@@ -267,6 +275,8 @@ class VolGeom(object):
             Px3 array with sub voxel indices.
             If lin[i] is outside the volume, then ijk[i,:]==self.shape.
         '''
+
+        lin = to_vector(lin)
 
         ijk = self._lin2ijk_unmasked(lin)
         ijk[self._outside_vol(ijk, lin), :] = self.shape[:3]
@@ -302,6 +312,8 @@ class VolGeom(object):
             Px3 array with sub voxel indices.
             If xyz[i,:] is outside the volume, then ijk[i,:]==self.shape
         '''
+        xyz = to_three_column_array(xyz)
+
         m = self.affine
         minv = np.linalg.inv(m)
 
@@ -329,6 +341,8 @@ class VolGeom(object):
             Px3 array with world coordinates.
             If ijk[i,:] is outside the volume, then xyz[i,:] is NaN.
         '''
+
+        ijk = to_three_column_array(ijk)
 
         m = self.affine
         ijkfloat = np.array(ijk, dtype=float)
@@ -402,7 +416,7 @@ class VolGeom(object):
         
         Returns
         -------
-        int
+        nt: int
             Number of time points
         '''
         return np.prod(self.shape[3:])
@@ -413,7 +427,7 @@ class VolGeom(object):
         
         Returns
         -------
-        int
+        nv: int
             Number of spatial points (i.e. number of voxels)
         '''
         return np.prod(self.shape[:3])
@@ -425,7 +439,7 @@ class VolGeom(object):
         
         Returns
         -------
-        tuple: int
+        sh: tuple of int
             Number of values in each dimension
         '''
 
@@ -437,12 +451,12 @@ class VolGeom(object):
         '''
         Returns
         -------
-        int
+        nv: int
             Number of voxels that survive the mask'''
         return self.nvoxels if self.mask is None else np.sum(self.mask)
 
 
-    def contains_ijk(self, ijk):
+    def contains_ijk(self, ijk, apply_mask=True):
         '''
         Returns whether a set of sub voxel indices are contained
         within this instance.
@@ -457,12 +471,16 @@ class VolGeom(object):
         numpy.ndarray (boolean)
             P boolean values indicating which voxels are within the volume.
         '''
+        ijk = to_three_column_array(ijk)
+
         lin = self._ijk2lin_unmasked(ijk)
 
-        return np.logical_not(self._outside_vol(ijk, lin))
+        return np.logical_not(self._outside_vol(ijk, lin, \
+                                        apply_mask=apply_mask))
 
 
-    def contains_lin(self, lin):
+
+    def contains_lin(self, lin, apply_mask=True):
         '''
         Returns whether a set of linear voxel indices are contained
         within this instance.
@@ -477,22 +495,141 @@ class VolGeom(object):
         numpy.ndarray (boolean)
             P boolean values indicating which voxels are within the volume.
         '''
+        lin = to_vector(lin)
 
         ijk = self._lin2ijk_unmasked(lin)
 
-        return np.logical_not(self._outside_vol(ijk, lin))
+        return np.logical_not(self._outside_vol(ijk, lin, \
+                                        apply_mask=apply_mask))
 
-    def empty_nifti_img(self, nt=None):
+    def get_empty_array(self, nt=None):
+        '''
+        Returns an empty array with size according to the volume
+        
+        Parameters
+        ----------
+        nt: int or None
+            Number of timepoints (or samples). Each feature has the
+            same value (1 if in the mask, 0 otherwise) for each
+            sample. If nt is None, then the output is 3D; otherwise
+            it is 4D with 'nt' values in the last dimension.
+        
+        Returns
+        -------
+        arr: numpy.ndarray
+            An array with value zero everywhere.
+        '''
         sh = self.shape
 
         if not nt is None:
             sh = (sh[0], sh[1], sh[2], nt)
 
         data = np.zeros(sh)
+        return data
+
+    def get_empty_nifti_image(self, nt=None):
+        '''
+        Returns an empty nifti image with size according to the volume
+        
+        Parameters
+        ----------
+        nt: int or None
+            Number of timepoints (or samples). Each feature has the
+            same value (1 if in the mask, 0 otherwise) for each
+            sample. If nt is None, then the output is 3D; otherwise
+            it is 4D with 'nt' values in the last dimension.
+        
+        Returns
+        -------
+        arr: nibabel.Nifti1Image
+            A Nifti image with value zero everywhere.
+        '''
+        data = self.get_empty_array(nt=nt)
         img = nb.Nifti1Image(data, self.affine)
         return img
 
-    def masked_nifti_img(self, nt=None, neighborhood_func=None):
+    def get_masked_array(self, nt=None, dilate=None):
+        '''Provides a masked numpy array
+        
+        Parameters
+        ----------
+        nt: int or None
+            Number of timepoints (or samples). Each feature has the
+            same value (1 if in the mask, 0 otherwise) for each
+            sample. If nt is None, then the output is 3D; otherwise
+            it is 4D with 'nt' values in the last dimension.
+        dilate: callable or int or None
+            Speficiation of mask dilation.
+            If a callable, it should be a a neighborhood function 
+            (like Sphere(..)) that can map a single voxel coordinate 
+            (represented as a triple of indices) to a list of voxel
+            coordinates that define the neighboorhood of that
+            coordinate. For example, Sphere(3) can be used to dilate the
+            original mask by 3 voxels. If an int, then it uses 
+            Sphere(dilate) to dilate the mask. If set to None
+            the mask is not dilated. 
+            
+        Returns
+        -------
+        msk: numpy.ndarray
+            an array with values 1. for values inside the mask
+            and values of 0 elsewhere. If the instance has no mask,
+            then all values are 1. 
+        '''
+
+        data_vec = np.zeros((self.nvoxels,), dtype=np.float32)
+        if self.mask is None:
+            data_vec[:] = 1
+        else:
+            data_vec[self.mask] = 1
+
+
+        # see if the mask has to be dilated.
+        # if all voxels are already in the mask this can be omitted
+        if not dilate is None and \
+                    self.nvoxels_mask != self.nvoxels:
+
+            if type(dilate) is int:
+                dilate = Sphere(dilate)
+
+            # offsets
+            deltas = dilate((0, 0, 0))
+
+            # positions of nonzero voxels
+            data_ijks = self.lin2ijk(np.nonzero(data_vec)[0])
+
+            # helper function
+            def add_tuple(x, y):
+                return (x[0] + y[0], x[1] + y[1], x[2] + y[2])
+
+            # gather all subindices ehre
+            dilate_ijk = set()
+
+            # all combinations of offsets and positions of voxels in the mask
+            for delta in deltas:
+                if delta != (0, 0, 0):
+                    for data_ijk in data_ijks:
+                        pos = add_tuple(delta, data_ijk)
+                        dilate_ijk.add(pos)
+
+            if dilate_ijk:
+                dilate_lin = self._ijk2lin_unmasked(list(dilate_ijk))
+                lin_mask = self.contains_lin(dilate_lin, apply_mask=False)
+                data_vec[dilate_lin[lin_mask]] = 1
+
+        sh = self.shape
+        data_t1 = np.reshape(data_vec, sh[:3])
+
+        if not nt is None:
+            sh = (sh[0], sh[1], sh[2], nt)
+            data = np.zeros(sh, data_vec.dtype)
+            for t in xrange(nt):
+                data[:, :, :, t] = data_t1
+            return data
+        else:
+            return data_t1
+
+    def get_masked_nifti_image(self, nt=None, dilate=None):
         '''Provides a masked nifti image
         
         Parameters
@@ -502,12 +639,15 @@ class VolGeom(object):
             same value (1 if in the mask, 0 otherwise) for each
             sample. If nt is None, then the output is 3D; otherwise
             it is 4D with 'nt' values in the last dimension.
-        neighborhood_func: callable or None
-            A neighborhood function (like Sphere(..) that can map 
-            a single coordinate (represented as a triple of 3D indices
-            to a list of triples that define the neighboorhood of that
+        dilate: callable or int or None
+            If a callable, it should be a a neighborhood function 
+            (like Sphere(..)) that can map a single voxel coordinate 
+            (represented as a triple of indices) to a list of voxel
+            coordinates that define the neighboorhood of that
             coordinate. For example, Sphere(3) can be used to dilate the
-            original mask by 3 voxels.
+            original mask by 3 voxels. If an int, then it uses 
+            Sphere(dilate) to dilate the mask. If set to None
+            the mask is not dilated.  
             
         Returns
         -------
@@ -516,29 +656,10 @@ class VolGeom(object):
             and values of 0 elsewhere. If the instance has no mask,
             then all values are 1. 
         '''
-        data_lin = np.zeros((self.nvoxels, nt or 1), dtype=np.float32)
-        if self.mask is None:
-            data_lin[:, :] = 1
-        else:
-            data_lin[self.mask, :] = 1
 
-        sh = self.shape
-        if not nt is None:
-            sh = (sh[0], sh[1], sh[2], nt)
-
-        data = np.reshape(data_lin, sh)
-
-        if not neighborhood_func is None and \
-                    self.nvoxels_mask != self.nvoxels:
-
-            for ijk_center in zip(*np.nonzero(data)):
-                ijks_around = neighborhood_func(ijk_center)
-                for ijk_around in ijks_around:
-                    data[ijk_around] = 1
-
+        data = self.get_masked_array(nt=nt, dilate=dilate)
         img = nb.Nifti1Image(data, self.affine)
         return img
-
 
 def from_any(s, mask_volume=None):
     """Constructs a VolGeom instance from any reasonable type of input.
@@ -553,10 +674,12 @@ def from_any(s, mask_volume=None):
         If an int is provided, then the mask-volume-th volume in s
         is used as a voxel mask. True is equivalent to 0. If None or
         False are provided, no mask is applied.
-        In the special case that s is fmri_dataset-like and mask_volume
-        is a string (such as 'voxel_indices'), then it is assumed
-        that s.fa[mask_volume] is a list with voxel coordinates to be
-        included.
+        Fmri-dataset-like objects are treated specifally: If s is 
+        such an object an mask_volume is None, it will automatically use 
+        s.fa['voxel_indices'] to define the mask (if that attribute is 
+        present). Alternatively, if mask_volume is a string, then the 
+        mask is defined based on the voxel indices that are assumed
+        to be present s.fa[mask_volume].
     
     Returns
     -------
@@ -575,6 +698,7 @@ def from_any(s, mask_volume=None):
         elif s.endswith('.h5py'):
             if externals.exists('h5py'):
                 from mvpa2.base.hdf5 import h5load
+                load_function = h5load
             else:
                 raise ValueError("Cannot load h5py file - no externals")
 
@@ -587,7 +711,9 @@ def from_any(s, mask_volume=None):
     if mask_volume is True:
         # assign a specific index -- the very first volume
         mask_volume = 0
+
     elif mask_volume is False:
+        # do not use a mask
         mask_volume = None
 
     try:
@@ -640,6 +766,43 @@ def from_any(s, mask_volume=None):
                              '(filename of) Nifti image, or (mri-)Dataset' % s)
 
     return VolGeom(shape=shape, affine=affine, mask=mask)
+
+
+def _to_X_column_array(v, x):
+    # TODO: some fancy checking of size/shape of input
+
+    if not isinstance(v, np.ndarray):
+        v = np.asarray(v)
+    if len(v.shape) == 1:
+        if x > 1 and len(v) != x:
+            raise ValueError("Cannot cast to %d columns: %r" % x)
+        v = v.reshape((-1, x))
+    if v.shape[1] != x:
+        raise ValueError("Not %dx3" % x)
+
+    return v
+
+
+def to_three_column_array(v):
+    '''Converts input to a Px3 array'''
+
+    return _to_X_column_array(v, 3)
+
+def to_one_column_array(v):
+    '''Converts input to a Px1 array'''
+    return _to_X_column_array(v, 1)
+
+def to_vector(v):
+    '''Converts input to a linear vector'''
+    if not isinstance(v, np.ndarray):
+        v = np.asarray(v)
+    if len(v.shape) > 1:
+        if v.shape[0] != 1 and v.shape(1) != 1:
+            raise ValueError("Matrix of shape %d x %d: cannot make linear" %
+                                        (v.shape[0], v.shape[1]))
+        v = v.ravel()
+    return v
+
 
 
 def distance(p, q, r=2):
