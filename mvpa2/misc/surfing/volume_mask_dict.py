@@ -20,15 +20,11 @@ and __getstate__ - have to flag somehow whether this mapping was present.
 
 __docformat__ = 'restructuredtext'
 
-import cPickle as pickle
 from collections import Mapping
 
 import numpy as np
-import collections
-import operator
 
 from mvpa2.base import externals
-from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
 from mvpa2.misc.surfing import volgeom
 
 if externals.exists('nibabel'):
@@ -129,8 +125,8 @@ class VolumeMaskDictionary(Mapping):
             n = len(nbrs)
             expected_keys = set(self.aux_keys())
             if expected_keys and (set(aux) != expected_keys):
-                raise ValuError("aux label mismatch: %r != %r" %
-                                (set(aux), self._aux_keys))
+                raise ValueError("aux label mismatch: %r != %r" %
+                                (set(aux), expected_keys))
             for k, v in aux.iteritems():
                 if type(v) is np.ndarray:
                     v_arr = v.ravel()
@@ -202,7 +198,7 @@ class VolumeMaskDictionary(Mapping):
         '''
         d = dict()
         for src in self.keys():
-            d[src] = self.get_tuple(src, *labels)
+            d[src] = self.get_tuple_list(src, *labels)
         return d
 
     def get(self, src):
@@ -263,7 +259,7 @@ class VolumeMaskDictionary(Mapping):
     def _add_target2source(self, src, targets=None):
         if targets is None:
             targets = self[src]
-        n = len(targets)
+
         contains = self.volgeom.contains_lin(np.asarray(targets))
         for i, target in enumerate(targets):
             if not contains[i]:
@@ -451,7 +447,6 @@ class VolumeMaskDictionary(Mapping):
 #                self._add_target2source(k, vs)
 
         self._lazy_nbr2src = None
-        other._lazy_nbr2src = None
 
         for k in other.keys():
             idxs = other[k]
