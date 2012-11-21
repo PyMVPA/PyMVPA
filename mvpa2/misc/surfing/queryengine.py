@@ -24,17 +24,9 @@ import numpy as np
 from mvpa2.base.dataset import AttrDataset
 from mvpa2.misc.neighborhood import QueryEngineInterface
 
-from mvpa2.misc.surfing import volgeom, volsurf, surf_voxel_selection
-
-from mvpa2.support.nibabel import surf
-
-from mvpa2.misc.support import is_sorted
-
+from mvpa2.misc.surfing import volgeom, surf_voxel_selection
 from mvpa2.base import warning
 
-
-if __debug__:
-    from mvpa2.base import debug
 
 class SurfaceVerticesQueryEngine(QueryEngineInterface):
     '''
@@ -73,7 +65,7 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
 
 
     def __reduce__(self):
-        return (self.__class__, (self.voxsel, self.space, self.add_fa))
+        return (self.__class__, (self.voxsel, self.space, self._add_fa))
 
     @property
     def ids(self):
@@ -155,7 +147,7 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
 
 
     def query(self, **kwargs):
-        raise NotImplemented
+        raise NotImplementedError
 
     def get_masked_nifti_image(self):
         '''Returns a nifti image indicating which voxels are included

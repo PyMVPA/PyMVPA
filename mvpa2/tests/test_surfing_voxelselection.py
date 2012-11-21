@@ -8,6 +8,9 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA surface searchlight voxel selection"""
 
+from mvpa2.testing import *
+skip_if_no_external('nibabel')
+
 import numpy as np
 from numpy.testing.utils import assert_array_almost_equal
 
@@ -16,7 +19,6 @@ import nibabel as nb
 import os
 import tempfile
 
-from mvpa2.testing import *
 from mvpa2.testing.datasets import datasets
 
 from mvpa2 import cfg
@@ -25,7 +27,7 @@ from mvpa2.datasets import Dataset
 from mvpa2.measures.base import Measure
 from mvpa2.datasets.mri import fmri_dataset
 
-from mvpa2.support.nibabel import surf, surf_fs_asc
+from mvpa2.support.nibabel import surf
 from mvpa2.misc.surfing import surf_voxel_selection, queryengine, volgeom, \
                                 volsurf
 
@@ -161,11 +163,13 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                                                     chunks=attr.chunks,
                                                     mask=mask)
 
-        # do chunkswise linear detrending on dataset
-        poly_detrend(dataset, polyord=1, chunks_attr='chunks')
+        if run_slow:
+            # do chunkswise linear detrending on dataset
 
-        # zscore dataset relative to baseline ('rest') mean
-        zscore(dataset, chunks_attr='chunks', param_est=('targets', ['rest']))
+            poly_detrend(dataset, polyord=1, chunks_attr='chunks')
+
+            # zscore dataset relative to baseline ('rest') mean
+            zscore(dataset, chunks_attr='chunks', param_est=('targets', ['rest']))
 
         # select class face and house for this demo analysis
         # would work with full datasets (just a little slower)

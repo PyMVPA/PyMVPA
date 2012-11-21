@@ -175,7 +175,7 @@ class VolSurf(object):
         for j in xrange(nv):
             n2vs[j] = None # by default, no voxels associated with each node
 
-        volgeom = self._volgeom
+        vg = self._volgeom
 
         surf_start = self.white_surface + start_mm
         surf_stop = self.pial_surface + stop_mm
@@ -186,19 +186,19 @@ class VolSurf(object):
             pialweight = 1 - whiteweight
 
             # compute weighted intermediate surface in between pial and white
-            surf = surf_stop * pialweight + surf_start * whiteweight
+            surf_weighted = surf_stop * pialweight + surf_start * whiteweight
 
             # coordinates
-            surf_xyz = surf.vertices
+            surf_xyz = surf_weighted.vertices
 
             # linear indices of voxels containing nodes
-            lin_vox = volgeom.xyz2lin(surf_xyz)
+            lin_vox = vg.xyz2lin(surf_xyz)
 
             # which of these voxels are actually in the volume
-            is_vox_in_vol = volgeom.contains_lin(lin_vox)
+            is_vox_in_vol = vg.contains_lin(lin_vox)
 
             # coordinates of voxels
-            vol_xyz = volgeom.lin2xyz(lin_vox)
+            vol_xyz = vg.lin2xyz(lin_vox)
 
             # compute relative position of each voxel in grey matter
             grey_matter_pos = self.surf_project_weights_nodewise(vol_xyz)
@@ -238,7 +238,7 @@ class VolSurf(object):
         '''
 
         pxyz = self._pial.vertices
-        weights = self.surf_project_weights(xyz)
+        weights = self.surf_project_weights_nodewise(xyz)
         return pxyz + np.reshape(weights, (-1, 1)) * pxyz
 
     def surf_project_weights_nodewise(self, xyz):
@@ -296,7 +296,7 @@ class VolSurf(object):
 
         voldata = np.zeros((nv,), dtype=float)
 
-        for i, vx2d in n2v.iteritems():
+        for vx2d in n2v.itervalues():
             if vx2d:
                 for vx in vx2d:
                     voldata[vx] += 1
