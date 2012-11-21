@@ -163,11 +163,13 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                                                     chunks=attr.chunks,
                                                     mask=mask)
 
-        # do chunkswise linear detrending on dataset
-        poly_detrend(dataset, polyord=1, chunks_attr='chunks')
+        if run_slow:
+            # do chunkswise linear detrending on dataset
 
-        # zscore dataset relative to baseline ('rest') mean
-        zscore(dataset, chunks_attr='chunks', param_est=('targets', ['rest']))
+            poly_detrend(dataset, polyord=1, chunks_attr='chunks')
+
+            # zscore dataset relative to baseline ('rest') mean
+            zscore(dataset, chunks_attr='chunks', param_est=('targets', ['rest']))
 
         # select class face and house for this demo analysis
         # would work with full datasets (just a little slower)
