@@ -8,6 +8,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA surface searchlight and related utilities"""
 
+from mvpa2.testing import *
+skip_if_no_external('nibabel')
+
+
 import numpy as np
 from numpy.testing.utils import assert_array_almost_equal
 
@@ -16,7 +20,6 @@ import nibabel as nb
 import os
 import tempfile
 
-from mvpa2.testing import *
 from mvpa2.testing.datasets import datasets
 
 from mvpa2 import cfg
@@ -32,6 +35,7 @@ from mvpa2.misc.surfing import volgeom, volsurf, \
 from mvpa2.support.nibabel import surf, surf_fs_asc
 
 from mvpa2.measures.searchlight import Searchlight
+from mvpa2.misc.neighborhood import Sphere
 
 if externals.exists('h5py'):
     from mvpa2.base.hdf5 import h5save, h5load
@@ -293,7 +297,7 @@ class SurfTests(unittest.TestCase):
 
         # some I/O testing
 
-        img = vg.empty_nifti_img()
+        img = vg.get_empty_nifti_image()
         _, fn = tempfile.mkstemp('.nii', 'test')
         img.to_filename(fn)
 
@@ -309,6 +313,58 @@ class SurfTests(unittest.TestCase):
         assert_equal(vg.shape[:3], vg3.shape[:3], 0)
 
         os.remove(fn)
+
+        assert_true(len('%s%r' % (vg, vg)) > 0)
+
+    def test_volgeom_masking(self):
+        maskstep = 5
+        vg = volgeom.VolGeom((2 * maskstep, 2 * maskstep, 2 * maskstep), np.identity(4))
+
+        mask = vg.get_empty_array()
+        sh = vg.shape
+
+        # mask a subset of the voxels
+        rng = range(0, sh[0], maskstep)
+        for i in rng:
+            for j in rng:
+                for k in rng:
+                    mask[i, j, k] = 1
+
+        # make a new volgeom instance
+        vg = volgeom.VolGeom(vg.shape, vg.affine, mask)
+
+        data = vg.get_masked_nifti_image(nt=1)
+        msk = vg.get_masked_nifti_image()
+        dset = fmri_dataset(data, mask=msk)
+        vg_dset = volgeom.from_any(dset)
+
+        # ensure that the mask is set properly and 
+        assert_equal(vg.nvoxels, vg.nvoxels_mask * maskstep ** 3)
+        assert_equal(vg_dset, vg)
+
+        dilates = range(0, 8, 2)
+        nvoxels_masks = []
+        for dilate in dilates:
+            covers_full_volume = dilate * 2 >= maskstep * 3 ** .5 + 1
+
+            for constr in [Sphere, lambda x:x if x else None]:
+                dilater = constr(dilate)
+
+                img_dilated = vg.get_masked_nifti_image(dilate=dilater)
+                data = img_dilated.get_data()
+
+                assert_array_equal(data, vg.get_masked_array(dilate=dilater))
+                n = np.sum(data)
+
+                # number of voxels in mask is increasing
+                assert_true(all(n >= p for p in nvoxels_masks))
+                nvoxels_masks.append(n)
+
+                # if dilate is not None or zero, then it should 
+                # have selected all the voxels if the radius is big enough
+                assert_equal(np.sum(data) == vg.nvoxels, covers_full_volume)
+
+
 
     def test_volsurf(self):
         vg = volgeom.VolGeom((50, 50, 50), np.identity(4))
@@ -356,6 +412,9 @@ class SurfTests(unittest.TestCase):
 
         voxel_expected = [1498, 1498, 4322, 4986, 7391, 10141]
         assert_equal(voxel_counter, voxel_expected)
+
+        # check that string building works
+        assert_true(len('%s%r' % (vs, vs)) > 0)
 
 
 
@@ -502,6 +561,8 @@ class SurfTests(unittest.TestCase):
             if test_full(param):
                 assert_equal(np.sum(datalin), np.sum(sel.get_mask()))
 
+                assert_true(len('%s%r' % (sel, sel)) > 0)
+
                 # see if voxels containing inner and outer 
                 # nodes were selected
                 for sf in [inner, outer]:
@@ -541,7 +602,7 @@ class SurfTests(unittest.TestCase):
                 surf.write(outerfn, outer, overwrite=True)
                 surf.write(innerfn, inner, overwrite=True)
 
-                img = sel.volgeom.empty_nifti_img()
+                img = sel.volgeom.get_empty_nifti_image()
                 img.to_filename(volfn)
 
                 sel3 = surf_voxel_selection.run_voxel_selection(radius, volfn, innerfn,

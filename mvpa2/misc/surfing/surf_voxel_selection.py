@@ -33,7 +33,6 @@ import operator
 import datetime
 import math
 import os
-import random
 
 import numpy as np
 
@@ -61,7 +60,7 @@ if __debug__:
 class VoxelSelector(object):
     '''Voxel selection for surface-based searchlights'''
 
-    def __init__(self, radius, surf, n2v, distance_metric='dijkstra',
+    def __init__(self, radius, srf, n2v, distance_metric='dijkstra',
                             outside_node_margin=None):
         '''
         Voxel selection using cortical surfaces.
@@ -108,7 +107,7 @@ class VoxelSelector(object):
         self._initradius_mm = initradius_mm # initial radius in mm
         self._optimizer = _RadiusOptimizer(initradius_mm)
         self._distance_metric = distance_metric # }
-        self._surf = surf                     # } save input
+        self._surf = srf                     # } save input
         self._n2v = n2v                       # }
         self._outside_node_margin = outside_node_margin
 
@@ -216,7 +215,7 @@ class VoxelSelector(object):
             Each of voxprops[key] should be list-like of equal length.
         '''
         optimizer = self._optimizer
-        surf = self._surf
+        dist_surf = self._surf
         n2v = self._n2v
         outside_node_margin = self._outside_node_margin
 
@@ -236,7 +235,7 @@ class VoxelSelector(object):
                             skip = False
                             break
                 else:
-                    node_distances = surf.dijkstra_distance(src,
+                    node_distances = dist_surf.dijkstra_distance(src,
                                                 maxdistance=outside_node_margin)
                     if __debug__:
                         debug("SVS", "")
@@ -263,8 +262,8 @@ class VoxelSelector(object):
         radius = self._targetradius
 
         maxiter = 100
-        for iter in xrange(maxiter):
-            around_n2d = surf.circlearound_n2d(src, radius_mm,
+        for counter in xrange(maxiter):
+            around_n2d = dist_surf.circlearound_n2d(src, radius_mm,
                                                self._distance_metric)
 
             allvxdist = self.nodes2voxel_attributes(around_n2d, n2v)
@@ -286,7 +285,7 @@ class VoxelSelector(object):
             else:
                 break
 
-        if iter + 1 >= maxiter:
+        if counter + 1 >= maxiter:
             raise ValueError("Failure to increase radius to get %d voxels for "
                              " node #%d" % (radius, src))
 
@@ -345,15 +344,6 @@ class VoxelSelector(object):
 
         '''
 
-
-        '''takes the node to distance mapping n2d, and the node to voxel mapping n2v,
-        and returns a pair of lists with voxel indices and distances
-        If a voxel is associated with multiple nodes (i.e. n2d[i] and n2d[j] are not disjunct
-        for i!=j, then the voxel with minimum value for distance is taken'''
-
-
-
-
         # mapping from voxel indices to all distances
         v2dps = collections.defaultdict(set)
 
@@ -400,256 +390,252 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                     outside_node_margin=None,
                     results_backend=None, tmp_prefix='tmpvoxsel'):
 
-        """
-        Voxel selection for multiple center nodes on the surface
+    """
+    Voxel selection for multiple center nodes on the surface
 
-        Parameters
-        ----------
-        vol_surf: volsurf.VolSurf
-            Contains gray and white matter surface, and volume geometry
-        radius: int or float
-            Size of searchlight. If an integer, then it indicates the number of
-            voxels. If a float, then it indicates the radius of the disc      
-        source_surf: surf.Surface or None
-            Surface used to compute distance between nodes. If omitted, it is 
-            the average of the gray and white surfaces. 
-        source_surf_nodes: list of int or numpy array or None
-            Indices of nodes in source_surf that serve as searchlight center. 
-            By default every node serves as a searchlight center.
-        distance_metric: str
-            Distance metric between nodes. 'euclidean' or 'dijksta' (default)           
-        start_fr: float (default: 0)
-                Relative start position of line in gray matter, 0.=white 
-                surface, 1.=pial surface
-        stop_fr: float (default: 1)
-            Relative stop position of line (as in see start)
-        start_mm: float (default: 0) 
-            Absolute start position offset (as in start_fr)
-        sttop_mm: float (default: 0)
-            Absolute start position offset (as in start_fr)
-        nsteps: int (default: 10)
-            Number of steps from white to pial surface
-        eta_step: int (default: 1)
-            After how many searchlights an estimate should be printed of the 
-            remaining time until completion of all searchlights
-        nproc: int or None
-            Number of parallel threads. None means as many threads as the 
-            system supports. The pprocess is required for parallel threads; if
-            it cannot be used, then a single thread is used.
-        outside_node_margin: float or True or None (default)
-            By default nodes outside the volume are skipped; using this 
-            parameter allows for a marign. If this value is a float (possibly
-            np.inf), then all nodes within outside_node_margin Dijkstra 
-            distance from any node within the volume are still assigned 
-            associated voxels. If outside_node_margin is True, then a node is
-            always assigned voxels regardless of its position in the volume. 
-        results_backend : 'native' or 'hdf5' or None (default).
-            Specifies the way results are provided back from a processing block
-            in case of nproc > 1. 'native' is pickling/unpickling of results by
-            pprocess, while 'hdf5' would use h5save/h5load functionality.
-            'hdf5' might be more time and memory efficient in some cases.
-            If None, then 'hdf5' if used if available, else 'native'.
-        tmp_prefix : str, optional
-            If specified -- serves as a prefix for temporary files storage
-            if results_backend == 'hdf5'.  Thus can specify the directory to use
-            (trailing file path separator is not added automagically).    
+    Parameters
+    ----------
+    vol_surf: volsurf.VolSurf
+        Contains gray and white matter surface, and volume geometry
+    radius: int or float
+        Size of searchlight. If an integer, then it indicates the number of
+        voxels. If a float, then it indicates the radius of the disc      
+    source_surf: surf.Surface or None
+        Surface used to compute distance between nodes. If omitted, it is 
+        the average of the gray and white surfaces. 
+    source_surf_nodes: list of int or numpy array or None
+        Indices of nodes in source_surf that serve as searchlight center. 
+        By default every node serves as a searchlight center.
+    distance_metric: str
+        Distance metric between nodes. 'euclidean' or 'dijksta' (default)           
+    start_fr: float (default: 0)
+            Relative start position of line in gray matter, 0.=white 
+            surface, 1.=pial surface
+    stop_fr: float (default: 1)
+        Relative stop position of line (as in see start)
+    start_mm: float (default: 0) 
+        Absolute start position offset (as in start_fr)
+    sttop_mm: float (default: 0)
+        Absolute start position offset (as in start_fr)
+    nsteps: int (default: 10)
+        Number of steps from white to pial surface
+    eta_step: int (default: 1)
+        After how many searchlights an estimate should be printed of the 
+        remaining time until completion of all searchlights
+    nproc: int or None
+        Number of parallel threads. None means as many threads as the 
+        system supports. The pprocess is required for parallel threads; if
+        it cannot be used, then a single thread is used.
+    outside_node_margin: float or True or None (default)
+        By default nodes outside the volume are skipped; using this 
+        parameter allows for a marign. If this value is a float (possibly
+        np.inf), then all nodes within outside_node_margin Dijkstra 
+        distance from any node within the volume are still assigned 
+        associated voxels. If outside_node_margin is True, then a node is
+        always assigned voxels regardless of its position in the volume. 
+    results_backend : 'native' or 'hdf5' or None (default).
+        Specifies the way results are provided back from a processing block
+        in case of nproc > 1. 'native' is pickling/unpickling of results by
+        pprocess, while 'hdf5' would use h5save/h5load functionality.
+        'hdf5' might be more time and memory efficient in some cases.
+        If None, then 'hdf5' if used if available, else 'native'.
+    tmp_prefix : str, optional
+        If specified -- serves as a prefix for temporary files storage
+        if results_backend == 'hdf5'.  Thus can specify the directory to use
+        (trailing file path separator is not added automagically).    
 
-        Returns
-        -------
-        sel: volume_mask_dict.VolumeMaskDictionary
-            Voxel selection results, that associates, which each node, the indices
-            of the surrounding voxels.
-        """
+    Returns
+    -------
+    sel: volume_mask_dict.VolumeMaskDictionary
+        Voxel selection results, that associates, which each node, the indices
+        of the surrounding voxels.
+    """
 
-        # outer and inner surface
-        surf_pial = vol_surf.pial_surface
-        surf_white = vol_surf.white_surface
+    # construct the intermediate surface, which is used 
+    # to measure distances
+    intermediate_surf = vol_surf.intermediate_surface
 
-        # construct the intermediate surface, which is used 
-        # to measure distances
-        intermediate_surf = vol_surf.intermediate_surface
+    if source_surf is None:
+        source_surf = intermediate_surf
+    else:
+        source_surf = surf.from_any(source_surf)
 
-        if source_surf is None:
-            source_surf = intermediate_surf
-        else:
-            source_surf = surf.from_any(source_surf)
+    if _debug():
+        debug('SVS', "Generated high-res intermediate surface: "
+              "%d nodes, %d faces" %
+              (intermediate_surf.nvertices, intermediate_surf.nfaces))
+        debug('SVS', "Mapping source to high-res surface:"
+              " %d nodes, %d faces" %
+              (source_surf.nvertices, source_surf.nfaces))
 
+    # find a mapping from nondes in source_surf to those in
+    # intermediate surface
+    src2intermediate = source_surf.map_to_high_resolution_surf(\
+                                                        intermediate_surf)
+
+    # if no sources are given, then visit all ndoes
+    if source_surf_nodes is None:
+        source_surf_nodes = np.arange(source_surf.nvertices)
+
+    n = len(source_surf_nodes)
+
+    if _debug():
+        debug('SVS',
+              "Performing surface-based voxel selection"
+              " for %d centers" % n)
+
+    # visit in random order, for for better ETA estimate
+    visitorder = list(np.random.permutation(len(source_surf_nodes)))
+
+    # construct mapping from nodes to enclosing voxels
+    n2v = vol_surf.node2voxels(nsteps=nsteps, \
+                                    start_fr=start_fr, stop_fr=stop_fr,
+                                    start_mm=start_mm, stop_mm=stop_mm)
+
+    if __debug__:
+        debug('SVS', "Generated mapping from nodes"
+              " to intersecting voxels")
+
+    # build voxel selector
+    voxel_selector = VoxelSelector(radius, intermediate_surf, n2v,
+                                   distance_metric,
+                                   outside_node_margin=outside_node_margin)
+
+    if _debug():
+        debug('SVS', "Instantiated voxel selector (radius %r)" % radius)
+
+
+    # structure to keep output data. Initialize with None, then
+    # make a sparse_attributes instance when we know what the attribtues are
+    node2volume_attributes = None
+
+    attribute_mapper = voxel_selector.disc_voxel_indices_and_attributes
+
+    srcs_order = [source_surf_nodes[node] for node in visitorder]
+    src_trg_nodes = [(src, src2intermediate[src]) for src in srcs_order]
+
+    if nproc is None:
+        try:
+            import pprocess
+            nproc = pprocess.get_number_of_cores() or 1
+            if _debug() :
+                debug("SVS", 'Using pprocess with %d cores' % nproc)
+        except:
+            nproc = 1
+            debug("SVS", 'Using %d cores - pprocess not available' % nproc)
+
+    if nproc > 1:
+        if results_backend == 'hdf5':
+            externals.exists('h5py', raise_=True)
+        elif results_backend is None:
+            if externals.exists('h5py'):
+                results_backend = 'hdf5'
+            else:
+                results_backend = 'native'
         if _debug():
-            debug('SVS', "Generated high-res intermediate surface: "
-                  "%d nodes, %d faces" %
-                  (intermediate_surf.nvertices, intermediate_surf.nfaces))
-            debug('SVS', "Mapping source to high-res surface:"
-                  " %d nodes, %d faces" %
-                  (source_surf.nvertices, source_surf.nfaces))
+            debug('SVS', "Using '%s' backend" % (results_backend,))
 
-        # find a mapping from nondes in source_surf to those in
-        # intermediate surface
-        src2intermediate = source_surf.map_to_high_resolution_surf(\
-                                                            intermediate_surf)
+        if not results_backend in ('native', 'hdf5'):
+            raise ValueError('Illegal results backend %r' % results_backend)
 
-        # if no sources are given, then visit all ndoes
-        if source_surf_nodes is None:
-            source_surf_nodes = np.arange(source_surf.nvertices)
+        import pprocess
+        n_srcs = len(src_trg_nodes)
+        blocks = np.array_split(np.arange(n_srcs), nproc)
 
-        n = len(source_surf_nodes)
-
-        if _debug():
-            debug('SVS',
-                  "Performing surface-based voxel selection"
-                  " for %d centers" % n)
-
-        # visit in random order, for for better ETA estimate
-        visitorder = list(np.random.permutation(len(source_surf_nodes)))
-
-        # construct mapping from nodes to enclosing voxels
-        n2v = vol_surf.node2voxels(nsteps=nsteps, \
-                                        start_fr=start_fr, stop_fr=stop_fr,
-                                        start_mm=start_mm, stop_mm=stop_mm)
+        results = pprocess.Map(limit=nproc)
+        reducer = results.manage(pprocess.MakeParallel(_reduce_mapper))
 
         if __debug__:
-            debug('SVS', "Generated mapping from nodes"
-                  " to intersecting voxels")
+            debug('SVS', "Starting %d child processes", (len(blocks),))
 
-        # build voxel selector
-        voxel_selector = VoxelSelector(radius, intermediate_surf, n2v,
-                                       distance_metric,
-                                       outside_node_margin=outside_node_margin)
-
-        if _debug():
-            debug('SVS', "Instantiated voxel selector (radius %r)" % radius)
-
-
-        # structure to keep output data. Initialize with None, then
-        # make a sparse_attributes instance when we know what the attribtues are
-        node2volume_attributes = None
-
-        attribute_mapper = voxel_selector.disc_voxel_indices_and_attributes
-
-        srcs_order = [source_surf_nodes[node] for node in visitorder]
-        src_trg_nodes = [(src, src2intermediate[src]) for src in srcs_order]
-
-        if nproc is None:
-            try:
-                import pprocess
-                nproc = pprocess.get_number_of_cores() or 1
-                if _debug() :
-                    debug("SVS", 'Using %d cores' % nproc)
-            except:
-                #warning("Could not import pprocess, using nproc=1")
-                nproc = 1
-
-        if nproc > 1:
-            if results_backend == 'hdf5':
-                externals.exists('h5py', raise_=True)
-            elif results_backend is None:
-                if externals.exists('h5py'):
-                    results_backend = 'hdf5'
-                else:
-                    results_backend = 'native'
-            if _debug():
-                debug('SVS', "Using '%s' backend" % (results_backend,))
-
-            if not results_backend in ('native', 'hdf5'):
-                raise ValueError('Illegal results backend %r' % results_backend)
-
-            import pprocess
-            n_srcs = len(src_trg_nodes)
-            blocks = np.array_split(np.arange(n_srcs), nproc)
-
-            results = pprocess.Map(limit=nproc)
-            reducer = results.manage(pprocess.MakeParallel(_reduce_mapper))
-
-            if __debug__:
-                debug('SVS', "Starting %d child processes", (len(blocks),))
-
-            for i, block in enumerate(blocks):
-                empty_dict = volume_mask_dict.VolumeMaskDictionary(
-                                                vol_surf.volgeom,
-                                                vol_surf.intermediate_surface)
-
-                src_trg = []
-                for idx in block:
-                    src_trg.append(src_trg_nodes[idx])
-
-                if _debug():
-                    debug('SVS', "  starting block %d/%d: %d centers" %
-                                (i + 1, nproc, len(src_trg)), cr=True)
-
-                reducer(empty_dict, attribute_mapper, src_trg,
-                        eta_step=eta_step, proc_id='%d' % (i + 1,),
-                        results_backend=results_backend, tmp_prefix=tmp_prefix)
-            if _debug():
-                debug('SVS', '')
-                debug('SVS', 'Started all %d child processes' % (len(blocks)))
-                tstart = time.time()
-
-            node2volume_attributes = None
-            for i, result in enumerate(results):
-                if result is None:
-                    continue
-
-                if results_backend == 'hdf5':
-                    result_fn = result
-                    result = h5load(result_fn)
-                    os.remove(result_fn)
-
-                if node2volume_attributes is None:
-                    # first time we have actual results. 
-                    # Use as a starting point
-                    node2volume_attributes = result
-                    if _debug():
-                        debug('SVS', '')
-                        debug('SVS', "Merging results from %d child "
-                                     "processes using '%s' backend" %
-                                     (len(blocks), results_backend))
-
-                else:
-                    # merge new with current data
-                    node2volume_attributes.merge(result)
-                if _debug():
-                    debug('SVS', "  merged result block %d/%d" % (i + 1, nproc),
-                                    cr=True)
-
-            if _debug():
-                telapsed = time.time() - tstart
-                debug('SVS', "")
-                debug('SVS', 'Merged results from %d child processed - '
-                             'took %s' %
-                             (len(blocks), _seconds2prettystring(telapsed)))
-
-        else:
+        for i, block in enumerate(blocks):
             empty_dict = volume_mask_dict.VolumeMaskDictionary(
-                                                vol_surf.volgeom,
-                                                vol_surf.intermediate_surface)
-            node2volume_attributes = _reduce_mapper(empty_dict,
-                                                    attribute_mapper,
-                                                    src_trg_nodes,
-                                                    eta_step=eta_step)
-            debug('SVS', "")
+                                            vol_surf.volgeom,
+                                            vol_surf.intermediate_surface)
+
+            src_trg = []
+            for idx in block:
+                src_trg.append(src_trg_nodes[idx])
+
+            if _debug():
+                debug('SVS', "  starting block %d/%d: %d centers" %
+                            (i + 1, nproc, len(src_trg)), cr=True)
+
+            reducer(empty_dict, attribute_mapper, src_trg,
+                    eta_step=eta_step, proc_id='%d' % (i + 1,),
+                    results_backend=results_backend, tmp_prefix=tmp_prefix)
+        if _debug():
+            debug('SVS', '')
+            debug('SVS', 'Started all %d child processes' % (len(blocks)))
+            tstart = time.time()
+
+        node2volume_attributes = None
+        for i, result in enumerate(results):
+            if result is None:
+                continue
+
+            if results_backend == 'hdf5':
+                result_fn = result
+                result = h5load(result_fn)
+                os.remove(result_fn)
+
+            if node2volume_attributes is None:
+                # first time we have actual results. 
+                # Use as a starting point
+                node2volume_attributes = result
+                if _debug():
+                    debug('SVS', '')
+                    debug('SVS', "Merging results from %d child "
+                                 "processes using '%s' backend" %
+                                 (len(blocks), results_backend))
+
+            else:
+                # merge new with current data
+                node2volume_attributes.merge(result)
+            if _debug():
+                debug('SVS', "  merged result block %d/%d" % (i + 1, nproc),
+                                cr=True)
 
         if _debug():
-            if node2volume_attributes is None:
-                msgs = ["Voxel selection completed: none of %d nodes have "
-                        "voxels associated" % len(visitorder)]
-            else:
-                nvox_selected = np.sum(node2volume_attributes.get_mask() != 0)
-                vg = vol_surf.volgeom
+            telapsed = time.time() - tstart
+            debug('SVS', "")
+            debug('SVS', 'Merged results from %d child processed - '
+                         'took %s' %
+                         (len(blocks), _seconds2prettystring(telapsed)))
 
-                msgs = ["Voxel selection completed: %d / %d nodes have "
-                        "voxels associated" %
-                        (len(node2volume_attributes.keys()), len(visitorder)),
-                        "Selected %d / %d  voxels (%.0f%%) in the mask at least once" %
-                        (nvox_selected, vg.nvoxels_mask,
-                         100. * nvox_selected / vg.nvoxels_mask)]
+    else:
+        empty_dict = volume_mask_dict.VolumeMaskDictionary(
+                                            vol_surf.volgeom,
+                                            vol_surf.intermediate_surface)
+        node2volume_attributes = _reduce_mapper(empty_dict,
+                                                attribute_mapper,
+                                                src_trg_nodes,
+                                                eta_step=eta_step)
+        debug('SVS', "")
 
-            for msg in msgs:
-                debug("SVS", msg)
-
-
+    if _debug():
         if node2volume_attributes is None:
-            warning('No voxels associated with any of %d nodes' %
-                            len(visitorder))
-        return node2volume_attributes
+            msgs = ["Voxel selection completed: none of %d nodes have "
+                    "voxels associated" % len(visitorder)]
+        else:
+            nvox_selected = np.sum(node2volume_attributes.get_mask() != 0)
+            vg = vol_surf.volgeom
+
+            msgs = ["Voxel selection completed: %d / %d nodes have "
+                    "voxels associated" %
+                    (len(node2volume_attributes.keys()), len(visitorder)),
+                    "Selected %d / %d  voxels (%.0f%%) in the mask at least once" %
+                    (nvox_selected, vg.nvoxels_mask,
+                     100. * nvox_selected / vg.nvoxels_mask)]
+
+        for msg in msgs:
+            debug("SVS", msg)
+
+
+    if node2volume_attributes is None:
+        warning('No voxels associated with any of %d nodes' %
+                        len(visitorder))
+    return node2volume_attributes
 
 def _reduce_mapper(node2volume_attributes, attribute_mapper,
                    src_trg_indices, eta_step=1, proc_id=None,
@@ -674,9 +660,6 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
             y = 1
         return '%%%dd' % math.ceil(math.log10(y))
 
-    minsrc = max(st[0] for st in src_trg_indices) if src_trg_indices else 1
-    mintrg = max(st[1] for st in src_trg_indices) if src_trg_indices else 1
-
     progresspat = 'node %s -> %s [%%3d%%%%]' % (_pat(0), _pat(1))
 
     # start the clock
@@ -690,12 +673,12 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
             node2volume_attributes.add(int(src), idxs, misc_attrs)
 
         if _debug() and eta_step and (i % eta_step == 0 or i == n - 1):
-                msg = _eta(tstart, float(i + 1) / n,
-                                progresspat %
-                                (src, trg, 100.*(i + 1) / n), show=False)
-                if not proc_id is None:
-                    msg += ' (#%s)' % proc_id
-                debug('SVS', msg, cr=True)
+            msg = _eta(tstart, float(i + 1) / n,
+                            progresspat %
+                            (src, trg, 100.*(i + 1) / n), show=False)
+            if not proc_id is None:
+                msg += ' (#%s)' % proc_id
+            debug('SVS', msg, cr=True)
 
     if results_backend == 'hdf5':
         tmp_postfix = ('__tmp__%d_%s.h5py' %
@@ -851,7 +834,7 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
                           distance_metric=distance_metric,
                           start_fr=start_fr, stop_fr=stop_fr,
                           start_mm=start_mm, stop_mm=stop_mm,
-                          nsteps=nsteps, eta_step=1, nproc=nproc,
+                          nsteps=nsteps, eta_step=eta_step, nproc=nproc,
                           outside_node_margin=outside_node_margin,
                           results_backend=results_backend,
                           tmp_prefix=tmp_prefix)
