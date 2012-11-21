@@ -567,8 +567,22 @@ def from_any(s, mask_volume=None):
         return s
 
     if isinstance(s, basestring):
-        # assume file name of nifti image - do a recursive call
-        return from_any(nb.load(s), mask_volume=mask_volume)
+        # try to find a function to load the data
+        load_function = None
+
+        if s.endswith('.nii') or s.endswith('.nii.gz'):
+            load_function = nb.load
+        elif s.endswith('.h5py'):
+            if externals.exists('h5py'):
+                from mvpa2.base.hdf5 import h5load
+            else:
+                raise ValueError("Cannot load h5py file - no externals")
+
+        if load_function:
+            # do a recursive call
+            return from_any(load_function(s), mask_volume=mask_volume)
+
+        raise ValueError("Unrecognized extension for file %s" % s)
 
     if mask_volume is True:
         # assign a specific index -- the very first volume
@@ -601,29 +615,27 @@ def from_any(s, mask_volume=None):
             shape = hdr.get_data_shape()
             affine = hdr.get_best_affine()
 
+            mask = None
             if isinstance(mask_volume, int):
                 mask = np.asarray(s.samples[mask_volume, :])
-            elif mask_volume is None and (hasattr(s, 'fa') and
-                                           hasattr(s.fa, 'voxel_indices')):
-                mask_volume = 'voxel_indices'
-                warning("Found a Dataset-like structure with sample attributes"
-                        " 'voxel_indices' - using these to define voxel mask. "
-                        "(To disable this behaviour, use "
-                        "'volgeom.from_any(..., mask_volume=False)').")
-
-            if isinstance(mask_volume, basestring):
-                if not mask_volume in s.fa:
-                    raise ValueError('Key not found in s.fa: %r' % mask_volume)
-
-                sh = shape[:3]
-                mask = np.zeros(sh)
-
-                for idx in s.fa[mask_volume].value:
-                    mask[tuple(idx)] = 1
             else:
-                mask = None
+                mask_volume_indices = None
+                if mask_volume is None and (hasattr(s, 'fa') and
+                                           hasattr(s.fa, 'voxel_indices')):
+                    mask_volume_indices = s.fa['voxel_indices']
+                elif isinstance(mask_volume, basestring):
+                    if not mask_volume in s.fa:
+                        raise ValueError('Key not found in s.fa: %r' % mask_volume)
+                    mask_volume_indices = s.fa[mask_volume]
+
+                if mask_volume_indices:
+                    sh = shape[:3]
+                    mask = np.zeros(sh)
+
+                    for idx in mask_volume_indices.value:
+                        mask[tuple(idx)] = 1
         except:
-            # no idea what type of beast this is.
+            #no idea what type of beast this is.
             raise ValueError('Unrecognized input %r - not a VolGeom, '
                              '(filename of) Nifti image, or (mri-)Dataset' % s)
 

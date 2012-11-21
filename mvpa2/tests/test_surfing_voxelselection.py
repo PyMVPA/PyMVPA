@@ -49,19 +49,19 @@ from mvpa2.clfs.gnb import GNB
 
 
 class SurfVoxelSelectionTests(unittest.TestCase):
-    # runs voxel selection and searchlight (surface-based) on haxby 2001 
-    # single plane data using a synthetic planar surface 
 
-    # checks to see if results are identical for surface
-    # and volume base searchlights (the former using Euclidian distance
+    def test_voxel_selection(self):
+        '''Compare surface and volume based searchlight'''
 
-    def _test_voxel_selection(self):
-        '''Define searchlight radius (in mm)
-        
+        '''
+        Tests to see whether results are identical for surface-based
+        searchlight (just one plane; Euclidian distnace) and volume-based 
+        searchlight.
+            
         Note that the current value is a float; if it were int, it would 
         specify the number of voxels in each searchlight'''
-        radius = 10.
 
+        radius = 10.
 
         '''Define input filenames'''
         epi_fn = os.path.join(pymvpa_dataroot, 'bold.nii.gz')
@@ -104,26 +104,27 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         surf_voxsel = surf_voxel_selection.voxel_selection(vs, radius,
                                                     distance_metric='e')
 
-        '''
-        Load an apply a volume - metric mask, and get a new instance
-        of voxel selection results.
-        In this new instance, only voxels that survive the epi mask
-        are kept
-        '''
-        #epi_mask = fmri_dataset(maskfn).samples[0]
-        #voxsel_masked = voxsel.get_masked_instance(epi_mask)
+        '''Define the measure'''
 
+        # run_slow=True would give an actual cross-validation with meaningful
+        # accuracies. Because this is a unit-test only the number of voxels
+        # in each searchlight is tested.
+        run_slow = False
 
-        '''Define cross validation'''
-        cv = CrossValidation(GNB(), OddEvenPartitioner(),
-                                  errorfx=lambda p, t: np.mean(p == t))
+        if run_slow:
+            meas = CrossValidation(GNB(), OddEvenPartitioner(),
+                                   errorfx=lambda p, t: np.mean(p == t))
+            postproc = mean_sample
+        else:
+            meas = _Voxel_Count_Measure()
+            postproc = lambda x:x
 
         '''
         Surface analysis: define the query engine, cross validation, 
         and searchlight
         '''
         surf_qe = SurfaceVerticesQueryEngine(surf_voxsel)
-        surf_sl = Searchlight(cv, queryengine=surf_qe, postproc=mean_sample())
+        surf_sl = Searchlight(meas, queryengine=surf_qe, postproc=postproc)
 
 
         '''
@@ -133,8 +134,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         surf_qe2 = disc_surface_queryengine(radius, maskfn, inner, outer,
                                             plane, volume_mask=True,
                                             distance_metric='euclidian')
-        surf_sl2 = Searchlight(cv, queryengine=surf_qe2,
-                               postproc=mean_sample())
+        surf_sl2 = Searchlight(meas, queryengine=surf_qe2,
+                               postproc=postproc)
 
 
         '''
@@ -145,7 +146,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         kwa = {'voxel_indices': sph}
 
         vol_qe = IndexQueryEngine(**kwa)
-        vol_sl = Searchlight(cv, queryengine=vol_qe, postproc=mean_sample())
+        vol_sl = Searchlight(meas, queryengine=vol_qe, postproc=postproc)
 
 
         '''The following steps are similar to start_easy.py'''
@@ -196,8 +197,11 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         # This method does not test for mask functionality.
 
         # define the volume
-        vol_shape = (50, 50, 50, 3)
+        vol_shape = (10, 10, 10, 3)
         vol_affine = np.identity(4)
+        vol_affine[0, 0] = vol_affine[1, 1] = vol_affine[2, 2] = 5
+
+
 
         # four versions: array, nifti image, file name, fmri dataset
         volarr = np.ones(vol_shape)
@@ -238,13 +242,20 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         m = _Voxel_Count_Measure()
 
         # number of voxels expected in each searchlight
-        r_expected = np.array([[76, 20, 22, 22, 13, 2, 9, 7, 7, 16, 20,
-                                35, 37, 29, 14, 20, 32, 32, 34, 34, 15, 5,
-                                25, 34, 35, 34, 25, 5, 15, 34, 34, 35, 33,
-                                20, 14, 29, 37, 35, 33, 30, 21, 21, 23, 16,
-                                27, 36, 36, 34, 35, 45, 43, 45, 43, 43, 49,
-                                51, 49, 48, 48, 55, 55, 55, 55, 55, 55, 55,
-                                55, 55, 55]])
+        r_expected = np.array([[18, 9, 10, 9, 9, 9, 9, 10, 9,
+                                 9, 9, 9, 11, 11, 11, 11, 10,
+                                10, 10, 9, 10, 11, 9, 10, 10,
+                                8, 7, 8, 8, 8, 9, 10, 12, 12,
+                                11, 7, 7, 8, 5, 9, 11, 11, 12,
+                                12, 9, 5, 8, 7, 7, 12, 12, 13,
+                                12, 12, 7, 7, 8, 5, 9, 12, 12,
+                                13, 11, 9, 5, 8, 7, 7, 11, 12,
+                                12, 11, 12, 10, 10, 11, 9, 11,
+                                12, 12, 12, 12, 16, 13, 16, 16,
+                                16, 17, 15, 17, 17, 17, 16, 16,
+                                16, 18, 16, 16, 16, 16, 18, 16]])
+
+
 
         params = dict(intermediate_=(intermediate, intermediatefn, None),
                     center_nodes_=(None, range(nv)),
@@ -268,12 +279,18 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         for i in xrange(0, len(combis), combistep):
             combi = combis[i]
 
-            # assign values
+            intermediate_ = combi['intermediate_']
+            center_nodes_ = combi['center_nodes_']
+            volume_ = combi['volume_']
+            surf_src_ = combi['surf_src_']
+            volume_mask_ = combi['volume_mask_']
+            call_method_ = combi['call_method_']
+
+
+            # keep track of which values were used - 
+            # so that this unit test tests itself
+
             for k in combi.keys():
-                # put these values in globals
-                # at the end of this testing function they
-                # are popped (assuming it passed the test)
-                exec '%s=combi["%s"]' % (k, k) in locals(), globals()
                 if not k in tested_params:
                     tested_params[k] = set()
                 tested_params[k].add(val2str(combi[k]))
@@ -338,7 +355,6 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                 if not vstr in tested_params[k]:
                     raise ValueError("Missing value %r for %s" %
                                         (tested_params[k], k))
-            globals().pop(k)
 
 def _cartprod(d):
     '''makes a combinatorial explosion from a dictionary
