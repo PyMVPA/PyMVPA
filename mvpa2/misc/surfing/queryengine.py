@@ -10,7 +10,7 @@
 
 References
 ----------
-NN Oosterhof, T Wiestler, PE Downing (2011). A comparison of volume-based
+NN Oosterhof, T Wiestler, PE Downing, J Diedrichsen (2011). A comparison of volume-based
 and surface-based multi-voxel pattern analysis. Neuroimage, 56(2), pp. 593-600
 
 'Surfing' toolbox: http://surfing.sourceforge.net
