@@ -152,14 +152,16 @@ def which(f, env=None):
 
 
 
-def _package_afni_nibabel_for_standalone(outputdir):
+def _package_afni_nibabel_for_standalone(outputdir, rootname='python'):
     '''
     helper function to put mvpa2.support.{afni,nibabel} into another
     directory (outputdir) where it can function as a stand-alone package
     '''
 
-    if not os.path.exists(outputdir):
-        os.mkdir(outputdir)
+    outputdir_files = os.path.join(outputdir, rootname)
+    for d in (outputdir, outputdir_files):
+        if not os.path.exists(d):
+            os.mkdir(d)
 
     fullpath = op.realpath(__file__)
     fullpath_parts = fullpath.split('/')
@@ -175,100 +177,133 @@ def _package_afni_nibabel_for_standalone(outputdir):
     pkgs = ['afni', 'nibabel']
     srcdirs = [os.path.join(rootdir, pkg) for pkg in pkgs]
 
+
+    input_path_fns = [os.path.join(d, f) for d in srcdirs
+                                         for f in os.listdir(d)
+                                         ]
+
+    is_python_file = lambda fn: fn.endswith('.py') and not fn.endswith('__.py')
+    input_path_fns = filter(is_python_file, input_path_fns)
+
+    print input_path_fns
+
     outputfns = []
-    for srcdir in srcdirs:
-        for fn in os.listdir(srcdir):
-            if fn.startswith('__') or not fn.endswith('.py'):
-                continue
+    for path_fn in input_path_fns:
+        fn = os.path.split(path_fn)[1]
 
-            path_fn = os.path.join(srcdir, fn)
-            with open(path_fn) as f:
-                lines = f.read().split('\n')
+        with open(path_fn) as f:
+            lines = f.read().split('\n')
 
-            newlines = []
-            for line in lines:
-                newline = None
+        newlines = []
+        for line in lines:
+            newline = None
 
-                for old, new in replacements.iteritems():
-                    line = line.replace(old, new)
+            for old, new in replacements.iteritems():
+                line = line.replace(old, new)
 
-                if 'import' in line:
-                    words = line.split()
+            if 'import' in line:
+                words = line.split()
 
-                    for pkg in pkgs:
-                        full_pkg = parent_pkg + '.' + pkg
-                        trgwords = ['from', full_pkg, 'import']
-                        n = len(trgwords)
+                for pkg in pkgs:
+                    full_pkg = parent_pkg + '.' + pkg
+                    trgwords = ['from', full_pkg, 'import']
+                    n = len(trgwords)
 
-                        if len(words) >= n and words[:n] == trgwords:
-                            # find how many trailing spaces
-                            i = 0
-                            while line.find(' ', i) == i:
-                                i += 1
-                            # get everything from import to end of line
-                            # with enough spaces in front
-                            newline = (' ' * i) + ' '.join(words[(n - 1):])
-                            print line
-                            print ' -> ', newline
-                            break
-                        else:
-                            if pkg in words:
-                                raise ValueError("Not supported in %s: %s" % (path_fn, line))
+                    if len(words) >= n and words[:n] == trgwords:
+                        # find how many trailing spaces
+                        i = 0
+                        while line.find(' ', i) == i:
+                            i += 1
+                        # get everything from import to end of line
+                        # with enough spaces in front
+                        newline = (' ' * i) + ' '.join(words[(n - 1):])
+                        print line
+                        print ' -> ', newline
+                        break
+                    else:
+                        if pkg in words:
+                            raise ValueError("Not supported in %s: %s" % (path_fn, line))
 
-                if newline is None:
-                    newline = line
+            if newline is None:
+                newline = line
 
-                newlines.append(newline)
+            newlines.append(newline)
 
-            trgfn = op.join(outputdir, fn)
-            with open(trgfn, 'w') as f:
-                f.write('\n'.join(newlines))
+        if fn.startswith('lib_'):
+            repls = [('lib_', 'pymvpa2-'), ('.py', ''), ('_', '-')]
+            srcbinfn = fn
+            for src, trg in repls:
+                srcbinfn = srcbinfn.replace(src, trg)
 
-            is_executable = lines[0].startswith('#!')
-            if is_executable:
-                os.chmod(trgfn, 0777)
+            parentfn = os.path.join(rootdir, '..', '..', 'bin', srcbinfn)
+            print parentfn
+            if os.path.exists(parentfn):
+                with open(parentfn) as pf:
+                    plines = pf.read().split('\n')
+                    in_main = False
+                    for line in plines:
+                        if '__main__' in line:
+                            in_main = True
+                        if in_main:
+                            newlines.append(line)
+                newlines = [plines[0]] + newlines
+            else:
+                raise ValueError("not found: %s" % parentfn)
 
-            print "Written file %s in %s" % (fn, outputdir)
-            outputfns.append(fn)
+            print newlines
+
+            trgfn = os.path.join(outputdir_files, fn.replace('lib_', ''))
+        else:
+            trgfn = op.join(outputdir_files, fn)
+
+        with open(trgfn, 'w') as f:
+            f.write('\n'.join(newlines))
+
+        is_executable = newlines[0].startswith('#!')
+        chmod_ = 0777 if is_executable else 0666
+        os.chmod(trgfn, chmod_)
+
+        print "Written file %s in %s" % (fn, outputdir_files)
+        outputfns.append(os.path.split(trgfn)[1])
+
+
 
 
     readme = ('''
-    AFNI I/O and wrapper functions in python
-    
-    Copyright 2010-2012 Nikolaas N. Oosterhof <nikolaas.oosterhof@unitn.it>
-    
-    The software in the following files is covered under the MIT License
-    (included below):
+AFNI I/O and wrapper functions in python
+
+Copyright 2010-2012 Nikolaas N. Oosterhof <nikolaas.oosterhof@unitn.it>
+
+The software in the following files is covered under the MIT License
+(included below):
 ''' +
-    '\n'.join(map(lambda x:'      - ' + x, outputfns)) +
+    '\n'.join(map(lambda x:' - ' + x, outputfns)) +
     '''
-    Parts of this software is or will be included in pyMVPA. For information,
-    see www.pymvpa.org. 
-    
-    -------------------------------------------------------------------------
-    The MIT License
+Parts of this software is or will be included in PyMVPA. 
+For information see http://www.pymvpa.org. 
 
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
+-------------------------------------------------------------------------
+The MIT License
 
-    The above copyright notice and this permission notice shall be included in
-    all copies or substantial portions of the Software.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-    THE SOFTWARE.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-    ''')
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.''')
 
-    readmefn = op.join(outputdir, 'COPYING')
+    readmefn = op.join(outputdir_files, 'COPYING')
     with open(readmefn, 'w') as f:
         f.write(readme)
 
