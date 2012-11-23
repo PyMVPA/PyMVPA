@@ -20,6 +20,10 @@ are dicts themselves). Branches are stored in a 'nodes' field.
 For specific types of data, consider afni_niml_annot or afni_niml_annot
 files which provide easier access to the data.
 
+WiP
+
+XXX a known bug is that very rarely datasets are not readable -  probably
+a parser issue.
 '''
 
 import re, numpy as np, random, os, time, sys, base64, copy
@@ -289,4 +293,3 @@ def write(fnout, niml, form='binary', prefunction=None):
     f = open(fnout, 'w')
     f.write(s)
     f.close()
-
