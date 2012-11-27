@@ -20,8 +20,10 @@ import numpy as np, sys
 '''Currently no support for RGB and RGBA'''
 
 np_types = [np.byte, np.int16, np.int32,
-         np.float32, np.float64, np.complex64,
-         None, None, str]
+            np.float32, np.float64, np.complex64,
+            None, None, str]
+
+np_bytecounts = [1, 2, 4, 4, 8, 16, None, None, None]
 
 python_types = [int, int, int,
               float, float, complex,
@@ -43,6 +45,12 @@ def code2python_convertor(i):
         return float
     if i in [8]:
         return lambda x:x.strip('"') # remove quotes
+    return None
+
+def numpy_type2bytecount(tp):
+    for i, t in enumerate(np_types):
+        if t is tp:
+            return np_bytecounts[i]
     return None
 
 def numpy_type2name(tp):
