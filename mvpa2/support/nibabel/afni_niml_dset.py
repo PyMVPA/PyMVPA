@@ -48,6 +48,7 @@ def rawniml2dset(p):
         return map(rawniml2dset, p)
 
     assert type(p) is dict and all([f in p for f in ['dset_type', 'nodes']]), p
+    #assert type(p) is dict and all([f in p for f in ['nodes']]), p
 
     r = dict()
     r['dset_type'] = p['dset_type']
