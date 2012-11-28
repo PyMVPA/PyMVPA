@@ -148,9 +148,12 @@ def _dset2rawniml_labels(s):
                 data=labels)
 
 def _dset2rawniml_history(s):
-    logprefix = ('[%s@%s: %s]' % (os.environ['USER'],
-                                os.uname()[1],
-                                time.asctime()))
+    try:
+        logprefix = ('[%s@%s: %s]' % (os.environ['USER'],
+                                      os.uname()[1],
+                                      time.asctime()))
+    except:
+        logprefix = ''
     # history
     history = s.get('history', '')
     if history and not history.endswith('\n'):
