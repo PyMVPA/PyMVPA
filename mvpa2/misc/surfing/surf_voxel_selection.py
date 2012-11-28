@@ -58,7 +58,7 @@ if __debug__:
 class VoxelSelector(object):
     '''Voxel selection for surface-based searchlights'''
 
-    def __init__(self, radius, srf, n2v, distance_metric='dijkstra',
+    def __init__(self, radius, distance_surf, n2v, distance_metric='dijkstra',
                             outside_node_margin=None):
         '''
         Voxel selection using cortical surfaces.
@@ -72,7 +72,7 @@ class VoxelSelector(object):
             metric distance (with variable number of voxels across searchlights). 
             In the latter case, the distance unit is usually in milimeters
             (which is the unit used for FreeSurfer surfaces).
-        surf: surf.Surface
+        distance_surf: surf.Surface
             A surface to be used for distance measurement. Usually this is the
             intermediate distance constructed by taking the node-wise average of
             the pial and white surface.
@@ -105,7 +105,7 @@ class VoxelSelector(object):
         self._initradius_mm = initradius_mm # initial radius in mm
         self._optimizer = _RadiusOptimizer(initradius_mm)
         self._distance_metric = distance_metric # }
-        self._surf = srf                     # } save input
+        self._surf = distance_surf                     # } save input
         self._n2v = n2v                       # }
         self._outside_node_margin = outside_node_margin
 

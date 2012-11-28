@@ -343,11 +343,12 @@ class SurfTests(unittest.TestCase):
         assert_equal(vg_dset, vg)
 
         dilates = range(0, 8, 2)
-        nvoxels_masks = []
+        nvoxels_masks = [] # keep track of number of voxels for each size
         for dilate in dilates:
             covers_full_volume = dilate * 2 >= maskstep * 3 ** .5 + 1
 
-            for constr in [Sphere, lambda x:x if x else None]:
+            # constr gets values: None, Sphere(0), 2, Sphere(2), ...
+            for i, constr in enumerate([Sphere, lambda x:x if x else None]):
                 dilater = constr(dilate)
 
                 img_dilated = vg.get_masked_nifti_image(dilate=dilater)
@@ -358,7 +359,19 @@ class SurfTests(unittest.TestCase):
 
                 # number of voxels in mask is increasing
                 assert_true(all(n >= p for p in nvoxels_masks))
-                nvoxels_masks.append(n)
+
+                # results should be identical irrespective of constr
+                if i == 0:
+                    # - first call with this value of dialte: has to be more 
+                    #   voxels than very previous dilation value, unless the 
+                    #   full volume is covered - then it can be equal too
+                    # - every next call: ensure size matches
+                    cmp = lambda x, y:(x >= y if covers_full_volume else x > y)
+                    assert_true(all(cmp(n, p) for p in nvoxels_masks))
+                    nvoxels_masks.append(n)
+                else:
+                    # same size as previous call
+                    assert_equal(n, nvoxels_masks[-1])
 
                 # if dilate is not None or zero, then it should 
                 # have selected all the voxels if the radius is big enough
