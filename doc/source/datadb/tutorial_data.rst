@@ -167,7 +167,7 @@ Instructions
 ============
 
   >>> from mvpa2.suite import *
-  >>> datapath = os.path.join(PyMVPA_datadbroot, 'tutorial_data',
+  >>> datapath = os.path.join(pymvpa_datadbroot, 'tutorial_data',
   ...                         'tutorial_data', 'data')
   >>> attrs = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
   >>> ds = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
