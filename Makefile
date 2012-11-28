@@ -666,6 +666,7 @@ fetch-data:
 	rsync $(RSYNC_OPTS) $(DATA_URI)/tutorial_data $(DATA_URI)/mnist \
 		$(DATA_URI)/face_inversion_demo \
 	      	$(DATA_URI)/hyperalignment_tutorial_data \
+                $(DATA_URI)/haxby2001 \
 		datadb/ 
 	@for ds in datadb/*; do \
 		echo " I: looking at $$ds"; \
