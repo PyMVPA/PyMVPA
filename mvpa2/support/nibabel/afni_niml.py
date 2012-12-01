@@ -102,7 +102,7 @@ def _mixedtypes_datastring2rawniml(s, niml):
 
 
 def _datastring2rawniml(s, niml):
-    debug('NIML', 'Raw string to NIML: %d characters' % len(s))
+    debug('NIML', 'Raw string to NIML: %d characters', len(s))
 
     tps = niml['vec_typ']
 
@@ -137,7 +137,8 @@ def _datastring2rawniml(s, niml):
         dtype = types.byteorder_from_niform(niform, dtype)
 
         if 'base64' in niform:
-            debug('NIML', 'base64, %d chars: %s' % (len(s), _partial_string(s, 0)))
+            debug('NIML', 'base64, %d chars: %s',
+                            (len(s), _partial_string(s, 0)))
 
             s = base64.b64decode(s)
         elif not 'binary' in niform:
@@ -145,7 +146,8 @@ def _datastring2rawniml(s, niml):
 
         data_1d = np.fromstring(s, dtype=tp)
 
-        debug('NIML', 'data vector has %d elements, reshape to %d x %d = %d' % (np.size(data_1d), nrows, ncols, nrows * ncols))
+        debug('NIML', 'data vector has %d elements, reshape to %d x %d = %d',
+                        (np.size(data_1d), nrows, ncols, nrows * ncols))
 
         data = np.reshape(data_1d, (nrows, ncols))
 
@@ -215,7 +217,7 @@ def _data2string(data, form):
             return str(data.data)
         elif form == 'base64':
             r = base64.b64encode(data)
-            debug('NIML', 'Encoding ok: [%s]' % _partial_string(r, 0))
+            debug('NIML', 'Encoding ok: [%s]', _partial_string(r, 0))
             return r
         else:
             raise ValueError("illegal format %s" % format)
@@ -316,7 +318,7 @@ def string2rawniml(s, i=None):
     if not return_pos:
         i = 0
 
-    debug('NIML', 'Parsing at %d, total length %d' % (i, len(s)))
+    debug('NIML', 'Parsing at %d, total length %d', (i, len(s)))
     # start parsing from header
     #
     # the tricky part is that binary data can contain characters that also 
@@ -342,14 +344,14 @@ def string2rawniml(s, i=None):
 
             if not m is None and i + m.end() == len(s):
                 # entire file was parsed - we are done
-                debug('NIML', 'Completed parsing, length %d' % len(s))
+                debug('NIML', 'Completed parsing, length %d', len(s))
                 if return_pos:
                     return i, nimls
                 else:
                     return nimls
 
             # not good - not at the end of the file
-            raise ValueError("Unexpected end: [%s] " % _partial_string(s, i))
+            raise ValueError("Unexpected end: [%s] ", _partial_string(s, i))
 
         else:
             # get values from header
@@ -360,23 +362,23 @@ def string2rawniml(s, i=None):
             i += m.end()
 
             # parse the keys and values in the header
-            debug('NIML', 'Parsing header %s, header end position %d' %
+            debug('NIML', 'Parsing header %s, header end position %d',
                                                 (name, i + m.end()))
             niml = _parse_keyvalues(header)
-            debug('NIML', 'Found keys %s' % (",".join(niml.keys())))
+            debug('NIML', 'Found keys %s', (",".join(niml.keys())))
 
             # set the name of this element
             niml['name'] = name
 
             if niml.get('ni_form', None) == 'ni_group':
                 # it's a group. Parse the group using recursion
-                debug("NIML", "Starting a group %s >>>" % name)
+                debug("NIML", "Starting a group %s >>>" , name)
                 i, niml['nodes'] = string2rawniml(s, i)
-                debug("NIML", "<<< ending a group %s" % name)
+                debug("NIML", "<<< ending a group %s", name)
             else:
                 # it's a normal element with data
                 debug('NIML', 'Parsing element %s from position %d, total '
-                                    'length %d' % (name, i, len(s)))
+                                    'length %d', (name, i, len(s)))
 
                 # set a few data elements
                 datatypes = niml['ni_type']
@@ -391,7 +393,7 @@ def string2rawniml(s, i=None):
                     # string form is handled separately. It's easy to parse 
                     # because it cannot contain any end markers in the data 
 
-                    debug("NIML", "Parsing string body for %s" % name)
+                    debug("NIML", "Parsing string body for %s", name)
 
                     is_string_data = niml['ni_type'] == 'String'
 
@@ -426,7 +428,7 @@ def string2rawniml(s, i=None):
                     # update position
                     i += m.end()
 
-                    debug('NIML', 'Completed %s, now at %d' % (name, i))
+                    debug('NIML', 'Completed %s, now at %d', (name, i))
 
                 else:
                     # see how many bytes (characters) to read
@@ -441,7 +443,7 @@ def string2rawniml(s, i=None):
                         # hardcode binary data - see how many bytes we need
                         nbytes = _binary_data_bytecount(niml)
                         debug('NIML', 'Raw data with %d bytes - total length '
-                                    '%d, starting at %d' % (nbytes, len(s), i))
+                                    '%d, starting at %d', (nbytes, len(s), i))
                         datastring = s[i:(i + nbytes)]
 
                     niml['data'] = _datastring2rawniml(datastring, niml)
@@ -474,7 +476,7 @@ def _binary_data_bytecount(niml):
     onetype = types.findonetype(tps)
 
     if onetype is None:
-        debug('NIML', 'Not unique type: %r' % tps)
+        debug('NIML', 'Not unique type: %r', tps)
         return None
 
     # numeric, either int or float
@@ -488,7 +490,7 @@ def _binary_data_bytecount(niml):
 
     nb = ncols * nrows * bytes_per_elem
 
-    debug('NIML', 'Number of bytes for %s: %d x %d with %d bytes / element' %
+    debug('NIML', 'Number of bytes for %s: %d x %d with %d bytes / element',
                                     (niform, ncols, nrows, bytes_per_elem))
 
     return nb
