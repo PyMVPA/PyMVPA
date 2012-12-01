@@ -31,16 +31,10 @@ import re, numpy as np, random, os, time, sys, base64, copy, math
 from mvpa2.support.nibabel import afni_niml_types as types
 _RE_FLAGS = re.DOTALL # regular expression matching spans across new lines
 
+from mvpa2.base import debug
 if __debug__:
-    from mvpa2.base import debug
     if not "NIML" in debug.registered:
         debug.register("NIML", "NeuroImaging Markup Language")
-else:
-    # for now just have an alternative debug function that does nothing
-    # XXX could we just put this into mvpa2.base?
-    def debug_(*args):
-        pass
-    debug = debug_
 
 _TEXT_ROWSEP = "\n"
 _TEXT_COLSEP = " "
