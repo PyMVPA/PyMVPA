@@ -459,9 +459,10 @@ def string2rawniml(s, i=None):
     # we should never end up here.
     raise ValueError("this should never happen")
 
+
 def _binary_data_bytecount(niml):
-    # helper function that returns how many bytes a NIML binary data
-    # element shoudl have
+    '''helper function that returns how many bytes a NIML binary data
+    element should have'''
     niform = niml['ni_form']
     if not 'binary' in niform:
         raise ValueError('Illegal niform %s' % niform)
