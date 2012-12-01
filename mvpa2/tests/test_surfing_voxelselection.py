@@ -46,9 +46,6 @@ from mvpa2.mappers.zscore import zscore
 from mvpa2.misc.neighborhood import Sphere, IndexQueryEngine
 from mvpa2.clfs.gnb import GNB
 
-#from mvpa2.suite import *
-#from mvpa2.datasets.mri import fmri_dataset
-
 
 class SurfVoxelSelectionTests(unittest.TestCase):
 
