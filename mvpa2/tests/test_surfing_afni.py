@@ -35,26 +35,92 @@ class SurfTests(unittest.TestCase):
         rng.set_state(('MT19937', keys, 0))
         return rng
 
-    def _test_afni_niml(self):
+    def test_afni_niml(self):
         # just a bunch of tests 
-        assert_equal(_partial_string("", 0, 0), "")
-        assert_equal(_partial_string("ab", 0, 0), "")
-        assert_equal(_partial_string("abcdefghij", 0, 0), "")
-        assert_equal(_partial_string("", 2, 0), "")
-        assert_equal(_partial_string("ab", 2, 0), "")
-        assert_equal(_partial_string("abcdefghij", 2, 0), "")
-        assert_equal(_partial_string("", 0, 1), "")
-        assert_equal(_partial_string("ab", 0, 1), " ... b")
-        assert_equal(_partial_string("abcdefghij", 0, 1), " ... j")
-        assert_equal(_partial_string("", 2, 1), "")
-        assert_equal(_partial_string("ab", 2, 1), "")
-        assert_equal(_partial_string("abcdefghij", 2, 1), " ... j")
-        assert_equal(_partial_string("", 0, 100), "")
-        assert_equal(_partial_string("ab", 0, 100), "ab")
-        assert_equal(_partial_string("abcdefghij", 0, 100), "abcdefghij")
-        assert_equal(_partial_string("", 2, 100), "")
-        assert_equal(_partial_string("ab", 2, 100), "")
-        assert_equal(_partial_string("abcdefghij", 2, 100), "cdefghij")
+
+        ps = afni_niml._partial_string
+
+        assert_equal(ps("", 0, 0), "")
+        assert_equal(ps("ab", 0, 0), "")
+        assert_equal(ps("abcdefghij", 0, 0), "")
+        assert_equal(ps("", 2, 0), "")
+        assert_equal(ps("ab", 2, 0), "")
+        assert_equal(ps("abcdefghij", 2, 0), "")
+        assert_equal(ps("", 0, 1), "")
+        assert_equal(ps("ab", 0, 1), " ... b")
+        assert_equal(ps("abcdefghij", 0, 1), " ... j")
+        assert_equal(ps("", 2, 1), "")
+        assert_equal(ps("ab", 2, 1), "")
+        assert_equal(ps("abcdefghij", 2, 1), " ... j")
+        assert_equal(ps("", 0, 100), "")
+        assert_equal(ps("ab", 0, 100), "ab")
+        assert_equal(ps("abcdefghij", 0, 100), "abcdefghij")
+        assert_equal(ps("", 2, 100), "")
+        assert_equal(ps("ab", 2, 100), "")
+        assert_equal(ps("abcdefghij", 2, 100), "cdefghij")
+
+
+
+        data = np.asarray([[1347506771, 1347506772],
+                       [1347506773, 1347506774]],
+                      dtype=np.int32)
+
+        fmt_data_reprs = dict(text='1347506771 1347506772\n1347506773 1347506774',
+                         binary='SRQPTRQPURQPVRQP',
+                         base64='U1JRUFRSUVBVUlFQVlJRUA==')
+
+        minimal_niml_struct = [{'dset_type': 'Node_Bucket',
+                               'name': 'AFNI_dataset',
+                               'ni_form': 'ni_group',
+                               'nodes': [{'data': data,
+                                          'data_type': 'Node_Bucket_data',
+                                          'name': 'SPARSE_DATA',
+                                          'ni_dimen': '2',
+                                          'ni_type': '2*int32'},
+                                         {'atr_name': 'COLMS_LABS',
+                                          'data': 'col_0;col_1',
+                                          'name': 'AFNI_atr',
+                                          'ni_dimen': '1',
+                                          'ni_type': 'String'}]}]
+
+
+        def _eq(p, q):
+            # helper function: equality for both arrays and other things
+            return np.all(p == q) if type(p) is np.ndarray else p == q
+
+        for fmt, data_repr in fmt_data_reprs.iteritems():
+            s = afni_niml.rawniml2string(minimal_niml_struct, fmt)
+            d = afni_niml.string2rawniml(s)
+
+            # ensure data was converted properly
+            assert_true(data_repr in s)
+
+            for k, v in minimal_niml_struct[0].iteritems():
+                if k == 'nodes':
+                    # at least in one of the data
+                    for node in v:
+                        for kk, vv in node.iteritems():
+                            # at least one of the data fields should have a value matching
+                            # that from the expected converted value
+                            dvals = [d[0]['nodes'][i].get(kk, None) for i in xrange(len(v))]
+                            assert_true(any([_eq(vv, dval) for dval in dvals]))
+
+                elif k != 'name':
+                    # check header was properly converted
+                    assert_true('%s="%s"' % (k, v) in s)
+
+
+            # check that if we remove some important information, then parsing fails
+            important_keys = ['ni_form', 'ni_dimen', 'ni_type']
+
+            for k in important_keys:
+                s_bad = s.replace(k, 'foo')
+                assert_raises((KeyError, ValueError), afni_niml.string2rawniml, s_bad)
+
+            # adding garbage at the beginning or end should fail the parse
+            assert_raises((KeyError, ValueError), afni_niml.string2rawniml, s + "GARBAGE")
+            assert_raises((KeyError, ValueError), afni_niml.string2rawniml, "GARBAGE" + s)
+
 
 
     def test_afni_niml_dset(self):
