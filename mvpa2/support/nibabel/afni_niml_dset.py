@@ -29,7 +29,7 @@ Similarly, such a dict can be saved to a .niml.dset file using the
 afni_niml_dset.write function
 '''
 
-import random, numpy as np, os, time, sys
+import random, numpy as np, os, time, sys, socket
 from mvpa2.support.nibabel import afni_niml_types as types
 from mvpa2.support.nibabel import afni_niml as niml
 
@@ -149,8 +149,8 @@ def _dset2rawniml_labels(s):
 
 def _dset2rawniml_history(s):
     try:
-        logprefix = ('[%s@%s: %s]' % (os.environ['USER'],
-                                      os.uname()[1],
+        logprefix = ('[%s@%s: %s]' % (os.environ.get('USER', 'UNKNOWN'),
+                                      socket.gethostname(),
                                       time.asctime()))
     except:
         logprefix = ''
