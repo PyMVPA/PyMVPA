@@ -884,5 +884,3 @@ class _RadiusOptimizer():
 
     def __repr__(self):
         return 'radius is %f, %d steps' % (self._curradius, self._count)
-
-
