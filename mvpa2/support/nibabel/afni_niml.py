@@ -34,12 +34,18 @@ _RE_FLAGS = re.DOTALL # regular expression matching spans across new lines
 if __debug__:
     from mvpa2.base import debug
     if not "NIML" in debug.registered:
-        debug.register("SVS", "NeuroImaging Markup Language")
-
+        debug.register("NIML", "NeuroImaging Markup Language")
+else:
+    # for now just have an alternative debug function that does nothing
+    # XXX could we just put this into mvpa2.base?
+    def debug_(*args):
+        pass
+    debug = debug_
 
 _TEXT_ROWSEP = "\n"
 _TEXT_COLSEP = " "
 
+# define NIML specific escape characters
 _ESCAPE = {'&lt;':'<',
          '&gt;':'>',
          '&quot;':'"',
