@@ -35,6 +35,28 @@ class SurfTests(unittest.TestCase):
         rng.set_state(('MT19937', keys, 0))
         return rng
 
+    def _test_afni_niml(self):
+        # just a bunch of tests 
+        assert_equal(_partial_string("", 0, 0), "")
+        assert_equal(_partial_string("ab", 0, 0), "")
+        assert_equal(_partial_string("abcdefghij", 0, 0), "")
+        assert_equal(_partial_string("", 2, 0), "")
+        assert_equal(_partial_string("ab", 2, 0), "")
+        assert_equal(_partial_string("abcdefghij", 2, 0), "")
+        assert_equal(_partial_string("", 0, 1), "")
+        assert_equal(_partial_string("ab", 0, 1), " ... b")
+        assert_equal(_partial_string("abcdefghij", 0, 1), " ... j")
+        assert_equal(_partial_string("", 2, 1), "")
+        assert_equal(_partial_string("ab", 2, 1), "")
+        assert_equal(_partial_string("abcdefghij", 2, 1), " ... j")
+        assert_equal(_partial_string("", 0, 100), "")
+        assert_equal(_partial_string("ab", 0, 100), "ab")
+        assert_equal(_partial_string("abcdefghij", 0, 100), "abcdefghij")
+        assert_equal(_partial_string("", 2, 100), "")
+        assert_equal(_partial_string("ab", 2, 100), "")
+        assert_equal(_partial_string("abcdefghij", 2, 100), "cdefghij")
+
+
     def test_afni_niml_dset(self):
         sz = (100, 45) # dataset size
         rng = self._get_rng() # generate random data

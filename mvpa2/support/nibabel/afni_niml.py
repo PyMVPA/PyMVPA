@@ -265,12 +265,24 @@ def read(fn, itemifsingletonlist=True, postfunction=None):
         return r
 
 def _partial_string(s, i, maxlen=100):
-    if i > len(s):
-        return ''
-    n = len(s)
-    sz = min(n, i + maxlen) / 2
 
-    return s[i:sz] + "..." + s[(n - sz):n]
+    # length of the string to print
+    n = len(s) - i
+    if n <= 0 or maxlen == 0:
+        return '' # nothing to print
+
+    if maxlen < 0 or maxlen > n:
+        maxlen = n # print the whole string
+    elif maxlen > n:
+        maxlen = n
+
+    # half the size of a segment
+    startsize = maxlen / 2
+    stopsize = startsize + maxlen % 2
+
+    infix = ' ... ' if n > maxlen else ''
+
+    return s[i:(i + startsize)] + infix + s[-stopsize:]
 
 def string2rawniml(s, i=None):
     '''Parses a NIML string to a raw NIML tree-like structure
