@@ -49,8 +49,8 @@ LINEAR_VOXEL_INDICES = "linear_voxel_indices"
 CENTER_DISTANCES = "center_distances"
 GREY_MATTER_POSITION = "grey_matter_position"
 
+from mvpa2.base import debug
 if __debug__:
-    from mvpa2.base import debug
     if not "SVS" in debug.registered:
         debug.register("SVS", "Surface-based voxel selection "
                        " (a.k.a. 'surfing')")
