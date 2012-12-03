@@ -642,3 +642,27 @@ if __debug__:
 
         metrics = property(fget=lambda x:x.__metrics,
                            fset=register_metric)
+
+
+if not __debug__:
+    class BlackHoleLogger(SetLogger):
+        '''A logger that does absolutely nothing - it is used as a fallback
+        so that debug(...) can still be called even if not __debug__'''
+        def __init__(self, metrics=None, offsetbydepth=True, *args, **kwargs):
+            # do not be evil - call the superclass even though it is useless
+            SetLogger.__init__(self, *args, **kwargs)
+
+        def __call__(self, setid, msg, *args, **kwargs):
+            pass
+
+        def register_metric(self, func):
+            pass
+
+        def register(self, setid, description):
+            pass
+
+        def set_active_from_string(self, value):
+            pass
+
+        def print_registered(self, detailed=True):
+            print "BlackHoleLogger: nothing registered "
