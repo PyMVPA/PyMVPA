@@ -381,15 +381,15 @@ if __debug__:
 
         _out = _pymvpa_stdout_debug(sys)
 
-if not __debug__:
-    # this debugger function does absolutely nothing.
-    # It avoids the need of using 'if __debug__' for debug(...) calls.
-    # It is still necessary to check for 'if __debug__' for registering
-    # debuggers though.
-    def _debug(*args):
-        pass
+else: # if not __debug__
 
-    debug = _debug
+    # this debugger function does absolutely nothing.
+    # It avoids the need of using 'if __debug__' for debug(...) calls.    
+
+    from mvpa2.base.verbosity import BlackHoleLogger
+
+    warning("Using BlackHoleLogger; __debug__ is disabled")
+    debug = __Singleton("debug", BlackHoleLogger())
 
 if __debug__:
     debug('INIT', 'mvpa2.base end')
