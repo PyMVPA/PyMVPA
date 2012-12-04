@@ -21,6 +21,8 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
+from mvpa2.base.dochelpers import _repr_attrs
+
 from mvpa2.base.dataset import AttrDataset
 from mvpa2.misc.neighborhood import QueryEngineInterface
 
@@ -55,14 +57,14 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
         self.voxsel = voxsel
         self.space = space
         self._map_voxel_coord = None
+        self.add_fa = add_fa
 
-        if add_fa is not None:
-            if not set(voxsel.aux_keys()).issuperset(add_fa):
-                raise ValueError(
-                    "add_fa should list only those known to voxsel %s"
-                    % voxsel)
-        self._add_fa = add_fa
-
+    def __repr__(self, prefixes=[]):
+        return super(SurfaceVerticesQueryEngine, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['voxsel'])
+            + _repr_attrs(self, ['space'], default='voxel_indices')
+            + _repr_attrs(self, ['add_fa'], []))
 
     def __reduce__(self):
         return (self.__class__, (self.voxsel, self.space, self._add_fa))
@@ -135,15 +137,21 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
         voxel_unmasked_ids = self.voxsel.get(vertexid)
 
         # map into dataset
-        voxel_dataset_ids = sum([self._map_voxel_coord[i]
-                                 for i in voxel_unmasked_ids], [])
+        voxel_dataset_ids = [self._map_voxel_coord[i]
+                             for i in voxel_unmasked_ids]
+        voxel_dataset_ids_flat = sum(voxel_dataset_ids, [])
+
         if self._add_fa is not None:
             # optionally add additional information from voxsel
-            ds = AttrDataset(np.asarray(voxel_dataset_ids)[np.newaxis])
+            ds = AttrDataset(np.asarray(voxel_dataset_ids_flat)[np.newaxis])
             for n in self._add_fa:
-                ds.fa[n] = self.voxsel.aux_get(vertexid, n)
+                fa_values = self.voxsel.aux_get(vertexid, n)
+                assert(len(fa_values) == len(voxel_dataset_ids))
+                ds.fa[n] = sum([[x]*len(ids)
+                                for x, ids in zip(fa_values,
+                                                  voxel_dataset_ids)], [])
             return ds
-        return voxel_dataset_ids
+        return voxel_dataset_ids_flat
 
 
     def query(self, **kwargs):
@@ -231,6 +239,16 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
         lin_vox = self.voxsel.source2nearest_target(vertex_id)
 
         return self.linear_voxel_id2feature_id(lin_vox)
+
+    def _set_add_fa(self, add_fa):
+        if add_fa is not None:
+            if not set(self.voxsel.aux_keys()).issuperset(add_fa):
+                raise ValueError(
+                    "add_fa should list only those known to voxsel %s"
+                    % self.voxsel)
+        self._add_fa = add_fa
+
+    add_fa = property(fget=lambda self:self._add_fa, fset=_set_add_fa)
 
 
 def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
