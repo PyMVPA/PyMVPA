@@ -24,7 +24,7 @@ from mvpa2.testing.datasets import datasets
 
 from mvpa2 import cfg
 from mvpa2.base import externals
-from mvpa2.datasets import Dataset
+from mvpa2.datasets import Dataset, hstack
 from mvpa2.measures.base import Measure
 from mvpa2.datasets.mri import fmri_dataset
 
@@ -553,6 +553,7 @@ class SurfTests(unittest.TestCase):
                          'center_distances']
 
         voxcount = []
+        tested_double_features = False
         for param in params:
             distance_metric, radius, ncenters = param
             srcs = range(0, nv, nv / (ncenters or nv))
@@ -672,8 +673,10 @@ class SurfTests(unittest.TestCase):
                                     # information about each near-disk-voxels
                                     add_fa=['center_distances',
                                             'grey_matter_position'])
+                assert_false('ERROR' in repr(qe))   #  to check if repr works
                 voxelcounter = _Voxel_Count_Measure()
-                searchlight = Searchlight(voxelcounter, queryengine=qe, roi_ids=keys)
+                searchlight = Searchlight(voxelcounter, queryengine=qe, roi_ids=keys, nproc=1,
+                                          enable_ca=['roi_feature_ids'])
                 sl_dset = searchlight(dset)
 
                 selected_count = sl_dset.samples[0, :]
@@ -697,6 +700,29 @@ class SurfTests(unittest.TestCase):
                     idx = np.argmin(sqsum)
                     assert_equal(idx, nearest)
 
+                if not tested_double_features:           # test only once
+                    # see if we have multiple features for the same voxel, we would get them all
+                    dset1 = dset.copy()
+                    dset1.fa['dset'] = [1]
+                    dset2 = dset.copy()
+                    dset2.fa['dset'] = [2]
+                    dset_ = hstack((dset1, dset2))
+                    dset_.sa = dset1.sa
+                    roi_feature_ids = searchlight.ca.roi_feature_ids
+                    sl_dset_ = searchlight(dset_)
+                    # and we should get twice the counts
+                    assert_array_equal(sl_dset_.samples, sl_dset.samples * 2)
+
+                    # compare old and new roi_feature_ids
+                    assert(len(roi_feature_ids) == len(searchlight.ca.roi_feature_ids))
+                    nfeatures = dset.nfeatures
+                    for old, new in zip(roi_feature_ids,
+                                        searchlight.ca.roi_feature_ids):
+                        # each new ids should comprise of old ones + (old + nfeatures)
+                        # since we hstack'ed two datasets
+                        assert_array_equal(np.hstack([(x, x+nfeatures) for x in old]),
+                                           new)
+                    tested_double_features = True
 
         # check whether number of voxels were selected is as expected
         expected_voxcount = [22, 93, 183, 183, 183, 183, 183, 183, 183]
