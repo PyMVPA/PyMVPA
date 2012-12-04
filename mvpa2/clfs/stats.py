@@ -181,7 +181,17 @@ def _pvalue(x, cdf_func, rcdf_func, tail, return_tails=False, name=None):
     np.clip(pvalues, 0, 1.0, pvalues)
 
     # Assure that NaNs didn't get significant value
-    pvalues[np.isnan(x)] = 1.0
+    # TODO: should be moved into corresponding cdf/rcdf computation
+    #       since that is where x->pvalues relation can be assured
+    x_nans = np.isnan(x)
+    if np.any(x_nans):
+        if x.shape == pvalues.shape:
+            pvalues[x_nans] = 1.0
+        else:
+            raise ValueError(
+                "Input had NaN's but of different shape %s than output "
+                "pvalues %s, so cannot deduce what needs to be done. Please "
+                "make your input cleaner" % (x.shape, pvalues.shape))
 
     if is_scalar:
         pvalues = pvalues[0]
