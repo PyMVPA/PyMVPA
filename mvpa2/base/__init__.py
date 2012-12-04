@@ -388,7 +388,6 @@ else: # if not __debug__
 
     from mvpa2.base.verbosity import BlackHoleLogger
 
-    warning("Using BlackHoleLogger; __debug__ is disabled")
     debug = __Singleton("debug", BlackHoleLogger())
 
 if __debug__:
