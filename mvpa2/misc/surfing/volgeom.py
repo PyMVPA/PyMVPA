@@ -523,7 +523,6 @@ class VolGeom(object):
 
         return self._shape
 
-
     @property
     def nvoxels_mask(self):
         '''

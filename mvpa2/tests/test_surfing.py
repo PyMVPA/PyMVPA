@@ -732,7 +732,7 @@ class SurfTests(unittest.TestCase):
                                         searchlight.ca.roi_feature_ids):
                         # each new ids should comprise of old ones + (old + nfeatures)
                         # since we hstack'ed two datasets
-                        assert_array_equal(np.hstack([(x, x+nfeatures) for x in old]),
+                        assert_array_equal(np.hstack([(x, x + nfeatures) for x in old]),
                                            new)
                     tested_double_features = True
 
