@@ -720,6 +720,7 @@ class SurfTests(unittest.TestCase):
                     dset2.fa['dset'] = [2]
                     dset_ = hstack((dset1, dset2))
                     dset_.sa = dset1.sa
+                    dset_.a.imghdr = dset1.a.imghdr
                     roi_feature_ids = searchlight.ca.roi_feature_ids
                     sl_dset_ = searchlight(dset_)
                     # and we should get twice the counts
