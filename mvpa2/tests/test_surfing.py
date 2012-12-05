@@ -209,7 +209,19 @@ class SurfTests(unittest.TestCase):
         mx[0, 3] = xo
         mx[1, 3] = yo
         mx[2, 3] = zo
+
         vg = volgeom.VolGeom(sz, mx) # initialize volgeom
+
+        eq_shape_nvoxels = {(17, 71, 37): (True, True),
+                           (71, 17, 37, 1): (False, True),
+                           (17, 71, 37, 2): (False, True),
+                            (17, 71, 37, 73): (True, True),
+                           (2, 2, 2): (False, False)}
+
+        for other_sz, (eq_shape, eq_nvoxels) in eq_shape_nvoxels.iteritems():
+            other_vg = volgeom.VolGeom(other_sz, mx)
+            assert_equal(other_vg.same_shape(vg), eq_shape)
+            assert_equal(other_vg.nvoxels_mask == vg.nvoxels_mask, eq_nvoxels)
 
         nv = sz[0] * sz[1] * sz[2] # number of voxels
         nt = sz[3] # number of time points
