@@ -91,7 +91,7 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
             if not np.all(np.equal(vg_ds.affine, vg.affine)):
                 raise ValueError("Mismatch in affine matrix: %r !+ %r" %
                                         (vg_ds.affine, vg.affine))
-            if vg_ds.shape[:3] != vg.shape[:3]:
+            if not vg_ds.same_shape(vg):
                 raise ValueError("Mismatch in shape: (%s,%s,%s) != "
                                  "(%s,%s,%s)" %
                                         (vg_ds.shape[:3], vg.shape[:3]))

@@ -53,25 +53,99 @@ class VolGeom(object):
             voxels are included.
         
         '''
+        if not type(shape) is tuple or len(shape) < 3:
+            raise ValueError("Shape should be a tuple with at least 3 values")
+
         self._shape = shape
-        self._affine = affine
+        self._affine = np.asarray(affine)
+
+        if self._affine.shape != (4, 4):
+            raise ValueError('Affine matrix should be 4x4')
+
         if not mask is None:
             if mask.size != self.nvoxels:
                 raise ValueError("%d voxels, but mask has %d" %
                                  (self.nvoxels, mask.size))
+            if len(mask.shape) >= 3 and shape[:3] != mask.shape[:3]:
+                raise ValueError("Shape mismatch for mask")
+
             mask = np.reshape(mask != 0, (-1,))
         self._mask = mask
 
-    def __eq__(self, other):
+    def same_geometry(self, other):
+        '''Compares this geometry with another instance
+        
+        Parameters
+        ----------
+        other: VolGeom
+            instance to which the current instance is compared
+            
+        Returns
+        -------
+        same: boolean
+            True iff it has the same geometry. It does not compare
+            whether the mask is the same'''
+
+        return (self.same_shape(other) and
+                np.all(self.affine == other.affine))
+
+    def same_shape(self, other):
+        '''Compares the shape of the spatial dimensions with another instance
+        
+        Parameters
+        ----------
+        other: VolGeom
+            instance to which the current instance is compared
+            
+        Returns
+        -------
+        same: boolean
+            True iff it has the same shape in the first three dimensions'''
+
         if not isinstance(other, self.__class__):
             return False
 
-        same_shape = self.shape == other.shape or \
-                        tuple(list(self.shape) + [1]) == other.shape \
-                        or tuple(list(other.shape) + [1]) == self.shape
+        p, q = self.shape, other.shape
 
-        return (same_shape and
-                np.all(self.mask == other.mask) and
+        if p == q:
+            return True
+
+        if len(p) == 3 and len(q) > 3:
+            return p == q[:3]
+        elif len(p) > 3 and len(q) == 3:
+            return p[:3] == q
+        else:
+            return False
+
+    def same_mask(self, other):
+        '''Compares the mask with another instance
+        
+        Parameters
+        ----------
+        other: VolGeom
+            instance to which the current instance is compared
+            
+        Returns
+        -------
+        same: boolean
+            True iff it has effectively the same mask'''
+
+        if not self.same_shape(other):
+            return False
+
+        p = self.mask
+        q = other.mask
+
+        if p is None:
+            return q.nvoxels_mask == self.nvoxels_mask
+        else:
+            if q is None:
+                return q.nvoxels_mask == self.nvoxels_mask
+            else:
+                return np.all(self.mask == other.mask)
+
+    def __eq__(self, other):
+        return (self.same_geometry(other) and
                 np.all(self.affine == other.affine))
 
     def __ne__(self, other):
