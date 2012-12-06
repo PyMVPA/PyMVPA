@@ -649,7 +649,9 @@ if not __debug__:
         '''A logger that does absolutely nothing - it is used as a fallback
         so that debug(...) can still be called even if not __debug__'''
         def __init__(self, metrics=None, offsetbydepth=True, *args, **kwargs):
-            # do not be evil - call the superclass even though it is useless
+            '''Initializes the logger - ignores all input arguments'''
+
+            # do not be evil - initialize through the parent class
             SetLogger.__init__(self, *args, **kwargs)
 
         def __call__(self, setid, msg, *args, **kwargs):
