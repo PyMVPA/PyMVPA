@@ -1,6 +1,9 @@
-This is PyMVPA -- Multivariate Pattern Analysis in Python.
+================================================================
+PyMVPA -- Multivariate Pattern Analysis in Python |build-status|
+================================================================
 
-For information how to install PyMVPA please see doc/installation.rst.
+For information how to install PyMVPA please see
+doc/source/installation.rst .
 
 Further information and access to binary packages is available from the
-project website at http://www.pymvpa.org
+project website at http://www.pymvpa.org .
