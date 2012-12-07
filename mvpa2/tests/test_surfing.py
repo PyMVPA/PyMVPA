@@ -209,7 +209,19 @@ class SurfTests(unittest.TestCase):
         mx[0, 3] = xo
         mx[1, 3] = yo
         mx[2, 3] = zo
+
         vg = volgeom.VolGeom(sz, mx) # initialize volgeom
+
+        eq_shape_nvoxels = {(17, 71, 37): (True, True),
+                           (71, 17, 37, 1): (False, True),
+                           (17, 71, 37, 2): (False, True),
+                            (17, 71, 37, 73): (True, True),
+                           (2, 2, 2): (False, False)}
+
+        for other_sz, (eq_shape, eq_nvoxels) in eq_shape_nvoxels.iteritems():
+            other_vg = volgeom.VolGeom(other_sz, mx)
+            assert_equal(other_vg.same_shape(vg), eq_shape)
+            assert_equal(other_vg.nvoxels_mask == vg.nvoxels_mask, eq_nvoxels)
 
         nv = sz[0] * sz[1] * sz[2] # number of voxels
         nt = sz[3] # number of time points
@@ -708,6 +720,7 @@ class SurfTests(unittest.TestCase):
                     dset2.fa['dset'] = [2]
                     dset_ = hstack((dset1, dset2))
                     dset_.sa = dset1.sa
+                    dset_.a.imghdr = dset1.a.imghdr
                     roi_feature_ids = searchlight.ca.roi_feature_ids
                     sl_dset_ = searchlight(dset_)
                     # and we should get twice the counts
@@ -720,7 +733,7 @@ class SurfTests(unittest.TestCase):
                                         searchlight.ca.roi_feature_ids):
                         # each new ids should comprise of old ones + (old + nfeatures)
                         # since we hstack'ed two datasets
-                        assert_array_equal(np.hstack([(x, x+nfeatures) for x in old]),
+                        assert_array_equal(np.hstack([(x, x + nfeatures) for x in old]),
                                            new)
                     tested_double_features = True
 
