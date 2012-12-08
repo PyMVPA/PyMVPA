@@ -291,7 +291,8 @@ class Surface(object):
 
         if shortmetric == 'e':
             ds = self.euclidean_distance(src)
-            c = dict((nd, d) for (nd, d) in zip(xrange(self._nv), ds) if d <= radius)
+            c = dict((nd, d) for (nd, d) in zip(xrange(self._nv), ds)
+                                            if d <= radius)
 
         elif shortmetric == 'd':
             c = self.dijkstra_distance(src, maxdistance=radius)
