@@ -518,7 +518,7 @@ class Surface(object):
 
             src_coord = src if src.shape == (1, 3) else np.reshape(src, (1, 3))
         else:
-            src_coord = srlf._v[src]
+            src_coord = self._v[src]
 
 
         if trg is None:
