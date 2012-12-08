@@ -498,8 +498,9 @@ class Surface(object):
         
         Parameters
         ----------
-        src : int
-            Index of center (source) node
+        src : int or numpy.ndarray
+            Index of center (source) node, or a 1x3 array with coordinates
+            of the center (source) node.
         trg : int
             Target node(s) to which the distance is computed.
             If 'trg is None' then distances to all nodes are computed
@@ -511,10 +512,19 @@ class Surface(object):
             "src" to node "j".
         '''
 
-        if trg is None:
-            delta = self._v - self._v[src]
+        if isinstance(src, np.ndarray):
+            if src.shape not in ((1, 3), (3,), (3, 1)):
+                raise ValueError("Illegal shape: should have 3 elements")
+
+            src_coord = src if src.shape == (1, 3) else np.reshape(src, (1, 3))
         else:
-            delta = self._v[trg] - self._v[src]
+            src_coord = srlf._v[src]
+
+
+        if trg is None:
+            delta = self._v - src_coord
+        else:
+            delta = self._v[trg] - src_coord
 
         delta2 = delta * delta
         ss = np.sum(delta2, axis=delta.ndim - 1)
