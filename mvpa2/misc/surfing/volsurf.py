@@ -313,3 +313,29 @@ class VolSurf(object):
         rs = np.reshape(voldata, v.shape)
         img = nb.Nifti1Image(rs, v.affine)
         return img
+
+def from_volume(v):
+    '''Makes a pseudo-surface from a volume. 
+    Each voxels corresponds to a node; there is no topology.
+    A use case is mimicking traditional volume-based searchlights
+    
+    Parameters
+    ----------
+    v: str of NiftiImage
+        input volume
+        
+    Returns
+    -------
+    s: surf.Surface
+        Surface with an equal number as nodes as there are voxels
+        in the input volume. The associated topology is empty.
+    '''
+    vg = volgeom.from_any(v)
+    n = vg.nvoxels
+
+    vertices = vg.lin2xyz(np.arange(n))
+    faces = np.zeros((0, 3), dtype=np.int)
+
+    s = surf.Surface(vertices, faces)
+    return VolSurf(vg, s, s, s)
+
