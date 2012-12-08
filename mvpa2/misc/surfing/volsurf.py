@@ -28,7 +28,7 @@ class VolSurf(object):
     '''
     Associates a volume geometry with two surfaces (pial and white).
     '''
-    def __init__(self, vg, white, pial):
+    def __init__(self, vg, white, pial, intermediate=None):
         '''
         Parameters
         ----------
@@ -38,6 +38,9 @@ class VolSurf(object):
             Surface representing white-grey matter boundary
         pial: surf.Surface
             Surface representing pial-grey matter boundary
+        intermediate: surf.Surface (default: None)
+            Surface representing intermediate surface. If omitted
+            it is the node-wise average of white and pial. 
             
         Note
         ----
@@ -49,6 +52,11 @@ class VolSurf(object):
 
         if not self._pial.same_topology(self._white):
             raise Exception("Not same topology for white and pial")
+
+        if intermediate is None:
+            intermediate = (self.pial_surface * .5) + (self.white_surface * .5)
+
+        self._intermediate = intermediate
 
     def __repr__(self, prefixes=[]):
         prefixes_ = ['vg=%r' % self._volgeom,
@@ -89,7 +97,7 @@ class VolSurf(object):
         -------
         intermediate: surf.Surface
         '''
-        return (self.pial_surface * .5) + (self.white_surface * .5)
+        return self._intermediate
 
     @property
     def volgeom(self):
