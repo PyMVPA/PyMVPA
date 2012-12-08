@@ -112,7 +112,8 @@ class VolSurf(object):
         return self._volgeom
 
     def __reduce__(self):
-        return (self.__class__, (self._volgeom, self._white, self._pial))
+        return (self.__class__, (self._volgeom, self._white,
+                                 self._pial, self._intermediate))
 
     def node2voxels(self, nsteps=10, start_fr=0.0,
                     stop_fr=1.0, start_mm=0, stop_mm=0):
