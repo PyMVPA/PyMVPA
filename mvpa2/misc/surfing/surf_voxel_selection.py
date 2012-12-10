@@ -226,33 +226,35 @@ class VoxelSelector(object):
                 if math.isinf(outside_node_margin):
                     if __debug__:
                         debug("SVS", "")
-                        debug("SVS", "node #%d is outside - considering all other "
-                                     "nodes that may be inside" % src)
+                        debug("SVS", "node %s is outside - considering all other "
+                                     "nodes that may be inside" % (src,))
                     for nd in n2v:
                         if node_in_vol(nd):
                             skip = False
                             break
                 else:
-                    node_distances = dist_surf.dijkstra_distance(src,
-                                                maxdistance=outside_node_margin)
+                    node_distances = dist_surf.circlearound_n2d(src,
+                                                radius=outside_node_margin,
+                                                metric=self._distance_metric)
+
                     if __debug__:
                         debug("SVS", "")
-                        debug("SVS", "node #%d is outside - considering %d distances"
-                                    " to other nodes that may be inside." % (src, len(node_distances)))
+                        debug("SVS", "node %s is outside - considering %d distances"
+                                    " to other nodes that may be inside." % ((src,), len(node_distances)))
                     for nd, d in node_distances.iteritems():
                         if nd in n2v and not n2v[nd] is None and d <= outside_node_margin:
                             if __debug__:
-                                debug("SVS", "node #%d is distance %s <= %s from #%d "
+                                debug("SVS", "node #%s is distance %s <= %s from #%d "
                                       " and kept" %
-                                      (src, d, outside_node_margin, nd))
+                                      ((src,), d, outside_node_margin, nd))
                             skip = False
                             break
 
             if skip:
                 # no voxels associated with this node, skip
                 if __debug__:
-                    debug("SVS", "Skipping node #%d (no voxels associated)" %
-                                        src, cr=True)
+                    debug("SVS", "Skipping node %s (no voxels associated)" %
+                                        (src,), cr=True)
 
                 return []
 
@@ -466,9 +468,17 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
               " %d nodes, %d faces" %
               (source_surf.nvertices, source_surf.nfaces))
 
-    # find a mapping from nondes in source_surf to those in
-    # intermediate surface
-    src2intermediate = source_surf.map_to_high_resolution_surf(\
+
+    if distance_metric[0].lower() == 'e' and outside_node_margin:
+        # euclidian distance: identity mapping
+        # this is *slow*
+        n = source_surf.nvertices
+        xyz = source_surf.vertices
+        src2intermediate = dict((i, tuple(xyz[i])) for i in xrange(n))
+    else:
+        # find a mapping from nodes in source_surf to those in
+        # intermediate surface
+        src2intermediate = source_surf.map_to_high_resolution_surf(\
                                                         intermediate_surf)
 
     # if no sources are given, then visit all ndoes
@@ -650,13 +660,17 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
 
 
     def _pat(index, xs=src_trg_indices, f=max):
-        if not xs:
-            y = 1
-        else:
-            y = f(x[index] for x in xs)
-        if y < 1:
-            y = 1
-        return '%%%dd' % math.ceil(math.log10(y))
+        try:
+            if not xs:
+                y = 1
+            else:
+                y = f(x[index] for x in xs)
+            if y < 1:
+                y = 1
+            p = '%%%dd' % math.ceil(math.log10(y))
+        except:
+            p = '%s'
+        return p
 
     progresspat = 'node %s -> %s [%%3d%%%%]' % (_pat(0), _pat(1))
 

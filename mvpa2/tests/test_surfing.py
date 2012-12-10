@@ -442,6 +442,26 @@ class SurfTests(unittest.TestCase):
         assert_true(len('%s%r' % (vs, vs)) > 0)
 
 
+    def test_volsurf_surf_from_volume(self):
+        aff = np.eye(4)
+        aff[0, 0] = aff[1, 1] = aff[2, 2] = 3
+
+        sh = (40, 40, 40)
+
+        vg = volgeom.VolGeom(sh, aff)
+
+        p = volsurf.from_volume(vg).intermediate_surface
+        q = volsurf.SurfaceFromVolume(vg)
+
+        centers = [0, 10, 10000, (-1, -1, -1), (5, 5, 5)]
+        radii = [0, 10, 20, 100]
+
+        for center in centers:
+            for radius in radii:
+                x = p.circlearound_n2d(center, radius)
+                y = q.circlearound_n2d(center, radius)
+                assert_equal(x, y)
+
 
     def test_volume_mask_dict(self):
         # also tests the outside_node_margin feature
@@ -601,6 +621,7 @@ class SurfTests(unittest.TestCase):
 
                 # check that it has all the attributes
                 labs = sel.aux_keys()
+
                 assert_true(all([lab in labs for lab in expected_labs]))
 
 
