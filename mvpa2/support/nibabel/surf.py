@@ -79,7 +79,7 @@ class Surface(object):
             from mvpa2.base import warning
             warning("Count mismatch for face range (%d!=%d), "
                             "faces without node: %r" % (unqf.size, self._nv,
-                                            set(range(self._nv)) - set(unqf)))
+                                    len(set(range(self._nv)) - set(unqf))))
 
 
         if np.any(unqf != np.arange(self._nv)):
@@ -283,9 +283,6 @@ class Surface(object):
             A dict "n2d" so that n2d[j]=d" is the distance "d" from node 
             "src" to node "j".
         '''
-
-        if radius == 0:
-            return {src:0}
 
         shortmetric = metric.lower()[0] # only take first letter - for now
 
@@ -511,6 +508,9 @@ class Surface(object):
             A dict "n2d" so that n2d[j]=d" is the distance "d" from node 
             "src" to node "j".
         '''
+
+        if type(src) is tuple and len(src) == 3:
+            src = np.asarray(src)
 
         if isinstance(src, np.ndarray):
             if src.shape not in ((1, 3), (3,), (3, 1)):
