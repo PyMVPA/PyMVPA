@@ -493,6 +493,7 @@ class SearchlightTests(unittest.TestCase):
 
         # elsewhere they should tend to be better but not guaranteed
 
+    @labile(5, 1)
     def test_usecase_concordancesl(self):
         import numpy as np
         from mvpa2.base.dataset import vstack
