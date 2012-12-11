@@ -337,8 +337,14 @@ class SurfaceFromVolume(surf.Surface):
         '''
         self._vg = volgeom.from_any(vg)
 
-        self._nv = self._vg.nvoxels
-        self._v = self._vg.lin2xyz(np.arange(self._nv))
+        n = self._vg.nvoxels
+        vertices = self._vg.lin2xyz(np.arange(n))
+
+        #msk = self._vg.contains_lin(np.arange(n))
+        #vertices = vertices[msk, :]
+
+        self._nv = vertices.shape[0]
+        self._v = vertices
         self._f = np.zeros((0, 3), dtype=np.int)
         self._nf = 0
 
@@ -386,7 +392,7 @@ class SurfaceFromVolume(surf.Surface):
             msk_ijk = np.zeros(self._vg.shape[:3], np.int)
             msk_ijk[mn[0]:mx[0], mn[1]:mx[1], mn[2]:mx[2]] = 1
 
-            msk_lin = np.reshape(msk_ijk, (self.nvertices,))
+            msk_lin = msk_ijk.ravel()
 
             # indices of voxels around the mask
             idxs = np.nonzero(msk_lin)[0]
@@ -422,12 +428,7 @@ def from_volume(v):
         in the input volume. The associated topology is empty.
     '''
     vg = volgeom.from_any(v)
-    n = vg.nvoxels
-
-    vertices = vg.lin2xyz(np.arange(n))
-    faces = np.zeros((0, 3), dtype=np.int)
-
-    vs = surf.Surface(vertices, faces, check=False)
+    vs = SurfaceFromVolume(vg)
 
     return VolSurf(vg, vs, vs, vs)
 
