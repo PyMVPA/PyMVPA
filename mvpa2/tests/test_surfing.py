@@ -825,12 +825,18 @@ class SurfTests(unittest.TestCase):
         # now use surface-based searchlight
         v = volsurf.from_volume(ds)
         source_surf = v.intermediate_surface
-        source_surf_nodes = np.nonzero(np.logical_not(np.isnan(source_surf.vertices[:, 0])))[0]
+
+        node_msk = np.logical_not(np.isnan(source_surf.vertices[:, 0]))
+
+        # check that the mask matches with what we used earlier
+        assert_array_equal(msk.ravel() + 0., node_msk.ravel() + 0.)
+
+        source_surf_nodes = np.nonzero(node_msk)[0]
 
         sel = surf_voxel_selection.voxel_selection(v, float(radius),
-                                            source_surf=source_surf,
-                                            source_surf_nodes=source_surf_nodes,
-                                            distance_metric='euclidian')
+                                        source_surf=source_surf,
+                                        source_surf_nodes=source_surf_nodes,
+                                        distance_metric='euclidian')
 
         qe = queryengine.SurfaceVerticesQueryEngine(sel)
         sl = Searchlight(sum_ds, queryengine=qe)
