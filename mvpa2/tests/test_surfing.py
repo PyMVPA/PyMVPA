@@ -34,7 +34,7 @@ from mvpa2.misc.surfing import volgeom, volsurf, \
 
 from mvpa2.support.nibabel import surf, surf_fs_asc
 
-from mvpa2.measures.searchlight import Searchlight
+from mvpa2.measures.searchlight import sphere_searchlight, Searchlight
 from mvpa2.misc.neighborhood import Sphere
 
 if externals.exists('h5py'):
@@ -795,7 +795,49 @@ class SurfTests(unittest.TestCase):
             else:
                 assert_equal(sel0, sel)
 
+    def test_agreement_surface_volume(self):
+        '''test agreement between volume-based and surface-based
+        searchlights when using euclidian measure'''
 
+        #import runner
+        def sum_ds(ds):
+            return np.sum(ds)
+
+        radius = 3
+
+        # make a small dataset with a mask
+        sh = (10, 10, 10)
+        msk = np.zeros(sh)
+        for i in xrange(0, sh[0], 2):
+            msk[i, :, :] = 1
+        vg = volgeom.VolGeom(sh, np.identity(4), mask=msk)
+
+        # make an image
+        nt = 6
+        img = vg.get_masked_nifti_image(6)
+        ds = fmri_dataset(img, mask=msk)
+
+
+        # run the searchlight
+        sl = sphere_searchlight(sum_ds, radius=radius)
+        m = sl(ds)
+
+        # now use surface-based searchlight
+        v = volsurf.from_volume(ds)
+        source_surf = v.intermediate_surface
+        source_surf_nodes = np.nonzero(np.logical_not(np.isnan(source_surf.vertices[:, 0])))[0]
+
+        sel = surf_voxel_selection.voxel_selection(v, float(radius),
+                                            source_surf=source_surf,
+                                            source_surf_nodes=source_surf_nodes,
+                                            distance_metric='euclidian')
+
+        qe = queryengine.SurfaceVerticesQueryEngine(sel)
+        sl = Searchlight(sum_ds, queryengine=qe)
+        r = sl(ds)
+
+        # check whether they give the same results
+        assert_array_equal(r.samples, m.samples)
 
 
 class _Voxel_Count_Measure(Measure):
