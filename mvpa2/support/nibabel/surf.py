@@ -1136,14 +1136,24 @@ class Surface(object):
         # within distance epsilon for which j in x_tuple2near_indices[t]  
 
         for i, x_tuple in enumerate(x_tuples):
+            i_xyz = x[i, :]
+            if np.any(np.isnan(i_xyz)):
+                continue
+
             idxs = np.asarray(x_tuple2near_indices[x_tuple])
 
             ds = np.sum((x[i, :] - y[idxs, :]) ** 2, axis=1)
-            minpos = np.argmin(ds)
+
+            not_nan_idxs = np.nonzero(np.logical_not(np.isnan(ds)))[0]
+            if len(not_nan_idxs) == 0:
+                raise ValueError("Empty sequence: is center %d (%r)"
+                                 " illegal?" % (i, (x[i],)))
+
+            minpos = not_nan_idxs[np.argmin(ds[not_nan_idxs])]
 
             mind = ds[minpos] ** .5
 
-            if not epsilon is None and mind > epsilon:
+            if not epsilon is None and not (mind < epsilon):
                 raise ValueError("Not found for node %i: %s > %s" %
                                         (i, mind, epsilon))
 
