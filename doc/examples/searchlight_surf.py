@@ -41,7 +41,7 @@ As always, we first have to import PyMVPA.
 
 from mvpa2.suite import *
 from mvpa2.clfs.svm import LinearCSVMC
-
+from mvpa2.base.hdf5 import h5save, h5load
 """As searchlight analyses are usually quite expensive in term of computational
 resources, we are going to enable some progress output to entertain us while
 we are waiting."""
