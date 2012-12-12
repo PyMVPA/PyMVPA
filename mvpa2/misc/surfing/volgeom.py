@@ -44,7 +44,7 @@ class VolGeom(object):
         shape: tuple
             Number of values in each dimension.
             Typically the first three dimensions are spatial and the remaining ones
-            temporal.
+            temporal. Only the first three dimensions are stored
         affine: numpy.ndarray
             4x4 affine transformation array that maps voxel to world coordinates.
         mask: numpy.ndarray (default: None)
@@ -56,7 +56,7 @@ class VolGeom(object):
         if not type(shape) is tuple or len(shape) < 3:
             raise ValueError("Shape should be a tuple with at least 3 values")
 
-        self._shape = shape
+        self._shape = (shape[0], shape[1], shape[2])
         self._affine = np.asarray(affine)
 
         if self._affine.shape != (4, 4):
@@ -105,17 +105,7 @@ class VolGeom(object):
         if not isinstance(other, self.__class__):
             return False
 
-        p, q = self.shape, other.shape
-
-        if p == q:
-            return True
-
-        if len(p) == 3 and len(q) > 3:
-            return p == q[:3]
-        elif len(p) > 3 and len(q) == 3:
-            return p[:3] == q
-        else:
-            return False
+        return self.shape == other.shape
 
     def same_mask(self, other):
         '''Compares the mask with another instance
@@ -487,17 +477,6 @@ class VolGeom(object):
 
         return np.dot(v, r) + t
 
-    @property
-    def ntimepoints(self):
-        '''
-        Returns the number of time points.
-        
-        Returns
-        -------
-        nt: int
-            Number of time points
-        '''
-        return np.prod(self.shape[3:])
     @property
     def nvoxels(self):
         '''

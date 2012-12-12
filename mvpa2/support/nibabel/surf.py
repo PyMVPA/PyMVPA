@@ -618,7 +618,7 @@ class Surface(object):
         vidxs = [i for i, m in enumerate(msk) if m]
 
         # unique face indices that contain nodes within that distance
-        funq = list(set.union(*[n2f[vidx] for vidx in vidxs]))
+        funq = list(set.union(*[set(n2f[vidx]) for vidx in vidxs]))
 
         # these are the node indices contained in one of the faces
         fsel = self._f[funq, :]

@@ -226,7 +226,6 @@ class SurfTests(unittest.TestCase):
         nv = sz[0] * sz[1] * sz[2] # number of voxels
         nt = sz[3] # number of time points
         assert_equal(vg.nvoxels, nv)
-        assert_equal(vg.ntimepoints, nt)
 
         # a couple of hard-coded test cases
         # last two are outside the volume
