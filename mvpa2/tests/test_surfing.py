@@ -214,7 +214,7 @@ class SurfTests(unittest.TestCase):
 
         eq_shape_nvoxels = {(17, 71, 37): (True, True),
                            (71, 17, 37, 1): (False, True),
-                           (17, 71, 37, 2): (False, True),
+                           (17, 71, 37, 2): (True, True),
                             (17, 71, 37, 73): (True, True),
                            (2, 2, 2): (False, False)}
 
