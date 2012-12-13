@@ -196,6 +196,7 @@ def collect_nose_tests(verbosity=1):
         'test_waveletmapper',
         'test_mdp',
         'test_filters',
+        'test_staticprojection',
 
         # Learners
         'test_enet',

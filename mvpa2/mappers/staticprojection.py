@@ -20,35 +20,34 @@ if __debug__:
 
 class StaticProjectionMapper(ProjectionMapper):
     """Mapper to project data onto arbitrary space using transformation given as input.
+       Both forward and reverse projections can be provided.
     """
 
-    @borrowdoc(ProjectionMapper)
-    def __init__(self, proj, **kwargs):
+    def __init__(self, proj, recon=None, **kwargs):
         """Initialize the StaticProjectionMapper
 
         Parameters
         ----------
+        proj : 2-D array
+          Projection matrix to be used for forward projection.
+        recon: 2-D array
+          Projection matrix to be used for reverse projection.
+          If this is not given, `numpy.linalg.pinv` of proj
+          will be used by default.
         **kwargs:
           All keyword arguments are passed to the ProjectionMapper
           constructor.
-
         """
-        ProjectionMapper.__init__(self,  auto_train=True, **kwargs)
+        ProjectionMapper.__init__(self, auto_train=True, **kwargs)
         self._proj = proj
+        self._recon = recon
 
     def _train(self, dummyds):
         """Do Nothing
         """
         if __debug__:
-            if "MAP_" in debug.active:
-                debug("MAP_", "Mixing matrix has %s shape and norm=%f" %
-                      (self._proj.shape, np.linalg.norm(self._proj)))
+            debug("MAP_", "Mixing matrix has %s shape and norm=%f" %
+                  (self._proj.shape, np.linalg.norm(self._proj)))
 
-
-
-    def _compute_recon(self):
-        """Computing the inverse of the projection matrix for reverse
-        """
-        return np.linalg.pinv(self._proj)
 
 
