@@ -279,7 +279,7 @@ def _partial_string(s, i, maxlen=100):
         maxlen = n
 
     # half the size of a segment
-    startsize = maxlen / 2
+    startsize = maxlen // 2
     stopsize = startsize + maxlen % 2
 
     infix = ' ... ' if n > maxlen else ''
