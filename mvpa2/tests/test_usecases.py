@@ -253,13 +253,13 @@ def test_gnbsearchlight_permutations():
 def test_multiclass_pairs_svm_searchlight():
     from mvpa2.measures.searchlight import sphere_searchlight
     import mvpa2.clfs.meta
-    reload(mvpa2.clfs.meta)
+    #reload(mvpa2.clfs.meta)
     from mvpa2.clfs.meta import MulticlassClassifier
 
     from mvpa2.datasets import Dataset
     from mvpa2.clfs.svm import LinearCSVMC
-    import mvpa2.testing.datasets
-    reload(mvpa2.testing.datasets)
+    #import mvpa2.testing.datasets
+    #reload(mvpa2.testing.datasets)
     from mvpa2.testing.datasets import datasets
     from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner
     from mvpa2.measures.base import CrossValidation
