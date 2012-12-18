@@ -163,12 +163,11 @@ args = parser.parse_args()
 # process common arguments
 _proc_common_args(args)
 # run the function associated with the selected command
-if args.common_debug:
-    # if we are debugging anyway, make no attempt to catch exceptions
-    # but let it fail in all its glory
+try:
     args.func(args)
-else:
-    try:
-        args.func(args)
-    except Exception as exc:
-        error('%s (%s)' % (str(exc), exc.__class__.__name__))
+except Exception as exc:
+    error('%s (%s)' % (str(exc), exc.__class__.__name__), critical=False)
+    if args.common_debug:
+        import pdb
+        pdb.post_mortem()
+    sys.exit(1)
