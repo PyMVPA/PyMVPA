@@ -168,7 +168,7 @@ class GNBSearchlight(SimpleStatBaseSearchlight):
 
     gnb = property(fget=lambda self: self._gnb)
 
-@borrowkwargs(GNBSearchlight, '__init__', exclude=['roi_ids'])
+@borrowkwargs(GNBSearchlight, '__init__', exclude=['roi_ids', 'queryengine'])
 def sphere_gnbsearchlight(gnb, generator, radius=1, center_ids=None,
                           space='voxel_indices', *args, **kwargs):
     """Creates a `GNBSearchlight` to assess :term:`cross-validation`
