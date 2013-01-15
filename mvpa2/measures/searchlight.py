@@ -400,6 +400,9 @@ class Searchlight(BaseSearchlight):
                     roi.fa[n] = v
 
             if self.__add_center_fa:
+                print ">", f
+                print roi_fids
+                print roi_specs
                 # add fa to indicate ROI seed if requested
                 roi_seed = np.zeros(roi.nfeatures, dtype='bool')
                 roi_seed[roi_fids.index(f)] = True

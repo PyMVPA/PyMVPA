@@ -339,14 +339,10 @@ class SurfaceFromVolume(surf.Surface):
 
         n = self._vg.nvoxels
         vertices = self._vg.lin2xyz(np.arange(n))
+        faces = np.zeros((0, 3), dtype=np.int)
 
-        #msk = self._vg.contains_lin(np.arange(n))
-        #vertices = vertices[msk, :]
-
-        self._nv = vertices.shape[0]
-        self._v = vertices
-        self._f = np.zeros((0, 3), dtype=np.int)
-        self._nf = 0
+        # call the parent's class constructor
+        super(SurfaceFromVolume, self).__init__(vertices, faces, check=False)
 
     def circlearound_n2d(self, src, radius, metric='euclidean'):
         shortmetric = metric[0].lower()
