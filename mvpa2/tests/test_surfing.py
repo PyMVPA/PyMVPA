@@ -763,7 +763,6 @@ class SurfTests(unittest.TestCase):
         assert_equal(voxcount, expected_voxcount)
 
     def test_h5support(self):
-
         sh = (20, 20, 20)
         msk = np.zeros(sh)
         for i in xrange(0, sh[0], 2):

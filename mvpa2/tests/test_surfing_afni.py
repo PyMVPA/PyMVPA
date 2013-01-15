@@ -18,6 +18,7 @@ import tempfile
 from mvpa2.testing import *
 
 from mvpa2.support.nibabel import afni_niml, afni_niml_dset
+from mvpa2.datasets import niml_dset
 
 class SurfTests(unittest.TestCase):
     """Test for AFNI I/O together with surface-based stuff
@@ -217,6 +218,84 @@ class SurfTests(unittest.TestCase):
                             if mode != 'sparse2full' or k == 'data':
                                 assert_array_almost_equal(v, v2, eps_dec)
 
+    def test_niml_dset(self):
+        d = dict(data=np.random.normal(size=(10, 2)),
+              node_indices=np.arange(10),
+              stats=['none', 'Tstat(2)'],
+              labels=['foo', 'bar'])
+        a = niml_dset.from_niml_dset(d)
+        b = niml_dset.to_niml_dset(a)
+
+        _, fn = tempfile.mkstemp('.niml.dset', 'dset')
+
+        afni_niml_dset.write(fn, b)
+        bb = afni_niml_dset.read(fn)
+        cc = niml_dset.from_niml_dset(bb)
+
+        os.remove(fn)
+
+        for dset in (a, cc):
+            assert_equal(list(dset.sa['labels']), d['labels'])
+            assert_equal(list(dset.sa['stats']), d['stats'])
+            assert_array_equal(np.asarray(dset.fa['node_indices']).ravel(),
+                               d['node_indices'])
+
+            eps_dec = 4
+            assert_array_almost_equal(dset.samples, d['data'].transpose(),
+                                                                    eps_dec)
+
+    def test_niml_dset_voxsel(self):
+        if not externals.exists('nibabel'):
+            return
+
+        # This is actually a bit of an integration test.
+        # It tests storing and retrieving searchlight results.
+        # Imports are inline here so that it does not mess up the header
+        # and makes the other unit tests more modular
+        # XXX put this in a separate file?
+        from mvpa2.misc.surfing import volgeom, surf_voxel_selection, queryengine
+        from mvpa2.measures.searchlight import Searchlight
+        from mvpa2.support.nibabel import surf
+        from mvpa2.measures.base import Measure
+        from mvpa2.datasets.mri import fmri_dataset
+
+        class _Voxel_Count_Measure(Measure):
+            # used to check voxel selection results
+            is_trained = True
+            def __init__(self, dtype, **kwargs):
+                Measure.__init__(self, **kwargs)
+                self.dtype = dtype
+
+            def _call(self, dset):
+                return self.dtype(dset.nfeatures)
+
+        sh = (20, 20, 20)
+        vg = volgeom.VolGeom(sh, np.identity(4))
+
+        density = 20
+
+        outer = surf.generate_sphere(density) * 10. + 5
+        inner = surf.generate_sphere(density) * 5. + 5
+
+        intermediate = outer * .5 + inner * .5
+        xyz = intermediate.vertices
+
+        radius = 50
+
+        sel = surf_voxel_selection.run_voxel_selection(radius, vg, inner, outer)
+        qe = queryengine.SurfaceVerticesQueryEngine(sel)
+
+        for dtype in (int, float):
+            sl = Searchlight(_Voxel_Count_Measure(dtype), queryengine=qe)
+
+            ds = fmri_dataset(vg.get_empty_nifti_image(1))
+            r = sl(ds)
+
+            _, fn = tempfile.mkstemp('.niml.dset', 'dset')
+            niml_dset.write(fn, r)
+            rr = niml_dset.read(fn)
+
+            assert_array_equal(r.samples, rr.samples)
 
 def _test_afni_suma_spec():
     datapath = os.path.join(pymvpa_datadbroot,
