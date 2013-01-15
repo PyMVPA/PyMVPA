@@ -33,6 +33,8 @@ import random, numpy as np, os, time, sys, socket
 from mvpa2.support.nibabel import afni_niml_types as types
 from mvpa2.support.nibabel import afni_niml as niml
 
+from mvpa2.base import warning
+
 def _string2list(s, SEP=";"):
     '''splits a string by SEP; if the last element is empty then it is not returned
     
@@ -73,7 +75,8 @@ def rawniml2dset(p):
             elif atr == 'COLMS_LABS':
                 r['labels'] = _string2list(data)
         else:
-            continue; #raise ValueError("Unexpected node %s" % name)
+            r[name] = data
+            #raise ValueError("Unexpected node %s" % name)
 
     return r
 
@@ -140,7 +143,11 @@ def _dset2rawniml_datarange(s):
 
 def _dset2rawniml_labels(s):
     ncols = s['data'].shape[1]
-    labels = list(s.get('labels', None) or ('col_%d' % i for i in xrange(ncols)))
+    labels = s.get('labels', None)
+    if labels is None:
+        labels = ['col_%d' % i for i in xrange(ncols)]
+    elif type(labels) != list:
+        labels = list(labels)
     if len(labels) != ncols:
         raise ValueError("Wrong number of labels: found %d but expected %d" %
                          (len(labels, ncols)))
@@ -161,7 +168,7 @@ def _dset2rawniml_history(s):
     history += '%s Saved by %s:%s' % (logprefix,
                                     __file__,
                                     sys._getframe().f_code.co_name)
-    history = str(history.decode('utf-8'))
+    history = history.encode('utf-8')
     return dict(atr_name='HISTORY_NOTE',
                 data=history)
 
@@ -175,25 +182,46 @@ def _dset2rawniml_datatypes(s):
 def _dset2rawniml_stats(s):
     data = s['data']
     ncols = data.shape[1]
-    stats = s.get('stats', None) or ['none'] * ncols
+    stats = s.get('stats', None)
+
+    if stats is None:
+        stats = ['none'] * ncols
     return dict(atr_name='COLMS_STATSYM',
                 data=stats)
+
+def _dset2rawniml_anything_else(s):
+    ignore_keys = ['data', 'stats', 'labels', 'history', 'dset_type', 'node_indices']
+
+    ks = s.keys()
+    niml = []
+    for k in ks:
+        if k in ignore_keys:
+            continue
+        niml_elem = dict(data=s[k], name=k)
+
+        try:
+            niml.append(_dset2rawniml_complete(niml_elem))
+        except TypeError:
+            warning("Unable to convert value for key '%s'" % k)
+    return niml
 
 def _dset2rawniml_complete(r):
     '''adds any missing information and ensures data is formatted properly'''
 
     # if data is a list of strings, join it and store it as a string
     # otherwise leave data untouched
+    if types.numpy_data_isstring(r['data']):
+        r['data'] = list(r['data'])
+
     while True:
         data = r['data']
         tp = type(data)
 
-        if tp is list:
-            if not data or type(data[0]) is str:
+        if types.numpy_data_isstring(r['data']):
+            r['data'] = list(r['data'])
+
+        elif tp is list:
                 r['data'] = ";".join(data)
-                # new data and tp values are set in next (and final) iteration
-            else:
-                raise TypeError("Illegal type %r" % tp)
         else:
             break # we're done
 
@@ -202,7 +230,11 @@ def _dset2rawniml_complete(r):
         r['ni_type'] = 'String'
     elif tp is np.ndarray:
         data = types.nimldataassupporteddtype(data)
+        if len(data.shape) == 1:
+            data = np.reshape(data, (data.shape[0], 1))
+
         r['data'] = data # ensure we store a supported type
+
 
         nrows, ncols = data.shape
         r['ni_dimen'] = str(nrows)
@@ -236,7 +268,10 @@ def dset2rawniml(s):
               _dset2rawniml_stats]
 
     nodes = [_dset2rawniml_complete(build(s)) for build in builders]
-    r['nodes'] = nodes
+
+    more_nodes = filter(lambda x:not x is None, _dset2rawniml_anything_else(s))
+
+    r['nodes'] = nodes + more_nodes
     return r
 
 def read(fn, itemifsingletonlist=True):
@@ -271,7 +306,7 @@ def sparse2full(dset, pad_to_ico_ld=None, pad_to_node=None,
     Returns
     -------
     dset: dict
-        afni_niml_dset-like dictionaryu with at least fields 'data' and 
+        afni_niml_dset-like dictionary with at least fields 'data' and 
         'node_indices'.
     '''
 

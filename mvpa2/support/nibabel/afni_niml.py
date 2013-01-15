@@ -178,7 +178,6 @@ def rawniml2string(p, form='text'):
     else:
         data = q.pop('data')
         data = types.nimldataassupporteddtype(data) # ensure the data format is supported by NIML
-
         s_body = _data2string(data, form)
 
         if form == 'text':
