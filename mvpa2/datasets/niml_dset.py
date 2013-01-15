@@ -36,7 +36,7 @@ _PYMVPA_PREFIX = 'PYMVPA'
 _PYMVPA_SEP = '_'
 
 def from_niml_dset(dset, fa_labels=[], sa_labels=[], a_labels=[]):
-    '''Converts a NIML dataset to a Dataset
+    '''Convert a NIML dataset to a Dataset
     
     Parameters
     ----------
@@ -115,7 +115,7 @@ def from_niml_dset(dset, fa_labels=[], sa_labels=[], a_labels=[]):
                             v = v.split(';')
 
                         if expected_length != len(v):
-                            raise ValueError("Unexpected length: %d != %d" % 
+                            raise ValueError("Unexpected length: %d != %d" %
                                                 (expected_length, len(v)))
 
                         v = ArrayCollectable(v, length=expected_length)
@@ -158,7 +158,7 @@ def from_niml_dset(dset, fa_labels=[], sa_labels=[], a_labels=[]):
     return ds
 
 def to_niml_dset(ds):
-    '''Converts a Dataset to a NIML dataset
+    '''Convert a Dataset to a NIML dataset
     
     Parameters
     ----------
@@ -190,7 +190,7 @@ def to_niml_dset(ds):
     return dset
 
 def write(fn, ds, form='binary'):
-    '''Writes a Dataset to a file in NIML format
+    '''Write a Dataset to a file in NIML format
 
     Parameters
     ----------
@@ -205,7 +205,7 @@ def write(fn, ds, form='binary'):
     niml_dset.write(fn, niml_ds, form=form)
 
 def read(fn):
-    '''Reads a Dataset from a file in NIML format
+    '''Read a Dataset from a file in NIML format
 
     Parameters
     ----------
@@ -231,7 +231,7 @@ def read(fn):
 
 
 def from_any(x):
-    '''Gets a Dataset from the input
+    '''Get a Dataset from the input
 
     Parameters
     ----------
