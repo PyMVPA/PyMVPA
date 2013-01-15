@@ -320,7 +320,7 @@ class VolSurf(object):
         img = nb.Nifti1Image(rs, v.affine)
         return img
 
-class SurfaceFromVolume(surf.Surface):
+class VolumeBasedSurface(surf.Surface):
     '''A surface based on a volume, where every voxel is a node.
     
     Use case: provide volume-based searchlight behaviour. In that
@@ -342,7 +342,7 @@ class SurfaceFromVolume(surf.Surface):
         faces = np.zeros((0, 3), dtype=np.int)
 
         # call the parent's class constructor
-        super(SurfaceFromVolume, self).__init__(vertices, faces, check=False)
+        super(VolumeBasedSurface, self).__init__(vertices, faces, check=False)
 
     def circlearound_n2d(self, src, radius, metric='euclidean'):
         shortmetric = metric[0].lower()
@@ -424,7 +424,7 @@ def from_volume(v):
         in the input volume. The associated topology is empty.
     '''
     vg = volgeom.from_any(v)
-    vs = SurfaceFromVolume(vg)
+    vs = VolumeBasedSurface(vg)
 
     return VolSurf(vg, vs, vs, vs)
 

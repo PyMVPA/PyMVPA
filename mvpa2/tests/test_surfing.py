@@ -450,7 +450,7 @@ class SurfTests(unittest.TestCase):
         vg = volgeom.VolGeom(sh, aff)
 
         p = volsurf.from_volume(vg).intermediate_surface
-        q = volsurf.SurfaceFromVolume(vg)
+        q = volsurf.VolumeBasedSurface(vg)
 
         centers = [0, 10, 10000, (-1, -1, -1), (5, 5, 5)]
         radii = [0, 10, 20, 100]
