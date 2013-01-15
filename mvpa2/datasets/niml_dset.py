@@ -6,7 +6,11 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""NeuroImaging Markup Language support."""
+"""NeuroImaging Markup Language (NIML) support.
+Supports storing most typical values (samples, feature attributes, sample
+attributes, dataset attributes) that are in a dataset in NIML format, as 
+long as these values are array-like.
+No support for 'sophisticated' values such as Mappers"""
 
 __docformat__ = 'restructuredtext'
 
@@ -18,7 +22,8 @@ from mvpa2.support.nibabel import afni_niml as niml
 from mvpa2.support.nibabel import afni_niml_dset as niml_dset
 
 from mvpa2.base.collections import SampleAttributesCollection, \
-        FeatureAttributesCollection, DatasetAttributesCollection, ArrayCollectable
+        FeatureAttributesCollection, DatasetAttributesCollection, \
+        ArrayCollectable
 
 
 from mvpa2.base import warning, debug, externals
@@ -31,7 +36,29 @@ _PYMVPA_PREFIX = 'PYMVPA'
 _PYMVPA_SEP = '_'
 
 def from_niml_dset(dset, fa_labels=[], sa_labels=[], a_labels=[]):
+    '''Converts a NIML dataset to a Dataset
+    
+    Parameters
+    ----------
+    dset: dict
+        Dictionary with NIML key-value pairs, such as obtained from
+        mvpa2.support.nibabel.afni_niml_dset.read()
+    fa_labels: list
+        Keys in dset that are enforced to be feature attributes
+    sa_labels: list
+        Keys in dset that are enforced to be sample attributes
+    a_labels: list
+        Keys in dset that are enforced to be dataset attributes
+    
+    Returns
+    -------
+    dataset: mvpa2.base.Dataset
+        a PyMVPA Dataset
+    '''
+
+    # check for singleton element
     if type(dset) is list and len(dset) == 1:
+        # recursive call
         return from_niml_dset(dset[0])
 
     if not type(dset) is dict:
@@ -83,11 +110,13 @@ def from_niml_dset(dset, fa_labels=[], sa_labels=[], a_labels=[]):
                     if expected_length:
                         while type(v) is str:
                             # strings are seperated by ';'
-                            # XXX what if this is part of the value intended by the user?
+                            # XXX what if this is part of the value 
+                            # intended by the user?
                             v = v.split(';')
 
                         if expected_length != len(v):
-                            raise ValueError("Unexpected length: %d != %d" % (expected_length, len(v)))
+                            raise ValueError("Unexpected length: %d != %d" % 
+                                                (expected_length, len(v)))
 
                         v = ArrayCollectable(v, length=expected_length)
 
@@ -129,6 +158,20 @@ def from_niml_dset(dset, fa_labels=[], sa_labels=[], a_labels=[]):
     return ds
 
 def to_niml_dset(ds):
+    '''Converts a Dataset to a NIML dataset
+    
+    Parameters
+    ----------
+    dataset: mvpa2.base.Dataset
+        A PyMVPA Dataset
+   
+    Returns
+    -------
+    dset: dict
+        Dictionary with NIML key-value pairs, such as obtained from
+        mvpa2.support.nibabel.afni_niml_dset.read()
+     '''
+
     dset = dict(data=np.transpose(ds.samples))
 
     attr_labels = ('a', 'fa', 'sa')
@@ -147,10 +190,29 @@ def to_niml_dset(ds):
     return dset
 
 def write(fn, ds, form='binary'):
+    '''Writes a Dataset to a file in NIML format
+
+    Parameters
+    ----------
+    fn: str
+        Filename
+    ds: mvpa2.base.Dataset
+        Dataset to be stored
+    form: str
+        Data format: 'binary' or 'text' or 'base64'
+    '''
     niml_ds = to_niml_dset(ds)
     niml_dset.write(fn, niml_ds, form=form)
 
 def read(fn):
+    '''Reads a Dataset from a file in NIML format
+
+    Parameters
+    ----------
+    fn: str
+        Filename
+    '''
+
     readers_converters = [(niml_dset.read, from_niml_dset)]
     if externals.exists('h5py'):
         readers_converters.append((h5load, None))
@@ -169,10 +231,22 @@ def read(fn):
 
 
 def from_any(x):
+    '''Gets a Dataset from the input
+
+    Parameters
+    ----------
+    x: str or dict or Dataset
+        Filename, or NIML-dictionary, or a Dataset itself
+
+    Returns
+    -------
+    ds: mvpa2.base.Dataset
+        Dataset instance
+    '''
     if isinstance(x, basestring):
         return read(fn)
     elif isinstance(x, dict):
-        return niml_dset.read(x)
+        return from_niml_dset(x)
     elif isinstance(x, Dataset):
         return x
 
