@@ -322,6 +322,8 @@ class VolSurf(object):
 
 class VolumeBasedSurface(surf.Surface):
     '''A surface based on a volume, where every voxel is a node.
+    It has the empty topology, meaning there are no edges between
+    nodes (voxels)
     
     Use case: provide volume-based searchlight behaviour. In that
     case finding neighbouring nodes is supposed to be faster
