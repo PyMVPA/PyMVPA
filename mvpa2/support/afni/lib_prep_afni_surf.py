@@ -263,8 +263,7 @@ def run_toafni(config, env):
     # files that should exist if Make_Spec_FS was run successfully
     checkfns = ['brainmask.nii',
               'T1.nii',
-              'aseg.nii',
-              '%s_SurfVol+orig.HEAD' % fs_sid]
+              'aseg.nii']
 
     filesexist = all([os.path.exists('%s/%s' % (sd, fn)) for fn in checkfns])
 
@@ -371,7 +370,7 @@ def run_skullstrip(config, env):
     # simply copy it over; rename brain.nii to surfvol_ss
     surfvol_srcs = ['%s/%s' % (sumadir, fn)
                   for fn in ['brain.nii',
-                             '%s_SurfVol+orig.HEAD' % fs_sid]]
+                             'T1.nii']]
 
     surfvol_trgs = ['%s/%s' % (refdir, fn)
                   for fn in ['%s_SurfVol_ss+orig.HEAD' % sid,
@@ -496,10 +495,11 @@ def run_alignment(config, env):
               # not respect the corners of the volume (as of April 2012)
 
     if overwrite or not os.path.exists(svalignedfn):
-        if not config['fs_sid']:
-            raise ValueError("Don't have a freesurfer subject id - cannot continue")
+        #if not config['fs_sid']:
+        #    raise ValueError("Don't have a freesurfer subject id - cannot continue")
 
-        surfvolfn = '%s/%s_SurfVol+orig' % (config['sumadir'], config['fs_sid'])
+        #surfvolfn = '%s/%s_SurfVol+orig' % (config['sumadir'], config['fs_sid'])
+        surfvolfn = '%s/T1.nii' % config['sumadir']
         cmds.append('cd "%s";3dWarp -overwrite -newgrid %f -matvec_out2in `cat_matvec -MATRIX %s` -prefix ./%s %s' %
                     (refdir, newgrid, matrixfn, alprefix, surfvolfn))
     else:
