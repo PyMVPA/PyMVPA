@@ -477,7 +477,8 @@ class Searchlight(BaseSearchlight):
                            fset=__set_datameasure)
     add_center_fa = property(fget=lambda self: self.__add_center_fa)
 
-@borrowkwargs(Searchlight, '__init__', exclude=['roi_ids'])
+
+@borrowkwargs(Searchlight, '__init__', exclude=['roi_ids', 'queryengine'])
 def sphere_searchlight(datameasure, radius=1, center_ids=None,
                        space='voxel_indices', **kwargs):
     """Creates a `Searchlight` to run a scalar `Measure` on
