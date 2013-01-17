@@ -708,7 +708,7 @@ class SurfTests(unittest.TestCase):
                 assert_false('ERROR' in repr(qe))   #  to check if repr works
                 voxelcounter = _Voxel_Count_Measure()
                 searchlight = Searchlight(voxelcounter, queryengine=qe, roi_ids=keys, nproc=1,
-                                          enable_ca=['roi_feature_ids'])
+                                          enable_ca=['roi_feature_ids', 'roi_center_ids'])
                 sl_dset = searchlight(dset)
 
                 selected_count = sl_dset.samples[0, :]
@@ -717,6 +717,8 @@ class SurfTests(unittest.TestCase):
                     # check that number of selected voxels matches
                     assert_equal(selected_count[i], len(mp[k]))
 
+
+                assert_equal(searchlight.ca.roi_center_ids, sel.keys())
 
                 # check nearest node is *really* the nearest node
 
