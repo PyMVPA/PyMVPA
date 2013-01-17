@@ -47,6 +47,9 @@ class BaseSearchlight(Measure):
     roi_feature_ids = ConditionalAttribute(enabled=False,
         doc="Feature IDs for all generated ROIs.")
 
+    roi_center_ids = ConditionalAttribute(enabled=False,
+        doc="Center ID for all generated ROIs.")
+
     is_trained = True
     """Indicate that this measure is always trained."""
 
@@ -219,6 +222,8 @@ class Searchlight(BaseSearchlight):
             sl.ca.roi_feature_ids = [r.a.roi_feature_ids for r in results]
         if sl.ca.is_enabled('roi_sizes'):
             sl.ca.roi_sizes = [r.a.roi_sizes for r in results]
+        if sl.ca.is_enabled('roi_center_ids'):
+            sl.ca.roi_center_ids = [r.a.roi_center_ids for r in results]
 
         return result_ds
 
@@ -373,7 +378,12 @@ class Searchlight(BaseSearchlight):
         results = []
         store_roi_feature_ids = self.ca.is_enabled('roi_feature_ids')
         store_roi_sizes = self.ca.is_enabled('roi_sizes')
-        assure_dataset = store_roi_feature_ids or store_roi_sizes
+        store_roi_center_ids = self.ca.is_enabled('roi_center_ids')
+
+        assure_dataset = any([store_roi_feature_ids,
+                              store_roi_sizes,
+                              store_roi_center_ids])
+
         # put rois around all features in the dataset and compute the
         # measure within them
         for i, f in enumerate(block):
@@ -419,6 +429,8 @@ class Searchlight(BaseSearchlight):
                 res.a['roi_feature_ids'] = roi_fids
             if store_roi_sizes:
                 res.a['roi_sizes'] = roi.nfeatures
+            if store_roi_center_ids:
+                res.a['roi_center_ids'] = f
             results.append(res)
 
             if __debug__:
