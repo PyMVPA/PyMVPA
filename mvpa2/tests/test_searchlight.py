@@ -61,6 +61,27 @@ class SearchlightTests(unittest.TestCase):
         ok_('nproc' in sphere_searchlight.__doc__)
         ok_('nproc' in Searchlight.__init__.__doc__)
 
+    # https://github.com/PyMVPA/PyMVPA/issues/106
+    def test_searchlights_doc_qe(self):
+        # queryengine should not be provided to sphere_* helpers
+        for sl in (sphere_searchlight,
+                   sphere_gnbsearchlight,
+                   sphere_m1nnsearchlight):
+            for kw in ('queryengine', 'qe'):
+                ok_(not kw in sl.__doc__,
+                    msg='There should be no %r in %s.__doc__' % (kw, sl))
+
+        # queryengine should be provided in corresponding classes __doc__s
+        for sl in (Searchlight,
+                   GNBSearchlight,
+                   M1NNSearchlight):
+            for kw in ('queryengine',):
+                ok_(kw in sl.__init__.__doc__,
+                    msg='There should be %r in %s.__init__.__doc__' % (kw, sl))
+            for kw in ('qe',):
+                ok_(not kw in sl.__init__.__doc__,
+                    msg='There should be no %r in %s.__init__.__doc__' % (kw, sl))
+
 
 
     #def _test_searchlights(self, ds, sls, roi_ids, result_all):
