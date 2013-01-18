@@ -47,7 +47,7 @@ class BaseSearchlight(Measure):
     roi_feature_ids = ConditionalAttribute(enabled=False,
         doc="Feature IDs for all generated ROIs.")
 
-    roi_center_ids = ConditionalAttribute(enabled=False,
+    roi_center_ids = ConditionalAttribute(enabled=True,
         doc="Center ID for all generated ROIs.")
 
     is_trained = True

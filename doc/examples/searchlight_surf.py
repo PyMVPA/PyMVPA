@@ -121,7 +121,7 @@ tutorial_data_surf_complete are required.
  
 """
 
-lowres_ld = 16 # 16, 32 or 64 is reasonable. 8 is really fast
+lowres_ld = 4 # 16, 32 or 64 is reasonable. 8 is really fast
 
 source_surf_fn = os.path.join(surfpath, "ico%d_%sh.intermediate_al.asc"
                                              % (lowres_ld, hemi))
@@ -200,9 +200,13 @@ cv = CrossValidation(clf, NFoldPartitioner(),
 Combining the query-engine and the cross-validation defines the 
 searchlight. The postproc-step averages the classification accuracies
 in each cross-validation fold to a single overall classification accuracy.
+
+The conditional attribute roi_center_ids is enabled so that the 
+center ids of each searchlight are stored automatically. 
 """
 
-sl = Searchlight(cv, queryengine=qe, postproc=mean_sample())
+sl = Searchlight(cv, queryengine=qe, postproc=mean_sample(),
+                 enable_ca=['roi_center_ids'])
 
 
 
