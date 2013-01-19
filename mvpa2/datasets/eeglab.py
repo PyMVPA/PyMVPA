@@ -1,0 +1,150 @@
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Dataset for EEGLAB electrode-time series in text format.
+
+This module offers functions to import data from _EEGLAB tex files.
+
+.. _EEGLAB: http://sccn.ucsd.edu/eeglab/
+"""
+
+__docformat__ = 'restructuredtext'
+
+from mvpa2.base import externals
+externals.exists('nibabel', raise_=True)
+
+import numpy as np
+import os
+
+from mvpa2.datasets.base import Dataset
+from mvpa2.mappers.flatten import FlattenMapper
+
+def _looks_like_filename(s):
+    if os.path.exists(s):
+        return True
+    return len(s) <= 256 and not '\n' in s
+
+def eeglab_dataset(samples):
+    '''Make a Dataset instance from EEGLAB input data
+    
+    Parameters
+    ----------
+    samples: str
+        Filename of EEGLAB text file
+        
+    Returns:
+    ds: mvpa2.base.dataset.Dataset
+        Dataset with the contents of the input file
+    '''
+    if not isinstance(samples, basestring):
+        raise ValueError("Samples should be a string")
+
+    if _looks_like_filename(samples):
+        if not os.path.exists(samples):
+            raise ValueError("Input looks like a filename, but file"
+                                " %s does not exist" % samples)
+        with open(samples) as f:
+            samples = f.read()
+
+    lines = samples.split('\n')
+    samples = []
+    cur_sample = None
+
+    for i, line in enumerate(lines):
+        if not line:
+            continue
+        if i == 0:
+            # first line contains the channel names
+            channel_labels = line.split()
+            n_channels = len(channel_labels)
+        else:
+            # first value is the time point, the remainders the value 
+            # for each channel
+            values = map(float, line.split())
+            t = values[0]  # time 
+            eeg = values[1:] # values for each electrode
+
+            if len(eeg) != n_channels:
+                raise ValueError("Line %d: expected %d values but found %d" %
+                                    (n_channels, len(eeg)))
+
+            if cur_sample is None or t < prev_t:
+                # new sample
+                cur_sample = []
+                samples.append(cur_sample)
+
+            cur_sample.append((t, eeg))
+            prev_t = t
+
+    # get and verify number of elements in each dimension
+    n_samples = len(samples)
+    n_timepoints_all = map(len, samples)
+
+    n_timepoints_unique = set(n_timepoints_all)
+    if len(n_timepoints_unique) != 1:
+        raise ValueError("Different number of time points in different"
+                            "samples: found %d different lengths" %
+                            len(n_timepoints_unique))
+
+    n_timepoints = n_timepoints_all[0]
+
+    shape = (n_samples, n_timepoints, n_channels)
+
+    # allocate space for data
+    data = np.zeros(shape)
+
+    # make a list of all channels and timepoints
+    channel_array = np.asarray(channel_labels)
+    timepoint_array = np.asarray([samples[0][i][0]
+                                  for i in xrange(n_timepoints)])
+
+    dts = timepoint_array[1:] - timepoint_array[:-1]
+    if not np.all(dts == dts[0]):
+        raise ValueError("Delta time points are different")
+
+    # put the values in the data array
+    for i, sample in enumerate(samples):
+        for j, (t, values) in enumerate(sample):
+            # check that the time is the same
+            if i > 0 and timepoint_array[j] != t:
+                raise ValueError("Sample %d, time point %s is different "
+                                 "than the first sample (%s)" %
+                                 (i, t, timepoint_array[j]))
+
+            for k, value in enumerate(values):
+                data[i, j, k] = value
+
+    samples = None # and let gc do it's job
+
+    # make a Dataset instance with the data
+    ds = Dataset(data)
+
+    # append a flatten_mapper to go from 3D (sample X time X channel)
+    # to 2D (sample X (time X channel))
+    space = 'time_channel_indices'
+    flatten_mapper = FlattenMapper(shape=shape[1:], space=space)
+    ds = ds.get_mapped(flatten_mapper)
+
+    # make this a 3D array of the proper size
+    channel_array_3D = np.tile(channel_array, (1, n_timepoints, 1))
+    timepoint_array_3D = np.tile(np.reshape(timepoint_array, (-1, 1)),
+                                            (1, 1, n_channels))
+
+    # for consistency use the flattan_mapper defined above to 
+    # flatten channel and timepoint names as well
+    ds.fa['channels'] = flatten_mapper.forward(channel_array_3D).ravel()
+    ds.fa['timepoints'] = flatten_mapper.forward(timepoint_array_3D).ravel()
+
+    # for reference set the channel and timepoints as well
+    ds.a['channels'] = channel_array
+    ds.a['timepoints'] = timepoint_array
+
+    ds.a['t0'] = timepoint_array[0]
+    ds.a['dt'] = dts[0]
+
+    return ds
