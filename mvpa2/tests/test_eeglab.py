@@ -36,16 +36,28 @@ class MEGTests(unittest.TestCase):
         eeg = eeglab_dataset(fn)
         os.remove(fn)
 
-        assert_array_equal(eeg.a['channels'].value,
-                           np.asarray(['Fpz', 'Cz', 'Pz']))
-        assert_array_equal(eeg.a['timepoints'].value,
-                           np.asarray([0., 2.]))
+        assert_array_equal(eeg.channelids, ['Fpz', 'Cz', 'Pz'])
+        assert_array_equal(eeg.timepoints, np.asarray([0., 2.]))
 
-        assert_true(eeg.nsamples == 3)
-        assert_true(eeg.nfeatures == 6)
+        assert_equal(eeg.nchannels, 3)
+        assert_equal(eeg.ntimepoints, 2)
 
-        assert_true(eeg.a['dt'].value == 2)
-        assert_true(eeg.a['t0'].value == 0)
+        assert_equal(eeg.nsamples, 3)
+        assert_equal(eeg.nfeatures, 6)
+
+        assert_equal(eeg.dt, 2)
+        assert_equal(eeg.t0, 0)
+
+        assert_array_equal(eeg.samples[0, 3], 1.5)
+
+        sel_time = eeg[:, eeg.get_features_by_timepoints(lambda x:x > 0)]
+        assert_equal(sel_time.ntimepoints, 1)
+        assert_equal(sel_time.t0, 2)
+
+        sel_chan = eeg[:, eeg.get_features_by_channelids(['Fpz', 'Pz'])]
+        assert_equal(sel_chan.nchannels, 2)
+        assert_array_equal(sel_chan.channelids, ['Fpz', 'Pz'])
+
 
 def suite():
     return unittest.makeSuite(MEGTests)

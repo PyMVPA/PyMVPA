@@ -137,14 +137,50 @@ def eeglab_dataset(samples):
 
     # for consistency use the flattan_mapper defined above to 
     # flatten channel and timepoint names as well
-    ds.fa['channels'] = flatten_mapper.forward(channel_array_3D).ravel()
+    ds.fa['channelids'] = flatten_mapper.forward(channel_array_3D).ravel()
     ds.fa['timepoints'] = flatten_mapper.forward(timepoint_array_3D).ravel()
 
-    # for reference set the channel and timepoints as well
-    ds.a['channels'] = channel_array
-    ds.a['timepoints'] = timepoint_array
+    # make some dynamic properties
+    # XXX at the moment we don't have propert 'protection' in case
+    # the feature space is sliced in a way so that some channels and/or
+    # timepoints occur more often than others 
+    setattr(ds.__class__, 'nchannels', property(
+                            fget=lambda self: len(set(self.fa[space][:, 1]))))
+    setattr(ds.__class__, 'ntimepoints', property(
+                            fget=lambda self: len(set(self.fa[space][:, 0]))))
 
-    ds.a['t0'] = timepoint_array[0]
-    ds.a['dt'] = dts[0]
+    setattr(ds.__class__, 'channelids', property(
+                    fget=lambda self: self.fa['channelids'][:self.nchannels]))
+    setattr(ds.__class__, 'timepoints', property(
+                    fget=lambda self: self.fa['timepoints'] \
+                                [:self.nfeatures:self.nchannels]))
+
+
+    setattr(ds.__class__, 't0', property(
+                    fget=lambda self: np.min(self.fa['timepoints'].value)))
+    setattr(ds.__class__, 'dt', property(fget=lambda self: dts[0]))
+
+    def selector(f, xs):
+        if type(f) in (list, tuple):
+            flist = f
+            f = lambda x:x in flist
+
+        return np.nonzero(map(f, xs))[0]
+
+    # attributes for getting certain time points or channels ids
+    # the argument f should be either be a function, or a list or tuple
+    setattr(ds.__class__, 'get_features_by_timepoints', property(
+                            fget=lambda self: lambda f: selector(f,
+                                            self.fa['timepoints']),
+                            doc='Given a filter function f returns the '
+                                'indices of features for which f(x) holds '
+                                ' for each x in timepoints'))
+    setattr(ds.__class__, 'get_features_by_channelids', property(
+                            fget=lambda self: lambda f: selector(f,
+                                            self.fa['channelids']),
+                            doc='Given a filter function f returns the '
+                                'indices of features for which f(x) holds '
+                                ' for each x in channelids'))
+
 
     return ds
