@@ -121,7 +121,7 @@ tutorial_data_surf_complete are required.
  
 """
 
-lowres_ld = 4 # 16, 32 or 64 is reasonable. 8 is really fast
+lowres_ld = 16 # 16, 32 or 64 is reasonable. 8 is really fast
 
 source_surf_fn = os.path.join(surfpath, "ico%d_%sh.intermediate_al.asc"
                                              % (lowres_ld, hemi))
