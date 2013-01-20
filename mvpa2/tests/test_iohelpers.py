@@ -114,6 +114,26 @@ class IOHelperTests(unittest.TestCase):
             msg='Something is wrong with the timiing of the events')
 
 
+    def test_samples_attributes_autodtype(self):
+        payload = '''a b c
+1 1.1 a
+2 2.2 b
+3 3.3 c
+4 4.4 d'''
+
+        _, fn = mkstemp('mvpa', 'sampleattr')
+
+        with open(fn, 'w') as f:
+            f.write(payload)
+
+        attr = SampleAttributes(fn, header=True)
+
+        assert_equal(set(attr.keys()), set(['a', 'b', 'c']))
+        assert_equal(attr['a'], [1, 2, 3, 4])
+        assert_equal(attr['b'], [1.1, 2.2, 3.3, 4.4])
+        assert_equal(attr['c'], ['a', 'b', 'c', 'd'])
+
+
     def test_fsl_ev(self):
         ex1 = """0.0 2.0 1
         13.89 2 1
