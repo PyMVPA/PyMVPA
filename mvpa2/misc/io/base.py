@@ -146,7 +146,7 @@ class ColumnData(dict):
                 # elsewhere
                 exec 'from %s import %s' % (self.__module__,
                                             self.__class__.__name__)
-                exec "%s.%s = property(fget=%s)"  % \
+                exec "%s.%s = property(fget=%s)" % \
                      (self.__class__.__name__, k_, getter)
                 # TODO!!! Check if it is safe actually here to rely on value of
                 #         k in lambda. May be it is treated as continuation and
@@ -184,10 +184,10 @@ class ColumnData(dict):
 
     def __str__(self):
         s = self.__class__.__name__
-        if len(self.keys())>0:
+        if len(self.keys()) > 0:
             s += " %d rows, %d columns [" % \
                  (self.nrows, self.ncolumns)
-            s += reduce(lambda x, y: x+" %s" % y, self.keys())
+            s += reduce(lambda x, y: x + " %s" % y, self.keys())
             s += "]"
         return s
 
@@ -582,7 +582,7 @@ def labels2chunks(labels, method="alllabels", ignore_labels=None):
         chunks = np.array(chunks)
         # fix up a bit the trailer
         if seenlabels != alllabels:
-            chunks[chunks == chunk] = chunk-1
+            chunks[chunks == chunk] = chunk - 1
         chunks = list(chunks)
     else:
         errmsg = "Unknown method to derive chunks is requested. Known are:\n"
