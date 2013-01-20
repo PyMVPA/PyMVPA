@@ -236,6 +236,9 @@ class ColumnData(dict):
         # string in lists: one per column
         tbl = [ [] for i in xrange(len(hdr)) ]
 
+        # store whether dtype should be determined automagically
+        auto_dtype = dtype is None
+
         # do per column dtypes
         if not isinstance(dtype, list):
             dtype = [dtype] * len(hdr)
@@ -262,6 +265,20 @@ class ColumnData(dict):
                         warning("Can't convert %r to desired datatype %r." %
                                 (v, dtype) + " Leaving original type")
                 tbl[i].append(v)
+
+        if auto_dtype:
+            attempt_convert_dtypes = (int, float)
+
+            for i in xrange(len(tbl)):
+                values = tbl[i]
+
+                for attempt_convert_dtype in attempt_convert_dtypes:
+                    try:
+                        values = map(attempt_convert_dtype, values)
+                        tbl[i] = values
+                        break
+                    except:
+                        continue
 
         # check
         if not len(tbl) == len(hdr):
@@ -397,7 +414,10 @@ class SampleAttributes(ColumnData):
           behavior as of `ColumnData`
         """
         if literallabels:
-            dtypes = [str, float]
+            if header is None:
+                dtypes = [str, float]
+            else:
+                dtypes = None
         else:
             dtypes = float
 
