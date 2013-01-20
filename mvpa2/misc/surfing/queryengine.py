@@ -88,7 +88,8 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
             vg_ds = None
 
         if vg_ds:
-            if not np.all(np.equal(vg_ds.affine, vg.affine)):
+            eps = .0001
+            if np.max(np.abs(vg_ds.affine - vg.affine)) > eps:
                 raise ValueError("Mismatch in affine matrix: %r !+ %r" %
                                         (vg_ds.affine, vg.affine))
             if not vg_ds.same_shape(vg):
