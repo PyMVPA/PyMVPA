@@ -100,6 +100,7 @@ common_args = ('common options for all preprocessing', [
                additionally specifying the corresponding individual "chunk"
                options.""")),
 ])
+
 def setup_parser(parser):
     parser_add_common_args(parser, pos=['data'])
     # order of calls is relevant!
@@ -144,3 +145,5 @@ def run(args):
         outfilename += '.hdf5'
     verbose(1, "Save dataset to '%s'" % outfilename)
     h5save(outfilename, ds, mkdir=True, compression=args.compression)
+
+    return ds
