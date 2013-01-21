@@ -183,21 +183,38 @@ class ProxyMeasure(Measure):
     measure into this class and assign arbitrary post-processing nodes to the
     wrapper, instead of the measure itself.
     """
-    def __init__(self, measure, **kwargs):
+
+    def __init__(self, measure, skip_train=False, **kwargs):
+        """
+        Parameters
+        ----------
+        skip_train : bool, optional
+          Flag whether the measure does not need to be really trained,
+          since proxied measure is guaranteed to be trained appropriately
+          prior to this call.  Use with caution
+        """
+
         # by default auto train
         kwargs['auto_train'] = kwargs.get('auto_train', True)
         Measure.__init__(self, **kwargs)
         self.__measure = measure
+        self.skip_train = skip_train
 
     def __repr__(self, prefixes=[]):
         """String representation of a `ProxyMeasure`
         """
         return super(ProxyMeasure, self).__repr__(
             prefixes=prefixes
-            + _repr_attrs(self, ['measure']))
+            + _repr_attrs(self, ['measure'])
+            + _repr_attrs(self, ['skip_train'], default=False)
+            )
 
     def _train(self, ds):
-        self.measure.train(ds)
+        if not self.skip_train:
+            self.measure.train(ds)
+        else:
+            # only flag that it was trained
+            self._set_trained()
 
 
     def _call(self, ds):

@@ -37,7 +37,9 @@ Through the course of the tutorial we would analyze :ref:`real BOLD fMRI data
 tutorial, you need to download the :ref:`corresponding data from the PyMVPA
 website <datadb_tutorial_data>`. Once downloaded, extract the tarball, open a
 terminal, go into the directory with the extracted tarball content and run:
-:command:`./start_tutorial_session.sh`.
+:command:`./start_tutorial_session.sh`. On a NeuroDebian-enabled system,
+the tutorial data is also available from the ``python-mvpa2-tutorialdata``
+package.
 
 If you want to prevent yourself from re-typing all code snippets into the
 terminal window, you might want to investigate IPython's ``%cpaste``

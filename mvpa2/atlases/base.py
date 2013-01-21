@@ -144,7 +144,7 @@ class XMLBasedAtlas(BaseAtlas):
             self._load_images()
             if self._image is not None:
                 # Get extent and voxel dimensions, limiting to 3D
-                self._extent = np.abs(np.asanyarray(self._image.get_shape()[:3]))
+                self._extent = np.abs(np.asanyarray(self._image.shape[:3]))
                 self._voxdim = np.asanyarray(self._image.get_header().get_zooms()[:3])
                 self.relativeToOrigin = True
         # Assign transformation to get into voxel coordinates,

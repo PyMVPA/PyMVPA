@@ -641,20 +641,22 @@ class ClassifiersTests(unittest.TestCase):
 
         clf.ca.reset_changed_temporarily()
 
+    # TODO: PLR expects [0,1], not [-1, 1] and apparently we do not
+    #       do remapping
+    #@sweepargs(clf=clfswh['!plr', 'binary'])
+    # For now just test on a representative SVM
     @sweepargs(clf=clfswh['linear', 'svm', 'libsvm', '!meta'])
     def test_multiclass_classifier(self, clf):
-        oldC = None
-        # XXX somewhat ugly way to force non-dataspecific C value.
+        # Force non-dataspecific C value.
         # Otherwise multiclass libsvm builtin and our MultiClass would differ
         # in results
-        if clf.params.has_key('C') and clf.params.C<0:
-            oldC = clf.params.C
-            clf.params.C = 1.0                 # reset C to be 1
-        svm, svm2 = clf, clf.clone()
+        svm = clf.clone()                 # operate on clone to avoid side-effects
+        if svm.params.has_key('C') and svm.params.C<0:
+            svm.params.C = 1.0                 # reset C to be 1
+        svm2 = svm.clone()
         svm2.ca.enable(['training_stats'])
 
-        mclf = MulticlassClassifier(clf=svm,
-                                   enable_ca=['training_stats'])
+        mclf = MulticlassClassifier(clf=svm, enable_ca=['training_stats'])
 
         # with explicit MaximalVote with the conditional attributes
         # enabled
@@ -662,8 +664,9 @@ class ClassifiersTests(unittest.TestCase):
                                        combiner=MaximalVote(enable_ca=['estimates', 'predictions']),
                                        enable_ca=['training_stats'])
 
+        ds_train = datasets['uni2small']
         for clf_ in svm2, mclf, mclf_mv:
-            clf_.train(datasets['uni2small'])
+            clf_.train(ds_train)
         s1 = str(mclf.ca.training_stats)
         s2 = str(svm2.ca.training_stats)
         s3 = str(mclf_mv.ca.training_stats)
@@ -682,8 +685,7 @@ class ClassifiersTests(unittest.TestCase):
         # enabled
         # recompute accuracy on predictions for training_stats
         training_acc = np.sum(mclf_mv.combiner.ca.predictions ==
-                              datasets['uni2small'].targets) \
-                              / float(len(datasets['uni2small']))
+                              ds_train.targets) / float(len(ds_train))
         # should match
         assert_equal(mclf_mv.ca.training_stats.stats['ACC'], training_acc)
 
@@ -703,9 +705,6 @@ class ClassifiersTests(unittest.TestCase):
                         msg="UnTrained Boosted classifier should not be trained")
         self.assertTrue(not np.array([x.trained for x in mclf.clfs]).any(),
             msg="UnTrained Boosted classifier should have no primary classifiers trained")
-
-        if oldC is not None:
-            clf.params.C = oldC
 
         # TODO: test combiners, e.g. MaximalVote and ca they store
 
@@ -735,6 +734,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
     @sweepargs(clf=clfswh['retrainable'])
+    @reseed_rng()
     def test_retrainables(self, clf):
         # XXX we agreed to not worry about this for the initial 0.6 release
         raise SkipTest

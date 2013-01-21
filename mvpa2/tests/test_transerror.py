@@ -220,7 +220,8 @@ class ErrorsTests(unittest.TestCase):
         train = datasets['uni2medium']
 
         num_perm = 10
-        permutator = AttributePermutator('targets', count=num_perm)
+        permutator = AttributePermutator('targets', count=num_perm,
+                                         limit='chunks')
         # define class to estimate NULL distribution of errors
         # use left tail of the distribution since we use MeanMatchFx as error
         # function and lower is better
@@ -718,6 +719,7 @@ def test_bayes_confusion_hyp():
             ])
     conf = Dataset(conf, sa={'labels': ['A', 'B', 'C', 'D']})
     bayes = BayesConfusionHypothesis(labels_attr='labels')
+    skip_if_no_external('scipy')        # uses factorial from scipy.misc
     hyptest = bayes(conf)
     # by default comes with all hypothesis and posterior probs
     assert_equal(hyptest.shape, (15,2))

@@ -22,6 +22,8 @@ from mvpa2.clfs.gda import LDA, QDA
 from mvpa2.clfs.gnb import GNB
 from mvpa2.kernels.np import LinearKernel, SquaredExponentialKernel, \
      GeneralizedLinearKernel
+from mvpa2.featsel.rfe import SplitRFE
+
 
 # Helpers
 from mvpa2.base import externals, cfg
@@ -30,7 +32,7 @@ from mvpa2.mappers.fx import absolute_features, maxofabs_sample
 from mvpa2.clfs.smlr import SMLRWeights
 from mvpa2.featsel.helpers import FractionTailSelector, \
     FixedNElementTailSelector, RangeElementSelector
-
+from mvpa2.generators.partition import OddEvenPartitioner
 from mvpa2.featsel.base import SensitivityBasedFeatureSelection
 
 # Kernels
@@ -440,7 +442,6 @@ clfswh += \
            FractionTailSelector(0.05, mode='select', tail='upper')),
         descr="GNB on 5%(ANOVA)")
 
-
 # GPR
 if externals.exists('scipy'):
     from mvpa2.clfs.gpr import GPR
@@ -491,6 +492,16 @@ if len(clfswh['linear', 'svm']) > 0:
                 RangeElementSelector(mode='select')),
              descr="LinSVM on SMLR(lm=0.1) non-0")
 
+    _rfeclf = linearSVMC.clone()
+    clfswh += \
+         FeatureSelectionClassifier(
+             _rfeclf,
+             SplitRFE(
+                 _rfeclf,
+                 OddEvenPartitioner(),
+                 fselector=FractionTailSelector(
+                     0.2, mode='discard', tail='lower')),
+             descr="LinSVM with nested-CV RFE")
 
     clfswh += \
         FeatureSelectionClassifier(

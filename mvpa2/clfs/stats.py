@@ -248,6 +248,11 @@ class NullDist(ClassWithCollections):
         """
         raise NotImplementedError
 
+    def dists(self):
+        """Implementations returns a sequence of the ``dist_class`` instances
+        that were used to fit the distribution.
+        """
+        raise NotImplementedError
 
     def p(self, x, return_tails=False, **kwargs):
         """Returns the p-value for values of `x`.
@@ -379,7 +384,7 @@ class MCNullDist(NullDist):
             #
             if __debug__:
                 debug('STATMC', "Doing %i permutations: %i" \
-                      % (self.__permutator.nruns, p+1), cr=True)
+                      % (self.__permutator.count, p+1), cr=True)
 
             # compute and store the measure of this permutation
             # assume it has `TransferError` interface
@@ -400,7 +405,11 @@ class MCNullDist(NullDist):
         if __debug__:
             debug('STATMC', ' Skipped: %d permutations' % skipped)
 
-
+        if not len(dist_samples) and skipped > 0:
+            raise RuntimeError(
+                'Failed to obtain any value from %s. %d measurements were '
+                'skipped. Check above warnings, and your code/data'
+                % (measure, skipped))
         # store samples as (npermutations x nsamples x nfeatures)
         dist_samples = np.asanyarray(dist_samples)
         # for the ca storage use a dataset with
@@ -470,6 +479,8 @@ class MCNullDist(NullDist):
     def rcdf(self, x):
         return self._cdf(x, 'rcdf')
 
+    def dists(self):
+        return self._dist
 
     def clean(self):
         """Clean stored distributions

@@ -64,6 +64,7 @@ Datasets: Input, Output, Storage and Preprocessing
    datasets.formats
    datasets.mri
    datasets.miscfx
+   datasets.sources.sklearn_data
 
 
 Mappers: Data Transformations
@@ -85,6 +86,7 @@ Mappers: Data Transformations
    mappers.procrustean
    mappers.projection
    mappers.prototype
+   mappers.shape
    mappers.slicing
    mappers.som
    mappers.svd
@@ -99,6 +101,7 @@ Generators: Repetitive Data Processing
    :toctree: generated
 
    generators
+   generators.base
    generators.partition
    generators.permutation
    generators.resampling
@@ -211,9 +214,14 @@ Miscellaneous
    misc.sampleslookup
    misc.stats
    misc.support
+   misc.surfing
+   misc.surfing.queryengine
+   misc.surfing.surf_voxel_selection
+   misc.surfing.volgeom
+   misc.surfing.volsurf
+   misc.surfing.volume_mask_dict
    misc.transformers
    misc.vproperty
-
 
 Testing
 =======
@@ -258,4 +266,12 @@ Basic Plotting Utilities
    misc.io.base
    misc.io.hamster
    misc.io.meg
-
+   support.nibabel
+   support.nibabel.afni_niml_annot
+   support.nibabel.afni_niml_dset
+   support.nibabel.afni_niml
+   support.nibabel.afni_suma_1d
+   support.nibabel.afni_suma_spec
+   support.nibabel.surf_fs_asc
+   support.nibabel.surf
+   

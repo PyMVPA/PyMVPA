@@ -61,6 +61,27 @@ class SearchlightTests(unittest.TestCase):
         ok_(    'nproc' in sphere_searchlight.__doc__)
         ok_(    'nproc' in Searchlight.__init__.__doc__)
 
+    # https://github.com/PyMVPA/PyMVPA/issues/106
+    def test_searchlights_doc_qe(self):
+        # queryengine should not be provided to sphere_* helpers
+        for sl in (sphere_searchlight,
+                   sphere_gnbsearchlight,
+                   sphere_m1nnsearchlight):
+            for kw in ('queryengine', 'qe'):
+                ok_(not kw in sl.__doc__,
+                    msg='There should be no %r in %s.__doc__' % (kw, sl))
+
+        # queryengine should be provided in corresponding classes __doc__s
+        for sl in (Searchlight,
+                   GNBSearchlight,
+                   M1NNSearchlight):
+            for kw in ('queryengine',):
+                ok_(kw in sl.__init__.__doc__,
+                    msg='There should be %r in %s.__init__.__doc__' % (kw, sl))
+            for kw in ('qe',):
+                ok_(not kw in sl.__init__.__doc__,
+                    msg='There should be no %r in %s.__init__.__doc__' % (kw, sl))
+
 
 
     #def _test_searchlights(self, ds, sls, roi_ids, result_all):
@@ -99,6 +120,12 @@ class SearchlightTests(unittest.TestCase):
         ## if results_backend == 'hdf5' and not common_variance:
         ##     # no need for full combination of all possible arguments here
         ##     return
+
+        if __debug__ and 'ENFORCE_CA_ENABLED' in debug.active \
+           and  isinstance(lrn, ChainMapper):
+            raise SkipTest("Known to fail while trying to enable "
+                           "training_stats for the ChainMapper (M1NN here)")
+
 
         # e.g. for M1NN we need plain kNN(1) for m1nnsl, but to imitate m1nn
         #      "learner" we must use a chainmapper atm
@@ -139,6 +166,9 @@ class SearchlightTests(unittest.TestCase):
             nroi = ds.nfeatures
             roi_ids = np.arange(nroi)
             result_all = None
+
+        if results_backend == 'hdf5':
+            skip_if_no_external('h5py')
 
         sls = [sphere_searchlight(cv, results_backend=results_backend,
                                   **skwargs),
@@ -246,6 +276,7 @@ class SearchlightTests(unittest.TestCase):
         slkwargs = dict(radius=1, postproc=mean_sample())
 
         sl_nodistr = sphere_m1nnsearchlight(*slargs, **slkwargs)
+        skip_if_no_external('scipy')    # needed for null_t
         sl = sphere_m1nnsearchlight(
             *slargs,
             null_dist=distr_est,
@@ -647,7 +678,7 @@ class SearchlightTests(unittest.TestCase):
             # disappear -- i.e. its result from previous "block" was
             # processed
             t0 = time.time()
-            while os.path.exists(f) and time.time() - t0 < 2.:
+            while os.path.exists(f) and time.time() - t0 < 4.:
                 time.sleep(0.5) # so it does take time to compute the measure
             if os.path.exists(f):
                 print_("ERROR: ", f)
