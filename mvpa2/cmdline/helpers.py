@@ -44,7 +44,7 @@ class HelpAction(argparse.Action):
         # convert all heading to have the first character uppercase
         headpat = re.compile(r'^([a-z])(.*):$',  re.MULTILINE)
         helpstr = re.subn(headpat,
-               lambda match: r'{}{}:'.format(match.group(1).upper(),
+               lambda match: r'{0}{1}:'.format(match.group(1).upper(),
                                              match.group(2)),
                helpstr)[0]
         # usage is on the same line
