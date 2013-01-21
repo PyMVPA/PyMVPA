@@ -18,6 +18,22 @@ For datasets from MR images this command also supports automatic conversion
 of additional images into (volumetric) feature attributes. This can be useful
 for describing features with, for example, atlas labels.
 
+
+COMPOSE ATTRIBUTES ON THE COMMAND LINE
+
+Options --sa and --fa  can be used to compose dataset attributes directly on
+the command line. The syntax is:
+
+  --sa <attribute name> <comma-separated values> [DTYPE]
+
+where the optional 'DTYPE' is any identifier of a NumPy data type (e.g. 'int',
+or 'float32'). If no data type is specified the attribute values will be
+strings.
+
+If only one attribute value is given, it will copied and assigned to all
+entries in the dataset.
+
+
 LOAD DATA FROM TEXT FILES
 
 All options for loading data from text files support optional parameters to
@@ -30,6 +46,7 @@ file, 'DTYPE' is any identifier of a NumPy data type (e.g. 'int', or 'float32'),
 'SKIPROWS' is an integer indicating how many lines at the beginning of the
 respective file shall be ignored, and 'COMMENTS' is a string indicating how
 to-be-ignored comment lines are prefixed in the file.
+
 
 LOAD DATA FROM NUMPY NPY FILES
 
@@ -79,6 +96,16 @@ def _load_from_txt(args):
     data = np.loadtxt(args[0], **defaults)
     return data
 
+def _load_from_cmdline(args):
+    defaults = dict(dtype='str', sep=',')
+    if len(args) > 1:
+        defaults['dtype'] = args[1]
+    if defaults['dtype'] == 'str':
+        data = [s.strip() for s in args[0].split(defaults['sep'])]
+    else:
+        data = np.fromstring(args[0], **defaults)
+    return data
+
 def _load_from_npy(args):
     defaults = dict(mmap_mode=None)
     if len(args) > 1 and arg2bool(args[1]):
@@ -90,6 +117,27 @@ def _load_from_npy(args):
 parser_args = {
     'formatter_class': argparse.RawDescriptionHelpFormatter,
 }
+
+cmdlinesrc_args = ('options for input from the command line', [
+    ('--sa', dict(type=str, nargs='+', action='append', metavar='VALUE',
+        help="""compose a sample attribute from the command line input.
+                The first value is the desired attribute name, the second value
+                is a comma-separated list (appropriately quoted) of actual
+                attribute values. An optional third value can be given to
+                specify a data type.
+                Additional information on defining dataset attributes on the
+                command line are given in the section "Compose attributes
+                on the command line.""")),
+    ('--fa', dict(type=str, nargs='+', action='append', metavar='VALUE',
+        help="""compose a feature attribute from the command line input.
+                The first value is the desired attribute name, the second value
+                is a comma-separated list (appropriately quoted) of actual
+                attribute values. An optional third value can be given to
+                specify a data type.
+                Additional information on defining dataset attributes on the
+                command line are given in the section "Compose attributes
+                on the command line.""")),
+])
 
 txtsrc_args = ('options for input from text file', [
     ('--from-txt', dict(type=str, nargs='+', metavar='VALUE',
@@ -175,7 +223,7 @@ def setup_parser(parser):
     # order of calls is relevant!
     inputsrcsgrp = parser.add_argument_group('input data sources')
     srctypesgrp = inputsrcsgrp.add_mutually_exclusive_group()
-    for src in (txtsrc_args, numpysrc_args, mrisrc_args):
+    for src in (txtsrc_args, numpysrc_args, mrisrc_args, cmdlinesrc_args):
         srcgrp = parser.add_argument_group(src[0])
         # make sure the main src arg is exclusive
         srctypesgrp.add_argument(src[1][0][0], ** src[1][0][1])
@@ -223,6 +271,8 @@ def run(args):
             ds.sa['mc_' + param] = mc_par[param]
     # loop over all attribute configurations that we know
     attr_cfgs = (# var, dst_collection, loader
+            ('--sa', args.sa, ds.sa, _load_from_cmdline),
+            ('--fa', args.sa, ds.fa, _load_from_cmdline),
             ('--sa-txt', args.sa_txt, ds.sa, _load_from_txt),
             ('--fa-txt', args.fa_txt, ds.fa, _load_from_txt),
             ('--sa-npy', args.sa_npy, ds.sa, _load_from_npy),
