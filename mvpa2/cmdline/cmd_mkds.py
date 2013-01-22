@@ -85,18 +85,18 @@ parser_args = {
 }
 
 datasrc_args = ('input data sources', [
-    ('--txt-data', dict(type=str, nargs='+', metavar='VALUE',
+    (('--txt-data',), dict(type=str, nargs='+', metavar='VALUE',
         help="""load samples from a text file. The first value
                 is the filename the data will be loaded from. Additional
                 values modifying the way the data is loaded are described in the
                 section "Load data from text files".""")),
-    ('--npy-data', dict(type=str, nargs='+', metavar='VALUE',
+    (('--npy-data',), dict(type=str, nargs='+', metavar='VALUE',
         help="""load samples from a Numpy .npy file. Compressed files (i.e.
              .npy.gz) are supported as well. The first value is the filename
              the data will be loaded from. Additional values modifying the way
              the data is loaded are described in the section "Load data from
              Numpy NPY files".""")),
-    ('--mri-data', {
+    (('--mri-data',), {
         'type': str,
         'nargs': '+',
         'metavar': 'IMAGE',
@@ -106,13 +106,13 @@ datasrc_args = ('input data sources', [
 ])
 
 mri_args = ('options for input from MR images', [
-    ('--mask', {
+    (('--mask',), {
         'type': str,
         'metavar': 'IMAGE',
         'help': """mask image file with the same dimensions as an input data
                 sample. All voxels corresponding to non-zero mask elements will
                 be permitted into the dataset."""}),
-    ('--add-vol-attr', {
+    (('--add-vol-attr',), {
         'type': str,
         'nargs': 2,
         'action': 'append',
@@ -121,7 +121,7 @@ mri_args = ('options for input from MR images', [
                 dimensions as an input data sample (2nd argument). The image
                 data will be added as a feature attribute under the specified
                 name."""}),
-    ('--add-fsl-mcpar', dict(type=str, metavar='FILENAME', help=
+    (('--add-fsl-mcpar',), dict(type=str, metavar='FILENAME', help=
                 """6-column motion parameter file in FSL's McFlirt format. Six
                 additional sample attributes will be created: mc_{x,y,z} and
                 mc_rot{1-3}, for translation and rotation estimates
@@ -131,15 +131,12 @@ mri_args = ('options for input from MR images', [
 
 def setup_parser(parser):
     from .helpers import parser_add_optgroup_from_def, \
-        parser_add_common_attr_opts, parser_add_common_args, \
-        parser_add_common_opt
+        parser_add_common_attr_opts, single_required_hdf5output
     # order of calls is relevant!
     parser_add_optgroup_from_def(parser, datasrc_args, exclusive=True)
     parser_add_common_attr_opts(parser)
     parser_add_optgroup_from_def(parser, mri_args)
-    outputgrp = parser.add_argument_group('output options')
-    parser_add_common_opt(outputgrp, 'output_file', required=True)
-    parser_add_common_args(outputgrp, opt=['hdf5compression'])
+    parser_add_optgroup_from_def(parser, single_required_hdf5output)
 
 def run(args):
     if not args.txt_data is None:
