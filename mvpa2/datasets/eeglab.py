@@ -150,10 +150,9 @@ def eeglab_dataset(samples):
                             fget=lambda self: len(set(self.fa[space][:, 0]))))
 
     setattr(ds.__class__, 'channelids', property(
-                    fget=lambda self: self.fa['channelids'][:self.nchannels]))
+                    fget=lambda self: np.unique(self.fa['channelids'].value)))
     setattr(ds.__class__, 'timepoints', property(
-                    fget=lambda self: self.fa['timepoints'] \
-                                [:self.nfeatures:self.nchannels]))
+                    fget=lambda self: np.unique(self.fa['timepoints'].value)))
 
 
     setattr(ds.__class__, 't0', property(
@@ -181,6 +180,5 @@ def eeglab_dataset(samples):
                             doc='Given a filter function f returns the '
                                 'indices of features for which f(x) holds '
                                 ' for each x in channelids'))
-
 
     return ds
