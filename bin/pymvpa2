@@ -15,7 +15,7 @@ import sys
 import argparse
 import textwrap
 import mvpa2.cmdline as mvcmd
-from mvpa2.cmdline import helpers, common_args
+from mvpa2.cmdline import helpers
 from mvpa2.base import verbose, error
 if __debug__:
     from mvpa2.base import debug
