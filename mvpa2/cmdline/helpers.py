@@ -385,3 +385,109 @@ def hdf2ds(fnames):
                 if is_datasetlike(c):
                     dss.append(c)
     return dss
+
+def parser_add_common_attr_opts(parser):
+    """Set up common parser options for adding dataset attributes"""
+    import mvpa2.cmdline.common_args as ca
+    for args in (ca.attr_from_cmdline, ca.attr_from_txt, ca.attr_from_npy):
+        parser_add_optgroup_from_def(parser, args)
+
+def parser_add_optgroup_from_def(parser, defn, exclusive=False):
+    """Add an entire option group from a definition in a custom format
+
+    Returns
+    -------
+    parser argument group
+    """
+    optgrp = parser.add_argument_group(defn[0])
+    if exclusive:
+        rgrp = optgrp.add_mutually_exclusive_group()
+    else:
+        rgrp = optgrp
+    for opt in defn[1]:
+        rgrp.add_argument(opt[0], **opt[1])
+    return optgrp
+
+def process_common_attr_opts(ds, args):
+    """Goes through an argument namespace and processes attribute options"""
+    # legacy support
+    if not args.add_sa_attr is None:
+        from mvpa2.misc.io.base import SampleAttributes
+        smpl_attrs = SampleAttributes(args.add_sa_attr)
+        for a in ('targets', 'chunks'):
+            verbose(2, "Add sample attribute '%s' from sample attributes file"
+                       % a)
+            ds.sa[a] = getattr(smpl_attrs, a)
+    if not args.add_fsl_mcpar is None:
+        from mvpa2.misc.fsl.base import McFlirtParams
+        mc_par = McFlirtParams(args.add_fsl_mcpar)
+        for param in mc_par:
+            verbose(2, "Add motion regressor as sample attribute '%s'"
+                       % ('mc_' + param))
+            ds.sa['mc_' + param] = mc_par[param]
+    # loop over all attribute configurations that we know
+    attr_cfgs = (# var, dst_collection, loader
+            ('--add-sa', args.add_sa, ds.sa, _load_from_cmdline),
+            ('--add-fa', args.add_fa, ds.fa, _load_from_cmdline),
+            ('--add-sa-txt', args.add_sa_txt, ds.sa, _load_from_txt),
+            ('--add-fa-txt', args.add_fa_txt, ds.fa, _load_from_txt),
+            ('--add-sa-npy', args.add_sa_npy, ds.sa, _load_from_npy),
+            ('--add-fa-npy', args.add_fa_npy, ds.fa, _load_from_npy),
+        )
+    for varid, srcvar, dst_collection, loader in attr_cfgs:
+        if not srcvar is None:
+            for spec in srcvar:
+                attr_name = spec[0]
+                if not len(spec) > 1:
+                    raise argparse.ArgumentTypeError(
+                        "%s option need at least two values " % varid +
+                        "(attribute name and source filename (got: %s)" % spec)
+                if dst_collection is ds.sa:
+                    verbose(2, "Add sample attribute '%s' from '%s'"
+                               % (attr_name, spec[1]))
+                else:
+                    verbose(2, "Add feature attribute '%s' from '%s'"
+                               % (attr_name, spec[1]))
+                attr = loader(spec[1:])
+                try:
+                    dst_collection[attr_name] = attr
+                except ValueError, e:
+                    # try making the exception more readable
+                    e_str = str(e)
+                    if e_str.startswith('Collectable'):
+                        raise ValueError('attribute %s' % e_str[12:])
+                    else:
+                        raise e
+    return ds
+
+def _load_from_txt(args):
+    defaults = dict(dtype=None, delimiter=None, skiprows=0, comments=None)
+    if len(args) > 1:
+        defaults['delimiter'] = args[1]
+    if len(args) > 2:
+        defaults['dtype'] = args[2]
+    if len(args) > 3:
+        defaults['skiprows'] = int(args[3])
+    if len(args) > 4:
+        defaults['comments'] = args[4]
+    data = np.loadtxt(args[0], **defaults)
+    return data
+
+def _load_from_cmdline(args):
+    defaults = dict(dtype='str', sep=',')
+    if len(args) > 1:
+        defaults['dtype'] = args[1]
+    if defaults['dtype'] == 'str':
+        data = [s.strip() for s in args[0].split(defaults['sep'])]
+    else:
+        data = np.fromstring(args[0], **defaults)
+    return data
+
+def _load_from_npy(args):
+    defaults = dict(mmap_mode=None)
+    if len(args) > 1 and arg2bool(args[1]):
+        defaults['mmap_mode'] = 'r'
+    data = np.load(args[0], **defaults)
+    return data
+
+

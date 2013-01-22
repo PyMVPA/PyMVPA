@@ -101,3 +101,65 @@ hdf5compression = (
 compression type for HDF5 storage. Available values depend on the specific HDF5
 installation. Typical values are: 'gzip', 'lzf', 'szip', or integers from 1 to
 9 indicating gzip compression levels."""))
+
+
+attr_from_cmdline = ('options for input from the command line', [
+    ('--add-sa', dict(type=str, nargs='+', action='append', metavar='VALUE',
+        help="""compose a sample attribute from the command line input.
+                The first value is the desired attribute name, the second value
+                is a comma-separated list (appropriately quoted) of actual
+                attribute values. An optional third value can be given to
+                specify a data type.
+                Additional information on defining dataset attributes on the
+                command line are given in the section "Compose attributes
+                on the command line.""")),
+    ('--add-fa', dict(type=str, nargs='+', action='append', metavar='VALUE',
+        help="""compose a feature attribute from the command line input.
+                The first value is the desired attribute name, the second value
+                is a comma-separated list (appropriately quoted) of actual
+                attribute values. An optional third value can be given to
+                specify a data type.
+                Additional information on defining dataset attributes on the
+                command line are given in the section "Compose attributes
+                on the command line.""")),
+])
+
+attr_from_txt = ('options for input from text files', [
+    ('--add-sa-txt', dict(type=str, nargs='+', action='append', metavar='VALUE',
+        help="""load sample attribute from a text file. The first value
+                is the desired attribute name, the second value is the filename
+                the attribute will be loaded from. Additional values modifying
+                the way the data is loaded are described in the section
+                "Load data from text files".""")),
+    ('--add-fa-txt', dict(type=str, nargs='+', action='append', metavar='VALUE',
+        help="""load feature attribute from a text file. The first value
+                is the desired attribute name, the second value is the filename
+                the attribute will be loaded from. Additional values modifying
+                the way the data is loaded are described in the section
+                "Load data from text files".""")),
+    ('--add-sa-attr', dict(type=str, metavar='FILENAME',
+        help="""load sample attribute values from an legacy 'attributes file'.
+                Column data is read as "literal". Only two column files
+                ('targets' + 'chunks') without headers are supported. This
+                option allows for reading attributes files from early PyMVPA
+                versions.""")),
+])
+
+attr_from_npy = ('options for input from stored Numpy arrays', [
+    ('--add-sa-npy', dict(type=str, nargs='+', metavar='VALUE', action='append',
+        help="""load sample attribute from a Numpy .npy file. Compressed files
+             (i.e. .npy.gz) are supported as well. The first value is the
+             desired attribute name, the second value is the filename
+             the data will be loaded from. Additional values modifying the way
+             the data is loaded are described in the section "Load data from
+             Numpy NPY files".""")),
+    ('--add-fa-npy', dict(type=str, nargs='+', metavar='VALUE', action='append',
+        help="""load feature attribute from a Numpy .npy file. Compressed files
+             (i.e. .npy.gz) are supported as well. The first value is the
+             desired attribute name, the second value is the filename
+             the data will be loaded from. Additional values modifying the way
+             the data is loaded are described in the section "Load data from
+             Numpy NPY files".""")),
+])
+
+
