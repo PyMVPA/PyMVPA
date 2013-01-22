@@ -335,3 +335,53 @@ def arg2hdf5compression(arg):
         return int(arg)
     except:
         return arg
+
+def ds2hdf5(ds, fname, compression=None):
+    """Save one or more datasets into an HDF5 file.
+
+    Parameters
+    ----------
+    ds : Datasset or list(Dataset)
+      One or more datasets to store
+    fname : str
+      Filename of the output file. if it doesn't end with '.hdf5', such an
+      extension will be appended.
+    compression : {'gzip','lzf','szip'} or 1-9
+      compression type for HDF5 storage. Available values depend on the specific
+      HDF5 installation.
+    """
+    # this one doesn't actually check what it stores
+    from mvpa2.base.hdf5 import h5save
+    if not fname.endswith('.hdf5'):
+        fname = '%s.hdf5' % fname
+    verbose(1, "Save dataset to '%s'" % fname)
+    h5save(fname, ds, mkdir=True, compression=compression)
+
+
+def hdf2ds(fnames):
+    """Load dataset(s) from an HDF5 file
+
+    Parameters
+    ----------
+    fname : list(str)
+      Names of the input HDF5 files
+
+    Returns
+    -------
+    list(Dataset)
+      All datasets-like elements in all given HDF5 files (in order of
+      appearance). If any given HDF5 file contains non-Dataset elements
+      they are silently ignored. If no given HDF5 file contains any
+      dataset, an empty list is returned.
+    """
+    from mvpa2.base.hdf5 import h5load
+    dss = []
+    for fname in fnames:
+        content = h5load(fname)
+        if is_datasetlike(content):
+            dss.append(content)
+        else:
+            for c in content:
+                if is_datasetlike(c):
+                    dss.append(c)
+    return dss
