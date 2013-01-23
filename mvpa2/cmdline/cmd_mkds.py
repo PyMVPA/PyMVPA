@@ -162,6 +162,14 @@ def run(args):
     # act on all attribute options
     ds = process_common_attr_opts(ds, args)
 
+    if not args.add_fsl_mcpar is None:
+        from mvpa2.misc.fsl.base import McFlirtParams
+        mc_par = McFlirtParams(args.add_fsl_mcpar)
+        for param in mc_par:
+            verbose(2, "Add motion regressor as sample attribute '%s'"
+                       % ('mc_' + param))
+            ds.sa['mc_' + param] = mc_par[param]
+
     verbose(3, "Dataset summary %s" % (ds.summary()))
     # and store
     outfilename = args.output
