@@ -576,7 +576,7 @@ installation. Typical values are: 'gzip', 'lzf', 'szip', or integers from 1 to
 9 indicating gzip compression levels."""))
 
 
-attr_from_cmdline = ('options for input from the command line', [
+attr_from_cmdline = ('options for attributes from the command line', [
     (('--add-sa',), dict(type=str, nargs='+', action='append', metavar='VALUE',
         help="""compose a sample attribute from the command line input.
                 The first value is the desired attribute name, the second value
@@ -597,7 +597,7 @@ attr_from_cmdline = ('options for input from the command line', [
                 on the command line.""")),
 ])
 
-attr_from_txt = ('options for input from text files', [
+attr_from_txt = ('options for attributes from text files', [
     (('--add-sa-txt',), dict(type=str, nargs='+', action='append', metavar='VALUE',
         help="""load sample attribute from a text file. The first value
                 is the desired attribute name, the second value is the filename
@@ -618,7 +618,7 @@ attr_from_txt = ('options for input from text files', [
                 versions.""")),
 ])
 
-attr_from_npy = ('options for input from stored Numpy arrays', [
+attr_from_npy = ('options for attributes from stored Numpy arrays', [
     (('--add-sa-npy',), dict(type=str, nargs='+', metavar='VALUE', action='append',
         help="""load sample attribute from a Numpy .npy file. Compressed files
              (i.e. .npy.gz) are supported as well. The first value is the
