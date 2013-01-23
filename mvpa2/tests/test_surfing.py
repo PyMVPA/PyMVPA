@@ -826,7 +826,6 @@ class SurfTests(unittest.TestCase):
         # now use surface-based searchlight
         v = volsurf.from_volume(ds)
         source_surf = v.intermediate_surface
-
         node_msk = np.logical_not(np.isnan(source_surf.vertices[:, 0]))
 
         # check that the mask matches with what we used earlier

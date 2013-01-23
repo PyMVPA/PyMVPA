@@ -281,10 +281,19 @@ class VolSurf(object):
 
         scale = np.sum(dxyz * dxyz, axis=1)
 
+
+        weights = np.zeros((self._pial.nvertices,), dtype=pxyz.dtype)
+
+        nan_mask = scale == 0
+        weights[nan_mask] = np.nan
+
+        non_nan_mask = np.logical_not(nan_mask)
         ps = xyz - pxyz
         proj = np.sum(ps * dxyz, axis=1)
 
-        return proj / scale
+        weights[non_nan_mask] = proj[non_nan_mask] / scale[non_nan_mask]
+
+        return weights
 
     def voxel_count_nifti_image(self, n2v=None):
         '''
