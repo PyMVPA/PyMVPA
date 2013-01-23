@@ -745,6 +745,7 @@ class SurfTests(unittest.TestCase):
                     dset_.sa = dset1.sa
                     #dset_.a.imghdr = dset1.a.imghdr
                     assert_true('imghdr' in dset_.a.keys())
+                    assert_equal(dset_.a['imghdr'].value, dset1.a['imghdr'].value)
                     roi_feature_ids = searchlight.ca.roi_feature_ids
                     sl_dset_ = searchlight(dset_)
                     # and we should get twice the counts
