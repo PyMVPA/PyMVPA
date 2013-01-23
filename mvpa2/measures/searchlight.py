@@ -168,6 +168,10 @@ class BaseSearchlight(Measure):
         # charge state
         self.ca.raw_results = results
 
+        # store the center ids as a feature attribute
+        results.fa['center_ids'] = roi_ids
+
+
         # return raw results, base-class will take care of transformations
         return results
 

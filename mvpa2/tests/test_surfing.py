@@ -719,6 +719,8 @@ class SurfTests(unittest.TestCase):
 
                 assert_equal(searchlight.ca.roi_center_ids, sel.keys())
 
+                assert_array_equal(sl_dset.fa['center_ids'], qe.ids)
+
                 # check nearest node is *really* the nearest node
 
                 allvx = sel.get_targets()
