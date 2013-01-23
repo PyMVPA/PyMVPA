@@ -373,7 +373,7 @@ class AttrDataset(object):
         out = self.__class__(samples,
                              sa=self.sa.copy(a=sa, deep=deep, memo=memo),
                              fa=self.fa.copy(a=fa, deep=deep, memo=memo),
-                             a =self.a.copy(a=a,   deep=deep, memo=memo))
+                             a=self.a.copy(a=a, deep=deep, memo=memo))
         if __debug__:
             debug('DS_', "Return dataset copy (ID: %s) of source (ID: %s)"
                          % (id(out), id(self)))
