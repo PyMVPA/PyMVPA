@@ -689,6 +689,8 @@ def vstack(datasets):
     for ds in datasets:
         merged.fa.update(ds.fa)
 
+    _stack_add_equal_dataset_attributes(merged, datasets)
+
     return merged
 
 
@@ -739,7 +741,49 @@ def hstack(datasets):
     for ds in datasets:
         merged.sa.update(ds.sa)
 
+    _stack_add_equal_dataset_attributes(merged, datasets)
+
     return merged
+
+
+def _stack_add_equal_dataset_attributes(merged_dataset, datasets):
+    """Helper function for vstack and hstack to find dataset
+    attributes common to a set of datasets, and at them to the output
+    
+    Parameters
+    ----------
+    merged_dataset: Dataset
+        the output dataset to which attributes are added
+    datasets: tuple of Dataset
+        Sequence of datasets to be stacked.
+    """
+
+    if not datasets:
+        # empty - so nothing to do
+        return
+
+    keys = datasets[0].a.keys()
+    for key in keys:
+        add_key = True
+        for i, dataset in enumerate(datasets):
+            value = dataset.a[key].value
+            if i == 0:
+                value0 = value
+            elif not key in dataset.a.keys():
+                add_key = False
+            else:
+                if isinstance(value, np.ndarray):
+                    # be careful with numpy arrays
+                    add_key = value0.shape == value.shape and np.all(value0 == value)
+                else:
+                    # just normal equality comparison
+                    add_key = value0 == value
+
+            if not add_key:
+                break
+
+        if add_key:
+            merged_dataset.a[key] = value
 
 
 def _expand_attribute(attr, length, attr_name):
