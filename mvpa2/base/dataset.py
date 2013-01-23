@@ -755,7 +755,9 @@ def _stack_add_equal_dataset_attributes(merged_dataset, datasets):
     merged_dataset: Dataset
         the output dataset to which attributes are added
     datasets: tuple of Dataset
-        Sequence of datasets to be stacked.
+        Sequence of datasets to be stacked. Only attributes present
+        in all datasets and with identical values are put in 
+        merged_dataset
     """
 
     if not datasets:
@@ -770,15 +772,23 @@ def _stack_add_equal_dataset_attributes(merged_dataset, datasets):
             if i == 0:
                 value0 = value
             elif not key in dataset.a.keys():
+                if __debug__:
+                    debug('DS_', "Dataset attribute %s not present "
+                                 "in %s (#%d)", (key, dataset, i))
                 add_key = False
             else:
                 if isinstance(value, np.ndarray):
                     # be careful with numpy arrays
-                    add_key = value0.shape == value.shape and np.all(value0 == value)
+                    add_key = value0.shape == value.shape and  \
+                                        np.all(value0 == value)
                 else:
                     # just normal equality comparison
                     add_key = value0 == value
 
+                if not add_key and __debug__:
+                    debug('DS_', "Dataset attribute %s values %s and %s "
+                                 "differ (#0 and #%d)",
+                                        (key, value0, value, i))
             if not add_key:
                 break
 
