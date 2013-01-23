@@ -417,13 +417,6 @@ def process_common_attr_opts(ds, args):
             verbose(2, "Add sample attribute '%s' from sample attributes file"
                        % a)
             ds.sa[a] = getattr(smpl_attrs, a)
-    if not args.add_fsl_mcpar is None:
-        from mvpa2.misc.fsl.base import McFlirtParams
-        mc_par = McFlirtParams(args.add_fsl_mcpar)
-        for param in mc_par:
-            verbose(2, "Add motion regressor as sample attribute '%s'"
-                       % ('mc_' + param))
-            ds.sa['mc_' + param] = mc_par[param]
     # loop over all attribute configurations that we know
     attr_cfgs = (# var, dst_collection, loader
             ('--add-sa', args.add_sa, ds.sa, _load_from_cmdline),
