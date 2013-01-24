@@ -418,8 +418,56 @@ def test_hstack():
     for fav in ds3dstacked.fa.itervalues():
         v = fav.value
         ok_(len(v) == nf3)
-        assert_array_equal(v[:nf1], v[nf1:2*nf1])
-        assert_array_equal(v[2*nf1:], v[nf1:2*nf1])
+        assert_array_equal(v[:nf1], v[nf1:2 * nf1])
+        assert_array_equal(v[2 * nf1:], v[nf1:2 * nf1])
+
+def test_stack_add_dataset_attributes():
+    data0 = Dataset.from_wizard(np.ones((5, 5)), targets=1)
+    data0.a['one'] = np.ones(2)
+    data0.a['two'] = 2
+    data0.a['three'] = 'three'
+    data0.a['common'] = range(10)
+    data1 = Dataset.from_wizard(np.ones((5, 5)), targets=1)
+    data1.a['one'] = np.ones(3)
+    data1.a['two'] = 3
+    data1.a['four'] = 'four'
+    data1.a['common'] = range(10)
+
+
+    vstacker = lambda x: vstack((data0, data1), x)
+    hstacker = lambda x: hstack((data0, data1), x)
+
+    add_params = (1, None, 'unique', 'uniques', 'all', 'drop_nonunique')
+
+    for stacker in (vstacker, hstacker):
+        for add_param in add_params:
+            if add_param == 'unique':
+                assert_raises(DatasetError, stacker, add_param)
+                continue
+
+            r = stacker(add_param)
+
+            if add_param == 1:
+                assert_array_equal(data1.a.one, r.a.one)
+                assert_equal(r.a.two, 3)
+                assert_equal(r.a.four, 'four')
+                assert_true('three' not in r.a.keys())
+            elif add_param == 'uniques':
+                assert_equal(set(r.a.keys()),
+                             set(['one', 'two', 'three', 'four', 'common']))
+                assert_equal(r.a.two, (2, 3))
+                assert_equal(r.a.four, ('four',))
+            elif add_param == 'all':
+                assert_equal(set(r.a.keys()),
+                             set(['one', 'two', 'three', 'four', 'common']))
+                assert_equal(r.a.two, (2, 3))
+                assert_equal(r.a.three, ('three', None))
+            elif add_param == 'drop_nonunique':
+                assert_equal(set(r.a.keys()), set(['common', 'three', 'four']))
+                assert_equal(r.a.three, 'three')
+                assert_equal(r.a.four, 'four')
+                assert_equal(r.a.common, range(10))
+
 
 def test_mergeds2():
     """Test composition of new datasets by addition of existing ones

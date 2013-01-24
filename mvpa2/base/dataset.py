@@ -643,7 +643,7 @@ def datasetmethod(func):
     return func
 
 
-def vstack(datasets):
+def vstack(datasets, add_dataset_attributes=None):
     """Stacks datasets vertically (appending samples).
 
     Feature attribute collections are merged incrementally, attribute with
@@ -661,8 +661,21 @@ def vstack(datasets):
     Parameters
     ----------
     datasets : tuple
-      Sequence of datasets to be stacked.
-
+        Sequence of datasets to be stacked.
+    add_dataset_attributes: int or 'unique' or 'drop_nonunique' or 'uniques' 
+        or 'all' or None (default: None).
+        Indicates which dataset attributes from datasets are stored 
+        in the output. If an int k, then the dataset attributes from 
+        datasets[k] are taken. If 'unique' then it is assumed that any
+        attribute common to more than one dataset in datasets is unique;
+        if not an exception is raised. If 'drop_nonunique' then as 'unique',
+        except that exceptions are not raised. If 'uniques' then, for each 
+        attribute,  any unique value across the datasets is stored in a tuple 
+        in the output. If 'all' then each attribute present in any 
+        dataset across datasets is stored as a tuple in the output; missing 
+        values are replaced by None. If None (the default) then no attributes 
+        are stored in the output.
+        
     Returns
     -------
     AttrDataset (or respective subclass)
@@ -689,12 +702,12 @@ def vstack(datasets):
     for ds in datasets:
         merged.fa.update(ds.fa)
 
-    _stack_add_equal_dataset_attributes(merged, datasets)
-
+    _stack_add_equal_dataset_attributes(merged, datasets,
+                                        add_dataset_attributes)
     return merged
 
 
-def hstack(datasets):
+def hstack(datasets, add_dataset_attributes=None):
     """Stacks datasets horizontally (appending features).
 
     Sample attribute collections are merged incrementally, attribute with
@@ -707,7 +720,20 @@ def hstack(datasets):
     Parameters
     ----------
     datasets : tuple
-      Sequence of datasets to be stacked.
+        Sequence of datasets to be stacked.
+    add_dataset_attributes: int or 'unique' or 'drop_nonunique' or 'uniques' 
+        or 'all' or None (default: None).
+        Indicates which dataset attributes from datasets are stored 
+        in the output. If an int k, then the dataset attributes from 
+        datasets[k] are taken. If 'unique' then it is assumed that any
+        attribute common to more than one dataset in datasets is unique;
+        if not an exception is raised. If 'drop_nonunique' then as 'unique',
+        except that exceptions are not raised. If 'uniques' then, for each 
+        attribute,  any unique value across the datasets is stored in a tuple 
+        in the output. If 'all' then each attribute present in any 
+        dataset across datasets is stored as a tuple in the output; missing 
+        values are replaced by None. If None (the default) then no attributes 
+        are stored in the output.
 
     Returns
     -------
@@ -741,14 +767,19 @@ def hstack(datasets):
     for ds in datasets:
         merged.sa.update(ds.sa)
 
-    _stack_add_equal_dataset_attributes(merged, datasets)
+    _stack_add_equal_dataset_attributes(merged, datasets,
+                                        add_dataset_attributes)
 
     return merged
 
 
-def _stack_add_equal_dataset_attributes(merged_dataset, datasets):
+def _stack_add_equal_dataset_attributes(merged_dataset, datasets,
+                                        add_dataset_attributes=None):
     """Helper function for vstack and hstack to find dataset
-    attributes common to a set of datasets, and at them to the output
+    attributes common to a set of datasets, and at them to the output.
+    Note:by default this function does nothing because testing for equality
+    may be messy for certain types; to override a value should be assigned
+    to the add_keys argument.
     
     Parameters
     ----------
@@ -758,42 +789,80 @@ def _stack_add_equal_dataset_attributes(merged_dataset, datasets):
         Sequence of datasets to be stacked. Only attributes present
         in all datasets and with identical values are put in 
         merged_dataset
+    add_dataset_attributes: int or 'unique' or 'drop_nonunique' or 'uniques' 
+        or 'all' or None (default: None).
+        Indicates which dataset attributes from datasets are stored 
+        in merged_dataset. If an int k, then the dataset attributes from 
+        datasets[k] are taken. If 'unique' then it is assumed that any
+        attribute common to more than one dataset in datasets is unique;
+        if not an exception is raised. If 'drop_nonunique' then as 'unique',
+        except that exceptions are not raised. If 'uniques' then, for each 
+        attribute,  any unique value across the datasets is stored in a tuple 
+        in merged_datasets. If 'all' then each attribute present in any 
+        dataset across datasets is stored as a tuple in merged_datasets; 
+        missing values are replaced by None. If None (the default) then no 
+        attributes are stored in merged_dataset.
     """
+    if add_dataset_attributes is None:
+        # do nothing
+        return
 
     if not datasets:
         # empty - so nothing to do
         return
 
-    keys = datasets[0].a.keys()
-    for key in keys:
-        add_key = True
-        for i, dataset in enumerate(datasets):
-            value = dataset.a[key].value
-            if i == 0:
-                value0 = value
-            elif not key in dataset.a.keys():
-                if __debug__:
-                    debug('DS_', "Dataset attribute %s not present "
-                                 "in %s (#%d)", (key, dataset, i))
-                add_key = False
-            else:
-                if isinstance(value, np.ndarray):
-                    # be careful with numpy arrays
-                    add_key = value0.shape == value.shape and  \
-                                        np.all(value0 == value)
-                else:
-                    # just normal equality comparison
-                    add_key = value0 == value
+    if type(add_dataset_attributes) is int:
+        base_dataset = datasets[add_dataset_attributes]
 
-                if not add_key and __debug__:
-                    debug('DS_', "Dataset attribute %s values %s and %s "
-                                 "differ (#0 and #%d)",
-                                        (key, value0, value, i))
-            if not add_key:
-                break
+        for key in base_dataset.a.keys():
+            merged_dataset.a[key] = base_dataset.a[key].value
+
+        return
+
+    allowed_values = ['unique', 'uniques', 'drop_nonunique', 'all']
+    if not add_dataset_attributes in allowed_values:
+        raise ValueError("add_dataset_attributes should be an int or one of "
+                        "%r" % allowed_values)
+
+    # consider all keys that are present in at least one dataset
+    all_keys = set.union(*[set(dataset.a.keys()) for dataset in datasets])
+
+    for key in all_keys:
+        add_key = True
+        values = []
+        for i, dataset in enumerate(datasets):
+            if not key in dataset.a:
+                if add_dataset_attributes == 'all':
+                    values.append(None)
+                continue
+
+            value = dataset.a[key].value
+
+            if add_dataset_attributes in ('drop_nonunique', 'unique'):
+                if not values:
+                    values.append(value)
+                elif not value in values:
+                    if add_dataset_attributes == 'unique':
+                        raise DatasetError("Not unique dataset attribute value "
+                                         " for %s: %s and %s" %
+                                            (key, values[0], value))
+                    else:
+                        add_key = False
+                        break
+            elif add_dataset_attributes == 'uniques':
+                if not value in values:
+                    values.append(value)
+            elif add_dataset_attributes == 'all':
+                values.append(value)
+            else:
+                raise ValueError("this should not happen: %s" %
+                                        add_dataset_attributes)
 
         if add_key:
-            merged_dataset.a[key] = value
+            if add_dataset_attributes in ('drop_nonunique', 'unique'):
+                merged_dataset.a[key] = values[0]
+            else:
+                merged_dataset.a[key] = tuple(values)
 
 
 def _expand_attribute(attr, length, attr_name):

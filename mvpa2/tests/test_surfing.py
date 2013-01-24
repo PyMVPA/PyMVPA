@@ -741,7 +741,7 @@ class SurfTests(unittest.TestCase):
                     dset1.fa['dset'] = [1]
                     dset2 = dset.copy()
                     dset2.fa['dset'] = [2]
-                    dset_ = hstack((dset1, dset2))
+                    dset_ = hstack((dset1, dset2), add_dataset_attributes='drop_nonunique')
                     dset_.sa = dset1.sa
                     #dset_.a.imghdr = dset1.a.imghdr
                     assert_true('imghdr' in dset_.a.keys())
