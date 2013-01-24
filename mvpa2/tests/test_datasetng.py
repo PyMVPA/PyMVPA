@@ -166,7 +166,7 @@ def test_ex_from_masked():
 
     # now try adding pattern with wrong shape
     assert_raises(DatasetError, ds.append,
-                  Dataset.from_wizard(np.ones((2,3)), targets=1, chunks=1))
+                  Dataset.from_wizard(np.ones((2, 3)), targets=1, chunks=1))
 
     # now add two real patterns
     ds.append(Dataset.from_wizard(np.random.standard_normal((2, 5)),
@@ -182,10 +182,10 @@ def test_ex_from_masked():
 
     # test wrong attributes length
     assert_raises(ValueError, Dataset.from_wizard,
-                  np.random.standard_normal((4,2,3,4)), targets=[1, 2, 3],
+                  np.random.standard_normal((4, 2, 3, 4)), targets=[1, 2, 3],
                   chunks=2)
     assert_raises(ValueError, Dataset.from_wizard,
-                  np.random.standard_normal((4,2,3,4)), targets=[1, 2, 3, 4],
+                  np.random.standard_normal((4, 2, 3, 4)), targets=[1, 2, 3, 4],
                   chunks=[2, 2, 2])
 
     # no test one that is using from_masked
@@ -214,7 +214,7 @@ def test_multidim_attrs():
     # but have 2d labels and 3d chunks -- whatever that is
     ds = Dataset.from_wizard(samples.copy(),
                              targets=samples.copy(),
-                             chunks=np.random.normal(size=(2,10,4,2)))
+                             chunks=np.random.normal(size=(2, 10, 4, 2)))
     assert_equal(ds.nsamples, 2)
     assert_equal(ds.nfeatures, 12)
     assert_equal(ds.sa.targets.shape, (2, 3, 4))
@@ -363,9 +363,9 @@ def test_mergeds():
     merged = data1.copy()
     merged.append(data2)
 
-    ok_( merged.nfeatures == 5 )
-    l12 = [1]*5 + [2]*3
-    l1 = [1]*8
+    ok_(merged.nfeatures == 5)
+    l12 = [1] * 5 + [2] * 3
+    l1 = [1] * 8
     ok_((merged.targets == l12).all())
     ok_((merged.chunks == l1).all())
 
@@ -394,7 +394,7 @@ def test_mergeds():
     assert_equal(merged.shape,
                  (np.sum([len(ds) for ds in datasets]), data1.nfeatures))
     assert_true('test' in merged.fa)
-    assert_array_equal(merged.sa.targets, [1]*5 + [2]*3 + [3]*2)
+    assert_array_equal(merged.sa.targets, [1] * 5 + [2] * 3 + [3] * 2)
 
     #
     # hstacking
@@ -405,7 +405,7 @@ def test_mergeds():
     assert_equal(merged.shape,
                  (len(data1), np.sum([ds.nfeatures for ds in datasets])))
     assert_true('chunks' in merged.sa)
-    assert_array_equal(merged.fa.one, [1]*5 + [0]*5)
+    assert_array_equal(merged.fa.one, [1] * 5 + [0] * 5)
 
 def test_hstack():
     """Additional tests for hstacking of datasets
@@ -488,7 +488,7 @@ def test_mergeds2():
     # now try adding pattern with wrong shape
     assert_raises(DatasetError,
                   data.append,
-                  dataset_wizard(np.ones((2,3)), targets=1, chunks=1))
+                  dataset_wizard(np.ones((2, 3)), targets=1, chunks=1))
 
     # now add two real patterns
     dss = datasets['uni2large'].samples
@@ -515,8 +515,8 @@ def test_mergeds2():
 
 def test_combined_samplesfeature_selection():
     data = dataset_wizard(np.arange(20).reshape((4, 5)).view(myarray),
-                   targets=[1,2,3,4],
-                   chunks=[5,6,7,8])
+                   targets=[1, 2, 3, 4],
+                   chunks=[5, 6, 7, 8])
 
     # array subclass survives
     ok_(isinstance(data.samples, myarray))
@@ -564,13 +564,13 @@ def test_combined_samplesfeature_selection():
 
 @reseed_rng()
 def test_labelpermutation_randomsampling():
-    ds = Dataset.from_wizard(np.ones((5, 10)),     targets=range(5), chunks=1)
+    ds = Dataset.from_wizard(np.ones((5, 10)), targets=range(5), chunks=1)
     for i in xrange(1, 5):
         ds.append(Dataset.from_wizard(np.ones((5, 10)) + i,
-                                      targets=range(5), chunks=i+1))
+                                      targets=range(5), chunks=i + 1))
     # assign some feature attributes
     ds.fa['roi'] = np.repeat(np.arange(5), 2)
-    ds.fa['lucky'] = np.arange(10)%2
+    ds.fa['lucky'] = np.arange(10) % 2
     # use subclass for testing if it would survive
     ds.samples = ds.samples.view(myarray)
 
@@ -789,7 +789,7 @@ def test_repr():
                              % cfg_repr)
 
 def test_str():
-    args = ( np.arange(12, dtype=np.int8).reshape((4, 3)),
+    args = (np.arange(12, dtype=np.int8).reshape((4, 3)),
              range(4),
              [1, 1, 2, 2])
     for iargs in range(1, len(args)):
@@ -962,15 +962,15 @@ def test_h5py_io(dsfile):
 
 
 def test_hollow_samples():
-    sshape = (10,5)
+    sshape = (10, 5)
     ds = Dataset(HollowSamples(sshape, dtype=int),
                  sa={'targets': np.tile(['one', 'two'], sshape[0] / 2)})
     assert_equal(ds.shape, sshape)
     assert_equal(ds.samples.dtype, int)
     # should give us features [1,3] and samples [2,3,5]
-    mds = ds[[2,3,5], 1::2]
-    assert_array_equal(mds.samples.sid, [2,3,5])
-    assert_array_equal(mds.samples.fid, [1,3])
+    mds = ds[[2, 3, 5], 1::2]
+    assert_array_equal(mds.samples.sid, [2, 3, 5])
+    assert_array_equal(mds.samples.fid, [1, 3])
     assert_equal(mds.shape, (3, 2))
     assert_equal(ds.samples.dtype, mds.samples.dtype)
     # orig should stay pristine
