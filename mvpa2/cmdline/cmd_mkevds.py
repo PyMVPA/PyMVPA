@@ -162,5 +162,5 @@ def run(args):
     # act on all attribute options
     evds = process_common_attr_opts(evds, args)
     # and store
-    ds2hdf5(ds, args.output, compression=args.compression)
+    ds2hdf5(ds, args.output, compression=args.hdf5_compression)
     return evds

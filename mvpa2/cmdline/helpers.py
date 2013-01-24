@@ -569,7 +569,7 @@ partitioner = (
 )
 
 hdf5compression = (
-    'compression', ('--compression',),
+    'compression', ('--hdf5-compression',),
     dict(type=arg2hdf5compression, default=None, help="""\
 compression type for HDF5 storage. Available values depend on the specific HDF5
 installation. Typical values are: 'gzip', 'lzf', 'szip', or integers from 1 to
