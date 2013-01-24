@@ -90,7 +90,10 @@ helpers.parser_add_common_opt(parser,
                                                           _license_info()))
 if __debug__:
     parser.add_argument(
-        '--dbg', action='append', nargs=1, type=str, dest='common_debug',
+        '--dbg', action='store_true', dest='dbg_fallback',
+        help="invoke a debugger when a crash occurs")
+    parser.add_argument(
+        '--dbg-channel', action='append', nargs=1, type=str, dest='common_debug',
         help="enable debug channel (see 'info' command for available channels)")
 parser.add_argument(
     '--preload', action='append', type=argparse.FileType('r'), default=list(),
@@ -167,7 +170,7 @@ try:
     args.func(args)
 except Exception as exc:
     error('%s (%s)' % (str(exc), exc.__class__.__name__), critical=False)
-    if args.common_debug:
+    if args.dbg_fallback:
         import pdb
         pdb.post_mortem()
     sys.exit(1)
