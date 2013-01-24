@@ -144,6 +144,6 @@ def run(args):
     if not outfilename.endswith('.hdf5'):
         outfilename += '.hdf5'
     verbose(1, "Save dataset to '%s'" % outfilename)
-    h5save(outfilename, ds, mkdir=True, compression=args.compression)
+    h5save(outfilename, ds, mkdir=True, compression=args.hdf5_compression)
 
     return ds
