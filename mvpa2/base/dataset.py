@@ -784,7 +784,7 @@ def all_equal(x, y):
     Returns
     -------
     eq: bool
-        True iff x and y are equal (which implies of the same type). 
+        True iff x and y are equal. 
         This comparison is performed element-wise, if applicable, and 
         in that case True is only returned if all elements are equal
     '''
@@ -800,7 +800,9 @@ def all_equal(x, y):
         # if it's just a bool (or boolean-like, such as numpy.bool_)
         # then see if it is True or not
         if eq == True or eq == False:
-            return eq
+            # also consider the case that eq is a numpy boolean array
+            # with just a single element - so compare to True
+            return eq == True
         else:
             # no idea what to do
             raise
