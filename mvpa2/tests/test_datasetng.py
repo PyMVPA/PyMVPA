@@ -20,7 +20,7 @@ import os
 from mvpa2.base import cfg
 from mvpa2.base.externals import versions
 from mvpa2.base.types import is_datasetlike
-from mvpa2.base.dataset import DatasetError, vstack, hstack
+from mvpa2.base.dataset import DatasetError, vstack, hstack, all_equal
 from mvpa2.datasets.base import dataset_wizard, Dataset, HollowSamples
 from mvpa2.misc.data_generators import normal_feature_dataset
 from mvpa2.testing import reseed_rng
@@ -427,15 +427,17 @@ def test_stack_add_dataset_attributes():
     data0.a['two'] = 2
     data0.a['three'] = 'three'
     data0.a['common'] = range(10)
+    data0.a['array'] = np.arange(10)
     data1 = Dataset.from_wizard(np.ones((5, 5)), targets=1)
     data1.a['one'] = np.ones(3)
     data1.a['two'] = 3
     data1.a['four'] = 'four'
     data1.a['common'] = range(10)
+    data1.a['array'] = np.arange(10)
 
 
-    vstacker = lambda x: vstack((data0, data1), x)
-    hstacker = lambda x: hstack((data0, data1), x)
+    vstacker = lambda x: vstack((data0, data1), a=x)
+    hstacker = lambda x: hstack((data0, data1), a=x)
 
     add_params = (1, None, 'unique', 'uniques', 'all', 'drop_nonunique')
 
@@ -452,21 +454,26 @@ def test_stack_add_dataset_attributes():
                 assert_equal(r.a.two, 3)
                 assert_equal(r.a.four, 'four')
                 assert_true('three' not in r.a.keys())
+                assert_true('array' in r.a.keys())
             elif add_param == 'uniques':
                 assert_equal(set(r.a.keys()),
-                             set(['one', 'two', 'three', 'four', 'common']))
+                             set(['one', 'two', 'three',
+                                  'four', 'common', 'array']))
                 assert_equal(r.a.two, (2, 3))
                 assert_equal(r.a.four, ('four',))
             elif add_param == 'all':
                 assert_equal(set(r.a.keys()),
-                             set(['one', 'two', 'three', 'four', 'common']))
+                             set(['one', 'two', 'three',
+                                  'four', 'common', 'array']))
                 assert_equal(r.a.two, (2, 3))
                 assert_equal(r.a.three, ('three', None))
             elif add_param == 'drop_nonunique':
-                assert_equal(set(r.a.keys()), set(['common', 'three', 'four']))
+                assert_equal(set(r.a.keys()),
+                             set(['common', 'three', 'four', 'array']))
                 assert_equal(r.a.three, 'three')
                 assert_equal(r.a.four, 'four')
                 assert_equal(r.a.common, range(10))
+                assert_array_equal(r.a.array, np.arange(10))
 
 
 def test_mergeds2():
@@ -961,6 +968,32 @@ def test_h5py_io(dsfile):
         pass
 
 
+def test_all_equal():
+    # all these values are supposed to be different from each other
+    # but equal to themselves
+    a = np.random.normal(size=(10, 10)) + 1000.
+    b = np.zeros((10, 10))
+    c = np.zeros(10)
+    d = np.zeros(11)
+    e = 0
+    f = None
+    g = True
+    h = ''
+    i = 'a'
+
+    values = [a, b, c, d, e, f, g, h, i]
+    for ii, v in enumerate(values):
+        for jj, w in enumerate(values):
+            assert_equal(all_equal(v, w), ii == jj)
+
+    # ensure that this function behaves like the 
+    # standard python '==' comparator for singulars
+    singulars = [0, None, True, False, '', 1, 'a']
+    for v in singulars:
+        for w in singulars:
+            assert_equal(all_equal(v, w), v == w)
+
+
 def test_hollow_samples():
     sshape = (10, 5)
     ds = Dataset(HollowSamples(sshape, dtype=int),
@@ -976,3 +1009,4 @@ def test_hollow_samples():
     # orig should stay pristine
     assert_equal(ds.samples.dtype, int)
     assert_equal(ds.shape, sshape)
+
