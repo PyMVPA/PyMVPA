@@ -110,6 +110,7 @@ class SearchlightTests(unittest.TestCase):
     @sweepargs(do_roi=(False, True))
     @sweepargs(results_backend=('native', 'hdf5'))
     @reseed_rng()
+    @labile(5, 1)
     def test_spatial_searchlight(self, lrn_sllrn_SL_partitioner, do_roi=False,
                                  results_backend='native'):
         """Tests both generic and ad-hoc searchlights (e.g. GNBSearchlight)
