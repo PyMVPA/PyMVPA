@@ -113,7 +113,7 @@ class ColumnData(dict):
         # intialize with default
         self._header_order = None
 
-        if isinstance(source, str):
+        if isinstance(source, basestring):
             self._from_file(source, header=header, sep=sep, headersep=headersep,
                            dtype=dtype, skiplines=skiplines)
 
