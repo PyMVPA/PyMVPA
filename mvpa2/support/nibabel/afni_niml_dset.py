@@ -279,6 +279,12 @@ def read(fn, itemifsingletonlist=True):
 
 def write(fnout, dset, form='binary'):
     fn = os.path.split(fnout)[1]
+
+    if not type(fn) is str:
+        if not isinstance(fnout, basestring):
+            raise ValueError("Filename %s should be string" % str)
+        fn = str(fn) # ensure that unicode is converted to string
+
     dset['filename'] = fn
     niml.write(fnout, dset, form, dset2rawniml)
 
