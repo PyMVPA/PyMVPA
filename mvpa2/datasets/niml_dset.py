@@ -174,6 +174,11 @@ def to_niml_dset(ds):
 
     dset = dict(data=np.transpose(ds.samples))
 
+    node_indices_labels = ('node_indices', 'center_ids', 'ids', 'roi_ids')
+    node_indices = _find_node_indices(ds, node_indices_labels)
+    if not node_indices is None:
+        dset['node_indices'] = node_indices
+
     attr_labels = ('a', 'fa', 'sa')
 
     for attr_label in attr_labels:
@@ -188,6 +193,40 @@ def to_niml_dset(ds):
             dset[long_key] = v
 
     return dset
+
+def _find_node_indices(dset, node_indices_labels):
+    '''Helper function to find node indices in this dataset
+    Sees if any of the node_indices_labels is a feature attribute
+    in the dataset and returns it. If they are multiple matches
+    ensure they are identical, otherwise raise an error.
+    A use case is searchlight results that assignes center_ids as
+    a feature attributes, but it should be named node_indices
+    before conversion to NIML format'''
+
+    use_label = None
+
+    dset_keys = dset.fa.keys()
+    for label in node_indices_labels:
+        if label in dset_keys:
+            if use_label is None:
+                # make vector and ensure all integer values
+                node_indices = dset.fa[label].value
+                node_indices = np.asarray(node_indices).ravel()
+                if len(node_indices) != dset.nfeatures:
+                    raise ValueError("Node indices mismatch: found %d values "
+                                     " but dataset has %d features" %
+                                     (len(node_indices, dset.nfeatures)))
+                node_indices_int = np.asarray(node_indices, dtype=np.int)
+                if not np.array_equal(node_indices_int, node_indices):
+                    raise ValueError("Node indices should have integer values")
+                use_label = label
+
+            else:
+                if not np.array_equal(dset.fa[label].value, node_indices_int):
+                    raise ValueError("Different indices for feature attributes"
+                                     " %s and %s" % (use_key, label))
+
+    return None if use_label is None else node_indices_int
 
 def write(fn, ds, form='binary'):
     '''Write a Dataset to a file in NIML format
