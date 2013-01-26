@@ -718,11 +718,11 @@ class Surface(object):
 
     def __mul__(self, other):
         '''coordinate-wise scaling'''
-        return Surface(v=self._v * other, f=self.faces)
+        return Surface(v=self._v * other, f=self.faces, check=False)
 
     def __neg__(self, other):
         '''coordinate-wise inversion with respect to addition'''
-        return Surface(v= -self.vertices, f=self.faces)
+        return Surface(v= -self.vertices, f=self.faces, check=False)
 
     def __sub__(self, other):
         '''coordiante-wise subtraction'''
