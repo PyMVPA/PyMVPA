@@ -250,7 +250,11 @@ def _header2string(p, keyfirst=['dset_type', 'self_idcode', 'filename', 'data_ty
                 added.add(k)
 
     rs = map(lambda x : '   %s="%s"' % x, kvs)
-    return "\n".join(rs)
+    joined = "\n".join(rs)
+    if not type(joined) is str:
+        # ensure a true string, not unicode
+        joined = str(joined)
+    return joined
 
 def read(fn, itemifsingletonlist=True, postfunction=None):
     with open(fn) as f:
