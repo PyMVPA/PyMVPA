@@ -121,7 +121,7 @@ tutorial_data_surf_complete are required.
  
 """
 
-lowres_ld = 16 # 16, 32 or 64 is reasonable. 8 is really fast
+lowres_ld = 16 # 16, 32 or 64 is reasonable. 4 and 8 are really fast
 
 source_surf_fn = os.path.join(surfpath, "ico%d_%sh.intermediate_al.asc"
                                              % (lowres_ld, hemi))
@@ -194,19 +194,27 @@ cv = CrossValidation(clf, NFoldPartitioner(),
                      errorfx=lambda p, t: np.mean(p == t),
                      enable_ca=['stats'])
 
+"""
+Set the roi_ids, that is the node indices that serve as searchlight 
+center. In this example it is set to None, meaning that all nodes are used
+as a searchlight center. It is also possible to restrict the nodes that serve
+as a searchlight center: setting roi_ids=np.arange(400,800) means that only 
+nodes in the range from 400 (inclusive) to 800 (exclusive) are used as a 
+searchlight center, and the result would be a partial brain map.
+"""
 
+roi_ids = None
 
 """
 Combining the query-engine and the cross-validation defines the 
 searchlight. The postproc-step averages the classification accuracies
-in each cross-validation fold to a single overall classification accuracy.
+in each cross-validation fold to a single overall classification accuracy. 
 
-The conditional attribute roi_center_ids is enabled so that the 
-center ids of each searchlight are stored automatically. 
+Because roi_ids is None is this example it could be omitted - it is only
+included for instructive purposes.
 """
 
-sl = Searchlight(cv, queryengine=qe, postproc=mean_sample(),
-                 enable_ca=['roi_center_ids'])
+sl = Searchlight(cv, queryengine=qe, postproc=mean_sample(), roi_ids=roi_ids)
 
 
 
@@ -256,38 +264,29 @@ Run the searchlight on the dataset.
 sl_dset = sl(dataset)
 
 """
-Although not strictly required, in this example the indices of the nodes 
-that formed the center for each searchlight are stored in the output dataset. 
-
-Note that in this example there was full brain coverage---meaning that every
-node was contained in the functional volume---and thus every 
-node had a searchlight disc associated with them. In other cases, with partial
-brain coverage for example, there may be nodes without associated voxels
-in the searchlight, and these nodes have thus no searchlight results.
-(disc_surface_queryengine provides an optional argument 
-'outside_node_margin' that defines under which circumstances a node will 
-have a searchlight associated with it. The default is that a node has
-to be in the functional volume.)   
-"""
-
-center_ids = qe.ids
-sl_dset.fa['center_ids'] = center_ids
-
-"""
 Searchlight results are now stored in sl_dset. As sl_dset is just like
-any other dataset, it can be stored with h5save for future use.
+any other PyMVPA dataset, it can be stored with h5save for future use.
 
 The remainder of this example provides a data file that 
-can be visualized using AFNI's SUMA. This is achieved by generating an NIML 
-(NeuroImaging Markup Language) dataset that can be viewed by AFNI's SUMA. 
-Results are transposed because in NIML, rows correspond to nodes (features) 
-and columns to datapoints (samples).
+can be visualized using AFNI's SUMA. This is achieved by storing the dataset
+as an NIML (NeuroImaging Markup Language) dataset that can be viewed by 
+AFNI's SUMA. sl_dset contains a feature attribute 'center_ids' that is
+automagically used to define the node indices of the searchlight centers in
+this NIML dataset.
+
+Note that this conversion will not preserve all information in sl_dset but
+only the samples and (feature, sample, dataset) attributes that behave
+like arrays or strings or scalars. For example, in this example sl_dset has a
+dataset attribute 'mapper' which is not stored in the NIML dataset (and
+a warning message is printed during the conversion, which can be ignored 
+savely). As mentioned above, using h5save will preserve this information
+(but its output cannot be viewed in SUMA).  
+
+Before saving the dataset, first the labels are set for each sample (in
+this case, only one) so that they show up in SUMA.
 """
 
-surf_sl_dset = dict(data=np.asarray(sl_dset).transpose(),
-                    node_indices=center_ids,
-                    labels=['HOUSvsSCRM'])
-
+sl_dset.sa['labels'] = ['HOUSvsSCRM']
 
 """
 Set the filename for output.
@@ -296,12 +295,10 @@ visualization. Finally print an informative message on how the
 generated data can be visualized using SUMA.
 """
 
-fn = 'ico%d_%sh_%dvx.niml.dset' % (lowres_ld, hemi, radius)
+fn = 'ico%d-%d_%sh_%dvx.niml.dset' % (lowres_ld, highres_ld, hemi, radius)
 path_fn = os.path.join(surfpath, fn)
 
-from mvpa2.support.nibabel import afni_niml_dset
-
-afni_niml_dset.write(path_fn, surf_sl_dset)
+niml_dset.write(path_fn, sl_dset)
 
 print ("To view results in SUMA, cd to '%s', run 'suma -spec "
       "%sh_ico%d_al.spec', press ctrl+s, "
