@@ -19,6 +19,7 @@ from mvpa2.testing import *
 
 from mvpa2.support.nibabel import afni_niml, afni_niml_dset
 from mvpa2.datasets import niml_dset
+from mvpa2.datasets.base import Dataset
 
 class SurfTests(unittest.TestCase):
     """Test for AFNI I/O together with surface-based stuff
@@ -244,6 +245,27 @@ class SurfTests(unittest.TestCase):
             assert_array_almost_equal(dset.samples, d['data'].transpose(),
                                                                     eps_dec)
 
+        # some more tests to ensure that the order of elements is ok
+        # (row first or column first)
+
+        d = np.arange(10).reshape((5, -1)) + .5
+        ds = Dataset(d)
+
+        fn = _, fn = tempfile.mkstemp('.niml.dset', 'dset')
+        writers = [niml_dset.write, afni_niml_dset.write]
+        for i, writer in enumerate(writers):
+            for form in ('text', 'binary', 'base64'):
+                if i == 0:
+                    writer(fn, ds, form=form)
+                else:
+                    writer(fn, dict(data=d.transpose()), form=form)
+
+                x = afni_niml_dset.read(fn)
+                assert_array_equal(x['data'], d.transpose())
+                print "OK"
+
+
+
     def test_niml_dset_voxsel(self):
         if not externals.exists('nibabel'):
             return
@@ -296,6 +318,8 @@ class SurfTests(unittest.TestCase):
             rr = niml_dset.read(fn)
 
             assert_array_equal(r.samples, rr.samples)
+
+
 
 def _test_afni_suma_spec():
     datapath = os.path.join(pymvpa_datadbroot,

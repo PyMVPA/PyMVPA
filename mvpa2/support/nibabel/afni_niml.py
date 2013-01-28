@@ -207,9 +207,11 @@ def _data2string(data, form):
                                                          for col in xrange(ncols)])
                                                          for row in xrange(nrows)])
         elif form == 'binary':
-            return str(data.data)
+            data_reshaped = data.reshape((data.shape[1], data.shape[0]))
+            return str(data_reshaped.data)
         elif form == 'base64':
-            r = base64.b64encode(data)
+            data_reshaped = data.reshape((data.shape[1], data.shape[0]))
+            r = base64.b64encode(data_reshaped)
             debug('NIML', 'Encoding ok: [%s]', _partial_string(r, 0))
             return r
         else:
