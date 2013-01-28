@@ -181,14 +181,23 @@ def to_niml_dset(ds):
 
     attr_labels = ('a', 'fa', 'sa')
 
-    for attr_label in attr_labels:
+    # a few labels are directly used in NIML dsets
+    # here we define two for sample attributes
+    attr_special_labels = ([], [], ['labels', 'stats'])
+
+    for i, attr_label in enumerate(attr_labels):
         attr = getattr(ds, attr_label)
+        special_labels = attr_special_labels[i]
         for k in attr.keys():
             v = attr[k]
             if hasattr(v, 'value'):
                 v = v.value
 
-            long_key = _PYMVPA_SEP.join((_PYMVPA_PREFIX, attr_label.upper(), k))
+            if k in special_labels:
+                long_key = k
+            else:
+                long_key = _PYMVPA_SEP.join((_PYMVPA_PREFIX,
+                                             attr_label.upper(), k))
 
             dset[long_key] = v
 
