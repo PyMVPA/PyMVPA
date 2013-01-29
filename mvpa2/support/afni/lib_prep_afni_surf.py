@@ -178,7 +178,7 @@ def augmentconfig(c):
                 else:
                     c['expvol'] = c['anatvol']
                     c['isepi'] = False
-                    del(config['anatvol'])
+                    del(c['anatvol'])
             else:
                 if hasepivol:
                     c['expvol'] = c['epivol']
