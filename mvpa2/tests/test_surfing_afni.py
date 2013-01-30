@@ -262,7 +262,6 @@ class SurfTests(unittest.TestCase):
 
                 x = afni_niml_dset.read(fn)
                 assert_array_equal(x['data'], d.transpose())
-                print "OK"
 
 
 
