@@ -120,7 +120,6 @@ def niml_roi2roi_mapping(rois):
 
     return roi_mapping
 
-@borrowdoc(niml_roi2roi_mapping)
 def read_mapping(roi):
     '''Converts NIML ROI representation in mapping from ROI labels 
     to node indices
