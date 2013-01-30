@@ -213,7 +213,7 @@ mpl-stamp: build
 	echo "backend : Agg" >| $(CURDIR)/build/matplotlibrc
 	touch $@
 
-htmldoc: examples2rst build pics mpl-stamp tutorial2notebooks
+htmldoc: examples2rst build pics mpl-stamp tutorial2notebooks manpages
 	@echo "I: Creating an HTML version of documentation"
 	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off \
 		PYTHONPATH=$(CURDIR):$(PYTHONPATH) \
