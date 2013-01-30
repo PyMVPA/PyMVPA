@@ -17,7 +17,7 @@ import tempfile
 
 from mvpa2.testing import *
 
-from mvpa2.support.nibabel import afni_niml, afni_niml_dset
+from mvpa2.support.nibabel import afni_niml, afni_niml_dset, afni_niml_roi
 from mvpa2.datasets import niml_dset
 from mvpa2.datasets.base import Dataset
 
@@ -316,7 +316,85 @@ class SurfTests(unittest.TestCase):
             niml_dset.write(fn, r)
             rr = niml_dset.read(fn)
 
+            os.remove(fn)
+
             assert_array_equal(r.samples, rr.samples)
+
+
+    def test_afni_niml_roi(self):
+        payload = """# <Node_ROI
+#  ni_type = "SUMA_NIML_ROI_DATUM"
+#  ni_dimen = "5"
+#  self_idcode = "XYZ_QlRYtdSyHmNr39qZWxD0wQ"
+#  domain_parent_idcode = "XYZ_V_Ug6er2LCNoLy_OzxPsZg"
+#  Parent_side = "no_side"
+#  Label = "myroi"
+#  iLabel = "12"
+#  Type = "2"
+#  ColPlaneName = "ROI.-.CoMminfl"
+#  FillColor = "0.525490 0.043137 0.231373 1.000000"
+#  EdgeColor = "0.000000 0.000000 1.000000 1.000000"
+#  EdgeThickness = "2"
+# >
+ 1 4 1 42946
+ 1 4 10 42946 42947 43062 43176 43289 43401 43512 43513 43623 43732
+ 1 4 8 43732 43623 43514 43404 43293 43181 43068 42954
+ 3 4 9 42954 42953 42952 42951 42950 42949 42948 42947 42946
+ 4 1 14 43063 43064 43065 43066 43067 43177 43178 43179 43180 43290 43291 43292 43402 43403
+# </Node_ROI>"""
+
+        _, fn = tempfile.mkstemp('.niml.roi', 'dset')
+
+        with open(fn, 'w') as f:
+            f.write(payload)
+
+        rois = afni_niml_roi.read(fn)
+        os.remove(fn)
+
+        assert_equal(len(rois), 1)
+        roi = rois[0]
+
+        expected_keys = ['ni_type', 'ColPlaneName', 'iLabel', 'Parent_side',
+                       'EdgeColor', 'Label', 'edges', 'ni_dimen',
+                       'self_idcode', 'EdgeThickness', 'Type', 'areas',
+                       'domain_parent_idcode', 'FillColor']
+
+        assert_equal(set(roi.keys()), set(expected_keys))
+
+        assert_equal(roi['Label'], 'myroi')
+        assert_equal(roi['iLabel'], 12)
+
+        # check edges
+        arr = np.asarray
+        expected_edges = [arr([42946]),
+                          arr([42946, 42947, 43062, 43176, 43289, 43401,
+                               43512, 43513, 43623, 43732]),
+                          arr([43732, 43623, 43514, 43404, 43293, 43181,
+                               43068, 42954]),
+                          arr([42954, 42953, 42952, 42951, 42950, 42949,
+                               42948, 42947, 42946])]
+
+        for i in xrange(4):
+            assert_array_equal(roi['edges'][i], expected_edges[i])
+
+
+        # check nodes
+        expected_nodes = [arr([43063, 43064, 43065, 43066, 43067, 43177, 43178,
+                            43179, 43180, 43290, 43291, 43292, 43402, 43403])]
+
+        assert_equal(len(roi['areas']), 1)
+        assert_array_equal(roi['areas'][0], expected_nodes[0])
+
+
+        # check mapping
+        m = afni_niml_roi.read_mapping(rois)
+        assert_equal(m.keys(), ['myroi'])
+
+        unique_nodes = np.unique(expected_nodes[0])
+        assert_array_equal(m['myroi'], unique_nodes)
+
+
+
 
 
 
