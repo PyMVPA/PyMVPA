@@ -23,7 +23,7 @@ COMPOSE ATTRIBUTES ON THE COMMAND LINE
 Options --add-sa and --add-fa  can be used to compose dataset attributes directly on
 the command line. The syntax is:
 
-  --add-sa <attribute name> <comma-separated values> [DTYPE]
+... --add-sa <attribute name> <comma-separated values> [DTYPE]
 
 where the optional 'DTYPE' is any identifier of a NumPy data type (e.g. 'int',
 or 'float32'). If no data type is specified the attribute values will be
@@ -37,7 +37,7 @@ LOAD DATA FROM TEXT FILES
 All options for loading data from text files support optional parameters to
 tweak the conversion:
 
-  --add-sa-txt <mandatory values> [DELIMITER [DTYPE [SKIPROWS [COMMENTS]]]]
+... --add-sa-txt <mandatory values> [DELIMITER [DTYPE [SKIPROWS [COMMENTS]]]]
 
 where 'DELIMITER' is the string that is used to separate values in the input
 file, 'DTYPE' is any identifier of a NumPy data type (e.g. 'int', or 'float32'),
@@ -49,7 +49,7 @@ LOAD DATA FROM NUMPY NPY FILES
 
 All options for loading data from NumPy NPY files support an optional parameter:
 
-  --add-fa-npy <mandatory values> [MEMMAP]
+... --add-fa-npy <mandatory values> [MEMMAP]
 
 where 'MEMMAP' is a flag  that triggers whether the respective file shall be
 read by memory-mapping, i.e. not read (immediately) into memory. Enable with
