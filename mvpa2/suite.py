@@ -226,6 +226,16 @@ __sdebug("atlases")
 if externals.exists("lxml") and externals.exists("nibabel"):
     from mvpa2.atlases import *
 
+__sdebug("surface searchlight")
+from mvpa2.misc.surfing.queryengine import SurfaceVerticesQueryEngine, \
+                                            disc_surface_queryengine
+
+from mvpa2.misc.surfing import surf_voxel_selection, volgeom, volsurf
+
+__sdebug("nibabel afni")
+from mvpa2.support.nibabel import afni_niml_dset, afni_suma_1d, \
+                                    afni_suma_spec, surf_fs_asc
+
 
 __sdebug("ipython goodies")
 if externals.exists("running ipython env"):
@@ -242,7 +252,7 @@ def suite_stats():
     glbls = globals()
     import types
     # Compatibility layer for Python3
-    try: 
+    try:
         from io import FileIO as BuiltinFileType
     except ImportError:
         BuiltinFileType = types.FileType
@@ -324,7 +334,7 @@ def suite_stats():
                             ind = doc.index('\n')
                         except:
                             ind = 1000
-                        s+= ": " + doc[:min(ind, 80)]
+                        s += ": " + doc[:min(ind, 80)]
                     except:
                         pass
             return s

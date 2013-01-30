@@ -191,6 +191,9 @@ manpages: mkdir-MAN_DIR
 		bin/pymvpa2-atlaslabeler > $(MAN_DIR)/pymvpa2-atlaslabeler.1
 	PYTHONPATH=$(LPYTHONPATH) help2man -N -n 'start a PyMVPA tutorial session' \
 		bin/pymvpa2-tutorial > $(MAN_DIR)/pymvpa2-tutorial.1
+	PYTHONPATH=$(LPYTHONPATH) help2man --no-discard-stderr -N -n \
+			'preprocess FreeSurfer surfaces for AFNI/SUMA' \
+			bin/pymvpa2-prep-afni-surf > $(MAN_DIR)/pymvpa2-prep-afni-surf.1
 	PYTHONPATH=$(LPYTHONPATH) help2man --no-discard-stderr \
 		--help-option="--help-np" -N -n "command line interface for PyMVPA" \
 			bin/pymvpa2 > $(MAN_DIR)/pymvpa2.1
@@ -666,10 +669,13 @@ bdist_mpkg: 3rd
 #
 
 fetch-data:
-	@echo "I: fetching data from datadb"
-	@rsync $(RSYNC_OPTS) $(DATA_URI)/tutorial_data $(DATA_URI)/mnist \
-		$(DATA_URI)/face_inversion_demo datadb \
-        $(DATA_URI)/hyperalignment_tutorial_data \
+	echo "I: fetching data from datadb"
+	[ -e datadb ] || mkdir -p datadb
+	rsync $(RSYNC_OPTS) $(DATA_URI)/tutorial_data $(DATA_URI)/mnist \
+		$(DATA_URI)/face_inversion_demo \
+	      	$(DATA_URI)/hyperalignment_tutorial_data \
+                $(DATA_URI)/haxby2001 \
+		datadb/ 
 	@for ds in datadb/*; do \
 		echo " I: looking at $$ds"; \
 		cd $(CURDIR)/$${ds} && \

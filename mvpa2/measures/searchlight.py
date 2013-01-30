@@ -18,6 +18,7 @@ import tempfile, os
 
 import mvpa2
 from mvpa2.base import externals, warning
+from mvpa2.base.types import is_datasetlike
 from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
 from mvpa2.base.types import is_datasetlike
 if externals.exists('h5py'):
@@ -31,7 +32,7 @@ from mvpa2.featsel.base import StaticFeatureSelection
 from mvpa2.measures.base import Measure
 from mvpa2.base.state import ConditionalAttribute
 from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
-
+from mvpa2.mappers.base import ChainMapper
 
 class BaseSearchlight(Measure):
     """Base class for searchlights.
@@ -123,13 +124,14 @@ class BaseSearchlight(Measure):
             roi_ids = self.__roi_ids
             # safeguard against stupidity
             if __debug__:
-                if max(roi_ids) >= dataset.nfeatures:
-                    raise IndexError, \
-                          "Maximal center_id found is %s whenever given " \
-                          "dataset has only %d features" \
-                          % (max(roi_ids), dataset.nfeatures)
+                qe_ids = self._queryengine.ids # known to qe
+                if not set(qe_ids).issuperset(roi_ids):
+                    raise IndexError(
+                          "Some roi_ids are not known to the query engine %s: %s"
+                          % (self._queryengine,
+                             set(roi_ids).difference(qe_ids)))
         else:
-            roi_ids = np.arange(dataset.nfeatures)
+            roi_ids = self._queryengine.ids
 
         # pass to subclass
         results = self._sl_call(dataset, roi_ids, nproc)
@@ -143,8 +145,21 @@ class BaseSearchlight(Measure):
                 # there is an additional selection step that needs to be
                 # expressed by another mapper
                 mapper = copy.copy(dataset.a.mapper)
-                mapper.append(StaticFeatureSelection(roi_ids,
-                                                     dshape=dataset.shape[1:]))
+
+                # NNO if the orignal mapper has no append (because it's not a
+                # chainmapper, for example), we make our own chainmapper.
+                #
+                # THe original code was:
+                # mapper.append(StaticFeatureSelection(roi_ids,
+                #                                     dshape=dataset.shape[1:])) 
+                feat_sel_mapper = StaticFeatureSelection(roi_ids,
+                                                     dshape=dataset.shape[1:])
+                if 'append' in dir(mapper):
+                    mapper.append(feat_sel_mapper)
+                else:
+                    mapper = ChainMapper([dataset.a.mapper,
+                                          feat_sel_mapper])
+
                 results.a['mapper'] = mapper
 
         # charge state
@@ -364,13 +379,25 @@ class Searchlight(BaseSearchlight):
         for i, f in enumerate(block):
             # retrieve the feature ids of all features in the ROI from the query
             # engine
-            roi_fids = self._queryengine[f]
+            roi_specs = self._queryengine[f]
 
             if __debug__ and  debug_slc_:
-                debug('SLC_', 'For %r query returned ids %r' % (f, roi_fids))
+                debug('SLC_', 'For %r query returned roi_specs %r'
+                      % (f, roi_specs))
+
+            if is_datasetlike(roi_specs):
+                # TODO: unittest
+                assert(len(roi_specs) == 1)
+                roi_fids = roi_specs.samples[0]
+            else:
+                roi_fids = roi_specs
 
             # slice the dataset
             roi = ds[:, roi_fids]
+
+            if is_datasetlike(roi_specs):
+                for n, v in roi_specs.fa.iteritems():
+                    roi.fa[n] = v
 
             if self.__add_center_fa:
                 # add fa to indicate ROI seed if requested
@@ -394,9 +421,9 @@ class Searchlight(BaseSearchlight):
             if __debug__:
                 debug('SLC', "Doing %i ROIs: %i (%i features) [%i%%]" \
                     % (len(block),
-                       f+1,
+                       f + 1,
                        roi.nfeatures,
-                       float(i+1)/len(block)*100,), cr=True)
+                       float(i + 1) / len(block) * 100,), cr=True)
 
         if self.results_backend == 'native':
             pass                        # nothing special
@@ -447,7 +474,8 @@ class Searchlight(BaseSearchlight):
                            fset=__set_datameasure)
     add_center_fa = property(fget=lambda self: self.__add_center_fa)
 
-@borrowkwargs(Searchlight, '__init__', exclude=['roi_ids'])
+
+@borrowkwargs(Searchlight, '__init__', exclude=['roi_ids', 'queryengine'])
 def sphere_searchlight(datameasure, radius=1, center_ids=None,
                        space='voxel_indices', **kwargs):
     """Creates a `Searchlight` to run a scalar `Measure` on

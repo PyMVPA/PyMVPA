@@ -130,7 +130,7 @@ class M1NNSearchlight(SimpleStatBaseSearchlight):
 
     knn = property(fget=lambda self: self._knn)
 
-@borrowkwargs(M1NNSearchlight, '__init__', exclude=['roi_ids'])
+@borrowkwargs(M1NNSearchlight, '__init__', exclude=['roi_ids', 'queryengine'])
 def sphere_m1nnsearchlight(knn, generator, radius=1, center_ids=None,
                           space='voxel_indices', *args, **kwargs):
     """Creates a `M1NNSearchlight` to assess :term:`cross-validation`

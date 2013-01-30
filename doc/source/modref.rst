@@ -214,9 +214,14 @@ Miscellaneous
    misc.sampleslookup
    misc.stats
    misc.support
+   misc.surfing
+   misc.surfing.queryengine
+   misc.surfing.surf_voxel_selection
+   misc.surfing.volgeom
+   misc.surfing.volsurf
+   misc.surfing.volume_mask_dict
    misc.transformers
    misc.vproperty
-
 
 Testing
 =======
@@ -261,4 +266,12 @@ Basic Plotting Utilities
    misc.io.base
    misc.io.hamster
    misc.io.meg
-
+   support.nibabel
+   support.nibabel.afni_niml_annot
+   support.nibabel.afni_niml_dset
+   support.nibabel.afni_niml
+   support.nibabel.afni_suma_1d
+   support.nibabel.afni_suma_spec
+   support.nibabel.surf_fs_asc
+   support.nibabel.surf
+   

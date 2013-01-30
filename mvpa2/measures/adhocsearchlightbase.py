@@ -134,7 +134,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
     # TODO: implement parallelization (see #67) and then uncomment
     __init__doc__exclude__ = ['nproc']
 
-    def __init__(self, generator, qe, errorfx=mean_mismatch_error,
+    def __init__(self, generator, queryengine, errorfx=mean_mismatch_error,
                  indexsum=None,
                  reuse_neighbors=False,
                  **kwargs):
@@ -145,8 +145,6 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         generator : `Generator`
           Some `Generator` to prepare partitions for cross-validation.
           It must not change "targets", thus e.g. no AttributePermutator's
-        qe : `QueryEngine`
-          Query engine which would provide neighborhood information
         errorfx : func, optional
           Functor that computes a scalar error value from the vectors of
           desired and predicted values (e.g. subclass of `ErrorFunction`).
@@ -162,7 +160,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         """
 
         # init base class first
-        BaseSearchlight.__init__(self, qe, **kwargs)
+        BaseSearchlight.__init__(self, queryengine, **kwargs)
 
         self._errorfx = errorfx
         self._generator = generator
