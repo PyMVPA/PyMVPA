@@ -22,6 +22,16 @@ from mvpa2.base.dochelpers import borrowdoc
 if __debug__:
     from mvpa2.base import debug
 
+def _assure_consistent_a(ds, oshape):
+    """If ds.shape differs from oshape, invoke set_length_check
+       for the corresponding collection
+    """
+    shape = ds.shape
+    if oshape[0] != shape[0]:
+        ds.sa.set_length_check(shape[0])
+    if oshape[1] != shape[1]:
+        ds.fa.set_length_check(shape[1])
+
 
 class Mapper(Learner):
     """Basic mapper interface definition.
@@ -113,6 +123,8 @@ class Mapper(Learner):
                            fa=self._fa_filter,
                            a=self._a_filter)
         mds.samples = msamples
+        _assure_consistent_a(mds, dataset.shape)
+
         if __debug__:
             debug('MAP_', "Return forward-mapped dataset.")
         return mds
@@ -144,6 +156,8 @@ class Mapper(Learner):
                            fa=self._fa_filter,
                            a=self._a_filter)
         mds.samples = msamples
+        _assure_consistent_a(mds, dataset.shape)
+
         return mds
 
 

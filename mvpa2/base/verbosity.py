@@ -192,7 +192,7 @@ class LevelLogger(Logger):
         if level <= self.level:
             if self.lfprev and self.indent:
                 # indent if previous line ended with newline
-                msg = self.indent*level + msg
+                msg = self.indent * level + msg
             Logger.__call__(self, msg, *args, **kwargs)
 
     level = property(fget=lambda self: self.__level, fset=_set_level)
@@ -323,7 +323,7 @@ class SetLogger(Logger):
         """
 
         if setid in self.__active:
-            if len(msg)>0 and self.__printsetid:
+            if len(msg) > 0 and self.__printsetid:
                 msg = "[%%-%ds] " % self.__maxstrlength % (setid) + msg
             Logger.__call__(self, msg, *args, **kwargs)
 
@@ -335,7 +335,7 @@ class SetLogger(Logger):
         if setid in self.__registered:
             raise ValueError, \
                   "Setid %s is already known with description '%s'" % \
-                  ( `setid`, self.__registered[setid] )
+                  (`setid`, self.__registered[setid])
         self.__registered[setid] = description
 
 
@@ -430,8 +430,8 @@ if __debug__:
             mi = __pymvpa_process__.get_memory_info()
             # in later versions of psutil mi is a named tuple.
             # but that is not the case on Debian squeeze with psutil 0.1.3
-            rss = mi[0]/1024
-            vms = mi[1]/1024
+            rss = mi[0] / 1024
+            vms = mi[1] / 1024
             return "RSS/VMS: %d/%d kB" % (rss, vms)
 
     except ImportError:
@@ -610,17 +610,17 @@ if __debug__:
 
             msg_ = ' / '.join([str(x()) for x in self.__metrics])
 
-            if len(msg_)>0:
+            if len(msg_) > 0:
                 msg_ = "{%s}" % msg_
 
             if len(msg) > 0:
                 # determine blank offset using backstacktrace
                 if self._offsetbydepth:
-                    level = len(traceback.extract_stack())-2
+                    level = len(traceback.extract_stack()) - 2
                 else:
                     level = 1
 
-                if len(msg)>250 and 'DBG' in self.active and not setid.endswith('_TB'):
+                if len(msg) > 250 and 'DBG' in self.active and not setid.endswith('_TB'):
                     tb = traceback.extract_stack(limit=2)
                     msg += "  !!!2LONG!!!. From %s" % str(tb[0])
 
@@ -642,3 +642,29 @@ if __debug__:
 
         metrics = property(fget=lambda x:x.__metrics,
                            fset=register_metric)
+
+
+if not __debug__:
+    class BlackHoleLogger(SetLogger):
+        '''A logger that does absolutely nothing - it is used as a fallback
+        so that debug(...) can still be called even if not __debug__'''
+        def __init__(self, metrics=None, offsetbydepth=True, *args, **kwargs):
+            '''Initializes the logger - ignores all input arguments'''
+
+            # do not be evil - initialize through the parent class
+            SetLogger.__init__(self, *args, **kwargs)
+
+        def __call__(self, setid, msg, *args, **kwargs):
+            pass
+
+        def register_metric(self, func):
+            pass
+
+        def register(self, setid, description):
+            pass
+
+        def set_active_from_string(self, value):
+            pass
+
+        def print_registered(self, detailed=True):
+            print "BlackHoleLogger: nothing registered "
