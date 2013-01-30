@@ -211,6 +211,7 @@ def augmentconfig(c):
 
     # see if we can get the fs_sid
     # (only if surfdir is set properly)
+    # XXX not sure if this still makes sense
     c['fs_sid'] = None
     surfdir = c.get('surfdir', None)
     if not surfdir is None and os.path.exists(surfdir):
@@ -219,7 +220,6 @@ def augmentconfig(c):
         if os.path.exists(fs_log_fn):
             with open(fs_log_fn) as f:
                 lines = f.read().split('\n')
-                print ">>>>", lines
                 for line in lines:
                     if line.startswith('SUBJECT'):
                         fs_sid = line[8:]
