@@ -386,7 +386,8 @@ def label2index(dset, label):
 
     return None
 
-def ttest(dsets, sa_labels=None, return_values='mt', set_NaN_to=0.):
+def ttest(dsets, sa_labels=None, return_values='mt',
+          set_NaN_to=0., compare_to=0.):
     '''Runs a one-sample t-test across datasets
     
     Parameters
@@ -398,6 +399,11 @@ def ttest(dsets, sa_labels=None, return_values='mt', set_NaN_to=0.):
         indices or labels of columns to compare
     return_values: str (default: 'mt')
         'm' or 't' or 'mt' to return sample mean, t-value, or both
+    set_NaN_to: float or None (default: 0.)
+        the value that NaNs in dsets replaced by. If None then NaNs are kept.
+    compare_to: float (default: 0.)
+        t-tests are compared against the null hypothesis of a mean of 
+        compare_to.
     
     Returns
     -------
@@ -433,7 +439,6 @@ def ttest(dsets, sa_labels=None, return_values='mt', set_NaN_to=0.):
             nc = len(dset_labels) if dset_labels else sh[1]
             nn = sh[0]
 
-            print "SH", nc
             data = np.zeros((nn, nc, ns), dset_data.dtype) # number of nodes, columns, subjects
 
         if 'node_indices' in dset:
@@ -452,7 +457,9 @@ def ttest(dsets, sa_labels=None, return_values='mt', set_NaN_to=0.):
 
         data[node_idxs, :, i] = dset_data[:, col_idxs]
 
-
+    # subtract the value it is compared to
+    # so that it now tests against a mean of zero
+    data -= compare_to
 
     if do_m:
         m = np.mean(data, axis=2)
