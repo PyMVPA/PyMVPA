@@ -472,6 +472,7 @@ def _load_from_cmdline(args):
     if defaults['dtype'] == 'str':
         data = [s.strip() for s in args[0].split(defaults['sep'])]
     else:
+        import numpy as np
         data = np.fromstring(args[0], **defaults)
     return data
 
