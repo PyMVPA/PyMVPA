@@ -132,11 +132,11 @@ class VoxelSelector(object):
             If 'count is None' then 'v2d_sel is None'
             If voxprops has fewer than 'count' elemens then 'v2d_sel' is None
 
-        Note
-        ----
+        Notes
+        -----
         Distances are only computed along the surface; the relative position of
         a voxel within the gray matter is ignored. Therefore, multiple voxels
-        can have the same distance from a center node. See node2voxels
+        can have the same distance from a center node. See node2voxels.
         '''
 
         if count is None:
