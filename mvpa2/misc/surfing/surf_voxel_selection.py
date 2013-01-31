@@ -71,7 +71,8 @@ class VoxelSelector(object):
             searchlights). If the type is float, then this sets the disc radius in 
             metric distance (with variable number of voxels across searchlights). 
             In the latter case, the distance unit is usually in milimeters
-            (which is the unit used for FreeSurfer surfaces).
+            (which is the unit used for FreeSurfer surfaces). 
+            If radius is zero then only the center node itself is considered.
         distance_surf: surf.Surface
             A surface to be used for distance measurement. Usually this is the
             intermediate distance constructed by taking the node-wise average of
@@ -263,7 +264,13 @@ class VoxelSelector(object):
 
         maxiter = 100
         for counter in xrange(maxiter):
-            around_n2d = dist_surf.circlearound_n2d(src, radius_mm,
+            if radius_mm == 0:
+                # only the node itself.
+                # this should work except for very strange surfaces where
+                # multiple nodes occupy exactly the same spatial location
+                around_n2d = {src:0.}
+            else:
+                around_n2d = dist_surf.circlearound_n2d(src, radius_mm,
                                                self._distance_metric)
 
             allvxdist = self.nodes2voxel_attributes(around_n2d, n2v)
