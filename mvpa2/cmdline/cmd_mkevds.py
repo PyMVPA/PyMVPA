@@ -42,6 +42,7 @@ import sys
 import argparse
 from mvpa2.base import verbose, warning, error
 from mvpa2.datasets import Dataset, vstack
+from mvpa2.mappers.fx import FxMapper
 from mvpa2.datasets.eventrelated import eventrelated_dataset, find_events
 if __debug__:
     from mvpa2.base import debug
@@ -99,6 +100,12 @@ mod_events_grp = ('options for modifying or converting events', [
         'prev' chooses the closes preceding samples, 'next' the closest
         following sample and 'closest' to absolute closest sample. Default:
         'prev'""")),
+    (('--event-compression',), dict(choices=('mean', 'median', 'min', 'max'),
+        help="""specify whether and how events spanning multiple input samples
+        shall be compressed. A number of methods can be chosen. Selecting, for
+        example, 'mean' will yield the mean of all relevant input samples for
+        an event. By default (when this option is not given) an event will
+        comprise of all concatenated input samples.""")),
 ])
 
 def setup_parser(parser):
@@ -158,9 +165,20 @@ def run(args):
         # overwrite duration
         for ev in events:
             ev['duration'] = args.duration
+    if args.event_compression is None:
+        evmap = None
+    elif args.event_compression == 'mean':
+        evmap = FxMapper('features', np.mean)
+    elif args.event_compression == 'median':
+        evmap = FxMapper('features', np.median)
+    elif args.event_compression == 'min':
+        evmap = FxMapper('features', np.min)
+    elif args.event_compression == 'max':
+        evmap = FxMapper('features', np.max)
     # convert to event-related ds
     evds = eventrelated_dataset(ds, events, time_attr=args.time_attr,
-                                match=args.match_strategy)
+                                match=args.match_strategy,
+                                event_mapper=evmap)
     # act on all attribute options
     evds = process_common_attr_opts(evds, args)
     # and store
