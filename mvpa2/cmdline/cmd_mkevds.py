@@ -88,6 +88,12 @@ mod_events_grp = ('options for modifying or converting events', [
         help="""dataset attribute with time stamps for input samples. Onset and
         duration for all events will be converted using this information. All
         values are assumed to be in the same unit.""")),
+    (('--offset',), dict(type=float, metavar='VALUE',
+        help="""fixed uniform event offset for all events. If no --time-attr
+        option is given, this value indicates the number of input samples all
+        event onsets shall be shifted. If --time-attr is given, this is treated
+        as a temporal offset that needs to be given in the same unit as the time
+        stamp attribute (see --time-attr).""")),
     (('--duration',), dict(type=float, metavar='VALUE',
         help="""fixed uniform duration for all events. If no --time-attr option
         is given, this value indicates the number of consecutive input samples
@@ -161,6 +167,10 @@ def run(args):
     if not len(events):
         raise ValueError("no events defined")
     verbose(2, 'Extracting %i events' % len(events))
+    if args.offset:
+        # shift events
+        for ev in events:
+            ev['onset'] += args.offset
     if args.duration:
         # overwrite duration
         for ev in events:
