@@ -47,7 +47,7 @@ if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
     import parser_add_common_args, parser_add_common_opt, \
-           ds2hdf5, hdf2ds, process_common_attr_opts
+           ds2hdf5, hdf2ds, process_common_attr_opts, _load_csv_table
 
 parser_args = {
     'formatter_class': argparse.RawDescriptionHelpFormatter,
@@ -61,32 +61,38 @@ define_events_grp = ('options for defining events (choose one)', [
         in the combination of attribute values. The length of an event is
         determined by the number of identical consecutive value combinations."""
         )),
-    (('--onset-samples',), dict(type=int, nargs='*', metavar='ID',
-        help="""reads a list of onset sample IDs (integer) from the command line
+    (('--onsets',), dict(type=float, nargs='*', metavar='TIME',
+        help="""reads a list of event onsets (float) from the command line
         (space-separated). If this option is given, but no arguments are
-        provided, onset sample IDs will be read from STDIN (one per line).
-        By default the onset input sample will compose the event. This can be
-        changed via --events-nsamples.""")),
-    (('--onset-times',), dict(type=float, nargs='*', metavar='TIME',
-        help="""reads a list of onset time stamps (float) from the command line
-        (space-separated). If this option is given, but no arguments are
-        provided, onset time stamps will be read from STDIN (one per line)."""
+        provided, onsets will be read from STDIN (one per line). If --time-attr
+        is also given, onsets will be interpreted as time stamps, otherwise
+        they are treated a integer ID of samples."""
         )),
+    (('--csv-events',), dict(type=str, metavar='FILENAME',
+        help="""read event information from a CSV table. A variety of dialects
+        are supported. A CSV file must contain a header line with field names
+        as a first row. The table must include an 'onset' column, and can
+        optionally include an arbitrary number of additional columns
+        (e.g. duration, target). All values are pass on to the event-related
+        samples. If '-' is given as a value the CSV table is read from STDIN.
+        """)),
     (('--fsl-ev3',), dict(type=str, nargs='+', metavar='FILENAME',
         help="""read event information from a text file in FSL's EV3 format
         (one event per line, three columns: onset, duration, intensity). One
         of more filenames can be given.""")),
 ])
 
-timebased_events_grp = ('options for time-based event definitions', [
+mod_events_grp = ('options for modifying or converting events', [
     (('--time-attr',), dict(type=str, metavar='ATTR',
         help="""dataset attribute with time stamps for input samples. Onset and
         duration for all events will be converted using this information. All
         values are assumed to be in the same unit.""")),
-    (('--event-duration',), dict(type=float, metavar='TIME',
-        help="""fixed uniform duration for all time-based event definitions.
-        Needs to be given in the same unit as the time stamp attribute (see
-        --time-attr).""")),
+    (('--duration',), dict(type=float, metavar='VALUE',
+        help="""fixed uniform duration for all events. If no --time-attr option
+        is given, this value indicates the number of consecutive input samples
+        following an onset that belong to an event. If --time-attr is given,
+        this is treated as a temporal duration that needs to be given in the
+        same unit as the time stamp attribute (see --time-attr).""")),
     (('--match-strategy',), dict(type=str, choices=('prev', 'next', 'closest'),
         default='prev',
         help="""strategy used to match time-based onsets to sample indices.
@@ -95,21 +101,12 @@ timebased_events_grp = ('options for time-based event definitions', [
         'prev'""")),
 ])
 
-samplebased_events_grp = ('options for sample-based event definitions', [
-    (('--event-nsamples',), dict(type=int, metavar='#SAMPLES',
-        help="""fixed uniform duration for all sample-based event definitions.
-        Needs to be given as number of consecutive input samples.""")),
-])
-
-
-
 def setup_parser(parser):
     from .helpers import parser_add_optgroup_from_def, \
         parser_add_common_attr_opts, single_required_hdf5output
     parser_add_common_args(parser, pos=['multidata'])
     parser_add_optgroup_from_def(parser, define_events_grp, exclusive=True)
-    parser_add_optgroup_from_def(parser, timebased_events_grp)
-    parser_add_optgroup_from_def(parser, samplebased_events_grp)
+    parser_add_optgroup_from_def(parser, mod_events_grp)
     parser_add_common_attr_opts(parser)
     parser_add_optgroup_from_def(parser, single_required_hdf5output)
 
@@ -125,15 +122,29 @@ def run(args):
     if not args.event_attrs is None:
         def_attrs = dict([(k, ds.sa[k].value) for k in args.event_attrs])
         events = find_events(**def_attrs)
-    elif not args.onset_samples is None:
-        if not len(args.onset_samples):
-            args.onset_samples = [int(i) for i in sys.stdin]
-        events = [{'onset': o, 'duration': 1} for o in args.onset_samples]
-    elif not args.onset_times is None:
-        timebased_events = True
-        if not len(args.onset_times):
-            args.onset_times = [float(i) for i in sys.stdin]
-        events = [{'onset': o} for o in args.onset_times]
+    elif not args.csv_events is None:
+        if args.csv_events == '-':
+            csv = sys.stdin.read()
+            import cStringIO
+            csv = cStringIO.StringIO(csv)
+        else:
+            csv = open(args.csv_events, 'rU')
+        csvt = _load_csv_table(csv)
+        if not len(csvt):
+            raise ValueError("no CSV columns found")
+        nevents = len(csvt[csvt.keys()[0]])
+        events = []
+        for ev in xrange(nevents):
+            events.append(dict([(k, v[ev]) for k, v in csvt.iteritems()]))
+    elif not args.onsets is None:
+        if not len(args.onsets):
+            args.onsets = [i for i in sys.stdin]
+        # time or sample-based?
+        if args.time_attr is None:
+            oconv = int
+        else:
+            oconv = float
+        events = [{'onset': oconv(o)} for o in args.onset_samples]
     elif not args.fsl_ev3 is None:
         timebased_events = True
         from mvpa2.misc.fsl import FslEV3
@@ -143,24 +154,15 @@ def run(args):
     if not len(events):
         raise ValueError("no events defined")
     verbose(2, 'Extracting %i events' % len(events))
-    if timebased_events:
-        if args.time_attr is None:
-            raise ValueError("a dataset attribute with sample time stamps"
-                             " needs to be specified")
-        if args.event_duration:
-            # overwrite duration
-            for ev in events:
-                ev['duration'] = args.event_duration
-    else:
-        if args.event_nsamples:
-            # overwrite duration
-            for ev in events:
-                ev['duration'] = args.event_nsamples
+    if args.duration:
+        # overwrite duration
+        for ev in events:
+            ev['duration'] = args.duration
     # convert to event-related ds
     evds = eventrelated_dataset(ds, events, time_attr=args.time_attr,
                                 match=args.match_strategy)
     # act on all attribute options
     evds = process_common_attr_opts(evds, args)
     # and store
-    ds2hdf5(ds, args.output, compression=args.hdf5_compression)
+    ds2hdf5(evds, args.output, compression=args.hdf5_compression)
     return evds

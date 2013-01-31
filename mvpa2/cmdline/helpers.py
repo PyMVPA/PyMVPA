@@ -482,6 +482,46 @@ def _load_from_npy(args):
     data = np.load(args[0], **defaults)
     return data
 
+def _load_csv_table(f):
+    import csv
+    import numpy as np
+    sniffer = csv.Sniffer()
+    try:
+        dialect = sniffer.sniff(f.read(1024))
+    except:
+        # maybe a sloppy header with a trailing delimiter?
+        f.seek(0)
+        sample = [f.readline() for s in range(3)]
+        sample[0] = sample[0].strip()
+        dialect = sniffer.sniff('\n'.join(sample))
+    f.seek(0)
+    reader = csv.DictReader(f, dialect=dialect)
+    table = dict(zip(reader.fieldnames,
+                       [list() for i in xrange(len(reader.fieldnames))]))
+    for row in reader:
+        for k, v in row.iteritems():
+            table[k].append(v)
+    del_me = []
+    for k, v in table.iteritems():
+        if not len(k) and len(v) and v[0] is None:
+            # this is an artifact of a trailing delimiter
+            del_me.append(k)
+        try:
+            table[k] = np.array(v, dtype=int)
+        except ValueError:
+            try:
+                table[k] = np.array(v, dtype=float)
+            except ValueError:
+                # we tried ...
+                pass
+        except TypeError:
+            # tolerate any unexpected types and keep them as is
+            pass
+    for d in del_me:
+        # delete artifacts
+        del table[d]
+    return table
+
 ########################
 #
 # common arguments
