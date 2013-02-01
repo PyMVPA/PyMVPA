@@ -110,24 +110,15 @@ def run(args):
     # What?
     if args.samples:
         dumpy = ds.samples
-    elif not args.sa is None:
-        try:
-            dumpy = ds.sa[args.sa].value
-        except KeyError:
-            raise ValueError("unknown attribute '%s', known are %s)"
-                             % (args.sa, ds.sa.keys()))
-    elif not args.fa is None:
-        try:
-            dumpy = ds.fa[args.fa].value
-        except KeyError:
-            raise ValueError("unknown attribute '%s', known are %s)"
-                             % (args.fa, ds.fa.keys()))
-    elif not args.da is None:
-        try:
-            dumpy = ds.a[args.da].value
-        except KeyError:
-            raise ValueError("unknown attribute '%s', known are %s)"
-                             % (args.da, ds.a.keys()))
+    elif not ((args.sa is None) and (args.fa is None) and (args.da is None)):
+        for attr, col in ((args.sa, ds.sa), (args.fa, ds.fa), (args.da, ds.a)):
+            if attr is None:
+                continue
+            try:
+                dumpy = col[attr].value
+            except KeyError:
+                raise ValueError("unknown attribute '%s', known are %s)"
+                                 % (attr, col.keys()))
     else:
         raise ValueError('no dataset component chosen')
     # How?
