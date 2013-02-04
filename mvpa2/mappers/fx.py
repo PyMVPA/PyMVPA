@@ -143,16 +143,8 @@ class FxMapper(Mapper):
     def _forward_dataset(self, ds):
         if self.__uattrs is None:
             mdata, sattrs = self._forward_dataset_full(ds)
-            single_attr = True
-            # yoh: Had another tentative solution but nope...  I guess
-            #      logic of wrapping into list should go into _full
-            #      and _grouped
-            #(len(mdata.shape) != len(ds.shape) \
-            #or
-            #(mdata.shape != ds.shape and mdata.shape[0] == 1))
         else:
             mdata, sattrs = self._forward_dataset_grouped(ds)
-            single_attr = False
 
         samples = np.atleast_2d(mdata)
 
@@ -167,24 +159,29 @@ class FxMapper(Mapper):
         if self.__axis == 'samples':
             out = ds.copy(deep=False, sa=[])
             col = out.sa
+            incol = ds.sa
             col.set_length_check(samples.shape[0])
         else:
             out = ds.copy(deep=False, fa=[])
             col = out.fa
+            incol = ds.fa
             col.set_length_check(samples.shape[1])
         # assign samples to do COW
         out.samples = samples
 
         for attr in sattrs:
             a = sattrs[attr]
-            # need to handle single literal attributes
-            if single_attr:
-                col[attr] = [a]
-            else:
-                # TODO -- here might puke if e.g it is a list where some items
-                # are empty lists... I guess just wrap in try/except and
-                # do dtype=object if catch
-                col[attr] = np.atleast_1d(a)
+            # TODO -- here might puke if e.g it is a list where some items
+            # are empty lists... I guess just wrap in try/except and
+            # do dtype=object if catch
+            a = np.atleast_1d(a)
+            # make sure we do not inflate the number of dimensions for no reason
+            # this could happen if there was only one unique value for an
+            # attribute and the default 'uniquemerge2literal' attrfx was given
+            if len(a.shape) > 1 and a.shape[-1] == 1 and attr in incol \
+                    and len(a.shape) > len(incol[attr].value.shape):
+                a.shape = a.shape[:-1]
+            col[attr] = a
 
         return out
 
@@ -412,23 +409,44 @@ def _uniquemerge2literal(attrs):
 
     Returns
     -------
-    Non-sequence arguments are passed as is. Sequences are converted into
-    a single item representation (see above) and returned.  None is returned
-    in case of an empty sequence.
+    Non-sequence arguments are passed as is, otherwise a sequences of unique
+    items is. None is returned in case of an empty sequence.
     """
     try:
-        unq = np.unique(attrs)
+        if isinstance(attrs[0], basestring):
+            # do not try to disassemble sequences of strings
+            raise TypeError
+        unq = [np.array(u) for u in set([tuple(p) for p in attrs])]
     except TypeError:
-        # so it is not an iterable -- return the original
-        return attrs
+        # either no 2d-iterable...
+        try:
+            unq = np.unique(attrs)
+        except TypeError:
+            # or no iterable at all -- return the original
+            return attrs
+
     lunq = len(unq)
     if lunq > 1:
-        return '+'.join([str(l) for l in unq])
-    elif lunq:                          # first entry (non
-        return unq[0]
+        return ['+'.join([str(l) for l in unq])]
+    elif lunq:
+        return unq
     else:
         return None
 
+def merge2first(attrs):
+    """Compress a sequence by discard all but the first element
+
+    This function can be useful as 'attrfx' argument for an FxMapper.
+
+    Parameters
+    ----------
+    attrs : sequence, arbitrary
+
+    Returns
+    -------
+    First element of the input sequence.
+    """
+    return attrs[0]
 
 def _orthogonal_permutations(a_dict):
     """
