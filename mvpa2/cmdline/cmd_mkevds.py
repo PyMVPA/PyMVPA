@@ -42,7 +42,7 @@ import sys
 import argparse
 from mvpa2.base import verbose, warning, error
 from mvpa2.datasets import Dataset, vstack
-from mvpa2.mappers.fx import FxMapper
+from mvpa2.mappers.fx import FxMapper, merge2first
 from mvpa2.datasets.eventrelated import eventrelated_dataset, find_events
 if __debug__:
     from mvpa2.base import debug
@@ -157,7 +157,7 @@ def run(args):
             oconv = int
         else:
             oconv = float
-        events = [{'onset': oconv(o)} for o in args.onset_samples]
+        events = [{'onset': oconv(o)} for o in args.onsets]
     elif not args.fsl_ev3 is None:
         timebased_events = True
         from mvpa2.misc.fsl import FslEV3
@@ -178,13 +178,13 @@ def run(args):
     if args.event_compression is None:
         evmap = None
     elif args.event_compression == 'mean':
-        evmap = FxMapper('features', np.mean)
+        evmap = FxMapper('features', np.mean, attrfx=merge2first)
     elif args.event_compression == 'median':
-        evmap = FxMapper('features', np.median)
+        evmap = FxMapper('features', np.median, attrfx=merge2first)
     elif args.event_compression == 'min':
-        evmap = FxMapper('features', np.min)
+        evmap = FxMapper('features', np.min, attrfx=merge2first)
     elif args.event_compression == 'max':
-        evmap = FxMapper('features', np.max)
+        evmap = FxMapper('features', np.max, attrfx=merge2first)
     # convert to event-related ds
     evds = eventrelated_dataset(ds, events, time_attr=args.time_attr,
                                 match=args.match_strategy,
