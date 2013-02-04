@@ -185,7 +185,8 @@ def _pvalue(x, cdf_func, rcdf_func, tail, return_tails=False, name=None):
     #       since that is where x->pvalues relation can be assured
     x_nans = np.isnan(x)
     if np.any(x_nans):
-        if x.shape == pvalues.shape:
+        if (isinstance(x, np.ndarray) and x.shape == pvalues.shape) \
+          or (pvalues.ndim == 1 and len(x) == len(pvalues)):
             pvalues[x_nans] = 1.0
         else:
             raise ValueError(
