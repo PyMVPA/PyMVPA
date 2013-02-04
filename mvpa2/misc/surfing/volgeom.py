@@ -803,6 +803,7 @@ def from_any(s, mask_volume=None):
                 # set the affine matrix with origin (0,0,0)
                 affine = np.zeros((4, 4))
                 affine[0, 0], affine[1, 1], affine[2, 2] = s.a.voxel_eldim
+                affine[:2, -1] = -.5 * np.diag(affine)[:2]
                 affine[3, 3] = 1
 
             mask = None
