@@ -311,24 +311,43 @@ def script2obj(filepath):
         return locals['obj']
 
 def arg2partitioner(arg):
-    arg = arg.lower()
+    # check for an optional 'attr' argument
+    args = arg.split(':')
+    arg = args[0]
+    if len(args) == 1:
+        chunk_attr = 'chunks'
+    else:
+        chunk_attr = ':'.join(args[1:])
+    arglower = arg.lower()
     import mvpa2.generators.partition as part
-    if arg == 'oddeven':
-        return part.OddEvenPartitioner()
-    elif arg == 'half':
-        return part.HalfPartitioner()
-    elif arg.startswith('group-'):
-        ngroups = int(arg[6:])
-        return part.NGroupPartitioner(ngroups)
-    elif arg.startswith('n-'):
-        nfolds = int(arg[2:])
-        return part.NFoldPartitioner(nfolds)
+    if arglower == 'oddeven':
+        return part.OddEvenPartitioner(attr=chunk_attr)
+    elif arglower == 'half':
+        return part.HalfPartitioner(attr=chunk_attr)
+    elif arglower.startswith('group-'):
+        ngroups = int(arglower[6:])
+        return part.NGroupPartitioner(ngroups, attr=chunk_attr)
+    elif arglower.startswith('n-'):
+        nfolds = int(arglower[2:])
+        return part.NFoldPartitioner(nfolds, attr=chunk_attr)
     elif os.path.isfile(arg) and arg.endswith('.py'):
         # arg is a script filepath
         return script2obj(arg)
     else:
         raise argparse.ArgumentTypeError(
             "'%s' does not describe a supported partitioner type" % arg)
+
+def arg2errorfx(arg):
+    import os
+    import mvpa2.misc.errorfx as efx
+    if hasattr(efx, arg):
+        return getattr(efx, arg)
+    elif os.path.isfile(arg) and arg.endswith('.py'):
+        # arg is a script filepath
+        return script2obj(arg)
+    else:
+        raise argparse.ArgumentTypeError(
+            "'%s' does not describe a supported error function" % arg)
 
 def arg2hdf5compression(arg):
     try:
@@ -586,26 +605,39 @@ output_prefix = (
     }
 )
 
-classifier = (
-    'classifier', ('--clf',),
+learner_opt = (
+    'learner', ('--learner',),
     {'type': arg2learner,
-     'help': """select a classifier via its description in the learner
-             warehouse (see 'info' command for a listing), a colon-separated
-             list of capabilities, or by a file path to a Python script that
-             creates a classifier instance (advanced)."""
+     'help': """select a learner (trainable node) via its description in the
+             learner warehouse (see 'info' command for a listing), a
+             colon-separated list of capabilities, or by a file path to a Python
+             script that creates a classifier instance (advanced)."""
     }
 )
 
-partitioner = (
+learner_space_opt = (
+    'learnerspace', ('--learner-space',),
+    {'type': str, 'default': 'targets',
+     'help': """name of a sample attribute defining the variable of interest
+             that is to be learned by a learner. By default this is an
+             attribute named 'targets'."""
+    }
+)
+
+partitioner_opt = (
     'partitioner', ('--partitioner',),
     {'type': arg2partitioner,
      'help': """select a data folding scheme. Supported arguments are: 'half'
              for split-half, partitioning, 'oddeven' for partitioning into odd
              and even chunks, 'group-X' where X can be any positive integer for
              partitioning in X groups, 'n-X' where X can be any positive
-             integer for leave-X-chunks out partitioning, or a file path to a
-             Python script that creates a custom partitioner instance
-             (advanced)."""
+             integer for leave-X-chunks out partitioning. By default
+             partitioners operate on dataset chunks that are defined by a
+             'chunks' sample attribute. The name of the "chunking" attribute
+             can be changed by appending a colon and the name of the attribute
+             (e.g. 'oddeven:run'). optionally an argument to this option can
+             also be a file path to a Python script that creates a custom
+             partitioner instance (advanced)."""
     }
 )
 
