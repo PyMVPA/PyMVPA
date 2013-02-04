@@ -89,7 +89,9 @@ class SearchlightTests(unittest.TestCase):
     @sweepargs(lrn_sllrn_SL_partitioner=
                [(GNB(common_variance=v, descr='GNB'), None,
                  sphere_gnbsearchlight,
-                 NFoldPartitioner(cvtype=1))
+                 NFoldPartitioner(cvtype=1),
+                 0.                       # correction for the error range
+                 )
                  for v in (True, False)] +
                # Mean 1 NN searchlights
                [(ChainMapper(
@@ -97,14 +99,16 @@ class SearchlightTests(unittest.TestCase):
                     kNN(1)], space='targets', descr='M1NN'),
                  kNN(1),
                  sphere_m1nnsearchlight,
-                 NFoldPartitioner(0.5, selection_strategy='random', count=20)),
+                 NFoldPartitioner(0.5, selection_strategy='random', count=20),
+                 0.05),
                 # the same but with NFold(1) partitioner since it still should work
                 (ChainMapper(
                    [mean_group_sample(['targets', 'partitions']),
                     kNN(1)], space='targets', descr='NF-M1NN'),
                  kNN(1),
                  sphere_m1nnsearchlight,
-                 NFoldPartitioner(1)),
+                 NFoldPartitioner(1),
+                 0.05),
                 ]
                )
     @sweepargs(do_roi=(False, True))
@@ -116,7 +120,7 @@ class SearchlightTests(unittest.TestCase):
         Test of and adhoc searchlight anyways requires a ground-truth
         comparison to the generic version, so we are doing sweepargs here
         """
-        lrn, sllrn, SL, partitioner = lrn_sllrn_SL_partitioner
+        lrn, sllrn, SL, partitioner, correction = lrn_sllrn_SL_partitioner
         ## if results_backend == 'hdf5' and not common_variance:
         ##     # no need for full combination of all possible arguments here
         ##     return
@@ -210,9 +214,12 @@ class SearchlightTests(unittest.TestCase):
             # makes sense only if number of features was big enough
             # to get some stable estimate of mean
             if not do_roi or nroi > 20:
-                # was for binary, somewhat labile with M1NN
-                #self.assertTrue(0.4 < results.samples.mean() < 0.6)
-                self.assertTrue(0.68 < results.samples.mean() < 0.82)
+                # correction here is for M1NN class which has wider distribution
+                self.assertTrue(
+                    0.68 - correction < results.samples.mean() < 0.84 + correction,
+                    msg="Out of range mean result: "
+                    "lrn: %s  sllrn: %s  NROI: %d  MEAN: %.3f"
+                    % (lrn, sllrn, nroi, results.samples.mean(),))
 
             mean_errors = results.samples.mean(axis=0)
             # that we do get different errors ;)
