@@ -178,7 +178,7 @@ def augmentconfig(c):
                 else:
                     c['expvol'] = c['anatvol']
                     c['isepi'] = False
-                    del(config['anatvol'])
+                    del(c['anatvol'])
             else:
                 if hasepivol:
                     c['expvol'] = c['epivol']
@@ -209,6 +209,27 @@ def augmentconfig(c):
         yesno2bool(c, 'isepi')
         yesno2bool(c, 'AddEdge')
 
+    # see if we can get the fs_sid
+    # (only if surfdir is set properly)
+    # XXX not sure if this still makes sense
+    c['fs_sid'] = None
+    surfdir = c.get('surfdir', None)
+    if not surfdir is None and os.path.exists(surfdir):
+        fs_log_fn = os.path.join(surfdir, '..', 'scripts', 'recon-all.done')
+        print "Looking in %s" % fs_log_fn
+        if os.path.exists(fs_log_fn):
+            with open(fs_log_fn) as f:
+                lines = f.read().split('\n')
+                for line in lines:
+                    if line.startswith('SUBJECT'):
+                        fs_sid = line[8:]
+                        c['fs_sid'] = fs_sid
+                        print "Found Freesurfer sid %s" % fs_sid
+                        break
+
+    if c['fs_sid'] is None:
+        c['fs_sid'] = sid
+        print "Unable to find proper Freesurfer sid"
 
     pathvars = ['anatvol', 'expvol', 'epivol', 'refdir', 'surfdir']
     for pathvar in pathvars:
@@ -237,12 +258,12 @@ def run_toafni(config, env):
 
     if sid is None:
         raise ValueError("Subject id is not set, cannot continue")
+    fs_sid = config['fs_sid']
 
     # files that should exist if Make_Spec_FS was run successfully
     checkfns = ['brainmask.nii',
               'T1.nii',
-              'aseg.nii',
-              '%s_SurfVol+orig.HEAD' % sid]
+              'aseg.nii']
 
     filesexist = all([os.path.exists('%s/%s' % (sd, fn)) for fn in checkfns])
 
@@ -339,13 +360,17 @@ def run_skullstrip(config, env):
 
     sumadir = config['sumadir']
     sid = config['sid']
+    fs_sid = config['fs_sid']
+
+    if not sid:
+        raise ValueError("Subject id is not set, cannot continue")
 
     # process the surfvol anatomical.
     # because it's already skull stripped by freesurfer
     # simply copy it over; rename brain.nii to surfvol_ss
     surfvol_srcs = ['%s/%s' % (sumadir, fn)
                   for fn in ['brain.nii',
-                             '%s_SurfVol+orig.HEAD' % sid]]
+                             'T1.nii']]
 
     surfvol_trgs = ['%s/%s' % (refdir, fn)
                   for fn in ['%s_SurfVol_ss+orig.HEAD' % sid,
@@ -470,7 +495,11 @@ def run_alignment(config, env):
               # not respect the corners of the volume (as of April 2012)
 
     if overwrite or not os.path.exists(svalignedfn):
-        surfvolfn = '%s/%s_SurfVol+orig' % (config['sumadir'], config['sid'])
+        #if not config['fs_sid']:
+        #    raise ValueError("Don't have a freesurfer subject id - cannot continue")
+
+        #surfvolfn = '%s/%s_SurfVol+orig' % (config['sumadir'], config['fs_sid'])
+        surfvolfn = '%s/T1.nii' % config['sumadir']
         cmds.append('cd "%s";3dWarp -overwrite -newgrid %f -matvec_out2in `cat_matvec -MATRIX %s` -prefix ./%s %s' %
                     (refdir, newgrid, matrixfn, alprefix, surfvolfn))
     else:
