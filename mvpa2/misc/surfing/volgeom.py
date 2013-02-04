@@ -793,9 +793,17 @@ def from_any(s, mask_volume=None):
         try:
             # see if s behaves like a Dataset with image header
             hdr = s.a.imghdr
+            try:
+                shape = hdr.get_data_shape()
+                affine = hdr.get_best_affine()
+            except AttributeError:
+                # maybe there are shape and voxel dimensions
+                shape = s.a.voxel_dim
 
-            shape = hdr.get_data_shape()
-            affine = hdr.get_best_affine()
+                # set the affine matrix with origin (0,0,0)
+                affine = np.zeros((4, 4))
+                affine[0, 0], affine[1, 1], affine[2, 2] = s.a.voxel_eldim
+                affine[3, 3] = 1
 
             mask = None
             if isinstance(mask_volume, int):
@@ -897,3 +905,6 @@ def distance(p, q, r=2):
         ds[i, :] = dist_func(pi, q, r)
 
     return ds
+
+
+
