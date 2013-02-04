@@ -784,13 +784,17 @@ def all_equal(x, y):
     Returns
     -------
     eq: bool
-        True iff x and y are equal. 
+        True iff x and y are equal. If in the comparison of x and y
+        and exception is thrown then False is returned 
         This comparison is performed element-wise, if applicable, and 
         in that case True is only returned if all elements are equal
     '''
 
     # an equality comparison that also works on numpy arrays
-    eq = x == y
+    try:
+        eq = x == y
+    except:
+        return False
 
     # eq could be a numpy array or similar. See if it has a length
     try:
