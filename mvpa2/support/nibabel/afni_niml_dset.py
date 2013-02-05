@@ -459,14 +459,12 @@ def ttest(dsets, sa_labels=None, return_values='mt',
 
     # subtract the value it is compared to
     # so that it now tests against a mean of zero
-    data -= compare_to
-
     if do_m:
         m = np.mean(data, axis=2)
 
     if do_t:
         from scipy import stats
-        t = stats.ttest_1samp(data, 0., axis=2)[0]
+        t = stats.ttest_1samp(data - compare_to, 0., axis=2)[0]
 
     if do_m and do_t:
         r = np.zeros((nn, 2 * nc), dtype=m.dtype)
