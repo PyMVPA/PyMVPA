@@ -29,7 +29,7 @@ if not pymvpa_version:
 
 def _license_info():
     return """\
-Copyright (c) 2006-2012 PyMVPA developers
+Copyright (c) 2006-2013 PyMVPA developers
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -146,11 +146,11 @@ for cmd in sorted([c for c in dir(mvcmd) if c.startswith('cmd_')]):
 # create command summary
 cmd_summary = []
 for cd in cmd_short_description:
-    cmd_summary.append('%s\n%s\n\n' \
+    cmd_summary.append('%s %s\n' \
                        % (cd[0],
                           textwrap.fill(cd[1], 75,
-                              initial_indent=' ' * 4,
-                              subsequent_indent=' ' * 4)))
+                              initial_indent=' ' * max(0, 12 - len(cd[0])),
+                              subsequent_indent=' ' * 16)))
 parser.description = '%s\n%s\n\n%s' \
         % (parser.description,
            '\n'.join(cmd_summary),
