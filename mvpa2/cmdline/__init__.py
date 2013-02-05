@@ -18,4 +18,5 @@ import cmd_info
 import cmd_mkds
 import cmd_mkevds
 import cmd_preproc
+import cmd_pytest
 import cmd_select
