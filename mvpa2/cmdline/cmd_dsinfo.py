@@ -33,6 +33,19 @@ parser_args = {
     'formatter_class': argparse.RawDescriptionHelpFormatter,
 }
 
+def arg2transform(args):
+    args = args.split(':')
+    if not len(args) == 2:
+        raise ValueError("--numpy-xfm needs exactly two arguments")
+    if not args[0] in ('samples', 'features'):
+        raise ValueError("transformation axis must be 'samples' or 'features' (was: %s)"
+                         % args[0])
+    axis = args[0]
+    if not hasattr(np, args[1]):
+        raise ValueError("the NumPy package does not have a '%s' function" % args[1])
+    fx = getattr(np, args[1])
+    return fx, axis
+
 def _limit_lines(string, maxlines):
     lines = string.split('\n')
     truncated = '\n'.join(lines[:maxlines])
@@ -98,6 +111,14 @@ info_fx = {
         'sample_histogram' : sample_histogram,
 }
 
+xfm_grp = ('options for transforming dataset content before plotting', [
+    (('--numpy-xfm',), dict(type=arg2transform, metavar='SPEC',
+        help="""apply a Numpy function along a given axis of the samples before
+        generating the dataset info summary. For example, 'samples:std' will
+        apply the 'std' function along the samples axis, i.e. compute a vector
+        of standard deviations for all features in a dataset""")),
+])
+
 output_grp = ('options for output formating', [
     (('--style',), dict(type=str, choices=info_fx.keys(),
         default='content_summary', metavar='MODE',
@@ -121,6 +142,7 @@ output_grp = ('options for output formating', [
 
 def setup_parser(parser):
     parser_add_common_args(parser, pos=['multidata'])
+    parser_add_optgroup_from_def(parser, xfm_grp)
     parser_add_optgroup_from_def(parser, output_grp)
 
 
@@ -129,4 +151,10 @@ def run(args):
     verbose(3, 'Loaded %i dataset(s)' % len(dss))
     ds = vstack(dss)
     verbose(3, 'Concatenation yielded %i samples with %i features' % ds.shape)
+    if not args.numpy_xfm is None:
+        from mvpa2.mappers.fx import FxMapper
+        print args.numpy_xfm
+        fx, axis = args.numpy_xfm
+        mapper = FxMapper(axis, fx)
+        ds = ds.get_mapped(mapper)
     info_fx[args.style](ds, args)
