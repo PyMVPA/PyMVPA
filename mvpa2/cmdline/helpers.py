@@ -792,13 +792,8 @@ single_required_hdf5output = ('output options', [
     hdf5compression[1:],
 ])
 
-cv_learner_opt = copy.deepcopy(learner_opt)
-cv_learner_opt[2]['required'] = True
-cv_partitioner_opt = copy.deepcopy(partitioner_opt)
-cv_partitioner_opt[2]['required'] = True
-
 crossvalidation_opts_grp = ('options for cross-validation setup', [
-    cv_learner_opt[1:], learner_space_opt[1:], cv_partitioner_opt[1:],
+    learner_opt[1:], learner_space_opt[1:], partitioner_opt[1:],
     (('--errorfx',), dict(type=arg2errorfx,
         help="""error function to be applied to the targets and predictions
         of each cross-validation data fold. This can either be a name of

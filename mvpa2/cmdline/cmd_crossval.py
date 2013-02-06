@@ -50,6 +50,9 @@ def setup_parser(parser):
     from .helpers import parser_add_optgroup_from_def, \
         parser_add_common_attr_opts, single_required_hdf5output
     parser_add_common_args(parser, pos=['multidata'])
+    # make learner and partitioner options required
+    for i in (0,2):
+        crossvalidation_opts_grp[1][i][1]['required'] = True
     parser_add_optgroup_from_def(parser, crossvalidation_opts_grp)
     parser_add_optgroup_from_def(parser, single_required_hdf5output)
 
