@@ -59,7 +59,6 @@ class HelpAction(argparse.Action):
         sys.exit(0)
 
 def parser_add_common_args(parser, pos=None, opt=None, **kwargs):
-    from mvpa2.cmdline import common_args
     for i, args in enumerate((pos, opt)):
         if args is None:
             continue
@@ -73,7 +72,6 @@ def parser_add_common_args(parser, pos=None, opt=None, **kwargs):
                 parser.add_argument(arg_tmpl[i], **arg_kwargs)
 
 def parser_add_common_opt(parser, opt, names=None, **kwargs):
-    #from mvpa2.cmdline import common_args
     opt_tmpl = globals()[opt]
     opt_kwargs = opt_tmpl[2].copy()
     opt_kwargs.update(kwargs)
