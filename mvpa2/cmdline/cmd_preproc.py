@@ -44,7 +44,8 @@ from mvpa2.datasets import Dataset
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
-        import parser_add_common_args, parser_add_common_opt, args2datasets
+        import parser_add_common_args, parser_add_common_opt, args2datasets, \
+               ds2hdf5
 
 parser_args = {
     'formatter_class': argparse.RawDescriptionHelpFormatter,
@@ -99,6 +100,11 @@ common_args = ('common options for all preprocessing', [
                --detrend-chunks). This global setting can be overwritten by
                additionally specifying the corresponding individual "chunk"
                options.""")),
+    ('--strip-invariant-features',
+     dict(action='store_true',
+          help="""After all pre-processing steps are done, strip all invariant
+          features from the dataset.""")),
+
 ])
 
 def setup_parser(parser):
@@ -139,11 +145,10 @@ def run(args):
         zscore(ds, chunks_attr=args.zscore_chunks,
                params=args.zscore_params)
         verbose(3, "Dataset summary %s" % (ds.summary()))
+    # invariants?
+    if not args.strip_invariant_features is None:
+        from mvpa2.datasets.miscfx import remove_invariant_features
+        ds = remove_invariant_features(ds)
     # and store
-    outfilename = args.output
-    if not outfilename.endswith('.hdf5'):
-        outfilename += '.hdf5'
-    verbose(1, "Save dataset to '%s'" % outfilename)
-    h5save(outfilename, ds, mkdir=True, compression=args.hdf5_compression)
-
+    ds2hdf5(ds, args.output, compression=args.hdf5_compression)
     return ds
