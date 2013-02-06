@@ -17,7 +17,9 @@ import tempfile
 
 from mvpa2.testing import *
 
-from mvpa2.support.nibabel import afni_niml, afni_niml_dset
+from mvpa2.support.nibabel import afni_niml, afni_niml_dset, afni_niml_roi
+from mvpa2.datasets import niml_dset
+from mvpa2.datasets.base import Dataset
 
 class SurfTests(unittest.TestCase):
     """Test for AFNI I/O together with surface-based stuff
@@ -216,6 +218,184 @@ class SurfTests(unittest.TestCase):
                             eps_dec = 4
                             if mode != 'sparse2full' or k == 'data':
                                 assert_array_almost_equal(v, v2, eps_dec)
+
+    def test_niml_dset(self):
+        d = dict(data=np.random.normal(size=(10, 2)),
+              node_indices=np.arange(10),
+              stats=['none', 'Tstat(2)'],
+              labels=['foo', 'bar'])
+        a = niml_dset.from_niml_dset(d)
+        b = niml_dset.to_niml_dset(a)
+
+        _, fn = tempfile.mkstemp('.niml.dset', 'dset')
+
+        afni_niml_dset.write(fn, b)
+        bb = afni_niml_dset.read(fn)
+        cc = niml_dset.from_niml_dset(bb)
+
+        os.remove(fn)
+
+        for dset in (a, cc):
+            assert_equal(list(dset.sa['labels']), d['labels'])
+            assert_equal(list(dset.sa['stats']), d['stats'])
+            assert_array_equal(np.asarray(dset.fa['node_indices']).ravel(),
+                               d['node_indices'])
+
+            eps_dec = 4
+            assert_array_almost_equal(dset.samples, d['data'].transpose(),
+                                                                    eps_dec)
+
+        # some more tests to ensure that the order of elements is ok
+        # (row first or column first)
+
+        d = np.arange(10).reshape((5, -1)) + .5
+        ds = Dataset(d)
+
+        fn = _, fn = tempfile.mkstemp('.niml.dset', 'dset')
+        writers = [niml_dset.write, afni_niml_dset.write]
+        for i, writer in enumerate(writers):
+            for form in ('text', 'binary', 'base64'):
+                if i == 0:
+                    writer(fn, ds, form=form)
+                else:
+                    writer(fn, dict(data=d.transpose()), form=form)
+
+                x = afni_niml_dset.read(fn)
+                assert_array_equal(x['data'], d.transpose())
+
+
+
+    def test_niml_dset_voxsel(self):
+        if not externals.exists('nibabel'):
+            return
+
+        # This is actually a bit of an integration test.
+        # It tests storing and retrieving searchlight results.
+        # Imports are inline here so that it does not mess up the header
+        # and makes the other unit tests more modular
+        # XXX put this in a separate file?
+        from mvpa2.misc.surfing import volgeom, surf_voxel_selection, queryengine
+        from mvpa2.measures.searchlight import Searchlight
+        from mvpa2.support.nibabel import surf
+        from mvpa2.measures.base import Measure
+        from mvpa2.datasets.mri import fmri_dataset
+
+        class _Voxel_Count_Measure(Measure):
+            # used to check voxel selection results
+            is_trained = True
+            def __init__(self, dtype, **kwargs):
+                Measure.__init__(self, **kwargs)
+                self.dtype = dtype
+
+            def _call(self, dset):
+                return self.dtype(dset.nfeatures)
+
+        sh = (20, 20, 20)
+        vg = volgeom.VolGeom(sh, np.identity(4))
+
+        density = 20
+
+        outer = surf.generate_sphere(density) * 10. + 5
+        inner = surf.generate_sphere(density) * 5. + 5
+
+        intermediate = outer * .5 + inner * .5
+        xyz = intermediate.vertices
+
+        radius = 50
+
+        sel = surf_voxel_selection.run_voxel_selection(radius, vg, inner, outer)
+        qe = queryengine.SurfaceVerticesQueryEngine(sel)
+
+        for dtype in (int, float):
+            sl = Searchlight(_Voxel_Count_Measure(dtype), queryengine=qe)
+
+            ds = fmri_dataset(vg.get_empty_nifti_image(1))
+            r = sl(ds)
+
+            _, fn = tempfile.mkstemp('.niml.dset', 'dset')
+            niml_dset.write(fn, r)
+            rr = niml_dset.read(fn)
+
+            os.remove(fn)
+
+            assert_array_equal(r.samples, rr.samples)
+
+
+    def test_afni_niml_roi(self):
+        payload = """# <Node_ROI
+#  ni_type = "SUMA_NIML_ROI_DATUM"
+#  ni_dimen = "5"
+#  self_idcode = "XYZ_QlRYtdSyHmNr39qZWxD0wQ"
+#  domain_parent_idcode = "XYZ_V_Ug6er2LCNoLy_OzxPsZg"
+#  Parent_side = "no_side"
+#  Label = "myroi"
+#  iLabel = "12"
+#  Type = "2"
+#  ColPlaneName = "ROI.-.CoMminfl"
+#  FillColor = "0.525490 0.043137 0.231373 1.000000"
+#  EdgeColor = "0.000000 0.000000 1.000000 1.000000"
+#  EdgeThickness = "2"
+# >
+ 1 4 1 42946
+ 1 4 10 42946 42947 43062 43176 43289 43401 43512 43513 43623 43732
+ 1 4 8 43732 43623 43514 43404 43293 43181 43068 42954
+ 3 4 9 42954 42953 42952 42951 42950 42949 42948 42947 42946
+ 4 1 14 43063 43064 43065 43066 43067 43177 43178 43179 43180 43290 43291 43292 43402 43403
+# </Node_ROI>"""
+
+        _, fn = tempfile.mkstemp('.niml.roi', 'dset')
+
+        with open(fn, 'w') as f:
+            f.write(payload)
+
+        rois = afni_niml_roi.read(fn)
+        os.remove(fn)
+
+        assert_equal(len(rois), 1)
+        roi = rois[0]
+
+        expected_keys = ['ni_type', 'ColPlaneName', 'iLabel', 'Parent_side',
+                       'EdgeColor', 'Label', 'edges', 'ni_dimen',
+                       'self_idcode', 'EdgeThickness', 'Type', 'areas',
+                       'domain_parent_idcode', 'FillColor']
+
+        assert_equal(set(roi.keys()), set(expected_keys))
+
+        assert_equal(roi['Label'], 'myroi')
+        assert_equal(roi['iLabel'], 12)
+
+        # check edges
+        arr = np.asarray
+        expected_edges = [arr([42946]),
+                          arr([42946, 42947, 43062, 43176, 43289, 43401,
+                               43512, 43513, 43623, 43732]),
+                          arr([43732, 43623, 43514, 43404, 43293, 43181,
+                               43068, 42954]),
+                          arr([42954, 42953, 42952, 42951, 42950, 42949,
+                               42948, 42947, 42946])]
+
+        for i in xrange(4):
+            assert_array_equal(roi['edges'][i], expected_edges[i])
+
+
+        # check nodes
+        expected_nodes = [arr([43063, 43064, 43065, 43066, 43067, 43177, 43178,
+                            43179, 43180, 43290, 43291, 43292, 43402, 43403])]
+
+        assert_equal(len(roi['areas']), 1)
+        assert_array_equal(roi['areas'][0], expected_nodes[0])
+
+
+        # check mapping
+        m = afni_niml_roi.read_mapping(rois)
+        assert_equal(m.keys(), ['myroi'])
+
+        unique_nodes = np.unique(expected_nodes[0])
+        assert_array_equal(m['myroi'], unique_nodes)
+
+
+
+
 
 
 def _test_afni_suma_spec():

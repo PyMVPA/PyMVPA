@@ -11,7 +11,6 @@
 from mvpa2.testing import *
 skip_if_no_external('nibabel')
 
-
 import numpy as np
 from numpy.testing.utils import assert_array_almost_equal
 
@@ -34,7 +33,7 @@ from mvpa2.misc.surfing import volgeom, volsurf, \
 
 from mvpa2.support.nibabel import surf, surf_fs_asc
 
-from mvpa2.measures.searchlight import Searchlight
+from mvpa2.measures.searchlight import sphere_searchlight, Searchlight
 from mvpa2.misc.neighborhood import Sphere
 
 if externals.exists('h5py'):
@@ -214,7 +213,7 @@ class SurfTests(unittest.TestCase):
 
         eq_shape_nvoxels = {(17, 71, 37): (True, True),
                            (71, 17, 37, 1): (False, True),
-                           (17, 71, 37, 2): (False, True),
+                           (17, 71, 37, 2): (True, True),
                             (17, 71, 37, 73): (True, True),
                            (2, 2, 2): (False, False)}
 
@@ -226,7 +225,6 @@ class SurfTests(unittest.TestCase):
         nv = sz[0] * sz[1] * sz[2] # number of voxels
         nt = sz[3] # number of time points
         assert_equal(vg.nvoxels, nv)
-        assert_equal(vg.ntimepoints, nt)
 
         # a couple of hard-coded test cases
         # last two are outside the volume
@@ -442,6 +440,26 @@ class SurfTests(unittest.TestCase):
         assert_true(len('%s%r' % (vs, vs)) > 0)
 
 
+    def test_volsurf_surf_from_volume(self):
+        aff = np.eye(4)
+        aff[0, 0] = aff[1, 1] = aff[2, 2] = 3
+
+        sh = (40, 40, 40)
+
+        vg = volgeom.VolGeom(sh, aff)
+
+        p = volsurf.from_volume(vg).intermediate_surface
+        q = volsurf.VolumeBasedSurface(vg)
+
+        centers = [0, 10, 10000, (-1, -1, -1), (5, 5, 5)]
+        radii = [0, 10, 20, 100]
+
+        for center in centers:
+            for radius in radii:
+                x = p.circlearound_n2d(center, radius)
+                y = q.circlearound_n2d(center, radius)
+                assert_equal(x, y)
+
 
     def test_volume_mask_dict(self):
         # also tests the outside_node_margin feature
@@ -601,6 +619,7 @@ class SurfTests(unittest.TestCase):
 
                 # check that it has all the attributes
                 labs = sel.aux_keys()
+
                 assert_true(all([lab in labs for lab in expected_labs]))
 
 
@@ -688,7 +707,7 @@ class SurfTests(unittest.TestCase):
                 assert_false('ERROR' in repr(qe))   #  to check if repr works
                 voxelcounter = _Voxel_Count_Measure()
                 searchlight = Searchlight(voxelcounter, queryengine=qe, roi_ids=keys, nproc=1,
-                                          enable_ca=['roi_feature_ids'])
+                                          enable_ca=['roi_feature_ids', 'roi_center_ids'])
                 sl_dset = searchlight(dset)
 
                 selected_count = sl_dset.samples[0, :]
@@ -697,6 +716,10 @@ class SurfTests(unittest.TestCase):
                     # check that number of selected voxels matches
                     assert_equal(selected_count[i], len(mp[k]))
 
+
+                assert_equal(searchlight.ca.roi_center_ids, sel.keys())
+
+                assert_array_equal(sl_dset.fa['center_ids'], qe.ids)
 
                 # check nearest node is *really* the nearest node
 
@@ -718,9 +741,11 @@ class SurfTests(unittest.TestCase):
                     dset1.fa['dset'] = [1]
                     dset2 = dset.copy()
                     dset2.fa['dset'] = [2]
-                    dset_ = hstack((dset1, dset2))
+                    dset_ = hstack((dset1, dset2), 'drop_nonunique')
                     dset_.sa = dset1.sa
-                    dset_.a.imghdr = dset1.a.imghdr
+                    #dset_.a.imghdr = dset1.a.imghdr
+                    assert_true('imghdr' in dset_.a.keys())
+                    assert_equal(dset_.a['imghdr'].value, dset1.a['imghdr'].value)
                     roi_feature_ids = searchlight.ca.roi_feature_ids
                     sl_dset_ = searchlight(dset_)
                     # and we should get twice the counts
@@ -743,7 +768,6 @@ class SurfTests(unittest.TestCase):
         assert_equal(voxcount, expected_voxcount)
 
     def test_h5support(self):
-
         sh = (20, 20, 20)
         msk = np.zeros(sh)
         for i in xrange(0, sh[0], 2):
@@ -774,7 +798,54 @@ class SurfTests(unittest.TestCase):
             else:
                 assert_equal(sel0, sel)
 
+    def test_agreement_surface_volume(self):
+        '''test agreement between volume-based and surface-based
+        searchlights when using euclidian measure'''
 
+        #import runner
+        def sum_ds(ds):
+            return np.sum(ds)
+
+        radius = 3
+
+        # make a small dataset with a mask
+        sh = (10, 10, 10)
+        msk = np.zeros(sh)
+        for i in xrange(0, sh[0], 2):
+            msk[i, :, :] = 1
+        vg = volgeom.VolGeom(sh, np.identity(4), mask=msk)
+
+        # make an image
+        nt = 6
+        img = vg.get_masked_nifti_image(6)
+        ds = fmri_dataset(img, mask=msk)
+
+
+        # run the searchlight
+        sl = sphere_searchlight(sum_ds, radius=radius)
+        m = sl(ds)
+
+        # now use surface-based searchlight
+        v = volsurf.from_volume(ds)
+        source_surf = v.intermediate_surface
+        node_msk = np.logical_not(np.isnan(source_surf.vertices[:, 0]))
+
+        # check that the mask matches with what we used earlier
+        assert_array_equal(msk.ravel() + 0., node_msk.ravel() + 0.)
+
+        source_surf_nodes = np.nonzero(node_msk)[0]
+
+        sel = surf_voxel_selection.voxel_selection(v, float(radius),
+                                        source_surf=source_surf,
+                                        source_surf_nodes=source_surf_nodes,
+                                        distance_metric='euclidian')
+
+        qe = queryengine.SurfaceVerticesQueryEngine(sel)
+        sl = Searchlight(sum_ds, queryengine=qe)
+        r = sl(ds)
+
+        # check whether they give the same results
+        assert_array_equal(r.samples, m.samples)
 
 
 class _Voxel_Count_Measure(Measure):

@@ -28,7 +28,7 @@ class VolSurf(object):
     '''
     Associates a volume geometry with two surfaces (pial and white).
     '''
-    def __init__(self, vg, white, pial):
+    def __init__(self, vg, white, pial, intermediate=None):
         '''
         Parameters
         ----------
@@ -38,6 +38,9 @@ class VolSurf(object):
             Surface representing white-grey matter boundary
         pial: surf.Surface
             Surface representing pial-grey matter boundary
+        intermediate: surf.Surface (default: None)
+            Surface representing intermediate surface. If omitted
+            it is the node-wise average of white and pial. 
             
         Note
         ----
@@ -49,6 +52,11 @@ class VolSurf(object):
 
         if not self._pial.same_topology(self._white):
             raise Exception("Not same topology for white and pial")
+
+        if intermediate is None:
+            intermediate = (self.pial_surface * .5) + (self.white_surface * .5)
+
+        self._intermediate = intermediate
 
     def __repr__(self, prefixes=[]):
         prefixes_ = ['vg=%r' % self._volgeom,
@@ -89,7 +97,7 @@ class VolSurf(object):
         -------
         intermediate: surf.Surface
         '''
-        return (self.pial_surface * .5) + (self.white_surface * .5)
+        return self._intermediate
 
     @property
     def volgeom(self):
@@ -104,7 +112,8 @@ class VolSurf(object):
         return self._volgeom
 
     def __reduce__(self):
-        return (self.__class__, (self._volgeom, self._white, self._pial))
+        return (self.__class__, (self._volgeom, self._white,
+                                 self._pial, self._intermediate))
 
     def node2voxels(self, nsteps=10, start_fr=0.0,
                     stop_fr=1.0, start_mm=0, stop_mm=0):
@@ -177,6 +186,8 @@ class VolSurf(object):
 
         vg = self._volgeom
 
+        same_surfaces = self.white_surface == self.pial_surface
+
         surf_start = self.white_surface + start_mm
         surf_stop = self.pial_surface + stop_mm
 
@@ -197,11 +208,15 @@ class VolSurf(object):
             # which of these voxels are actually in the volume
             is_vox_in_vol = vg.contains_lin(lin_vox)
 
-            # coordinates of voxels
-            vol_xyz = vg.lin2xyz(lin_vox)
+            if same_surfaces:
+                # prevent division by zero - simply assign it whatever weight is here
+                grey_matter_pos = np.zeros(lin_vox.shape) + whiteweight
+            else:
+                # coordinates of voxels
+                vol_xyz = vg.lin2xyz(lin_vox)
 
-            # compute relative position of each voxel in grey matter
-            grey_matter_pos = self.surf_project_weights_nodewise(vol_xyz)
+                # compute relative position of each voxel in grey matter
+                grey_matter_pos = self.surf_project_weights_nodewise(vol_xyz)
 
             for center_id in center_ids: # for each node on the surface
                 # associate voxels with the present center node.
@@ -266,10 +281,19 @@ class VolSurf(object):
 
         scale = np.sum(dxyz * dxyz, axis=1)
 
+
+        weights = np.zeros((self._pial.nvertices,), dtype=pxyz.dtype)
+
+        nan_mask = scale == 0
+        weights[nan_mask] = np.nan
+
+        non_nan_mask = np.logical_not(nan_mask)
         ps = xyz - pxyz
         proj = np.sum(ps * dxyz, axis=1)
 
-        return proj / scale
+        weights[non_nan_mask] = proj[non_nan_mask] / scale[non_nan_mask]
+
+        return weights
 
     def voxel_count_nifti_image(self, n2v=None):
         '''
@@ -304,3 +328,116 @@ class VolSurf(object):
         rs = np.reshape(voldata, v.shape)
         img = nb.Nifti1Image(rs, v.affine)
         return img
+
+class VolumeBasedSurface(surf.Surface):
+    '''A surface based on a volume, where every voxel is a node.
+    It has the empty topology, meaning there are no edges between
+    nodes (voxels)
+    
+    Use case: provide volume-based searchlight behaviour. In that
+    case finding neighbouring nodes is supposed to be faster
+    using the circlearound_n2d method.
+    
+    XXX make a separate module?'''
+    def __init__(self, vg):
+        '''
+        Parameters
+        ----------
+        vg: Volgeom.volgeom or str or NiftiImage
+            volume to be used as a surface
+        '''
+        self._vg = volgeom.from_any(vg)
+
+        n = self._vg.nvoxels
+        vertices = self._vg.lin2xyz(np.arange(n))
+        faces = np.zeros((0, 3), dtype=np.int)
+
+        # call the parent's class constructor
+        super(VolumeBasedSurface, self).__init__(vertices, faces, check=False)
+
+    def circlearound_n2d(self, src, radius, metric='euclidean'):
+        shortmetric = metric[0].lower()
+
+        if shortmetric == 'e':
+            v = self.vertices
+
+            # make sure src is a 1x3 array
+            if type(src) is tuple and len(src) == 3:
+                src = np.asarray(src)
+
+            if isinstance(src, np.ndarray):
+                if src.shape not in ((1, 3), (3,), (3, 1)):
+                    raise ValueError("Illegal shape: should have 3 elements")
+
+                src_coord = src if src.shape == (1, 3) else np.reshape(src, (1, 3))
+            else:
+                src_coord = np.reshape(v[src, :], (1, 3))
+
+            # ensure it is a float
+            src_coord = np.asanyarray(src_coord, dtype=np.float)
+
+            # make a mask around center
+            voxel2world = self._vg.affine
+            world2voxel = np.linalg.inv(voxel2world)
+
+            nrm = np.linalg.norm(voxel2world, 2)
+
+            max_extent = np.ceil(radius / nrm + 1)
+
+            src_ijk = self._vg.xyz2ijk(src_coord)
+
+            # min and max ijk coordinates
+            mn = src_ijk.ravel() - max_extent
+            mx = src_ijk.ravel() + max_extent
+
+            # set boundaries properly
+            mn[mn < 0] = 0
+
+            sh = np.asarray(self._vg.shape[:3])
+            mx[mx > sh] = sh[mx > sh]
+
+            msk_ijk = np.zeros(self._vg.shape[:3], np.int)
+            msk_ijk[mn[0]:mx[0], mn[1]:mx[1], mn[2]:mx[2]] = 1
+
+            msk_lin = msk_ijk.ravel()
+
+            # indices of voxels around the mask
+            idxs = np.nonzero(msk_lin)[0]
+
+            d = volgeom.distance(src_coord, v[idxs])[0, :]
+
+            n = d.size
+            node2dist = dict((idxs[i], d[i]) for i in np.arange(n)
+                                    if d[i] <= radius)
+
+            return node2dist
+
+        elif shortmetric == 'd':
+            return {src:0.}
+        else:
+            raise ValueError("Illegal metric: %s" % metric)
+
+
+def from_volume(v):
+    '''Makes a pseudo-surface from a volume. 
+    Each voxels corresponds to a node; there is no topology.
+    A use case is mimicking traditional volume-based searchlights
+    
+    Parameters
+    ----------
+    v: str of NiftiImage
+        input volume
+        
+    Returns
+    -------
+    s: surf.Surface
+        Surface with an equal number as nodes as there are voxels
+        in the input volume. The associated topology is empty.
+    '''
+    vg = volgeom.from_any(v)
+    vs = VolumeBasedSurface(vg)
+
+    return VolSurf(vg, vs, vs, vs)
+
+
+

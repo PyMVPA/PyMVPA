@@ -378,6 +378,7 @@ if __debug__:
 
     __pymvpa_pid__ = getpid()
 
+
     def parse_status(field='VmSize', value_only=False):
         """Return stat information on current process.
 
@@ -402,16 +403,17 @@ if __debug__:
         return match
 
     def get_vmem_from_status():
-        """Return a string summary about utilization of virtual memory
+        """Return utilization of virtual memory
 
         Deprecated implementation which relied on parsing proc/PID/status
         """
         rss, vms = [parse_status(field=x, value_only=True)
                   for x in ['VmRSS', 'VmSize']]
-        if rss[-3:] == vms[-3:]:
+        if rss[-3:] == vms[-3:] and rss[-3:] == ' kB':
             # the same units
-            rss = rss[:-3]                # strip from rss
-        return "RSS/VMS: %s/%s" % (rss, vms)
+            rss = int(rss[:-3])                # strip from rss
+            vms = int(vms[:-3])
+        return (rss, vms)
 
     try:
         # we prefer to use psutil if available
@@ -423,7 +425,7 @@ if __debug__:
         __pymvpa_process__ = __Process(__pymvpa_pid__)
 
         def get_vmem():
-            """Return a string summary about utilization of virtual memory
+            """Return utilization of virtual memory
 
             Generic implementation using psutil
             """
@@ -432,10 +434,35 @@ if __debug__:
             # but that is not the case on Debian squeeze with psutil 0.1.3
             rss = mi[0] / 1024
             vms = mi[1] / 1024
-            return "RSS/VMS: %d/%d kB" % (rss, vms)
+            return (rss, vms)
 
     except ImportError:
         get_vmem = get_vmem_from_status
+
+    def get_vmem_str():
+        """Return  a string summary about utilization of virtual_memory
+        """
+        vmem = get_vmem()
+        try:
+            return "RSS/VMS: %d/%d kB" % vmem
+        except:
+            return "RSS/VMS: %s" % str(vmem)
+
+    def _get_vmem_max_str_gen():
+        """Return peak vmem utilization so far.
+
+        It is a generator, get_vmem_max_str later is bound to .next
+        of it - to mimic static variables
+        """
+        rss_max = 0
+        vms_max = 0
+
+        while True:
+            rss, vms = get_vmem()
+            rss_max = max(rss, rss_max)
+            vms_max = max(vms, vms_max)
+            yield "max RSS/VMS: %d/%d kB" % (rss_max, vms_max)
+    get_vmem_max_str = _get_vmem_max_str_gen().next
 
     def mbasename(s):
         """Custom function to include directory name if filename is too common
@@ -526,7 +553,8 @@ if __debug__:
         _known_metrics = {
             # TODO: make up Windows-friendly version or pure Python platform
             # independent version (probably just make use of psutil)
-            'vmem' : get_vmem,
+            'vmem' : get_vmem_str,
+            'vmem_max' : get_vmem_max_str,
             'pid' : getpid, # lambda : parse_status(field='Pid'),
             'asctime' : time.asctime,
             'tb' : TraceBack(),
