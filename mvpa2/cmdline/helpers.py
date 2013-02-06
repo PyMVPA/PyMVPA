@@ -14,6 +14,7 @@ import argparse
 import re
 import sys
 import copy
+import os
 
 from mvpa2.base import verbose
 if __debug__:
@@ -272,7 +273,6 @@ def arg2none(arg):
 
 def arg2learner(arg, index=0):
     from mvpa2.clfs.warehouse import clfswh
-    import os.path
     if arg in clfswh.descriptions:
         # arg is a description
         return clfswh.get_by_descr(arg)
@@ -337,7 +337,6 @@ def arg2partitioner(arg):
             "'%s' does not describe a supported partitioner type" % arg)
 
 def arg2errorfx(arg):
-    import os
     import mvpa2.misc.errorfx as efx
     if hasattr(efx, arg):
         return getattr(efx, arg)
@@ -353,6 +352,38 @@ def arg2hdf5compression(arg):
         return int(arg)
     except:
         return arg
+
+def arg2neighbor(arg):
+    # [[shape:]shape:]params
+    comp = arg.split(':')
+    if not len(comp):
+        # need at least a radius
+        raise ValueError("incomplete neighborhood specification")
+    if len(comp) == 1:
+        # [file|sphere radius]
+        attr = 'voxel_indices'
+        arg = comp[0]
+        if os.path.isfile(arg) and arg.endswith('.py'):
+            neighbor = script2obj(arg)
+        else:
+            from mvpa2.misc.neighborhood import Sphere
+            neighbor = Sphere(int(arg))
+    elif len(comp) == 2:
+        # attr:[file|sphere radius]
+        attr = comp[0]
+        arg = comp[1]
+        if os.path.isfile(arg) and arg.endswith('.py'):
+            neighbor = script2obj(arg)
+        else:
+            from mvpa2.misc.neighborhood import Sphere
+            neighbor = Sphere(int(arg))
+    elif len(comp) > 2:
+        attr = comp[0]
+        shape = comp[1]
+        params = [float(c) for c in comp[2:]]
+        import mvpa2.misc.neighborhood as neighb
+        neighbor = getattr(neighb, shape)(*params)
+    return attr, neighbor
 
 def ds2hdf5(ds, fname, compression=None):
     """Save one or more datasets into an HDF5 file.
