@@ -39,7 +39,7 @@ class IOHelperTests(unittest.TestCase):
         d = ColumnData(fpath, header=True)
 
         # check header (sort because order in dict is unpredictable)
-        self.assertTrue(sorted(d.keys()) == ['drei','eins','zwei'])
+        self.assertTrue(sorted(d.keys()) == ['drei', 'eins', 'zwei'])
 
         self.assertTrue(d['eins'] == [0, 3])
         self.assertTrue(d['zwei'] == [1, 4])
@@ -49,7 +49,7 @@ class IOHelperTests(unittest.TestCase):
         d2 = ColumnData(d)
 
         # check if identical
-        self.assertTrue(sorted(d2.keys()) == ['drei','eins','zwei'])
+        self.assertTrue(sorted(d2.keys()) == ['drei', 'eins', 'zwei'])
         self.assertTrue(d2['eins'] == [0, 3])
         self.assertTrue(d2['zwei'] == [1, 4])
         self.assertTrue(d2['drei'] == [2, 5])
@@ -58,7 +58,7 @@ class IOHelperTests(unittest.TestCase):
         d += d2
 
         # same columns?
-        self.assertTrue(sorted(d.keys()) == ['drei','eins','zwei'])
+        self.assertTrue(sorted(d.keys()) == ['drei', 'eins', 'zwei'])
 
         # but more data
         self.assertEqual(d['eins'], [0, 3, 0, 3])
@@ -114,6 +114,26 @@ class IOHelperTests(unittest.TestCase):
             msg='Something is wrong with the timiing of the events')
 
 
+    def test_samples_attributes_autodtype(self):
+        payload = '''a b c
+1 1.1 a
+2 2.2 b
+3 3.3 c
+4 4.4 d'''
+
+        _, fn = mkstemp('mvpa', 'sampleattr')
+
+        with open(fn, 'w') as f:
+            f.write(payload)
+
+        attr = SampleAttributes(fn, header=True)
+
+        assert_equal(set(attr.keys()), set(['a', 'b', 'c']))
+        assert_equal(attr['a'], [1, 2, 3, 4])
+        assert_equal(attr['b'], [1.1, 2.2, 3.3, 4.4])
+        assert_equal(attr['c'], ['a', 'b', 'c', 'd'])
+
+
     def test_fsl_ev(self):
         ex1 = """0.0 2.0 1
         13.89 2 1
@@ -129,7 +149,7 @@ class IOHelperTests(unittest.TestCase):
 
         # check header (sort because order in dict is unpredictable)
         self.assertTrue(sorted(d.keys()) == \
-            ['durations','intensities','onsets'])
+            ['durations', 'intensities', 'onsets'])
 
         self.assertTrue(d['onsets'] == [0.0, 13.89, 16.0])
         self.assertTrue(d['durations'] == [2.0, 2.0, 2.0])
@@ -148,17 +168,17 @@ class IOHelperTests(unittest.TestCase):
         self.assertTrue(len(ev) == 3)
         self.assertTrue([e['duration'] for e in ev] == [9] * 3)
         self.assertTrue([e['onset'] for e in ev] == [6, 21, 35])
-        self.assertTrue([e['features'] for e in ev] == [[1],[1],[1]])
+        self.assertTrue([e['features'] for e in ev] == [[1], [1], [1]])
 
         ev = d.to_events(label='face', chunk=0, crap=True)
         ev[0]['label'] = 'house'
         self.assertTrue(len(ev) == 3)
         self.assertTrue([e['duration'] for e in ev] == [9] * 3)
         self.assertTrue([e['onset'] for e in ev] == [6, 21, 35])
-        self.assertTrue([e['features'] for e in ev] == [[1],[1],[1]])
+        self.assertTrue([e['features'] for e in ev] == [[1], [1], [1]])
         self.assertTrue([e['label'] for e in ev] == ['house', 'face', 'face'])
-        self.assertTrue([e['chunk'] for e in ev] == [0]*3)
-        self.assertTrue([e['crap'] for e in ev] == [True]*3)
+        self.assertTrue([e['chunk'] for e in ev] == [0] * 3)
+        self.assertTrue([e['crap'] for e in ev] == [True] * 3)
 
 
     def test_fsl_ev2(self):
@@ -166,7 +186,7 @@ class IOHelperTests(unittest.TestCase):
 
         # check header (sort because order in dict is unpredictable)
         self.assertTrue(sorted(attr.keys()) == \
-            ['chunks','targets'])
+            ['chunks', 'targets'])
 
         self.assertTrue(attr.nsamples == 3)
 
@@ -191,7 +211,7 @@ class IOHelperTests(unittest.TestCase):
         attr = BrainVoyagerRTC(os.path.join(pymvpa_dataroot, 'bv', 'smpl_model.rtc'))
         labels0 = design2labels(attr, baseline_label='silence')
         labels = design2labels(attr, baseline_label='silence',
-                                func=lambda x:x>0.5)
+                                func=lambda x:x > 0.5)
         Nsilence = lambda x:len(np.where(np.array(x) == 'silence')[0])
 
         nsilence0 = Nsilence(labels0)
@@ -201,7 +221,7 @@ class IOHelperTests(unittest.TestCase):
         self.assertEqual(len(labels), attr.nrows,
                         "We must have the same number of labels as rows")
         self.assertRaises(ValueError, design2labels, attr,
-                        baseline_label='silence', func=lambda x:x>-1.0)
+                        baseline_label='silence', func=lambda x:x > -1.0)
 
 
     def testlabels2chunks(self):
