@@ -149,7 +149,7 @@ call it with a dataset to run the actual analysis:
 
 >>> res = sl(ds)
 >>> print res
-<Dataset: 1x577@float64, <sa: cvfolds>, <a: mapper>>
+<Dataset: 1x577@float64, <sa: cvfolds>, <fa: center_ids>, <a: mapper>>
 
 That was it. However, this was just a toy example with only our ventral
 temporal ROI. Let's now run it on a much larger volume, so we can actually

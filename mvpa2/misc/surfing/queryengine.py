@@ -88,7 +88,8 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
             vg_ds = None
 
         if vg_ds:
-            if not np.all(np.equal(vg_ds.affine, vg.affine)):
+            eps = .0001
+            if np.max(np.abs(vg_ds.affine - vg.affine)) > eps:
                 raise ValueError("Mismatch in affine matrix: %r !+ %r" %
                                         (vg_ds.affine, vg.affine))
             if not vg_ds.same_shape(vg):
@@ -100,10 +101,10 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
 
 
         self._map_voxel_coord = map_voxel_coord = {}
-        long_i = vg.ijk2lin(dataset.fa[self.space].value)
-        long_i_invol = vg.contains_lin(long_i)
-        for i, long_i in enumerate(long_i):
-            if not long_i_invol[i]:
+        long_is = vg.ijk2lin(dataset.fa[self.space].value)
+        long_is_invol = vg.contains_lin(long_is)
+        for i, long_i in enumerate(long_is):
+            if not long_is_invol[i]:
                 raise ValueError('Feature id %d (with voxel id %d)'
                                  ' is not in the (possibly masked) '
                                  'volume geometry %r)' % (i, long_i, vg))
