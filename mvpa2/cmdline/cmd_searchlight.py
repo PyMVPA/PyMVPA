@@ -57,14 +57,6 @@ searchlight_opts_grp = ('options for searchlight setup', [
         'voxel_indices:myownshape.py' (advanced). It is possible to specify
         this option multiple times to define multi-space ROI shapes for, e.g.,
         spatio-temporal searchlights.""")),
-    (('--scatter-rois',), dict(type=arg2neighbor, metavar='SPEC',
-        help="""scatter ROI locations across the available space. The arguments
-        supported by this option are identical to those of --neighbors. ROI
-        locations are randomly picked from all possible locations with the
-        constraint that the center coordinates of any ROI is NOT within
-        the neighborhood (as defined by this option's argument) of a second
-        ROI. Increasing the size of the neighborhood therefore increases the
-        scarceness of the sampling.""")),
     (('--nproc',), dict(type=int, default=1,
         help="""Use the specific number or worker processes for computing.""")),
     (('--multiproc-backend',), dict(choices=('native', 'hdf5'),
@@ -75,11 +67,27 @@ searchlight_opts_grp = ('options for searchlight setup', [
         time and memory efficient in some cases.""")),
 ])
 
+searchlight_constraints_opts_grp = ('options for constraining the searchlight', [
+    (('--scatter-rois',), dict(type=arg2neighbor, metavar='SPEC',
+        help="""scatter ROI locations across the available space. The arguments
+        supported by this option are identical to those of --neighbors. ROI
+        locations are randomly picked from all possible locations with the
+        constraint that the center coordinates of any ROI is NOT within
+        the neighborhood (as defined by this option's argument) of a second
+        ROI. Increasing the size of the neighborhood therefore increases the
+        scarceness of the sampling.""")),
+    (('--roi-attr',), dict(metavar='ATTR',
+        help="""name of a feature attribute whose non-zero values define
+        possible ROI seeds/centers. Conflicts""")),
+])
+
 def setup_parser(parser):
     from .helpers import parser_add_optgroup_from_def, \
         parser_add_common_attr_opts, single_required_hdf5output
     parser_add_common_args(parser, pos=['multidata'])
     parser_add_optgroup_from_def(parser, searchlight_opts_grp)
+    parser_add_optgroup_from_def(parser, searchlight_constraints_opts_grp,
+                                 exclusive=True)
     parser_add_optgroup_from_def(parser, crossvalidation_opts_grp)
     parser_add_optgroup_from_def(parser, single_required_hdf5output)
 
@@ -112,6 +120,9 @@ def run(args):
         coords = ds.fa[attr].value
         seed_coords, roi_ids = scatter_neighborhoods(nb, coords)
         verbose(3, 'Attempting %i ROI analyses' % len(roi_ids))
+    elif not args.roi_attr is None:
+        verbose(3, 'Attempting ROI analyses in %s' % args.roi_attr)
+        roi_ids = args.roi_attr
     else:
         verbose(3, 'Attempting %i ROI analyses' % ds.nfeatures)
         roi_ids = None
