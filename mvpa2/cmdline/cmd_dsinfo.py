@@ -63,11 +63,58 @@ def _describe_attr(attr, style):
     else:
         return 'IMPLEMENT ME\n'
 
+def txt_content_summary_terse(ds, args):
+    info = 'samples: '
+    info += _describe_samples(ds.samples, 'terse')
+    for cdesc, col, describer in \
+            (('sample', ds.sa, _describe_array_attr),
+             ('feature', ds.fa, _describe_array_attr),
+             ('dataset', ds.a, _describe_attr)):
+        info += '%s attributes:\n' % cdesc
+        for attr in sorted(col.values(),
+                           cmp=lambda x, y: cmp(x.name, y.name)):
+            info += '  %s\n' % describer(attr, 'terse')
+    print info
+
+def sample_histogram(ds, args):
+    import pylab as pl
+    pl.figure()
+    pl.hist(np.ravel(ds.samples), bins=args.histogram_bins)
+    if not args.xlim is None:
+        pl.xlim(*args.xlim)
+    if not args.ylim is None:
+        pl.ylim(*args.ylim)
+    for opt, fx in ((args.x_marker, pl.axvline),
+                    (args.y_marker, pl.axhline)):
+        if not opt is None:
+            for val in opt:
+                fx(val, linestyle='--')
+    if not args.figure_title is None:
+        pl.title(args.figure_title)
+    pl.show()
+
+info_fx = {
+        'content_summary' : txt_content_summary_terse,
+        'sample_histogram' : sample_histogram,
+}
+
 output_grp = ('options for output formating', [
-    (('--style',), dict(type=str, choices=('terse', 'full'), default='terse',
-        metavar='MODE',
-        help="""output format style: only 'terse' is implemented for now"""
-        )),
+    (('--style',), dict(type=str, choices=info_fx.keys(),
+        default='content_summary', metavar='MODE',
+        help="""info type""")),
+    (('--figure-title',), dict(type=str,
+        help="""title for a plot""")),
+    (('--histogram-bins',), dict(type=int, default=20,
+        metavar='VALUE',
+        help="""number of bin for histograms""")),
+    (('--xlim',), dict(type=float, nargs=2,
+        help="""minimum and maximum value of the x-axis extent in a figure""")),
+    (('--ylim',), dict(type=float, nargs=2,
+        help="""minimum and maximum value of the y-axis extent in a figure""")),
+    (('--x-marker',), dict(type=float, nargs='+',
+        help="""list of x-value to draw markers on in a figure""")),
+    (('--y-marker',), dict(type=float, nargs='+',
+        help="""list of y-value to draw markers on in a figure""")),
 ])
 
 
@@ -82,14 +129,4 @@ def run(args):
     verbose(3, 'Loaded %i dataset(s)' % len(dss))
     ds = vstack(dss)
     verbose(3, 'Concatenation yielded %i samples with %i features' % ds.shape)
-    info = 'samples: '
-    info += _describe_samples(ds.samples, args.style)
-    for cdesc, col, describer in \
-            (('sample', ds.sa, _describe_array_attr),
-             ('feature', ds.fa, _describe_array_attr),
-             ('dataset', ds.a, _describe_attr)):
-        info += '%s attributes:\n' % cdesc
-        for attr in sorted(col.values(),
-                           cmp=lambda x, y: cmp(x.name, y.name)):
-            info += '  %s\n' % describer(attr, args.style)
-    print info
+    info_fx[args.style](ds, args)
