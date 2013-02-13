@@ -25,7 +25,8 @@ class CorrCoef(FeaturewiseMeasure):
     is_trained = True
     """Indicate that this measure is always trained."""
 
-    def __init__(self, pvalue=False, attr='targets', **kwargs):
+    def __init__(self, pvalue=False, attr='targets',
+                        corr_backend=None, **kwargs):
         """Initialize
 
         Parameters
@@ -35,6 +36,9 @@ class CorrCoef(FeaturewiseMeasure):
           instead of pure correlation coefficient
         attr : str
           What attribut to correlate with
+        corr_backend: None or 'builtin' or 'scipy' (default: None)
+          Which function to use to compute correlations.
+          None means 'scipy' if pvalue else 'builtin'. 
         """
         # init base classes first
 
@@ -42,13 +46,26 @@ class CorrCoef(FeaturewiseMeasure):
 
         self.__pvalue = int(pvalue)
         self.__attr = attr
+        self.__corr_backend = corr_backend
 
 
     def _call(self, dataset):
         """Computes featurewise scores."""
-        if externals.exists('scipy', raise_=True):
+        backend = self.__corr_backend
+
+        if backend is None:
+            # if p values needed, use scipy
+            # otherwise 
+            backend = ['builtin', 'scipy'][self.__pvalue]
+
+        if backend == 'builtin':
+            if self.__pvalue:
+                raise ValueError("Not supported: 'builtin' and pvalue=True")
+            pearsonr = lambda x, y:(pearson_correlation(x, y),)
+        elif self.__corr_backend == 'scipy':
+            if externals.exists('scipy', raise_=True):
             # TODO: implement corrcoef optionally without scipy, e.g. np.corrcoef
-            from scipy.stats import pearsonr
+                from scipy.stats import pearsonr
 
         attrdata = dataset.sa[self.__attr].value
         if (np.issubdtype(attrdata.dtype, 'c') or
@@ -97,7 +114,7 @@ def pearson_correlation(x, y=None):
     -----
     Unlike numpy. this function behaves like matlab's 'corr' function.
     Its numerical precision is slightly lower than numpy's correlate function.
-    
+    Unlike scipy's 'pearsonr' function it does not return p values.
     TODO integrate with CorrCoef
     
     '''
