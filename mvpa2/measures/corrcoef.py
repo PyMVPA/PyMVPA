@@ -14,10 +14,6 @@ from mvpa2.base import externals
 
 import numpy as np
 
-if externals.exists('scipy', raise_=True):
-    # TODO: implement corrcoef optionally without scipy, e.g. np.corrcoef
-    from scipy.stats import pearsonr
-
 from mvpa2.measures.base import FeaturewiseMeasure
 from mvpa2.datasets.base import Dataset
 
@@ -41,6 +37,7 @@ class CorrCoef(FeaturewiseMeasure):
           What attribut to correlate with
         """
         # init base classes first
+
         FeaturewiseMeasure.__init__(self, **kwargs)
 
         self.__pvalue = int(pvalue)
@@ -49,6 +46,9 @@ class CorrCoef(FeaturewiseMeasure):
 
     def _call(self, dataset):
         """Computes featurewise scores."""
+        if externals.exists('scipy', raise_=True):
+            # TODO: implement corrcoef optionally without scipy, e.g. np.corrcoef
+            from scipy.stats import pearsonr
 
         attrdata = dataset.sa[self.__attr].value
         if (np.issubdtype(attrdata.dtype, 'c') or
