@@ -77,3 +77,46 @@ class CorrCoef(FeaturewiseMeasure):
             result[ifeature] = corrv
 
         return Dataset(result[np.newaxis])
+
+def pearson_correlation(x, y=None):
+    '''Computes pearson correlations on matrices
+    
+    Parameters
+    ----------
+    x: np.ndarray
+        PxM array
+    y: np.ndarray or None (the default).
+        PxN array. If None, then y=x.
+        
+    Returns
+    -------
+    c: np.ndarray
+        MxN array with c[i,j]=r(x[:,i],y[:,j])
+    
+    Notes
+    -----
+    Unlike numpy. this function behaves like matlab's 'corr' function.
+    Its numerical precision is slightly lower than numpy's correlate function.
+    
+    TODO integrate with CorrCoef
+    
+    '''
+
+    if y is None:
+        y = x
+
+    xd = x - np.mean(x, axis=0)
+    yd = y - np.mean(y, axis=0)
+
+    if xd.shape[0] != yd.shape[0]:
+        raise ValueError("Shape mismatch: %d != %d" % (xd.shape, yd.shape))
+
+    # normalize
+    n = 1. / (x.shape[0] - 1) # normalize
+
+    # standard deviation
+    xs = (n * np.sum(xd * xd, axis=0)) ** -.5
+    ys = (n * np.sum(yd * yd, axis=0)) ** -.5
+
+    return n * np.dot(xd.T, yd) * np.tensordot(xs, ys, 0)
+
