@@ -83,9 +83,9 @@ def pearson_correlation(x, y=None):
     
     Parameters
     ----------
-    x: np.ndarray
+    x: np.ndarray or Dataset
         PxM array
-    y: np.ndarray or None (the default).
+    y: np.ndarray or Dataset or None (the default).
         PxN array. If None, then y=x.
         
     Returns
@@ -104,6 +104,17 @@ def pearson_correlation(x, y=None):
 
     if y is None:
         y = x
+
+    def _get_data(ds):
+        # support for dataset
+        try:
+            return ds.samples
+        except:
+            return ds
+
+    x = _get_data(x)
+    y = _get_data(y)
+
 
     xd = x - np.mean(x, axis=0)
     yd = y - np.mean(y, axis=0)
