@@ -223,3 +223,7 @@ def _augment_config(cfg):
     cfg['group_prefix'] = _full_path(cfg['group_prefix'])
 
 
+if __name__ == '__main__':
+    cfg = _get_options()
+    _augment_config(cfg)
+    afni_niml_zscore_makefull_wizard(cfg)
