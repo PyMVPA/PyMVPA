@@ -1543,7 +1543,7 @@ def read(fn):
         coords, faces = fsio.read_geometry(fn)
         return Surface(coords, faces)
 
-def write(fn, s, overwrite=False):
+def write(fn, s, overwrite=True):
     '''General write function for surfaces
     
     For now only supports ascii (as used in AFNI's SUMA)
