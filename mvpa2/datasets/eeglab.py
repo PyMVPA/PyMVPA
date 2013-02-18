@@ -15,9 +15,6 @@ This module offers functions to import data from _EEGLAB tex files.
 
 __docformat__ = 'restructuredtext'
 
-from mvpa2.base import externals
-externals.exists('nibabel', raise_=True)
-
 import numpy as np
 import os
 
