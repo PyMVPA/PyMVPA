@@ -52,7 +52,6 @@ def read_topology(fn):
     return faces
 
 
-
 def read(fn, topology_fn=None):
     '''Reads Caret .coord file and also (if it exists) the topology file
     
