@@ -168,7 +168,7 @@ def _dset2rawniml_history(s):
     history += '%s Saved by %s:%s' % (logprefix,
                                     __file__,
                                     sys._getframe().f_code.co_name)
-    history = history.encode('utf-8')
+
     return dict(atr_name='HISTORY_NOTE',
                 data=history)
 
