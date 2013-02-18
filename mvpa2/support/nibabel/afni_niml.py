@@ -60,9 +60,10 @@ def encode_escape(s):
 def _parse_keyvalues(s):
     '''parse K0=V0 K1=V1 ... and return a dict(K0=V0,K1=V1,...)'''
 
-    e = r'\s*(?P<lhs>\w+)\s*=\s*"(?P<rhs>[^"]+)"'
+    e = b'\s*(?P<lhs>\w+)\s*=\s*"(?P<rhs>[^"]+)"'
+
     m = re.findall(e, s, _RE_FLAGS)
-    return dict([(k, v) for k, v in m])
+    return dict([(k.decode(), v.decode()) for k, v in m])
 
 def _mixedtypes_datastring2rawniml(s, niml):
     tps = niml['vec_typ']
@@ -107,7 +108,7 @@ def _datastring2rawniml(s, niml):
         return _mixedtypes_datastring2rawniml(s, niml)
 
     if [onetype] == types.str2codes('string'):
-        return decode_escape(s) # do not string2rawniml
+        return decode_escape(s.decode()) # do not string2rawniml
 
     # numeric, either int or float
     ncols = niml['vec_num']
@@ -203,6 +204,7 @@ def rawniml2string(p, form='text'):
 def _data2string(data, form):
     if type(data) is str:
         return ('"%s"' % encode_escape(data)).encode()
+
     elif type(data) is np.ndarray:
         if form == 'text':
             f = types.numpy_data2printer(data)
@@ -345,12 +347,11 @@ def string2rawniml(s, i=None):
 
         if m is None:
             # no header - was it the end of a section?
-            finalpat = r'\W*</\w+>'
-            m = re.match(r'\W*</\w+>\s*', s[i:], _RE_FLAGS)
+            m = re.match(b'\W*</\w+>\s*', s[i:], _RE_FLAGS)
 
             if not m is None and i + m.end() == len(s):
                 # entire file was parsed - we are done
-                debug('NIML', 'Completed parsing, length %d', len(s))
+                debug('NIML', 'Completed parsing, length %d (%d elements)', (len(s), len(nimls)))
                 if return_pos:
                     return i, nimls
                 else:
@@ -371,20 +372,20 @@ def string2rawniml(s, i=None):
             debug('NIML', 'Parsing header %s, header end position %d',
                                                 (name, i + m.end()))
             niml = _parse_keyvalues(header)
-            debug('NIML', 'Found keys %s', (",".join(niml.keys())))
 
+            debug('NIML', 'Found keys %s.', (", ".join(niml.keys())))
             # set the name of this element
-            niml['name'] = name
+            niml['name'] = name.decode()
 
             if niml.get('ni_form', None) == 'ni_group':
                 # it's a group. Parse the group using recursion
-                debug("NIML", "Starting a group %s >>>" , name)
+                debug("NIML", "Starting a group %s >>>" , niml['name'])
                 i, niml['nodes'] = string2rawniml(s, i)
-                debug("NIML", "<<< ending a group %s", name)
+                debug("NIML", "<<< ending a group %s", niml['name'])
             else:
                 # it's a normal element with data
                 debug('NIML', 'Parsing element %s from position %d, total '
-                                    'length %d', (name, i, len(s)))
+                                    'length %d', (niml['name'], i, len(s)))
 
                 # set a few data elements
                 datatypes = niml['ni_type']
@@ -408,8 +409,8 @@ def string2rawniml(s, i=None):
                     quote = '"' if is_string_data else ''
 
                     # construct the regular pattern for this string
-                    strpat = r'\s*%s(?P<data>[^"]*)[^"]*%s\s*</%s>' % \
-                                                    (quote, quote, name)
+                    strpat = ('\s*%s(?P<data>[^"]*)[^"]*%s\s*</%s>' % \
+                                                    (quote, quote, name.decode())).encode()
                     m = re.match(strpat, s[i:])
                     if m is None:
                         # something went wrong
@@ -442,7 +443,7 @@ def string2rawniml(s, i=None):
                     # convert this part of the string
                     if 'base64' in niml['ni_form']:
                         # base 64 has no '<' character - so we should be fine
-                        endpos = s.index('<', i + 1)
+                        endpos = s.index(b'<', i + 1)
                         datastring = s[i:endpos]
                         nbytes = len(datastring)
                     else:
@@ -459,13 +460,14 @@ def string2rawniml(s, i=None):
 
                     # ensure that immediately after this segment there is an 
                     # end-part marker
-                    endstr = '</%s>' % name
-                    if s[i:(i + len(endstr))] != endstr:
+                    endstr = '</%s>' % name.decode()
+                    if s[i:(i + len(endstr))].decode() != endstr:
                         raise ValueError("Not found expected end string %s"
                                          "  (found %s...)" %
                                             (endstr, _partial_string(s, i)))
                     i += len(endstr)
 
+            debug('NIML', "Adding element '%s' with keys %r" % (niml['name'], niml.keys()))
             nimls.append(niml)
 
     # we should never end up here.
