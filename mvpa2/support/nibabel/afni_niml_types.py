@@ -158,8 +158,6 @@ def sametype(p, q):
     if pc is None or qc is None:
         raise ValueError("Illegal type %r or %r " % (p, q))
 
-    print p, q, pc, qc
-
     return pc == qc
 
 
