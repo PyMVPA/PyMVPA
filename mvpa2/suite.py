@@ -146,6 +146,7 @@ from mvpa2.mappers.flatten import *
 from mvpa2.mappers.shape import *
 from mvpa2.mappers.prototype import *
 from mvpa2.mappers.projection import *
+from mvpa2.mappers.staticprojection import *
 from mvpa2.mappers.svd import *
 from mvpa2.mappers.procrustean import *
 from mvpa2.mappers.boxcar import *
