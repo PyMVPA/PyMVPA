@@ -287,7 +287,7 @@ def _partial_string(s, i, maxlen=100):
 
     infix = ' ... ' if n > maxlen else ''
 
-    return s[i:(i + startsize)] + infix + s[-stopsize:]
+    return '%s%s%s' % (s[i:(i + startsize)], infix, s[-stopsize:])
 
 def string2rawniml(s, i=None):
     '''Parses a NIML string to a raw NIML tree-like structure
