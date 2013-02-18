@@ -241,7 +241,7 @@ def _dset2rawniml_complete(r):
         tpstr = types.numpy_type2name(data.dtype)
         r['ni_type'] = '%d*%s' % (ncols, tpstr) if nrows > 1 else tpstr
     else:
-        raise TypeError('Illegal type %r' % tp)
+        raise TypeError('Illegal type %r in %r' % (tp, data))
 
     if not 'name' in r:
         r['name'] = 'AFNI_atr'

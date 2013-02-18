@@ -83,7 +83,7 @@ def numpy_data2printer(data):
         elif numpy_data_isfloat(data):
             return lambda x : '%f' % x
 
-    raise ValueError("Not understood type: %r" % tp)
+    raise ValueError("Not understood type %r in %r" % (tp, data))
 
 
 def code2python_type(i):
