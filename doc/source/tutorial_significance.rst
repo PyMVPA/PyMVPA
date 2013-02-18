@@ -272,7 +272,7 @@ magic happens inside the distribution estimator.
 >>> err = cv_mc_corr(ds)
 >>> cv_mc_corr.ca.stats.stats['ACC'] == cv_mc.ca.stats.stats['ACC']
 True
->>> cv_mc.ca.null_prob < cv_mc_corr.ca.null_prob
+>>> cv_mc.ca.null_prob == cv_mc_corr.ca.null_prob
 True
 
 After running it we see that there is no change in the empirical performance
