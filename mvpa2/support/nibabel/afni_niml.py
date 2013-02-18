@@ -209,7 +209,8 @@ def _data2string(data, form):
         elif form == 'binary':
             data_reshaped = data.reshape((data.shape[1], data.shape[0]))
             r = data_reshaped.tostring()
-            debug('NIML', 'Binary encoding: [%s]' % _partial_string(r, 0))
+            debug('NIML', 'Binary encoding (len %d -> %d): [%s]' %
+                            (data_reshaped.size, len(r), _partial_string(r, 0)))
             return r
         elif form == 'base64':
             data_reshaped = data.reshape((data.shape[1], data.shape[0]))
