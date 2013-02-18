@@ -126,8 +126,7 @@ def eeglab_dataset(samples):
 
     # append a flatten_mapper to go from 3D (sample X time X channel)
     # to 2D (sample X (time X channel))
-    space = 'time_channel_indices'
-    flatten_mapper = FlattenMapper(shape=shape[1:], space=space)
+    flatten_mapper = FlattenMapper(shape=shape[1:], space='time_channel_indices')
     ds = ds.get_mapped(flatten_mapper)
 
     # make this a 3D array of the proper size
@@ -144,20 +143,34 @@ def eeglab_dataset(samples):
     # XXX at the moment we don't have propert 'protection' in case
     # the feature space is sliced in a way so that some channels and/or
     # timepoints occur more often than others 
+    _eeglab_set_attributes(ds)
+
+    return ds
+
+def _eeglab_set_attributes(ds):
     setattr(ds.__class__, 'nchannels', property(
-                            fget=lambda self: len(set(self.fa[space][:, 1]))))
+            fget=lambda self: len(set(self.fa['time_channel_indices'][:, 1]))))
     setattr(ds.__class__, 'ntimepoints', property(
-                            fget=lambda self: len(set(self.fa[space][:, 0]))))
+            fget=lambda self: len(set(self.fa['time_channel_indices'][:, 0]))))
 
     setattr(ds.__class__, 'channelids', property(
-                    fget=lambda self: np.unique(self.fa['channelids'].value)))
+            fget=lambda self: np.unique(self.fa['channelids'].value)))
     setattr(ds.__class__, 'timepoints', property(
-                    fget=lambda self: np.unique(self.fa['timepoints'].value)))
+            fget=lambda self: np.unique(self.fa['timepoints'].value)))
 
 
     setattr(ds.__class__, 't0', property(
                     fget=lambda self: np.min(self.fa['timepoints'].value)))
-    setattr(ds.__class__, 'dt', property(fget=lambda self: dts[0]))
+
+    def _get_dt(ds):
+        ts = np.unique(ds.fa['timepoints'].value)
+        if len(ts) >= 1:
+            delta = ts[1:] - ts[:-1]
+            if len(np.unique(delta)) == 1:
+                return delta[0]
+        return float(numpy.nan)
+
+    setattr(ds.__class__, 'dt', property(fget=lambda self: _get_dt(self)))
 
     def selector(f, xs):
         if type(f) in (list, tuple):
@@ -180,5 +193,3 @@ def eeglab_dataset(samples):
                             doc='Given a filter function f returns the '
                                 'indices of features for which f(x) holds '
                                 ' for each x in channelids'))
-
-    return ds
