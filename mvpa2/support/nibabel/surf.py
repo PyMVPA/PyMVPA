@@ -712,7 +712,7 @@ class Surface(object):
             True iff the current surface has the same number of coordinates and the
             same faces as 'other'. '''
 
-        return self._v.shape == other._v.shape and (other._f == self._f).all()
+        return self._v.shape == other._v.shape and np.array_equal(self._f, other._f)
 
     def __add__(self, other):
         '''coordinate-wise addition of two surfaces with the same topology'''
