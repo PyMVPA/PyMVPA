@@ -1542,11 +1542,15 @@ def generate_plane(x00, x01, x10, n01, n10):
 def read(fn):
     '''General read function for surfaces
     
-    For now only supports ascii (as used in AFNI's SUMA) and freesurfer formats
+    For now only supports ascii (as used in AFNI's SUMA), Caret
+    and freesurfer formats
     '''
     if fn.endswith('.asc'):
         from mvpa2.support.nibabel import surf_fs_asc
         return surf_fs_asc.read(fn)
+    elif fn.endswith('.coord'):
+        from mvpa2.support.nibabel import surf_caret
+        return surf_caret.read(fn)
     else:
         import nibabel.freesurfer.io as fsio
         coords, faces = fsio.read_geometry(fn)
