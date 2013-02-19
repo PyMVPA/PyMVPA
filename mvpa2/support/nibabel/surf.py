@@ -46,15 +46,24 @@ class Surface(object):
     s : Surface
         a surface specified by vertices and faces
     '''
-    def __init__(self, v=None, f=None, check=True):
-        if not (v is None or f is None):
-            self._v = np.asarray(v)
-            self._f = np.asarray(f)
-            self._nv = v.shape[0]
-            self._nf = f.shape[0]
+    def __init__(self, v, f=None, check=True):
+        # set vertices
+        v = np.asarray(v)
+        if len(v.shape) != 2 or v.shape[1] != 3:
+            raise ValueError("Expected Px3 array for coordinates")
+        self._v = v
 
+        # set faces
+        if f is None:
+            f = np.zeros((0, 3), dtype=np.int)
         else:
-            raise Exception("Cannot make new surface from nothing")
+            f = np.asarray(f)
+            if len(f.shape) != 2 or f.shape[1] != 3:
+                raise ValueError("Expected Qx3 array for faces")
+        self._f = f
+
+        self._nv = v.shape[0]
+        self._nf = f.shape[0]
 
         if check:
             self._check()
