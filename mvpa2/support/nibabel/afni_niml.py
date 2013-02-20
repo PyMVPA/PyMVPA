@@ -349,7 +349,10 @@ def string2rawniml(s, i=None):
             # no header - was it the end of a section?
             m = re.match(b'\W*</\w+>\s*', s[i:], _RE_FLAGS)
 
-            if not m is None and i + m.end() == len(s):
+            # for NIFTI extensions there can be some null bytes left
+            remaining = s[i + m.end():].replace(chr(0), '').strip()
+
+            if not m is None and len(remaining) == 0:
                 # entire file was parsed - we are done
                 debug('NIML', 'Completed parsing, length %d (%d elements)', (len(s), len(nimls)))
                 if return_pos:
