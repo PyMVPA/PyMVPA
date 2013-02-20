@@ -64,13 +64,13 @@ def _describe_attr(attr, style):
         return 'IMPLEMENT ME\n'
 
 def txt_content_summary_terse(ds, args):
-    info = 'samples: '
-    info += _describe_samples(ds.samples, 'terse')
+    print ds.summary(targets_attr=args.target_attr)
+    info = '\n\nDetails on dataset attributes:\n'
     for cdesc, col, describer in \
             (('sample', ds.sa, _describe_array_attr),
              ('feature', ds.fa, _describe_array_attr),
              ('dataset', ds.a, _describe_attr)):
-        info += '%s attributes:\n' % cdesc
+        info += ' %s attributes:\n' % cdesc
         for attr in sorted(col.values(),
                            cmp=lambda x, y: cmp(x.name, y.name)):
             info += '  %s\n' % describer(attr, 'terse')
@@ -118,10 +118,18 @@ output_grp = ('options for output formating', [
 ])
 
 
+ds_descr_grp = ('options for dataset description', [
+    (('--target-attr',), dict(default='targets', metavar='NAME',
+        help="""name of a samples attributes defining 'target'. This
+        information is used to define groups of samples when
+        generating information on the within and between category
+        data structure in a dataset.""")),
+])
 
 def setup_parser(parser):
     parser_add_common_args(parser, pos=['multidata'])
     parser_add_optgroup_from_def(parser, output_grp)
+    parser_add_optgroup_from_def(parser, ds_descr_grp)
 
 
 def run(args):
