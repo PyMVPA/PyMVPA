@@ -34,6 +34,12 @@ NUMPY'S NPY BINARY FILES
 This data format is for storing numerical data (with arbitrary number of
 dimensions in binary format).
 
+NIFTI FILES
+
+This data format is for (multi-dimensional) spatial images. Input datasets
+should have a mapper that can reverse-map the corresponding dataset component
+back into the image space.
+
 Examples:
 
 Print a sample attribute
@@ -68,6 +74,13 @@ def _check_destination(args):
     if args.destination is None:
         raise ValueError("no output filename given (missing --destination)")
 
+def to_nifti(dumpy, ds, args):
+    from mvpa2.datasets.mri import map2nifti
+    # TODO allow overriding the nifti header
+    # TODO allow overriding the mapper
+    nimg = map2nifti(ds, dumpy)
+    nimg.to_filename(args.destination)
+
 parser_args = {
     'formatter_class': argparse.RawDescriptionHelpFormatter,
 }
@@ -97,7 +110,7 @@ def setup_parser(parser):
                         is given it will be directed to stdout, if permitted by
                         the data format""")
     parser.add_argument('-f', '--format', default='txt',
-                        choices=('txt', 'hdf5', 'npy'),
+                        choices=('hdf5', 'nifti', 'npy', 'txt'),
                         help="""output format""")
     parser_add_optgroup_from_def(parser, hdf5_grp)
 
@@ -158,4 +171,7 @@ def run(args):
     elif args.format == 'npy':
         _check_destination(args)
         np.save(args.destination, dumpy)
+    elif args.format == 'nifti':
+        _check_destination(args)
+        to_nifti(dumpy, ds, args)
     return ds
