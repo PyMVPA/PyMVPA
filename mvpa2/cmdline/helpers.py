@@ -295,7 +295,7 @@ def arg2learner(arg, index=0):
 
 def script2obj(filepath):
     locals = {}
-    execfile(filepath, dict(), locals)
+    execfile(filepath, locals, locals)
     if not len(locals):
         raise argparse.ArgumentTypeError(
             "executing script '%s' did not create at least one object" % filepath)
