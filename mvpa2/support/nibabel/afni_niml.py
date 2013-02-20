@@ -361,7 +361,7 @@ def string2rawniml(s, i=None):
                     return nimls
 
             # not good - not at the end of the file
-            raise ValueError("Unexpected end: [%s] ", _partial_string(s, i))
+            raise ValueError("Unexpected end: [%s] " % _partial_string(s, i))
 
         else:
             # get values from header
