@@ -349,16 +349,18 @@ def string2rawniml(s, i=None):
             # no header - was it the end of a section?
             m = re.match(b'\W*</\w+>\s*', s[i:], _RE_FLAGS)
 
-            # for NIFTI extensions there can be some null bytes left
-            remaining = s[i + m.end():].replace(chr(0), '').strip()
+            if not m is None:
+                # for NIFTI extensions there can be some null bytes left
+                # so get rid of them here
+                remaining = s[i + m.end():].replace(chr(0), '').strip()
 
-            if not m is None and len(remaining) == 0:
+                if len(remaining) == 0:
                 # entire file was parsed - we are done
-                debug('NIML', 'Completed parsing, length %d (%d elements)', (len(s), len(nimls)))
-                if return_pos:
-                    return i, nimls
-                else:
-                    return nimls
+                    debug('NIML', 'Completed parsing, length %d (%d elements)', (len(s), len(nimls)))
+                    if return_pos:
+                        return i, nimls
+                    else:
+                        return nimls
 
             # not good - not at the end of the file
             raise ValueError("Unexpected end: [%s] " % _partial_string(s, i))
