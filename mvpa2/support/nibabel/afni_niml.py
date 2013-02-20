@@ -202,7 +202,7 @@ def rawniml2string(p, form='text'):
     return b''.join((d[0], s_name, d[1], s_header, d[2], s_body, d[3], s_name, d[4]))
 
 def _data2string(data, form):
-    if type(data) is str:
+    if isinstance(data, basestring):
         return ('"%s"' % encode_escape(data)).encode()
 
     elif type(data) is np.ndarray:

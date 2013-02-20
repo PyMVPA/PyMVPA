@@ -225,7 +225,7 @@ def _dset2rawniml_complete(r):
         else:
             break # we're done
 
-    if tp is str:
+    if issubclass(tp, basestring):
         r['ni_dimen'] = '1'
         r['ni_type'] = 'String'
     elif tp is np.ndarray:
