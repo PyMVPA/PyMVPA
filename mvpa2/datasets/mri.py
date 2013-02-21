@@ -127,6 +127,11 @@ def map2nifti(dataset, data=None, imghdr=None, imgtype=None):
         elif __debug__:
             debug('DS_NIFTI', 'No image header found. Using defaults.')
 
+    # Ensure that header extensions are consistent.
+    # This should fix issues with AFNI extension information.
+    # See: https://github.com/PyMVPA/PyMVPA/issues/107 
+    imghdr = _get_imghdr_with_consistent_extensions(imghdr, dsarray.shape)
+
     if imgtype is None:
         if 'imgtype' in dataset.a:
             imgtype = dataset.a.imgtype
@@ -383,3 +388,66 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
         return None
     else:
         return imgdata, imghdr, imgtype
+
+def _get_imghdr_with_consistent_extensions(imghdr, dsarray_shape):
+    '''Makes sure that NIFTI header extensions data is consistent
+    with the size of the dataset array shape.
+    Usually this function just returns its first input argument (imghdr).
+    At the moment it only returns a header different from the input
+    if there is an AFNI extension and there is a size mismatch; in that case 
+    the AFNI extension info is destroyed
+    
+    WiP
+    '''
+
+    if not imghdr or not hasattr(imghdr, 'extensions'):
+        return imghdr
+
+    es = imghdr.extensions
+    if not es:
+        return imghdr
+
+    n = len(es)
+
+    # because information may be destroyed used normal integer indexing
+    for i in xrange(n):
+        e = es[i]
+        code = e.get_code()
+
+        if code != 4:
+            # not an AFNI extension - ignore
+            continue
+
+        # parse the AFNI extension header
+        content = e.get_content()
+        if not content:
+            continue
+
+        # XXX surround this part of the code (till the end) with try/catch?
+        from mvpa2.support.nibabel import afni_niml
+        nimls = afni_niml.string2rawniml(content)[0]
+
+        # by default leave the header intact
+        nuke_it = False
+
+        for niml in nimls['nodes']:
+            atr_name = niml.get('atr_name', None)
+            if atr_name == 'DATASET_RANK':
+                nuke_it = dsarray_shape[3] != niml['data'][1]
+            elif atr_name == 'DATASET_DIMENSIONS':
+                nuke_it = dsarray_shape[:3] != niml['data'][:3]
+            if nuke_it:
+                break
+
+        if nuke_it:
+            # make a copy of the header because even if this time the 
+            # header should be nuked, that may not be the case in 
+            # subsequent calls
+            imghdr = imghdr.copy()
+            import nibabel
+
+            # overwrite the current extension
+            imghdr.extensions[i] = nibabel.nifti1.Nifti1Extension(code, '')
+            warning("Nuking AFNI NIFTI extension due to dimension mismatch")
+
+    return imghdr
