@@ -342,6 +342,10 @@ def string2rawniml(s, i=None):
 
     # Keep on reading new parts
     while True:
+        # ignore any xml tags
+        if s.startswith('<?xml', i):
+            i = s.index('>', i) + 1
+
         # try to read a name and header part
         m = re.match(headerpat, s[i:], _RE_FLAGS)
 
