@@ -203,11 +203,9 @@ def hemi_pairs_add_views(spec_both, state, directory=None, overwrite=False):
     if state == 'inflated':
         views = dict(m='medial', s='superior', i='inferior', a='anterior', p='posterior')
         viewkeys = ['m', 's', 'i', 'a', 'p']
-    elif state in ('sphere.reg', 'full.patch.3d'):
+    else:
         views = dict(m='medial')
         viewkeys = 'm'
-    else:
-        raise ValueError("Illegal state %s" % state)
 
     spec_both = [spec_left, spec_right]
     spec_both_new = map(copy.deepcopy, spec_both)
