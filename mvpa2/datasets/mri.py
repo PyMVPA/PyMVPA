@@ -423,31 +423,41 @@ def _get_imghdr_with_consistent_extensions(imghdr, dsarray_shape):
         if not content:
             continue
 
-        # XXX surround this part of the code (till the end) with try/catch?
-        from mvpa2.support.nibabel import afni_niml
-        nimls = afni_niml.string2rawniml(content)[0]
+        # this is experimental at the moment
+        # surround by try/catch to ensure it does not interfere
+        # with existing analysis code
+        try:
+            from mvpa2.support.nibabel import afni_niml
+            nimls = afni_niml.string2rawniml(content)[0]
 
-        # by default leave the header intact
-        nuke_it = False
+            # by default leave the header intact
+            nuke_it = False
 
-        for niml in nimls['nodes']:
-            atr_name = niml.get('atr_name', None)
-            if atr_name == 'DATASET_RANK':
-                nuke_it = dsarray_shape[3] != niml['data'][1]
-            elif atr_name == 'DATASET_DIMENSIONS':
-                nuke_it = dsarray_shape[:3] != niml['data'][:3]
+            for niml in nimls['nodes']:
+                atr_name = niml.get('atr_name', None)
+                if atr_name == 'DATASET_RANK':
+                    dataset_rank = niml['data'][1]
+                    if len(dsarray_shape) < 4:
+                        nuke_it = dataset_rank != 1
+                    else:
+                        nuke_it = dataset_rank != dsarray_shape[3]
+                elif atr_name == 'DATASET_DIMENSIONS':
+                    nuke_it = dsarray_shape[:3] != niml['data'][:3]
+                if nuke_it:
+                    break
+
             if nuke_it:
-                break
+                # make a copy of the header because even if this time the 
+                # header should be nuked, that may not be the case in 
+                # subsequent calls
+                imghdr = imghdr.copy()
+                import nibabel
 
-        if nuke_it:
-            # make a copy of the header because even if this time the 
-            # header should be nuked, that may not be the case in 
-            # subsequent calls
-            imghdr = imghdr.copy()
-            import nibabel
-
-            # overwrite the current extension
-            imghdr.extensions[i] = nibabel.nifti1.Nifti1Extension(code, '')
-            warning("Nuking AFNI NIFTI extension due to dimension mismatch")
+                # overwrite the current extension
+                imghdr.extensions[i] = nibabel.nifti1.Nifti1Extension(code, '')
+                warning("Nuking AFNI NIFTI extension due to dimension mismatch")
+        except:
+            warning("Could not check/destroy AFNI NIFTI extension information."
+                    " NIFTI header and AFNI extension info may be inconsistent.")
 
     return imghdr
