@@ -267,8 +267,6 @@ def read(fn, itemifsingletonlist=True, postfunction=None):
     import io
     with io.FileIO(fn) as f:
         s = f.read()
-    #with open(fn) as f:
-    #    s = f.read()
 
     r = string2rawniml(s)
     if not postfunction is None:
@@ -304,7 +302,7 @@ def string2rawniml(s, i=None):
     
     Parameters
     ----------
-    s: str
+    s: bytearray
         string to be converted
     i: int
         Starting position in the string.
@@ -340,11 +338,14 @@ def string2rawniml(s, i=None):
 
     nimls = [] # here all found parts are stored
 
+    #if isinstance(s, basestring):
+    #    s = s.encode()
+
     # Keep on reading new parts
     while True:
         # ignore any xml tags
-        if s.startswith('<?xml', i):
-            i = s.index('>', i) + 1
+        if s.startswith(b'<?xml', i):
+            i = s.index(b'>', i) + 1
 
         # try to read a name and header part
         m = re.match(headerpat, s[i:], _RE_FLAGS)
@@ -356,7 +357,7 @@ def string2rawniml(s, i=None):
             if not m is None:
                 # for NIFTI extensions there can be some null bytes left
                 # so get rid of them here
-                remaining = s[i + m.end():].replace(chr(0), '').strip()
+                remaining = s[i + m.end():].replace(chr(0).encode(), b'').strip()
 
                 if len(remaining) == 0:
                 # entire file was parsed - we are done
