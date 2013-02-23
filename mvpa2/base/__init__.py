@@ -337,6 +337,8 @@ if __debug__:
 
     debug.register('REP', "Reports")
     debug.register('REP_', "Reports (verbose)")
+    debug.register('PAR', "Parallelization")
+
 
     debug.register('SUITE', "Import of mvpa2.suite")
 
