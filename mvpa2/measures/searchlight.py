@@ -33,6 +33,7 @@ from mvpa2.measures.base import Measure
 from mvpa2.base.state import ConditionalAttribute
 from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
 from mvpa2.mappers.base import ChainMapper
+from mvpa2.misc.parallelization import get_parallelizer
 
 class BaseSearchlight(Measure):
     """Base class for searchlights.
@@ -303,43 +304,28 @@ class Searchlight(BaseSearchlight):
         """Classical generic searchlight implementation
         """
         assert(self.results_backend in ('native', 'hdf5'))
-        # compute
-        if nproc is not None and nproc > 1:
-            # split all target ROIs centers into `nproc` equally sized blocks
-            nproc_needed = min(len(roi_ids), nproc)
-            nblocks = nproc_needed \
-                      if self.nblocks is None else self.nblocks
-            roi_blocks = np.array_split(roi_ids, nblocks)
 
-            # the next block sets up the infrastructure for parallel computing
-            # this can easily be changed into a ParallelPython loop, if we
-            # decide to have a PP job server in PyMVPA
-            import pprocess
-            p_results = pprocess.Map(limit=nproc_needed)
-            if __debug__:
-                debug('SLC', "Starting off %s child processes for nblocks=%i"
-                      % (nproc_needed, nblocks))
-            compute = p_results.manage(
-                        pprocess.MakeParallel(self._proc_block))
-            for iblock, block in enumerate(roi_blocks):
-                # should we maybe deepcopy the measure to have a unique and
-                # independent one per process?
-                seed = mvpa2.get_random_seed()
-                compute(block, dataset, copy.copy(self.__datameasure),
-                        seed=seed, iblock=iblock)
-        else:
-            # otherwise collect the results in an 1-item list
-            p_results = [
-                    self._proc_block(roi_ids, dataset, self.__datameasure)]
+        proc_func = self._proc_block
+        merge_func = lambda results:self.results_fx(
+                                sl=self,
+                                dataset=dataset,
+                                roi_ids=roi_ids,
+                                results=self.__handle_all_results(results))
 
-        # Finally collect and possibly process results
-        # p_results here is either a generator from pprocess.Map or a list.
-        # In case of a generator it allows to process results as they become
-        # available
-        result_ds = self.results_fx(sl=self,
-                                    dataset=dataset,
-                                    roi_ids=roi_ids,
-                                    results=self.__handle_all_results(p_results))
+
+        parallelizer = get_parallelizer(proc_func=proc_func,
+                                        merge_func=merge_func,
+                                        nproc=nproc)
+
+        nblocks = self.nblocks or parallelizer.number_of_cores_needed
+
+        # define blocks and parameters used in each
+        roi_blocks = np.array_split(roi_ids, nblocks)
+        params = [(block, dataset, copy.copy(self.__datameasure),
+                   mvpa2.get_random_seed(), iblock)
+                        for iblock, block in enumerate(roi_blocks)]
+
+        result_ds = parallelizer(params)
 
         # Assure having a dataset (for paranoid ones)
         if not is_datasetlike(result_ds):
