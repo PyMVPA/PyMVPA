@@ -309,19 +309,26 @@ class RepeatedMeasure(Measure):
         Parallelizer = parallelization.get_best_parallelizer()
         results_backend = Parallelizer.get_best_results_backend()
 
-        proc_func = lambda data:self._call_single_item(data, results_backend)
+        proc_func = lambda proc_id, data:self._call_single_item(proc_id, data, results_backend)
         merge_func = self._merge_result_items
 
         f = Parallelizer(proc_func=proc_func, merge_func=merge_func,
                          results_backend=results_backend)
 
-        results = f(generator.generate(ds))
+        # pack with process id for each element
+        def indexed_generator(gs, start=0):
+            for g in gs:
+                yield ((0, g),)
+                start += 1
+        results = f(enumerate(generator.generate(ds)))
+
 
         return results
 
-    def _call_single_item(self, sds, backend=None):
+    def _call_single_item(self, proc_id, sds, backend=None):
         '''Helper function for _call
         Returns a triple with the result, dataset (the input), and stats'''
+
         ca_dataset = None
         ca_stats = None
 
@@ -352,7 +359,8 @@ class RepeatedMeasure(Measure):
             ca_stats = node.ca['stats'].value
 
         if backend == 'hdf5':
-            suffix = int(hash(result) % 1e12)
+            # 'almost' ensure a unique file name
+            suffix = '%s-%s' % (int(hash(result) % 1e12), proc_id)
             results_file = tempfile.mktemp(prefix='__tmp_repeated_measures',
                                            suffix='-%s.hdf5' % suffix)
             if __debug__:
