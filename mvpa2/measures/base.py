@@ -290,21 +290,14 @@ class RepeatedMeasure(Measure):
 
 
     def _call(self, ds):
-        # local binding
-        generator = self._generator
         node = self._node
-        ca = self.ca
-        space = self.get_space()
-        concat_as = self._concat_as
-
         if self.ca.is_enabled("stats") and (not node.ca.has_key("stats") or
                                             not node.ca.is_enabled("stats")):
             warning("'stats' conditional attribute was enabled, but "
                     "the assigned node '%s' either doesn't support it, "
                     "or it is disabled" % node)
-        # precharge conditional attributes
-        ca.datasets = []
 
+        generator = self._generator
         # run the node an all generated datasets
         #results, ca_datasets, ca_stats = zip(*map(self._process_call_item, generator.generate(ds)))
         sds_dataset_stats = map(self._call_single_item, generator.generate(ds))
@@ -370,9 +363,9 @@ class RepeatedMeasure(Measure):
 
         # set conditional attributes
         if ca.is_enabled("datasets"):
-            # store dataset in ca
-            for ca_dataset in ca_datasets:
-                ca.datasets.append(ca_dataset)
+            ca.datasets = list(ca_datasets)
+        else:
+            ca.datasets = []
 
         # set repetition results
         self.ca.repetition_results = results
