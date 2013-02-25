@@ -66,6 +66,9 @@ def numpy_data_isfloat(data):
 def numpy_data_isdouble(data):
     return type(data) is np.ndarray and np.issubdtype(data.dtype, np.double)
 
+def numpy_data_isstring(data):
+    return type(data) is np.ndarray and np.issubdtype(data.dtype, np.str)
+
 def numpy_data2printer(data):
     tp = type(data)
     if tp is list:
@@ -80,7 +83,7 @@ def numpy_data2printer(data):
         elif numpy_data_isfloat(data):
             return lambda x : '%f' % x
 
-    raise ValueError("Not understood type: %r" % tp)
+    raise ValueError("Not understood type %r in %r" % (tp, data))
 
 
 def code2python_type(i):
@@ -99,7 +102,6 @@ def nimldataassupporteddtype(data):
         return data
 
     tp = data.dtype
-
     if numpy_data_isfloat(data) and not np.issubdtype(tp, np.float32):
         return np.asarray(data, np.float32)
 
@@ -107,7 +109,6 @@ def nimldataassupporteddtype(data):
         return np.asarray(data, np.int32)
 
     return data
-
 
 
 def numpy_type2code(tp):
@@ -122,9 +123,12 @@ def numpy_type2code(tp):
         if tp == np.int64:
             return 2
 
-        raise ValueError("Unknown type %r" % tp)
+        # bit of a hack to get string arrays converted properly 
+        # XXX should we do this for other types as well?
+        if isinstance(tp, np.dtype) and tp.char in ('S', 'a'):
+            return 8
 
-        return None
+        raise ValueError("Unknown type %r" % tp)
 
 
 def code2numpy_type(i):
@@ -153,8 +157,6 @@ def sametype(p, q):
 
     if pc is None or qc is None:
         raise ValueError("Illegal type %r or %r " % (p, q))
-
-    print p, q, pc, qc
 
     return pc == qc
 

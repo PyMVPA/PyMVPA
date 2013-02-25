@@ -46,15 +46,24 @@ class Surface(object):
     s : Surface
         a surface specified by vertices and faces
     '''
-    def __init__(self, v=None, f=None, check=True):
-        if not (v is None or f is None):
-            self._v = np.asarray(v)
-            self._f = np.asarray(f)
-            self._nv = v.shape[0]
-            self._nf = f.shape[0]
+    def __init__(self, v, f=None, check=True):
+        # set vertices
+        v = np.asarray(v)
+        if len(v.shape) != 2 or v.shape[1] != 3:
+            raise ValueError("Expected Px3 array for coordinates")
+        self._v = v
 
+        # set faces
+        if f is None:
+            f = np.zeros((0, 3), dtype=np.int)
         else:
-            raise Exception("Cannot make new surface from nothing")
+            f = np.asarray(f)
+            if len(f.shape) != 2 or f.shape[1] != 3:
+                raise ValueError("Expected Qx3 array for faces")
+        self._f = f
+
+        self._nv = v.shape[0]
+        self._nf = f.shape[0]
 
         if check:
             self._check()
@@ -79,7 +88,7 @@ class Surface(object):
             from mvpa2.base import warning
             warning("Count mismatch for face range (%d!=%d), "
                             "faces without node: %r" % (unqf.size, self._nv,
-                                            set(range(self._nv)) - set(unqf)))
+                                    len(set(range(self._nv)) - set(unqf))))
 
 
         if np.any(unqf != np.arange(self._nv)):
@@ -284,14 +293,12 @@ class Surface(object):
             "src" to node "j".
         '''
 
-        if radius == 0:
-            return {src:0}
-
         shortmetric = metric.lower()[0] # only take first letter - for now
 
         if shortmetric == 'e':
             ds = self.euclidean_distance(src)
-            c = dict((nd, d) for (nd, d) in zip(xrange(self._nv), ds) if d <= radius)
+            c = dict((nd, d) for (nd, d) in zip(xrange(self._nv), ds)
+                                            if d <= radius)
 
         elif shortmetric == 'd':
             c = self.dijkstra_distance(src, maxdistance=radius)
@@ -497,8 +504,9 @@ class Surface(object):
         
         Parameters
         ----------
-        src : int
-            Index of center (source) node
+        src : int or numpy.ndarray
+            Index of center (source) node, or a 1x3 array with coordinates
+            of the center (source) node.
         trg : int
             Target node(s) to which the distance is computed.
             If 'trg is None' then distances to all nodes are computed
@@ -510,10 +518,22 @@ class Surface(object):
             "src" to node "j".
         '''
 
-        if trg is None:
-            delta = self._v - self._v[src]
+        if type(src) is tuple and len(src) == 3:
+            src = np.asarray(src)
+
+        if isinstance(src, np.ndarray):
+            if src.shape not in ((1, 3), (3,), (3, 1)):
+                raise ValueError("Illegal shape: should have 3 elements")
+
+            src_coord = src if src.shape == (1, 3) else np.reshape(src, (1, 3))
         else:
-            delta = self._v[trg] - self._v[src]
+            src_coord = self._v[src]
+
+
+        if trg is None:
+            delta = self._v - src_coord
+        else:
+            delta = self._v[trg] - src_coord
 
         delta2 = delta * delta
         ss = np.sum(delta2, axis=delta.ndim - 1)
@@ -607,7 +627,7 @@ class Surface(object):
         vidxs = [i for i, m in enumerate(msk) if m]
 
         # unique face indices that contain nodes within that distance
-        funq = list(set.union(*[n2f[vidx] for vidx in vidxs]))
+        funq = list(set.union(*[set(n2f[vidx]) for vidx in vidxs]))
 
         # these are the node indices contained in one of the faces
         fsel = self._f[funq, :]
@@ -692,7 +712,7 @@ class Surface(object):
             True iff the current surface has the same number of coordinates and the
             same faces as 'other'. '''
 
-        return self._v.shape == other._v.shape and (other._f == self._f).all()
+        return self._v.shape == other._v.shape and np.array_equal(self._f, other._f)
 
     def __add__(self, other):
         '''coordinate-wise addition of two surfaces with the same topology'''
@@ -707,11 +727,11 @@ class Surface(object):
 
     def __mul__(self, other):
         '''coordinate-wise scaling'''
-        return Surface(v=self._v * other, f=self.faces)
+        return Surface(v=self._v * other, f=self.faces, check=False)
 
     def __neg__(self, other):
         '''coordinate-wise inversion with respect to addition'''
-        return Surface(v= -self.vertices, f=self.faces)
+        return Surface(v= -self.vertices, f=self.faces, check=False)
 
     def __sub__(self, other):
         '''coordiante-wise subtraction'''
@@ -1125,14 +1145,24 @@ class Surface(object):
         # within distance epsilon for which j in x_tuple2near_indices[t]  
 
         for i, x_tuple in enumerate(x_tuples):
+            i_xyz = x[i, :]
+            if np.any(np.isnan(i_xyz)):
+                continue
+
             idxs = np.asarray(x_tuple2near_indices[x_tuple])
 
             ds = np.sum((x[i, :] - y[idxs, :]) ** 2, axis=1)
-            minpos = np.argmin(ds)
+
+            not_nan_idxs = np.nonzero(np.logical_not(np.isnan(ds)))[0]
+            if len(not_nan_idxs) == 0:
+                raise ValueError("Empty sequence: is center %d (%r)"
+                                 " illegal?" % (i, (x[i],)))
+
+            minpos = not_nan_idxs[np.argmin(ds[not_nan_idxs])]
 
             mind = ds[minpos] ** .5
 
-            if not epsilon is None and mind > epsilon:
+            if not epsilon is None and not (mind < epsilon):
                 raise ValueError("Not found for node %i: %s > %s" %
                                         (i, mind, epsilon))
 
@@ -1512,17 +1542,21 @@ def generate_plane(x00, x01, x10, n01, n10):
 def read(fn):
     '''General read function for surfaces
     
-    For now only supports ascii (as used in AFNI's SUMA) and freesurfer formats
+    For now only supports ascii (as used in AFNI's SUMA), Caret
+    and freesurfer formats
     '''
     if fn.endswith('.asc'):
         from mvpa2.support.nibabel import surf_fs_asc
         return surf_fs_asc.read(fn)
+    elif fn.endswith('.coord'):
+        from mvpa2.support.nibabel import surf_caret
+        return surf_caret.read(fn)
     else:
         import nibabel.freesurfer.io as fsio
         coords, faces = fsio.read_geometry(fn)
         return Surface(coords, faces)
 
-def write(fn, s, overwrite=False):
+def write(fn, s, overwrite=True):
     '''General write function for surfaces
     
     For now only supports ascii (as used in AFNI's SUMA)
