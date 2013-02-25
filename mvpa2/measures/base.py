@@ -306,41 +306,78 @@ class RepeatedMeasure(Measure):
         ca.datasets = []
 
         # run the node an all generated datasets
-        results = []
-        for i, sds in enumerate(generator.generate(ds)):
-            if __debug__:
-                debug('REPM', "%d-th iteration of %s on %s",
-                      (i, self, sds))
-            if ca.is_enabled("datasets"):
-                # store dataset in ca
-                ca.datasets.append(sds)
-            # run the beast
-            result = node(sds)
-            # callback
-            if not self._callback is None:
-                self._callback(data=sds, node=node, result=result)
-            # subclass postprocessing
-            result = self._repetition_postcall(sds, node, result)
-            if space:
-                # XXX maybe try to get something more informative from the
-                # processing node (e.g. in 0.5 it used to be 'chunks'->'chunks'
-                # to indicate what was trained and what was tested. Now it is
-                # more tricky, because `node` could be anything
+        #results, ca_datasets, ca_stats = zip(*map(self._process_call_item, generator.generate(ds)))
+        sds_dataset_stats = map(self._call_single_item, generator.generate(ds))
+
+        results = self._merge_result_items(sds_dataset_stats)
+
+        return results
+
+    def _call_single_item(self, sds):
+        '''Helper function for _call
+        Returns a triple with the result, dataset (the input), and stats'''
+        ca_dataset = None
+        ca_stats = None
+
+        node = self._node
+        ca = self.ca
+
+        if __debug__:
+            debug('REPM', "iteration of %s on %s",
+                      (self, sds))
+
+        if ca.is_enabled("datasets"):
+            # store dataset in ca
+            ca_dataset = sds
+
+        # run the beast
+        result = node(sds)
+
+        # callback
+        if not self._callback is None:
+            self._callback(data=sds, node=node, result=result)
+
+        # subclass postprocessing
+        result = self._repetition_postcall(sds, node, result)
+
+        # harvest summary stats
+        if ca.is_enabled("stats") and node.ca.has_key("stats") and \
+                             node.ca.is_enabled("stats"):
+            ca_stats = node.ca['stats'].value
+
+        return result, ca_dataset, ca_stats
+
+    def _merge_result_items(self, sds_dataset_stats):
+        '''merges an iterator with triples from _call_single_item'''
+        results, ca_datasets, ca_stats = zip(*sds_dataset_stats)
+
+        # set the space, if necessary
+        space = self.get_space()
+        if space:
+            for i, result in enumerate(results):
                 result.set_attr(space, (i,))
-            # store
-            results.append(result)
 
-            if ca.is_enabled("stats") and node.ca.has_key("stats") \
-               and node.ca.is_enabled("stats"):
-                if not ca.is_set('stats'):
-                    # create empty stats container of matching type
-                    ca.stats = node.ca['stats'].value.__class__()
-                # harvest summary stats
-                ca['stats'].value.__iadd__(node.ca['stats'].value)
+        # if stats set those as wlel
+        ca = self.ca
+        node = self._node
+        if all(ca_stats):
+            if not ca.is_set('stats'):
+                # create empty stats container of matching type
+                ca.stats = node.ca['stats'].value.__class__()
 
-        # charge condition attribute
+            for ca_stat in ca_stats:
+                ca['stats'].value.__iadd__(ca_stat)
+
+        # set conditional attributes
+        if ca.is_enabled("datasets"):
+            # store dataset in ca
+            for ca_dataset in ca_datasets:
+                ca.datasets.append(ca_dataset)
+
+        # set repetition results
         self.ca.repetition_results = results
 
+        concat_as = self._concat_as
         # stack all results into a single Dataset
         if concat_as == 'samples':
             results = vstack(results)
