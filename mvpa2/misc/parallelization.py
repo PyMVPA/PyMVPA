@@ -266,15 +266,19 @@ class PProcessParallelizer(Parallelizer):
         debug_("Using %d parallel threads" % nproc)
         compute_func = ys.manage(self.pp.MakeParallel(self.proc_func))
 
-        n = len(xs)
+        try:
+            n = len(xs)
+        except TypeError: # when xs is a generator
+            n = "<unknown>"
+
         for i, x in enumerate(xs):
-            debug_("Starting child process %d/%d" % (i + 1, n))
+            debug_("Starting child process %d/%s" % (i + 1, n))
             if type(x) is tuple:
                 compute_func(*x)
             else:
                 compute_func(x)
 
-        debug_("All %d child processes were started" % n)
+        debug_("All %s child processes were started" % n)
         return self._join_results(ys)
 
 
