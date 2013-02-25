@@ -319,7 +319,7 @@ class Searchlight(BaseSearchlight):
 
         # see which results backend is the best (if not given explicitly)
         results_backend = self.results_backend or \
-                                Parallelizer.best_results_backend()
+                                Parallelizer.get_best_results_backend()
 
         f = Parallelizer(proc_func=proc_func, merge_func=merge_func,
                          results_backend=results_backend, nproc=nproc)
