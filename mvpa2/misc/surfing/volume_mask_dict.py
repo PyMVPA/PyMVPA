@@ -398,7 +398,7 @@ class VolumeMaskDictionary(Mapping):
 
         return True
 
-    def same_layout(self, other):
+    def same_layout(self, other, raise_=False):
         '''
         Computers whether another instance has the same spatial layout
         
@@ -414,9 +414,24 @@ class VolumeMaskDictionary(Mapping):
             and source as the current instance
         '''
         if not isinstance(other, self.__class__):
+            if raise_:
+                raise ValueError("%s not instance of %s" %
+                                        (type(other), type(self)))
+            else:
+                return False
+
+        if self.volgeom != other.volgeom:
+            if raise_:
+                raise ValueError("Different volgeom: %s != %s" %
+                                        (self.volgeom, other.volgeom))
             return False
 
-        return self.volgeom == other.volgeom and self.source == other.source
+        if self.source != other.source:
+            if raise_:
+                raise ValueError("Different source: %s != %s" %
+                                        (self.source, other.source))
+
+        return True
 
     def merge(self, other):
         '''
@@ -430,8 +445,7 @@ class VolumeMaskDictionary(Mapping):
             auxiliary properties (if present) should have the same labels.
         '''
 
-        if not self.same_layout(other):
-            raise ValueError("Cannot merge %r with %r" % (self, other))
+        self.same_layout(other, raise_=True)
 
         aks = self.aux_keys()
 
