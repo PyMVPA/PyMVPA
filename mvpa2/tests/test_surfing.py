@@ -786,6 +786,7 @@ class SurfTests(unittest.TestCase):
 
         backends = ['native', 'hdf5']
 
+        sel0 = None
         for i, backend in enumerate(backends):
             if backend == 'hdf5' and not externals.exists('h5py'):
                 continue
@@ -793,7 +794,7 @@ class SurfTests(unittest.TestCase):
             sel = surf_voxel_selection.run_voxel_selection(radius, vg, inner,
                             outer, results_backend=backend)
 
-            if i == 0:
+            if sel0 is None:
                 sel0 = sel
             else:
                 assert_equal(sel0, sel)

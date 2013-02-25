@@ -287,7 +287,6 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             volume_mask_ = combi['volume_mask_']
             call_method_ = combi['call_method_']
 
-
             # keep track of which values were used - 
             # so that this unit test tests itself
 
