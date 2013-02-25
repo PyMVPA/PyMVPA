@@ -38,6 +38,7 @@ from mvpa2.base import warning, externals
 
 from mvpa2.misc.surfing import volgeom, volsurf, volume_mask_dict
 from mvpa2.support.nibabel import surf
+from mvpa2.misc import parallelization
 
 if externals.exists('h5py'):
     from mvpa2.base.hdf5 import h5save, h5load
@@ -519,114 +520,49 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
     if _debug():
         debug('SVS', "Instantiated voxel selector (radius %r)" % radius)
 
-
-    # structure to keep output data. Initialize with None, then
-    # make a sparse_attributes instance when we know what the attribtues are
-    node2volume_attributes = None
-
     attribute_mapper = voxel_selector.disc_voxel_indices_and_attributes
 
     srcs_order = [source_surf_nodes[node] for node in visitorder]
     src_trg_nodes = [(src, src2intermediate[src]) for src in srcs_order]
 
-    if nproc is None:
-        try:
-            import pprocess
-            nproc = pprocess.get_number_of_cores() or 1
-            if _debug() :
-                debug("SVS", 'Using pprocess with %d cores' % nproc)
-        except:
-            nproc = 1
-            debug("SVS", 'Using %d cores - pprocess not available' % nproc)
+    # see which parallelizer is the best on this platform
+    Parallelizer = parallelization.get_best_parallelizer(nproc=nproc)
 
-    if nproc > 1:
-        if results_backend == 'hdf5':
-            externals.exists('h5py', raise_=True)
-        elif results_backend is None:
-            if externals.exists('h5py'):
-                results_backend = 'hdf5'
-            else:
-                results_backend = 'native'
-        if _debug():
-            debug('SVS', "Using '%s' backend" % (results_backend,))
+    # choose the best backend
+    if results_backend is None:
+        results_backend = Parallelizer.get_best_results_backend()
+        debug('SVS', "Best results backend is %s" % results_backend)
 
-        if not results_backend in ('native', 'hdf5'):
-            raise ValueError('Illegal results backend %r' % results_backend)
+    proc_func = _reduce_mapper
+    merge_func = lambda results:_concat_results(results, results_backend)
 
-        import pprocess
-        n_srcs = len(src_trg_nodes)
-        blocks = np.array_split(np.arange(n_srcs), nproc)
+    # initiate parallelization
+    f = Parallelizer(proc_func, merge_func=merge_func,
+                     nproc=nproc, results_backend=results_backend)
 
-        results = pprocess.Map(limit=nproc)
-        reducer = results.manage(pprocess.MakeParallel(_reduce_mapper))
+    nproc = f.number_of_cores_needed
+    debug("SVS", "Using %d cores (backend=%s)" % (nproc, results_backend))
 
-        if __debug__:
-            debug('SVS', "Starting %d child processes", (len(blocks),))
+    n_srcs = len(src_trg_nodes)
+    blocks = np.array_split(np.arange(n_srcs), nproc)
 
-        for i, block in enumerate(blocks):
-            empty_dict = volume_mask_dict.VolumeMaskDictionary(
-                                            vol_surf.volgeom,
-                                            vol_surf.intermediate_surface)
-
-            src_trg = []
-            for idx in block:
-                src_trg.append(src_trg_nodes[idx])
-
-            if _debug():
-                debug('SVS', "  starting block %d/%d: %d centers" %
-                            (i + 1, nproc, len(src_trg)), cr=True)
-
-            reducer(empty_dict, attribute_mapper, src_trg,
-                    eta_step=eta_step, proc_id='%d' % (i + 1,),
-                    results_backend=results_backend, tmp_prefix=tmp_prefix)
-        if _debug():
-            debug('SVS', '')
-            debug('SVS', 'Started all %d child processes' % (len(blocks)))
-            tstart = time.time()
-
-        node2volume_attributes = None
-        for i, result in enumerate(results):
-            if result is None:
-                continue
-
-            if results_backend == 'hdf5':
-                result_fn = result
-                result = h5load(result_fn)
-                os.remove(result_fn)
-
-            if node2volume_attributes is None:
-                # first time we have actual results. 
-                # Use as a starting point
-                node2volume_attributes = result
-                if _debug():
-                    debug('SVS', '')
-                    debug('SVS', "Merging results from %d child "
-                                 "processes using '%s' backend" %
-                                 (len(blocks), results_backend))
-
-            else:
-                # merge new with current data
-                node2volume_attributes.merge(result)
-            if _debug():
-                debug('SVS', "  merged result block %d/%d" % (i + 1, nproc),
-                                cr=True)
-
-        if _debug():
-            telapsed = time.time() - tstart
-            debug('SVS', "")
-            debug('SVS', 'Merged results from %d child processed - '
-                         'took %s' %
-                         (len(blocks), _seconds2prettystring(telapsed)))
-
-    else:
+    # split up in blocks and define parameters for each block
+    params = []
+    for i, block in enumerate(blocks):
         empty_dict = volume_mask_dict.VolumeMaskDictionary(
-                                            vol_surf.volgeom,
-                                            vol_surf.intermediate_surface)
-        node2volume_attributes = _reduce_mapper(empty_dict,
-                                                attribute_mapper,
-                                                src_trg_nodes,
-                                                eta_step=eta_step)
-        debug('SVS', "")
+                                        vol_surf.volgeom,
+                                        vol_surf.intermediate_surface)
+
+        src_trg = []
+        for idx in block:
+            src_trg.append(src_trg_nodes[idx])
+
+        params.append((empty_dict, attribute_mapper, src_trg,
+                       eta_step, '%d' % (i + 1,),
+                       results_backend, tmp_prefix))
+
+    # apply parallelization to parameters
+    node2volume_attributes = f(params)
 
     if _debug():
         if node2volume_attributes is None:
@@ -652,6 +588,30 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                         len(visitorder))
     return node2volume_attributes
 
+def _concat_results(results, results_backend):
+    node2volume_attributes = None
+    debug('SVS_', "concatenating results %s using backend %s" % (type(results), results_backend))
+    for i, result in enumerate(results):
+        debug('SVS_', "Processing result %d" % i)
+        if result is None:
+            continue
+
+        debug('SVS', '')
+        debug('SVS', "Merging results from child process"
+                             "%d using '%s' backend" %
+                             (i + 1, results_backend))
+
+        if node2volume_attributes is None:
+            # first time we have actual results.
+            # Use as a starting point
+            node2volume_attributes = result
+
+        else:
+            # merge new with current data
+            node2volume_attributes.merge(result)
+
+    return node2volume_attributes
+
 def _reduce_mapper(node2volume_attributes, attribute_mapper,
                    src_trg_indices, eta_step=1, proc_id=None,
                    results_backend='native', tmp_prefix='tmpvoxsel'):
@@ -662,7 +622,7 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
     if not src_trg_indices:
         return None
 
-    if not results_backend in ('native', 'hdf5'):
+    if not results_backend in ('native', 'hdf5', None):
         raise ValueError('Illegal results backend %r' % results_backend)
 
 
@@ -699,13 +659,17 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
                 msg += ' (#%s)' % proc_id
             debug('SVS', msg, cr=True)
 
+    debug('SVS_', 'Completed %d searchlights' % len(src_trg_indices))
+
     if results_backend == 'hdf5':
         tmp_postfix = ('__tmp__%d_%s.h5py' %
                                  (hash(time.time()), proc_id))
         tmp_fn = tmp_prefix + tmp_postfix
         h5save(tmp_fn, node2volume_attributes)
+        debug('SVS_', 'Completed %d searchlights' % len(src_trg_indices))
         return tmp_fn
     else:
+        debug('SVS_', 'Returning results using backend %s' % results_backend)
         return node2volume_attributes
 
 def _debug():
