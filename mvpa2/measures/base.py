@@ -22,6 +22,8 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 import mvpa2.support.copy as copy
 
+import tempfile
+
 from mvpa2.base.node import Node
 from mvpa2.base.learner import Learner
 from mvpa2.base.state import ConditionalAttribute
@@ -37,6 +39,8 @@ from mvpa2.base.dataset import AttrDataset
 from mvpa2.datasets import Dataset, vstack, hstack
 from mvpa2.mappers.fx import BinaryFxNode
 from mvpa2.generators.splitters import Splitter
+
+from mvpa2.misc import parallelization
 
 if __debug__:
     from mvpa2.base import debug
@@ -299,14 +303,23 @@ class RepeatedMeasure(Measure):
 
         generator = self._generator
         # run the node an all generated datasets
-        #results, ca_datasets, ca_stats = zip(*map(self._process_call_item, generator.generate(ds)))
-        sds_dataset_stats = map(self._call_single_item, generator.generate(ds))
 
-        results = self._merge_result_items(sds_dataset_stats)
+        # XXX for now we have 'auto' parallelizer, backend and number of processes.
+        # In the future we may want nproc and backend a parameter?
+        Parallelizer = parallelization.get_best_parallelizer()
+        results_backend = Parallelizer.get_best_results_backend()
+
+        proc_func = lambda data:self._call_single_item(data, results_backend)
+        merge_func = self._merge_result_items
+
+        f = Parallelizer(proc_func=proc_func, merge_func=merge_func,
+                         results_backend=results_backend)
+
+        results = f(generator.generate(ds))
 
         return results
 
-    def _call_single_item(self, sds):
+    def _call_single_item(self, sds, backend=None):
         '''Helper function for _call
         Returns a triple with the result, dataset (the input), and stats'''
         ca_dataset = None
@@ -338,6 +351,16 @@ class RepeatedMeasure(Measure):
                              node.ca.is_enabled("stats"):
             ca_stats = node.ca['stats'].value
 
+        if backend == 'hdf5':
+            suffix = int(hash(result) % 1e12)
+            results_file = tempfile.mktemp(prefix='__tmp_repeated_measures',
+                                           suffix='-%s.hdf5' % suffix)
+            if __debug__:
+                debug('SLC', "Storing results into %s" % results_file)
+            from mvpa2.base.hdf5 import h5save
+            h5save(results_file, (result, ca_dataset, ca_stats))
+            return results_file
+
         return result, ca_dataset, ca_stats
 
     def _merge_result_items(self, sds_dataset_stats):
@@ -350,13 +373,14 @@ class RepeatedMeasure(Measure):
             for i, result in enumerate(results):
                 result.set_attr(space, (i,))
 
-        # if stats set those as wlel
+        # if stats set those as well
         ca = self.ca
         node = self._node
-        if all(ca_stats):
-            if not ca.is_set('stats'):
+        if len(ca_stats) and all(ca_stats):
+            if not ca.is_set('stats') and node.ca.has_key("stats") and \
+                             node.ca.is_enabled("stats"):
                 # create empty stats container of matching type
-                ca.stats = node.ca['stats'].value.__class__()
+                ca.stats = ca_stats[0].__class__()
 
             for ca_stat in ca_stats:
                 ca['stats'].value.__iadd__(ca_stat)
