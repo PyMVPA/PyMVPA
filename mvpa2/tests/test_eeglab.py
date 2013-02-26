@@ -36,7 +36,7 @@ class MEGTests(unittest.TestCase):
         eeg = eeglab_dataset(fn)
         os.remove(fn)
 
-        assert_array_equal(eeg.channelids, ['Fpz', 'Cz', 'Pz'])
+        assert_array_equal(set(eeg.channelids), set(['Fpz', 'Cz', 'Pz']))
         assert_array_equal(eeg.timepoints, np.asarray([0., 2.]))
 
         assert_equal(eeg.nchannels, 3)

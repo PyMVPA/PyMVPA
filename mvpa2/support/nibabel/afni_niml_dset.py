@@ -168,7 +168,7 @@ def _dset2rawniml_history(s):
     history += '%s Saved by %s:%s' % (logprefix,
                                     __file__,
                                     sys._getframe().f_code.co_name)
-    history = history.encode('utf-8')
+
     return dict(atr_name='HISTORY_NOTE',
                 data=history)
 
@@ -225,7 +225,7 @@ def _dset2rawniml_complete(r):
         else:
             break # we're done
 
-    if tp is str:
+    if issubclass(tp, basestring):
         r['ni_dimen'] = '1'
         r['ni_type'] = 'String'
     elif tp is np.ndarray:
@@ -241,7 +241,7 @@ def _dset2rawniml_complete(r):
         tpstr = types.numpy_type2name(data.dtype)
         r['ni_type'] = '%d*%s' % (ncols, tpstr) if nrows > 1 else tpstr
     else:
-        raise TypeError('Illegal type %r' % tp)
+        raise TypeError('Illegal type %r in %r' % (tp, data))
 
     if not 'name' in r:
         r['name'] = 'AFNI_atr'
@@ -459,14 +459,12 @@ def ttest(dsets, sa_labels=None, return_values='mt',
 
     # subtract the value it is compared to
     # so that it now tests against a mean of zero
-    data -= compare_to
-
     if do_m:
         m = np.mean(data, axis=2)
 
     if do_t:
         from scipy import stats
-        t = stats.ttest_1samp(data, 0., axis=2)[0]
+        t = stats.ttest_1samp(data - compare_to, 0., axis=2)[0]
 
     if do_m and do_t:
         r = np.zeros((nn, 2 * nc), dtype=m.dtype)
