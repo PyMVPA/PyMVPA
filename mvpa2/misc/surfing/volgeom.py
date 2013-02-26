@@ -887,7 +887,19 @@ def distance(p, q, r=2):
     -------
     pq: np.ndarray (PxQ)
         Distance between p[j] and q[j] is in pq[i,j]
+        
+    Notes
+    -----
+    If p or q are vectors (one-dimensional) then pq is also a vector
     '''
+    ravel = 0
+
+    if len(p.shape) == 1:
+        p = np.reshape(p, (1, -1))
+        ravel += 1
+    if len(q.shape) == 1:
+        q = np.reshape(q, (1, -1))
+        ravel += 1
 
     if p.shape[1] != q.shape[1]:
         raise ValueError("Shape mismatch")
@@ -905,6 +917,10 @@ def distance(p, q, r=2):
     for i, pi in enumerate(p):
         ds[i, :] = dist_func(pi, q, r)
 
+    if ravel > 0:
+        # we could also return just a single number if 
+        # ravel==2 but for consistency always return an array
+        ds = ds.ravel()
     return ds
 
 

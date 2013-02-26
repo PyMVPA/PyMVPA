@@ -27,6 +27,7 @@ TODO: some nice refactoring of the code. Currently it's a bit of
 '''
 
 import re, numpy as np, random, os, time, sys, base64, copy, math
+from io import BytesIO
 
 from mvpa2.support.nibabel import afni_niml_types as types
 _RE_FLAGS = re.DOTALL # regular expression matching spans across new lines
@@ -59,9 +60,10 @@ def encode_escape(s):
 def _parse_keyvalues(s):
     '''parse K0=V0 K1=V1 ... and return a dict(K0=V0,K1=V1,...)'''
 
-    e = r'\s*(?P<lhs>\w+)\s*=\s*"(?P<rhs>[^"]+)"'
+    e = b'\s*(?P<lhs>\w+)\s*=\s*"(?P<rhs>[^"]+)"'
+
     m = re.findall(e, s, _RE_FLAGS)
-    return dict([(k, v) for k, v in m])
+    return dict([(k.decode(), v.decode()) for k, v in m])
 
 def _mixedtypes_datastring2rawniml(s, niml):
     tps = niml['vec_typ']
@@ -106,7 +108,7 @@ def _datastring2rawniml(s, niml):
         return _mixedtypes_datastring2rawniml(s, niml)
 
     if [onetype] == types.str2codes('string'):
-        return decode_escape(s) # do not string2rawniml
+        return decode_escape(s.decode()) # do not string2rawniml
 
     # numeric, either int or float
     ncols = niml['vec_num']
@@ -163,9 +165,11 @@ def setnewidcode(s):
             else:
                 setnewidcode(v)
 
+
 def rawniml2string(p, form='text'):
     if type(p) is list:
-        return "\n".join(rawniml2string(v, form) for v in p)
+        nb = '\n'.encode()
+        return nb.join(rawniml2string(v, form) for v in p)
 
     if not form in ['text', 'binary', 'base64']:
         raise ValueError("Illegal form %s" % form)
@@ -191,27 +195,32 @@ def rawniml2string(p, form='text'):
         for f in ['vec_typ', 'vec_len', 'vec_num']:
             q.pop(f, None)
 
-    s_name = q.pop('name', None)
+    s_name = q.pop('name', None).encode()
     s_header = _header2string(q)
 
-    return '<%s\n%s >%s</%s>' % (s_name, s_header, s_body, s_name)
+    d = map(lambda x:x.encode(), ['<', '\n', ' >', '</', '>'])
+    return b''.join((d[0], s_name, d[1], s_header, d[2], s_body, d[3], s_name, d[4]))
 
 def _data2string(data, form):
-    if type(data) is str:
-        return '"%s"' % encode_escape(data)
+    if isinstance(data, basestring):
+        return ('"%s"' % encode_escape(data)).encode()
+
     elif type(data) is np.ndarray:
         if form == 'text':
             f = types.numpy_data2printer(data)
             nrows, ncols = data.shape
             return _TEXT_ROWSEP.join([_TEXT_COLSEP.join([f(data[row, col])
                                                          for col in xrange(ncols)])
-                                                         for row in xrange(nrows)])
+                                                         for row in xrange(nrows)]).encode()
         elif form == 'binary':
             data_reshaped = data.reshape((data.shape[1], data.shape[0]))
-            return str(data_reshaped.data)
+            r = data_reshaped.tostring()
+            debug('NIML', 'Binary encoding (len %d -> %d): [%s]' %
+                            (data_reshaped.size, len(r), _partial_string(r, 0)))
+            return r
         elif form == 'base64':
             data_reshaped = data.reshape((data.shape[1], data.shape[0]))
-            r = base64.b64encode(data_reshaped)
+            r = base64.b64encode(data_reshaped.tostring())
             debug('NIML', 'Encoding ok: [%s]', _partial_string(r, 0))
             return r
         else:
@@ -223,7 +232,7 @@ def _data2string(data, form):
 
         ncols = len(data)
         if ncols == 0:
-            return ""
+            return "".encode()
         else:
             nrows = len(data[0])
 
@@ -234,7 +243,7 @@ def _data2string(data, form):
 
             return _TEXT_ROWSEP.join([_TEXT_COLSEP.join([fs[col](data[col][row])
                                                          for col in xrange(ncols)])
-                                                         for row in xrange(nrows)])
+                                                         for row in xrange(nrows)]).encode()
 
     else:
         raise TypeError("Unknown type %r" % type(data))
@@ -252,10 +261,11 @@ def _header2string(p, keyfirst=['dset_type', 'self_idcode', 'filename', 'data_ty
                 added.add(k)
 
     rs = map(lambda x : '   %s="%s"' % x, kvs)
-    return "\n".join(rs)
+    return ("\n".join(rs)).encode()
 
 def read(fn, itemifsingletonlist=True, postfunction=None):
-    with open(fn) as f:
+    import io
+    with io.FileIO(fn) as f:
         s = f.read()
 
     r = string2rawniml(s)
@@ -285,14 +295,14 @@ def _partial_string(s, i, maxlen=100):
 
     infix = ' ... ' if n > maxlen else ''
 
-    return s[i:(i + startsize)] + infix + s[-stopsize:]
+    return '%s%s%s' % (s[i:(i + startsize)], infix, s[-stopsize:])
 
 def string2rawniml(s, i=None):
     '''Parses a NIML string to a raw NIML tree-like structure
     
     Parameters
     ----------
-    s: str
+    s: bytearray
         string to be converted
     i: int
         Starting position in the string.
@@ -324,29 +334,41 @@ def string2rawniml(s, i=None):
     # From then on the remainder of the string is parsed as above.
 
 
-    headerpat = r'\W*<(?P<name>\w+)\W(?P<header>.*?)>'
+    headerpat = b'\W*<(?P<name>\w+)\W(?P<header>.*?)>'
 
     nimls = [] # here all found parts are stored
 
+    #if isinstance(s, basestring):
+    #    s = s.encode()
+
     # Keep on reading new parts
     while True:
+        # ignore any xml tags
+        if s.startswith(b'<?xml', i):
+            i = s.index(b'>', i) + 1
+
         # try to read a name and header part
         m = re.match(headerpat, s[i:], _RE_FLAGS)
+
         if m is None:
             # no header - was it the end of a section?
-            finalpat = r'\W*</\w+>'
-            m = re.match(r'\W*</\w+>\s*', s[i:], _RE_FLAGS)
+            m = re.match(b'\W*</\w+>\s*', s[i:], _RE_FLAGS)
 
-            if not m is None and i + m.end() == len(s):
+            if not m is None:
+                # for NIFTI extensions there can be some null bytes left
+                # so get rid of them here
+                remaining = s[i + m.end():].replace(chr(0).encode(), b'').strip()
+
+                if len(remaining) == 0:
                 # entire file was parsed - we are done
-                debug('NIML', 'Completed parsing, length %d', len(s))
-                if return_pos:
-                    return i, nimls
-                else:
-                    return nimls
+                    debug('NIML', 'Completed parsing, length %d (%d elements)', (len(s), len(nimls)))
+                    if return_pos:
+                        return i, nimls
+                    else:
+                        return nimls
 
             # not good - not at the end of the file
-            raise ValueError("Unexpected end: [%s] ", _partial_string(s, i))
+            raise ValueError("Unexpected end: [%s] " % _partial_string(s, i))
 
         else:
             # get values from header
@@ -360,20 +382,20 @@ def string2rawniml(s, i=None):
             debug('NIML', 'Parsing header %s, header end position %d',
                                                 (name, i + m.end()))
             niml = _parse_keyvalues(header)
-            debug('NIML', 'Found keys %s', (",".join(niml.keys())))
 
+            debug('NIML', 'Found keys %s.', (", ".join(niml.keys())))
             # set the name of this element
-            niml['name'] = name
+            niml['name'] = name.decode()
 
             if niml.get('ni_form', None) == 'ni_group':
                 # it's a group. Parse the group using recursion
-                debug("NIML", "Starting a group %s >>>" , name)
+                debug("NIML", "Starting a group %s >>>" , niml['name'])
                 i, niml['nodes'] = string2rawniml(s, i)
-                debug("NIML", "<<< ending a group %s", name)
+                debug("NIML", "<<< ending a group %s", niml['name'])
             else:
                 # it's a normal element with data
                 debug('NIML', 'Parsing element %s from position %d, total '
-                                    'length %d', (name, i, len(s)))
+                                    'length %d', (niml['name'], i, len(s)))
 
                 # set a few data elements
                 datatypes = niml['ni_type']
@@ -397,8 +419,8 @@ def string2rawniml(s, i=None):
                     quote = '"' if is_string_data else ''
 
                     # construct the regular pattern for this string
-                    strpat = r'\s*%s(?P<data>[^"]*)[^"]*%s\s*</%s>' % \
-                                                    (quote, quote, name)
+                    strpat = ('\s*%s(?P<data>[^"]*)[^"]*%s\s*</%s>' % \
+                                                    (quote, quote, name.decode())).encode()
                     m = re.match(strpat, s[i:])
                     if m is None:
                         # something went wrong
@@ -431,7 +453,7 @@ def string2rawniml(s, i=None):
                     # convert this part of the string
                     if 'base64' in niml['ni_form']:
                         # base 64 has no '<' character - so we should be fine
-                        endpos = s.index('<', i + 1)
+                        endpos = s.index(b'<', i + 1)
                         datastring = s[i:endpos]
                         nbytes = len(datastring)
                     else:
@@ -448,13 +470,14 @@ def string2rawniml(s, i=None):
 
                     # ensure that immediately after this segment there is an 
                     # end-part marker
-                    endstr = '</%s>' % name
-                    if s[i:(i + len(endstr))] != endstr:
+                    endstr = '</%s>' % name.decode()
+                    if s[i:(i + len(endstr))].decode() != endstr:
                         raise ValueError("Not found expected end string %s"
                                          "  (found %s...)" %
                                             (endstr, _partial_string(s, i)))
                     i += len(endstr)
 
+            debug('NIML', "Adding element '%s' with keys %r" % (niml['name'], niml.keys()))
             nimls.append(niml)
 
     # we should never end up here.
@@ -498,5 +521,8 @@ def write(fnout, niml, form='binary', prefunction=None):
 
     s = rawniml2string(niml, form=form)
 
-    with open(fnout, 'w') as f:
-        f.write(s)
+    import io
+    with io.FileIO(fnout, 'w') as f:
+        n = f.write(s)
+    if n != len(s):
+        raise ValueError("Not all bytes written to %s" % fnout)

@@ -120,6 +120,8 @@ if externals.exists('nibabel') :
 from mvpa2.datasets.sources import *
 from mvpa2.datasets import niml_dset
 from mvpa2.datasets.niml_dset import from_niml_dset, to_niml_dset
+from mvpa2.datasets import eeglab
+from mvpa2.datasets.eeglab import eeglab_dataset
 
 
 __sdebug('generators')
@@ -145,6 +147,7 @@ from mvpa2.mappers.flatten import *
 from mvpa2.mappers.shape import *
 from mvpa2.mappers.prototype import *
 from mvpa2.mappers.projection import *
+from mvpa2.mappers.staticprojection import *
 from mvpa2.mappers.svd import *
 from mvpa2.mappers.procrustean import *
 from mvpa2.mappers.boxcar import *
@@ -237,7 +240,7 @@ from mvpa2.misc.surfing import surf_voxel_selection, volgeom, volsurf
 
 __sdebug("nibabel afni")
 from mvpa2.support.nibabel import afni_niml_dset, afni_suma_1d, \
-                                    afni_suma_spec, surf_fs_asc
+                                    afni_suma_spec, surf_fs_asc, surf
 
 
 __sdebug("ipython goodies")

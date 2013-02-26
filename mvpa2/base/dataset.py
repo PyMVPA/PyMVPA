@@ -833,7 +833,6 @@ def all_equal(x, y):
     # do a recursive call on all elements
     return all(all_equal(xx, yy) for (xx, yy) in zip(x, y))
 
-
 def _stack_add_equal_dataset_attributes(merged_dataset, datasets, a=None):
     """Helper function for vstack and hstack to find dataset
     attributes common to a set of datasets, and at them to the output.
