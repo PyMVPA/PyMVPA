@@ -87,7 +87,10 @@ def afni_niml_zscore_makefull(fnin, fnout, pad_to_ico_ld=None, pad_to_node=None)
 
     dset_z = afni_niml_zscore_data(dset)
 
-    dset_z_full = afni_niml_dset.sparse2full(dset_z, pad_to_ico_ld=pad_to_ico_ld, pad_to_node=pad_to_node)
+    if pad_to_ico_ld or pad_to_node:
+        dset_z_full = afni_niml_dset.sparse2full(dset_z, pad_to_ico_ld=pad_to_ico_ld, pad_to_node=pad_to_node)
+    else:
+        dset_z_full = dset_z
 
     afni_niml_dset.write(fnout, dset_z_full)
     return fnout
@@ -121,8 +124,9 @@ def afni_niml_zscore_makefull_wizard(cfg):
             if not pad_to_ico_ld is None:
                 pad_to_node = pad_to_ico_ld * pad_to_ico_ld * 10 + 2
                 print "Using automatic pad_to_ico_ld=%r, pad_to_node=%r" % (pad_to_ico_ld, pad_to_node)
-            else:
-                raise ValueError('No pad_to_node or pad_to_ico_ld specified, cannot continue')
+
+    if pad_to_node:
+        pad_to_node = int(pad_to_node)
 
     # process each of the input files            
     fnouts = []
@@ -158,10 +162,12 @@ def afni_niml_zscore_makefull_wizard(cfg):
     if any(map(os.path.exists, groupfnsout)):
         if overwrite:
             cmds.extend('rm %s;' % fn for fn in groupfnsout)
-            cmds.append('%s -prefix ./%s' % (instacorrbin, fullprefix))
-            cmds.extend(' %s' % fn for fn in fnouts)
         else:
             print("Some or all of output files (%s) already exists (use '--overwrite' to override)" % (" ".join(groupfnsout)))
+
+    cmds.append('%s -prefix ./%s' % (instacorrbin, fullprefix))
+    cmds.extend(' %s' % fn for fn in fnouts)
+
 
     cmd = "".join(cmds)
 
@@ -217,3 +223,7 @@ def _augment_config(cfg):
     cfg['group_prefix'] = _full_path(cfg['group_prefix'])
 
 
+if __name__ == '__main__':
+    cfg = _get_options()
+    _augment_config(cfg)
+    afni_niml_zscore_makefull_wizard(cfg)

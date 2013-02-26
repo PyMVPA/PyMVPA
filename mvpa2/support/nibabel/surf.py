@@ -46,15 +46,24 @@ class Surface(object):
     s : Surface
         a surface specified by vertices and faces
     '''
-    def __init__(self, v=None, f=None, check=True):
-        if not (v is None or f is None):
-            self._v = np.asarray(v)
-            self._f = np.asarray(f)
-            self._nv = v.shape[0]
-            self._nf = f.shape[0]
+    def __init__(self, v, f=None, check=True):
+        # set vertices
+        v = np.asarray(v)
+        if len(v.shape) != 2 or v.shape[1] != 3:
+            raise ValueError("Expected Px3 array for coordinates")
+        self._v = v
 
+        # set faces
+        if f is None:
+            f = np.zeros((0, 3), dtype=np.int)
         else:
-            raise Exception("Cannot make new surface from nothing")
+            f = np.asarray(f)
+            if len(f.shape) != 2 or f.shape[1] != 3:
+                raise ValueError("Expected Qx3 array for faces")
+        self._f = f
+
+        self._nv = v.shape[0]
+        self._nf = f.shape[0]
 
         if check:
             self._check()
@@ -703,7 +712,7 @@ class Surface(object):
             True iff the current surface has the same number of coordinates and the
             same faces as 'other'. '''
 
-        return self._v.shape == other._v.shape and (other._f == self._f).all()
+        return self._v.shape == other._v.shape and np.array_equal(self._f, other._f)
 
     def __add__(self, other):
         '''coordinate-wise addition of two surfaces with the same topology'''
@@ -1533,17 +1542,21 @@ def generate_plane(x00, x01, x10, n01, n10):
 def read(fn):
     '''General read function for surfaces
     
-    For now only supports ascii (as used in AFNI's SUMA) and freesurfer formats
+    For now only supports ascii (as used in AFNI's SUMA), Caret
+    and freesurfer formats
     '''
     if fn.endswith('.asc'):
         from mvpa2.support.nibabel import surf_fs_asc
         return surf_fs_asc.read(fn)
+    elif fn.endswith('.coord'):
+        from mvpa2.support.nibabel import surf_caret
+        return surf_caret.read(fn)
     else:
         import nibabel.freesurfer.io as fsio
         coords, faces = fsio.read_geometry(fn)
         return Surface(coords, faces)
 
-def write(fn, s, overwrite=False):
+def write(fn, s, overwrite=True):
     '''General write function for surfaces
     
     For now only supports ascii (as used in AFNI's SUMA)

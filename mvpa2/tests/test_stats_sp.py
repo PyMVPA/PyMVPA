@@ -30,8 +30,8 @@ class StatsTestsScipy(unittest.TestCase):
         # test equal distribution
         tbl = np.array([[5, 5], [5, 5]])
         chi, p = chisquare(tbl, exp=exp)
-        self.assertTrue( chi == 0.0 )
-        self.assertTrue( p == 1.0 )
+        self.assertTrue(chi == 0.0)
+        self.assertTrue(p == 1.0)
 
         # test perfect "generalization"
         tbl = np.array([[4, 0], [0, 4]])
@@ -76,8 +76,8 @@ class StatsTestsScipy(unittest.TestCase):
 
         # 100 and -100 should both have zero probability on their respective
         # tails
-        pm100 = null.p([-100] + [0]*(ds.nfeatures-1))
-        p100 = null.p([100] + [0]*(ds.nfeatures-1))
+        pm100 = null.p([-100] + [0] * (ds.nfeatures - 1))
+        p100 = null.p([100] + [0] * (ds.nfeatures - 1))
         assert_array_almost_equal(pm100, p100)
 
         # With 20 samples it isn't that easy to get a reliable sampling for
@@ -198,7 +198,7 @@ class StatsTestsScipy(unittest.TestCase):
                 # some really basic testing
                 matched = match_distribution(
                     data=data,
-                    distributions = ['scipy',
+                    distributions=['scipy',
                                      ('norm',
                                       {'name': 'norm_fixed',
                                        'loc': 0.2,
@@ -232,7 +232,7 @@ class StatsTestsScipy(unittest.TestCase):
                                          'uniform',
                                          ('uniform', {'loc': 0})
                                          ],
-                                     p=-1 # so we get all matches
+                                     p= -1 # so we get all matches
                                      )
         self.assertEqual(len(matches), 2) # we must get some match
 
@@ -241,21 +241,21 @@ class StatsTestsScipy(unittest.TestCase):
 
         if externals.versions['scipy'] >= '0.10':
             # known to work on 0.10 and fail on 0.7.3
-            self.assertTrue(abs(matches[0][-1][1]-9) < 1e-1) # full fit should get close to true scale
+            self.assertTrue(abs(matches[0][-1][1] - 9) < 1e-1) # full fit should get close to true scale
         else:
             raise SkipTest("KnownFailure to fit uniform on older scipy")
 
         # actually it fails ATM to fit uniform with frozen loc=0
         # nicely -- sets scale = 1 :-/   TODO
         raise SkipTest("TODO: Known failure to fit uniform with frozen loc")
-        self.assertTrue(abs(matches[1][-1][1]-9) < 1e-1) # frozen fit of scale
+        self.assertTrue(abs(matches[1][-1][1] - 9) < 1e-1) # frozen fit of scale
 
     def test_r_dist_stability(self):
         """Test either rdist distribution performs nicely
         """
         try:
             # actually I haven't managed to cause this error
-            scipy.stats.rdist(1.32, 0, 1).pdf(-1.0+np.finfo(float).eps)
+            scipy.stats.rdist(1.32, 0, 1).pdf(-1.0 + np.finfo(float).eps)
         except Exception, e:
             self.fail('Failed to compute rdist.pdf due to numeric'
                       ' loss of precision. Exception was %s' % e)
@@ -278,7 +278,7 @@ class StatsTestsScipy(unittest.TestCase):
             # NB: very cool way to store the trace of the execution
             #import pydb
             #pydb.debugger(dbg_cmds=['bt', 'l', 's']*300 + ['c'])
-            scipy.stats.rdist(1.32, 0, 1).cdf(-1.0+np.finfo(float).eps)
+            scipy.stats.rdist(1.32, 0, 1).cdf(-1.0 + np.finfo(float).eps)
         except IndexError, e:
             self.fail('Failed due to bug which leads to InvalidIndex if only'
                       ' scalar is provided to cdf')
@@ -287,7 +287,7 @@ class StatsTestsScipy(unittest.TestCase):
                       ' loss of precision. Exception was %s' % e)
 
         v = scipy.stats.rdist(10000, 0, 1).cdf([-0.1])
-        self.assertTrue(v>=0, v<=1)
+        self.assertTrue(v >= 0, v <= 1)
 
     @reseed_rng()
     def test_scipy_fit_2fparams(self):
@@ -365,12 +365,12 @@ class StatsTestsScipy(unittest.TestCase):
         self.assertTrue(np.absolute(betas.samples[1] - baseline < 10).all(),
             msg="baseline betas should be huge and around 800")
 
-        self.assertTrue(betas.samples[0,0] > betas[0,1],
+        self.assertTrue(betas.samples[0, 0] > betas[0, 1],
             msg="feature (with signal) beta should be larger than for noise")
 
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.assertTrue(np.absolute(betas[0,1]) < 0.5)
-            self.assertTrue(np.absolute(betas[0,0]) > 1.0)
+            self.assertTrue(np.absolute(betas[0, 1]) < 0.5)
+            self.assertTrue(np.absolute(betas[0, 0]) > 1.0)
 
 
         # check GLM t values
@@ -383,7 +383,7 @@ class StatsTestsScipy(unittest.TestCase):
                 msg='constant tvalues should be huge')
 
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.assertTrue(np.absolute(betas[0,0]) > betas[0,1],
+            self.assertTrue(np.absolute(betas[0, 0]) > betas[0, 1],
                 msg='with signal should have higher tvalues')
 
         # check t-contrast -- should do the same as tvalues for the first
@@ -395,13 +395,13 @@ class StatsTestsScipy(unittest.TestCase):
         # we should be able to recover the approximate effect size of the signal
         # which is constructed with a baseline offset of 2 (see above)
         if cfg.getboolean('tests', 'labile', default='yes'):
-            assert_true(1.5 < contrast.samples[2,0] < 2.5)
+            assert_true(1.5 < contrast.samples[2, 0] < 2.5)
 
         # check F-test
         glm = GLM(X, voi=[[1, 0]])
         ftest = glm(data)
         assert_equals(len(ftest), 4)
-        assert_true(ftest.samples[0,0] > ftest.samples[0,1])
+        assert_true(ftest.samples[0, 0] > ftest.samples[0, 1])
 
 
     def test_binomdist_ppf(self):
@@ -421,6 +421,7 @@ class StatsTestsScipy(unittest.TestCase):
         # TODO:  some of it is done in
         #   test_transerror.py:ErrorsTests.test_confusionmatrix_nulldist
         pass
+
 
 def suite():
     """Create the suite"""

@@ -179,9 +179,16 @@ def to_niml_dset(ds):
     if not node_indices is None:
         dset['node_indices'] = node_indices
 
+    sample_labels = ('labels', 'targets')
+    labels = _find_sample_labels(ds, sample_labels)
+    if not labels is None:
+        dset['labels'] = labels
+
     attr_labels = ('a', 'fa', 'sa')
 
     # a few labels are directly used in NIML dsets
+    # without prefixing it with a pyMVPA string
+    # for (dataset, feature, sample) attributes
     # here we define two for sample attributes
     attr_special_labels = ([], [], ['labels', 'stats'])
 
@@ -202,6 +209,35 @@ def to_niml_dset(ds):
             dset[long_key] = v
 
     return dset
+
+def _find_sample_labels(dset, sample_labels):
+    '''Helper function to find labels in this dataset.
+    Looks for any in sample_labels and returns the first one
+    that matches '''
+    use_label = None
+
+    dset_keys = dset.sa.keys()
+    for label in sample_labels:
+        if label in dset_keys:
+            sample_label = dset.sa[label].value
+            if isinstance(sample_label, basestring):
+                # split using 
+                sample_label = sample_label.split(';')
+
+            # they can be of any type so ensure they are strings
+            sample_label_list = [str(i) for i in sample_label]
+            if len(sample_label_list) != dset.nsamples:
+                # unlike node indices here we are more lenient
+                # so not throw an exception but just continue
+                continue
+
+            use_label = label
+
+            # do not look for any other labels
+            break
+
+    return None if use_label is None else sample_label_list
+
 
 def _find_node_indices(dset, node_indices_labels):
     '''Helper function to find node indices in this dataset
