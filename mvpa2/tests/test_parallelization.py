@@ -17,13 +17,25 @@ from mvpa2.testing import *
 from mvpa2.misc.parallelization import *
 from mvpa2.base import externals
 
+import tempfile
+
 class ParallelizationTests(unittest.TestCase):
     """Test for parallelization"""
 
     def test_simple(self):
         x = [1, -1, -3]
 
-        proc_func = abs
+        def get_proc_func(backend):
+            if backend == 'hdf5':
+                def f(x):
+                    _, fn = tempfile.mkstemp('par', '.h5py')
+                    from mvpa2.base.hdf5 import h5save
+                    h5save(fn, abs(x))
+                    return fn
+                return f
+            else:
+                return abs
+
         merge_func = sum
         fold_func = lambda x, y:x + y
 
@@ -38,14 +50,18 @@ class ParallelizationTests(unittest.TestCase):
                 assert_false(parallelizer.is_available())
                 continue
 
-            for i in xrange(2):
-                if i == 0:
-                    f = parallelizer(proc_func, merge_func=merge_func)
-                else:
-                    f = parallelizer(proc_func, fold_func=fold_func)
+            for backend in ['native'] + \
+                    (['hdf5'] if externals.exists('h5py') else []):
+
+                proc_func = get_proc_func(backend)
+
+                for i in xrange(2):
+                    if i == 0:
+                        f = parallelizer(proc_func, merge_func=merge_func, results_backend=backend)
+                    else:
+                        f = parallelizer(proc_func, fold_func=fold_func, results_backend=backend)
 
             assert_true(f.is_available())
-
             y = f(x)
             assert_equal(y, 5)
 
