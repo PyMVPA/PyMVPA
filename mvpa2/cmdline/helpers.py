@@ -753,6 +753,23 @@ partitioner_opt = (
     }
 )
 
+enable_ca_opt = (
+    'enable_ca', ('--enable-ca',),
+    {'nargs': '+', 'metavar': 'NAME',
+     'help': """list of conditional attributes to be enabled"""
+    }
+)
+
+disable_ca_opt = (
+    'disable_ca', ('--disable-ca',),
+    {'nargs': '+', 'metavar': 'NAME',
+     'help': """list of conditional attributes to be disabled"""
+    }
+)
+
+ca_opts_grp = ('options for conditional attributes',
+        [enable_ca_opt[1:], disable_ca_opt[1:]])
+
 hdf5compression = (
     'compression', ('--hdf5-compression',),
     dict(type=arg2hdf5compression, default=None, metavar='TYPE', help="""\
