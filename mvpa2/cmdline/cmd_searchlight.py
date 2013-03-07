@@ -88,7 +88,8 @@ def setup_parser(parser):
     parser_add_optgroup_from_def(parser, searchlight_opts_grp)
     parser_add_optgroup_from_def(parser, searchlight_constraints_opts_grp,
                                  exclusive=True)
-    parser_add_optgroup_from_def(parser, crossvalidation_opts_grp)
+    parser_add_optgroup_from_def(parser, crossvalidation_opts_grp,
+                                 prefix='--cv-')
     parser_add_optgroup_from_def(parser, single_required_hdf5output)
 
 def run(args):
@@ -99,10 +100,10 @@ def run(args):
             raise ValueError('cross-validation payload requires --learner and --partitioner')
         # get CV instance
         measure = get_crossvalidation_instance(
-                    args.learner, args.partitioner, args.errorfx,
-                    args.sampling_repetitions, args.learner_space,
-                    args.balance_training, args.permutations,
-                    args.avg_datafold_results, args.prob_tail)
+                    args.cv_learner, args.cv_partitioner, args.cv_errorfx,
+                    args.cv_sampling_repetitions, args.cv_learner_space,
+                    args.cv_balance_training, args.cv_permutations,
+                    args.cv_avg_datafold_results, args.cv_prob_tail)
     else:
         raise RuntimeError("this should not happen")
     dss = hdf2ds(args.data)

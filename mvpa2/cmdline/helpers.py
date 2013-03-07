@@ -440,7 +440,7 @@ def parser_add_common_attr_opts(parser):
     for args in (attr_from_cmdline, attr_from_txt, attr_from_npy):
         parser_add_optgroup_from_def(parser, args)
 
-def parser_add_optgroup_from_def(parser, defn, exclusive=False):
+def parser_add_optgroup_from_def(parser, defn, exclusive=False, prefix=None):
     """Add an entire option group from a definition in a custom format
 
     Returns
@@ -453,7 +453,10 @@ def parser_add_optgroup_from_def(parser, defn, exclusive=False):
     else:
         rgrp = optgrp
     for opt in defn[1]:
-        rgrp.add_argument(*opt[0], **opt[1])
+        optnames = opt[0]
+        if not prefix is None:
+            optnames = ['%s%s' % (prefix, on.lstrip('-')) for on in optnames]
+        rgrp.add_argument(*optnames, **opt[1])
     return optgrp
 
 def process_common_attr_opts(ds, args):
