@@ -65,6 +65,9 @@ searchlight_opts_grp = ('options for searchlight setup', [
         block in case of --nproc > 1. 'native' is pickling/unpickling of
         results, while 'hdf5' uses HDF5 based file storage. 'hdf5' might be more
         time and memory efficient in some cases.""")),
+    (('--aggregate-fx',), dict(type=script2obj,
+        help="""use a custom result aggregation function for the searchlight
+             """)),
 ])
 
 searchlight_constraints_opts_grp = ('options for constraining the searchlight', [
@@ -96,7 +99,7 @@ def run(args):
     if os.path.isfile(args.payload) and args.payload.endswith('.py'):
         measure = script2obj(args.payload)
     elif args.payload == 'cv':
-        if args.learner is None or args.partitioner is None:
+        if args.cv_learner is None or args.cv_partitioner is None:
             raise ValueError('cross-validation payload requires --learner and --partitioner')
         # get CV instance
         measure = get_crossvalidation_instance(
@@ -128,11 +131,13 @@ def run(args):
         verbose(3, 'Attempting %i ROI analyses' % ds.nfeatures)
         roi_ids = None
     from mvpa2.measures.searchlight import Searchlight
+
     sl = Searchlight(measure,
                      queryengine=qe,
                      roi_ids=roi_ids,
                      nproc=args.nproc,
-                     results_backend=args.multiproc_backend)
+                     results_backend=args.multiproc_backend,
+                     results_fx=args.aggregate_fx)
     # XXX support me too!
     #                 add_center_fa
     #                 results_fx
