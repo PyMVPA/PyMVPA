@@ -368,7 +368,7 @@ class Searchlight(BaseSearchlight):
           RNG seed.  Should be provided e.g. in child process invocations
           to guarantee that they all seed differently to not keep generating
           the same sequencies due to reusing the same copy of numpy's RNG
-        iblock
+        block
           Critical for generating non-colliding temp filenames in case
           of hdf5 backend.  Otherwise RNGs of different processes might
           collide in their temporary file names leading to problems.
