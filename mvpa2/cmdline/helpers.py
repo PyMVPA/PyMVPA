@@ -299,15 +299,18 @@ def script2obj(filepath):
     if not len(locals):
         raise argparse.ArgumentTypeError(
             "executing script '%s' did not create at least one object" % filepath)
-    elif len(locals) > 1 and not 'obj' in locals:
+    elif len(locals) > 1 and not ('obj' in locals or 'fx' in locals):
         raise argparse.ArgumentTypeError(
             "executing script '%s' " % filepath
             + "did create multiple objects %s " % locals.keys()
-            + "but none is named 'obj'")
+            + "but none is named 'obj' or 'fx'")
     if len(locals) == 1:
         return locals.values()[0]
     else:
-        return locals['obj']
+        if 'obj' in locals:
+            return locals['obj']
+        else:
+            return locals['fx']
 
 def arg2partitioner(arg):
     # check for an optional 'attr' argument
