@@ -86,9 +86,10 @@ searchlight_constraints_opts_grp = ('options for constraining the searchlight', 
 
 def setup_parser(parser):
     from .helpers import parser_add_optgroup_from_def, \
-        parser_add_common_attr_opts, single_required_hdf5output
+        parser_add_common_attr_opts, single_required_hdf5output, ca_opts_grp
     parser_add_common_args(parser, pos=['multidata'])
     parser_add_optgroup_from_def(parser, searchlight_opts_grp)
+    parser_add_optgroup_from_def(parser, ca_opts_grp)
     parser_add_optgroup_from_def(parser, searchlight_constraints_opts_grp,
                                  exclusive=True)
     parser_add_optgroup_from_def(parser, crossvalidation_opts_grp,
@@ -137,14 +138,14 @@ def run(args):
                      roi_ids=roi_ids,
                      nproc=args.nproc,
                      results_backend=args.multiproc_backend,
-                     results_fx=args.aggregate_fx)
+                     results_fx=args.aggregate_fx,
+                     enable_ca=args.enable_ca,
+                     disable_ca=args.disable_ca)
     # XXX support me too!
     #                 add_center_fa
     #                 results_fx
     #                 tmp_prefix
     #                 nblocks
-    #                 enable_ca
-    #                 disable_ca
     #                 null_dist
     # run 
     res = sl(ds)
