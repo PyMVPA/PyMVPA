@@ -332,6 +332,7 @@ class SurfTests(unittest.TestCase):
                 dset.fa['node_indices'] = i
             dsets.append(dset)
 
+
         dset = niml_dset.hstack(dsets)
         assert_equal(dset.nfeatures, 12)
         assert_equal(dset.nsamples, 10)
@@ -352,6 +353,10 @@ class SurfTests(unittest.TestCase):
         # If not enough space it should raise an error
         stacker = (lambda x: niml_dset.hstack(dsets, x))
         assert_raises(ValueError, stacker, 2)
+
+        # If sparse then with no padding it should fail
+        dsets[0].fa.node_indices[0] = 3
+        assert_raises(ValueError, stacker, None)
 
         # Using an illegal node index should raise an error
         dsets[1].fa.node_indices[0] = 666
