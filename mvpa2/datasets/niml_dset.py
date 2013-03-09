@@ -223,14 +223,15 @@ def hstack(dsets, pad_to_feature_index=None, hstack_method='drop_nonunique',
         If a list then it should be of the same length as dsets and indicates
         to which node index the input should be padded. A single int means
         that the same value is used for all dset in dsets. None means
-        no padding
+        no padding.
     hstack_method: str:
-        How datasets are stacked; see dataset.hstack
+        How datasets are stacked; see dataset.hstack.
     set_empty_value: float
-        Value to which empty (padded) dataset values are set
+        Value to which empty (padded) dataset values are set.
     
     Returns
     dset: Dataset
+        Data combined from all dset in dsets.
     '''
 
     n = len(dsets)
