@@ -255,6 +255,7 @@ def hstack(dsets, pad_to_feature_index=None, hstack_method='drop_nonunique',
         node_index = _find_node_indices(dset, node_indices_labels)
         if node_index is None:
             node_index = np.arange(dset.nfeatures)
+        max_node_index = np.max(node_index)
 
         # make a stripped version - without node index labels
         stripped_dset = dset.copy()
@@ -286,12 +287,12 @@ def hstack(dsets, pad_to_feature_index=None, hstack_method='drop_nonunique',
 
         # sanity check to make sure that indices are ok
         # XXX could be more informative
-        if len(np.setdiff1d(node_index, np.arange(pad_to or dset.nfeatures))):
+        if len(np.setdiff1d(node_index, np.arange(pad_to or max_node_index + 1))):
             raise ValueError("Illegal indices")
 
         hstack_index = node_index + first_node_index
         hstack_other_index = other_index + first_node_index
-        first_node_index += pad_to or dset.nfeatures # prepare for next iteration
+        first_node_index += pad_to or (max_node_index + 1) # prepare for next iteration
 
         padded_dsets.append(padded_dset)
         hstack_indices.append(hstack_index)
