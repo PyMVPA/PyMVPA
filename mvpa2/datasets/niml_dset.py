@@ -223,7 +223,7 @@ def hstack(dsets, pad_to_feature_index=None, hstack_method='drop_nonunique',
         If a list then it should be of the same length as dsets and indicates
         to which node index the input should be padded. A single int means
         that the same value is used for all dset in dsets. None means
-        no padding.
+        no padding, and is only allowed for non-sparse datasets.
     hstack_method: str:
         How datasets are stacked; see dataset.hstack.
     set_empty_value: float
@@ -250,7 +250,7 @@ def hstack(dsets, pad_to_feature_index=None, hstack_method='drop_nonunique',
     padded_dsets = []
     hstack_indices = []
     first_node_index = 0
-    for dset, pad_to in zip(dsets, pad_to_feature_index):
+    for i, (dset, pad_to) in enumerate(zip(dsets, pad_to_feature_index)):
         # get node indices in this dataset
         node_index = _find_node_indices(dset, node_indices_labels)
         if node_index is None:
@@ -264,7 +264,9 @@ def hstack(dsets, pad_to_feature_index=None, hstack_method='drop_nonunique',
                 stripped_dset.fa.pop(label)
 
         # see if padding is needed
-        if pad_to is None or pad_to is None or pad_to == dset.nfeatures:
+        if pad_to is None or pad_to == max_node_index + 1:
+            if not np.array_equal(np.arange(max_node_index + 1), np.sort(node_index)):
+                raise ValueError("Sparse input %d: need pad_to input" % (i + 1))
             padded_dset = stripped_dset
             other_index = np.arange(0)
         else:
