@@ -94,7 +94,7 @@ def find_events(**kwargs):
 
 
 def eventrelated_dataset(ds, events=None, time_attr=None, match='prev',
-                         eprefix='event'):
+                         eprefix='event', event_mapper=None):
     """Segment a dataset into a set of events.
 
     This function can be used to extract event-related samples from any
@@ -134,6 +134,14 @@ def eventrelated_dataset(ds, events=None, time_attr=None, match='prev',
       If not None, this prefix is used to name additional attributes generated
       by the underlying `~mvpa2.mappers.boxcar.BoxcarMapper`. If it is set to
       None, no additional attributes will be created.
+    event_mapper : Mapper
+      This mapper is used to forward-map the dataset containing the boxcar event
+      samples. If None (default) a FlattenMapper is employed to convert
+      multi-dimensional sample matrices into simple one-dimensional sample
+      vectors. This option can be used to implement temporal compression, by
+      e.g. averaging samples within an event boxcar using an FxMapper. Any
+      mapper needs to keep the sample axis unchanged, i.e. number and order of
+      samples remain the same.
 
     Returns
     -------
@@ -228,10 +236,13 @@ def eventrelated_dataset(ds, events=None, time_attr=None, match='prev',
     bcm = BoxcarMapper(evvars['onset'], boxlength, space=eprefix)
     bcm.train(ds)
     ds = ds.get_mapped(bcm)
-    # at last reflatten the dataset
-    # could we add some meaningful attribute during this mapping, i.e. would
-    # assigning 'inspace' do something good?
-    ds = ds.get_mapped(FlattenMapper(shape=ds.samples.shape[1:]))
+    if event_mapper is None:
+        # at last reflatten the dataset
+        # could we add some meaningful attribute during this mapping, i.e. would
+        # assigning 'inspace' do something good?
+        ds = ds.get_mapped(FlattenMapper(shape=ds.samples.shape[1:]))
+    else:
+        ds = ds.get_mapped(event_mapper)
     # add samples attributes for the events, simply dump everything as a samples
     # attribute
     for a in evvars:
