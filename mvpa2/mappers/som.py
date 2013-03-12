@@ -35,24 +35,24 @@ class SimpleSOMMapper(Mapper):
         Parameters
         ----------
         kshape : (int, int)
-          Shape of the internal Kohonen layer. Currently, only 2D Kohonen
-          layers are supported, although the length of an axis might be set
-          to 1.
+            Shape of the internal Kohonen layer. Currently, only 2D Kohonen
+            layers are supported, although the length of an axis might be set
+            to 1.
         niter : int
-          Number of iteration during network training.
+            Number of iteration during network training.
         learning_rate : float
-          Initial learning rate, which will continuously decreased during
-          network training.
+            Initial learning rate, which will continuously decreased during
+            network training.
         iradius : float or None
-          Initial radius of the Gaussian neighborhood kernel radius, which
-          will continuously decreased during network training. If `None`
-          (default) the radius is set equal to the longest edge of the
-          Kohonen layer.
+            Initial radius of the Gaussian neighborhood kernel radius, which
+            will continuously decreased during network training. If `None`
+            (default) the radius is set equal to the longest edge of the
+            Kohonen layer.
         distance_metric: callable or None
-          Kernel distance metric between elements in Kohonen layer. If None
-          then Euclidian distance is used. Otherwise it should be a 
-          callable that accepts two input arguments x and y and returns
-          the distance d through d=distance_metric(x,y)  
+            Kernel distance metric between elements in Kohonen layer. If None
+            then Euclidian distance is used. Otherwise it should be a 
+            callable that accepts two input arguments x and y and returns
+            the distance d through d=distance_metric(x,y)  
           
         """
         # init base class
@@ -88,10 +88,10 @@ class SimpleSOMMapper(Mapper):
     def _pretrain(self, samples):
         """Perform network pre-training.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         samples : array-like
-          Used for unsupervised training of the SOM
+            Used for unsupervised training of the SOM
         """
 
          # XXX initialize with clever default, e.g. plain of first two PCA
@@ -110,10 +110,10 @@ class SimpleSOMMapper(Mapper):
     def _train(self, samples):
         """Perform network training.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         samples : array-like
-          Used for unsupervised training of the SOM.
+            Used for unsupervised training of the SOM.
           
         Notes
         -----
@@ -156,14 +156,14 @@ class SimpleSOMMapper(Mapper):
                             # lower right
                             k[:self.kshape[0] - b[0], :self.kshape[1] - b[1]]))
                                ))
-                unit_deltas += infl[:,:,np.newaxis] * (s - self._K)
+                unit_deltas += infl[:, :, np.newaxis] * (s - self._K)
 
             # apply cumulative unit deltas
             self._K += unit_deltas
 
             if __debug__:
                 debug("SOM", "Iteration %d/%d done: ||unit_deltas||=%g" %
-                      (it, self.niter, np.sqrt(np.sum(unit_deltas **2))))
+                      (it, self.niter, np.sqrt(np.sum(unit_deltas ** 2))))
 
             # reset unit deltas
             unit_deltas.fill(0.)
