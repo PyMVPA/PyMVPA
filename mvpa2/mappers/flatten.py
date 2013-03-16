@@ -139,7 +139,7 @@ class FlattenMapper(Mapper):
             multiplier = mds.nfeatures \
                     / np.prod(attr.shape[:maxdim])
             if __debug__:
-                debug('MAP_', "Broadcasting fa '%s' %s %d times" 
+                debug('MAP_', "Broadcasting fa '%s' %s %d times"
                         % (k, attr.shape, multiplier))
             # broadcast as many times as necessary to get 'matching dimensions'
             bced = np.repeat(attr, multiplier, axis=0)
