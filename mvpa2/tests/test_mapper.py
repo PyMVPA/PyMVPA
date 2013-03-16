@@ -34,7 +34,7 @@ def test_flatten():
     data_shape = (4,) + samples_shape
     data = np.arange(np.prod(data_shape)).reshape(data_shape).view(myarray)
     pristinedata = data.copy()
-    target = [[ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15],
+    target = [[ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
               [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31],
               [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47],
               [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63]]
@@ -145,10 +145,10 @@ def test_subset():
     sms = [sm_none, sm_int, sm_bool]
 
     # test subsets
-    sids = [3,4,5,6]
+    sids = [3, 4, 5, 6]
     bsubset = np.zeros(16, dtype='bool')
     bsubset[sids] = True
-    subsets = [sids, slice(3,7), bsubset, [3,3,4,4,6,6,6,5]]
+    subsets = [sids, slice(3, 7), bsubset, [3, 3, 4, 4, 6, 6, 6, 5]]
     # all test subset result in equivalent masks, hence should do the same to
     # the mapper and result in identical behavior
     for st in sms:
@@ -184,13 +184,13 @@ def test_subset():
     # intended merge failures
     fsm = StaticFeatureSelection(np.arange(16))
     assert_equal(fsm.__iadd__(None), NotImplemented)
-    assert_equal(fsm.__iadd__(Dataset([2,3,4])), NotImplemented)
+    assert_equal(fsm.__iadd__(Dataset([2, 3, 4])), NotImplemented)
 
 
 def test_subset_filler():
     sm = StaticFeatureSelection(np.arange(3))
     sm_f0 = StaticFeatureSelection(np.arange(3), filler=0)
-    sm_fm1 = StaticFeatureSelection(np.arange(3), filler=-1)
+    sm_fm1 = StaticFeatureSelection(np.arange(3), filler= -1)
     sm_fnan = StaticFeatureSelection(np.arange(3), filler=np.nan)
     data = np.arange(12).astype(float).reshape((2, -1))
 
@@ -232,7 +232,7 @@ def test_chainmapper():
     data_shape = (4,) + samples_shape
     data = np.arange(np.prod(data_shape)).reshape(data_shape)
     pristinedata = data.copy()
-    target = [[ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15],
+    target = [[ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
               [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31],
               [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47],
               [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63]]
@@ -242,11 +242,11 @@ def test_chainmapper():
     cm.train(data)
 
     # a new mapper should appear when doing feature selection
-    cm.append(StaticFeatureSelection(range(1,16)))
+    cm.append(StaticFeatureSelection(range(1, 16)))
     assert_equal(cm.forward1(data[0]).shape, (15,))
     assert_equal(len(cm), 2)
     # multiple slicing
-    cm.append(StaticFeatureSelection([9,14]))
+    cm.append(StaticFeatureSelection([9, 14]))
     assert_equal(cm.forward1(data[0]).shape, (2,))
     assert_equal(len(cm), 3)
 
@@ -269,7 +269,7 @@ def test_chainmapper():
 
     # let's map something
     mdata = cm.forward(data)
-    assert_array_equal(mdata, target[:,[10,15]])
+    assert_array_equal(mdata, target[:, [10, 15]])
     # and back
     rdata = cm.reverse(mdata)
     # original shape
@@ -296,7 +296,7 @@ def test_sampleslicemapper():
 
 def test_strip_boundary():
     ds = datasets['hollow']
-    ds.sa['btest'] = np.repeat([0,1], 20)
+    ds.sa['btest'] = np.repeat([0, 1], 20)
     sn = StripBoundariesSamples('btest', 1, 2)
     sds = sn(ds)
     assert_equal(len(sds), len(ds) - 3)
@@ -305,7 +305,7 @@ def test_strip_boundary():
 
 def test_transpose():
     from mvpa2.mappers.shape import TransposeMapper
-    ds = Dataset(np.arange(24).reshape(2,3,4),
+    ds = Dataset(np.arange(24).reshape(2, 3, 4),
                  sa={'testsa': np.arange(2)},
                  fa={'testfa': np.arange(3)})
     tp = TransposeMapper()
@@ -330,7 +330,7 @@ def test_transpose():
 
 def test_addaxis():
     from mvpa2.mappers.shape import AddAxisMapper
-    ds = Dataset(np.arange(24).reshape(2,3,4),
+    ds = Dataset(np.arange(24).reshape(2, 3, 4),
                  sa={'testsa': np.arange(2)},
                  fa={'testfa': np.arange(3)})
     ds0 = AddAxisMapper(pos=0)(ds)
@@ -354,7 +354,7 @@ def test_addaxis():
     ds3 = AddAxisMapper(pos=3)(ds)
     assert_array_equal(ds3.shape, ds.shape + (1,))
     # reverse indexing
-    ds_1 = AddAxisMapper(pos=-1)(ds)
+    ds_1 = AddAxisMapper(pos= -1)(ds)
     assert_array_equal(ds3.samples, ds_1.samples)
     assert_equal(ds3.sa, ds_1.sa)
     assert_equal(ds3.fa, ds_1.fa)
