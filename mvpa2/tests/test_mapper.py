@@ -24,6 +24,10 @@ from mvpa2.support.copy import copy
 from mvpa2.datasets.base import Dataset
 from mvpa2.base.collections import ArrayCollectable
 from mvpa2.datasets.base import dataset_wizard
+from mvpa2.mappers.flatten import ProductFlattenMapper
+
+import itertools
+import operator
 
 # arbitrary ndarray subclass for testing
 class myarray(np.ndarray):
@@ -115,10 +119,58 @@ def test_flatten():
         assert_false('voxel' in revds.fa)
 
 
+def test_product_flatten():
+    nsamples = 17
+    product_name_values = [('chan', ['C1', 'C2']),
+                         ('freq', np.arange(4, 20, 6)),
+                         ('time', np.arange(-200, 800, 200))]
+
+    shape = (nsamples,) + tuple(len(v) for _, v in product_name_values)
+
+    sample_names = ['samp%d' % i for i in xrange(nsamples)]
+
+    # generate random data in four dimensions
+    data = np.random.normal(size=shape)
+    ds = Dataset(data, sa=dict(sample_names=sample_names))
+
+    # apply flattening to ds
+    flattener = ProductFlattenMapper(product_name_values)
+    mds = flattener(ds)
+
+    prod = lambda x:reduce(operator.mul, x)
+
+    # ensure the size is ok
+    assert_equal(mds.shape, (nsamples,) + (prod(shape[1:]),))
+
+    ndim = len(product_name_values)
+
+    idxs = [range(len(v)) for _, v in product_name_values]
+    for si in xrange(nsamples):
+        for fi, p in enumerate(itertools.product(*idxs)):
+            data_tup = (si,) + p
+
+            x = mds[si, fi]
+
+            # value should match
+            assert_equal(data[data_tup], x.samples[0, 0])
+
+            # indices should match as well
+            all_idxs = tuple(x.fa['chan_freq_time_indices'].value.ravel())
+            assert_equal(p, all_idxs)
+
+            # values and indices in each dimension should match
+            for i, (name, value) in enumerate(product_name_values):
+                assert_equal(x.fa[name].value, value[p[i]])
+                assert_equal(x.fa[name + '_indices'].value, p[i])
+
+    product_name_values += [('foo', [1, 2, 3])]
+    flattener = ProductFlattenMapper(product_name_values)
+    assert_raises(ValueError, flattener, ds)
+
 
 def test_subset():
     data = np.array(
-            [[ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15],
+            [[ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
             [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31],
             [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47],
             [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63]])
