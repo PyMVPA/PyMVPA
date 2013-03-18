@@ -143,7 +143,6 @@ def run(args):
                      disable_ca=args.disable_ca)
     # XXX support me too!
     #                 add_center_fa
-    #                 results_fx
     #                 tmp_prefix
     #                 nblocks
     #                 null_dist
