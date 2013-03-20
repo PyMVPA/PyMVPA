@@ -121,9 +121,16 @@ class Measure(Learner):
     def _postcall(self, dataset, result):
         """Some postprocessing on the result
         """
-        # post-processing
-        result = super(Measure, self)._postcall(dataset, result)
-        if not self.__null_dist is None:
+        if self.__null_dist is None:
+            # do base-class postcall and be done
+            result = super(Measure, self)._postcall(dataset, result)
+        else:
+            # don't do a full base-class postcall, only do the
+            # postproc-application here, to gain result compatibility with the
+            # fitted null distribution -- necessary to be able to use
+            # a Node's 'pass_attr' to pick up ca.null_prob
+            result = self._apply_postproc(dataset, result)
+
             if self.ca.is_enabled('null_t'):
                 # get probability under NULL hyp, but also request
                 # either it belong to the right tail
@@ -164,7 +171,8 @@ class Measure(Learner):
                 # get probability of result under NULL hypothesis if available
                 # and don't request tail information
                 self.ca.null_prob = self.__null_dist.p(result)
-
+            # now do the second half of postcall and invoke pass_attr
+            result = self._pass_attr(dataset, result)
         return result
 
 
