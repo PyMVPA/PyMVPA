@@ -641,15 +641,19 @@ def get_crossvalidation_instance(learner, partitioner, errorfx,
                                tail=prob_tail,
                                measure=null_cv,
                                enable_ca=['dist_samples'])
+        # pass the p-values as feature attributes on to the results
+        pass_attr = [('ca.null_prob', 'fa', 1)]
     else:
         distr_est = None
+        pass_attr = None
     # final CV node
     cv = CrossValidation(learner,
                          gennode,
                          errorfx=errorfx,
                          null_dist=distr_est,
                          postproc=postproc,
-                         enable_ca=['stats'])
+                         enable_ca=['stats', 'null_prob'],
+                         pass_attr=pass_attr)
     return cv
 
 
