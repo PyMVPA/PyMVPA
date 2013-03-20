@@ -153,7 +153,12 @@ class Node(ClassWithCollections):
         -------
         Dataset
         """
+        result = self._pass_attr(ds, result)
+        result = self._apply_postproc(ds, result)
+        return result
 
+    def _pass_attr(self, ds, result):
+        """Pass a configured set of attributes on to the output dataset"""
         pass_attr = self.__pass_attr
         if pass_attr is not None:
             ca = self.ca
@@ -214,17 +219,17 @@ class Node(ClassWithCollections):
                 # "shallow copy" into the result
                 # this way we also invoke checks for the correct length etc
                 rcol[attr_newname] = value
+        return result
 
+    def _apply_postproc(self, ds, result):
+        """Apply any post-processing to an output dataset"""
         if not self.__postproc is None:
             if __debug__:
                 debug("NO",
                       "Applying post-processing node %s", (self.__postproc,))
             self.ca.raw_results = result
-
             result = self.__postproc(result)
-
         return result
-
 
     def generate(self, ds):
         """Yield processing results.
