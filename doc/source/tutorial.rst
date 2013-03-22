@@ -14,9 +14,11 @@
 Tutorial Introduction to PyMVPA
 *******************************
 
-This chapter offers a tutorial introduction into PyMVPA. In the tutorial we are
-going to take a look at all major parts of PyMVPA, introduce the most important
-concepts, and explore particular functionality in real-life analysis examples.
+In this tutorial we are going to take a look at all major parts of PyMVPA,
+introduce the most important concepts, and explore particular functionality in
+real-life analysis examples. This tutorial also serves as basic course
+material for workshops on introductions to MVPA. Please contact us, if you are
+interested in hosting a PyMVPA workshop at your institution.
 
 Please note that this tutorial is only concerned with aspects directly related
 to PyMVPA.  It does **not** teach basic Python_ programming. If you are new to
