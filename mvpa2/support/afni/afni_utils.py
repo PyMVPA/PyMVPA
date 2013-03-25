@@ -272,7 +272,7 @@ def _package_afni_nibabel_for_standalone(outputdir, rootname='python'):
     readme = ('''
 AFNI I/O and wrapper functions in python
 
-Copyright 2010-2012 Nikolaas N. Oosterhof <nikolaas.oosterhof@unitn.it>
+Copyright 2010-2013 Nikolaas N. Oosterhof <nikolaas.oosterhof@unitn.it>
 
 The software in the following files is covered under the MIT License
 (included below):
