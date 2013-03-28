@@ -970,7 +970,7 @@ def unique_sample_attributes_stack(dataset, sa_label):
         d.fa[sa_label] = [unq[i]] * d.nfeatures
         ds.append(d)
 
-    stacked_ds = hstack(ds, 'all')
+    stacked_ds = hstack(ds, True)
     stacked_ds.sa.pop(sa_label)
 
     return stacked_ds
@@ -1004,7 +1004,7 @@ def unique_feature_attributes_stack(dataset, fa_label):
         d.sa[fa_label] = [unq[i]] * d.nsamples
         ds.append(d)
 
-    stacked_ds = vstack(ds, 'all')
+    stacked_ds = vstack(ds, True)
     stacked_ds.fa.pop(fa_label)
 
     return stacked_ds
