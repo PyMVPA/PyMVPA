@@ -648,7 +648,7 @@ class FeaturewiseMeasure(Measure):
             if not __debug__ or len(result.shape) == 1:
                 break
 
-            if isinstance(result, AttrDataset) and result.shape[1] == 1:
+            if isinstance(result, AttrDataset):
                 break
 
             raise RuntimeError("FeaturewiseMeasures have to return "
