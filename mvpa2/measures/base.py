@@ -644,9 +644,13 @@ class FeaturewiseMeasure(Measure):
         """
         # This method get the 'result' either as a 1D array, or as a Dataset
         # everything else is illegal
-        if __debug__ \
-               and not isinstance(result, AttrDataset) \
-               and not len(result.shape) == 1:
+        while True:
+            if not __debug__ or len(result.shape) == 1:
+                break
+
+            if isinstance(result, AttrDataset) and result.shape[1] == 1:
+                break
+
             raise RuntimeError("FeaturewiseMeasures have to return "
                                "their results as 1D array, or as a Dataset "
                                "(error made by: '%s')." % repr(self))
