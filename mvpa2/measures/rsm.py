@@ -75,8 +75,39 @@ class RSMMeasure(Measure):
             #rsm = np.triu(rsm, k=1)
             #rsm = rsm[abs(rsm) > 0]
             #rsm[rsm == -2] = 0
-            rsm = rsm[np.tri(len(rsm),k=-1,dtype=bool)]
+            rsm = rsm[np.tri(len(rsm), k= -1, dtype=bool)]
             rsm = np.asarray(rsm)
             rsm_all = rsm[0]
 
         return Dataset(rsm_all)
+
+class RSM_Correlation_Measure(Measure):
+    is_trained = True
+    def __init__(self, metric='pearson', space='targets', **kwargs):
+        Measure.__init__(self, **kwargs)
+        self.metric = metric
+        self.space = space
+
+    def _call(self, dataset):
+        # compute rsm 
+        dsm = DSMatrix(dataset.samples, metric=self.metric)
+        vec_form = samples = dsm.get_vector_form()
+
+        n = dsm.full_matrix.shape[0]
+
+        # mask for upper diagonal
+        msk = np.asarray([[i > j for i in xrange(n)] for j in xrange(n)])
+
+        # compute z scores        
+        arr = np.reshape(np.asarray(dsm.full_matrix[msk]), (-1,))
+        arr_z = (arr - np.mean(arr)) / np.std(arr)
+
+        # set the space
+        ds = Dataset(samples=arr_z)
+        if not self.space is None:
+            space_vals = dataset.sa[self.space].value
+            labels = ['%s-%s' % (space_vals[i], space_vals[j])
+                        for i in xrange(n) for j in xrange(n) if msk[i, j]]
+            ds.sa[self.space] = labels
+
+        return ds
