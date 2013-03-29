@@ -223,6 +223,7 @@ def collect_nose_tests(verbosity=1):
 
         # Misc
         'test_misc',
+        'test_errorfx',
         'test_testing',
         'test_usecases',
         'test_surfing',
