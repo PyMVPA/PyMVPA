@@ -28,7 +28,7 @@ class RSMMeasure(Measure):
        """
 
     def __init__(self, dset_metric, nsubjs, compare_ave, k, **kwargs):
-        Measure.__init__(self,  **kwargs)
+        Measure.__init__(self, **kwargs)
 
         self.dset_metric = dset_metric
         self.dset_dsm = []
@@ -46,9 +46,9 @@ class RSMMeasure(Measure):
         '''
         for i in xrange(nsubjs):
             if self.dset_metric == 'pearson':
-                self.dset_dsm = np.corrcoef(dataset.samples[i*dataset.nsamples/nsubjs:((i+1)*dataset.nsamples/nsubjs),:])
+                self.dset_dsm = np.corrcoef(dataset.samples[i * dataset.nsamples / nsubjs:((i + 1) * dataset.nsamples / nsubjs), :])
             else:
-                self.dset_dsm = DSMatrix(dataset.samples[i*dataset.nsamples/nsubjs:((i+1)*dataset.nsamples/nsubjs),:], self.dset_metric)
+                self.dset_dsm = DSMatrix(dataset.samples[i * dataset.nsamples / nsubjs:((i + 1) * dataset.nsamples / nsubjs), :], self.dset_metric)
                 self.dset_dsm = self.dset_dsm.full_matrix
             orig_dsmatrix = copy.deepcopy(np.matrix(self.dset_dsm))
             #orig_dsmatrix[np.isnan(orig_dsmatrix)] = 0
@@ -56,7 +56,7 @@ class RSMMeasure(Measure):
             #orig_tri = np.triu(orig_dsmatrix, k=self.k)
             #vector_form = orig_tri[abs(orig_tri) > 0]
             #vector_form[vector_form == -2] = 0
-            vector_form = orig_dsmatrix[np.tri(len(orig_dsmatrix),k=-1*self.k,dtype=bool)]
+            vector_form = orig_dsmatrix[np.tri(len(orig_dsmatrix), k= -1 * self.k, dtype=bool)]
             vector_form = np.asarray(vector_form)
             dset_vec = vector_form[0]
             dsm_all.append(dset_vec)
@@ -64,9 +64,9 @@ class RSMMeasure(Measure):
         #print dsm_all.shape
         if self.compare_ave:
             for i in xrange(nsubjs):
-                dsm_temp = nsubjs*np.mean(dsm_all, axis=0) - dsm_all[i,:]
-                rsm = np.corrcoef(dsm_temp, dsm_all[i,:])
-                rsm_all.append(rsm[0,1])
+                dsm_temp = nsubjs * np.mean(dsm_all, axis=0) - dsm_all[i, :]
+                rsm = np.corrcoef(dsm_temp, dsm_all[i, :])
+                rsm_all.append(rsm[0, 1])
         else:
             rsm = np.corrcoef(dsm_all)
             rsm = np.matrix(rsm)
