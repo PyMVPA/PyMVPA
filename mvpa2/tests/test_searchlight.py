@@ -673,7 +673,7 @@ class SearchlightTests(unittest.TestCase):
                         r = np.asscalar(r.samples)
                     os.unlink(r)         # remove generated file
                 print_("WAITING")
-            return res
+            return hstack(sum(res, []))
 
         def measure(ds):
             """The "measure" will check if a run with the same "index" from
