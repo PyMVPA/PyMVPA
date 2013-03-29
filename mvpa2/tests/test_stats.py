@@ -18,7 +18,7 @@ from mvpa2.generators.permutation import AttributePermutator
 from mvpa2.datasets import Dataset
 from mvpa2.measures.anova import OneWayAnova, CompoundOneWayAnova
 from mvpa2.misc.fx import double_gamma_hrf, single_gamma_hrf
-
+from mvpa2.measures.corrcoef import pearson_correlation
 
 # Prepare few distributions to test
 #kwargs = {'permutations':10, 'tail':'any'}
@@ -114,9 +114,28 @@ class StatsTests(unittest.TestCase):
         # All features should have slightly but different CompoundAnova
         # values. I really doubt that there will be a case when this
         # test would fail just to being 'labile'
-        self.assertTrue(np.max(np.std(ac, axis=1))>0,
+        self.assertTrue(np.max(np.std(ac, axis=1)) > 0,
                         msg='In compound anova, we should get different'
                         ' results for different labels. Got %s' % ac)
+
+    def test_pearson_correlation(self):
+        sh = (3, -1)
+        x = np.reshape(np.asarray([5, 3, 6, 5, 5, 4]), sh)
+        y = np.reshape(np.asarray([3, 4, 5, 6, 3, 2, 6, 5, 4, 6, 6, 3]), sh)
+
+        # compute in the traditional way
+        nx = x.shape[1]
+        ny = y.shape[1]
+
+        c_np = np.zeros((nx, ny))
+        for k in xrange(nx):
+            for j in xrange(ny):
+                c_np[k, j] = np.corrcoef(x[:, k], y[:, j])[0, 1]
+
+        c = pearson_correlation(x, y)
+
+        assert_array_almost_equal(c, c_np)
+
 
 def suite():
     """Create the suite"""

@@ -203,7 +203,7 @@ def hemi_pairs_add_views(spec_both, state, directory=None, overwrite=False):
     if state == 'inflated':
         views = dict(m='medial', s='superior', i='inferior', a='anterior', p='posterior')
         viewkeys = ['m', 's', 'i', 'a', 'p']
-    elif state == 'sphere.reg':
+    else:
         views = dict(m='medial')
         viewkeys = 'm'
 

@@ -95,7 +95,6 @@ class SurfTests(unittest.TestCase):
             d = afni_niml.string2rawniml(s)
 
             # ensure data was converted properly
-            assert_true(data_repr in s)
 
             for k, v in minimal_niml_struct[0].iteritems():
                 if k == 'nodes':
@@ -109,19 +108,20 @@ class SurfTests(unittest.TestCase):
 
                 elif k != 'name':
                     # check header was properly converted
-                    assert_true('%s="%s"' % (k, v) in s)
+                    assert_true(('%s="%s"' % (k, v)).encode() in s)
 
 
             # check that if we remove some important information, then parsing fails
             important_keys = ['ni_form', 'ni_dimen', 'ni_type']
 
             for k in important_keys:
-                s_bad = s.replace(k, 'foo')
+                s_bad = s.replace(k.encode(), b'foo')
                 assert_raises((KeyError, ValueError), afni_niml.string2rawniml, s_bad)
 
             # adding garbage at the beginning or end should fail the parse
-            assert_raises((KeyError, ValueError), afni_niml.string2rawniml, s + "GARBAGE")
-            assert_raises((KeyError, ValueError), afni_niml.string2rawniml, "GARBAGE" + s)
+            garbage = "GARBAGE".encode()
+            assert_raises((KeyError, ValueError), afni_niml.string2rawniml, s + garbage)
+            assert_raises((KeyError, ValueError), afni_niml.string2rawniml, garbage + s)
 
 
 
@@ -377,7 +377,6 @@ class SurfTests(unittest.TestCase):
         for i in xrange(4):
             assert_array_equal(roi['edges'][i], expected_edges[i])
 
-
         # check nodes
         expected_nodes = [arr([43063, 43064, 43065, 43066, 43067, 43177, 43178,
                             43179, 43180, 43290, 43291, 43292, 43402, 43403])]
@@ -407,7 +406,6 @@ def _test_afni_suma_spec():
 def suite():
     """Create the suite"""
     return unittest.makeSuite(SurfTests)
-
 
 if __name__ == '__main__':
     import runner
