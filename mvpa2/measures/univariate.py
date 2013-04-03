@@ -14,7 +14,8 @@ import numpy as np
 import functools
 
 from mvpa2.base import externals
-from mvpa2.measures.base import FeaturewiseMeasure, ChainMeasure
+from mvpa2.base.learner import ChainLearner
+from mvpa2.measures.base import FeaturewiseMeasure
 from mvpa2.base.dataset import vstack
 from mvpa2.datasets.base import Dataset
 
@@ -149,6 +150,4 @@ def compound_winner_take_all_measure(sign=1, space='targets', sa_labels=None,
     attribute'''
     meaner = compound_univariate_mean_measure(space=space, sa_labels=sa_labels, **kwargs)
     winner = WinnerTakeAllMeasure(sign=sign, **kwargs)
-    return ChainMeasure((meaner, winner))
-
-
+    return ChainLearner((meaner, winner))
