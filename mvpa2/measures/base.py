@@ -643,7 +643,11 @@ class FeaturewiseMeasure(Measure):
         """Adjusts per-feature-measure for computed `result`
         """
         # This method get the 'result' either as a 1D array, or as a Dataset
-        # everything else is illegal
+        # everything else is illegal.
+
+        # Use a while loop as a surrogate for 'goto' (which is considered harmful).
+        # Either break out of the loop or raise an error. 
+        # (a long if statement with many 'ors would be the alternative)
         while True:
             if not __debug__ or len(result.shape) == 1:
                 break
