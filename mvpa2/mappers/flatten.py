@@ -189,7 +189,12 @@ class FlattenMapper(Mapper):
 
 class ProductFlattenMapper(FlattenMapper):
     """Reshaping mapper that flattens multidimensional arrays and
-    preserves information for each dimension"""
+    preserves information for each dimension in feature attributes
+    
+    Notes
+    -----
+    This class' name contains 'product' because it maps feature
+    attributes in a cartesian-product way."""
 
     def __init__(self, factor_names_values, **kwargs):
         '''
@@ -215,7 +220,7 @@ class ProductFlattenMapper(FlattenMapper):
             space = '_'.join(name for name, _ in factor_names_values) + \
                                                                  '_indices'
         except:
-            ValueError('factor_names_values should be an iterable with pairs'
+            raise ValueError('factor_names_values should be an iterable with pairs'
                        ' of names and values')
 
         FlattenMapper.__init__(self, shape=shape, space=space, **kwargs)
