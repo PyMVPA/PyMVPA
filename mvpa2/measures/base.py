@@ -1153,35 +1153,3 @@ class MappedClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
         return _str(self, str(self.clf))
 
 
-class ChainMeasure(Measure):
-    '''Combines different measures into one'''
-    def __init__(self, measures, null_dist=None, **kwargs):
-        '''Initializes with measures
-        
-        Parameters
-        ----------
-        measures: list
-            a list of measures
-        '''
-        Measure.__init__(self, null_dist=null_dist, **kwargs)
-        self._measures = measures
-
-    def is_trained(self):
-        return all(measure.is_trained for measure in self._measures)
-
-    def _train(self, ds):
-        for measure in self._measures:
-            measure._train(ds)
-
-    def _untrain(self):
-        for measure in self._measures:
-            measure._untrain()
-
-    def _call(self, ds):
-        measures = self._measures
-
-        r = ds
-        for measure in measures:
-            r = measure(r)
-
-        return r
