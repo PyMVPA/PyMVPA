@@ -418,6 +418,12 @@ class CombinedNode(CompoundNode):
         self._combine_axis = combine_axis
         self._a = a
 
+    def __copy__(self):
+        print self._combine_axis
+        return self.__class__([copy.copy(n) for n in self],
+                                         copy.copy(self._combine_axis),
+                                         copy.copy(self._a))
+
 
     def _call(self, ds):
         out = [node(ds) for node in self]
