@@ -583,6 +583,81 @@ class Surface(object):
 
         return idxs
 
+    def nodes_on_border(self, node_indices=None):
+        '''Determines which nodes are on the border of the surface
+        
+        Parameters
+        ----------
+        node_indices: np.ndarray or None
+            Vector with node indices for which their bordership status is to 
+            be deteremined. None means all node indices
+            
+        Returns
+        -------
+        on_border: np.ndarray
+            Boolean array of shape (len(node_indices),). A node i is 
+            considered on the border if there is a face that contains node i
+            and another node j so that no other face contains both i and j.
+            In other words a node i is *not* on the border if there is a path
+            of nodes p1,...pN so that N>1, p1==pN, pj!=pk if j!=k<N, and
+            each node pk (and no other node) is a neighbor of node i.
+        '''
+
+        if node_indices is None:
+            node_indices = np.arange(self.nvertices)
+
+        if not isinstance(node_indices, np.ndarray):
+            node_indices = np.asarray(node_indices)[np.newaxis]
+
+        if len(node_indices.shape) != 1:
+            raise ValueError("Only supported for vectors")
+
+        n = len(node_indices)
+        on_border = np.zeros((n,), dtype=np.bool_) # allocate space for output
+
+        n2f = self.node2faces
+        f = self.faces
+
+        def except_(vs, x):
+            return filter(lambda y:y != x, vs)
+
+        for i, node_index in enumerate(node_indices):
+            face_indices = n2f[node_index]
+            nf = len(face_indices)
+
+            # node indices of neighbouring nodes (one for each face containing
+            # node with index node_index)
+            fs = [except_(f[fi], node_index) for fi in face_indices]
+
+            a = np.asarray(fs)
+            if a.size == 0:
+                continue
+
+            # initial position and value
+            ipos, jpos = 0, 0
+            a_init = a[ipos, jpos]
+
+            for j in xrange(nf):
+                # go over the faces that contain node_index
+                # for each row take the other value, and try to match  
+                # it to another face
+                jpos_ = (jpos + 1) % 2
+                target = a[ipos, jpos_]
+                a[ipos, jpos_] = -1 # is visited
+
+                ijpos = np.nonzero(a == target)
+                if len(ijpos[0]) != 1:
+                    # 
+                    on_border[i] = True
+                    break
+                ipos, jpos = ijpos[0], ijpos[1]
+
+            on_border[i] = on_border[i] or target != a_init
+
+            pivot = fs[0][0]
+
+
+        return on_border
 
 
 
