@@ -109,7 +109,10 @@ def from_niml_dset(dset, fa_labels=[], sa_labels=[], a_labels=[]):
                     short_k = _PYMVPA_SEP.join(k_split[2:])
                     expected_length = infix2length.get(infix, None)
                     if expected_length:
-                        while type(v) is str:
+                        if isinstance(v, np.ndarray) and np.dtype == np.str_:
+                            v = str(v)
+
+                        while isinstance(v, basestring):
                             # strings are seperated by ';'
                             # XXX what if this is part of the value 
                             # intended by the user?
