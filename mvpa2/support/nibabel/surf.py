@@ -659,7 +659,103 @@ class Surface(object):
 
         return on_border
 
+    def pairwise_near_nodes(self, max_distance=None, src=None, trg=None):
+        '''Finds the distances between pairs of nodes
+        
+        Parameters
+        ----------
+        max_distance: None or float
+            maximum distance (None: no maximum distance)
+        src: array of int or None
+            source indices
+        trg: array of int or None
+            target indices
+        
+        Returns
+        -------
+        source_target2distance: dict
+            A dictionary so that source_target2distance[i,j]=d means that the
+            Euclidian distance between nodes i and j is d, where i in src 
+            and j in trg.
+        
+        Notes
+        -----
+        If src and trg are both None, then this function checks if the surface
+        has two components; if so they are taken as source and target. A use 
+        case for this behaviour is a surface consisting of two hemispheres  
+        '''
 
+        if src is None and trg is None:
+            components = self.connected_components()
+            if len(components) != 2:
+                raise ValueError("Empty src and trg: requires two components")
+            src, trg = (np.asarray([i for i in c]) for c in components)
+
+        v = self.vertices
+        if not max_distance is None:
+            # hopefully we can reduce the number of vertices significantly
+            # if src and trg can be seperated easily (as in the case of
+            # two hemispheres).
+
+            # vector connecting centers of mass of src and trg
+            n = np.mean(v[src], 0) - np.mean(v[trg], 0)
+
+            # normalize
+            n /= np.sum(n ** 2) ** .5
+
+            # compute projection on normal
+            ps = self.project_vertices(n, v[src])
+            pt = self.project_vertices(n, v[trg])
+
+            def remove_far(s, t, ps, pt, max_distance=max_distance):
+                keep_idxs = np.arange(len(s))
+                for sign in (-1, 1):
+                    far_idxs = np.nonzero(sign * ps[keep_idxs] + \
+                                            max_distance < min(sign * pt))[0]
+
+                    keep_idxs = np.setdiff1d(keep_idxs, far_idxs)
+
+                return s[keep_idxs]
+
+            src, trg = remove_far(src, trg, ps, pt), \
+                                remove_far(trg, src, pt, ps)
+
+        st2d = dict() # source-target pair to distance
+        for s in src:
+            ds = self.euclidean_distance(s, trg)
+            for t, d in zip(trg, ds):
+                if max_distance is None or d <= max_distance:
+                    st2d[(s, t)] = d
+
+
+        return st2d
+
+    def project_vertices(self, n, v=None):
+        '''Projects vertex coordinates onto a vector
+        
+        Parameters
+        ----------
+        n: np.ndarray
+            Vector with 3 elements
+        v: np.ndarray or None
+            coordinates to be projected. If None then the vertices of the 
+            current instance are used.
+            
+        Returns
+        -------
+        p: np.ndarray
+            Vector with coordinates projected onto n 
+        '''
+
+        if not isinstance(n, np.ndarray):
+            n = np.asarray(n)
+        if n.shape != (3,):
+            raise ValueError("Expected vector with 3 elements, found %s" % ((n.shape,)))
+
+        if v is None:
+            v = self.vertices
+
+        return np.dot(v, n)
 
     def sub_surface(self, src, radius):
         '''Makes a smaller surface consisting of nodes around a center node
