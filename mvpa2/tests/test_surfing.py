@@ -861,6 +861,47 @@ class SurfTests(unittest.TestCase):
         # check whether they give the same results
         assert_array_equal(r.samples, m.samples)
 
+    def test_surf_pairs(self):
+        o, x, y = map(np.asarray, [(0, 0, 0), (0, 1, 0), (1, 0, 0)])
+        d = np.asarray((0, 0, .1))
+        n = 10
+        s1 = surf.generate_plane(o, x, y, n, n)
+        s2 = surf.generate_plane(o + d, x, y, n, n)
+        s = surf.merge(s1, s2)
+
+        # try for small surface
+        eps = .0000001
+        pw = s.pairwise_near_nodes(.5)
+        for i in xrange(n ** 2):
+            d = pw.pop((i, i + 100))
+            assert_array_almost_equal(d, .1)
+
+        assert_true(len(pw) == 0)
+
+        pw = s.pairwise_near_nodes(.5)
+        for i in xrange(n ** 2):
+            d = pw.pop((i, i + 100))
+            assert_array_almost_equal(d, .1)
+
+        assert_true(len(pw) == 0)
+
+        # bigger one
+        pw = s.pairwise_near_nodes(1.4)
+        for i in xrange(n ** 2):
+            p, q = i / n, i % n
+            offsets = sum(([] if q == 0 else [-1],
+                         [] if q == n - 1 else [+1],
+                         [] if p == 0 else [-n],
+                         [] if p == n - 1 else [n],
+                         [0]), [])
+            for offset in offsets:
+                ii = i + offset + n ** 2
+                d = pw.pop((i, ii))
+
+            assert_true((d < .5) ^ (offset > 0))
+
+        assert_true(len(pw) == 0)
+
 
 class _Voxel_Count_Measure(Measure):
     # used to check voxel selection results
