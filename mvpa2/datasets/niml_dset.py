@@ -175,6 +175,8 @@ def to_niml_dset(ds):
         Dictionary with NIML key-value pairs, such as obtained from
         mvpa2.support.nibabel.afni_niml_dset.read()
      '''
+    if isinstance(ds, np.ndarray):
+        ds = Dataset(ds)
 
     dset = dict(data=np.transpose(ds.samples))
 
