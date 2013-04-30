@@ -360,7 +360,7 @@ class SurfaceDiskQueryEngine(object):
         return cls(radius, lverts, lgraph, lcoords, rverts, rgraph, rcoords)
 
     def train(self, dataset):
-        pass
+        self.ids = np.arange(dataset.nfeatures)
 
     def __getitem__(self, coordinate):
         if self.lverts.samples[0, coordinate] != -1:
