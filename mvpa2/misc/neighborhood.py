@@ -331,6 +331,10 @@ class SurfaceDiskQueryEngine(object):
     def radius(self):
         return self._radius
 
+    @radius.setter
+    def radius(self, newrad):
+        self._radius = newrad
+
     @classmethod
     def loadFromFiles(cls, radius, lvtxvol, lhsurf, rvtxvol, rhsurf,
             mask=None):
@@ -381,6 +385,38 @@ class SurfaceDiskQueryEngine(object):
         idcs = [i for i, v in enumerate(verts) if v in disk]
 
         return idcs
+
+
+class DoubleDiskQueryEngine(SurfaceDiskQueryEngine):
+    coordinate = None
+
+    def setFirstDisk(self, coordinate):
+        self.coordinate = coordinate
+        self._setFirstDisk()
+
+    def _setFirstDisk(self):
+        self.firstDisk = super(DoubleDiskQueryEngine, self).__getitem__(self.coordinate)
+        self.fdset = set(self.firstDisk)
+
+    @property
+    def radius(self):
+        return self._radius
+
+    @radius.setter
+    def radius(self, newrad):
+        print "Setting radius in DoubleDiskQE"
+        self._radius = newrad
+        if self.coordinate is not None:
+            self._setFirstDisk()
+
+    def getSingleDisk(self):
+        return SurfaceDiskQueryEngine(self._radius,
+                                      self.lverts, self.lgraph, self.lcoords,
+                                      self.lverts, self.lgraph, self.lcoords)
+
+    def __getitem__(self, coordinate):
+        secondDisk = super(DoubleDiskQueryEngine, self).__getitem__(coordinate)
+        return self.firstDisk + [x for x in secondDisk if x not in self.fdset]
 
 
 class QueryEngineInterface(object):
