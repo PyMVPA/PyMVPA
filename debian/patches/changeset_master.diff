@@ -1,0 +1,25 @@
+From: Yaroslav Halchenko <debian@onerussian.com>
+Subject: BF+TST: compatibility with numpy 1.7.1 -- use is_the_same_base helper more
+
+--- a/mvpa2/tests/test_splitter.py
++++ b/mvpa2/tests/test_splitter.py
+@@ -398,7 +398,7 @@ class SplitterTests(unittest.TestCase):
+             else:
+                 assert_true(s[0].samples.base is None)
+             # we get slicing all the time
+-            assert_true(s[1].samples.base.base is self.data.samples)
++            assert_true(is_the_same_base(s[1].samples))
+         step_ds = Dataset(np.random.randn(20,2),
+                           sa={'chunks': np.tile([0,1], 10)})
+         oes = OddEvenPartitioner()
+@@ -411,8 +411,8 @@ class SplitterTests(unittest.TestCase):
+         assert_equal(len(splits), 2)
+         for s in splits:
+             # we get slicing all the time
+-            assert_true(s[0].samples.base.base is step_ds.samples)
+-            assert_true(s[1].samples.base.base is step_ds.samples)
++            assert_true(is_the_same_base(s[0].samples, step_ds.samples))
++            assert_true(is_the_same_base(s[1].samples, step_ds.samples))
+ 
+ 
+ def suite():
