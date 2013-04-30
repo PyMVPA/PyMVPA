@@ -1,3 +1,11 @@
+pymvpa2 (2.2.0-2) unstable; urgency=low
+
+  * debian/patches
+    - changeset_79bc8ecad13fe43447f8a262ed03147cbe7da326.diff
+      Addresses numpy 1.7.1 compatibility in unittests
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 30 Apr 2013 11:35:24 -0400
+
 pymvpa2 (2.2.0-1) unstable; urgency=low
 
   * Fresh upstream release:
