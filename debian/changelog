@@ -1,3 +1,12 @@
+pymvpa2 (2.2.0-3) unstable; urgency=low
+
+  * debian/patches
+    - changeset_bab55a4a390c9c4b337ead5877868f7f7debc208.diff
+      Tollerate "Probabalistic" (mention the typo) and "fixed"
+      FSL atlases
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 06 May 2013 15:02:58 -0400
+
 pymvpa2 (2.2.0-2) unstable; urgency=low
 
   * debian/patches
