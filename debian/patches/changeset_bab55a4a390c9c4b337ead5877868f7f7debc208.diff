@@ -1,0 +1,37 @@
+From: Yaroslav Halchenko <debian@onerussian.com>
+Subject: BF: tollerate Probabalistic FSL atlases + use warning isntead of undefined printdebug
+
+--- a/mvpa2/atlases/warehouse.py
++++ b/mvpa2/atlases/warehouse.py
+@@ -10,6 +10,7 @@
+ 
+ import os
+ 
++from mvpa2.base import warning
+ from mvpa2.atlases.base import *
+ from mvpa2.atlases.fsl import *
+ 
+@@ -61,7 +62,9 @@ def Atlas(filename=None, name=None, *arg
+             'PyMVPA': {"Label" : LabelsAtlas,
+                        "Reference": ReferencesAtlas},
+             'FSL': {"Label" : FSLLabelsAtlas,
+-                    "Probabalistic": FSLProbabilisticAtlas}
++                    "Probabalistic": FSLProbabilisticAtlas,
++                    "Probabilistic": FSLProbabilisticAtlas,
++                    }
+             }[atlas_source]
+         atlasType = tempAtlas.header.type.text
+         if atlasTypes.has_key(atlasType):
+@@ -69,9 +72,9 @@ def Atlas(filename=None, name=None, *arg
+             return atlasTypes[atlasType](filename=filename, *args, **kwargs)
+             #return ReferencesAtlas(filename)
+         else:
+-            printdebug("Unknown %s type '%s' of atlas in %s." " Known are %s" %
+-                       (atlas_source, atlasType, filename,
+-                        atlasTypes.keys()), 2)
++            warning("Unknown %s type '%s' of atlas in %s." " Known are %s" %
++                    (atlas_source, atlasType, filename,
++                     atlasTypes.keys()), 2)
+             return tempAtlas
+     except XMLAtlasException, e:
+         print "File %s is not a valid XML based atlas due to %s" \
