@@ -654,10 +654,86 @@ class Surface(object):
 
             on_border[i] = on_border[i] or target != a_init
 
-            pivot = fs[0][0]
-
-
         return on_border
+
+
+    def nodes_on_border_paths(self):
+        '''Find paths of nodes on the border
+        
+        Returns
+        -------
+        paths: list of lists
+            paths[i]=[k_0,...k_N] means that there is path of N+1 edges
+            [(k_0,k_1),(k_1,...,k_N),(k_N,k_0)] where each k_i is on the 
+            border of the surface
+            
+        '''
+        border_mask = self.nodes_on_border()
+        faces = self.faces
+        nbrs = self.neighbors
+        border_nodes = set(np.nonzero(border_mask)[0])
+        if not len(border_nodes):
+            return []
+
+        # for each edge, see which is the next edge
+        # in the same triangle (clock-wise)
+        edge2next = dict()
+        for i in xrange(self.nfaces):
+            for j in xrange(3):
+                p, q, r = faces[i]
+
+                # make edges
+                pp, qq, rr = (p, q), (q, r), (r, p)
+
+                edge2next[pp] = qq
+                edge2next[qq] = rr
+                edge2next[rr] = pp
+
+        # mapping from edge to face
+        e2f = self.edge2face
+
+        pths = [] # space for output
+        while border_nodes:
+            b0 = border_nodes.pop() # select a random node on the border
+            ns = [b for b in nbrs[b0] if b in border_nodes]
+            if not ns:
+                # not a proper node - no neighbors - so skip
+                continue
+
+            # find an edge on the border
+            for n in ns:
+                edge = (b0, n)
+                if edge in edge2next:
+                    break
+
+            if not edge in edge2next:
+                # this should not happen really
+                raise ValueError("no edge on border found")
+
+            # start a path
+            pth = []
+            pths.append(pth)
+            while True:
+                p, q = edge2next[edge]
+
+                if (q, p) in e2f:
+                    # node q is 'inside' - not on the border
+                    # continue looking
+                    edge = (q, p)
+                else:
+                    # on the border, so swap
+                    edge = (p, q)
+                    pth.append(p) # p is on the border
+                    if p in border_nodes:
+                        border_nodes.remove(p)
+                    else:
+                        # we made a tour and back to the starting point
+                        break
+
+        return pths
+
+
+
 
     def pairwise_near_nodes(self, max_distance=None, src=None, trg=None):
         '''Finds the distances between pairs of nodes
