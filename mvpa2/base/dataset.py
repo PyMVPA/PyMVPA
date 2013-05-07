@@ -1026,6 +1026,49 @@ def _get_unique_attribute_masks(xs, raise_unequal_count=True):
                                  ' %s != %s' % (i, h, h0))
     return unq, masks
 
+def split_by_sample_attribute(ds, sa_label, raise_unequal_count=True):
+    '''Splits a dataset based on unique values of a sample attribute
+    
+    Parameters
+    ----------
+    d: Dataset
+        input dataset
+    sa_label: str
+        sample attribute label on which the split is based
+    
+    Returns
+    -------
+    ds: list of Dataset
+        List with n datasets, if d.sa[sa_label] has n unique values
+    '''
+
+    _, masks = _get_unique_attribute_masks(dataset.sa[sa_label].value,
+                                    raise_unequal_count=raise_unequal_count)
+
+    return [ds[mask, :].copy(deep=False) for mask in masks]
+
+
+def split_by_feature_attribute(ds, fa_label, raise_unequal_count=True):
+    '''Splits a dataset based on unique values of a feature attribute
+    
+    Parameters
+    ----------
+    d: Dataset
+        input dataset
+    sa_label: str
+        sample attribute label on which the split is based
+    
+    Returns
+    -------
+    ds: list of Dataset
+        List with n datasets, if d.fa[fa_label] has n unique values
+    '''
+    _, masks = _get_unique_attribute_masks(dataset.fa[fa_label].value,
+                                    raise_unequal_count=raise_unequal_count)
+
+    return [ds[:, mask].copy(deep=False) for mask in masks]
+
+
 
 class DatasetError(Exception):
     """Thrown if there is a problem with the internal integrity of a Dataset.
