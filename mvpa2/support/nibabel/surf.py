@@ -446,7 +446,7 @@ class Surface(object):
             q_i a list of node indices on the path between nodes i and (i+1)
             so that q_i[0]==i and q_i[-1]==(i+1)
         '''
-        if not to_visit:
+        if to_visit is None or len(to_visit) == 0:
             raise ValueError("Cannot operate on empty list")
 
         src = to_visit[0]
