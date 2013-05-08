@@ -1042,7 +1042,7 @@ def split_by_sample_attribute(ds, sa_label, raise_unequal_count=True):
         List with n datasets, if d.sa[sa_label] has n unique values
     '''
 
-    _, masks = _get_unique_attribute_masks(dataset.sa[sa_label].value,
+    _, masks = _get_unique_attribute_masks(ds.sa[sa_label].value,
                                     raise_unequal_count=raise_unequal_count)
 
     return [ds[mask, :].copy(deep=False) for mask in masks]
@@ -1063,7 +1063,7 @@ def split_by_feature_attribute(ds, fa_label, raise_unequal_count=True):
     ds: list of Dataset
         List with n datasets, if d.fa[fa_label] has n unique values
     '''
-    _, masks = _get_unique_attribute_masks(dataset.fa[fa_label].value,
+    _, masks = _get_unique_attribute_masks(ds.fa[fa_label].value,
                                     raise_unequal_count=raise_unequal_count)
 
     return [ds[:, mask].copy(deep=False) for mask in masks]
