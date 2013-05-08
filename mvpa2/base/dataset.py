@@ -1047,7 +1047,7 @@ def split_by_sample_attribute(ds, sa_label, raise_unequal_count=True):
         if len(sa_label) == 1:
             return sas
         else:
-            return sum([split_by_sample_attribute(fa, fa_label[1:],
+            return sum([split_by_sample_attribute(sa, sa_label[1:],
                                                   raise_unequal_count)
                                 for sa in sas], [])
 
