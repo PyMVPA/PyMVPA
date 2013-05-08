@@ -950,7 +950,7 @@ def unique_sample_attributes_stack(dataset, sa_label):
     ----------
     dataset: Dataset
         input dataset.
-    sa_label: str
+    sa_label: str 
         sample attribute label according which samples in dataset
         are stacked. 
     
@@ -983,7 +983,7 @@ def unique_feature_attributes_stack(dataset, fa_label):
     ----------
     dataset: Dataset
         input dataset.
-    fa_label: str
+    fa_label: str 
         feature attribute label according which samples in dataset
         are stacked. 
     
@@ -1033,7 +1033,7 @@ def split_by_sample_attribute(ds, sa_label, raise_unequal_count=True):
     ----------
     d: Dataset
         input dataset
-    sa_label: str
+    sa_label: str or list of str
         sample attribute label on which the split is based
     
     Returns
@@ -1041,6 +1041,15 @@ def split_by_sample_attribute(ds, sa_label, raise_unequal_count=True):
     ds: list of Dataset
         List with n datasets, if d.sa[sa_label] has n unique values
     '''
+    if type(sa_label) in (list, tuple):
+        label0 = sa_label[0]
+        sas = split_by_sample_attribute(ds, label0, raise_unequal_count)
+        if len(sa_label) == 1:
+            return sas
+        else:
+            return sum([split_by_sample_attribute(fa, fa_label[1:],
+                                                  raise_unequal_count)
+                                for sa in sas], [])
 
     _, masks = _get_unique_attribute_masks(ds.sa[sa_label].value,
                                     raise_unequal_count=raise_unequal_count)
@@ -1055,7 +1064,7 @@ def split_by_feature_attribute(ds, fa_label, raise_unequal_count=True):
     ----------
     d: Dataset
         input dataset
-    sa_label: str
+    sa_label: str or list of str
         sample attribute label on which the split is based
     
     Returns
@@ -1063,6 +1072,16 @@ def split_by_feature_attribute(ds, fa_label, raise_unequal_count=True):
     ds: list of Dataset
         List with n datasets, if d.fa[fa_label] has n unique values
     '''
+    if type(fa_label) in (list, tuple):
+        label0 = fa_label[0]
+        fas = split_by_feature_attribute(ds, label0, raise_unequal_count)
+        if len(fa_label) == 1:
+            return fas
+        else:
+            return sum([split_by_feature_attribute(fa, fa_label[1:],
+                                                   raise_unequal_count)
+                                for fa in fas], [])
+
     _, masks = _get_unique_attribute_masks(ds.fa[fa_label].value,
                                     raise_unequal_count=raise_unequal_count)
 
