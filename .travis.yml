@@ -27,6 +27,10 @@ install:
     - sudo apt-get install $PY-mdp $PY-psutil $PY-sklearn liblapack-dev
     - sudo easy_install$PYSUF nibabel # Latest pypi
     - make
+    - if [[ $MVPA_DEBUG_METRICS == all ]]; then pip install -q coveralls; fi
 script:
-    # Run only nonlabile tests
-    - make unittest-nonlabile
+    # Run only nonlabile tests but via coverage for the last entry in the matrix
+    - if [[ $MVPA_DEBUG_METRICS == all ]]; then export MVPA_TESTS_LABILE=no PYTHONPATH=. MVPA_MATPLOTLIB_BACKEND=agg; fi
+    - if [[ $MVPA_DEBUG_METRICS == all ]]; then coverage run --rcfile=.travis_coveragerc mvpa2/tests/__init__.py; else make unittest-nonlabile; fi
+after_success:
+    - if [[ $MVPA_DEBUG_METRICS == all ]]; then coveralls; fi
