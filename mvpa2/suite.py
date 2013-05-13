@@ -176,6 +176,7 @@ from mvpa2.measures.searchlight import *
 from mvpa2.measures.gnbsearchlight import *
 from mvpa2.measures.nnsearchlight import *
 from mvpa2.measures.corrstability import *
+from mvpa2.measures.univariate import *
 
 __sdebug('misc')
 from mvpa2.support.copy import *
