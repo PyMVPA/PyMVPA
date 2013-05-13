@@ -35,7 +35,7 @@ before_install:
     - sudo apt-get install $PY-nibabel
 install:
     - make
-    - if [[ $MVPA_DEBUG_METRICS == all ]]; then pip install -q coveralls; fi
+    - if [[ $MVPA_DEBUG_METRICS == all ]]; then pip install -v coveralls; fi
 script:
     # Run only nonlabile tests but via coverage for the last entry in the matrix
     - if [[ $MVPA_DEBUG_METRICS == all ]]; then export MVPA_TESTS_LABILE=no PYTHONPATH=. MVPA_MATPLOTLIB_BACKEND=agg; fi
