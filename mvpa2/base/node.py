@@ -357,7 +357,7 @@ class CompoundNode(Node):
 class ChainNode(CompoundNode):
     """
     This class allows to concatenate a list of nodes into a processing chain.
-    When called with a dataset, it is sequentially fed through a nodes in the
+    When called with a dataset, it is sequentially fed through nodes in the
     chain. A ChainNode may also be used as a generator. In this case, all
     nodes in the chain are treated as generators too, and the ChainNode
     behaves as a single big generator that recursively calls all embedded
