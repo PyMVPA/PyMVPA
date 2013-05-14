@@ -68,7 +68,7 @@ class CompoundFeaturewiseMeasure(FeaturewiseMeasure):
         return ds
 
 
-def compound_univariate_mean_measure(space='targets', sa_labels=None, **kwargs):
+def compound_mean_measure(space='targets', sa_labels=None, **kwargs):
     '''Returns a measure that computes the mean for each unique
     value in sample attributes over all features
     '''
@@ -78,9 +78,9 @@ def compound_univariate_mean_measure(space='targets', sa_labels=None, **kwargs):
                                       summary_func=summary_func,
                                       **kwargs)
 
-def compound_mean_measure(space='targets', sa_labels=None, **kwargs):
+def compound_univariate_mean_measure(space='targets', sa_labels=None, **kwargs):
     '''Returns a measure that computes the mean for each unique
-    value in sample attributes over all features
+    value in sample attributes, for each feature seperately.
     '''
     summary_func = lambda x:np.mean(x, axis=0)
     return CompoundFeaturewiseMeasure(space=space,
