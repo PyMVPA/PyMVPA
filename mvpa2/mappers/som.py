@@ -30,7 +30,7 @@ class SimpleSOMMapper(Mapper):
     kernel.
     """
     def __init__(self, kshape, niter, learning_rate=0.005,
-                 iradius=None, distance_metric=None):
+                 iradius=None, distance_metric=None, initialization_func=None):
         """
         Parameters
         ----------
@@ -52,8 +52,12 @@ class SimpleSOMMapper(Mapper):
             Kernel distance metric between elements in Kohonen layer. If None
             then Euclidian distance is used. Otherwise it should be a 
             callable that accepts two input arguments x and y and returns
-            the distance d through d=distance_metric(x,y)  
-          
+            the distance d through d=distance_metric(x,y)
+        initialization_func: callable or None
+            Initialization function to set self._K, that should take one 
+            argument with training samples and return an numpy array. If None,
+            then values in the returned array are taken from a standard normal 
+            distribution.  
         """
         # init base class
         Mapper.__init__(self)
@@ -83,6 +87,7 @@ class SimpleSOMMapper(Mapper):
         # the internal kohonen layer
         self._K = None
         self._dqd = None
+        self._initialization_func = initialization_func
 
     @accepts_dataset_as_samples
     def _pretrain(self, samples):
@@ -93,10 +98,14 @@ class SimpleSOMMapper(Mapper):
         samples : array-like
             Used for unsupervised training of the SOM
         """
-
-         # XXX initialize with clever default, e.g. plain of first two PCA
+        ifunc = self._initialization_func
+        # XXX initialize with clever default, e.g. plain of first two PCA
         # components
-        self._K = np.random.standard_normal(tuple(self.kshape) + (samples.shape[1],))
+        if ifunc is None:
+             ifunc = lambda x:np.random.standard_normal(tuple(self.kshape) \
+                                                             + (x.shape[1],))
+
+        self._K = ifunc(samples)
 
          # precompute distance kernel between elements in the Kohonen layer
         # that will remain constant throughout the training
