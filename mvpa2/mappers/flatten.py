@@ -184,7 +184,7 @@ class FlattenMapper(Mapper):
             del mds.fa[inspace]
         return mds
 
-    shape = property(fget=lambda self:self._origshape)
+    oshape = property(fget=lambda self:self._origshape)
     maxdims = property(fget=lambda self:self.__maxdims)
 
 class ProductFlattenMapper(FlattenMapper):
