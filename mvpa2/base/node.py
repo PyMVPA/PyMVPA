@@ -254,7 +254,7 @@ class CompoundNode(Node):
     A CompoundNode behaves similar to a list container: Nodes can be appended,
     and the chain can be sliced like a list, etc ...
     
-    Subclasses such as ChainNode and CompoundNode implement the _call
+    Subclasses such as ChainNode and CombinedNode implement the _call
     method in different ways.
     """
     def __init__(self, nodes, **kwargs):
