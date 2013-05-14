@@ -216,7 +216,7 @@ class SearchlightTests(unittest.TestCase):
             if not do_roi or nroi > 20:
                 # correction here is for M1NN class which has wider distribution
                 self.assertTrue(
-                    0.68 - correction < results.samples.mean() < 0.84 + correction,
+                    0.67 - correction < results.samples.mean() < 0.85 + correction,
                     msg="Out of range mean result: "
                     "lrn: %s  sllrn: %s  NROI: %d  MEAN: %.3f"
                     % (lrn, sllrn, nroi, results.samples.mean(),))
