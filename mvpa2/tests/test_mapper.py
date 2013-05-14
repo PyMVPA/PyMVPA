@@ -25,9 +25,16 @@ from mvpa2.datasets.base import Dataset
 from mvpa2.base.collections import ArrayCollectable
 from mvpa2.datasets.base import dataset_wizard
 from mvpa2.mappers.flatten import ProductFlattenMapper
+from mvpa2.base.hdf5 import h5save, h5load
 
 import itertools
 import operator
+
+from mvpa2.testing import externals
+if externals.exists('h5py'):
+    from mvpa2.base.hdf5 import h5save, h5load
+    import tempfile
+    import os
 
 # arbitrary ndarray subclass for testing
 class myarray(np.ndarray):
@@ -135,6 +142,14 @@ def test_product_flatten():
 
     # apply flattening to ds
     flattener = ProductFlattenMapper(product_name_values)
+
+    # test I/O
+    if externals.exists('h5py'):
+        _, testfn = tempfile.mkstemp('mapper.h5py', 'test_product')
+        h5save(testfn, flattener)
+        flattener = h5load(testfn)
+        os.unlink(testfn)
+
     mds = flattener(ds)
 
     prod = lambda x:reduce(operator.mul, x)

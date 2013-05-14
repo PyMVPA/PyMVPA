@@ -227,6 +227,11 @@ class ProductFlattenMapper(FlattenMapper):
 
         self._factor_names_values = factor_names_values
 
+    def __repr__(self, prefixes=[]):
+        return super(ProductFlattenMapper, self).__repr__(
+                        prefixes=prefixes
+                        + _repr_attrs(self, ['factor_name_values']))
+
     def _forward_dataset(self, dataset):
         mds = super(ProductFlattenMapper, self)._forward_dataset(dataset)
 
