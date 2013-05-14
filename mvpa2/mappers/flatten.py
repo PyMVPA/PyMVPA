@@ -50,7 +50,7 @@ class FlattenMapper(Mapper):
         # by default auto train
         kwargs['auto_train'] = kwargs.get('auto_train', True)
         Mapper.__init__(self, **kwargs)
-        self.__origshape = None         # pylint pacifier
+        self._origshape = None         # pylint pacifier
         self.__maxdims = maxdims
         if not shape is None:
             self._train_with_shape(shape)
@@ -83,7 +83,7 @@ class FlattenMapper(Mapper):
         """
         # infer the sample shape from the data under the assumption that the
         # first axis is the samples-separating dimension
-        self.__origshape = shape
+        self._origshape = shape
         # flag the mapper as trained
         self._set_trained()
 
@@ -93,7 +93,7 @@ class FlattenMapper(Mapper):
         # local binding
         nsamples = data.shape[0]
         sshape = data.shape[1:]
-        oshape = self.__origshape
+        oshape = self._origshape
 
         if oshape is None:
             raise RuntimeError("FlattenMapper needs to be trained before it "
@@ -133,9 +133,9 @@ class FlattenMapper(Mapper):
             attr = dataset.fa[k].value
             # the maximmum number of axis to flatten in the attr
             if not self.__maxdims is None:
-                maxdim = min(len(self.__origshape), self.__maxdims)
+                maxdim = min(len(self._origshape), self.__maxdims)
             else:
-                maxdim = len(self.__origshape)
+                maxdim = len(self._origshape)
             multiplier = mds.nfeatures \
                     / np.prod(attr.shape[:maxdim])
             if __debug__:
@@ -161,7 +161,7 @@ class FlattenMapper(Mapper):
         # local binding
         nsamples = data.shape[0]
         sshape = data.shape[1:]
-        oshape = self.__origshape
+        oshape = self._origshape
         return data.reshape((nsamples,) + oshape + sshape[1:])
 
 
@@ -184,7 +184,7 @@ class FlattenMapper(Mapper):
             del mds.fa[inspace]
         return mds
 
-    shape = property(fget=lambda self:self.__origshape)
+    shape = property(fget=lambda self:self._origshape)
     maxdims = property(fget=lambda self:self.__maxdims)
 
 class ProductFlattenMapper(FlattenMapper):
@@ -230,7 +230,7 @@ class ProductFlattenMapper(FlattenMapper):
     def _forward_dataset(self, dataset):
         mds = super(ProductFlattenMapper, self)._forward_dataset(dataset)
 
-        oshape = self.__dict__['_FlattenMapper__origshape']
+        oshape = self._origshape
 
         # now map all the factor names and values to feature attributes
         for i, (name, value) in enumerate(self._factor_names_values):
