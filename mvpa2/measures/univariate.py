@@ -136,7 +136,7 @@ class WinnerTakeAllMeasure(FeaturewiseMeasure):
             prek = prefix + k
 
             if prek in wta.fa:
-                raise KeyError("Key clash: %s already in feature attribtutes"
+                raise KeyError("Key clash: %s already in feature attributes"
                                     % (prek))
 
             wta.fa[prek] = v.value[samples]
