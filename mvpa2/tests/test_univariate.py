@@ -40,10 +40,10 @@ class UnivariateTests(unittest.TestCase):
 
             assert_true(m.is_trained)
 
-        m = compound_mean_measure()
+        m = compound_univariate_mean_measure()
         assert_array_equal(m(ds).samples, [[1.5, 2.5, 3.5], [7.5, 8.5, 9.5]])
 
-        m = compound_univariate_mean_measure()
+        m = compound_mean_measure()
         assert_array_equal(m(ds).samples, [[2.5], [8.5]])
 
         m = WinnerTakeAllMeasure()
