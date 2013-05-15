@@ -80,7 +80,8 @@ class BaseSearchlight(Measure):
             raise RuntimeError("The 'pprocess' module is required for "
                                "multiprocess searchlights. Please either "
                                "install python-pprocess, or reduce `nproc` "
-                               "to 1 (got nproc=%i)" % nproc)
+                               "to 1 (got nproc=%i) or set to default None"
+                               % nproc)
 
         self._queryengine = queryengine
         if roi_ids is not None and not isinstance(roi_ids, str) \
