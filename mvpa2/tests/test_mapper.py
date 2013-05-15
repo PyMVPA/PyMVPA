@@ -31,10 +31,6 @@ import itertools
 import operator
 
 from mvpa2.testing import externals
-if externals.exists('h5py'):
-    from mvpa2.base.hdf5 import h5save, h5load
-    import tempfile
-    import os
 
 # arbitrary ndarray subclass for testing
 class myarray(np.ndarray):
@@ -143,8 +139,12 @@ def test_product_flatten():
     # apply flattening to ds
     flattener = ProductFlattenMapper(product_name_values)
 
-    # test I/O
+    # test I/O (only if h5py is available)
     if externals.exists('h5py'):
+        from mvpa2.base.hdf5 import h5save, h5load
+        import tempfile
+        import os
+
         _, testfn = tempfile.mkstemp('mapper.h5py', 'test_product')
         h5save(testfn, flattener)
         flattener = h5load(testfn)
