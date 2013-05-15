@@ -529,7 +529,14 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
     srcs_order = [source_surf_nodes[node] for node in visitorder]
     src_trg_nodes = [(src, src2intermediate[src]) for src in srcs_order]
 
-    if nproc is None:
+    if nproc is not None and nproc > 1 and not externals.exists('pprocess'):
+        raise RuntimeError("The 'pprocess' module is required for "
+                           "multiprocess searchlights. Please either "
+                           "install python-pprocess, or reduce `nproc` "
+                           "to 1 (got nproc=%i) or set to default None"
+                           % nproc)
+
+    if nproc is None and externals.exists('pprocess'):
         try:
             import pprocess
             nproc = pprocess.get_number_of_cores() or 1
