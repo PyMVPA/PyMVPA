@@ -30,7 +30,7 @@ from mvpa2.base.hdf5 import h5save, h5load
 import itertools
 import operator
 
-from mvpa2.testing import externals
+from mvpa2.base import externals
 
 # arbitrary ndarray subclass for testing
 class myarray(np.ndarray):
