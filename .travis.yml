@@ -15,9 +15,16 @@ env:
     - PYTHON="$PY -O"
     - PYTHONPATH=mvpa2/tests/badexternals
     - MVPA_DEBUG=ENFORCE_CA_ENABLED MVPA_DEBUG_METRICS=all
-install:
+before_install:
+    - sudo apt-get update -qq
+    - sudo apt-get install lsb-release
+    - source /etc/lsb-release
+    - echo ${DISTRIB_CODENAME}
+    - wget -O- http://neuro.debian.net/lists/${DISTRIB_CODENAME}.us-nh.full | sudo tee /etc/apt/sources.list.d/neurodebian.sources.list
+    - sudo apt-key adv --recv-keys --keyserver pgp.mit.edu 2649A5A9
+    - sudo apt-get update -qq
     - sudo apt-cache policy           # What is actually available?
-    #- sudo apt-get install $PYTHON-dev
+    # - sudo apt-get install $PYTHON-dev
     - sudo apt-get install swig
     - sudo apt-get install $PY-numpy
     - sudo apt-get install $PY-scipy $PY-matplotlib
@@ -25,8 +32,13 @@ install:
     - sudo apt-get install $PY-nose
     - sudo apt-get install shogun-python-modular
     - sudo apt-get install $PY-mdp $PY-psutil $PY-sklearn liblapack-dev
-    - sudo easy_install$PYSUF nibabel # Latest pypi
+    - sudo apt-get install $PY-nibabel
+install:
     - make
+    - if [[ $MVPA_DEBUG_METRICS == all ]]; then pip install --user -v coveralls; fi
 script:
-    # Run only nonlabile tests
-    - make unittest-nonlabile
+    # Run only nonlabile tests but via coverage for the last entry in the matrix
+    - if [[ $MVPA_DEBUG_METRICS == all ]]; then export MVPA_TESTS_LABILE=no PYTHONPATH=. MVPA_MATPLOTLIB_BACKEND=agg PATH=$HOME/.local/bin:$PATH; fi
+    - if [[ $MVPA_DEBUG_METRICS == all ]]; then coverage run --rcfile=.travis_coveragerc mvpa2/tests/__init__.py; else make unittest-nonlabile; fi
+after_success:
+    - if [[ $MVPA_DEBUG_METRICS == all ]]; then coveralls; fi
