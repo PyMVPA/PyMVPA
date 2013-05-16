@@ -363,6 +363,11 @@ class VolumeBasedSurface(surf.Surface):
     def __reduce__(self):
         return (self.__class__, (self._vg,))
 
+    
+    def __eq__(self, other):
+        if not isinstance(other, VolumeBasedSurface):
+            return False
+        return self._vg==other._vg
 
     def circlearound_n2d(self, src, radius, metric='euclidean'):
         shortmetric = metric[0].lower()
