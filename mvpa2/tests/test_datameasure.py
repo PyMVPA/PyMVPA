@@ -76,7 +76,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         self.assertTrue(f.shape == (1, data.nfeatures))
         self.assertTrue(abs(f.samples[0, 1]) <= 1e-12, # some small value
             msg="Failed test with value %g instead of != 0.0" % f.samples[0, 1])
-        self.assertTrue(f.samples[0,0] > 0.1)     # some reasonably large value
+        self.assertTrue(f.samples[0, 0] > 0.1)     # some reasonably large value
 
         # we should not have NaNs
         self.assertTrue(not np.any(np.isnan(f)))
@@ -118,7 +118,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         sens = sana(ds)
         assert('nonbogus_targets' in sens.fa) # were they passsed?
         # TODO: those few do not expose biases
-        if not len(set(clf.__tags__).intersection(('lars', 'glmnet', 'gpr' ))):
+        if not len(set(clf.__tags__).intersection(('lars', 'glmnet', 'gpr'))):
             assert('biases' in sens.sa)
             # print sens.sa.biases
         # It should return either ...
@@ -129,10 +129,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
             req_nsamples += [ nsplits ]
         else:
             # and for pairs in case of multiclass
-            req_nsamples += [ (nlabels * (nlabels-1) / 2) * nsplits ]
+            req_nsamples += [ (nlabels * (nlabels - 1) / 2) * nsplits ]
             # and for 1-vs-1 embedded within Multiclass operating on
             # pairs (e.g. SMLR)
-            req_nsamples += [req_nsamples[-1]*2]
+            req_nsamples += [req_nsamples[-1] * 2]
 
             # Also for regression_based -- they can do multiclass
             # but only 1 sensitivity is provided
@@ -155,7 +155,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # dtype object and we would need to get them all
         if sens_ulabels.dtype is np.dtype('object'):
             sens_ulabels = np.unique(
-                reduce(lambda x,y: x+y, [list(x) for x in sens_ulabels]))
+                reduce(lambda x, y: x + y, [list(x) for x in sens_ulabels]))
 
         assert_array_equal(sens_ulabels, ds.sa['targets'].unique)
 
@@ -178,7 +178,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
             for conf_matrix in [sana.clf.ca.training_stats] \
                               + sana.clf.ca.stats.matrices:
                 self.assertTrue(
-                    conf_matrix.percent_correct>=70,
+                    conf_matrix.percent_correct >= 70,
                     msg="We must have trained on each one more or " \
                     "less correctly. Got %f%% correct on %d labels" %
                     (conf_matrix.percent_correct,
@@ -249,10 +249,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
                     # that those 2 were the strongest -- so check only signs
                     """
                     self.assertTrue(
-                        sens1.samples[0, ilabel2[0]]<0,
+                        sens1.samples[0, ilabel2[0]] < 0,
                         "With %i classes in pair %s got feature %i for %r >= 0"
                         % (nlabels, label, ilabel2[0], label[0]))
-                    self.assertTrue(sens1.samples[0, ilabel2[1]]>0,
+                    self.assertTrue(sens1.samples[0, ilabel2[1]] > 0,
                         "With %i classes in pair %s got feature %i for %r <= 0"
                         % (nlabels, label, ilabel2[1], label[1]))
                 else:
@@ -287,7 +287,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
     @sweepargs(svm=clfswh['linear', 'svm'])
     def test_linear_svm_weights(self, svm):
         # assumming many defaults it is as simple as
-        sana = svm.get_sensitivity_analyzer(enable_ca=["sensitivities"] )
+        sana = svm.get_sensitivity_analyzer(enable_ca=["sensitivities"])
         # and lets look at all sensitivities
         sens = sana(self.dataset)
         # for now we can do only linear SVM, so lets check if we raise
@@ -319,11 +319,11 @@ class SensitivityAnalysersTests(unittest.TestCase):
         sensfull = sana_full(ds2)
 
         self.assertEqual(senssplit.shape, (2, ds2.nfeatures))
-        self.assertEqual(sensfull.shape,  (1, ds2.nfeatures))
+        self.assertEqual(sensfull.shape, (1, ds2.nfeatures))
 
         # just to verify that we split properly and if we reconstruct
         # manually we obtain the same
-        dmap = (-1 * senssplit.samples[1]  + senssplit.samples[0]) \
+        dmap = (-1 * senssplit.samples[1] + senssplit.samples[0]) \
                - sensfull.samples
         self.assertTrue((np.abs(dmap) <= 1e-10).all())
         #print "____"
@@ -368,7 +368,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                   ds.nfeatures))
         splits = sana.ca.datasets
         self.assertEqual(len(splits), 2)
-        self.assertTrue(np.all([s.nsamples == ds.nsamples//4 for s in splits]))
+        self.assertTrue(np.all([s.nsamples == ds.nsamples // 4 for s in splits]))
         # should have used different samples
         self.assertTrue(np.any([splits[0].sa.origids != splits[1].sa.origids]))
         # and should have got different sensitivities
@@ -504,7 +504,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         tm_err = TransferMeasure(clf, Splitter('chunks', count=2),
                                  postproc=enode)
         auto_error = tm_err(self.dataset)
-        ok_(manual_error == postproc_error.samples[0,0])
+        ok_(manual_error == postproc_error.samples[0, 0])
 
 
     def test_pseudo_cv_measure(self):
@@ -539,7 +539,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         rm = RepeatedMeasure(cf, spl, concat_as='features')
         res = rm(self.dataset)
         assert_equal(res.shape, (1, nsplits))
-        assert_array_equal(res.samples[0], [18,1,1])
+        assert_array_equal(res.samples[0], [18, 1, 1])
 
     def test_custom_combined_selectors(self):
         """Test combination of the selectors in a single function
