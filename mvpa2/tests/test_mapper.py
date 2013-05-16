@@ -25,7 +25,6 @@ from mvpa2.datasets.base import Dataset
 from mvpa2.base.collections import ArrayCollectable
 from mvpa2.datasets.base import dataset_wizard
 from mvpa2.mappers.flatten import ProductFlattenMapper
-from mvpa2.base.hdf5 import h5save, h5load
 
 import itertools
 import operator
