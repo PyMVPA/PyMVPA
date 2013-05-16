@@ -15,7 +15,7 @@ from mvpa2.testing.clfs import *
 from mvpa2.testing.datasets import *
 
 from mvpa2.base import externals, warning
-from mvpa2.base.node import ChainNode
+from mvpa2.base.node import ChainNode, CombinedNode
 from mvpa2.datasets.base import Dataset
 from mvpa2.featsel.base import SensitivityBasedFeatureSelection, \
         CombinedFeatureSelection
@@ -29,7 +29,8 @@ from mvpa2.clfs.meta import SplitClassifier, MulticlassClassifier, \
 from mvpa2.clfs.smlr import SMLR, SMLRWeights
 from mvpa2.mappers.zscore import zscore
 from mvpa2.mappers.fx import sumofabs_sample, absolute_features, FxMapper, \
-     maxofabs_sample, BinaryFxNode
+     maxofabs_sample, BinaryFxNode, \
+     mean_sample, mean_feature
 from mvpa2.generators.splitters import Splitter
 from mvpa2.generators.partition import NFoldPartitioner
 from mvpa2.generators.resampling import Balancer
@@ -562,6 +563,17 @@ class SensitivityAnalysersTests(unittest.TestCase):
         ds_ = fs(ds)
         assert_equal(ds_.nfeatures, int(ds.nfeatures * 0.04))
 
+    def test_combined_node(self):
+        ds = datasets['3dsmall']
+        axis2nodes = dict(h=(mean_feature, mean_feature),
+                          v=(mean_sample, mean_sample))
+
+        for i, axis in enumerate('vh'):
+            nodes = axis2nodes[axis]
+            combined = CombinedNode([n() for n in nodes], axis, False)
+            assert_true(combined(ds).shape[i] == 2)
+            assert_true(combined(ds).shape[1 - i] == ds.shape[1 - i])
+
 
 def suite():
     return unittest.makeSuite(SensitivityAnalysersTests)
@@ -569,4 +581,3 @@ def suite():
 
 if __name__ == '__main__':
     import runner
-
