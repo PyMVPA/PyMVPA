@@ -25,7 +25,7 @@ from mvpa2.misc.support import idhash
 from mvpa2.base.state import ConditionalAttribute
 from mvpa2.base.param import Parameter
 from mvpa2.misc.attrmap import AttributeMap
-from mvpa2.base.dochelpers import _str
+from mvpa2.base.dochelpers import _str, _strid
 
 from mvpa2.clfs.transerror import ConfusionMatrix, RegressionStatistics
 
@@ -318,7 +318,7 @@ class Classifier(Learner):
         TODO: think about proper re-implementation, without enrollment of deepcopy
         """
         if __debug__:
-            debug("CLF", "Cloning %s#%s", (self, id(self)))
+            debug("CLF", "Cloning %s%s", (self, _strid(self)))
         try:
             return deepcopy(self)
         except:

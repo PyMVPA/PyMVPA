@@ -17,7 +17,7 @@ from mvpa2.base import externals, cfg
 from mvpa2.base.collections import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection
 from mvpa2.base.types import is_datasetlike
-from mvpa2.base.dochelpers import _str
+from mvpa2.base.dochelpers import _str, _strid
 
 if __debug__:
     from mvpa2.base import debug
@@ -375,8 +375,8 @@ class AttrDataset(object):
                              fa=self.fa.copy(a=fa, deep=deep, memo=memo),
                              a=self.a.copy(a=a, deep=deep, memo=memo))
         if __debug__:
-            debug('DS_', "Return dataset copy (ID: %s) of source (ID: %s)"
-                         % (id(out), id(self)))
+            debug('DS_', "Return dataset copy %s of source %s"
+                         % (_strid(out), _strid(self)))
         return out
 
 
