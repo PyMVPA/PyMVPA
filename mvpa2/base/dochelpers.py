@@ -489,6 +489,10 @@ def _repr(obj, *args, **kwargs):
 
     return "%s(%s)" % (cls_name, auto_repr)
 
+def _strid(obj):
+    """Helper for centralized string id representation in debug msgs
+    """
+    return "#%d" % (id(obj))
 
 def _str(obj, *args, **kwargs):
     """Helper to get a structured __str__ for all objects.
@@ -536,7 +540,7 @@ def _str(obj, *args, **kwargs):
             if s[-1]:
                 s += ','
             s += ' '
-        s += 'id=%i' % id(obj)
+        s += _strid(obj)
 
     # finally wrap in <> and return
     # + instead of '%s' for bits of speedup
