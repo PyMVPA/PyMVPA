@@ -645,16 +645,8 @@ class FeaturewiseMeasure(Measure):
         # This method get the 'result' either as a 1D array, or as a Dataset
         # everything else is illegal.
 
-        # Use a while loop as a surrogate for 'goto' (which is considered 
-        # harmful); either break out of the loop or raise an error. 
-        # (a less readable 'if' statement with a few 'ors' would be 
-        # the alternative)
-        while True:
-            if len(result.shape) == 1:
-                break
 
-            if isinstance(result, AttrDataset):
-                break
+        if not (len(result.shape) == 1 or isinstance(result, AttrDataset)):
 
             raise RuntimeError("FeaturewiseMeasures have to return "
                                "their results as 1D array, or as a Dataset "
