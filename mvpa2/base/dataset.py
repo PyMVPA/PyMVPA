@@ -943,7 +943,7 @@ def _expand_attribute(attr, length, attr_name):
         # make sequence of identical value matching the desired length
         return np.repeat(attr, length)
 
-def unique_sample_attributes_stack(dataset, sa_label):
+def stack_by_unique_sample_attribute(dataset, sa_label):
     """Performs hstack based on unique values in sa_label
     
     Parameters
@@ -976,7 +976,7 @@ def unique_sample_attributes_stack(dataset, sa_label):
     return stacked_ds
 
 
-def unique_feature_attributes_stack(dataset, fa_label):
+def stack_by_unique_feature_attribute(dataset, fa_label):
     """Performs vstack based on unique values in fa_label
     
     Parameters
