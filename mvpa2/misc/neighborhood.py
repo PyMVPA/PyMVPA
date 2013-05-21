@@ -412,7 +412,7 @@ class DoubleDiskQueryEngine(SurfaceDiskQueryEngine):
     def getSingleDisk(self):
         return SurfaceDiskQueryEngine(self._radius,
                                       self.lverts, self.lgraph, self.lcoords,
-                                      self.lverts, self.lgraph, self.lcoords)
+                                      self.rverts, self.rgraph, self.rcoords)
 
     def __getitem__(self, coordinate):
         secondDisk = super(DoubleDiskQueryEngine, self).__getitem__(coordinate)
