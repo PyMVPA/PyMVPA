@@ -647,7 +647,6 @@ class FeaturewiseMeasure(Measure):
 
 
         if not (len(result.shape) == 1 or isinstance(result, AttrDataset)):
-
             raise RuntimeError("FeaturewiseMeasures have to return "
                                "their results as 1D array, or as a Dataset "
                                "(error made by: '%s')." % repr(self))
