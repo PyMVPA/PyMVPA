@@ -49,3 +49,11 @@ def read(fn):
 
     ys = [map(float, line.split()) for line in lines]
     return np.asarray(ys)
+
+def from_any(s):
+    if isinstance(s, np.ndarray):
+        return s.copy()
+    elif isinstance(s, basestring):
+        return read(s)
+
+    raise TypeError("Not understood: %s" % s)
