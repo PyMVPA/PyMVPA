@@ -340,7 +340,7 @@ class ChainMapper(ChainNode):
                           "previous mapper return multiple samples. Trying to "
                           "switch to reverse() for the remainder of the chain."
                           % str(m))
-                mp = self[:-1*i].reverse(mp)
+                mp = self[:-1 * i].reverse(mp)
                 return mp
         return mp
 
@@ -388,12 +388,25 @@ class CombinedMapper(Mapper):
     vstacking the resulting datasets.
     """
 
-    def __init__(self, mappers, combine_axis, **kwargs):
+    def __init__(self, mappers, combine_axis, a=None, **kwargs):
         """
         Parameters
         ----------
         mappers : list
         combine_axis : ['h', 'v']
+        a: {'unique','drop_nonunique','uniques','all'} or True or False or None (default: None)
+            Indicates which dataset attributes from datasets are stored 
+            in merged_dataset. If an int k, then the dataset attributes from 
+            datasets[k] are taken. If 'unique' then it is assumed that any
+            attribute common to more than one dataset in datasets is unique;
+            if not an exception is raised. If 'drop_nonunique' then as 'unique',
+            except that exceptions are not raised. If 'uniques' then, for each 
+            attribute,  any unique value across the datasets is stored in a tuple 
+            in merged_datasets. If 'all' then each attribute present in any 
+            dataset across datasets is stored as a tuple in merged_datasets; 
+            missing values are replaced by None. If None (the default) then no 
+            attributes are stored in merged_dataset. True is equivalent to
+            'drop_nonunique'. False is equivalent to None.
 
         Examples
         --------
@@ -415,12 +428,13 @@ class CombinedMapper(Mapper):
         Mapper.__init__(self, **kwargs)
         self._mappers = mappers
         self._combine_axis = combine_axis
+        self._a = a
 
     @borrowdoc(Mapper)
     def __repr__(self, prefixes=[]):
         return super(CombinedMapper, self).__repr__(
                 prefixes=prefixes
-                    + _repr_attrs(self, ['mappers', 'combine_axis']))
+                    + _repr_attrs(self, ['mappers', 'combine_axis', 'a']))
 
     def __str__(self):
         return _str(self)
@@ -438,7 +452,7 @@ class CombinedMapper(Mapper):
         from mvpa2.datasets import hstack, vstack
         mapped_ds = [mapper.forward(ds) for mapper in self._mappers]
         stacker = {'h': hstack, 'v': vstack}
-        out = stacker[self._combine_axis](mapped_ds)
+        out = stacker[self._combine_axis](mapped_ds, self._a)
         return out
 
     mappers = property(fget=lambda self:self._mappers)

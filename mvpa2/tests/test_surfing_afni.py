@@ -321,6 +321,48 @@ class SurfTests(unittest.TestCase):
             assert_array_equal(r.samples, rr.samples)
 
 
+    def test_niml_dset_stack(self):
+        values = map(lambda x:np.random.normal(size=x), [(10, 3), (10, 4), (10, 5)])
+        indices = [[0, 1, 2], [3, 2, 1, 0], None]
+
+        dsets = []
+        for v, i in zip(values, indices):
+            dset = Dataset(v)
+            if not i is None:
+                dset.fa['node_indices'] = i
+            dsets.append(dset)
+
+
+        dset = niml_dset.hstack(dsets)
+        assert_equal(dset.nfeatures, 12)
+        assert_equal(dset.nsamples, 10)
+        indices = np.asarray([ 0, 1, 2, 6, 5, 4, 3, 7, 8, 9, 10, 11])
+        assert_array_equal(dset.fa['node_indices'], indices)
+
+        dset = niml_dset.hstack(dsets, 10)
+        dset = niml_dset.hstack(dsets, 10) # twice to ensure not overwriting
+        assert_equal(dset.nfeatures, 30)
+        indices = np.asarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+                              13, 12, 11, 10, 14, 15, 16, 17, 18, 19,
+                              20, 21, 22, 23, 24, 25, 26, 27, 28, 29])
+        assert_array_equal(dset.fa['node_indices'], indices)
+
+        assert_true(np.all(dset[:, 4].samples == 0))
+        assert_array_equal(dset[:, 10:14].samples, dsets[1].samples)
+
+        # If not enough space it should raise an error
+        stacker = (lambda x: niml_dset.hstack(dsets, x))
+        assert_raises(ValueError, stacker, 2)
+
+        # If sparse then with no padding it should fail
+        dsets[0].fa.node_indices[0] = 3
+        assert_raises(ValueError, stacker, None)
+
+        # Using an illegal node index should raise an error
+        dsets[1].fa.node_indices[0] = 666
+        assert_raises(ValueError, stacker, 10)
+
+
     def test_afni_niml_roi(self):
         payload = """# <Node_ROI
 #  ni_type = "SUMA_NIML_ROI_DATUM"

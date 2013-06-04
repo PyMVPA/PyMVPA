@@ -163,6 +163,20 @@ class SurfTests(unittest.TestCase):
         assert_array_almost_equal(s3.vertices[-1, :], np.array([18., 19, 0.]))
         assert_array_almost_equal(s3.faces[-1, :], np.array([199, 198, 179]))
 
+    def test_surf_border(self):
+        s = surf.generate_sphere(3)
+        assert_array_equal(s.nodes_on_border(), [False] * 11)
+
+        s = surf.generate_plane((0, 0, 0), (0, 1, 0), (1, 0, 0), 10, 10)
+        b = s.nodes_on_border()
+        v = s.vertices
+
+        vb = reduce(np.logical_or, [v[:, 0] == 0, v[:, 1] == 0,
+                                    v[:, 0] == 9, v[:, 1] == 9])
+
+        assert_array_equal(b, vb)
+
+        assert_true(s.nodes_on_border(0))
 
     def test_surf_fs_asc(self):
         s = surf.generate_sphere(5) * 100
@@ -846,6 +860,47 @@ class SurfTests(unittest.TestCase):
 
         # check whether they give the same results
         assert_array_equal(r.samples, m.samples)
+
+    def test_surf_pairs(self):
+        o, x, y = map(np.asarray, [(0, 0, 0), (0, 1, 0), (1, 0, 0)])
+        d = np.asarray((0, 0, .1))
+        n = 10
+        s1 = surf.generate_plane(o, x, y, n, n)
+        s2 = surf.generate_plane(o + d, x, y, n, n)
+        s = surf.merge(s1, s2)
+
+        # try for small surface
+        eps = .0000001
+        pw = s.pairwise_near_nodes(.5)
+        for i in xrange(n ** 2):
+            d = pw.pop((i, i + 100))
+            assert_array_almost_equal(d, .1)
+
+        assert_true(len(pw) == 0)
+
+        pw = s.pairwise_near_nodes(.5)
+        for i in xrange(n ** 2):
+            d = pw.pop((i, i + 100))
+            assert_array_almost_equal(d, .1)
+
+        assert_true(len(pw) == 0)
+
+        # bigger one
+        pw = s.pairwise_near_nodes(1.4)
+        for i in xrange(n ** 2):
+            p, q = i / n, i % n
+            offsets = sum(([] if q == 0 else [-1],
+                         [] if q == n - 1 else [+1],
+                         [] if p == 0 else [-n],
+                         [] if p == n - 1 else [n],
+                         [0]), [])
+            for offset in offsets:
+                ii = i + offset + n ** 2
+                d = pw.pop((i, ii))
+
+            assert_true((d < .5) ^ (offset > 0))
+
+        assert_true(len(pw) == 0)
 
 
 class _Voxel_Count_Measure(Measure):

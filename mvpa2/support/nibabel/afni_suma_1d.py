@@ -7,7 +7,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''
-Very simple AFNI 1D support (only writing, at the moment)
+Very simple AFNI 1D support
 
 Created on Feb 12, 2012
 
@@ -41,3 +41,19 @@ def write(fnout, data, nodeidxs=None):
 
     np.savetxt(fnout, data, fmt, ' ')
 
+def read(fn):
+    not_empty = lambda x:len(x) > 0 and not x.startswith('#')
+
+    with open(fn) as f:
+        lines = filter(not_empty, f.read().split('\n'))
+
+    ys = [map(float, line.split()) for line in lines]
+    return np.asarray(ys)
+
+def from_any(s):
+    if isinstance(s, np.ndarray):
+        return s.copy()
+    elif isinstance(s, basestring):
+        return read(s)
+
+    raise TypeError("Not understood: %s" % s)

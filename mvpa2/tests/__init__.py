@@ -228,7 +228,8 @@ def collect_nose_tests(verbosity=1):
         'test_usecases',
         'test_surfing',
         'test_surfing_afni',
-        'test_surfing_voxelselection'
+        'test_surfing_voxelselection',
+        'test_eeglab'
         ]
 
     if not cfg.getboolean('tests', 'lowmem', default='no'):
