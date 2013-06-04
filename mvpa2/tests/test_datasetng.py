@@ -20,7 +20,9 @@ import os
 from mvpa2.base import cfg
 from mvpa2.base.externals import versions
 from mvpa2.base.types import is_datasetlike
-from mvpa2.base.dataset import DatasetError, vstack, hstack, all_equal
+from mvpa2.base.dataset import DatasetError, vstack, hstack, all_equal, \
+                                stack_by_unique_feature_attribute, \
+                                stack_by_unique_sample_attribute
 from mvpa2.datasets.base import dataset_wizard, Dataset, HollowSamples
 from mvpa2.misc.data_generators import normal_feature_dataset
 from mvpa2.testing import reseed_rng
@@ -475,6 +477,42 @@ def test_stack_add_dataset_attributes():
                 assert_equal(r.a.common, range(10))
                 assert_array_equal(r.a.array, np.arange(10))
 
+
+def test_unique_stack():
+    data = Dataset(np.reshape(np.arange(24), (4, 6)),
+                        sa=dict(x=[0, 1, 0, 1]),
+                        fa=dict(y=[x for x in 'abccba']))
+
+    sa_stack = stack_by_unique_sample_attribute(data, 'x')
+    assert_equal(sa_stack.shape, (2, 12))
+    assert_array_equal(sa_stack.fa.x, [0] * 6 + [1] * 6)
+    assert_array_equal(sa_stack.fa.y, [x for x in 'abccbaabccba'])
+
+    fa_stack = stack_by_unique_feature_attribute(data, 'y')
+    assert_equal(fa_stack.shape, (12, 2))
+    assert_array_equal(fa_stack.sa.x, [0, 1] * 6)
+    assert_array_equal(fa_stack.sa.y, [y for y in 'aaaabbbbcccc'])
+    #assert_array_equal(fa_stack.fa.y,[''])
+
+    # check values match the fa or sa
+    for i in xrange(4):
+        for j in xrange(6):
+            d = data[i, j]
+            for k, other in enumerate((sa_stack, fa_stack)):
+                msk = other.samples == d.samples
+                ii, jj = np.nonzero(msk) # find matching indices in other
+
+                o = other[ii, jj]
+                coll = [o.fa, o.sa][k]
+
+                assert_equal(coll.x, d.sa.x)
+                assert_equal(coll.y, d.fa.y)
+
+    ystacker = lambda y: lambda x: stack_by_unique_feature_attribute(x, y)
+    assert_raises(KeyError, ystacker('z'), data)
+
+    data.fa['z'] = [z for z in '123451']
+    assert_raises(ValueError, ystacker('z'), data)
 
 def test_mergeds2():
     """Test composition of new datasets by addition of existing ones
