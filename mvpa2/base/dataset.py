@@ -1034,7 +1034,7 @@ def split_by_sample_attribute(ds, sa_label, raise_unequal_count=True):
     d: Dataset
         input dataset
     sa_label: str or list of str
-        sample attribute label on which the split is based
+        sample attribute label(s) on which the split is based
     
     Returns
     -------
@@ -1065,7 +1065,7 @@ def split_by_feature_attribute(ds, fa_label, raise_unequal_count=True):
     d: Dataset
         input dataset
     sa_label: str or list of str
-        sample attribute label on which the split is based
+        sample attribute label(s) on which the split is based
     
     Returns
     -------
