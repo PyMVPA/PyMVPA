@@ -125,7 +125,7 @@ def numpy_type2code(tp):
 
         # bit of a hack to get string arrays converted properly 
         # XXX should we do this for other types as well?
-        if isinstance(tp, np.dtype) and tp.char in ('S', 'a'):
+        if isinstance(tp, np.dtype) and tp.char in ('S', 'a', 'U'):
             return 8
 
         raise ValueError("Unknown type %r" % tp)
