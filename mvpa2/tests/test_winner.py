@@ -42,7 +42,7 @@ class WinnerTests(unittest.TestCase):
                         group_sample_loser_measure: [1, 0, 0]}
 
         for m, out in measures2out.iteritems():
-            assert_array_equal(m()(ds).samples.ravel() == np.asarray(out))
+            assert_array_equal(m()(ds).samples.ravel(), np.asarray(out))
 
 def suite():
     return unittest.makeSuite(WinnerTests)
