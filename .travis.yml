@@ -30,9 +30,9 @@ before_install:
     - sudo apt-get install $PY-scipy $PY-matplotlib
     - sudo apt-get install $PY-h5py
     - sudo apt-get install $PY-nose
-    - sudo apt-get install shogun-python-modular
-    - sudo apt-get install $PY-mdp $PY-psutil $PY-sklearn liblapack-dev
-    - sudo apt-get install $PY-nibabel
+    - travis_retry sudo apt-get install shogun-python-modular
+    - travis_retry sudo apt-get install $PY-mdp $PY-psutil $PY-sklearn liblapack-dev
+    - travis_retry sudo apt-get install $PY-nibabel
 install:
     - make
     - if [[ $MVPA_DEBUG_METRICS == all ]]; then pip install --user -v coveralls; fi
