@@ -111,7 +111,7 @@ class SurfTests(unittest.TestCase):
             x.faces[:, :] = 0
             return None
 
-        assert_raises(RuntimeError, assign_zero, s)
+        assert_raises((ValueError, RuntimeError), assign_zero, s)
 
         # see if mapping to high res works
         h = surf.generate_sphere(40)
