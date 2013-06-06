@@ -118,7 +118,18 @@ def __assign_mdp_version():
     versions['mdp'] = SmartVersion(ver)
 
 def __assign_nibabel_version():
-    import nibabel
+    try:
+        import nibabel
+    except Exception, e:
+        # FloatingError is defined in the same module which precludes
+        # its specific except
+        e_str = str(e)
+        if "We had not expected long double type <type 'numpy.float128'>" in e_str:
+            warning("Must be running under valgrind?  Available nibabel experiences "
+                    "difficulty with float128 upon import and fails to work, thus is "
+                    "report as N/A")
+            raise ImportError("Fail to import nibabel due to %s" % e_str)
+        raise
     versions['nibabel'] = SmartVersion(nibabel.__version__)
 
 def __check_pywt(features=None):
