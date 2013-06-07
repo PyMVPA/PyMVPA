@@ -1,0 +1,14 @@
+From: Yaroslav Halchenko <debian@onerussian.com>
+Subject: BF(TST): minor incompatibility with numpy 1.7 -- change of exception from RuntimeError to ValueError for R/O assignments
+
+--- a/mvpa/tests/test_neighbor.py
++++ b/mvpa/tests/test_neighbor.py
+@@ -58,7 +58,7 @@ class MetricTests(unittest.TestCase):
+             metric.elementsize[1] = 1
+             self.fail(
+                 msg="We should not be able to reassign parts of elementsize")
+-        except RuntimeError:
++        except (ValueError, RuntimeError):
+             pass
+ 
+         self.failUnless((metric.getNeighbors([2, 2], 2.6) ==
