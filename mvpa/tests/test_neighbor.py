@@ -58,7 +58,7 @@ class MetricTests(unittest.TestCase):
             metric.elementsize[1] = 1
             self.fail(
                 msg="We should not be able to reassign parts of elementsize")
-        except RuntimeError:
+        except (ValueError, RuntimeError):
             pass
 
         self.failUnless((metric.getNeighbors([2, 2], 2.6) ==
