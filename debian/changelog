@@ -3,8 +3,13 @@ pymvpa2 (2.2.0-4) UNRELEASED; urgency=low
   * debian/control:
     - specify git branch for debian packaging of pymvpa2. Thanks Julien
       Cristau for the report
+  * debian/rules:
+    - mkdir target -lib directories before moving .so files.  It should resolve
+      FTBFS with debhelper 9.20130507 and robustify build
+    - quote paths with globs to avoid their expansion in find command.
+      Thanks Julien Cristau for the hint
 
- --
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 10 Jun 2013 10:16:09 -0400
 
 pymvpa2 (2.2.0-3) unstable; urgency=low
 

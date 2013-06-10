@@ -53,13 +53,14 @@ ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 endif
 	# and now move libraries into -lib package (account for snapshot name
 	# as well)
-	cd $(CURDIR)/debian/python-mvpa*-lib && \
+	mkdir -p $(CURDIR)/debian/python-mvpa2-lib
+	cd $(CURDIR)/debian/python-mvpa2-lib && \
 		for so in $$(find ../tmp -name '*.so'); do \
 			install -D $$so $${so#../tmp/*} ; \
 			rm $$so ; \
 		done
 	: # Do not install some existing scripts yet for now
-	find debian -wholename */bin/* -o -wholename */man/* \
+	find debian -wholename '*/bin/*' -o -wholename '*/man/*' \
 	| grep -e 'pymvpa2-\(analysis\)' \
 	| xargs -r rm -rf
 
