@@ -17,7 +17,7 @@ Build-Depends: debhelper (>= 7.0.50~),
 Standards-Version: 3.9.3
 Homepage: http://www.pymvpa.org
 Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/pymvpa.git
-Vcs-Git: git://git.debian.org/git/pkg-exppsy/pymvpa.git
+Vcs-Git: git://git.debian.org/git/pkg-exppsy/pymvpa.git -b dist2/debian/proper/sid
 X-Python-Version: >= 2.6
 
 

@@ -1,3 +1,11 @@
+pymvpa2 (2.2.0-4) UNRELEASED; urgency=low
+
+  * debian/control:
+    - specify git branch for debian packaging of pymvpa2. Thanks Julien
+      Cristau for the report
+
+ --
+
 pymvpa2 (2.2.0-3) unstable; urgency=low
 
   * debian/patches
