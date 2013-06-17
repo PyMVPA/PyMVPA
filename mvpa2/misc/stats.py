@@ -147,7 +147,7 @@ class DSMatrix(object):
                         data_vectors[i, :], data_vectors[j, :])[0]
 
         elif (metric == 'pearson'):
-            dsmatrix = np.corrcoef(data_vectors)
+            dsmatrix = 1 - np.corrcoef(data_vectors) #changed to 1-corr
 
         elif (metric == 'confusion'):
             #print 'Using confusion correlation metric...'
@@ -174,16 +174,16 @@ class DSMatrix(object):
 
         return self.u_triangle
 
-    def get_triangle_vector_form(self, k=0):
+    def get_triangle_vector_form(self, k=1):
         '''
         Returns values from a triangular part of the matrix in vector form
-        
+
         Parameters
         ----------
         k: int
             offset from diagonal. k=0 means all values from the diagonal and those
             above it, k=1 all values from the cells above the diagonal, etc
-        
+
         Returns
         -------
         v: np.ndarray (vector)
@@ -233,17 +233,17 @@ class DSMatrix(object):
         if (self.vector_form is not None):
             return self.vector_form
 
-        orig_dsmatrix = copy.deepcopy(self.get_full_matrix())
+        #orig_dsmatrix = copy.deepcopy(self.get_full_matrix())
 
-        orig_dsmatrix[orig_dsmatrix == 0] = -1
+        #orig_dsmatrix[orig_dsmatrix == 0] = -1
 
-        orig_tri = np.triu(orig_dsmatrix)
+        #orig_tri = np.triu(orig_dsmatrix)
 
-        vector_form = orig_tri[abs(orig_tri) > 0]
+        #vector_form = orig_tri[abs(orig_tri) > 0]
 
-        vector_form[vector_form == -1] = 0
-
-        self.vector_form = np.asarray(vector_form)
+        #vector_form[vector_form == -1] = 0
+        #can use pdist or just grab the upper triangular. ddw
+        self.vector_form = self.get_full_matrix()[np.triu_indices_from(self.get_full_matrix(),1)]
 
         return self.vector_form
 
