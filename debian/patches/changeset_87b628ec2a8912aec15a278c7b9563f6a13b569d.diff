@@ -1,0 +1,28 @@
+From: Yaroslav Halchenko <debian@onerussian.com>
+Subject: BF: numpy 1.7 -- np.where indexes might be read-only, thus operate on a copy then
+
+--- a/mvpa/featsel/base.py
++++ b/mvpa/featsel/base.py
+@@ -10,6 +10,8 @@
+ 
+ __docformat__ = 'restructuredtext'
+ 
++import numpy as np
++
+ from mvpa.featsel.helpers import FractionTailSelector
+ from mvpa.misc.state import StateVariable, ClassWithCollections
+ 
+@@ -137,7 +139,12 @@ class SensitivityBasedFeatureSelection(F
+         results = (wdataset, wtestdataset)
+ 
+         # WARNING: THIS MUST BE THE LAST THING TO DO ON selected_ids
+-        selected_ids.sort()
++        if not selected_ids.flags.writeable:
++            # With numpy 1.7 sometimes it returns R/O arrays... not clear yet why.
++            # Dirty fix: work on a copy
++            selected_ids = np.sort(selected_ids)
++        else:
++            selected_ids.sort()
+         self.selected_ids = selected_ids
+ 
+         # dataset with selected features is returned
