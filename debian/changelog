@@ -1,3 +1,11 @@
+pymvpa (0.4.8-3) unstable; urgency=low
+
+  [ Felix Geyer ]
+  * patches/changeset_4be557bb1eb31576555ada8943f2aad6e7e3e54c.diff
+    do not rely on identical FP results in a testOverAxis
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 24 Jun 2013 10:27:52 -0400
+
 pymvpa (0.4.8-2) unstable; urgency=low
 
   [ Andreas Tille ]
