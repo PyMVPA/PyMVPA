@@ -10,8 +10,6 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as np
-
 from mvpa.featsel.helpers import FractionTailSelector
 from mvpa.misc.state import StateVariable, ClassWithCollections
 
@@ -139,7 +137,8 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         results = (wdataset, wtestdataset)
 
         # WARNING: THIS MUST BE THE LAST THING TO DO ON selected_ids
-        self.selected_ids = np.sort(selected_ids)
+        selected_ids.sort()
+        self.selected_ids = selected_ids
 
         # dataset with selected features is returned
         return results
