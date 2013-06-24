@@ -2,9 +2,16 @@ pymvpa (0.4.8-3) unstable; urgency=low
 
   [ Felix Geyer ]
   * patches/changeset_4be557bb1eb31576555ada8943f2aad6e7e3e54c.diff
-    do not rely on identical FP results in a testOverAxis
+    do not rely on identical FP results in a testOverAxis (Closes: #713056)
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 24 Jun 2013 10:27:52 -0400
+  [ Yaroslav Halchenko ]
+  * patches/changeset_87b628ec2a8912aec15a278c7b9563f6a13b569d.diff
+    numpy 1.7 -- np.where indexes might be read-only, thus operate on a copy
+  * patches/changeset_fc4b20124c3914ec21cfbfc19db1db0932975a57.diff
+    use inheritance_diagram provided by sphinx on recent sphinx.
+    Closes: #706534
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 24 Jun 2013 12:20:49 -0400
 
 pymvpa (0.4.8-2) unstable; urgency=low
 
