@@ -10,6 +10,7 @@
 
 import unittest
 import numpy as N
+from numpy.testing import assert_array_almost_equal
 
 from mvpa.base import externals
 
@@ -77,7 +78,7 @@ class TransformerTests(unittest.TestCase):
         for axis in [None, 0, 1, 2]:
             oversum = OverAxis(N.sum, axis=axis)(data)
             sum_ = N.sum(data, axis=axis)
-            self.failUnless(N.all(sum_ == oversum))
+            assert_array_almost_equal(sum_, oversum)
 
         # Transformer which doesn't modify dimensionality of the data
         data = data.reshape((6, -1))
