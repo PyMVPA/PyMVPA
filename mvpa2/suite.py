@@ -209,6 +209,10 @@ if externals.exists("pylab"):
     if externals.exists(['griddata', 'scipy']):
         from mvpa2.misc.plot.topo import *
     from mvpa2.misc.plot.lightbox import plot_lightbox
+    
+    if externals.exists(["matplotlib","griddata"]):
+        from mvpa2.misc.plot.flat_surf import \
+                FlatSurfacePlotter, curvature_from_any
 
 __sdebug("scipy dependents")
 if externals.exists("scipy"):
