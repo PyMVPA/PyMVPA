@@ -14,6 +14,7 @@ from mvpa2.base import warning
 from mvpa2.atlases.base import *
 from mvpa2.atlases.fsl import *
 
+__all__ = [ "KNOWN_ATLAS_FAMILIES", "KNOWN_ATLASES", "Atlas"]
 
 KNOWN_ATLAS_FAMILIES = {
     'pymvpa': (["talairach", "talairach-dist"],
