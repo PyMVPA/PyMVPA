@@ -63,6 +63,7 @@ Datasets: Input, Output, Storage and Preprocessing
    datasets.eep
    datasets.formats
    datasets.mri
+   datasets.eeglab
    datasets.miscfx
    datasets.sources.sklearn_data
 
@@ -202,6 +203,9 @@ Miscellaneous
    :toctree: generated
 
    atlases
+   atlases.base
+   atlases.fsl
+   atlases.warehouse
    misc.args
    misc.attrmap
    misc.cmdline
