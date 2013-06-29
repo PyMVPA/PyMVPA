@@ -663,19 +663,19 @@ def vstack(datasets, a=None):
     datasets : tuple
         Sequence of datasets to be stacked.
     a: {'unique','drop_nonunique','uniques','all'} or True or False or None (default: None)
-        Indicates which dataset attributes from datasets are stored 
-        in merged_dataset. If an int k, then the dataset attributes from 
+        Indicates which dataset attributes from datasets are stored
+        in merged_dataset. If an int k, then the dataset attributes from
         datasets[k] are taken. If 'unique' then it is assumed that any
         attribute common to more than one dataset in datasets is unique;
         if not an exception is raised. If 'drop_nonunique' then as 'unique',
-        except that exceptions are not raised. If 'uniques' then, for each 
-        attribute,  any unique value across the datasets is stored in a tuple 
-        in merged_datasets. If 'all' then each attribute present in any 
-        dataset across datasets is stored as a tuple in merged_datasets; 
-        missing values are replaced by None. If None (the default) then no 
+        except that exceptions are not raised. If 'uniques' then, for each
+        attribute,  any unique value across the datasets is stored in a tuple
+        in merged_datasets. If 'all' then each attribute present in any
+        dataset across datasets is stored as a tuple in merged_datasets;
+        missing values are replaced by None. If None (the default) then no
         attributes are stored in merged_dataset. True is equivalent to
         'drop_nonunique'. False is equivalent to None.
-        
+
     Returns
     -------
     AttrDataset (or respective subclass)
@@ -721,16 +721,16 @@ def hstack(datasets, a=None):
     datasets : tuple
         Sequence of datasets to be stacked.
     a: {'unique','drop_nonunique','uniques','all'} or True or False or None (default: None)
-        Indicates which dataset attributes from datasets are stored 
-        in merged_dataset. If an int k, then the dataset attributes from 
+        Indicates which dataset attributes from datasets are stored
+        in merged_dataset. If an int k, then the dataset attributes from
         datasets[k] are taken. If 'unique' then it is assumed that any
         attribute common to more than one dataset in datasets is unique;
         if not an exception is raised. If 'drop_nonunique' then as 'unique',
-        except that exceptions are not raised. If 'uniques' then, for each 
-        attribute,  any unique value across the datasets is stored in a tuple 
-        in merged_datasets. If 'all' then each attribute present in any 
-        dataset across datasets is stored as a tuple in merged_datasets; 
-        missing values are replaced by None. If None (the default) then no 
+        except that exceptions are not raised. If 'uniques' then, for each
+        attribute,  any unique value across the datasets is stored in a tuple
+        in merged_datasets. If 'all' then each attribute present in any
+        dataset across datasets is stored as a tuple in merged_datasets;
+        missing values are replaced by None. If None (the default) then no
         attributes are stored in merged_dataset. True is equivalent to
         'drop_nonunique'. False is equivalent to None.
 
@@ -775,18 +775,18 @@ def all_equal(x, y):
     '''General function that compares two values. Usually this function
     behaves like x==y and type(x)==type(y), but for numpy arrays it
     behaves like np.array_equal(x==y).
-    
+
     Parameters
     ----------
     x, y : any type
         Elements to be compared
-    
+
     Returns
     -------
     eq: bool
         True iff x and y are equal. If in the comparison of x and y
-        and exception is thrown then False is returned 
-        This comparison is performed element-wise, if applicable, and 
+        and exception is thrown then False is returned
+        This comparison is performed element-wise, if applicable, and
         in that case True is only returned if all elements are equal
     '''
 
@@ -811,7 +811,7 @@ def all_equal(x, y):
             # no idea what to do
             raise
 
-    # because of numpy's broadcasting either x or y may 
+    # because of numpy's broadcasting either x or y may
     # be a scaler yet eq could be an array
     try:
         same_length = len(x) == len(y)
@@ -829,26 +829,26 @@ def _stack_add_equal_dataset_attributes(merged_dataset, datasets, a=None):
     Note:by default this function does nothing because testing for equality
     may be messy for certain types; to override a value should be assigned
     to the add_keys argument.
-    
+
     Parameters
     ----------
     merged_dataset: Dataset
         the output dataset to which attributes are added
     datasets: tuple of Dataset
         Sequence of datasets to be stacked. Only attributes present
-        in all datasets and with identical values are put in 
+        in all datasets and with identical values are put in
         merged_dataset
     a: {'unique','drop_nonunique','uniques','all'} or True or False or None (default: None).
-        Indicates which dataset attributes from datasets are stored 
-        in merged_dataset. If an int k, then the dataset attributes from 
+        Indicates which dataset attributes from datasets are stored
+        in merged_dataset. If an int k, then the dataset attributes from
         datasets[k] are taken. If 'unique' then it is assumed that any
         attribute common to more than one dataset in datasets is unique;
         if not an exception is raised. If 'drop_nonunique' then as 'unique',
-        except that exceptions are not raised. If 'uniques' then, for each 
-        attribute,  any unique value across the datasets is stored in a tuple 
-        in merged_datasets. If 'all' then each attribute present in any 
-        dataset across datasets is stored as a tuple in merged_datasets; 
-        missing values are replaced by None. If None (the default) then no 
+        except that exceptions are not raised. If 'uniques' then, for each
+        attribute,  any unique value across the datasets is stored in a tuple
+        in merged_datasets. If 'all' then each attribute present in any
+        dataset across datasets is stored as a tuple in merged_datasets;
+        missing values are replaced by None. If None (the default) then no
         attributes are stored in merged_dataset. True is equivalent to
         'drop_nonunique'. False is equivalent to None.
     """
@@ -945,20 +945,20 @@ def _expand_attribute(attr, length, attr_name):
 
 def stack_by_unique_sample_attribute(dataset, sa_label):
     """Performs hstack based on unique values in sa_label
-    
+
     Parameters
     ----------
     dataset: Dataset
         input dataset.
-    sa_label: str 
+    sa_label: str
         sample attribute label according which samples in dataset
-        are stacked. 
-    
+        are stacked.
+
     Returns
     -------
     stacked_dataset: Dataset
-        A dataset where matching featurs are joined (hstacked).
-        If the number of matching features differes for values in sa_label
+        A dataset where matching features are joined (hstacked).
+        If the number of matching features differs for values in sa_label
         and exception is raised.
     """
 
@@ -978,21 +978,21 @@ def stack_by_unique_sample_attribute(dataset, sa_label):
 
 def stack_by_unique_feature_attribute(dataset, fa_label):
     """Performs vstack based on unique values in fa_label
-    
+
     Parameters
     ----------
     dataset: Dataset
         input dataset.
-    fa_label: str 
+    fa_label: str
         feature attribute label according which samples in dataset
-        are stacked. 
-    
+        are stacked.
+
     Returns
     stacked_dataset: Dataset
         A dataset where matching samples are joined. This dataset has
-        a sample attribute fa_label added and the feature attribute 
+        a sample attribute fa_label added and the feature attribute
         fa_label removed.
-        If the number of matching features differes for values in sa_label
+        If the number of matching features differs for values in sa_label
         and exception is raised.
     """
 
@@ -1028,14 +1028,14 @@ def _get_unique_attribute_masks(xs, raise_unequal_count=True):
 
 def split_by_sample_attribute(ds, sa_label, raise_unequal_count=True):
     '''Splits a dataset based on unique values of a sample attribute
-    
+
     Parameters
     ----------
     d: Dataset
         input dataset
     sa_label: str or list of str
         sample attribute label(s) on which the split is based
-    
+
     Returns
     -------
     ds: list of Dataset
@@ -1059,14 +1059,14 @@ def split_by_sample_attribute(ds, sa_label, raise_unequal_count=True):
 
 def split_by_feature_attribute(ds, fa_label, raise_unequal_count=True):
     '''Splits a dataset based on unique values of a feature attribute
-    
+
     Parameters
     ----------
     d: Dataset
         input dataset
     sa_label: str or list of str
         sample attribute label(s) on which the split is based
-    
+
     Returns
     -------
     ds: list of Dataset
