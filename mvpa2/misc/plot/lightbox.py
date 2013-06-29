@@ -26,12 +26,12 @@ if externals.exists('nibabel'):
 else:
     class SpatialImage(object):
         """Just a helper to allow plot_lightbox be used even if no
-        nifti module available for plotting regular 2D/3D images
+        nibabel module available for plotting regular 2D/3D images
         (ndarrays)"""
         def __init__(self, filename):
             raise ValueError, "plot_lightbox was provided a filename %s.  " \
                   "By now we only support loading data from Nifti/Analyze " \
-                  "files, but nifti module is not available" % filename
+                  "files, but nibabel module is not available" % filename
 
 
 def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',

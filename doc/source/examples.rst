@@ -54,6 +54,7 @@ Analysis
    examples/searchlight_surf
    examples/sensanas
    examples/svdclf
+   examples/svm_margin
    examples/permutation_test
    examples/nested_cv
    examples/match_distribution
