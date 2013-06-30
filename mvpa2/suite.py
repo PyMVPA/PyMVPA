@@ -245,7 +245,8 @@ from mvpa2.misc.surfing import surf_voxel_selection, volgeom, volsurf
 
 __sdebug("nibabel afni")
 from mvpa2.support.nibabel import afni_niml_dset, afni_suma_1d, \
-                                    afni_suma_spec, surf_fs_asc, surf
+                                    afni_suma_spec, surf_fs_asc, surf, \
+				    surf_caret, afni_niml_roi, afni_niml_annot
 
 
 __sdebug("ipython goodies")
