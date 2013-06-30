@@ -17,7 +17,7 @@ This function reads a NIML file and returns a dict that contains all
 NIML information in a tree-like structure (dicts for which some values
 are dicts themselves). Branches are stored in a 'nodes' field.
 
-For specific types of data, consider afni_niml_annot or afni_niml_annot
+For specific types of data, consider afni_niml_dset or afni_niml_annot
 files which provide easier access to the data.
 
 WiP
@@ -338,8 +338,6 @@ def string2rawniml(s, i=None):
 
     nimls = [] # here all found parts are stored
 
-    #if isinstance(s, basestring):
-    #    s = s.encode()
 
     # Keep on reading new parts
     while True:
@@ -431,7 +429,6 @@ def string2rawniml(s, i=None):
                     # parse successful - get the parsed data
                     data = m.groupdict()['data']
 
-
                     # convert data to raw NIML
                     data = _datastring2rawniml(data, niml)
 
@@ -479,6 +476,7 @@ def string2rawniml(s, i=None):
 
             debug('NIML', "Adding element '%s' with keys %r" % (niml['name'], niml.keys()))
             nimls.append(niml)
+
 
     # we should never end up here.
     raise ValueError("this should never happen")
