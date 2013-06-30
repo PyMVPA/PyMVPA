@@ -33,7 +33,7 @@ import random, numpy as np, os, time, sys, socket
 from mvpa2.support.nibabel import afni_niml_types as types
 from mvpa2.support.nibabel import afni_niml as niml
 
-from mvpa2.base import warning
+from mvpa2.base import warning, debug
 
 def _string2list(s, SEP=";"):
     '''splits a string by SEP; if the last element is empty then it is not returned
@@ -202,7 +202,8 @@ def _dset2rawniml_anything_else(s):
         try:
             niml.append(_dset2rawniml_complete(niml_elem))
         except TypeError:
-            warning("Unable to convert value for key '%s'" % k)
+            debug('NIML', 'Warning: unable to convert value for key %s' % k)
+
     return niml
 
 def _dset2rawniml_complete(r):
