@@ -165,6 +165,31 @@ def setnewidcode(s):
             else:
                 setnewidcode(v)
 
+def find_attribute_node(niml_dict, key, value, just_one=True):
+    tp = type(niml_dict)
+    if tp is list:
+        r = sum([find_attribute_node(d, key, value, False)
+                            for d in niml_dict], [])
+
+    elif tp is dict:
+        r = [niml_dict] if niml_dict.get(key, None) == value else []
+        r.extend(find_attribute_node(niml_dict[k], key, value, False)
+                        for k, v in niml_dict.iteritems() if type(v) in (list, dict))
+
+    else:
+        return []
+
+    r = [ri for ri in r if ri]
+    if just_one:
+        while type(r) is list:
+            if len(r) != 1:
+                raise ValueError('Found %d elements matching %s=%s, '
+                             ' but expected 1' % (len(r), key, value))
+            r = r[0]
+
+    return r
+
+
 
 def rawniml2string(p, form='text'):
     if type(p) is list:
