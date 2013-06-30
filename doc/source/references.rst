@@ -460,15 +460,19 @@ experiments.
   DOI: http://dx.doi.org/10.1162/jocn.2007.19.11.1735
 
 
+.. _OGA2012:
+
+**Olivetti, E., Greiner, S. & Avesani, P.** (2012). Induction in Neuroscience with Classification: Issues and Solutions. Machine Learning and Interpretation in Neuroimaging, 42-50.
+  DOI: http://dx.doi.org/10.1007/978-3-642-34713-9_6
+
+
 .. _OVG+10:
 
 **Olivetti, E., Veeramachaneni, S., Greiner, S. & Avesani, P.** (2010). Brain Connectivity Analysis by Reduction to Pair Classification. The 2nd IAPR International Workshop on Cognitive Information Processing.
 
-
 .. _OWD+11:
 
-**Oosterhof, N. N., Wiestler, T., Downing, P. E. and Diedrichsen, J.** (2011). A comparison of volume-based and surface-based multi-voxel pattern analysis. NeuroImage, 56, 593–600.
-
+**Oosterhof, N. N., Wiestler, T., Downing, P. E. & Diedrichsen, J.** (2011). A comparison of volume-based and surface-based multi-voxel pattern analysis. *NeuroImage*, *56*, 593-600.
 
 .. _PMB09:
 

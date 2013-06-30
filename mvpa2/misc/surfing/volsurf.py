@@ -42,8 +42,8 @@ class VolSurf(object):
             Surface representing intermediate surface. If omitted
             it is the node-wise average of white and pial. 
             
-        Note
-        ----
+        Notes
+        -----
         'pial' and 'white' should have the same topology. 
         '''
         self._volgeom = volgeom.from_any(vg)
@@ -149,8 +149,8 @@ class VolSurf(object):
             
             If node 'i' is outside the volume, then 'n2v[i]=None'.
             
-        Note
-        ----
+        Notes
+        -----
         The typical use case is selecting voxels in the grey matter. The 
         rationale of this method is that (assuming a sufficient dense cortical
         surface mesh, combined with a sufficient number of nsteps, the grey 
@@ -172,7 +172,7 @@ class VolSurf(object):
         # if n2v[i]=vs, then node i is associated with the voxels vs
         #
         # vs is a mapping from indices to relative position in grey matter
-        # wheere 0 means white surface and 1 means pial surface
+        # where 0 means white surface and 1 means pial surface
         # vs[k]=pos means that voxel with linear index k is 
         # associated with relative positions pos0
         #
