@@ -17,4 +17,5 @@ PyMVPA User Manual
    glossary
    changelog
    references
+   modref
    legal

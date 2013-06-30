@@ -13,27 +13,26 @@ Surface-based searchlight on fMRI data
 
 .. index:: surface, searchlight, cross-validation
 
-This example employs a surface-based searchlight as described in 
+This example employs a surface-based searchlight as described in
 :ref:`Oosterhof et al. (2011) <OWD+11>` (with a minor difference that distances
-are currently computed using a Dijkstra distance metric rather than a geodesic 
-one). For more details, see the `Surfing <http://surfing.sourceforge.net>`_  
+are currently computed using a Dijkstra distance metric rather than a geodesic
+one). For more details, see the `Surfing <http://surfing.sourceforge.net>`_
 website.
 
-Surfaces used in this example are available in the tutorial dataset files; 
+Surfaces used in this example are available in the tutorial dataset files;
 either the tutorial_data_surf_minimal or tutorial_data_surf_complete version.
-The surfaces were reconstructed using FreeSurfer and 
-subsequently preprocessed with AFNI and SUMA using the 
-pymvpa2-prep-afni-surf wrapper script in PyMVPA's 'bin' directory, which 
-resamples the surfaces to standard topologies (with different resolutions) 
-using MapIcosehedron, aligns surfaces to a reference functional volume, and 
-merges left and right hemispheres into single surface files. A more detailed 
-description of the steps that this script takes is provided in the 
-documentation on the `Surfing <http://surfing.sourceforge.net>`_  
+The surfaces were reconstructed using FreeSurfer and
+subsequently preprocessed with AFNI and SUMA using the
+pymvpa2-prep-afni-surf wrapper script in PyMVPA's 'bin' directory, which
+resamples the surfaces to standard topologies (with different resolutions)
+using MapIcosehedron, aligns surfaces to a reference functional volume, and
+merges left and right hemispheres into single surface files. A more detailed
+description of the steps that this script takes is provided in the
+documentation on the `Surfing <http://surfing.sourceforge.net>`_
 website.
 
-If you use the surface-based searchlight code for a publication, please cite 
-both :ref:`PyMVPA (2009) <HHS+09a>`_ and 
-:ref:`Oosterhof et al. (2011) <OWD+11>`. 
+If you use the surface-based searchlight code for a publication, please cite
+both :ref:`PyMVPA (2009) <HHS+09a>` and :ref:`Oosterhof et al. (2011) <OWD+11>`.
 
 
 As always, we first have to import PyMVPA.
@@ -65,7 +64,7 @@ epi_fn = os.path.join(datapath, 'bold.nii.gz')
 """
 In this example we are concerned with the left hemisphere only.
 (Other possible values are 'r' for the right hemisphere and 'm' for merged
-hemispheres; the latter contains the nodes from the left and right 
+hemispheres; the latter contains the nodes from the left and right
 hemispheres in a single file. Both the 'r' and 'm' options require
 the tutorial_data_surf_complete tutorial data.)
 """
@@ -77,8 +76,8 @@ Define the surfaces that enclose the grey matter, which are used to
 delineate the grey matter. The pial surface is the 'outside' border of the
 grey matter; the white surface is the 'inside' border.
 
-The surfaces in this example were resampled using AFNI's MapIcosahedron 
-(for more details, see the top of this script). ld refers to the number of 
+The surfaces in this example were resampled using AFNI's MapIcosahedron
+(for more details, see the top of this script). ld refers to the number of
 linear divisions of the twenty 'large' triangles of the original
 icosahedron; ld=x means there are 10*x**2+2 nodes (a.k.a. vertices)
 and 20*x**2 triangles (a.k.a. faces).
@@ -93,32 +92,32 @@ white_surf_fn = os.path.join(surfpath, "ico%d_%sh.smoothwm_al.asc"
 
 """
 Define the surface on which the nodes are centers of the searchlight. This
-surface should be an 'intermediate' surface, which is formed by the 
+surface should be an 'intermediate' surface, which is formed by the
 node-wise average spatial coordinates of the inner (white) and outer (pial)
-surfaces. 
+surfaces.
 
 In this example a surface coarser (fewer nodes) than the grey matter-enclosing
 surfaces is employed. This reduces the number of searchlights and therefore
-the script's execution time. Of course one could also use a surface that has 
-the same number of nodes as the grey-matter enclosing surfaces; this is 
+the script's execution time. Of course one could also use a surface that has
+the same number of nodes as the grey-matter enclosing surfaces; this is
 actually the default and used when souce_surf_fn (assigned below) is set
-to None. 
+to None.
 
 It is required that highres_ld is an integer multiple of lowres_ld, so that
 all nodes in the low-res surface have a corresponding node (i.e., with the
 same, or almost the same, spatial coordinate) on the high-res surface.
 
-Choice of lowres_ld and highres_ld is somewhat arbitrary and a trade-off 
-between spatial specificity and execution speed. For highres_ld a value of at 
-least 64 is be advisable as this ensures enough anatomical detail is available 
-to select voxels in the grey matter accurately. Typical values for lowres_ld 
+Choice of lowres_ld and highres_ld is somewhat arbitrary and a trade-off
+between spatial specificity and execution speed. For highres_ld a value of at
+least 64 is be advisable as this ensures enough anatomical detail is available
+to select voxels in the grey matter accurately. Typical values for lowres_ld
 range from 8 to 64.
 
-Note that the data in tutorial_data_surf_minimal only contains 
+Note that the data in tutorial_data_surf_minimal only contains
 all necessary surfaces for visualization for lowres_ld=16. For other values
-of lowres_ld (4, 8, 32, 64 and 128) the surfaces in 
+of lowres_ld (4, 8, 32, 64 and 128) the surfaces in
 tutorial_data_surf_complete are required.
- 
+
 """
 
 lowres_ld = 16 # 16, 32 or 64 is reasonable. 4 and 8 are really fast
@@ -141,27 +140,27 @@ radius = 100
 
 
 """We're all set to go to create a query engine that performs 'voxel
-selection', that is determines, for each node, which voxels are near it 
+selection', that is determines, for each node, which voxels are near it
 (that is, in the corresponding searchlight disc).
 
 As a reminder, the only essential values we have set so far are the
 filenames of three surfaces (high-res inner and outer,
-and low-res source surface), the functional volume, and the searchlight 
+and low-res source surface), the functional volume, and the searchlight
 radius.
 
 Note that if the functional data was preprocessed and subsequently masked,
-voxel selection should take into account this mask. To do so, the 
+voxel selection should take into account this mask. To do so, the
 instantiation of the query engine below takes an optional argument
 'volume_mask' (which can be a PyMVPA dataset, a numpy array, a Nifti
-volume, or a string representing the file name of a Nifti volume). It is, 
-however, recommended to *not* mask the functional data prior to voxel 
-selection, because the voxel selection uses (implicitly) a mask based on the 
-grey-matter enclosing surfaces already, and this mask is assumed to be more 
-precise than typical volume-based masking implementations.   
+volume, or a string representing the file name of a Nifti volume). It is,
+however, recommended to *not* mask the functional data prior to voxel
+selection, because the voxel selection uses (implicitly) a mask based on the
+grey-matter enclosing surfaces already, and this mask is assumed to be more
+precise than typical volume-based masking implementations.
 
-Also note that, as described above, the argument defining the low-res source 
-surface can be omitted, in which case it is computed as the node-wise 
-average of the white and pial surface.) 
+Also note that, as described above, the argument defining the low-res source
+surface can be omitted, in which case it is computed as the node-wise
+average of the white and pial surface.)
 """
 
 qe = disc_surface_queryengine(radius, epi_fn,
@@ -169,19 +168,19 @@ qe = disc_surface_queryengine(radius, epi_fn,
                               source_surf_fn)
 
 """
-Voxel selection is now completed; each node has been assigned a list of 
-linear voxel indices in the searchlight. These result are stored in 
-'qe.voxsel' and can be saved with h5save for later re-use. 
+Voxel selection is now completed; each node has been assigned a list of
+linear voxel indices in the searchlight. These result are stored in
+'qe.voxsel' and can be saved with h5save for later re-use.
 
 (Linear voxel indices mean that each voxel is indexed by a value between
-0 (inclusive) and N (exclusive), where N is the number of voxels in the 
+0 (inclusive) and N (exclusive), where N is the number of voxels in the
 volume (N = NX * NY * NZ, where NX, NY and NZ are the number of voxels in
 the three spatial dimensions). For certain analyses one may want to index
 voxels by 'sub indices' (triples (i,j,k) with 0<=i<NX, 0<=j<=NY,
 and 0<=k<NZ) or spatial coordinates; conversions amongst
 linear and sub indices and spatial coordinates is provided by
-functions in the  VolGeom (volume geometry) instance stored in 
-'qe.voxsel.volgeom'.)   
+functions in the  VolGeom (volume geometry) instance stored in
+'qe.voxsel.volgeom'.)
 
 From now on we follow the example as in doc/examples/searchlight.py.
 
@@ -195,20 +194,20 @@ cv = CrossValidation(clf, NFoldPartitioner(),
                      enable_ca=['stats'])
 
 """
-Set the roi_ids, that is the node indices that serve as searchlight 
+Set the roi_ids, that is the node indices that serve as searchlight
 center. In this example it is set to None, meaning that all nodes are used
 as a searchlight center. It is also possible to restrict the nodes that serve
-as a searchlight center: setting roi_ids=np.arange(400,800) means that only 
-nodes in the range from 400 (inclusive) to 800 (exclusive) are used as a 
+as a searchlight center: setting roi_ids=np.arange(400,800) means that only
+nodes in the range from 400 (inclusive) to 800 (exclusive) are used as a
 searchlight center, and the result would be a partial brain map.
 """
 
 roi_ids = None
 
 """
-Combining the query-engine and the cross-validation defines the 
+Combining the query-engine and the cross-validation defines the
 searchlight. The postproc-step averages the classification accuracies
-in each cross-validation fold to a single overall classification accuracy. 
+in each cross-validation fold to a single overall classification accuracy.
 
 Because roi_ids is None is this example it could be omitted - it is only
 included for instructive purposes.
@@ -221,10 +220,10 @@ sl = Searchlight(cv, queryengine=qe, postproc=mean_sample(), roi_ids=roi_ids)
 '''
 In the next step the functional data is loaded. We can reduce
 memory requirements significantly by considering which voxels to load:
-since the searchlight analysis will only use data from voxels that 
-were selected (at least once) by the voxel selection step, a mask is 
-derived from the voxel selection results and used when loading the 
-functional data. 
+since the searchlight analysis will only use data from voxels that
+were selected (at least once) by the voxel selection step, a mask is
+derived from the voxel selection results and used when loading the
+functional data.
 '''
 
 mask = qe.voxsel.get_mask()
@@ -258,7 +257,7 @@ zscore(dataset, chunks_attr='chunks', param_est=('targets', ['rest']),
 dataset = dataset[dataset.sa.targets != 'rest']
 
 """
-Run the searchlight on the dataset. 
+Run the searchlight on the dataset.
 """
 
 sl_dset = sl(dataset)
@@ -267,9 +266,9 @@ sl_dset = sl(dataset)
 Searchlight results are now stored in sl_dset. As sl_dset is just like
 any other PyMVPA dataset, it can be stored with h5save for future use.
 
-The remainder of this example provides a data file that 
+The remainder of this example provides a data file that
 can be visualized using AFNI's SUMA. This is achieved by storing the dataset
-as an NIML (NeuroImaging Markup Language) dataset that can be viewed by 
+as an NIML (NeuroImaging Markup Language) dataset that can be viewed by
 AFNI's SUMA. sl_dset contains a feature attribute 'center_ids' that is
 automagically used to define the node indices of the searchlight centers in
 this NIML dataset.
@@ -278,9 +277,9 @@ Note that this conversion will not preserve all information in sl_dset but
 only the samples and (feature, sample, dataset) attributes that behave
 like arrays or strings or scalars. For example, in this example sl_dset has a
 dataset attribute 'mapper' which is not stored in the NIML dataset (and
-a warning message is printed during the conversion, which can be ignored 
+a warning message is printed during the conversion, which can be ignored
 savely). As mentioned above, using h5save will preserve this information
-(but its output cannot be viewed in SUMA).  
+(but its output cannot be viewed in SUMA).
 
 Before saving the dataset, first the labels are set for each sample (in
 this case, only one) so that they show up in SUMA.
@@ -290,7 +289,7 @@ sl_dset.sa['labels'] = ['HOUSvsSCRM']
 
 """
 Set the filename for output.
-Searchlight results are stored in the surface directory for easy 
+Searchlight results are stored in the surface directory for easy
 visualization. Finally print an informative message on how the
 generated data can be visualized using SUMA.
 """
