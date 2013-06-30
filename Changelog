@@ -31,6 +31,38 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
+* 2.3.0 (XX 2013)
+
+  * New functionality (73 commits)
+
+    - Multi-threaded, surface-based searchlight
+      :func:`~mvpa2.misc.surfing.queryengine.disc_surface_queryengine`.
+    - :class:`~mvpa2.misc.plot.flat_surf.FlatSurfacePlotter` supporting
+      flattened cortical surfaces.
+    - I/O support for AFNI NIML (dset,
+      :mod:`~mvpa2.support.nibabel.afni_niml_dset`), AFNI 1D datasets
+      (:mod:`~mvpa2.support.nibabel.afni_suma_1d`), SUMA surface specification
+      (:mod:`~mvpa2.support.nibabel.afni_suma_spec`), Freesurfer ASCII surfaces
+      (:mod:`~mvpa2.support.nibabel.surf_fs_asc`). Input support for Caret
+      binary surfaces (:mod:`~mvpa2.support.nibabel.surf_caret`), EEGlab ASCII
+      (:meth:`mvpa2.datasets.eeglab.eeglab_dataset`), AFNI NIML (annotation,
+      :mod:`~mvpa2.support.nibabel.afni_niml_annot`; ROI,
+      :mod:`~mvpa2.support.nibabel.afni_niml_roi`).
+    - Experimental support for saving AttrDataset files directly to NIML format
+      using :mod:`~mvpa2.datasets.niml_dset`.
+    - Freesurfer/AFNI/SUMA preprocessing wrapper script
+      ``pymvpa2-prep-afni-surf'' for surface-based analyses.
+
+  * Enhancements (130 commits)
+
+    - :func:`~mvpa2.datasets.mri.fmri_dataset` load support for AFNI NIFTI
+      volumes with time in the fifth dimension.
+
+ * Fixes (88 commits)
+
+    - Makefile fetch-data retrieves the data correctly.
+
+
 * 2.2.0 (Sun, Sep 16 2012)
 
   * New functionality (14 commits)
