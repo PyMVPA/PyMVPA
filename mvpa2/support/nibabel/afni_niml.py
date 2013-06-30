@@ -377,21 +377,34 @@ def string2rawniml(s, i=None):
             # no header - was it the end of a section?
             m = re.match(b'\W*</\w+>\s*', s[i:], _RE_FLAGS)
 
-            if not m is None:
-                # for NIFTI extensions there can be some null bytes left
-                # so get rid of them here
-                remaining = s[i + m.end():].replace(chr(0).encode(), b'').strip()
-
-                if len(remaining) == 0:
-                # entire file was parsed - we are done
-                    debug('NIML', 'Completed parsing, length %d (%d elements)', (len(s), len(nimls)))
+            if m is None:
+                if len(s[i:].strip()) == 0:
                     if return_pos:
                         return i, nimls
                     else:
                         return nimls
+                else:
+                    raise ValueError("No match towards end of header end: [%s] " % _partial_string(s, i))
 
-            # not good - not at the end of the file
-            raise ValueError("Unexpected end: [%s] " % _partial_string(s, i))
+            else:
+                # for NIFTI extensions there can be some null bytes left
+                # so get rid of them here
+                remaining = s[i + m.end():].replace(chr(0).encode(), b'').strip()
+
+                if len(remaining) > 0:
+                    # there is more stuff to parse
+                    i += m.end()
+                    continue
+
+
+                # entire file was parsed - we are done
+                debug('NIML', 'Completed parsing, length %d (%d elements)', (len(s), len(nimls)))
+                if return_pos:
+                    return i, nimls
+                else:
+                    return nimls
+
+
 
         else:
             # get values from header
@@ -426,6 +439,8 @@ def string2rawniml(s, i=None):
                 niml['vec_len'] = int(niml['ni_dimen'])
                 niml['vec_num'] = len(niml['vec_typ'])
 
+                debug('NIML', 'Element of type %s' % niml['vec_typ'])
+
                 # data can be in string form, binary or base64.
                 is_string = niml['ni_type'] == 'String' or \
                                 not 'ni_form' in niml
@@ -436,15 +451,24 @@ def string2rawniml(s, i=None):
                     debug("NIML", "Parsing string body for %s", name)
 
                     is_string_data = niml['ni_type'] == 'String'
+                    is_mixed_data = len(set(niml['vec_typ'])) > 1
 
-                    # If the data type is string, it is surrounded by quotes
-                    # Otherwise (numeric data) there are no quotes
-                    quote = '"' if is_string_data else ''
+                    if is_mixed_data:
+                        debug("NIML", "Data is mixed type")
+                        strpat = ('\s*(?P<data>.*)\s*</%s>' % \
+                                                (name.decode())).encode()
+                        m = re.match(strpat, s[i:], _RE_FLAGS)
+                    else:
+                        # If the data type is string, it is surrounded by quotes
+                        # Otherwise (numeric data) there are no quotes
+                        quote = '"' if is_string_data else ''
 
-                    # construct the regular pattern for this string
-                    strpat = ('\s*%s(?P<data>[^"]*)[^"]*%s\s*</%s>' % \
-                                                    (quote, quote, name.decode())).encode()
-                    m = re.match(strpat, s[i:])
+                        # construct the regular pattern for this string
+                        strpat = ('\s*%s(?P<data>[^"]*)[^"]*%s\s*</%s>' % \
+                                                        (quote, quote, name.decode())).encode()
+
+                        m = re.match(strpat, s[i:], _RE_FLAGS)
+
                     if m is None:
                         # something went wrong
                         raise ValueError("Could not parse string data from "
