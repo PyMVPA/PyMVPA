@@ -224,14 +224,14 @@ class SurfTests(unittest.TestCase):
               node_indices=np.arange(10),
               stats=['none', 'Tstat(2)'],
               labels=['foo', 'bar'])
-        a = niml.from_niml_dset(d)
-        b = niml.to_niml_dset(a)
+        a = niml.from_niml(d)
+        b = niml.to_niml(a)
 
         _, fn = tempfile.mkstemp('.niml.dset', 'dset')
 
         afni_niml_dset.write(fn, b)
         bb = afni_niml_dset.read(fn)
-        cc = niml.from_niml_dset(bb)
+        cc = niml.from_niml(bb)
 
         os.remove(fn)
 
