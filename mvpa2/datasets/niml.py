@@ -18,7 +18,6 @@ import numpy as np
 
 import os
 
-from mvpa2.support.nibabel import afni_niml as niml
 from mvpa2.support.nibabel import afni_niml_dset as niml_dset
 
 from mvpa2.base.collections import SampleAttributesCollection, \
