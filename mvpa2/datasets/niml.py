@@ -43,7 +43,7 @@ if externals.exists('h5py'):
 _PYMVPA_PREFIX = 'PYMVPA'
 _PYMVPA_SEP = '_'
 
-def from_niml_dset(dset, fa_labels=[], sa_labels=[], a_labels=[]):
+def from_niml(dset, fa_labels=[], sa_labels=[], a_labels=[]):
     '''Convert a NIML dataset to a Dataset
 
     Parameters
@@ -67,7 +67,7 @@ def from_niml_dset(dset, fa_labels=[], sa_labels=[], a_labels=[]):
     # check for singleton element
     if type(dset) is list and len(dset) == 1:
         # recursive call
-        return from_niml_dset(dset[0])
+        return from_niml(dset[0])
 
     if not type(dset) is dict:
         raise ValueError("Expected a dict")
@@ -168,7 +168,7 @@ def from_niml_dset(dset, fa_labels=[], sa_labels=[], a_labels=[]):
 
     return ds
 
-def to_niml_dset(ds):
+def to_niml(ds):
     '''Convert a Dataset to a NIML dataset
     
     Parameters
@@ -396,7 +396,7 @@ def write(fn, ds, form='binary'):
     form: str
         Data format: 'binary' or 'text' or 'base64'
     '''
-    niml_ds = to_niml_dset(ds)
+    niml_ds = to_niml(ds)
     niml_dset.write(fn, niml_ds, form=form)
 
 def read(fn):
@@ -408,7 +408,7 @@ def read(fn):
         Filename
     '''
 
-    readers_converters = [(niml_dset.read, from_niml_dset)]
+    readers_converters = [(niml_dset.read, from_niml)]
     if externals.exists('h5py'):
         readers_converters.append((h5load, None))
 
@@ -441,7 +441,7 @@ def from_any(x):
     if isinstance(x, basestring):
         return read(fn)
     elif isinstance(x, dict):
-        return from_niml_dset(x)
+        return from_niml(x)
     elif isinstance(x, Dataset):
         return x
 
