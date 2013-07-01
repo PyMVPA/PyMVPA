@@ -126,13 +126,9 @@ def merge(annots):
             for j in xrange(n):
                 columns[j] = columns[j] + to_add_table[j]
 
-        else:
-            print "no merge",
-
         table.append(np.hstack(columns))
 
     data = np.vstack([datas[i] + to_add_table[i] for i in xrange(n)])
-    print data.shape, idx.shape
 
     output = annots[0].copy()
     output['node_indices'] = idx
