@@ -7,10 +7,18 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """NeuroImaging Markup Language (NIML) support.
+
 Supports storing most typical values (samples, feature attributes, sample
-attributes, dataset attributes) that are in a dataset in NIML format, as 
+attributes, dataset attributes) that are in a dataset in NIML format, as
 long as these values are array-like.
-No support for 'sophisticated' values such as Mappers"""
+
+Notes
+-----
+No support for 'sophisticated' values such as Mappers
+
+.. versionadded:: 2.3.0
+
+"""
 
 __docformat__ = 'restructuredtext'
 
@@ -37,7 +45,7 @@ _PYMVPA_SEP = '_'
 
 def from_niml_dset(dset, fa_labels=[], sa_labels=[], a_labels=[]):
     '''Convert a NIML dataset to a Dataset
-    
+
     Parameters
     ----------
     dset: dict
