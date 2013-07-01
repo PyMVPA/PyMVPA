@@ -49,7 +49,7 @@ Releases
       :mod:`~mvpa2.support.nibabel.afni_niml_annot`; ROI,
       :mod:`~mvpa2.support.nibabel.afni_niml_roi`).
     - Experimental support for saving AttrDataset files directly to NIML format
-      using :mod:`~mvpa2.datasets.niml_dset`.
+      using :mod:`~mvpa2.datasets.niml`.
     - Freesurfer/AFNI/SUMA preprocessing wrapper script
       ``pymvpa2-prep-afni-surf'' for surface-based analyses.
 
