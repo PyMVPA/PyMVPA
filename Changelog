@@ -51,12 +51,14 @@ Releases
     - Experimental support for saving AttrDataset files directly to NIML format
       using :mod:`~mvpa2.datasets.niml`.
     - Freesurfer/AFNI/SUMA preprocessing wrapper script
-      ``pymvpa2-prep-afni-surf'' for surface-based analyses.
+      ``pymvpa2-prep-afni-surf`` for surface-based analyses.
+    - Winner-take-all measures :mod:`~mvpa2.measures.winner`.
 
   * Enhancements (130 commits)
 
     - :func:`~mvpa2.datasets.mri.fmri_dataset` load support for AFNI NIFTI
-      volumes with time in the fifth dimension.
+      volumes with time in the fifth dimension (data is automagically squeezed
+      to 4D).
 
  * Fixes (88 commits)
 
