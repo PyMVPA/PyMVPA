@@ -118,8 +118,8 @@ from mvpa2.datasets.eventrelated import *
 if externals.exists('nibabel') :
     from mvpa2.datasets.mri import *
 from mvpa2.datasets.sources import *
-from mvpa2.datasets import niml_dset
-from mvpa2.datasets.niml_dset import from_niml_dset, to_niml_dset
+from mvpa2.datasets import niml
+from mvpa2.datasets.niml import from_niml_dset, to_niml_dset
 from mvpa2.datasets import eeglab
 from mvpa2.datasets.eeglab import eeglab_dataset
 
