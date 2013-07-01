@@ -27,7 +27,7 @@ from mvpa2.atlases.base import XMLBasedAtlas, LabelsLevel
 if __debug__:
 	from mvpa2.base import debug
 
-__all__ = [ "FSLAtlas" ]
+__all__ = [ "FSLAtlas", "FSLLabelsAtlas", "FSLProbabilisticAtlas" ]
 
 #
 # Atlases from FSL
