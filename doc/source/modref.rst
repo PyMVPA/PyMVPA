@@ -63,7 +63,7 @@ Datasets: Input, Output, Storage and Preprocessing
    datasets.eep
    datasets.formats
    datasets.mri
-   datasets.niml_dset
+   datasets.niml
    datasets.eeglab
    datasets.miscfx
    datasets.sources.sklearn_data
