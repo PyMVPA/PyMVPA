@@ -1789,8 +1789,18 @@ def generate_plane(x00, x01, x10, n01, n10):
 def read(fn):
     '''General read function for surfaces
     
-    For now only supports ascii (as used in AFNI's SUMA), Caret
-    and freesurfer formats
+    Parameters
+    ----------
+    fn: str
+        Surface filename. The extension determines how the file is read as 
+        follows. '.asc', FreeSurfer ASCII format; '.coord'; Caret, '.gii',
+        GIFTI; anything else: FreeSurfer geometry.
+    
+    Returns
+    -------
+    surf_: surf.Surface
+        Surface object
+    
     '''
     if fn.endswith('.asc'):
         from mvpa2.support.nibabel import surf_fs_asc
@@ -1798,6 +1808,9 @@ def read(fn):
     elif fn.endswith('.coord'):
         from mvpa2.support.nibabel import surf_caret
         return surf_caret.read(fn)
+    elif fn.endswith('.gii'):
+        from mvpa2.support.nibabel import surf_gifti
+        return surf_gifti.read(fn)
     else:
         import nibabel.freesurfer.io as fsio
         coords, faces = fsio.read_geometry(fn)
@@ -1806,11 +1819,19 @@ def read(fn):
 def write(fn, s, overwrite=True):
     '''General write function for surfaces
     
-    For now only supports ascii (as used in AFNI's SUMA)
+    Parameters
+    ----------
+    fn: str
+        Surface filename. The extension determines how the file is written as 
+        follows. '.asc', FreeSurfer ASCII format; '.gii', GIFTI. 
+        Other formats are not supported.
     '''
     if fn.endswith('.asc'):
         from mvpa2.support.nibabel import surf_fs_asc
         surf_fs_asc.write(fn, s, overwrite=overwrite)
+    elif fn.endswith('.gii'):
+        from mvpa2.support.nibabel import surf_gifti
+        surf_gifti.write(fn, s, overwrite=overwrite)
     else:
         raise ValueError("Not implemented (based on extension): %r" % fn)
 

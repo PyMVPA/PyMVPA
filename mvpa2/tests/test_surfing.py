@@ -31,7 +31,7 @@ from mvpa2.misc.surfing import volgeom, volsurf, \
                                 volume_mask_dict, surf_voxel_selection, \
                                 queryengine
 
-from mvpa2.support.nibabel import surf, surf_fs_asc
+from mvpa2.support.nibabel import surf, surf_fs_asc, surf_gifti
 
 from mvpa2.measures.searchlight import sphere_searchlight, Searchlight
 from mvpa2.misc.neighborhood import Sphere
@@ -901,6 +901,92 @@ class SurfTests(unittest.TestCase):
             assert_true((d < .5) ^ (offset > 0))
 
         assert_true(len(pw) == 0)
+
+
+    def test_surf_gifti(self):
+            # From section 14.4 in GIFTI Surface Data Format Version 1.0
+            # (with some adoptions)
+
+            test_data = '''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE GIFTI SYSTEM "http://www.nitrc.org/frs/download.php/1594/gifti.dtd">
+<GIFTI
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+  xsi:noNamespaceSchemaLocation="http://www.nitrc.org/frs/download.php/1303/GIFTI_Caret.xsd" 
+  Version="1.0"
+  NumberOfDataArrays="2">
+<MetaData> 
+  <MD>
+    <Name><![CDATA[date]]></Name>
+    <Value><![CDATA[Thu Nov 15 09:05:22 2007]]></Value> 
+  </MD>
+</MetaData>
+<LabelTable/>
+<DataArray Intent="NIFTI_INTENT_POINTSET"
+  DataType="NIFTI_TYPE_FLOAT32" 
+  ArrayIndexingOrder="RowMajorOrder" 
+  Dimensionality="2"
+  Dim0="4"
+  Dim1="3" 
+  Encoding="ASCII" 
+  Endian="LittleEndian" 
+  ExternalFileName="" 
+  ExternalFileOffset="">
+<CoordinateSystemTransformMatrix>
+  <DataSpace><![CDATA[NIFTI_XFORM_TALAIRACH]]></DataSpace> 
+  <TransformedSpace><![CDATA[NIFTI_XFORM_TALAIRACH]]></TransformedSpace> 
+  <MatrixData>
+    1.000000 0.000000 0.000000 0.000000 
+    0.000000 1.000000 0.000000 0.000000 
+    0.000000 0.000000 1.000000 0.000000 
+    0.000000 0.000000 0.000000 1.000000
+  </MatrixData> 
+</CoordinateSystemTransformMatrix> 
+<Data>
+  10.5 0 0
+  0 20.5 0
+  0 0 30.5
+  0 0 0
+</Data>
+</DataArray>
+<DataArray Intent="NIFTI_INTENT_TRIANGLE"
+  DataType="NIFTI_TYPE_INT32" 
+  ArrayIndexingOrder="RowMajorOrder" 
+  Dimensionality="2"
+  Dim0="4"
+  Dim1="3" 
+  Encoding="ASCII" 
+  Endian="LittleEndian" 
+  ExternalFileName="" ExternalFileOffset="">
+<Data>
+0 1 2
+1 2 3
+0 1 3
+0 2 3
+</Data> 
+</DataArray>
+</GIFTI>'''
+            _, fn = tempfile.mkstemp('surf.gii', 'surftest')
+            with open(fn, 'w') as f:
+                f.write(test_data)
+
+            # test I/O
+            s = surf.read(fn)
+            surf.write(fn, s)
+            s = surf.read(fn)
+            os.unlink(fn)
+
+            v = np.zeros((4, 3))
+            v[0, 0] = 10.5
+            v[1, 1] = 20.5
+            v[2, 2] = 30.5
+
+            f = np.asarray([[0, 1, 2], [1, 2, 3], [0, 1, 3], [0, 2, 3]],
+                            dtype=np.int32)
+
+            assert_array_equal(s.vertices, v)
+            assert_array_equal(s.faces, f)
+
+
 
 
 class _Voxel_Count_Measure(Measure):
