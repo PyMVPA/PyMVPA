@@ -17,6 +17,7 @@ if externals.exists("nibabel", raise_=True):
 import numpy as np, os, datetime, re
 
 from mvpa2.support.nibabel import surf
+import io
 
 def read(fn):
     '''Reads a GIFTI surface file
@@ -129,14 +130,14 @@ def write(fn, s, overwrite=True):
     if not overwrite and os.path.exists(fn):
         raise ValueError("Already exists: %s" % fn)
 
-    vertices = gifti.GiftiDataArray(s.vertices)
+    vertices = gifti.GiftiDataArray(np.asarray(s.vertices, np.float32))
     vertices.intent = gifti.intent_codes.field1['pointset']
     vertices.datatype = 16 # this is what gifti likes
 
-    faces = gifti.GiftiDataArray(s.faces)
+    faces = gifti.GiftiDataArray(np.asarray(s.faces, np.int32))
     faces.intent = gifti.intent_codes.field1['triangle']
     faces.datatype = 8 # this is what gifti likes
-    faces.coordsys = None
+    faces.coordsys = None # otherwise SUMA might complain 
 
     # set some fields common to faces and vertices
     for arr in (vertices, faces):
@@ -160,19 +161,22 @@ def write(fn, s, overwrite=True):
     # The to_xml() method adds newlines in <DATA>...</DATA> segments
     # and also writes GIFTI_ENDIAN_LITTLE instead of LittleEndian.
     # For now we just replace these offending parts
+    # TODO: report issue to nibabel developers
 
-    xml = img.to_xml()
+    xml = img.to_xml().encode('utf-8')
 
     # split by data segements. Odd elements are data, even are surroudning
-    sps = re.split('([<]Data[>][^<]*?[<][/]Data[>])', xml, re.DOTALL)
+    sps = re.split(b'([<]Data[>][^<]*?[<][/]Data[>])', xml, re.DOTALL)
 
     # fix the LittleEndian issue for even segments and newline for odd ones
-    fix_odd_even = lambda x, i: x.replace('\n', '') \
+    fix_odd_even = lambda x, i: x.replace(b'\n', b'') \
                                 if i % 2 == 1 \
-                                else x.replace('Endian="GIFTI_ENDIAN_LITTLE"',
-                                               'Endian="LittleEndian"')
+                                else x.replace(b'Endian="GIFTI_ENDIAN_LITTLE"',
+                                               b'Endian="LittleEndian"')
 
-    xml_fixed = ''.join(fix_odd_even(sp, i) for i, sp in enumerate(sps))
+    xml_fixed = b''.join(fix_odd_even(sp, i) for i, sp in enumerate(sps))
 
-    with open(fn, 'wb') as f:
-        f.write(xml_fixed)
+    with io.FileIO(fn, 'wb') as f:
+        n = f.write(xml_fixed)
+    if n != len(xml_fixed):
+        raise ValueError("Not all bytes written to %s" % fn)
