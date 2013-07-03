@@ -101,7 +101,7 @@ class SurfaceSpec(object):
 
         return set(self.states) == set(other.states)
 
-    def write(self, fnout, overwrite=False):
+    def write(self, fnout, overwrite=True):
         '''
         Writes spec to a file
         
@@ -109,7 +109,7 @@ class SurfaceSpec(object):
         ----------
         fn: str
             filename where the spec is written to
-        overwrite: boolean (default: False)
+        overwrite: boolean (default: True)
             overwrite the file even if it exists already.
         '''
 
@@ -359,7 +359,7 @@ def merge_left_right(both):
 
 
 
-def write(fnout, spec, overwrite=False):
+def write(fnout, spec, overwrite=True):
     if type(spec) is str and isinstance(fnout, SurfaceSpec):
         fnout, spec = spec, fnout
     spec.write(fnout, overwrite=overwrite)
