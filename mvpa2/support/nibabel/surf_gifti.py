@@ -130,9 +130,19 @@ def write(fn, s, overwrite=True):
     if not overwrite and os.path.exists(fn):
         raise ValueError("Already exists: %s" % fn)
 
+    add_indices = True
+
     vertices = gifti.GiftiDataArray(np.asarray(s.vertices, np.float32))
     vertices.intent = gifti.intent_codes.field1['pointset']
     vertices.datatype = 16 # this is what gifti likes
+
+    if add_indices:
+        nvertices = s.nvertices
+        indices = gifti.GiftiDataArray(np.asarray(np.arange(nvertices), np.int32))
+        indices.datatype = 8 # this is what gifti likes
+        indices.coordsys = None # otherwise SUMA might complain
+        indices.intent = gifti.intent_codes.field1['node index']
+
 
     faces = gifti.GiftiDataArray(np.asarray(s.faces, np.int32))
     faces.intent = gifti.intent_codes.field1['triangle']
@@ -140,12 +150,12 @@ def write(fn, s, overwrite=True):
     faces.coordsys = None # otherwise SUMA might complain 
 
     # set some fields common to faces and vertices
-    for arr in (vertices, faces):
+    for arr in (vertices, faces) + (indices,) if add_indices else ():
         arr.ind_ord = 1
         arr.encoding = 3
         arr.endian = 'LittleEndian' # XXX this does not work (see below)
-        arr.num_dim = 2
         arr.dims = list(arr.data.shape)
+        arr.num_dim = len(arr.dims)
 
     vertices.meta, faces.meta = filename2vertices_faces_metadata(fn)
 
@@ -154,6 +164,9 @@ def write(fn, s, overwrite=True):
     labeltable = gifti.GiftiLabelTable()
 
     img = gifti.GiftiImage(meta=meta, labeltable=labeltable)
+
+    if add_indices:
+        img.add_gifti_data_array(indices)
     img.add_gifti_data_array(vertices)
     img.add_gifti_data_array(faces)
 
