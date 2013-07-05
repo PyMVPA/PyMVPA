@@ -19,6 +19,7 @@ from mvpa2.mappers.base import accepts_dataset_as_samples
 from mvpa2.base.dochelpers import _repr_attrs
 from mvpa2.base.state import ConditionalAttribute
 from mvpa2.generators.splitters import mask2slice
+from mvpa2.base.dataset import split_by_sample_attribute, vstack
 
 if __debug__:
     from mvpa2.base import debug
