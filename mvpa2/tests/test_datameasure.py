@@ -18,7 +18,7 @@ from mvpa2.base import externals, warning
 from mvpa2.base.node import ChainNode, CombinedNode
 from mvpa2.datasets.base import Dataset, AttrDataset
 from mvpa2.featsel.base import SensitivityBasedFeatureSelection, \
-        CombinedFeatureSelection, SplitSamplesProbabilityMapper
+        CombinedFeatureSelection
 from mvpa2.featsel.helpers import FixedNElementTailSelector, \
                                  FractionTailSelector, RangeElementSelector
 
@@ -57,6 +57,7 @@ if externals.exists('scipy'):
                            # that one is good when small... handle later
                            #CorrCoef(pvalue=True)
                            ]
+    from mvpa2.featsel.base import SensitivityBasedFeatureSelection
 
 class SensitivityAnalysersTests(unittest.TestCase):
 
@@ -575,6 +576,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
             assert_true(combined(ds).shape[1 - i] == ds.shape[1 - i])
 
     def test_split_samples_probability_mapper(self):
+        skip_if_no_external('scipy')
         nf = 10
         ns = 100
         nsubj = 5
