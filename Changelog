@@ -35,7 +35,7 @@ Releases
 
   * New functionality (73 commits)
 
-    - Multi-threaded, surface-based searchlight
+    - Multi-threaded, surface-based searchlight queryengine
       :func:`~mvpa2.misc.surfing.queryengine.disc_surface_queryengine`.
     - :class:`~mvpa2.misc.plot.flat_surf.FlatSurfacePlotter` supporting
       flattened cortical surfaces.
