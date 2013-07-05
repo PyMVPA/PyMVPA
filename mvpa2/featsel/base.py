@@ -584,7 +584,13 @@ class SplitSamplesProbabilityMapper(SliceMapper):
 
         if probability_combiner is None:
             def f(x):
-                x = np.sum(-np.log(x))
+                y = -np.log(x.ravel())
+
+                # address potential NaNs
+                # set to max value in y
+                m = np.isnan(y)
+                y[m] = np.max(y[-m])
+                return np.sum(y)
             probability_combiner = f # avoid lambda as h5py doesn't like it
 
         self._sensitivity_analyzer = sensitivity_analyzer
@@ -617,6 +623,7 @@ class SplitSamplesProbabilityMapper(SliceMapper):
             # must have the same number of features
             stacked = np.vstack(scores)
             f = self._probability_combiner
+
             n = stacked.shape[-1] # number of features
             common_all = np.asarray([f(stacked[:, i]) for i in xrange(n)])
 
