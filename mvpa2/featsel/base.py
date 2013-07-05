@@ -598,7 +598,7 @@ class SplitSamplesProbabilityMapper(SliceMapper):
         # add a sample attribute indicating the sample indices
         # so that we can recover where each part came from
         ds_copy = ds.copy(deep=False)
-        ds_copy.sa['orig_fidxs_'] = np.arange(ns)
+        ds_copy.sa['orig_fidxs_'] = np.arange(ds.nsamples)
 
         splits = split_by_sample_attribute(ds_copy,
                                          self._split_by_labels)
