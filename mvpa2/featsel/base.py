@@ -20,6 +20,7 @@ from mvpa2.base.dochelpers import _repr_attrs
 from mvpa2.base.state import ConditionalAttribute
 from mvpa2.generators.splitters import mask2slice
 from mvpa2.base.dataset import split_by_sample_attribute, vstack
+from mvpa2.base import externals
 
 if __debug__:
     from mvpa2.base import debug
@@ -509,6 +510,7 @@ class CombinedFeatureSelection(FeatureSelection):
     method = property(fget=lambda self: self.__method)
     selectors = property(fget=lambda self: self.__selectors)
 
+# XXX is there a more elegant way to do this?
 if externals.exists('scipy'):
     class SplitSamplesProbabilityMapper(SliceMapper):
         '''
