@@ -57,7 +57,7 @@ if externals.exists('scipy'):
                            # that one is good when small... handle later
                            #CorrCoef(pvalue=True)
                            ]
-    from mvpa2.featsel.base import SensitivityBasedFeatureSelection
+    from mvpa2.featsel.base import SplitSamplesProbabilityMapper
 
 class SensitivityAnalysersTests(unittest.TestCase):
 
@@ -576,7 +576,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
             assert_true(combined(ds).shape[1 - i] == ds.shape[1 - i])
 
     def test_split_samples_probability_mapper(self):
-        skip_if_no_external('scipy')
+        if not externals.exists('scipy'):
+            return
         nf = 10
         ns = 100
         nsubj = 5
