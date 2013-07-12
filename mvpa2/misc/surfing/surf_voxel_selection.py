@@ -38,6 +38,7 @@ from mvpa2.base import warning, externals
 
 from mvpa2.misc.surfing import volgeom, volsurf, volume_mask_dict
 from mvpa2.support.nibabel import surf
+from mvpa2.base.progress import eta_string, seconds2prettystring
 
 if externals.exists('h5py'):
     from mvpa2.base.hdf5 import h5save, h5load
@@ -623,7 +624,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             debug('SVS', "")
             debug('SVS', 'Merged results from %d child processed - '
                          'took %s' %
-                         (len(blocks), _seconds2prettystring(telapsed)))
+                         (len(blocks), seconds2prettystring(telapsed)))
 
     else:
         empty_dict = volume_mask_dict.VolumeMaskDictionary(
@@ -686,7 +687,7 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
             p = '%s'
         return p
 
-    progresspat = 'node %s -> %s [%%3d%%%%]' % (_pat(0), _pat(1))
+    progresspat = '(node %s -> %s)' % (_pat(0), _pat(1))
 
     # start the clock
     tstart = time.time()
@@ -699,9 +700,11 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
             node2volume_attributes.add(int(src), idxs, misc_attrs)
 
         if _debug() and eta_step and (i % eta_step == 0 or i == n - 1):
-            msg = _eta(tstart, float(i + 1) / n,
-                            progresspat %
-                            (src, trg, 100.*(i + 1) / n), show=False)
+            #msg = _eta(tstart, float(i + 1) / n,
+            #                progresspat %
+            #                (src, trg, 100.*(i + 1) / n), show=False)
+            msg = eta_string(tstart, float(i + 1) / n,
+                             progresspat % (src, trg))
             if not proc_id is None:
                 msg += ' (#%s)' % proc_id
             debug('SVS', msg, cr=True)
@@ -718,56 +721,7 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
 def _debug():
     return __debug__ and 'SVS' in debug.active
 
-def _seconds2prettystring(t):
-    # XXX put in a general module?
-    return str(datetime.timedelta(seconds=round(t)))
 
-def _eta(starttime, progress, msg=None, show=True):
-    '''Simple linear extrapolation to estimate how much time is needed 
-    to complete a task.
-    
-    Parameters
-    ----------
-    starttime
-        Time the tqsk started, from 'time.time()'
-    progress: float
-        Between 0 (nothing completed) and 1 (fully completed)
-    msg: str (optional)
-        Message that describes progress
-    show: bool (optional, default=True)
-        Show the message and the estimated time until completion
-    
-    Returns
-    -------
-    eta
-        Estimated time until completion
-    
-    Note
-    ----
-    ETA refers to estimated time of arrival
-    '''
-    if msg is None:
-        msg = ""
-
-    now = time.time()
-    took = now - starttime
-    eta = -1 if progress == 0 else took * (1 - progress) / progress
-
-    f = _seconds2prettystring
-
-    barlength = 10 # should be good up to 10^6 nodes
-    if barlength:
-        nstars = int(math.floor(progress * barlength))
-        fullmsg = '%s  +%s [%s] -%s' % (msg, f(took),
-                                '=' * nstars + '_' * (barlength - nstars),
-                                f(eta))
-    else:
-        fullmsg = '%s, after %s ETA %s' % (msg, f(took), f(eta))
-
-    if show:
-        print fullmsg
-
-    return fullmsg
 
 def run_voxel_selection(radius, volume, white_surf, pial_surf,
                          source_surf=None, source_surf_nodes=None,
