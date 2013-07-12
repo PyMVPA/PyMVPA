@@ -45,6 +45,7 @@ Basic Facilities
    base.learner
    base.node
    base.param
+   base.progress
    base.report
    base.state
    base.types

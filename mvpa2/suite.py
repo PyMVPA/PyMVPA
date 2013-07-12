@@ -44,6 +44,7 @@ from mvpa2.base.param import *
 from mvpa2.base.state import *
 from mvpa2.base.node import *
 from mvpa2.base.learner import *
+from mvpa2.base.progress import *
 
 __sdebug('h5py')
 if externals.exists('h5py'):
