@@ -15,12 +15,14 @@ if __debug__:
 
 import numpy as np
 import tempfile, os
+import time
 
 import mvpa2
 from mvpa2.base import externals, warning
 from mvpa2.base.types import is_datasetlike
 from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
 from mvpa2.base.types import is_datasetlike
+from mvpa2.base.progress import eta_string
 if externals.exists('h5py'):
     # Is optionally required for passing searchlight
     # results via storing/reloading hdf5 files
@@ -380,6 +382,7 @@ class Searchlight(BaseSearchlight):
             debug_slc_ = 'SLC_' in debug.active
             debug('SLC',
                   "Starting computing block for %i elements" % len(block))
+            start_time = time.time()
         results = []
         store_roi_feature_ids = self.ca.is_enabled('roi_feature_ids')
         store_roi_sizes = self.ca.is_enabled('roi_sizes')
@@ -439,11 +442,15 @@ class Searchlight(BaseSearchlight):
             results.append(res)
 
             if __debug__:
-                debug('SLC', "Doing %i ROIs: %i (%i features) [%i%%]" \
-                    % (len(block),
-                       f + 1,
-                       roi.nfeatures,
-                       float(i + 1) / len(block) * 100,), cr=True)
+                #debug('SLC', "Doing %i ROIs: %i (%i features) [%i%%]" \
+                #    % (len(block),
+                #       f + 1,
+                #       roi.nfeatures,
+                #       float(i + 1) / len(block) * 100,), cr=True)
+                msg = 'ROI %i (of %i), %i features' % \
+                            (f + 1, len(block), roi.nfeatures)
+                debug('SLC', eta_string(start_time,
+                                        float(i + 1) / len(block), msg), cr=True)
 
         if self.results_backend == 'native':
             pass                        # nothing special
