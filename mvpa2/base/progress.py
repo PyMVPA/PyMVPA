@@ -128,3 +128,57 @@ def eta_string(start_time, progress, msg=None,
         full_msg = '%s  %s' % (full_msg, msg)
     return full_msg
 
+class ProgressBar(object):
+    '''Simple progress bar in ASCII text'''
+    def __init__(self, start_time=None, progress_bar_width=18,
+                        show_percentage=True):
+        '''
+        Initializes the progress bar
+        
+        Parameters
+        ----------
+        start_time: float or None (default) 
+            Start time relative to the start of the Epoch. If None it takes
+            the current time.
+        progress_bar_width: int (default: 18)
+            Width of progress bar. If zero then no progress bar is shown.
+        show_percentage: bool (default: True)
+            Show progress in percentage?
+        '''
+
+        self.start(start_time)
+        self._progress_bar_width = progress_bar_width
+        self._show_percentage = show_percentage
+
+    def start(self, start_time=None):
+        '''Resets the start time
+        
+        Parameters
+        ----------
+        start_time: float or None (default) 
+            Start time relative to the start of the Epoch. If None it takes
+            the current time.
+        '''
+        if start_time is None:
+            start_time = time.time()
+        self._start_time = start_time
+
+    def __call__(self, progress, msg=None):
+        '''
+        Returns a string representation of progress
+        
+        Parameters
+        ----------
+        progress: float
+            Between 0 (nothing completed) and 1 (fully completed)
+        msg: str (optional)
+            Message that describes progress - is added to the output
+        
+        Returns
+        -------
+        bar: str
+            A text representation of progress. 
+        '''
+        return eta_string(self._start_time, progress, msg,
+                          progress_bar_width=self._progress_bar_width,
+                          show_percentage=self._show_percentage)
