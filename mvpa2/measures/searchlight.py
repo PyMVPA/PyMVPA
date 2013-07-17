@@ -22,7 +22,7 @@ from mvpa2.base import externals, warning
 from mvpa2.base.types import is_datasetlike
 from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
 from mvpa2.base.types import is_datasetlike
-from mvpa2.base.progress import eta_string
+from mvpa2.base.progress import ProgressBar
 if externals.exists('h5py'):
     # Is optionally required for passing searchlight
     # results via storing/reloading hdf5 files
@@ -394,6 +394,8 @@ class Searchlight(BaseSearchlight):
 
         # put rois around all features in the dataset and compute the
         # measure within them
+        bar = ProgressBar()
+
         for i, f in enumerate(block):
             # retrieve the feature ids of all features in the ROI from the query
             # engine
@@ -442,15 +444,9 @@ class Searchlight(BaseSearchlight):
             results.append(res)
 
             if __debug__:
-                #debug('SLC', "Doing %i ROIs: %i (%i features) [%i%%]" \
-                #    % (len(block),
-                #       f + 1,
-                #       roi.nfeatures,
-                #       float(i + 1) / len(block) * 100,), cr=True)
-                msg = 'ROI %i (of %i), %i features' % \
-                            (f + 1, len(block), roi.nfeatures)
-                debug('SLC', eta_string(start_time,
-                                        float(i + 1) / len(block), msg), cr=True)
+                msg = 'ROI %i (%i/%i), %i features' % \
+                            (f + 1, i + 1, len(block), roi.nfeatures)
+                debug('SLC', bar(float(i + 1) / len(block), msg), cr=True)
 
         if self.results_backend == 'native':
             pass                        # nothing special
