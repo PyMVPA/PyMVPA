@@ -38,7 +38,7 @@ from mvpa2.base import warning, externals
 
 from mvpa2.misc.surfing import volgeom, volsurf, volume_mask_dict
 from mvpa2.support.nibabel import surf
-from mvpa2.base.progress import eta_string, seconds2prettystring
+from mvpa2.base.progress import ProgressBar, seconds2prettystring
 
 if externals.exists('h5py'):
     from mvpa2.base.hdf5 import h5save, h5load
@@ -690,7 +690,7 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
     progresspat = '(node %s -> %s)' % (_pat(0), _pat(1))
 
     # start the clock
-    tstart = time.time()
+    bar = ProgressBar()
     n = len(src_trg_indices)
 
     for i, (src, trg) in enumerate(src_trg_indices):
@@ -700,11 +700,7 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
             node2volume_attributes.add(int(src), idxs, misc_attrs)
 
         if _debug() and eta_step and (i % eta_step == 0 or i == n - 1):
-            #msg = _eta(tstart, float(i + 1) / n,
-            #                progresspat %
-            #                (src, trg, 100.*(i + 1) / n), show=False)
-            msg = eta_string(tstart, float(i + 1) / n,
-                             progresspat % (src, trg))
+            msg = bar(float(i + 1) / n, progresspat % (src, trg))
             if not proc_id is None:
                 msg += ' (#%s)' % proc_id
             debug('SVS', msg, cr=True)
