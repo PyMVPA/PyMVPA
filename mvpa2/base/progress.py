@@ -23,6 +23,9 @@ def seconds2prettystring(t, ndigits=0):
     ----------
     t: float
         time in seconds
+    ndigits: int (default: 0)
+        how many digits are used to show time in seconds (after
+        the decimal sign '.')
         
     Returns
     s: str
@@ -104,6 +107,8 @@ def eta_string(start_time, progress, msg=None,
         todo = SYM_TODO * n_todo
 
         if show_percentage:
+            # replace characters in 'done' or 'todo' (whichever is longer)
+            # by a percentage indicator (e.g. "[42%]").
             n_pct = len(pct_str)
             margin = 2
             n = n_pct + margin # required length for pct string
