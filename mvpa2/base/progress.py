@@ -53,7 +53,7 @@ def seconds2prettystring(t, ndigits=0):
         else:
             sec_str = '%s.%s' % (big, small[:min(len(small), ndigits)])
 
-    return sec_str if ndays == 0 else '%dd:%s' % (ndays, sec_str)
+    return sec_str if ndays == 0 else '%d+%s' % (ndays, sec_str)
 
 
 def eta_string(start_time, progress, msg=None,
