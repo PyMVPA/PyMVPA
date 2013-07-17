@@ -94,8 +94,6 @@ def eta_string(start_time, progress, msg=None,
                                            else progress * float('inf')
     pct_str = '[%.0f%%]' % (progress * 100.)
 
-    swap_sign = lambda x:'+' + x[1:] if len(x) > 0 and x[0] == '-' else '-' + x
-
     formatter = seconds2prettystring
 
 
@@ -121,14 +119,15 @@ def eta_string(start_time, progress, msg=None,
                 offset = (n_todo - (n_pct + margin) / 2) / 2
                 todo = todo[:offset] + pct_str + \
                         todo[:(n_todo - offset - n_pct)]
+            else:
+                pass # not enough space - don't show anything
 
 
         bar = done + todo
     else:
         bar = pct_str
 
-    full_msg = '+%s %s %s' % (formatter(took), bar,
-                                swap_sign(formatter(eta)))
+    full_msg = '+%s %s %s' % (formatter(took), bar, formatter(-eta))
     if not msg is None:
         full_msg = '%s  %s' % (full_msg, msg)
     return full_msg
