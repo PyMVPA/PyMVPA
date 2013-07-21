@@ -527,26 +527,28 @@ if externals.exists('scipy'):
         >>> nsubj=5
         >>> nchunks=5
         >>> data=np.random.normal(size=(ns,nf))
+        >>> from mvpa2.base.dataset import AttrDataset
+        >>> from mvpa2.measures.anova import OneWayAnova
         >>> ds=AttrDataset(data,
-        >>> ...            sa=dict(sidx=np.arange(ns),
-        >>> ...                    targets=np.arange(ns)%nchunks,
-        >>> ...                    chunks=np.floor(np.arange(ns)*nchunks/ns),
-        >>> ...                    subjects=np.arange(ns) / (ns/nsubj/nchunks) % nsubj)
-        >>> ...            fa=dict(fidx=np.arange(nf)))
+        ...                sa=dict(sidx=np.arange(ns),
+        ...                        targets=np.arange(ns)%nchunks,
+        ...                        chunks=np.floor(np.arange(ns)*nchunks/ns),
+        ...                        subjects=np.arange(ns) / (ns/nsubj/nchunks) % nsubj),
+        ...                fa=dict(fidx=np.arange(nf)))
         >>> analyzer=OneWayAnova()
         >>> element_selector=FractionTailSelector(.4,mode='select',tail='upper')
         >>> common=True
         >>> m=SplitSamplesProbabilityMapper(analyzer, 'subjects', 
-        >>> ...                             probability_label='fprob',
-        >>> ...                             select_common_features=common,
-        >>> ...                             selector=element_selector)
+        ...                                 probability_label='fprob',
+        ...                                 select_common_features=common,
+        ...                                 selector=element_selector)
         >>> m.train(ds)
         >>> y=m(ds)
         >>> z=m(ds.samples)
         >>> np.all(np.equal(z,y.samples))
         True
         >>> y.shape
-        (100,4)
+        (100, 4)
     
         '''
         def __init__(self,
