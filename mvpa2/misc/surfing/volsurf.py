@@ -38,7 +38,7 @@ class VolSurf(object):
             Surface representing white-grey matter boundary
         pial: surf.Surface
             Surface representing pial-grey matter boundary
-        intermediate: surf.Surface (default: None)
+        intermediate: surf.Surface (default: None).
             Surface representing intermediate surface. If omitted
             it is the node-wise average of white and pial. 
             
@@ -256,6 +256,36 @@ class VolSurf(object):
         weights = self.surf_project_weights_nodewise(xyz)
         return pxyz + np.reshape(weights, (-1, 1)) * pxyz
 
+    def surf_unproject_weights_nodewise(self, weights):
+        '''Maps relative positions in grey matter to coordinates
+        
+        Parameters
+        ----------
+        weights: numpy.ndarray (float)
+            P values of relative grey matter positions, where 0=white surface 
+            and 1=pial surface.
+            
+        Returns
+        -------
+        xyz: numpy.ndarray (float)
+            Px3 array with coordinates, assuming 'white' and 'pial' surfaces 
+            have P nodes each.
+        '''
+        # compute relative to pial_xyz
+        pxyz = self._pial.vertices
+        qxyz = self._white.vertices
+
+        dxyz = qxyz - pxyz # difference vector
+
+
+        if len([s for s in weights.shape if s > 1]) != 1:
+            raise ValueError("Weights should be a vector, but found "
+                             "shape %s" % (weights.shape,))
+
+        weights_lin = np.reshape(weights.ravel(), (-1, 1))
+        return pxyz + weights_lin * dxyz
+
+
     def surf_project_weights_nodewise(self, xyz):
         '''
         Computes relative position of xyz on lines from pial to white matter.
@@ -363,11 +393,11 @@ class VolumeBasedSurface(surf.Surface):
     def __reduce__(self):
         return (self.__class__, (self._vg,))
 
-    
+
     def __eq__(self, other):
         if not isinstance(other, VolumeBasedSurface):
             return False
-        return self._vg==other._vg
+        return self._vg == other._vg
 
     def circlearound_n2d(self, src, radius, metric='euclidean'):
         shortmetric = metric[0].lower()
