@@ -111,12 +111,12 @@ def eta_string(start_time, progress, msg=None,
             margin = 2
             n = n_pct + margin # required length for pct string
             if n <= n_done and (n > n_todo or n_done >= n_todo):
-                offset = (n_done - margin - n_pct / 2) / 2
+                offset = (n_done - margin - n_pct // 2) // 2
 
                 done = done[:offset] + pct_str + \
                         done[:(n_done - offset - n_pct)]
             elif n <= n_todo:
-                offset = (n_todo - (n_pct + margin) / 2) / 2
+                offset = (n_todo - (n_pct + margin) // 2) // 2
                 todo = todo[:offset] + pct_str + \
                         todo[:(n_todo - offset - n_pct)]
             else:
