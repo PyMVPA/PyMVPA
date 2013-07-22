@@ -23,14 +23,14 @@ _COORD_EPS = 1e-14 # maximum allowed difference between coordinates
 
 class Surface(object):
     '''Cortical surface mesh
-    
-    A surface consists of a set of vertices (each with an x, y, and z 
+
+    A surface consists of a set of vertices (each with an x, y, and z
     coordinate) and a set of faces (triangles; each has three indices
     referring to the vertices that make up a triangle).
-    
-    In the present implementation new surfaces should be made using the 
+
+    In the present implementation new surfaces should be made using the
     __init__ constructor; internal fields should not be changed manually
-    
+
     Parameters
     ----------
     vertices : numpy.ndarray (float)
@@ -38,9 +38,9 @@ class Surface(object):
     faces : numpy.ndarray (int)
         Qx3 array with vertex indices for Q faces (triangles).
     check: boolean (default=True)
-        Do some sanity checks to ensure that vertices and faces have proper 
+        Do some sanity checks to ensure that vertices and faces have proper
         size and values.
-        
+
     Returns
     -------
     s : Surface
@@ -99,13 +99,13 @@ class Surface(object):
     def node2faces(self):
         '''
         A mapping from node indices to the faces that contain those nodes.
-        
+
         Returns
         -------
         n2v : dict
             A dict "n2v" so that "n2v[i]=faceidxs" contains a list of the faces
             (indexed by faceidxs) that contain node "i".
-        
+
         '''
 
         if not hasattr(self, '_n2f'):
@@ -124,12 +124,12 @@ class Surface(object):
     def face_edge_length(self):
         '''
         Length of edges associated with each face
-        
+
         Returns
         -------
         f2el: np.ndarray
             Px3 array where P==self.nfaces. f2el[i,:] contains the
-            length of the (three) edges that make up face i. 
+            length of the (three) edges that make up face i.
         '''
 
         if not hasattr(self, '_f2el'):
@@ -154,11 +154,11 @@ class Surface(object):
     def average_node_edge_length(self):
         '''
         Average length of edges associated with each face
-        
+
         Returns
         -------
         n2el: np.ndarray
-            P-valued vector where P==self.nvertices, where n2el[i] is the 
+            P-valued vector where P==self.nvertices, where n2el[i] is the
             average length of the edges that contain node i.
         '''
         if not hasattr(self, '_n2ael'):
@@ -195,13 +195,13 @@ class Surface(object):
     @property
     def edge2face(self):
         '''A mapping from edges to the face that contains that edge
-        
+
         Returns
         -------
         e2f: dict
             a mapping from edges to faces. e2f[(i,j)]==f means that
             the edge connecting nodes i and j contains node f.
-            It is assumed that faces are consistent with respect to 
+            It is assumed that faces are consistent with respect to
             the direction of their normals: if self.faces[j,:]==[p,q,r]
             then the normal of vectors pq and pr should all either point
             'inwards' or 'outwards'.
@@ -228,16 +228,16 @@ class Surface(object):
     @property
     def neighbors(self):
         '''Finds the neighbours for each node and their (Euclidean) distance.
-        
+
         Returns
         -------
         nbrs : dict
-            A dict "nbrs" so that "nbrs[i]=n2d" contains the distances from 
-            node i to the neighbours of node "i" in "n2d". "n2d" is, in turn, 
-            a dict so that "n2d[k]=d" is the distance "d" from node "i" to 
-            node "j". In other words, nbrs[i][j]=d means that the distance from 
+            A dict "nbrs" so that "nbrs[i]=n2d" contains the distances from
+            node i to the neighbours of node "i" in "n2d". "n2d" is, in turn,
+            a dict so that "n2d[k]=d" is the distance "d" from node "i" to
+            node "j". In other words, nbrs[i][j]=d means that the distance from
             node i to node j is d. It holds that nbrs[i][j]=nbrs[j][i].
-        
+
         Note
         ----
         This function computes nbrs if called for the first time, otherwise
@@ -274,22 +274,22 @@ class Surface(object):
 
     def circlearound_n2d(self, src, radius, metric='euclidean'):
         '''Finds the distances from a center node to surrounding nodes.
-        
+
         Parameters
         ----------
         src : int
             Index of center node
         radius : float
-            Maximum distance for other nodes to qualify as a 'surrounding' 
+            Maximum distance for other nodes to qualify as a 'surrounding'
             node.
         metric : string (default: euclidean)
             'euclidean' or 'dijkstra': distance metric
-             
-        
+
+
         Returns
         -------
         n2d : dict
-            A dict "n2d" so that n2d[j]=d" is the distance "d" from node 
+            A dict "n2d" so that n2d[j]=d" is the distance "d" from node
             "src" to node "j".
         '''
 
@@ -311,22 +311,22 @@ class Surface(object):
 
     def dijkstra_distance(self, src, maxdistance=None):
         '''Computes Dijkstra distance from one node to surrounding nodes
-        
+
         Parameters
         ----------
         src : int
             Index of center (source) node
         maxdistance: float (default: None)
             Maximum distance for a node to qualify as a 'surrounding' node.
-            If 'maxdistance is None' then the distances to all nodes is 
+            If 'maxdistance is None' then the distances to all nodes is
             returned/
-        
+
         Returns:
         --------
         n2d : dict
-            A dict "n2d" so that n2d[j]=d" is the distance "d" from node 
+            A dict "n2d" so that n2d[j]=d" is the distance "d" from node
             "src" to node "j".
-            
+
         Note
         ----
         Preliminary analyses show that the Dijkstra distance gives very similar
@@ -343,7 +343,7 @@ class Surface(object):
 
         nbrs = self.neighbors
 
-        # algorithm from wikipedia 
+        # algorithm from wikipedia
         # (http://en.wikipedia.org/wiki/Dijkstra's_algorithm)
         while candidates:
             # distance and index of current candidate
@@ -371,23 +371,23 @@ class Surface(object):
 
     def dijkstra_shortest_path(self, src, maxdistance=None):
         '''Computes Dijkstra shortest path from one node to surrounding nodes.
-        
+
         Parameters
         ----------
         src : int
             Index of center (source) node
         maxdistance: float (default: None)
             Maximum distance for a node to qualify as a 'surrounding' node.
-            If 'maxdistance is None' then the shortest path to all nodes is 
+            If 'maxdistance is None' then the shortest path to all nodes is
             returned.
-        
+
         Returns:
         --------
         n2dp : dict
-            A dict "n2d" so that n2d[j]=(d,p)" contains the distance "d" from 
+            A dict "n2d" so that n2d[j]=(d,p)" contains the distance "d" from
             node  "src" to node "j", and p is a list of the nodes of the path
             with p[0]==src and p[-1]==j.
-            
+
         Note
         ----
         Preliminary analyses show that the Dijkstra distance gives very similar
@@ -404,7 +404,7 @@ class Surface(object):
 
         nbrs = self.neighbors
 
-        # algorithm from wikipedia 
+        # algorithm from wikipedia
         #(http://en.wikipedia.org/wiki/Dijkstra's_algorithm)
         while candidates:
             # distance and index of current candidate
@@ -432,17 +432,17 @@ class Surface(object):
 
     def dijkstra_shortest_path_visiting(self, to_visit):
         '''Computes a list of paths that visit specific nodes
-        
+
         Parameters
         ----------
         to_visit: list of int
             P indices of nodes to visit
-        
+
         Returns
         -------
         path_distances: list of tuple (int, list of int)
             List with (P-1) elements, where the i-th element is a tuple
-            (d_i, q_i) with distance d_i between nodes i and (i+1), and 
+            (d_i, q_i) with distance d_i between nodes i and (i+1), and
             q_i a list of node indices on the path between nodes i and (i+1)
             so that q_i[0]==i and q_i[-1]==(i+1)
         '''
@@ -468,7 +468,7 @@ class Surface(object):
 
         nbrs = self.neighbors
 
-        # algorithm from wikipedia 
+        # algorithm from wikipedia
         #(http://en.wikipedia.org/wiki/Dijkstra's_algorithm)
         while candidates:
             # distance and index of current candidate
@@ -505,7 +505,7 @@ class Surface(object):
 
     def euclidean_distance(self, src, trg=None):
         '''Computes Euclidean distance from one node to other nodes
-        
+
         Parameters
         ----------
         src : int or numpy.ndarray
@@ -514,11 +514,11 @@ class Surface(object):
         trg : int
             Target node(s) to which the distance is computed.
             If 'trg is None' then distances to all nodes are computed
-        
+
         Returns:
         --------
         n2d : dict
-            A dict "n2d" so that n2d[j]=d" is the distance "d" from node 
+            A dict "n2d" so that n2d[j]=d" is the distance "d" from node
             "src" to node "j".
         '''
 
@@ -546,14 +546,14 @@ class Surface(object):
 
     def nearest_node_index(self, src_coords, node_mask_indices=None):
         '''Computes index of nearest node to src
-        
+
         Parameters
         ----------
         src_coords: numpy.ndarray (Px3 array)
             Coordinates of center
         node_mask_idxs numpy.ndarray (default: None):
             Indices of nodes to consider. By default all nodes are considered
-        
+
         Returns
         -------
         idxs: numpy.ndarray (P-valued vector)
@@ -589,17 +589,17 @@ class Surface(object):
 
     def nodes_on_border(self, node_indices=None):
         '''Determines which nodes are on the border of the surface
-        
+
         Parameters
         ----------
         node_indices: np.ndarray or None
-            Vector with node indices for which their bordership status is to 
+            Vector with node indices for which their bordership status is to
             be deteremined. None means all node indices
-            
+
         Returns
         -------
         on_border: np.ndarray
-            Boolean array of shape (len(node_indices),). A node i is 
+            Boolean array of shape (len(node_indices),). A node i is
             considered on the border if there is a face that contains node i
             and another node j so that no other face contains both i and j.
             In other words a node i is *not* on the border if there is a path
@@ -643,7 +643,7 @@ class Surface(object):
 
             for j in xrange(nf):
                 # go over the faces that contain node_index
-                # for each row take the other value, and try to match  
+                # for each row take the other value, and try to match
                 # it to another face
                 jpos_ = (jpos + 1) % 2
                 target = a[ipos, jpos_]
@@ -651,7 +651,7 @@ class Surface(object):
 
                 ijpos = np.nonzero(a == target)
                 if len(ijpos[0]) != 1:
-                    # 
+                    #
                     on_border[i] = True
                     break
                 ipos, jpos = ijpos[0], ijpos[1]
@@ -663,14 +663,14 @@ class Surface(object):
 
     def nodes_on_border_paths(self):
         '''Find paths of nodes on the border
-        
+
         Returns
         -------
         paths: list of lists
             paths[i]=[k_0,...k_N] means that there is path of N+1 edges
-            [(k_0,k_1),(k_1,...,k_N),(k_N,k_0)] where each k_i is on the 
+            [(k_0,k_1),(k_1,...,k_N),(k_N,k_0)] where each k_i is on the
             border of the surface
-            
+
         '''
         border_mask = self.nodes_on_border()
         faces = self.faces
@@ -741,7 +741,7 @@ class Surface(object):
 
     def pairwise_near_nodes(self, max_distance=None, src=None, trg=None):
         '''Finds the distances between pairs of nodes
-        
+
         Parameters
         ----------
         max_distance: None or float
@@ -750,19 +750,19 @@ class Surface(object):
             source indices
         trg: array of int or None
             target indices
-        
+
         Returns
         -------
         source_target2distance: dict
             A dictionary so that source_target2distance[i,j]=d means that the
-            Euclidian distance between nodes i and j is d, where i in src 
+            Euclidian distance between nodes i and j is d, where i in src
             and j in trg.
-        
+
         Notes
         -----
         If src and trg are both None, then this function checks if the surface
-        has two components; if so they are taken as source and target. A use 
-        case for this behaviour is a surface consisting of two hemispheres  
+        has two components; if so they are taken as source and target. A use
+        case for this behaviour is a surface consisting of two hemispheres
         '''
 
         if src is None and trg is None:
@@ -812,19 +812,19 @@ class Surface(object):
 
     def project_vertices(self, n, v=None):
         '''Projects vertex coordinates onto a vector
-        
+
         Parameters
         ----------
         n: np.ndarray
             Vector with 3 elements
         v: np.ndarray or None
-            coordinates to be projected. If None then the vertices of the 
+            coordinates to be projected. If None then the vertices of the
             current instance are used.
-            
+
         Returns
         -------
         p: np.ndarray
-            Vector with coordinates projected onto n 
+            Vector with coordinates projected onto n
         '''
 
         if not isinstance(n, np.ndarray):
@@ -839,16 +839,16 @@ class Surface(object):
 
     def sub_surface(self, src, radius):
         '''Makes a smaller surface consisting of nodes around a center node
-        
+
         Parameters
         ----------
         src : int
             Index of center (source) node
         radius : float
             Lower bound of (Euclidean) distance to 'src' in order to be part
-            of the smaller surface. In other words, if a node 'j' is within 
+            of the smaller surface. In other words, if a node 'j' is within
             'radius' from 'src', then 'j' is also part of the resulting surface.
-        
+
         Returns
         -------
         small_surf: Surface
@@ -859,16 +859,16 @@ class Surface(object):
             indices of faces selected from the original surface
         orig_src: int
             index of 'src' in the original surface
-            
+
         Note
         ----
-        This function is a port from the Matlab surfing toolbox function 
+        This function is a port from the Matlab surfing toolbox function
         'surfing_subsurface' (see http://surfing.sourceforge.net)
-        
-        With the 'dijkstra_distance' function, this function is more or 
+
+        With the 'dijkstra_distance' function, this function is more or
         less obsolete.
-        
-         
+
+
         '''
         n2f = self.node2faces
 
@@ -951,12 +951,12 @@ class Surface(object):
     def same_topology(self, other):
         '''
         Returns whether another surface has the same topology
-        
+
         Parameters
         ----------
         other: surf.Surface
             another surface
-        
+
         Returns
         -------
         bool
@@ -982,7 +982,7 @@ class Surface(object):
 
     def __neg__(self, other):
         '''coordinate-wise inversion with respect to addition'''
-        return Surface(v= -self.vertices, f=self.faces, check=False)
+        return Surface(v=-self.vertices, f=self.faces, check=False)
 
     def __sub__(self, other):
         '''coordiante-wise subtraction'''
@@ -990,7 +990,7 @@ class Surface(object):
 
     def rotate(self, theta, center=None, unit='rad'):
         '''Rotates the surface
-        
+
         Parameters
         ----------
         theta:
@@ -1000,7 +1000,7 @@ class Surface(object):
             then rotation is around the origin (0,0,0).
         unit:
             'rad' or 'deg' for angles in theta in either radians or degrees.
-        
+
         Returns
         -------
         surf.Surface
@@ -1021,7 +1021,7 @@ class Surface(object):
         sx, sy, sz = np.sin(theta)
 
         # rotation matrix *in row-first order*
-        # in other words, we compute vertices*R' 
+        # in other words, we compute vertices*R'
         m = np.asarray(
                 [[cy * cz, -cy * sz, sy],
                  [cx * sz + sx * sy * cz, cx * cz - sx * sy * sz, -sx * cy],
@@ -1038,7 +1038,7 @@ class Surface(object):
     @property
     def center_of_mass(self):
         '''Computes the center of mass
-        
+
         Returns
         -------
         np.array
@@ -1048,19 +1048,19 @@ class Surface(object):
 
     def merge(self, *others):
         '''Merges the present surface with other surfaces
-        
+
         Parameters
         ----------
         others: list of surf.Surface
             List of other surfaces to be merged with present one
-        
+
         Returns
         -------
         surf.Surface
             A surface that has all the nodes of the current surface
             and the surfaces in others, and has the topologies combined
-            from these surfaces as well. 
-            If the current surface has v_0 vertices and f_0 faces, and the 
+            from these surfaces as well.
+            If the current surface has v_0 vertices and f_0 faces, and the
             i-th surface has v_i and f_i faces, then the output has
             sum_j (v_j) vertices and sum_j (f_j) faces.
         '''
@@ -1099,7 +1099,7 @@ class Surface(object):
 
     def split_by_connected_components(self):
         '''Splits a surface by its connected components
-        
+
         Returns
         -------
         splits: list of surf.Surface
@@ -1108,8 +1108,8 @@ class Surface(object):
             (If all nodes in the original surface are connected
             then a list is returned with a single surface that is
             identical to the input).
-            The output is sorted by the number of vertices. 
-            
+            The output is sorted by the number of vertices.
+
         '''
         components = self.connected_components()
         n2f = self.node2faces
@@ -1199,7 +1199,7 @@ class Surface(object):
         named "map_to_high_resolution_surf", this function is both slow
         and exact---and is actually used in case the former function does
         not find a solution.
-        
+
         Parameters
         ----------
         highres: surf.Surface
@@ -1211,14 +1211,14 @@ class Surface(object):
             if True, then this function raises an error if the number of
             nodes does not match those which would be expected from
             MapIcosahedorn.
-        
+
         Returns
         -------
         low2high: dict
             mapping so that low2high[i]==j means that node i in the current
             (low-resolution) surface is mapped to node j in the highres
             surface.
-            
+
         '''
         nx = self.nvertices
         ny = highres.nvertices
@@ -1275,20 +1275,20 @@ class Surface(object):
     def coordinates_to_box_indices(self, box_size, min_coord=None,
                                                    master=None):
         ''''Boxes' coordinates into triples
-        
+
         Parameters
         ----------
-        box_sizes: 
-            
+        box_sizes:
+
         min_coord: triple or ndarray
-            Minimum coordinates; maps to (0,0,0). 
+            Minimum coordinates; maps to (0,0,0).
             If omitted, it defaults to the mininum coordinates in this surface.
         max_coord: triple or ndarray
-            Minimum coordinates; maps to (nboxes[0]-1,nboxes[1]-1,nboxes[2]-1)). 
+            Minimum coordinates; maps to (nboxes[0]-1,nboxes[1]-1,nboxes[2]-1)).
             If omitted, it defaults to the maximum coordinates in this surface.
         master: Surface.surf (default: None)
             If provided, then min_coord and max_coord are taken from master.
-        
+
         Returns
         -------
         boxes_indices: np.ndarray of float
@@ -1323,9 +1323,9 @@ class Surface(object):
         delineate the grey matter for voxel selection.
         This function implements an optimization which in most cases
         yields solutions much faster than map_to_high_resolution_surf_exact,
-        but may fail to find the correct solution for larger values 
+        but may fail to find the correct solution for larger values
         of epsilon.
-        
+
         Parameters
         ----------
         highres: surf.Surface
@@ -1337,14 +1337,14 @@ class Surface(object):
             if True, then this function raises an error if the number of
             nodes does not match those which would be expected from
             MapIcosahedorn.
-        
+
         Returns
         -------
         low2high: dict
             mapping so that low2high[i]==j means that node i in the current
             (low-resolution) surface is mapped to node j in the highres
             surface.
-            
+
         '''
 
         nx = self.nvertices
@@ -1413,17 +1413,17 @@ class Surface(object):
         y_tuples = map(tuple, np.asarray(y_boxed, dtype=np.int))
 
         # maps box indices in low-resolution surface to indices
-        # of potentially nearby nodes in highres surface 
+        # of potentially nearby nodes in highres surface
         x_tuple2near_indices = dict()
 
         # add border nodes to all low-res surface
-        # this is a bit inefficient 
+        # this is a bit inefficient
         # TODO optimize to consider neighboorhood
         for x_tuple in x_tuples:
             x_tuple2near_indices[x_tuple] = list(on_borders)
 
         # for non-border nodes in high-res surface, add them to
-        # a single box 
+        # a single box
         for i, y_tuple in enumerate(y_tuples):
             if i in on_borders:
                 continue # because it was added above
@@ -1434,7 +1434,7 @@ class Surface(object):
 
         # it now holds that for every node i in low-res surface (which is
         # identified by t=x_tuples[i]), there is no node j in the high-res surface
-        # within distance epsilon for which j in x_tuple2near_indices[t]  
+        # within distance epsilon for which j in x_tuple2near_indices[t]
 
         for i, x_tuple in enumerate(x_tuples):
             i_xyz = x[i, :]
@@ -1661,12 +1661,12 @@ class Surface(object):
 
 def normalized(v):
     '''Normalizes vectors
-    
+
     Parameters
     ==========
     v: np.ndarray
         PxQ matrix for P vectors that are all Q-dimensional
-    
+
     Returns
     =======
     n: np.ndarray
@@ -1687,7 +1687,7 @@ def merge(*surfs):
 def generate_cube():
     '''
     Generates a cube with sides 2 centered at the origin.
-    
+
     Returns
     -------
     cube: surf.Surface
@@ -1716,23 +1716,23 @@ def generate_cube():
 def generate_sphere(density=10):
     '''
     Generates a sphere-like surface with unit radius centered at the origin.
-    
+
     Parameters
     ----------
     d: int (default: 10)
         Level of detail
-    
+
     Returns
     -------
     sphere: surf.Surface
         A sphere with d**2+2 vertices and 2*d**2 faces. Seen as the planet
-        Earth, node 0 and 1 correspond to the north and south poles. 
+        Earth, node 0 and 1 correspond to the north and south poles.
         The remaining d**2 vertices are in d circles of latitute, each with
-        d vertices in them. 
+        d vertices in them.
     '''
 
     hsteps = density # 'horizontal' steps (in each circle of latitude)
-    vsteps = density # 'vertical' steps (number of circles of latitude, 
+    vsteps = density # 'vertical' steps (number of circles of latitude,
                      #                   excluding north and south poles)
 
     vs = [(0., 0., 1.), (0., 0., -1)] # top and bottom nodes
@@ -1781,7 +1781,7 @@ def generate_sphere(density=10):
 def generate_plane(x00, x01, x10, n01, n10):
     '''
     Generates a plane.
-    
+
     Parameters
     ----------
     x00: np.array with 3 values
@@ -1794,11 +1794,11 @@ def generate_plane(x00, x01, x10, n01, n10):
         number of points in first direction
     n10: int
         number of points in second direction
-    
+
     Returns
     -------
     surf.Surface
-        surface with n01*n10 nodes and (n01-1)*(n10-1)*2 faces. 
+        surface with n01*n10 nodes and (n01-1)*(n10-1)*2 faces.
         The (i,j)-th point is at coordinate x01+i*x01+j*x10 and
         is stored as the (i*n10+j)-th vertex.
     '''
@@ -1833,19 +1833,19 @@ def generate_plane(x00, x01, x10, n01, n10):
 
 def read(fn):
     '''General read function for surfaces
-    
+
     Parameters
     ----------
     fn: str
-        Surface filename. The extension determines how the file is read as 
+        Surface filename. The extension determines how the file is read as
         follows. '.asc', FreeSurfer ASCII format; '.coord'; Caret, '.gii',
         GIFTI; anything else: FreeSurfer geometry.
-    
+
     Returns
     -------
     surf_: surf.Surface
         Surface object
-    
+
     '''
     if fn.endswith('.asc'):
         from mvpa2.support.nibabel import surf_fs_asc
@@ -1863,12 +1863,12 @@ def read(fn):
 
 def write(fn, s, overwrite=True):
     '''General write function for surfaces
-    
+
     Parameters
     ----------
     fn: str
-        Surface filename. The extension determines how the file is written as 
-        follows. '.asc', FreeSurfer ASCII format; '.gii', GIFTI. 
+        Surface filename. The extension determines how the file is written as
+        follows. '.asc', FreeSurfer ASCII format; '.gii', GIFTI.
         Other formats are not supported.
     '''
     if fn.endswith('.asc'):
