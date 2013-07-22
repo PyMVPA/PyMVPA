@@ -252,7 +252,8 @@ class VolSurf(object):
             points on this line.
         '''
 
-        pxyz = self._pial.vertices
+
+        pxyz = self.white_surface.vertices
         weights = self.surf_project_weights_nodewise(xyz)
         return pxyz + np.reshape(weights, (-1, 1)) * pxyz
 
@@ -275,7 +276,7 @@ class VolSurf(object):
         pxyz = self._pial.vertices
         qxyz = self._white.vertices
 
-        dxyz = qxyz - pxyz  # difference vector
+        dxyz = (pxyz - qxyz)  # difference vector
 
 
         if len([s for s in weights.shape if s > 1]) != 1:
@@ -283,7 +284,7 @@ class VolSurf(object):
                              "shape %s" % (weights.shape,))
 
         weights_lin = np.reshape(weights.ravel(), (-1, 1))
-        return pxyz + weights_lin * dxyz
+        return qxyz + weights_lin * dxyz
 
 
     def surf_project_weights_nodewise(self, xyz):
@@ -357,7 +358,7 @@ class VolSurf(object):
             pxyz = pial if node_wise else pial[node, :]
             qxyz = white if node_wise else white[node, :]
 
-            dxyz = qxyz - pxyz  # difference vector
+            dxyz = pxyz - qxyz
             ndim = len(dxyz.shape)
             scale = np.sum(dxyz * dxyz, axis=ndim - 1)
             # weights = np.zeros((self._pial.nvertices,), dtype=pxyz.dtype)
@@ -367,7 +368,7 @@ class VolSurf(object):
                 weights[nan_mask, i] = np.nan
 
                 non_nan_mask = np.logical_not(nan_mask)
-                ps = xyz - pxyz
+                ps = (xyz - qxyz)
                 proj = np.sum(ps * dxyz, axis=1)
 
                 weights[non_nan_mask, i] = proj[non_nan_mask] / scale[non_nan_mask]
@@ -375,7 +376,7 @@ class VolSurf(object):
                 if scale == 0:
                     weights[:, i] = np.NAN
                 else:
-                    ps = xyz - pxyz
+                    ps = (xyz - qxyz)
                     proj = np.sum(ps * dxyz, axis=1)
 
                     weights[:, i] = proj / scale
@@ -445,7 +446,9 @@ class VolSurf(object):
                     # mask of voxels outside grey matter
                     msk = f(pos if one_node else pos[:, i])
                     delta = s[node, :] - xyz[msk, :]
-                d[msk] = sgn * np.sum(delta ** 2, 1) ** .5 # compute distance
+
+                dst = np.sum(delta ** 2, 1) ** .5
+                d[msk] = sgn * dst # compute signed distance
             d[np.isnan(d)] = 0
             ds[:, i] = d
 
