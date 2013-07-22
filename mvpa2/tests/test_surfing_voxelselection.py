@@ -54,10 +54,10 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         '''
         Tests to see whether results are identical for surface-based
-        searchlight (just one plane; Euclidian distnace) and volume-based 
+        searchlight (just one plane; Euclidian distnace) and volume-based
         searchlight.
-            
-        Note that the current value is a float; if it were int, it would 
+
+        Note that the current value is a float; if it were int, it would
         specify the number of voxels in each searchlight'''
 
         radius = 10.
@@ -84,7 +84,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
 
         '''
-        Simulate pial and white matter as just above and below 
+        Simulate pial and white matter as just above and below
         the central plane
         '''
         normal_vec = aff[:3, 2]
@@ -119,7 +119,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             postproc = lambda x:x
 
         '''
-        Surface analysis: define the query engine, cross validation, 
+        Surface analysis: define the query engine, cross validation,
         and searchlight
         '''
         surf_qe = SurfaceVerticesQueryEngine(surf_voxsel)
@@ -266,7 +266,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                     call_method_=("qe", "rvs", "gam"))
 
         combis = _cartprod(params) # compute all possible combinations
-        combistep = 17  #173 
+        combistep = 17  #173
                         # some fine prime number to speed things up
                         # if this value becomes too big then not all
                         # cases are covered
@@ -288,7 +288,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             call_method_ = combi['call_method_']
 
 
-            # keep track of which values were used - 
+            # keep track of which values were used -
             # so that this unit test tests itself
 
             for k in combi.keys():
@@ -313,7 +313,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                 r = sl(ds).samples
 
             elif call_method_ == 'rvs':
-                # use query-engine but build the 
+                # use query-engine but build the
                 # ingredients by hand
                 vg = volgeom.from_any(volume_,
                                       volume_mask_)
