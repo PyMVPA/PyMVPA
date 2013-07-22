@@ -12,7 +12,7 @@ from mvpa2.testing import *
 skip_if_no_external('nibabel')
 
 import numpy as np
-from numpy.testing.utils import assert_array_almost_equal
+from numpy.testing.utils import assert_array_almost_equal, assert_array_equal
 
 import nibabel as nb
 
@@ -356,6 +356,38 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                 if not vstr in tested_params[k]:
                     raise ValueError("Missing value %r for %s" %
                                         (tested_params[k], k))
+
+
+    def test_volsurf_projections(self):
+        white = surf.generate_plane((0, 0, 0), (0, 1, 0), (0, 0, 1), 10, 10)
+        pial = white + np.asarray([[1, 0, 0]])
+
+        above = pial + np.asarray([[3, 0, 0]])
+        vg = volgeom.VolGeom((10, 10, 10), np.eye(4))
+        vs = volsurf.VolSurf(vg, white, pial)
+
+        dx = pial.vertices - white.vertices
+
+        for s, w in ((white, 0), (pial, 1), (above, 4)):
+            xyz = s.vertices
+            ws = vs.surf_project_weights(True, xyz)
+            delta = vs.surf_unproject_weights_nodewise(ws) - xyz
+            assert_array_equal(delta, np.zeros((100, 3)))
+            assert_true(np.all(w == ws))
+
+        n2vs = vs.node2voxels()
+        assert_equal(n2vs, dict((i, {i:0, i + 100:1}) for i in xrange(100)))
+
+        nd = 17
+        ds_mm_expected = np.sum((above.vertices - pial.vertices[nd, :]) ** 2,
+                                                                    1) ** .5
+        ds_mm = vs.coordinates_to_grey_distance_mm(nd, above.vertices)
+        assert_array_almost_equal(ds_mm_expected, ds_mm)
+
+        ds_mm_nodewise = vs.coordinates_to_grey_distance_mm(True,
+                                                            above.vertices)
+        assert_true(np.all(ds_mm_nodewise == 3))
+
 
 def _cartprod(d):
     '''makes a combinatorial explosion from a dictionary
