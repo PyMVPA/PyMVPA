@@ -495,6 +495,10 @@ class Surface(object):
             if i == trg:
                 break
 
+        if i != trg:
+            raise ValueError('Node %d could not be reached from %d' %
+                                                        (trg, src))
+
         pth = [fdist[i]]
 
         # recursion to find remaining paths (if any)
