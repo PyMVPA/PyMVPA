@@ -1097,6 +1097,47 @@ class Surface(object):
         return Surface(v=all_v, f=all_f)
 
 
+    def split_by_connected_components(self):
+        '''Splits a surface by its connected components
+        
+        Returns
+        -------
+        splits: list of surf.Surface
+            A list of all surfaces that make up the original surface,
+            split when they are not connected to each other.
+            (If all nodes in the original surface are connected
+            then a list is returned with a single surface that is
+            identical to the input).
+            The output is sorted by the number of vertices. 
+            
+        '''
+        components = self.connected_components()
+        n2f = self.node2faces
+
+        n = len(components)
+        splits = []
+
+        face_mask = np.zeros((self.nfaces,), dtype=np.False_)
+        for i, component in enumerate(components):
+            face_mask[:] = False
+
+            node_idxs = np.asarray(list(component))
+            for node_idx in node_idxs:
+                face_mask[n2f[node_idx]] = True
+
+            nodes = self.vertices[node_idxs, :]
+
+            face_idxs = np.nonzero(face_mask)[0]
+            unq, unq_inv = np.unique(self.faces[face_idxs], False, True)
+            faces = np.reshape(unq_inv, (-1, 3))
+
+            s = Surface(nodes, faces)
+            splits.append(s)
+
+        splits.sort(key=lambda x:x.nvertices)
+        return splits
+
+
 
     @property
     def vertices(self):
