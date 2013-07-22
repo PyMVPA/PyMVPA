@@ -450,10 +450,14 @@ class Surface(object):
             raise ValueError("Cannot operate on empty list")
 
         src = to_visit[0]
+        if not src in np.arange(self.nvertices):
+            raise ValueError("%d is not a valid node index" % src)
         if len(to_visit) == 1:
             return []
 
         trg = to_visit[1]
+        if not trg in np.arange(self.nvertices):
+            raise ValueError("%d is not a valid node index" % trg)
 
         tdist = {src:(0, [src])} # tentative distances and path
         fdist = dict()  # final distances
