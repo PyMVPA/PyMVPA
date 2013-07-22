@@ -394,14 +394,15 @@ class VolSurf(object):
         ----------
         nodes: int or np.ndarray
             Single index, or Q indices of nodes relative to which the
-            coordinates are computed.
+            coordinates are computed. If True then grey distances
+            are computed node-wise.
         xyz: Px3 array with coordinates, assuming 'white' and 'pial' surfaces
             have P nodes each.
 
         Returns
         -------
         grey_position_mm: np.ndarray
-            Vector with P elements (if type(nodes) is int) or Px3 array
+            Vector with P elements (if type(nodes) is int) or PxQ array
             (with type(nodes) is np.ndarray) containing the distance to the
             grey matter. Values of zero indicate a node is within the grey
             matter. Negative values indicate that a node is 'below' the white
@@ -409,9 +410,16 @@ class VolSurf(object):
             whereas Positive values indicate that a node is 'above' the pial
             matter.
         '''
-        one_node = type(nodes) is int
-        nodes = np.asarray(nodes).ravel()
-        nnodes = len(nodes)
+        node_wise = nodes is True
+
+        if node_wise:
+            one_node = True
+            all_nodes = [False]  # placeholder
+        else:
+            one_node = type(nodes) is int
+            all_nodes = np.asarray(nodes).ravel()
+
+        nnodes = len(all_nodes)
 
         nxyz, three = xyz.shape
         if three != 3:
@@ -423,15 +431,21 @@ class VolSurf(object):
         in_white = lambda x:x < 0
         in_pial = lambda x:x > 1
 
-        pos = self.surf_project_weights(nodes, xyz)  # compute relative position
+        # compute relative position
+        pos = self.surf_project_weights(nodes, xyz)
         ds = np.zeros((nxyz, nnodes))  # space for output
 
-        for i, node in enumerate(nodes):
+        for i, node in enumerate(all_nodes):
             d = np.zeros(nxyz) + np.nan
-            for s, f in ((white, in_white), (pial, in_pial)):
-                msk = f(pos[:, i])
-                delta = s[node, :] - xyz[msk, :]
-                d[msk] = np.sum(delta ** 2, 1) ** .5
+            for sgn, s, f in ((-1, white, in_white), (1, pial, in_pial)):
+                if node_wise:
+                    msk = f(pos)
+                    delta = s[msk] - xyz[msk] # difference in coordinates
+                else:
+                    # mask of voxels outside grey matter
+                    msk = f(pos if one_node else pos[:, i])
+                    delta = s[node, :] - xyz[msk, :]
+                d[msk] = sgn * np.sum(delta ** 2, 1) ** .5 # compute distance
             d[np.isnan(d)] = 0
             ds[:, i] = d
 
