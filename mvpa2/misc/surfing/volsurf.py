@@ -404,7 +404,7 @@ class VolSurf(object):
         -------
         grey_position_mm: np.ndarray
             Vector with P elements (if type(nodes) is int) or PxQ array
-            (with type(nodes) is np.ndarray) containing the distance to the
+            (with type(nodes) is np.ndarray) containing the signed 'distance' to the
             grey matter. Values of zero indicate a node is within the grey
             matter. Negative values indicate that a node is 'below' the white
             matter (i.e. farther from the pial surface than the white surface),
