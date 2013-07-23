@@ -593,7 +593,10 @@ if externals.exists('scipy'):
                     # address potential NaNs
                     # set to max value in y
                     m = np.isnan(y)
-                    y[m] = np.max(y[-m])
+                    if np.all(m):
+                        return 0 # p=1
+
+                    y[m] = np.max(y[np.logical_not(m)])
                     return np.sum(y)
                 probability_combiner = f # avoid lambda as h5py doesn't like it
 
