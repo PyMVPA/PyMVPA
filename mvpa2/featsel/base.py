@@ -515,11 +515,11 @@ if externals.exists('scipy'):
     class SplitSamplesProbabilityMapper(SliceMapper):
         '''
         Mapper to select features & samples  based on some sensitivity value.
-    
+
         A use case is feature selection across participants,
         where either the same features are selected in all
         participants or not (see select_common_features parameter).
-    
+
         Examples
         --------
         >>> nf=10
@@ -538,7 +538,7 @@ if externals.exists('scipy'):
         >>> analyzer=OneWayAnova()
         >>> element_selector=FractionTailSelector(.4,mode='select',tail='upper')
         >>> common=True
-        >>> m=SplitSamplesProbabilityMapper(analyzer, 'subjects', 
+        >>> m=SplitSamplesProbabilityMapper(analyzer, 'subjects',
         ...                                 probability_label='fprob',
         ...                                 select_common_features=common,
         ...                                 selector=element_selector)
@@ -549,7 +549,7 @@ if externals.exists('scipy'):
         True
         >>> y.shape
         (100, 4)
-    
+
         '''
         def __init__(self,
                      sensitivity_analyzer,
@@ -570,7 +570,7 @@ if externals.exists('scipy'):
             select_common_features: bool
                 True means that the same features are selected after the split.
             probablity_label: None or str
-                If None, then the output dataset ds from the 
+                If None, then the output dataset ds from the
                 sensitivity_analyzer is taken to select the samples.
                 If not None it takes ds.sa['probablity_label'].
                 For example if sensitivity_analyzer=OneWayAnova then
