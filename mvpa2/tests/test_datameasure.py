@@ -526,8 +526,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
 
     def test_repeated_features(self):
-        print self.dataset
-        print self.dataset.fa.nonbogus_targets
+        #print self.dataset
+        #print self.dataset.fa.nonbogus_targets
         class CountFeatures(Measure):
             is_trained = True
             def _call(self, ds):
