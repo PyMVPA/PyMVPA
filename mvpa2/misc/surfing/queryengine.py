@@ -33,15 +33,15 @@ from mvpa2.base import warning
 class SurfaceVerticesQueryEngine(QueryEngineInterface):
     '''
     Query-engine that maps center nodes to indices of features
-    (voxels) that are near each center node.  
-    
+    (voxels) that are near each center node.
+
     In a typical use case such an instance is generated using
     the function 'disc_surface_queryengine'
     '''
 
     def __init__(self, voxsel, space='voxel_indices', add_fa=None):
         '''Makes a new SurfaceVerticesQueryEngine
-        
+
         Parameters
         ----------
         voxsel: volume_mask_dict.VolumeMaskDictionary
@@ -119,21 +119,21 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
 
     def query_byid(self, vertexid):
         """Given a vertex ID give us indices of dataset features (voxels)
-        
+
         Parameters
         ----------
         vertexid: int
-            Index of searchlight center vertex on the surface. 
+            Index of searchlight center vertex on the surface.
             This value should be an element in self.ids
-            
+
         Returns
         -------
         voxel_ids: list of int or AttrDataset
             The linear indices of voxels near the vertex with index vertexid.
             If the instance was constructed with add_fa=None, then voxel_ids
             is a list; otherwise it is a AttrDataset with additional feature
-            attributes stored in voxel_ids.fa. 
-            
+            attributes stored in voxel_ids.fa.
+
         """
         voxel_unmasked_ids = self.voxsel.get(vertexid)
 
@@ -161,12 +161,12 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
     def get_masked_nifti_image(self):
         '''Returns a nifti image indicating which voxels are included
         in one or more searchlights.
-        
+
         Returns
         -------
         img: nibabel.Nifti1Image
-            Nifti image with value zero for voxels that we not selected, and 
-            non-zero values for selected voxels. 
+            Nifti image with value zero for voxels that we not selected, and
+            non-zero values for selected voxels.
         '''
         msk = self.voxsel.get_mask()
         import nibabel as nb
@@ -189,23 +189,23 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
     def feature_id2nearest_vertex_id(self, feature_id,
                                      fallback_euclidian_distance=False):
         '''Computes the index of the vertex nearest to a given voxel.
-        
+
         Parameters
         ----------
         feature_id: int
             Feature index (referring to a voxel).
         fallback_euclidian_distance: bool (default: False)
             If the voxel indexed by feature_id was not selected by any searchlight,
-            then None is returned if fallback_euclidian_distance is False, but 
-            vertex_id with the nearest Euclidian distance is returned if True. 
-            
+            then None is returned if fallback_euclidian_distance is False, but
+            vertex_id with the nearest Euclidian distance is returned if True.
+
         Returns
         -------
         vertex_id: int
             Vertex index of vertex nearest to the feature with id feature_id.
             By default this function only considers vertices that are in one
             or more searchlights
-            
+
         '''
 
         if type(feature_id) in (list, tuple):
@@ -218,17 +218,17 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
 
     def vertex_id2nearest_feature_id(self, vertex_id):
         '''Computes the index of the voxel nearest to a given vertex.
-        
+
         Parameters
         ----------
         vertex_id: int
             Vertex id (referring to a node on the surface).
-            
+
         Returns
         -------
         feature_id: int
             Index of feature nearest to the vertex with id vertex_id.
-            
+
         Notes
         -----
         This function only considers feature ids that are selected by
@@ -277,10 +277,10 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
         Surface of grey-matter to pial-matter boundary, or filename
         of file containing such a surface.
     source_surf: surf.Surface or None
-        Surface used to compute distance between nodes. If omitted, it is 
-        the average of the gray and white surfaces. 
+        Surface used to compute distance between nodes. If omitted, it is
+        the average of the gray and white surfaces.
     source_surf_nodes: list of int or numpy array or None
-        Indices of nodes in source_surf that serve as searchlight center. 
+        Indices of nodes in source_surf that serve as searchlight center.
         By default every node serves as a searchlight center.
     volume_mask: None (default) or False or int
         Mask from volume to apply from voxel selection results. By default
