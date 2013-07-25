@@ -259,7 +259,7 @@ def test_subset():
 def test_subset_filler():
     sm = StaticFeatureSelection(np.arange(3))
     sm_f0 = StaticFeatureSelection(np.arange(3), filler=0)
-    sm_fm1 = StaticFeatureSelection(np.arange(3), filler= -1)
+    sm_fm1 = StaticFeatureSelection(np.arange(3), filler=-1)
     sm_fnan = StaticFeatureSelection(np.arange(3), filler=np.nan)
     data = np.arange(12).astype(float).reshape((2, -1))
 
@@ -423,7 +423,7 @@ def test_addaxis():
     ds3 = AddAxisMapper(pos=3)(ds)
     assert_array_equal(ds3.shape, ds.shape + (1,))
     # reverse indexing
-    ds_1 = AddAxisMapper(pos= -1)(ds)
+    ds_1 = AddAxisMapper(pos=-1)(ds)
     assert_array_equal(ds3.samples, ds_1.samples)
     assert_equal(ds3.sa, ds_1.sa)
     assert_equal(ds3.fa, ds_1.fa)
