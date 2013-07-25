@@ -277,7 +277,56 @@ class ProductFlattenMapper(FlattenMapper):
             label = name + postfix
             if label in mds.fa:
                 del mds.fa[label]
+
         return mds
+
+    def get_reversed_factor_name_values(self, reversed_dataset):
+        '''Helper function to trace back the original names and values
+        after the mapper reversed a dataset.
+
+        Parameters
+        ----------
+        reversed_dataset: Dataset
+            The instance that was reversed using this instance
+
+        Returns
+        -------
+        factor_names_values: iterable
+            The names and values for each dimension. If the reversed_dataset
+            is shaped ns X nf1 x nf2 x ... x nfN, then
+            factor_names_values will have a length of N. Furthermore
+            the K-th element in factor_names_values is a tuple
+            (nameK, valueK) where nameK is a string and valueK has
+            length nfK.
+
+        Notes
+        -----
+        It is not guaranteed that the order of valueK matches the
+        corresponding element in self.factor_names_values that was
+        supplied to the __init__ method
+        '''
+
+        output_factor_names = []
+        for dim, (name, values) in enumerate(self._factor_names_values):
+            vs = reversed_dataset.fa[name].value
+
+            if dim > 0:
+                vs = vs.swapaxes(0, dim)
+
+            n = vs.shape[0]
+            assert(n == len(values))
+
+            unq_vs = []
+            for i in xrange(n):
+                v = vs[i, ...]
+                unq_v = np.unique(v)
+                assert(unq_v.size == 1)
+                assert(unq_v in values)
+                unq_vs.append(unq_v)
+
+            output_factor_names.append((name, np.asarray(unq_vs).ravel()))
+
+        return output_factor_names
 
 
 def mask_mapper(mask=None, shape=None, space=None):
