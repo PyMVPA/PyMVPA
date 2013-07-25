@@ -272,11 +272,11 @@ class ProductFlattenMapper(FlattenMapper):
 
     def _reverse_dataset(self, dataset):
         mds = super(ProductFlattenMapper, self)._reverse_dataset(dataset)
-        for name, _ in self._factor_name_values:
-            for postfix in (None, '_indices'):
-                label = name if postfix is None else name + postfix
-                if label in mds.fa:
-                    del mds.fa[label]
+        postfix = '_indices'
+        for name, _ in self._factor_names_values:
+            label = name + postfix
+            if label in mds.fa:
+                del mds.fa[label]
         return mds
 
 
