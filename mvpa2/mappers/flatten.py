@@ -190,7 +190,7 @@ class FlattenMapper(Mapper):
 class ProductFlattenMapper(FlattenMapper):
     """Reshaping mapper that flattens multidimensional arrays and
     preserves information for each dimension in feature attributes
-    
+
     Notes
     -----
     This class' name contains 'product' because it maps feature
@@ -208,9 +208,9 @@ class ProductFlattenMapper(FlattenMapper):
             (nameK, valueK) where nameK is a string and valueK has
             length nfK.
             Applying this mapper to a dataset yields a new dataset
-            with size ns X (nf1 * nf2 * ... * nfN) with 
+            with size ns X (nf1 * nf2 * ... * nfN) with
             feature attributes nameK and nameKindices for each nameK
-            in the factor names. 
+            in the factor names.
         '''
         kwargs['auto_train'] = kwargs.get('auto_train', True)
 
@@ -246,7 +246,7 @@ class ProductFlattenMapper(FlattenMapper):
                 nshape = [1] + list(oshape) # full shape with one sample
                 nshape[i + 1] = 1 # dimension of current factor
 
-                # shape for repr with 1 value at all dimensions except the 
+                # shape for repr with 1 value at all dimensions except the
                 # current one. In other words nshapa and ushape complement
                 # each other.
                 ushape = [1] * len(nshape)
