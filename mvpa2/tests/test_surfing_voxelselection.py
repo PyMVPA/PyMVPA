@@ -33,7 +33,8 @@ from mvpa2.misc.surfing import surf_voxel_selection, queryengine, volgeom, \
 
 from mvpa2.measures.searchlight import Searchlight
 from mvpa2.misc.surfing.queryengine import SurfaceVerticesQueryEngine, \
-                                            disc_surface_queryengine
+                                           SurfaceVoxelsQueryEngine, \
+                                           disc_surface_queryengine
 
 from mvpa2.measures.base import Measure, \
         TransferMeasure, RepeatedMeasure, CrossValidation
@@ -387,6 +388,42 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         ds_mm_nodewise = vs.coordinates_to_grey_distance_mm(True,
                                                             above.vertices)
         assert_true(np.all(ds_mm_nodewise == 3))
+
+    def test_surface_voxel_query_engine(self):
+        vol_shape = (10, 10, 10, 1)
+        vol_affine = np.identity(4)
+        vol_affine[0, 0] = vol_affine[1, 1] = vol_affine[2, 2] = 5
+        vg = volgeom.VolGeom(vol_shape, vol_affine)
+
+        # make the surfaces
+        sphere_density = 10
+
+        outer = surf.generate_sphere(sphere_density) * 25. + 15
+        inner = surf.generate_sphere(sphere_density) * 20. + 15
+
+        vs = volsurf.VolSurf(vg, inner, outer)
+
+        radius = 10
+
+        for fallback, expected_nfeatures in ((True, 1000), (False, 183)):
+            voxsel = surf_voxel_selection.voxel_selection(vs, radius)
+            qe = SurfaceVoxelsQueryEngine(voxsel, fallback_euclidian_distance=fallback)
+
+            m = _Voxel_Count_Measure()
+
+            sl = Searchlight(m, queryengine=qe)
+
+            data = np.random.normal(size=vol_shape)
+            img = nb.Nifti1Image(data, vol_affine)
+            ds = fmri_dataset(img)
+
+            sl_map = sl(ds)
+
+            counts = sl_map.samples
+
+            assert_true(np.all(np.logical_and(5 <= counts, counts <= 18)))
+            assert_equal(sl_map.nfeatures, expected_nfeatures)
+
 
 
 def _cartprod(d):

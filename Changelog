@@ -36,7 +36,11 @@ Releases
   * New functionality (73 commits)
 
     - Multi-threaded, surface-based searchlight queryengine
-      :func:`~mvpa2.misc.surfing.queryengine.disc_surface_queryengine`.
+      :func:`~mvpa2.misc.surfing.queryengine.disc_surface_queryengine`
+      supporting as output space either surfaces
+      (:class:`~mvpa2.misc.surfing.queryengine.SurfaceVerticesQueryEngine`;
+      recommended) or volumes
+      (:class:`~mvpa2.misc.surfing.queryengine.SurfaceVoxelsQueryEngine`).
     - :class:`~mvpa2.misc.plot.flat_surf.FlatSurfacePlotter` supporting
       flattened cortical surfaces.
     - I/O support for AFNI NIML (dset,

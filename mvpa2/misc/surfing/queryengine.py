@@ -252,6 +252,99 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
     add_fa = property(fget=lambda self:self._add_fa, fset=_set_add_fa)
 
 
+class SurfaceVoxelsQueryEngine(SurfaceVerticesQueryEngine):
+    '''
+    Query-engine that maps center voxels (indexed by feature ids)
+    to indices of features (voxels) that are near each center voxel.
+
+    In a typical use case such an instance is generated using
+    the function 'disc_surface_queryengine' with the output_space='voxels'
+    argument
+    '''
+    def __init__(self, voxsel, space='voxel_indices', add_fa=None,
+                 fallback_euclidian_distance=True):
+        '''Makes a new SurfaceVerticesQueryEngine
+
+        Parameters
+        ----------
+        voxsel: volume_mask_dict.VolumeMaskDictionary
+            mapping from center node indices to indices of voxels
+            in a searchlight
+        space: str (default: 'voxel_indices')
+            defines by which space voxels are indexed.
+        add_fa: list of str
+            additional feature attributes that should be returned
+            when this instance is called with a center node id.
+        fallback_euclidian_distance: bool (default: True)
+            If True then every feature id will have voxels associated with
+            it. That means that the number of self.ids is then equal to the
+            number of features as the input dataset.
+            If False, only feature ids that are selected by at least one
+            searchlight are used. The number of self.ids is then equal
+            to the number of voxels that are selected by at least one
+            searchlight.
+        '''
+        super(SurfaceVoxelsQueryEngine, self).__init__(voxsel=voxsel,
+                                                       space=space,
+                                                       add_fa=add_fa)
+
+        self._feature_id2vertex_id = None
+        self.fallback_euclidian_distance = fallback_euclidian_distance
+
+
+    def __repr__(self, prefixes=[]):
+        prefixes_ = prefixes + _repr_attrs(self,
+                                          ['fallback_euclidian_distance'],
+                                          default=False)
+        return super(SurfaceVoxelsQueryEngine, self).__repr__(
+                            prefixes=prefixes_)
+
+    def __reduce__(self):
+        return (self.__class__, (self.voxsel, self.space,
+                                 self._add_fa,
+                                 self.fallback_euclidian_distance))
+
+    @property
+    def ids(self):
+        if self._feature_id2vertex_id is None:
+            raise ValueError("No feature id mapping. Did you train?")
+        return self._feature_id2vertex_id.keys()
+
+    def query_byid(self, feature_id):
+        vertex_id = self._feature_id2vertex_id[feature_id]
+        return super(SurfaceVoxelsQueryEngine, self).query_byid(vertex_id)
+
+    def train(self, ds):
+        super(SurfaceVoxelsQueryEngine, self).train(ds)
+
+        # Compute the mapping from voxel (feature) ids to node ids
+
+        fallback = self.fallback_euclidian_distance
+        if fallback:
+            # can use any feature id in ds
+            feature_ids = range(ds.nfeatures)
+        else:
+            # see which feature ids were mapped to
+            feature_ids = set()
+            for v in self._map_voxel_coord.itervalues():
+                feature_ids.update(set(v))
+
+        f = lambda x:self.feature_id2nearest_vertex_id(x, fallback)
+
+        fv = [(fid, f(fid)) for fid in feature_ids]
+
+        # in the case of not fallback, some feature ids do not map to
+        # a voxel id (i.e. they are mapped to None). Remove those from the
+        # output
+        self._feature_id2vertex_id = dict((f, v) for f, v in fv
+                                                if not v is None)
+
+
+    def untrain(self):
+        super(SurfaceVoxelsQueryEngine, self).untrain(ds)
+        self._feature_id2vertex_id = None
+
+
 def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
                              source_surf=None, source_surf_nodes=None,
                              volume_mask=False, distance_metric='dijkstra',
@@ -259,10 +352,15 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
                              nsteps=10, eta_step=1, add_fa=None, nproc=None,
                              outside_node_margin=None,
                              results_backend=None,
-                             tmp_prefix='tmpvoxsel'):
+                             tmp_prefix='tmpvoxsel',
+                             output_modality='surface'):
     """
     Voxel selection wrapper for multiple center nodes on the surface
-    
+
+    WiP
+    XXX currently the last parameter 'output_modality' determines
+    what kind of query engine is returned - is that bad?
+
     Parameters
     ----------
     radius: int or float
@@ -289,52 +387,63 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
         and has a property volume.fa.voxel_indices, then these indices
         are used to mask the data, unless volume_mask is False or an integer.
     distance_metric: str
-        Distance metric between nodes. 'euclidean' or 'dijksta' (default)           
+        Distance metric between nodes. 'euclidean' or 'dijksta' (default)
     start_fr: float (default: 0)
-            Relative start position of line in gray matter, 0.=white 
+            Relative start position of line in gray matter, 0.=white
             surface, 1.=pial surface
     stop_fr: float (default: 1)
         Relative stop position of line (as in start_fr)
-    start_mm: float (default: 0) 
+    start_mm: float (default: 0)
         Absolute start position offset (as in start_fr)
     sttop_mm: float (default: 0)
         Absolute start position offset (as in start_fr)
     nsteps: int (default: 10)
         Number of steps from white to pial surface
     eta_step: int (default: 1)
-        After how many searchlights an estimate should be printed of the 
+        After how many searchlights an estimate should be printed of the
         remaining time until completion of all searchlights
     add_fa: None or list of strings
-        Feature attribtues from a dataset that should be returned if the 
+        Feature attribtues from a dataset that should be returned if the
         queryengine is called with a dataset.
     nproc: int or None
-        Number of parallel threads. None means as many threads as the 
+        Number of parallel threads. None means as many threads as the
         system supports. The pprocess is required for parallel threads; if
         it cannot be used, then a single thread is used.
     outside_node_margin: float or None (default)
-        By default nodes outside the volume are skipped; using this 
+        By default nodes outside the volume are skipped; using this
         parameters allows for a marign. If this value is a float (possibly
-        np.inf), then all nodes within outside_node_margin Dijkstra 
-        distance from any node within the volume are still assigned 
+        np.inf), then all nodes within outside_node_margin Dijkstra
+        distance from any node within the volume are still assigned
         associated voxels. If outside_node_margin is True, then a node is
-        always assigned voxels regardless of its position in the volume. 
+        always assigned voxels regardless of its position in the volume.
     results_backend : 'native' or 'hdf5' or None (default).
         Specifies the way results are provided back from a processing block
         in case of nproc > 1. 'native' is pickling/unpickling of results by
         pprocess, while 'hdf5' would use h5save/h5load functionality.
         'hdf5' might be more time and memory efficient in some cases.
-        If None, then 'hdf5' if used if available, else 'native'.    
+        If None, then 'hdf5' if used if available, else 'native'.
     tmp_prefix : str, optional
         If specified -- serves as a prefix for temporary files storage
         if results_backend == 'hdf5'.  Thus can specify the directory to use
-        (trailing file path separator is not added automagically).    
+        (trailing file path separator is not added automagically).
+    output_modality: 'surface' or 'volume' (default: 'surface')
+        Indicates whether the output is surface-based
 
     Returns
     -------
     qe: SurfaceVerticesQueryEngine
         Query-engine that maps center nodes to indices of features
-        (voxels) that are near each center node.  
+        (voxels) that are near each center node.
+        If output_modality=='volume' then qe is of type subclass
+        SurfaceVoxelsQueryEngine.
     """
+
+    modality2class = dict(surface=SurfaceVerticesQueryEngine,
+                        volume=SurfaceVoxelsQueryEngine)
+
+    if not output_modality in modality2class:
+        raise KeyError("Illegal modality %s: should be in %s" %
+                            (output_modality, modality2class.keys()))
 
     voxsel = surf_voxel_selection.run_voxel_selection(
                                 radius=radius, volume=volume,
@@ -350,6 +459,7 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
                                 results_backend=results_backend,
                                 tmp_prefix=tmp_prefix)
 
-    qe = SurfaceVerticesQueryEngine(voxsel, add_fa=add_fa)
+
+    qe = modality2class[output_modality](voxsel, add_fa=add_fa)
 
     return qe

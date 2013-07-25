@@ -240,6 +240,7 @@ if externals.exists("lxml") and externals.exists("nibabel"):
 
 __sdebug("surface searchlight")
 from mvpa2.misc.surfing.queryengine import SurfaceVerticesQueryEngine, \
+                                           SurfaceVoxelsQueryEngine, \
                                             disc_surface_queryengine
 
 from mvpa2.misc.surfing import surf_voxel_selection, volgeom, volsurf
