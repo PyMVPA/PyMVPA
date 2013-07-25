@@ -263,7 +263,7 @@ class SurfaceVoxelsQueryEngine(SurfaceVerticesQueryEngine):
     '''
     def __init__(self, voxsel, space='voxel_indices', add_fa=None,
                  fallback_euclidian_distance=True):
-        '''Makes a new SurfaceVerticesQueryEngine
+        '''Makes a new SurfaceVoxelsQueryEngine
 
         Parameters
         ----------
