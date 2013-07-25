@@ -180,6 +180,12 @@ def test_product_flatten():
     dsr = flattener.reverse(mds)
     assert_equal(dsr.shape, ds.shape)
 
+    pnvs = flattener.get_reversed_factor_name_values(dsr)
+    for i, (n, vs) in enumerate(pnvs):
+        n_, vs_ = product_name_values[i]
+        assert_equal(n, n_)
+        assert_array_equal(np.sort(vs), np.sort(vs_))
+
     product_name_values += [('foo', [1, 2, 3])]
     flattener = ProductFlattenMapper(product_name_values)
     assert_raises(ValueError, flattener, ds)
