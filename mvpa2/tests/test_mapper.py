@@ -177,6 +177,9 @@ def test_product_flatten():
                 assert_equal(x.fa[name].value, value[p[i]])
                 assert_equal(x.fa[name + '_indices'].value, p[i])
 
+    dsr = flattener.reverse(mds)
+    assert_equal(dsr.shape, ds.shape)
+
     product_name_values += [('foo', [1, 2, 3])]
     flattener = ProductFlattenMapper(product_name_values)
     assert_raises(ValueError, flattener, ds)
