@@ -78,11 +78,11 @@ initsmlr(void)
 #else
     PyObject *module = Py_InitModule("smlr", smlr_methods);
 #endif
-
-    if (module == NULL)
-        INITERROR;
     struct module_state *st = GETSTATE(module);
 
+    if (module == NULL) {
+        INITERROR;
+    }
     st->error = PyErr_NewException("smlr.Error", NULL, NULL);
     if (st->error == NULL) {
         Py_DECREF(module);
