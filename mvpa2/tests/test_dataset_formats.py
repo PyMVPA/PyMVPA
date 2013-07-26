@@ -22,10 +22,13 @@ def test_format_lightsvm_basic():
     # arguments
     for dsname in ['uni2small', 'uni3small', 'chirp_linear']:
         ds = datasets[dsname]
-        f = tempfile.NamedTemporaryFile()
+        f = tempfile.NamedTemporaryFile(delete=False)
         am = to_lightsvm_format(ds, f)
+        f.close()
         f_ = open(f.name, 'r')
         ds_ = from_lightsvm_format(f_, am=am)
+        f_.close()
+        os.unlink(f.name)
         # Lets do checks now
         ok_(ds.targets.dtype == ds_.targets.dtype)
         if ds.targets.dtype.char in ['i', 'S', 'U']:
