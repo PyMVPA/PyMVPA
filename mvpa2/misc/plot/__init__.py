@@ -11,11 +11,11 @@
 __docformat__ = 'restructuredtext'
 
 if __debug__:
-    from mvpa2.base import debug
+    from mvpa2.base import debug, externals
     debug('INIT', 'mvpa2.misc.plot start')
 
-from mvpa2.misc.plot.base import *
+if externals.exists('matplotlib'):
+    from mvpa2.misc.plot.base import *
 
 if __debug__:
     debug('INIT', 'mvpa2.misc.plot end')
-
