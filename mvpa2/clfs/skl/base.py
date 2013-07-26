@@ -20,7 +20,7 @@ from mvpa2.base.learner import FailedToTrainError, FailedToPredictError, \
 
 
 # do conditional to be able to build module reference
-externals.exists('skl', raise_=True)
+externals.exists('skl', raise_=True, exception=ImportError)
 
 
 class SKLLearnerAdapter(Classifier):
