@@ -11,12 +11,12 @@
 import os
 import unittest
 
-from mvpa2.testing.tools import *
 from mvpa2.base.info import wtf
+from mvpa2.testing.tools import *
 
 @with_tempfile()
 def test_wtf(filename):
-    """Very basic testing -- just to see if it doesn't crash"""
+    """Very basic testing of wtf()"""
 
     sinfo = str(wtf())
     sinfo_excludes = str(wtf(exclude=['runtime']))
@@ -24,8 +24,6 @@ def test_wtf(filename):
         msg="Got not less info when excluded runtime."
         " Original one was:\n%s and without process:\n%s"
         % (sinfo, sinfo_excludes))
-    print sinfo
-    print sinfo_excludes
     ok_(not 'RUNTIME' in sinfo_excludes)
 
     # check if we could store and load it back
