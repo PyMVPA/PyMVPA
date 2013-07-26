@@ -29,7 +29,7 @@ class MEGTests(unittest.TestCase):
 
         # Use this whenever we fully switch to nose to run tests
         #skip_if_no_external('gzip')
-        _, fn = tempfile.mkstemp('eeglab.txt', 'eeglab')
+        fd, fn = tempfile.mkstemp('eeglab.txt', 'eeglab'); os.close(fd)
         with open(fn, 'w') as f:
             f.write(data)
 

@@ -66,8 +66,8 @@ def test_h5py_datasets():
 def test_h5py_dataset_typecheck():
     ds = datasets['uni2small']
 
-    _, fpath = tempfile.mkstemp('mvpa', 'test')
-    _, fpath2 = tempfile.mkstemp('mvpa', 'test')
+    fd, fpath = tempfile.mkstemp('mvpa', 'test'); os.close(fd)
+    fd, fpath2 = tempfile.mkstemp('mvpa', 'test'); os.close(fd)
 
     h5save(fpath2, [[1, 2, 3]])
     assert_raises(ValueError, AttrDataset.from_hdf5, fpath2)
