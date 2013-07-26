@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit test interface for PyMVPA"""
 
+import sys
 import unittest
 import numpy as np
 from mvpa2 import _random_seed, cfg, wtf
@@ -81,7 +82,7 @@ def teardown_module(module, verbosity=None):
         np.seterr(**_sys_settings['np_errsettings'])
 
     if cfg.getboolean('tests', 'wtf', default='no'):
-        print wtf()
+        sys.stderr.write(str(wtf()))
 
 
 def collect_unit_tests(verbosity=1):
