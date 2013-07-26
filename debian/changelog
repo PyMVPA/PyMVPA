@@ -1,3 +1,10 @@
+pymvpa (0.4.8-4) UNRELEASED; urgency=low
+
+  * debian/control:
+    - build depend on python-numpydoc
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 26 Jul 2013 08:51:17 -0400
+
 pymvpa (0.4.8-3) unstable; urgency=low
 
   [ Felix Geyer ]

@@ -3,7 +3,7 @@ Section: python
 Priority: optional
 Maintainer: NeuroDebian Team <team@neuro.debian.net>
 Uploaders: Michael Hanke <michael.hanke@gmail.com>, Yaroslav Halchenko <debian@onerussian.com>
-Build-Depends: cdbs, debhelper (>= 5.0.38), swig, python-all-dev (>= 2.5), python-support (>= 0.6), python-numpy, libsvm-dev (>= 2.84.0), python-epydoc (>> 2.99), python-docutils (<< 0.6) | python-docutils (>= 0.6-3~), python-sphinx, help2man, rsync, graphviz, python-lxml, python-nifti, python-nose
+Build-Depends: cdbs, debhelper (>= 5.0.38), swig, python-all-dev (>= 2.5), python-support (>= 0.6), python-numpy, libsvm-dev (>= 2.84.0), python-epydoc (>> 2.99), python-docutils (<< 0.6) | python-docutils (>= 0.6-3~), python-sphinx, help2man, rsync, graphviz, python-lxml, python-nifti, python-nose, python-numpydoc
 Build-Conflicts: python-epydoc (= 3.0.1-3)
 Standards-Version: 3.9.3
 Homepage: http://www.pymvpa.org
