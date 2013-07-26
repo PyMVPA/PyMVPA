@@ -137,7 +137,7 @@ class SurfTests(unittest.TestCase):
             assert_true(len(n2f[i]) in nf)
 
 
-        # test dijkstra disances
+        # test dijkstra distances
         ds2 = s.dijkstra_distance(2)
         some_ds = {0: 3.613173280799, 1: 0.2846296765, 2: 0.,
                  52: 1.87458018, 53: 2.0487004817, 54: 2.222820777,
@@ -147,8 +147,8 @@ class SurfTests(unittest.TestCase):
         for k, v in some_ds.iteritems():
             assert_true(abs(v - ds2[k]) < eps)
 
-        # test I/O (throught ascii files)
-        _, fn = tempfile.mkstemp('surf.asc', 'surftest')
+        # test I/O (through ascii files)
+        fd, fn = tempfile.mkstemp('surf.asc', 'surftest'); os.close(fd)
         surf.write(fn, s, overwrite=True)
         s2 = surf.read(fn)
         os.remove(fn)
@@ -181,7 +181,7 @@ class SurfTests(unittest.TestCase):
     def test_surf_fs_asc(self):
         s = surf.generate_sphere(5) * 100
 
-        _, fn = tempfile.mkstemp('surf', 'test')
+        fd, fn = tempfile.mkstemp('surf', 'test'); os.close(fd)
         surf_fs_asc.write(fn, s, overwrite=True)
 
         t = surf_fs_asc.read(fn)
@@ -322,7 +322,7 @@ class SurfTests(unittest.TestCase):
         # some I/O testing
 
         img = vg.get_empty_nifti_image()
-        _, fn = tempfile.mkstemp('.nii', 'test')
+        fd, fn = tempfile.mkstemp('.nii', 'test'); os.close(fd)
         img.to_filename(fn)
 
         assert_true(os.path.exists(fn))
@@ -639,7 +639,7 @@ class SurfTests(unittest.TestCase):
 
                 if externals.exists('h5py'):
                     # some I/O testing
-                    _, fn = tempfile.mkstemp('.h5py', 'test')
+                    fd, fn = tempfile.mkstemp('.h5py', 'test'); os.close(fd)
                     h5save(fn, sel)
 
                     sel2 = h5load(fn)
@@ -654,9 +654,9 @@ class SurfTests(unittest.TestCase):
 
 
                 # test I/O with surfaces
-                _, outerfn = tempfile.mkstemp('outer.asc', 'test')
-                _, innerfn = tempfile.mkstemp('inner.asc', 'test')
-                _, volfn = tempfile.mkstemp('vol.nii', 'test')
+                fd, outerfn = tempfile.mkstemp('outer.asc', 'test'); os.close(fd)
+                fd, innerfn = tempfile.mkstemp('inner.asc', 'test'); os.close(fd)
+                fd, volfn = tempfile.mkstemp('vol.nii', 'test'); os.close(fd)
 
                 surf.write(outerfn, outer, overwrite=True)
                 surf.write(innerfn, inner, overwrite=True)
