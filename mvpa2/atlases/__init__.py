@@ -21,12 +21,16 @@ __docformat__ = 'restructuredtext'
 
 
 if __debug__:
-    from mvpa2.base import debug
+    from mvpa2.base import debug, externals
     debug('INIT', 'mvpa2.atlases')
 
-from mvpa2.atlases.base import LabelsAtlas, ReferencesAtlas, XMLAtlasException
-from mvpa2.atlases.fsl import FSLProbabilisticAtlas
-from mvpa2.atlases.warehouse import Atlas, KNOWN_ATLASES, KNOWN_ATLAS_FAMILIES
+# to pacify the nose
+# (see e.g. http://nipy.bic.berkeley.edu/builders/pymvpa-py2.7-osx-10.8/builds/4/steps/shell_3/logs/stdio)
+# import submodules only if lxml they need is available
+if externals.exists('lxml'):
+    from mvpa2.atlases.base import LabelsAtlas, ReferencesAtlas, XMLAtlasException
+    from mvpa2.atlases.fsl import FSLProbabilisticAtlas
+    from mvpa2.atlases.warehouse import Atlas, KNOWN_ATLASES, KNOWN_ATLAS_FAMILIES
 
 if __debug__:
     debug('INIT', 'mvpa2.atlases end')
