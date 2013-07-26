@@ -342,14 +342,19 @@ stepwise_regression(int w_rows, int w_cols, double w[],
   return cycle;
 }
 
-/* I am unsure if the following is still needed after
-   the changes due to Python 3 compatibility */
+/*tiziano:
+   I am unsure if the following is still needed after
+   the changes due to Python 3 compatibility
+  yoh:
+   Without it Windows build seems to be broken
+   http://nipy.bic.berkeley.edu/builders/pymvpa-py2.6-xp/builds/10/steps/shell_2/logs/stdio
+   so returning for Python2 at least for now */
+#if PY_MAJOR_VERSION < 3
 /* make dummy module definition to satisfy distutils on win32
  * which cannot compile non-extension libraries
  */
-/*PyMODINIT_FUNC initsmlrc(void)
+PyMODINIT_FUNC initsmlrc(void)
 {
         Py_InitModule3("smlrc", NULL, "");
 }
-*/
-
+#endif
