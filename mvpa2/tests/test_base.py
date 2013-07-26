@@ -19,9 +19,14 @@ def test_wtf(filename):
     """Very basic testing -- just to see if it doesn't crash"""
 
     sinfo = str(wtf())
-    sinfo_excludes = str(wtf(exclude=['process']))
-    ok_(len(sinfo) > len(sinfo_excludes))
-    ok_(not 'Process Info' in sinfo_excludes)
+    sinfo_excludes = str(wtf(exclude=['runtime']))
+    ok_(len(sinfo) > len(sinfo_excludes),
+        msg="Got not less info when excluded runtime."
+        " Original one was:\n%s and without process:\n%s"
+        % (sinfo, sinfo_excludes))
+    print sinfo
+    print sinfo_excludes
+    ok_(not 'RUNTIME' in sinfo_excludes)
 
     # check if we could store and load it back
     wtf(filename)
