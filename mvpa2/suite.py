@@ -257,11 +257,11 @@ if externals.exists("running ipython env"):
     except Exception, e:
         warning("Failed to activate custom IPython completions due to %s" % e)
 
-def suite_stats():
+def suite_stats(scope_dict={}):
     """Return cruel dict of things which evil suite provides
     """
 
-    glbls = globals()
+    scope_dict = scope_dict or globals()
     import types
     # Compatibility layer for Python3
     try:
@@ -351,6 +351,6 @@ def suite_stats():
                         pass
             return s
 
-    return EnvironmentStatistics(globals())
+    return EnvironmentStatistics(scope_dict)
 
 __sdebug("THE END of mvpa2.suite imports")
