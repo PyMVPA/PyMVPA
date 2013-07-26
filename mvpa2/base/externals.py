@@ -674,7 +674,7 @@ def exists(dep, force=False, raise_=False, issueWarning=None,
 
     if not result:
         if raise_:
-            raise RuntimeError, "Required external '%s' was not found" % dep
+            raise exception, "Required external '%s' was not found" % dep
         if issueWarning is not None \
                and cfg.getboolean('externals', 'issue warning', True):
             if issueWarning is True:
