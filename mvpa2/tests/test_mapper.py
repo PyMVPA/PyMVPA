@@ -134,9 +134,13 @@ def test_product_flatten():
     # generate random data in four dimensions
     data = np.random.normal(size=shape)
     ds = Dataset(data, sa=dict(sample_names=sample_names))
+    for n, v in product_name_values:
+        ds.a[n] = v
 
     # apply flattening to ds
-    flattener = ProductFlattenMapper(product_name_values)
+    names, values = zip(*(product_name_values))
+
+    flattener = ProductFlattenMapper(names)
 
     # test I/O (only if h5py is available)
     if externals.exists('h5py'):
@@ -158,7 +162,7 @@ def test_product_flatten():
 
     ndim = len(product_name_values)
 
-    idxs = [range(len(v)) for _, v in product_name_values]
+    idxs = [range(len(v)) for v in values]
     for si in xrange(nsamples):
         for fi, p in enumerate(itertools.product(*idxs)):
             data_tup = (si,) + p
@@ -180,15 +184,11 @@ def test_product_flatten():
     dsr = flattener.reverse(mds)
     assert_equal(dsr.shape, ds.shape)
 
-    pnvs = flattener.get_reversed_factor_name_values(dsr)
-    for i, (n, vs) in enumerate(pnvs):
-        n_, vs_ = product_name_values[i]
-        assert_equal(n, n_)
-        assert_array_equal(np.sort(vs), np.sort(vs_))
 
-    product_name_values += [('foo', [1, 2, 3])]
-    flattener = ProductFlattenMapper(product_name_values)
-    assert_raises(ValueError, flattener, ds)
+    names += ('foo',)
+
+    flattener = ProductFlattenMapper(names)
+    assert_raises(KeyError, flattener, ds)
 
 
 def test_subset():

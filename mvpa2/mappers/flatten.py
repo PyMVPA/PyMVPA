@@ -196,49 +196,75 @@ class ProductFlattenMapper(FlattenMapper):
     This class' name contains 'product' because it maps feature
     attributes in a cartesian-product way."""
 
-    def __init__(self, factor_names_values, **kwargs):
+    def __init__(self, factor_names, **kwargs):
         '''
         Parameters
         ----------
-        factor_names_values: iterable
+        factor_names: iterable
             The names and values for each dimension. If the dataset to
             be flattened is shaped ns X nf1 x nf2 x ... x nfN, then
-            factor_names_values should have a length of N. Furthermore
-            the K-th element in factor_names_values should be a tuple
-            (nameK, valueK) where nameK is a string and valueK has
-            length nfK.
-            Applying this mapper to a dataset yields a new dataset
+            factor_names should have a length of N. Furthermore
+            when applied to a dataset ds, it should have each
+            of the factor names factor_names[K] as an attribute and the value
+            of this attribute should have nfK values.
+            Applying this mapper to such a dataset yields a new dataset
             with size ns X (nf1 * nf2 * ... * nfN) with
             feature attributes nameK and nameKindices for each nameK
             in the factor names.
+        reverse_set_fa: bool
         '''
         kwargs['auto_train'] = kwargs.get('auto_train', True)
 
         # make sure the factor names and values are properly set
-        try:
-            shape = tuple(len(value) for _, value in factor_names_values)
-            space = '_'.join(name for name, _ in factor_names_values) + \
-                                                                 '_indices'
-        except:
-            raise ValueError('factor_names_values should be an iterable with pairs'
-                       ' of names and values')
+        factor_names = list(factor_names)
+        space = '_'.join(factor_names) + '_indices'
 
-        FlattenMapper.__init__(self, shape=shape, space=space, **kwargs)
+        FlattenMapper.__init__(self, shape=None, space=space, **kwargs)
 
-        self._factor_names_values = factor_names_values
+        self._factor_names = factor_names
+        self._factor_values = None
 
     def __repr__(self, prefixes=[]):
         return super(ProductFlattenMapper, self).__repr__(
                         prefixes=prefixes
-                        + _repr_attrs(self, ['factor_name_values']))
+                        + _repr_attrs(self, ['factor_names']))
+
+    @property
+    def factor_names(self):
+        return self._factor_names
+
+    def _train(self, ds):
+        super(ProductFlattenMapper, self)._train(ds)
+        self._factor_values = []
+        for nm in self._factor_names:
+            if not nm in ds.a.keys():
+                raise KeyError("Missing attribute: %s" % nm)
+            self._factor_values.append(ds.a[nm].value)
+
+
+    def _untrain(self):
+        self._factor_values = None
+
+    def _check_factor_name_values(self, ds):
+        ### currently unished...
+        if self._factor_values is None:
+            raise ValueError("Dataset is not trained")
+        for nm, value in zip(*(self._factor_names, self._factor_values)):
+            if any(ds.a[nm].value != value):
+                raise ValueError("Mismatch for attribute %s: %s != %s" %
+                                        (nm, value, ds.a[nm].value))
+
 
     def _forward_dataset(self, dataset):
+        self._train(dataset)
+
         mds = super(ProductFlattenMapper, self)._forward_dataset(dataset)
 
         oshape = self._origshape
 
+        factor_names_values = zip(*(self._factor_names, self._factor_values))
         # now map all the factor names and values to feature attributes
-        for i, (name, value) in enumerate(self._factor_names_values):
+        for i, (name, value) in enumerate(factor_names_values):
             # keep track of both the value itself and the indices
             for repr, postfix in ((value, None),
                                   (np.arange(len(value)), '_indices')):
@@ -268,19 +294,31 @@ class ProductFlattenMapper(FlattenMapper):
 
                 mds.fa[fa_label] = repr_flat.ravel()
 
+            del mds.a[name]
+
         return mds
 
     def _reverse_dataset(self, dataset):
+        #self._train(dataset)
+        factor_names_values = zip(*(self._factor_names, self._factor_values))
+
         mds = super(ProductFlattenMapper, self)._reverse_dataset(dataset)
         postfix = '_indices'
-        for name, _ in self._factor_names_values:
+        for name, _ in factor_names_values:
             label = name + postfix
             if label in mds.fa:
                 del mds.fa[label]
 
+        for nm, values in factor_names_values: #:self._get_reversed_factor_name_values(mds):
+            if nm in mds.a.keys() and any(mds.a[nm].value != values):
+                raise ValueError("name clash for %s" % nm)
+            del mds.fa[nm]
+            mds.a[nm] = values
+
         return mds
 
-    def get_reversed_factor_name_values(self, reversed_dataset):
+
+    def _get_reversed_factor_name_values(self, reversed_dataset):
         '''Helper function to trace back the original names and values
         after the mapper reversed a dataset.
 
@@ -307,13 +345,19 @@ class ProductFlattenMapper(FlattenMapper):
         '''
 
         output_factor_names = []
-        for dim, (name, values) in enumerate(self._factor_names_values):
+        factor_names_values = zip(*(self._factor_names, self._factor_values))
+        for dim, (name, values) in enumerate(factor_names_values):
             vs = reversed_dataset.fa[name].value
 
             if dim > 0:
                 vs = vs.swapaxes(0, dim)
 
             n = vs.shape[0]
+            print values
+            print n
+
+            print len(values)
+
             assert(n == len(values))
 
             unq_vs = []
