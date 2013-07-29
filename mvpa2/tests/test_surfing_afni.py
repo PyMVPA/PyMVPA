@@ -153,7 +153,7 @@ class SurfTests(unittest.TestCase):
         eps = .00001
 
         # test I/O
-        _, fn = tempfile.mkstemp('data.niml.dset', 'test')
+        fd, fn = tempfile.mkstemp('data.niml.dset', 'test'); os.close(fd)
 
         # depending on the mode we do different tests (but on the same data)
         modes = ['normal', 'skipio', 'sparse2full']
@@ -228,7 +228,7 @@ class SurfTests(unittest.TestCase):
         a = niml.from_niml(d)
         b = niml.to_niml(a)
 
-        _, fn = tempfile.mkstemp('.niml.dset', 'dset')
+        fd, fn = tempfile.mkstemp('.niml.dset', 'dset'); os.close(fd)
 
         afni_niml_dset.write(fn, b)
         bb = afni_niml_dset.read(fn)
@@ -252,7 +252,7 @@ class SurfTests(unittest.TestCase):
         d = np.arange(10).reshape((5, -1)) + .5
         ds = Dataset(d)
 
-        fn = _, fn = tempfile.mkstemp('.niml.dset', 'dset')
+        fn = fd, fn = tempfile.mkstemp('.niml.dset', 'dset'); os.close(fd)
         writers = [niml.write, afni_niml_dset.write]
         for i, writer in enumerate(writers):
             for form in ('text', 'binary', 'base64'):
@@ -313,7 +313,7 @@ class SurfTests(unittest.TestCase):
             ds = fmri_dataset(vg.get_empty_nifti_image(1))
             r = sl(ds)
 
-            _, fn = tempfile.mkstemp('.niml.dset', 'dset')
+            fd, fn = tempfile.mkstemp('.niml.dset', 'dset'); os.close(fd)
             niml.write(fn, r)
             rr = niml.read(fn)
 
@@ -386,7 +386,7 @@ class SurfTests(unittest.TestCase):
  4 1 14 43063 43064 43065 43066 43067 43177 43178 43179 43180 43290 43291 43292 43402 43403
 # </Node_ROI>"""
 
-        _, fn = tempfile.mkstemp('.niml.roi', 'dset')
+        fd, fn = tempfile.mkstemp('.niml.roi', 'dset'); os.close(fd)
 
         with open(fn, 'w') as f:
             f.write(payload)

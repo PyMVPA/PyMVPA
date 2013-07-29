@@ -569,7 +569,8 @@ _KNOWN = {'libsvm':'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           }
 
 
-def exists(dep, force=False, raise_=False, issueWarning=None):
+def exists(dep, force=False, raise_=False, issueWarning=None,
+           exception=RuntimeError):
     """
     Test whether a known dependency is installed on the system.
 
@@ -584,15 +585,17 @@ def exists(dep, force=False, raise_=False, issueWarning=None):
     force : boolean
       Whether to force the test even if it has already been
       performed.
-    raise_ : boolean
-      Whether to raise RuntimeError if dependency is missing.
-      If True, it is still conditioned on the global setting 
+    raise_ : boolean, str
+      Whether to raise an exception if dependency is missing.
+      If True, it is still conditioned on the global setting
       MVPA_EXTERNALS_RAISE_EXCEPTION, while would raise exception
       if missing despite the configuration if 'always'.
     issueWarning : string or None or True
       If string, warning with given message would be thrown.
       If True, standard message would be used for the warning
       text.
+    exception : exception, optional
+      What exception to raise.  Defaults to RuntimeError
     """
     # if we are provided with a list of deps - go through all of them
     if isinstance(dep, list) or isinstance(dep, tuple):
@@ -623,7 +626,7 @@ def exists(dep, force=False, raise_=False, issueWarning=None):
         # check whether an exception should be raised, even though the external
         # was already tested previously
         if not cfg.getboolean('externals', cfgid) and raise_:
-            raise RuntimeError, "Required external '%s' was not found" % dep
+            raise exception, "Required external '%s' was not found" % dep
         return cfg.getboolean('externals', cfgid)
 
 
@@ -671,7 +674,7 @@ def exists(dep, force=False, raise_=False, issueWarning=None):
 
     if not result:
         if raise_:
-            raise RuntimeError, "Required external '%s' was not found" % dep
+            raise exception, "Required external '%s' was not found" % dep
         if issueWarning is not None \
                and cfg.getboolean('externals', 'issue warning', True):
             if issueWarning is True:

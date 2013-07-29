@@ -148,7 +148,7 @@ def test_product_flatten():
         import tempfile
         import os
 
-        _, testfn = tempfile.mkstemp('mapper.h5py', 'test_product')
+        fd, testfn = tempfile.mkstemp('mapper.h5py', 'test_product'); os.close(fd)
         h5save(testfn, flattener)
         flattener = h5load(testfn)
         os.unlink(testfn)
