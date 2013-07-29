@@ -16,6 +16,10 @@ import sys, os, re
 import numpy as np
 import mvpa2
 
+# To troubleshoot buildbot documentation build problem
+print "D: PyMVPA path %s" % mvpa2.__path__
+print "D: PYTHONPATHs", '\n   '.join([]+sys.path)
+
 # We need to know sphinx version for decisions below
 import sphinx
 from distutils.version import LooseVersion

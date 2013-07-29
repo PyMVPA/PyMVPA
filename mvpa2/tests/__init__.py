@@ -8,9 +8,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit test interface for PyMVPA"""
 
+import sys
 import unittest
 import numpy as np
-from mvpa2 import _random_seed, cfg
+from mvpa2 import _random_seed, cfg, wtf
 from mvpa2.base import externals, warning
 
 # # init to make tests into a package
@@ -79,6 +80,9 @@ def teardown_module(module, verbosity=None):
     if verbosity < 4:
         # restore numpy settings
         np.seterr(**_sys_settings['np_errsettings'])
+
+    if cfg.getboolean('tests', 'wtf', default='no'):
+        sys.stderr.write(str(wtf()))
 
 
 def collect_unit_tests(verbosity=1):
