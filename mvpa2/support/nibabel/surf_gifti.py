@@ -27,7 +27,7 @@ def _get_single_array(g, intent):
             len_str = 'no' if n == 0 else '%d' % n
             raise ValueError('Found %s arrays matching %s, expected 1' %
                                 (len_str, intent))
-        return ar[0].data
+        return ar[0]
 
 def read(fn):
     '''Reads a GIFTI surface file
@@ -49,8 +49,8 @@ def read(fn):
 
     g = giftiio.read(fn)
 
-    vertices = _get_single_array(g, 'NIFTI_INTENT_POINTSET')
-    faces = _get_single_array(g, 'NIFTI_INTENT_TRIANGLE')
+    vertices = _get_single_array(g, 'NIFTI_INTENT_POINTSET').data
+    faces = _get_single_array(g, 'NIFTI_INTENT_TRIANGLE').data
 
     return surf.Surface(vertices, faces)
 
@@ -203,10 +203,10 @@ def to_xml(img, meta_fn_hint=None):
         img = to_gifti_image(img)
 
     if not meta_fn_hint is None:
-        vertices = _get_single_array('pointset')
-        faces = _get_single_array('triangle')
-
-        vertices.meta, faces.meta = filename2vertices_faces_metadata(fn)
+        vertices = _get_single_array(img, 'pointset')
+        faces = _get_single_array(img, 'triangle')
+        vertices.meta, faces.meta = \
+                        filename2vertices_faces_metadata(meta_fn_hint)
 
     # XXX FIXME from here on it's a bit of a hack
     # The to_xml() method adds newlines in <DATA>...</DATA> segments
