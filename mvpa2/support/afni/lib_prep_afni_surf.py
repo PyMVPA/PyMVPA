@@ -876,7 +876,7 @@ remove and/or overwrite existing files.'''
     parser.add_argument('--aea_opts', default='-cmass cmass+xyz -big_move', help="Options given to align_epi_anat ([-cmass cmass+xyz -big_move])")
     parser.add_argument('-I', '--identity', action="store_true", default=False, help="Use identity transformation between SurfVol and anat/epivol (no alignment)")
     parser.add_argument('-A', '--AddEdge', default='yes', choices=yesno, help="Run AddEdge on aligned volumes ([yes])")
-    parser.add_argument('-f', '--surfformat', default='gifti', choices=['gifti', 'ascii'], help="Output format of surfaces: 'gifti' (default) or 'ascii'")
+    parser.add_argument('-f', '--surfformat', default='ascii', choices=['gifti', 'ascii'], help="Output format of surfaces: 'ascii' (default - for now) or 'gifti'")
     return parser
 
 def getoptions():
