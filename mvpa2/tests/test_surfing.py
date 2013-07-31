@@ -194,7 +194,7 @@ class SurfTests(unittest.TestCase):
 
         r = s.rotate(theta, unit='deg')
 
-        l2r = surf_fs_asc.sphere_reg_leftrightmapping(s, r)
+        l2r = surf.sphere_reg_leftrightmapping(s, r)
         l2r_expected = [0, 1, 2, 6, 5, 4, 3, 11, 10, 9, 8, 7, 15, 14, 13, 12,
                        16, 19, 18, 17, 21, 20, 23, 22, 26, 25, 24]
 
@@ -203,12 +203,12 @@ class SurfTests(unittest.TestCase):
 
         sides_facing = 'apism'
         for side_facing in sides_facing:
-            l, r = surf_fs_asc.hemi_pairs_reposition(s + 10., t + (-10.),
-                                                     side_facing)
+            l, r = surf.hemi_pairs_reposition(s + 10., t + (-10.),
+                                              side_facing)
 
             m = surf.merge(l, r)
 
-            # not sure at the moment why medial rotation 
+            # not sure at the moment why medial rotation
             # messes up - but leave for now
             eps = 666 if side_facing == 'm' else .001
             assert_true((abs(m.center_of_mass) < eps).all())
@@ -362,7 +362,7 @@ class SurfTests(unittest.TestCase):
         dset = fmri_dataset(data, mask=msk)
         vg_dset = volgeom.from_any(dset)
 
-        # ensure that the mask is set properly and 
+        # ensure that the mask is set properly and
         assert_equal(vg.nvoxels, vg.nvoxels_mask * maskstep ** 3)
         assert_equal(vg_dset, vg)
 
@@ -386,8 +386,8 @@ class SurfTests(unittest.TestCase):
 
                 # results should be identical irrespective of constr
                 if i == 0:
-                    # - first call with this value of dialte: has to be more 
-                    #   voxels than very previous dilation value, unless the 
+                    # - first call with this value of dialte: has to be more
+                    #   voxels than very previous dilation value, unless the
                     #   full volume is covered - then it can be equal too
                     # - every next call: ensure size matches
                     cmp = lambda x, y:(x >= y if covers_full_volume else x > y)
@@ -397,7 +397,7 @@ class SurfTests(unittest.TestCase):
                     # same size as previous call
                     assert_equal(n, nvoxels_masks[-1])
 
-                # if dilate is not None or zero, then it should 
+                # if dilate is not None or zero, then it should
                 # have selected all the voxels if the radius is big enough
                 assert_equal(np.sum(data) == vg.nvoxels, covers_full_volume)
 
@@ -584,7 +584,7 @@ class SurfTests(unittest.TestCase):
         nv = outer.nvertices
 
         # select under variety of parameters
-        # parameters are distance metric (dijkstra or euclidean), 
+        # parameters are distance metric (dijkstra or euclidean),
         # radius, and number of searchlight  centers
         params = [('d', 1., 10), ('d', 1., 50), ('d', 1., 100), ('d', 2., 100),
                   ('e', 2., 100), ('d', 2., 100), ('d', 20, 100),
@@ -621,7 +621,7 @@ class SurfTests(unittest.TestCase):
 
                 assert_true(len('%s%r' % (sel, sel)) > 0)
 
-                # see if voxels containing inner and outer 
+                # see if voxels containing inner and outer
                 # nodes were selected
                 for sf in [inner, outer]:
                     for k, idxs in mp.iteritems():
@@ -910,37 +910,37 @@ class SurfTests(unittest.TestCase):
             test_data = '''<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE GIFTI SYSTEM "http://www.nitrc.org/frs/download.php/1594/gifti.dtd">
 <GIFTI
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-  xsi:noNamespaceSchemaLocation="http://www.nitrc.org/frs/download.php/1303/GIFTI_Caret.xsd" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="http://www.nitrc.org/frs/download.php/1303/GIFTI_Caret.xsd"
   Version="1.0"
   NumberOfDataArrays="2">
-<MetaData> 
+<MetaData>
   <MD>
     <Name><![CDATA[date]]></Name>
-    <Value><![CDATA[Thu Nov 15 09:05:22 2007]]></Value> 
+    <Value><![CDATA[Thu Nov 15 09:05:22 2007]]></Value>
   </MD>
 </MetaData>
 <LabelTable/>
 <DataArray Intent="NIFTI_INTENT_POINTSET"
-  DataType="NIFTI_TYPE_FLOAT32" 
-  ArrayIndexingOrder="RowMajorOrder" 
+  DataType="NIFTI_TYPE_FLOAT32"
+  ArrayIndexingOrder="RowMajorOrder"
   Dimensionality="2"
   Dim0="4"
-  Dim1="3" 
-  Encoding="ASCII" 
-  Endian="LittleEndian" 
-  ExternalFileName="" 
+  Dim1="3"
+  Encoding="ASCII"
+  Endian="LittleEndian"
+  ExternalFileName=""
   ExternalFileOffset="">
 <CoordinateSystemTransformMatrix>
-  <DataSpace><![CDATA[NIFTI_XFORM_TALAIRACH]]></DataSpace> 
-  <TransformedSpace><![CDATA[NIFTI_XFORM_TALAIRACH]]></TransformedSpace> 
+  <DataSpace><![CDATA[NIFTI_XFORM_TALAIRACH]]></DataSpace>
+  <TransformedSpace><![CDATA[NIFTI_XFORM_TALAIRACH]]></TransformedSpace>
   <MatrixData>
-    1.000000 0.000000 0.000000 0.000000 
-    0.000000 1.000000 0.000000 0.000000 
-    0.000000 0.000000 1.000000 0.000000 
+    1.000000 0.000000 0.000000 0.000000
+    0.000000 1.000000 0.000000 0.000000
+    0.000000 0.000000 1.000000 0.000000
     0.000000 0.000000 0.000000 1.000000
-  </MatrixData> 
-</CoordinateSystemTransformMatrix> 
+  </MatrixData>
+</CoordinateSystemTransformMatrix>
 <Data>
   10.5 0 0
   0 20.5 0
@@ -949,23 +949,23 @@ class SurfTests(unittest.TestCase):
 </Data>
 </DataArray>
 <DataArray Intent="NIFTI_INTENT_TRIANGLE"
-  DataType="NIFTI_TYPE_INT32" 
-  ArrayIndexingOrder="RowMajorOrder" 
+  DataType="NIFTI_TYPE_INT32"
+  ArrayIndexingOrder="RowMajorOrder"
   Dimensionality="2"
   Dim0="4"
-  Dim1="3" 
-  Encoding="ASCII" 
-  Endian="LittleEndian" 
+  Dim1="3"
+  Encoding="ASCII"
+  Endian="LittleEndian"
   ExternalFileName="" ExternalFileOffset="">
 <Data>
 0 1 2
 1 2 3
 0 1 3
 0 2 3
-</Data> 
+</Data>
 </DataArray>
 </GIFTI>'''
-            _, fn = tempfile.mkstemp('surf.gii', 'surftest')
+            _, fn = tempfile.mkstemp('surf.surf.gii', 'surftest')
             with open(fn, 'w') as f:
                 f.write(test_data)
 
