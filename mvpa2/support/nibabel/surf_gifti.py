@@ -19,6 +19,16 @@ import numpy as np, os, datetime, re
 from mvpa2.support.nibabel import surf
 import io
 
+
+def _get_single_array(g, intent):
+        ar = g.getArraysFromIntent(intent)
+        n = len(ar)
+        if n != 1:
+            len_str = 'no' if n == 0 else '%d' % n
+            raise ValueError('Found %s arrays matching %s, expected 1' %
+                                (len_str, intent))
+        return ar[0].data
+
 def read(fn):
     '''Reads a GIFTI surface file
 
@@ -39,17 +49,8 @@ def read(fn):
 
     g = giftiio.read(fn)
 
-    def get_single_array(g, intent):
-        ar = g.getArraysFromIntent(intent)
-        n = len(ar)
-        if n != 1:
-            len_str = 'no' if n == 0 else '%d' % n
-            raise ValueError('Found %s arrays matching %s, expected 1' %
-                                (len_str, intent))
-        return ar[0].data
-
-    vertices = get_single_array(g, 'NIFTI_INTENT_POINTSET')
-    faces = get_single_array(g, 'NIFTI_INTENT_TRIANGLE')
+    vertices = _get_single_array(g, 'NIFTI_INTENT_POINTSET')
+    faces = _get_single_array(g, 'NIFTI_INTENT_TRIANGLE')
 
     return surf.Surface(vertices, faces)
 
@@ -187,6 +188,10 @@ def to_xml(img, meta_fn_hint=None):
     ----------
     img: gifti.GiftiImage or surf
         Input surface
+    meta_fn_hint: str or None
+        If not None, it should be a string (possibly a filename that
+        describes what kind of surface this is.
+        See filename2vertices_faces_metadata.
 
     Returns
     -------
@@ -198,15 +203,8 @@ def to_xml(img, meta_fn_hint=None):
         img = to_gifti_image(img)
 
     if not meta_fn_hint is None:
-        def get_array(intent, img=img):
-            arrs = img.getArraysFromIntent(intent)
-            n = len(arrs)
-            if n != 1:
-                raise ValueError("Expected unique array, found %d" % n)
-            return arrs[0]
-
-        vertices = get_array('pointset')
-        faces = get_array('triangle')
+        vertices = _get_single_array('pointset')
+        faces = _get_single_array('triangle')
 
         vertices.meta, faces.meta = filename2vertices_faces_metadata(fn)
 
@@ -249,10 +247,11 @@ def write(fn, s, overwrite=True):
 
     EXT = '.surf.gii'
     if not fn.endswith(EXT):
-        raise ValueError("Filename does not end with required extension %s" %
-                                                                          EXT)
+        raise ValueError("Filename %s does not end with required"
+                         " extension %s" % (fn, EXT))
 
-    xml = to_xml(s)
+
+    xml = to_xml(s, fn)
 
     with io.FileIO(fn, 'wb') as f:
         n = f.write(xml)
