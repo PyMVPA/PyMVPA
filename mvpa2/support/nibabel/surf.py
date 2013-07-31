@@ -1858,6 +1858,7 @@ def read(fn):
         from mvpa2.support.nibabel import surf_caret
         return surf_caret.read(fn)
     elif fn.endswith('.gii'):
+        # XXX require .surf.gii? Not for now - but may want to change
         from mvpa2.support.nibabel import surf_gifti
         return surf_gifti.read(fn)
     else:
@@ -1879,6 +1880,8 @@ def write(fn, s, overwrite=True):
         from mvpa2.support.nibabel import surf_fs_asc
         surf_fs_asc.write(fn, s, overwrite=overwrite)
     elif fn.endswith('.gii'):
+        if not fn.endswith('.surf.gii'):
+            raise ValueError("GIFTI output requires extension .surf.gii")
         from mvpa2.support.nibabel import surf_gifti
         surf_gifti.write(fn, s, overwrite=overwrite)
     else:
