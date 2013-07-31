@@ -21,20 +21,20 @@ import io
 
 def read(fn):
     '''Reads a GIFTI surface file
-    
+
     Parameters
     ----------
     fn: str
         Filename
-    
+
     Returns
     -------
     surf_: surf.Surface
         Surface
-        
+
     Notes
     -----
-    Any meta-information stored in the GIFTI file is not present in surf_. 
+    Any meta-information stored in the GIFTI file is not present in surf_.
     '''
 
     g = giftiio.read(fn)
@@ -56,17 +56,17 @@ def read(fn):
 
 def filename2vertices_faces_metadata(fn):
     '''Attempts to get meta data based on the filename
-    
+
     Parameters
     ----------
     fn: str
         Filename
-        
+
     Returns
     -------
     meta: tuple
         Tuple with two gifti.GiftiMetaData objects for vertices
-        and faces. If the filename contains exactly one of 'lh', 'rh', or 
+        and faces. If the filename contains exactly one of 'lh', 'rh', or
         'mh' then it is assumed to be of left, right or merged hemispheres.
         If the filename contains exactly one of 'pial,'smoothwm',
         'intermediate',''inflated','sphere','flat', then the geometric
@@ -113,24 +113,27 @@ def filename2vertices_faces_metadata(fn):
 
     return v, f
 
+def to_gifti_image(s, add_indices=False, swap_LPI_RAI=False):
+    '''
+    Converts a surface to nibabel's gifti format.
 
-def write(fn, s, overwrite=True):
-    '''Writes a GIFTI surface file
-    
     Parameters
     ----------
-    fn: str
-        Filename
-    s: surf.Surface
-        Surface
-    overwrite: bool (default: False)
-        If set to False an error is raised if the file exists
+    s: surf
+        Input surface
+    add_indices: True or False (default: False)
+        if True then indices of the nodes are added.
+        Note: caret may not be able to read these
+    swap_LPI_RAI: True or False (default: False)
+        If True then the diagonal elements of the xform matrix
+        are set to [-1,-1,1,1], otherwise to [1,1,1,1].
+
+
+    Returns
+    -------
+    img: gifti.GiftiImage
+        Surface representated as GiftiImage
     '''
-
-    if not overwrite and os.path.exists(fn):
-        raise ValueError("Already exists: %s" % fn)
-
-    add_indices = True
 
     vertices = gifti.GiftiDataArray(np.asarray(s.vertices, np.float32))
     vertices.intent = gifti.intent_codes.field1['pointset']
@@ -147,28 +150,65 @@ def write(fn, s, overwrite=True):
     faces = gifti.GiftiDataArray(np.asarray(s.faces, np.int32))
     faces.intent = gifti.intent_codes.field1['triangle']
     faces.datatype = 8 # this is what gifti likes
-    faces.coordsys = None # otherwise SUMA might complain 
+    faces.coordsys = None # otherwise SUMA might complain
 
     # set some fields common to faces and vertices
-    for arr in (vertices, faces) + (indices,) if add_indices else ():
+    for arr in (vertices, faces) + ((indices,) if add_indices else ()):
         arr.ind_ord = 1
         arr.encoding = 3
         arr.endian = 'LittleEndian' # XXX this does not work (see below)
         arr.dims = list(arr.data.shape)
         arr.num_dim = len(arr.dims)
 
-    vertices.meta, faces.meta = filename2vertices_faces_metadata(fn)
-
-    # make the image    
+    # make the image
     meta = gifti.GiftiMetaData()
     labeltable = gifti.GiftiLabelTable()
 
     img = gifti.GiftiImage(meta=meta, labeltable=labeltable)
 
+    if swap_LPI_RAI:
+        xform = np.asarray(vertices.coordsys.xform)
+        xform[0, 0] = -1
+        xform[1, 1] = -1
+        vertices.coordsys.xform = xform
+
     if add_indices:
         img.add_gifti_data_array(indices)
     img.add_gifti_data_array(vertices)
     img.add_gifti_data_array(faces)
+
+    return img
+
+
+def to_xml(img, meta_fn_hint=None):
+    '''Converts to XML
+
+    Parameters
+    ----------
+    img: gifti.GiftiImage or surf
+        Input surface
+
+    Returns
+    -------
+    xml: bytearray
+        Representation of input surface in XML format
+    '''
+
+    if isinstance(img, surf.Surface):
+        img = to_gifti_image(img)
+
+    if not meta_fn_hint is None:
+        def get_array(intent, img=img):
+            arrs = img.getArraysFromIntent(intent)
+            n = len(arrs)
+            if n != 1:
+                raise ValueError("Expected unique array, found %d" % n)
+            return arrs[0]
+
+        vertices = get_array('pointset')
+        faces = get_array('triangle')
+
+        vertices.meta, faces.meta = filename2vertices_faces_metadata(fn)
 
     # XXX FIXME from here on it's a bit of a hack
     # The to_xml() method adds newlines in <DATA>...</DATA> segments
@@ -189,7 +229,32 @@ def write(fn, s, overwrite=True):
 
     xml_fixed = b''.join(fix_odd_even(sp, i) for i, sp in enumerate(sps))
 
+    return xml_fixed
+
+def write(fn, s, overwrite=True):
+    '''Writes a GIFTI surface file
+
+    Parameters
+    ----------
+    fn: str
+        Filename
+    s: surf.Surface
+        Surface
+    overwrite: bool (default: False)
+        If set to False an error is raised if the file exists
+    '''
+
+    if not overwrite and os.path.exists(fn):
+        raise ValueError("Already exists: %s" % fn)
+
+    EXT = '.surf.gii'
+    if not fn.endswith(EXT):
+        raise ValueError("Filename does not end with required extension %s" %
+                                                                          EXT)
+
+    xml = to_xml(s)
+
     with io.FileIO(fn, 'wb') as f:
-        n = f.write(xml_fixed)
-    if n != len(xml_fixed):
+        n = f.write(xml)
+    if n != len(xml):
         raise ValueError("Not all bytes written to %s" % fn)
