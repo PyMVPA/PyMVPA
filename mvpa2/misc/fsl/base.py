@@ -159,7 +159,7 @@ class McFlirtParams(ColumnData):
 class FslGLMDesign(object):
     """Load FSL GLM design matrices from file.
 
-    Be aware that such a desig matrix has its regressors in columns and the
+    Be aware that such a design matrix has its regressors in columns and the
     samples in its rows.
     """
     def __init__(self, source):
