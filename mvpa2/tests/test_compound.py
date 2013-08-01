@@ -108,7 +108,7 @@ class CompoundTests(unittest.TestCase):
 
 
 def suite():
-    return unittest.makeSuite(SMLRTests)
+    return unittest.makeSuite(CompoundTests)
 
 
 if __name__ == '__main__':
