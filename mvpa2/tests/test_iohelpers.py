@@ -14,7 +14,7 @@ import unittest
 from tempfile import mkstemp
 import numpy as np
 
-from mvpa2.testing.tools import ok_, assert_equal
+from mvpa2.testing.tools import ok_, assert_equal, with_tempfile
 
 from mvpa2 import pymvpa_dataroot
 from mvpa2.datasets.eventrelated import find_events
@@ -134,7 +134,7 @@ class IOHelperTests(unittest.TestCase):
         assert_equal(attr['c'], ['a', 'b', 'c', 'd'])
 
 
-    def test_fsl_ev(self):
+    def test_fslev3(self):
         ex1 = """0.0 2.0 1
         13.89 2 1
         16 2.0 0.5
@@ -181,7 +181,7 @@ class IOHelperTests(unittest.TestCase):
         self.assertTrue([e['crap'] for e in ev] == [True] * 3)
 
 
-    def test_fsl_ev2(self):
+    def test_fslev3_2(self):
         attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'smpl_attr.txt'))
 
         # check header (sort because order in dict is unpredictable)
@@ -189,6 +189,43 @@ class IOHelperTests(unittest.TestCase):
             ['chunks', 'targets'])
 
         self.assertTrue(attr.nsamples == 3)
+
+    @with_tempfile(suffix='.txt')
+    def test_fslev2(self, fpath):
+        ex1 = """0.000000
+        1.000000
+        0.000000
+        0.000000
+        1.000000
+        1.000000
+        0.000000
+        2.000000
+        2.000000
+        2.000000
+        0.000000
+        2.000000
+        2.000000
+        2.200000
+        """
+        with open(fpath, 'w') as f:
+            f.write(ex1)
+
+        d = FslEV2(fpath, 2.5)
+
+        # check header
+        self.assertEqual(set(d.keys()),
+                         set(['durations', 'intensities', 'onsets']))
+        # but the rest of its API mimics regular events
+        self.assertEqual(d['onsets'],      [2.5, 10, 17.5, 27.5, 32.5])
+        self.assertEqual(d.durations,      [2.5, 5.0, 7.5,  5.0,  2.5])
+        self.assertEqual(d['intensities'], [1.0, 1.0, 2.0, 2.0, 2.2])
+
+        self.assertEqual(d.nevs, 5)
+        self.assertEqual(d.get_ev(1), (10, 5, 1.0))
+        self.assertEqual(len(d.to_events()), 5)
+
+        self.assertRaises(NotImplementedError, d.tofile, "buga")
+
 
     def test_bv_rtc(self):
         """Simple testing of reading RTC files from BrainVoyager"""

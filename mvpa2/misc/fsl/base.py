@@ -83,11 +83,50 @@ class FslEV3(ColumnData):
                    **kwargs)
              for i in xrange(self.nevs)]
 
-
     onsets = property(fget=lambda self: self['onsets'])
     durations = property(fget=lambda self: self['durations'])
     intensities = property(fget=lambda self: self['intensities'])
 
+
+class FslEV2(FslEV3):
+    """IO helper to read FSL's EV type 2 files -- 1 entry per volume.
+
+    It will simply decorate FslEV3 while not providing tofile() for now
+    """
+
+    def __init__(self, source, TR):
+        """
+        Parameters
+        ----------
+        TR : float
+             To correctly estimate onsets and durations
+        """
+        # We need first to cook up the structure similar to
+        ev2 = ColumnData(source, header=['intensities'],
+                         sep=None, dtype=float)
+        super(FslEV2, self).__init__(self._ev2_to_ev3(ev2['intensities'], TR))
+
+    def tofile(self, filename):
+        raise NotImplementedError(
+            "Have not implemented storing of type=2 FSL events descriptions yet")
+
+    @staticmethod
+    def _ev2_to_ev3(intensities, TR):
+        # having read the column data -- compose ._events
+        prev, prev_onset, prev_duration = 0, 0, 0
+        events = dict(onsets=[], durations=[], intensities=[])
+        # None is appended to trigger the last change
+        for i, intensity in enumerate(intensities + [None]):
+            if intensity != prev:
+                if prev:
+                    # create an event
+                    events['onsets'].append(prev_onset*TR)
+                    events['durations'].append(prev_duration*TR)
+                    events['intensities'].append(prev)
+                prev_onset, prev_duration = i, 0
+            prev_duration += 1
+            prev = intensity
+        return events
 
 
 class McFlirtParams(ColumnData):
