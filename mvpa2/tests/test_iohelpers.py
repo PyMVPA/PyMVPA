@@ -30,7 +30,7 @@ class IOHelperTests(unittest.TestCase):
         0 1 2
         3 4 5
         """
-        file, fpath = mkstemp('mvpa', 'test')
+        fd, fpath = mkstemp('mvpa', 'test'); os.close(fd)
         file = open(fpath, 'w')
         file.write(ex1)
         file.close()
@@ -121,7 +121,7 @@ class IOHelperTests(unittest.TestCase):
 3 3.3 c
 4 4.4 d'''
 
-        _, fn = mkstemp('mvpa', 'sampleattr')
+        fd, fn = mkstemp('mvpa', 'sampleattr'); os.close(fd)
 
         with open(fn, 'w') as f:
             f.write(payload)
@@ -139,7 +139,7 @@ class IOHelperTests(unittest.TestCase):
         13.89 2 1
         16 2.0 0.5
         """
-        file, fpath = mkstemp('mvpa', 'test')
+        fd, fpath = mkstemp('mvpa', 'test'); os.close(fd)
         file = open(fpath, 'w')
         file.write(ex1)
         file.close()

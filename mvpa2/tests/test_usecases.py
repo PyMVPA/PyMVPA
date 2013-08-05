@@ -12,7 +12,8 @@ import unittest
 import numpy as np
 
 from mvpa2.testing.tools import ok_, assert_array_equal, assert_true, \
-        assert_false, assert_equal, assert_not_equal, reseed_rng
+        assert_false, assert_equal, assert_not_equal, reseed_rng, assert_raises, \
+        assert_array_almost_equal, SkipTest
 
 @reseed_rng()
 def _test_mcasey20120222():
@@ -334,3 +335,77 @@ def test_multiclass_pairs_svm_searchlight():
     assert_array_equal(out.samples[3:], out123.samples)
 
     ok_(np.all(out.samples[:, 1] == 1.), "This was with super-strong result")
+
+@reseed_rng()
+def test_rfe_sensmap():
+    # http://lists.alioth.debian.org/pipermail/pkg-exppsy-pymvpa/2013q3/002538.html
+    # just a smoke test. fails with
+    from mvpa2.clfs.svm import LinearCSVMC
+    from mvpa2.clfs.meta import FeatureSelectionClassifier
+    from mvpa2.measures.base import CrossValidation, RepeatedMeasure
+    from mvpa2.generators.splitters import Splitter
+    from mvpa2.generators.partition import NFoldPartitioner
+    from mvpa2.misc.errorfx import mean_mismatch_error
+    from mvpa2.mappers.fx import mean_sample
+    from mvpa2.mappers.fx import maxofabs_sample
+    from mvpa2.generators.base import Repeater
+    from mvpa2.featsel.rfe import RFE
+    from mvpa2.featsel.helpers import FractionTailSelector, BestDetector
+    from mvpa2.featsel.helpers import NBackHistoryStopCrit
+    from mvpa2.datasets import vstack
+
+    from mvpa2.misc.data_generators import normal_feature_dataset
+
+    # Let's simulate the beast -- 6 categories total groupped into 3
+    # super-ordinate, and actually without any 'superordinate' effect
+    # since subordinate categories independent
+    fds = normal_feature_dataset(nlabels=3,
+                                 snr=1, # 100,   # pure signal! ;)
+                                 perlabel=9,
+                                 nfeatures=6,
+                                 nonbogus_features=range(3),
+                                 nchunks=3)
+    clfsvm = LinearCSVMC()
+
+    rfesvm = RFE(clfsvm.get_sensitivity_analyzer(postproc=maxofabs_sample()),
+                 CrossValidation(
+                     clfsvm,
+                     NFoldPartitioner(),
+                     errorfx=mean_mismatch_error, postproc=mean_sample()),
+                 Repeater(2),
+                 fselector=FractionTailSelector(0.70, mode='select', tail='upper'),
+                 stopping_criterion=NBackHistoryStopCrit(BestDetector(), 10),
+                 update_sensitivity=True)
+
+    fclfsvm = FeatureSelectionClassifier(clfsvm, rfesvm)
+
+    sensanasvm = fclfsvm.get_sensitivity_analyzer(postproc=maxofabs_sample())
+
+
+    # manually repeating/splitting so we do both RFE sensitivity and classification
+    senses, errors = [], []
+    for i, pset in enumerate(NFoldPartitioner().generate(fds)):
+        # split partitioned dataset
+        split = [d for d in Splitter('partitions').generate(pset)]
+        senses.append(sensanasvm(split[0])) # and it also should train the classifier so we would ask it about error
+        errors.append(mean_mismatch_error(fclfsvm.predict(split[1]), split[1].targets))
+
+    senses = vstack(senses)
+    errors = vstack(errors)
+
+    # Let's compare against rerunning the beast simply for classification with CV
+    errors_cv = CrossValidation(fclfsvm, NFoldPartitioner(), errorfx=mean_mismatch_error)(fds)
+    # and they should match
+    assert_array_equal(errors, errors_cv)
+
+    # buggy!
+    cv_sensana_svm = RepeatedMeasure(sensanasvm, NFoldPartitioner())
+    senses_rm = cv_sensana_svm(fds)
+
+    #print senses.samples, senses_rm.samples
+    #print errors, errors_cv.samples
+    assert_raises(AssertionError,
+                  assert_array_almost_equal,
+                  senses.samples, senses_rm.samples)
+    raise SkipTest("Known failure for repeated measures: https://github.com/PyMVPA/PyMVPA/issues/117")
+

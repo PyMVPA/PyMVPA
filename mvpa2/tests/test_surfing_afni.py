@@ -18,7 +18,7 @@ import tempfile
 from mvpa2.testing import *
 
 from mvpa2.support.nibabel import afni_niml, afni_niml_dset, afni_niml_roi
-from mvpa2.datasets import niml_dset
+from mvpa2.datasets import niml
 from mvpa2.datasets.base import Dataset
 
 class SurfTests(unittest.TestCase):
@@ -152,7 +152,7 @@ class SurfTests(unittest.TestCase):
         eps = .00001
 
         # test I/O
-        _, fn = tempfile.mkstemp('data.niml.dset', 'test')
+        fd, fn = tempfile.mkstemp('data.niml.dset', 'test'); os.close(fd)
 
         # depending on the mode we do different tests (but on the same data)
         modes = ['normal', 'skipio', 'sparse2full']
@@ -219,19 +219,19 @@ class SurfTests(unittest.TestCase):
                             if mode != 'sparse2full' or k == 'data':
                                 assert_array_almost_equal(v, v2, eps_dec)
 
-    def test_niml_dset(self):
+    def test_niml(self):
         d = dict(data=np.random.normal(size=(10, 2)),
               node_indices=np.arange(10),
               stats=['none', 'Tstat(2)'],
               labels=['foo', 'bar'])
-        a = niml_dset.from_niml_dset(d)
-        b = niml_dset.to_niml_dset(a)
+        a = niml.from_niml(d)
+        b = niml.to_niml(a)
 
-        _, fn = tempfile.mkstemp('.niml.dset', 'dset')
+        fd, fn = tempfile.mkstemp('.niml.dset', 'dset'); os.close(fd)
 
         afni_niml_dset.write(fn, b)
         bb = afni_niml_dset.read(fn)
-        cc = niml_dset.from_niml_dset(bb)
+        cc = niml.from_niml(bb)
 
         os.remove(fn)
 
@@ -251,8 +251,8 @@ class SurfTests(unittest.TestCase):
         d = np.arange(10).reshape((5, -1)) + .5
         ds = Dataset(d)
 
-        fn = _, fn = tempfile.mkstemp('.niml.dset', 'dset')
-        writers = [niml_dset.write, afni_niml_dset.write]
+        fn = fd, fn = tempfile.mkstemp('.niml.dset', 'dset'); os.close(fd)
+        writers = [niml.write, afni_niml_dset.write]
         for i, writer in enumerate(writers):
             for form in ('text', 'binary', 'base64'):
                 if i == 0:
@@ -312,9 +312,9 @@ class SurfTests(unittest.TestCase):
             ds = fmri_dataset(vg.get_empty_nifti_image(1))
             r = sl(ds)
 
-            _, fn = tempfile.mkstemp('.niml.dset', 'dset')
-            niml_dset.write(fn, r)
-            rr = niml_dset.read(fn)
+            fd, fn = tempfile.mkstemp('.niml.dset', 'dset'); os.close(fd)
+            niml.write(fn, r)
+            rr = niml.read(fn)
 
             os.remove(fn)
 
@@ -333,14 +333,14 @@ class SurfTests(unittest.TestCase):
             dsets.append(dset)
 
 
-        dset = niml_dset.hstack(dsets)
+        dset = niml.hstack(dsets)
         assert_equal(dset.nfeatures, 12)
         assert_equal(dset.nsamples, 10)
         indices = np.asarray([ 0, 1, 2, 6, 5, 4, 3, 7, 8, 9, 10, 11])
         assert_array_equal(dset.fa['node_indices'], indices)
 
-        dset = niml_dset.hstack(dsets, 10)
-        dset = niml_dset.hstack(dsets, 10) # twice to ensure not overwriting
+        dset = niml.hstack(dsets, 10)
+        dset = niml.hstack(dsets, 10) # twice to ensure not overwriting
         assert_equal(dset.nfeatures, 30)
         indices = np.asarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
                               13, 12, 11, 10, 14, 15, 16, 17, 18, 19,
@@ -351,7 +351,7 @@ class SurfTests(unittest.TestCase):
         assert_array_equal(dset[:, 10:14].samples, dsets[1].samples)
 
         # If not enough space it should raise an error
-        stacker = (lambda x: niml_dset.hstack(dsets, x))
+        stacker = (lambda x: niml.hstack(dsets, x))
         assert_raises(ValueError, stacker, 2)
 
         # If sparse then with no padding it should fail
@@ -385,7 +385,7 @@ class SurfTests(unittest.TestCase):
  4 1 14 43063 43064 43065 43066 43067 43177 43178 43179 43180 43290 43291 43292 43402 43403
 # </Node_ROI>"""
 
-        _, fn = tempfile.mkstemp('.niml.roi', 'dset')
+        fd, fn = tempfile.mkstemp('.niml.roi', 'dset'); os.close(fd)
 
         with open(fn, 'w') as f:
             f.write(payload)

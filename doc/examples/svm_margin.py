@@ -22,6 +22,7 @@ expand again after learning error becomes sufficiently small.
 This brief examples provides a demonstration.
 
 """
+
 import mvpa2
 import pylab as pl
 import numpy as np
@@ -34,6 +35,7 @@ from mvpa2.mappers.zscore import zscore
 """
 Generate a binary dataset without any signal (snr=0).
 """
+
 mvpa2.seed(1);
 ds_noise = normal_feature_dataset(perlabel=100, nlabels=2, nfeatures=2, snr=0,
                                   nonbogus_features=[0,1])
@@ -107,6 +109,7 @@ So what would be our dependence between signal level and errors/width
 of the margin?
 
 """
+
 pl.figure()
 pl.plot(sigs, rs, label="Margin width of %s" % clf)
 pl.plot(sigs, errors, label="CV error")

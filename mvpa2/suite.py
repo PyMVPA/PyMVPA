@@ -118,8 +118,8 @@ from mvpa2.datasets.eventrelated import *
 if externals.exists('nibabel') :
     from mvpa2.datasets.mri import *
 from mvpa2.datasets.sources import *
-from mvpa2.datasets import niml_dset
-from mvpa2.datasets.niml_dset import from_niml_dset, to_niml_dset
+from mvpa2.datasets import niml
+from mvpa2.datasets.niml import from_niml, to_niml
 from mvpa2.datasets import eeglab
 from mvpa2.datasets.eeglab import eeglab_dataset
 
@@ -210,6 +210,10 @@ if externals.exists("pylab"):
         from mvpa2.misc.plot.topo import *
     from mvpa2.misc.plot.lightbox import plot_lightbox
 
+    if externals.exists(['matplotlib', 'griddata']):
+        from mvpa2.misc.plot.flat_surf import \
+                FlatSurfacePlotter, curvature_from_any
+
 __sdebug("scipy dependents")
 if externals.exists("scipy"):
     from mvpa2.support.stats import scipy
@@ -241,7 +245,8 @@ from mvpa2.misc.surfing import surf_voxel_selection, volgeom, volsurf
 
 __sdebug("nibabel afni")
 from mvpa2.support.nibabel import afni_niml_dset, afni_suma_1d, \
-                                    afni_suma_spec, surf_fs_asc, surf
+                                    afni_suma_spec, surf_fs_asc, surf, \
+				    surf_caret, afni_niml_roi, afni_niml_annot
 
 
 __sdebug("ipython goodies")
@@ -252,11 +257,11 @@ if externals.exists("running ipython env"):
     except Exception, e:
         warning("Failed to activate custom IPython completions due to %s" % e)
 
-def suite_stats():
+def suite_stats(scope_dict={}):
     """Return cruel dict of things which evil suite provides
     """
 
-    glbls = globals()
+    scope_dict = scope_dict or globals()
     import types
     # Compatibility layer for Python3
     try:
@@ -346,6 +351,6 @@ def suite_stats():
                         pass
             return s
 
-    return EnvironmentStatistics(globals())
+    return EnvironmentStatistics(scope_dict)
 
 __sdebug("THE END of mvpa2.suite imports")
