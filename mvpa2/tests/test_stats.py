@@ -191,7 +191,6 @@ class StatsTests(unittest.TestCase):
             # Check that values are correct
             assert_array_almost_equal(dsm_2dtest.get_triangle_vector_form(),
                                       truevals[metric],3)
-            print(dsm_2dtest.full_matrix,3)
 
 def suite():
     """Create the suite"""
