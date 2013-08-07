@@ -163,6 +163,15 @@ class SurfTests(unittest.TestCase):
         assert_array_almost_equal(s3.vertices[-1, :], np.array([18., 19, 0.]))
         assert_array_almost_equal(s3.faces[-1, :], np.array([199, 198, 179]))
 
+        # test bar
+        p, q = (0, 0, 0), (100, 0, 0)
+        s4 = surf.generate_bar(p, q, 10, 12)
+        assert_equal(s4.nvertices, 26)
+        assert_equal(s4.nfaces, 48)
+
+
+
+
     def test_surf_border(self):
         s = surf.generate_sphere(3)
         assert_array_equal(s.nodes_on_border(), [False] * 11)

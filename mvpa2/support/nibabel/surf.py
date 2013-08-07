@@ -1984,6 +1984,82 @@ def generate_plane(x00, x01, x10, n01, n10):
 
     return Surface(vs, fs)
 
+def generate_bar(start, stop, radius, poly=10):
+    '''Generates a bar-like surface
+
+    Parameters
+    ----------
+    start: np.ndarray
+        3-elemtent vector indicating top part of the bar
+    stop: np.ndarray
+        3-elemtent vector indicating bottom side of the bar
+    radius: float
+        radius of the bar
+    poly: int
+        the top and bottom part will be a regular polygon.
+
+    Returns
+    -------
+    bar: surf.Surface
+        A surface with poly*2+2 vertices and poly*4 faces
+
+    Example
+    -------
+    generate_bar((0,0,0),(0,0,177.6),14.1,4)
+
+    This generates a surface resembling the new One World Trade center, New York
+    '''
+
+    start = np.asarray(start)
+    stop = np.asarray(stop)
+
+    nv = poly * 2 + 2
+    delta = start - stop
+    delta_n = delta / np.sqrt(np.sum(delta ** 2))
+
+    # get a normal vector
+    # make sure that we don't use zero values
+    i = np.argsort(np.abs(delta_n))
+    vec_x = np.zeros(3)
+    vec_x[i] = delta_n[i[[0, 2, 1]]] * np.asarray((0, -1, 1))
+    vec_y = np.cross(delta_n, vec_x)
+
+    coords = np.zeros((nv, 3))
+    sc = 2 * np.pi / poly # angle scaling
+    alpha = np.arange(poly) * sc # for top art
+    beta = alpha + sc / 2
+
+    # first and last node are top and bottom.
+    # nodes in between are the edges at top and bottom
+    coords[0, :] = start
+    dtop = np.cos(alpha)[np.newaxis].T * vec_x[np.newaxis] + \
+                        np.sin(alpha)[np.newaxis].T * vec_y[np.newaxis]
+    dbot = np.cos(beta)[np.newaxis].T * vec_x[np.newaxis] + \
+                        np.sin(beta)[np.newaxis].T * vec_y[np.newaxis]
+
+    coords[1:-1:2, :] = dtop * radius + start
+    coords[2::2, :] = dbot * radius + stop
+    coords[-1, :] = stop
+
+    # set up faces
+    nf = poly * 4
+    faces = np.zeros((nf, 3), dtype=np.int_)
+    for i in xrange(poly):
+        j = i * 2
+        faces[j + 0, :] = (j + 1, j + 2, j + 3) # top part
+        faces[j + 1, :] = (j + 2, j + 4, j + 3) # side with top
+        faces[j + 2 * poly, :] = (j + 3, 0, j + 1) # side with bottom
+        faces[j + 2 * poly + 1, :] = (j + 2, nv - 1, j + 4) # bottom part
+
+    nrm = lambda x: (x - 1) % (2 * poly) + 1
+    faces[:2 * poly, :] = nrm(faces[:2 * poly, :])
+    faces[2 * poly:, 0] = nrm(faces[2 * poly:, 0])
+    faces[2 * poly:, 2] = nrm(faces[2 * poly:, 2])
+
+    s = Surface(coords, faces)
+
+    return s
+
 
 def read(fn):
     '''General read function for surfaces
