@@ -13,9 +13,13 @@ __docformat__ = 'restructuredtext'
 import os
 import numpy as np
 
+from mvpa2.base import externals
+
 from mvpa2.datasets.base import dataset_wizard, Dataset
 from mvpa2 import pymvpa_dataroot, pymvpa_datadbroot
 from mvpa2.misc.fx import get_random_rotation
+
+from mvpa2.misc.fx import double_gamma_hrf, single_gamma_hrf
 
 if __debug__:
     from mvpa2.base import debug
@@ -386,7 +390,7 @@ load_datadb_demo_blockfmri = load_datadb_tutorial_data
    "using" already.  Deprecate entirely whenever tutorial_data gets updated.
 """
 
-def autocorrelated_noise(ds, sr, cutoff, lfnl=3.0, bord=10, hfnl=None):
+def autocorrelated_noise(ds, sr, cutoff, lfnl=3.0, bord=10, hfnl=None, add_baseline=True):
     """Generate a dataset with samples being temporally autocorrelated noise.
 
     Parameters
@@ -432,7 +436,8 @@ def autocorrelated_noise(ds, sr, cutoff, lfnl=3.0, bord=10, hfnl=None):
     nsamples = lfilter(fb, fa, nsamples, axis=0)
 
     # add the pedestal
-    nsamples += msample
+    if add_baseline:
+        nsamples += msample
 
     # HF noise
     if not hfnl is None:
@@ -476,3 +481,57 @@ def random_affine_transformation(ds, scale_fac=100., shift_fac=10.):
                    a={'random_rotation': R,
                       'random_scale': random_scale,
                       'random_shift': random_shift})
+
+
+def simple_hrf_dataset(onsets=[1, 20, 25, 50, 60, 90, 92, 140],
+                       hrf_gen=lambda t:double_gamma_hrf(t) - single_gamma_hrf(t, 0.8, 1, 0.05),
+                       nsamples=None,
+                       tr=2.0,
+                       tres=0.1,
+                       baseline=800.0,
+                       signal_level=1,
+                       lfnl=0.05,
+                       hfnl=0.05):
+    from scipy import signal
+
+    onsets = np.asanyarray(onsets)
+
+    # play fmri
+    # full-blown HRF with initial dip and undershoot ;-)
+    hrf_x = np.linspace(0, 25, 25/tres)
+    hrf = hrf_gen(hrf_x)
+
+    # estimate number of samples needed if not provided
+    nsamples = int(max(onsets)/tres + len(hrf_x)*1.5)
+
+    # come up with an experimental design
+    fast_er_onsets = (onsets/tres).astype(int)
+    fast_er = np.zeros(nsamples)
+    fast_er[fast_er_onsets] = 1
+
+    # high resolution model of the convolved regressor
+    model_hr = np.convolve(fast_er, hrf)[:nsamples]
+
+    # downsample the regressor to fMRI resolution
+    model_lr = signal.resample(model_hr,
+                               int(nsamples / tr / 10),
+                               window='ham')
+
+    # generate artifical fMRI data: two voxels one is noise, one has
+    # something
+    wsignal = baseline + model_lr*signal_level
+    # + np.random.randn(int(nsamples / tr / 10)) * noise_level
+    nsignal = np.ones(wsignal.shape) * baseline #  + np.random.randn(int(nsamples / tr / 10)) * noise_level
+
+    # build design matrix: bold-regressor and constant
+    design = np.array([model_lr, np.repeat(1, len(model_lr))]).T
+
+    # two 'voxel' dataset
+    ds = dataset_wizard(samples=np.array((wsignal, nsignal)).T, targets=1)
+    ds.a['baseline'] = baseline
+    ds.a['tr'] = tr
+    ds.sa['design'] = design
+
+    ds.samples += autocorrelated_noise(ds, 1/tr, 1/(2*tr), lfnl=lfnl, hfnl=hfnl,
+                                       add_baseline=False)
+    return ds
