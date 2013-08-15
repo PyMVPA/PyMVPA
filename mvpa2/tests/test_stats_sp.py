@@ -322,7 +322,7 @@ class StatsTestsScipy(unittest.TestCase):
         skip_if_no_external('statsmodels')
         from mvpa2.measures.statsmodels_adaptor import GLM
         # high SNR dataset for such a short timeseries
-        data = simple_hrf_dataset(signal_level=2, lfnl=0.02, hfnl=0.02)
+        data = simple_hrf_dataset(signal_level=2, noise_level=0.5)
         X = data.sa.design
 
         # check GLM betas
