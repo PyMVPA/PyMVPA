@@ -501,8 +501,9 @@ def simple_hrf_dataset(onsets=[1, 20, 25, 50, 60, 90, 92, 140],
                        tres=0.1,
                        baseline=800.0,
                        signal_level=1,
-                       lfnl=0.05,
-                       hfnl=0.05):
+                       noise='normal',
+                       noise_level=1,
+                       ):
     from scipy import signal
 
     onsets = np.asanyarray(onsets)
@@ -531,8 +532,7 @@ def simple_hrf_dataset(onsets=[1, 20, 25, 50, 60, 90, 92, 140],
     # generate artifical fMRI data: two voxels one is noise, one has
     # something
     wsignal = baseline + model_lr*signal_level
-    # + np.random.randn(int(nsamples / tr / 10)) * noise_level
-    nsignal = np.ones(wsignal.shape) * baseline #  + np.random.randn(int(nsamples / tr / 10)) * noise_level
+    nsignal = np.ones(wsignal.shape) * baseline
 
     # build design matrix: bold-regressor and constant
     design = np.array([model_lr, np.repeat(1, len(model_lr))]).T
@@ -543,6 +543,18 @@ def simple_hrf_dataset(onsets=[1, 20, 25, 50, 60, 90, 92, 140],
     ds.a['tr'] = tr
     ds.sa['design'] = design
 
-    ds.samples += autocorrelated_noise(ds, 1/tr, 1/(2*tr), lfnl=lfnl, hfnl=hfnl,
-                                       add_baseline=False)
+    ds.fa['signal_level'] = [signal_level, False]
+
+    if noise == 'autocorrelated':
+        # this one seems to be quite unstable and can provide really
+        # funky noise at times
+        noise = autocorrelated_noise(ds, 1/tr, 1/(2*tr),
+                                     lfnl=noise_level, hfnl=noise_level,
+                                     add_baseline=False)
+    elif noise == 'normal':
+        noise = np.random.randn(*ds.shape) * noise_level
+    else:
+        raise ValueError(noise)
+    ds.sa['noise'] = noise
+    ds.samples += noise
     return ds
