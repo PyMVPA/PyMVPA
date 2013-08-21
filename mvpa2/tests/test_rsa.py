@@ -19,6 +19,7 @@ from mvpa2.datasets.base import dataset_wizard, Dataset
 from mvpa2.testing.tools import *
 
 from mvpa2.measures.rsa import *
+import scipy.stats as stats
 
 data = np.array([[ 0.22366105, 0.51562476, 0.62623543, 0.28081652, 0.56513533],
                 [ 0.22077129, 0.63013374, 0.19641318, 0.38466208, 0.60788347],
@@ -33,16 +34,34 @@ def test_DissimilarityConsistencyMeasure():
     chunks = np.repeat(np.array((0,1)),3)
     # correct results
     cres1 = 0.41894348
-    cres2 = np.array([[ 0.16137995],[ 0.73062639],[ 0.59441713]])
+    cres2 = np.array([[ 0.16137995, 0.73062639, 0.59441713]])
+    dc1 = data[0:3,:] - np.mean(data[0:3,:],0)
+    dc2 = data[3:6,:] - np.mean(data[3:6,:],0)
+    center = squareform(np.corrcoef(pdist(dc1,'correlation'),pdist(dc2,'correlation')), 
+                        checks=False).reshape((1,-1))
+    dsm1 = stats.rankdata(pdist(data[0:3,:],'correlation').reshape((1,-1)))
+    dsm2 = stats.rankdata(pdist(data[3:6,:],'correlation').reshape((1,-1)))
+
+    spearman = squareform(np.corrcoef(np.vstack((dsm1,dsm2))), 
+                        checks=False).reshape((1,-1))
+    
     ds = dataset_wizard(samples=data, targets=targets, chunks=chunks)
     dscm = DissimilarityConsistencyMeasure()
-    dset = dscm(ds)
-    assert_almost_equal(np.mean(dset.samples),cres1)
+    res1 = dscm(ds)
+    dscm_c = DissimilarityConsistencyMeasure(center_data=True)
+    res2 = dscm_c(ds)
+    dscm_sp = DissimilarityConsistencyMeasure(consistency_metric='spearman')
+    res3 = dscm_sp(ds)
     ds.append(ds)
     chunks = np.repeat(np.array((0,1,2,)),4)
     ds.sa['chunks'] = chunks
-    dset = dscm(ds)
-    assert_array_almost_equal(dset.samples,cres2)
+    res4 = dscm(ds)
+    assert_almost_equal(np.mean(res1.samples),cres1)
+    assert_array_almost_equal(res2.samples, center)
+    assert_array_almost_equal(res3.samples, spearman)
+    assert_array_almost_equal(res4.samples,cres2)
+
+
 
 def test_DissimilarityMatrixMeasure():
     targets = np.tile(xrange(3),2)

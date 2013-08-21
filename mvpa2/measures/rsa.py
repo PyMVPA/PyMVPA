@@ -14,6 +14,7 @@ import numpy as np
 from mvpa2.measures.base import Measure
 from mvpa2.datasets.base import Dataset
 from scipy.spatial.distance import pdist, squareform
+from scipy.stats import rankdata
 
 class DissimilarityMatrixMeasure(Measure):
     """
@@ -92,21 +93,26 @@ class DissimilarityConsistencyMeasure(Measure):
     """Indicate that this measure is always trained."""
 
     def __init__(self, chunks_attr='chunks', pairwise_metric='correlation', 
-                    consistency_metric='pearson', **kwargs):
+                    consistency_metric='pearson', center_data=False, **kwargs):
         """Initialize
 
         Parameters
         ----------
-        chunks_attr:        Chunks attribute to use for chunking dataset. Can be any
+        chunks_attr :       Chunks attribute to use for chunking dataset. Can be any
                             samples attribute specified in the dataset.sa dict.
                             (Default: 'chunks')
-        pairwise_metric:    Distance metric to use for calculating dissimilarity
+        pairwise_metric :   Distance metric to use for calculating dissimilarity
                             matrices from the set of samples in each chunk specified.
                             See spatial.distance.pdist for all possible metrics.
                             (Default = 'correlation', i.e. one minus Pearson correlation)
         consistency_metric: Correlation measure to use for the correlation
                             between dissimilarity matrices. Options are
                             'pearson' (default) or 'spearman'
+        center_data :       boolean. (Optional. Default = False) If True then center 
+                            each column of the data matrix by subtracing the column 
+                            mean from each element  (by chunk if chunks_attr 
+                            specified). This is recommended especially when using 
+                            pairwise_metric = 'correlation'.  
 
         Returns
         -------
@@ -123,6 +129,7 @@ class DissimilarityConsistencyMeasure(Measure):
         self.pairwise_metric = pairwise_metric
         self.consistency_metric = consistency_metric
         self.chunks_attr = chunks_attr
+        self.center_data = center_data
 
     def _call(self, dataset):
         """Computes the average correlation in similarity structure across chunks."""
@@ -133,21 +140,23 @@ class DissimilarityConsistencyMeasure(Measure):
             raise StandardError("This measure calculates similarity consistency across "
                                 "chunks and is not meaningful for datasets with only "
                                 "one chunk:")
-        sims = None
+        dsms = None
     
         for chunk in np.unique(dataset.sa[chunks_attr]):
-            ds = dataset[dataset.sa[chunks_attr]==chunk,:]
-            dsm = pdist(ds.samples,self.pairwise_metric)
+            data = dataset.samples[dataset.sa[chunks_attr]==chunk,:]
+            if self.center_data:
+                data = data - np.mean(data,0)
+            dsm = pdist(data,self.pairwise_metric)
             #print dsm.shape
-            if sims is None:
-                sims = dsm
+            if dsms is None:
+                dsms = dsm
             else:
-                sims = np.vstack((sims,dsm))
+                dsms = np.vstack((dsms,dsm))
 
         if self.consistency_metric=='spearman':
-            sims = np.apply_along_axis(stats.rankdata, 1, sims)
-        corrmat = np.corrcoef(sims)
+            dsms = np.apply_along_axis(rankdata, 1, dsms)
+        corrmat = np.corrcoef(dsms)
         
-        return Dataset(squareform(corrmat,checks=False))
+        return Dataset(squareform(corrmat,checks=False).reshape((1,-1)))
     
 
