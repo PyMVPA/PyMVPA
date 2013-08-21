@@ -24,7 +24,7 @@ class DissimilarityMatrixMeasure(Measure):
     
     is_trained = True # Indicate that this measure is always trained.
 
-    def __init__(self, pairwise_metric='correlation', center_data=True,
+    def __init__(self, pairwise_metric='correlation', center_data=False,
                     square=False, **kwargs):
         """Initialize
 
@@ -36,7 +36,7 @@ class DissimilarityMatrixMeasure(Measure):
                             (DSM).  See scipy.spatial.distance.pdist for all 
                             possible metrics.  (Default ='correlation', i.e. one 
                             minus Pearson correlation) 
-        center_data :       boolean. (Optional. Default = True) If True then center 
+        center_data :       boolean. (Optional. Default = False) If True then center 
                             each column of the data matrix by subtracing the column 
                             mean from each element  (by chunk if chunks_attr 
                             specified). This is recommended especially when using 

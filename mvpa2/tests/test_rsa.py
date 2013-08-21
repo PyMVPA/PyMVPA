@@ -49,19 +49,19 @@ def test_DissimilarityMatrixMeasure():
     chunks = np.repeat(np.array((0,1)),3)
     ds = dataset_wizard(samples=data, targets=targets, chunks=chunks)
     data_c = data - np.mean(data,0)
-    euc = pdist(data_c, 'euclidean').reshape((1,-1))
-    pear = pdist(data_c, 'correlation').reshape((1,-1))
-    city = pdist(data_c, 'cityblock').reshape((1,-1))
-    nocenter = pdist(data,'correlation').reshape((1,-1))
+    euc = pdist(data, 'euclidean').reshape((1,-1))
+    pear = pdist(data, 'correlation').reshape((1,-1))
+    city = pdist(data, 'cityblock').reshape((1,-1))
+    center_sq = squareform(pdist(data_c,'correlation'))
 
     # Now center each chunk separately
     dsm1 = DissimilarityMatrixMeasure()
     dsm2 = DissimilarityMatrixMeasure(pairwise_metric='euclidean')
     dsm3 = DissimilarityMatrixMeasure(pairwise_metric='cityblock')
-    dsm4 = DissimilarityMatrixMeasure(center_data=False)
+    dsm4 = DissimilarityMatrixMeasure(center_data=True,square=True)
     assert_array_almost_equal(dsm1(ds).samples,pear)
     assert_array_almost_equal(dsm2(ds).samples,euc)
     assert_array_almost_equal(dsm3(ds).samples,city)
-    assert_array_almost_equal(dsm4(ds).samples,nocenter)
+    assert_array_almost_equal(dsm4(ds).samples,center_sq)
 
 
