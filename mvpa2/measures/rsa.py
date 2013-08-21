@@ -42,16 +42,19 @@ class DissimilarityMatrixMeasure(Measure):
         self.chunks_attr = chunks_attr
         self.square = square
 
-    def _call(self,dataset):
+    def _call(self,ds):
         chunks_attr = self.chunks_attr
         dsm = None
         if chunks_attr is None:
-            dataset.chunks = np.zeros((length(dataset.samples)))
-        for chunk in np.unique(dataset.sa['chunks']):
-            dset = dataset[dataset.sa[chunks_attr]==chunk,:]
+            chunks = np.zeros((len(ds.samples)))
+        else:
+            chunks = ds.sa[chunks_attr]
+        for chunk in np.unique(chunks):
+            dset = ds[chunks==chunk,:]
+            print ds.shape
             if self.center_data:
-                dataset.samples = dataset.samples - np.mean(dataset.samples,0)
-            pd = pdist(dataset.samples,metric=self.pairwise_metric)
+                ds.samples = ds.samples - np.mean(ds.samples,0)
+            pd = pdist(ds.samples,metric=self.pairwise_metric)
             if self.square:
                 pd = squareform(pd)
             if dsm is None:
