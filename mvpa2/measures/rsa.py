@@ -25,78 +25,61 @@ class DissimilarityMatrixMeasure(Measure):
     is_trained = True # Indicate that this measure is always trained.
 
     def __init__(self, pairwise_metric='correlation', center_data=True,
-                    chunks_attr=None, square=False, **kwargs):
-        """
-        Initialize
+                    square=False, **kwargs):
+        """Initialize
 
         Parameters
         ----------
 
-        pairwise_metric : String. Distance metric to use for calculating pairwise vector
-            distances for dissimilarity matrix (DSM).  See scipy.spatial.distance.pdist
-            for all possible metrics.  (Default = 'correlation', i.e. one minus
-            Pearson correlation)
-        chunks_attr : String. Chunks attribute (Optional. default = None).
-            Indicates the samples attribute to use to partition dataset
-            returning one dissimilarity matrix per chunk, stacked vertically. If
-            set to None (default) then DSM includes distances between all pairs
-            of samples.  Value can be any key in dataset.sa dict, typically
-            'chunks'.
-        center_data : boolean. (Optional. Default = True) If True then center
-            each column of the data matrix by subtracing the column mean from each
-            element  (by chunk if chunks_attr specified). This is recommended
-            especially when using pairwise_metric = 'correlation'.
-        square : boolean. (Optional. Default = False) If True return the square
-            distance matrices, if False, returns the flattened lower triangle.
+        pairwise_metric :   String. Distance metric to use for calculating 
+                            pairwise vector distances for dissimilarity matrix 
+                            (DSM).  See scipy.spatial.distance.pdist for all 
+                            possible metrics.  (Default ='correlation', i.e. one 
+                            minus Pearson correlation) 
+        center_data :       boolean. (Optional. Default = True) If True then center 
+                            each column of the data matrix by subtracing the column 
+                            mean from each element  (by chunk if chunks_attr 
+                            specified). This is recommended especially when using 
+                            pairwise_metric = 'correlation'.  
+        square :            boolean. (Optional.  Default = False) If True return 
+                            the square distance matrices, if False, returns the 
+                            flattened lower triangle.
     
+        Returns
+        -------
+        Dataset :           Contains a row vector of pairwise distances between
+                            all samples if square = False; square dissimilarty
+                            matrix if square = True.
         """
 
         Measure.__init__(self, **kwargs) 
         self.pairwise_metric = pairwise_metric
         self.center_data = center_data 
-        self.chunks_attr = chunks_attr
         self.square = square
 
     def _call(self,ds):
-        chunks_attr = self.chunks_attr
-        dsm = None
-
-        # Determine partitions if chunks_attr is specified
-        if chunks_attr is None:
-            chunks = np.zeros((len(ds.samples)))
+       
+        data = ds.samples
+        # center data if specified
+        if self.center_data:
+            data = data - np.mean(data,0)
+        
+        # get dsm 
+        dsm = pdist(data,metric=self.pairwise_metric)
+        
+        # if square return value make dsm square 
+        if self.square:
+            dsm = squareform(dsm)
         else:
-            chunks = ds.sa[chunks_attr].value
-
-        # iterate over chunks, note if no chunks specified then there is only
-        # one chunk, and therefore only one iteration
-        for chunk in np.unique(chunks):
-            dset = ds[chunks==chunk,:]
-            
-            # center data if specified
-            if self.center_data:
-                dset.samples = dset.samples - np.mean(dset.samples,0)
-            
-            # get dsm for this chunk 
-            pd = pdist(dset.samples,metric=self.pairwise_metric)
-            
-            # if square return value make dsm square 
-            if self.square:
-                pd = squareform(pd)
-
-            # Vstack results for each chunk
-            if dsm is None:
-                dsm = pd
-            else:
-                dsm = np.vstack((dsm,pd))
-
+            dsm = dsm.reshape((1,-1))
         return Dataset(dsm) 
 
 
-
 class DissimilarityConsistencyMeasure(Measure):
-    """Dissimilarity Conistency `Measure` calculates the average
-    correlation across chunks in pairwise dissimilarity matrices defined over the
-    samples in each chunk.
+    """
+    Dissimilarity Consistency `Measure` calculates the correlations across
+    chunks for pairwise dissimilarity matrices defined over the samples in each
+    chunk.
 
     This measures the consistency in similarity structure across runs
     within individuals, or across individuals if the target dataset is made from
@@ -117,12 +100,10 @@ class DissimilarityConsistencyMeasure(Measure):
         chunks_attr:        Chunks attribute to use for chunking dataset. Can be any
                             samples attribute specified in the dataset.sa dict.
                             (Default: 'chunks')
-
         pairwise_metric:    Distance metric to use for calculating dissimilarity
                             matrices from the set of samples in each chunk specified.
                             See spatial.distance.pdist for all possible metrics.
                             (Default = 'correlation', i.e. one minus Pearson correlation)
-
         consistency_metric: Correlation measure to use for the correlation
                             between dissimilarity matrices. Options are
                             'pearson' (default) or 'spearman'
