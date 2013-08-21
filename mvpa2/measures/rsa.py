@@ -16,47 +16,74 @@ from mvpa2.datasets.base import Dataset
 from scipy.spatial.distance import pdist, squareform
 
 class DissimilarityMatrixMeasure(Measure):
-    """Dissimilarity Matrix `Measure` returns the lower triangle of the n x n disimilarity matrix
-    defined as the pairwise distances between all samples in the dataset, and
-    where n is the number of samples.
+    """
+    Dissimilarity Matrix `Measure` returns the lower triangle of the n x n
+    disimilarity matrix defined as the pairwise distances between samples in
+    the dataset, and where n is the number of samples.  
     """
     
-    is_trained = True
-    """Indicate that this measure is always trained."""
+    is_trained = True # Indicate that this measure is always trained.
 
-    def __init__(self, pairwise_metric='correlation', center_data=False,
+    def __init__(self, pairwise_metric='correlation', center_data=True,
                     chunks_attr=None, square=False, **kwargs):
-        """Initialize
+        """
+        Initialize
 
         Parameters
         ----------
-        pairwise_metric: Distance metric to use for calculating pairwise vector distances.
-            See scipy.spatial.distance.pdist for all possible metrics.
-            (Default = 'correlation', i.e. one minus Pearson correlation)
-        chunks_attr: Chunks attribute (default = None). Indicates the samples attribute
-            to use to partition dataset returning one dissimilarity matrix per chunk
+
+        pairwise_metric : String. Distance metric to use for calculating pairwise vector
+            distances for dissimilarity matrix (DSM).  See scipy.spatial.distance.pdist
+            for all possible metrics.  (Default = 'correlation', i.e. one minus
+            Pearson correlation)
+        chunks_attr : String. Chunks attribute (Optional. default = None).
+            Indicates the samples attribute to use to partition dataset
+            returning one dissimilarity matrix per chunk, stacked vertically. If
+            set to None (default) then DSM includes distances between all pairs
+            of samples.  Value can be any key in dataset.sa dict, typically
+            'chunks'.
+        center_data : boolean. (Optional. Default = True) If True then center
+            each column of the data matrix by subtracing the column mean from each
+            element  (by chunk if chunks_attr specified). This is recommended
+            especially when using pairwise_metric = 'correlation'.
+        square : boolean. (Optional. Default = False) If True return the square
+            distance matrices, if False, returns the flattened lower triangle.
+    
         """
-        Measure.__init__(self, **kwargs)
+
+        Measure.__init__(self, **kwargs) 
         self.pairwise_metric = pairwise_metric
-        self.center_data = center_data
+        self.center_data = center_data 
         self.chunks_attr = chunks_attr
         self.square = square
 
     def _call(self,ds):
         chunks_attr = self.chunks_attr
         dsm = None
+
+        # Determine partitions if chunks_attr is specified
         if chunks_attr is None:
             chunks = np.zeros((len(ds.samples)))
         else:
-            chunks = ds.sa[chunks_attr]
+            chunks = ds.sa[chunks_attr].value
+
+        # iterate over chunks, note if no chunks specified then there is only
+        # one chunk, and therefore only one iteration
         for chunk in np.unique(chunks):
             dset = ds[chunks==chunk,:]
-            print ds.shape
+            
+            # center data if specified
             if self.center_data:
-                ds.samples = ds.samples - np.mean(ds.samples,0)
-            pd = pdist(ds.samples,metric=self.pairwise_metric)
+                dset.samples = dset.samples - np.mean(dset.samples,0)
+            
+            # get dsm for this chunk 
+            pd = pdist(dset.samples,metric=self.pairwise_metric)
+            
+            # if square return value make dsm square 
             if self.square:
                 pd = squareform(pd)
+
+            # Vstack results for each chunk
             if dsm is None:
                 dsm = pd
             else:
