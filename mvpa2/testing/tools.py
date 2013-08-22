@@ -32,6 +32,7 @@ if externals.exists('nose'):
         # Asserting (pep8-ed from unittest)
         assert_true, assert_false, assert_raises,
         assert_equal, assert_equals, assert_not_equal, assert_not_equals,
+        assert_greater,
         # Decorators
         timed, with_setup, raises, istest, nottest, make_decorator )
 else:
