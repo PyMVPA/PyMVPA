@@ -201,7 +201,7 @@ class SurfTests(unittest.TestCase):
 
         r = s.rotate(theta, unit='deg')
 
-        l2r = surf.sphere_reg_leftrightmapping(s, r)
+        l2r = surf.get_sphere_left_right_mapping(s, r)
         l2r_expected = [0, 1, 2, 6, 5, 4, 3, 11, 10, 9, 8, 7, 15, 14, 13, 12,
                        16, 19, 18, 17, 21, 20, 23, 22, 26, 25, 24]
 
