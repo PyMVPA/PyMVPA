@@ -139,40 +139,8 @@ class BaseSearchlight(Measure):
 
         # pass to subclass
         results = self._sl_call(dataset, roi_ids, nproc)
-
-        if 'mapper' in dataset.a:
-            # since we know the space we can stick the original mapper into the
-            # results as well
-            if self.__roi_ids is None:
-                results.a['mapper'] = copy.copy(dataset.a.mapper)
-            else:
-                # there is an additional selection step that needs to be
-                # expressed by another mapper
-                mapper = copy.copy(dataset.a.mapper)
-
-                # NNO if the orignal mapper has no append (because it's not a
-                # chainmapper, for example), we make our own chainmapper.
-                #
-                # THe original code was:
-                # mapper.append(StaticFeatureSelection(roi_ids,
-                #                                     dshape=dataset.shape[1:])) 
-                feat_sel_mapper = StaticFeatureSelection(roi_ids,
-                                                     dshape=dataset.shape[1:])
-                if 'append' in dir(mapper):
-                    mapper.append(feat_sel_mapper)
-                else:
-                    mapper = ChainMapper([dataset.a.mapper,
-                                          feat_sel_mapper])
-
-                results.a['mapper'] = mapper
-
         # charge state
         self.ca.raw_results = results
-
-        # store the center ids as a feature attribute
-        results.fa['center_ids'] = roi_ids
-
-
         # return raw results, base-class will take care of transformations
         return results
 
@@ -230,8 +198,32 @@ class Searchlight(BaseSearchlight):
         if sl.ca.is_enabled('roi_center_ids'):
             sl.ca.roi_center_ids = [r.a.roi_center_ids for r in results]
 
-        return result_ds
+        if 'mapper' in dataset.a:
+            # since we know the space we can stick the original mapper into the
+            # results as well
+            if roi_ids is None:
+                result_ds.a['mapper'] = copy.copy(dataset.a.mapper)
+            else:
+                # there is an additional selection step that needs to be
+                # expressed by another mapper
+                mapper = copy.copy(dataset.a.mapper)
 
+                # NNO if the orignal mapper has no append (because it's not a
+                # chainmapper, for example), we make our own chainmapper.
+                feat_sel_mapper = StaticFeatureSelection(
+                                    roi_ids, dshape=dataset.shape[1:])
+                if hasattr(mapper, 'append'):
+                    mapper.append(feat_sel_mapper)
+                else:
+                    mapper = ChainMapper([dataset.a.mapper,
+                                          feat_sel_mapper])
+
+                result_ds.a['mapper'] = mapper
+
+        # store the center ids as a feature attribute
+        result_ds.fa['center_ids'] = roi_ids
+
+        return result_ds
 
     def __init__(self, datameasure, queryengine, add_center_fa=False,
                  results_postproc_fx=None,
