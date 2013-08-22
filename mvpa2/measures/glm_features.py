@@ -14,13 +14,18 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa2.base import externals
-
-## # do conditional to be able to build module reference
-## if externals.exists('statsmodels', raise_=True):
-##     import statsmodels.api as sm
+from mvpa2.base.state import ConditionalAttribute
 
 from mvpa2.measures.base import FeaturewiseMeasure
 from mvpa2.datasets.base import Dataset
+
+from mvpa2.misc.fx import double_gamma_hrf
+
+if externals.exists('hrf_estimation'):
+    import hrf_estimation as he # pip install -U hrf_estimation
+if externals.exists('nipy'):
+    from nipy.modalities.fmri import hemodynamic_models as hdm
+
 
 def fsl_design_to_evs(fsf_filename):
     """Load FSL design and spit out description of EVs and other regressors
@@ -99,11 +104,21 @@ class HRFEstimator(FeaturewiseMeasure):
 
     """
 
-    # We might well want to train separately
-    #is_trained = True
+    # TODO: We might well want to train separately?
+    is_trained = True
 
-    def __init__(self, evs, TR, ev_groups=None,
+    betas = ConditionalAttribute(enabled=False,
+                                  doc="Dataset with estimated per each even betas")
+    design = ConditionalAttribute(enabled=False,
+                                  doc="Design used for the estimation of HRF/betas")
+
+    def __init__(self,
+                 evs,
+                 tr,
                  estimator='hrf_estimation',
+                 nuisance_sas=None,
+                 fir_length=20,
+                 hrf_gen=double_gamma_hrf,
                  **kwargs):
         """
         Parameters
@@ -119,13 +134,114 @@ class HRFEstimator(FeaturewiseMeasure):
         ##   them apart.  If None, then assume that all conditions are on their own
         """
         FeaturewiseMeasure.__init__(self, **kwargs)
-        self._evs = evs
-        self._TR = TR
+        self.evs = evs
+        self.tr = tr
+        self.estimator = estimator
+        self.nuisance_sas = nuisance_sas
+        self.fir_length = fir_length
+        self.hrf_gen = hrf_gen
         #self._ev_groups = ev_groups
 
-    def _train(self, dataset):
+    def _get_nuisances_ds(self, dataset):
+        # prepare nuisanaces
+        if not self.nuisance_sas:
+            return None
+        nuisances, nuisance_names, nuisance_indexes = [], [], []
+        for sa in (self.nuisance_sas or []):
+            # those are samples x regressors (x whatever?)
+            sa_value = dataset.sa[sa].value
+            nuisance_names += [ sa ] * sa_value.shape[1] \
+                              if sa_value.ndim > 1 else [ sa ]
+            nuisance_indexes += range(sa_value.shape[1])
+            nuisances += list(
+                sa_value[None, :] if sa_value.ndim == 1 else np.swapaxes(sa_value, 0, 1))
+        return Dataset(np.array(nuisances).T,
+                       sa=dataset.sa.copy(),
+                       fa={'names': nuisance_names,
+                           'index': nuisance_indexes})
+
+
+    def _call(self, dataset):
+        ## from mvpa2.mappers.zscore import zscore
+
+        ## dataset = dataset.copy()
+        ## zscore(dataset, chunks_attr=None)
         ntimepoints = len(dataset)
-        # for hrf_estimator, we would need to generate the design matrix
-        # which we would later expand for FIRs
-        
-        # in case of later 
+        nevs = sum([len(e['onsets']) for e in self.evs.itervalues()])
+        tr = self.tr
+
+        nuisances = self._get_nuisances_ds(dataset)
+        if self.estimator == 'hrf_estimation':
+            # for hrf_estimator, we would need to generate the design matrix
+            # which we would later expand for FIRs
+            
+            # at first do not care about groups, all events are alike
+            # TODO: care about groups
+            # TODO: csr sparse matrix
+            design_shape = (ntimepoints, nevs*self.fir_length)
+            design = np.zeros(shape=design_shape, dtype=int)
+            groups, event_indexes, event_totalindex = [], [], 0
+            
+            for ig, (g, events) in enumerate(self.evs.iteritems()):
+                onsets = events['onsets']
+                durations = events.get('durations', [1]*len(onsets))
+                for ie, (o, d) in enumerate(zip(onsets, durations)):
+                    # Place events rounding to closest tr
+                    o_idx = int(round(o/tr))
+                    e_idx = max(int(round((o+d)/tr)), o_idx+1)
+                    # place the diagonal with 1s for every fir offset
+                    # into the design.
+                    ix, iy = [], []
+                    for resp_point in np.arange(o_idx, e_idx):
+                        ix += [resp_point + i for i in xrange(self.fir_length)]
+                        iy += range(event_totalindex*self.fir_length,
+                                    (event_totalindex+1)*self.fir_length)
+                    ix, iy = np.asanyarray(ix), np.asanyarray(iy)
+                    # discard those going beyond the duration
+                    ix_legit = ix<ntimepoints
+                    design[(ix[ix_legit], iy[ix_legit])] = 1
+                    event_totalindex += 1
+                    groups.append(g)
+                    event_indexes.append(ie)
+                    # we might want to store the entire dict of event for
+                    # that occasion so we could populate .fa happen we want
+                    # store this bloody design
+
+        # TODO: it might be more efficient to initiate/assign to
+        # sparse matrix from the beginning?
+        if externals.exists('scipy'):
+            import scipy.sparse as ss
+            design = ss.csr_matrix(design)
+
+        import hrf_estimation as he
+
+        timex = np.arange(0, self.fir_length*tr, tr)
+        canonical = self.hrf_gen(timex)
+        # yoh: Let's do 1 voxel at a time to ease convergence
+        #      at penalty of performance.  Also we will possibly once again
+        #      center/demean the data
+        out = [he.rank_one(
+                design, voxel_data-np.mean(voxel_data), alpha=1., size_u=self.fir_length,
+                u0=canonical,
+                Z=np.asanyarray(nuisances) if nuisances else None,
+                rtol=0.5e-5, verbose=False, maxiter=200)
+               for voxel_data in dataset.samples.T]
+        # And now collect results into single arrays
+        out = [np.concatenate(x, axis=1) for x in zip(*out)]
+        hrfs, betas = out[:2]
+        if nuisances is not None:
+            W = out[2]
+
+        # TODO
+        if self.ca.is_enabled('design'):
+            # TODO -- add all the attribution for each sa, fa
+            self.ca.design = Dataset(design)
+        if self.ca.is_enabled('betas'):
+            self.ca.betas = betasds = \
+              Dataset(betas, fa=dataset.fa,
+                             sa={'groups':  groups,
+                                 'indexes': event_indexes})
+        # compose resultant dataset with HRFs
+        hrfsds = Dataset(hrfs, fa=dataset.fa, sa={'time_coords': timex})
+
+        return hrfsds

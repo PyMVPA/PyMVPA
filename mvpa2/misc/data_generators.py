@@ -18,8 +18,8 @@ from mvpa2.base import externals
 from mvpa2.datasets.base import dataset_wizard, Dataset
 from mvpa2 import pymvpa_dataroot, pymvpa_datadbroot
 from mvpa2.misc.fx import get_random_rotation
-
 from mvpa2.misc.fx import double_gamma_hrf, single_gamma_hrf
+from mvpa2.misc.support import Event
 
 if __debug__:
     from mvpa2.base import debug
@@ -483,39 +483,54 @@ def random_affine_transformation(ds, scale_fac=100., shift_fac=10.):
                       'random_shift': random_shift})
 
 
-def simple_hrf_dataset(onsets=[1, 20, 25, 50, 60, 90, 92, 140],
+def simple_hrf_dataset(events=[1, 20, 25, 50, 60, 90, 92, 140],
                        hrf_gen=lambda t:double_gamma_hrf(t) - single_gamma_hrf(t, 0.8, 1, 0.05),
                        nsamples=None,
                        tr=2.0,
-                       tres=0.1,
+                       tres=1,
                        baseline=800.0,
                        signal_level=1,
                        noise='normal',
                        noise_level=1,
                        ):
+    """
+    events: list of Events or ndarray of onsets for simple(r) designs
+    """
     from scipy import signal
 
-    onsets = np.asanyarray(onsets)
+    if isinstance(events, np.ndarray) or not isinstance(events[0], dict):
+        events = [Event(onset=o) for o in events]
+    else:
+        assert(isinstance(events, list))
+        for e in events:
+            assert(isinstance(e, dict))
 
     # play fmri
     # full-blown HRF with initial dip and undershoot ;-)
     hrf_x = np.linspace(0, 25, 25/tres)
     hrf = hrf_gen(hrf_x)
 
-    # estimate number of samples needed if not provided
-    nsamples = int(max(onsets)/tres + len(hrf_x)*1.5)
+    if not nsamples:
+        # estimate number of samples needed if not provided
+        max_onset = max([e['onset'] for e in events])
+        nsamples = int(max_onset/tres + len(hrf_x)*1.5)
 
     # come up with an experimental design
-    fast_er_onsets = (onsets/tres).astype(int)
     fast_er = np.zeros(nsamples)
-    fast_er[fast_er_onsets] = 1
+    for e in events:
+        on = int(e['onset'] / float(tres))
+        off = int((e['onset'] + e.get('duration', 1.)) / float(tres))
+        if off == on:
+            off += 1                      # so we have at least 1 point
+        assert(range(on, off))
+        fast_er[on:off] = e.get('intensity', 1)
 
     # high resolution model of the convolved regressor
     model_hr = np.convolve(fast_er, hrf)[:nsamples]
 
     # downsample the regressor to fMRI resolution
     model_lr = signal.resample(model_hr,
-                               int(nsamples / tr / 10),
+                               int(tres * nsamples / tr),
                                window='ham')
 
     # generate artifical fMRI data: two voxels one is noise, one has

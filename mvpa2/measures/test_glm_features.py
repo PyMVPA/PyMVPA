@@ -29,8 +29,12 @@ __author__ = 'Yaroslav Halchenko'
 __copyright__ = 'Copyright (c) 2013 Yaroslav Halchenko'
 __license__ = 'MIT'
 
-from nose.tools import *
 from glm_features import *
+
+from mvpa2.misc.data_generators import simple_hrf_dataset
+from mvpa2.misc.fx import double_gamma_hrf
+
+from mvpa2.testing import *
 
 def test_regroup():
     evs = {'a': [1, 2],
@@ -67,3 +71,107 @@ def test_bunch_to_evs():
     assert_equal(evs, {'cond1': {'onsets': [20, 120], 'durations': [0, 0]},
                        'cond2': {'onsets': [80, 160], 'durations': [0, 2]}})
 
+from mvpa2.misc.support import Event
+def generate_events(onset, **kwargs):
+    opts = {'onset': onset}
+    for k,x in kwargs.iteritems():
+        if not (isinstance(x, list) or isinstance(x, np.ndarray)):
+            x = [x]*len(onset)
+        opts[k] = x
+    return [Event(**dict([(k, opts[k][i]) for k in opts.keys()]))
+            for i in xrange(len(onset))]
+
+@reseed_rng()
+def test_hrf_estimate():
+    # a very simple test for now -- single condition, high SNR, not
+    # that much of overlap, matching HRF
+    onsets1 = np.arange(0, 120, 6)
+    intensities1 = np.random.uniform(1, 3, len(onsets1))
+    events = generate_events(onsets1, intensity=intensities1, target='L1')
+    # jitter them a bit
+    #onsets1 += np.random.uniform(0, 8, size=onsets1.shape) - 4
+    #onsets1 = np.clip(onsets1, 0, 1000)
+    hrf_gen = double_gamma_hrf
+    #onsets1 = [5, 8, 10, 20, 30, 35, 40, 43, 48, 51]
+    tr = 2.
+    noise_level = 0.000001
+    fir_length = 20
+
+    data = simple_hrf_dataset(events, hrf_gen=double_gamma_hrf,
+                              tr=tr, noise_level=noise_level, baseline=0)
+    # 10 would be 20sec at tr=2.
+    he = HRFEstimator({'cond1': {'onsets': onsets1}}, tr,
+                       hrf_gen=hrf_gen,
+                       fir_length=fir_length,
+                       enable_ca=['all'])
+    hrfsds = he(data)
+    betas = he.ca.betas
+
+    # how well this reconstructs voxel1 with the signal?
+    data_rec = simple_hrf_dataset(
+        generate_events(onsets1, intensity=betas.samples[:, 0]),
+        hrf_gen=double_gamma_hrf, tr=tr, noise_level=0, baseline=0)
+
+    cc_rec = 
+    assert_equal(len(hrfsds), fir_length)
+    assert_almost_equal(hrfsds.sa.time_coords[1]-hrfsds.sa.time_coords[0], tr)
+
+    # Basic tests
+    assert_equal(he.ca.betas.shape, (len(onsets1), data.nfeatures))
+    assert_equal(he.ca.design.shape, (len(data), fir_length*len(onsets1)))
+
+    assert_true(hrfsds.fa.signal_level[0])
+    assert_false(hrfsds.fa.signal_level[1])
+
+    canonical = hrf_gen(hrfsds.sa.time_coords)
+    cc = np.corrcoef(np.hstack((hrfsds, canonical[:, None])), rowvar=0)
+    # voxel0 is informative one and its estimate would become a bit noisier
+    # version of canonical HRF but still quite high
+    assert_true(0.7 < cc[0, 2] < 1)
+    # for bogus feature it should correlate more with canonical than v0
+    assert_greater(cc[1, 2], cc[1, 0])
+    # voxel1 is not informative and no HRF could be deduced so it would stay
+    # at canonical and with high cc
+    assert_greater(cc[1, 2], 0.8)
+
+    cc_betas = np.corrcoef(np.hstack((betas.samples, intensities1[:, None])),
+                           rowvar=0)
+    # there should be no correlation between betas of informative
+    # voxel and noisy one
+    assert_greater(0.4, cc_betas[0, 1])
+    # neight to original
+    assert_greater(0.4, cc_betas[1, 2])
+    # but estimates for a good voxel should have reasonably high correlation
+    assert_greater(cc_betas[0, 2], 0.6)
+
+    # provide nuisance_sas pointing to originally added noise
+    he.nuisance_sas = ['noise']
+    hrfsds_ = he(data)
+    betas_ = he.ca.betas
+    cc_ = np.corrcoef(np.hstack((hrfsds_, canonical[:, None])), rowvar=0)
+    # Fidelity should be higher if we provide original noise as nuisances
+    assert_true(np.all(cc <= cc_))
+    # results should be even better match then before
+    cc_betas_ = np.corrcoef(np.hstack((betas.samples, intensities1[:, None])),
+                            rowvar=0)
+
+
+    #print np.linalg.norm(hrfsds.samples[:, 1] - canonical, 'fro')
+    # voxel1 has no information
+    import pydb; pydb.debugger()
+    i = 1
+
+    """
+            #pl.imshow(design2)
+        #pl.show()
+        print V
+        pl.figure();
+        pl.plot(dataset.samples[:, 0]); pl.plot(dataset.samples[:, 1]); pl.legend(('v1', 'v2'))
+        pl.figure();
+        pl.plot(hrfsds[:, 0]); pl.plot(hrfsds[:, 1]); pl.plot(canonical); pl.legend(('v1', 'v2', 'canonical')); pl.show()
+
+        import pydb; pydb.debugger()
+        i = 1
+        return design
+        # in case of later 
+"""

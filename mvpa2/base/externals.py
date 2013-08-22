@@ -564,6 +564,7 @@ _KNOWN = {'libsvm':'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'pywt': "__check('pywt')",
           'h5py': "__check('h5py', 'version.version')",
           'nipy': "__check('nipy')",
+          'hrf_estimation': "__check('hrf_estimation')",
           'nipy.neurospin': "__check_nipy_neurospin()",
           'statsmodels': 'import statsmodels.api as __',
           }
