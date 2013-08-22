@@ -576,8 +576,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
             assert_true(combined(ds).shape[1 - i] == ds.shape[1 - i])
 
     def test_split_samples_probability_mapper(self):
-        if not externals.exists('scipy'):
-            return
+        skip_if_no_external('scipy')
         nf = 10
         ns = 100
         nsubj = 5
