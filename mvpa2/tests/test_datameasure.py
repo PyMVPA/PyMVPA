@@ -601,6 +601,35 @@ class SensitivityAnalysersTests(unittest.TestCase):
         assert_array_equal(z, y.samples)
         assert_equal(y.shape, (100, 4))
 
+    def test_pass_attr(self):
+        from mvpa2.base.node import Node
+        from mvpa2.base.state import ConditionalAttribute
+
+        ds = datasets['dumbinv']
+
+        class MyNode(Node):
+            some_sa = ConditionalAttribute(enabled=True)
+            some_fa = ConditionalAttribute(enabled=True)
+            some_complex = ConditionalAttribute(enabled=True)
+            def _call(self, ds):
+                return Dataset(np.zeros(ds.shape))
+        node = MyNode(pass_attr=['ca.some_sa',
+                                 ('ca.some_fa', 'fa'),
+                                 ('ca.some_complex', 'fa', 1, 'transposed'),
+                                 'sa.targets'])
+        node.ca.some_sa = np.arange(len(ds))
+        node.ca.some_fa = np.arange(ds.nfeatures)
+        node.ca.some_complex = ds.samples
+        res = node(ds)
+        assert_true('some_sa' in res.sa)
+        assert_true('some_fa' in res.fa)
+        assert_true('transposed' in res.fa)
+        assert_true('targets' in res.sa)
+        # view on original array
+        assert_true(res.fa.transposed.base is ds.samples)
+        assert_array_equal(res.fa.transposed.T, ds.samples)
+
+
 def suite():
     return unittest.makeSuite(SensitivityAnalysersTests)
 
