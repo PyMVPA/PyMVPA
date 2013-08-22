@@ -157,7 +157,7 @@ class BaseSearchlight(Measure):
                 #
                 # THe original code was:
                 # mapper.append(StaticFeatureSelection(roi_ids,
-                #                                     dshape=dataset.shape[1:])) 
+                #                                     dshape=dataset.shape[1:]))
                 feat_sel_mapper = StaticFeatureSelection(roi_ids,
                                                      dshape=dataset.shape[1:])
                 if 'append' in dir(mapper):
@@ -447,6 +447,10 @@ class Searchlight(BaseSearchlight):
                 msg = 'ROI %i (%i/%i), %i features' % \
                             (f + 1, i + 1, len(block), roi.nfeatures)
                 debug('SLC', bar(float(i + 1) / len(block), msg), cr=True)
+
+        if __debug__:
+            # just to get to new line
+            debug('SLC', '')
 
         if self.results_backend == 'native':
             pass                        # nothing special
