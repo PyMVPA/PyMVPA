@@ -255,9 +255,9 @@ def hemi_pairs_add_views(spec_both, state, ext, directory=None, overwrite=False)
             print "Output already exist for %s" % longname
         else:
             surf_left, surf_right = map(surf.read, oldfns)
-            surf_both_moved = surf.hemi_pairs_reposition(surf_left,
-                                                         surf_right,
-                                                         view)
+            surf_both_moved = surf.reposition_hemisphere_pairs(surf_left,
+                                                               surf_right,
+                                                               view)
 
             for fn, surf_ in zip(newfns, surf_both_moved):
                 surf.write(fn, surf_, overwrite)
