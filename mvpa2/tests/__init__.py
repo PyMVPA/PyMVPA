@@ -220,6 +220,7 @@ def collect_nose_tests(verbosity=1):
         'test_iohelpers',
         'test_hdf5',
         'test_hdf5_clf',
+        'test_gifti',
 
         # Measures
         'test_transerror',
@@ -234,7 +235,9 @@ def collect_nose_tests(verbosity=1):
         'test_surfing',
         'test_surfing_afni',
         'test_surfing_voxelselection',
-        'test_eeglab'
+        'test_eeglab',
+        'test_progress',
+        'test_winner',
         ]
 
     if not cfg.getboolean('tests', 'lowmem', default='no'):
