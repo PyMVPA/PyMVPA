@@ -170,8 +170,6 @@ class SurfTests(unittest.TestCase):
         assert_equal(s4.nfaces, 48)
 
 
-
-
     def test_surf_border(self):
         s = surf.generate_sphere(3)
         assert_array_equal(s.nodes_on_border(), [False] * 11)
@@ -395,7 +393,7 @@ class SurfTests(unittest.TestCase):
 
                 # results should be identical irrespective of constr
                 if i == 0:
-                    # - first call with this value of dialte: has to be more
+                    # - first call with this value of dilate: has to be more
                     #   voxels than very previous dilation value, unless the
                     #   full volume is covered - then it can be equal too
                     # - every next call: ensure size matches
