@@ -1667,7 +1667,7 @@ class Surface(object):
     def write(self, fn):
         write(fn, self)
 
-def hemi_pairs_reposition(surf_left, surf_right, facing_side,
+def reposition_hemisphere_pairs(surf_left, surf_right, facing_side,
                           min_distance=10.):
     '''moves and rotates pairs of hemispheres so that they are facing each
     other on one side, good for visualization. It is assumed that the input
@@ -1728,22 +1728,22 @@ def hemi_pairs_reposition(surf_left, surf_right, facing_side,
 
 
 
-def sphere_reg_leftrightmapping(sL, sR, eps=.001):
-    '''finds the mapping from left to right hemispehre and vice versa
+def get_sphere_left_right_mapping(surf_left, surf_right, eps=.001):
+    '''finds the mapping from left to right hemisphere and vice versa
     (the mapping is symmetric)
 
     this only works on sphere.reg.asc files made with AFNI/SUMA's mapicosehedron'''
 
-    if not sL.same_topology(sR):
+    if not surf_left.same_topology(surf_right):
         raise ValueError('topology mismatch')
 
-    nv = sL.nvertices
+    nv = surf_left.nvertices
 
     # to swap right surface along x-axis (i.e. mirror along x=0 plane)
     swapLR = np.array([[-1, 1, 1]])
 
-    vL, vR = sL.vertices, sR.vertices * swapLR
-    nL, nR = sL.neighbors, sR.neighbors
+    vL, vR = surf_left.vertices, surf_right.vertices * swapLR
+    nL, nR = surf_left.neighbors, surf_right.neighbors
 
 
     # flip along x-axis
@@ -1785,8 +1785,9 @@ def sphere_reg_leftrightmapping(sL, sR, eps=.001):
 
         # of all the neighbors of sourceR, one of them should be
         # corresponding to pivotL
-        nbrsR = nR[sourceR].keys()
-        nearestR = nbrsR[find_nearest(vL[pivotL, :], vR[nbrsR, :])]
+        nbr_surf_right = nR[sourceR].keys()
+        nearestR = nbr_surf_right[find_nearest(vL[pivotL, :],
+                                               vR[nbr_surf_right, :])]
 
         # store result
         l2r[pivotL] = nearestR
