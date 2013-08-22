@@ -220,7 +220,6 @@ def collect_nose_tests(verbosity=1):
         'test_iohelpers',
         'test_hdf5',
         'test_hdf5_clf',
-        'test_gifti',
 
         # Measures
         'test_transerror',
