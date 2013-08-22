@@ -210,7 +210,7 @@ class SurfTests(unittest.TestCase):
 
         sides_facing = 'apism'
         for side_facing in sides_facing:
-            l, r = surf.hemi_pairs_reposition(s + 10., t + (-10.),
+            l, r = surf.reposition_hemisphere_pairs(s + 10., t + (-10.),
                                               side_facing)
 
             m = surf.merge(l, r)
