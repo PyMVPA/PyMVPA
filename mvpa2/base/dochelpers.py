@@ -12,6 +12,8 @@ __docformat__ = 'restructuredtext'
 
 import re, textwrap
 
+types = __import__('types')
+
 # for table2string
 import numpy as np
 from math import ceil
@@ -443,6 +445,18 @@ def table2string(table, out=None):
         out.close()
         return value
 
+def _saferepr(f):
+    """repr which would not repr instances of bound methods since that might recurse
+
+    See: bound methods to its instances
+    https://github.com/PyMVPA/PyMVPA/issues/122
+    """
+    if type(f) == types.MethodType:
+        objid = _strid(f.im_self) if __debug__ and 'ID_IN_REPR' in debug.active else ""
+        return "<bound %s%s.%s>" % (f.im_class.__name__, objid, f.__func__.__name__)
+    else:
+        return repr(f)
+
 def _repr_attrs(obj, attrs, default=None, error_value='ERROR'):
     """Helper to obtain a list of formatted attributes different from
     the default
@@ -451,9 +465,8 @@ def _repr_attrs(obj, attrs, default=None, error_value='ERROR'):
     for a in attrs:
         v = getattr(obj, a, error_value)
         if not (v is default or isinstance(v, basestring) and v == default):
-            out.append('%s=%r' % (a, v))
+            out.append('%s=%s' % (a, _saferepr(v)))
     return out
-
 
 def _repr(obj, *args, **kwargs):
     """Helper to get a structured __repr__ for all objects.
