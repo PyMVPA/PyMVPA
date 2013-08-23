@@ -48,9 +48,9 @@ class DissimilarityMatrixMeasure(Measure):
     
         Returns
         -------
-        Dataset :           Contains a row vector of pairwise distances between
-                            all samples if square = False; square dissimilarty
-                            matrix if square = True.
+        Dataset :           Contains a column vector of length = n(n-1)/2 of pairwise 
+                            distances between all samples if square = False; square 
+                            dissimilarty matrix if square = True.
         """
 
         Measure.__init__(self, **kwargs) 
@@ -71,8 +71,7 @@ class DissimilarityMatrixMeasure(Measure):
         # if square return value make dsm square 
         if self.square:
             dsm = squareform(dsm)
-        else:
-            dsm = dsm.reshape((1,-1))
+        
         return Dataset(dsm) 
 
 
@@ -157,6 +156,6 @@ class DissimilarityConsistencyMeasure(Measure):
             dsms = np.apply_along_axis(rankdata, 1, dsms)
         corrmat = np.corrcoef(dsms)
         
-        return Dataset(squareform(corrmat,checks=False).reshape((1,-1)))
+        return Dataset(squareform(corrmat,checks=False))
     
 
