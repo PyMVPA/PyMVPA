@@ -139,40 +139,8 @@ class BaseSearchlight(Measure):
 
         # pass to subclass
         results = self._sl_call(dataset, roi_ids, nproc)
-
-        if 'mapper' in dataset.a:
-            # since we know the space we can stick the original mapper into the
-            # results as well
-            if self.__roi_ids is None:
-                results.a['mapper'] = copy.copy(dataset.a.mapper)
-            else:
-                # there is an additional selection step that needs to be
-                # expressed by another mapper
-                mapper = copy.copy(dataset.a.mapper)
-
-                # NNO if the orignal mapper has no append (because it's not a
-                # chainmapper, for example), we make our own chainmapper.
-                #
-                # THe original code was:
-                # mapper.append(StaticFeatureSelection(roi_ids,
-                #                                     dshape=dataset.shape[1:])) 
-                feat_sel_mapper = StaticFeatureSelection(roi_ids,
-                                                     dshape=dataset.shape[1:])
-                if 'append' in dir(mapper):
-                    mapper.append(feat_sel_mapper)
-                else:
-                    mapper = ChainMapper([dataset.a.mapper,
-                                          feat_sel_mapper])
-
-                results.a['mapper'] = mapper
-
         # charge state
         self.ca.raw_results = results
-
-        # store the center ids as a feature attribute
-        results.fa['center_ids'] = roi_ids
-
-
         # return raw results, base-class will take care of transformations
         return results
 
@@ -230,10 +198,35 @@ class Searchlight(BaseSearchlight):
         if sl.ca.is_enabled('roi_center_ids'):
             sl.ca.roi_center_ids = [r.a.roi_center_ids for r in results]
 
+        if 'mapper' in dataset.a:
+            # since we know the space we can stick the original mapper into the
+            # results as well
+            if roi_ids is None:
+                result_ds.a['mapper'] = copy.copy(dataset.a.mapper)
+            else:
+                # there is an additional selection step that needs to be
+                # expressed by another mapper
+                mapper = copy.copy(dataset.a.mapper)
+
+                # NNO if the orignal mapper has no append (because it's not a
+                # chainmapper, for example), we make our own chainmapper.
+                feat_sel_mapper = StaticFeatureSelection(
+                                    roi_ids, dshape=dataset.shape[1:])
+                if hasattr(mapper, 'append'):
+                    mapper.append(feat_sel_mapper)
+                else:
+                    mapper = ChainMapper([dataset.a.mapper,
+                                          feat_sel_mapper])
+
+                result_ds.a['mapper'] = mapper
+
+        # store the center ids as a feature attribute
+        result_ds.fa['center_ids'] = roi_ids
+
         return result_ds
 
-
     def __init__(self, datameasure, queryengine, add_center_fa=False,
+                 results_postproc_fx=None,
                  results_backend='native',
                  results_fx=None,
                  tmp_prefix='tmpsl',
@@ -251,6 +244,10 @@ class Searchlight(BaseSearchlight):
           seed (e.g. sphere center) for the respective ROI. If True, the
           attribute is named 'roi_seed', the provided string is used as the name
           otherwise.
+        results_postproc_fx : callable
+          Called with all the results computed in a block for possible
+          post-processing which needs to be done in parallel instead of serial
+          aggregation in results_fx.
         results_backend : ('native', 'hdf5'), optional
           Specifies the way results are provided back from a processing block
           in case of nproc > 1. 'native' is pickling/unpickling of results by
@@ -275,6 +272,7 @@ class Searchlight(BaseSearchlight):
         """
         BaseSearchlight.__init__(self, queryengine, **kwargs)
         self.datameasure = datameasure
+        self.results_postproc_fx = results_postproc_fx
         self.results_backend = results_backend.lower()
         if self.results_backend == 'hdf5':
             # Assure having hdf5
@@ -295,6 +293,7 @@ class Searchlight(BaseSearchlight):
             prefixes=prefixes
             + _repr_attrs(self, ['datameasure'])
             + _repr_attrs(self, ['add_center_fa'], default=False)
+            + _repr_attrs(self, ['results_postproc_fx'])
             + _repr_attrs(self, ['results_backend'], default='native')
             + _repr_attrs(self, ['results_fx', 'nblocks'])
             )
@@ -445,6 +444,11 @@ class Searchlight(BaseSearchlight):
                        roi.nfeatures,
                        float(i + 1) / len(block) * 100,), cr=True)
 
+        if self.results_postproc_fx:
+            if __debug__:
+                debug('SLC', "Post-processing %d results in proc_block using %s"
+                      % (len(results), self.results_postproc_fx))
+            results = self.results_postproc_fx(results)
         if self.results_backend == 'native':
             pass                        # nothing special
         elif self.results_backend == 'hdf5':
