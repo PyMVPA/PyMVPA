@@ -328,7 +328,7 @@ def run_mapico(config, env):
             if config['overwrite'] or not os.path.exists(mappathfn):
                 eps = .001
                 print "Computing bijection between nodes (ico=%d) - this may take a while" % icold
-                bijection = surf.sphere_reg_leftrightmapping(spheres[0],
+                bijection = surf.get_sphere_left_right_mapping(spheres[0],
                                                                 spheres[1],
                                                                 eps)
 

@@ -141,6 +141,33 @@ class BaseSearchlight(Measure):
 
         # pass to subclass
         results = self._sl_call(dataset, roi_ids, nproc)
+
+        if 'mapper' in dataset.a:
+            # since we know the space we can stick the original mapper into the
+            # results as well
+            if self.__roi_ids is None:
+                results.a['mapper'] = copy.copy(dataset.a.mapper)
+            else:
+                # there is an additional selection step that needs to be
+                # expressed by another mapper
+                mapper = copy.copy(dataset.a.mapper)
+
+                # NNO if the orignal mapper has no append (because it's not a
+                # chainmapper, for example), we make our own chainmapper.
+                #
+                # THe original code was:
+                # mapper.append(StaticFeatureSelection(roi_ids,
+                #                                     dshape=dataset.shape[1:]))
+                feat_sel_mapper = StaticFeatureSelection(roi_ids,
+                                                     dshape=dataset.shape[1:])
+                if 'append' in dir(mapper):
+                    mapper.append(feat_sel_mapper)
+                else:
+                    mapper = ChainMapper([dataset.a.mapper,
+                                          feat_sel_mapper])
+
+                results.a['mapper'] = mapper
+
         # charge state
         self.ca.raw_results = results
         # return raw results, base-class will take care of transformations
@@ -446,6 +473,10 @@ class Searchlight(BaseSearchlight):
                 msg = 'ROI %i (%i/%i), %i features' % \
                             (f + 1, i + 1, len(block), roi.nfeatures)
                 debug('SLC', bar(float(i + 1) / len(block), msg), cr=True)
+
+        if __debug__:
+            # just to get to new line
+            debug('SLC', '')
 
         if self.results_postproc_fx:
             if __debug__:
