@@ -125,8 +125,8 @@ class SurfTests(unittest.TestCase):
             assert_raises((KeyError, ValueError), afni_niml.string2rawniml, garbage + s)
 
 
-
-    def test_afni_niml_dset(self):
+    @with_tempfile('.niml.dset', 'dset')
+    def test_afni_niml_dset(self, fn):
         sz = (100, 45) # dataset size
         rng = self._get_rng() # generate random data
 
@@ -153,8 +153,6 @@ class SurfTests(unittest.TestCase):
         eps = .00001
 
         # test I/O
-        fd, fn = tempfile.mkstemp('data.niml.dset', 'test'); os.close(fd)
-
         # depending on the mode we do different tests (but on the same data)
         modes = ['normal', 'skipio', 'sparse2full']
 
@@ -220,15 +218,14 @@ class SurfTests(unittest.TestCase):
                             if mode != 'sparse2full' or k == 'data':
                                 assert_array_almost_equal(v, v2, eps_dec)
 
-    def test_niml(self):
+    @with_tempfile('.niml.dset', 'dset')
+    def test_niml(self, fn):
         d = dict(data=np.random.normal(size=(10, 2)),
               node_indices=np.arange(10),
               stats=['none', 'Tstat(2)'],
               labels=['foo', 'bar'])
         a = niml.from_niml(d)
         b = niml.to_niml(a)
-
-        fd, fn = tempfile.mkstemp('.niml.dset', 'dset'); os.close(fd)
 
         afni_niml_dset.write(fn, b)
         bb = afni_niml_dset.read(fn)
@@ -252,7 +249,6 @@ class SurfTests(unittest.TestCase):
         d = np.arange(10).reshape((5, -1)) + .5
         ds = Dataset(d)
 
-        fn = fd, fn = tempfile.mkstemp('.niml.dset', 'dset'); os.close(fd)
         writers = [niml.write, afni_niml_dset.write]
         for i, writer in enumerate(writers):
             for form in ('text', 'binary', 'base64'):
@@ -265,8 +261,8 @@ class SurfTests(unittest.TestCase):
                 assert_array_equal(x['data'], d.transpose())
 
 
-
-    def test_niml_dset_voxsel(self):
+    @with_tempfile('.niml.dset', 'dset')
+    def test_niml_dset_voxsel(self, fn):
         if not externals.exists('nibabel'):
             return
 
@@ -313,7 +309,6 @@ class SurfTests(unittest.TestCase):
             ds = fmri_dataset(vg.get_empty_nifti_image(1))
             r = sl(ds)
 
-            fd, fn = tempfile.mkstemp('.niml.dset', 'dset'); os.close(fd)
             niml.write(fn, r)
             rr = niml.read(fn)
 
@@ -363,8 +358,8 @@ class SurfTests(unittest.TestCase):
         dsets[1].fa.node_indices[0] = 666
         assert_raises(ValueError, stacker, 10)
 
-
-    def test_afni_niml_roi(self):
+    @with_tempfile('.niml.roi', 'dset')
+    def test_afni_niml_roi(self, fn):
         payload = """# <Node_ROI
 #  ni_type = "SUMA_NIML_ROI_DATUM"
 #  ni_dimen = "5"
@@ -386,13 +381,10 @@ class SurfTests(unittest.TestCase):
  4 1 14 43063 43064 43065 43066 43067 43177 43178 43179 43180 43290 43291 43292 43402 43403
 # </Node_ROI>"""
 
-        fd, fn = tempfile.mkstemp('.niml.roi', 'dset'); os.close(fd)
-
         with open(fn, 'w') as f:
             f.write(payload)
 
         rois = afni_niml_roi.read(fn)
-        os.remove(fn)
 
         assert_equal(len(rois), 1)
         roi = rois[0]

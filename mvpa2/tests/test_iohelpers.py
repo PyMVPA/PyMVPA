@@ -14,7 +14,7 @@ import unittest
 from tempfile import mkstemp
 import numpy as np
 
-from mvpa2.testing.tools import ok_, assert_equal
+from mvpa2.testing.tools import ok_, assert_equal, with_tempfile
 
 from mvpa2 import pymvpa_dataroot
 from mvpa2.datasets.eventrelated import find_events
@@ -114,14 +114,13 @@ class IOHelperTests(unittest.TestCase):
             msg='Something is wrong with the timiing of the events')
 
 
-    def test_samples_attributes_autodtype(self):
+    @with_tempfile('mvpa', 'sampleattr')
+    def test_samples_attributes_autodtype(self, fn):
         payload = '''a b c
 1 1.1 a
 2 2.2 b
 3 3.3 c
 4 4.4 d'''
-
-        fd, fn = mkstemp('mvpa', 'sampleattr'); os.close(fd)
 
         with open(fn, 'w') as f:
             f.write(payload)
