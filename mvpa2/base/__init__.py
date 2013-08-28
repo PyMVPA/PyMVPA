@@ -223,6 +223,9 @@ if __debug__:
     debug.register('SPL', "*Splitter")
     debug.register('APERM', "AttributePermutator")
 
+    debug.register('HRF', "Estimation of HRF")
+    debug.register('HRF_', "Estimation of HRF (verbose)")
+
     debug.register('TRAN', "Transformers")
     debug.register('TRAN_', "Transformers (verbose)")
 

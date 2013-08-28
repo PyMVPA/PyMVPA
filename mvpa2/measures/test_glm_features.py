@@ -91,18 +91,22 @@ def test_hrf_estimate():
     # jitter them a bit
     #onsets1 += np.random.uniform(0, 8, size=onsets1.shape) - 4
     #onsets1 = np.clip(onsets1, 0, 1000)
-    hrf_gen = double_gamma_hrf
-    #onsets1 = [5, 8, 10, 20, 30, 35, 40, 43, 48, 51]
+    hrf_gen, hrf_est = double_gamma_hrf, double_gamma_hrf
     tr = 2.
-    noise_level = 0.000001
+    # even 0.5 is sufficient to make it converge to some "interesting" results
+    # where even if I betas0 are provided, matching original intensities and
+    # hrf_gen is the used canonical -- estimated betas are quite far away
+    noise_level = 0.2
     fir_length = 20
 
     data = simple_hrf_dataset(events, hrf_gen=double_gamma_hrf,
                               tr=tr, noise_level=noise_level, baseline=0)
+
     # 10 would be 20sec at tr=2.
     he = HRFEstimator({'cond1': {'onsets': onsets1}}, tr,
-                       hrf_gen=hrf_gen,
+                       hrf_gen=hrf_est,
                        fir_length=fir_length,
+                       # betas0=intensities1,
                        enable_ca=['all'])
     hrfsds = he(data)
     betas = he.ca.betas
@@ -112,7 +116,10 @@ def test_hrf_estimate():
         generate_events(onsets1, intensity=betas.samples[:, 0]),
         hrf_gen=double_gamma_hrf, tr=tr, noise_level=0, baseline=0)
 
-    cc_rec = 
+    cc_rec = np.corrcoef(((data.samples - data.sa.noise)[:, 0],
+                           data_rec.samples[:, 0]))[0, 1]
+    assert_greater(cc_rec, 0.8)
+
     assert_equal(len(hrfsds), fir_length)
     assert_almost_equal(hrfsds.sa.time_coords[1]-hrfsds.sa.time_coords[0], tr)
 
@@ -149,8 +156,10 @@ def test_hrf_estimate():
     hrfsds_ = he(data)
     betas_ = he.ca.betas
     cc_ = np.corrcoef(np.hstack((hrfsds_, canonical[:, None])), rowvar=0)
-    # Fidelity should be higher if we provide original noise as nuisances
-    assert_true(np.all(cc <= cc_))
+    # Fidelity should be higher if we provide original noise as
+    # nuisances but we will leave some 1e-4 margin for being wrong due
+    # to numeric precision etc
+    assert_array_less(cc, cc_ + 1e-4)
     # results should be even better match then before
     cc_betas_ = np.corrcoef(np.hstack((betas.samples, intensities1[:, None])),
                             rowvar=0)
@@ -158,8 +167,8 @@ def test_hrf_estimate():
 
     #print np.linalg.norm(hrfsds.samples[:, 1] - canonical, 'fro')
     # voxel1 has no information
-    import pydb; pydb.debugger()
-    i = 1
+    # import pydb; import pylab as pl;  pydb.debugger()
+    # i = 1
 
     """
             #pl.imshow(design2)

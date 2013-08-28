@@ -26,6 +26,8 @@ if externals.exists('hrf_estimation'):
 if externals.exists('nipy'):
     from nipy.modalities.fmri import hemodynamic_models as hdm
 
+if __debug__:
+    from mvpa2.base import debug
 
 def fsl_design_to_evs(fsf_filename):
     """Load FSL design and spit out description of EVs and other regressors
@@ -119,6 +121,7 @@ class HRFEstimator(FeaturewiseMeasure):
                  nuisance_sas=None,
                  fir_length=20,
                  hrf_gen=double_gamma_hrf,
+                 betas0=None,
                  **kwargs):
         """
         Parameters
@@ -140,10 +143,11 @@ class HRFEstimator(FeaturewiseMeasure):
         self.nuisance_sas = nuisance_sas
         self.fir_length = fir_length
         self.hrf_gen = hrf_gen
+        self._betas0 = betas0
         #self._ev_groups = ev_groups
 
     def _get_nuisances_ds(self, dataset):
-        # prepare nuisanaces
+        # prepare nuisances
         if not self.nuisance_sas:
             return None
         nuisances, nuisance_names, nuisance_indexes = [], [], []
@@ -221,10 +225,15 @@ class HRFEstimator(FeaturewiseMeasure):
         #      at penalty of performance.  Also we will possibly once again
         #      center/demean the data
         out = [he.rank_one(
-                design, voxel_data-np.mean(voxel_data), alpha=1., size_u=self.fir_length,
+                design,
+                voxel_data -np.mean(voxel_data),
+                alpha=1., size_u=self.fir_length,
                 u0=canonical,
+                v0=self._betas0,
                 Z=np.asanyarray(nuisances) if nuisances else None,
-                rtol=0.5e-5, verbose=False, maxiter=200)
+                rtol=0.1e-5,
+                verbose=__debug__ and 'HRF_' in debug.active,
+                maxiter=1000)
                for voxel_data in dataset.samples.T]
         # And now collect results into single arrays
         out = [np.concatenate(x, axis=1) for x in zip(*out)]
