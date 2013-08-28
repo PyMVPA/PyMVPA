@@ -63,16 +63,16 @@ class VoxelSelector(object):
                             outside_node_margin=None):
         '''
         Voxel selection using cortical surfaces.
-    
+
         Parameters
         ----------
         radius: int or float
-            Searchlight radius. If the type is int, then this set the number of 
-            voxels in each searchlight (with variable size of the disc across 
-            searchlights). If the type is float, then this sets the disc radius in 
-            metric distance (with variable number of voxels across searchlights). 
+            Searchlight radius. If the type is int, then this set the number of
+            voxels in each searchlight (with variable size of the disc across
+            searchlights). If the type is float, then this sets the disc radius in
+            metric distance (with variable number of voxels across searchlights).
             In the latter case, the distance unit is usually in milimeters
-            (which is the unit used for FreeSurfer surfaces). 
+            (which is the unit used for FreeSurfer surfaces).
             If radius is zero then only the center node itself is considered.
         distance_surf: surf.Surface
             A surface to be used for distance measurement. Usually this is the
@@ -85,12 +85,12 @@ class VoxelSelector(object):
             Distance measure used to define distances between nodes on the surface.
             Currently supports 'dijkstra' and 'euclidean'
         outside_node_margin: float or True or None (default)
-            By default nodes outside the volume are skipped; using this 
+            By default nodes outside the volume are skipped; using this
             parameter allows for a marign. If this value is a float (possibly
-            np.inf), then all nodes within outside_node_margin Dijkstra 
-            distance from any node within the volume are still assigned 
+            np.inf), then all nodes within outside_node_margin Dijkstra
+            distance from any node within the volume are still assigned
             associated voxels. If outside_node_margin is True, then a node is
-            always assigned voxels regardless of its position in the volume. 
+            always assigned voxels regardless of its position in the volume.
         '''
         tp = type(radius)
         if tp is int: # fixed number of voxels
@@ -156,8 +156,8 @@ class VoxelSelector(object):
         if n < count or n == 0:
             return None
 
-        # here, a 'chunk' is a set of voxels at the same distance. voxels are 
-        # selected in chunks with increasing distance. either all voxels in a 
+        # here, a 'chunk' is a set of voxels at the same distance. voxels are
+        # selected in chunks with increasing distance. either all voxels in a
         # chunk are selected or none.
         curchunk = []
         prevd = allds[0]
@@ -407,40 +407,40 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
         Contains gray and white matter surface, and volume geometry
     radius: int or float
         Size of searchlight. If an integer, then it indicates the number of
-        voxels. If a float, then it indicates the radius of the disc      
+        voxels. If a float, then it indicates the radius of the disc
     source_surf: surf.Surface or None
-        Surface used to compute distance between nodes. If omitted, it is 
-        the average of the gray and white surfaces. 
+        Surface used to compute distance between nodes. If omitted, it is
+        the average of the gray and white surfaces.
     source_surf_nodes: list of int or numpy array or None
-        Indices of nodes in source_surf that serve as searchlight center. 
+        Indices of nodes in source_surf that serve as searchlight center.
         By default every node serves as a searchlight center.
     distance_metric: str
-        Distance metric between nodes. 'euclidean' or 'dijksta' (default)           
+        Distance metric between nodes. 'euclidean' or 'dijksta' (default)
     start_fr: float (default: 0)
-            Relative start position of line in gray matter, 0.=white 
+            Relative start position of line in gray matter, 0.=white
             surface, 1.=pial surface
     stop_fr: float (default: 1)
         Relative stop position of line (as in see start)
-    start_mm: float (default: 0) 
+    start_mm: float (default: 0)
         Absolute start position offset (as in start_fr)
     sttop_mm: float (default: 0)
         Absolute start position offset (as in start_fr)
     nsteps: int (default: 10)
         Number of steps from white to pial surface
     eta_step: int (default: 1)
-        After how many searchlights an estimate should be printed of the 
+        After how many searchlights an estimate should be printed of the
         remaining time until completion of all searchlights
     nproc: int or None
-        Number of parallel threads. None means as many threads as the 
+        Number of parallel threads. None means as many threads as the
         system supports. The pprocess is required for parallel threads; if
         it cannot be used, then a single thread is used.
     outside_node_margin: float or True or None (default)
-        By default nodes outside the volume are skipped; using this 
+        By default nodes outside the volume are skipped; using this
         parameter allows for a marign. If this value is a float (possibly
-        np.inf), then all nodes within outside_node_margin Dijkstra 
-        distance from any node within the volume are still assigned 
+        np.inf), then all nodes within outside_node_margin Dijkstra
+        distance from any node within the volume are still assigned
         associated voxels. If outside_node_margin is True, then a node is
-        always assigned voxels regardless of its position in the volume. 
+        always assigned voxels regardless of its position in the volume.
     results_backend : 'native' or 'hdf5' or None (default).
         Specifies the way results are provided back from a processing block
         in case of nproc > 1. 'native' is pickling/unpickling of results by
@@ -450,7 +450,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
     tmp_prefix : str, optional
         If specified -- serves as a prefix for temporary files storage
         if results_backend == 'hdf5'.  Thus can specify the directory to use
-        (trailing file path separator is not added automagically).    
+        (trailing file path separator is not added automagically).
 
     Returns
     -------
@@ -459,7 +459,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
         of the surrounding voxels.
     """
 
-    # construct the intermediate surface, which is used 
+    # construct the intermediate surface, which is used
     # to measure distances
     intermediate_surf = vol_surf.intermediate_surface
 
@@ -603,7 +603,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                 os.remove(result_fn)
 
             if node2volume_attributes is None:
-                # first time we have actual results. 
+                # first time we have actual results.
                 # Use as a starting point
                 node2volume_attributes = result
                 if _debug():
@@ -729,7 +729,7 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
 
     """
     Voxel selection wrapper for multiple center nodes on the surface
-    
+
     Parameters
     ----------
     radius: int or float
@@ -744,10 +744,10 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
         Surface of grey-matter to pial-matter boundary, or filename
         of file containing such a surface.
     source_surf: surf.Surface or None
-        Surface used to compute distance between nodes. If omitted, it is 
-        the average of the gray and white surfaces. 
+        Surface used to compute distance between nodes. If omitted, it is
+        the average of the gray and white surfaces.
     source_surf_nodes: list of int or numpy array or None
-        Indices of nodes in source_surf that serve as searchlight center. 
+        Indices of nodes in source_surf that serve as searchlight center.
         By default every node serves as a searchlight center.
     volume_mask: None (default) or False or int
         Mask from volume to apply from voxel selection results. By default
@@ -756,32 +756,32 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
         and has a property volume.fa.voxel_indices, then these indices
         are used to mask the data, unless volume_mask is False or an integer.
     distance_metric: str
-        Distance metric between nodes. 'euclidean' or 'dijksta' (default)           
+        Distance metric between nodes. 'euclidean' or 'dijksta' (default)
     start_fr: float (default: 0)
-            Relative start position of line in gray matter, 0.=white 
+            Relative start position of line in gray matter, 0.=white
             surface, 1.=pial surface
     stop_fr: float (default: 1)
         Relative stop position of line (as in see start)
-    start_mm: float (default: 0) 
+    start_mm: float (default: 0)
         Absolute start position offset (as in start_fr)
     sttop_mm: float (default: 0)
         Absolute start position offset (as in start_fr)
     nsteps: int (default: 10)
         Number of steps from white to pial surface
     eta_step: int (default: 1)
-        After how many searchlights an estimate should be printed of the 
+        After how many searchlights an estimate should be printed of the
         remaining time until completion of all searchlights
     nproc: int or None
-        Number of parallel threads. None means as many threads as the 
+        Number of parallel threads. None means as many threads as the
         system supports. The pprocess is required for parallel threads; if
         it cannot be used, then a single thread is used.
     outside_node_margin: float or None (default)
-        By default nodes outside the volume are skipped; using this 
+        By default nodes outside the volume are skipped; using this
         parameter allows for a marign. If this value is a float (possibly
-        np.inf), then all nodes within outside_node_margin Dijkstra 
-        distance from any node within the volume are still assigned 
+        np.inf), then all nodes within outside_node_margin Dijkstra
+        distance from any node within the volume are still assigned
         associated voxels. If outside_node_margin is True, then a node is
-        always assigned voxels regardless of its position in the volume. 
+        always assigned voxels regardless of its position in the volume.
     results_backend : 'native' or 'hdf5' or None (default).
         Specifies the way results are provided back from a processing block
         in case of nproc > 1. 'native' is pickling/unpickling of results by
@@ -791,7 +791,7 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
     tmp_prefix : str, optional
         If specified -- serves as a prefix for temporary files storage
         if results_backend == 'hdf5'.  Thus can specify the directory to use
-        (trailing file path separator is not added automagically).    
+        (trailing file path separator is not added automagically).
 
     Returns
     -------
