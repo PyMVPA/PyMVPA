@@ -600,6 +600,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
         assert_array_equal(z, y.samples)
         assert_equal(y.shape, (100, 4))
+    
 
     def test_pass_attr(self):
         from mvpa2.base.node import Node
@@ -629,7 +630,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
         assert_true(res.fa.transposed.base is ds.samples)
         assert_array_equal(res.fa.transposed.T, ds.samples)
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> fea686c551f1761801731665a80f1dc78d4d4872
 def suite():
     return unittest.makeSuite(SensitivityAnalysersTests)
 
