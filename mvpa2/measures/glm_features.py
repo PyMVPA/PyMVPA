@@ -226,7 +226,7 @@ class HRFEstimator(FeaturewiseMeasure):
         #      center/demean the data
         out = [he.rank_one(
                 design,
-                voxel_data -np.mean(voxel_data),
+                voxel_data, # -np.mean(voxel_data),
                 alpha=1., size_u=self.fir_length,
                 u0=canonical,
                 v0=self._betas0,

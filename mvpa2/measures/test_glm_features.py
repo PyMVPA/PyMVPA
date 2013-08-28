@@ -95,27 +95,34 @@ def test_hrf_estimate():
     tr = 2.
     # even 0.5 is sufficient to make it converge to some "interesting" results
     # where even if I betas0 are provided, matching original intensities and
-    # hrf_gen is the used canonical -- estimated betas are quite far away
-    noise_level = 0.2
+    # hrf_gen is the used canonical -- estimated betas are quite far away.
+    # Filed an issue: https://github.com/fabianp/hrf_estimation/issues/4
+    noise_level = 0.1
     fir_length = 20
 
-    data = simple_hrf_dataset(events, hrf_gen=double_gamma_hrf,
+    data = simple_hrf_dataset(events, hrf_gen=hrf_gen,
                               tr=tr, noise_level=noise_level, baseline=0)
 
     # 10 would be 20sec at tr=2.
     he = HRFEstimator({'cond1': {'onsets': onsets1}}, tr,
                        hrf_gen=hrf_est,
                        fir_length=fir_length,
+                       # nuisance_sas = ['noise'],
                        # betas0=intensities1,
                        enable_ca=['all'])
     hrfsds = he(data)
     betas = he.ca.betas
-
+    """
+    import pylab as pl; pl.scatter(intensities1, betas.samples[:, 0]); pl.show()
+    """
     # how well this reconstructs voxel1 with the signal?
     data_rec = simple_hrf_dataset(
         generate_events(onsets1, intensity=betas.samples[:, 0]),
         hrf_gen=double_gamma_hrf, tr=tr, noise_level=0, baseline=0)
-
+    
+    """
+    import pylab as pl; pl.plot(data.samples[:, 0], label='noisy data'); pl.plot((data.samples - data.sa.noise)[:, 0], label='clean data'); pl.plot(data_rec.samples[:,0], label='reconstructed'); pl.legend(); pl.show()
+    """
     cc_rec = np.corrcoef(((data.samples - data.sa.noise)[:, 0],
                            data_rec.samples[:, 0]))[0, 1]
     assert_greater(cc_rec, 0.8)
@@ -167,11 +174,13 @@ def test_hrf_estimate():
 
     #print np.linalg.norm(hrfsds.samples[:, 1] - canonical, 'fro')
     # voxel1 has no information
-    # import pydb; import pylab as pl;  pydb.debugger()
-    # i = 1
+    #    import pydb; import pylab as pl;  pydb.debugger()
+    i = 1
 
     """
             #pl.imshow(design2)
+        import pylab as pl; pl.plot(data.samples[:, 0], label='noisy data'); pl.plot((data.samples - data.sa.noise)[:, 0], label='clean data'); pl.plot(data_rec.samples[:,0], label='reconstructed'); pl.legend(); pl.show()
+
         #pl.show()
         print V
         pl.figure();
