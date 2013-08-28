@@ -45,7 +45,7 @@ from textwrap import TextWrapper
 from mvpa2.misc.exceptions import UnknownStateError
 from mvpa2.base.attributes import IndexedCollectable, ConditionalAttribute
 from mvpa2.base.dochelpers import enhanced_doc_string, borrowdoc, _repr_attrs, \
-     get_docstring_split, _strid
+     get_docstring_split, _strid, _saferepr
 
 from mvpa2.base import externals
 # XXX local rename is due but later on
@@ -323,7 +323,7 @@ class ParameterCollection(Collection):
             # list only params with not default values
             if self[k].is_default:
                 continue
-            prefixes.append("%s=%r" % (k, self[k].value))
+            prefixes.append("%s=%s" % (k, _saferepr(self[k].value)))
         return prefixes
 
 
