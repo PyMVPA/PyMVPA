@@ -387,8 +387,45 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         ds_mm_nodewise = vs.coordinates_to_grey_distance_mm(True,
                                                             above.vertices)
-        
-        assert_array_equal(ds_mm_nodewise, np.ones((100,))*3)
+
+        assert_array_equal(ds_mm_nodewise, np.ones((100,)) * 3)
+
+
+    def test_surface_outside_volume_voxel_selection(self):
+        vol_shape = (10, 10, 10, 1)
+        vol_affine = np.identity(4)
+        vg = volgeom.VolGeom(vol_shape, vol_affine)
+
+        # make surfaces that are far away from all voxels
+        # in the volume
+        sphere_density = 4
+        far = 10000.
+        outer = surf.generate_sphere(sphere_density) * 10 + far
+        inner = surf.generate_sphere(sphere_density) * 5 + far
+
+        vs = volsurf.VolSurf(vg, inner, outer)
+        radii = [10., 10]
+
+        outside_node_margins = [0, far, True]
+        for outside_node_margin in outside_node_margins:
+            for radius in radii:
+                selector = lambda:surf_voxel_selection.voxel_selection(vs,
+                                            radius,
+                                            outside_node_margin=outside_node_margin)
+
+                if type(radius) is int and outside_node_margin is True:
+                    assert_raises(ValueError, selector)
+                else:
+                    sel = selector()
+                    if outside_node_margin is True:
+                        # it should have all the keys, but they should
+                        # all be empty
+                        assert_array_equal(sel.keys(), range(inner.nvertices))
+                        for k, v in sel.iteritems():
+                            assert_equal(v, [])
+                    else:
+                        assert_array_equal(sel.keys(), [])
+
 
     def test_surface_voxel_query_engine(self):
         vol_shape = (10, 10, 10, 1)

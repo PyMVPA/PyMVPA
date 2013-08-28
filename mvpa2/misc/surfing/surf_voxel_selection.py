@@ -297,8 +297,8 @@ class VoxelSelector(object):
             raise ValueError("Failure to increase radius to get %d voxels for "
                              " node #%d" % (radius, src))
 
-        if voxel_attributes:
-            # found at least one voxel; update our ioptimizer
+        if voxel_attributes and len(voxel_attributes[CENTER_DISTANCES]):
+            # found at least one voxel; update our optimizer
             maxradius = voxel_attributes[CENTER_DISTANCES][-1]
             optimizer.set_final(maxradius)
 
