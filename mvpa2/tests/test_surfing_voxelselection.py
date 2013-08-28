@@ -387,7 +387,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         ds_mm_nodewise = vs.coordinates_to_grey_distance_mm(True,
                                                             above.vertices)
-        assert_true(np.all(ds_mm_nodewise == 3))
+        
+        assert_array_equal(ds_mm_nodewise, np.ones((100,))*3)
 
     def test_surface_voxel_query_engine(self):
         vol_shape = (10, 10, 10, 1)

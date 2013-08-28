@@ -576,8 +576,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
             assert_true(combined(ds).shape[1 - i] == ds.shape[1 - i])
 
     def test_split_samples_probability_mapper(self):
-        if not externals.exists('scipy'):
-            return
+        skip_if_no_external('scipy')
         nf = 10
         ns = 100
         nsubj = 5
@@ -602,6 +601,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         assert_array_equal(z, y.samples)
         assert_equal(y.shape, (100, 4))
     
+
     def test_pass_attr(self):
         from mvpa2.base.node import Node
         from mvpa2.base.state import ConditionalAttribute
@@ -630,6 +630,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
         assert_true(res.fa.transposed.base is ds.samples)
         assert_array_equal(res.fa.transposed.T, ds.samples)
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> fea686c551f1761801731665a80f1dc78d4d4872
 def suite():
     return unittest.makeSuite(SensitivityAnalysersTests)
 

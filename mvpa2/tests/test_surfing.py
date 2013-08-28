@@ -163,6 +163,13 @@ class SurfTests(unittest.TestCase):
         assert_array_almost_equal(s3.vertices[-1, :], np.array([18., 19, 0.]))
         assert_array_almost_equal(s3.faces[-1, :], np.array([199, 198, 179]))
 
+        # test bar
+        p, q = (0, 0, 0), (100, 0, 0)
+        s4 = surf.generate_bar(p, q, 10, 12)
+        assert_equal(s4.nvertices, 26)
+        assert_equal(s4.nfaces, 48)
+
+
     def test_surf_border(self):
         s = surf.generate_sphere(3)
         assert_array_equal(s.nodes_on_border(), [False] * 11)
@@ -194,7 +201,7 @@ class SurfTests(unittest.TestCase):
 
         r = s.rotate(theta, unit='deg')
 
-        l2r = surf.sphere_reg_leftrightmapping(s, r)
+        l2r = surf.get_sphere_left_right_mapping(s, r)
         l2r_expected = [0, 1, 2, 6, 5, 4, 3, 11, 10, 9, 8, 7, 15, 14, 13, 12,
                        16, 19, 18, 17, 21, 20, 23, 22, 26, 25, 24]
 
@@ -203,7 +210,7 @@ class SurfTests(unittest.TestCase):
 
         sides_facing = 'apism'
         for side_facing in sides_facing:
-            l, r = surf.hemi_pairs_reposition(s + 10., t + (-10.),
+            l, r = surf.reposition_hemisphere_pairs(s + 10., t + (-10.),
                                               side_facing)
 
             m = surf.merge(l, r)
@@ -386,7 +393,7 @@ class SurfTests(unittest.TestCase):
 
                 # results should be identical irrespective of constr
                 if i == 0:
-                    # - first call with this value of dialte: has to be more
+                    # - first call with this value of dilate: has to be more
                     #   voxels than very previous dilation value, unless the
                     #   full volume is covered - then it can be equal too
                     # - every next call: ensure size matches
