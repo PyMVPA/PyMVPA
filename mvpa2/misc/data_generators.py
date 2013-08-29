@@ -485,6 +485,7 @@ def random_affine_transformation(ds, scale_fac=100., shift_fac=10.):
 
 def simple_hrf_dataset(events=[1, 20, 25, 50, 60, 90, 92, 140],
                        hrf_gen=lambda t:double_gamma_hrf(t) - single_gamma_hrf(t, 0.8, 1, 0.05),
+                       fir_length=15,
                        nsamples=None,
                        tr=2.0,
                        tres=1,
@@ -507,8 +508,14 @@ def simple_hrf_dataset(events=[1, 20, 25, 50, 60, 90, 92, 140],
 
     # play fmri
     # full-blown HRF with initial dip and undershoot ;-)
-    hrf_x = np.linspace(0, 25, 25/tres)
-    hrf = hrf_gen(hrf_x)
+    hrf_x = np.linspace(0, fir_length*tres, fir_length)
+    if isinstance(hrf_gen, np.ndarray):
+        # just accept provided HRF and only verify size match
+        assert(len(hrf_x) == len(hrf_gen))
+        hrf = hrf_gen
+    else:
+        # actually generate it
+        hrf = hrf_gen(hrf_x)
 
     if not nsamples:
         # estimate number of samples needed if not provided
