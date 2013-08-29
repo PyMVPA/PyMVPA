@@ -394,6 +394,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
     @with_tempfile('.h5py', 'voxsel')
     def test_surface_outside_volume_voxel_selection(self, fn):
+        skip_if_no_external('h5py')
         vol_shape = (10, 10, 10, 1)
         vol_affine = np.identity(4)
         vg = volgeom.VolGeom(vol_shape, vol_affine)
@@ -406,7 +407,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         inner = surf.generate_sphere(sphere_density) * 5 + far
 
         vs = volsurf.VolSurf(vg, inner, outer)
-        radii = [10., 10]
+        radii = [10., 10] # fixed and variable radii
 
         outside_node_margins = [0, far, True]
         for outside_node_margin in outside_node_margins:
@@ -427,6 +428,11 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                             assert_equal(v, [])
                     else:
                         assert_array_equal(sel.keys(), [])
+
+                    if outside_node_margin is True and \
+                                 externals.versions['hdf5'] < '1.8.7':
+                        raise SkipTest("Versions of hdf5 before 1.8.7 have "
+                                                    "problems with empty arrays")
 
                     h5save(fn, sel)
                     sel_copy = h5load(fn)
