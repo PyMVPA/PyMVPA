@@ -263,6 +263,7 @@ def test_save_load_object_dtype_ds(obj=None):
     aobjf = np.asanyarray(obj).flatten()
     aobjf_ = np.asanyarray(obj_).flatten()
     # checks if having just array above
-    assert_equal(type(aobjf[0]), type(aobjf_[0]))
-    assert_array_equal(aobjf[0]['d'], aobjf_[0]['d'])
+    if aobjf.size:
+        assert_equal(type(aobjf[0]), type(aobjf_[0]))
+        assert_array_equal(aobjf[0]['d'], aobjf_[0]['d'])
 
