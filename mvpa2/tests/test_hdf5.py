@@ -246,6 +246,11 @@ def test_state_setter_getter():
 def test_save_load_object_dtype_ds(obj=None):
     """Test saving of custom object ndarray (GH #84)
     """
+    aobjf = np.asanyarray(obj).flatten()
+
+    if not aobjf.size and externals.versions['hdf5'] < '1.8.7':
+        raise SkipTest("Versions of hdf5 before 1.8.7 have problems with empty arrays")
+
     # print obj, obj.shape
     f = tempfile.NamedTemporaryFile()
 
@@ -260,7 +265,6 @@ def test_save_load_object_dtype_ds(obj=None):
     assert_array_equal(obj.shape, obj_.shape)
     assert_equal(type(obj), type(obj_))
     # so we could test both ds and arrays
-    aobjf = np.asanyarray(obj).flatten()
     aobjf_ = np.asanyarray(obj_).flatten()
     # checks if having just array above
     if aobjf.size:
