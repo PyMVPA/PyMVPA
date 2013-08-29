@@ -82,7 +82,7 @@ def generate_events(onset, **kwargs):
             for i in xrange(len(onset))]
 
 @reseed_rng()
-def test_hrf_estimate():
+def check_hrf_estimate(noise_level, cheating_start):
     # a very simple test for now -- single condition, high SNR, not
     # that much of overlap, matching HRF
     onsets1 = np.arange(0, 120, 6)
@@ -93,39 +93,73 @@ def test_hrf_estimate():
     #onsets1 = np.clip(onsets1, 0, 1000)
     hrf_gen, hrf_est = double_gamma_hrf, double_gamma_hrf
     tr = 2.
+    tres = 1.  # t resolution for HRF etc
     # even 0.5 is sufficient to make it converge to some "interesting" results
     # where even if I betas0 are provided, matching original intensities and
     # hrf_gen is the used canonical -- estimated betas are quite far away.
     # Filed an issue: https://github.com/fabianp/hrf_estimation/issues/4
-    noise_level = 0.1
     fir_length = 20
+    baseline = 100
 
     data = simple_hrf_dataset(events, hrf_gen=hrf_gen,
-                              tr=tr, noise_level=noise_level, baseline=0)
+                              fir_length=int(fir_length*tr/tres),
+                              tr=tr, noise_level=noise_level, baseline=baseline)
 
     # 10 would be 20sec at tr=2.
-    he = HRFEstimator({'cond1': {'onsets': onsets1}}, tr,
+    rank_one_kwargs = dict(
+        #v0=intensities1,
+        #alpha=0.00100,
+    )
+    if cheating_start:
+        rank_one_kwargs['v0'] = intensities1
+
+    he = HRFEstimator({'cond1': {'onsets': onsets1}},
+                       tr,
                        hrf_gen=hrf_est,
                        fir_length=fir_length,
-                       # nuisance_sas = ['noise'],
-                       # betas0=intensities1,
+                       rank_one_kwargs=rank_one_kwargs,
                        enable_ca=['all'])
     hrfsds = he(data)
     betas = he.ca.betas
     """
     import pylab as pl; pl.scatter(intensities1, betas.samples[:, 0]); pl.show()
     """
+    
+    # baseline should be estimated more or less correct
+    assert_array_lequal(np.abs(he.ca.nuisances.samples - baseline),
+                        0.1 + noise_level * 2)
     # how well this reconstructs voxel1 with the signal?
     data_rec = simple_hrf_dataset(
         generate_events(onsets1, intensity=betas.samples[:, 0]),
-        hrf_gen=double_gamma_hrf, tr=tr, noise_level=0, baseline=0)
-    
-    """
-    import pylab as pl; pl.plot(data.samples[:, 0], label='noisy data'); pl.plot((data.samples - data.sa.noise)[:, 0], label='clean data'); pl.plot(data_rec.samples[:,0], label='reconstructed'); pl.legend(); pl.show()
-    """
-    cc_rec = np.corrcoef(((data.samples - data.sa.noise)[:, 0],
-                           data_rec.samples[:, 0]))[0, 1]
-    assert_greater(cc_rec, 0.8)
+        hrf_gen=hrfsds.samples[:, 0],
+        fir_length=fir_length,
+        tr=tr,
+        tres=tr,                          # those should both correspond to TR for this reconstruction since HRF is already computed at TR
+        noise_level=0,
+        baseline=he.ca.nuisances.samples[0,0])
+
+    data_clean = data.samples - data.sa.noise
+    if he.ca.is_set('designed_data'):
+        designed_data = he.ca.designed_data   # for possible retrospection
+        # must be nearly identical
+        assert_greater(np.corrcoef((data_clean[:, 0], designed_data))[0, 1], 0.98)
+    else:
+        designed_data = None
+
+    def plot_results():
+        """Helper for a possible introspection of the results
+        """
+        import pylab as pl;
+        pl.figure(); pl.plot(data.samples[:, 0], label='noisy data'); pl.plot((data.samples - data.sa.noise)[:, 0], label='clean data'); pl.plot(data_rec.samples[:,0], label='reconstructed');
+        if designed_data is not None:
+            pl.plot(designed_data[:] + baseline, label='designed + %d' % baseline);
+        pl.legend();
+        pl.figure(); time_x = np.arange(0, fir_length*tr, tr);  pl.plot(time_x, hrf_gen(time_x), label='original %.2f' % np.linalg.norm(hrf_gen(time_x))); pl.plot(time_x, hrfsds.samples[:, 0], label='estimated %.2f' % np.linalg.norm(hrfsds.samples[:, 0])); pl.legend();
+        pl.figure(); pl.scatter(intensities1, betas[:, 0]); pl.xlabel('original'); pl.ylabel('estimated');
+        pl.show()
+
+    cc_rec = np.corrcoef((data_clean[:, 0], data_rec.samples[:, 0]))[0, 1]
+    assert_greater(cc_rec, 0.9-noise_level/2)
 
     assert_equal(len(hrfsds), fir_length)
     assert_almost_equal(hrfsds.sa.time_coords[1]-hrfsds.sa.time_coords[0], tr)
@@ -141,22 +175,26 @@ def test_hrf_estimate():
     cc = np.corrcoef(np.hstack((hrfsds, canonical[:, None])), rowvar=0)
     # voxel0 is informative one and its estimate would become a bit noisier
     # version of canonical HRF but still quite high
-    assert_true(0.7 < cc[0, 2] < 1)
-    # for bogus feature it should correlate more with canonical than v0
-    assert_greater(cc[1, 2], cc[1, 0])
-    # voxel1 is not informative and no HRF could be deduced so it would stay
-    # at canonical and with high cc
-    assert_greater(cc[1, 2], 0.8)
+    assert_true(0.8 - noise_level/2 < cc[0, 2] < 1)
+    if noise_level < 0.2:
+        # for bogus feature it should correlate more with canonical than v0
+        assert_greater(cc[1, 2], cc[1, 0])
+
+        # voxel1 is not informative and no HRF could be deduced so it would stay
+        # at canonical and with high cc if noise level was low
+        assert_greater(cc[1, 2], 0.8)
 
     cc_betas = np.corrcoef(np.hstack((betas.samples, intensities1[:, None])),
                            rowvar=0)
-    # there should be no correlation between betas of informative
-    # voxel and noisy one
-    assert_greater(0.4, cc_betas[0, 1])
-    # neight to original
-    assert_greater(0.4, cc_betas[1, 2])
+    if not cheating_start:
+        # there should be no correlation between betas of informative
+        # voxel and noisy one
+        assert_greater(0.4, cc_betas[0, 1])
+        # neither to original
+        assert_greater(0.4, cc_betas[1, 2])
     # but estimates for a good voxel should have reasonably high correlation
-    assert_greater(cc_betas[0, 2], 0.6)
+    # yoh: blunt heuristic here for the comparison
+    assert_greater(cc_betas[0, 2], 0.9-noise_level * 1.8)
 
     # provide nuisance_sas pointing to originally added noise
     he.nuisance_sas = ['noise']
@@ -167,29 +205,17 @@ def test_hrf_estimate():
     # nuisances but we will leave some 1e-4 margin for being wrong due
     # to numeric precision etc
     assert_array_less(cc, cc_ + 1e-4)
-    # results should be even better match then before
-    cc_betas_ = np.corrcoef(np.hstack((betas.samples, intensities1[:, None])),
+    # results should be really close to the underlying data -- we provided everything!
+    cc_betas_ = np.corrcoef(np.hstack((betas_.samples, intensities1[:, None])),
                             rowvar=0)
-
+    assert_greater(cc_betas_[0, 2], 0.99)
 
     #print np.linalg.norm(hrfsds.samples[:, 1] - canonical, 'fro')
     # voxel1 has no information
-    #    import pydb; import pylab as pl;  pydb.debugger()
-    i = 1
+    # import pydb; import pylab as pl;  pydb.debugger()
+    # i = 1
 
-    """
-            #pl.imshow(design2)
-        import pylab as pl; pl.plot(data.samples[:, 0], label='noisy data'); pl.plot((data.samples - data.sa.noise)[:, 0], label='clean data'); pl.plot(data_rec.samples[:,0], label='reconstructed'); pl.legend(); pl.show()
-
-        #pl.show()
-        print V
-        pl.figure();
-        pl.plot(dataset.samples[:, 0]); pl.plot(dataset.samples[:, 1]); pl.legend(('v1', 'v2'))
-        pl.figure();
-        pl.plot(hrfsds[:, 0]); pl.plot(hrfsds[:, 1]); pl.plot(canonical); pl.legend(('v1', 'v2', 'canonical')); pl.show()
-
-        import pydb; pydb.debugger()
-        i = 1
-        return design
-        # in case of later 
-"""
+def test_hrf_estimate():
+    for nl in [0, 0.1, 0.5, 0.8]:
+        for cheating_start in (True, False):
+            yield check_hrf_estimate, nl, cheating_start

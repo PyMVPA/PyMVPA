@@ -113,15 +113,20 @@ class HRFEstimator(FeaturewiseMeasure):
                                   doc="Dataset with estimated per each even betas")
     design = ConditionalAttribute(enabled=False,
                                   doc="Design used for the estimation of HRF/betas")
+    designed_data = ConditionalAttribute(enabled=True,
+                                  doc="If v0 was provided for rank_one -- store 'designed' data")
+    nuisances = ConditionalAttribute(enabled=False,
+                                  doc="Fits to nuisance variables")
 
     def __init__(self,
                  evs,
                  tr,
                  estimator='hrf_estimation',
+                 nuisance_offset=True,
                  nuisance_sas=None,
                  fir_length=20,
                  hrf_gen=double_gamma_hrf,
-                 betas0=None,
+                 rank_one_kwargs={},
                  **kwargs):
         """
         Parameters
@@ -141,14 +146,15 @@ class HRFEstimator(FeaturewiseMeasure):
         self.tr = tr
         self.estimator = estimator
         self.nuisance_sas = nuisance_sas
+        self.nuisance_offset = nuisance_offset
         self.fir_length = fir_length
         self.hrf_gen = hrf_gen
-        self._betas0 = betas0
+        self.rank_one_kwargs = rank_one_kwargs
         #self._ev_groups = ev_groups
 
     def _get_nuisances_ds(self, dataset):
         # prepare nuisances
-        if not self.nuisance_sas:
+        if not self.nuisance_sas and not self.nuisance_offset:
             return None
         nuisances, nuisance_names, nuisance_indexes = [], [], []
         for sa in (self.nuisance_sas or []):
@@ -159,6 +165,10 @@ class HRFEstimator(FeaturewiseMeasure):
             nuisance_indexes += range(sa_value.shape[1])
             nuisances += list(
                 sa_value[None, :] if sa_value.ndim == 1 else np.swapaxes(sa_value, 0, 1))
+        if self.nuisance_offset:
+            nuisances.append(np.ones((len(dataset),)))
+            nuisance_names.append('offset')
+            nuisance_indexes.append(0)
         return Dataset(np.array(nuisances).T,
                        sa=dataset.sa.copy(),
                        fa={'names': nuisance_names,
@@ -166,22 +176,20 @@ class HRFEstimator(FeaturewiseMeasure):
 
 
     def _call(self, dataset):
-        ## from mvpa2.mappers.zscore import zscore
-
-        ## dataset = dataset.copy()
-        ## zscore(dataset, chunks_attr=None)
         ntimepoints = len(dataset)
         nevs = sum([len(e['onsets']) for e in self.evs.itervalues()])
         tr = self.tr
+        timex = np.arange(0, self.fir_length*tr, tr)
+        canonical = self.hrf_gen(timex)
 
         nuisances = self._get_nuisances_ds(dataset)
+
         if self.estimator == 'hrf_estimation':
             # for hrf_estimator, we would need to generate the design matrix
             # which we would later expand for FIRs
             
             # at first do not care about groups, all events are alike
             # TODO: care about groups
-            # TODO: csr sparse matrix
             design_shape = (ntimepoints, nevs*self.fir_length)
             design = np.zeros(shape=design_shape, dtype=int)
             groups, event_indexes, event_totalindex = [], [], 0
@@ -211,45 +219,66 @@ class HRFEstimator(FeaturewiseMeasure):
                     # that occasion so we could populate .fa happen we want
                     # store this bloody design
 
-        # TODO: it might be more efficient to initiate/assign to
-        # sparse matrix from the beginning?
-        if externals.exists('scipy'):
-            import scipy.sparse as ss
-            design = ss.csr_matrix(design)
+            # TODO: it might be more efficient to initiate/assign to
+            # sparse matrix from the beginning?
+            if externals.exists('scipy'):
+                import scipy.sparse as ss
+                design = ss.csr_matrix(design)
 
-        import hrf_estimation as he
+            import hrf_estimation as he
 
-        timex = np.arange(0, self.fir_length*tr, tr)
-        canonical = self.hrf_gen(timex)
-        # yoh: Let's do 1 voxel at a time to ease convergence
-        #      at penalty of performance.  Also we will possibly once again
-        #      center/demean the data
-        out = [he.rank_one(
-                design,
-                voxel_data, # -np.mean(voxel_data),
-                alpha=1., size_u=self.fir_length,
-                u0=canonical,
-                v0=self._betas0,
-                Z=np.asanyarray(nuisances) if nuisances else None,
-                rtol=0.1e-5,
-                verbose=__debug__ and 'HRF_' in debug.active,
-                maxiter=1000)
-               for voxel_data in dataset.samples.T]
-        # And now collect results into single arrays
-        out = [np.concatenate(x, axis=1) for x in zip(*out)]
-        hrfs, betas = out[:2]
-        if nuisances is not None:
-            W = out[2]
+            kwargs = dict(alpha=1., # rtol=0.1e-5, maxiter=1000,
+                          verbose=__debug__ and 'HRF_' in debug.active)
+            kwargs.update(self.rank_one_kwargs)
+            if 'v0' in kwargs:
+                design_ = design if isinstance(design, np.ndarray) else np.array(design.todense())
+                v0 = kwargs['v0']
+                self.ca.designed_data = \
+                    np.sum(design_
+                           # design_.shape[1]/len(u0)
+                           * np.array(list(canonical) * self.fir_length) # HRF
+                           * np.repeat(v0, self.fir_length) # amplitudes
+                           , axis=1)
+            # having high baseline would affect estimates even if we add a
+            # 'constant' as a nuisance.  Thus we will explicitly demean data
+            # prior estimation (if nuisance_offset) and then add those means to
+            # 'offset'
+            out, data_means = [], []
+            for voxel_data in dataset.samples.T:
+                if self.nuisance_offset:
+                    data_mean = np.mean(voxel_data)
+                    data = voxel_data - data_mean
+                    data_means.append(data_mean)
+                else:
+                    data = voxel_data
+                out.append(he.rank_one(design, data, size_u=self.fir_length,
+                                       u0=canonical, Z=np.asanyarray(nuisances), **kwargs))
+    
 
-        # TODO
-        if self.ca.is_enabled('design'):
-            # TODO -- add all the attribution for each sa, fa
-            self.ca.design = Dataset(design)
+            # And now collect results into single arrays
+            out = [np.concatenate(x, axis=1) for x in zip(*out)]
+            hrfs, betas = out[:2]
+
+            if nuisances is not None:
+                W = out[2]
+                # TODO: compose usable/useful .sa.nuisances dataset
+                if self.ca.is_enabled('nuisances'):
+                    self.ca.nuisances = Dataset(W, sa=nuisances.fa, fa=dataset.fa)
+                    if self.nuisance_offset:
+                        self.ca.nuisances.samples[np.where(nuisances.fa.names == 'offset')[0], :] += data_means
+
+            if self.ca.is_enabled('design'):
+                # TODO -- add all the attribution for each sa, fa
+                self.ca.design = Dataset(design)
+        else:
+            raise NotImplemented()
+
         if self.ca.is_enabled('betas'):
             self.ca.betas = betasds = \
               Dataset(betas, fa=dataset.fa,
                              sa={'groups':  groups,
                                  'indexes': event_indexes})
+
         # compose resultant dataset with HRFs
         hrfsds = Dataset(hrfs, fa=dataset.fa, sa={'time_coords': timex})
 
