@@ -46,6 +46,7 @@ from mvpa2.mappers.detrend import poly_detrend
 from mvpa2.mappers.zscore import zscore
 from mvpa2.misc.neighborhood import Sphere, IndexQueryEngine
 from mvpa2.clfs.gnb import GNB
+from mvpa2.base.hdf5 import h5save, h5load
 
 
 class SurfVoxelSelectionTests(unittest.TestCase):
@@ -391,7 +392,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         assert_array_equal(ds_mm_nodewise, np.ones((100,)) * 3)
 
 
-    def test_surface_outside_volume_voxel_selection(self):
+    @with_tempfile('.h5py', 'voxsel')
+    def test_surface_outside_volume_voxel_selection(self, fn):
         vol_shape = (10, 10, 10, 1)
         vol_affine = np.identity(4)
         vg = volgeom.VolGeom(vol_shape, vol_affine)
@@ -425,6 +427,15 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                             assert_equal(v, [])
                     else:
                         assert_array_equal(sel.keys(), [])
+
+                    h5save(fn, sel)
+                    sel_copy = h5load(fn)
+
+                    assert_array_equal(sel.keys(), sel_copy.keys())
+                    for k in sel.keys():
+                        assert_equal(sel[k], sel_copy[k])
+
+                    assert_equal(sel, sel_copy)
 
 
     def test_surface_voxel_query_engine(self):
