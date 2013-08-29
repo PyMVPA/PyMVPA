@@ -82,15 +82,18 @@ def generate_events(onset, **kwargs):
             for i in xrange(len(onset))]
 
 @reseed_rng()
-def check_hrf_estimate(noise_level, cheating_start):
+def check_hrf_estimate(noise_level, cheating_start, jitter):
     # a very simple test for now -- single condition, high SNR, not
     # that much of overlap, matching HRF
     onsets1 = np.arange(0, 120, 6)
     intensities1 = np.random.uniform(1, 3, len(onsets1))
+    # jitter design a bit
+    if jitter:
+        onsets1 += np.random.uniform(0, 6, size=onsets1.shape) - 3
+        onsets1 = np.clip(onsets1, 0, 1000)
+    # finally generate the events
     events = generate_events(onsets1, intensity=intensities1, target='L1')
-    # jitter them a bit
-    #onsets1 += np.random.uniform(0, 8, size=onsets1.shape) - 4
-    #onsets1 = np.clip(onsets1, 0, 1000)
+
     hrf_gen, hrf_est = double_gamma_hrf, double_gamma_hrf
     tr = 2.
     tres = 1.  # t resolution for HRF etc
@@ -143,12 +146,8 @@ def check_hrf_estimate(noise_level, cheating_start):
         baseline=he.ca.nuisances.samples[0,0])
 
     data_clean = data.samples - data.sa.noise
-    if he.ca.is_set('designed_data'):
-        designed_data = he.ca.designed_data   # for possible retrospection
-        # must be nearly identical
-        assert_greater(np.corrcoef((data_clean[:, 0], designed_data))[0, 1], 0.98)
-    else:
-        designed_data = None
+    # for possible retrospection
+    designed_data = he.ca.designed_data if he.ca.is_set('designed_data') else None
 
     def plot_results():
         """Helper for a possible introspection of the results
@@ -161,6 +160,10 @@ def check_hrf_estimate(noise_level, cheating_start):
         pl.figure(); time_x = np.arange(0, fir_length*tr, tr);  pl.plot(time_x, hrf_gen(time_x), label='original %.2f' % np.linalg.norm(hrf_gen(time_x))); pl.plot(time_x, hrfsds.samples[:, 0], label='estimated %.2f' % np.linalg.norm(hrfsds.samples[:, 0])); pl.legend();
         pl.figure(); pl.scatter(intensities1, betas[:, 0]); pl.xlabel('original'); pl.ylabel('estimated');
         pl.show()
+
+    if he.ca.is_set('designed_data'):
+        # must be nearly identical
+        assert_greater(np.corrcoef((data_clean[:, 0], designed_data))[0, 1], 0.98 - 0.1*int(jitter))
 
     cc_rec = np.corrcoef((data_clean[:, 0], data_rec.samples[:, 0]))[0, 1]
     assert_greater(cc_rec, 0.9-noise_level/2)
@@ -222,4 +225,5 @@ def check_hrf_estimate(noise_level, cheating_start):
 def test_hrf_estimate():
     for nl in [0, 0.5, 0.8]:
         for cheating_start in (True, False):
-            yield check_hrf_estimate, nl, cheating_start
+            for jitter in (False, ): # True):
+                yield check_hrf_estimate, nl, cheating_start, jitter
