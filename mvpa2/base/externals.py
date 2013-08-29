@@ -444,6 +444,11 @@ def __check(name, a='__version__'):
         pass
     return True
 
+def __check_h5py():
+    __check('h5py', 'version.version')
+    import h5py
+    versions['hdf5'] = SmartVersion(h5py.version.hdf5_version)
+
 def __check_rpy():
     """Check either rpy is available and also set it for the sane execution
     """
@@ -562,7 +567,8 @@ _KNOWN = {'libsvm':'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'nose': "import nose as __",
           'pprocess': "__check('pprocess')",
           'pywt': "__check('pywt')",
-          'h5py': "__check('h5py', 'version.version')",
+          'h5py': "__check_h5py()",
+          'hdf5': "__check_h5py()",
           'nipy': "__check('nipy')",
           'nipy.neurospin': "__check_nipy_neurospin()",
           'statsmodels': 'import statsmodels.api as __',
