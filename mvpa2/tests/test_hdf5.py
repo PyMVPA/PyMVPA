@@ -241,6 +241,7 @@ def test_state_setter_getter():
     # as it would be reconstructed before the fix -- obj array of obj arrays
     np.array([np.array([{'d': np.empty(shape=(2,3))}], dtype=object)],
              dtype=object),
+    np.array([],dtype='int64'),
     ))
 def test_save_load_object_dtype_ds(obj=None):
     """Test saving of custom object ndarray (GH #84)
