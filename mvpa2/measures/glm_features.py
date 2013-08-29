@@ -174,10 +174,52 @@ class HRFEstimator(FeaturewiseMeasure):
                        fa={'names': nuisance_names,
                            'index': nuisance_indexes})
 
+    def _get_he_design(self, ntimepoints):
+        # for hrf_estimator, we would need to generate the design matrix
+        # which we would later expand for FIRs
+        tr = self.tr
+        nevs = sum([len(e['onsets']) for e in self.evs.itervalues()])
+
+        # at first do not care about groups, all events are alike
+        # TODO: care about groups
+        design_shape = (ntimepoints, nevs*self.fir_length)
+        design = np.zeros(shape=design_shape, dtype=int)
+        groups, event_indexes, event_totalindex = [], [], 0
+
+        for ig, (g, events) in enumerate(self.evs.iteritems()):
+            onsets = events['onsets']
+            durations = events.get('durations', [1]*len(onsets))
+            for ie, (o, d) in enumerate(zip(onsets, durations)):
+                # Place events rounding to closest tr
+                o_idx = int(round(o/tr))
+                e_idx = max(int(round((o+d)/tr)), o_idx+1)
+                # place the diagonal with 1s for every fir offset
+                # into the design.
+                ix, iy = [], []
+                for resp_point in np.arange(o_idx, e_idx):
+                    ix += [resp_point + i for i in xrange(self.fir_length)]
+                    iy += range(event_totalindex*self.fir_length,
+                                (event_totalindex+1)*self.fir_length)
+                ix, iy = np.asanyarray(ix), np.asanyarray(iy)
+                # discard those going beyond the duration
+                ix_legit = ix<ntimepoints
+                design[(ix[ix_legit], iy[ix_legit])] = 1
+                event_totalindex += 1
+                groups.append(g)
+                event_indexes.append(ie)
+                # we might want to store the entire dict of event for
+                # that occasion so we could populate .fa happen we want
+                # store this bloody design
+
+        # TODO: it might be more efficient to initiate/assign to
+        # sparse matrix from the beginning?
+        if externals.exists('scipy'):
+            import scipy.sparse as ss
+            design = ss.csr_matrix(design)
+
+        return design, groups, event_indexes
 
     def _call(self, dataset):
-        ntimepoints = len(dataset)
-        nevs = sum([len(e['onsets']) for e in self.evs.itervalues()])
         tr = self.tr
         timex = np.arange(0, self.fir_length*tr, tr)
         canonical = self.hrf_gen(timex)
@@ -185,48 +227,8 @@ class HRFEstimator(FeaturewiseMeasure):
         nuisances = self._get_nuisances_ds(dataset)
 
         if self.estimator == 'hrf_estimation':
-            # for hrf_estimator, we would need to generate the design matrix
-            # which we would later expand for FIRs
-            
-            # at first do not care about groups, all events are alike
-            # TODO: care about groups
-            design_shape = (ntimepoints, nevs*self.fir_length)
-            design = np.zeros(shape=design_shape, dtype=int)
-            groups, event_indexes, event_totalindex = [], [], 0
-            
-            for ig, (g, events) in enumerate(self.evs.iteritems()):
-                onsets = events['onsets']
-                durations = events.get('durations', [1]*len(onsets))
-                for ie, (o, d) in enumerate(zip(onsets, durations)):
-                    # Place events rounding to closest tr
-                    o_idx = int(round(o/tr))
-                    e_idx = max(int(round((o+d)/tr)), o_idx+1)
-                    # place the diagonal with 1s for every fir offset
-                    # into the design.
-                    ix, iy = [], []
-                    for resp_point in np.arange(o_idx, e_idx):
-                        ix += [resp_point + i for i in xrange(self.fir_length)]
-                        iy += range(event_totalindex*self.fir_length,
-                                    (event_totalindex+1)*self.fir_length)
-                    ix, iy = np.asanyarray(ix), np.asanyarray(iy)
-                    # discard those going beyond the duration
-                    ix_legit = ix<ntimepoints
-                    design[(ix[ix_legit], iy[ix_legit])] = 1
-                    event_totalindex += 1
-                    groups.append(g)
-                    event_indexes.append(ie)
-                    # we might want to store the entire dict of event for
-                    # that occasion so we could populate .fa happen we want
-                    # store this bloody design
-
-            # TODO: it might be more efficient to initiate/assign to
-            # sparse matrix from the beginning?
-            if externals.exists('scipy'):
-                import scipy.sparse as ss
-                design = ss.csr_matrix(design)
-
             import hrf_estimation as he
-
+            design, groups, event_indexes = self._get_he_design(len(dataset))
             kwargs = dict(alpha=1., # rtol=0.1e-5, maxiter=1000,
                           verbose=__debug__ and 'HRF_' in debug.active)
             kwargs.update(self.rank_one_kwargs)
@@ -253,7 +255,6 @@ class HRFEstimator(FeaturewiseMeasure):
                     data = voxel_data
                 out.append(he.rank_one(design, data, size_u=self.fir_length,
                                        u0=canonical, Z=np.asanyarray(nuisances), **kwargs))
-    
 
             # And now collect results into single arrays
             out = [np.concatenate(x, axis=1) for x in zip(*out)]
@@ -271,7 +272,7 @@ class HRFEstimator(FeaturewiseMeasure):
                 # TODO -- add all the attribution for each sa, fa
                 self.ca.design = Dataset(design)
         else:
-            raise NotImplemented()
+            raise NotImplementedError()
 
         if self.ca.is_enabled('betas'):
             self.ca.betas = betasds = \

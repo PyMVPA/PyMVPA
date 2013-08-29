@@ -121,6 +121,10 @@ def check_hrf_estimate(noise_level, cheating_start):
                        enable_ca=['all'])
     hrfsds = he(data)
     betas = he.ca.betas
+
+    assert_array_equal(betas.sa['groups'].unique, ['cond1'])
+    assert_array_equal(betas.sa['indexes'].unique, np.arange(len(onsets1)))
+
     """
     import pylab as pl; pl.scatter(intensities1, betas.samples[:, 0]); pl.show()
     """
@@ -175,7 +179,7 @@ def check_hrf_estimate(noise_level, cheating_start):
     cc = np.corrcoef(np.hstack((hrfsds, canonical[:, None])), rowvar=0)
     # voxel0 is informative one and its estimate would become a bit noisier
     # version of canonical HRF but still quite high
-    assert_true(0.8 - noise_level/2 < cc[0, 2] < 1)
+    assert_true(0.8 - noise_level < cc[0, 2] <= 1)
     if noise_level < 0.2:
         # for bogus feature it should correlate more with canonical than v0
         assert_greater(cc[1, 2], cc[1, 0])
@@ -216,6 +220,6 @@ def check_hrf_estimate(noise_level, cheating_start):
     # i = 1
 
 def test_hrf_estimate():
-    for nl in [0, 0.1, 0.5, 0.8]:
+    for nl in [0, 0.5, 0.8]:
         for cheating_start in (True, False):
             yield check_hrf_estimate, nl, cheating_start
