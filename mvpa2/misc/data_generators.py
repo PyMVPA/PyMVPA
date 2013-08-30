@@ -505,12 +505,11 @@ def simple_hrf_dataset(events=[1, 20, 25, 50, 60, 90, 92, 140],
                        signal_level=1,
                        noise='normal',
                        noise_level=1,
+                       resampling='scipy',
                        ):
     """
     events: list of Events or ndarray of onsets for simple(r) designs
     """
-    from scipy import signal
-
     if isinstance(events, np.ndarray) or not isinstance(events[0], dict):
         events = [Event(onset=o) for o in events]
     else:
@@ -520,7 +519,7 @@ def simple_hrf_dataset(events=[1, 20, 25, 50, 60, 90, 92, 140],
 
     # play fmri
     # full-blown HRF with initial dip and undershoot ;-)
-    hrf_x = np.linspace(0, fir_length*tres, fir_length)
+    hrf_x = np.arange(0, float(fir_length)*tres, tres)
     if isinstance(hrf_gen, np.ndarray):
         # just accept provided HRF and only verify size match
         assert(len(hrf_x) == len(hrf_gen))
@@ -528,7 +527,6 @@ def simple_hrf_dataset(events=[1, 20, 25, 50, 60, 90, 92, 140],
     else:
         # actually generate it
         hrf = hrf_gen(hrf_x)
-
     if not nsamples:
         # estimate number of samples needed if not provided
         max_onset = max([e['onset'] for e in events])
@@ -543,14 +541,27 @@ def simple_hrf_dataset(events=[1, 20, 25, 50, 60, 90, 92, 140],
             off += 1                      # so we have at least 1 point
         assert(range(on, off))
         fast_er[on:off] = e.get('intensity', 1)
-
     # high resolution model of the convolved regressor
     model_hr = np.convolve(fast_er, hrf)[:nsamples]
 
     # downsample the regressor to fMRI resolution
-    model_lr = signal.resample(model_hr,
-                               int(tres * nsamples / tr),
-                               window='ham')
+    if resampling == 'scipy':
+        from scipy import signal
+        model_lr = signal.resample(model_hr,
+                                   int(tres * nsamples / tr),
+                                   window='ham')
+    elif resampling == 'naive':
+        if tr % tres != 0.0:
+            raise ValueError("You must use resample='scipy' since your TR=%.2g"
+                             " is not multiple of tres=%.2g" % (tr, tres))
+        if tr < tres:
+            raise ValueError("You must use resample='scipy' since your TR=%.2g"
+                             " is less than tres=%.2g" % (tr, tres))
+        step = int(tr // tres)
+        model_lr = model_hr[::step]
+    else:
+        raise ValueError("resampling can only be 'scipy' or 'naive'. Got %r"
+                         % resampling)
 
     # generate artifical fMRI data: two voxels one is noise, one has
     # something
