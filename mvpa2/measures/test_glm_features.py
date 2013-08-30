@@ -117,14 +117,14 @@ def check_hrf_estimate(noise_level, cheating_start, jitter):
     if cheating_start:
         rank_one_kwargs['v0'] = intensities1
 
-    he = HRFEstimator(events, # {'cond1': {'onset': onsets1}},
+    tre = TrialsResponseEstimator(events, # {'cond1': {'onset': onsets1}},
                        tr,
                        hrf_gen=hrf_est,
                        fir_length=fir_length,
                        rank_one_kwargs=rank_one_kwargs,
                        enable_ca=['all'])
-    hrfsds = he(data)
-    betas = he.ca.betas
+    betas = tre(data)
+    hrfsds = tre.ca.hrfs
 
     assert_array_equal(betas.sa['target'].unique, ['cond1'])
     assert_array_equal(betas.sa['onset'].unique, onsets1)
@@ -136,7 +136,7 @@ def check_hrf_estimate(noise_level, cheating_start, jitter):
     """
     
     # baseline should be estimated more or less correct
-    assert_array_lequal(np.abs(he.ca.nuisances.samples - baseline),
+    assert_array_lequal(np.abs(tre.ca.nuisances.samples - baseline),
                         0.1 + noise_level * 2)
     # how well this reconstructs voxel1 with the signal?
     data_rec = simple_hrf_dataset(
@@ -146,11 +146,11 @@ def check_hrf_estimate(noise_level, cheating_start, jitter):
         tr=tr,
         tres=tr,                          # those should both correspond to TR for this reconstruction since HRF is already computed at TR
         noise_level=0,
-        baseline=he.ca.nuisances.samples[0,0])
+        baseline=tre.ca.nuisances.samples[0,0])
 
     data_clean = data.samples - data.sa.noise
     # for possible retrospection
-    designed_data = he.ca.designed_data if he.ca.is_set('designed_data') else None
+    designed_data = tre.ca.designed_data if tre.ca.is_set('designed_data') else None
 
     def plot_results():
         """Helper for a possible introspection of the results
@@ -164,7 +164,7 @@ def check_hrf_estimate(noise_level, cheating_start, jitter):
         pl.figure(); pl.scatter(intensities1, betas[:, 0]); pl.xlabel('original'); pl.ylabel('estimated');
         pl.show()
 
-    if he.ca.is_set('designed_data'):
+    if tre.ca.is_set('designed_data'):
         # must be nearly identical
         assert_greater(np.corrcoef((data_clean[:, 0], designed_data))[0, 1], 0.98 - 0.1*int(jitter))
 
@@ -175,8 +175,8 @@ def check_hrf_estimate(noise_level, cheating_start, jitter):
     assert_almost_equal(hrfsds.sa.time_coords[1]-hrfsds.sa.time_coords[0], tr)
 
     # Basic tests
-    assert_equal(he.ca.betas.shape, (len(onsets1), data.nfeatures))
-    assert_equal(he.ca.design.shape, (len(data), fir_length*len(onsets1)))
+    assert_equal(betas.shape, (len(onsets1), data.nfeatures))
+    assert_equal(tre.ca.design.shape, (len(data), fir_length*len(onsets1)))
 
     assert_true(hrfsds.fa.signal_level[0])
     assert_false(hrfsds.fa.signal_level[1])
@@ -210,9 +210,9 @@ def check_hrf_estimate(noise_level, cheating_start, jitter):
     assert_greater(cc_betas[0, 2], 0.9-noise_level * 1.8)
 
     # provide nuisance_sas pointing to originally added noise
-    he.nuisance_sas = ['noise']
-    hrfsds_ = he(data)
-    betas_ = he.ca.betas
+    tre.nuisance_sas = ['noise']
+    betas_ = tre(data)
+    hrfsds_ = tre.ca.hrfs
     cc_ = np.corrcoef(np.hstack((hrfsds_, canonical[:, None])), rowvar=0)
     # Fidelity should be higher if we provide original noise as
     # nuisances but we will leave some 1e-4 margin for being wrong due
@@ -279,14 +279,14 @@ def test_hrf_estimate_multigroup(): #noise_level, cheating_start, jitter):
     for i, e in enumerate(events):
         e['target'] = 'L%d' % i
 
-    he = HRFEstimator(events,
+    tre = TrialsResponseEstimator(events,
                       tr,
                       hrf_gen=hrf_est,
                       ev_group_key='superord',
                       fir_length=fir_length,
                       enable_ca=['all'])
-    hrfsds = he(data)
-    betas = he.ca.betas
+    betas = tre(data)
+    hrfsds = tre.ca.hrfs
 
     assert_array_equal(betas.sa['superord'].unique, ['cond1', 'cond2'])
     assert_array_equal(betas.sa['onset'], np.hstack((onsets1, onsets2)))
@@ -305,7 +305,7 @@ def test_hrf_estimate_multigroup(): #noise_level, cheating_start, jitter):
             generate_events(onsets1, intensity=betas.samples[:n1, 0], superord='cond1'),
             hrf_gen=hrfsds.samples[:, 0],
             fir_length=fir_length, tr=tr, tres=tr,                          # those should both correspond to TR for this reconstruction since HRF is already computed at TR
-            noise_level=0, baseline=he.ca.nuisances.samples[0, 0])
+            noise_level=0, baseline=tre.ca.nuisances.samples[0, 0])
     # and 2nd type of events
     data_rec2 = simple_hrf_dataset(
             generate_events(onsets2, intensity=betas.samples[n1:, 0], superord='cond2'),

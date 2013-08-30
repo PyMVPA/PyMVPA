@@ -60,18 +60,13 @@ def regroup_conditions(evs, groups):
     return out
 
 
-class HRFEstimator(FeaturewiseMeasure):
-    """
+class TrialsResponseEstimator(FeaturewiseMeasure):
+    """Given a list of events -- estimate responses per each trial.
 
-    Given evs: familiar, unfamiliar, self, oddball, motor
-    we would like to estimate separate HRF per each group
+    Specific implementations might also provide estimations of HRFs
+    per each feature/group of stimuli.
 
-    output would be 3D dataset which would have
-    group x voxel x temporal_offset
-
-    or may be group x voxel  object nd-array of sympy style generators?
-
-    estimators to implement/interface
+    Estimators to implement/interface
 
     - hrf_estimation:  use hrf_estimation library to estimate HRF per each
       voxel while events within condition share the same HRF.
@@ -107,17 +102,18 @@ class HRFEstimator(FeaturewiseMeasure):
 
     """
 
-    # TODO: We might well want to train separately?
+    # TODO: We might well want to train separately to estimate HRFs
+    #       while only estimating responses in predict
     is_trained = True
 
-    betas = ConditionalAttribute(enabled=False,
-                                  doc="Dataset with estimated per each even betas")
+    hrfs = ConditionalAttribute(enabled=False,
+        doc="Dataset with estimated per each voxel/group HRF")
     design = ConditionalAttribute(enabled=False,
-                                  doc="Design used for the estimation of HRF/betas")
+        doc="Design used for the estimation of HRF/responses")
     designed_data = ConditionalAttribute(enabled=True,
-                                  doc="If v0 was provided for rank_one -- store 'designed' data")
+        doc="If v0 was provided for rank_one -- store 'designed' data")
     nuisances = ConditionalAttribute(enabled=False,
-                                  doc="Fits to nuisance variables")
+        doc="Fits to nuisance variables")
 
     def __init__(self,
                  evs,
@@ -344,20 +340,22 @@ class HRFEstimator(FeaturewiseMeasure):
         else:
             raise NotImplementedError()
 
-        if self.ca.is_enabled('betas'):
-            self.ca.betas = Dataset(betas, fa=dataset.fa, sa=fas_evs) # sas)
+        betas = Dataset(betas, fa=dataset.fa, sa=fas_evs) # sas)
 
         # compose resultant dataset with HRFs
-        if self.ev_group_key:
-            # place different
-            # groups into 'columns' while breaking our 'meta'-HRF into pieces
-            dss = []
-            for i, g in enumerate(groups):
-                fa = {self.ev_group_key: [g] * dataset.nfeatures}
-                fa.update(dataset.fa)
-                dss.append(Dataset(hrfs[i*self.fir_length:(i+1)*self.fir_length], fa=fa))
-            hrfsds = mvpa2.datasets.hstack(dss)
-            hrfsds.sa['time_coords'] = timex
-        else:
-            hrfsds = Dataset(hrfs, sa={'time_coords': timex}, fa=dataset.fa)
-        return hrfsds
+        if self.ca.is_enabled('hrfs'):
+            if self.ev_group_key:
+                # place different
+                # groups into 'columns' while breaking our 'meta'-HRF into pieces
+                dss = []
+                for i, g in enumerate(groups):
+                    fa = {self.ev_group_key: [g] * dataset.nfeatures}
+                    fa.update(dataset.fa)
+                    dss.append(Dataset(hrfs[i*self.fir_length:(i+1)*self.fir_length], fa=fa))
+                hrfsds = mvpa2.datasets.hstack(dss)
+                hrfsds.sa['time_coords'] = timex
+            else:
+                hrfsds = Dataset(hrfs, sa={'time_coords': timex}, fa=dataset.fa)
+            self.ca.hrfs = hrfsds
+
+        return betas
