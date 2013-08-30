@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
+import mvpa2.datasets
 from mvpa2.base import externals
 from mvpa2.base.state import ConditionalAttribute
 
@@ -121,6 +122,7 @@ class HRFEstimator(FeaturewiseMeasure):
     def __init__(self,
                  evs,
                  tr,
+                 ev_group_key=None,
                  estimator='hrf_estimation',
                  nuisance_offset=True,
                  nuisance_sas=None,
@@ -131,15 +133,17 @@ class HRFEstimator(FeaturewiseMeasure):
         """
         Parameters
         ----------
-        evs : dict of EVs
+        evs : dict of EVs, list of Events
            dict of explanatory variables definitions
             each value would have
              onsets, (in sec)
-             durations, (optional, assume 1 if none)
+             durations, (optional, assume 1 if none) TODO -- not used ATM
 #             ?hrf, callable which given time points produces HRF kernel for convolution
-        ## ev_groups : dict, optional
-        ##   In the model, group EVs for HRF shape estimation first, before taking
-        ##   them apart.  If None, then assume that all conditions are on their own
+        ev_group_key : str, optional
+            In case of evs being a list of Events, group them
+            based on the ev_group_key to estimate separate HRF for each
+            group of events.  By default the same HRF estimated all
+            events.
         """
         FeaturewiseMeasure.__init__(self, **kwargs)
         self.evs = evs
@@ -150,7 +154,7 @@ class HRFEstimator(FeaturewiseMeasure):
         self.fir_length = fir_length
         self.hrf_gen = hrf_gen
         self.rank_one_kwargs = rank_one_kwargs
-        #self._ev_groups = ev_groups
+        self.ev_group_key = ev_group_key
 
     def _get_nuisances_ds(self, dataset):
         # prepare nuisances
@@ -174,50 +178,109 @@ class HRFEstimator(FeaturewiseMeasure):
                        fa={'names': nuisance_names,
                            'index': nuisance_indexes})
 
-    def _get_he_design(self, ntimepoints):
+    def _get_groupped_events(self, evs):
+        evs_ = {}
+        if self.ev_group_key is None:
+            # all EVs fall into the same group
+            g_func = lambda e: 'ev'
+        else:
+            k = self.ev_group_key
+            def g_func(e):
+                if not k in e:
+                    raise ValueError("Event %s must be lacking value for %s"
+                                     % (e, k))
+                return e[k]
+        for e in evs:
+            g = g_func(e)
+            if not g in evs_:
+                evs_[g] = []
+            evs_[g].append(e)
+        return evs_
+
+    def _get_he_design(self, dataset):
+        ntimepoints = len(dataset)
         # for hrf_estimator, we would need to generate the design matrix
         # which we would later expand for FIRs
         tr = self.tr
-        nevs = sum([len(e['onsets']) for e in self.evs.itervalues()])
+
+        if not isinstance(self.evs, dict):
+            # must be a list of Events
+            evs_groupped = self._get_groupped_events(self.evs)
+        else:
+            if self.ev_group_key is not None:
+                raise ValueError("You have provided dictionary of EVs AND ev_group_key"
+                                 " which should not be specified in this case")
+            evs_groupped = self.evs
+
+        nevs = sum([len(evs) for evs in evs_groupped.itervalues()])
+        ngroups = len(evs_groupped)
+
+        # all available descriptors for the EVs would be used as fa's
+        # in design and we initiate those as lists with None's entries
+        # which we will populate while processing each even of each group
+        # in the sparse design matrix
+        fa_keys = list(set(sum([e.keys() for e in evs], [])))
+        fas_design = dict((k, [None] * nevs*self.fir_length*ngroups)
+                          for k in fa_keys)
+        # and the one for every event (thus beta)
+        fas_evs = dict((k, []) for k in fa_keys)
 
         # at first do not care about groups, all events are alike
         # TODO: care about groups
-        design_shape = (ntimepoints, nevs*self.fir_length)
+        design_shape = (ntimepoints, nevs*self.fir_length*ngroups)
         design = np.zeros(shape=design_shape, dtype=int)
-        groups, event_indexes, event_totalindex = [], [], 0
-
-        for ig, (g, events) in enumerate(self.evs.iteritems()):
-            onsets = events['onsets']
-            durations = events.get('durations', [1]*len(onsets))
-            for ie, (o, d) in enumerate(zip(onsets, durations)):
+        groups, event_totalindex = [], 0
+        for ig, (g, events) in enumerate(evs_groupped.iteritems()):
+            # offset for the group's HRF coefficients within the "full HRF"
+            goffset = self.fir_length * ig
+            groups.append(g)
+            for ie, e in enumerate(events):
+                e = e.copy()
+                o = e['onset']
+                d = e.get('duration', 1)
                 # Place events rounding to closest tr
                 o_idx = int(round(o/tr))
                 e_idx = max(int(round((o+d)/tr)), o_idx+1)
                 # place the diagonal with 1s for every fir offset
                 # into the design.
                 ix, iy = [], []
+                # which column to start placing this even in this group place
+                iy_o = event_totalindex   *self.fir_length*ngroups + goffset
                 for resp_point in np.arange(o_idx, e_idx):
-                    ix += [resp_point + i for i in xrange(self.fir_length)]
-                    iy += range(event_totalindex*self.fir_length,
-                                (event_totalindex+1)*self.fir_length)
+                    ix += list(resp_point + np.arange(self.fir_length))
+                    iy += range(iy_o, iy_o + self.fir_length)
                 ix, iy = np.asanyarray(ix), np.asanyarray(iy)
                 # discard those going beyond the duration
-                ix_legit = ix<ntimepoints
-                design[(ix[ix_legit], iy[ix_legit])] = 1
+                ix_legit = ix < ntimepoints
+                ix_ = ix[ix_legit]
+                iy_ = iy[ix_legit]
+                design[(ix_, iy_)] = 1
+                # store event's attributes into fas while checking
+                # that it was not yet occupied, since it should have
+                # not
+                for k, values in fas_design.iteritems():
+                    v = e.get(k)
+                    # for non single-point duration there might be
+                    # multiple same values
+                    for j in np.unique(iy_):
+                        assert(values[j] is None)
+                        values[j] = v
                 event_totalindex += 1
-                groups.append(g)
-                event_indexes.append(ie)
+                for k, values in fas_evs.iteritems():
+                    values.append(e.get(k))
                 # we might want to store the entire dict of event for
                 # that occasion so we could populate .fa happen we want
                 # store this bloody design
-
+        # Add FIR offset fa
+        fas_design['fir_offset'] = range(self.fir_length) * (nevs*ngroups)
         # TODO: it might be more efficient to initiate/assign to
         # sparse matrix from the beginning?
         if externals.exists('scipy'):
             import scipy.sparse as ss
             design = ss.csr_matrix(design)
-
-        return design, groups, event_indexes
+        # import pydb; pydb.debugger()
+        return Dataset(design, fa=fas_design), groups, fas_evs # , sa=dataset.sa.copy())
+    # groups, event_indexes
 
     def _call(self, dataset):
         tr = self.tr
@@ -228,15 +291,17 @@ class HRFEstimator(FeaturewiseMeasure):
 
         if self.estimator == 'hrf_estimation':
             import hrf_estimation as he
-            design, groups, event_indexes = self._get_he_design(len(dataset))
-            kwargs = dict(alpha=1., # rtol=0.1e-5, maxiter=1000,
+            designds, groups, fas_evs = self._get_he_design(dataset)
+            ngroups = len(groups)
+            kwargs = dict(alpha=0., # rtol=0.1e-5, maxiter=1000,
                           verbose=__debug__ and 'HRF_' in debug.active)
             kwargs.update(self.rank_one_kwargs)
             if 'v0' in kwargs:
-                design_ = design if isinstance(design, np.ndarray) else np.array(design.todense())
+                design = designds.samples
+                design = design if isinstance(design, np.ndarray) else np.array(design.todense())
                 v0 = kwargs['v0']
                 self.ca.designed_data = \
-                    np.sum(design_
+                    np.sum(design
                            # design_.shape[1]/len(u0)
                            * np.array(list(canonical) * self.fir_length) # HRF
                            * np.repeat(v0, self.fir_length) # amplitudes
@@ -253,8 +318,13 @@ class HRFEstimator(FeaturewiseMeasure):
                     data_means.append(data_mean)
                 else:
                     data = voxel_data
-                out.append(he.rank_one(design, data, size_u=self.fir_length,
-                                       u0=canonical, Z=np.asanyarray(nuisances), **kwargs))
+                out.append(he.rank_one(designds.samples,
+                                       data,
+                                       size_u=self.fir_length * ngroups,
+                                       # replicate canonical across groups
+                                       # TODO: per group starting HRF?
+                                       u0=np.hstack([canonical] * ngroups),
+                                       Z=np.asanyarray(nuisances), **kwargs))
 
             # And now collect results into single arrays
             out = [np.concatenate(x, axis=1) for x in zip(*out)]
@@ -270,17 +340,24 @@ class HRFEstimator(FeaturewiseMeasure):
 
             if self.ca.is_enabled('design'):
                 # TODO -- add all the attribution for each sa, fa
-                self.ca.design = Dataset(design)
+                self.ca.design = designds
         else:
             raise NotImplementedError()
 
         if self.ca.is_enabled('betas'):
-            self.ca.betas = betasds = \
-              Dataset(betas, fa=dataset.fa,
-                             sa={'groups':  groups,
-                                 'indexes': event_indexes})
+            self.ca.betas = Dataset(betas, fa=dataset.fa, sa=fas_evs) # sas)
 
         # compose resultant dataset with HRFs
-        hrfsds = Dataset(hrfs, fa=dataset.fa, sa={'time_coords': timex})
-
+        if self.ev_group_key:
+            # place different
+            # groups into 'columns' while breaking our 'meta'-HRF into pieces
+            dss = []
+            for i, g in enumerate(groups):
+                fa = {self.ev_group_key: [g] * dataset.nfeatures}
+                fa.update(dataset.fa)
+                dss.append(Dataset(hrfs[i*self.fir_length:(i+1)*self.fir_length], fa=fa))
+            hrfsds = mvpa2.datasets.hstack(dss)
+            hrfsds.sa['time_coords'] = timex
+        else:
+            hrfsds = Dataset(hrfs, sa={'time_coords': timex}, fa=dataset.fa)
         return hrfsds
