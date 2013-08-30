@@ -140,11 +140,7 @@ class DSMatrix(object):
         elif (metric == 'spearman'):
             #print 'Using Spearman rank-correlation metric...'
             # down rows
-            for i in range(num_exem):
-                # across columns
-                for j in range(num_exem):
-                    dsmatrix[i, j] = 1 - st.spearmanr(
-                        data_vectors[i, :], data_vectors[j, :])[0]
+            dsmatrix = 1 - st.spearmanr(data_vectors.T)[0]
 
         elif (metric == 'pearson'):
             dsmatrix = np.corrcoef(data_vectors)
