@@ -26,10 +26,12 @@ class SuiteTest(unittest.TestCase):
                       "Getting %s" % e)
 
     def test_docstrings(self):
+        #import mvpa2.suite as mv
         from mvpa2.suite import suite_stats
         # Lets do compliance checks
         # Get gross information on what we have in general
-        gs = suite_stats()
+        #mv_scope = dict((x, getattr(mv, x)) for x in dir(mv))
+        gs = suite_stats()#mv_scope)
 
         # all functions/classes/types should have some docstring
         missing = []
@@ -43,6 +45,7 @@ class SuiteTest(unittest.TestCase):
                   'types'):
             missing1 = []
             conflicting1 = []
+            self.assertTrue(gs[c])
             for k, i in gs[c].iteritems():
                 try:
                     s = i.__doc__.strip()

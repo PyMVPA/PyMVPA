@@ -460,7 +460,7 @@ class CrossValidation(RepeatedMeasure):
             # because it is guaranteed to yield two splits) and is more likely
             # to fail in visible ways if the attribute does not have 0,1,2
             # values at all (i.e. a literal train/test/spareforlater attribute)
-            splitter = Splitter(generator.get_space(), attr_values=(1,2))
+            splitter = Splitter(generator.get_space(), attr_values=(1, 2))
         # transfer measure to wrap the learner
         # splitter used the output space of the generator to know what to split
         tm = TransferMeasure(learner, splitter, postproc=enode)
@@ -623,7 +623,7 @@ class TransferMeasure(Measure):
                     targets=res.sa[measure.get_space()].value,
                     # XXX this should really accept the full dataset
                     predictions=res.samples[:, 0],
-                    estimates = measure.ca.get('estimates', None))
+                    estimates=measure.ca.get('estimates', None))
                 ca.stats = stats
         if ca.is_enabled('training_stats'):
             if measure.ca.has_key("training_stats") \
@@ -651,10 +651,10 @@ class FeaturewiseMeasure(Measure):
         """Adjusts per-feature-measure for computed `result`
         """
         # This method get the 'result' either as a 1D array, or as a Dataset
-        # everything else is illegal
-        if __debug__ \
-               and not isinstance(result, AttrDataset) \
-               and not len(result.shape) == 1:
+        # everything else is illegal.
+
+
+        if not (len(result.shape) == 1 or isinstance(result, AttrDataset)):
             raise RuntimeError("FeaturewiseMeasures have to return "
                                "their results as 1D array, or as a Dataset "
                                "(error made by: '%s')." % repr(self))
@@ -836,7 +836,7 @@ class CombinedFeaturewiseMeasure(FeaturewiseMeasure):
     # XXX think again about combiners... now we have it in here and as
     #     well as in the parent -- FeaturewiseMeasure
     # YYY because we don't use parent's _call. Needs RF
-    def __init__(self, analyzers=None,  # XXX should become actually 'measures'
+    def __init__(self, analyzers=None, # XXX should become actually 'measures'
                  sa_attr='combinations',
                  **kwargs):
         """Initialize CombinedFeaturewiseMeasure
@@ -1155,4 +1155,5 @@ class MappedClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
 
     def __str__(self):
         return _str(self, str(self.clf))
+
 

@@ -202,7 +202,6 @@ class ClassifiersTests(unittest.TestCase):
     # yoh: I guess we have skipped meta constructs because they would
     #      need targets attribute specified in both slave and wrapper
     @sweepargs(lrn=clfswh['!meta']+regrswh['!meta'])
-    @reseed_rng()
     def test_custom_targets(self, lrn):
         """Simple test if a learner could cope with custom sa not targets
         """
@@ -211,6 +210,8 @@ class ClassifiersTests(unittest.TestCase):
         # to assure that if they depend on some random seed -- they
         # would use the same value.  Currently we have such stochastic
         # behavior in SMLR
+        # yoh: we explicitly seed right before calling a CVs below so
+        #      this setting of .seed is of no real effect/testing
         if 'seed' in lrn.params:
             from mvpa2 import _random_seed
             lrn = lrn.clone()              # clone the beast
@@ -231,7 +232,10 @@ class ClassifiersTests(unittest.TestCase):
                         msg="'targets' should remain in original ds")
 
         try:
+            mvpa2.seed()
             cve = te(ds)
+
+            mvpa2.seed()
             cve_ = te_(ds_)
         except Exception, e:
             self.fail("Failed with %r" % e)
@@ -247,13 +251,11 @@ class ClassifiersTests(unittest.TestCase):
             and not ('gpr' in lrn.__tags__
                      and 'non-linear' in lrn.__tags__)
             ):
-            ## if str(lrn) == "SVM(svm_impl='EPSILON_SVR', kernel=LinearLSKernel())":
-            ##     # TODO investigate segfault
-            ##     import pydb
-            ##     pydb.debugger()
-
+            mvpa2.seed()
             s = lrn.get_sensitivity_analyzer()(ds)
+            mvpa2.seed()
             s_ = lrn_.get_sensitivity_analyzer()(ds_)
+
             isreg = lrn.__is_regression__
             # ^ is XOR so we shouldn't get get those sa's in
             # regressions at all

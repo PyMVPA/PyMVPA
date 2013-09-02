@@ -8,6 +8,12 @@ PyMVPA -- Multivariate Pattern Analysis in Python |build-status|
    :target: http://travis-ci.org/PyMVPA/PyMVPA
    :alt: PyMVPA travis-ci build status
 
+.. |coverage-status|
+   image:: https://coveralls.io/repos/PyMVPA/PyMVPA/badge.png
+           ?branch=master
+   :target: https://coveralls.io/r/PyMVPA/PyMVPA
+   :alt: PyMVPA coveralls coverage status
+
 For information how to install PyMVPA please see
 doc/source/installation.rst .
 

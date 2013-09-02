@@ -80,7 +80,8 @@ class BaseSearchlight(Measure):
             raise RuntimeError("The 'pprocess' module is required for "
                                "multiprocess searchlights. Please either "
                                "install python-pprocess, or reduce `nproc` "
-                               "to 1 (got nproc=%i)" % nproc)
+                               "to 1 (got nproc=%i) or set to default None"
+                               % nproc)
 
         self._queryengine = queryengine
         if roi_ids is not None and not isinstance(roi_ids, str) \
@@ -225,6 +226,7 @@ class Searchlight(BaseSearchlight):
         return result_ds
 
     def __init__(self, datameasure, queryengine, add_center_fa=False,
+                 results_postproc_fx=None,
                  results_backend='native',
                  results_fx=None,
                  tmp_prefix='tmpsl',
@@ -242,6 +244,10 @@ class Searchlight(BaseSearchlight):
           seed (e.g. sphere center) for the respective ROI. If True, the
           attribute is named 'roi_seed', the provided string is used as the name
           otherwise.
+        results_postproc_fx : callable
+          Called with all the results computed in a block for possible
+          post-processing which needs to be done in parallel instead of serial
+          aggregation in results_fx.
         results_backend : ('native', 'hdf5'), optional
           Specifies the way results are provided back from a processing block
           in case of nproc > 1. 'native' is pickling/unpickling of results by
@@ -266,6 +272,7 @@ class Searchlight(BaseSearchlight):
         """
         BaseSearchlight.__init__(self, queryengine, **kwargs)
         self.datameasure = datameasure
+        self.results_postproc_fx = results_postproc_fx
         self.results_backend = results_backend.lower()
         if self.results_backend == 'hdf5':
             # Assure having hdf5
@@ -286,6 +293,7 @@ class Searchlight(BaseSearchlight):
             prefixes=prefixes
             + _repr_attrs(self, ['datameasure'])
             + _repr_attrs(self, ['add_center_fa'], default=False)
+            + _repr_attrs(self, ['results_postproc_fx'])
             + _repr_attrs(self, ['results_backend'], default='native')
             + _repr_attrs(self, ['results_fx', 'nblocks'])
             )
@@ -436,6 +444,11 @@ class Searchlight(BaseSearchlight):
                        roi.nfeatures,
                        float(i + 1) / len(block) * 100,), cr=True)
 
+        if self.results_postproc_fx:
+            if __debug__:
+                debug('SLC', "Post-processing %d results in proc_block using %s"
+                      % (len(results), self.results_postproc_fx))
+            results = self.results_postproc_fx(results)
         if self.results_backend == 'native':
             pass                        # nothing special
         elif self.results_backend == 'hdf5':

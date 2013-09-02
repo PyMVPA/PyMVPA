@@ -35,6 +35,7 @@ from mvpa2.mappers.staticprojection import StaticProjectionMapper
 if __debug__:
     from mvpa2.base import debug
 
+__all__ = [ "Hyperalignment" ]
 
 class Hyperalignment(ClassWithCollections):
     """Align the features across multiple datasets into a common feature space.
