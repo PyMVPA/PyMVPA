@@ -121,7 +121,7 @@ xfm_grp = ('options for transforming dataset content before plotting', [
 
 output_grp = ('options for output formating', [
     (('--style',), dict(type=str, choices=info_fx.keys(),
-        default='content_summary', metavar='MODE',
+        default='content_summary',
         help="""info type""")),
     (('--figure-title',), dict(type=str,
         help="""title for a plot""")),
