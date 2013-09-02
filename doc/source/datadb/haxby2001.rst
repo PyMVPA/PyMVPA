@@ -34,6 +34,16 @@ Separate tarballs for each subject are available at:
   http://data.pymvpa.org/datasets/haxby2001
 
 
+Stimuli-tarball content
+=======================
+
+Contains images of the stimuli used in the study.
+
+.. note::
+
+   Answer-4-FAQ: The original sequence of presentation is N/A.
+
+
 Subject-tarball content
 =======================
 

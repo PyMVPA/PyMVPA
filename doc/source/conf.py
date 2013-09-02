@@ -16,10 +16,16 @@ import sys, os, re
 import numpy as np
 import mvpa2
 
+# To troubleshoot buildbot documentation build problem
+print "D: PyMVPA path %s" % mvpa2.__path__
+print "D: PYTHONPATHs", '\n   '.join([]+sys.path)
+
 # We need to know sphinx version for decisions below
 import sphinx
 from distutils.version import LooseVersion
 sphinx_version = LooseVersion(sphinx.__version__)
+
+from mvpa2.base import externals
 
 try:
     import matplotlib
@@ -39,7 +45,7 @@ except:
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.append(os.path.abspath('../sphinxext'))
+sys.path.append(os.path.abspath('..'))
 
 # -- General configuration -----------------------------------------------------
 
@@ -55,14 +61,14 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.pngmath',
               # we have a local copy of the extension, imported from NumPy 1.3
               # this also includes the docscrape* extensions
-              'numpydoc',
+              externals.exists('numpydoc') and 'numpydoc.numpydoc' or 'sphinxext.numpydoc',
               # finally our own little thingie to display tasks
-              'exercise_directive']
+              'sphinxext.exercise_directive']
 
 # we have a local copy of autosummary from the unreleased sphinx
 # 1.0 -- reason: the 0.6 extension creates half-empty summaries
 extensions += [sphinx_version < '1.1.2'
-               and 'autosummary'
+               and 'sphinxext.autosummary'
                or 'sphinx.ext.autosummary']
 
 # the following doesn't work with sphinx < 1.0, but will make a separate
@@ -83,7 +89,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'PyMVPA'
-copyright = '2006-2012, PyMVPA Authors'
+copyright = '2006-2013, PyMVPA Authors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

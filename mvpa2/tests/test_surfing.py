@@ -111,7 +111,7 @@ class SurfTests(unittest.TestCase):
             x.faces[:, :] = 0
             return None
 
-        assert_raises(RuntimeError, assign_zero, s)
+        assert_raises((ValueError, RuntimeError), assign_zero, s)
 
         # see if mapping to high res works
         h = surf.generate_sphere(40)
@@ -137,7 +137,7 @@ class SurfTests(unittest.TestCase):
             assert_true(len(n2f[i]) in nf)
 
 
-        # test dijkstra disances
+        # test dijkstra distances
         ds2 = s.dijkstra_distance(2)
         some_ds = {0: 3.613173280799, 1: 0.2846296765, 2: 0.,
                  52: 1.87458018, 53: 2.0487004817, 54: 2.222820777,
@@ -147,8 +147,8 @@ class SurfTests(unittest.TestCase):
         for k, v in some_ds.iteritems():
             assert_true(abs(v - ds2[k]) < eps)
 
-        # test I/O (throught ascii files)
-        _, fn = tempfile.mkstemp('surf.asc', 'surftest')
+        # test I/O (through ascii files)
+        fd, fn = tempfile.mkstemp('surf.asc', 'surftest'); os.close(fd)
         surf.write(fn, s, overwrite=True)
         s2 = surf.read(fn)
         os.remove(fn)
@@ -163,11 +163,25 @@ class SurfTests(unittest.TestCase):
         assert_array_almost_equal(s3.vertices[-1, :], np.array([18., 19, 0.]))
         assert_array_almost_equal(s3.faces[-1, :], np.array([199, 198, 179]))
 
+    def test_surf_border(self):
+        s = surf.generate_sphere(3)
+        assert_array_equal(s.nodes_on_border(), [False] * 11)
+
+        s = surf.generate_plane((0, 0, 0), (0, 1, 0), (1, 0, 0), 10, 10)
+        b = s.nodes_on_border()
+        v = s.vertices
+
+        vb = reduce(np.logical_or, [v[:, 0] == 0, v[:, 1] == 0,
+                                    v[:, 0] == 9, v[:, 1] == 9])
+
+        assert_array_equal(b, vb)
+
+        assert_true(s.nodes_on_border(0))
 
     def test_surf_fs_asc(self):
         s = surf.generate_sphere(5) * 100
 
-        _, fn = tempfile.mkstemp('surf', 'test')
+        fd, fn = tempfile.mkstemp('surf', 'test'); os.close(fd)
         surf_fs_asc.write(fn, s, overwrite=True)
 
         t = surf_fs_asc.read(fn)
@@ -308,7 +322,7 @@ class SurfTests(unittest.TestCase):
         # some I/O testing
 
         img = vg.get_empty_nifti_image()
-        _, fn = tempfile.mkstemp('.nii', 'test')
+        fd, fn = tempfile.mkstemp('.nii', 'test'); os.close(fd)
         img.to_filename(fn)
 
         assert_true(os.path.exists(fn))
@@ -625,7 +639,7 @@ class SurfTests(unittest.TestCase):
 
                 if externals.exists('h5py'):
                     # some I/O testing
-                    _, fn = tempfile.mkstemp('.h5py', 'test')
+                    fd, fn = tempfile.mkstemp('.h5py', 'test'); os.close(fd)
                     h5save(fn, sel)
 
                     sel2 = h5load(fn)
@@ -640,9 +654,9 @@ class SurfTests(unittest.TestCase):
 
 
                 # test I/O with surfaces
-                _, outerfn = tempfile.mkstemp('outer.asc', 'test')
-                _, innerfn = tempfile.mkstemp('inner.asc', 'test')
-                _, volfn = tempfile.mkstemp('vol.nii', 'test')
+                fd, outerfn = tempfile.mkstemp('outer.asc', 'test'); os.close(fd)
+                fd, innerfn = tempfile.mkstemp('inner.asc', 'test'); os.close(fd)
+                fd, volfn = tempfile.mkstemp('vol.nii', 'test'); os.close(fd)
 
                 surf.write(outerfn, outer, overwrite=True)
                 surf.write(innerfn, inner, overwrite=True)
@@ -846,6 +860,47 @@ class SurfTests(unittest.TestCase):
 
         # check whether they give the same results
         assert_array_equal(r.samples, m.samples)
+
+    def test_surf_pairs(self):
+        o, x, y = map(np.asarray, [(0, 0, 0), (0, 1, 0), (1, 0, 0)])
+        d = np.asarray((0, 0, .1))
+        n = 10
+        s1 = surf.generate_plane(o, x, y, n, n)
+        s2 = surf.generate_plane(o + d, x, y, n, n)
+        s = surf.merge(s1, s2)
+
+        # try for small surface
+        eps = .0000001
+        pw = s.pairwise_near_nodes(.5)
+        for i in xrange(n ** 2):
+            d = pw.pop((i, i + 100))
+            assert_array_almost_equal(d, .1)
+
+        assert_true(len(pw) == 0)
+
+        pw = s.pairwise_near_nodes(.5)
+        for i in xrange(n ** 2):
+            d = pw.pop((i, i + 100))
+            assert_array_almost_equal(d, .1)
+
+        assert_true(len(pw) == 0)
+
+        # bigger one
+        pw = s.pairwise_near_nodes(1.4)
+        for i in xrange(n ** 2):
+            p, q = i / n, i % n
+            offsets = sum(([] if q == 0 else [-1],
+                         [] if q == n - 1 else [+1],
+                         [] if p == 0 else [-n],
+                         [] if p == n - 1 else [n],
+                         [0]), [])
+            for offset in offsets:
+                ii = i + offset + n ** 2
+                d = pw.pop((i, ii))
+
+            assert_true((d < .5) ^ (offset > 0))
+
+        assert_true(len(pw) == 0)
 
 
 class _Voxel_Count_Measure(Measure):

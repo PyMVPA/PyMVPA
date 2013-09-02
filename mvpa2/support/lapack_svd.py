@@ -85,4 +85,4 @@ def svd(a, full_matrices=True, algo='svd', **kwargs):
     #if info.value <= -1:
     #    print "Interesting!!! \nQuick, go find swaroop"
     if info.value == 0:
-        return vt, numpy.asarray(s), u
+        return vt, numpy.frombuffer(s), u

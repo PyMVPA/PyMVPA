@@ -446,7 +446,7 @@ class Surface(object):
             q_i a list of node indices on the path between nodes i and (i+1)
             so that q_i[0]==i and q_i[-1]==(i+1)
         '''
-        if not to_visit:
+        if to_visit is None or len(to_visit) == 0:
             raise ValueError("Cannot operate on empty list")
 
         src = to_visit[0]
@@ -583,8 +583,255 @@ class Surface(object):
 
         return idxs
 
+    def nodes_on_border(self, node_indices=None):
+        '''Determines which nodes are on the border of the surface
+        
+        Parameters
+        ----------
+        node_indices: np.ndarray or None
+            Vector with node indices for which their bordership status is to 
+            be deteremined. None means all node indices
+            
+        Returns
+        -------
+        on_border: np.ndarray
+            Boolean array of shape (len(node_indices),). A node i is 
+            considered on the border if there is a face that contains node i
+            and another node j so that no other face contains both i and j.
+            In other words a node i is *not* on the border if there is a path
+            of nodes p1,...pN so that N>1, p1==pN, pj!=pk if j!=k<N, and
+            each node pk (and no other node) is a neighbor of node i.
+        '''
+
+        if node_indices is None:
+            node_indices = np.arange(self.nvertices)
+
+        if not isinstance(node_indices, np.ndarray):
+            node_indices = np.asarray(node_indices)[np.newaxis]
+
+        if len(node_indices.shape) != 1:
+            raise ValueError("Only supported for vectors")
+
+        n = len(node_indices)
+        on_border = np.zeros((n,), dtype=np.bool_) # allocate space for output
+
+        n2f = self.node2faces
+        f = self.faces
+
+        def except_(vs, x):
+            return filter(lambda y:y != x, vs)
+
+        for i, node_index in enumerate(node_indices):
+            face_indices = n2f[node_index]
+            nf = len(face_indices)
+
+            # node indices of neighbouring nodes (one for each face containing
+            # node with index node_index)
+            fs = [except_(f[fi], node_index) for fi in face_indices]
+
+            a = np.asarray(fs)
+            if a.size == 0:
+                continue
+
+            # initial position and value
+            ipos, jpos = 0, 0
+            a_init = a[ipos, jpos]
+
+            for j in xrange(nf):
+                # go over the faces that contain node_index
+                # for each row take the other value, and try to match  
+                # it to another face
+                jpos_ = (jpos + 1) % 2
+                target = a[ipos, jpos_]
+                a[ipos, jpos_] = -1 # is visited
+
+                ijpos = np.nonzero(a == target)
+                if len(ijpos[0]) != 1:
+                    # 
+                    on_border[i] = True
+                    break
+                ipos, jpos = ijpos[0], ijpos[1]
+
+            on_border[i] = on_border[i] or target != a_init
+
+        return on_border
 
 
+    def nodes_on_border_paths(self):
+        '''Find paths of nodes on the border
+        
+        Returns
+        -------
+        paths: list of lists
+            paths[i]=[k_0,...k_N] means that there is path of N+1 edges
+            [(k_0,k_1),(k_1,...,k_N),(k_N,k_0)] where each k_i is on the 
+            border of the surface
+            
+        '''
+        border_mask = self.nodes_on_border()
+        faces = self.faces
+        nbrs = self.neighbors
+        border_nodes = set(np.nonzero(border_mask)[0])
+        if not len(border_nodes):
+            return []
+
+        # for each edge, see which is the next edge
+        # in the same triangle (clock-wise)
+        edge2next = dict()
+        for i in xrange(self.nfaces):
+            for j in xrange(3):
+                p, q, r = faces[i]
+
+                # make edges
+                pp, qq, rr = (p, q), (q, r), (r, p)
+
+                edge2next[pp] = qq
+                edge2next[qq] = rr
+                edge2next[rr] = pp
+
+        # mapping from edge to face
+        e2f = self.edge2face
+
+        pths = [] # space for output
+        while border_nodes:
+            b0 = border_nodes.pop() # select a random node on the border
+            ns = [b for b in nbrs[b0] if b in border_nodes]
+            if not ns:
+                # not a proper node - no neighbors - so skip
+                continue
+
+            # find an edge on the border
+            for n in ns:
+                edge = (b0, n)
+                if edge in edge2next:
+                    break
+
+            if not edge in edge2next:
+                # this should not happen really
+                raise ValueError("no edge on border found")
+
+            # start a path
+            pth = []
+            pths.append(pth)
+            while True:
+                p, q = edge2next[edge]
+
+                if (q, p) in e2f:
+                    # node q is 'inside' - not on the border
+                    # continue looking
+                    edge = (q, p)
+                else:
+                    # on the border, so swap
+                    edge = (p, q)
+                    pth.append(p) # p is on the border
+                    if p in border_nodes:
+                        border_nodes.remove(p)
+                    else:
+                        # we made a tour and back to the starting point
+                        break
+
+        return pths
+
+
+
+
+    def pairwise_near_nodes(self, max_distance=None, src=None, trg=None):
+        '''Finds the distances between pairs of nodes
+        
+        Parameters
+        ----------
+        max_distance: None or float
+            maximum distance (None: no maximum distance)
+        src: array of int or None
+            source indices
+        trg: array of int or None
+            target indices
+        
+        Returns
+        -------
+        source_target2distance: dict
+            A dictionary so that source_target2distance[i,j]=d means that the
+            Euclidian distance between nodes i and j is d, where i in src 
+            and j in trg.
+        
+        Notes
+        -----
+        If src and trg are both None, then this function checks if the surface
+        has two components; if so they are taken as source and target. A use 
+        case for this behaviour is a surface consisting of two hemispheres  
+        '''
+
+        if src is None and trg is None:
+            components = self.connected_components()
+            if len(components) != 2:
+                raise ValueError("Empty src and trg: requires two components")
+            src, trg = (np.asarray([i for i in c]) for c in components)
+
+        v = self.vertices
+        if not max_distance is None:
+            # hopefully we can reduce the number of vertices significantly
+            # if src and trg can be seperated easily (as in the case of
+            # two hemispheres).
+
+            # vector connecting centers of mass of src and trg
+            n = np.mean(v[src], 0) - np.mean(v[trg], 0)
+
+            # normalize
+            n /= np.sum(n ** 2) ** .5
+
+            # compute projection on normal
+            ps = self.project_vertices(n, v[src])
+            pt = self.project_vertices(n, v[trg])
+
+            def remove_far(s, t, ps, pt, max_distance=max_distance):
+                keep_idxs = np.arange(len(s))
+                for sign in (-1, 1):
+                    far_idxs = np.nonzero(sign * ps[keep_idxs] + \
+                                            max_distance < min(sign * pt))[0]
+
+                    keep_idxs = np.setdiff1d(keep_idxs, far_idxs)
+
+                return s[keep_idxs]
+
+            src, trg = remove_far(src, trg, ps, pt), \
+                                remove_far(trg, src, pt, ps)
+
+        st2d = dict() # source-target pair to distance
+        for s in src:
+            ds = self.euclidean_distance(s, trg)
+            for t, d in zip(trg, ds):
+                if max_distance is None or d <= max_distance:
+                    st2d[(s, t)] = d
+
+
+        return st2d
+
+    def project_vertices(self, n, v=None):
+        '''Projects vertex coordinates onto a vector
+        
+        Parameters
+        ----------
+        n: np.ndarray
+            Vector with 3 elements
+        v: np.ndarray or None
+            coordinates to be projected. If None then the vertices of the 
+            current instance are used.
+            
+        Returns
+        -------
+        p: np.ndarray
+            Vector with coordinates projected onto n 
+        '''
+
+        if not isinstance(n, np.ndarray):
+            n = np.asarray(n)
+        if n.shape != (3,):
+            raise ValueError("Expected vector with 3 elements, found %s" % ((n.shape,)))
+
+        if v is None:
+            v = self.vertices
+
+        return np.dot(v, n)
 
     def sub_surface(self, src, radius):
         '''Makes a smaller surface consisting of nodes around a center node

@@ -17,7 +17,7 @@ This function reads a NIML file and returns a dict that contains all
 NIML information in a tree-like structure (dicts for which some values
 are dicts themselves). Branches are stored in a 'nodes' field.
 
-For specific types of data, consider afni_niml_annot or afni_niml_annot
+For specific types of data, consider afni_niml_dset or afni_niml_annot
 files which provide easier access to the data.
 
 WiP
@@ -164,6 +164,31 @@ def setnewidcode(s):
                 s[key] = getnewidcode()
             else:
                 setnewidcode(v)
+
+def find_attribute_node(niml_dict, key, value, just_one=True):
+    tp = type(niml_dict)
+    if tp is list:
+        r = sum([find_attribute_node(d, key, value, False)
+                            for d in niml_dict], [])
+
+    elif tp is dict:
+        r = [niml_dict] if niml_dict.get(key, None) == value else []
+        r.extend(find_attribute_node(niml_dict[k], key, value, False)
+                        for k, v in niml_dict.iteritems() if type(v) in (list, dict))
+
+    else:
+        return []
+
+    r = [ri for ri in r if ri]
+    if just_one:
+        while type(r) is list:
+            if len(r) != 1:
+                raise ValueError('Found %d elements matching %s=%s, '
+                             ' but expected 1' % (len(r), key, value))
+            r = r[0]
+
+    return r
+
 
 
 def rawniml2string(p, form='text'):
@@ -338,8 +363,6 @@ def string2rawniml(s, i=None):
 
     nimls = [] # here all found parts are stored
 
-    #if isinstance(s, basestring):
-    #    s = s.encode()
 
     # Keep on reading new parts
     while True:
@@ -354,21 +377,34 @@ def string2rawniml(s, i=None):
             # no header - was it the end of a section?
             m = re.match(b'\W*</\w+>\s*', s[i:], _RE_FLAGS)
 
-            if not m is None:
-                # for NIFTI extensions there can be some null bytes left
-                # so get rid of them here
-                remaining = s[i + m.end():].replace(chr(0).encode(), b'').strip()
-
-                if len(remaining) == 0:
-                # entire file was parsed - we are done
-                    debug('NIML', 'Completed parsing, length %d (%d elements)', (len(s), len(nimls)))
+            if m is None:
+                if len(s[i:].strip()) == 0:
                     if return_pos:
                         return i, nimls
                     else:
                         return nimls
+                else:
+                    raise ValueError("No match towards end of header end: [%s] " % _partial_string(s, i))
 
-            # not good - not at the end of the file
-            raise ValueError("Unexpected end: [%s] " % _partial_string(s, i))
+            else:
+                # for NIFTI extensions there can be some null bytes left
+                # so get rid of them here
+                remaining = s[i + m.end():].replace(chr(0).encode(), b'').strip()
+
+                if len(remaining) > 0:
+                    # there is more stuff to parse
+                    i += m.end()
+                    continue
+
+
+                # entire file was parsed - we are done
+                debug('NIML', 'Completed parsing, length %d (%d elements)', (len(s), len(nimls)))
+                if return_pos:
+                    return i, nimls
+                else:
+                    return nimls
+
+
 
         else:
             # get values from header
@@ -403,6 +439,8 @@ def string2rawniml(s, i=None):
                 niml['vec_len'] = int(niml['ni_dimen'])
                 niml['vec_num'] = len(niml['vec_typ'])
 
+                debug('NIML', 'Element of type %s' % niml['vec_typ'])
+
                 # data can be in string form, binary or base64.
                 is_string = niml['ni_type'] == 'String' or \
                                 not 'ni_form' in niml
@@ -413,15 +451,24 @@ def string2rawniml(s, i=None):
                     debug("NIML", "Parsing string body for %s", name)
 
                     is_string_data = niml['ni_type'] == 'String'
+                    is_mixed_data = len(set(niml['vec_typ'])) > 1
 
-                    # If the data type is string, it is surrounded by quotes
-                    # Otherwise (numeric data) there are no quotes
-                    quote = '"' if is_string_data else ''
+                    if is_mixed_data:
+                        debug("NIML", "Data is mixed type")
+                        strpat = ('\s*(?P<data>.*)\s*</%s>' % \
+                                                (name.decode())).encode()
+                        m = re.match(strpat, s[i:], _RE_FLAGS)
+                    else:
+                        # If the data type is string, it is surrounded by quotes
+                        # Otherwise (numeric data) there are no quotes
+                        quote = '"' if is_string_data else ''
 
-                    # construct the regular pattern for this string
-                    strpat = ('\s*%s(?P<data>[^"]*)[^"]*%s\s*</%s>' % \
-                                                    (quote, quote, name.decode())).encode()
-                    m = re.match(strpat, s[i:])
+                        # construct the regular pattern for this string
+                        strpat = ('\s*%s(?P<data>[^"]*)[^"]*%s\s*</%s>' % \
+                                                        (quote, quote, name.decode())).encode()
+
+                        m = re.match(strpat, s[i:], _RE_FLAGS)
+
                     if m is None:
                         # something went wrong
                         raise ValueError("Could not parse string data from "
@@ -430,7 +477,6 @@ def string2rawniml(s, i=None):
 
                     # parse successful - get the parsed data
                     data = m.groupdict()['data']
-
 
                     # convert data to raw NIML
                     data = _datastring2rawniml(data, niml)
@@ -479,6 +525,7 @@ def string2rawniml(s, i=None):
 
             debug('NIML', "Adding element '%s' with keys %r" % (niml['name'], niml.keys()))
             nimls.append(niml)
+
 
     # we should never end up here.
     raise ValueError("this should never happen")

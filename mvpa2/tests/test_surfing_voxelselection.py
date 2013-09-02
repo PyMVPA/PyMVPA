@@ -207,11 +207,11 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         # four versions: array, nifti image, file name, fmri dataset
         volarr = np.ones(vol_shape)
         volimg = nb.Nifti1Image(volarr, vol_affine)
-        _, volfn = tempfile.mkstemp('vol.nii', 'test')
+        fd, volfn = tempfile.mkstemp('vol.nii', 'test'); os.close(fd)
         volimg.to_filename(volfn)
         volds = fmri_dataset(volfn)
 
-        _, volfngz = tempfile.mkstemp('vol.nii.gz', 'test')
+        fd, volfngz = tempfile.mkstemp('vol.nii.gz', 'test'); os.close(fd)
         volimg.to_filename(volfngz)
         voldsgz = fmri_dataset(volfngz)
 
@@ -225,9 +225,9 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         intermediate = inner * .5 + outer * .5
         nv = outer.nvertices
 
-        _, outerfn = tempfile.mkstemp('outer.asc', 'test')
-        _, innerfn = tempfile.mkstemp('inner.asc', 'test')
-        _, intermediatefn = tempfile.mkstemp('intermediate.asc', 'test')
+        fd, outerfn = tempfile.mkstemp('outer.asc', 'test'); os.close(fd)
+        fd, innerfn = tempfile.mkstemp('inner.asc', 'test'); os.close(fd)
+        fd, intermediatefn = tempfile.mkstemp('intermediate.asc', 'test'); os.close(fd)
 
         for s, fn in zip([outer, inner, intermediate],
                          [outerfn, innerfn, intermediatefn]):
