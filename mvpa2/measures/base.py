@@ -312,9 +312,8 @@ class RepeatedMeasure(Measure):
         generator = self._generator
         # run the node an all generated datasets
 
-        # XXX for now we have 'auto' parallelizer, backend and number of processes.
-        # In the future we may want nproc and backend a parameter?
-        Parallelizer = parallelization.get_best_parallelizer()
+        # XXX Use a single thread only
+        Parallelizer = parallelization.get_best_parallelizer(1)
         results_backend = Parallelizer.get_best_results_backend()
 
         proc_func = lambda proc_id, data:self._call_single_item(proc_id, data, results_backend)
