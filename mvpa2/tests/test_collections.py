@@ -124,7 +124,7 @@ def test_array_collectable_unique(a):
     # And sort since order of those is not guaranteed (failed test
     # on squeeze)
     def repr_(x):
-        return repr(sorted(set(x)))
+        return repr(np.sort(set(x)))
 
     assert_equal(repr_(a_flat), repr_(c.unique))
     # even if we request it 2nd time ;)
@@ -176,7 +176,7 @@ def test_conditional_attr():
         node.ca.stats.compute()
 
         dc_node = copy.deepcopy(node)
-        assert_array_equal(node.ca.enabled, dc_node.ca.enabled)
+        assert_equal(set(node.ca.enabled), set(dc_node.ca.enabled))
         assert(node.ca['test'].enabled)
         assert(node.ca['stats'].enabled)
         assert_array_equal(node.ca['test'].value, dc_node.ca['test'].value)

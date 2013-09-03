@@ -342,6 +342,7 @@ def run(limit=None, verbosity=None, exit_=False):
 
 # to avoid nosetests running the beasts defined in this file
 run_tests_using_nose.__test__ = False
+collect_test_suites.__test__ = False
 run.__test__ = False
 __test__ = False
 
