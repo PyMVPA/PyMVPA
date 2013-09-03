@@ -164,7 +164,7 @@ class ClassifiersTests(unittest.TestCase):
 
         self.assertTrue(bclf1.predict(testdata) ==
                         [['sp', 'sn'], ['sp', 'sn'], ['sp', 'sn'],
-                         ['dn', 'dp'], ['dn', 'dp']])
+                         ['dp', 'dn'], ['dp', 'dn']])
 
         self.assertTrue((ds.targets == orig_labels).all(),
                         msg="BinaryClassifier should not alter labels")
