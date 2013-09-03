@@ -376,8 +376,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             assert_array_equal(delta, np.zeros((100, 3)))
             assert_true(np.all(w == ws))
 
-        n2vs = vs.node2voxels()
-        assert_equal(n2vs, dict((i, {i:0, i + 100:1}) for i in xrange(100)))
+        n2vs = vs.node2voxels(nsteps=2)
+        assert_equal(n2vs, dict((i, {i:0., i + 100:1.}) for i in xrange(100)))
 
         nd = 17
         ds_mm_expected = np.sum((above.vertices - pial.vertices[nd, :]) ** 2,
@@ -394,6 +394,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
     @with_tempfile('.h5py', 'voxsel')
     def test_surface_outside_volume_voxel_selection(self, fn):
         skip_if_no_external('h5py')
+        from mvpa2.base.hdf5 import h5save, h5load
         vol_shape = (10, 10, 10, 1)
         vol_affine = np.identity(4)
         vg = volgeom.VolGeom(vol_shape, vol_affine)
