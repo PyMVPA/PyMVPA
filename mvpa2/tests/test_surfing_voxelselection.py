@@ -395,6 +395,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
     @with_tempfile('.h5py', 'voxsel')
     def test_surface_outside_volume_voxel_selection(self, fn):
         skip_if_no_external('h5py')
+        from mvpa2.base.hdf5 import h5save, h5load
         vol_shape = (10, 10, 10, 1)
         vol_affine = np.identity(4)
         vg = volgeom.VolGeom(vol_shape, vol_affine)
