@@ -280,7 +280,7 @@ class TrialsResponseEstimator(FeaturewiseMeasure):
 
     def _call(self, dataset):
         tr = self.tr
-        timex = np.arange(0, self.fir_length*tr, tr)
+        timex = np.arange(0, float(self.fir_length)*tr, tr)
         canonical = self.hrf_gen(timex)
 
         nuisances = self._get_nuisances_ds(dataset)
@@ -288,8 +288,9 @@ class TrialsResponseEstimator(FeaturewiseMeasure):
         if self.estimator == 'hrf_estimation':
             import hrf_estimation as he
             designds, groups, fas_evs = self._get_he_design(dataset)
+            nevs = len(fas_evs.values()[0])
             ngroups = len(groups)
-            kwargs = dict(alpha=0., # rtol=0.1e-5, maxiter=1000,
+            kwargs = dict(alpha=0.,#  rtol=0.1e-6, maxiter=10000,
                           verbose=__debug__ and 'HRF_' in debug.active)
             kwargs.update(self.rank_one_kwargs)
             if 'v0' in kwargs:
@@ -298,9 +299,8 @@ class TrialsResponseEstimator(FeaturewiseMeasure):
                 v0 = kwargs['v0']
                 self.ca.designed_data = \
                     np.sum(design
-                           # design_.shape[1]/len(u0)
-                           * np.array(list(canonical) * self.fir_length) # HRF
-                           * np.repeat(v0, self.fir_length) # amplitudes
+                           * np.array(list(canonical) * nevs * ngroups) # HRF
+                           * np.repeat(v0, self.fir_length * ngroups) # amplitudes
                            , axis=1)
             # having high baseline would affect estimates even if we add a
             # 'constant' as a nuisance.  Thus we will explicitly demean data
