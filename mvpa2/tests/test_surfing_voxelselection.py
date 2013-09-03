@@ -377,8 +377,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             assert_array_equal(delta, np.zeros((100, 3)))
             assert_true(np.all(w == ws))
 
-        n2vs = vs.node2voxels()
-        assert_equal(n2vs, dict((i, {i:0, i + 100:1}) for i in xrange(100)))
+        n2vs = vs.node2voxels(nsteps=2)
+        assert_equal(n2vs, dict((i, {i:1., i + 100:0.}) for i in xrange(100)))
 
         nd = 17
         ds_mm_expected = np.sum((above.vertices - pial.vertices[nd, :]) ** 2,
