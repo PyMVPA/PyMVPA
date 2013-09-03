@@ -11,6 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 import time
+import numpy as np
 from mvpa2.support import copy
 
 from mvpa2.base.dochelpers import _str, _repr, _repr_attrs
@@ -53,12 +54,26 @@ class Node(ClassWithCollections):
           a trigger that tells the node to compute and store information about
           the input data that is "interesting" in the context of the
           corresponding processing in the output dataset.
-        pass_attr : str, list of str, optional
-          What attribute(s) (from sa, fa, a collections, see
-          :meth:`Dataset.get_attr`) to pass from original dataset
-          provided to __call__ (before applying postproc), or from
-          'ca' collection of this instance (use 'ca.' prefix)
-          into the resultant dataset.
+        pass_attr : str, list of str|tuple, optional
+          Additional attributes to pass on to an output dataset. Attributes can
+          be taken from all three attribute collections of an input dataset
+          (sa, fa, a -- see :meth:`Dataset.get_attr`), or from the collection
+          of conditional attributes (ca) of a node instance. Corresponding
+          collection name prefixes should be used to identify attributes, e.g.
+          'ca.null_prob' for the conditional attribute 'null_prob', or
+          'fa.stats' for the feature attribute stats. In addition to a plain
+          attribute identifier it is possible to use a tuple to trigger more
+          complex operations. The first tuple element is the attribute
+          identifier, as described before. The second element is the name of the
+          target attribute collection (sa, fa, or a). The third element is the
+          axis number of a multidimensional array that shall be swapped with the
+          current first axis. The fourth element is a new name that shall be
+          used for an attribute in the output dataset.
+          Example: ('ca.null_prob', 'fa', 1, 'pvalues') will take the
+          conditional attribute 'null_prob' and store it as a feature attribute
+          'pvalues', while swapping the first and second axes. Simplified
+          instructions can be given by leaving out consecutive tuple elements
+          starting from the end.
         postproc : Node instance, optional
           Node to perform post-processing of results. This node is applied
           in `__call__()` to perform a final processing step on the to be
@@ -137,52 +152,83 @@ class Node(ClassWithCollections):
         -------
         Dataset
         """
+        result = self._pass_attr(ds, result)
+        result = self._apply_postproc(ds, result)
+        return result
 
+    def _pass_attr(self, ds, result):
+        """Pass a configured set of attributes on to the output dataset"""
         pass_attr = self.__pass_attr
         if pass_attr is not None:
             ca = self.ca
             ca_keys = self.ca.keys()
             for a in pass_attr:
+                maxis = 0
+                rcol = None
+                attr_newname = None
+                if isinstance(a, tuple):
+                    if len(a) > 1:
+                        # target collection is second element
+                        colswitch = {'sa': result.sa, 'fa': result.fa, 'a': result.a}
+                        rcol = colswitch[a[1]]
+                    if len(a) > 2:
+                        # major axis is third element
+                        maxis = a[2]
+                    if len(a) > 3:
+                        # new attr name if fourth element
+                        attr_newname = a[3]
+                    # the attribute name is the first element
+                    a = a[0]
                 # It might come from .ca of this instance
                 if a.startswith('ca.'):
                     a = a[3:]
                 if a in ca_keys:
-                    # We will assign it to .sa for now
-                    # Later on we might/should characterize .ca's
-                    # as being sample- or feature- or ds- related
-                    rcol = result.sa
+                    if rcol is None:
+                        # We will assign it to .sa for now
+                        rcol = result.sa
                     attr = ca[a]
                 else:
                     # look in the ds
                     # find it in the original ds
                     attr, col = ds.get_attr(a)
-                    # deduce corresponding collection in results
-                    # Since isinstance would take longer (eg 200 us vs 4)
-                    # for now just use 'is' on the __class__
-                    col_class = col.__class__
-                    if col_class is SampleAttributesCollection:
-                        rcol = result.sa
-                    elif col_class is FeatureAttributesCollection:
-                        rcol = result.fa
-                    elif col_class is DatasetAttributesCollection:
-                        rcol = result.a
-                    else:
-                        raise ValueError("Cannot determine origin of %s collection"
-                                         % col)
+                    if rcol is None:
+                        # ONLY if there was no explicit output collection set
+                        # deduce corresponding collection in results
+                        # Since isinstance would take longer (eg 200 us vs 4)
+                        # for now just use 'is' on the __class__
+                        col_class = col.__class__
+                        if col_class is SampleAttributesCollection:
+                            rcol = result.sa
+                        elif col_class is FeatureAttributesCollection:
+                            rcol = result.fa
+                        elif col_class is DatasetAttributesCollection:
+                            rcol = result.a
+                        else:
+                            raise ValueError("Cannot determine origin of %s collection"
+                                             % col)
+                if attr_newname is None:
+                    # go with previous name if no other is given
+                    attr_newname = attr.name
+                if maxis == 0:
+                    # all good
+                    value = attr.value
+                else:
+                    # move selected axis to the front
+                    value = np.swapaxes(attr.value, 0, maxis)
                 # "shallow copy" into the result
                 # this way we also invoke checks for the correct length etc
-                rcol[attr.name] = attr.value
+                rcol[attr_newname] = value
+        return result
 
+    def _apply_postproc(self, ds, result):
+        """Apply any post-processing to an output dataset"""
         if not self.__postproc is None:
             if __debug__:
                 debug("NO",
                       "Applying post-processing node %s", (self.__postproc,))
             self.ca.raw_results = result
-
             result = self.__postproc(result)
-
         return result
-
 
     def generate(self, ds):
         """Yield processing results.

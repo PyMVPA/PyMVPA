@@ -673,7 +673,18 @@ class SearchlightTests(unittest.TestCase):
                         r = np.asscalar(r.samples)
                     os.unlink(r)         # remove generated file
                 print_("WAITING")
-            return hstack(sum(res, []))
+
+            results_ds = hstack(sum(res, []))
+
+            # store the center ids as a feature attribute since we use
+            # them for testing
+            results_ds.fa['center_ids'] = roi_ids
+            return results_ds
+
+        def results_postproc_fx(results):
+            for ds in results:
+                ds.fa['test_postproc'] = np.atleast_1d(ds.a.roi_center_ids**2)
+            return results
 
         def results_postproc_fx(results):
             for ds in results:
@@ -714,6 +725,9 @@ class SearchlightTests(unittest.TestCase):
         assert_equal(len(glob.glob(tfile + '*')), 0) # so no junk around
         try:
             res = sl(ds)
+            assert_equal(res.nfeatures, ds.nfeatures)
+            # verify that we did have results_postproc_fx called
+            assert_array_equal(res.fa.test_postproc, np.power(res.fa.center_ids, 2))
         finally:
             assert_equal(res.nfeatures, ds.nfeatures)
             # verify that we did have results_postproc_fx called

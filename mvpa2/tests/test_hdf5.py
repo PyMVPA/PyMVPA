@@ -241,10 +241,16 @@ def test_state_setter_getter():
     # as it would be reconstructed before the fix -- obj array of obj arrays
     np.array([np.array([{'d': np.empty(shape=(2,3))}], dtype=object)],
              dtype=object),
+    np.array([],dtype='int64'),
     ))
 def test_save_load_object_dtype_ds(obj=None):
     """Test saving of custom object ndarray (GH #84)
     """
+    aobjf = np.asanyarray(obj).flatten()
+
+    if not aobjf.size and externals.versions['hdf5'] < '1.8.7':
+        raise SkipTest("Versions of hdf5 before 1.8.7 have problems with empty arrays")
+
     # print obj, obj.shape
     f = tempfile.NamedTemporaryFile()
 
@@ -259,9 +265,9 @@ def test_save_load_object_dtype_ds(obj=None):
     assert_array_equal(obj.shape, obj_.shape)
     assert_equal(type(obj), type(obj_))
     # so we could test both ds and arrays
-    aobjf = np.asanyarray(obj).flatten()
     aobjf_ = np.asanyarray(obj_).flatten()
     # checks if having just array above
-    assert_equal(type(aobjf[0]), type(aobjf_[0]))
-    assert_array_equal(aobjf[0]['d'], aobjf_[0]['d'])
+    if aobjf.size:
+        assert_equal(type(aobjf[0]), type(aobjf_[0]))
+        assert_array_equal(aobjf[0]['d'], aobjf_[0]['d'])
 
