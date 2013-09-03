@@ -6,12 +6,17 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Import helper for PyMVPA misc modules"""
+"""Import helper for surfing (surface-based information mapping)"""
+
 
 __docformat__ = 'restructuredtext'
 
+
 if __debug__:
     from mvpa2.base import debug
-    debug('INIT', 'mvpa2.misc start')
-    debug('INIT', 'mvpa2.misc end')
+    debug('INIT', 'mvpa2.misc.surfing')
 
+from mvpa2.misc.surfing import *
+
+if __debug__:
+    debug('INIT', 'mvpa2.misc.surfing end')
