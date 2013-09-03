@@ -180,3 +180,12 @@ def test_fx_native_calls(f):
             assert_objectarray_equal(dsm1.targets, dsm2.targets)
             assert_objectarray_equal(dsm1.chunks, dsm2.chunks)
             assert_objectarray_equal(dsm1.fa.nonbogus_targets, dsm2.fa.nonbogus_targets)
+
+def test_uniquemerge2literal():
+    from mvpa2.mappers.fx import _uniquemerge2literal
+    assert_equal(_uniquemerge2literal(range(3)), ['0+1+2'])
+    assert_equal(_uniquemerge2literal(np.arange(6).reshape(2,3)), ['[0 1 2]+[3 4 5]'])
+    assert_array_equal(_uniquemerge2literal([[2,3,4]]), [[2, 3, 4]])
+    assert_array_equal(_uniquemerge2literal([[2,3,4],[2,3,4]]), [[2, 3, 4]])
+    assert_equal(_uniquemerge2literal([2,2,2]), [2])
+    assert_array_equal(_uniquemerge2literal(['L1', 'L1']), ['L1'])

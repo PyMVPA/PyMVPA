@@ -19,6 +19,8 @@ from mvpa2.mappers.base import accepts_dataset_as_samples
 from mvpa2.base.dochelpers import _repr_attrs
 from mvpa2.base.state import ConditionalAttribute
 from mvpa2.generators.splitters import mask2slice
+from mvpa2.base.dataset import split_by_sample_attribute, vstack
+from mvpa2.base import externals
 
 if __debug__:
     from mvpa2.base import debug
@@ -506,3 +508,168 @@ class CombinedFeatureSelection(FeatureSelection):
 
     method = property(fget=lambda self: self.__method)
     selectors = property(fget=lambda self: self.__selectors)
+
+
+class SplitSamplesProbabilityMapper(SliceMapper):
+    '''
+    Mapper to select features & samples  based on some sensitivity value.
+
+    A use case is feature selection across participants,
+    where either the same features are selected in all
+    participants or not (see select_common_features parameter).
+
+    Examples
+    --------
+    >>> nf = 10
+    >>> ns = 100
+    >>> nsubj = 5
+    >>> nchunks = 5
+    >>> data = np.random.normal(size=(ns, nf))
+    >>> from mvpa2.base.dataset import AttrDataset
+    >>> from mvpa2.measures.anova import OneWayAnova
+    >>> ds = AttrDataset(data,
+    ...                sa=dict(sidx=np.arange(ns),
+    ...                        targets=np.arange(ns) % nchunks,
+    ...                        chunks=np.floor(np.arange(ns) * nchunks / ns),
+    ...                        subjects=np.arange(ns) / (ns / nsubj / nchunks) % nsubj),
+    ...                fa=dict(fidx=np.arange(nf)))
+    >>> analyzer=OneWayAnova()
+    >>> element_selector=FractionTailSelector(.4, mode='select', tail='upper')
+    >>> common=True
+    >>> m=SplitSamplesProbabilityMapper(analyzer, 'subjects',
+    ...                                 probability_label='fprob',
+    ...                                 select_common_features=common,
+    ...                                 selector=element_selector)
+    >>> m.train(ds)
+    >>> y=m(ds)
+    >>> z=m(ds.samples)
+    >>> np.all(np.equal(z, y.samples))
+    True
+    >>> y.shape
+    (100, 4)
+
+    '''
+    def __init__(self,
+                 sensitivity_analyzer,
+                 split_by_labels,
+                 select_common_features=True,
+                 probability_label=None,
+                 probability_combiner=None,
+                 selector=FractionTailSelector(0.05),
+                 **kwargs):
+        '''
+        Parameters
+        ----------
+        sensitivity_analyzer: FeaturewiseMeasure
+            Sensitivity analyzer to come up with sensitivity.
+        split_by_labels: str or list of str
+            Sample labels on which input datasets are split before
+            data is selected.
+        select_common_features: bool
+            True means that the same features are selected after the split.
+        probablity_label: None or str
+            If None, then the output dataset ds from the
+            sensitivity_analyzer is taken to select the samples.
+            If not None it takes ds.sa['probablity_label'].
+            For example if sensitivity_analyzer=OneWayAnova then
+            probablity_label='fprob' is a sensible value.
+        probability_combiner: function
+            If select_common_features is True, then this function is
+            applied to the feature scores across splits. If None,
+            it uses lambda x:np.sum(-np.log(x)) which is sensible if
+            the scores are probability values
+        selector: Selector
+            function that returns the indices to keep.
+        '''
+
+        SliceMapper.__init__(self, None, **kwargs)
+
+        if probability_combiner is None:
+            def f(x):
+                y = -np.log(x.ravel())
+
+                # address potential NaNs
+                # set to max value in y
+                m = np.isnan(y)
+                if np.all(m):
+                    return 0 # p=1
+
+                y[m] = np.max(y[np.logical_not(m)])
+                return np.sum(y)
+            probability_combiner = f # avoid lambda as h5py doesn't like it
+
+        self._sensitivity_analyzer = sensitivity_analyzer
+        self._split_by_labels = split_by_labels
+        self._select_common_features = select_common_features
+        self._probability_label = probability_label
+        self._probability_combiner = probability_combiner
+        self._selector = selector
+
+
+    def _train(self, ds):
+        # add a sample attribute indicating the sample indices
+        # so that we can recover where each part came from
+        ds_copy = ds.copy(deep=False)
+        ds_copy.sa['orig_fidxs_'] = np.arange(ds.nsamples)
+
+        splits = split_by_sample_attribute(ds_copy,
+                                         self._split_by_labels)
+
+        scores_ds = map(self._sensitivity_analyzer, splits)
+
+        if self._probability_label is None:
+            scores = [ds.samples for ds in scores_ds]
+        else:
+            scores = [ds.fa[self._probability_label].value for ds in scores_ds]
+
+        selector = self._selector
+
+        if self._select_common_features:
+            # must have the same number of features
+            stacked = np.vstack(scores)
+            f = self._probability_combiner
+
+            n = stacked.shape[-1] # number of features
+            common_all = np.asarray([f(stacked[:, i]) for i in xrange(n)])
+
+            # combine the scores
+            common_feature_ids = selector(common_all)
+
+            # same feature ids for each element in split
+            feature_ids = [common_feature_ids for _ in splits]
+        else:
+            # do the selection split=wise
+            feature_ids = [selector(score) for score in scores]
+
+        self._slice_feature_ids = feature_ids
+        self._slice_sample_ids = [ds.sa.orig_fidxs_ for ds in splits]
+        super(SplitSamplesProbabilityMapper, self)._train(ds)
+
+    def _untrain(self):
+        self._slice_feature_ids = None
+        self._slice_sample_ids = None
+        super(SplitSamplesProbabilityMapper, self)._untrain()
+
+
+    def _forward_dataset(self, ds):
+        sliced_ds = [ds[sample_ids, feature_ids]
+                            for sample_ids, feature_ids in
+                                    zip(*(self._slice_sample_ids,
+                                    self._slice_feature_ids))]
+
+        return vstack(sliced_ds, True)
+
+
+    def _forward_data(self, data):
+        sliced_data = [np.vstack(data[sample_id, feature_ids]
+                         for sample_id in sample_ids)
+                                for sample_ids, feature_ids in
+                                    zip(*(self._slice_sample_ids,
+                                    self._slice_feature_ids))]
+
+        return vstack(sliced_data)
+
+    sensitivity_analyzer = property(fget=lambda self:self._sensitivity_analyzer,
+                                    doc="Measure which was used to do selection")
+    selector = property(fget=lambda self:self._selector,
+                                    doc="Function used to do selection")

@@ -1,17 +1,17 @@
 .. _datadb_hyperalignment_tutorial_data:
 
-************************************************************************
+**********************************************************************************
 Hypearalignment Tutorial Data: Faces and Objects in Ventral Temporal Cortex (fMRI)
-************************************************************************
+**********************************************************************************
 
 This is a block-design fMRI dataset from a study on face and object
 representation in human ventral temporal cortex.  It consists of 10 subjects
 with 8 runs per subject. In each run, the subjects passively viewed greyscale
-images from seven face & object categories. Each image was shown for 500ms 
-and was followed by a 1500ms inter-stimulus interval.  Full-brain fMRI data 
-were recorded with a volume repetition time of 2.5s, thus, a stimulus block 
-was covered by roughly 16 volumes. For a complete description of the experimental 
-design, fMRI acquisition parameters, and preprocessing steps, and previously 
+images from seven face & object categories. Each image was shown for 500ms
+and was followed by a 1500ms inter-stimulus interval.  Full-brain fMRI data
+were recorded with a volume repetition time of 2.5s, thus, a stimulus block
+was covered by roughly 16 volumes. For a complete description of the experimental
+design, fMRI acquisition parameters, and preprocessing steps, and previously
 obtained results see the references_ below.
 
 This tutorial dataset is based on data from a study published by :ref:`Haxby
@@ -19,8 +19,8 @@ et al. (2011) <HGC+11>`. The datasets have been preprocessed to a degree that sh
 allow people without prior fMRI experience to perform meaningful analyses.
 Moreover, it should not require further preprocessing with external tools.
 
-All preprocessing has been performed using tools from AFNI & PyMVPA. 
-Specifically, the 4D fMRI timeseries has been pre-processed as described in 
+All preprocessing has been performed using tools from AFNI & PyMVPA.
+Specifically, the 4D fMRI timeseries has been preprocessed as described in
 :ref: `Haxby et al. (2011) <HGC+11>` and aligned to the standard MNI brain.
 A Ventral Temporal Cortex mask in MNI space is applied to the data.
 
@@ -66,8 +66,8 @@ Instructions
 References
 ==========
 
-:ref:`Haxby, J. V., Guntupalli, J. S., Connolly, A. C., Halchenko, Y. O., 
-Conroy, B. R., Gobbini, M. I., Hanke, M. & Ramadge, P. J. (2011) <HGC+11>.` 
-A Common, High-Dimensional Model of the Representational Space in Human 
-Ventral Temporal Cortex. Neuron, 72, 404–416. 
+:ref:`Haxby, J. V., Guntupalli, J. S., Connolly, A. C., Halchenko, Y. O.,
+Conroy, B. R., Gobbini, M. I., Hanke, M. & Ramadge, P. J. (2011) <HGC+11>.`
+A Common, High-Dimensional Model of the Representational Space in Human
+Ventral Temporal Cortex. Neuron, 72, 404–416.
 DOI: http://dx.doi.org/10.1016/j.neuron.2011.08.026

@@ -26,7 +26,7 @@ mvpa2.atlases.base module contains support for various atlases
 import os.path as osp
 from mvpa2.base import externals
 
-if externals.exists('lxml', raise_=True):
+if externals.exists('lxml', raise_=True, exception=ImportError):
     from lxml import etree, objectify
 
 from mvpa2.base.dochelpers import enhanced_doc_string

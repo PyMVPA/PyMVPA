@@ -116,7 +116,8 @@ def hdf2obj(hdf, memo=None):
         else:
             # read array-dataset into an array
             obj = np.empty(hdf.shape, hdf.dtype)
-            hdf.read_direct(obj)
+            if obj.size:
+                hdf.read_direct(obj)
     else:
         # check if we have a class instance definition here
         if not ('class' in hdf.attrs or 'recon' in hdf.attrs):

@@ -36,6 +36,7 @@ class Balancer(Node):
                  count=1,
                  limit='chunks',
                  apply_selection=False,
+                 include_offlimit=False,
                  space='balanced_set',
                  **kwargs):
         """
@@ -67,6 +68,10 @@ class Balancer(Node):
           dataset only contains selected elements. If False, the selection is
           instead added as an attribute that merely marks selected elements (see
           ``space`` argument).
+        include_offlimit : bool
+          If True, all samples that were off limit (i.e. not included in the
+          balancing input are included in the balanced selection. If False
+          (default) they are excluded.
         space : str
           Name of the selection marker attribute in the output dataset that is
           created if the balanced selection is not applied to the output dataset
@@ -78,6 +83,7 @@ class Balancer(Node):
         self.count = count
         self._limit = limit
         self._limit_filter = None
+        self._include_offlimit = include_offlimit
         self._apply_selection = apply_selection
 
 
@@ -94,6 +100,7 @@ class Balancer(Node):
 
         # ids of elements that are part of the balanced set
         balanced_set = []
+        full_limit_set = []
         # for each chunk in the filter (might be just the selected ones)
         for limit_value in np.unique(limit_filter):
             if limit_filter.dtype == np.bool:
@@ -105,6 +112,7 @@ class Balancer(Node):
             else:
                 # non-boolean limiter -> determine "chunk" and balance within
                 limit_idx = (limit_filter == limit_value).nonzero()[0]
+            full_limit_set += list(limit_idx)
 
             # apply the current limit to the target attribute
             # need list to index properly
@@ -141,8 +149,18 @@ class Balancer(Node):
 
         # make full-sized boolean selection attribute and put it into
         # the right collection of the output dataset
-        battr = np.zeros(len(attr), dtype=np.bool)
-        battr[balanced_set] = True
+        if self._include_offlimit:
+            # start with all-in
+            battr = np.ones(len(attr), dtype=np.bool)
+            # throw out all samples that could have been limited
+            battr[full_limit_set] = False
+            # put back the ones that got into the balanced set
+            battr[balanced_set] = True
+        else:
+            # start with nothing
+            battr = np.zeros(len(attr), dtype=np.bool)
+            # only keep the balanced set
+            battr[balanced_set] = True
 
         if self._apply_selection:
             if collection is ds.sa:

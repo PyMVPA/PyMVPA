@@ -33,7 +33,7 @@ import random, numpy as np, os, time, sys, socket
 from mvpa2.support.nibabel import afni_niml_types as types
 from mvpa2.support.nibabel import afni_niml as niml
 
-from mvpa2.base import warning
+from mvpa2.base import warning, debug
 
 def _string2list(s, SEP=";"):
     '''splits a string by SEP; if the last element is empty then it is not returned
@@ -101,21 +101,46 @@ def _dset2rawniml_data(s):
                 name='SPARSE_DATA',
                 data=s['data'])
 
+def _dset_nrows_ncols(s):
+    if type(s) is dict and 'data' in s:
+        data = s['data']
+    else:
+        data = s
+
+    if isinstance(data, np.ndarray):
+        sh = s['data'].shape
+        nrows = sh[0]
+        ncols = 1 if len(sh) == 1 else sh[1]
+    elif isinstance(data, list):
+        lengths = set([len(d) for d in data])
+        if len(lengths) != 1:
+            raise ValueError('nonmatching lengths', lengths)
+        nrows = lengths.pop()
+        ncols = len(data)
+    else:
+        raise ValueError('not understood: %s' % data)
+
+    return nrows, ncols
+
 def _dset2rawniml_nodeidxs(s):
-    nrows = s['data'].shape[0]
+    nrows, _ = _dset_nrows_ncols(s)
 
     node_idxs = s.get('node_indices') if 'node_indices' in s else np.arange(nrows, dtype=np.int32)
-    if not type(node_idxs) is np.ndarray:
-        node_idxs = np.asarray(node_idxs, dtype=np.int32)
 
-    if node_idxs.size != nrows:
-        raise ValueError("Size mismatch for node indices (%r) and data (%r)" %
-                         (node_idxs.size, nrows))
+    if not node_idxs is None:
+        if not type(node_idxs) is np.ndarray:
+            node_idxs = np.asarray(node_idxs, dtype=np.int32)
 
-    if node_idxs.shape != (nrows, 1):
-        node_idxs = np.reshape(node_idxs, ((nrows, 1))) # reshape to column vector if necessary
+        if node_idxs.size != nrows:
+            raise ValueError("Size mismatch for node indices (%r) and data (%r)" %
+                             (node_idxs.size, nrows))
+
+        if node_idxs.shape != (nrows, 1):
+            node_idxs = np.reshape(node_idxs, ((nrows, 1))) # reshape to column vector if necessary
 
     def is_sorted(v): # O(1) in best case and O(n) in worst case (unlike sorted())
+        if v is None:
+            return None
         n = len(v)
         return n == 0 or all(v[i] <= v[i + 1] for i in xrange(n - 1))
 
@@ -127,30 +152,35 @@ def _dset2rawniml_nodeidxs(s):
 def _dset2rawniml_datarange(s):
     data = s['data']
 
-    minpos = np.argmin(data, axis=0)
-    maxpos = np.argmax(data, axis=0)
+    try:
+        minpos = np.argmin(data, axis=0)
+        maxpos = np.argmax(data, axis=0)
 
-    f = types.numpy_data2printer(data) # formatter function
-    r = []
-    for i in xrange(len(minpos)):
-        mnpos = minpos[i]
-        mxpos = maxpos[i]
-        r.append('%s %s %d %d' % (f(data[mnpos, i]), f(data[mxpos, i]), mnpos, mxpos))
+        f = types.numpy_data2printer(data) # formatter function
+        r = []
+        for i in xrange(len(minpos)):
+            mnpos = minpos[i]
+            mxpos = maxpos[i]
+            r.append('%s %s %d %d' % (f(data[mnpos, i]), f(data[mxpos, i]), mnpos, mxpos))
 
-    # range of data in each column
-    return dict(atr_name='COLMS_RANGE',
-                data=r)
+        # range of data in each column
+        return dict(atr_name='COLMS_RANGE',
+                    data=r)
+    except:
+        return dict(atr_name='COLMS_RANGE',
+                    data=None)
 
 def _dset2rawniml_labels(s):
-    ncols = s['data'].shape[1]
+    _, ncols = _dset_nrows_ncols(s)
+
     labels = s.get('labels', None)
     if labels is None:
         labels = ['col_%d' % i for i in xrange(ncols)]
     elif type(labels) != list:
         labels = list(labels)
     if len(labels) != ncols:
-        raise ValueError("Wrong number of labels: found %d but expected %d" %
-                         (len(labels, ncols)))
+        raise ValueError("Wrong number of labels (%s): found %d but expected %d" %
+                         (labels, len(labels), ncols))
     return dict(atr_name='COLMS_LABS',
                 data=labels)
 
@@ -174,14 +204,15 @@ def _dset2rawniml_history(s):
 
 def _dset2rawniml_datatypes(s):
     data = s['data']
-    ncols = data.shape[1]
+    _, ncols = _dset_nrows_ncols(s)
+    # XXX does not support mixed types
     datatype = ['Generic_Int' if types.numpy_data_isint(data) else 'Generic_Float'] * ncols
     return dict(atr_name='COLMS_TYPE',
                 data=datatype)
 
 def _dset2rawniml_stats(s):
     data = s['data']
-    ncols = data.shape[1]
+    _, ncols = _dset_nrows_ncols(s)
     stats = s.get('stats', None)
 
     if stats is None:
@@ -202,7 +233,8 @@ def _dset2rawniml_anything_else(s):
         try:
             niml.append(_dset2rawniml_complete(niml_elem))
         except TypeError:
-            warning("Unable to convert value for key '%s'" % k)
+            debug('NIML', 'Warning: unable to convert value for key %s' % k)
+
     return niml
 
 def _dset2rawniml_complete(r):
@@ -221,11 +253,35 @@ def _dset2rawniml_complete(r):
             r['data'] = list(r['data'])
 
         elif tp is list:
+            if all(isinstance(d, basestring)  for d in data):
                 r['data'] = ";".join(data)
+            else:
+                tp = 'mixed'
+                break
+
         else:
             break # we're done
 
-    if issubclass(tp, basestring):
+    if tp == 'mixed':
+        #data = [types.nimldataassupporteddtype(d) for d in data]
+        #r['data'] = data
+
+        nrows, ncols = _dset_nrows_ncols(data)
+        r['ni_dimen'] = str(nrows)
+        tpstrs = []
+        for d in data:
+            if isinstance(d, basestring) or \
+                    (type(d) is list and
+                            all(isinstance(di, basestring) for di in d)):
+                tpstr = 'String'
+            elif isinstance(d, np.ndarray):
+                tpstr = types.numpy_type2name(d.dtype)
+            else:
+                raise ValueError('unrecognized type %s' % type(d))
+            tpstrs.append(tpstr)
+        r['ni_type'] = ','.join(tpstrs)
+
+    elif issubclass(tp, basestring):
         r['ni_dimen'] = '1'
         r['ni_type'] = 'String'
     elif tp is np.ndarray:
@@ -240,13 +296,27 @@ def _dset2rawniml_complete(r):
         r['ni_dimen'] = str(nrows)
         tpstr = types.numpy_type2name(data.dtype)
         r['ni_type'] = '%d*%s' % (ncols, tpstr) if nrows > 1 else tpstr
-    else:
+    elif not data is None:
         raise TypeError('Illegal type %r in %r' % (tp, data))
 
     if not 'name' in r:
         r['name'] = 'AFNI_atr'
 
     return r
+
+def _remove_empty_nodes(nodes):
+    tp = type(nodes)
+    if tp is list:
+        i = 0
+        while i < len(nodes):
+            node = nodes[i]
+            if type(node) is dict and 'data' in node and node['data'] is None:
+                nodes.pop(i)
+            else:
+                i += 1
+    elif tp is dict:
+        for v in nodes.itervalues():
+            _remove_empty_nodes(v)
 
 
 def dset2rawniml(s):
@@ -268,6 +338,7 @@ def dset2rawniml(s):
               _dset2rawniml_stats]
 
     nodes = [_dset2rawniml_complete(build(s)) for build in builders]
+    _remove_empty_nodes(nodes)
 
     more_nodes = filter(lambda x:not x is None, _dset2rawniml_anything_else(s))
 

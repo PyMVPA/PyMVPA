@@ -23,14 +23,14 @@ _COORD_EPS = 1e-14 # maximum allowed difference between coordinates
 
 class Surface(object):
     '''Cortical surface mesh
-    
-    A surface consists of a set of vertices (each with an x, y, and z 
+
+    A surface consists of a set of vertices (each with an x, y, and z
     coordinate) and a set of faces (triangles; each has three indices
     referring to the vertices that make up a triangle).
-    
-    In the present implementation new surfaces should be made using the 
+
+    In the present implementation new surfaces should be made using the
     __init__ constructor; internal fields should not be changed manually
-    
+
     Parameters
     ----------
     vertices : numpy.ndarray (float)
@@ -38,9 +38,9 @@ class Surface(object):
     faces : numpy.ndarray (int)
         Qx3 array with vertex indices for Q faces (triangles).
     check: boolean (default=True)
-        Do some sanity checks to ensure that vertices and faces have proper 
+        Do some sanity checks to ensure that vertices and faces have proper
         size and values.
-        
+
     Returns
     -------
     s : Surface
@@ -99,13 +99,13 @@ class Surface(object):
     def node2faces(self):
         '''
         A mapping from node indices to the faces that contain those nodes.
-        
+
         Returns
         -------
         n2v : dict
             A dict "n2v" so that "n2v[i]=faceidxs" contains a list of the faces
             (indexed by faceidxs) that contain node "i".
-        
+
         '''
 
         if not hasattr(self, '_n2f'):
@@ -124,12 +124,12 @@ class Surface(object):
     def face_edge_length(self):
         '''
         Length of edges associated with each face
-        
+
         Returns
         -------
         f2el: np.ndarray
             Px3 array where P==self.nfaces. f2el[i,:] contains the
-            length of the (three) edges that make up face i. 
+            length of the (three) edges that make up face i.
         '''
 
         if not hasattr(self, '_f2el'):
@@ -154,11 +154,11 @@ class Surface(object):
     def average_node_edge_length(self):
         '''
         Average length of edges associated with each face
-        
+
         Returns
         -------
         n2el: np.ndarray
-            P-valued vector where P==self.nvertices, where n2el[i] is the 
+            P-valued vector where P==self.nvertices, where n2el[i] is the
             average length of the edges that contain node i.
         '''
         if not hasattr(self, '_n2ael'):
@@ -195,13 +195,13 @@ class Surface(object):
     @property
     def edge2face(self):
         '''A mapping from edges to the face that contains that edge
-        
+
         Returns
         -------
         e2f: dict
             a mapping from edges to faces. e2f[(i,j)]==f means that
             the edge connecting nodes i and j contains node f.
-            It is assumed that faces are consistent with respect to 
+            It is assumed that faces are consistent with respect to
             the direction of their normals: if self.faces[j,:]==[p,q,r]
             then the normal of vectors pq and pr should all either point
             'inwards' or 'outwards'.
@@ -228,16 +228,16 @@ class Surface(object):
     @property
     def neighbors(self):
         '''Finds the neighbours for each node and their (Euclidean) distance.
-        
+
         Returns
         -------
         nbrs : dict
-            A dict "nbrs" so that "nbrs[i]=n2d" contains the distances from 
-            node i to the neighbours of node "i" in "n2d". "n2d" is, in turn, 
-            a dict so that "n2d[k]=d" is the distance "d" from node "i" to 
-            node "j". In other words, nbrs[i][j]=d means that the distance from 
+            A dict "nbrs" so that "nbrs[i]=n2d" contains the distances from
+            node i to the neighbours of node "i" in "n2d". "n2d" is, in turn,
+            a dict so that "n2d[k]=d" is the distance "d" from node "i" to
+            node "j". In other words, nbrs[i][j]=d means that the distance from
             node i to node j is d. It holds that nbrs[i][j]=nbrs[j][i].
-        
+
         Note
         ----
         This function computes nbrs if called for the first time, otherwise
@@ -274,22 +274,22 @@ class Surface(object):
 
     def circlearound_n2d(self, src, radius, metric='euclidean'):
         '''Finds the distances from a center node to surrounding nodes.
-        
+
         Parameters
         ----------
         src : int
             Index of center node
         radius : float
-            Maximum distance for other nodes to qualify as a 'surrounding' 
+            Maximum distance for other nodes to qualify as a 'surrounding'
             node.
         metric : string (default: euclidean)
             'euclidean' or 'dijkstra': distance metric
-             
-        
+
+
         Returns
         -------
         n2d : dict
-            A dict "n2d" so that n2d[j]=d" is the distance "d" from node 
+            A dict "n2d" so that n2d[j]=d" is the distance "d" from node
             "src" to node "j".
         '''
 
@@ -311,22 +311,22 @@ class Surface(object):
 
     def dijkstra_distance(self, src, maxdistance=None):
         '''Computes Dijkstra distance from one node to surrounding nodes
-        
+
         Parameters
         ----------
         src : int
             Index of center (source) node
         maxdistance: float (default: None)
             Maximum distance for a node to qualify as a 'surrounding' node.
-            If 'maxdistance is None' then the distances to all nodes is 
+            If 'maxdistance is None' then the distances to all nodes is
             returned/
-        
+
         Returns:
         --------
         n2d : dict
-            A dict "n2d" so that n2d[j]=d" is the distance "d" from node 
+            A dict "n2d" so that n2d[j]=d" is the distance "d" from node
             "src" to node "j".
-            
+
         Note
         ----
         Preliminary analyses show that the Dijkstra distance gives very similar
@@ -343,7 +343,7 @@ class Surface(object):
 
         nbrs = self.neighbors
 
-        # algorithm from wikipedia 
+        # algorithm from wikipedia
         # (http://en.wikipedia.org/wiki/Dijkstra's_algorithm)
         while candidates:
             # distance and index of current candidate
@@ -371,23 +371,23 @@ class Surface(object):
 
     def dijkstra_shortest_path(self, src, maxdistance=None):
         '''Computes Dijkstra shortest path from one node to surrounding nodes.
-        
+
         Parameters
         ----------
         src : int
             Index of center (source) node
         maxdistance: float (default: None)
             Maximum distance for a node to qualify as a 'surrounding' node.
-            If 'maxdistance is None' then the shortest path to all nodes is 
+            If 'maxdistance is None' then the shortest path to all nodes is
             returned.
-        
+
         Returns:
         --------
         n2dp : dict
-            A dict "n2d" so that n2d[j]=(d,p)" contains the distance "d" from 
+            A dict "n2d" so that n2d[j]=(d,p)" contains the distance "d" from
             node  "src" to node "j", and p is a list of the nodes of the path
             with p[0]==src and p[-1]==j.
-            
+
         Note
         ----
         Preliminary analyses show that the Dijkstra distance gives very similar
@@ -404,7 +404,7 @@ class Surface(object):
 
         nbrs = self.neighbors
 
-        # algorithm from wikipedia 
+        # algorithm from wikipedia
         #(http://en.wikipedia.org/wiki/Dijkstra's_algorithm)
         while candidates:
             # distance and index of current candidate
@@ -432,28 +432,32 @@ class Surface(object):
 
     def dijkstra_shortest_path_visiting(self, to_visit):
         '''Computes a list of paths that visit specific nodes
-        
+
         Parameters
         ----------
         to_visit: list of int
             P indices of nodes to visit
-        
+
         Returns
         -------
         path_distances: list of tuple (int, list of int)
             List with (P-1) elements, where the i-th element is a tuple
-            (d_i, q_i) with distance d_i between nodes i and (i+1), and 
+            (d_i, q_i) with distance d_i between nodes i and (i+1), and
             q_i a list of node indices on the path between nodes i and (i+1)
             so that q_i[0]==i and q_i[-1]==(i+1)
         '''
-        if not to_visit:
+        if to_visit is None or len(to_visit) == 0:
             raise ValueError("Cannot operate on empty list")
 
         src = to_visit[0]
+        if not src in np.arange(self.nvertices):
+            raise ValueError("%d is not a valid node index" % src)
         if len(to_visit) == 1:
             return []
 
         trg = to_visit[1]
+        if not trg in np.arange(self.nvertices):
+            raise ValueError("%d is not a valid node index" % trg)
 
         tdist = {src:(0, [src])} # tentative distances and path
         fdist = dict()  # final distances
@@ -464,7 +468,7 @@ class Surface(object):
 
         nbrs = self.neighbors
 
-        # algorithm from wikipedia 
+        # algorithm from wikipedia
         #(http://en.wikipedia.org/wiki/Dijkstra's_algorithm)
         while candidates:
             # distance and index of current candidate
@@ -491,6 +495,10 @@ class Surface(object):
             if i == trg:
                 break
 
+        if i != trg:
+            raise ValueError('Node %d could not be reached from %d' %
+                                                        (trg, src))
+
         pth = [fdist[i]]
 
         # recursion to find remaining paths (if any)
@@ -501,7 +509,7 @@ class Surface(object):
 
     def euclidean_distance(self, src, trg=None):
         '''Computes Euclidean distance from one node to other nodes
-        
+
         Parameters
         ----------
         src : int or numpy.ndarray
@@ -510,11 +518,11 @@ class Surface(object):
         trg : int
             Target node(s) to which the distance is computed.
             If 'trg is None' then distances to all nodes are computed
-        
+
         Returns:
         --------
         n2d : dict
-            A dict "n2d" so that n2d[j]=d" is the distance "d" from node 
+            A dict "n2d" so that n2d[j]=d" is the distance "d" from node
             "src" to node "j".
         '''
 
@@ -542,14 +550,14 @@ class Surface(object):
 
     def nearest_node_index(self, src_coords, node_mask_indices=None):
         '''Computes index of nearest node to src
-        
+
         Parameters
         ----------
         src_coords: numpy.ndarray (Px3 array)
             Coordinates of center
         node_mask_idxs numpy.ndarray (default: None):
             Indices of nodes to consider. By default all nodes are considered
-        
+
         Returns
         -------
         idxs: numpy.ndarray (P-valued vector)
@@ -583,21 +591,268 @@ class Surface(object):
 
         return idxs
 
+    def nodes_on_border(self, node_indices=None):
+        '''Determines which nodes are on the border of the surface
+
+        Parameters
+        ----------
+        node_indices: np.ndarray or None
+            Vector with node indices for which their bordership status is to
+            be deteremined. None means all node indices
+
+        Returns
+        -------
+        on_border: np.ndarray
+            Boolean array of shape (len(node_indices),). A node i is
+            considered on the border if there is a face that contains node i
+            and another node j so that no other face contains both i and j.
+            In other words a node i is *not* on the border if there is a path
+            of nodes p1,...pN so that N>1, p1==pN, pj!=pk if j!=k<N, and
+            each node pk (and no other node) is a neighbor of node i.
+        '''
+
+        if node_indices is None:
+            node_indices = np.arange(self.nvertices)
+
+        if not isinstance(node_indices, np.ndarray):
+            node_indices = np.asarray(node_indices)[np.newaxis]
+
+        if len(node_indices.shape) != 1:
+            raise ValueError("Only supported for vectors")
+
+        n = len(node_indices)
+        on_border = np.zeros((n,), dtype=np.bool_) # allocate space for output
+
+        n2f = self.node2faces
+        f = self.faces
+
+        def except_(vs, x):
+            return filter(lambda y:y != x, vs)
+
+        for i, node_index in enumerate(node_indices):
+            face_indices = n2f[node_index]
+            nf = len(face_indices)
+
+            # node indices of neighbouring nodes (one for each face containing
+            # node with index node_index)
+            fs = [except_(f[fi], node_index) for fi in face_indices]
+
+            a = np.asarray(fs)
+            if a.size == 0:
+                continue
+
+            # initial position and value
+            ipos, jpos = 0, 0
+            a_init = a[ipos, jpos]
+
+            for j in xrange(nf):
+                # go over the faces that contain node_index
+                # for each row take the other value, and try to match
+                # it to another face
+                jpos_ = (jpos + 1) % 2
+                target = a[ipos, jpos_]
+                a[ipos, jpos_] = -1 # is visited
+
+                ijpos = np.nonzero(a == target)
+                if len(ijpos[0]) != 1:
+                    #
+                    on_border[i] = True
+                    break
+                ipos, jpos = ijpos[0], ijpos[1]
+
+            on_border[i] = on_border[i] or target != a_init
+
+        return on_border
 
 
+    def nodes_on_border_paths(self):
+        '''Find paths of nodes on the border
+
+        Returns
+        -------
+        paths: list of lists
+            paths[i]=[k_0,...k_N] means that there is path of N+1 edges
+            [(k_0,k_1),(k_1,...,k_N),(k_N,k_0)] where each k_i is on the
+            border of the surface
+
+        '''
+        border_mask = self.nodes_on_border()
+        faces = self.faces
+        nbrs = self.neighbors
+        border_nodes = set(np.nonzero(border_mask)[0])
+        if not len(border_nodes):
+            return []
+
+        # for each edge, see which is the next edge
+        # in the same triangle (clock-wise)
+        edge2next = dict()
+        for i in xrange(self.nfaces):
+            for j in xrange(3):
+                p, q, r = faces[i]
+
+                # make edges
+                pp, qq, rr = (p, q), (q, r), (r, p)
+
+                edge2next[pp] = qq
+                edge2next[qq] = rr
+                edge2next[rr] = pp
+
+        # mapping from edge to face
+        e2f = self.edge2face
+
+        pths = [] # space for output
+        while border_nodes:
+            b0 = border_nodes.pop() # select a random node on the border
+            ns = [b for b in nbrs[b0] if b in border_nodes]
+            if not ns:
+                # not a proper node - no neighbors - so skip
+                continue
+
+            # find an edge on the border
+            for n in ns:
+                edge = (b0, n)
+                if edge in edge2next:
+                    break
+
+            if not edge in edge2next:
+                # this should not happen really
+                raise ValueError("no edge on border found")
+
+            # start a path
+            pth = []
+            pths.append(pth)
+            while True:
+                p, q = edge2next[edge]
+
+                if (q, p) in e2f:
+                    # node q is 'inside' - not on the border
+                    # continue looking
+                    edge = (q, p)
+                else:
+                    # on the border, so swap
+                    edge = (p, q)
+                    pth.append(p) # p is on the border
+                    if p in border_nodes:
+                        border_nodes.remove(p)
+                    else:
+                        # we made a tour and back to the starting point
+                        break
+
+        return pths
+
+
+
+
+    def pairwise_near_nodes(self, max_distance=None, src=None, trg=None):
+        '''Finds the distances between pairs of nodes
+
+        Parameters
+        ----------
+        max_distance: None or float
+            maximum distance (None: no maximum distance)
+        src: array of int or None
+            source indices
+        trg: array of int or None
+            target indices
+
+        Returns
+        -------
+        source_target2distance: dict
+            A dictionary so that source_target2distance[i,j]=d means that the
+            Euclidian distance between nodes i and j is d, where i in src
+            and j in trg.
+
+        Notes
+        -----
+        If src and trg are both None, then this function checks if the surface
+        has two components; if so they are taken as source and target. A use
+        case for this behaviour is a surface consisting of two hemispheres
+        '''
+
+        if src is None and trg is None:
+            components = self.connected_components()
+            if len(components) != 2:
+                raise ValueError("Empty src and trg: requires two components")
+            src, trg = (np.asarray([i for i in c]) for c in components)
+
+        v = self.vertices
+        if not max_distance is None:
+            # hopefully we can reduce the number of vertices significantly
+            # if src and trg can be seperated easily (as in the case of
+            # two hemispheres).
+
+            # vector connecting centers of mass of src and trg
+            n = np.mean(v[src], 0) - np.mean(v[trg], 0)
+
+            # normalize
+            n /= np.sum(n ** 2) ** .5
+
+            # compute projection on normal
+            ps = self.project_vertices(n, v[src])
+            pt = self.project_vertices(n, v[trg])
+
+            def remove_far(s, t, ps, pt, max_distance=max_distance):
+                keep_idxs = np.arange(len(s))
+                for sign in (-1, 1):
+                    far_idxs = np.nonzero(sign * ps[keep_idxs] + \
+                                            max_distance < min(sign * pt))[0]
+
+                    keep_idxs = np.setdiff1d(keep_idxs, far_idxs)
+
+                return s[keep_idxs]
+
+            src, trg = remove_far(src, trg, ps, pt), \
+                                remove_far(trg, src, pt, ps)
+
+        st2d = dict() # source-target pair to distance
+        for s in src:
+            ds = self.euclidean_distance(s, trg)
+            for t, d in zip(trg, ds):
+                if max_distance is None or d <= max_distance:
+                    st2d[(s, t)] = d
+
+
+        return st2d
+
+    def project_vertices(self, n, v=None):
+        '''Projects vertex coordinates onto a vector
+
+        Parameters
+        ----------
+        n: np.ndarray
+            Vector with 3 elements
+        v: np.ndarray or None
+            coordinates to be projected. If None then the vertices of the
+            current instance are used.
+
+        Returns
+        -------
+        p: np.ndarray
+            Vector with coordinates projected onto n
+        '''
+
+        if not isinstance(n, np.ndarray):
+            n = np.asarray(n)
+        if n.shape != (3,):
+            raise ValueError("Expected vector with 3 elements, found %s" % ((n.shape,)))
+
+        if v is None:
+            v = self.vertices
+
+        return np.dot(v, n)
 
     def sub_surface(self, src, radius):
         '''Makes a smaller surface consisting of nodes around a center node
-        
+
         Parameters
         ----------
         src : int
             Index of center (source) node
         radius : float
             Lower bound of (Euclidean) distance to 'src' in order to be part
-            of the smaller surface. In other words, if a node 'j' is within 
+            of the smaller surface. In other words, if a node 'j' is within
             'radius' from 'src', then 'j' is also part of the resulting surface.
-        
+
         Returns
         -------
         small_surf: Surface
@@ -608,16 +863,16 @@ class Surface(object):
             indices of faces selected from the original surface
         orig_src: int
             index of 'src' in the original surface
-            
+
         Note
         ----
-        This function is a port from the Matlab surfing toolbox function 
+        This function is a port from the Matlab surfing toolbox function
         'surfing_subsurface' (see http://surfing.sourceforge.net)
-        
-        With the 'dijkstra_distance' function, this function is more or 
+
+        With the 'dijkstra_distance' function, this function is more or
         less obsolete.
-        
-         
+
+
         '''
         n2f = self.node2faces
 
@@ -701,12 +956,12 @@ class Surface(object):
     def same_topology(self, other):
         '''
         Returns whether another surface has the same topology
-        
+
         Parameters
         ----------
         other: surf.Surface
             another surface
-        
+
         Returns
         -------
         bool
@@ -732,7 +987,7 @@ class Surface(object):
 
     def __neg__(self, other):
         '''coordinate-wise inversion with respect to addition'''
-        return Surface(v= -self.vertices, f=self.faces, check=False)
+        return Surface(v=-self.vertices, f=self.faces, check=False)
 
     def __sub__(self, other):
         '''coordiante-wise subtraction'''
@@ -740,7 +995,7 @@ class Surface(object):
 
     def rotate(self, theta, center=None, unit='rad'):
         '''Rotates the surface
-        
+
         Parameters
         ----------
         theta:
@@ -750,7 +1005,7 @@ class Surface(object):
             then rotation is around the origin (0,0,0).
         unit:
             'rad' or 'deg' for angles in theta in either radians or degrees.
-        
+
         Returns
         -------
         surf.Surface
@@ -771,7 +1026,7 @@ class Surface(object):
         sx, sy, sz = np.sin(theta)
 
         # rotation matrix *in row-first order*
-        # in other words, we compute vertices*R' 
+        # in other words, we compute vertices*R'
         m = np.asarray(
                 [[cy * cz, -cy * sz, sy],
                  [cx * sz + sx * sy * cz, cx * cz - sx * sy * sz, -sx * cy],
@@ -788,7 +1043,7 @@ class Surface(object):
     @property
     def center_of_mass(self):
         '''Computes the center of mass
-        
+
         Returns
         -------
         np.array
@@ -798,19 +1053,19 @@ class Surface(object):
 
     def merge(self, *others):
         '''Merges the present surface with other surfaces
-        
+
         Parameters
         ----------
         others: list of surf.Surface
             List of other surfaces to be merged with present one
-        
+
         Returns
         -------
         surf.Surface
             A surface that has all the nodes of the current surface
             and the surfaces in others, and has the topologies combined
-            from these surfaces as well. 
-            If the current surface has v_0 vertices and f_0 faces, and the 
+            from these surfaces as well.
+            If the current surface has v_0 vertices and f_0 faces, and the
             i-th surface has v_i and f_i faces, then the output has
             sum_j (v_j) vertices and sum_j (f_j) faces.
         '''
@@ -845,6 +1100,47 @@ class Surface(object):
             all_f[pos_f[i]:pos_f[i + 1], :] = all[i].faces + pos_v[i]
 
         return Surface(v=all_v, f=all_f)
+
+
+    def split_by_connected_components(self):
+        '''Splits a surface by its connected components
+
+        Returns
+        -------
+        splits: list of surf.Surface
+            A list of all surfaces that make up the original surface,
+            split when they are not connected to each other.
+            (If all nodes in the original surface are connected
+            then a list is returned with a single surface that is
+            identical to the input).
+            The output is sorted by the number of vertices.
+
+        '''
+        components = self.connected_components()
+        n2f = self.node2faces
+
+        n = len(components)
+        splits = []
+
+        face_mask = np.zeros((self.nfaces,), dtype=np.False_)
+        for i, component in enumerate(components):
+            face_mask[:] = False
+
+            node_idxs = np.asarray(list(component))
+            for node_idx in node_idxs:
+                face_mask[n2f[node_idx]] = True
+
+            nodes = self.vertices[node_idxs, :]
+
+            face_idxs = np.nonzero(face_mask)[0]
+            unq, unq_inv = np.unique(self.faces[face_idxs], False, True)
+            faces = np.reshape(unq_inv, (-1, 3))
+
+            s = Surface(nodes, faces)
+            splits.append(s)
+
+        splits.sort(key=lambda x:x.nvertices)
+        return splits
 
 
 
@@ -908,7 +1204,7 @@ class Surface(object):
         named "map_to_high_resolution_surf", this function is both slow
         and exact---and is actually used in case the former function does
         not find a solution.
-        
+
         Parameters
         ----------
         highres: surf.Surface
@@ -920,14 +1216,14 @@ class Surface(object):
             if True, then this function raises an error if the number of
             nodes does not match those which would be expected from
             MapIcosahedorn.
-        
+
         Returns
         -------
         low2high: dict
             mapping so that low2high[i]==j means that node i in the current
             (low-resolution) surface is mapped to node j in the highres
             surface.
-            
+
         '''
         nx = self.nvertices
         ny = highres.nvertices
@@ -984,20 +1280,20 @@ class Surface(object):
     def coordinates_to_box_indices(self, box_size, min_coord=None,
                                                    master=None):
         ''''Boxes' coordinates into triples
-        
+
         Parameters
         ----------
-        box_sizes: 
-            
+        box_sizes:
+
         min_coord: triple or ndarray
-            Minimum coordinates; maps to (0,0,0). 
+            Minimum coordinates; maps to (0,0,0).
             If omitted, it defaults to the mininum coordinates in this surface.
         max_coord: triple or ndarray
-            Minimum coordinates; maps to (nboxes[0]-1,nboxes[1]-1,nboxes[2]-1)). 
+            Minimum coordinates; maps to (nboxes[0]-1,nboxes[1]-1,nboxes[2]-1)).
             If omitted, it defaults to the maximum coordinates in this surface.
         master: Surface.surf (default: None)
             If provided, then min_coord and max_coord are taken from master.
-        
+
         Returns
         -------
         boxes_indices: np.ndarray of float
@@ -1032,9 +1328,9 @@ class Surface(object):
         delineate the grey matter for voxel selection.
         This function implements an optimization which in most cases
         yields solutions much faster than map_to_high_resolution_surf_exact,
-        but may fail to find the correct solution for larger values 
+        but may fail to find the correct solution for larger values
         of epsilon.
-        
+
         Parameters
         ----------
         highres: surf.Surface
@@ -1046,14 +1342,14 @@ class Surface(object):
             if True, then this function raises an error if the number of
             nodes does not match those which would be expected from
             MapIcosahedorn.
-        
+
         Returns
         -------
         low2high: dict
             mapping so that low2high[i]==j means that node i in the current
             (low-resolution) surface is mapped to node j in the highres
             surface.
-            
+
         '''
 
         nx = self.nvertices
@@ -1122,17 +1418,17 @@ class Surface(object):
         y_tuples = map(tuple, np.asarray(y_boxed, dtype=np.int))
 
         # maps box indices in low-resolution surface to indices
-        # of potentially nearby nodes in highres surface 
+        # of potentially nearby nodes in highres surface
         x_tuple2near_indices = dict()
 
         # add border nodes to all low-res surface
-        # this is a bit inefficient 
+        # this is a bit inefficient
         # TODO optimize to consider neighboorhood
         for x_tuple in x_tuples:
             x_tuple2near_indices[x_tuple] = list(on_borders)
 
         # for non-border nodes in high-res surface, add them to
-        # a single box 
+        # a single box
         for i, y_tuple in enumerate(y_tuples):
             if i in on_borders:
                 continue # because it was added above
@@ -1143,7 +1439,7 @@ class Surface(object):
 
         # it now holds that for every node i in low-res surface (which is
         # identified by t=x_tuples[i]), there is no node j in the high-res surface
-        # within distance epsilon for which j in x_tuple2near_indices[t]  
+        # within distance epsilon for which j in x_tuple2near_indices[t]
 
         for i, x_tuple in enumerate(x_tuples):
             i_xyz = x[i, :]
@@ -1368,14 +1664,165 @@ class Surface(object):
 
         return components
 
+
+    def write(self, fn):
+        write(fn, self)
+
+def reposition_hemisphere_pairs(surf_left, surf_right, facing_side,
+                          min_distance=10.):
+    '''moves and rotates pairs of hemispheres so that they are facing each
+    other on one side, good for visualization. It is assumed that the input
+    surfaces were generated by FreeSurfer's recon-all.
+
+    Parameters
+    ----------
+    surf_left: surf.Surface
+        surface of left hemisphere
+    surf_right: surf.Surface
+        surface of right hemisphere
+    facing_side: str
+        determines on which sides the surfaces should be facing each other.
+        'm'=medial,'i'=inferior, 's'=superior, 'a'=anterior,'p'=posterior
+
+
+    '''
+    facing_side = facing_side[0].lower()
+
+    mn, mx = np.min, np.max
+    #min=-1, max=1
+    side2dimsigns = dict(m=(0, -1), i=(1, 1), s=(1, -1), a=(2, 1), p=(2, -1))
+
+    dim, rotatesign = side2dimsigns[facing_side]
+    if dim == 0:
+        rotate_axis = None
+    else:
+        rotate_axis = dim #1+((dim+1) % 2)
+        rotate_angle = 90
+
+    surfs = [surf_left, surf_right]
+    nsurfs = len(surfs)
+    hemisigns = [1, -1]
+    if not rotate_axis is None:
+        theta = [0] * 3
+
+        for i in xrange(nsurfs):
+            theta[rotate_axis] = rotate_angle * hemisigns[i] * rotatesign
+            surfs[i] = surfs[i].rotate(theta, unit='deg')
+
+
+    for i in xrange(nsurfs):
+        hemisign = hemisigns[i]
+        sign = rotatesign * hemisign
+        coords = surfs[i].vertices
+
+        xtreme = np.min(coords[:, 0] * -hemisign)
+
+        # sometimes the surfaces are not properly aligned along x and y
+        # so fix it by moving by center of mass values along x and y
+
+        delta = -np.reshape(surfs[i].center_of_mass, (1, 3))
+        delta[0, 0] = hemisign * (xtreme - min_distance * .5)
+        surfs[i] = surfs[i] + delta # make an implicit copy
+
+    return tuple(surfs)
+
+
+
+
+def get_sphere_left_right_mapping(surf_left, surf_right, eps=.001):
+    '''finds the mapping from left to right hemisphere and vice versa
+    (the mapping is symmetric)
+
+    this only works on sphere.reg.asc files made with AFNI/SUMA's mapicosehedron'''
+
+    if not surf_left.same_topology(surf_right):
+        raise ValueError('topology mismatch')
+
+    nv = surf_left.nvertices
+
+    # to swap right surface along x-axis (i.e. mirror along x=0 plane)
+    swapLR = np.array([[-1, 1, 1]])
+
+    vL, vR = surf_left.vertices, surf_right.vertices * swapLR
+    nL, nR = surf_left.neighbors, surf_right.neighbors
+
+
+    # flip along x-axis
+    #vR = vR * np.asarray([[-1., 1., 1.]])
+
+    def find_nearest(src_coords, trgs_coords, eps=eps):
+        # finds the index of the nearest node in trgs_coords to src_coords.
+        # if the distance is more than eps, an exception is thrown
+        d2 = np.sum((src_coords - trgs_coords) ** 2, 1)
+        nearest = np.argmin(d2)
+        if d2[nearest] > eps ** 2:
+            raise ValueError('eps too big: %r > %r' % (d2[nearest] ** .5, eps))
+        return nearest
+
+    # get a (random) starting point
+    pivotL = 0
+    pivotR = find_nearest(vL[pivotL, :], vR)
+
+    # mapping from left to right
+    l2r = {pivotL:pivotR}
+    to_visit = nL[pivotL].keys()
+
+    # for each node (in the left hemispehre) still to visit, keep track of its
+    # 'parent'
+    to_visit2source = dict(zip(to_visit, [pivotL] * len(to_visit)))
+
+    # invariants:
+    # 1) if to_visit2source[v]==s, then s in l2r.keys()
+    # 2) if to_visit2source[v]==s, then v in nL[s].keys()
+
+    while to_visit2source:
+        # find the corresponding node in right hemi for pivotL,
+        # using sourceL as a neighbor which a corresponding node
+        # on the other hemisphere is already known
+        pivotL, sourceL = to_visit2source.popitem()
+
+        # get the corresponding node of sourceL on the other hemisphere
+        sourceR = l2r[sourceL]
+
+        # of all the neighbors of sourceR, one of them should be
+        # corresponding to pivotL
+        nbr_surf_right = nR[sourceR].keys()
+        nearestR = nbr_surf_right[find_nearest(vL[pivotL, :],
+                                               vR[nbr_surf_right, :])]
+
+        # store result
+        l2r[pivotL] = nearestR
+
+        # add new neighbors to to_visit2source; but not those that
+        # have already a corresponding node on the other hemisphere
+        for nbrL in nL[pivotL].keys():
+            if not nbrL in l2r:
+                to_visit2source[nbrL] = pivotL
+
+    # store values in an array - this is easier for indexing
+    l2r_arr = np.zeros((nv,), dtype=np.int32)
+    for p, q in l2r.iteritems():
+        l2r_arr[p] = q
+
+    v_range = np.arange(nv)
+
+    # final check: make sure it's a bijection
+    if not np.all(l2r_arr[l2r_arr] == v_range):
+        raise ValueError('Not found a bijection - this should not happen')
+
+    return l2r_arr
+
+
+
+
 def normalized(v):
     '''Normalizes vectors
-    
+
     Parameters
     ==========
     v: np.ndarray
         PxQ matrix for P vectors that are all Q-dimensional
-    
+
     Returns
     =======
     n: np.ndarray
@@ -1396,7 +1843,7 @@ def merge(*surfs):
 def generate_cube():
     '''
     Generates a cube with sides 2 centered at the origin.
-    
+
     Returns
     -------
     cube: surf.Surface
@@ -1425,23 +1872,23 @@ def generate_cube():
 def generate_sphere(density=10):
     '''
     Generates a sphere-like surface with unit radius centered at the origin.
-    
+
     Parameters
     ----------
     d: int (default: 10)
         Level of detail
-    
+
     Returns
     -------
     sphere: surf.Surface
         A sphere with d**2+2 vertices and 2*d**2 faces. Seen as the planet
-        Earth, node 0 and 1 correspond to the north and south poles. 
+        Earth, node 0 and 1 correspond to the north and south poles.
         The remaining d**2 vertices are in d circles of latitute, each with
-        d vertices in them. 
+        d vertices in them.
     '''
 
     hsteps = density # 'horizontal' steps (in each circle of latitude)
-    vsteps = density # 'vertical' steps (number of circles of latitude, 
+    vsteps = density # 'vertical' steps (number of circles of latitude,
                      #                   excluding north and south poles)
 
     vs = [(0., 0., 1.), (0., 0., -1)] # top and bottom nodes
@@ -1490,7 +1937,7 @@ def generate_sphere(density=10):
 def generate_plane(x00, x01, x10, n01, n10):
     '''
     Generates a plane.
-    
+
     Parameters
     ----------
     x00: np.array with 3 values
@@ -1503,11 +1950,11 @@ def generate_plane(x00, x01, x10, n01, n10):
         number of points in first direction
     n10: int
         number of points in second direction
-    
+
     Returns
     -------
     surf.Surface
-        surface with n01*n10 nodes and (n01-1)*(n10-1)*2 faces. 
+        surface with n01*n10 nodes and (n01-1)*(n10-1)*2 faces.
         The (i,j)-th point is at coordinate x01+i*x01+j*x10 and
         is stored as the (i*n10+j)-th vertex.
     '''
@@ -1539,12 +1986,98 @@ def generate_plane(x00, x01, x10, n01, n10):
 
     return Surface(vs, fs)
 
+def generate_bar(start, stop, radius, poly=10):
+    '''Generates a bar-like surface
+
+    Parameters
+    ----------
+    start: np.ndarray
+        3-elemtent vector indicating top part of the bar
+    stop: np.ndarray
+        3-elemtent vector indicating bottom side of the bar
+    radius: float
+        radius of the bar
+    poly: int
+        the top and bottom part will be a regular polygon.
+
+    Returns
+    -------
+    bar: surf.Surface
+        A surface with poly*2+2 vertices and poly*4 faces
+
+    Example
+    -------
+    generate_bar((0,0,0),(0,0,177.6),14.1,4)
+
+    This generates a surface resembling the new One World Trade center, New York
+    '''
+
+    start = np.asarray(start)
+    stop = np.asarray(stop)
+
+    nv = poly * 2 + 2
+    delta = start - stop
+    delta_n = delta / np.sqrt(np.sum(delta ** 2))
+
+    # get a normal vector
+    # make sure that we don't use zero values
+    i = np.argsort(np.abs(delta_n))
+    vec_x = np.zeros(3)
+    vec_x[i] = delta_n[i[[0, 2, 1]]] * np.asarray((0, -1, 1))
+    vec_y = np.cross(delta_n, vec_x)
+
+    coords = np.zeros((nv, 3))
+    sc = 2 * np.pi / poly # angle scaling
+    alpha = np.arange(poly) * sc # for top art
+    beta = alpha + sc / 2
+
+    # first and last node are top and bottom.
+    # nodes in between are the edges at top and bottom
+    coords[0, :] = start
+    dtop = np.cos(alpha)[np.newaxis].T * vec_x[np.newaxis] + \
+                        np.sin(alpha)[np.newaxis].T * vec_y[np.newaxis]
+    dbot = np.cos(beta)[np.newaxis].T * vec_x[np.newaxis] + \
+                        np.sin(beta)[np.newaxis].T * vec_y[np.newaxis]
+
+    coords[1:-1:2, :] = dtop * radius + start
+    coords[2::2, :] = dbot * radius + stop
+    coords[-1, :] = stop
+
+    # set up faces
+    nf = poly * 4
+    faces = np.zeros((nf, 3), dtype=np.int_)
+    for i in xrange(poly):
+        j = i * 2
+        faces[j + 0, :] = (j + 1, j + 2, j + 3) # top part
+        faces[j + 1, :] = (j + 2, j + 4, j + 3) # side with top
+        faces[j + 2 * poly, :] = (j + 3, 0, j + 1) # side with bottom
+        faces[j + 2 * poly + 1, :] = (j + 2, nv - 1, j + 4) # bottom part
+
+    nrm = lambda x: (x - 1) % (2 * poly) + 1
+    faces[:2 * poly, :] = nrm(faces[:2 * poly, :])
+    faces[2 * poly:, 0] = nrm(faces[2 * poly:, 0])
+    faces[2 * poly:, 2] = nrm(faces[2 * poly:, 2])
+
+    s = Surface(coords, faces)
+
+    return s
+
 
 def read(fn):
     '''General read function for surfaces
-    
-    For now only supports ascii (as used in AFNI's SUMA), Caret
-    and freesurfer formats
+
+    Parameters
+    ----------
+    fn: str
+        Surface filename. The extension determines how the file is read as
+        follows. '.asc', FreeSurfer ASCII format; '.coord'; Caret, '.gii',
+        GIFTI; anything else: FreeSurfer geometry.
+
+    Returns
+    -------
+    surf_: surf.Surface
+        Surface object
+
     '''
     if fn.endswith('.asc'):
         from mvpa2.support.nibabel import surf_fs_asc
@@ -1552,6 +2085,10 @@ def read(fn):
     elif fn.endswith('.coord'):
         from mvpa2.support.nibabel import surf_caret
         return surf_caret.read(fn)
+    elif fn.endswith('.gii'):
+        # XXX require .surf.gii? Not for now - but may want to change
+        from mvpa2.support.nibabel import surf_gifti
+        return surf_gifti.read(fn)
     else:
         import nibabel.freesurfer.io as fsio
         coords, faces = fsio.read_geometry(fn)
@@ -1559,12 +2096,22 @@ def read(fn):
 
 def write(fn, s, overwrite=True):
     '''General write function for surfaces
-    
-    For now only supports ascii (as used in AFNI's SUMA)
+
+    Parameters
+    ----------
+    fn: str
+        Surface filename. The extension determines how the file is written as
+        follows. '.asc', FreeSurfer ASCII format; '.gii', GIFTI.
+        Other formats are not supported.
     '''
     if fn.endswith('.asc'):
         from mvpa2.support.nibabel import surf_fs_asc
         surf_fs_asc.write(fn, s, overwrite=overwrite)
+    elif fn.endswith('.gii'):
+        if not fn.endswith('.surf.gii'):
+            raise ValueError("GIFTI output requires extension .surf.gii")
+        from mvpa2.support.nibabel import surf_gifti
+        surf_gifti.write(fn, s, overwrite=overwrite)
     else:
         raise ValueError("Not implemented (based on extension): %r" % fn)
 

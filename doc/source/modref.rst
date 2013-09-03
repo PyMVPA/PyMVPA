@@ -45,6 +45,7 @@ Basic Facilities
    base.learner
    base.node
    base.param
+   base.progress
    base.report
    base.state
    base.types
@@ -63,6 +64,8 @@ Datasets: Input, Output, Storage and Preprocessing
    datasets.eep
    datasets.formats
    datasets.mri
+   datasets.niml
+   datasets.eeglab
    datasets.miscfx
    datasets.sources.sklearn_data
 
@@ -170,8 +173,10 @@ Measures: Searchlights and Sensitivties
    measures.adhocsearchlightbase
    measures.gnbsearchlight
    measures.nnsearchlight
+   measures.rsm
    measures.searchlight
    measures.statsmodels_adaptor
+   measures.winner
 
 
 Feature Selection
@@ -202,6 +207,9 @@ Miscellaneous
    :toctree: generated
 
    atlases
+   atlases.base
+   atlases.fsl
+   atlases.warehouse
    misc.args
    misc.attrmap
    misc.cmdline
@@ -246,6 +254,7 @@ Basic Plotting Utilities
    misc.plot
    misc.plot.base
    misc.plot.erp
+   misc.plot.flat_surf
    misc.plot.lightbox
    misc.plot.topo
 
@@ -269,9 +278,12 @@ Basic Plotting Utilities
    support.nibabel
    support.nibabel.afni_niml_annot
    support.nibabel.afni_niml_dset
+   support.nibabel.afni_niml_roi
    support.nibabel.afni_niml
    support.nibabel.afni_suma_1d
    support.nibabel.afni_suma_spec
    support.nibabel.surf_fs_asc
+   support.nibabel.surf_caret
+   support.nibabel.surf_gifti
    support.nibabel.surf
    

@@ -12,6 +12,7 @@ from mvpa2.testing import *
 from mvpa2.datasets import dataset_wizard
 from mvpa2.mappers.flatten import FlattenMapper
 from mvpa2.mappers.boxcar import BoxcarMapper
+from mvpa2.mappers.fx import FxMapper
 from mvpa2.datasets.eventrelated import find_events, eventrelated_dataset
 
 
@@ -50,6 +51,12 @@ def test_erdataset():
     assert_equal(len(erds.a.mapper), 2)
     assert_true(isinstance(erds.a.mapper[0], BoxcarMapper))
     assert_true(isinstance(erds.a.mapper[1], FlattenMapper))
+    # check alternative event mapper
+    # this one does temporal compression by averaging
+    erds_compress = eventrelated_dataset(
+                        ds, evs, event_mapper=FxMapper('features', np.mean))
+    assert_equal(len(erds), len(erds_compress))
+    assert_array_equal(erds_compress.samples[:,0], np.arange(2,73,5))
     #
     # now check the same dataset with event descretization
     tr = 2.5

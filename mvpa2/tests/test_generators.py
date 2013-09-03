@@ -218,6 +218,16 @@ def test_balancer():
     assert_equal(res.sa['chunks'].unique, (3,))
     assert_equal(get_nelements_per_value(res.sa.targets).values(),
                  [2] * 4)
+    # same but include all offlimit samples
+    bal = Balancer(limit={'chunks': 3}, include_offlimit=True,
+                   apply_selection=True)
+    res = bal(ds)
+    assert_array_equal(res.sa['chunks'].unique, range(10))
+    # chunk three still balanced, but the rest is not, i.e. all samples included
+    assert_equal(get_nelements_per_value(res[res.sa.chunks == 3].sa.targets).values(),
+                 [2] * 4)
+    assert_equal(get_nelements_per_value(res.sa.chunks).values(),
+                 [10, 10, 10, 8, 10, 10, 10, 10, 10, 10])
     # fixed amount
     bal = Balancer(amount=1, limit={'chunks': 3}, apply_selection=True)
     res = bal(ds)

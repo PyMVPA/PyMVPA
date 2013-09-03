@@ -25,10 +25,10 @@ analysis.
    :maxdepth: 1
 
    datadb/tutorial_data
-   datadb//face_inversion_demo
+   datadb/face_inversion_demo
    datadb/haxby2001
    datadb/mnist
-
+   datadb/hyperalignment_tutorial_data
 
 ==========================
 External Data Repositories
@@ -42,10 +42,14 @@ Learning`:
 
 Neural data repositories:
 
+* `OpenFMRI`_
+* `NITRC Image Repository`_
 * `fMRI Data Center`_
 * `1000 Functional Connectomes`_
 * `Test-Retest Resting State Data`_ (Shehzad, Kelly et al. (2009))
 
+.. _OpenfMRI: https://openfmri.org/
+.. _NITRC Image Repository: http://www.nitrc.org/ir/
 .. _UC Irvine Machine Learning Repository: http://archive.ics.uci.edu/ml/
 .. _fMRI Data Center: http://www.fmridc.org
 .. _1000 Functional Connectomes: http://www.nitrc.org/projects/fcon_1000/

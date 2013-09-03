@@ -6,7 +6,11 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-""""""
+"""Datasets originating from code outside of PyMVPA
+
+Contains wrapper and adapter methods interfacing data provided by other
+packages as PyMVPA datasets.
+"""
 
 __docformat__ = 'restructuredtext'
 

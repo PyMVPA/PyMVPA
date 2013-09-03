@@ -45,7 +45,7 @@ from textwrap import TextWrapper
 from mvpa2.misc.exceptions import UnknownStateError
 from mvpa2.base.attributes import IndexedCollectable, ConditionalAttribute
 from mvpa2.base.dochelpers import enhanced_doc_string, borrowdoc, _repr_attrs, \
-     get_docstring_split
+     get_docstring_split, _strid, _saferepr
 
 from mvpa2.base import externals
 # XXX local rename is due but later on
@@ -323,7 +323,7 @@ class ParameterCollection(Collection):
             # list only params with not default values
             if self[k].is_default:
                 continue
-            prefixes.append("%s=%r" % (k, self[k].value))
+            prefixes.append("%s=%s" % (k, _saferepr(self[k].value)))
         return prefixes
 
 
@@ -818,8 +818,8 @@ class ClassWithCollections(object):
         if __debug__:
             descr = kwargs.get('descr', None)
             debug("COL", "ClassWithCollections.__new__ was done "
-                  "for %s#%s with descr=%s",
-                  (s__class__.__name__, id(self), descr))
+                  "for %s%s with descr=%s",
+                  (s__class__.__name__, _strid(self), descr))
 
         return self
 
@@ -886,8 +886,8 @@ class ClassWithCollections(object):
             #              + " Valid parameters are %s" % known_params
         if __debug__:
             debug("COL", "ClassWithCollections.__init__ was done "
-                  "for %s#%s with descr=%s",
-                  (self.__class__.__name__, id(self), descr))
+                  "for %s%s with descr=%s",
+                  (self.__class__.__name__, _strid(self), descr))
 
 
     #__doc__ = enhanced_doc_string('ClassWithCollections', locals())
@@ -1006,7 +1006,7 @@ class ClassWithCollections(object):
             if 'MODULE_IN_REPR' in debug.active:
                 fullname = True
             if 'ID_IN_REPR' in debug.active:
-                id_str = '#%r' % id(self)
+                id_str = _strid(self)
 
         if fullname:
             modulename = '%s' % self.__class__.__module__

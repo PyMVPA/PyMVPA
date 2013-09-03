@@ -89,11 +89,11 @@ class SurfaceSpec(object):
     def same_states(self, other):
         '''
         Returns whether another surface has the same surface states
-        
+
         Parameters
         ----------
         other: SurfaceSpec
-        
+
         Returns
         -------
             True iff other has the same states
@@ -101,15 +101,15 @@ class SurfaceSpec(object):
 
         return set(self.states) == set(other.states)
 
-    def write(self, fnout, overwrite=False):
+    def write(self, fnout, overwrite=True):
         '''
         Writes spec to a file
-        
+
         Parameters
         ----------
         fn: str
             filename where the spec is written to
-        overwrite: boolean (default: False)
+        overwrite: boolean (default: True)
             overwrite the file even if it exists already.
         '''
 
@@ -122,32 +122,32 @@ class SurfaceSpec(object):
     def get_surface(self, *args):
         '''
         Wizard-like function to get a surface
-         
+
         Parameters
         ----------
-        *args: list of str 
-            parts of the surface file name or description, such as 
-            'pial' (for pial surface), 'wm' (for white matter), or 
+        *args: list of str
+            parts of the surface file name or description, such as
+            'pial' (for pial surface), 'wm' (for white matter), or
             'lh' (for left hemisphere').
-        
+
         Returns
         -------
         surf: surf.Surface
-            
+
         '''
         return surf.from_any(self.get_surface_file(*args))
 
     def get_surface_file(self, *args):
         '''
         Wizard-like function to get the filename of a surface
-         
+
         Parameters
         ----------
-        *args: list of str 
-            parts of the surface file name or description, such as 
-            'pial' (for pial surface), 'wm' (for white matter), or 
+        *args: list of str
+            parts of the surface file name or description, such as
+            'pial' (for pial surface), 'wm' (for white matter), or
             'lh' (for left hemisphere').
-        
+
         Returns
         -------
         filename: str
@@ -183,13 +183,11 @@ class SurfaceSpec(object):
         return None # (redundant code, just for clarity)
 
 
-def hemi_pairs_add_views(spec_both, state, directory=None, overwrite=False):
+def hemi_pairs_add_views(spec_both, state, ext, directory=None, overwrite=False):
     '''adds views for medial, superior, inferior, anterior, posterior viewing
     of two surfaces together. Also generates these surfaces'''
 
     spec_left, spec_right = spec_both[0], spec_both[1]
-
-    ext = '.asc'
 
     if directory is None:
         directory = os.path.curdir
@@ -235,7 +233,7 @@ def hemi_pairs_add_views(spec_both, state, directory=None, overwrite=False):
                 raise ValueError("File not found: %s" % fn)
 
             if not surfname.endswith(ext):
-                error('Expected extension %s for %s' % (ext, fn))
+                raise ValueError('Expected extension %s for %s' % (ext, fn))
             oldfns.append(fn) # store old name
 
             shortfn = surfname[:-(len(ext))]
@@ -256,13 +254,13 @@ def hemi_pairs_add_views(spec_both, state, directory=None, overwrite=False):
         if all(map(os.path.exists, newfns)) and not overwrite:
             print "Output already exist for %s" % longname
         else:
-            surf_left, surf_right = map(surf_fs_asc.read, oldfns)
-            surf_both_moved = surf_fs_asc.hemi_pairs_reposition(surf_left,
-                                                                surf_right,
-                                                                view)
+            surf_left, surf_right = map(surf.read, oldfns)
+            surf_both_moved = surf.reposition_hemisphere_pairs(surf_left,
+                                                               surf_right,
+                                                               view)
 
-            for fn, surf in zip(newfns, surf_both_moved):
-                surf_fs_asc.write(surf, fn, overwrite)
+            for fn, surf_ in zip(newfns, surf_both_moved):
+                surf.write(fn, surf_, overwrite)
                 print "Written %s" % fn
 
     return tuple(spec_both_new)
@@ -296,11 +294,11 @@ def combine_left_right(leftright):
             states.append(state)
             surfaces.extend([ll, rr])
         else:
-            for hemi, surf in zip(hemis, [ll, rr]):
-                state = '%s_%sh' % (surf['SurfaceState'], hemi)
+            for hemi, surf_ in zip(hemis, [ll, rr]):
+                state = '%s_%sh' % (surf_['SurfaceState'], hemi)
                 states.append(state)
-                surf['SurfaceState'] = state
-                surfaces.append(surf)
+                surf_['SurfaceState'] = state
+                surfaces.append(surf_)
 
     spec = SurfaceSpec(surfaces, states, groups=left.groups)
 
@@ -337,10 +335,10 @@ def merge_left_right(both):
                 fns = []
                 mrg = [] # versions ok to be merged
 
-                for ii, surf in enumerate([left, right]):
+                for ii, surf_ in enumerate([left, right]):
                     newsurf = dict()
-                    fns.append(surf[_NAME])
-                    for k, v in surf.iteritems():
+                    fns.append(surf_[_NAME])
+                    for k, v in surf_.iteritems():
                         newsurf[k] = v.replace(lr_infixes[ii], m_infix)
 
                         # ensure that right hemi identical to left
@@ -359,7 +357,7 @@ def merge_left_right(both):
 
 
 
-def write(fnout, spec, overwrite=False):
+def write(fnout, spec, overwrite=True):
     if type(spec) is str and isinstance(fnout, SurfaceSpec):
         fnout, spec = spec, fnout
     spec.write(fnout, overwrite=overwrite)
@@ -430,19 +428,19 @@ def from_any(*args):
     """
     Wizard-like function to get a SurfaceSpec instance from any
     kind of reasonable input.
-    
+
     Parameters
     ==========
     *args: one or multiple arguments.
         If one argument and a SurfaceSpec, this is returned immediately.
         If one argument and the name of a file, it returns the contents
         of the file.
-        Otherwise each argument may refer to a path, a hemisphere (if one 
-        of 'l','r','b','m', optionally followed by the string 'h'), a 
+        Otherwise each argument may refer to a path, a hemisphere (if one
+        of 'l','r','b','m', optionally followed by the string 'h'), a
         suffix, or an int (this is interpreted as icold); these elments
-        are used to construct a canonical filename using 
+        are used to construct a canonical filename using
         afni_suma_spec.canonical_filename whose result is returned.
-    
+
     Returns
     =======
     spec: SurfaceSpec
@@ -461,7 +459,7 @@ def from_any(*args):
                 if os.path.isfile(fn):
                     return read(fn)
 
-    # try to be smart 
+    # try to be smart
     directory = icold = suffix = hemi = None
     for arg in args:
         if type(arg) is int:

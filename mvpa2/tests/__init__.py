@@ -8,9 +8,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit test interface for PyMVPA"""
 
+import sys
 import unittest
 import numpy as np
-from mvpa2 import _random_seed, cfg
+from mvpa2 import _random_seed, cfg, wtf
 from mvpa2.base import externals, warning
 
 # # init to make tests into a package
@@ -80,6 +81,9 @@ def teardown_module(module, verbosity=None):
         # restore numpy settings
         np.seterr(**_sys_settings['np_errsettings'])
 
+    if cfg.getboolean('tests', 'wtf', default='no'):
+        sys.stderr.write(str(wtf()))
+
 
 def collect_unit_tests(verbosity=1):
     """Runs over all tests it knows and composes a dictionary with test suite
@@ -122,6 +126,7 @@ def collect_unit_tests(verbosity=1):
         'test_rfe',
         'test_ifs',
         'test_perturbsensana',
+        'test_winner',
         # And the suite (all-in-1)
         'test_suite',
         ]
@@ -223,6 +228,7 @@ def collect_nose_tests(verbosity=1):
 
         # Misc
         'test_misc',
+        'test_errorfx',
         'test_testing',
         'test_usecases',
         'test_surfing',
@@ -230,6 +236,8 @@ def collect_nose_tests(verbosity=1):
         'test_surfing_voxelselection',
         'test_eeglab',
         'test_parallelization'
+        'test_progress',
+        'test_winner',
         ]
 
     if not cfg.getboolean('tests', 'lowmem', default='no'):

@@ -85,7 +85,7 @@ class SVM(_SVM):
         Default implementation (C/nu/epsilon SVM) is chosen depending
         on the given parameters (C/nu/tube_epsilon).
         """
-    
+
         svm_impl = kwargs.get('svm_impl', None)
         # Depending on given arguments, figure out desired SVM
         # implementation
@@ -159,7 +159,7 @@ class SVM(_SVM):
             kernel_type=self.params.kernel.as_raw_ls(),# Just an integer ID
             svm_type=self._svm_type,
             **dict(args))
-        
+
         """Store SVM parameters in libSVM compatible format."""
 
         if self.params.has_key('C'):#svm_type in [_svm.svmc.C_SVC]:
@@ -248,7 +248,8 @@ class SVM(_SVM):
 
 
     def summary(self):
-        """Provide quick summary over the SVM classifier"""
+        """Provide quick summary over the SVM classifier
+        """
         s = super(SVM, self).summary()
         if self.trained:
             s += '\n # of SVs: %d' % self.__model.get_total_n_sv()

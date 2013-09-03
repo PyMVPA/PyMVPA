@@ -125,9 +125,16 @@ class Measure(Learner):
     def _postcall(self, dataset, result):
         """Some postprocessing on the result
         """
-        # post-processing
-        result = super(Measure, self)._postcall(dataset, result)
-        if not self.__null_dist is None:
+        if self.__null_dist is None:
+            # do base-class postcall and be done
+            result = super(Measure, self)._postcall(dataset, result)
+        else:
+            # don't do a full base-class postcall, only do the
+            # postproc-application here, to gain result compatibility with the
+            # fitted null distribution -- necessary to be able to use
+            # a Node's 'pass_attr' to pick up ca.null_prob
+            result = self._apply_postproc(dataset, result)
+
             if self.ca.is_enabled('null_t'):
                 # get probability under NULL hyp, but also request
                 # either it belong to the right tail
@@ -168,7 +175,8 @@ class Measure(Learner):
                 # get probability of result under NULL hypothesis if available
                 # and don't request tail information
                 self.ca.null_prob = self.__null_dist.p(result)
-
+            # now do the second half of postcall and invoke pass_attr
+            result = self._pass_attr(dataset, result)
         return result
 
 
@@ -405,9 +413,9 @@ class RepeatedMeasure(Measure):
         concat_as = self._concat_as
         # stack all results into a single Dataset
         if concat_as == 'samples':
-            results = vstack(results)
+            results = vstack(results, True)
         elif concat_as == 'features':
-            results = hstack(results)
+            results = hstack(results, True)
         else:
             raise ValueError("Unkown concatenation mode '%s'" % concat_as)
         # no need to store the raw results, since the Measure class will
@@ -705,10 +713,10 @@ class FeaturewiseMeasure(Measure):
         """Adjusts per-feature-measure for computed `result`
         """
         # This method get the 'result' either as a 1D array, or as a Dataset
-        # everything else is illegal
-        if __debug__ \
-               and not isinstance(result, AttrDataset) \
-               and not len(result.shape) == 1:
+        # everything else is illegal.
+
+
+        if not (len(result.shape) == 1 or isinstance(result, AttrDataset)):
             raise RuntimeError("FeaturewiseMeasures have to return "
                                "their results as 1D array, or as a Dataset "
                                "(error made by: '%s')." % repr(self))
@@ -1209,4 +1217,5 @@ class MappedClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
 
     def __str__(self):
         return _str(self, str(self.clf))
+
 
