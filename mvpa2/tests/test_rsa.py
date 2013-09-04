@@ -83,4 +83,28 @@ def test_DissimilarityMatrixMeasure():
     assert_array_almost_equal(dsm3(ds).samples,city)
     assert_array_almost_equal(dsm4(ds).samples,center_sq)
 
+def test_TargetDissimilarityCorrelationMeasure():
+    ds = Dataset(data)
+    tdsm = range(15)
+    ans1 = np.array([0.30956920104253222, 0.26152022709856804])
+    ans2 = np.array([0.53882710751962437, 0.038217527859375197])
+    ans3 = np.array([0.33571428571428574, 0.22121153763932569])
+    tdcm1 = TargetDissimilarityCorrelationMeasure(tdsm)
+    tdcm2 = TargetDissimilarityCorrelationMeasure(tdsm,
+                                            pairwise_metric='euclidean')
+    tdcm3 = TargetDissimilarityCorrelationMeasure(tdsm,
+                                comparison_metric = 'spearman')
+    tdcm4 = TargetDissimilarityCorrelationMeasure(tdsm,
+                                    corrcoef_only=True)
+    a1 = tdcm1(ds)
+    a2 = tdcm2(ds)
+    a3 = tdcm3(ds)
+    a4 = tdcm4(ds)
+    assert_array_almost_equal(a1.samples,ans1.reshape(-1,1))
+    assert_array_almost_equal(a2.samples,ans2.reshape(-1,1))
+    assert_array_almost_equal(a3.samples,ans3.reshape(-1,1))
+    assert_array_almost_equal(a4.samples,ans1[0].reshape(-1,1))
+
+
+
 

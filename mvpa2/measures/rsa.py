@@ -14,7 +14,7 @@ import numpy as np
 from mvpa2.measures.base import Measure
 from mvpa2.datasets.base import Dataset
 from scipy.spatial.distance import pdist, squareform
-from scipy.stats import rankdata
+from scipy.stats import rankdata, pearsonr
 
 class DissimilarityMatrixMeasure(Measure):
     """
@@ -158,4 +158,76 @@ class DissimilarityConsistencyMeasure(Measure):
         
         return Dataset(squareform(corrmat,checks=False))
     
+class TargetDissimilarityCorrelationMeasure(Measure):
+    """
+    Target dissimilarity correlation `Measure`. Computes the correlation between
+    the dissimilarity matrix defined over the pairwise distances between the
+    samples of dataset and the target dissimilarity matrix.
+    """
+    
+    is_trained = True
+    """Indicate that this measure is always trained."""
+
+    def __init__(self, target_dsm, pairwise_metric='correlation', 
+                    comparison_metric='pearson', center_data = False, 
+                    corrcoef_only = False, **kwargs):
+        """
+        Initialize
+
+        Parameters
+        ----------
+        dataset :           Dataset with N samples such that corresponding dissimilarity
+                            matrix has N*(N-1)/2 unique pairwise distances
+        target_dsm :        numpy array, length N*(N-1)/2. Target dissimilarity matrix
+        pairwise_metric :   To be used by pdist to calculate dataset DSM
+                            Default: 'correlation', 
+                            see scipy.spatial.distance.pdist for other metric options.
+        comparison_metric : To be used for comparing dataset dsm with target dsm
+                            Default: 'pearson'. Options: 'pearson' or 'spearman'
+        center_data :       Center data by subtracting mean column values from
+                            columns prior to calculating dataset dsm. 
+                            Default: False
+        corrcoef_only :     If true, return only the correlation coefficient
+                            (rho), otherwise return rho and probability, p. 
+                            Default: False
+        Returns
+        -------
+        Dataset :           Dataset contains the correlation coefficient (rho) only or
+                            rho plus p, when corrcoef_only is set to false.
+        """
+        # init base classes first
+        Measure.__init__(self, **kwargs)
+        if comparison_metric not in ['spearman','pearson']:
+            raise Exception("comparison_metric %s is not in "
+                            "['spearman','pearson']" % comparison_metric)
+        self.target_dsm = target_dsm
+        if comparison_metric == 'spearman':
+            self.target_dsm = rankdata(target_dsm)
+        self.pairwise_metric = pairwise_metric
+        self.comparison_metric = comparison_metric
+        self.center_data = center_data
+        self.corrcoef_only = corrcoef_only
+
+    def _call(self,dataset):
+        data = dataset.samples
+        if self.center_data:
+            data = data - np.mean(data,0)
+        dsm = pdist(data,self.pairwise_metric)
+        if self.comparison_metric=='spearman':
+            dsm = rankdata(dsm)
+        rho, p = pearsonr(dsm,self.target_dsm)
+        if self.corrcoef_only:
+            return Dataset(np.array([rho,]))
+        else:
+            return Dataset(np.array([rho,p]))
+
+
+            
+
+
+
+
+
+
+
 
