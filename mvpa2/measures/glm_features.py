@@ -290,7 +290,7 @@ class TrialsResponseEstimator(FeaturewiseMeasure):
             designds, groups, fas_evs = self._get_he_design(dataset)
             nevs = len(fas_evs.values()[0])
             ngroups = len(groups)
-            kwargs = dict(alpha=0.,#  rtol=0.1e-6, maxiter=10000,
+            kwargs = dict(#alpha=0.,#  rtol=0.1e-6, maxiter=10000,
                           verbose=__debug__ and 'HRF_' in debug.active)
             kwargs.update(self.rank_one_kwargs)
             if 'v0' in kwargs:
