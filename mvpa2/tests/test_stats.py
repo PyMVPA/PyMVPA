@@ -19,6 +19,7 @@ from mvpa2.datasets import Dataset
 from mvpa2.measures.anova import OneWayAnova, CompoundOneWayAnova
 from mvpa2.misc.fx import double_gamma_hrf, single_gamma_hrf
 from mvpa2.measures.corrcoef import pearson_correlation
+from mvpa2.misc.stats import DSMatrix
 
 # Prepare few distributions to test
 #kwargs = {'permutations':10, 'tail':'any'}
@@ -136,6 +137,60 @@ class StatsTests(unittest.TestCase):
 
         assert_array_almost_equal(c, c_np)
 
+    def test_dsmatrix(self):
+        '''Testing DSMatrix on 1D and 2D arrays with various metrics'''
+        #Tests: Make sure metric is returned
+        #       Check confusion metric works on 1D and 2D data
+        #       Check full_matrix is appropriate (0's on diagnonal)
+        #       Check that get methods return appropriate arrays
+
+        # Make small simple dataset
+        targets_1d = np.array(['A','B','B'])
+        samples_2d = np.array([[50,10,20,30],[30,20,40,90],[25,5,10,20]])
+        truevals = dict(spearman = np.array([0.6,0.0,0.6]),
+                        confusion = np.array([1,1,1]),
+                        pearson = np.array([0.843, 0.038, 0.589]),
+                        euclidean = np.array([67.082,29.154,77.782]))
+        metric_list = ['spearman','confusion','pearson','euclidean']
+        for metric in metric_list:
+            if metric == 'confusion':
+                # Test Confusion metric using targets (for 1D)
+                dsm_1dtest = DSMatrix(targets_1d,metric)
+                # Test that metric is returned
+                assert_true(dsm_1dtest.metric == 'confusion')
+                # Test that diagonal is zero (no dissimilarity)
+                assert_true(np.diag(dsm_1dtest.full_matrix).sum() == 0.0)
+                # Test that matrix is symmetric along diagonal
+                assert_array_equal(dsm_1dtest.full_matrix.transpose(),
+                             dsm_1dtest.full_matrix)
+                # Check that values are correct
+                assert_array_equal(dsm_1dtest.get_triangle_vector_form(),
+                             np.array([1,1,0]))
+            #Test Confusion metric using samples (for 2D)
+            dsm_2dtest = DSMatrix(samples_2d, metric)
+            # Test that metric is returned
+            assert_true(dsm_2dtest.metric == metric)
+            # Test that diagonal is zero (no dissimilarity)
+            assert_true(np.diag(dsm_2dtest.full_matrix).sum() == 0.0)
+            # Test that matrix is symmetric along diagonal
+            assert_array_equal(dsm_2dtest.full_matrix.transpose(),
+                        dsm_2dtest.full_matrix)
+            # Since we know that full_matrix checks out we can test other forms
+            # Test vector form
+            # Test upper triangle form
+            # Test upper triangle vector form
+            target = dsm_2dtest.full_matrix
+            assert_array_equal(dsm_2dtest.get_vector_form(), target.flatten())
+            assert_array_equal(dsm_2dtest.get_triangle(k=1),np.triu(target, k=1))
+            assert_array_equal(dsm_2dtest.get_triangle_vector_form(k=1),
+                         target[np.triu_indices_from(target,k=1)])
+            # Check that get methods created values and converted to np.arrays
+            assert_true(isinstance(dsm_2dtest.u_triangle, np.ndarray))
+            assert_true(isinstance(dsm_2dtest.u_triangle_vector_form, np.ndarray))
+            assert_true(isinstance(dsm_2dtest.vector_form, np.ndarray))
+            # Check that values are correct
+            assert_array_almost_equal(dsm_2dtest.get_triangle_vector_form(),
+                                      truevals[metric],3)
 
 def suite():
     """Create the suite"""
