@@ -96,13 +96,13 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         '''
         Combine volume and surface information
         '''
-        vs = volsurf.VolSurf(vg, outer, inner)
+        vsm = volsurf.VolSurfMaximalMapping(vg, outer, inner)
 
         '''
         Run voxel selection with specified radius (in mm), using
         Euclidian distance measure
         '''
-        surf_voxsel = surf_voxel_selection.voxel_selection(vs, radius,
+        surf_voxsel = surf_voxel_selection.voxel_selection(vsm, radius,
                                                     distance_metric='e')
 
         '''Define the measure'''
@@ -319,7 +319,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                 # ingredients by hand
                 vg = volgeom.from_any(volume_,
                                       volume_mask_)
-                vs = volsurf.VolSurf(vg, s_i, s_o)
+                vs = volsurf.VolSurfMaximalMapping(vg, s_i, s_o)
                 sel = surf_voxel_selection.voxel_selection(
                         vs, radius, source_surf=s_m,
                         source_surf_nodes=center_nodes_)
@@ -331,7 +331,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                 # build everything from the ground up
                 vg = volgeom.from_any(volume_,
                                       volume_mask_)
-                vs = volsurf.VolSurf(vg, s_i, s_o)
+                vs = volsurf.VolSurfMaximalMapping(vg, s_i, s_o)
                 sel = surf_voxel_selection.voxel_selection(
                         vs, radius, source_surf=s_m,
                         source_surf_nodes=center_nodes_)
@@ -366,7 +366,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         above = pial + np.asarray([[3, 0, 0]])
         vg = volgeom.VolGeom((10, 10, 10), np.eye(4))
-        vs = volsurf.VolSurf(vg, white, pial)
+        vs = volsurf.VolSurfMaximalMapping(vg, white, pial)
 
         dx = pial.vertices - white.vertices
 
@@ -377,7 +377,9 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             assert_array_equal(delta, np.zeros((100, 3)))
             assert_true(np.all(w == ws))
 
-        n2vs = vs.node2voxels(nsteps=2)
+
+        vs = volsurf.VolSurfMaximalMapping(vg, white, pial, nsteps=2)
+        n2vs = vs.get_node2voxels_mapping()
         assert_equal(n2vs, dict((i, {i:0., i + 100:1.}) for i in xrange(100)))
 
         nd = 17
@@ -407,7 +409,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         outer = surf.generate_sphere(sphere_density) * 10 + far
         inner = surf.generate_sphere(sphere_density) * 5 + far
 
-        vs = volsurf.VolSurf(vg, inner, outer)
+        vs = volsurf.VolSurfMaximalMapping(vg, inner, outer)
         radii = [10., 10] # fixed and variable radii
 
         outside_node_margins = [0, far, True]
@@ -457,7 +459,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         outer = surf.generate_sphere(sphere_density) * 25. + 15
         inner = surf.generate_sphere(sphere_density) * 20. + 15
 
-        vs = volsurf.VolSurf(vg, inner, outer)
+        vs = volsurf.VolSurfMaximalMapping(vg, inner, outer)
 
         radius = 10
 
