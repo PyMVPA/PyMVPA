@@ -391,10 +391,9 @@ class VoxelSelector(object):
 
         return voxel_attributes
 
-def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
+def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_nodes=None,
                     distance_metric='dijkstra',
-                    start_fr=0., stop_fr=1., start_mm=0, stop_mm=0,
-                    nsteps=10, eta_step=1, nproc=None,
+                    eta_step=100, nproc=None,
                     outside_node_margin=None,
                     results_backend=None, tmp_prefix='tmpvoxsel'):
 
@@ -416,20 +415,8 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
         By default every node serves as a searchlight center.
     distance_metric: str
         Distance metric between nodes. 'euclidean' or 'dijksta' (default)
-    start_fr: float (default: 0)
-            Relative start position of line in gray matter, 0.=white
-            surface, 1.=pial surface
-    stop_fr: float (default: 1)
-        Relative stop position of line (as in see start)
-    start_mm: float (default: 0)
-        Absolute start position offset (as in start_fr)
-    sttop_mm: float (default: 0)
-        Absolute start position offset (as in start_fr)
-    nsteps: int (default: 10)
-        Number of steps from white to pial surface
-    eta_step: int (default: 1)
-        After how many searchlights an estimate should be printed of the
-        remaining time until completion of all searchlights
+    eta_step: int
+        Report progress every eta_step.
     nproc: int or None
         Number of parallel threads. None means as many threads as the
         system supports. The pprocess is required for parallel threads; if
@@ -461,7 +448,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
 
     # construct the intermediate surface, which is used
     # to measure distances
-    intermediate_surf = vol_surf.intermediate_surface
+    intermediate_surf = vol_surf_mapping.intermediate_surface
 
     if source_surf is None:
         source_surf = intermediate_surf
@@ -504,9 +491,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
     visitorder = list(np.random.permutation(len(source_surf_nodes)))
 
     # construct mapping from nodes to enclosing voxels
-    n2v = vol_surf.node2voxels(nsteps=nsteps, \
-                                    start_fr=start_fr, stop_fr=stop_fr,
-                                    start_mm=start_mm, stop_mm=stop_mm)
+    n2v = vol_surf_mapping.get_node2voxels_mapping()
 
     if __debug__:
         debug('SVS', "Generated mapping from nodes"
@@ -628,8 +613,8 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
 
     else:
         empty_dict = volume_mask_dict.VolumeMaskDictionary(
-                                            vol_surf.volgeom,
-                                            vol_surf.intermediate_surface)
+                                            vol_surf_mapping.volgeom,
+                                            vol_surf_mapping.intermediate_surface)
         node2volume_attributes = _reduce_mapper(empty_dict,
                                                 attribute_mapper,
                                                 src_trg_nodes,
@@ -802,15 +787,15 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
 
     vg = volgeom.from_any(volume, volume_mask)
 
-    vs = volsurf.VolSurf(vg, white_surf, pial_surf)
+    vsm = volsurf.VolSurfMaximalMapping(vg, white=white_surf, pial=pial_surf,
+                                intermediate=source_surf, nsteps=nsteps, start_fr=start_fr,
+                                stop_fr=stop_fr, start_mm=start_mm, stop_mm=stop_mm)
 
-    sel = voxel_selection(vol_surf=vs, radius=radius,
+    sel = voxel_selection(vol_surf_mapping=vsm, radius=radius,
                           source_surf=source_surf,
                           source_surf_nodes=source_surf_nodes,
                           distance_metric=distance_metric,
-                          start_fr=start_fr, stop_fr=stop_fr,
-                          start_mm=start_mm, stop_mm=stop_mm,
-                          nsteps=nsteps, eta_step=eta_step, nproc=nproc,
+                          eta_step=eta_step, nproc=nproc,
                           outside_node_margin=outside_node_margin,
                           results_backend=results_backend,
                           tmp_prefix=tmp_prefix)
