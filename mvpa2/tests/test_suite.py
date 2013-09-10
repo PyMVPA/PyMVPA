@@ -10,6 +10,7 @@
 
 import inspect
 import re
+import sys
 import unittest
 
 from mvpa2.base.dochelpers import get_docstring_split
@@ -41,8 +42,8 @@ class SuiteTest(unittest.TestCase):
         con_re2 = re.compile('(?::Parameters?:.*Parameters?\s*\n\s*-------'
                              '|Parameters?\s*\n\s*-------.*:Parameters?:)',
                              flags=re.DOTALL)
-        for c in ('classes', 'functions', 'modules', 'objects',
-                  'types'):
+        for c in ('functions', 'modules', 'objects', 'types') \
+          + ('classes',) if sys.version_info[0] < 3 else ():
             missing1 = []
             conflicting1 = []
             self.assertTrue(gs[c])
