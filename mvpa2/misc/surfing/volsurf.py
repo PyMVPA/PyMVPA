@@ -345,8 +345,8 @@ class VolSurfMapping(VolSurf):
 
     Subclasses have to implement node2voxels'''
     def __init__(self, vg, white, pial, intermediate=None,
-                   nsteps=10, start_fr=0.0,
-                   stop_fr=1.0, start_mm=0, stop_mm=0):
+                   start_fr=0.0, stop_fr=1.0, start_mm=0, stop_mm=0,
+                   nsteps=10):
         '''
         Parameters
         ----------
@@ -359,6 +359,18 @@ class VolSurfMapping(VolSurf):
         intermediate: surf.Surface (default: None).
             Surface representing intermediate surface. If omitted
             it is the node-wise average of white and pial.
+        nsteps: int (default: 10)
+            Number of steps from white to pial surface
+        start_fr: float (default: 0)
+            Relative start position of line in gray matter, 0.=white
+            surface, 1.=pial surface.
+        stop_fr: float (default: 1)
+            Relative stop position of line (as in see start).
+        start_mm: float (default: 0)
+            Absolute start position offset (as in start_fr).
+        sttop_mm: float (default: 0)
+            Absolute start position offset (as in start_fr).
+
 
         Notes
         -----
@@ -374,6 +386,28 @@ class VolSurfMapping(VolSurf):
         self.__n2v_maximal_mapping = None
 
     def get_node2voxels_mapping(self):
+        '''
+        Returns
+        -------
+        n2v: dict
+        A mapping from node indices to voxels. In this mapping, the
+        'i'-th node is associated with 'n2v[i]=v2p' which contains the
+        mapping from linear voxel indices to grey matter positions. In
+        other words, 'n2v[i][idx]=v2p[idx]=pos' means that the voxel with
+        linear index 'idx' is associated with node 'i' and has has
+        relative position 'pos' in the gray matter.
+
+        If node 'i' is outside the volume, then 'n2v[i]=None'.
+
+        Notes
+        -----
+        The typical use case is selecting voxels in the grey matter. The
+        rationale of this method is that (assuming a sufficient dense cortical
+        surface mesh, combined with a sufficient number of nsteps, the grey
+        matter is sampled dense enough so that 'no voxels are left out'.
+
+        '''
+
         raise NotImplementedError
 
     def voxel_count_nifti_image(self):
@@ -503,47 +537,41 @@ class VolSurfMaximalMapping(VolSurfMapping):
     def __init__(self, vg, white, pial, intermediate=None,
                    nsteps=10, start_fr=0.0,
                    stop_fr=1.0, start_mm=0, stop_mm=0):
-
-
         '''
-        Generates a mapping from node indices to voxels that are at or near
-        the nodes at the pial and white surface.
+        Represents the maximal mapping from nodes to voxels.
+        'maximal', in this context, means that to each node all voxels
+        are associated that are contained in lines connecting white
+        and grey matter.
+
+        Each voxel can be associated with multiple nodes.
 
         Parameters
         ----------
+        volgeom: volgeom.VolGeom
+            Volume geometry
+        white: surf.Surface
+            Surface representing white-grey matter boundary
+        pial: surf.Surface
+            Surface representing pial-grey matter boundary
+        intermediate: surf.Surface (default: None).
+            Surface representing intermediate surface. If omitted
+            it is the node-wise average of white and pial.
         nsteps: int (default: 10)
-        Number of nsteps from pial to white matter. For each node pair
-        across the 'pial' and 'white' surface, a line is constructed
-        connecting the pairs. Subsequently 'nsteps' nsteps are taken from
-        'pial' to 'white' and the voxel at that position at the line is
-        associated with that node pair.
-        start: float (default: 0)
-        Relative start position of line in gray matter, 0.=white surface,
-        1.=pial surface
-        stop: float (default: 1)
-        Relative stop position of line, in gray matter, 0.=white surface,
-        1.=pial surface
+            Number of steps from white to pial surface
+        start_fr: float (default: 0)
+            Relative start position of line in gray matter, 0.=white
+            surface, 1.=pial surface.
+        stop_fr: float (default: 1)
+            Relative stop position of line (as in see start).
+        start_mm: float (default: 0)
+            Absolute start position offset (as in start_fr).
+        sttop_mm: float (default: 0)
+            Absolute start position offset (as in start_fr).
 
-
-        Returns
-        -------
-        n2v: dict
-        A mapping from node indices to voxels. In this mapping, the
-        'i'-th node is associated with 'n2v[i]=v2p' which contains the
-        mapping from linear voxel indices to grey matter positions. In
-        other words, 'n2v[i][idx]=v2p[idx]=pos' means that the voxel with
-        linear index 'idx' is associated with node 'i' and has has
-        relative position 'pos' in the gray matter.
-
-        If node 'i' is outside the volume, then 'n2v[i]=None'.
 
         Notes
         -----
-        The typical use case is selecting voxels in the grey matter. The
-        rationale of this method is that (assuming a sufficient dense cortical
-        surface mesh, combined with a sufficient number of nsteps, the grey
-        matter is sampled dense enough so that 'no voxels are left out'.
-
+        'pial' and 'white' should have the same topology.
         '''
 
         super(VolSurfMaximalMapping, self).__init__(vg=vg, white=white, pial=pial,
