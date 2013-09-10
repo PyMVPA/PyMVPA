@@ -21,8 +21,10 @@ __docformat__ = 'restructuredtext'
 
 
 if __debug__:
-    from mvpa2.base import debug, externals
+    from mvpa2.base import debug
     debug('INIT', 'mvpa2.atlases')
+
+from mvpa2.base import externals
 
 # to pacify the nose
 # (see e.g. http://nipy.bic.berkeley.edu/builders/pymvpa-py2.7-osx-10.8/builds/4/steps/shell_3/logs/stdio)

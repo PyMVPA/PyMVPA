@@ -939,22 +939,20 @@ class BinaryClassifier(ProxyClassifier):
         ProxyClassifier.__init__(self, clf, **kwargs)
 
         # Handle labels
-        sposlabels = set(poslabels)
-        sneglabels = set(neglabels)
 
         # TODO: move to use AttributeMap
         #self._attrmap = AttributeMap(dict([(l, -1) for l in sneglabels] +
         #                                  [(l, +1) for l in sposlabels]))
 
         # check if there is no overlap
-        overlap = sposlabels.intersection(sneglabels)
+        overlap = set(poslabels).intersection(neglabels)
         if len(overlap)>0:
             raise ValueError("Sets of positive and negative labels for " +
                 "BinaryClassifier must not overlap. Got overlap " %
                 overlap)
 
-        self.__poslabels = list(sposlabels)
-        self.__neglabels = list(sneglabels)
+        self.__poslabels = poslabels
+        self.__neglabels = neglabels
 
         # define what values will be returned by predict: if there is
         # a single label - return just it alone, otherwise - whole
