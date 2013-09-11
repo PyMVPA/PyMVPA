@@ -393,7 +393,7 @@ class VoxelSelector(object):
 
 def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_nodes=None,
                     distance_metric='dijkstra',
-                    eta_step=100, nproc=None,
+                    eta_step=10, nproc=None,
                     outside_node_margin=None,
                     results_backend=None, tmp_prefix='tmpvoxsel'):
 
@@ -402,7 +402,7 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
 
     Parameters
     ----------
-    vol_surf: volsurf.VolSurf
+    vol_surf_mapping: volsurf.VolSurfMapping
         Contains gray and white matter surface, and volume geometry
     radius: int or float
         Size of searchlight. If an integer, then it indicates the number of
@@ -416,7 +416,7 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
     distance_metric: str
         Distance metric between nodes. 'euclidean' or 'dijksta' (default)
     eta_step: int
-        Report progress every eta_step.
+        Report progress every eta_step (default: 10).
     nproc: int or None
         Number of parallel threads. None means as many threads as the
         system supports. The pprocess is required for parallel threads; if
@@ -558,8 +558,8 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
 
         for i, block in enumerate(blocks):
             empty_dict = volume_mask_dict.VolumeMaskDictionary(
-                                            vol_surf.volgeom,
-                                            vol_surf.intermediate_surface)
+                                            vol_surf_mapping.volgeom,
+                                            vol_surf_mapping.intermediate_surface)
 
             src_trg = []
             for idx in block:
@@ -627,7 +627,7 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
                     "voxels associated" % len(visitorder)]
         else:
             nvox_selected = np.sum(node2volume_attributes.get_mask() != 0)
-            vg = vol_surf.volgeom
+            vg = vol_surf_mapping.volgeom
 
             msgs = ["Voxel selection completed: %d / %d nodes have "
                     "voxels associated" %
@@ -710,7 +710,8 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
                          start_mm=0, stop_mm=0, start_fr=0., stop_fr=1.,
                          nsteps=10, eta_step=1, nproc=None,
                          outside_node_margin=None,
-                         results_backend=None, tmp_prefix='tmpvoxsel'):
+                         results_backend=None, tmp_prefix='tmpvoxsel',
+                         minimal_voxel_mapping=False):
 
     """
     Voxel selection wrapper for multiple center nodes on the surface
@@ -777,6 +778,10 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
         If specified -- serves as a prefix for temporary files storage
         if results_backend == 'hdf5'.  Thus can specify the directory to use
         (trailing file path separator is not added automagically).
+    minimal_voxel_mapping: False or True
+        If True, then each voxel is associated with at most one node.
+        If False it is associated with as many nodes that contain the
+        voxel (default: False)
 
     Returns
     -------
@@ -787,9 +792,12 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
 
     vg = volgeom.from_any(volume, volume_mask)
 
-    vsm = volsurf.VolSurfMaximalMapping(vg, white=white_surf, pial=pial_surf,
-                                intermediate=source_surf, nsteps=nsteps, start_fr=start_fr,
-                                stop_fr=stop_fr, start_mm=start_mm, stop_mm=stop_mm)
+    mapper = { False:volsurf.VolSurfMaximalMapping,
+               True:volsurf.VolSurfMinimalMapping}[minimal_voxel_mapping]
+
+    vsm = mapper(vg, white=white_surf, pial=pial_surf,
+                 intermediate=None, nsteps=nsteps, start_fr=start_fr,
+                 stop_fr=stop_fr, start_mm=start_mm, stop_mm=stop_mm)
 
     sel = voxel_selection(vol_surf_mapping=vsm, radius=radius,
                           source_surf=source_surf,
@@ -799,6 +807,8 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
                           outside_node_margin=outside_node_margin,
                           results_backend=results_backend,
                           tmp_prefix=tmp_prefix)
+
+    img = vsm.voxel_count_nifti_image()
 
     return sel
 

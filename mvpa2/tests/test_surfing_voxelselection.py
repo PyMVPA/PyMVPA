@@ -483,6 +483,51 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             assert_equal(sl_map.nfeatures, expected_nfeatures)
 
 
+    @reseed_rng()
+    def test_surface_minimal_voxel_selection(self):
+        vol_shape = (10, 10, 10, 1)
+        vol_affine = np.identity(4)
+        vg = volgeom.VolGeom(vol_shape, vol_affine)
+
+        # generate some surfaces,
+        # and add some noise to them
+        sphere_density = 10
+        nvertices = sphere_density ** 2 + 2
+        noise = np.random.uniform(size=(nvertices, 3))
+        outer = surf.generate_sphere(sphere_density) * 5 + 8 + noise
+        inner = surf.generate_sphere(sphere_density) * 3 + 8 + noise
+
+        radii = [5., 20.] # note: no fixed radii at the moment
+
+        # Note: a little outside margin is necessary
+        # as otherwise there are nodes in the minimal case
+        # that have no voxels associated with them
+        output_modality = 'volume'
+        for radius in radii:
+            for output_modality in ('surface', 'volume'):
+                for i, use_minimal in enumerate((True, False)):
+                    qe = disc_surface_queryengine(radius, vg, inner,
+                                        outer, minimal_voxel_mapping=use_minimal,
+                                        output_modality=output_modality)
+                    voxsel = qe.voxsel
+
+                    if i == 0:
+                        keys_ = voxsel.keys()
+                        voxsel_ = voxsel
+                    else:
+                        keys = voxsel.keys()
+                        # minimal one has a subset
+                        assert_equal(set(keys_) - set(keys), set())
+
+                        # and the subset is quite overlapping
+                        assert_true(len(keys) * .50 < len(keys_))
+
+                        for k in keys_:
+                            x = set(voxsel_[k])
+                            y = set(voxsel[k])
+                            assert_equal(x - y, set())
+                            # note: the opposite does not necessarily hold
+
 
 def _cartprod(d):
     '''makes a combinatorial explosion from a dictionary
