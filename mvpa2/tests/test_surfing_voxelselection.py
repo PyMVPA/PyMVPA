@@ -485,6 +485,9 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
     @reseed_rng()
     def test_surface_minimal_voxel_selection(self):
+        # Tests 'minimal' voxel selection.
+        # It assumes that 'maximal' voxel selection works (which is tested
+        # in other unit tests)
         vol_shape = (10, 10, 10, 1)
         vol_affine = np.identity(4)
         vg = volgeom.VolGeom(vol_shape, vol_affine)
@@ -497,7 +500,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         outer = surf.generate_sphere(sphere_density) * 5 + 8 + noise
         inner = surf.generate_sphere(sphere_density) * 3 + 8 + noise
 
-        radii = [5., 20.] # note: no fixed radii at the moment
+        radii = [5., 20., 10] # note: no fixed radii at the moment
 
         # Note: a little outside margin is necessary
         # as otherwise there are nodes in the minimal case
@@ -517,16 +520,22 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                     else:
                         keys = voxsel.keys()
                         # minimal one has a subset
-                        assert_equal(set(keys_) - set(keys), set())
+                        assert_equal(keys, keys_)
 
                         # and the subset is quite overlapping
-                        assert_true(len(keys) * .50 < len(keys_))
+                        assert_true(len(keys) * .90 < len(keys_))
 
                         for k in keys_:
                             x = set(voxsel_[k])
                             y = set(voxsel[k])
-                            assert_equal(x - y, set())
-                            # note: the opposite does not necessarily hold
+
+                            d = set.symmetric_difference(x, y)
+                            r = float(len(d)) / 2 / len(x)
+                            if type(radius) is float:
+                                assert_equal(x - y, set())
+
+                            # decent agreement in any case between the two sets
+                            assert_true(r < .3)
 
 
 def _cartprod(d):
