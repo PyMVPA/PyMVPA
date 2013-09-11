@@ -135,6 +135,9 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
             attributes stored in voxel_ids.fa.
 
         """
+        if self._map_voxel_coord is None:
+            raise ValueError("No voxel mapping - did you train?")
+
         voxel_unmasked_ids = self.voxsel.get(vertexid)
 
         # map into dataset
