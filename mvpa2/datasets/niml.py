@@ -439,7 +439,7 @@ def from_any(x):
         Dataset instance
     '''
     if isinstance(x, basestring):
-        return read(fn)
+        return read(x)
     elif isinstance(x, dict):
         return from_niml(x)
     elif isinstance(x, Dataset):
