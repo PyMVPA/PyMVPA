@@ -808,8 +808,6 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
                           results_backend=results_backend,
                           tmp_prefix=tmp_prefix)
 
-    img = vsm.voxel_count_nifti_image()
-
     return sel
 
 class _RadiusOptimizer():
