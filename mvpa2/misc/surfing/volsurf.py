@@ -548,6 +548,18 @@ class VolSurfMapping(VolSurf):
 
         return n2vs, v2ns
 
+    def get_parameter_dict(self):
+        '''
+        Returns a dictionary with the most important parameters
+        of this instance'''
+
+        parameter_dict = dict(volgeom=self.volgeom,
+                              volsurf_nvertices=self.white_surface.nvertices,
+                              nsteps=self.nsteps,
+                              start_fr=self.start_fr, stop_fr=self.stop_fr,
+                              start_mm=self.start_mm, stop_mm=self.stop_mm)
+        parameter_dict['class'] = self.__class__.__name__
+        return parameter_dict
 
 
 
@@ -600,9 +612,6 @@ class VolSurfMaximalMapping(VolSurfMapping):
         '''Returns a mapping from nodes to voxels'''
         node2voxels_mapping, _ = self._get_node_voxels_maximal_mapping()
         return node2voxels_mapping
-
-
-
 
 
 @total_ordering
