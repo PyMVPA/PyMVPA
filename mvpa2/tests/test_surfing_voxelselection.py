@@ -535,7 +535,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                                 assert_equal(x - y, set())
 
                             # decent agreement in any case between the two sets
-                            assert_true(r < .3)
+                            assert_true(r < .5)
 
 
 def _cartprod(d):
