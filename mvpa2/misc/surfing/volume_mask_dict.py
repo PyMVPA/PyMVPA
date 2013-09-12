@@ -72,6 +72,8 @@ class VolumeMaskDictionary(Mapping):
         self._src2nbr = dict() if src2nbr is None else src2nbr
         self._src2aux = dict() if src2nbr is None else src2aux
 
+        self._meta = meta
+
         # this attribute is initially set to None
         # upon the first call that requires an inverse mapping
         # it is generated.
@@ -80,6 +82,10 @@ class VolumeMaskDictionary(Mapping):
     def __repr__(self, prefixes=[]):
         prefixes_ = ['vg=%r' % self._volgeom,
                     'source=%r' % self._source] + prefixes
+
+        if not self._meta is None:
+            prefixes_.append('meta=%r' % self._meta)
+
         if not self._src2nbr is None:
             prefixes_.append('src2nbr=%r' % self._src2nbr)
         if not self._src2aux is None:

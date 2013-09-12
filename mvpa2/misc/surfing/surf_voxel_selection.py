@@ -532,6 +532,19 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
             nproc = 1
             debug("SVS", 'Using %d cores - pprocess not available' % nproc)
 
+    # get the the voxel selection parameters
+    parameter_dict = vol_surf_mapping.get_parameter_dict()
+    parameter_dict.update(dict(radius=radius,
+                               outside_node_margin=outside_node_margin,
+                               distance_metric=distance_metric),
+                               source_nvertices=source_surf.nvertices)
+
+
+    init_output = lambda: volume_mask_dict.VolumeMaskDictionary(
+                                    vol_surf_mapping.volgeom,
+                                    vol_surf_mapping.intermediate_surface,
+                                    meta=parameter_dict)
+
     if nproc > 1:
         if results_backend == 'hdf5':
             externals.exists('h5py', raise_=True)
@@ -557,9 +570,7 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
             debug('SVS', "Starting %d child processes", (len(blocks),))
 
         for i, block in enumerate(blocks):
-            empty_dict = volume_mask_dict.VolumeMaskDictionary(
-                                            vol_surf_mapping.volgeom,
-                                            vol_surf_mapping.intermediate_surface)
+            empty_dict = init_output()
 
             src_trg = []
             for idx in block:
@@ -612,9 +623,7 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
                          (len(blocks), seconds2prettystring(telapsed)))
 
     else:
-        empty_dict = volume_mask_dict.VolumeMaskDictionary(
-                                            vol_surf_mapping.volgeom,
-                                            vol_surf_mapping.intermediate_surface)
+        empty_dict = init_output()
         node2volume_attributes = _reduce_mapper(empty_dict,
                                                 attribute_mapper,
                                                 src_trg_nodes,
