@@ -1,35 +1,14 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*- 
-#ex: set sts=4 ts=4 sw=4 noet:
-"""
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Unit tests for PyMVPA routines for extracting features via some linear models"""
 
- COPYRIGHT: Yaroslav Halchenko 2013
-
- LICENSE: MIT
-
-  Permission is hereby granted, free of charge, to any person obtaining a copy
-  of this software and associated documentation files (the "Software"), to deal
-  in the Software without restriction, including without limitation the rights
-  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-  copies of the Software, and to permit persons to whom the Software is
-  furnished to do so, subject to the following conditions:
-
-  The above copyright notice and this permission notice shall be included in
-  all copies or substantial portions of the Software.
-
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-  THE SOFTWARE.
-"""
-
-__author__ = 'Yaroslav Halchenko'
-__copyright__ = 'Copyright (c) 2013 Yaroslav Halchenko'
-__license__ = 'MIT'
-
-from glm_features import *
+from mvpa2.measures.glm_features import *
 
 from mvpa2.misc.data_generators import simple_hrf_dataset
 from mvpa2.misc.fx import double_gamma_hrf, single_gamma_hrf
@@ -234,6 +213,7 @@ def check_hrf_estimate(noise_level, cheating_start, jitter):
     # i = 1
 
 def test_hrf_estimate():
+    skip_if_no_external('hrf_estimation')
     for nl in [0, 0.5, 0.8]:
         for cheating_start in (True, False):
             for jitter in (False, ): # True):
@@ -398,6 +378,7 @@ def check_hrf_estimate_multigroup(noise_level, rcond2):
     """
 
 def test_hrf_estimate_multigroup():
+    skip_if_no_external('hrf_estimation')
     for nl in [0, 0.8]:
         for rcond2 in (0.5, 1., 1.2):
             yield check_hrf_estimate_multigroup, nl, rcond2
