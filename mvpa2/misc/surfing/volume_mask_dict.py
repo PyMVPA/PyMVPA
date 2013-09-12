@@ -7,7 +7,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Dictionary (mapping) for storing several volume masks.
-A typical use case is storing results from (surface-based) 
+A typical use case is storing results from (surface-based)
 voxel selection.
 
 @author: nick
@@ -15,7 +15,7 @@ voxel selection.
 WiP.
 TODO: make target to sources dictionary computations 'lazy'-only
 compute the first time this is asked. XXX How to deal with __setstate__
-and __getstate__ - have to flag somehow whether this mapping was present. 
+and __getstate__ - have to flag somehow whether this mapping was present.
 """
 
 __docformat__ = 'restructuredtext'
@@ -33,37 +33,37 @@ if externals.exists('nibabel'):
 class VolumeMaskDictionary(Mapping):
     """A VolumeMaskDictionary is a collection of 3D volume masks, indexed
     by integers or strings. Voxels in a mask are represented sparsely, that
-    is by linear indices in the range of 0 (inclusive) to n (exclusive), 
-    where n is the number of voxels in the volume. 
-    
+    is by linear indices in the range of 0 (inclusive) to n (exclusive),
+    where n is the number of voxels in the volume.
+
     A typical use is case storing voxel selection results, which can
     subsequently be used for running searchlights. An alternative
     use case is storing a set of regions-of-interest masks.
-    
-    Because this class extends Mapping, it can be indexed as any other 
+
+    Because this class extends Mapping, it can be indexed as any other
     mapping (like dicts). Currently masks cannot be removed, however, and
-    adding masks is performed through the add(...) function rather than 
+    adding masks is performed through the add(...) function rather than
     item assignment.
-    
-    In some functions the terminology 'source' and 'target' is used. A source 
-    refers to the label associated with masks (and can be used as a key 
+
+    In some functions the terminology 'source' and 'target' is used. A source
+    refers to the label associated with masks (and can be used as a key
     in the mapping), while a target is an element from the value associated
-    in this mapping (i.e. typically a target is a linear voxel index).  
-    
-    Besides storing voxel indices, each mask can also have additional 
+    in this mapping (i.e. typically a target is a linear voxel index).
+
+    Besides storing voxel indices, each mask can also have additional
     'auxiliary' information associated, such as distance from the center
     or its relative position in grey matter.
     """
-    def __init__(self, vg, source, src2nbr=None, src2aux=None):
+    def __init__(self, vg, source, meta=None, src2nbr=None, src2aux=None):
         """
         Parameters
         ----------
         vg: volgeom.VolGeom or fmri_dataset-like or str
             data structure that contains volume geometry information.
         source: Surface.surf or numpy.ndarray or None
-            structure that contains the geometric information of 
+            structure that contains the geometric information of
             (the centers of) each mask. In the case of surface-searchlights this
-            should be a surface used as the center for searchlights. 
+            should be a surface used as the center for searchlights.
         """
         self._volgeom = volgeom.from_any(vg)
         self._source = source
@@ -97,7 +97,7 @@ class VolumeMaskDictionary(Mapping):
     def add(self, src, nbrs, aux=None):
         '''
         Adds a volume mask
-        
+
         Parameters
         ----------
         src: int or str
@@ -109,7 +109,7 @@ class VolumeMaskDictionary(Mapping):
             auxiliary properties associated with (the voxels in) the volume
             mask. If the current dictionary instance alraedy has stored
             auxiliary properties for other masks, then the set of keys in
-            the current mask should be the same as for other masks. In 
+            the current mask should be the same as for other masks. In
             addition, the length of each value in aux should be either
             the number of elements in nbrs or one.
         '''
@@ -152,9 +152,9 @@ class VolumeMaskDictionary(Mapping):
 
     def get_tuple_list(self, src, *labels):
         '''
-        Returns a list of tuples with mask indices and/or auxiliary 
+        Returns a list of tuples with mask indices and/or auxiliary
         information.
-        
+
         Parameters
         ----------
         src: int or str
@@ -162,7 +162,7 @@ class VolumeMaskDictionary(Mapping):
         *labels: str or None
             List of labels to return. None refers to the voxel indices of the
             mask.
-        
+
         Returns
         -------
         tuples: list of tuple
@@ -189,17 +189,17 @@ class VolumeMaskDictionary(Mapping):
 
     def get_tuple_list_dict(self, *labels):
         '''Returns a dictionary mapping that maps each mask index
-        to tuples with mask indices and/or auxiliary 
+        to tuples with mask indices and/or auxiliary
         information.
-        
+
         Parameters
         ----------
         *labels: str or None
             List of labels to return. None refers to the voxel indices of the
             mask.
-            
+
         tuple_dict: dict
-            a mapping so that 
+            a mapping so that
             get_tuple_list(s, labels)==get_tuple_list_dict(labels)[s]
         '''
         d = dict()
@@ -209,12 +209,12 @@ class VolumeMaskDictionary(Mapping):
 
     def get(self, src):
         '''Returns the linear voxel indices of a mask
-        
+
         Parameters
         ----------
         src: int
             index of mask
-        
+
         Returns
         -------
         idxs: list of int
@@ -224,14 +224,14 @@ class VolumeMaskDictionary(Mapping):
 
     def aux_get(self, src, label):
         '''Auxiliary information of a mask
-        
+
         Parameters
         ----------
         src: int
             index of mask
         label: str
             label of auxiliary information
-            
+
         Returns
         -------
         vals: list
@@ -248,7 +248,7 @@ class VolumeMaskDictionary(Mapping):
 
     def aux_keys(self):
         '''Names of auxiliary labels
-        
+
         Returns
         -------
         keys: list of str
@@ -279,12 +279,12 @@ class VolumeMaskDictionary(Mapping):
 
     def target2sources(self, nbr):
         '''Finds the indices of masks that map to a linear voxel index
-        
+
         Parameters
         ----------
         nbr: int
             Linear voxel index
-        
+
         Returns
         -------
         srcs: list of int
@@ -302,7 +302,7 @@ class VolumeMaskDictionary(Mapping):
 
     def get_targets(self):
         '''The list of voxels that are in one or more masks
-        
+
         Returns
         -------
         idxs: list of int
@@ -314,7 +314,7 @@ class VolumeMaskDictionary(Mapping):
 
     def get_mask(self):
         '''A mask of voxels that are included in one or more masks
-        
+
         Returns
         -------
         msk: np.ndarray
@@ -332,9 +332,9 @@ class VolumeMaskDictionary(Mapping):
 
     def get_nifti_image_mask(self):
         '''
-         A nifti image indicating voxels that are included in one or more 
+         A nifti image indicating voxels that are included in one or more
          masks
-        
+
         Returns
         -------
         msk: nibabel.Nifti1Image
@@ -362,21 +362,28 @@ class VolumeMaskDictionary(Mapping):
 
     def __getstate__(self):
         # due to issues with saving self_nbr2src, it is not returned as part
-        # of the current state. instead it is derived when __setstate__ is 
+        # of the current state. instead it is derived when __setstate__ is
         # called.
-        return (self._volgeom, self._source, self._src2nbr, self._src2aux)
+        return (self._volgeom, self._source, self._meta, self._src2nbr, self._src2aux)
 
     def __setstate__(self, s):
-        self._volgeom, self._source, self._src2nbr, self._src2aux = s
+        if len(s) == 4:
+            # computatibilty thing: previous version (before Sep 12, 2013) did
+            # not store meta
+            self._volgeom, self._source, self._src2nbr, self._src2aux = s
+            self._meta = False # signal that it is old (no meta information)
+            warning('Using old (pre-12 Sep 2013) mapping - no meta data')
+        else:
+            self._volgeom, self._source, self._meta, self._src2nbr, self._src2aux = s
 
     def __eq__(self, other):
         """Compares this instance with another instance
-        
+
         Parameters
         ----------
         other: VolumeMaskDictionary
-            instance with which the current instance is compared. 
-        
+            instance with which the current instance is compared.
+
         Returns
         -------
         eq: bool
@@ -402,17 +409,26 @@ class VolumeMaskDictionary(Mapping):
                 if self.aux_get(k, lab) != other.aux_get(k, lab):
                     return False
 
+        if self.meta != False or other.meta != False:
+            # both are 'new' ones with
+            if self.meta != other.meta:
+                return False
+
         return True
+
+    @property
+    def meta(self):
+        return dict(self._meta)
 
     def same_layout(self, other):
         '''
         Computers whether another instance has the same spatial layout
-        
+
         Parameters
         ----------
         other: VolumeMaskDictionary
             the instance that is compared to the current instance
-        
+
         Returns
         -------
         same: boolean
@@ -426,8 +442,8 @@ class VolumeMaskDictionary(Mapping):
 
     def merge(self, other):
         '''
-        Adds masks from another instance 
-        
+        Adds masks from another instance
+
         Parameters
         ----------
         other: VolumeMaskDictionary
@@ -443,7 +459,7 @@ class VolumeMaskDictionary(Mapping):
 
 # TODO: optimization in case either one or both already have the
 #       inverse mapping from voxels to nodes
-#       For now simply set everything to empty. 
+#       For now simply set everything to empty.
 #        if self._lazy_nbr2src is None and not other._lazy_nbr2src is None:
 #            self._ensure_has_target2sources()
 #        elif other._lazy_nbr2src is None and not self._lazy_nbr2src is None:
@@ -468,14 +484,14 @@ class VolumeMaskDictionary(Mapping):
 
     def xyz_target(self, ts=None):
         '''Computes the x,y,z coordinates of one or more voxels
-        
+
         Parameters
         ----------
         ts: list of int or None
-            list of voxels for which coordinates should be computed. If 
+            list of voxels for which coordinates should be computed. If
             ts is None, then coordinates for all voxels that are mapped
             are computed
-        
+
         Returns
         -------
         xyz: numpy.ndarray
@@ -489,12 +505,12 @@ class VolumeMaskDictionary(Mapping):
 
     def xyz_source(self, ss=None):
         '''Computes the x,y,z coordinates of one or more mask centers
-        
+
         Parameters
         ----------
         ss: list of int or None
-            list of mask center indices for which coordinates should be 
-            computed. If ss is None, then coordinates for all masks that 
+            list of mask center indices for which coordinates should be
+            computed. If ss is None, then coordinates for all masks that
             are mapped are computed.
             If is required that when the current instance was initialized,
             the source-argument was either a surf.Surface or a numpy.ndarray.
@@ -529,15 +545,15 @@ class VolumeMaskDictionary(Mapping):
 
     @property
     def source(self):
-        '''Structure that contains the geometric information of 
+        '''Structure that contains the geometric information of
         (the centers of) each mask. In the case of surface-searchlights this
-        should be a surface used as the center for searchlights. 
+        should be a surface used as the center for searchlights.
         return self._volgeom'''
         return self._source
 
     def target2nearest_source(self, target, fallback_euclidian_distance=False):
         """Finds the voxel nearest to a mask center
-        
+
         Parameters
         ==========
         target: int
@@ -545,13 +561,13 @@ class VolumeMaskDictionary(Mapping):
         fallback_euclidian_distance: bool (default: False)
             Whether to use a euclidian distance metric if target is not in
             any of the masks in this instance
-        
+
         Returns
         =======
         src: int
-            key index for the mask that contains target and is nearest to 
-            target. If target is not contained in any mask, then None is 
-            returned if fallback_euclidian_distance is False, and the 
+            key index for the mask that contains target and is nearest to
+            target. If target is not contained in any mask, then None is
+            returned if fallback_euclidian_distance is False, and the
             index of the source nearest to target using a Euclidian distance
             metric is returned if fallback_euclidian_distance is True
         """
@@ -589,12 +605,12 @@ class VolumeMaskDictionary(Mapping):
 
     def source2nearest_target(self, source):
         """Finds the voxel nearest to a mask center
-        
+
         Parameters
         ==========
         src: int
             mask index
-        
+
         Returns
         =======
         target: int
