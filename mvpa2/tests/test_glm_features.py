@@ -117,36 +117,36 @@ def check_hrf_estimate(noise_level, cheating_start, jitter):
     """
     
     # baseline should be estimated more or less correct
-    assert_array_lequal(np.abs(tre.ca.nuisances.samples - baseline),
+    assert_array_lequal(np.abs(tre.ca.nuisances_fit.samples - baseline),
                         0.1 + noise_level * 2)
     # how well this reconstructs voxel1 with the signal?
     data_rec = simple_hrf_dataset(
         generate_events(onsets1, intensity=betas.samples[:, 0]),
         hrf_gen=hrfsds.samples[:, 0],
         noise_level=0,
-        baseline=tre.ca.nuisances.samples[0,0],
+        baseline=tre.ca.nuisances_fit.samples[0,0],
         **sdskwargs
         )
 
     data_clean = data.samples - data.sa.noise
     # for possible retrospection
-    designed_data = tre.ca.designed_data if tre.ca.is_set('designed_data') else None
+    data_designed = tre.ca.data_designed if tre.ca.is_set('data_designed') else None
 
     def plot_results():
         """Helper for a possible introspection of the results
         """
         import pylab as pl;
         pl.figure(); pl.plot(data.samples[:, 0], label='noisy data'); pl.plot((data.samples - data.sa.noise)[:, 0], label='clean data'); pl.plot(data_rec.samples[:,0], label='reconstructed');
-        if designed_data is not None:
-            pl.plot(designed_data[:] + baseline, label='designed + %d' % baseline);
+        if data_designed is not None:
+            pl.plot(data_designed[:] + baseline, label='designed + %d' % baseline);
         pl.legend();
         pl.figure(); time_x = np.arange(0, fir_length*tr, tr);  pl.plot(time_x, hrf_gen(time_x), label='original %.2f' % np.linalg.norm(hrf_gen(time_x))); pl.plot(time_x, hrfsds.samples[:, 0], label='estimated %.2f' % np.linalg.norm(hrfsds.samples[:, 0])); pl.legend();
         pl.figure(); pl.scatter(intensities1, betas[:, 0]); pl.xlabel('original'); pl.ylabel('estimated');
         pl.show()
 
-    if tre.ca.is_set('designed_data'):
+    if tre.ca.is_set('data_designed'):
         # must be nearly identical
-        assert_greater(np.corrcoef((data_clean[:, 0], designed_data))[0, 1], 0.98 - 0.1*int(jitter))
+        assert_greater(np.corrcoef((data_clean[:, 0], data_designed))[0, 1], 0.98 - 0.1*int(jitter))
 
     cc_rec = np.corrcoef((data_clean[:, 0], data_rec.samples[:, 0]))[0, 1]
     assert_greater(cc_rec, 0.9-noise_level/1.5)
@@ -302,7 +302,8 @@ def check_hrf_estimate_multigroup(noise_level, rcond2):
     data_rec1 = simple_hrf_dataset(
             generate_events(onsets1, intensity=betas.samples[:n1, 0], superord='cond1'),
             hrf_gen=hrfsds.samples[:, 0],
-            noise_level=0, baseline=tre.ca.nuisances.samples[0, 0],
+            noise_level=0,
+            baseline=tre.ca.nuisances_fit.samples[0, 0],
             **sdskwargs)
     # and 2nd type of events
     data_rec2 = simple_hrf_dataset(
@@ -321,19 +322,28 @@ def check_hrf_estimate_multigroup(noise_level, rcond2):
     cc_rec = np.corrcoef((data_clean[:, 0], data_rec[:, 0]))[0, 1]
     assert_greater(cc_rec, 0.9-noise_level/2)
 
+    # checkout reconstructed data -- should match the "recreated" data here:
+    assert_array_almost_equal(tre.ca.data_fit[:, 0], data_rec[:, 0])
+    cc_estimated = np.corrcoef(data, tre.ca.data_fit, rowvar=0)[:2, 2:]
+    # we should fit the data quite well
+    assert_greater(cc_estimated[0,0], 0.9-noise_level/5)
+
+    #import pylab as pl; pl.plot(tre.ca.data_fit, label='estim'); pl.plot(data_rec, label='rec'); pl.legend(); pl.show()
+    #import pydb; pydb.debugger()
+
     t = np.arange(fir_length)*tr
     cc_hrfs = \
         np.corrcoef(np.hstack((hrfsds.samples,
                                hrf_gen1(t)[:, None], hrf_gen2(t)[:, None])), rowvar=0)
 
-    designed_data = tre.ca.designed_data if tre.ca.is_set('designed_data') else None
+    data_designed = tre.ca.data_designed if tre.ca.is_set('data_designed') else None
 
     def plot_results():
         """Helper for a possible introspection of the results
         """
         import pylab as pl; pl.figure(); pl.plot(data.samples[:, 0], label='noisy data'); pl.plot((data.samples - data.sa.noise)[:, 0], label='clean data'); pl.plot(data_rec[:,0], label='reconstructed');
-        if designed_data is not None:
-            pl.plot(designed_data[:] + baseline, label='designed + %d' % baseline);
+        if data_designed is not None:
+            pl.plot(data_designed[:] + baseline, label='designed + %d' % baseline);
         pl.legend();
         pl.figure(); pl.scatter(intensities1, betas.samples[:n1, 0]); pl.title("intensities1");
         pl.figure(); pl.scatter(intensities2, betas.samples[n1:, 0]); pl.title("intensities2");
@@ -382,4 +392,4 @@ def test_hrf_estimate_multigroup():
     for nl in [0, 0.8]:
         for rcond2 in (0.5, 1., 1.2):
             yield check_hrf_estimate_multigroup, nl, rcond2
-            #return
+

@@ -110,9 +110,12 @@ class TrialsResponseEstimator(FeaturewiseMeasure):
         doc="Dataset with estimated per each voxel/group HRF")
     design = ConditionalAttribute(enabled=False,
         doc="Design used for the estimation of HRF/responses")
-    designed_data = ConditionalAttribute(enabled=True,
+    # TODO:  rename to initial_fit, final_fit ?
+    data_designed = ConditionalAttribute(enabled=True,
         doc="If v0 was provided for rank_one -- store 'designed' data")
-    nuisances = ConditionalAttribute(enabled=False,
+    data_fit = ConditionalAttribute(enabled=False,
+        doc="Data reconstructed using estimated values of responses")
+    nuisances_fit = ConditionalAttribute(enabled=False,
         doc="Fits to nuisance variables")
 
     def __init__(self,
@@ -288,20 +291,23 @@ class TrialsResponseEstimator(FeaturewiseMeasure):
         if self.estimator == 'hrf_estimation':
             import hrf_estimation as he
             designds, groups, fas_evs = self._get_he_design(dataset)
+            self.ca.design = designds
+
             nevs = len(fas_evs.values()[0])
             ngroups = len(groups)
-            kwargs = dict(#alpha=0.,#  rtol=0.1e-6, maxiter=10000,
+            kwargs = dict(#  rtol=0.1e-6, maxiter=10000,
                           verbose=__debug__ and 'HRF_' in debug.active)
             kwargs.update(self.rank_one_kwargs)
             if 'v0' in kwargs:
                 design = designds.samples
                 design = design if isinstance(design, np.ndarray) else np.array(design.todense())
                 v0 = kwargs['v0']
-                self.ca.designed_data = \
+                self.ca.data_designed = \
                     np.sum(design
                            * np.array(list(canonical) * nevs * ngroups) # HRF
                            * np.repeat(v0, self.fir_length * ngroups) # amplitudes
                            , axis=1)
+                del design
             # having high baseline would affect estimates even if we add a
             # 'constant' as a nuisance.  Thus we will explicitly demean data
             # prior estimation (if nuisance_offset) and then add those means to
@@ -328,22 +334,17 @@ class TrialsResponseEstimator(FeaturewiseMeasure):
 
             if nuisances is not None:
                 W = out[2]
-                # TODO: compose usable/useful .sa.nuisances dataset
-                if self.ca.is_enabled('nuisances'):
-                    self.ca.nuisances = Dataset(W, sa=nuisances.fa, fa=dataset.fa)
-                    if self.nuisance_offset:
-                        self.ca.nuisances.samples[np.where(nuisances.fa.names == 'offset')[0], :] += data_means
-
-            if self.ca.is_enabled('design'):
-                # TODO -- add all the attribution for each sa, fa
-                self.ca.design = designds
+                nuisances_fit = Dataset(W.copy(), sa=nuisances.fa, fa=dataset.fa)
+                if self.nuisance_offset:
+                    nuisances_fit.samples[np.where(nuisances.fa.names == 'offset')[0], :] += data_means
+                self.ca.nuisances_fit = nuisances_fit
         else:
             raise NotImplementedError()
 
         betas = Dataset(betas, fa=dataset.fa, sa=fas_evs) # sas)
 
         # compose resultant dataset with HRFs
-        if self.ca.is_enabled('hrfs'):
+        if self.ca.is_enabled('hrfs') or self.ca.is_enabled('data_fit'):
             if self.ev_group_key:
                 # place different
                 # groups into 'columns' while breaking our 'meta'-HRF into pieces
@@ -358,4 +359,19 @@ class TrialsResponseEstimator(FeaturewiseMeasure):
                 hrfsds = Dataset(hrfs, sa={'time_coords': timex}, fa=dataset.fa)
             self.ca.hrfs = hrfsds
 
+        if self.ca.is_enabled('data_fit'):
+            # place HRFs in the same order as original
+            design_matrix = np.matrix(designds.samples) if isinstance(designds.samples, np.ndarray)\
+                            else designds.samples   # must be a sparse matrix otherwise
+            data_fit = \
+                design_matrix * \
+                (np.kron(np.ones(nevs), hrfs.T) * np.repeat(betas, self.fir_length * ngroups, axis=0).T).T
+            # now add possible offsets and nuisance variables fits
+            if nuisances:
+                data_fit += np.dot(nuisances.samples, nuisances_fit.samples)
+
+            #import pylab as pl; pl.plot(self.ca.data_designed[:]+data_means[0], label='designed'); pl.plot(dataset.samples[:, 0], label='data'); pl.plot(data_fit[:, 0], label='fit'); pl.legend(); pl.show()
+            #import pylab as pl, pydb; pydb.debugger()
+
+            self.ca.data_fit = data_fit
         return betas
