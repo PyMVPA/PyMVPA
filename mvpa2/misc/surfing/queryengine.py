@@ -357,7 +357,7 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
                              results_backend=None,
                              tmp_prefix='tmpvoxsel',
                              output_modality='surface',
-                             minimal_voxel_mapping=False):
+                             node_voxel_mapping='maximal'):
     """
     Voxel selection wrapper for multiple center nodes on the surface
 
@@ -434,10 +434,10 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
         (trailing file path separator is not added automagically).
     output_modality: 'surface' or 'volume' (default: 'surface')
         Indicates whether the output is surface-based
-    minimal_voxel_mapping: False or True
-        If True, then each voxel is associated with at most one node.
-        If False it is associated with as many nodes that contain the
-        voxel (default: False)
+    node_voxel_mapping: 'minimal' or 'maximal'
+        If 'minimal' then each voxel is associated with at most one node.
+        If 'maximal' it is associated with as many nodes that contain the
+        voxel (default: 'maximal')
 
     Returns
     -------
@@ -468,7 +468,7 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
                                 outside_node_margin=outside_node_margin,
                                 results_backend=results_backend,
                                 tmp_prefix=tmp_prefix,
-                                minimal_voxel_mapping=minimal_voxel_mapping)
+                                node_voxel_mapping=node_voxel_mapping)
 
 
     qe = modality2class[output_modality](voxsel, add_fa=add_fa)
