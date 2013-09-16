@@ -508,9 +508,9 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         output_modality = 'volume'
         for radius in radii:
             for output_modality in ('surface', 'volume'):
-                for i, use_minimal in enumerate((True, False)):
+                for i, nvm in enumerate(('minimal', 'maximal')):
                     qe = disc_surface_queryengine(radius, vg, inner,
-                                        outer, minimal_voxel_mapping=use_minimal,
+                                        outer, node_voxel_mapping=nvm,
                                         output_modality=output_modality)
                     voxsel = qe.voxsel
 

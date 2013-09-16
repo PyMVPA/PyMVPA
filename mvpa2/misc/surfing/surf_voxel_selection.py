@@ -720,7 +720,7 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
                          nsteps=10, eta_step=1, nproc=None,
                          outside_node_margin=None,
                          results_backend=None, tmp_prefix='tmpvoxsel',
-                         minimal_voxel_mapping=False):
+                         node_voxel_mapping='maximal'):
 
     """
     Voxel selection wrapper for multiple center nodes on the surface
@@ -787,10 +787,11 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
         If specified -- serves as a prefix for temporary files storage
         if results_backend == 'hdf5'.  Thus can specify the directory to use
         (trailing file path separator is not added automagically).
-    minimal_voxel_mapping: False or True
-        If True, then each voxel is associated with at most one node.
-        If False it is associated with as many nodes that contain the
-        voxel (default: False)
+    node_voxel_mapping: 'minimal' or 'maximal'
+        If 'minimal' then each voxel is associated with at most one node.
+        If 'maximal' it is associated with as many nodes that contain the
+        voxel (default: 'maximal')
+
 
     Returns
     -------
@@ -801,8 +802,8 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
 
     vg = volgeom.from_any(volume, volume_mask)
 
-    mapper = { False:volsurf.VolSurfMaximalMapping,
-               True:volsurf.VolSurfMinimalMapping}[minimal_voxel_mapping]
+    mapper = dict(maximal=volsurf.VolSurfMaximalMapping,
+                  minimal=volsurf.VolSurfMinimalMapping)[node_voxel_mapping]
 
     vsm = mapper(vg, white=white_surf, pial=pial_surf,
                  intermediate=None, nsteps=nsteps, start_fr=start_fr,
