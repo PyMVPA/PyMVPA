@@ -363,9 +363,17 @@ class TrialsResponseEstimator(FeaturewiseMeasure):
             # place HRFs in the same order as original
             design_matrix = np.matrix(designds.samples) if isinstance(designds.samples, np.ndarray)\
                             else designds.samples   # must be a sparse matrix otherwise
-            data_fit = \
-                design_matrix * \
-                (np.kron(np.ones(nevs), hrfs.T) * np.repeat(betas, self.fir_length * ngroups, axis=0).T).T
+            ## straightforward but memory consuming
+            ## data_fit_kron = \
+            ##     design_matrix * \
+            ##     (np.kron(np.ones(nevs), hrfs.T) * np.repeat(betas, self.fir_length * ngroups, axis=0).T).T
+            # To avoid kron,repeat and memory blow up -- reconstruct per voxel.
+            # On simple test-cases came out to be even a bit faster than
+            # "straightforward" reconstruction
+            data_fit = np.zeros(dataset.shape)   # reserve all the space at once
+            for i, (hrfs_, betas_) in enumerate(zip(hrfs.T, betas.samples.T)):
+                data_fit[:, i] = design_matrix * np.outer(hrfs_, betas_).flatten(order='F')
+            ## assert(np.all(data_fit == data_fit_kron))
             # now add possible offsets and nuisance variables fits
             if nuisances:
                 data_fit += np.dot(nuisances.samples, nuisances_fit.samples)
