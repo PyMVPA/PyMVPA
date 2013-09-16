@@ -713,7 +713,7 @@ class VolSurfMinimalMapping(VolSurfMapping):
             nvoxels_max = sum(map(len, v2ns_max.itervalues()))
             nvoxels_max_per_node = float(nvoxels_max) / nnodes
             debug('SVS', 'Maximal node-to-voxel mapping: %d nodes, '
-                            '%d voxels, %.1f voxels/node' %
+                            '%d voxels, %.2f voxels/node' %
                             (nnodes, nvoxels_max, nvoxels_max_per_node))
             debug('SVS', 'Starting injective pruning')
 
@@ -748,7 +748,7 @@ class VolSurfMinimalMapping(VolSurfMapping):
             nvoxels_delta = nvoxels_max - nvoxels_min
             nvoxels_pruned_ratio = float(nvoxels_delta) / nvoxels_max
 
-            debug('SVS', 'Pruned %d/%d voxels (%.1f%%), %.1f voxels/node'
+            debug('SVS', 'Pruned %d/%d voxels (%.1f%%), %.2f voxels/node'
                              % (nvoxels_delta, nvoxels_max,
                                 nvoxels_pruned_ratio * 100,
                                 nvoxels_min_per_node))
