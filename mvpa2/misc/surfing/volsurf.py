@@ -702,56 +702,7 @@ class VolSurfMinimalMapping(VolSurfMapping):
         super(VolSurfMinimalMapping, self).__init__(vg=vg, white=white, pial=pial,
                                 intermediate=intermediate, nsteps=nsteps, start_fr=start_fr,
                                 stop_fr=stop_fr, start_mm=start_mm, stop_mm=stop_mm)
-    '''
-    def _node_voxel_index2pos(self, node_index, voxel_index):
-        vg = self.volgeom
-        xyz = vg.lin2xyz(np.asarray([voxel_index]))
 
-        pos_fr = self.surf_project_weights(node_index, xyz)
-        pos_mm = self.coordinates_to_grey_distance_mm(node_index, xyz)
-
-        return VoxelPosition(pos_fr, pos_mm)
-
-
-    def _set_voxel_positions(self):
-        n2vs_max = self._get_node2voxels_maximal_mapping()
-
-        bar = ProgressBar()
-
-        v2n = dict() # keep track of mapping from voxel to node
-        v2pos = dict()
-        nnodes = len(n2vs_max)
-
-        visited = set()
-        for i, (n, vs) in enumerate(n2vs_max.iteritems()): # loop over node to voxels mappings
-            if not vs is None:
-                for v in vs: # loop over voxel indices
-                    vpos = self._node_voxel_index2pos(n, v)
-                    if not vpos in v2n or v2pos[v] > vpos:
-                        v2pos[v] = vpos
-                        v2n[v] = n
-                        visited.add(v)
-            if __debug__ and 'SVS' in debug.active:
-                ii = i + 1.
-                msg = bar(ii / nnodes, 'Pruned %d/%d nodes mapping to voxels' %
-                                    (ii, nnodes))
-                debug('SVS', msg, cr=True)
-
-        if __debug__ and 'SVS' in debug.active:
-            debug('SVS', '')
-            debug('SVS', 'Pruned mapping to %d voxels (%d)',
-                                    (len(visited), len(v2n)))
-
-        self.__n2v_minimal_mapping = n2vs_min = dict()
-        for n in n2vs_max:
-            n2vs_min[n] = None
-        for v, n in v2n.iteritems():
-            pos_fr = v2pos[v].grey_position_fr
-            if n2vs_min[n] is None:
-                n2vs_min[n] = dict()
-            assert(not v in n2vs_min[n])
-            n2vs_min[n][v] = float(pos_fr)
-    '''
 
     def get_node2voxels_mapping(self):
         # start out with the maximum mapping, then prune it
