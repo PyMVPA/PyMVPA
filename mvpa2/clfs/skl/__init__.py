@@ -10,8 +10,9 @@
 
 __docformat__ = 'restructuredtext'
 
+from mvpa2.base import externals
 if __debug__:
-    from mvpa2.base import debug, externals
+    from mvpa2.base import debug
     debug('INIT', 'mvpa2.clfs.skl')
 
 # to pacify the nose
