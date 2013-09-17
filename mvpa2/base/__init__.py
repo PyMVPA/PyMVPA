@@ -379,6 +379,9 @@ if __debug__:
                 finally:
                     self._inhere = False
 
+            def flush(self):
+                self.stdout.flush()
+
         _out = _pymvpa_stdout_debug(sys)
 
 else: # if not __debug__
