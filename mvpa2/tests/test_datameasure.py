@@ -526,12 +526,11 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
 
     def test_repeated_features(self):
-        #print self.dataset
-        #print self.dataset.fa.nonbogus_targets
         class CountFeatures(Measure):
             is_trained = True
             def _call(self, ds):
-                return ds.nfeatures
+                return Dataset([ds.nfeatures],
+                                fa={'nonbogus_targets': list(ds.fa['nonbogus_targets'].unique)})
 
         cf = CountFeatures()
         spl = Splitter('fa.nonbogus_targets')
@@ -540,7 +539,22 @@ class SensitivityAnalysersTests(unittest.TestCase):
         rm = RepeatedMeasure(cf, spl, concat_as='features')
         res = rm(self.dataset)
         assert_equal(res.shape, (1, nsplits))
-        assert_array_equal(res.samples[0], [18, 1, 1])
+        # due to https://github.com/numpy/numpy/issues/641 we are
+        # using list(set(...)) construct and there order of
+        # nonbogus_targets.unique can vary from run to run, thus there
+        # is no guarantee that we would get 18 first, which is a
+        # questionable assumption anyways, thus performing checks
+        # which do not require any specific order.
+        # And yet due to another issue
+        # https://github.com/numpy/numpy/issues/3759
+        # we can't just == None for the bool mask
+        None_fa = np.array([x == None for x in  res.fa.nonbogus_targets])
+        assert_array_equal(res.samples[0, None_fa], [18])
+        assert_array_equal(res.samples[0, ~None_fa], [1, 1])
+
+        if sys.version_info[0] < 3:
+            # with python2 order seems to be consistent
+            assert_array_equal(res.samples[0], [18, 1, 1])
 
     def test_custom_combined_selectors(self):
         """Test combination of the selectors in a single function
