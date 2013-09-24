@@ -343,6 +343,83 @@ class VolumeMaskDictionary(Mapping):
         '''
         return nb.Nifti1Image(self.get_mask(), self.volgeom.affine)
 
+    def get_voxel_indices(self):
+        '''
+        Returns voxel indices at least once selected
+
+        Returns
+        -------
+        voxel_indices: list of tuple
+            List of triples with sub-voxel indices that were selected
+            at least once
+        '''
+        # get linear voxel indices
+        lin_vox_set = set.union(*(set(self[k]) for k in self.keys()))
+
+        # convert to array
+        lin_vox_arr = np.asarray(list(lin_vox_set))
+
+        # convert to sub indices
+        vg = self.volgeom
+
+        return map(tuple, vg.lin2ijk(lin_vox_arr))
+
+    def get_dataset_feature_mask(self, ds):
+        '''Returns a mask for a dataset for features that were selected
+        at least once
+
+        Parameters
+        ----------
+        ds: Dataset
+            A dataset with field .fa.voxel_indices
+
+        Returns
+        -------
+        mask: np.ndarray (boolean)
+            binary mask with ds.nfeatures values, with True for features that
+            were selected at least once
+
+        '''
+        # convert to tuples
+        ds_voxel_indices = map(tuple, ds.fa.voxel_indices)
+        sel_voxel_indices = map(tuple, self.get_voxel_indices())
+
+        set_ds_voxel_indices = set(ds_voxel_indices)
+        set_sel_voxel_indices = set(sel_voxel_indices)
+
+        not_in_ds = set_sel_voxel_indices - set_ds_voxel_indices
+        if not_in_ds:
+            raise ValueError('Found %d voxel indices selected that were '
+                             'not in dataset, first one is %s' %
+                                (len(not_in_ds), not_in_ds.pop()))
+
+        return np.asarray([d in sel_voxel_indices for d in ds_voxel_indices])
+
+    def get_minimal_dataset(self, ds):
+        '''Returns a minimal dataset based on which features were selected
+
+        Parameters
+        ----------
+        ds: Dataset
+            A dataset with field .fa.voxel_indices
+
+        Returns
+        -------
+        Dataset
+            A dataset containing features that were selected at least once
+
+        Notes
+        -----
+        The rationale of this function is that voxel selection can be run
+        first (without using a mask for a dataset), then the dataset
+        can be reduced to contain only voxels that were selected by
+        voxel selection
+        '''
+
+        ds_mask = self.get_dataset_feature_mask(ds)
+        return ds[:, ds_mask]
+
+
     def __getitem__(self, key):
         return self.get(key)
 
