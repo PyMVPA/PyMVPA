@@ -536,6 +536,49 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
                             # decent agreement in any case between the two sets
                             assert_true(r < .5)
+    @reseed_rng()
+    def test_minimal_dataset(self):
+        vol_shape = (10, 10, 10, 3)
+        vol_affine = np.identity(4)
+        vg = volgeom.VolGeom(vol_shape, vol_affine)
+
+        data = np.random.normal(size=vol_shape)
+        msk = np.ones(vol_shape[:3])
+        msk[:, 1:-1:2, :] = 0
+
+        ni_data = nb.Nifti1Image(data, vol_affine)
+        ni_msk = nb.Nifti1Image(msk, vol_affine)
+
+        ds = fmri_dataset(ni_data, mask=ni_msk)
+
+        sphere_density = 20
+        outer = surf.generate_sphere(sphere_density) * 10. + 5
+        inner = surf.generate_sphere(sphere_density) * 7. + 5
+
+
+        radius = 10
+        sel = surf_voxel_selection.run_voxel_selection(radius, ds, inner, outer)
+
+
+        sel_fids = set.union(*(set(sel[k]) for k in sel.keys()))
+
+        ds_vox = map(tuple, ds.fa.voxel_indices)
+
+        vg = sel.volgeom
+        sel_vox = map(tuple, vg.lin2ijk(np.asarray(list(sel_fids))))
+
+
+        fid_mask = np.asarray([v in sel_vox for v in ds_vox])
+        assert_array_equal(fid_mask, sel.get_dataset_feature_mask(ds))
+
+        # check if it raises errors
+        ni_neg_msk = nb.Nifti1Image(1 - msk, vol_affine)
+        neg_ds = fmri_dataset(ni_data, mask=ni_neg_msk) # inverted mask
+
+        assert_raises(ValueError, sel.get_dataset_feature_mask, neg_ds)
+
+        min_ds = sel.get_minimal_dataset(ds)
+        assert_array_equal(min_ds.samples, ds[:, fid_mask].samples)
 
 
 def _cartprod(d):
