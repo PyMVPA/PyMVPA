@@ -10,6 +10,7 @@
 
 import numpy as np
 import copy
+import sys
 
 from mvpa2.testing.tools import assert_raises, assert_false, assert_equal, \
     assert_true,  assert_array_equal, assert_array_almost_equal, reseed_rng
@@ -124,7 +125,10 @@ def test_array_collectable_unique(a):
     # And sort since order of those is not guaranteed (failed test
     # on squeeze)
     def repr_(x):
-        return repr(np.sort(set(x)))
+        x_ = set(x)
+        if sys.version_info[0] < 3:
+            x_ = list(x_)
+        return repr(np.sort(x_))
 
     assert_equal(repr_(a_flat), repr_(c.unique))
     # even if we request it 2nd time ;)
