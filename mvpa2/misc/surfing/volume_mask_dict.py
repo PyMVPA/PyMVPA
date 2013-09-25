@@ -703,3 +703,33 @@ class VolumeMaskDictionary(Mapping):
         i = np.argmin(d)
 
         return trgs[i / src_xyz.shape[0]]
+
+
+def from_any(s):
+    '''
+    Loads or returns voxel selection results
+
+    Parameters
+    ----------
+    s: basestring or volume_mask_dict.VolumeMaskDictionary
+        if a string it is assumed to be a file name and loaded using h5load. If
+        a volume_mask_dict.VolumeMaskDictionary then it is returned.
+
+    Returns
+    -------
+    r: volume_mask_dict.VolumeMaskDictionary
+    '''
+    if isinstance(s, basestring):
+        loaders = [] # XXX maybe add pickle here too
+        if externals.exists('h5py'):
+            loaders.append(h5load)
+        for loader in loaders:
+            try:
+                return from_any(loader(s))
+            except:
+                continue
+        raise ValueError("Could not load file %s" % s)
+    elif isinstance(s, volume_mask_dict.VolumeMaskDictionary):
+        return s
+    else:
+        raise ValueError("Unknown type %s" % (type(s)))
