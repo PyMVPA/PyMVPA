@@ -14,7 +14,7 @@ env:
     - PYTHON=$PY
     - PYTHON="$PY -O"
     - PYTHONPATH=mvpa/tests/badexternals
-    - MVPA_DEBUG=ENFORCE_CA_ENABLED MVPA_DEBUG_METRICS=all
+    - MVPA_DEBUG_METRICS=all
 before_install:
     - sudo apt-get update -qq
     - sudo apt-get install lsb-release
