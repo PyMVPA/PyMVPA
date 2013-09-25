@@ -865,3 +865,22 @@ class _RadiusOptimizer():
 
     def __repr__(self):
         return 'radius is %f, %d steps' % (self._curradius, self._count)
+
+def from_any(s):
+    '''
+    Loads or returns voxel selection results
+
+    Parameters
+    ----------
+    s: basestring or volume_mask_dict.VolumeMaskDictionary
+        if a string it is assumed to be a file name and loaded using h5load. If
+        a volume_mask_dict.VolumeMaskDictionary then it is returned.
+
+    Returns
+    -------
+    r: volume_mask_dict.VolumeMaskDictionary
+    '''
+
+    # this is just a convenience function
+    return volume_mask_dict.from_any(s)
+
