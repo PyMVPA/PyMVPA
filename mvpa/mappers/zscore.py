@@ -85,9 +85,11 @@ class ZScoreMapper(ProjectionMapper):
         # so we will handle case with n = 1 with regular non-sparse
         # matrices
         if n > 1:
-            proj = _identity(n)
+            # format='csr' to avoid getting dia_matrix on scipy 0.12.0
+            # which has non-functional dia_matrix.setdiag()
+            proj = _identity(n, format='csr')
             proj.setdiag(1.0/std)
-            recon = _identity(n)
+            recon = _identity(n, format='csr')
             recon.setdiag(std)
             self._proj = proj
             self._recon = recon
