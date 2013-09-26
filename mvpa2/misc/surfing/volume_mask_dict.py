@@ -29,6 +29,9 @@ from mvpa2.misc.surfing import volgeom
 
 if externals.exists('nibabel'):
     import nibabel as nb
+if externals.exists('h5py'):
+    from mvpa2.base.hdf5 import h5save, h5load
+
 
 class VolumeMaskDictionary(Mapping):
     """A VolumeMaskDictionary is a collection of 3D volume masks, indexed
@@ -720,16 +723,9 @@ def from_any(s):
     r: volume_mask_dict.VolumeMaskDictionary
     '''
     if isinstance(s, basestring):
-        loaders = [] # XXX maybe add pickle here too
-        if externals.exists('h5py'):
-            loaders.append(h5load)
-        for loader in loaders:
-            try:
-                return from_any(loader(s))
-            except:
-                continue
-        raise ValueError("Could not load file %s" % s)
-    elif isinstance(s, volume_mask_dict.VolumeMaskDictionary):
+        vs = h5load(s)
+        return from_any(vs)
+    elif isinstance(s, VolumeMaskDictionary):
         return s
     else:
         raise ValueError("Unknown type %s" % (type(s)))
