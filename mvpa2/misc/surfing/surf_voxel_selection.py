@@ -448,7 +448,8 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
 
     # construct the intermediate surface, which is used
     # to measure distances
-    intermediate_surf = vol_surf_mapping.intermediate_surface
+    intermediate_surf = (vol_surf_mapping.pial_surface * .5) + \
+                        (vol_surf_mapping.white_surface * .5)
 
     if source_surf is None:
         source_surf = intermediate_surf
@@ -542,7 +543,7 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
 
     init_output = lambda: volume_mask_dict.VolumeMaskDictionary(
                                     vol_surf_mapping.volgeom,
-                                    vol_surf_mapping.intermediate_surface,
+                                    intermediate_surf,
                                     meta=parameter_dict)
 
     if nproc > 1:
@@ -787,10 +788,13 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
         If specified -- serves as a prefix for temporary files storage
         if results_backend == 'hdf5'.  Thus can specify the directory to use
         (trailing file path separator is not added automagically).
-    node_voxel_mapping: 'minimal' or 'maximal'
+    node_voxel_mapping: 'minimal' or 'maximal' or 'minimal_lowres'
         If 'minimal' then each voxel is associated with at most one node.
         If 'maximal' it is associated with as many nodes that contain the
-        voxel (default: 'maximal')
+        voxel (default: 'maximal').
+        If 'minimal_lowres' then each voxel is associated with at most one
+        node, and each node that is mapped onto has a corresponding node
+        (at the same spatial location) in source_surf.
 
 
     Returns
@@ -802,11 +806,14 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
 
     vg = volgeom.from_any(volume, volume_mask)
 
-    mapper = dict(maximal=volsurf.VolSurfMaximalMapping,
-                  minimal=volsurf.VolSurfMinimalMapping)[node_voxel_mapping]
+    mapper_dict = dict(maximal=volsurf.VolSurfMaximalMapping,
+                       minimal=volsurf.VolSurfMinimalMapping,
+                       minimal_lowres=volsurf.VolSurfMinimalLowresMapping)
+
+    mapper = mapper_dict[node_voxel_mapping]
 
     vsm = mapper(vg, white=white_surf, pial=pial_surf,
-                 intermediate=None, nsteps=nsteps, start_fr=start_fr,
+                 intermediate=source_surf, nsteps=nsteps, start_fr=start_fr,
                  stop_fr=stop_fr, start_mm=start_mm, stop_mm=stop_mm)
 
     sel = voxel_selection(vol_surf_mapping=vsm, radius=radius,
