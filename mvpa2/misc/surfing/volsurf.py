@@ -46,6 +46,8 @@ class VolSurf(object):
         intermediate: surf.Surface (default: None).
             Surface representing intermediate surface. If omitted
             it is the node-wise average of white and pial.
+            This parameter is usually ignored, except when used
+            in a VolSurfMinimalLowresMapping.
 
         Notes
         -----
@@ -58,10 +60,10 @@ class VolSurf(object):
         if not self._pial.same_topology(self._white):
             raise Exception("Not same topology for white and pial")
 
-        if intermediate is None:
-            intermediate = (self.pial_surface * .5) + (self.white_surface * .5)
-
+        #if intermediate is None:
+        #    intermediate = (self.pial_surface * .5) + (self.white_surface * .5)
         self._intermediate = surf.from_any(intermediate)
+
 
     def __repr__(self, prefixes=[]):
         prefixes_ = ['vg=%r' % self._volgeom,
@@ -664,10 +666,10 @@ class VolSurfMinimalMapping(VolSurfMapping):
                    nsteps=10, start_fr=0.0,
                    stop_fr=1.0, start_mm=0, stop_mm=0):
         '''
-        Represents the maximal mapping from nodes to voxels.
-        'maximal', in this context, means that to each node all voxels
-        are associated that are contained in lines connecting white
-        and grey matter.
+        Represents the minimal mapping from nodes to voxels.
+        'minimal', in this context, means that the mapping from
+        voxels to nodes is many-to-one (i.e. each voxel is associated
+        with at most one node)
 
         Each voxel can be associated with just a single node.
 
@@ -753,8 +755,111 @@ class VolSurfMinimalMapping(VolSurfMapping):
                                 nvoxels_pruned_ratio * 100,
                                 nvoxels_min_per_node))
 
-
         return n2vs_min
+
+class VolSurfMinimalLowresMapping(VolSurfMinimalMapping):
+    def __init__(self, vg, white, pial, intermediate=None,
+                   nsteps=10, start_fr=0.0,
+                   stop_fr=1.0, start_mm=0, stop_mm=0):
+        '''
+        Represents the minimal mapping from nodes to voxels,
+        incorporating the intermediate surface that can
+        be of lower-res.
+        'minimal', in this context, means that the mapping from
+        voxels to nodes is many-to-one (i.e. each voxel is associated
+        with at most one node). Each node mapped must be
+        present in the intermediate surface
+
+        Each voxel can be associated with just a single node.
+
+        Parameters
+        ----------
+        volgeom: volgeom.VolGeom
+            Volume geometry
+        white: surf.Surface
+            Surface representing white-grey matter boundary
+        pial: surf.Surface
+            Surface representing pial-grey matter boundary
+        intermediate: surf.Surface (default: None).
+            Surface representing intermediate surface.
+            Unlike in its superclass this argument cannot be ommited here.
+        nsteps: int (default: 10)
+            Number of steps from white to pial surface
+        start_fr: float (default: 0)
+            Relative start position of line in gray matter, 0.=white
+            surface, 1.=pial surface.
+        stop_fr: float (default: 1)
+            Relative stop position of line (as in see start).
+        start_mm: float (default: 0)
+            Absolute start position offset (as in start_fr).
+        sttop_mm: float (default: 0)
+            Absolute start position offset (as in start_fr).
+
+        Notes
+        -----
+        'pial' and 'white' should have the same topology.
+        '''
+
+        if intermediate is None:
+            raise RuntimeError("intermediate surface has to be specified")
+
+        super(VolSurfMinimalLowresMapping, self).__init__(vg=vg, white=white,
+                pial=pial, intermediate=intermediate, nsteps=nsteps,
+                start_fr=start_fr, stop_fr=stop_fr, start_mm=start_mm,
+                stop_mm=stop_mm)
+
+    def get_node2voxels_mapping(self):
+        n2v = super(VolSurfMinimalLowresMapping, self).\
+                                get_node2voxels_mapping()
+
+        # set low and high res intermediate surfaces
+        lowres = surf.from_any(self._intermediate)
+        highres = (self.pial_surface * .5) + \
+                                (self.white_surface * .5)
+
+        high2high_in_low = lowres.vonoroi_map_to_high_resolution_surf(highres)
+
+        n_in_low2v = dict()
+        ds = []
+
+        for n, v2pos in n2v.iteritems():
+            (n_in_low, d) = high2high_in_low[n]
+            if v2pos is None:
+                continue
+
+            ds.append(d)
+
+
+            if not n_in_low in n_in_low2v:
+                # not there - just set the dictionary
+                n_in_low2v[n_in_low] = v2pos
+            else:
+                # is there - see if it is none
+                cur = n_in_low2v[n_in_low]
+                if cur is None and not v2pos is None:
+                    # also overwrite (v2pos can also be None, that's fine)
+                    n_in_low2v[n_in_low] = v2pos
+                elif v2pos is not None:
+                    # update
+                    for v, pos in v2pos.iteritems():
+                        # minimal mapping, so voxel should not be there already
+                        assert(not v in n_in_low2v[n_in_low])
+                        cur[v] = pos
+
+        if __debug__ and 'SVS' in debug.active:
+            ds = np.asarray(ds)
+            mu = np.mean(ds)
+            n = len(ds)
+            s = np.std(ds)
+
+            debug('SVS', 'Reassigned %d nodes by moving %.2f +/- %.2f to low-res',
+                        (n, mu, s))
+
+
+
+        return n_in_low2v
+
+
 
 
 

@@ -505,7 +505,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         # Note: a little outside margin is necessary
         # as otherwise there are nodes in the minimal case
         # that have no voxels associated with them
-        output_modality = 'volume'
+
         for radius in radii:
             for output_modality in ('surface', 'volume'):
                 for i, nvm in enumerate(('minimal', 'maximal')):
@@ -536,6 +536,43 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
                             # decent agreement in any case between the two sets
                             assert_true(r < .5)
+
+
+    def test_surface_minimal_lowres_voxel_selection(self):
+        vol_shape = (4, 10, 10, 1)
+        vol_affine = np.identity(4)
+        vg = volgeom.VolGeom(vol_shape, vol_affine)
+
+
+        # make surfaces that are far away from all voxels
+        # in the volume
+        sphere_density = 10
+        radius = 10
+
+        outer = surf.generate_plane((0, 0, 4), (0, .4, 0), (0, 0, .4), 14, 14)
+        inner = outer + 2
+
+        source = surf.generate_plane((0, 0, 4), (0, .8, 0), (0, 0, .8), 7, 7) + 1
+
+        for i, nvm in enumerate(('minimal', 'minimal_lowres')):
+            qe = disc_surface_queryengine(radius, vg, inner,
+                                      outer, source,
+                                      node_voxel_mapping=nvm)
+
+            voxsel = qe.voxsel
+            if i == 0:
+                voxsel0 = voxsel
+            else:
+                assert_equal(voxsel.keys(), voxsel0.keys())
+                for k in voxsel.keys():
+                    p = voxsel[k]
+                    q = voxsel0[k]
+
+                    # require at least 60% agreement
+                    delta = set.symmetric_difference(set(p), set(q))
+                    assert_true(len(delta) < .8 * (len(p) + len(q)))
+
+
     @reseed_rng()
     def test_minimal_dataset(self):
         vol_shape = (10, 10, 10, 3)
