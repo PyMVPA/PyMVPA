@@ -679,10 +679,10 @@ def run_makespec_bothhemis(config, env):
             specpathfn = os.path.join(refdir, specfn)
             specs.append(afni_suma_spec.read(specpathfn))
 
-        specs = afni_suma_spec.hemi_pairs_add_views(specs,
-                            'inflated', ext, refdir, overwrite=overwrite)
-        specs = afni_suma_spec.hemi_pairs_add_views(specs,
-                            'sphere.reg', ext, refdir, overwrite=overwrite)
+        add_states = ['inflated', 'full.patch.flat', 'sphere.reg']
+        for add_state in add_states:
+            specs = afni_suma_spec.hemi_pairs_add_views(specs,
+                            add_state, ext, refdir, overwrite=overwrite)
 
 
         spec_both = afni_suma_spec.combine_left_right(specs)
@@ -707,7 +707,14 @@ def run_makespec_bothhemis(config, env):
             full_path = lambda x:os.path.join(refdir, x)
             for fn_out, fns_in in surfs_to_join.iteritems():
                 surfs_in = [surf.read(full_path(fn)) for fn in fns_in]
+
+                if all(['full.patch.flat' in fn for fn in fns_in]):
+                    # left hemi of flat; rotate 180 degrees, reposition again
+                    surfs_in[0] = surfs_in[0] * [-1, -1, 1]
+                    surfs_in = surf.reposition_hemisphere_pairs(surfs_in[0], surfs_in[1], 'm')
+
                 surf_merged = surf.merge(*surfs_in)
+
                 if config['overwrite'] or not os.path.exists(full_path(fn_out)):
                     surf.write(full_path(fn_out), surf_merged)
                     print "Merged surfaces written to %s" % fn_out
@@ -748,6 +755,7 @@ def suma_makespec(directory, surfprefix, surf_format, fnout=None, removepostfix=
     fns = os.listdir(directory)
     surfname2filename = dict()
     for fn in fns:
+        print fn, pat
         if fnmatch.fnmatch(fn, pat):
             surfname = fn[len(surfprefix) + 1:(len(fn) - len(postfix))]
 
@@ -758,8 +766,8 @@ def suma_makespec(directory, surfprefix, surf_format, fnout=None, removepostfix=
 
     # only include these surfaces
     usesurfs = ['smoothwm', 'intermediate', 'pial', 'semiinflated',
-                 'tqinflated', 'inflated', 'sphere.reg']
-    isanatomical = dict(zip(usesurfs, [True, True, True] + [False] * 4))
+                 'tqinflated', 'inflated', 'full.patch.flat', 'sphere.reg']
+    isanatomical = dict(zip(usesurfs, [True, True, True] + [False] * 5))
 
 
     # make the spec file
@@ -772,6 +780,9 @@ def suma_makespec(directory, surfprefix, surf_format, fnout=None, removepostfix=
 
     lines.append('')
     localdomainparent = surfname2filename.get('smoothwm', None)
+
+    ndim = lambda x:2 if 'full.patch' in x else 3
+
     for surfname in usesurfs:
         if surfname in surfname2filename:
             ldp = ('SAME' if (not localdomainparent or
@@ -784,7 +795,7 @@ def suma_makespec(directory, surfprefix, surf_format, fnout=None, removepostfix=
                           'LocalDomainParent = %s' % ldp,
                           'LocalCurvatureParent = %s' % ldp,
                           'SurfaceState = %s' % surfname,
-                          'EmbedDimension = 3',
+                          'EmbedDimension = %d' % ndim(surfname),
                           'Anatomical = %s' % ('Y' if isanatomical[surfname] else 'N'),
                          ''])
             if localdomainparent is None:
