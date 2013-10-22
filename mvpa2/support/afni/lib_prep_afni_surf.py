@@ -284,7 +284,7 @@ def run_toafni(config, env):
         if config['overwrite']:
             if filesexist:
                 cmds.append('rm -rf "%s"' % sd)
-        cmds.append('cd %(surfdir)s;@SUMA_Make_Spec_FS -sid %(sid)s -no_ld' % config)
+        cmds.append('cd %(surfdir)s;@SUMA_Make_Spec_FS -sid %(sid)s -fix_cut_surfaces -no_ld' % config)
         utils.run_cmds(cmds, env)
     else:
         print "SUMA conversion appears to have been performed already for %s in %s" % (sid, sd)
