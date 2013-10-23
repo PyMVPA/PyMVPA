@@ -299,16 +299,18 @@ class StatisMapper(Mapper):
 
 
                 fselect[:,:,k] = self.partial_factors.samples[self.partial_factors.chunks==j,:]
+            
+            """
             ds_i = Dataset(Y)
             ds_i.fa['tables'] = Y_idx
             ds_i.sa['targets'] = self.targets[0:nrows]
             stat_i = StatisMapper()
             stat_i.train(ds_i)
-
+            """
                 
             (A,alpha,C) = self.inter_table_Rv_analysis(Y,Y_idx)
-            #self.FBoot[:,:,i]=np.sum(fselect*alpha.flatten(),2)
-            self.FBoot[:,:,i] = np.dot(Y,np.dot(stat_i.A,stat_i.Q))
+            self.FBoot[:,:,i]=np.sum(fselect*alpha.flatten(),2)
+            #self.FBoot[:,:,i] = np.dot(Y,np.dot(stat_i.A,stat_i.Q))
             if self._supp_obs:
                 self._supp_obs['boot'][:,:,i] = np.dot(Y_supp,np.dot(A,self.Q))
             if i%100==0:
