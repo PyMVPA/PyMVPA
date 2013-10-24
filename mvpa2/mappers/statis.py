@@ -1,8 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse
+from matplotlib import cm
+from scipy.stats import chi2
 from mvpa2.suite import Mapper, Dataset
 from scipy.spatial.distance import pdist
 from operator import itemgetter
+import matplotlib as mpl
 
 
 def eigh(X):
@@ -353,23 +357,23 @@ class StatisMapper(Mapper):
        
 
 
-    def draw_ellipses(self, x=0, y=1, labels=None,
-                        colors=None,scat=False,linestyle=None, **kwargs):
+    def draw_ellipses(self, x=0, y=1, level=.95, labels=None,
+                        cmap=None,scat=False,linestyle=None, nude=False,
+                        axes='off', **kwargs):
         """
         center: should be the factor scores from original compromise matrix
         points: should be factor scores from bootstrap
         """
         fig = plt.figure()
+        ax = fig.gca()
         boot = self.FBoot
         if self._supp_obs:
             boot = np.vstack((boot,self._supp_obs['boot']))
 
         i,j,k = boot.shape
 
-        if colors==None:
-            colors = ['b','g','r','c','m','y','k']
-            while len(colors) < len(self.targets):
-                colors = colors + colors
+        if cmap==None:
+            cmap = cm.spectral(np.linspace(.2,.85,i))
         if linestyle is None:
             linestyle = ['-']*j + ['--']*(i-j)
         if labels is None:
@@ -377,12 +381,34 @@ class StatisMapper(Mapper):
             if self._supp_obs:
                 labels = labels + list(self._supp_obs['targets'])
 
-        mx = []
-        mn = []
+        mx = np.max(abs(boot[:,[x,y],:]))
+        plt.plot([-mx,mx],[0,0],'k',alpha=.8,lw=2)
+        plt.plot([0,0],[-mx*.8,mx*.8],'k',alpha=.8,lw=2)
+        plt.axis('equal')
+
         for l in range(i):
             points = np.hstack((boot[l,x,:].reshape(-1,1),
                                     boot[l,y,:].reshape(-1,1)))
             center = np.mean(points,0)
+            cov = np.cov(points, rowvar=0)
+
+            v, w = np.linalg.eigh(cov)
+            u = w[0] / np.linalg.norm(w[0])
+            angle = np.arctan(u[1]/u[0])
+            angle = 180 * angle / np.pi # convert to degrees
+            v = 2 * np.sqrt(v * chi2.ppf(level, 2)) #get size corresponding to level
+            ell = Ellipse(center, v[0], v[1], 180 + angle, facecolor='none',
+                          edgecolor=cmap[l],
+                          **kwargs)
+            ax.add_artist(ell)
+
+
+
+
+
+
+
+            """
 
             dist = np.array([ np.sqrt((points[m,0]-center[0])**2+(points[m,1]-center[1])**2) 
                             for m in range(points.shape[0])])
@@ -396,9 +422,10 @@ class StatisMapper(Mapper):
             orig_points = points
             points = np.array([dp[n][1] for n in range(len(dp))])
             center = np.mean(points,0)
-            
+            """
             if scat:
-                plt.scatter(orig_points[:,0],orig_points[:,1],c=colors[l]) # uncomment to see all points
+                plt.scatter(points[:,0],points[:,1],c=colors[l]) 
+            """
             # PCA on set of centered points
             #p,a,q = np.linalg.svd(points - center, full_matrices=0)
             p,a,q = paq(points - center)
@@ -413,19 +440,31 @@ class StatisMapper(Mapper):
 
             coords = np.array([np.cos(j.T)*x_length,np.sin(j.T)*y_length]).T
             coords = np.mat(coords)*np.mat(q.T) + np.mat(np.ones((len(j),1)))*np.mat(center)
-            mx.append(np.max(coords))
-            mn.append(np.min(coords))
-            plt.plot(np.vstack((coords[:,0],coords[0,0])),
-                        np.vstack((coords[:,1],coords[0,1])),
-                        colors[l], linestyle=linestyle[l],**kwargs)
+            #plt.plot(np.vstack((coords[:,0],coords[0,0])),
+            #            np.vstack((coords[:,1],coords[0,1])),
+            #            colors[l], linestyle=linestyle[l],**kwargs)
+            """
+            if not nude:
+                plt.annotate(labels[l],xy = (center[0], center[1]))
+        #plt.axis([-mx,mx,-mx,mx])
+        plt.axis('equal')
+        plt.axis(axes)
+        mpl.rcParams['text.usetex'] = True
+        plt.text(-mx-.15*mx,.02*mx,'$\lambda = %s$'%np.round(self.eigv[x],2),
+                size='large')
+        plt.text(mx*.05,mx*.8,'$\lambda = %s$'%np.round(self.eigv[y],2),
+                size='large')
+        tau = '$\\tau = $'
+        perc = '$\%$'
+        plt.text(-mx-.15*mx,-.08*mx, '%s $%s$%s' % 
+                (tau,np.round(100*self.inertia[x],0),perc),
+                size='large')
+        plt.text(mx*.05,mx*.72, '%s $%s$%s' %
+                (tau,np.round(100*self.inertia[y],0),perc),
+                size='large')
+ 
 
-            plt.annotate(labels[l],xy = (center[0], center[1]))
-        mn = min(mn)
-        mx = max(mx)
-        pad = (mx-mn)/30.
-        mn = mn - pad
-        mx = mx + pad
-        plt.axis([mn, mx, mn, mx])
+
 
     def plot_mds(self,x=0,y=1,labels=None):
         """
