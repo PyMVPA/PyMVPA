@@ -23,8 +23,14 @@
     font-size: 1.5em;
     text-align: right;
     position: relative;
-    top: 100px;
+    top: 10px;
   }
+
+#header div.logos {
+	display: block;
+	margin-top: 15px;
+    float: right;
+}
 
 body {
     font-family: {{ theme_bodyfont }};
