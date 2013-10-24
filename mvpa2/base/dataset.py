@@ -141,11 +141,11 @@ class AttrDataset(object):
     syntax is used the resulting dataset will share the samples with the
     original dataset.
 
-    >>> sel1.samples.base is ds.samples
+    >>> sel1.samples.base is ds.samples.base
     False
-    >>> sel2.samples.base is ds.samples
+    >>> sel2.samples.base is ds.samples.base
     False
-    >>> sel3.samples.base is ds.samples
+    >>> sel3.samples.base is ds.samples.base
     True
 
     For feature selection the syntax is very similar they are just
@@ -170,7 +170,7 @@ class AttrDataset(object):
     array([[1, 2],
            [4, 5],
            [7, 8]])
-    >>> fsel.samples.base is ds.samples
+    >>> fsel.samples.base is ds.samples.base
     True
 
     Please note that simultaneous selection of samples and features is

@@ -45,7 +45,12 @@ def setup_module(module, verbosity=None):
             print('T: Testing for availability of external software packages.')
 
     # fully test of externals
-    externals.check_all_dependencies(verbosity=max(0, verbosity - 1))
+    verbosity_dependencies = max(0, verbosity - 1)
+    if verbosity_dependencies:
+        externals.check_all_dependencies(verbosity=verbosity_dependencies)
+    elif __debug__ and verbosity:
+        print('T: Skipping testing of all dependencies since verbosity '
+              '(MVPA_TESTS_VERBOSITY) is too low')
 
     # So we could see all warnings about missing dependencies
     _sys_settings['maxcount'] = warning.maxcount
@@ -342,6 +347,7 @@ def run(limit=None, verbosity=None, exit_=False):
 
 # to avoid nosetests running the beasts defined in this file
 run_tests_using_nose.__test__ = False
+collect_test_suites.__test__ = False
 run.__test__ = False
 __test__ = False
 

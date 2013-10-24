@@ -241,10 +241,16 @@ def test_state_setter_getter():
     # as it would be reconstructed before the fix -- obj array of obj arrays
     np.array([np.array([{'d': np.empty(shape=(2,3))}], dtype=object)],
              dtype=object),
+    np.array([],dtype='int64'),
     ))
 def test_save_load_object_dtype_ds(obj=None):
     """Test saving of custom object ndarray (GH #84)
     """
+    aobjf = np.asanyarray(obj).flatten()
+
+    if not aobjf.size and externals.versions['hdf5'] < '1.8.7':
+        raise SkipTest("Versions of hdf5 before 1.8.7 have problems with empty arrays")
+
     # print obj, obj.shape
     f = tempfile.NamedTemporaryFile()
 
@@ -259,9 +265,39 @@ def test_save_load_object_dtype_ds(obj=None):
     assert_array_equal(obj.shape, obj_.shape)
     assert_equal(type(obj), type(obj_))
     # so we could test both ds and arrays
-    aobjf = np.asanyarray(obj).flatten()
     aobjf_ = np.asanyarray(obj_).flatten()
     # checks if having just array above
-    assert_equal(type(aobjf[0]), type(aobjf_[0]))
-    assert_array_equal(aobjf[0]['d'], aobjf_[0]['d'])
+    if aobjf.size:
+        assert_equal(type(aobjf[0]), type(aobjf_[0]))
+        assert_array_equal(aobjf[0]['d'], aobjf_[0]['d'])
 
+
+_python_objs = [
+    # lists
+    [1, 2], [],
+    # tuples
+    (1, 2), tuple(),
+    # pure Python sets
+    set([1,2]), set(), set([None]), set([tuple()]),
+    ]
+import collections
+_python_objs.append([collections.deque([1,2])])
+if hasattr(collections, 'OrderedDict'):
+    _python_objs.append([collections.OrderedDict(),
+                         collections.OrderedDict(a9=1, a0=2)])
+if hasattr(collections, 'Counter'):
+    _python_objs.append([collections.Counter({'red': 4, 'blue': 2})])
+
+@sweepargs(obj=_python_objs)
+def test_save_load_python_objs(obj):
+    """Test saving objects of various types
+    """
+    # print obj, obj.shape
+    f = tempfile.NamedTemporaryFile()
+
+    # save/reload
+    h5save(f.name, obj)
+    obj_ = h5load(f.name)
+
+    assert_equal(type(obj), type(obj_))
+    assert_equal(obj, obj_)
