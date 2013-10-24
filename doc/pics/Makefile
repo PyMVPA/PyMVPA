@@ -13,6 +13,8 @@ ICON_HEIGHT = $(shell inkscape -z -f $(ICON_SVG_BASE).svg -H)
 ICON_WIDTH = $(shell inkscape -z -f $(ICON_SVG_BASE).svg -W)
 ICON_NUMBER = 6
 
+LOGO_HEIGHT = 70
+
 # PICS_IGNORE must contain a rule for grep
 PICS_IGNORE ?= "$(ICON_SVG_BASE)"
 
@@ -24,8 +26,9 @@ PDFPICS=$(shell find . -iname \*svg \
 PNGPICS=$(shell find . -iname \*svg \
 	| sed -e 's/svg$$/png/g' -e 's/\([^\]\)\([ \t:]\)/\1\\\\\2/g' \
 	| grep -v -e $(PICS_IGNORE) )
+LOGOPICS=ccn-logo_h$(LOGO_HEIGHT).png uni-md-logo_h$(LOGO_HEIGHT).png dartmouth-logo_h$(LOGO_HEIGHT).png
 
-pics: $(PDFPICS) $(PNGPICS)
+pics: $(PDFPICS) $(PNGPICS) $(LOGOPICS)
 
 clean::
 	for p in *.svg; do \
@@ -67,6 +70,10 @@ ignore-%:
 	@convert -flatten -resize x130 $*.png $*.jpg
 	@cp "$@" $(STATICDIR)
 
+# logo sized versions
+%_h70.png: %.png ignore-%_h70.png
+	@echo "Generating downscaled $@"
+	@convert -geometry x70 "$<" "$@"
 
 # special cases
 download_icon.png: $(ICON_SVG_BASE).svg
