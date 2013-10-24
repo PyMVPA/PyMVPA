@@ -53,6 +53,22 @@ def paq(X, k=None):
     return P,a,Q
 
 
+def _make_ellipse(mean, cov, ax, level=0.95, color=None):
+    """Support function for scatter_ellipse."""
+    from matplotlib.patches import Ellipse
+
+    v, w = np.linalg.eigh(cov)
+    u = w[0] / np.linalg.norm(w[0])
+    angle = np.arctan(u[1]/u[0])
+    angle = 180 * angle / np.pi # convert to degrees
+    v = 2 * np.sqrt(v * stats.chi2.ppf(level, 2)) #get size corresponding to level
+    ell = Ellipse(mean[:2], v[0], v[1], 180 + angle, facecolor='none',
+                  edgecolor=color,
+                  #ls='dashed',  #for debugging
+                  lw=1.5)
+    ell.set_clip_box(ax.bbox)
+    ell.set_alpha(0.5)
+    ax.add_artist(ell)
 
 
 class StatisMapper(Mapper):
@@ -353,13 +369,17 @@ class StatisMapper(Mapper):
        
 
 
-    def draw_ellipses(self, x=0, y=1, labels=None,
+    def draw_ellipses(self, x=0, y=1, level=.95, labels=None,
                         colors=None,scat=False,linestyle=None, **kwargs):
         """
         center: should be the factor scores from original compromise matrix
         points: should be factor scores from bootstrap
         """
+        from matplotlib.patches import Ellipse
+        import scipy.stats as stats
+
         fig = plt.figure()
+        ax = fig.gca()
         boot = self.FBoot
         if self._supp_obs:
             boot = np.vstack((boot,self._supp_obs['boot']))
@@ -379,10 +399,28 @@ class StatisMapper(Mapper):
 
         mx = []
         mn = []
+        
         for l in range(i):
             points = np.hstack((boot[l,x,:].reshape(-1,1),
                                     boot[l,y,:].reshape(-1,1)))
             center = np.mean(points,0)
+           
+
+            ####### FROM statsmodels _make_ellipse 
+            v, w = eigh(np.cov(points))
+            u = w[0] / np.linalg.norm(w[0])
+            angle = np.arctan(u[1]/u[0])
+            angle = 180 * angle / np.pi 
+            v = 2 * np.sqrt(v * stats.chi2.ppf(level, 2)) 
+            ell = Ellipse(center, v[0], v[1], 180 + angle, facecolor='none',
+                    edgecolor=colors[l],
+                    #ls='dashed',  #for debugging
+                    lw=1.5)
+            ell.set_clip_box(ax.bbox)
+            ell.set_alpha(0.5)
+            ax.add_artist(ell)
+            #######################################
+
 
             dist = np.array([ np.sqrt((points[m,0]-center[0])**2+(points[m,1]-center[1])**2) 
                             for m in range(points.shape[0])])
@@ -390,7 +428,8 @@ class StatisMapper(Mapper):
             dp=zip(dist,points)
             
             # Trim the 5% of points with the largest distances from the center
-            dp=sorted(dp, key=itemgetter(0))[0:int(points.shape[0]*.95)]
+            #don't do this
+            #dp=sorted(dp, key=itemgetter(0))[0:int(points.shape[0]*.95)]
             
             # update set of points and new center
             orig_points = points
@@ -402,24 +441,28 @@ class StatisMapper(Mapper):
             # PCA on set of centered points
             #p,a,q = np.linalg.svd(points - center, full_matrices=0)
             p,a,q = paq(points - center)
-            F_ = np.mat(p) * np.mat(np.diag(a))
+            F_ = p.dot(np.diag(a))
+
+            
 
             F_hull=np.asarray(abs(F_))
 
             prop=a[0]/a[1]   #proportion
             y_length = max(np.sqrt((F_hull[:,0]**2)/(prop**2) + (F_hull[:,1]**2)))
             x_length = y_length*prop
+
+
             j = np.array(range(1,129))*np.pi/64
 
             coords = np.array([np.cos(j.T)*x_length,np.sin(j.T)*y_length]).T
             coords = np.mat(coords)*np.mat(q.T) + np.mat(np.ones((len(j),1)))*np.mat(center)
             mx.append(np.max(coords))
             mn.append(np.min(coords))
-            plt.plot(np.vstack((coords[:,0],coords[0,0])),
-                        np.vstack((coords[:,1],coords[0,1])),
-                        colors[l], linestyle=linestyle[l],**kwargs)
+            #plt.plot(np.vstack((coords[:,0],coords[0,0])),
+            #            np.vstack((coords[:,1],coords[0,1])),
+            #            colors[l], linestyle=linestyle[l],**kwargs)
 
-            plt.annotate(labels[l],xy = (center[0], center[1]))
+            #plt.annotate(labels[l],xy = (center[0], center[1]))
         mn = min(mn)
         mx = max(mx)
         pad = (mx-mn)/30.
