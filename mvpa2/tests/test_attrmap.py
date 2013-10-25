@@ -113,9 +113,10 @@ def test_attrmap_conflicts():
 
 def test_attrmap_repr():
     assert_equal(repr(AttributeMap()), "AttributeMap()")
-    assert_equal(repr(AttributeMap(dict(a=2, b=1))),
-                 "AttributeMap({'a': 2, 'b': 1})")
+    d = dict(a=2, b=1)
+    assert_equal(repr(AttributeMap(d)),
+                 "AttributeMap(%r)" % (d,))
     assert_equal(repr(AttributeMap(dict(a=2, b=1), mapnumeric=True)),
-                 "AttributeMap({'a': 2, 'b': 1}, mapnumeric=True)")
+                 "AttributeMap(%r, mapnumeric=True)" % (d,))
     assert_equal(repr(AttributeMap(dict(a=2, b=1), mapnumeric=True, collisions_resolution='tuple')),
-                 "AttributeMap({'a': 2, 'b': 1}, mapnumeric=True, collisions_resolution='tuple')")
+                 "AttributeMap(%r, mapnumeric=True, collisions_resolution='tuple')" % (d,))
