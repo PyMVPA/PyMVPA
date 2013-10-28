@@ -26,7 +26,7 @@ Community Norms`_.
 Download
 ========
 
-Data will be made available on http://www/openfmri.org
+Data will be made available on http://www.openfmri.org
 
 Usage
 =====
@@ -38,6 +38,13 @@ implementation of a data access module has been made available at:
   https://github.com/hanke/gumpdata
 
 This module include basic unit tests to check data integrity and consistency.
+
+The source code used to create the group template images is available at:
+
+  https://github.com/hanke/openfmri_helpers
+
+The associate configuratiuon file is included in the ``gumpdata`` repository.
+
 
 References
 ==========
