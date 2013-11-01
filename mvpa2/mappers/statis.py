@@ -57,24 +57,6 @@ def paq(X, k=None):
     return P,a,Q
 
 
-def _make_ellipse(mean, cov, ax, level=0.95, color=None):
-    """Support function for scatter_ellipse."""
-    from matplotlib.patches import Ellipse
-
-    v, w = np.linalg.eigh(cov)
-    u = w[0] / np.linalg.norm(w[0])
-    angle = np.arctan(u[1]/u[0])
-    angle = 180 * angle / np.pi # convert to degrees
-    v = 2 * np.sqrt(v * stats.chi2.ppf(level, 2)) #get size corresponding to level
-    ell = Ellipse(mean[:2], v[0], v[1], 180 + angle, facecolor='none',
-                  edgecolor=color,
-                  #ls='dashed',  #for debugging
-                  lw=1.5)
-    ell.set_clip_box(ax.bbox)
-    ell.set_alpha(0.5)
-    ax.add_artist(ell)
-
-
 class StatisMapper(Mapper):
     """Implementation of STATIS. 
     Compromise matrices are the optimal linear combination of 
@@ -147,10 +129,11 @@ class StatisMapper(Mapper):
         self.I = I = ntargets
         self.M = M = (1.0/I)*np.eye(I) # masses, eq. 2
         self.X = X
-        (A, alpha,C) = inter_table_Rv_analysis(X,self.subtable_idx)
+        (A, alpha,C,G) = inter_table_Rv_analysis(X,self.subtable_idx)
         self.A = A
         self.alpha = alpha
-        self.C = C
+        self.Rv = C
+        self.inter_table_structure = G
                
         #self.compromise1 = np.dot(np.sqrt(self.M),np.dot(X,np.sqrt(self.A)))
         self.compromise = (X.T*np.sqrt(np.diag(M))).T*np.sqrt(np.diag(A))
@@ -299,7 +282,7 @@ def run_bootstrap(ds, sts, niter=1000):
 
             fselect[:,:,k] = ds.samples[ds.chunks==j,:]
         
-        (A,alpha,C) = inter_table_Rv_analysis(Y,Y_idx)
+        (A,alpha,C,G) = inter_table_Rv_analysis(Y,Y_idx)
         boot[:,:,i] = np.sum(fselect*alpha.flatten(),2)
 
         if i%100==0:
@@ -340,11 +323,70 @@ def inter_table_Rv_analysis(X_, subtable_idx):
             a = np.hstack((a,alph))
 
     A = np.diag(a)
-    return A,alpha,C
+    G = v*np.sqrt(w) # eq. 13
+    return A,alpha,C,G
 
 
 
-       
+def plot_inter_table_map(sts, prefix='T_', labels=None, axes='off'):
+    ax = plt.figure();
+
+    G = sts.inter_table_structure[:,[0,1]]
+    for i,idx in enumerate(np.unique(sts.chunks)):
+        s = prefix + str(idx)
+        plt.text(G[i,0],G[i,1],s)
+    mx = np.max(np.abs(G[:,1]))
+    plt.arrow(0,0,1,0,color='gray',alpha=.7,head_width=.02,length_includes_head=True)
+    plt.arrow(0,-mx-mx*.1,0,2*mx+mx*.1,color='gray',alpha=.7,lw=2,
+            head_width=.02,length_includes_head=True)
+    plt.axis((-.05,1.05,-mx-mx*.1,mx))
+    plt.axis(axes)
+    plt.text(-.05,mx-.05,'$2$', fontsize=20)
+    plt.text(.9,-.05,'$1$',fontsize=20)
+
+def plot_partial_factors(ds,sts,x=0,y=1,cmap=None,axes='off', nude=False):
+
+    mx = np.max(np.abs(ds.samples))
+    plt.arrow(-mx,0,2*mx,0,color = 'gray',alpha=.7,width=.0003, 
+            head_width=.002,length_includes_head=True)
+    plt.arrow(0,-mx,0,1.66*mx,color = 'gray',alpha=.7, width=.0003,
+            head_width=.002,length_includes_head=True)
+    ntables = len(np.unique(ds.chunks))
+    if cmap is None:
+        cmap = cm.spectral(np.linspace(.2,.85,ntables))
+    m,ncol = ds.shape
+    nrows = m/ntables
+    data = ds.samples.T.reshape((ncol,nrows,ntables),order='F')
+
+    centers = np.mean(data,2).T[:,[x,y]]
+    plt.scatter(centers[:,0],centers[:,1])
+
+    for t in range(ntables):
+        tab = data[:,:,t].T[:,[x,y]]
+        for r in range(nrows):
+            a,b = centers[r,:]
+            j,k = tab[r,:]
+            plt.plot([a,j],[b,k],c=cmap[t],lw=2,alpha=.5)
+    plt.axis('equal')
+    plt.axis((-mx,mx,-mx,mx))
+    #plt.axis('equal')
+    plt.axis(axes)
+    if not nude:
+        for t in range(nrows):
+            plt.annotate(ds.targets[t],xy = (centers[t,0], centers[t,1]))
+        
+        plt.text(-mx,.04*mx,'$\lambda = %s$'%np.round(sts.eigv[x],2))
+        plt.text(mx*.05,mx*.7,'$\lambda = %s$'%np.round(sts.eigv[y],2))
+        tau = '$\\tau = $'
+        perc = '$\%$'
+        mpl.rcParams['text.usetex'] = False
+        plt.text(-mx,-.1*mx, '%s $%s$%s' %
+                (tau,np.round(100*sts.inertia[x],0),perc))
+        plt.text(mx*.05,mx*.6, '%s $%s$%s' %
+                (tau,np.round(100*sts.inertia[y],0),perc))
+        plt.text(-.1*mx,.55*mx,'$2$', fontsize=20)
+        plt.text(mx*.85,-mx*.1,'$1$',fontsize=20)
+     
 
 
 def draw_ellipses(ds, sts, x=0, y=1, ci=.95, labels=None,
@@ -375,7 +417,6 @@ def draw_ellipses(ds, sts, x=0, y=1, ci=.95, labels=None,
     mx = np.max(abs(boot[:,[x,y],:]))
     plt.plot([-mx,mx],[0,0],c = 'gray',alpha=.7, lw=2)
     plt.plot([0,0],[-mx*.8,mx*.8],c = 'gray',alpha=.7, lw=2)
-    plt.axis('equal')
 
     for l in range(i):
         points = np.hstack((boot[l,x,:].reshape(-1,1),
