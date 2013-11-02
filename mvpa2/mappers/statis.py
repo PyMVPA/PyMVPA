@@ -38,7 +38,7 @@ def paq(X, k=None):
         X = X.T
         flip = True
     l, Q = eigh(np.dot(X.T,X))
-    
+
     ll = np.max(l.shape)
     if k > ll:
         k = len(l)
@@ -53,15 +53,15 @@ def paq(X, k=None):
         X = X.T
         tmp = Q
         Q = P
-        P = tmp 
+        P = tmp
     return P,a,Q
 
 
 class StatisMapper(Mapper):
-    """Implementation of STATIS. 
-    Compromise matrices are the optimal linear combination of 
+    """Implementation of STATIS.
+    Compromise matrices are the optimal linear combination of
     cross-product matrices, the general eigen decomposition of
-    which yield same results as left generalized singular vectors 
+    which yield same results as left generalized singular vectors
     """
     def __init__(self,tables_attr='tables', bootstrap_iter=0,
                 col_center=False, col_norm=None,
@@ -91,10 +91,10 @@ class StatisMapper(Mapper):
 
         self.ntables = ntables = len(np.unique(chunks))
         i,J = samples.shape
-        
+
         self._subtable_stats = {}
-        
-    
+
+
         X = None # tables matrix with subtables h-stacked
         self.subtable_idx = np.array([])
         for ch, chunk in enumerate(np.unique(chunks)):
@@ -114,12 +114,12 @@ class StatisMapper(Mapper):
                     self.targets = dataset.sa['targets']
                 else:
                     self.targets = range(ntargets)
-            
+
             t,c_m,c_n,r_m,r_n,t_n = self.center_and_norm_table(t)
             self._subtable_stats[ch] = {'row_mean':r_m, 'row_norm':r_n,
                         'col_mean':c_m, 'col_norm':c_n, 'table_norm':t_n}
             self.subtable_idx=np.hstack((self.subtable_idx,ch*np.ones((t.shape[1]))))
-            
+
 
             if X is None:
                 X = t
@@ -134,10 +134,10 @@ class StatisMapper(Mapper):
         self.alpha = alpha
         self.Rv = C
         self.inter_table_structure = G
-               
+
         #self.compromise1 = np.dot(np.sqrt(self.M),np.dot(X,np.sqrt(self.A)))
         self.compromise = (X.T*np.sqrt(np.diag(M))).T*np.sqrt(np.diag(A))
-   
+
         P,delta,Qt = np.linalg.svd(self.compromise, full_matrices=0)     #Eq.42
         self.P = np.dot(np.linalg.inv(np.sqrt(M)),P)
         self.Q = np.dot(np.linalg.inv(np.sqrt(self.A)),Qt.T)
@@ -152,7 +152,7 @@ class StatisMapper(Mapper):
         mapped = None
         X = None
         i,j = ds.shape
-        
+
         for ch,chunk in enumerate(np.unique(self.chunks)):
             if self._stack == 'v':
                 table = ds.samples[ds.sa[self._chunks_attr]==chunk,:]
@@ -163,12 +163,12 @@ class StatisMapper(Mapper):
             table = self.center_and_norm_table(table,
                     col_mean=self._subtable_stats[ch]['col_mean'],
                     col_norm=self._subtable_stats[ch]['col_norm'],
-                    table_norm = self._subtable_stats[ch]['table_norm'])[0]        
+                    table_norm = self._subtable_stats[ch]['table_norm'])[0]
 
-            
+
             m = 1.0/self.I
             Y = table*np.sqrt(m)*np.sqrt(self.alpha[ch])
-            
+
             part = Dataset(np.dot(Y,self.Q[self.subtable_idx==ch,:]))
             part.sa['chunks'] = np.ones((len(part.samples,)))*ch
             part.sa['targets'] = targ
@@ -188,7 +188,7 @@ class StatisMapper(Mapper):
                     row_mean=None, row_norm=None, table_norm=None):
         """
         Using the norming parameters set in the constructor preprocess each
-        subtable. 
+        subtable.
 
         Parameters
         ----------
@@ -198,8 +198,8 @@ class StatisMapper(Mapper):
         row_mean    : an optional column vector of row means
         row_norm    : an optional column vector of row norms
         table_norm  : optional value to divide entire table by for normalization
-        """ 
-        
+        """
+
         t = table
         # first columns
         if self._col_center:
@@ -244,17 +244,17 @@ class StatisMapper(Mapper):
 
         return t, col_mean, col_norm, row_mean, row_norm, table_norm
 
-   
-def run_bootstrap(ds, sts, niter=1000): 
+
+def run_bootstrap(ds, sts, niter=1000):
     """
        dataset: Input fmri dataset with targets and chunks, should be preprocessed
        Q:       The loading matrix from statis
        niter:   number of iteration for bootstrap
        This function iteratively samples random chunks from dataset with
        replacement and computes each statis solution.
-        The factor scores from each statis are then projected into original compromise 
+        The factor scores from each statis are then projected into original compromise
        matrix space using Q
-       OUTPUT: FBoot collects all projected factor scores   
+       OUTPUT: FBoot collects all projected factor scores
     """
     ntables = sts.ntables
     nrows = len(np.unique(ds.targets))
@@ -262,7 +262,7 @@ def run_bootstrap(ds, sts, niter=1000):
     X = ds.a['X'].value
 
     for i in range(niter):
-        idx = np.floor(ntables*np.random.random_sample(ntables))   
+        idx = np.floor(ntables*np.random.random_sample(ntables))
         Y = None
         Y_idx = None
         fselect = np.zeros((nrows,nrows,ntables))
@@ -281,14 +281,14 @@ def run_bootstrap(ds, sts, niter=1000):
                 Y = np.hstack((Y,Y_t))
 
             fselect[:,:,k] = ds.samples[ds.chunks==j,:]
-        
+
         (A,alpha,C,G) = inter_table_Rv_analysis(Y,Y_idx)
         boot[:,:,i] = np.sum(fselect*alpha.flatten(),2)
 
         if i%100==0:
             sys.stdout.write("iter:%s/%s\r"% (i,niter))
             sys.stdout.flush()
-    
+
     boot = Dataset(boot)
     boot.sa['targets'] = sts.targets
     return boot
@@ -347,9 +347,10 @@ def plot_inter_table_map(sts, prefix='T_', labels=None, axes='off'):
 def plot_partial_factors(ds,sts,x=0,y=1,cmap=None,axes='off', nude=False):
 
     mx = np.max(np.abs(ds.samples))
-    plt.arrow(-mx,0,2*mx,0,color = 'gray',alpha=.7,width=.0003, 
+    xmx = mx*1.1
+    plt.arrow(-xmx,0,2*xmx,0,color = 'gray',alpha=.7,width=.0003,
             head_width=.002,length_includes_head=True)
-    plt.arrow(0,-mx,0,1.66*mx,color = 'gray',alpha=.7, width=.0003,
+    plt.arrow(0,-mx,0,2*mx,color = 'gray',alpha=.7, width=.0003,
             head_width=.002,length_includes_head=True)
     ntables = len(np.unique(ds.chunks))
     if cmap is None:
@@ -374,20 +375,21 @@ def plot_partial_factors(ds,sts,x=0,y=1,cmap=None,axes='off', nude=False):
     if not nude:
         for t in range(nrows):
             plt.annotate(ds.targets[t],xy = (centers[t,0], centers[t,1]))
-        
-        plt.text(-mx,.04*mx,'$\lambda = %s$'%np.round(sts.eigv[x],2))
-        plt.text(mx*.05,mx*.7,'$\lambda = %s$'%np.round(sts.eigv[y],2))
+
+        plt.text(-xmx,.05*mx,'$\lambda = %s$'%np.round(sts.eigv[x],2))
+        plt.text(mx*.05,mx*.9,'$\lambda = %s$'%np.round(sts.eigv[y],2))
         tau = '$\\tau = $'
         perc = '$\%$'
         mpl.rcParams['text.usetex'] = False
-        plt.text(-mx,-.1*mx, '%s $%s$%s' %
+        plt.text(-xmx,-.1*mx, '%s $%s$%s' %
                 (tau,np.round(100*sts.inertia[x],0),perc))
-        plt.text(mx*.05,mx*.6, '%s $%s$%s' %
+        plt.text(xmx*.05,mx*.8, '%s $%s$%s' %
                 (tau,np.round(100*sts.inertia[y],0),perc))
-        plt.text(-.1*mx,.55*mx,'$2$', fontsize=20)
-        plt.text(mx*.85,-mx*.1,'$1$',fontsize=20)
-     
+        plt.text(-.15*xmx,.8*mx,'$%s$'%(y+1), fontsize=20)
+        plt.text(xmx*.85,-mx*.2,'$%s$'%(x+1),fontsize=20)
 
+    plt.axis('scaled')
+    plt.axis([-xmx,xmx,-mx,mx])
 
 def draw_ellipses(ds, sts, x=0, y=1, ci=.95, labels=None,
                    cmap=None,scat=False,linestyle=None, nude=False,
@@ -412,12 +414,17 @@ def draw_ellipses(ds, sts, x=0, y=1, ci=.95, labels=None,
             linestyle = ['solid']*i
     if labels is None:
         labels = list(ds.targets)
-        
+
 
     mx = np.max(abs(boot[:,[x,y],:]))
-    plt.plot([-mx,mx],[0,0],c = 'gray',alpha=.7, lw=2)
-    plt.plot([0,0],[-mx*.8,mx*.8],c = 'gray',alpha=.7, lw=2)
-
+    xmx = mx*1.2
+    #plt.plot([-mx,mx],[0,0],c = 'gray',alpha=.7, lw=2)
+    #plt.plot([0,0],[-mx*.8,mx*.8],c = 'gray',alpha=.7, lw=2)
+    plt.arrow(-xmx,0,2*xmx,0,color = 'gray',alpha=.7,width=.0003,
+            head_width=.002,length_includes_head=True)
+    plt.arrow(0,-mx,0,mx*2,color = 'gray',alpha=.7, width=.0003,
+            head_width=.002,length_includes_head=True)
+ 
     for l in range(i):
         points = np.hstack((boot[l,x,:].reshape(-1,1),
                                 boot[l,y,:].reshape(-1,1)))
@@ -429,31 +436,36 @@ def draw_ellipses(ds, sts, x=0, y=1, ci=.95, labels=None,
         b = np.sqrt(w[1] * chi2.ppf(ci, 2))
 
         j = np.linspace(0,2*np.pi,128)
-        coords = np.hstack((    (np.cos(j)*a).reshape((-1,1)), 
+        coords = np.hstack((    (np.cos(j)*a).reshape((-1,1)),
                         (np.sin(j)*b).reshape((-1,1))))
         coords = np.mat(coords.dot(rot.T) + center)
-        
-        plt.plot(np.vstack((coords[:,0], coords[0,0])), 
-                    np.vstack((coords[:,1], coords[0,1])), 
+
+        plt.plot(np.vstack((coords[:,0], coords[0,0])),
+                    np.vstack((coords[:,1], coords[0,1])),
                     c=cmap[l], ls=linestyle[l], **kwargs)
         if scat:
-            plt.scatter(points[:,0],points[:,1],c=cmap[l]) 
+            plt.scatter(points[:,0],points[:,1],c=cmap[l])
 
         if not nude:
             plt.annotate(labels[l],xy = (center[0], center[1]))
             mpl.rcParams['text.usetex'] = True
-    
+
     if not nude:
-        plt.text(-mx-.25*mx,.04*mx,'$\lambda = %s$'%np.round(sts.eigv[x],2))
-        plt.text(mx*.05,mx*.8,'$\lambda = %s$'%np.round(sts.eigv[y],2))
+        plt.text(-xmx,.05*mx,'$\lambda = %s$'%np.round(sts.eigv[x],2))
+        plt.text(xmx*.05,mx*.9,'$\lambda = %s$'%np.round(sts.eigv[y],2))
         tau = '$\\tau = $'
         perc = '$\%$'
         mpl.rcParams['text.usetex'] = False
-        plt.text(-mx-.25*mx,-.1*mx, '%s $%s$%s' % 
+        plt.text(-xmx,-.1*mx, '%s $%s$%s' %
                 (tau,np.round(100*sts.inertia[x],0),perc))
-        plt.text(mx*.05,mx*.7, '%s $%s$%s' %
+        plt.text(xmx*.05,mx*.8, '%s $%s$%s' %
                 (tau,np.round(100*sts.inertia[y],0),perc))
-    plt.axis('equal')
+        plt.text(-.15*xmx,.8*mx,'$%s$'%(y+1), fontsize=20)
+        plt.text(xmx*.85,-mx*.2,'$%s$'%(x+1),fontsize=20)
+    #plt.axis('equal')
+    #plt.axis([-mx,mx,-mx,mx])
+    plt.axis('scaled')
+    plt.axis([-xmx,xmx,-mx,mx])
     plt.axis(axes)
     return f.number
 
@@ -473,7 +485,7 @@ def plot_mds(self,x=0,y=1,labels=None):
     plt.xlim((-mx,mx))
     plt.ylim((-mx,mx))
 
-def plot_partial_factor(self,x=0,y=1,labels=None,colors=None):    
+def plot_partial_factor(self,x=0,y=1,labels=None,colors=None):
     """
     This plots partial factor scores from each subject
     """
@@ -493,7 +505,7 @@ def plot_partial_factor(self,x=0,y=1,labels=None,colors=None):
         for i in range(self.ntargets):
             plt.plot([point[i,0],center[i,0]],[point[i,1],center[i,1]],'%s--'%colors[i],linewidth=1)
 
-def remove_pc(self,pc_num,method): 
+def remove_pc(self,pc_num,method):
     pc_all=None
     res_all=None
     q_all=None
@@ -522,7 +534,7 @@ def remove_pc(self,pc_num,method):
                             chunks=np.repeat(chunk+1,self.ntargets)))
             res_all.append(dataset_wizard(res,targets=np.unique(self.targets),
                             chunks=np.repeat(chunk+1,self.ntargets)))
-    return pc_all, res_all, q_all, f_all 
+    return pc_all, res_all, q_all, f_all
 
 
 
