@@ -257,15 +257,16 @@ def run_bootstrap(ds, sts, niter=1000):
        OUTPUT: FBoot collects all projected factor scores
     """
     ntables = sts.ntables
-    nrows = len(np.unique(ds.targets))
-    boot = np.zeros((nrows,nrows,niter))
+    rows, nfactors = ds.shape
+    nrows = rows/ntables
+    boot = np.zeros((nrows,nfactors,niter))
     X = ds.a['X'].value
 
     for i in range(niter):
         idx = np.floor(ntables*np.random.random_sample(ntables))
         Y = None
         Y_idx = None
-        fselect = np.zeros((nrows,nrows,ntables))
+        fselect = np.zeros((nrows,nfactors,ntables))
 
         for k,j in enumerate(idx):
 
@@ -290,7 +291,7 @@ def run_bootstrap(ds, sts, niter=1000):
             sys.stdout.flush()
 
     boot = Dataset(boot)
-    boot.sa['targets'] = sts.targets
+    boot.sa['targets'] = ds.targets[:nrows]
     return boot
 
 def inter_table_Rv_analysis(X_, subtable_idx):
