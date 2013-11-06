@@ -136,14 +136,21 @@ class StatisMapper(Mapper):
         self.inter_table_structure = G
 
         #self.compromise1 = np.dot(np.sqrt(self.M),np.dot(X,np.sqrt(self.A)))
-        self.compromise = (X.T*np.sqrt(np.diag(M))).T*np.sqrt(np.diag(A))
+        self.compromise = (X.T*np.sqrt(np.diag(M))).T*np.sqrt(A)
 
         P,delta,Qt = np.linalg.svd(self.compromise, full_matrices=0)     #Eq.42
-        self.P = np.dot(np.linalg.inv(np.sqrt(M)),P)
-        self.Q = np.dot(np.linalg.inv(np.sqrt(self.A)),Qt.T)
+        
+        #self.P = np.dot(np.linalg.inv(np.sqrt(M)),P)
+        self.P = np.sqrt(I)*P # duh. this replacs line above
 
-        self.Delta = Delta = np.diag(delta)
-        self.F = F = np.dot(self.P,Delta)     #Eq. 43
+
+        #self.Q = np.dot(np.linalg.inv(np.sqrt(self.A)),Qt.T)
+        self.Q = (A*Qt).T # sane replacement for above
+
+        #self.Delta = Delta = np.diag(delta)
+        #self.F = F = np.dot(self.P,Delta)     #Eq. 43
+        self.F = self.P*delta
+
         self.eigv=delta**2
         self.inertia=delta**2/np.sum(delta**2)
 
@@ -323,10 +330,9 @@ def inter_table_Rv_analysis(X_, subtable_idx):
         else:
             a = np.hstack((a,alph))
 
-    A = np.diag(a)
     G = v.dot(np.diag(np.sqrt(w))) # eq. 13
     #G = G/np.linalg.norm(G[:,0])
-    return A,alpha,C,G
+    return a,alpha,C,G
 
 
 
@@ -336,13 +342,16 @@ def plot_inter_table_map(sts, prefix='T_', labels=None, axes='off',hw=.03,lw=2):
     G = sts.inter_table_structure[:,[0,1]]
     G[:,0] = np.abs(G[:,0])
     xmx = np.max(G[:,0])
+    w = xmx*.005
+    hw = xmx*.03
     ymx = np.max(abs(G[:,1]))
     for i,idx in enumerate(np.unique(sts.chunks)):
         s = prefix + str(idx)
         plt.text(G[i,0],G[i,1],s)
     #mx = np.max(np.abs(G[:,1]))
-    plt.arrow(0,0,xmx*1.1,0,color='gray',alpha=.7,lw=lw,head_width=hw,length_includes_head=True)
-    plt.arrow(0,-ymx*1.1,0,2*(ymx*1.1),color='gray',alpha=.7,lw=lw,
+    plt.arrow(0,0,xmx*1.1,0,color='gray',alpha=.7,width=w,
+                head_width=hw,length_includes_head=True)
+    plt.arrow(0,-ymx*1.1,0,2*(ymx*1.1),color='gray',alpha=.7,width=w,
             head_width=hw,length_includes_head=True)
     plt.axis((-.1*xmx,xmx*1.1,-ymx*1.1,ymx*1.1))
     plt.axis(axes)
@@ -350,14 +359,17 @@ def plot_inter_table_map(sts, prefix='T_', labels=None, axes='off',hw=.03,lw=2):
     plt.text(xmx,-.2*ymx,'$1$',fontsize=20)
     
 
-def plot_partial_factors(ds,sts,x=0,y=1,cmap=None,axes='off', nude=False):
+def plot_partial_factors(ds,sts,x=0,y=1,cmap=None,axes='off',
+                        nude=False):
 
     mx = np.max(np.abs(ds.samples))
     xmx = mx*1.1
-    plt.arrow(-xmx,0,2*xmx,0,color = 'gray',alpha=.7,width=.0003,
-            head_width=.002,length_includes_head=True)
-    plt.arrow(0,-mx,0,2*mx,color = 'gray',alpha=.7, width=.0003,
-            head_width=.002,length_includes_head=True)
+    hw = .05*xmx
+    w = .01*xmx
+    plt.arrow(-xmx,0,2*xmx,0,color = 'gray',alpha=.7,width=w,
+                head_width=hw,length_includes_head=True)
+    plt.arrow(0,-mx,0,2*mx,color = 'gray',alpha=.7, width=w,
+                head_width=hw,length_includes_head=True)
     ntables = len(np.unique(ds.chunks))
     if cmap is None:
         cmap = cm.spectral(np.linspace(.2,.85,ntables))
@@ -424,12 +436,14 @@ def draw_ellipses(ds, sts, x=0, y=1, ci=.95, labels=None,
 
     mx = np.max(abs(boot[:,[x,y],:]))
     xmx = mx*1.2
+    w = .01*xmx
+    hw = .05*xmx
     #plt.plot([-mx,mx],[0,0],c = 'gray',alpha=.7, lw=2)
     #plt.plot([0,0],[-mx*.8,mx*.8],c = 'gray',alpha=.7, lw=2)
-    plt.arrow(-xmx,0,2*xmx,0,color = 'gray',alpha=.7,width=.0003,
-            head_width=.002,length_includes_head=True)
-    plt.arrow(0,-mx,0,mx*2,color = 'gray',alpha=.7, width=.0003,
-            head_width=.002,length_includes_head=True)
+    plt.arrow(-xmx,0,2*xmx,0,color = 'gray',alpha=.7,width=w,
+            head_width=hw,length_includes_head=True)
+    plt.arrow(0,-mx,0,mx*2,color = 'gray',alpha=.7, width=w,
+            head_width=hw,length_includes_head=True)
  
     for l in range(i):
         points = np.hstack((boot[l,x,:].reshape(-1,1),
