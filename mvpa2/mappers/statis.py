@@ -103,7 +103,7 @@ class StatisMapper(Mapper):
                 ntargets = i/ntables
                 t = samples[chunks==chunk,:]
                 if dataset.sa.has_key('targets'):
-                    self.targets = ds.sa['targets'][chunks==chunk]
+                    self.targets = dataset.sa['targets'][chunks==chunk]
                 else:
                     self.targets = range(ntargets)
 
@@ -301,7 +301,7 @@ def inter_table_Rv_analysis(X_, subtable_idx):
     for idx in np.unique(subtable_idx):
         t = X_[:,subtable_idx==idx]
         S_t = np.dot(t,t.T).flatten()
-
+        S_t = S_t / np.linalg.norm(S_t)
         # K by I^2 matrix Z, eq.10
         if Z is None:
             Z = S_t
@@ -324,26 +324,31 @@ def inter_table_Rv_analysis(X_, subtable_idx):
             a = np.hstack((a,alph))
 
     A = np.diag(a)
-    G = v*np.sqrt(w) # eq. 13
+    G = v.dot(np.diag(np.sqrt(w))) # eq. 13
+    #G = G/np.linalg.norm(G[:,0])
     return A,alpha,C,G
 
 
 
-def plot_inter_table_map(sts, prefix='T_', labels=None, axes='off'):
+def plot_inter_table_map(sts, prefix='T_', labels=None, axes='off',hw=.03,lw=2):
     ax = plt.figure();
 
     G = sts.inter_table_structure[:,[0,1]]
+    G[:,0] = np.abs(G[:,0])
+    xmx = np.max(G[:,0])
+    ymx = np.max(abs(G[:,1]))
     for i,idx in enumerate(np.unique(sts.chunks)):
         s = prefix + str(idx)
         plt.text(G[i,0],G[i,1],s)
-    mx = np.max(np.abs(G[:,1]))
-    plt.arrow(0,0,1,0,color='gray',alpha=.7,head_width=.02,length_includes_head=True)
-    plt.arrow(0,-mx-mx*.1,0,2*mx+mx*.1,color='gray',alpha=.7,lw=2,
-            head_width=.02,length_includes_head=True)
-    plt.axis((-.05,1.05,-mx-mx*.1,mx))
+    #mx = np.max(np.abs(G[:,1]))
+    plt.arrow(0,0,xmx*1.1,0,color='gray',alpha=.7,lw=lw,head_width=hw,length_includes_head=True)
+    plt.arrow(0,-ymx*1.1,0,2*(ymx*1.1),color='gray',alpha=.7,lw=lw,
+            head_width=hw,length_includes_head=True)
+    plt.axis((-.1*xmx,xmx*1.1,-ymx*1.1,ymx*1.1))
     plt.axis(axes)
-    plt.text(-.05,mx-.05,'$2$', fontsize=20)
-    plt.text(.9,-.05,'$1$',fontsize=20)
+    plt.text(-.1*xmx,ymx,'$2$', fontsize=20)
+    plt.text(xmx,-.2*ymx,'$1$',fontsize=20)
+    
 
 def plot_partial_factors(ds,sts,x=0,y=1,cmap=None,axes='off', nude=False):
 
