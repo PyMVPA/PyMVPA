@@ -176,34 +176,8 @@ class WTF(object):
         SV = ('.__version__', )              # standard versioning
         out.write(' Versions of critical externals:\n')
         # First the ones known to externals,
-        # TODO: make all of them set in externals.versions
-        for k, v in externals.versions.iteritems():
+        for k, v in sorted(externals.versions.iteritems()):
             out.write('  %-12s: %s\n' % (k, str(v)))
-        for e, mname, fs in (
-            ('ctypes', None, SV),
-            ('matplotlib', None, SV),
-            ('lxml', None, ('.etree.__version__',)),
-            ('nifti', None, SV),
-            ('numpy', None, SV),
-            ('openopt', 'openopt', SV),
-            ('openopt', 'scikits.openopt', ('.openopt.__version__',)),
-            ('pywt', None, SV),
-            #('rpy', None, ('.rpy_version',)),
-            ('shogun', None, ('.Classifier.Version_get_version_release()',)),
-            ):
-            try:
-                if not externals.exists(e):
-                    continue #sver = 'not present'
-                else:
-                    if mname is None:
-                        mname = e
-                    m = __import__(mname)
-                    svers = [eval('m%s' % (f,)) for f in fs]
-                    sver = ' '.join(svers)
-            except Exception, exc:
-                sver = 'failed to query due to "%s"' % str(exc)
-            out.write('  %-12s: %s\n' % (e, sver))
-
         try:
             if externals.exists('matplotlib'):
                 import matplotlib
@@ -212,6 +186,7 @@ class WTF(object):
         except Exception, exc:
             out.write(' Failed to determine backend of matplotlib due to "%s"'
                       % str(exc))
+
     def _acquire_runtime(self, out):
         out.write("RUNTIME:\n")
         out.write(" PyMVPA Environment Variables:\n")

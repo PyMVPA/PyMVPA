@@ -224,6 +224,7 @@ htmldoc: examples2rst build pics mpl-stamp tutorial2notebooks manpages
 	cd $(HTML_DIR)/workshops && ln -sf ../_static
 	cd $(HTML_DIR)/datadb && ln -sf ../_static
 	cp $(DOCSRC_DIR)/pics/history_splash.png $(HTML_DIR)/_images/
+	cp $(DOC_DIR)/pics/*-logo_h*.png $(HTML_DIR)/_static/
 
 pdfdoc: examples2rst build pics pdfdoc-stamp
 pdfdoc-stamp: mpl-stamp

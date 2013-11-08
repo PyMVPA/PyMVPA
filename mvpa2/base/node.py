@@ -20,7 +20,6 @@ from mvpa2.base.state import ClassWithCollections, ConditionalAttribute
 from mvpa2.base.collections import SampleAttributesCollection, \
      FeatureAttributesCollection, DatasetAttributesCollection
 
-
 if __debug__:
     from mvpa2.base import debug
 
@@ -295,18 +294,14 @@ class Node(ClassWithCollections):
                         doc="Node to perform post-processing of results")
 
 
-class ChainNode(Node):
-    """Chain of nodes.
+class CompoundNode(Node):
+    """List of nodes. 
 
-    This class allows to concatenate a list of nodes into a processing chain.
-    When called with a dataset, it is sequentially fed through a nodes in the
-    chain. A ChainNode may also be used as a generator. In this case, all
-    nodes in the chain are treated as generators too, and the ChainNode
-    behaves as a single big generator that recursively calls all embedded
-    generators and yield the results.
-
-    A ChainNode behaves similar to a list container: Nodes can be appended,
+    A CompoundNode behaves similar to a list container: Nodes can be appended,
     and the chain can be sliced like a list, etc ...
+    
+    Subclasses such as ChainNode and CombinedNode implement the _call
+    method in different ways.
     """
     def __init__(self, nodes, **kwargs):
         """
@@ -318,8 +313,9 @@ class ChainNode(Node):
         if not len(nodes):
             raise ValueError("%s needs at least one embedded node."
                              % self.__class__.__name__)
-        Node.__init__(self, **kwargs)
+
         self._nodes = nodes
+        Node.__init__(self, **kwargs)
 
 
     def __copy__(self):
@@ -328,18 +324,7 @@ class ChainNode(Node):
 
 
     def _call(self, ds):
-        mp = ds
-        for i, n in enumerate(self):
-            if __debug__:
-                debug('MAP', "%s: input (%s) -> node (%i/%i): '%s'",
-                      (self.__class__.__name__,
-                       hasattr(mp, 'shape') and mp.shape or '???',
-                       i + 1, len(self),
-                       n))
-            mp = n(mp)
-        if __debug__:
-            debug('MAP', "%s: output (%s)", (self.__class__.__name__, mp.shape))
-        return mp
+        raise NotImplementedError("This is an abstract class.")
 
 
     def generate(self, ds, startnode=0):
@@ -404,7 +389,7 @@ class ChainNode(Node):
 
 
     def __repr__(self, prefixes=[]):
-        return super(ChainNode, self).__repr__(
+        return super(CompoundNode, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['nodes']))
 
@@ -413,3 +398,88 @@ class ChainNode(Node):
         return _str(self, '-'.join([str(n) for n in self]))
 
     nodes = property(fget=lambda self:self._nodes)
+
+
+class ChainNode(CompoundNode):
+    """
+    This class allows to concatenate a list of nodes into a processing chain.
+    When called with a dataset, it is sequentially fed through nodes in the
+    chain. A ChainNode may also be used as a generator. In this case, all
+    nodes in the chain are treated as generators too, and the ChainNode
+    behaves as a single big generator that recursively calls all embedded
+    generators and yield the results.
+    """
+    def __init__(self, nodes, **kwargs):
+        """
+        Parameters
+        ----------
+        nodes: list
+          Node instances.
+        """
+        CompoundNode.__init__(self, nodes=nodes, **kwargs)
+
+    def _call(self, ds):
+        mp = ds
+        for i, n in enumerate(self):
+            if __debug__:
+                debug('MAP', "%s: input (%s) -> node (%i/%i): '%s'",
+                      (self.__class__.__name__,
+                       hasattr(mp, 'shape') and mp.shape or '???',
+                       i + 1, len(self),
+                       n))
+            mp = n(mp)
+        if __debug__:
+            debug('MAP', "%s: output (%s)", (self.__class__.__name__, mp.shape))
+        return mp
+
+
+class CombinedNode(CompoundNode):
+    """Node to pass a dataset on to a set of nodes and combine there output.
+
+    Output combination or aggregation is currently done by hstacking or
+    vstacking the resulting datasets.
+    """
+
+    def __init__(self, nodes, combine_axis, a=None, **kwargs):
+        """
+        Parameters
+        ----------
+        mappers : list
+        combine_axis : ['h', 'v']
+        a: {'unique','drop_nonunique','uniques','all'} or True or False or None (default: None)
+            Indicates which dataset attributes from datasets are stored 
+            in merged_dataset. If an int k, then the dataset attributes from 
+            datasets[k] are taken. If 'unique' then it is assumed that any
+            attribute common to more than one dataset in datasets is unique;
+            if not an exception is raised. If 'drop_nonunique' then as 'unique',
+            except that exceptions are not raised. If 'uniques' then, for each 
+            attribute,  any unique value across the datasets is stored in a tuple 
+            in merged_datasets. If 'all' then each attribute present in any 
+            dataset across datasets is stored as a tuple in merged_datasets; 
+            missing values are replaced by None. If None (the default) then no 
+            attributes are stored in merged_dataset. True is equivalent to
+            'drop_nonunique'. False is equivalent to None.
+        """
+        CompoundNode.__init__(self, nodes=nodes, **kwargs)
+        self._combine_axis = combine_axis
+        self._a = a
+
+    def __copy__(self):
+        return self.__class__([copy.copy(n) for n in self],
+                                         copy.copy(self._combine_axis),
+                                         copy.copy(self._a))
+
+
+    def _call(self, ds):
+        out = [node(ds) for node in self]
+        from mvpa2.datasets import hstack, vstack
+        stacker = {'h': hstack, 'v': vstack}
+        stacked = stacker[self._combine_axis](out, self._a)
+        return stacked
+
+    def __repr__(self, prefixes=[]):
+        return super(CombinedNode, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['combine_axis', 'a']))
+
+

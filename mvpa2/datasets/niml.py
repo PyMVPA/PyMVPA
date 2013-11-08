@@ -7,10 +7,18 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """NeuroImaging Markup Language (NIML) support.
+
 Supports storing most typical values (samples, feature attributes, sample
-attributes, dataset attributes) that are in a dataset in NIML format, as 
+attributes, dataset attributes) that are in a dataset in NIML format, as
 long as these values are array-like.
-No support for 'sophisticated' values such as Mappers"""
+
+Notes
+-----
+No support for 'sophisticated' values such as Mappers
+
+.. versionadded:: 2.3.0
+
+"""
 
 __docformat__ = 'restructuredtext'
 
@@ -18,7 +26,6 @@ import numpy as np
 
 import os
 
-from mvpa2.support.nibabel import afni_niml as niml
 from mvpa2.support.nibabel import afni_niml_dset as niml_dset
 
 from mvpa2.base.collections import SampleAttributesCollection, \
@@ -28,6 +35,7 @@ from mvpa2.base.collections import SampleAttributesCollection, \
 
 from mvpa2.base import warning, debug, externals
 from mvpa2.datasets.base import Dataset
+from mvpa2.base import dataset
 
 if externals.exists('h5py'):
     from mvpa2.base.hdf5 import h5save, h5load
@@ -35,9 +43,9 @@ if externals.exists('h5py'):
 _PYMVPA_PREFIX = 'PYMVPA'
 _PYMVPA_SEP = '_'
 
-def from_niml_dset(dset, fa_labels=[], sa_labels=[], a_labels=[]):
+def from_niml(dset, fa_labels=[], sa_labels=[], a_labels=[]):
     '''Convert a NIML dataset to a Dataset
-    
+
     Parameters
     ----------
     dset: dict
@@ -59,7 +67,7 @@ def from_niml_dset(dset, fa_labels=[], sa_labels=[], a_labels=[]):
     # check for singleton element
     if type(dset) is list and len(dset) == 1:
         # recursive call
-        return from_niml_dset(dset[0])
+        return from_niml(dset[0])
 
     if not type(dset) is dict:
         raise ValueError("Expected a dict")
@@ -108,7 +116,10 @@ def from_niml_dset(dset, fa_labels=[], sa_labels=[], a_labels=[]):
                     short_k = _PYMVPA_SEP.join(k_split[2:])
                     expected_length = infix2length.get(infix, None)
                     if expected_length:
-                        while type(v) is str:
+                        if isinstance(v, np.ndarray) and np.dtype == np.str_:
+                            v = str(v)
+
+                        while isinstance(v, basestring):
                             # strings are seperated by ';'
                             # XXX what if this is part of the value 
                             # intended by the user?
@@ -157,7 +168,7 @@ def from_niml_dset(dset, fa_labels=[], sa_labels=[], a_labels=[]):
 
     return ds
 
-def to_niml_dset(ds):
+def to_niml(ds):
     '''Convert a Dataset to a NIML dataset
     
     Parameters
@@ -171,6 +182,8 @@ def to_niml_dset(ds):
         Dictionary with NIML key-value pairs, such as obtained from
         mvpa2.support.nibabel.afni_niml_dset.read()
      '''
+    if isinstance(ds, np.ndarray):
+        ds = Dataset(ds)
 
     dset = dict(data=np.transpose(ds.samples))
 
@@ -209,6 +222,104 @@ def to_niml_dset(ds):
             dset[long_key] = v
 
     return dset
+
+def hstack(dsets, pad_to_feature_index=None, hstack_method='drop_nonunique',
+                set_empty_value=0.):
+    '''Stacks NIML datasets while considering node indices
+    
+    Parameters
+    ----------
+    dsets: list 
+        datasets to be stacked
+    pad_to_feature_index: list or int or None
+        If a list then it should be of the same length as dsets and indicates
+        to which node index the input should be padded. A single int means
+        that the same value is used for all dset in dsets. None means
+        no padding, and is only allowed for non-sparse datasets.
+    hstack_method: str:
+        How datasets are stacked; see dataset.hstack.
+    set_empty_value: float
+        Value to which empty (padded) dataset values are set.
+    
+    Returns
+    dset: Dataset
+        Data combined from all dset in dsets.
+    '''
+
+    n = len(dsets)
+
+    # make sure pad_to_feature_index has n values
+    if pad_to_feature_index is None or type(pad_to_feature_index) is int:
+        pad_to_feature_index = [pad_to_feature_index] * n
+    elif len(pad_to_feature_index) != n:
+        raise ValueError("illegal pad_to_feature_index: expected list or int")
+
+    # labels that can contain node indices
+    node_indices_labels = ('node_indices', 'center_ids', 'ids', 'roi_ids')
+    node_indices = []
+
+    # allocate space for output
+    padded_dsets = []
+    hstack_indices = []
+    first_node_index = 0
+    for i, (dset, pad_to) in enumerate(zip(dsets, pad_to_feature_index)):
+        # get node indices in this dataset
+        node_index = _find_node_indices(dset, node_indices_labels)
+        if node_index is None:
+            node_index = np.arange(dset.nfeatures)
+        max_node_index = np.max(node_index)
+
+        # make a stripped version - without node index labels
+        stripped_dset = dset.copy()
+        for label in node_indices_labels:
+            if label in stripped_dset.fa:
+                stripped_dset.fa.pop(label)
+
+        # see if padding is needed
+        if pad_to is None or pad_to == max_node_index + 1:
+            if not np.array_equal(np.arange(max_node_index + 1), np.sort(node_index)):
+                raise ValueError("Sparse input %d: need pad_to input" % (i + 1))
+            padded_dset = stripped_dset
+            other_index = np.arange(0)
+        else:
+            # have to use empty values
+            nfeatures_empty = pad_to - dset.nfeatures
+            if nfeatures_empty < 0:
+                raise ValueError("Dataset has %d features, cannot pad "
+                                    "to %d" % (dset.nfeatures, pad_to))
+
+            # make empty array
+            empty_arr = np.zeros((dset.nsamples, nfeatures_empty),
+                                    dtype=dset.samples.dtype) + set_empty_value
+            empty_dset = Dataset(empty_arr, sa=stripped_dset.sa.copy(deep=True))
+
+            # combine current dset and empty array
+            padded_dset = dataset.hstack((stripped_dset, empty_dset), hstack_method)
+
+            # set the proper node indices
+            other_index = np.setdiff1d(np.arange(pad_to), node_index)
+
+        # sanity check to make sure that indices are ok
+        # XXX could be more informative
+        if len(np.setdiff1d(node_index, np.arange(pad_to or max_node_index + 1))):
+            raise ValueError("Illegal indices")
+
+        hstack_index = node_index + first_node_index
+        hstack_other_index = other_index + first_node_index
+        first_node_index += pad_to or (max_node_index + 1) # prepare for next iteration
+
+        padded_dsets.append(padded_dset)
+        hstack_indices.append(hstack_index)
+        if len(other_index):
+            hstack_indices.append(hstack_other_index)
+
+    hstack_dset = dataset.hstack(padded_dsets, hstack_method)
+    hstack_indices = np.hstack(hstack_indices)
+
+    hstack_dset.fa[node_indices_labels[0]] = hstack_indices
+
+    return hstack_dset
+
 
 def _find_sample_labels(dset, sample_labels):
     '''Helper function to find labels in this dataset.
@@ -285,7 +396,7 @@ def write(fn, ds, form='binary'):
     form: str
         Data format: 'binary' or 'text' or 'base64'
     '''
-    niml_ds = to_niml_dset(ds)
+    niml_ds = to_niml(ds)
     niml_dset.write(fn, niml_ds, form=form)
 
 def read(fn):
@@ -297,7 +408,7 @@ def read(fn):
         Filename
     '''
 
-    readers_converters = [(niml_dset.read, from_niml_dset)]
+    readers_converters = [(niml_dset.read, from_niml)]
     if externals.exists('h5py'):
         readers_converters.append((h5load, None))
 
@@ -330,7 +441,7 @@ def from_any(x):
     if isinstance(x, basestring):
         return read(fn)
     elif isinstance(x, dict):
-        return from_niml_dset(x)
+        return from_niml(x)
     elif isinstance(x, Dataset):
         return x
 

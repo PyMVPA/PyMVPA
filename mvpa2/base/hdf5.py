@@ -116,7 +116,8 @@ def hdf2obj(hdf, memo=None):
         else:
             # read array-dataset into an array
             obj = np.empty(hdf.shape, hdf.dtype)
-            hdf.read_direct(obj)
+            if obj.size:
+                hdf.read_direct(obj)
     else:
         # check if we have a class instance definition here
         if not ('class' in hdf.attrs or 'recon' in hdf.attrs):
@@ -219,7 +220,8 @@ def _update_obj_state_from_hdf(obj, hdf, memo):
             obj.__setstate__(state)
         else:
             state = _hdf_dict_to_obj(hdf['state'], memo)
-            obj.__dict__.update(state)
+            if state:
+                obj.__dict__.update(state)
         if __debug__:
             debug('HDF5', "Updated %i state items." % len(state))
 
@@ -637,7 +639,10 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
         # there is something in the state
         state = pieces[2]
         if __debug__:
-            debug('HDF5', "Store object state (%i items)." % len(state))
+            if state is not None:
+                debug('HDF5', "Store object state (%i items)." % len(state))
+            else:
+                debug('HDF5', "Storing object with None state")
         # need to set noid since state dict is unique to an object
         obj2hdf(grp, state, name='state', memo=memo, noid=True,
                 **kwargs)

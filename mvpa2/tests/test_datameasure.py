@@ -15,7 +15,7 @@ from mvpa2.testing.clfs import *
 from mvpa2.testing.datasets import *
 
 from mvpa2.base import externals, warning
-from mvpa2.base.node import ChainNode
+from mvpa2.base.node import ChainNode, CombinedNode
 from mvpa2.datasets.base import Dataset
 from mvpa2.featsel.base import SensitivityBasedFeatureSelection, \
         CombinedFeatureSelection
@@ -29,7 +29,8 @@ from mvpa2.clfs.meta import SplitClassifier, MulticlassClassifier, \
 from mvpa2.clfs.smlr import SMLR, SMLRWeights
 from mvpa2.mappers.zscore import zscore
 from mvpa2.mappers.fx import sumofabs_sample, absolute_features, FxMapper, \
-     maxofabs_sample, BinaryFxNode
+     maxofabs_sample, BinaryFxNode, \
+     mean_sample, mean_feature
 from mvpa2.generators.splitters import Splitter
 from mvpa2.generators.partition import NFoldPartitioner
 from mvpa2.generators.resampling import Balancer
@@ -75,7 +76,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         self.assertTrue(f.shape == (1, data.nfeatures))
         self.assertTrue(abs(f.samples[0, 1]) <= 1e-12, # some small value
             msg="Failed test with value %g instead of != 0.0" % f.samples[0, 1])
-        self.assertTrue(f.samples[0,0] > 0.1)     # some reasonably large value
+        self.assertTrue(f.samples[0, 0] > 0.1)     # some reasonably large value
 
         # we should not have NaNs
         self.assertTrue(not np.any(np.isnan(f)))
@@ -117,7 +118,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         sens = sana(ds)
         assert('nonbogus_targets' in sens.fa) # were they passsed?
         # TODO: those few do not expose biases
-        if not len(set(clf.__tags__).intersection(('lars', 'glmnet', 'gpr' ))):
+        if not len(set(clf.__tags__).intersection(('lars', 'glmnet', 'gpr'))):
             assert('biases' in sens.sa)
             # print sens.sa.biases
         # It should return either ...
@@ -128,10 +129,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
             req_nsamples += [ nsplits ]
         else:
             # and for pairs in case of multiclass
-            req_nsamples += [ (nlabels * (nlabels-1) / 2) * nsplits ]
+            req_nsamples += [ (nlabels * (nlabels - 1) / 2) * nsplits ]
             # and for 1-vs-1 embedded within Multiclass operating on
             # pairs (e.g. SMLR)
-            req_nsamples += [req_nsamples[-1]*2]
+            req_nsamples += [req_nsamples[-1] * 2]
 
             # Also for regression_based -- they can do multiclass
             # but only 1 sensitivity is provided
@@ -154,7 +155,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # dtype object and we would need to get them all
         if sens_ulabels.dtype is np.dtype('object'):
             sens_ulabels = np.unique(
-                reduce(lambda x,y: x+y, [list(x) for x in sens_ulabels]))
+                reduce(lambda x, y: x + y, [list(x) for x in sens_ulabels]))
 
         assert_array_equal(sens_ulabels, ds.sa['targets'].unique)
 
@@ -177,7 +178,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
             for conf_matrix in [sana.clf.ca.training_stats] \
                               + sana.clf.ca.stats.matrices:
                 self.assertTrue(
-                    conf_matrix.percent_correct>=70,
+                    conf_matrix.percent_correct >= 70,
                     msg="We must have trained on each one more or " \
                     "less correctly. Got %f%% correct on %d labels" %
                     (conf_matrix.percent_correct,
@@ -248,10 +249,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
                     # that those 2 were the strongest -- so check only signs
                     """
                     self.assertTrue(
-                        sens1.samples[0, ilabel2[0]]<0,
+                        sens1.samples[0, ilabel2[0]] < 0,
                         "With %i classes in pair %s got feature %i for %r >= 0"
                         % (nlabels, label, ilabel2[0], label[0]))
-                    self.assertTrue(sens1.samples[0, ilabel2[1]]>0,
+                    self.assertTrue(sens1.samples[0, ilabel2[1]] > 0,
                         "With %i classes in pair %s got feature %i for %r <= 0"
                         % (nlabels, label, ilabel2[1], label[1]))
                 else:
@@ -286,7 +287,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
     @sweepargs(svm=clfswh['linear', 'svm'])
     def test_linear_svm_weights(self, svm):
         # assumming many defaults it is as simple as
-        sana = svm.get_sensitivity_analyzer(enable_ca=["sensitivities"] )
+        sana = svm.get_sensitivity_analyzer(enable_ca=["sensitivities"])
         # and lets look at all sensitivities
         sens = sana(self.dataset)
         # for now we can do only linear SVM, so lets check if we raise
@@ -318,11 +319,11 @@ class SensitivityAnalysersTests(unittest.TestCase):
         sensfull = sana_full(ds2)
 
         self.assertEqual(senssplit.shape, (2, ds2.nfeatures))
-        self.assertEqual(sensfull.shape,  (1, ds2.nfeatures))
+        self.assertEqual(sensfull.shape, (1, ds2.nfeatures))
 
         # just to verify that we split properly and if we reconstruct
         # manually we obtain the same
-        dmap = (-1 * senssplit.samples[1]  + senssplit.samples[0]) \
+        dmap = (-1 * senssplit.samples[1] + senssplit.samples[0]) \
                - sensfull.samples
         self.assertTrue((np.abs(dmap) <= 1e-10).all())
         #print "____"
@@ -367,7 +368,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                   ds.nfeatures))
         splits = sana.ca.datasets
         self.assertEqual(len(splits), 2)
-        self.assertTrue(np.all([s.nsamples == ds.nsamples//4 for s in splits]))
+        self.assertTrue(np.all([s.nsamples == ds.nsamples // 4 for s in splits]))
         # should have used different samples
         self.assertTrue(np.any([splits[0].sa.origids != splits[1].sa.origids]))
         # and should have got different sensitivities
@@ -503,7 +504,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         tm_err = TransferMeasure(clf, Splitter('chunks', count=2),
                                  postproc=enode)
         auto_error = tm_err(self.dataset)
-        ok_(manual_error == postproc_error.samples[0,0])
+        ok_(manual_error == postproc_error.samples[0, 0])
 
 
     def test_pseudo_cv_measure(self):
@@ -524,12 +525,11 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
 
     def test_repeated_features(self):
-        print self.dataset
-        print self.dataset.fa.nonbogus_targets
         class CountFeatures(Measure):
             is_trained = True
             def _call(self, ds):
-                return ds.nfeatures
+                return Dataset([ds.nfeatures],
+                                fa={'nonbogus_targets': list(ds.fa['nonbogus_targets'].unique)})
 
         cf = CountFeatures()
         spl = Splitter('fa.nonbogus_targets')
@@ -538,7 +538,22 @@ class SensitivityAnalysersTests(unittest.TestCase):
         rm = RepeatedMeasure(cf, spl, concat_as='features')
         res = rm(self.dataset)
         assert_equal(res.shape, (1, nsplits))
-        assert_array_equal(res.samples[0], [18,1,1])
+        # due to https://github.com/numpy/numpy/issues/641 we are
+        # using list(set(...)) construct and there order of
+        # nonbogus_targets.unique can vary from run to run, thus there
+        # is no guarantee that we would get 18 first, which is a
+        # questionable assumption anyways, thus performing checks
+        # which do not require any specific order.
+        # And yet due to another issue
+        # https://github.com/numpy/numpy/issues/3759
+        # we can't just == None for the bool mask
+        None_fa = np.array([x == None for x in  res.fa.nonbogus_targets])
+        assert_array_equal(res.samples[0, None_fa], [18])
+        assert_array_equal(res.samples[0, ~None_fa], [1, 1])
+
+        if sys.version_info[0] < 3:
+            # with python2 order seems to be consistent
+            assert_array_equal(res.samples[0], [18, 1, 1])
 
     def test_custom_combined_selectors(self):
         """Test combination of the selectors in a single function
@@ -562,33 +577,44 @@ class SensitivityAnalysersTests(unittest.TestCase):
         ds_ = fs(ds)
         assert_equal(ds_.nfeatures, int(ds.nfeatures * 0.04))
 
-def test_pass_attr():
-    from mvpa2.base.node import Node
-    from mvpa2.base.state import ConditionalAttribute
+    def test_combined_node(self):
+        ds = datasets['3dsmall']
+        axis2nodes = dict(h=(mean_feature, mean_feature),
+                          v=(mean_sample, mean_sample))
 
-    ds = datasets['dumbinv']
+        for i, axis in enumerate('vh'):
+            nodes = axis2nodes[axis]
+            combined = CombinedNode([n() for n in nodes], axis, False)
+            assert_true(combined(ds).shape[i] == 2)
+            assert_true(combined(ds).shape[1 - i] == ds.shape[1 - i])
 
-    class MyNode(Node):
-        some_sa = ConditionalAttribute(enabled=True)
-        some_fa = ConditionalAttribute(enabled=True)
-        some_complex = ConditionalAttribute(enabled=True)
-        def _call(self, ds):
-            return Dataset(np.zeros(ds.shape))
-    node = MyNode(pass_attr=['ca.some_sa',
-                             ('ca.some_fa', 'fa'),
-                             ('ca.some_complex', 'fa', 1, 'transposed'),
-                             'sa.targets'])
-    node.ca.some_sa = np.arange(len(ds))
-    node.ca.some_fa = np.arange(ds.nfeatures)
-    node.ca.some_complex = ds.samples
-    res = node(ds)
-    assert_true('some_sa' in res.sa)
-    assert_true('some_fa' in res.fa)
-    assert_true('transposed' in res.fa)
-    assert_true('targets' in res.sa)
-    # view on original array
-    assert_true(res.fa.transposed.base is ds.samples)
-    assert_array_equal(res.fa.transposed.T, ds.samples)
+    def test_pass_attr(self):
+        from mvpa2.base.node import Node
+        from mvpa2.base.state import ConditionalAttribute
+
+        ds = datasets['dumbinv']
+
+        class MyNode(Node):
+            some_sa = ConditionalAttribute(enabled=True)
+            some_fa = ConditionalAttribute(enabled=True)
+            some_complex = ConditionalAttribute(enabled=True)
+            def _call(self, ds):
+                return Dataset(np.zeros(ds.shape))
+        node = MyNode(pass_attr=['ca.some_sa',
+                                 ('ca.some_fa', 'fa'),
+                                 ('ca.some_complex', 'fa', 1, 'transposed'),
+                                 'sa.targets'])
+        node.ca.some_sa = np.arange(len(ds))
+        node.ca.some_fa = np.arange(ds.nfeatures)
+        node.ca.some_complex = ds.samples
+        res = node(ds)
+        assert_true('some_sa' in res.sa)
+        assert_true('some_fa' in res.fa)
+        assert_true('transposed' in res.fa)
+        assert_true('targets' in res.sa)
+        # view on original array
+        assert_true(res.fa.transposed.base is ds.samples)
+        assert_array_equal(res.fa.transposed.T, ds.samples)
 
 
 def suite():
@@ -597,4 +623,3 @@ def suite():
 
 if __name__ == '__main__':
     import runner
-

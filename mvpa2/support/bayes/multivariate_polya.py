@@ -1,4 +1,4 @@
-# emacs: coding: iso-8859-15; -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# emacs: coding: utf-8; -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PDF of the multivariate Pólya distribution.
+"""PDF of the multivariate PÃ³lya distribution.
 
 See: http://en.wikipedia.org/wiki/Multivariate_P%C3%B3lya_distribution
 """
@@ -17,7 +17,7 @@ from scipy.special import gamma, gammaln
 
 
 def multivariate_polya(x, alpha):
-    """Multivariate Pólya PDF. Basic implementation.
+    """Multivariate PÃ³lya PDF. Basic implementation.
     """
     x = np.atleast_1d(x).flatten()
     alpha = np.atleast_1d(alpha).flatten()
@@ -33,7 +33,7 @@ def multivariate_polya(x, alpha):
 
 
 def log_multivariate_polya_vectorized(X, alpha):
-    """Multivariate Pólya log PDF. Vectorized and stable implementation.
+    """Multivariate PÃ³lya log PDF. Vectorized and stable implementation.
     """
     X = np.atleast_1d(X)
     alpha = np.atleast_1d(alpha)

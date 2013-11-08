@@ -50,7 +50,7 @@ class FlattenMapper(Mapper):
         # by default auto train
         kwargs['auto_train'] = kwargs.get('auto_train', True)
         Mapper.__init__(self, **kwargs)
-        self.__origshape = None         # pylint pacifier
+        self._origshape = None         # pylint pacifier
         self.__maxdims = maxdims
         if not shape is None:
             self._train_with_shape(shape)
@@ -83,7 +83,7 @@ class FlattenMapper(Mapper):
         """
         # infer the sample shape from the data under the assumption that the
         # first axis is the samples-separating dimension
-        self.__origshape = shape
+        self._origshape = shape
         # flag the mapper as trained
         self._set_trained()
 
@@ -93,7 +93,7 @@ class FlattenMapper(Mapper):
         # local binding
         nsamples = data.shape[0]
         sshape = data.shape[1:]
-        oshape = self.__origshape
+        oshape = self._origshape
 
         if oshape is None:
             raise RuntimeError("FlattenMapper needs to be trained before it "
@@ -133,13 +133,13 @@ class FlattenMapper(Mapper):
             attr = dataset.fa[k].value
             # the maximmum number of axis to flatten in the attr
             if not self.__maxdims is None:
-                maxdim = min(len(self.__origshape), self.__maxdims)
+                maxdim = min(len(self._origshape), self.__maxdims)
             else:
-                maxdim = len(self.__origshape)
+                maxdim = len(self._origshape)
             multiplier = mds.nfeatures \
                     / np.prod(attr.shape[:maxdim])
             if __debug__:
-                debug('MAP_', "Broadcasting fa '%s' %s %d times" 
+                debug('MAP_', "Broadcasting fa '%s' %s %d times"
                         % (k, attr.shape, multiplier))
             # broadcast as many times as necessary to get 'matching dimensions'
             bced = np.repeat(attr, multiplier, axis=0)
@@ -161,7 +161,7 @@ class FlattenMapper(Mapper):
         # local binding
         nsamples = data.shape[0]
         sshape = data.shape[1:]
-        oshape = self.__origshape
+        oshape = self._origshape
         return data.reshape((nsamples,) + oshape + sshape[1:])
 
 
@@ -184,8 +184,101 @@ class FlattenMapper(Mapper):
             del mds.fa[inspace]
         return mds
 
-    shape = property(fget=lambda self:self.__origshape)
+    shape = property(fget=lambda self:self._origshape)
     maxdims = property(fget=lambda self:self.__maxdims)
+
+class ProductFlattenMapper(FlattenMapper):
+    """Reshaping mapper that flattens multidimensional arrays and
+    preserves information for each dimension in feature attributes
+    
+    Notes
+    -----
+    This class' name contains 'product' because it maps feature
+    attributes in a cartesian-product way."""
+
+    def __init__(self, factor_names_values, **kwargs):
+        '''
+        Parameters
+        ----------
+        factor_names_values: iterable
+            The names and values for each dimension. If the dataset to
+            be flattened is shaped ns X nf1 x nf2 x ... x nfN, then
+            factor_names_values should have a length of N. Furthermore
+            the K-th element in factor_names_values should be a tuple
+            (nameK, valueK) where nameK is a string and valueK has
+            length nfK.
+            Applying this mapper to a dataset yields a new dataset
+            with size ns X (nf1 * nf2 * ... * nfN) with 
+            feature attributes nameK and nameKindices for each nameK
+            in the factor names. 
+        '''
+        kwargs['auto_train'] = kwargs.get('auto_train', True)
+
+        # make sure the factor names and values are properly set
+        try:
+            shape = tuple(len(value) for _, value in factor_names_values)
+            space = '_'.join(name for name, _ in factor_names_values) + \
+                                                                 '_indices'
+        except:
+            raise ValueError('factor_names_values should be an iterable with pairs'
+                       ' of names and values')
+
+        FlattenMapper.__init__(self, shape=shape, space=space, **kwargs)
+
+        self._factor_names_values = factor_names_values
+
+    def __repr__(self, prefixes=[]):
+        return super(ProductFlattenMapper, self).__repr__(
+                        prefixes=prefixes
+                        + _repr_attrs(self, ['factor_name_values']))
+
+    def _forward_dataset(self, dataset):
+        mds = super(ProductFlattenMapper, self)._forward_dataset(dataset)
+
+        oshape = self._origshape
+
+        # now map all the factor names and values to feature attributes
+        for i, (name, value) in enumerate(self._factor_names_values):
+            # keep track of both the value itself and the indices
+            for repr, postfix in ((value, None),
+                                  (np.arange(len(value)), '_indices')):
+
+                nshape = [1] + list(oshape) # full shape with one sample
+                nshape[i + 1] = 1 # dimension of current factor
+
+                # shape for repr with 1 value at all dimensions except the 
+                # current one. In other words nshapa and ushape complement
+                # each other.
+                ushape = [1] * len(nshape)
+                ushape[i + 1] = len(value)
+
+                # reshape and tile
+                repr_rs = np.reshape(np.asarray(repr), ushape)
+                repr_arr = np.tile(repr_rs, nshape)
+
+                # ensure that values have the proper shape
+                if repr_arr.shape[1:] != oshape:
+                    raise ValueError("Shape mismatch: %s != %s - this should"
+                                    " not happen" % ((repr_arr.shape,), (oshape,)))
+
+                # flatten the attributes
+                repr_flat = self.forward(repr_arr)
+                # assigne as feature attribute
+                fa_label = name if postfix is None else name + postfix
+
+                mds.fa[fa_label] = repr_flat.ravel()
+
+        return mds
+
+    def _reverse_dataset(self, dataset):
+        mds = super(ProductFlattenMapper, self)._reverse_dataset(dataset)
+        for name, _ in self._factor_name_values:
+            for postfix in (None, '_indices'):
+                label = name if postfix is None else name + postfix
+                if label in mds.fa:
+                    del mds.fa[label]
+        return mds
+
 
 def mask_mapper(mask=None, shape=None, space=None):
     """Factory method to create a chain of Flatten+StaticFeatureSelection Mappers

@@ -1,9 +1,9 @@
 
 .. _datadb_face_inversion_demo:
 
-********************************
-Tutorial Data: Block-design fMRI
-********************************
+*********************************
+Eye-tracking Data: Face inversion
+*********************************
 
 TODO
 

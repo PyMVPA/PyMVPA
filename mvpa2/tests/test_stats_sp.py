@@ -292,7 +292,7 @@ class StatsTestsScipy(unittest.TestCase):
     @reseed_rng()
     def test_scipy_fit_2fparams(self):
         # fixing parameters was not before this version
-        skip_if_no_external('scipy', min_version='0.8.0')
+        skip_if_no_external('scipy', min_version='0.8.1')
         t = scipy.stats.t
         d = t(10, 1, 10).rvs(10)
         params = t.fit(d, floc=1, fscale=10.)
