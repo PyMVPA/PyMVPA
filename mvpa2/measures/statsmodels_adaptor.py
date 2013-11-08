@@ -10,17 +10,18 @@
 
 __docformat__ = 'restructuredtext'
 
+import numpy as np
+
 from mvpa2.base import externals
 
 # do conditional to be able to build module reference
-externals.exists('statsmodels', raise_=True)
-
-import numpy as np
-import statsmodels.api as sm
+if externals.exists('statsmodels', raise_=True):
+    import statsmodels.api as sm
 
 from mvpa2.measures.base import FeaturewiseMeasure
 from mvpa2.datasets.base import Dataset
 
+__all__ = [ 'UnivariateStatsModels', 'GLM' ]
 
 class UnivariateStatsModels(FeaturewiseMeasure):
     """Adaptor for some models from the StatsModels package
@@ -136,7 +137,7 @@ class UnivariateStatsModels(FeaturewiseMeasure):
           class is returned (e.g. 'tvalues'). If a 1d-array, it is passed
           to the fit result class' ``t_test()`` function as a t-contrast vector.
           If a 2d-array, it is passed to the ``f_test()`` function as a
-          constrast matrix. If both latter cases a number of common test
+          contrast matrix. If both latter cases a number of common test
           statistics are return in the rows of the result dataset. A description
           is available in the 'descr' sample attribute. Any other datatype
           passed to this argument will be treated as a callable, the model

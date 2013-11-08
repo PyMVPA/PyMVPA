@@ -410,7 +410,9 @@ if externals.exists('skl'):
                                         descr='skl.LassoLars()')
 
         _elastic_net = SKLLearnerAdapter(
-            sklElasticNet(alpha=.01, rho=.3),
+            sklElasticNet(alpha=.01,
+                          **{'l1_ratio' if externals.versions['skl'] >= '0.13'
+                                        else 'rho': .3}),
             tags=['enet', 'regression', 'linear', # 'has_sensitivity',
                  'does_feature_selection'],
             descr='skl.ElasticNet()')

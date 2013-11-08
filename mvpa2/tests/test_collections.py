@@ -10,6 +10,7 @@
 
 import numpy as np
 import copy
+import sys
 
 from mvpa2.testing.tools import assert_raises, assert_false, assert_equal, \
     assert_true,  assert_array_equal, assert_array_almost_equal, reseed_rng
@@ -124,7 +125,10 @@ def test_array_collectable_unique(a):
     # And sort since order of those is not guaranteed (failed test
     # on squeeze)
     def repr_(x):
-        return repr(sorted(set(x)))
+        x_ = set(x)
+        if sys.version_info[0] < 3:
+            x_ = list(x_)
+        return repr(np.sort(x_))
 
     assert_equal(repr_(a_flat), repr_(c.unique))
     # even if we request it 2nd time ;)
@@ -176,7 +180,7 @@ def test_conditional_attr():
         node.ca.stats.compute()
 
         dc_node = copy.deepcopy(node)
-        assert_array_equal(node.ca.enabled, dc_node.ca.enabled)
+        assert_equal(set(node.ca.enabled), set(dc_node.ca.enabled))
         assert(node.ca['test'].enabled)
         assert(node.ca['stats'].enabled)
         assert_array_equal(node.ca['test'].value, dc_node.ca['test'].value)

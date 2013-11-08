@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Dataset for EEGLAB electrode-time series in text format.
 
-This module offers functions to import data from _EEGLAB tex files.
+This module offers functions to import data from EEGLAB_ text files.
 
 .. _EEGLAB: http://sccn.ucsd.edu/eeglab/
 """
@@ -21,6 +21,9 @@ import os
 from mvpa2.datasets.base import Dataset
 from mvpa2.mappers.flatten import FlattenMapper
 
+# restrict public interface to not misguide sphinx
+__all__ = [ 'eeglab_dataset' ]
+
 def _looks_like_filename(s):
     if os.path.exists(s):
         return True
@@ -28,13 +31,14 @@ def _looks_like_filename(s):
 
 def eeglab_dataset(samples):
     '''Make a Dataset instance from EEGLAB input data
-    
+
     Parameters
     ----------
     samples: str
         Filename of EEGLAB text file
-        
-    Returns:
+
+    Returns
+    -------
     ds: mvpa2.base.dataset.Dataset
         Dataset with the contents of the input file
     '''

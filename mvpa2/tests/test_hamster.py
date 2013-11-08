@@ -96,7 +96,9 @@ class HamsterHelperTests(unittest.TestCase):
         self.assertTrue(hamster.boo is hamster2.boo)
 
         # cleanup
+        gzipped.close()
         os.remove(filename_gz)
+        gzbogus.close()
         os.remove(filename_bogusgz)
 
     @reseed_rng()

@@ -464,7 +464,7 @@ two things and convert any vector into the corresponding NIfTI image:
 
 >>> nimg = map2nifti(fds, revtest)
 
-This image can now be stored as a file (e.g. ``nimg.save('mytest.nii.gz')``).
+This image can now be stored as a file (e.g. ``nimg.to_filename('mytest.nii.gz')``).
 In this format it is now compatible with the vast majority of neuroimaging
 software.
 

@@ -11,7 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 import time
-from mvpa2.base.node import Node
+from mvpa2.base.node import Node, ChainNode
 from mvpa2.base.state import ConditionalAttribute
 from mvpa2.base.types import is_datasetlike
 from mvpa2.base.dochelpers import _repr_attrs
@@ -247,3 +247,43 @@ class Learner(Node):
     force_train = property(fget=lambda x:x.__force_train,
                           doc="Whether the Learner enforces training upon every"
                               "called.")
+
+
+class ChainLearner(Learner, ChainNode):
+    '''Combines different learners into one in a chained fashion'''
+    def __init__(self, learners, auto_train=False,
+                    force_train=False, **kwargs):
+        '''Initializes with measures
+        
+        Parameters
+        ----------
+        learners: list or tuple
+            a list of Learner instances
+        '''
+        Learner.__init__(self, auto_train=auto_train,
+                         force_train=force_train, **kwargs)
+        self._learners = learners
+
+    is_trained = property(fget=lambda x:all(y.is_trained
+                                            for y in x._learners),
+                          fset=lambda x:map(x.set_trained
+                                            for y in x._learners),
+                          doc="Whether the Learner is currently trained.")
+
+    def train(self, ds):
+        for learner in self._learners:
+            learner.train(ds)
+
+    def untrain(self):
+        for learner in self._learners:
+            measure.untrain()
+
+    def __call__(self, ds):
+        '''Calls all learners of this instance'''
+        learners = self._learners
+
+        r = ds
+        for learner in learners:
+            r = learner(r)
+
+        return r

@@ -34,6 +34,8 @@ class _VersionsChecker(dict):
                 # run registered procedure to obtain versions
                 self._KNOWN[key]()
             else:
+                # just check for presence -- that function might set
+                # the version information
                 exists(key, force=True, raise_=True)
         return super(_VersionsChecker, self).__getitem__(key)
 
@@ -116,7 +118,18 @@ def __assign_mdp_version():
     versions['mdp'] = SmartVersion(ver)
 
 def __assign_nibabel_version():
-    import nibabel
+    try:
+        import nibabel
+    except Exception, e:
+        # FloatingError is defined in the same module which precludes
+        # its specific except
+        e_str = str(e)
+        if "We had not expected long double type <type 'numpy.float128'>" in e_str:
+            warning("Must be running under valgrind?  Available nibabel experiences "
+                    "difficulty with float128 upon import and fails to work, thus is "
+                    "report as N/A")
+            raise ImportError("Fail to import nibabel due to %s" % e_str)
+        raise
     versions['nibabel'] = SmartVersion(nibabel.__version__)
 
 def __check_pywt(features=None):
@@ -197,10 +210,6 @@ def __check_shogun(bottom_version, custom_versions=[]):
     else:
         raise ImportError, 'Version %s is smaller than needed %s' % \
               (ver, bottom_version)
-
-def __assign_nipy_version():
-    import nipy
-    versions['nipy'] = SmartVersion(nipy.__version__)
 
 def __check_nipy_neurospin():
     from nipy.neurospin.utils import emp_nul
@@ -343,13 +352,13 @@ def __assign_ipython_version():
     versions['ipython'] = SmartVersion(ipy_version)
 
 def __check_openopt():
+    m = None
     try:
-        import openopt as _
-        return
+        import openopt as m
     except ImportError:
-        pass
-    import scikits.openopt as _
-    return
+        import scikits.openopt as m
+    versions['openopt'] = m.__version__
+    return True
 
 
 def _set_matplotlib_backend():
@@ -421,15 +430,24 @@ def __check_reportlab():
     import reportlab as rl
     versions['reportlab'] = SmartVersion(rl.Version)
 
-def __check_pprocess():
-    import pprocess as pp
-    versions['pprocess'] = SmartVersion(pp.__version__)
+def __check(name, a='__version__'):
+    exec "import %s" % name
+    try:
+        exec "v = %s.%s" % (name, a)
+        # it might be lxml.etree, so take only first module
+        versions[name.split('.')[0]] = SmartVersion(v)
+    except Exception, e:
+        # we can't assign version but it is there
+        if __debug__:
+            debug('EXT', 'Failed to acquire a version of %(name)s: %(e)s'
+                  % locals())
+        pass
+    return True
 
-def __assign_h5py_version():
-    """Check if h5py present  an if it is -- store its version
-    """
+def __check_h5py():
+    __check('h5py', 'version.version')
     import h5py
-    versions['h5py'] = SmartVersion(h5py.version.version)
+    versions['hdf5'] = SmartVersion(h5py.version.hdf5_version)
 
 def __check_rpy():
     """Check either rpy is available and also set it for the sane execution
@@ -492,7 +510,7 @@ def __check_liblapack_so():
 _KNOWN = {'libsvm':'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'libsvm verbosity control':'__check_libsvm_verbosity_control();',
           'nibabel':'__assign_nibabel_version()',
-          'ctypes':'import ctypes as __',
+          'ctypes':'__check("ctypes")',
           'liblapack.so': "__check_liblapack_so()",
           'shogun':'__assign_shogun_version()',
           'shogun.krr': '__assign_shogun_version(); import shogun.Regression as __; x=__.KRR',
@@ -502,6 +520,7 @@ _KNOWN = {'libsvm':'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'shogun.svrlight': '__assign_shogun_version(); from shogun.Regression import SVRLight as __',
           'numpy': "__assign_numpy_version()",
           'numpy_correct_unique': "__check_numpy_correct_unique()",
+          'numpydoc': "import numpydoc",
           'scipy': "__check_scipy()",
           'good scipy.stats.rdist': "__check_stablerdist()",
           'good scipy.stats.rv_discrete.ppf': "__check_rv_discrete_ppf()",
@@ -538,22 +557,26 @@ _KNOWN = {'libsvm':'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'griddata': "__check_griddata()",
           'cPickle': "import cPickle as __",
           'gzip': "import gzip as __",
-          'lxml': "from lxml import objectify as __",
+          'lxml': "__check('lxml.etree', '__version__');"
+                  "from lxml import objectify as __",
           'atlas_pymvpa': "__check_atlas_family('pymvpa')",
           'atlas_fsl': "__check_atlas_family('fsl')",
           'ipython': "__assign_ipython_version()",
           'running ipython env': "__check_in_ipython()",
-          'reportlab': "__check_reportlab()",
+          'reportlab': "__check('reportlab', 'Version')",
           'nose': "import nose as __",
-          'pprocess': "__check_pprocess()",
-          'h5py': "import h5py as __",
-          'nipy': "__assign_nipy_version()",
+          'pprocess': "__check('pprocess')",
+          'pywt': "__check('pywt')",
+          'h5py': "__check_h5py()",
+          'hdf5': "__check_h5py()",
+          'nipy': "__check('nipy')",
           'nipy.neurospin': "__check_nipy_neurospin()",
           'statsmodels': 'import statsmodels.api as __',
           }
 
 
-def exists(dep, force=False, raise_=False, issueWarning=None):
+def exists(dep, force=False, raise_=False, issueWarning=None,
+           exception=RuntimeError):
     """
     Test whether a known dependency is installed on the system.
 
@@ -568,15 +591,17 @@ def exists(dep, force=False, raise_=False, issueWarning=None):
     force : boolean
       Whether to force the test even if it has already been
       performed.
-    raise_ : boolean
-      Whether to raise RuntimeError if dependency is missing.
-      If True, it is still conditioned on the global setting 
+    raise_ : boolean, str
+      Whether to raise an exception if dependency is missing.
+      If True, it is still conditioned on the global setting
       MVPA_EXTERNALS_RAISE_EXCEPTION, while would raise exception
       if missing despite the configuration if 'always'.
     issueWarning : string or None or True
       If string, warning with given message would be thrown.
       If True, standard message would be used for the warning
       text.
+    exception : exception, optional
+      What exception to raise.  Defaults to RuntimeError
     """
     # if we are provided with a list of deps - go through all of them
     if isinstance(dep, list) or isinstance(dep, tuple):
@@ -607,7 +632,7 @@ def exists(dep, force=False, raise_=False, issueWarning=None):
         # check whether an exception should be raised, even though the external
         # was already tested previously
         if not cfg.getboolean('externals', cfgid) and raise_:
-            raise RuntimeError, "Required external '%s' was not found" % dep
+            raise exception, "Required external '%s' was not found" % dep
         return cfg.getboolean('externals', cfgid)
 
 
@@ -617,7 +642,7 @@ def exists(dep, force=False, raise_=False, issueWarning=None):
     result = False
 
     if dep not in _KNOWN:
-        raise ValueError, "%s is not a known dependency key." % (dep)
+        raise ValueError, "%r is not a known dependency key." % (dep,)
     else:
         # try and load the specific dependency
         if __debug__:
@@ -655,7 +680,7 @@ def exists(dep, force=False, raise_=False, issueWarning=None):
 
     if not result:
         if raise_:
-            raise RuntimeError, "Required external '%s' was not found" % dep
+            raise exception, "Required external '%s' was not found" % dep
         if issueWarning is not None \
                and cfg.getboolean('externals', 'issue warning', True):
             if issueWarning is True:
@@ -676,20 +701,9 @@ def exists(dep, force=False, raise_=False, issueWarning=None):
 
 # Bind functions for some versions checkings
 versions._KNOWN.update({
-    'numpy' : __assign_numpy_version,
-    'scipy' : __assign_scipy_version,
-    'nipy' : __assign_nipy_version,
-    'matplotlib': __assign_matplotlib_version,
-    'mdp' : __assign_mdp_version,
-    'ipython' : __assign_ipython_version,
-    'reportlab' : __check_reportlab,
-    'pprocess' : __check_pprocess,
-    'rpy2' : __check_rpy2,
-    'skl' : __assign_skl_version,
     'shogun' : __assign_shogun_version,
     'shogun:rev' : __assign_shogun_version,
     'shogun:full' : __assign_shogun_version,
-    'h5py' : __assign_h5py_version,
     })
 
 
