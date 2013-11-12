@@ -137,11 +137,11 @@ class StatisMapper(Mapper):
 
         self.compromise = (X.T*np.sqrt(np.diag(M))).T*np.sqrt(A)
 
-        P,delta,Qt = np.linalg.svd(self.compromise, full_matrices=0)     #Eq.42
+        Pt,delta,Qt = np.linalg.svd(self.compromise, full_matrices=0)     #Eq.42
         
-        self.P = np.sqrt(I)*P # duh. this replacs line above
+        self.P = np.sqrt(I)*Pt # duh. this replacs line above
         self.Qt = Qt
-        
+        self.Pt = Pt
         self.Q = (Qt*np.sqrt(A)).T
         self.F = self.P*delta
 
@@ -185,6 +185,8 @@ class StatisMapper(Mapper):
 
         return mapped
 
+    #def _reverse_data(self, data):
+        
 
 
     def center_and_norm_table(self,table,col_mean=None, col_norm=None,
