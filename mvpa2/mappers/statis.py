@@ -135,20 +135,14 @@ class StatisMapper(Mapper):
         self.Rv = C
         self.inter_table_structure = G
 
-        #self.compromise1 = np.dot(np.sqrt(self.M),np.dot(X,np.sqrt(self.A)))
         self.compromise = (X.T*np.sqrt(np.diag(M))).T*np.sqrt(A)
 
         P,delta,Qt = np.linalg.svd(self.compromise, full_matrices=0)     #Eq.42
         
-        #self.P = np.dot(np.linalg.inv(np.sqrt(M)),P)
         self.P = np.sqrt(I)*P # duh. this replacs line above
-
-
-        #self.Q = np.dot(np.linalg.inv(np.sqrt(self.A)),Qt.T)
-        self.Q = (A*Qt).T # sane replacement for above
-
-        #self.Delta = Delta = np.diag(delta)
-        #self.F = F = np.dot(self.P,Delta)     #Eq. 43
+        self.Qt = Qt
+        
+        self.Q = (Qt*np.sqrt(A)).T
         self.F = self.P*delta
 
         self.eigv=delta**2
@@ -159,13 +153,15 @@ class StatisMapper(Mapper):
         mapped = None
         X = None
         i,j = ds.shape
+        ntables = len(np.unique(self.chunks))
 
         for ch,chunk in enumerate(np.unique(self.chunks)):
             if self._stack == 'v':
-                table = ds.samples[ds.sa[self._chunks_attr]==chunk,:]
-                nrows = i/j
+                table = ds.samples[ds.sa[self._chunks_attr].value==chunk,:]
+                nrows = i/ntables
+                targ = ds.targets[:nrows]
             if self._stack == 'h':
-                table = ds.samples[:,ds.fa[self._chunks_attr]==chunk]
+                table = ds.samples[:,ds.fa[self._chunks_attr].value==chunk]
                 nrows = i
             table = self.center_and_norm_table(table,
                     col_mean=self._subtable_stats[ch]['col_mean'],
@@ -174,17 +170,17 @@ class StatisMapper(Mapper):
 
 
             m = 1.0/self.I
-            Y = table*np.sqrt(m)*np.sqrt(self.alpha[ch])
+            
 
-            part = Dataset(np.dot(Y,self.Q[self.subtable_idx==ch,:]))
+            part = Dataset(np.dot(table,self.Q[self.subtable_idx==ch,:]))
             part.sa['chunks'] = np.ones((len(part.samples,)))*ch
             part.sa['targets'] = targ
             if mapped is None:
                 mapped = part
-                X = Y
+                X = table
             else:
                 mapped.append(part)
-                X = np.hstack((X,Y))
+                X = np.hstack((X,table))
         mapped.a['X'] = X
 
         return mapped
@@ -220,7 +216,7 @@ class StatisMapper(Mapper):
                 pass
             elif self._col_norm=='l2':
                 col_norm = np.apply_along_axis(np.linalg.norm,0,t)
-            elif self._row_norm=='std':
+            elif self._col_norm=='std':
                 col_norm = np.apply_along_axis(np.std,0,t)
             t = t / col_norm
         # then rows
@@ -409,7 +405,8 @@ def plot_partial_factors(ds,sts,x=0,y=1,cmap=None,axes='off',
     plt.axis('scaled')
     plt.axis([-xmx,xmx,-mx,mx])
 
-def draw_ellipses(ds, sts, x=0, y=1, ci=.95, labels=None,
+
+def plot_ellipses(ds, sts, x=0, y=1, ci=.95, labels=None,
                    cmap=None,scat=False,linestyle=None, nude=False,
                     axes='off', fig=None, **kwargs):
 
