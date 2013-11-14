@@ -680,7 +680,19 @@ def run_makespec_bothhemis(config, env):
             specs.append(afni_suma_spec.read(specpathfn))
 
         add_states = ['inflated', 'full.patch.flat', 'sphere.reg']
-        for add_state in add_states:
+        add_states_required = [True, False, True] # flat surface is optional
+        for add_state, is_req in zip(add_states, add_states_required):
+            has_state = all([len(spec.find_surface_from_state(add_state)) == 1
+                                    for spec in specs])
+
+            if not has_state:
+                if is_req:
+                    error('cannot find state %s' % add_state)
+                else:
+                    # skip this state
+                    print "Optional state %s not found - skipping" % add_state
+                    continue
+
             specs = afni_suma_spec.hemi_pairs_add_views(specs,
                             add_state, ext, refdir, overwrite=overwrite)
 
