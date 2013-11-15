@@ -12,10 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa2.base.node import Node
-from mvpa2.mappers.base import Mapper, accepts_dataset_as_samples
-from mvpa2.base.dochelpers import _str, _repr_attrs
-from mvpa2.generators.splitters import mask2slice
+from mvpa2.mappers.base import Mapper
 
 
 class SensitivityBasedFeatureScaling(Mapper):
@@ -39,11 +36,12 @@ class SensitivityBasedFeatureScaling(Mapper):
         self._sensitivity_map = None
         self._sens_anal = sensitivity_analyzer
         self._norm = norm
+        self.tiny = np.finfo(np.double).tiny
         
     def _forward_dataset(self,ds):
         mds = ds.copy(deep=False)
         scal = self._sensitivity_map.samples.flatten()
-        scal[scal==0] = 1.*10e-16 # no zeros allowed
+        scal[scal==0] = self.tiny # no zeros allowed
         if self._norm == 'l2':
             scal = scal/np.linalg.norm(scal)
         
@@ -53,7 +51,7 @@ class SensitivityBasedFeatureScaling(Mapper):
     def _forward_data(self, data):
         mds = ds.copy(deep=False)
         scal = self._sensitivity_map.samples.flatten()
-        scal[scal==0] = 1.*10e-16 # no zeros allowed
+        scal[scal==0] = self.tiny # no zeros allowed
         if self._norm == 'l2':
             scal = scal/np.linalg.norm(scal)
         mds = mds * scal
