@@ -9,7 +9,10 @@ from operator import itemgetter
 import matplotlib as mpl
 import sys
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
 class StatisMapper(Mapper):
     """Implementation of STATIS.
     Compromise matrices are the optimal linear combination of
@@ -17,6 +20,7 @@ class StatisMapper(Mapper):
     which yield same results as left generalized singular vectors
     """
     def __init__(self,tables_attr='tables', bootstrap_iter=0,
+                keep_dims = 'all',
                 col_center=False, col_norm=None,
                 row_center=False, row_norm=None, table_norm=None,
                 stack = 'h', **kwargs):
@@ -29,6 +33,7 @@ class StatisMapper(Mapper):
         self._table_norm = table_norm
         self._bootstrap_iter = bootstrap_iter
         self._stack = stack
+        self.keep_dims = keep_dims
 
         Mapper.__init__(self, **kwargs)
 
@@ -54,7 +59,7 @@ class StatisMapper(Mapper):
             # compute cross-product for each table, Eq. 7
             if self._stack == 'v':
                 ntargets = i/ntables
-                t = samples[chunks==chunk,:]
+                t = dataset[chunks==chunk,:]
                 if dataset.sa.has_key('targets'):
                     self.targets = dataset.sa['targets'][chunks==chunk]
                 else:
@@ -62,7 +67,7 @@ class StatisMapper(Mapper):
 
             if self._stack == 'h':
                 ntargets = i
-                t = samples[:,chunks==chunk]
+                t = dataset[:,chunks==chunk]
                 if dataset.sa.has_key('targets'):
                     self.targets = dataset.sa['targets']
                 else:
@@ -77,18 +82,18 @@ class StatisMapper(Mapper):
             if X is None:
                 X = t
             else:
-                X = np.hstack((X,t))
+                X.append(t,stack='h')
 
         self.I = I = ntargets
         self.M = M = (1.0/I)*np.eye(I) # masses, eq. 2
         self.X = X
-        (A, alpha,C,G) = inter_table_Rv_analysis(X,self.subtable_idx)
+        (A, alpha,C,G) = inter_table_Rv_analysis(X.samples,self.subtable_idx)
         self.A = A
         self.alpha = alpha
         self.Rv = C
         self.inter_table_structure = G
 
-        self.compromise = (X.T*np.sqrt(np.diag(M))).T*np.sqrt(A)
+        self.compromise = (X.samples.T*np.sqrt(np.diag(M))).T*np.sqrt(A)
 
         Pt,delta,Qt = np.linalg.svd(self.compromise, full_matrices=0)     #Eq.42
         
@@ -100,43 +105,84 @@ class StatisMapper(Mapper):
 
         self.eigv=delta**2
         self.inertia=delta**2/np.sum(delta**2)
+        super(type(self),self)._train(dataset)
+
+    def _untrain(self):
+        """
+        covering all bases here...
+        """
+        self.dataset = None
+        self.samples = None
+        self.chunk = None
+        self.targets = None
+        self.ntables = None
+        self._subtable_stats = None
+        self.subtable_idx = None
+        self.I = None
+        self.M = None
+        self.X = None
+        self.A = None
+        self.alpha = None
+        self.Rv = None
+        self.inter_table_structure = None
+        self.compromise = None
+        self.P = None
+        self.Qt = None
+        self.Pt = None
+        self.Q = None
+        self.F = None
+        self.eigv = None
+        self.inertia = None
+        super(type(self),self)._untrain()
+
+
 
     def _forward_dataset(self, ds):
         targ = np.copy(ds.targets)
         mapped = None
         X = None
         i,j = ds.shape
-        ntables = len(np.unique(self.chunks))
+        
 
-        for ch,chunk in enumerate(np.unique(self.chunks)):
+        for ch,chunk in enumerate(np.unique(ds.sa[self._chunks_attr].value)):
             if self._stack == 'v':
-                table = ds.samples[ds.sa[self._chunks_attr].value==chunk,:]
-                nrows = i/ntables
-                targ = ds.targets[:nrows]
+                table = ds[ds.sa[self._chunks_attr].value==chunk,:]
             if self._stack == 'h':
-                table = ds.samples[:,ds.fa[self._chunks_attr].value==chunk]
-                nrows = i
+                table = ds[:,ds.fa[self._chunks_attr].value==chunk]
+
             table = self.center_and_norm_table(table,
                     col_mean=self._subtable_stats[ch]['col_mean'],
                     col_norm=self._subtable_stats[ch]['col_norm'],
                     table_norm = self._subtable_stats[ch]['table_norm'])[0]
 
 
-            m = 1.0/self.I
-            
+            if self._stack =='v':
+                # Assume features align, use average Q
+                Q_ = None
+                for subtab in np.unique(self.subtable_idx):
+                    if Q_ is None:
+                        Q_ = self.Q[subtable_idx==subtab,:]
+                    else:
+                        Q_ = Q_ + self.Q[subtable_idx==subtab,:]
+                Q_ = Q_ / len(np.unique(self.subtable_idx))
+                part = Dataset(np.dot(table.samples,Q_))
+                part.sa = table.sa
+            if self.stack =='h':
+                # Assume same number of features as in X
+                part = Dataset(np.dot(table,self.Q[self.subtable_idx==ch,:]))
+                part.sa = table.sa
 
-            part = Dataset(np.dot(table,self.Q[self.subtable_idx==ch,:]))
-            part.sa['chunks'] = np.ones((len(part.samples,)))*ch
-            part.sa['targets'] = targ
             if mapped is None:
                 mapped = part
                 X = table
             else:
                 mapped.append(part)
-                X = np.hstack((X,table))
+                X = hstack((X,table))
         mapped.a['X'] = X
-
-        return mapped
+        
+        if self.keep_dims == 'all':
+            self.keep_dims = range(i)
+        return mapped[self.keep_dims,:]
 
     #def _reverse_data(self, data):
         
@@ -157,8 +203,9 @@ class StatisMapper(Mapper):
         row_norm    : an optional column vector of row norms
         table_norm  : optional value to divide entire table by for normalization
         """
-
-        t = table
+        if table.shape[0] == 0:
+            return (table,)
+        t = table.samples
         # first columns
         if self._col_center:
             if col_mean is not None:
@@ -185,6 +232,7 @@ class StatisMapper(Mapper):
             if row_norm is not None:
                 pass
             elif self._row_norm=='l2':
+                print t.shape
                 row_norm = np.apply_along_axis(np.linalg.norm,0,t.T)
             elif self._row_norm=='std':
                 row_norm = np.apply_along_axis(np.std,0,t.T)
@@ -199,8 +247,8 @@ class StatisMapper(Mapper):
             elif self._table_norm == 'std':
                 table_norm = np.std(t)
             t = t / table_norm
-
-        return t, col_mean, col_norm, row_mean, row_norm, table_norm
+        table.samples = t
+        return table, col_mean, col_norm, row_mean, row_norm, table_norm
 
 
 def run_bootstrap(ds, sts, niter=1000):
@@ -219,6 +267,7 @@ def run_bootstrap(ds, sts, niter=1000):
     nrows = rows/ntables
     boot = np.zeros((nrows,nfactors,niter))
     X = ds.a['X'].value
+    X = X.samples
 
     for i in range(niter):
         idx = np.floor(ntables*np.random.random_sample(ntables))
@@ -524,7 +573,10 @@ def eigh(X):
             v_s = np.hstack((v_s,v[:,w==w_s[i]]))
     return w_s,v_s
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
 
 
 
