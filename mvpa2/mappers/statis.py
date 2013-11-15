@@ -9,54 +9,6 @@ from operator import itemgetter
 import matplotlib as mpl
 import sys
 
-def eigh(X):
-    """Convenience function that returns the output of np.linalg.eigh
-    (i.e., eigen decomposition of Hermitian matrices) after ordering
-    the output in descending eigen value order
-    """
-    w,v = np.linalg.eigh(X)
-    w_s = np.array(sorted(w,reverse=True))
-    v_s = None
-    for i in range(len(w)):
-        if v_s is None:
-            v_s = v[:,w==w_s[i]]
-        else:
-            v_s = np.hstack((v_s,v[:,w==w_s[i]]))
-    return w_s,v_s
-
-def paq(X, k=None):
-    epsilon = 10**-15
-    i,j = X.shape
-    m = np.min([i,j])
-    if k is None:
-        k = m
-    elif k > m:
-        k = m
-
-    flip = False
-    if i < j:
-        X = X.T
-        flip = True
-    l, Q = eigh(np.dot(X.T,X))
-
-    ll = np.max(l.shape)
-    if k > ll:
-        k = len(l)
-    Q = Q[:,0:k+1]
-    l = l[0:k+1]
-    a = np.sqrt(l)
-    niq, njq = Q.shape
-    a_ = 1./(a.reshape(1,-1)).squeeze()
-    a_ = np.tile(a_,niq).reshape(niq,len(a_))
-    P = np.dot(X,Q*a_)
-    if flip:
-        X = X.T
-        tmp = Q
-        Q = P
-        P = tmp
-    return P,a,Q
-
-
 class StatisMapper(Mapper):
     """Implementation of STATIS.
     Compromise matrices are the optimal linear combination of
@@ -555,6 +507,21 @@ def remove_pc(self,pc_num,method):
                             chunks=np.repeat(chunk+1,self.ntargets)))
     return pc_all, res_all, q_all, f_all
 
+
+def eigh(X):
+    """Convenience function that returns the output of np.linalg.eigh
+    (i.e., eigen decomposition of Hermitian matrices) after ordering
+    the output in descending eigen value order
+    """
+    w,v = np.linalg.eigh(X)
+    w_s = np.array(sorted(w,reverse=True))
+    v_s = None
+    for i in range(len(w)):
+        if v_s is None:
+            v_s = v[:,w==w_s[i]]
+        else:
+            v_s = np.hstack((v_s,v[:,w==w_s[i]]))
+    return w_s,v_s
 
 
 
