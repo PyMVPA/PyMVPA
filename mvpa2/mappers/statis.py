@@ -15,7 +15,7 @@ class StatisMapper(Mapper):
     cross-product matrices, the general eigen decomposition of
     which yield same results as left generalized singular vectors
     """
-    def __init__(self,tables_attr='tables', bootstrap_iter=0,
+    def __init__(self,tables_attr='chunks', bootstrap_iter=0,
                 keep_dims = 'all',
                 col_center=False, col_norm=None,
                 row_center=False, row_norm=None, table_norm=None,
@@ -139,8 +139,12 @@ class StatisMapper(Mapper):
         X = None
         i,j = ds.shape
         
-
-        for ch,chunk in enumerate(np.unique(ds.sa[self._chunks_attr].value)):
+        if self._stack=='v':
+            chunks = np.unique(ds.sa[self._chunks_attr].value)
+        else:
+            chunks = np.unique(ds.fa[self._chunks_attr].value)
+        
+        for ch,chunk in enumerate(chunks):
             if self._stack == 'v':
                 table = ds[ds.sa[self._chunks_attr].value==chunk,:]
             if self._stack == 'h':
@@ -157,28 +161,29 @@ class StatisMapper(Mapper):
                 Q_ = None
                 for subtab in np.unique(self.subtable_idx):
                     if Q_ is None:
-                        Q_ = self.Q[subtable_idx==subtab,:]
+                        Q_ = self.Q[self.subtable_idx==subtab,:]
                     else:
-                        Q_ = Q_ + self.Q[subtable_idx==subtab,:]
+                        Q_ = Q_ + self.Q[self.subtable_idx==subtab,:]
                 Q_ = Q_ / len(np.unique(self.subtable_idx))
                 part = Dataset(np.dot(table.samples,Q_))
                 part.sa = table.sa
-            if self.stack =='h':
+            if self._stack =='h':
                 # Assume same number of features as in X
                 part = Dataset(np.dot(table,self.Q[self.subtable_idx==ch,:]))
                 part.sa = table.sa
+            part.sa['chunks'] = [chunk]*part.shape[0]
 
             if mapped is None:
-                mapped = part
+                mapped = part.copy()
                 X = table
             else:
-                mapped.append(part)
-                X = hstack((X,table))
+                mapped.append(part.copy())
+                X.append(table,'h')
         mapped.a['X'] = X
-        
+         
         if self.keep_dims == 'all':
-            self.keep_dims = range(i)
-        return mapped[self.keep_dims,:]
+            self.keep_dims = range(mapped.shape[1])
+        return mapped[:,self.keep_dims]
 
     #def _reverse_data(self, data):
         
@@ -228,7 +233,6 @@ class StatisMapper(Mapper):
             if row_norm is not None:
                 pass
             elif self._row_norm=='l2':
-                print t.shape
                 row_norm = np.apply_along_axis(np.linalg.norm,0,t.T)
             elif self._row_norm=='std':
                 row_norm = np.apply_along_axis(np.std,0,t.T)
@@ -266,13 +270,12 @@ def run_bootstrap(ds, sts, niter=1000):
     X = X.samples
 
     for i in range(niter):
-        idx = np.floor(ntables*np.random.random_sample(ntables))
+        idx = np.random.random_integers(0,ntables-1,size=(ntables,))
         Y = None
         Y_idx = None
         fselect = np.zeros((nrows,nfactors,ntables))
 
         for k,j in enumerate(idx):
-
             Y_t = X[:,sts.subtable_idx==j]
             if Y_idx is None:
                 Y_idx = np.ones((Y_t.shape[1]))*k
@@ -283,10 +286,13 @@ def run_bootstrap(ds, sts, niter=1000):
                 Y = Y_t
             else:
                 Y = np.hstack((Y,Y_t))
-
-            fselect[:,:,k] = ds.samples[ds.chunks==j,:]
+            fselect[:,:,k] = ds.samples[ds.chunks==np.unique(ds.chunks)[j],:]
 
         (A,alpha,C,G) = inter_table_Rv_analysis(Y,Y_idx)
+        #print "shape alpha:", alpha.shape
+        #print "shape fselect", fselect.shape
+        #print alpha
+        #print fselect
         boot[:,:,i] = np.sum(fselect*alpha.flatten(),2)
 
         if i%100==0:
@@ -327,7 +333,6 @@ def inter_table_Rv_analysis(X_, subtable_idx):
             a = np.hstack((a,alph))
 
     G = v.dot(np.diag(np.sqrt(w))) # eq. 13
-    #G = G/np.linalg.norm(G[:,0])
     return a,alpha,C,G
 
 
@@ -567,6 +572,7 @@ def eigh(X):
             v_s = v[:,w==w_s[i]]
         else:
             v_s = np.hstack((v_s,v[:,w==w_s[i]]))
+    w_s[w_s< 0] = np.finfo(np.double).tiny
     return w_s,v_s
 
 
