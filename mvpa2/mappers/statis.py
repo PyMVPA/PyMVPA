@@ -9,10 +9,6 @@ from operator import itemgetter
 import matplotlib as mpl
 import sys
 
-<<<<<<< HEAD
-
-=======
->>>>>>> master
 class StatisMapper(Mapper):
     """Implementation of STATIS.
     Compromise matrices are the optimal linear combination of
@@ -578,12 +574,5 @@ def eigh(X):
             v_s = np.hstack((v_s,v[:,w==w_s[i]]))
     w_s[w_s< 0] = np.finfo(np.double).tiny
     return w_s,v_s
-
-<<<<<<< HEAD
-
-=======
->>>>>>> master
-
-
 
 
