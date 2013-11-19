@@ -88,6 +88,9 @@ mod_events_grp = ('options for modifying or converting events', [
         help="""dataset attribute with time stamps for input samples. Onset and
         duration for all events will be converted using this information. All
         values are assumed to be in the same unit.""")),
+    (('--onset-column',), dict(type=str, metavar='ATTR',
+        help="""name of the column in the CSV event table that indicates event
+        onsets""")),
     (('--offset',), dict(type=float, metavar='VALUE',
         help="""fixed uniform event offset for all events. If no --time-attr
         option is given, this value indicates the number of input samples all
@@ -145,6 +148,8 @@ def run(args):
         csvt = _load_csv_table(csv)
         if not len(csvt):
             raise ValueError("no CSV columns found")
+        if args.onset_column:
+            csvt['onset'] = csvt[args.onset_column]
         nevents = len(csvt[csvt.keys()[0]])
         events = []
         for ev in xrange(nevents):
