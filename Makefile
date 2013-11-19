@@ -418,6 +418,16 @@ unittest-debug: build
 unittests: unittest-nonlabile unittest unittest-badexternals \
            unittest-optimization unittest-ca unittest-debug
 
+tc-%: build
+	@PYTHONPATH=.:$(PYTHONPATH) PATH=./bin:$(PATH) \
+		MVPA_MATPLOTLIB_BACKEND=agg \
+		MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
+		MVPA_DATADB_ROOT=datadb \
+		MVPA_WARNINGS_SUPPRESS=1 \
+		sh ./doc/examples/cmdline/$*.sh > /dev/null 2>&1
+
+testcmdline: tc-datasets
+
 te-%: build
 	@echo -n "I: Testing example $*: "
 	@[ -z "$$MVPA_TESTS_LOGDIR" ]  \
@@ -565,11 +575,11 @@ test-prep-fmri:
 	&& head -1 $$td/T/func_mc.par | grep -q '0  0  0' \
 
 
-test: unittests testmanual testsuite testexamples testcfg testourcfg
+test: unittests testmanual testsuite testexamples testcfg testourcfg testcmdline
 
 # Target to be called after some major refactoring
 # It skips some flavors of unittests
-testrefactor: unittest testmanual testsuite testexamples
+testrefactor: unittest testmanual testsuite testexamples testcmdline
 
 coverage: $(COVERAGE_REPORT)
 $(COVERAGE_REPORT): build

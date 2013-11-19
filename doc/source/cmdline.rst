@@ -57,6 +57,12 @@ Sub-command documentation
    generated/cmd_hyperalign
    generated/cmd_clfcv
 
+Example scripts
+===============
+
+.. toctree::
+
+   cmdline/datasets
 
 Create a new PyMVPA command (for developers)
 ============================================
