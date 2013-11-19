@@ -168,7 +168,7 @@ def augmentconfig(c):
 
     # update steps
     if c.get('steps', 'all') == 'all':
-        c['steps'] = 'toafni+mapico+moresurfs+skullstrip+align+makespec+makespecboth'
+        c['steps'] = 'toafni+mapico+moresurfs+skullstrip+align+makespec+makespecboth+makesurfmasks'
 
 
     if c['identity']:
@@ -733,6 +733,79 @@ def run_makespec_bothhemis(config, env):
                 if config['overwrite'] or not os.path.exists(full_path(fn_out)):
                     surf.write(full_path(fn_out), surf_merged)
                     print "Merged surfaces written to %s" % fn_out
+
+def run_makesurfmasks(config, env):
+    refdir = config['refdir']
+    overwrite = config['overwrite']
+    sumfn = 'surf_mask' # output file
+
+    if os.path.exists('%s/%s+orig.HEAD' % (refdir, sumfn)) and not overwrite:
+        print "Already exists: %s" % sumfn
+        return
+
+    icolds, hemis = _get_hemis_icolds(config)
+
+    volor = '+orig'
+    volexts = ['%s%s' % (volor, e) for e in '.HEAD', '.BRIK*']
+
+    alignsuffix = config['al2expsuffix']
+    sv_al_prefix = '%s_SurfVol%s' % (config['sid'], alignsuffix)
+    sv_al_orig_fn = '%s+orig' % sv_al_prefix
+    sv_al_nii_fn = '%s.nii' % sv_al_prefix
+
+
+    #if overwrite or not os.path.exists('%s/%s' % (refdir, sv_al_nii_fn)):
+    #    cmd = 'cd %s; 3dcopy -overwrite %s %s' % (refdir, sv_al_orig_fn, sv_al_nii_fn)
+    #    utils.run_cmds(cmd, env)
+
+
+    if hemis != ['l', 'r']:
+        raise ValueError("Cannot run without left and right hemisphere")
+
+    icold = max(icolds)
+
+    oneDfn = '__t.1D'
+    oneDtfn = '__tt.1D' # transposed
+    cmds = ['cd %s' % refdir,
+             '1deval -1D: -num %d -expr 1 > %s' % (icold ** 2 * 10 + 1, oneDfn),
+             '1dtranspose %s > %s' % (oneDfn, oneDtfn)]
+
+    utils.run_cmds(';'.join(cmds), env)
+
+
+    tmpfns = [oneDfn, oneDtfn]
+
+    s2v_cmd = ('3dSurf2Vol -map_func mask2 -data_expr "a*%%d" -spec %%s %%s -sv %s'
+             ' -grid_parent %s. -prefix %%s -sdata %s -overwrite') % \
+                                (sv_al_orig_fn, sv_al_orig_fn, oneDtfn)
+
+    infix2val = {'-surf_A pial':1,
+               '-surf_A smoothwm':2,
+               '-surf_A smoothwm -surf_B pial -f_steps 20': 4}
+
+    volfns = []
+    for hemi in hemis:
+        specfn = afni_suma_spec.canonical_filename(icold, hemi,
+                                                       config['alsuffix'])
+
+        for infix, val in infix2val.iteritems():
+            fnprefix = '__m%d_%sh' % (val, hemi)
+            cmd = s2v_cmd % (val, specfn, infix, fnprefix)
+            utils.run_cmds('cd %s;%s' % (refdir, cmd))
+            tmpfns.extend(['%s%s' % (fnprefix, e) for e in volexts])
+            volfns.append(fnprefix + volor)
+
+    cmds = ['cd %s' % refdir]
+    catfn = '__cat'
+    cmds.extend(['3dTcat -overwrite -prefix %s %s' % (catfn, ' '.join(volfns)),
+                 '3dTstat -overwrite -sum -prefix %s %s%s' % (sumfn, catfn, volor)])
+    tmpfns.extend(['%s%s' % (catfn, e) for e in volexts])
+
+
+    cmds.extend('rm %s' % fn for fn in tmpfns)
+    cmds.append('echo "Surface mask in %s"' % sumfn)
+
+    utils.run_cmds(';'.join(cmds), env)
 
 
 def suma_makerunsuma(fnout, specfn, surfvol):
