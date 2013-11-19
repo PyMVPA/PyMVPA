@@ -51,10 +51,11 @@ conflicts may occur.
 This function does not resample or transform any functional data. Instead,
 surfaces are transformed to be in alignment with ANATVOL or EPIVOL.
 
-For typical usage it requires three arguments:
+For typical usage it requires three (or four) arguments:
 (1) "-e epi_filename"  or  "-a anat_filename"
 (2) "-d freesurfer/directory/surf"
 (3) "-r outputdir"'
+(*) "-T" [if "epi_filename" / "anat_filename" is in template (MNI/Tal) space"
 
 Notes:
 
@@ -480,6 +481,8 @@ def run_alignment(config, env):
             twovolsuffix = twovolpat % (volsin[0], volsin[1])
 
             aea_opts = config['aea_opts']
+            if config['template']:
+                aea_opts += " -Allineate_opts '-maxrot 10 -maxshf 10 -maxscl 1.5'"
             # align_epi_anat.py
             cmd = 'cd "%s"; align_epi_anat.py -overwrite -suffix %s %s %s' % (refdir, alignsuffix, twovolsuffix, aea_opts)
             cmds.append(cmd)
@@ -853,7 +856,8 @@ def run_all(config, env):
                'skullstrip':run_skullstrip,
                'align':run_alignment,
                'makespec':run_makespec,
-               'makespecboth':run_makespec_bothhemis}
+               'makespecboth':run_makespec_bothhemis,
+               'makesurfmasks':run_makesurfmasks}
 
     if not all(s in step2func for s in steps):
         raise Exception("Illegal step in %s" % steps)
@@ -891,7 +895,7 @@ remove and/or overwrite existing files.'''
     parser.add_argument('-x', "--expvol", required=False, help="Experimental volume to which SurfVol is aligned")
     parser.add_argument('-E', "--isepi", required=False, choices=yesno, help="Is the experimental volume an EPI (yes) or anatomical (no)")
     parser.add_argument("-r", "--refdir", required=True, help="Output directory in which volumes and surfaces are in reference to ANATVOL or EPIVOL")
-    parser.add_argument("-p", "--steps", default='all', help='Processing steps separated by "+"-characters. "all" is the default and equivalent to "toafni+mapico+moresurfs+skullstrip+align+makespec+makespecboth"')
+    parser.add_argument("-p", "--steps", default='all', help='Processing steps separated by "+"-characters. "all" is the default and equivalent to "toafni+mapico+moresurfs+skullstrip+align+makespec+makespecboth+makesurfmasks"')
     parser.add_argument("-l", "--ld", default="4+8+16+32+64+128", help="MapIcosahedron linear devisions, e.g. 80, or 16+96 (for both 16 or 96). The default is 4+8+16+32+64+128")
     parser.add_argument("-o", "--overwrite", action='store_true', default=False, help="Overwrite existing files")
     parser.add_argument('--hemi', default='l+r', choices=['l', 'r', 'l+r'], help='Hemispheres to process ([l+r])')
@@ -900,6 +904,8 @@ remove and/or overwrite existing files.'''
     parser.add_argument('-I', '--identity', action="store_true", default=False, help="Use identity transformation between SurfVol and anat/epivol (no alignment)")
     parser.add_argument('-A', '--AddEdge', default='yes', choices=yesno, help="Run AddEdge on aligned volumes ([yes])")
     parser.add_argument('-f', '--surfformat', default='ascii', choices=['gifti', 'ascii'], help="Output format of surfaces: 'ascii' (default - for now) or 'gifti'")
+    parser.add_argument('-T', '--template', action="store_true", default=False, help="Indicate that the experimental volume (suppplied by '-e', '-a', or '-x') is in template space. This will add \"-Allineate_opts '-maxrot 10 -maxshf 10 -maxscl 1.5'\" to --aea_opts")
+
     return parser
 
 def getoptions():
