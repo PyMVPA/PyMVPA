@@ -77,7 +77,8 @@ from mvpa2.base import verbose, warning, error
 from mvpa2.datasets import Dataset
 if __debug__:
     from mvpa2.base import debug
-from mvpa2.cmdline.helpers import process_common_attr_opts
+from mvpa2.cmdline.helpers import process_common_attr_opts, \
+        parser_add_common_args, hdf2ds
 
 
 parser_args = {
@@ -133,12 +134,15 @@ def setup_parser(parser):
     from .helpers import parser_add_optgroup_from_def, \
         parser_add_common_attr_opts, single_required_hdf5output
     # order of calls is relevant!
+    parser_add_common_args(parser, pos=['data'], metavar='dataset', nargs='*',
+            default=None)
     parser_add_optgroup_from_def(parser, datasrc_args, exclusive=True)
     parser_add_common_attr_opts(parser)
     parser_add_optgroup_from_def(parser, mri_args)
     parser_add_optgroup_from_def(parser, single_required_hdf5output)
 
 def run(args):
+    ds = None
     if not args.txt_data is None:
         verbose(1, "Load data from TXT file '%s'" % args.txt_data)
         samples = _load_from_txt(args.txt_data)
@@ -158,6 +162,15 @@ def run(args):
                         "check arguments!")
             verbose(2, "Add volumetric feature attributes: %s" % vol_attr)
         ds = fmri_dataset(args.mri_data, mask=args.mask, add_fa=vol_attr)
+
+    if ds is None:
+        if args.data is None:
+            raise RuntimeError('no data source specific')
+        else:
+            ds = hdf2ds(args.data)[0]
+    else:
+        if args.data is not None:
+            verbose(1, 'ignoring dataset input in favor of other data source -- remove either one to disambiguate')
 
     # act on all attribute options
     ds = process_common_attr_opts(ds, args)
