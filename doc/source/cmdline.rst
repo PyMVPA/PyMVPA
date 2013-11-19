@@ -30,9 +30,10 @@ of a sub-command. For example::
 
 will yield the documentation of the main command, but::
 
-  $ pymvpa2 info --help
+  $ pymvpa2 mkds --help
 
-will yield the documentation of the ``info`` sub-command.
+will yield the documentation of the ``mkds`` sub-command.
+
 
 Documentation of the main ``pymvpa2`` command
 =============================================
@@ -43,6 +44,7 @@ includes a list of all available sub-commands on a particular system.
 .. toctree::
 
    generated/cmd_pymvpa2
+
 
 Sub-command documentation
 =========================
@@ -57,15 +59,19 @@ Sub-command documentation
    generated/cmd_hyperalign
    generated/cmd_clfcv
 
+
 Example scripts
 ===============
+
+Here are a few executable example that come with the PyMVPA and demonstrate how
+to use PyMVPA's command line interface in actual scripts.
 
 .. toctree::
 
    cmdline/datasets
 
+
 Create a new PyMVPA command (for developers)
 ============================================
-
 
 write me
