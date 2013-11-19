@@ -29,7 +29,7 @@ help:
 	@echo "  doctest   to run all doctests embedded in the documentation (if enabled)"
 
 clean:
-	-rm -rf $(BUILDDIR) source/generated source/examples
+	-rm -rf $(BUILDDIR) source/generated
 	-rm generate-stamp
 
 SPHINXEXT_PATH=$(shell python -c 'import sphinx; from distutils.version import LooseVersion; print LooseVersion(sphinx.__version__) < "1.1.2" and "sphinxext" or "/usr/share/pyshared/sphinx/ext"')
