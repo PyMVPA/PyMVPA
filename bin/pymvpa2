@@ -146,7 +146,7 @@ for cmd in sorted([c for c in dir(mvcmd) if c.startswith('cmd_')]):
 # create command summary
 cmd_summary = []
 for cd in cmd_short_description:
-    cmd_summary.append('%s %s\n' \
+    cmd_summary.append('%s: %s\n' \
                        % (cd[0],
                           textwrap.fill(cd[1], 75,
                               initial_indent=' ' * max(0, 12 - len(cd[0])),
