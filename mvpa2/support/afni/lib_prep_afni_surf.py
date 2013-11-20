@@ -51,7 +51,7 @@ conflicts may occur.
 This function does not resample or transform any functional data. Instead,
 surfaces are transformed to be in alignment with ANATVOL or EPIVOL.
 
-For typical usage it requires three (or four) arguments:
+For typical usage it requires three arguments:
 (1) "-e epi_filename"  or  "-a anat_filename"
 (2) "-d freesurfer/directory/surf"
 (3) "-r outputdir"'
@@ -285,7 +285,7 @@ def run_toafni(config, env):
         if config['overwrite']:
             if filesexist:
                 cmds.append('rm -rf "%s"' % sd)
-        cmds.append('cd %(surfdir)s;@SUMA_Make_Spec_FS -sid %(sid)s -fix_cut_surfaces -no_ld' % config)
+        cmds.append('cd %(surfdir)s;@SUMA_Make_Spec_FS -sid %(sid)s -no_ld' % config)
         utils.run_cmds(cmds, env)
     else:
         print "SUMA conversion appears to have been performed already for %s in %s" % (sid, sd)
@@ -312,7 +312,7 @@ def run_mapico(config, env):
                     print("Seems MapIcosahedron was already run for %sh with ld=%d" % (hemi, icold))
                     continue
 
-            cmd = ('MapIcosahedron -overwrite -spec %s_%sh.spec -ld %d -prefix %s' %
+            cmd = ('MapIcosahedron -overwrite -spec %s_%sh.spec -ld %d -fix_cut_surfaces -prefix %s' %
                        (sid, hemi, icold, icoprefix))
             cmds.append(cmd)
         if cmds:
@@ -978,6 +978,7 @@ remove and/or overwrite existing files.'''
     parser.add_argument('-A', '--AddEdge', default='yes', choices=yesno, help="Run AddEdge on aligned volumes ([yes])")
     parser.add_argument('-f', '--surfformat', default='ascii', choices=['gifti', 'ascii'], help="Output format of surfaces: 'ascii' (default - for now) or 'gifti'")
     parser.add_argument('-T', '--template', action="store_true", default=False, help="Indicate that the experimental volume (suppplied by '-e', '-a', or '-x') is in template space. This will add \"-Allineate_opts '-maxrot 10 -maxshf 10 -maxscl 1.5'\" to --aea_opts")
+
 
     return parser
 
