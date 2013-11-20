@@ -35,7 +35,7 @@ pymvpa2 dump --sa one -f txt "$outdir"/ones.hdf5 | wc -l
 pymvpa2 dsinfo "$outdir"/bold_ds.hdf5 | grep '^Dataset'
 
 # create a simple CSV table on the fly to define some "events" with attributes
-cat << EOT >> "$outdir"/events.csv
+cat << EOT > "$outdir"/events.csv
 "vol","attr","part"
 0,"leafy",1
 10,"bald",1
@@ -46,6 +46,7 @@ EOT
 # using the 'vol' column in the CSV table to define event onsets
 pymvpa2 mkevds --csv-events  "$outdir"/events.csv --onset-column vol \
                -o "$outdir"/evds.hdf5 \
+               --offset 3 \
                --duration 2 \
                --event-compression mean \
                "$outdir"/bold_ds.hdf5
