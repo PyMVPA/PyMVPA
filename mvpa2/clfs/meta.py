@@ -644,8 +644,8 @@ class CombinedClassifier(BoostedClassifier):
 
         ca.predictions = predictions
 
-        if ca.is_enabled("estimates"):
-            if cca is not None and cca.is_active("estimates"):
+        if ca.is_enabled("estimates") and cca is not None:
+            if cca.is_active("estimates"):
                 # XXX or may be we could leave simply up to accessing .combiner?
                 ca.estimates = cca.estimates
             else:
