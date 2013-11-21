@@ -185,3 +185,18 @@ def test_multiclass_classifier_pass_ds_attributes():
                        np.repeat(range(len(ds.UC)), len(ds)/len(ds.UC)))
 
 
+def test_multiclass_without_combiner():
+    # The goal is to obtain all pairwise results as the resultant dataset
+    # avoiding even calling any combiner
+    clf = LinearCSVMC(C=1)
+    ds = datasets['uni3small'].copy()
+    ds.sa['ids'] = np.arange(len(ds))
+    mclf = MulticlassClassifier(clf, combiner=None)
+    # without combining results at all
+    mcv = CrossValidation(mclf, NFoldPartitioner(), errorfx=None)
+    res = mcv(ds)
+    assert_equal(len(res), len(ds))
+    assert_equal(res.nfeatures, 3)        # 3 pairs for 3 classes
+    assert_array_equal(res.UT, ds.UT)
+    assert_equal(set(np.squeeze(res.fa.pos)).union(np.squeeze(res.fa.neg)), set(ds.UT))
+    assert_array_equal(res.sa['cvfolds'].unique, np.arange(len(ds.UC)))

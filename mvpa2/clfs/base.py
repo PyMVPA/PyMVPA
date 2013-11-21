@@ -438,7 +438,14 @@ class Classifier(Learner):
         pred = self.predict(ds)
         tattr = self.get_space()
         # return the predictions and the targets in a dataset
-        return Dataset(pred, sa={tattr: ds.sa[tattr]})
+        if isinstance(pred, Dataset):
+            # it is already a dataset, e.g. as if we did not
+            # use any combiner for MulticlassClassifier
+            # to look at each pair
+            pred.sa[tattr] = ds.sa[tattr]
+            return pred
+        else:
+            return Dataset(pred, sa={tattr: ds.sa[tattr]})
 
 
     # XXX deprecate ???
