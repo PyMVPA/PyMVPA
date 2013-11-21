@@ -633,7 +633,6 @@ class TransferMeasure(Measure):
                 warning("'training_stats' conditional attribute was enabled, "
                         "but the assigned measure '%s' either doesn't support "
                         "it, or it is disabled" % measure)
-
         return res
 
     measure = property(fget=lambda self:self.__measure)
