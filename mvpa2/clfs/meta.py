@@ -1166,10 +1166,13 @@ class MulticlassClassifier(CombinedClassifier):
                 # we should fetch those from ca
                 raw_predictions = ca.raw_predictions
 
+            # assign pos and neg to fa while squeezing out
+            # degenerate dimensions which are there to possibly accomodate
+            # 1-vs-all cases
             ca.raw_predictions_ds = raw_predictions_ds = \
                 Dataset(np.array(raw_predictions).T,
-                    fa={'pos': [clf.poslabels for clf in self.clfs],
-                        'neg': [clf.neglabels for clf in self.clfs]})
+                    fa={'pos': [np.squeeze(clf.poslabels) for clf in self.clfs],
+                        'neg': [np.squeeze(clf.neglabels) for clf in self.clfs]})
         if self.combiner is None:
             return raw_predictions_ds
         else:
