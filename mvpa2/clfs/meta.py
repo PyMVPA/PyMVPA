@@ -24,7 +24,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa2.misc.args import group_kwargs
-from mvpa2.base.types import is_sequence_type
+from mvpa2.base.types import is_sequence_type, asobjarray
 from mvpa2.base.param import Parameter
 
 from mvpa2.datasets import Dataset
@@ -1169,10 +1169,13 @@ class MulticlassClassifier(CombinedClassifier):
             # assign pos and neg to fa while squeezing out
             # degenerate dimensions which are there to possibly accomodate
             # 1-vs-all cases
+
+            # for consistency -- place into object array of tuples
+            # (Sensitivity analyzers already do the same)
+            pairs = zip(np.array([np.squeeze(clf.neglabels) for clf in self.clfs]).tolist(),
+                        np.array([np.squeeze(clf.poslabels) for clf in self.clfs]).tolist())
             ca.raw_predictions_ds = raw_predictions_ds = \
-                Dataset(np.array(raw_predictions).T,
-                    fa={'pos': [np.squeeze(clf.poslabels) for clf in self.clfs],
-                        'neg': [np.squeeze(clf.neglabels) for clf in self.clfs]})
+                Dataset(np.array(raw_predictions).T, fa={self.space: asobjarray(pairs)})
         if self.combiner is None:
             return raw_predictions_ds
         else:

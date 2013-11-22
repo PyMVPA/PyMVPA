@@ -198,5 +198,6 @@ def test_multiclass_without_combiner():
     assert_equal(len(res), len(ds))
     assert_equal(res.nfeatures, 3)        # 3 pairs for 3 classes
     assert_array_equal(res.UT, ds.UT)
-    assert_equal(set(np.squeeze(res.fa.pos)).union(np.squeeze(res.fa.neg)), set(ds.UT))
+    assert_array_equal(np.unique(np.array(res.fa.targets.tolist())), ds.UT)
+    # TODO -- check that we have all the pairs?
     assert_array_equal(res.sa['cvfolds'].unique, np.arange(len(ds.UC)))
