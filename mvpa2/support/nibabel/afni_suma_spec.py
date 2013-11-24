@@ -24,6 +24,8 @@ class SurfaceSpec(object):
         self.directory = directory
 
         if states is None:
+            if surfaces is None:
+                raise ValueError('No surfaces given')
             states = list(set(surface['SurfaceState'] for surface in surfaces))
 
         self.states = states
