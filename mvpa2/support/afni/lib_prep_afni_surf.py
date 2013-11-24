@@ -632,38 +632,81 @@ def run_alignment(config, env):
             # only refit if not already in AFNI history (which is stored in HEADfile)
             cmd = 'cd "%s"; m=`grep "%s" %s | wc -w`; if [ $m -eq 0 ]; then %s; else echo "File %s seems already 3drefitted"; fi' % (refdir, refitcmd, fn, refitcmd, fn)
             cmds.append(cmd)
+    utils.run_cmds('; '.join(cmds), env)
+    cmds = []
 
     # run AddEdge so that volumes can be inspected visually for alignment
     if config['AddEdge']:
-        basedset = volsin[1]
-        [d, n, o, e] = utils.afni_fileparts(basedset)
-        if 'nii' in e:
-            o = '+orig'
-            if overwrite or not os.path.exists('%s/%s+orig.HEAD' % refdir, n):
-                cmds.append('cd %s; 3dcopy -overwrite %s.nii %s%s' % (refdir, n, n, o))
+        use_ss = True #not config['expvol_ss']
 
-        dset = '%s+orig.HEAD' % alprefix
-        n_dset = utils.afni_fileparts(dset)[1]
 
-        addedge_fns = ['_ae.ExamineList.log']
+        # ae_{e,s}_n are AddEdge names for expvol and surfvol
+        ae_e_n = utils.afni_fileparts(config['expvol'])[1]
+        if use_ss:
+            ae_e_n += config['sssuffix']
+        ae_s_n = ssalprefix if use_ss else alprefix
+
+        # *_ne have the output extension as well
+        ae_e_ne = ae_e_n + ext
+        ae_s_ne = ae_s_n + ext
+
+        addedge_fns = ['%s/_ae.ExamineList.log' % refdir]
 
         exts = ['HEAD', 'BRIK']
-        addedge_rootfns = ['%s_%s+orig' % (n, postfix)
-                            for postfix in ['e3', 'ec', n_dset + '_ec']]
-        addedge_rootfns.extend(['%s_%s+orig' % (n_dset, postfix)
+        orig_ext = '+orig'
+        addedge_rootfns = ['%s_%s%%s' % (ae_e_n, postfix)
+                            for postfix in ['e3', 'ec', ae_s_n + '_ec']]
+        addedge_rootfns.extend(['%s_%s%%s' % (ae_s_n, postfix)
                             for postfix in ['e3', 'ec']])
 
-        addedge_fns = ['%s.%s' % (fn, e) for fn in addedge_rootfns for e in exts]
+        addedge_fns_pat = ['%s.%s' % (fn, e) for fn in addedge_rootfns for e in exts]
 
-        addegde_pathfns = map(lambda x:os.path.join(refdir, x), addedge_fns)
-
-        addegde_exists = map(os.path.exists, addegde_pathfns)
+        addegde_pathfns_orig = map(lambda x:os.path.join(refdir, x % '+orig'), addedge_fns_pat) + addedge_fns
+        addegde_pathfns_ext = map(lambda x:os.path.join(refdir, x % ext), addedge_fns_pat)
+        addegde_exists = map(os.path.exists, addegde_pathfns_ext)
         if overwrite or not all(addegde_exists):
-            if overwrite:
-                cmds.extend(map(lambda fn : 'rm "%s"' % fn, addegde_pathfns))
-            cmds.append('cd %s; \@AddEdge %s%s %s' % (refdir, n, o, dset))
+            ae_ns = (ae_e_n, ae_s_n)
+
+            cmds.extend(map(lambda fn : 'if [ -e "%s" ]; then rm "%s"; fi' % (fn, fn), addegde_pathfns_orig + addegde_pathfns_ext))
+            cmds.append(';'.join(['cd %s' % refdir] +
+                                 [_convert_vol_space_to_orig_cmd('%s/%s%s' % (refdir, n, ext))
+                                            for n in ae_ns] +
+                                 ['\@AddEdge %s+orig %s+orig' % ae_ns]))
+
+            set_space_fns = addegde_pathfns_orig + ['%s/%s%s.%s' % (refdir, fn, orig_ext, exts[0]) for fn in ae_ns]
+
+            for fn in set_space_fns: #['%s/%s' % (refdir, fn % orig_ext) for fn in addedge_fns_pat]:
+                if fn.endswith('.log'):
+                    continue
+                cmds.append('if [ -e %s ]; then %s; fi' % (fn, _set_vol_space_cmd(fn, config)))
+
+            utils.run_cmds(cmds, env)
+            cmds = []
+
         else:
             print "AddEdge seems to have been run already"
+
+        plot_slice_fns = [(ae_e_n + '_e3', ae_s_n + '_e3', 'qa_e3.png'),
+                          (None, ae_e_n + '_' + ae_s_n + '_ec', 'qa_ec.png')]
+
+        plot_slice_imgfns = ['%s/%s' % (refdir, fn) for fn in plot_slice_fns]
+        if overwrite or not all(map(os.path.exists, plot_slice_imgfns)):
+
+            slice_dims = [0, 1, 2]
+            slice_pos = [.35, .45, .55, .65]
+            for fns in plot_slice_fns:
+                input_fns = []
+                for i, fn in enumerate(fns):
+                    if fn is not None:
+                        fn = '%s/%s' % (refdir, fn)
+                        if i <= 1:
+                            fn += ext
+                    input_fns.append(fn)
+
+                fn1, fn2, fnout = input_fns
+                if not os.path.exists(fnout):
+                    _make_slice_plot(fn1, fn2, fnout)
+                    print "QA Image saved to %s" % fnout
 
     # because AFNI uses RAI orientation but FreeSurfer LPI, make a new
     # affine transformation matrix in which the signs of
@@ -722,6 +765,22 @@ def run_alignment(config, env):
                 cmds.append('cp %s %s' % (srcpathfn, trgpathfn))
 
     utils.run_cmds(cmds, env)
+
+def _make_slice_plot(ulay, olay, fnout, raise_=False):
+    plot_slices = True
+    if raise_:
+        from mvpa2.support.afni import lib_plot_slices
+    else:
+        try:
+            from mvpa2.support.afni import lib_plot_slices
+        except:
+            print "No slice plotting supported"
+            return
+
+    slice_dims = [0, 1, 2]
+    slice_pos = [.35, .45, .55, .65]
+
+    lib_plot_slices.make_plot(ulay, olay, slice_dims, slice_pos, output_fn=fnout)
 
 
 def run_makespec(config, env):
@@ -898,6 +957,13 @@ def run_makesurfmasks(config, env):
     cmds.append('echo "Surface mask in %s"' % sumfn)
 
     utils.run_cmds(';'.join(cmds), env)
+
+    # make plot
+    if overwrite or not os.path.exists(qafn_path):
+        expvol_path = '%s/%s' % (refdir, expvol_fn)
+        _make_slice_plot(expvol_path,
+                         sumfn_path,
+                         qafn_path)
 
 
 def suma_makerunsuma(fnout, specfn, surfvol):
