@@ -1,7 +1,12 @@
 pymvpa (0.4.8-4) UNRELEASED; urgency=low
 
+  [ Yaroslav Halchenko ]
   * debian/control:
     - build depend on python-numpydoc
+
+  [ Andreas Tille ]
+  * debian/upstream: Add reference which was inside Debian Science task
+    machine-learning as secondary entry.
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 26 Jul 2013 08:51:17 -0400
 
