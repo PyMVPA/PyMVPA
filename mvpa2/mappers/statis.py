@@ -72,7 +72,7 @@ class StatisMapper(Mapper):
             t,c_m,c_n,r_m,r_n,t_n = self.center_and_norm_table(t)
             self._subtable_stats[ch] = {'row_mean':r_m, 'row_norm':r_n,
                         'col_mean':c_m, 'col_norm':c_n, 'table_norm':t_n}
-            self.subtable_idx=np.hstack((self.subtable_idx,ch*np.ones((t.shape[1]))))
+            self.subtable_idx=np.append(self.subtable_idx,[chunk]*t.shape[1])
 
 
             if X is None:
@@ -94,6 +94,7 @@ class StatisMapper(Mapper):
         Pt,delta,Qt = np.linalg.svd(self.compromise, full_matrices=0)     #Eq.42
         
         self.P = np.sqrt(I)*Pt # duh. this replacs line above
+        self.delta = delta
         self.Qt = Qt
         self.Pt = Pt
         self.Q = (Qt*np.sqrt(A)).T
@@ -169,7 +170,7 @@ class StatisMapper(Mapper):
                 part.sa = table.sa
             if self._stack =='h':
                 # Assume same number of features as in X
-                part = Dataset(np.dot(table,self.Q[self.subtable_idx==ch,:]))
+                part = Dataset(np.dot(table,self.Q[self.subtable_idx==chunk,:]))
                 part.sa = table.sa
             part.sa['chunks'] = [chunk]*part.shape[0]
 
@@ -269,8 +270,10 @@ def run_bootstrap(ds, sts, niter=1000):
     X = ds.a['X'].value
     X = X.samples
 
+    ignore = 0 # Hack: for some reasone inter_table_Rv_analysis chokes...
+    ident = np.unique(sts.subtable_idx)
     for i in range(niter):
-        idx = np.random.random_integers(0,ntables-1,size=(ntables,))
+        idx = ident[np.random.random_integers(0,ntables-1,size=(ntables,))]
         Y = None
         Y_idx = None
         fselect = np.zeros((nrows,nfactors,ntables))
@@ -289,6 +292,9 @@ def run_bootstrap(ds, sts, niter=1000):
             fselect[:,:,k] = ds.samples[ds.chunks==np.unique(ds.chunks)[j],:]
 
         (A,alpha,C,G) = inter_table_Rv_analysis(Y,Y_idx)
+        if G is None:
+            ignore += 1
+            continue
         #print "shape alpha:", alpha.shape
         #print "shape fselect", fselect.shape
         #print alpha
@@ -299,6 +305,7 @@ def run_bootstrap(ds, sts, niter=1000):
             sys.stdout.write("iter:%s/%s\r"% (i,niter))
             sys.stdout.flush()
 
+    print "completed %s/%s bootstraps." % (niter-ignore,niter)
     boot = Dataset(boot)
     boot.sa['targets'] = ds.targets[:nrows]
     return boot
@@ -331,8 +338,11 @@ def inter_table_Rv_analysis(X_, subtable_idx):
 
         else:
             a = np.hstack((a,alph))
-
-    G = v.dot(np.diag(np.sqrt(w))) # eq. 13
+    try:
+        G = v.dot(np.diag(np.sqrt(w))) # eq. 13
+    except:
+        print "Error: out of cheese. "
+        G = None
     return a,alpha,C,G
 
 
