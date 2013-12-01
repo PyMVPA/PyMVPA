@@ -637,14 +637,13 @@ def run_alignment(config, env):
 
     # run AddEdge so that volumes can be inspected visually for alignment
     if config['AddEdge']:
-        use_ss = True #not config['expvol_ss']
-
+        use_ss = config['expvol_ss']
 
         # ae_{e,s}_n are AddEdge names for expvol and surfvol
         ae_e_n = utils.afni_fileparts(config['expvol'])[1]
         if use_ss:
             ae_e_n += config['sssuffix']
-        ae_s_n = ssalprefix if use_ss else alprefix
+        ae_s_n = ssalprefix #if use_ss else alprefix
 
         # *_ne have the output extension as well
         ae_e_ne = ae_e_n + ext
@@ -686,6 +685,7 @@ def run_alignment(config, env):
         else:
             print "AddEdge seems to have been run already"
 
+
         plot_slice_fns = [(ae_e_n + '_e3', ae_s_n + '_e3', 'qa_e3.png'),
                           (None, ae_e_n + '_' + ae_s_n + '_ec', 'qa_ec.png')]
 
@@ -707,6 +707,10 @@ def run_alignment(config, env):
                 if not os.path.exists(fnout):
                     _make_slice_plot(fn1, fn2, fnout)
                     print "QA Image saved to %s" % fnout
+                else:
+                    print "Already exists: %s" % fnout
+        else:
+            print "QA images already exist"
 
     # because AFNI uses RAI orientation but FreeSurfer LPI, make a new
     # affine transformation matrix in which the signs of
@@ -900,8 +904,12 @@ def run_makesurfmasks(config, env):
 
     volexts = ['%s%s' % (volor, e) for e in '.HEAD', '.BRIK*']
 
+
+
+
+    sssuffix = config['sssuffix'] if config['expvol_ss'] else ''
     expvol_fn = '%s%s%s' % (utils.afni_fileparts(config['expvol'])[1],
-                            config['sssuffix'],
+                            sssuffix,
                             volor)
 
 
