@@ -14,7 +14,14 @@ import numpy as np
 import nibabel as nb
 import argparse
 
+from mvpa2.base import externals
+externals.exists('matplotlib', raise_=True)
+
+import matplotlib
+matplotlib.use('Agg') # this seems to work on non-(X windows) systems
 import matplotlib.pyplot as plt
+
+
 import os
 import subprocess
 from os.path import join, split, abspath
