@@ -351,9 +351,9 @@ class RepeatedMeasure(Measure):
 
         # stack all results into a single Dataset
         if concat_as == 'samples':
-            results = vstack(results)
+            results = vstack(results, True)
         elif concat_as == 'features':
-            results = hstack(results)
+            results = hstack(results, True)
         else:
             raise ValueError("Unkown concatenation mode '%s'" % concat_as)
         # no need to store the raw results, since the Measure class will

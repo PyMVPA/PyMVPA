@@ -35,8 +35,12 @@ Releases
 
   * New functionality (73 commits)
 
-    - Multi-threaded, surface-based searchlight
-      :func:`~mvpa2.misc.surfing.queryengine.disc_surface_queryengine`.
+    - Multi-threaded, surface-based searchlight queryengine
+      :func:`~mvpa2.misc.surfing.queryengine.disc_surface_queryengine`
+      supporting as output space either surfaces
+      (:class:`~mvpa2.misc.surfing.queryengine.SurfaceVerticesQueryEngine`;
+      recommended) or volumes
+      (:class:`~mvpa2.misc.surfing.queryengine.SurfaceVoxelsQueryEngine`).
     - :class:`~mvpa2.misc.plot.flat_surf.FlatSurfacePlotter` supporting
       flattened cortical surfaces.
     - I/O support for AFNI NIML (dset,
@@ -44,7 +48,9 @@ Releases
       :mod:`~mvpa2.support.nibabel.afni_niml_annot`), AFNI 1D datasets
       (:mod:`~mvpa2.support.nibabel.afni_suma_1d`), SUMA surface specification
       (:mod:`~mvpa2.support.nibabel.afni_suma_spec`), Freesurfer ASCII surfaces
-      (:mod:`~mvpa2.support.nibabel.surf_fs_asc`). Input support for Caret
+      (:mod:`~mvpa2.support.nibabel.surf_fs_asc`), GIFTI surfaces
+      (:mod:`~mvpa2.support.nibabel.surf_gifti` through nibabel).
+      Input support for Caret
       binary surfaces (:mod:`~mvpa2.support.nibabel.surf_caret`), EEGlab ASCII
       (:meth:`mvpa2.datasets.eeglab.eeglab_dataset`), AFNI NIML ( ROI,
       :mod:`~mvpa2.support.nibabel.afni_niml_roi`).

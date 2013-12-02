@@ -45,6 +45,7 @@ Basic Facilities
    base.learner
    base.node
    base.param
+   base.progress
    base.report
    base.state
    base.types
@@ -283,5 +284,6 @@ Basic Plotting Utilities
    support.nibabel.afni_suma_spec
    support.nibabel.surf_fs_asc
    support.nibabel.surf_caret
+   support.nibabel.surf_gifti
    support.nibabel.surf
    
