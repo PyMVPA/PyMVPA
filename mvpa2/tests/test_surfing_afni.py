@@ -21,6 +21,7 @@ from mvpa2.support.nibabel import afni_niml, afni_niml_dset, afni_niml_roi
 from mvpa2.datasets import niml
 from mvpa2.datasets.base import Dataset
 
+
 class SurfTests(unittest.TestCase):
     """Test for AFNI I/O together with surface-based stuff
 
@@ -425,9 +426,6 @@ class SurfTests(unittest.TestCase):
 
         unique_nodes = np.unique(expected_nodes[0])
         assert_array_equal(m['myroi'], unique_nodes)
-
-
-
 
 
 

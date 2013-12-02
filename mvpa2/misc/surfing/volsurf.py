@@ -5,9 +5,9 @@
 #   See COPYING file distributed along with the PyMVPA package for the
 #   copyright and license terms.
 #
-### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##'''
 """
-Associate volume geometry with two surface meshes (typically pial and white 
+Associate volume geometry with two surface meshes (typically pial and white
 matter boundaries of the grey matter).
 
 @author: nick
@@ -38,13 +38,13 @@ class VolSurf(object):
             Surface representing white-grey matter boundary
         pial: surf.Surface
             Surface representing pial-grey matter boundary
-        intermediate: surf.Surface (default: None)
+        intermediate: surf.Surface (default: None).
             Surface representing intermediate surface. If omitted
-            it is the node-wise average of white and pial. 
-            
+            it is the node-wise average of white and pial.
+
         Notes
         -----
-        'pial' and 'white' should have the same topology. 
+        'pial' and 'white' should have the same topology.
         '''
         self._volgeom = volgeom.from_any(vg)
         self._pial = surf.from_any(pial)
@@ -69,7 +69,7 @@ class VolSurf(object):
     def pial_surface(self):
         '''
         Returns the pial surface
-        
+
         Returns
         -------
         pial: surf.Surface
@@ -80,7 +80,7 @@ class VolSurf(object):
     def white_surface(self):
         '''
         Returns the white surface
-        
+
         Returns
         -------
         white: surf.Surface
@@ -92,7 +92,7 @@ class VolSurf(object):
     def intermediate_surface(self):
         '''
         Returns the node-wise average of the pial and white surface
-        
+
         Returns
         -------
         intermediate: surf.Surface
@@ -103,7 +103,7 @@ class VolSurf(object):
     def volgeom(self):
         '''
         Returns the volume geometry
-        
+
         Returns
         -------
         vg: volgeom.VolGeom
@@ -120,42 +120,42 @@ class VolSurf(object):
         '''
         Generates a mapping from node indices to voxels that are at or near
         the nodes at the pial and white surface.
-        
+
         Parameters
         ----------
         nsteps: int (default: 10)
             Number of nsteps from pial to white matter. For each node pair
-            across the 'pial' and 'white' surface, a line is constructed 
-            connecting the pairs. Subsequently 'nsteps' nsteps are taken from 
-            'pial' to 'white' and the voxel at that position at the line is 
+            across the 'pial' and 'white' surface, a line is constructed
+            connecting the pairs. Subsequently 'nsteps' nsteps are taken from
+            'pial' to 'white' and the voxel at that position at the line is
             associated with that node pair.
         start: float (default: 0)
-            Relative start position of line in gray matter, 0.=white surface, 
+            Relative start position of line in gray matter, 0.=white surface,
             1.=pial surface
         stop: float (default: 1)
-            Relative stop position of line, in gray matter, 0.=white surface, 
+            Relative stop position of line, in gray matter, 0.=white surface,
             1.=pial surface
-            
-              
+
+
         Returns
         -------
         n2v: dict
-            A mapping from node indices to voxels. In this mapping, the 
-            'i'-th node is associated with 'n2v[i]=v2p' which contains the 
-            mapping from linear voxel indices to grey matter positions. In 
-            other words, 'n2v[i][idx]=v2p[idx]=pos' means that the voxel with 
-            linear index 'idx' is associated with node 'i' and has has 
+            A mapping from node indices to voxels. In this mapping, the
+            'i'-th node is associated with 'n2v[i]=v2p' which contains the
+            mapping from linear voxel indices to grey matter positions. In
+            other words, 'n2v[i][idx]=v2p[idx]=pos' means that the voxel with
+            linear index 'idx' is associated with node 'i' and has has
             relative position 'pos' in the gray matter.
-            
+
             If node 'i' is outside the volume, then 'n2v[i]=None'.
-            
+
         Notes
         -----
-        The typical use case is selecting voxels in the grey matter. The 
+        The typical use case is selecting voxels in the grey matter. The
         rationale of this method is that (assuming a sufficient dense cortical
-        surface mesh, combined with a sufficient number of nsteps, the grey 
-        matter is sampled dense enough so that 'no voxels are left out'. 
-         
+        surface mesh, combined with a sufficient number of nsteps, the grey
+        matter is sampled dense enough so that 'no voxels are left out'.
+
         '''
         if start_fr > stop_fr or nsteps < 1:
             raise ValueError("Illegal start/stop combination, "
@@ -173,16 +173,16 @@ class VolSurf(object):
         #
         # vs is a mapping from indices to relative position in grey matter
         # where 0 means white surface and 1 means pial surface
-        # vs[k]=pos means that voxel with linear index k is 
+        # vs[k]=pos means that voxel with linear index k is
         # associated with relative positions pos0
         #
         # CHECKME that I did not confuse (the order of) pial and white surface
 
         center_ids = range(self._pial.nvertices)
-        nv = len(center_ids) # number of nodes on the surface
-        n2vs = dict() # node to voxel indices mapping
+        nv = len(center_ids)  # number of nodes on the surface
+        n2vs = dict()  # node to voxel indices mapping
         for j in xrange(nv):
-            n2vs[j] = None # by default, no voxels associated with each node
+            n2vs[j] = None  # by default, no voxels associated with each node
 
         vg = self._volgeom
 
@@ -193,7 +193,7 @@ class VolSurf(object):
 
         # different 'layers' (depths) in the grey matter
         for i in xrange(nsteps):
-            whiteweight = start_fr + step * float(i) # ensure float
+            whiteweight = start_fr + step * float(i)  # ensure float
             pialweight = 1 - whiteweight
 
             # compute weighted intermediate surface in between pial and white
@@ -218,10 +218,10 @@ class VolSurf(object):
                 # compute relative position of each voxel in grey matter
                 grey_matter_pos = self.surf_project_weights_nodewise(vol_xyz)
 
-            for center_id in center_ids: # for each node on the surface
+            for center_id in center_ids:  # for each node on the surface
                 # associate voxels with the present center node.
                 # If a node is not in the volume, then no voxels are
-                # associated with it. 
+                # associated with it.
 
                 if is_vox_in_vol[center_id]:
                     # no voxels (yet) associated with this node - make space
@@ -236,75 +236,238 @@ class VolSurf(object):
     def surf_project_nodewise(self, xyz):
         '''
         Projects coordinates on lines connecting pial and white matter.
-        
+
         Parameters
         ----------
         xyz: numpy.ndarray (float)
-            Px3 array with coordinates, assuming 'white' and 'pial' 
+            Px3 array with coordinates, assuming 'white' and 'pial'
             surfaces have P nodes each
-        
+
         Returns
         -------
         xyz_proj: numpy.ndarray (float)
-            Px3 array with coordinates the constraints that xyz_proj[i,:] 
-            lies on the line connecting node 'i' on the white and pial 
-            surface, and that xyz_proj[i,:] is closest to xyz[i,:] of all 
-            points on this line.   
+            Px3 array with coordinates the constraints that xyz_proj[i,:]
+            lies on the line connecting node 'i' on the white and pial
+            surface, and that xyz_proj[i,:] is closest to xyz[i,:] of all
+            points on this line.
         '''
 
-        pxyz = self._pial.vertices
+
+        pxyz = self.white_surface.vertices
         weights = self.surf_project_weights_nodewise(xyz)
         return pxyz + np.reshape(weights, (-1, 1)) * pxyz
 
-    def surf_project_weights_nodewise(self, xyz):
-        '''
-        Computes relative position of xyz on lines from pial to white matter.
-        
+    def surf_unproject_weights_nodewise(self, weights):
+        '''Maps relative positions in grey matter to coordinates
+
         Parameters
         ----------
-        xyz: numpy.ndarray (float)
-            Px3 array with coordinates, assuming 'white' and 'pial' surfaces 
-            have P nodes each.
-        
+        weights: numpy.ndarray (float)
+            P values of relative grey matter positions, where 0=white surface
+            and 1=pial surface.
+
         Returns
         -------
-        weights: numpy.ndarray (float)
-            P values of relative grey matter positions, where 0=white surface 
-            and 1=pial surface.
+        xyz: numpy.ndarray (float)
+            Px3 array with coordinates, assuming 'white' and 'pial' surfaces
+            have P nodes each.
         '''
-
         # compute relative to pial_xyz
         pxyz = self._pial.vertices
         qxyz = self._white.vertices
 
-        dxyz = qxyz - pxyz # difference vector
-
-        scale = np.sum(dxyz * dxyz, axis=1)
+        dxyz = (pxyz - qxyz)  # difference vector
 
 
-        weights = np.zeros((self._pial.nvertices,), dtype=pxyz.dtype)
+        if len([s for s in weights.shape if s > 1]) != 1:
+            raise ValueError("Weights should be a vector, but found "
+                             "shape %s" % (weights.shape,))
 
-        nan_mask = scale == 0
-        weights[nan_mask] = np.nan
+        weights_lin = np.reshape(weights.ravel(), (-1, 1))
+        return qxyz + weights_lin * dxyz
 
-        non_nan_mask = np.logical_not(nan_mask)
-        ps = xyz - pxyz
-        proj = np.sum(ps * dxyz, axis=1)
 
-        weights[non_nan_mask] = proj[non_nan_mask] / scale[non_nan_mask]
+    def surf_project_weights_nodewise(self, xyz):
+        '''
+        Computes relative position of xyz on lines from pial to white matter.
+
+        Parameters
+        ----------
+        xyz: numpy.ndarray (float)
+            Px3 array with coordinates, assuming 'white' and 'pial' surfaces
+            have P nodes each.
+
+        Returns
+        -------
+        weights: numpy.ndarray (float)
+            If nodes is True, P values of relative grey matter positions
+            (0=white surface and 1=pial surface), where
+            the i-th element are the projection weights for xyz[i] relative
+            to the i-th node in the pial and white surface.
+            Otherwise it returns an PxQ array with the projected weights
+            for each node. If nodes is an int, then a P-vector is returned
+
+        '''
+        return self.surf_project_weights(True, xyz)
+
+
+    def surf_project_weights(self, nodes, xyz):
+        '''
+        Computes relative position of xyz on lines from pial to white matter.
+
+        Parameters
+        ----------
+        nodes: True or np.ndarray or int
+            Q node indices for each the weights are computed. If True, then
+            weights are computed node-wise, otherwise separately for each node.
+        xyz: numpy.ndarray (float)
+            Px3 array with coordinates. IF nodes is True then the 'white' and
+            'pial' surfaces must have P nodes each.
+
+        Returns
+        -------
+        weights: numpy.ndarray (float)
+            If nodes is True, P values of relative grey matter positions
+            (0=white surface and 1=pial surface), where
+            the i-th element are the projection weights for xyz[i] relative
+            to the i-th node in the pial and white surface.
+            Otherwise it returns an PxQ array with the projected weights
+            for each node. If nodes is an int, then a P-vector is returned
+
+        '''
+        node_wise = nodes is True
+
+        if node_wise:
+            one_node = True
+            nodes = [False]  # placeholder
+        else:
+            one_node = type(nodes) is int
+            nodes = np.asarray(nodes).ravel()
+        nnodes = len(nodes)
+
+        nxyz, three = xyz.shape
+        if three != 3:
+            raise ValueError('Coordinates should be Px3')
+
+
+        pial = self._pial.vertices
+        white = self._white.vertices
+
+        weights = np.zeros((nxyz, nnodes))
+        for i, node in enumerate(nodes):
+            pxyz = pial if node_wise else pial[node, :]
+            qxyz = white if node_wise else white[node, :]
+
+            dxyz = pxyz - qxyz
+            ndim = len(dxyz.shape)
+            scale = np.sum(dxyz * dxyz, axis=ndim - 1)
+            # weights = np.zeros((self._pial.nvertices,), dtype=pxyz.dtype)
+
+            if node_wise:
+                nan_mask = scale == 0
+                weights[nan_mask, i] = np.nan
+
+                non_nan_mask = np.logical_not(nan_mask)
+                ps = (xyz - qxyz)
+                proj = np.sum(ps * dxyz, axis=1)
+
+                weights[non_nan_mask, i] = proj[non_nan_mask] / scale[non_nan_mask]
+            else:
+                if scale == 0:
+                    weights[:, i] = np.NAN
+                else:
+                    ps = (xyz - qxyz)
+                    proj = np.sum(ps * dxyz, axis=1)
+
+                    weights[:, i] = proj / scale
+
+        if one_node:
+            weights = weights.ravel()
 
         return weights
+
+
+
+    def coordinates_to_grey_distance_mm(self, nodes, xyz):
+        '''Computes the grey position of coordinates in metric units
+
+        Parameters
+        ----------
+        nodes: int or np.ndarray
+            Single index, or Q indices of nodes relative to which the
+            coordinates are computed. If True then grey distances
+            are computed node-wise.
+        xyz: Px3 array with coordinates, assuming 'white' and 'pial' surfaces
+            have P nodes each.
+
+        Returns
+        -------
+        grey_position_mm: np.ndarray
+            Vector with P elements (if type(nodes) is int) or PxQ array
+            (with type(nodes) is np.ndarray) containing the signed 'distance' to the
+            grey matter. Values of zero indicate a node is within the grey
+            matter. Negative values indicate that a node is 'below' the white
+            matter (i.e. farther from the pial surface than the white surface),
+            whereas Positive values indicate that a node is 'above' the pial
+            matter.
+        '''
+        node_wise = nodes is True
+
+        if node_wise:
+            one_node = True
+            all_nodes = [False]  # placeholder
+        else:
+            one_node = type(nodes) is int
+            all_nodes = np.asarray(nodes).ravel()
+
+        nnodes = len(all_nodes)
+
+        nxyz, three = xyz.shape
+        if three != 3:
+            raise ValueError('Coordinates should be Px3')
+
+        white = self.white_surface.vertices
+        pial = self.pial_surface.vertices
+
+        in_white = lambda x:x < 0
+        in_pial = lambda x:x > 1
+
+        # compute relative position
+        pos = self.surf_project_weights(nodes, xyz)
+        ds = np.zeros((nxyz, nnodes))  # space for output
+
+        for i, node in enumerate(all_nodes):
+            d = np.zeros(nxyz) + np.nan
+            for sgn, s, f in ((-1, white, in_white), (1, pial, in_pial)):
+                if node_wise:
+                    msk = f(pos)
+                    delta = s[msk] - xyz[msk] # difference in coordinates
+                else:
+                    # mask of voxels outside grey matter
+                    msk = f(pos if one_node else pos[:, i])
+                    delta = s[node, :] - xyz[msk, :]
+
+                dst = np.sum(delta ** 2, 1) ** .5
+                d[msk] = sgn * dst # compute signed distance
+            d[np.isnan(d)] = 0
+            ds[:, i] = d
+
+        if one_node:
+            ds = ds.ravel()
+
+        return ds
+
 
     def voxel_count_nifti_image(self, n2v=None):
         '''
         Returns a NIFTI image indicating how often each voxel is selected.
-        
+
         Parameters
         ==========
         n2v: dict
             Node to voxel mapping, typically from node2voxels. If omitted
             then the output from node2voxels() is used.
-        
+
         Returns
         =======
         img: nifti.Nifti1Image
@@ -333,11 +496,11 @@ class VolumeBasedSurface(surf.Surface):
     '''A surface based on a volume, where every voxel is a node.
     It has the empty topology, meaning there are no edges between
     nodes (voxels)
-    
+
     Use case: provide volume-based searchlight behaviour. In that
     case finding neighbouring nodes is supposed to be faster
     using the circlearound_n2d method.
-    
+
     XXX make a separate module?'''
     def __init__(self, vg):
         '''
@@ -363,11 +526,11 @@ class VolumeBasedSurface(surf.Surface):
     def __reduce__(self):
         return (self.__class__, (self._vg,))
 
-    
+
     def __eq__(self, other):
         if not isinstance(other, VolumeBasedSurface):
             return False
-        return self._vg==other._vg
+        return self._vg == other._vg
 
     def circlearound_n2d(self, src, radius, metric='euclidean'):
         shortmetric = metric[0].lower()
@@ -433,15 +596,15 @@ class VolumeBasedSurface(surf.Surface):
 
 
 def from_volume(v):
-    '''Makes a pseudo-surface from a volume. 
+    '''Makes a pseudo-surface from a volume.
     Each voxels corresponds to a node; there is no topology.
     A use case is mimicking traditional volume-based searchlights
-    
+
     Parameters
     ----------
     v: str of NiftiImage
         input volume
-        
+
     Returns
     -------
     s: surf.Surface

@@ -38,7 +38,7 @@ class CorrCoef(FeaturewiseMeasure):
           What attribut to correlate with
         corr_backend: None or 'builtin' or 'scipy' (default: None)
           Which function to use to compute correlations.
-          None means 'scipy' if pvalue else 'builtin'. 
+          None means 'scipy' if pvalue else 'builtin'.
         """
         # init base classes first
 
@@ -55,7 +55,7 @@ class CorrCoef(FeaturewiseMeasure):
 
         if backend is None:
             # if p values needed, use scipy
-            # otherwise 
+            # otherwise
             backend = ['builtin', 'scipy'][self.__pvalue]
 
         if backend == 'builtin':
@@ -97,26 +97,26 @@ class CorrCoef(FeaturewiseMeasure):
 
 def pearson_correlation(x, y=None):
     '''Computes pearson correlations on matrices
-    
+
     Parameters
     ----------
     x: np.ndarray or Dataset
         PxM array
     y: np.ndarray or Dataset or None (the default).
         PxN array. If None, then y=x.
-        
+
     Returns
     -------
     c: np.ndarray
         MxN array with c[i,j]=r(x[:,i],y[:,j])
-    
+
     Notes
     -----
     Unlike numpy. this function behaves like matlab's 'corr' function.
     Its numerical precision is slightly lower than numpy's correlate function.
     Unlike scipy's 'pearsonr' function it does not return p values.
     TODO integrate with CorrCoef
-    
+
     '''
 
     if y is None:
@@ -137,7 +137,7 @@ def pearson_correlation(x, y=None):
     yd = y - np.mean(y, axis=0)
 
     if xd.shape[0] != yd.shape[0]:
-        raise ValueError("Shape mismatch: %d != %d" % (xd.shape, yd.shape))
+        raise ValueError("Shape mismatch: %s != %s" % (xd.shape, yd.shape))
 
     # normalize
     n = 1. / (x.shape[0] - 1) # normalize

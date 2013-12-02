@@ -134,9 +134,13 @@ def test_product_flatten():
     # generate random data in four dimensions
     data = np.random.normal(size=shape)
     ds = Dataset(data, sa=dict(sample_names=sample_names))
+    for n, v in product_name_values:
+        ds.a[n] = v
 
     # apply flattening to ds
-    flattener = ProductFlattenMapper(product_name_values)
+    names, values = zip(*(product_name_values))
+
+    flattener = ProductFlattenMapper(names)
 
     # test I/O (only if h5py is available)
     if externals.exists('h5py'):
@@ -158,7 +162,7 @@ def test_product_flatten():
 
     ndim = len(product_name_values)
 
-    idxs = [range(len(v)) for _, v in product_name_values]
+    idxs = [range(len(v)) for v in values]
     for si in xrange(nsamples):
         for fi, p in enumerate(itertools.product(*idxs)):
             data_tup = (si,) + p
@@ -177,9 +181,14 @@ def test_product_flatten():
                 assert_equal(x.fa[name].value, value[p[i]])
                 assert_equal(x.fa[name + '_indices'].value, p[i])
 
-    product_name_values += [('foo', [1, 2, 3])]
-    flattener = ProductFlattenMapper(product_name_values)
-    assert_raises(ValueError, flattener, ds)
+    dsr = flattener.reverse(mds)
+    assert_equal(dsr.shape, ds.shape)
+
+
+    names += ('foo',)
+
+    flattener = ProductFlattenMapper(names)
+    assert_raises(KeyError, flattener, ds)
 
 
 def test_subset():
@@ -256,7 +265,7 @@ def test_subset():
 def test_subset_filler():
     sm = StaticFeatureSelection(np.arange(3))
     sm_f0 = StaticFeatureSelection(np.arange(3), filler=0)
-    sm_fm1 = StaticFeatureSelection(np.arange(3), filler= -1)
+    sm_fm1 = StaticFeatureSelection(np.arange(3), filler=-1)
     sm_fnan = StaticFeatureSelection(np.arange(3), filler=np.nan)
     data = np.arange(12).astype(float).reshape((2, -1))
 
@@ -420,7 +429,7 @@ def test_addaxis():
     ds3 = AddAxisMapper(pos=3)(ds)
     assert_array_equal(ds3.shape, ds.shape + (1,))
     # reverse indexing
-    ds_1 = AddAxisMapper(pos= -1)(ds)
+    ds_1 = AddAxisMapper(pos=-1)(ds)
     assert_array_equal(ds3.samples, ds_1.samples)
     assert_equal(ds3.sa, ds_1.sa)
     assert_equal(ds3.fa, ds_1.fa)

@@ -12,7 +12,7 @@ from mvpa2.testing import *
 skip_if_no_external('nibabel')
 
 import numpy as np
-from numpy.testing.utils import assert_array_almost_equal
+from numpy.testing.utils import assert_array_almost_equal, assert_array_equal
 
 import nibabel as nb
 
@@ -33,7 +33,8 @@ from mvpa2.misc.surfing import surf_voxel_selection, queryengine, volgeom, \
 
 from mvpa2.measures.searchlight import Searchlight
 from mvpa2.misc.surfing.queryengine import SurfaceVerticesQueryEngine, \
-                                            disc_surface_queryengine
+                                           SurfaceVoxelsQueryEngine, \
+                                           disc_surface_queryengine
 
 from mvpa2.measures.base import Measure, \
         TransferMeasure, RepeatedMeasure, CrossValidation
@@ -45,6 +46,7 @@ from mvpa2.mappers.detrend import poly_detrend
 from mvpa2.mappers.zscore import zscore
 from mvpa2.misc.neighborhood import Sphere, IndexQueryEngine
 from mvpa2.clfs.gnb import GNB
+from mvpa2.base.hdf5 import h5save, h5load
 
 
 class SurfVoxelSelectionTests(unittest.TestCase):
@@ -54,10 +56,10 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         '''
         Tests to see whether results are identical for surface-based
-        searchlight (just one plane; Euclidian distnace) and volume-based 
+        searchlight (just one plane; Euclidian distnace) and volume-based
         searchlight.
-            
-        Note that the current value is a float; if it were int, it would 
+
+        Note that the current value is a float; if it were int, it would
         specify the number of voxels in each searchlight'''
 
         radius = 10.
@@ -84,7 +86,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
 
         '''
-        Simulate pial and white matter as just above and below 
+        Simulate pial and white matter as just above and below
         the central plane
         '''
         normal_vec = aff[:3, 2]
@@ -119,7 +121,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             postproc = lambda x:x
 
         '''
-        Surface analysis: define the query engine, cross validation, 
+        Surface analysis: define the query engine, cross validation,
         and searchlight
         '''
         surf_qe = SurfaceVerticesQueryEngine(surf_voxsel)
@@ -266,7 +268,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                     call_method_=("qe", "rvs", "gam"))
 
         combis = _cartprod(params) # compute all possible combinations
-        combistep = 17  #173 
+        combistep = 17  #173
                         # some fine prime number to speed things up
                         # if this value becomes too big then not all
                         # cases are covered
@@ -288,7 +290,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             call_method_ = combi['call_method_']
 
 
-            # keep track of which values were used - 
+            # keep track of which values were used -
             # so that this unit test tests itself
 
             for k in combi.keys():
@@ -313,7 +315,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                 r = sl(ds).samples
 
             elif call_method_ == 'rvs':
-                # use query-engine but build the 
+                # use query-engine but build the
                 # ingredients by hand
                 vg = volgeom.from_any(volume_,
                                       volume_mask_)
@@ -356,6 +358,128 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                 if not vstr in tested_params[k]:
                     raise ValueError("Missing value %r for %s" %
                                         (tested_params[k], k))
+
+
+    def test_volsurf_projections(self):
+        white = surf.generate_plane((0, 0, 0), (0, 1, 0), (0, 0, 1), 10, 10)
+        pial = white + np.asarray([[1, 0, 0]])
+
+        above = pial + np.asarray([[3, 0, 0]])
+        vg = volgeom.VolGeom((10, 10, 10), np.eye(4))
+        vs = volsurf.VolSurf(vg, white, pial)
+
+        dx = pial.vertices - white.vertices
+
+        for s, w in ((white, 0), (pial, 1), (above, 4)):
+            xyz = s.vertices
+            ws = vs.surf_project_weights(True, xyz)
+            delta = vs.surf_unproject_weights_nodewise(ws) - xyz
+            assert_array_equal(delta, np.zeros((100, 3)))
+            assert_true(np.all(w == ws))
+
+        n2vs = vs.node2voxels()
+        assert_equal(n2vs, dict((i, {i:0, i + 100:1}) for i in xrange(100)))
+
+        nd = 17
+        ds_mm_expected = np.sum((above.vertices - pial.vertices[nd, :]) ** 2,
+                                                                    1) ** .5
+        ds_mm = vs.coordinates_to_grey_distance_mm(nd, above.vertices)
+        assert_array_almost_equal(ds_mm_expected, ds_mm)
+
+        ds_mm_nodewise = vs.coordinates_to_grey_distance_mm(True,
+                                                            above.vertices)
+
+        assert_array_equal(ds_mm_nodewise, np.ones((100,)) * 3)
+
+
+    @with_tempfile('.h5py', 'voxsel')
+    def test_surface_outside_volume_voxel_selection(self, fn):
+        skip_if_no_external('h5py')
+        vol_shape = (10, 10, 10, 1)
+        vol_affine = np.identity(4)
+        vg = volgeom.VolGeom(vol_shape, vol_affine)
+
+        # make surfaces that are far away from all voxels
+        # in the volume
+        sphere_density = 4
+        far = 10000.
+        outer = surf.generate_sphere(sphere_density) * 10 + far
+        inner = surf.generate_sphere(sphere_density) * 5 + far
+
+        vs = volsurf.VolSurf(vg, inner, outer)
+        radii = [10., 10] # fixed and variable radii
+
+        outside_node_margins = [0, far, True]
+        for outside_node_margin in outside_node_margins:
+            for radius in radii:
+                selector = lambda:surf_voxel_selection.voxel_selection(vs,
+                                            radius,
+                                            outside_node_margin=outside_node_margin)
+
+                if type(radius) is int and outside_node_margin is True:
+                    assert_raises(ValueError, selector)
+                else:
+                    sel = selector()
+                    if outside_node_margin is True:
+                        # it should have all the keys, but they should
+                        # all be empty
+                        assert_array_equal(sel.keys(), range(inner.nvertices))
+                        for k, v in sel.iteritems():
+                            assert_equal(v, [])
+                    else:
+                        assert_array_equal(sel.keys(), [])
+
+                    if outside_node_margin is True and \
+                                 externals.versions['hdf5'] < '1.8.7':
+                        raise SkipTest("Versions of hdf5 before 1.8.7 have "
+                                                    "problems with empty arrays")
+
+                    h5save(fn, sel)
+                    sel_copy = h5load(fn)
+
+                    assert_array_equal(sel.keys(), sel_copy.keys())
+                    for k in sel.keys():
+                        assert_equal(sel[k], sel_copy[k])
+
+                    assert_equal(sel, sel_copy)
+
+
+    def test_surface_voxel_query_engine(self):
+        vol_shape = (10, 10, 10, 1)
+        vol_affine = np.identity(4)
+        vol_affine[0, 0] = vol_affine[1, 1] = vol_affine[2, 2] = 5
+        vg = volgeom.VolGeom(vol_shape, vol_affine)
+
+        # make the surfaces
+        sphere_density = 10
+
+        outer = surf.generate_sphere(sphere_density) * 25. + 15
+        inner = surf.generate_sphere(sphere_density) * 20. + 15
+
+        vs = volsurf.VolSurf(vg, inner, outer)
+
+        radius = 10
+
+        for fallback, expected_nfeatures in ((True, 1000), (False, 183)):
+            voxsel = surf_voxel_selection.voxel_selection(vs, radius)
+            qe = SurfaceVoxelsQueryEngine(voxsel, fallback_euclidian_distance=fallback)
+
+            m = _Voxel_Count_Measure()
+
+            sl = Searchlight(m, queryengine=qe)
+
+            data = np.random.normal(size=vol_shape)
+            img = nb.Nifti1Image(data, vol_affine)
+            ds = fmri_dataset(img)
+
+            sl_map = sl(ds)
+
+            counts = sl_map.samples
+
+            assert_true(np.all(np.logical_and(5 <= counts, counts <= 18)))
+            assert_equal(sl_map.nfeatures, expected_nfeatures)
+
+
 
 def _cartprod(d):
     '''makes a combinatorial explosion from a dictionary
