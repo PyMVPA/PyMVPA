@@ -380,39 +380,67 @@ class AttrDataset(object):
         return out
 
 
-    def append(self, other):
+    def append(self, other, stack='v'):
         """Append the content of a Dataset.
 
         Parameters
         ----------
         other : AttrDataset
           The content of this dataset will be append.
+        stack   : str. Options: "v" for vertical (Default) or "h" for horizontal.
+            If 'v', other is added to the bottom of dataset as additional samples
+            If 'h', other is added to the right as additional features
 
         Notes
         -----
+        If vstack:
         No dataset attributes, or feature attributes will be merged!  These
         respective properties of the *other* dataset are neither checked for
         compatibility nor copied over to this dataset. However, all samples
         attributes will be concatenated with the existing ones.
+
+        If hstack:
+        No sample attributes, or dataset atributes will be merged. Feature
+        attributes will be concatenated with existing ones.
         """
-        if not self.nfeatures == other.nfeatures:
-            raise DatasetError("Cannot merge datasets, because the number of "
-                               "features does not match.")
+        if stack=='v':
+            if not self.nfeatures == other.nfeatures:
+                raise DatasetError("Cannot merge datasets, because the number of "
+                                   "features does not match.")
 
-        if not sorted(self.sa.keys()) == sorted(other.sa.keys()):
-            raise DatasetError("Cannot merge dataset. This datasets samples "
-                               "attributes %s cannot be mapped into the other "
-                               "set %s" % (self.sa.keys(), other.sa.keys()))
+            if not sorted(self.sa.keys()) == sorted(other.sa.keys()):
+                raise DatasetError("Cannot merge dataset. This datasets samples "
+                                   "attributes %s cannot be mapped into the other "
+                                   "set %s" % (self.sa.keys(), other.sa.keys()))
 
-        # concat the samples as well
-        self.samples = np.concatenate((self.samples, other.samples), axis=0)
+            # concat the samples as well
+            self.samples = np.concatenate((self.samples, other.samples), axis=0)
 
-        # tell the collection the new desired length of all attributes
-        self.sa.set_length_check(len(self.samples))
-        # concat all samples attributes
-        for k, v in other.sa.iteritems():
-            self.sa[k].value = np.concatenate((self.sa[k].value, v.value),
-                                             axis=0)
+            # tell the collection the new desired length of all attributes
+            self.sa.set_length_check(len(self.samples))
+            # concat all samples attributes
+            for k, v in other.sa.iteritems():
+                self.sa[k].value = np.concatenate((self.sa[k].value, v.value),
+                                                 axis=0)
+        if stack=='h':
+            if not self.nsamples == other.nsamples:
+                raise DatasetError("Cannot merge datasets, because the number of "
+                                   "samples does not match.")
+
+            if not sorted(self.fa.keys()) == sorted(other.fa.keys()):
+                raise DatasetError("Cannot merge dataset. This datasets features "
+                                   "attributes %s cannot be mapped into the other "
+                                   "set %s" % (self.fa.keys(), other.fa.keys()))
+
+            # concat the samples as well
+            self.samples = np.concatenate((self.samples, other.samples), axis=1)
+
+            # tell the collection the new desired length of all attributes
+            self.fa.set_length_check(len(self.samples.T))
+            # concat all feature attributes
+            for k, v in other.fa.iteritems():
+                self.fa[k].value = np.concatenate((self.fa[k].value, v.value),
+                                                    axis=0) 
 
 
     def __getitem__(self, args):

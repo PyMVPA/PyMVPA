@@ -219,6 +219,7 @@ __sdebug("scipy dependents")
 if externals.exists("scipy"):
     from mvpa2.support.stats import scipy
     from mvpa2.measures.corrcoef import *
+    from mvpa2.measures.rsa import *
     from mvpa2.measures.ds import *
     from mvpa2.clfs.ridge import *
     from mvpa2.clfs.plr import *
