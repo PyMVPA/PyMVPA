@@ -524,6 +524,9 @@ def run_alignment(config, env):
     fullext = config['outvol_fullext']
     ext = config['outvol_ext']
 
+    if config['sid'] is None:
+        raise ValueError('Need sid')
+
     cmds = []
     if not os.path.exists(config['refdir']):
         cmds.append('mkdir %(refdir)s' % config)
@@ -685,9 +688,9 @@ def run_alignment(config, env):
         else:
             print "AddEdge seems to have been run already"
 
-
-        plot_slice_fns = [(ae_e_n + '_e3', ae_s_n + '_e3', 'qa_e3.png'),
-                          (None, ae_e_n + '_' + ae_s_n + '_ec', 'qa_ec.png')]
+        sid = config['sid']
+        plot_slice_fns = [(ae_e_n + '_e3', ae_s_n + '_e3', '%s_qa_e3.png' % sid),
+                          (None, ae_e_n + '_' + ae_s_n + '_ec', '%s_qa_ec.png' % sid)]
 
         plot_slice_imgfns = ['%s/%s' % (refdir, fn) for fn in plot_slice_fns]
         if overwrite or not all(map(os.path.exists, plot_slice_imgfns)):
@@ -888,7 +891,11 @@ def run_makespec_bothhemis(config, env):
 def run_makesurfmasks(config, env):
     refdir = config['refdir']
     overwrite = config['overwrite']
-    sumfn = 'qa_surf_mask' # output file
+
+    if config['sid'] is None:
+        raise ValueError('Need sid')
+
+    sumfn = '%s_qa_surf_mask' % config['sid'] # output file
 
     fullext = config['outvol_fullext']
     volor = config['outvol_ext']
