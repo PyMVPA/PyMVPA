@@ -8,8 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """sklearn interface module.
 
-This module provides an adaptor to allow for using sklearn transformers as
-PyMVPA mappers.
+This module provides an adaptor to use sklearn transformers as PyMVPA mappers.
 """
 
 __docformat__ = 'restructuredtext'
@@ -20,18 +19,32 @@ from mvpa2.base.learner import Learner
 from mvpa2.mappers.base import Mapper
 
 class SKLTransformer(Mapper):
-    """Mapper encapsulating an arbitray sklearn transformer.
+    """Adaptor to use arbitrary sklearn transformer as a mapper.
+
+    This basic adaptor support forward mapping only. It is clever enough
+    to call ``fit_transform()`` instead of a serial ``fit()`` and
+    ``transform()`` combo when an untrained instance is called with a dataset.
+
+    >>> from sklearn.manifold import MDS
+    >>> from mvpa2.misc.data_generators import normal_feature_dataset
+    >>> ds = normal_feature_dataset(perlabel=10, nlabels=2)
+    >>> print ds.shape
+    (20, 4)
+    >>> mds = SKLTransformer(MDS())
+    >>> mapped = mds(ds)
+    >>> print mapped.shape
+    (20, 2)
     """
     def __init__(self, transformer, **kwargs):
         """
-        If the mapper's ``space`` argument is not ``None``, a sample
-        attribute of the given name will be extracted from the training
-        dataset and passed to the sklearn transformer's ``fit()`` method
-        as ``y`` argument.
-
         Parameters
         ----------
         transformer : sklearn.transformer instance
+        space : str or None, optional
+          If not None, a sample attribute of the given name will be extracted
+          from the training dataset and passed to the sklearn transformer's
+          ``fit()`` method as ``y`` argument.
+
         """
         # NOTE: trailing spaces in above docstring must not be pruned
         # for correct parsing
