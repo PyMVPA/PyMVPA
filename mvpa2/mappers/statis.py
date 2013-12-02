@@ -289,7 +289,7 @@ def run_bootstrap(ds, sts, niter=1000):
                 Y = Y_t
             else:
                 Y = np.hstack((Y,Y_t))
-            fselect[:,:,k] = ds.samples[ds.chunks==np.unique(ds.chunks)[j],:]
+            fselect[:,:,k] = ds.samples[ds.chunks==j,:]
 
         (A,alpha,C,G) = inter_table_Rv_analysis(Y,Y_idx)
         if G is None:
