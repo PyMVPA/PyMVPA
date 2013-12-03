@@ -71,7 +71,7 @@ def test_iirfilter():
     b, a = signal.butter(8, 0.125)
     mds = iir_filter(ds, b, a, padlen=150)
     # check we get just the slow wave out (compensate for edge artifacts)
-    assert_false(np.sum(np.abs(mds.samples[:,0] - xlow) > 0.001))
+    assert_false(np.sum(np.abs(mds.samples[100:-100,0] - xlow[100:-100]) > 0.001))
     assert_equal(len(ds.sa), len(mds.sa))
     assert_equal(len(ds.fa), len(mds.fa))
     assert_array_equal(ds.fa.fid, mds.fa.fid)
