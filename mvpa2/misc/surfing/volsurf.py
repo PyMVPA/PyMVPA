@@ -17,12 +17,17 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
+from functools import total_ordering
+
 from mvpa2.base import externals
 from mvpa2.misc.surfing import volgeom
 from mvpa2.support.nibabel import surf
 
+from mvpa2.base.progress import ProgressBar
+from mvpa2.base import debug
+
 if externals.exists('nibabel'):
-    import nibabel as nb
+        import nibabel as nb
 
 class VolSurf(object):
     '''
@@ -41,6 +46,8 @@ class VolSurf(object):
         intermediate: surf.Surface (default: None).
             Surface representing intermediate surface. If omitted
             it is the node-wise average of white and pial.
+            This parameter is usually ignored, except when used
+            in a VolSurfMinimalLowresMapping.
 
         Notes
         -----
@@ -53,10 +60,10 @@ class VolSurf(object):
         if not self._pial.same_topology(self._white):
             raise Exception("Not same topology for white and pial")
 
-        if intermediate is None:
-            intermediate = (self.pial_surface * .5) + (self.white_surface * .5)
+        #if intermediate is None:
+        #    intermediate = (self.pial_surface * .5) + (self.white_surface * .5)
+        self._intermediate = surf.from_any(intermediate)
 
-        self._intermediate = intermediate
 
     def __repr__(self, prefixes=[]):
         prefixes_ = ['vg=%r' % self._volgeom,
@@ -115,123 +122,6 @@ class VolSurf(object):
         return (self.__class__, (self._volgeom, self._white,
                                  self._pial, self._intermediate))
 
-    def node2voxels(self, nsteps=10, start_fr=0.0,
-                    stop_fr=1.0, start_mm=0, stop_mm=0):
-        '''
-        Generates a mapping from node indices to voxels that are at or near
-        the nodes at the pial and white surface.
-
-        Parameters
-        ----------
-        nsteps: int (default: 10)
-            Number of nsteps from pial to white matter. For each node pair
-            across the 'pial' and 'white' surface, a line is constructed
-            connecting the pairs. Subsequently 'nsteps' nsteps are taken from
-            'pial' to 'white' and the voxel at that position at the line is
-            associated with that node pair.
-        start: float (default: 0)
-            Relative start position of line in gray matter, 0.=white surface,
-            1.=pial surface
-        stop: float (default: 1)
-            Relative stop position of line, in gray matter, 0.=white surface,
-            1.=pial surface
-
-
-        Returns
-        -------
-        n2v: dict
-            A mapping from node indices to voxels. In this mapping, the
-            'i'-th node is associated with 'n2v[i]=v2p' which contains the
-            mapping from linear voxel indices to grey matter positions. In
-            other words, 'n2v[i][idx]=v2p[idx]=pos' means that the voxel with
-            linear index 'idx' is associated with node 'i' and has has
-            relative position 'pos' in the gray matter.
-
-            If node 'i' is outside the volume, then 'n2v[i]=None'.
-
-        Notes
-        -----
-        The typical use case is selecting voxels in the grey matter. The
-        rationale of this method is that (assuming a sufficient dense cortical
-        surface mesh, combined with a sufficient number of nsteps, the grey
-        matter is sampled dense enough so that 'no voxels are left out'.
-
-        '''
-        if start_fr > stop_fr or nsteps < 1:
-            raise ValueError("Illegal start/stop combination, "
-                             "or not enough steps")
-
-        # make a list of the different relative gray matter positions
-        if nsteps > 1:
-            step = (stop_fr - start_fr) / float(nsteps - 1)
-        else:
-            step = 0.
-            start_fr = stop_fr = .5
-
-        # node to voxels mapping
-        # if n2v[i]=vs, then node i is associated with the voxels vs
-        #
-        # vs is a mapping from indices to relative position in grey matter
-        # where 0 means white surface and 1 means pial surface
-        # vs[k]=pos means that voxel with linear index k is
-        # associated with relative positions pos0
-        #
-        # CHECKME that I did not confuse (the order of) pial and white surface
-
-        center_ids = range(self._pial.nvertices)
-        nv = len(center_ids)  # number of nodes on the surface
-        n2vs = dict()  # node to voxel indices mapping
-        for j in xrange(nv):
-            n2vs[j] = None  # by default, no voxels associated with each node
-
-        vg = self._volgeom
-
-        same_surfaces = self.white_surface == self.pial_surface
-
-        surf_start = self.white_surface + start_mm
-        surf_stop = self.pial_surface + stop_mm
-
-        # different 'layers' (depths) in the grey matter
-        for i in xrange(nsteps):
-            whiteweight = start_fr + step * float(i)  # ensure float
-            pialweight = 1 - whiteweight
-
-            # compute weighted intermediate surface in between pial and white
-            surf_weighted = surf_stop * pialweight + surf_start * whiteweight
-
-            # coordinates
-            surf_xyz = surf_weighted.vertices
-
-            # linear indices of voxels containing nodes
-            lin_vox = vg.xyz2lin(surf_xyz)
-
-            # which of these voxels are actually in the volume
-            is_vox_in_vol = vg.contains_lin(lin_vox)
-
-            if same_surfaces:
-                # prevent division by zero - simply assign it whatever weight is here
-                grey_matter_pos = np.zeros(lin_vox.shape) + whiteweight
-            else:
-                # coordinates of voxels
-                vol_xyz = vg.lin2xyz(lin_vox)
-
-                # compute relative position of each voxel in grey matter
-                grey_matter_pos = self.surf_project_weights_nodewise(vol_xyz)
-
-            for center_id in center_ids:  # for each node on the surface
-                # associate voxels with the present center node.
-                # If a node is not in the volume, then no voxels are
-                # associated with it.
-
-                if is_vox_in_vol[center_id]:
-                    # no voxels (yet) associated with this node - make space
-                    if n2vs[center_id] is None:
-                        n2vs[center_id] = dict()
-
-                    n2vs[center_id][lin_vox[center_id]] = \
-                                                grey_matter_pos[center_id]
-
-        return n2vs
 
     def surf_project_nodewise(self, xyz):
         '''
@@ -457,8 +347,76 @@ class VolSurf(object):
 
         return ds
 
+class VolSurfMapping(VolSurf):
+    '''General mapping between volume and surface.
 
-    def voxel_count_nifti_image(self, n2v=None):
+    Subclasses have to implement node2voxels'''
+    def __init__(self, vg, white, pial, intermediate=None,
+                   nsteps=10, start_fr=0.0, stop_fr=1.0, start_mm=0, stop_mm=0):
+        '''
+        Parameters
+        ----------
+        volgeom: volgeom.VolGeom
+            Volume geometry
+        white: surf.Surface
+            Surface representing white-grey matter boundary
+        pial: surf.Surface
+            Surface representing pial-grey matter boundary
+        intermediate: surf.Surface (default: None).
+            Surface representing intermediate surface. If omitted
+            it is the node-wise average of white and pial.
+        nsteps: int (default: 10)
+            Number of steps from white to pial surface
+        start_fr: float (default: 0)
+            Relative start position of line in gray matter, 0.=white
+            surface, 1.=pial surface.
+        stop_fr: float (default: 1)
+            Relative stop position of line (as in see start).
+        start_mm: float (default: 0)
+            Absolute start position offset (as in start_fr).
+        sttop_mm: float (default: 0)
+            Absolute start position offset (as in start_fr).
+
+
+        Notes
+        -----
+        'pial' and 'white' should have the same topology.
+        '''
+        super(VolSurfMapping, self).__init__(vg=vg, white=white, pial=pial,
+                                             intermediate=intermediate)
+        self.nsteps = nsteps
+        self.start_fr = start_fr
+        self.stop_fr = stop_fr
+        self.start_mm = start_mm
+        self.stop_mm = stop_mm
+
+
+    def get_node2voxels_mapping(self):
+        '''
+        Returns
+        -------
+        n2v: dict
+        A mapping from node indices to voxels. In this mapping, the
+        'i'-th node is associated with 'n2v[i]=v2p' which contains the
+        mapping from linear voxel indices to grey matter positions. In
+        other words, 'n2v[i][idx]=v2p[idx]=pos' means that the voxel with
+        linear index 'idx' is associated with node 'i' and has has
+        relative position 'pos' in the gray matter.
+
+        If node 'i' is outside the volume, then 'n2v[i]=None'.
+
+        Notes
+        -----
+        The typical use case is selecting voxels in the grey matter. The
+        rationale of this method is that (assuming a sufficient dense cortical
+        surface mesh, combined with a sufficient number of nsteps, the grey
+        matter is sampled dense enough so that 'no voxels are left out'.
+
+        '''
+
+        raise NotImplementedError
+
+    def voxel_count_nifti_image(self):
         '''
         Returns a NIFTI image indicating how often each voxel is selected.
 
@@ -475,8 +433,7 @@ class VolSurf(object):
             each voxel was selected by n2v.
         '''
 
-        if n2v is None:
-            n2v = self.node2voxels()
+        n2v = self.get_node2voxels_mapping()
 
         v = self._volgeom
         nv = v.nvoxels
@@ -491,6 +448,420 @@ class VolSurf(object):
         rs = np.reshape(voldata, v.shape)
         img = nb.Nifti1Image(rs, v.affine)
         return img
+
+    def _get_node_voxels_maximal_mapping(self):
+        '''Internal helper function to return all possible voxels associated
+        with each node. Each voxel can be associated with multiple nodes
+
+        It returns a node to voxel mapping and a voxel to node mapping'''
+
+        nsteps = self.nsteps
+        start_fr = self.start_fr
+        stop_fr = self.stop_fr
+        start_mm = self.start_mm
+        stop_mm = self.stop_mm
+
+        if start_fr > stop_fr or nsteps < 1:
+            raise ValueError("Illegal start/stop combination, "
+                             "or not enough steps")
+
+        # make a list of the different relative gray matter positions
+        if nsteps > 1:
+            step = (stop_fr - start_fr) / float(nsteps - 1)
+        else:
+            step = 0.
+            start_fr = stop_fr = .5
+
+        center_ids = range(self._pial.nvertices)
+        nv = len(center_ids)  # number of nodes on the surface
+
+        vg = self._volgeom
+        same_surfaces = self.white_surface == self.pial_surface
+
+        surf_start = self.white_surface + start_mm
+        surf_stop = self.pial_surface + stop_mm
+
+        # allocate space for output
+        # if n2v[i]=vs, then node i is associated with the voxels vs
+        #
+        # vs is a mapping from indices to relative position in grey matter
+        # where 0 means white surface and 1 means pial surface
+        # vs[k]=pos means that voxel with linear index k is
+        # associated with relative positions pos0
+        #
+        # CHECKME that I did not confuse (the order of) pial and white surface
+        #
+        # v2ns is a mapping from voxel indices to sets of nodes.
+
+        n2vs = dict()  # node to voxel indices mapping
+        v2ns = dict()
+
+        # by default, no voxels associated with each node
+        for j in xrange(nv):
+            n2vs[j] = None
+
+        # different 'layers' (depths) in the grey matter
+        for i in xrange(nsteps):
+            whiteweight = start_fr + step * float(i)  # ensure float
+            pialweight = 1 - whiteweight
+
+            # compute weighted intermediate surface in between pial and white
+            surf_weighted = surf_stop * pialweight + surf_start * whiteweight
+
+            # coordinates
+            surf_xyz = surf_weighted.vertices
+
+            # linear indices of voxels containing nodes
+            lin_vox = vg.xyz2lin(surf_xyz)
+
+            # which of these voxels are actually in the volume
+            is_vox_in_vol = vg.contains_lin(lin_vox)
+
+            if same_surfaces:
+                # prevent division by zero - simply assign it whatever weight is here
+                grey_matter_pos = np.zeros(lin_vox.shape) + whiteweight
+            else:
+                # coordinates of voxels
+                vol_xyz = vg.lin2xyz(lin_vox)
+
+                # compute relative position of each voxel in grey matter
+                grey_matter_pos = self.surf_project_weights_nodewise(vol_xyz)
+
+            for center_id in center_ids:  # for each node on the surface
+                # associate voxels with the present center node.
+                # If a node is not in the volume, then no voxels are
+                # associated with it.
+
+                if is_vox_in_vol[center_id]:
+                    # no voxels (yet) associated with this node - make space
+                    if n2vs[center_id] is None:
+                        n2vs[center_id] = dict()
+
+                    vox_id = lin_vox[center_id]
+
+                    # node to voxel mapping
+                    n2vs[center_id][vox_id] = grey_matter_pos[center_id]
+
+                    # voxel to node mapping
+                    if not vox_id in v2ns:
+                        v2ns[vox_id] = set()
+
+                    v2ns[vox_id].add(center_id)
+
+        return n2vs, v2ns
+
+    def get_parameter_dict(self):
+        '''
+        Returns a dictionary with the most important parameters
+        of this instance'''
+
+        parameter_dict = dict(volgeom=self.volgeom,
+                              volsurf_nvertices=self.white_surface.nvertices,
+                              nsteps=self.nsteps,
+                              start_fr=self.start_fr, stop_fr=self.stop_fr,
+                              start_mm=self.start_mm, stop_mm=self.stop_mm)
+        parameter_dict['class'] = self.__class__.__name__
+        return parameter_dict
+
+
+
+class VolSurfMaximalMapping(VolSurfMapping):
+    def __init__(self, vg, white, pial, intermediate=None,
+                   nsteps=10, start_fr=0.0,
+                   stop_fr=1.0, start_mm=0, stop_mm=0):
+        '''
+        Represents the maximal mapping from nodes to voxels.
+        'maximal', in this context, means that to each node all voxels
+        are associated that are contained in lines connecting white
+        and grey matter.
+
+        Each voxel can be associated with multiple nodes.
+
+        Parameters
+        ----------
+        volgeom: volgeom.VolGeom
+            Volume geometry
+        white: surf.Surface
+            Surface representing white-grey matter boundary
+        pial: surf.Surface
+            Surface representing pial-grey matter boundary
+        intermediate: surf.Surface (default: None).
+            Surface representing intermediate surface. If omitted
+            it is the node-wise average of white and pial.
+        nsteps: int (default: 10)
+            Number of steps from white to pial surface
+        start_fr: float (default: 0)
+            Relative start position of line in gray matter, 0.=white
+            surface, 1.=pial surface.
+        stop_fr: float (default: 1)
+            Relative stop position of line (as in see start).
+        start_mm: float (default: 0)
+            Absolute start position offset (as in start_fr).
+        sttop_mm: float (default: 0)
+            Absolute start position offset (as in start_fr).
+
+
+        Notes
+        -----
+        'pial' and 'white' should have the same topology.
+        '''
+
+        super(VolSurfMaximalMapping, self).__init__(vg=vg, white=white, pial=pial,
+                                intermediate=intermediate, nsteps=nsteps, start_fr=start_fr,
+                                stop_fr=stop_fr, start_mm=start_mm, stop_mm=stop_mm)
+
+    def get_node2voxels_mapping(self):
+        '''Returns a mapping from nodes to voxels'''
+        node2voxels_mapping, _ = self._get_node_voxels_maximal_mapping()
+        return node2voxels_mapping
+
+
+@total_ordering
+class VoxelPosition(object):
+    '''Defines the position of a voxel in grey matter.
+
+    Helper class for minimal mapping
+
+    XXX: worthwhile to refactor and use this class universally
+         (in maximal mapper and voxel_node_mapping)?'''
+    def __init__(self, grey_position_fr, grey_position_mm):
+        self.grey_position_fr = grey_position_fr
+        self.grey_position_mm = grey_position_mm
+        if 0 <= grey_position_fr <= 1 and grey_position_mm != 0:
+            raise ValueError("Illegal position - in the grey matter?")
+
+    def __cmp__(self, other):
+        return self.grey_position_fr == other.grey_position_fr and \
+                    self.grey_postition_mm == other.grey_postition_mm
+
+    def __repr__(self):
+        return '%s(%s)' % (self.__class__.__name__,
+                              ','.join(map(str, [self.grey_position_fr,
+                                                self.grey_position_mm])))
+
+    def copy(self):
+        return self.__class__(grey_position_fr, grey_position_mm)
+
+    def __lt__(self, other):
+        '''Indicates whether self is closer to the center of grey matter
+        than other'''
+        if self.__cmp__(other):
+            return False
+        s_gr, o_gr = self.grey_position_fr - .5, other.grey_position_fr - .5
+        s_in, o_in = abs(s_gr) <= .5, abs(o_gr) <= .5 # self or other in grey matter
+        if s_in != o_in:
+            return s_in # only one in grey matter
+        elif s_in and o_in:
+            return s_gr < o_gr # both in grey matter - which one closer?
+
+        # both outside grey matter.
+        mm_diff = abs(self.grey_position_mm) - abs(other.grey_position_mm)
+        if mm_diff != 0:
+            return mm_diff < 0 # the closest one
+
+        return self.grey_position_mm > 0 # just arbitrary
+
+class VolSurfMinimalMapping(VolSurfMapping):
+    def __init__(self, vg, white, pial, intermediate=None,
+                   nsteps=10, start_fr=0.0,
+                   stop_fr=1.0, start_mm=0, stop_mm=0):
+        '''
+        Represents the minimal mapping from nodes to voxels.
+        'minimal', in this context, means that the mapping from
+        voxels to nodes is many-to-one (i.e. each voxel is associated
+        with at most one node)
+
+        Each voxel can be associated with just a single node.
+
+        Parameters
+        ----------
+        volgeom: volgeom.VolGeom
+            Volume geometry
+        white: surf.Surface
+            Surface representing white-grey matter boundary
+        pial: surf.Surface
+            Surface representing pial-grey matter boundary
+        intermediate: surf.Surface (default: None).
+            Surface representing intermediate surface. If omitted
+            it is the node-wise average of white and pial.
+        nsteps: int (default: 10)
+            Number of steps from white to pial surface
+        start_fr: float (default: 0)
+            Relative start position of line in gray matter, 0.=white
+            surface, 1.=pial surface.
+        stop_fr: float (default: 1)
+            Relative stop position of line (as in see start).
+        start_mm: float (default: 0)
+            Absolute start position offset (as in start_fr).
+        sttop_mm: float (default: 0)
+            Absolute start position offset (as in start_fr).
+
+        Notes
+        -----
+        'pial' and 'white' should have the same topology.
+        '''
+
+        super(VolSurfMinimalMapping, self).__init__(vg=vg, white=white, pial=pial,
+                                intermediate=intermediate, nsteps=nsteps, start_fr=start_fr,
+                                stop_fr=stop_fr, start_mm=start_mm, stop_mm=stop_mm)
+
+
+    def get_node2voxels_mapping(self):
+        # start out with the maximum mapping, then prune it
+        n2vs_max, v2ns_max = self._get_node_voxels_maximal_mapping()
+
+        if __debug__ and 'SVS' in debug.active:
+            nnodes = len(n2vs_max)
+            nvoxels_max = sum(map(len, v2ns_max.itervalues()))
+            nvoxels_max_per_node = float(nvoxels_max) / nnodes
+            debug('SVS', 'Maximal node-to-voxel mapping: %d nodes, '
+                            '%d voxels, %.2f voxels/node' %
+                            (nnodes, nvoxels_max, nvoxels_max_per_node))
+            debug('SVS', 'Starting injective pruning')
+
+
+        # initialize mapping
+        n2vs_min = dict((n, None if vs is None else dict())
+                                    for n, vs in n2vs_max.iteritems())
+        v2n_min = dict()
+
+        # helper function to compute distance to intermediate surface
+        dist_func = lambda (_, p): abs(p - .5)
+
+        for v, ns in v2ns_max.iteritems():
+            # get pairs os nodes and the voxel positions
+            ns_pos = [(n, n2vs_max[n].get(v)) for n in ns]
+
+            # get node nearest to intermediate surface
+            min_node, min_pos = min(ns_pos, key=dist_func)
+
+
+            if n2vs_min[min_node] is None:
+                n2vs_min[min_node] = dict()
+            assert(not v in n2vs_min[min_node]) # no duplicates
+            n2vs_min[min_node][v] = min_pos
+
+            assert(not v in v2n_min)
+            v2n_min[v] = min_node
+
+        if __debug__ and 'SVS' in debug.active:
+            nvoxels_min = len(v2n_min)
+            nvoxels_min_per_node = float(nvoxels_min) / nnodes
+            nvoxels_delta = nvoxels_max - nvoxels_min
+            nvoxels_pruned_ratio = float(nvoxels_delta) / nvoxels_max
+
+            debug('SVS', 'Pruned %d/%d voxels (%.1f%%), %.2f voxels/node'
+                             % (nvoxels_delta, nvoxels_max,
+                                nvoxels_pruned_ratio * 100,
+                                nvoxels_min_per_node))
+
+        return n2vs_min
+
+class VolSurfMinimalLowresMapping(VolSurfMinimalMapping):
+    def __init__(self, vg, white, pial, intermediate=None,
+                   nsteps=10, start_fr=0.0,
+                   stop_fr=1.0, start_mm=0, stop_mm=0):
+        '''
+        Represents the minimal mapping from nodes to voxels,
+        incorporating the intermediate surface that can
+        be of lower-res.
+        'minimal', in this context, means that the mapping from
+        voxels to nodes is many-to-one (i.e. each voxel is associated
+        with at most one node). Each node mapped must be
+        present in the intermediate surface
+
+        Each voxel can be associated with just a single node.
+
+        Parameters
+        ----------
+        volgeom: volgeom.VolGeom
+            Volume geometry
+        white: surf.Surface
+            Surface representing white-grey matter boundary
+        pial: surf.Surface
+            Surface representing pial-grey matter boundary
+        intermediate: surf.Surface (default: None).
+            Surface representing intermediate surface.
+            Unlike in its superclass this argument cannot be ommited here.
+        nsteps: int (default: 10)
+            Number of steps from white to pial surface
+        start_fr: float (default: 0)
+            Relative start position of line in gray matter, 0.=white
+            surface, 1.=pial surface.
+        stop_fr: float (default: 1)
+            Relative stop position of line (as in see start).
+        start_mm: float (default: 0)
+            Absolute start position offset (as in start_fr).
+        sttop_mm: float (default: 0)
+            Absolute start position offset (as in start_fr).
+
+        Notes
+        -----
+        'pial' and 'white' should have the same topology.
+        '''
+
+        if intermediate is None:
+            raise RuntimeError("intermediate surface has to be specified")
+
+        super(VolSurfMinimalLowresMapping, self).__init__(vg=vg, white=white,
+                pial=pial, intermediate=intermediate, nsteps=nsteps,
+                start_fr=start_fr, stop_fr=stop_fr, start_mm=start_mm,
+                stop_mm=stop_mm)
+
+    def get_node2voxels_mapping(self):
+        n2v = super(VolSurfMinimalLowresMapping, self).\
+                                get_node2voxels_mapping()
+
+        # set low and high res intermediate surfaces
+        lowres = surf.from_any(self._intermediate)
+        highres = (self.pial_surface * .5) + \
+                                (self.white_surface * .5)
+
+        high2high_in_low = lowres.vonoroi_map_to_high_resolution_surf(highres)
+
+        n_in_low2v = dict()
+        ds = []
+
+        for n, v2pos in n2v.iteritems():
+            (n_in_low, d) = high2high_in_low[n]
+            if v2pos is None:
+                continue
+
+            ds.append(d)
+
+
+            if not n_in_low in n_in_low2v:
+                # not there - just set the dictionary
+                n_in_low2v[n_in_low] = v2pos
+            else:
+                # is there - see if it is none
+                cur = n_in_low2v[n_in_low]
+                if cur is None and not v2pos is None:
+                    # also overwrite (v2pos can also be None, that's fine)
+                    n_in_low2v[n_in_low] = v2pos
+                elif v2pos is not None:
+                    # update
+                    for v, pos in v2pos.iteritems():
+                        # minimal mapping, so voxel should not be there already
+                        assert(not v in n_in_low2v[n_in_low])
+                        cur[v] = pos
+
+        if __debug__ and 'SVS' in debug.active:
+            ds = np.asarray(ds)
+            mu = np.mean(ds)
+            n = len(ds)
+            s = np.std(ds)
+
+            debug('SVS', 'Reassigned %d nodes by moving %.2f +/- %.2f to low-res',
+                        (n, mu, s))
+
+
+
+        return n_in_low2v
+
+
+
+
 
 class VolumeBasedSurface(surf.Surface):
     '''A surface based on a volume, where every voxel is a node.
@@ -614,7 +985,7 @@ def from_volume(v):
     vg = volgeom.from_any(v)
     vs = VolumeBasedSurface(vg)
 
-    return VolSurf(vg, vs, vs, vs)
+    return VolSurfMaximalMapping(vg, vs, vs, vs)
 
 
 

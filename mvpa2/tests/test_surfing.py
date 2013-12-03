@@ -418,22 +418,22 @@ class SurfTests(unittest.TestCase):
         inner = surf.generate_sphere(density) * 20. + 25
 
 
-        vs = volsurf.VolSurf(vg, outer, inner)
-
         # increasingly select more voxels in 'grey matter'
         steps_start_stop = [(1, .5, .5), (5, .5, .5), (3, .3, .7),
                           (5, .3, .7), (5, 0., 1.), (10, 0., 1.)]
+
 
         mp = None
         expected_keys = set(range(density ** 2 + 2))
         selection_counter = []
         voxel_counter = []
         for sp, sa, so in steps_start_stop:
-            n2v = vs.node2voxels(sp, sa, so)
+            vs = volsurf.VolSurfMaximalMapping(vg, outer, inner, (outer + inner) * .5, sp, sa, so)
+
+            n2v = vs.get_node2voxels_mapping()
 
             if mp is None:
                 mp = n2v
-
 
             assert_equal(expected_keys, set(n2v.keys()))
 
@@ -446,7 +446,7 @@ class SurfTests(unittest.TestCase):
                     counter += 1
 
             selection_counter.append(counter)
-            img = vs.voxel_count_nifti_image(n2v)
+            img = vs.voxel_count_nifti_image()
 
             voxel_counter.append(np.sum(img.get_data() > 0))
 
@@ -586,7 +586,7 @@ class SurfTests(unittest.TestCase):
         outer = surf.generate_sphere(density) * 25. + 15
         inner = surf.generate_sphere(density) * 20. + 15
 
-        vs = volsurf.VolSurf(vg, outer, inner)
+        vs = volsurf.VolSurfMaximalMapping(vg, outer, inner)
 
         nv = outer.nvertices
 
@@ -677,10 +677,10 @@ class SurfTests(unittest.TestCase):
 
                 outer4 = surf.read(outerfn)
                 inner4 = surf.read(innerfn)
-                vs4 = vs = volsurf.VolSurf(vg, inner4, outer4)
+                vsm4 = vs = volsurf.VolSurfMaximalMapping(vg, inner4, outer4)
 
                 # check that two ways of voxel selection match
-                sel4 = surf_voxel_selection.voxel_selection(vs4, radius,
+                sel4 = surf_voxel_selection.voxel_selection(vsm4, radius,
                                                     source_surf_nodes=srcs,
                                                     distance_metric=distance_metric)
 
