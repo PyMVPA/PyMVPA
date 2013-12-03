@@ -30,3 +30,7 @@ def test_hist():
     plots = hist(ds)
     assert_equal(len(plots), 1)
     assert_is_instance(plots[0], Subplot)
+    # make sure it works with plan arrays too
+    plots = hist(ds.samples)
+    assert_equal(len(plots), 1)
+    assert_is_instance(plots[0], Subplot)

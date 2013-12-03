@@ -12,6 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import pylab as pl
 from mvpa2.base.node import ChainNode
+from mvpa2.base.dataset import is_datasetlike
 from mvpa2.generators.splitters import Splitter
 from mvpa2.generators.partition import NFoldPartitioner
 
@@ -38,9 +39,13 @@ def hist(dataset, xgroup_attr=None, ygroup_attr=None,
     >>> len(plots)
     15
 
+    This function can also be used with plain arrays, in which case it will
+    fall back on the behavior of matplotlib's hist() and additional
+    functionality is not available.
+
     Parameters
     ----------
-    dataset : Dataset
+    dataset : Dataset or array
     xgroup_attr : string, optional
       Name of a samples attribute to be used as targets
     ygroup_attr : None or string, optional
@@ -68,7 +73,7 @@ def hist(dataset, xgroup_attr=None, ygroup_attr=None,
     xgroup = {'attr': xgroup_attr}
     ygroup = {'attr': ygroup_attr}
     for grp in (xgroup, ygroup):
-        if grp['attr'] is not None:
+        if grp['attr'] is not None and is_datasetlike(dataset):
             grp['split'] = ChainNode([NFoldPartitioner(1, attr=grp['attr']),
                                       Splitter('partitions', attr_values=[2])])
             grp['gen'] = lambda s, x: s.generate(x)
@@ -86,7 +91,11 @@ def hist(dataset, xgroup_attr=None, ygroup_attr=None,
     for row, ds in enumerate(ygroup['gen'](ygroup['split'], dataset)):
         for col, d in enumerate(xgroup['gen'](xgroup['split'], ds)):
             ax = pl.subplot(nrows, ncols, fig)
-            ax.hist(d.samples.ravel(), **kwargs)
+            if is_datasetlike(d):
+                data = d.samples
+            else:
+                data = d
+            ax.hist(data.ravel(), **kwargs)
             if xlim is not None:
                 pl.xlim(xlim)
 
