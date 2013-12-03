@@ -25,8 +25,8 @@ ds = ds[ds.chunks < 5]
 
 # take a look at the distribution of the feature values in all
 # sample categories and chunks
-plot_feature_hist(ds, chunks_attr='chunks', bins=20, normed=True,
-                xlim=(0, ds.samples.max()))
+hist(ds, xgroup_attr='chunks', ygroup_attr='targets', noticks=None,
+     bins=20, normed=True, xlim=(0, ds.samples.max()))
 
 # next only works with floating point data
 ds.samples = ds.samples.astype('float')
