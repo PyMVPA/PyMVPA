@@ -237,12 +237,30 @@ class IIRFilterMapper(Mapper):
                          1)
 
     def _forward_data(self, data):
-        return filtfilt(self.__iir_num,
-                        self.__iir_denom,
-                        data,
-                        axis=self.__axis,
-                        padtype=self.__padtype,
-                        padlen=self.__padlen)
+        try:
+            mapped = filtfilt(self.__iir_num,
+                              self.__iir_denom,
+                              data,
+                              axis=self.__axis,
+                              padtype=self.__padtype,
+                              padlen=self.__padlen)
+        except TypeError:
+            # we have an ancient scipy, do manually
+            # but is will only support 2d arrays
+            if self.__axis == 0:
+                data = data.T
+            if self.__axis > 1:
+                raise ValueError("this version of scipy does not "
+                                 "support nd-arrays for filtfilt()")
+            mapped = [filtfilt(self.__iir_num,
+                               self.__iir_denom,
+                               x)
+                        for x in data]
+            mapped = np.array(mapped)
+            if self.__axis == 0:
+                mapped = mapped.T
+        return mapped
+
 
 @borrowkwargs(IIRFilterMapper, '__init__')
 def iir_filter(ds, *args, **kwargs):
