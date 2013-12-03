@@ -245,7 +245,7 @@ class IIRFilterMapper(Mapper):
             if params.axis > 1:
                 raise ValueError("this version of scipy does not "
                                  "support nd-arrays for filtfilt()")
-            if not (params.['padlen'].is_default and params['padtype'].is_default):
+            if not (params['padlen'].is_default and params['padtype'].is_default):
                 warning("this version of scipy.signal.filtfilt() does not "
                         "support `padlen` and `padtype` arguments -- ignoring "
                         "them")
