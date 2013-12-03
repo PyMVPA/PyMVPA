@@ -32,9 +32,11 @@ def hist(dataset, xgroup_attr=None, ygroup_attr=None,
 
     >>> from mvpa2.viz import hist
     >>> from mvpa2.misc.data_generators import normal_feature_dataset
-    >>> ds = normal_feature_dataset(10,3,10,5)
+    >>> ds = normal_feature_dataset(10, 3, 10, 5)
     >>> plots = hist(ds, ygroup_attr='targets', xgroup_attr='chunks',
     ...              noticks=None, xlim=(-.5,.5), normed=True)
+    >>> len(plots)
+    15
 
     Parameters
     ----------
