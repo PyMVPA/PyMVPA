@@ -13,8 +13,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa2.datasets import Dataset
-from mvpa2.base import externals
+from mvpa2.base import externals, types
 
 
 
@@ -48,25 +47,60 @@ def imshow(matrix, xlabel_attr=None, ylabel_attr=None, numbers=None,
     """
     
     externals.exists("pylab", raise_=True)
-    import pylab as pl    
+    import pylab as pl
+
+    _xlabel = None
+    _ylabel = None
+
+    # check if dataset 'is' a confusion matrix 
+    if types.is_datasetlike(matrix):
+        if xlabel_attr is not None and ylabel_attr is not None:           
+            _xlabel = matrix.get_attr(xlabel_attr)[0].value  # LookupError
+            _ylabel = matrix.get_attr(ylabel_attr)[0].value  # if it's not there
+            if not np.equal(_xlabel, _ylabel):
+                raise ValueError, "Elements in %s and $s " \
+                                  "do not match" % (xlabel_attr, ylabel_attr)    
+
+    matrix = np.asanyarray(matrix)
     
     fig = pl.gcf()
     ax = pl.gca()
-    im = ax.matshow(matrix)               
-    cb = pl.colorbar(im) 
+    im = ax.matshow(matrix, **kwargs)
 
-    # plot matrix values inside the image   
+    # customize labels if _xlabel  and _ylabel are set
+    if _xlabel is not None and _ylabel is not None:
+        xlabels = [item.get_text() for item in ax.get_xticklabels()]
+        xlabels[1:-1] = _xlabel
+        ax.set_xticklabels(xlabels)
+        pl.xlabel(xlabel_attr)
+        ylabels = [item.get_text() for item in ax.get_yticklabels()]
+        ylabels[1:-1] = _ylabel
+        ax.set_yticklabels(ylabels)
+        pl.ylabel(ylabel_attr)                   
+
+    # colorbar customization for discrete matrix
+    # code taken from old ConfusionMatrix.plot()
+    # TODO: colorbar should be discrete as well
+    cb_kwargs_ = {}
+    maxv = np.max(matrix) 
+    if ('int' in matrix.dtype.name) and (maxv > 0):
+        boundaries = np.linspace(0, maxv, np.min((maxv, 10)), True)
+        cb_kwargs_['format'] = '%d'
+        cb_kwargs_['ticks'] = boundaries    
+    
+    cb = pl.colorbar(im, **cb_kwargs_) 
+
+    # plot matrix values inside the image if number is set   
     if numbers is not None:
         numbers_kwargs_ = {'fontsize': 14,
                            'horizontalalignment': 'center',
                            'verticalalignment': 'center'}
-        maxv = float(np.max(matrix))
         colors = [im.to_rgba(0), im.to_rgba(maxv)]
         for i, cas in enumerate(matrix):
             for j, v in enumerate(cas):            
                 numbers_kwargs_['color'] = colors[int(v<maxv/2)]
                 pl.text(j, i, numbers % v, alpha=2.0, **numbers_kwargs_)
-                
+    
     pl.draw()
     
     return fig, im, cb
