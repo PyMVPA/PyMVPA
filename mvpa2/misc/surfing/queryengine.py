@@ -135,6 +135,9 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
             attributes stored in voxel_ids.fa.
 
         """
+        if self._map_voxel_coord is None:
+            raise ValueError("No voxel mapping - did you train?")
+
         voxel_unmasked_ids = self.voxsel.get(vertexid)
 
         # map into dataset
@@ -353,13 +356,16 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
                              outside_node_margin=None,
                              results_backend=None,
                              tmp_prefix='tmpvoxsel',
-                             output_modality='surface'):
+                             output_modality='surface',
+                             node_voxel_mapping='maximal'):
     """
     Voxel selection wrapper for multiple center nodes on the surface
 
     WiP
     XXX currently the last parameter 'output_modality' determines
     what kind of query engine is returned - is that bad?
+
+    XXX: have to decide whether to use minimal_voxel_mapping=True as default
 
     Parameters
     ----------
@@ -428,6 +434,10 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
         (trailing file path separator is not added automagically).
     output_modality: 'surface' or 'volume' (default: 'surface')
         Indicates whether the output is surface-based
+    node_voxel_mapping: 'minimal' or 'maximal'
+        If 'minimal' then each voxel is associated with at most one node.
+        If 'maximal' it is associated with as many nodes that contain the
+        voxel (default: 'maximal')
 
     Returns
     -------
@@ -457,7 +467,8 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
                                 nsteps=nsteps, eta_step=eta_step, nproc=nproc,
                                 outside_node_margin=outside_node_margin,
                                 results_backend=results_backend,
-                                tmp_prefix=tmp_prefix)
+                                tmp_prefix=tmp_prefix,
+                                node_voxel_mapping=node_voxel_mapping)
 
 
     qe = modality2class[output_modality](voxsel, add_fa=add_fa)

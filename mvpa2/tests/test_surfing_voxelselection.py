@@ -96,13 +96,13 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         '''
         Combine volume and surface information
         '''
-        vs = volsurf.VolSurf(vg, outer, inner)
+        vsm = volsurf.VolSurfMaximalMapping(vg, outer, inner)
 
         '''
         Run voxel selection with specified radius (in mm), using
         Euclidian distance measure
         '''
-        surf_voxsel = surf_voxel_selection.voxel_selection(vs, radius,
+        surf_voxsel = surf_voxel_selection.voxel_selection(vsm, radius,
                                                     distance_metric='e')
 
         '''Define the measure'''
@@ -319,7 +319,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                 # ingredients by hand
                 vg = volgeom.from_any(volume_,
                                       volume_mask_)
-                vs = volsurf.VolSurf(vg, s_i, s_o)
+                vs = volsurf.VolSurfMaximalMapping(vg, s_i, s_o)
                 sel = surf_voxel_selection.voxel_selection(
                         vs, radius, source_surf=s_m,
                         source_surf_nodes=center_nodes_)
@@ -331,7 +331,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                 # build everything from the ground up
                 vg = volgeom.from_any(volume_,
                                       volume_mask_)
-                vs = volsurf.VolSurf(vg, s_i, s_o)
+                vs = volsurf.VolSurfMaximalMapping(vg, s_i, s_o)
                 sel = surf_voxel_selection.voxel_selection(
                         vs, radius, source_surf=s_m,
                         source_surf_nodes=center_nodes_)
@@ -366,7 +366,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         above = pial + np.asarray([[3, 0, 0]])
         vg = volgeom.VolGeom((10, 10, 10), np.eye(4))
-        vs = volsurf.VolSurf(vg, white, pial)
+        vs = volsurf.VolSurfMaximalMapping(vg, white, pial)
 
         dx = pial.vertices - white.vertices
 
@@ -377,8 +377,10 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             assert_array_equal(delta, np.zeros((100, 3)))
             assert_true(np.all(w == ws))
 
-        n2vs = vs.node2voxels()
-        assert_equal(n2vs, dict((i, {i:0, i + 100:1}) for i in xrange(100)))
+
+        vs = volsurf.VolSurfMaximalMapping(vg, white, pial, nsteps=2)
+        n2vs = vs.get_node2voxels_mapping()
+        assert_equal(n2vs, dict((i, {i:0., i + 100:1.}) for i in xrange(100)))
 
         nd = 17
         ds_mm_expected = np.sum((above.vertices - pial.vertices[nd, :]) ** 2,
@@ -395,6 +397,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
     @with_tempfile('.h5py', 'voxsel')
     def test_surface_outside_volume_voxel_selection(self, fn):
         skip_if_no_external('h5py')
+        from mvpa2.base.hdf5 import h5save, h5load
         vol_shape = (10, 10, 10, 1)
         vol_affine = np.identity(4)
         vg = volgeom.VolGeom(vol_shape, vol_affine)
@@ -406,7 +409,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         outer = surf.generate_sphere(sphere_density) * 10 + far
         inner = surf.generate_sphere(sphere_density) * 5 + far
 
-        vs = volsurf.VolSurf(vg, inner, outer)
+        vs = volsurf.VolSurfMaximalMapping(vg, inner, outer)
         radii = [10., 10] # fixed and variable radii
 
         outside_node_margins = [0, far, True]
@@ -456,7 +459,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         outer = surf.generate_sphere(sphere_density) * 25. + 15
         inner = surf.generate_sphere(sphere_density) * 20. + 15
 
-        vs = volsurf.VolSurf(vg, inner, outer)
+        vs = volsurf.VolSurfMaximalMapping(vg, inner, outer)
 
         radius = 10
 
@@ -479,6 +482,140 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             assert_true(np.all(np.logical_and(5 <= counts, counts <= 18)))
             assert_equal(sl_map.nfeatures, expected_nfeatures)
 
+
+    @reseed_rng()
+    def test_surface_minimal_voxel_selection(self):
+        # Tests 'minimal' voxel selection.
+        # It assumes that 'maximal' voxel selection works (which is tested
+        # in other unit tests)
+        vol_shape = (10, 10, 10, 1)
+        vol_affine = np.identity(4)
+        vg = volgeom.VolGeom(vol_shape, vol_affine)
+
+        # generate some surfaces,
+        # and add some noise to them
+        sphere_density = 10
+        nvertices = sphere_density ** 2 + 2
+        noise = np.random.uniform(size=(nvertices, 3))
+        outer = surf.generate_sphere(sphere_density) * 5 + 8 + noise
+        inner = surf.generate_sphere(sphere_density) * 3 + 8 + noise
+
+        radii = [5., 20., 10] # note: no fixed radii at the moment
+
+        # Note: a little outside margin is necessary
+        # as otherwise there are nodes in the minimal case
+        # that have no voxels associated with them
+
+        for radius in radii:
+            for output_modality in ('surface', 'volume'):
+                for i, nvm in enumerate(('minimal', 'maximal')):
+                    qe = disc_surface_queryengine(radius, vg, inner,
+                                        outer, node_voxel_mapping=nvm,
+                                        output_modality=output_modality)
+                    voxsel = qe.voxsel
+
+                    if i == 0:
+                        keys_ = voxsel.keys()
+                        voxsel_ = voxsel
+                    else:
+                        keys = voxsel.keys()
+                        # minimal one has a subset
+                        assert_equal(keys, keys_)
+
+                        # and the subset is quite overlapping
+                        assert_true(len(keys) * .90 < len(keys_))
+
+                        for k in keys_:
+                            x = set(voxsel_[k])
+                            y = set(voxsel[k])
+
+                            d = set.symmetric_difference(x, y)
+                            r = float(len(d)) / 2 / len(x)
+                            if type(radius) is float:
+                                assert_equal(x - y, set())
+
+                            # decent agreement in any case between the two sets
+                            assert_true(r < .5)
+
+
+    def test_surface_minimal_lowres_voxel_selection(self):
+        vol_shape = (4, 10, 10, 1)
+        vol_affine = np.identity(4)
+        vg = volgeom.VolGeom(vol_shape, vol_affine)
+
+
+        # make surfaces that are far away from all voxels
+        # in the volume
+        sphere_density = 10
+        radius = 10
+
+        outer = surf.generate_plane((0, 0, 4), (0, .4, 0), (0, 0, .4), 14, 14)
+        inner = outer + 2
+
+        source = surf.generate_plane((0, 0, 4), (0, .8, 0), (0, 0, .8), 7, 7) + 1
+
+        for i, nvm in enumerate(('minimal', 'minimal_lowres')):
+            qe = disc_surface_queryengine(radius, vg, inner,
+                                      outer, source,
+                                      node_voxel_mapping=nvm)
+
+            voxsel = qe.voxsel
+            if i == 0:
+                voxsel0 = voxsel
+            else:
+                assert_equal(voxsel.keys(), voxsel0.keys())
+                for k in voxsel.keys():
+                    p = voxsel[k]
+                    q = voxsel0[k]
+
+                    # require at least 60% agreement
+                    delta = set.symmetric_difference(set(p), set(q))
+                    assert_true(len(delta) < .8 * (len(p) + len(q)))
+
+
+    @reseed_rng()
+    def test_minimal_dataset(self):
+        vol_shape = (10, 10, 10, 3)
+        vol_affine = np.identity(4)
+        vg = volgeom.VolGeom(vol_shape, vol_affine)
+
+        data = np.random.normal(size=vol_shape)
+        msk = np.ones(vol_shape[:3])
+        msk[:, 1:-1:2, :] = 0
+
+        ni_data = nb.Nifti1Image(data, vol_affine)
+        ni_msk = nb.Nifti1Image(msk, vol_affine)
+
+        ds = fmri_dataset(ni_data, mask=ni_msk)
+
+        sphere_density = 20
+        outer = surf.generate_sphere(sphere_density) * 10. + 5
+        inner = surf.generate_sphere(sphere_density) * 7. + 5
+
+
+        radius = 10
+        sel = surf_voxel_selection.run_voxel_selection(radius, ds, inner, outer)
+
+
+        sel_fids = set.union(*(set(sel[k]) for k in sel.keys()))
+
+        ds_vox = map(tuple, ds.fa.voxel_indices)
+
+        vg = sel.volgeom
+        sel_vox = map(tuple, vg.lin2ijk(np.asarray(list(sel_fids))))
+
+
+        fid_mask = np.asarray([v in sel_vox for v in ds_vox])
+        assert_array_equal(fid_mask, sel.get_dataset_feature_mask(ds))
+
+        # check if it raises errors
+        ni_neg_msk = nb.Nifti1Image(1 - msk, vol_affine)
+        neg_ds = fmri_dataset(ni_data, mask=ni_neg_msk) # inverted mask
+
+        assert_raises(ValueError, sel.get_dataset_feature_mask, neg_ds)
+
+        min_ds = sel.get_minimal_dataset(ds)
+        assert_array_equal(min_ds.samples, ds[:, fid_mask].samples)
 
 
 def _cartprod(d):

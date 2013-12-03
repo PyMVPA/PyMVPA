@@ -391,10 +391,9 @@ class VoxelSelector(object):
 
         return voxel_attributes
 
-def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
+def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_nodes=None,
                     distance_metric='dijkstra',
-                    start_fr=0., stop_fr=1., start_mm=0, stop_mm=0,
-                    nsteps=10, eta_step=1, nproc=None,
+                    eta_step=10, nproc=None,
                     outside_node_margin=None,
                     results_backend=None, tmp_prefix='tmpvoxsel'):
 
@@ -403,7 +402,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
 
     Parameters
     ----------
-    vol_surf: volsurf.VolSurf
+    vol_surf_mapping: volsurf.VolSurfMapping
         Contains gray and white matter surface, and volume geometry
     radius: int or float
         Size of searchlight. If an integer, then it indicates the number of
@@ -416,20 +415,8 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
         By default every node serves as a searchlight center.
     distance_metric: str
         Distance metric between nodes. 'euclidean' or 'dijksta' (default)
-    start_fr: float (default: 0)
-            Relative start position of line in gray matter, 0.=white
-            surface, 1.=pial surface
-    stop_fr: float (default: 1)
-        Relative stop position of line (as in see start)
-    start_mm: float (default: 0)
-        Absolute start position offset (as in start_fr)
-    sttop_mm: float (default: 0)
-        Absolute start position offset (as in start_fr)
-    nsteps: int (default: 10)
-        Number of steps from white to pial surface
-    eta_step: int (default: 1)
-        After how many searchlights an estimate should be printed of the
-        remaining time until completion of all searchlights
+    eta_step: int
+        Report progress every eta_step (default: 10).
     nproc: int or None
         Number of parallel threads. None means as many threads as the
         system supports. The pprocess is required for parallel threads; if
@@ -461,7 +448,8 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
 
     # construct the intermediate surface, which is used
     # to measure distances
-    intermediate_surf = vol_surf.intermediate_surface
+    intermediate_surf = (vol_surf_mapping.pial_surface * .5) + \
+                        (vol_surf_mapping.white_surface * .5)
 
     if source_surf is None:
         source_surf = intermediate_surf
@@ -504,9 +492,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
     visitorder = list(np.random.permutation(len(source_surf_nodes)))
 
     # construct mapping from nodes to enclosing voxels
-    n2v = vol_surf.node2voxels(nsteps=nsteps, \
-                                    start_fr=start_fr, stop_fr=stop_fr,
-                                    start_mm=start_mm, stop_mm=stop_mm)
+    n2v = vol_surf_mapping.get_node2voxels_mapping()
 
     if __debug__:
         debug('SVS', "Generated mapping from nodes"
@@ -547,6 +533,19 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             nproc = 1
             debug("SVS", 'Using %d cores - pprocess not available' % nproc)
 
+    # get the the voxel selection parameters
+    parameter_dict = vol_surf_mapping.get_parameter_dict()
+    parameter_dict.update(dict(radius=radius,
+                               outside_node_margin=outside_node_margin,
+                               distance_metric=distance_metric),
+                               source_nvertices=source_surf.nvertices)
+
+
+    init_output = lambda: volume_mask_dict.VolumeMaskDictionary(
+                                    vol_surf_mapping.volgeom,
+                                    intermediate_surf,
+                                    meta=parameter_dict)
+
     if nproc > 1:
         if results_backend == 'hdf5':
             externals.exists('h5py', raise_=True)
@@ -572,9 +571,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             debug('SVS', "Starting %d child processes", (len(blocks),))
 
         for i, block in enumerate(blocks):
-            empty_dict = volume_mask_dict.VolumeMaskDictionary(
-                                            vol_surf.volgeom,
-                                            vol_surf.intermediate_surface)
+            empty_dict = init_output()
 
             src_trg = []
             for idx in block:
@@ -627,9 +624,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                          (len(blocks), seconds2prettystring(telapsed)))
 
     else:
-        empty_dict = volume_mask_dict.VolumeMaskDictionary(
-                                            vol_surf.volgeom,
-                                            vol_surf.intermediate_surface)
+        empty_dict = init_output()
         node2volume_attributes = _reduce_mapper(empty_dict,
                                                 attribute_mapper,
                                                 src_trg_nodes,
@@ -642,7 +637,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                     "voxels associated" % len(visitorder)]
         else:
             nvox_selected = np.sum(node2volume_attributes.get_mask() != 0)
-            vg = vol_surf.volgeom
+            vg = vol_surf_mapping.volgeom
 
             msgs = ["Voxel selection completed: %d / %d nodes have "
                     "voxels associated" %
@@ -725,7 +720,8 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
                          start_mm=0, stop_mm=0, start_fr=0., stop_fr=1.,
                          nsteps=10, eta_step=1, nproc=None,
                          outside_node_margin=None,
-                         results_backend=None, tmp_prefix='tmpvoxsel'):
+                         results_backend=None, tmp_prefix='tmpvoxsel',
+                         node_voxel_mapping='maximal'):
 
     """
     Voxel selection wrapper for multiple center nodes on the surface
@@ -792,6 +788,14 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
         If specified -- serves as a prefix for temporary files storage
         if results_backend == 'hdf5'.  Thus can specify the directory to use
         (trailing file path separator is not added automagically).
+    node_voxel_mapping: 'minimal' or 'maximal' or 'minimal_lowres'
+        If 'minimal' then each voxel is associated with at most one node.
+        If 'maximal' it is associated with as many nodes that contain the
+        voxel (default: 'maximal').
+        If 'minimal_lowres' then each voxel is associated with at most one
+        node, and each node that is mapped onto has a corresponding node
+        (at the same spatial location) in source_surf.
+
 
     Returns
     -------
@@ -802,15 +806,21 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
 
     vg = volgeom.from_any(volume, volume_mask)
 
-    vs = volsurf.VolSurf(vg, white_surf, pial_surf)
+    mapper_dict = dict(maximal=volsurf.VolSurfMaximalMapping,
+                       minimal=volsurf.VolSurfMinimalMapping,
+                       minimal_lowres=volsurf.VolSurfMinimalLowresMapping)
 
-    sel = voxel_selection(vol_surf=vs, radius=radius,
+    mapper = mapper_dict[node_voxel_mapping]
+
+    vsm = mapper(vg, white=white_surf, pial=pial_surf,
+                 intermediate=source_surf, nsteps=nsteps, start_fr=start_fr,
+                 stop_fr=stop_fr, start_mm=start_mm, stop_mm=stop_mm)
+
+    sel = voxel_selection(vol_surf_mapping=vsm, radius=radius,
                           source_surf=source_surf,
                           source_surf_nodes=source_surf_nodes,
                           distance_metric=distance_metric,
-                          start_fr=start_fr, stop_fr=stop_fr,
-                          start_mm=start_mm, stop_mm=stop_mm,
-                          nsteps=nsteps, eta_step=eta_step, nproc=nproc,
+                          eta_step=eta_step, nproc=nproc,
                           outside_node_margin=outside_node_margin,
                           results_backend=results_backend,
                           tmp_prefix=tmp_prefix)
@@ -862,3 +872,22 @@ class _RadiusOptimizer():
 
     def __repr__(self):
         return 'radius is %f, %d steps' % (self._curradius, self._count)
+
+def from_any(s):
+    '''
+    Loads or returns voxel selection results
+
+    Parameters
+    ----------
+    s: basestring or volume_mask_dict.VolumeMaskDictionary
+        if a string it is assumed to be a file name and loaded using h5load. If
+        a volume_mask_dict.VolumeMaskDictionary then it is returned.
+
+    Returns
+    -------
+    r: volume_mask_dict.VolumeMaskDictionary
+    '''
+
+    # this is just a convenience function
+    return volume_mask_dict.from_any(s)
+
