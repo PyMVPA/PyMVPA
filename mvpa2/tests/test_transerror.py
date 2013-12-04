@@ -696,8 +696,8 @@ def test_confusion_as_node():
     cv = CrossValidation(
         clf, NFoldPartitioner(),
         errorfx=None,
-        postproc=ChainNode((Confusion(labels=ds.UT),
-                            BayesConfusionHypothesis())))
+        postproc=ChainNode([Confusion(labels=ds.UT),
+                            BayesConfusionHypothesis()]))
     res = cv(ds)
     # only two possible hypothesis with two classes
     assert_equals(len(res), 2)
@@ -707,6 +707,31 @@ def test_confusion_as_node():
     # and the hypothesis is actually less likely than the other one
     # (both classes can be distinguished)
     assert(np.e**res.samples[0,0] < np.e**res.samples[1,0])
+
+    # Let's see how well it would work within the searchlight when we also
+    # would like to store the hypotheses per each voxel
+    # Somewhat an ad-hoc solution for the answer posted on the ML
+    #
+    # run 1d searchlight of radii 0, for that just provide a .fa with coordinates
+    ds.fa['voxel_indices'] = [[0], [1]]
+    # and a custom Node which would collect .sa.hypothesis to place together along
+    # with the posterior probabilities
+    from mvpa2.base.node import Node
+    from mvpa2.measures.searchlight import sphere_searchlight
+
+    class KeepBothPosteriorAndHypothesis(Node):
+        def _call(self, ds):
+            out = np.zeros(1, dtype=object)
+            out[0] = (ds.samples, ds.sa.hypothesis)
+            return out
+    cv.postproc.append(KeepBothPosteriorAndHypothesis())
+    sl = sphere_searchlight(cv, radius=0, nproc=1)
+    res = sl(ds)
+
+    assert_equal(res.shape, (1, 2))
+    assert_equal(len(res.samples[0,0]), 2)
+    assert_equal(res.samples[0,0][0].shape, (2, 2))   # posteriors per 1st SL
+    assert_equal(len(res.samples[0,0][1]), 2)   # 2 of hypotheses
 
 
 def test_bayes_confusion_hyp():

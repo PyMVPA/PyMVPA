@@ -1,6 +1,6 @@
-================================================================
-PyMVPA -- Multivariate Pattern Analysis in Python |build-status|
-================================================================
+==================================================================================
+PyMVPA -- Multivariate Pattern Analysis in Python |build-status| |coverage-status|
+==================================================================================
 
 .. |build-status|
    image:: https://secure.travis-ci.org/PyMVPA/PyMVPA.png

@@ -42,7 +42,7 @@ class AttributeMap(object):
     array([1, 2, 0])
 
     >>> print am.to_literal([1, 2, 0])
-    ['eins' 'zwei' 'drei']
+    ['eins', 'zwei', 'drei']
 
     Custom mapping:
 

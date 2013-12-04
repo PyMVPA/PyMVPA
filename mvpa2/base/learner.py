@@ -11,10 +11,13 @@
 __docformat__ = 'restructuredtext'
 
 import time
+
+from mvpa2.base.dataset import AttrDataset
 from mvpa2.base.node import Node, ChainNode
 from mvpa2.base.state import ConditionalAttribute
 from mvpa2.base.types import is_datasetlike
 from mvpa2.base.dochelpers import _repr_attrs
+from mvpa2.base.node import CompoundNode, CombinedNode, ChainNode
 
 if __debug__:
     from mvpa2.base import debug
@@ -58,6 +61,16 @@ class Learner(Node):
 
     training_time = ConditionalAttribute(enabled=True,
         doc="Time (in seconds) it took to train the learner")
+
+    trained_targets = ConditionalAttribute(enabled=True,
+        doc="Set of unique targets (or any other space) it has"
+            " been trained on (if present in the dataset trained on)")
+
+    trained_nsamples = ConditionalAttribute(enabled=True,
+        doc="Number of samples it has been trained on")
+
+    trained_dataset = ConditionalAttribute(enabled=False,
+        doc="The dataset it has been trained on")
 
 
     def __init__(self, auto_train=False, force_train=False, **kwargs):
@@ -197,7 +210,14 @@ class Learner(Node):
         -------
         None
         """
-        pass
+        ca = self.ca
+        if ca.is_enabled('trained_targets') and isinstance(ds, AttrDataset):
+            space = self.get_space()
+            if space in ds.sa:
+                ca.trained_targets = ds.sa[space].unique
+
+        ca.trained_dataset = ds
+        ca.trained_nsamples = len(ds)
 
 
     def _set_trained(self, status=True):
@@ -249,12 +269,11 @@ class Learner(Node):
                               "called.")
 
 
-class ChainLearner(Learner, ChainNode):
-    '''Combines different learners into one in a chained fashion'''
+class CompoundLearner(Learner, CompoundNode):
     def __init__(self, learners, auto_train=False,
                     force_train=False, **kwargs):
         '''Initializes with measures
-        
+
         Parameters
         ----------
         learners: list or tuple
@@ -262,28 +281,69 @@ class ChainLearner(Learner, ChainNode):
         '''
         Learner.__init__(self, auto_train=auto_train,
                          force_train=force_train, **kwargs)
-        self._learners = learners
+        CompoundNode.__init__(self, learners, **kwargs)
 
     is_trained = property(fget=lambda x:all(y.is_trained
-                                            for y in x._learners),
-                          fset=lambda x:map(x.set_trained
-                                            for y in x._learners),
+                                            for y in x),
+                          fset=lambda x:map(y._set_trained()
+                                            for y in x),
                           doc="Whether the Learner is currently trained.")
 
     def train(self, ds):
-        for learner in self._learners:
+        for learner in self:
             learner.train(ds)
 
     def untrain(self):
-        for learner in self._learners:
-            measure.untrain()
+        for learner in self:
+            learner.untrain()
 
-    def __call__(self, ds):
-        '''Calls all learners of this instance'''
-        learners = self._learners
+    def _call(self, ds):
+        raise NotImplementedError
 
-        r = ds
-        for learner in learners:
-            r = learner(r)
 
-        return r
+class ChainLearner(ChainNode, CompoundLearner):
+    '''Combines different learners into one in a chained fashion'''
+    def __init__(self, learners, auto_train=False,
+                    force_train=False, **kwargs):
+        '''Initializes with measures
+
+        Parameters
+        ----------
+        learners: list or tuple
+            a list of Learner instances
+        '''
+        CompoundLearner.__init__(self, learners, auto_train=auto_train,
+                         force_train=force_train, **kwargs)
+
+    def _call(self, ds):
+       return ChainNode._call(self, ds)
+
+class CombinedLearner(CompoundLearner, CombinedNode):
+    def __init__(self, learners, combine_axis, a=None, **kwargs):
+        """
+        Parameters
+        ----------
+        learners : list of Learner
+        combine_axis : ['h', 'v']
+        a: {'unique','drop_nonunique','uniques','all'} or True or False or None (default: None)
+            Indicates which dataset attributes from datasets are stored
+            in merged_dataset. If an int k, then the dataset attributes from
+            datasets[k] are taken. If 'unique' then it is assumed that any
+            attribute common to more than one dataset in datasets is unique;
+            if not an exception is raised. If 'drop_nonunique' then as 'unique',
+            except that exceptions are not raised. If 'uniques' then, for each
+            attribute,  any unique value across the datasets is stored in a tuple
+            in merged_datasets. If 'all' then each attribute present in any
+            dataset across datasets is stored as a tuple in merged_datasets;
+            missing values are replaced by None. If None (the default) then no
+            attributes are stored in merged_dataset. True is equivalent to
+            'drop_nonunique'. False is equivalent to None.
+        """
+        CompoundLearner.__init__(self, learners, **kwargs)
+        self._combine_axis = combine_axis
+        self._a = a
+
+    def _call(self, ds):
+        return CombinedNode._call(self, ds)
+
+
