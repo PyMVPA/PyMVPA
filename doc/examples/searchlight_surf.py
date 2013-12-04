@@ -297,7 +297,7 @@ generated data can be visualized using SUMA.
 fn = 'ico%d-%d_%sh_%dvx.niml.dset' % (lowres_ld, highres_ld, hemi, radius)
 path_fn = os.path.join(surfpath, fn)
 
-niml_dset.write(path_fn, sl_dset)
+niml.write(path_fn, sl_dset)
 
 print ("To view results in SUMA, cd to '%s', run 'suma -spec "
       "%sh_ico%d_al.spec', press ctrl+s, "

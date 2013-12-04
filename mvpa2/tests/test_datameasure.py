@@ -16,7 +16,7 @@ from mvpa2.testing.datasets import *
 
 from mvpa2.base import externals, warning
 from mvpa2.base.node import ChainNode, CombinedNode
-from mvpa2.datasets.base import Dataset
+from mvpa2.datasets.base import Dataset, AttrDataset
 from mvpa2.featsel.base import SensitivityBasedFeatureSelection, \
         CombinedFeatureSelection
 from mvpa2.featsel.helpers import FixedNElementTailSelector, \
@@ -57,6 +57,7 @@ if externals.exists('scipy'):
                            # that one is good when small... handle later
                            #CorrCoef(pvalue=True)
                            ]
+    from mvpa2.featsel.base import SplitSamplesProbabilityMapper
 
 class SensitivityAnalysersTests(unittest.TestCase):
 
@@ -587,6 +588,33 @@ class SensitivityAnalysersTests(unittest.TestCase):
             combined = CombinedNode([n() for n in nodes], axis, False)
             assert_true(combined(ds).shape[i] == 2)
             assert_true(combined(ds).shape[1 - i] == ds.shape[1 - i])
+
+    def test_split_samples_probability_mapper(self):
+        skip_if_no_external('scipy')
+        nf = 10
+        ns = 100
+        nsubj = 5
+        nchunks = 5
+        data = np.random.normal(size=(ns, nf))
+        ds = AttrDataset(data, sa=dict(sidx=np.arange(ns),
+                                    targets=np.arange(ns) % nchunks,
+                                    chunks=np.floor(np.arange(ns) * nchunks / ns),
+                                    subjects=np.arange(ns) / (ns / nsubj / nchunks) % nsubj),
+                            fa=dict(fidx=np.arange(nf)))
+        analyzer = OneWayAnova()
+        element_selector = FractionTailSelector(.4, mode='select', tail='upper')
+        common = True
+        m = SplitSamplesProbabilityMapper(analyzer, 'subjects', probability_label='fprob',
+                            select_common_features=common,
+                            selector=element_selector)
+
+        m.train(ds)
+        y = m(ds)
+        z = m(ds.samples)
+
+        assert_array_equal(z, y.samples)
+        assert_equal(y.shape, (100, 4))
+
 
     def test_pass_attr(self):
         from mvpa2.base.node import Node

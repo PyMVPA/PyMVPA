@@ -103,15 +103,6 @@ class Classifier(Learner):
     # minimal iteration stepsize, ...), therefore the value to each key should
     # also be a dict or we should use mvpa2.base.param.Parameter'...
 
-    trained_targets = ConditionalAttribute(enabled=True,
-        doc="Set of unique targets it has been trained on")
-
-    trained_nsamples = ConditionalAttribute(enabled=True,
-        doc="Number of samples it has been trained on")
-
-    trained_dataset = ConditionalAttribute(enabled=False,
-        doc="The dataset it has been trained on")
-
     training_stats = ConditionalAttribute(enabled=False,
         doc="Confusion matrix of learning performance")
 
@@ -238,12 +229,9 @@ class Classifier(Learner):
         dataset : Dataset
           Data which was used for training
         """
-        ca = self.ca
-        if ca.is_enabled('trained_targets'):
-            ca.trained_targets = dataset.sa[self.get_space()].unique
+        super(Classifier, self)._posttrain(dataset)
 
-        ca.trained_dataset = dataset
-        ca.trained_nsamples = dataset.nsamples
+        ca = self.ca
 
         # needs to be assigned first since below we use predict
         self.__trainednfeatures = dataset.nfeatures
@@ -251,11 +239,11 @@ class Classifier(Learner):
         if __debug__ and 'CHECK_TRAINED' in debug.active:
             self.__trainedidhash = dataset.idhash
 
-        if self.ca.is_enabled('training_stats') and \
-               not self.ca.is_set('training_stats'):
+        if ca.is_enabled('training_stats') and \
+               not ca.is_set('training_stats'):
             # we should not store predictions for training data,
             # it is confusing imho (yoh)
-            self.ca.change_temporarily(
+            ca.change_temporarily(
                 disable_ca=["predictions"])
             if self.params.retrainable:
                 # we would need to recheck if data is the same,
@@ -265,8 +253,8 @@ class Classifier(Learner):
                 # training_stats... sad
                 self.__changedData_isset = False
             predictions = self.predict(dataset)
-            self.ca.reset_changed_temporarily()
-            self.ca.training_stats = self.__summary_class__(
+            ca.reset_changed_temporarily()
+            ca.training_stats = self.__summary_class__(
                 targets=dataset.sa[self.get_space()].value,
                 predictions=predictions)
 

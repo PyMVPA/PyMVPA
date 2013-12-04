@@ -33,7 +33,7 @@ from mvpa2.base.types import asobjarray
 from mvpa2.base.dochelpers import enhanced_doc_string, _str, _repr_attrs
 from mvpa2.base import externals, warning
 from mvpa2.clfs.stats import auto_null_dist
-from mvpa2.base.dataset import AttrDataset
+from mvpa2.base.dataset import AttrDataset, vstack
 from mvpa2.datasets import Dataset, vstack, hstack
 from mvpa2.mappers.fx import BinaryFxNode
 from mvpa2.generators.splitters import Splitter
@@ -351,9 +351,9 @@ class RepeatedMeasure(Measure):
 
         # stack all results into a single Dataset
         if concat_as == 'samples':
-            results = vstack(results)
+            results = vstack(results, True)
         elif concat_as == 'features':
-            results = hstack(results)
+            results = hstack(results, True)
         else:
             raise ValueError("Unkown concatenation mode '%s'" % concat_as)
         # no need to store the raw results, since the Measure class will
@@ -881,14 +881,11 @@ class CombinedFeaturewiseMeasure(FeaturewiseMeasure):
 
         sa_attr = self._sa_attr
         if isinstance(sensitivities[0], AttrDataset):
-            smerged = None
+            smerged = []
             for i, s in enumerate(sensitivities):
                 s.sa[sa_attr] = np.repeat(i, len(s))
-                if smerged is None:
-                    smerged = s
-                else:
-                    smerged.append(s)
-            sensitivities = smerged
+                smerged.append(s)
+            sensitivities = vstack(smerged)
         else:
             sensitivities = \
                 Dataset(sensitivities,

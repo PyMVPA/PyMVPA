@@ -44,6 +44,7 @@ from mvpa2.base.param import *
 from mvpa2.base.state import *
 from mvpa2.base.node import *
 from mvpa2.base.learner import *
+from mvpa2.base.progress import *
 
 __sdebug('h5py')
 if externals.exists('h5py'):
@@ -204,6 +205,7 @@ if externals.exists("nibabel"):
     from mvpa2.misc.fsl.melodic import *
 
 if externals.exists("pylab"):
+    from mvpa2.viz import *
     from mvpa2.misc.plot import *
     from mvpa2.misc.plot.erp import *
     if externals.exists(['griddata', 'scipy']):
@@ -239,14 +241,18 @@ if externals.exists("lxml") and externals.exists("nibabel"):
 
 __sdebug("surface searchlight")
 from mvpa2.misc.surfing.queryengine import SurfaceVerticesQueryEngine, \
+                                           SurfaceVoxelsQueryEngine, \
                                             disc_surface_queryengine
 
 from mvpa2.misc.surfing import surf_voxel_selection, volgeom, volsurf
 
 __sdebug("nibabel afni")
 from mvpa2.support.nibabel import afni_niml_dset, afni_suma_1d, \
-                                    afni_suma_spec, surf_fs_asc, surf, \
-				    surf_caret, afni_niml_roi, afni_niml_annot
+                                  afni_suma_spec, surf_fs_asc, surf, \
+				                  surf_caret, \
+                                  afni_niml_roi, afni_niml_annot
+if externals.exists('nibabel'):
+    from mvpa2.support.nibabel import surf_gifti
 
 
 __sdebug("ipython goodies")

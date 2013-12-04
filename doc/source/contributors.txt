@@ -90,6 +90,9 @@ PyMVPA:
 German Federal Ministry of Education and Research
   * BMBF 01GQ11112
 
+German federal state of Saxony-Anhalt
+  * Project: Center for Behavioral Brain Sciences
+
 German Academic Exchange Service
   * PPP-USA D/05/504/7
 

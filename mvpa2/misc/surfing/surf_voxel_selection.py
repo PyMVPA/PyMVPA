@@ -38,6 +38,7 @@ from mvpa2.base import warning, externals
 
 from mvpa2.misc.surfing import volgeom, volsurf, volume_mask_dict
 from mvpa2.support.nibabel import surf
+from mvpa2.base.progress import ProgressBar, seconds2prettystring
 
 if externals.exists('h5py'):
     from mvpa2.base.hdf5 import h5save, h5load
@@ -62,16 +63,16 @@ class VoxelSelector(object):
                             outside_node_margin=None):
         '''
         Voxel selection using cortical surfaces.
-    
+
         Parameters
         ----------
         radius: int or float
-            Searchlight radius. If the type is int, then this set the number of 
-            voxels in each searchlight (with variable size of the disc across 
-            searchlights). If the type is float, then this sets the disc radius in 
-            metric distance (with variable number of voxels across searchlights). 
+            Searchlight radius. If the type is int, then this set the number of
+            voxels in each searchlight (with variable size of the disc across
+            searchlights). If the type is float, then this sets the disc radius in
+            metric distance (with variable number of voxels across searchlights).
             In the latter case, the distance unit is usually in milimeters
-            (which is the unit used for FreeSurfer surfaces). 
+            (which is the unit used for FreeSurfer surfaces).
             If radius is zero then only the center node itself is considered.
         distance_surf: surf.Surface
             A surface to be used for distance measurement. Usually this is the
@@ -84,12 +85,12 @@ class VoxelSelector(object):
             Distance measure used to define distances between nodes on the surface.
             Currently supports 'dijkstra' and 'euclidean'
         outside_node_margin: float or True or None (default)
-            By default nodes outside the volume are skipped; using this 
+            By default nodes outside the volume are skipped; using this
             parameter allows for a marign. If this value is a float (possibly
-            np.inf), then all nodes within outside_node_margin Dijkstra 
-            distance from any node within the volume are still assigned 
+            np.inf), then all nodes within outside_node_margin Dijkstra
+            distance from any node within the volume are still assigned
             associated voxels. If outside_node_margin is True, then a node is
-            always assigned voxels regardless of its position in the volume. 
+            always assigned voxels regardless of its position in the volume.
         '''
         tp = type(radius)
         if tp is int: # fixed number of voxels
@@ -155,8 +156,8 @@ class VoxelSelector(object):
         if n < count or n == 0:
             return None
 
-        # here, a 'chunk' is a set of voxels at the same distance. voxels are 
-        # selected in chunks with increasing distance. either all voxels in a 
+        # here, a 'chunk' is a set of voxels at the same distance. voxels are
+        # selected in chunks with increasing distance. either all voxels in a
         # chunk are selected or none.
         curchunk = []
         prevd = allds[0]
@@ -296,8 +297,8 @@ class VoxelSelector(object):
             raise ValueError("Failure to increase radius to get %d voxels for "
                              " node #%d" % (radius, src))
 
-        if voxel_attributes:
-            # found at least one voxel; update our ioptimizer
+        if voxel_attributes and len(voxel_attributes[CENTER_DISTANCES]):
+            # found at least one voxel; update our optimizer
             maxradius = voxel_attributes[CENTER_DISTANCES][-1]
             optimizer.set_final(maxradius)
 
@@ -390,10 +391,9 @@ class VoxelSelector(object):
 
         return voxel_attributes
 
-def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
+def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_nodes=None,
                     distance_metric='dijkstra',
-                    start_fr=0., stop_fr=1., start_mm=0, stop_mm=0,
-                    nsteps=10, eta_step=1, nproc=None,
+                    eta_step=10, nproc=None,
                     outside_node_margin=None,
                     results_backend=None, tmp_prefix='tmpvoxsel'):
 
@@ -402,44 +402,32 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
 
     Parameters
     ----------
-    vol_surf: volsurf.VolSurf
+    vol_surf_mapping: volsurf.VolSurfMapping
         Contains gray and white matter surface, and volume geometry
     radius: int or float
         Size of searchlight. If an integer, then it indicates the number of
-        voxels. If a float, then it indicates the radius of the disc      
+        voxels. If a float, then it indicates the radius of the disc
     source_surf: surf.Surface or None
-        Surface used to compute distance between nodes. If omitted, it is 
-        the average of the gray and white surfaces. 
+        Surface used to compute distance between nodes. If omitted, it is
+        the average of the gray and white surfaces.
     source_surf_nodes: list of int or numpy array or None
-        Indices of nodes in source_surf that serve as searchlight center. 
+        Indices of nodes in source_surf that serve as searchlight center.
         By default every node serves as a searchlight center.
     distance_metric: str
-        Distance metric between nodes. 'euclidean' or 'dijksta' (default)           
-    start_fr: float (default: 0)
-            Relative start position of line in gray matter, 0.=white 
-            surface, 1.=pial surface
-    stop_fr: float (default: 1)
-        Relative stop position of line (as in see start)
-    start_mm: float (default: 0) 
-        Absolute start position offset (as in start_fr)
-    sttop_mm: float (default: 0)
-        Absolute start position offset (as in start_fr)
-    nsteps: int (default: 10)
-        Number of steps from white to pial surface
-    eta_step: int (default: 1)
-        After how many searchlights an estimate should be printed of the 
-        remaining time until completion of all searchlights
+        Distance metric between nodes. 'euclidean' or 'dijksta' (default)
+    eta_step: int
+        Report progress every eta_step (default: 10).
     nproc: int or None
-        Number of parallel threads. None means as many threads as the 
+        Number of parallel threads. None means as many threads as the
         system supports. The pprocess is required for parallel threads; if
         it cannot be used, then a single thread is used.
     outside_node_margin: float or True or None (default)
-        By default nodes outside the volume are skipped; using this 
+        By default nodes outside the volume are skipped; using this
         parameter allows for a marign. If this value is a float (possibly
-        np.inf), then all nodes within outside_node_margin Dijkstra 
-        distance from any node within the volume are still assigned 
+        np.inf), then all nodes within outside_node_margin Dijkstra
+        distance from any node within the volume are still assigned
         associated voxels. If outside_node_margin is True, then a node is
-        always assigned voxels regardless of its position in the volume. 
+        always assigned voxels regardless of its position in the volume.
     results_backend : 'native' or 'hdf5' or None (default).
         Specifies the way results are provided back from a processing block
         in case of nproc > 1. 'native' is pickling/unpickling of results by
@@ -449,7 +437,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
     tmp_prefix : str, optional
         If specified -- serves as a prefix for temporary files storage
         if results_backend == 'hdf5'.  Thus can specify the directory to use
-        (trailing file path separator is not added automagically).    
+        (trailing file path separator is not added automagically).
 
     Returns
     -------
@@ -458,9 +446,10 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
         of the surrounding voxels.
     """
 
-    # construct the intermediate surface, which is used 
+    # construct the intermediate surface, which is used
     # to measure distances
-    intermediate_surf = vol_surf.intermediate_surface
+    intermediate_surf = (vol_surf_mapping.pial_surface * .5) + \
+                        (vol_surf_mapping.white_surface * .5)
 
     if source_surf is None:
         source_surf = intermediate_surf
@@ -503,9 +492,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
     visitorder = list(np.random.permutation(len(source_surf_nodes)))
 
     # construct mapping from nodes to enclosing voxels
-    n2v = vol_surf.node2voxels(nsteps=nsteps, \
-                                    start_fr=start_fr, stop_fr=stop_fr,
-                                    start_mm=start_mm, stop_mm=stop_mm)
+    n2v = vol_surf_mapping.get_node2voxels_mapping()
 
     if __debug__:
         debug('SVS', "Generated mapping from nodes"
@@ -546,6 +533,19 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             nproc = 1
             debug("SVS", 'Using %d cores - pprocess not available' % nproc)
 
+    # get the the voxel selection parameters
+    parameter_dict = vol_surf_mapping.get_parameter_dict()
+    parameter_dict.update(dict(radius=radius,
+                               outside_node_margin=outside_node_margin,
+                               distance_metric=distance_metric),
+                               source_nvertices=source_surf.nvertices)
+
+
+    init_output = lambda: volume_mask_dict.VolumeMaskDictionary(
+                                    vol_surf_mapping.volgeom,
+                                    intermediate_surf,
+                                    meta=parameter_dict)
+
     if nproc > 1:
         if results_backend == 'hdf5':
             externals.exists('h5py', raise_=True)
@@ -571,9 +571,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             debug('SVS', "Starting %d child processes", (len(blocks),))
 
         for i, block in enumerate(blocks):
-            empty_dict = volume_mask_dict.VolumeMaskDictionary(
-                                            vol_surf.volgeom,
-                                            vol_surf.intermediate_surface)
+            empty_dict = init_output()
 
             src_trg = []
             for idx in block:
@@ -602,7 +600,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                 os.remove(result_fn)
 
             if node2volume_attributes is None:
-                # first time we have actual results. 
+                # first time we have actual results.
                 # Use as a starting point
                 node2volume_attributes = result
                 if _debug():
@@ -623,12 +621,10 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
             debug('SVS', "")
             debug('SVS', 'Merged results from %d child processed - '
                          'took %s' %
-                         (len(blocks), _seconds2prettystring(telapsed)))
+                         (len(blocks), seconds2prettystring(telapsed)))
 
     else:
-        empty_dict = volume_mask_dict.VolumeMaskDictionary(
-                                            vol_surf.volgeom,
-                                            vol_surf.intermediate_surface)
+        empty_dict = init_output()
         node2volume_attributes = _reduce_mapper(empty_dict,
                                                 attribute_mapper,
                                                 src_trg_nodes,
@@ -641,7 +637,7 @@ def voxel_selection(vol_surf, radius, source_surf=None, source_surf_nodes=None,
                     "voxels associated" % len(visitorder)]
         else:
             nvox_selected = np.sum(node2volume_attributes.get_mask() != 0)
-            vg = vol_surf.volgeom
+            vg = vol_surf_mapping.volgeom
 
             msgs = ["Voxel selection completed: %d / %d nodes have "
                     "voxels associated" %
@@ -686,10 +682,10 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
             p = '%s'
         return p
 
-    progresspat = 'node %s -> %s [%%3d%%%%]' % (_pat(0), _pat(1))
+    progresspat = '(node %s -> %s)' % (_pat(0), _pat(1))
 
     # start the clock
-    tstart = time.time()
+    bar = ProgressBar()
     n = len(src_trg_indices)
 
     for i, (src, trg) in enumerate(src_trg_indices):
@@ -699,9 +695,7 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
             node2volume_attributes.add(int(src), idxs, misc_attrs)
 
         if _debug() and eta_step and (i % eta_step == 0 or i == n - 1):
-            msg = _eta(tstart, float(i + 1) / n,
-                            progresspat %
-                            (src, trg, 100.*(i + 1) / n), show=False)
+            msg = bar(float(i + 1) / n, progresspat % (src, trg))
             if not proc_id is None:
                 msg += ' (#%s)' % proc_id
             debug('SVS', msg, cr=True)
@@ -718,56 +712,7 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
 def _debug():
     return __debug__ and 'SVS' in debug.active
 
-def _seconds2prettystring(t):
-    # XXX put in a general module?
-    return str(datetime.timedelta(seconds=round(t)))
 
-def _eta(starttime, progress, msg=None, show=True):
-    '''Simple linear extrapolation to estimate how much time is needed 
-    to complete a task.
-    
-    Parameters
-    ----------
-    starttime
-        Time the tqsk started, from 'time.time()'
-    progress: float
-        Between 0 (nothing completed) and 1 (fully completed)
-    msg: str (optional)
-        Message that describes progress
-    show: bool (optional, default=True)
-        Show the message and the estimated time until completion
-    
-    Returns
-    -------
-    eta
-        Estimated time until completion
-    
-    Note
-    ----
-    ETA refers to estimated time of arrival
-    '''
-    if msg is None:
-        msg = ""
-
-    now = time.time()
-    took = now - starttime
-    eta = -1 if progress == 0 else took * (1 - progress) / progress
-
-    f = _seconds2prettystring
-
-    barlength = 10 # should be good up to 10^6 nodes
-    if barlength:
-        nstars = int(math.floor(progress * barlength))
-        fullmsg = '%s  +%s [%s] -%s' % (msg, f(took),
-                                '=' * nstars + '_' * (barlength - nstars),
-                                f(eta))
-    else:
-        fullmsg = '%s, after %s ETA %s' % (msg, f(took), f(eta))
-
-    if show:
-        print fullmsg
-
-    return fullmsg
 
 def run_voxel_selection(radius, volume, white_surf, pial_surf,
                          source_surf=None, source_surf_nodes=None,
@@ -775,11 +720,12 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
                          start_mm=0, stop_mm=0, start_fr=0., stop_fr=1.,
                          nsteps=10, eta_step=1, nproc=None,
                          outside_node_margin=None,
-                         results_backend=None, tmp_prefix='tmpvoxsel'):
+                         results_backend=None, tmp_prefix='tmpvoxsel',
+                         node_voxel_mapping='maximal'):
 
     """
     Voxel selection wrapper for multiple center nodes on the surface
-    
+
     Parameters
     ----------
     radius: int or float
@@ -794,10 +740,10 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
         Surface of grey-matter to pial-matter boundary, or filename
         of file containing such a surface.
     source_surf: surf.Surface or None
-        Surface used to compute distance between nodes. If omitted, it is 
-        the average of the gray and white surfaces. 
+        Surface used to compute distance between nodes. If omitted, it is
+        the average of the gray and white surfaces.
     source_surf_nodes: list of int or numpy array or None
-        Indices of nodes in source_surf that serve as searchlight center. 
+        Indices of nodes in source_surf that serve as searchlight center.
         By default every node serves as a searchlight center.
     volume_mask: None (default) or False or int
         Mask from volume to apply from voxel selection results. By default
@@ -806,32 +752,32 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
         and has a property volume.fa.voxel_indices, then these indices
         are used to mask the data, unless volume_mask is False or an integer.
     distance_metric: str
-        Distance metric between nodes. 'euclidean' or 'dijksta' (default)           
+        Distance metric between nodes. 'euclidean' or 'dijksta' (default)
     start_fr: float (default: 0)
-            Relative start position of line in gray matter, 0.=white 
+            Relative start position of line in gray matter, 0.=white
             surface, 1.=pial surface
     stop_fr: float (default: 1)
         Relative stop position of line (as in see start)
-    start_mm: float (default: 0) 
+    start_mm: float (default: 0)
         Absolute start position offset (as in start_fr)
     sttop_mm: float (default: 0)
         Absolute start position offset (as in start_fr)
     nsteps: int (default: 10)
         Number of steps from white to pial surface
     eta_step: int (default: 1)
-        After how many searchlights an estimate should be printed of the 
+        After how many searchlights an estimate should be printed of the
         remaining time until completion of all searchlights
     nproc: int or None
-        Number of parallel threads. None means as many threads as the 
+        Number of parallel threads. None means as many threads as the
         system supports. The pprocess is required for parallel threads; if
         it cannot be used, then a single thread is used.
     outside_node_margin: float or None (default)
-        By default nodes outside the volume are skipped; using this 
+        By default nodes outside the volume are skipped; using this
         parameter allows for a marign. If this value is a float (possibly
-        np.inf), then all nodes within outside_node_margin Dijkstra 
-        distance from any node within the volume are still assigned 
+        np.inf), then all nodes within outside_node_margin Dijkstra
+        distance from any node within the volume are still assigned
         associated voxels. If outside_node_margin is True, then a node is
-        always assigned voxels regardless of its position in the volume. 
+        always assigned voxels regardless of its position in the volume.
     results_backend : 'native' or 'hdf5' or None (default).
         Specifies the way results are provided back from a processing block
         in case of nproc > 1. 'native' is pickling/unpickling of results by
@@ -841,7 +787,15 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
     tmp_prefix : str, optional
         If specified -- serves as a prefix for temporary files storage
         if results_backend == 'hdf5'.  Thus can specify the directory to use
-        (trailing file path separator is not added automagically).    
+        (trailing file path separator is not added automagically).
+    node_voxel_mapping: 'minimal' or 'maximal' or 'minimal_lowres'
+        If 'minimal' then each voxel is associated with at most one node.
+        If 'maximal' it is associated with as many nodes that contain the
+        voxel (default: 'maximal').
+        If 'minimal_lowres' then each voxel is associated with at most one
+        node, and each node that is mapped onto has a corresponding node
+        (at the same spatial location) in source_surf.
+
 
     Returns
     -------
@@ -852,15 +806,21 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
 
     vg = volgeom.from_any(volume, volume_mask)
 
-    vs = volsurf.VolSurf(vg, white_surf, pial_surf)
+    mapper_dict = dict(maximal=volsurf.VolSurfMaximalMapping,
+                       minimal=volsurf.VolSurfMinimalMapping,
+                       minimal_lowres=volsurf.VolSurfMinimalLowresMapping)
 
-    sel = voxel_selection(vol_surf=vs, radius=radius,
+    mapper = mapper_dict[node_voxel_mapping]
+
+    vsm = mapper(vg, white=white_surf, pial=pial_surf,
+                 intermediate=source_surf, nsteps=nsteps, start_fr=start_fr,
+                 stop_fr=stop_fr, start_mm=start_mm, stop_mm=stop_mm)
+
+    sel = voxel_selection(vol_surf_mapping=vsm, radius=radius,
                           source_surf=source_surf,
                           source_surf_nodes=source_surf_nodes,
                           distance_metric=distance_metric,
-                          start_fr=start_fr, stop_fr=stop_fr,
-                          start_mm=start_mm, stop_mm=stop_mm,
-                          nsteps=nsteps, eta_step=eta_step, nproc=nproc,
+                          eta_step=eta_step, nproc=nproc,
                           outside_node_margin=outside_node_margin,
                           results_backend=results_backend,
                           tmp_prefix=tmp_prefix)
@@ -912,3 +872,22 @@ class _RadiusOptimizer():
 
     def __repr__(self):
         return 'radius is %f, %d steps' % (self._curradius, self._count)
+
+def from_any(s):
+    '''
+    Loads or returns voxel selection results
+
+    Parameters
+    ----------
+    s: basestring or volume_mask_dict.VolumeMaskDictionary
+        if a string it is assumed to be a file name and loaded using h5load. If
+        a volume_mask_dict.VolumeMaskDictionary then it is returned.
+
+    Returns
+    -------
+    r: volume_mask_dict.VolumeMaskDictionary
+    '''
+
+    # this is just a convenience function
+    return volume_mask_dict.from_any(s)
+
