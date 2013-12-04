@@ -17,6 +17,7 @@ from mvpa2.testing import *
 if not externals.exists('nibabel'):
     raise SkipTest
 
+from mvpa2.base.dataset import vstack
 from mvpa2 import pymvpa_dataroot
 from mvpa2.datasets.mri import fmri_dataset, _load_anyimg, map2nifti
 from mvpa2.datasets.eventrelated import eventrelated_dataset
@@ -44,8 +45,7 @@ def test_nifti_dataset():
     #self.assertTrue(nb22.shape[0] == 7)
     #self.assertTrue(nb20.shape[0] == 5)
 
-    merged = ds.copy()
-    merged.append(ds)
+    merged = vstack((ds.copy(), ds), a=0)
     assert_equal(merged.nfeatures, 294912)
     assert_equal(merged.nsamples, 4)
 
