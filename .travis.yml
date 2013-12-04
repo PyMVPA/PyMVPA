@@ -19,20 +19,15 @@ before_install:
     # The ultimate one-liner setup for NeuroDebian repository
     - bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
     # - sudo apt-get install $PYTHON-dev
-    - sudo apt-get install swig
-    - sudo apt-get install $PY-numpy
-    - sudo apt-get install $PY-scipy $PY-matplotlib
-    - sudo apt-get install $PY-h5py
-    - sudo apt-get install $PY-nose
-    - travis_retry sudo apt-get install shogun-python-modular
-    - travis_retry sudo apt-get install $PY-mdp $PY-psutil $PY-sklearn liblapack-dev
-    - travis_retry sudo apt-get install $PY-nibabel
+    - sudo apt-get install swig $PY-numpy $PY-scipy $PY-matplotlib $PY-h5py $PY-nose $PY-nibabel
+    - travis_retry sudo apt-get install shogun-python-modular $PY-mdp $PY-psutil $PY-sklearn liblapack-dev
 install:
     - make
     - if [[ $MVPA_DEBUG_METRICS == all ]]; then pip install --user -v coveralls; fi
 script:
+    - export MVPA_TESTS_LABILE=no PYTHONPATH=. MVPA_MATPLOTLIB_BACKEND=agg PATH=$HOME/.local/bin:$PATH MVPA_EXTERNALS_RAISE_EXCEPTION=off
     # Run only nonlabile tests but via coverage for the last entry in the matrix
-    - if [[ $MVPA_DEBUG_METRICS == all ]]; then export MVPA_TESTS_LABILE=no PYTHONPATH=. MVPA_MATPLOTLIB_BACKEND=agg PATH=$HOME/.local/bin:$PATH; fi
-    - if [[ $MVPA_DEBUG_METRICS == all ]]; then coverage run --rcfile=.travis_coveragerc mvpa2/tests/__init__.py; else make unittest-nonlabile; fi
+    - if [[ $MVPA_DEBUG_METRICS == all ]]; then cmd="coverage run --rcfile=.travis_coveragerc"; else cmd=""; fi
+    - eval $cmd nosetests -s -v mvpa2 --with-doctest
 after_success:
     - if [[ $MVPA_DEBUG_METRICS == all ]]; then coveralls; fi
