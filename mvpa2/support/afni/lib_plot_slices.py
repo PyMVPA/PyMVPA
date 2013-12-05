@@ -336,6 +336,8 @@ def make_plot(ulay, olay, dims, pos, title=None,
         dimensions to plot (0=x, 1=y, 2=z)
     pos: list of float
         relative positions to slice (in range 0..1)
+    title: str or None
+        title of plot
     ulay_range: None or [min_, max_]
         range to scale underlay to
     olay_range: None or [min_, max_]
