@@ -523,13 +523,19 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
                            "to 1 (got nproc=%i) or set to default None"
                            % nproc)
 
-    if nproc is None and externals.exists('pprocess'):
-        try:
-            import pprocess
-            nproc = pprocess.get_number_of_cores() or 1
-            if _debug() :
-                debug("SVS", 'Using pprocess with %d cores' % nproc)
-        except:
+    if nproc is None:
+        if externals.exists('pprocess'):
+            try:
+                import pprocess
+                nproc = pprocess.get_number_of_cores() or 1
+                if _debug() :
+                    debug("SVS", 'Using pprocess with %d cores' % nproc)
+            except:
+                if _debug():
+                    debug("SVS", 'pprocess not available')
+
+        if nproc is None:
+            # importing pprocess failed - so use a single core
             nproc = 1
             debug("SVS", 'Using %d cores - pprocess not available' % nproc)
 
