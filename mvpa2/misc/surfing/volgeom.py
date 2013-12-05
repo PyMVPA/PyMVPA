@@ -266,6 +266,7 @@ class VolGeom(object):
             lin = np.asarray(lin, dtype=np.int)
         else:
             lin = np.copy(lin)
+
         lin = lin.ravel()
 
         n = np.shape(lin)[0]
@@ -273,7 +274,7 @@ class VolGeom(object):
 
         ijk = np.zeros((n, 3), dtype=int)
         for i, f in enumerate(fs):
-            v = lin / f
+            v = lin // f
             ijk[:, i] = v[:]
             lin -= v * f
 
