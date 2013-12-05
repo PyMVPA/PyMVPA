@@ -28,6 +28,6 @@ script:
     - export MVPA_TESTS_LABILE=no PYTHONPATH=. MVPA_MATPLOTLIB_BACKEND=agg PATH=$HOME/.local/bin:$PATH MVPA_EXTERNALS_RAISE_EXCEPTION=off
     # Run only nonlabile tests but via coverage for the last entry in the matrix
     - if [[ $MVPA_DEBUG_METRICS == all ]]; then cmd="coverage run --rcfile=.travis_coveragerc"; else cmd=""; fi
-    - eval $cmd nosetests -s -v mvpa2 --with-doctest
+    - eval $cmd nosetests -v mvpa2 --with-doctest
 after_success:
     - if [[ $MVPA_DEBUG_METRICS == all ]]; then coveralls; fi
