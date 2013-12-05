@@ -174,6 +174,7 @@ def setup_package():
                            'mvpa2.testing',
                            'mvpa2.tests',
                            'mvpa2.tests.badexternals',
+                           'mvpa2.viz',
                            ],
           data_files=[('mvpa2', ['mvpa2/COMMIT_HASH']),
                         ('mvpa2/data',
