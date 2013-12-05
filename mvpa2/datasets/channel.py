@@ -17,8 +17,9 @@ __docformat__ = 'restructuredtext'
 # PLEASE PORT substract_baseline() AND resample() TO WORK WITH ANY DATASET.
 #
 
-raise DeprecationWarning("ChannelDataset is obsolete and might vanish any "
-                         "second.")
+from mvpa2.base import warning
+
+warning("Deprecated: ChannelDataset has vanished already")
 
 if False:           # just to please Python so it could parse the file
     ##REF: Name was automagically refactored
