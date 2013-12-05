@@ -31,7 +31,7 @@ if externals.exists('skl', raise_=True):
         fx = getattr(sklds, fx)
         argnames, varargs, varkw, defaults = inspect.getargspec(fx)
         if not defaults is None:
-            kwargs = zip(argnames[::-1], defaults[::-1])[::-1]
+            kwargs = list(zip(argnames[::-1], defaults[::-1]))[::-1]
         else:
             kwargs = tuple()
         args = argnames[:len(argnames) - len(kwargs)]
