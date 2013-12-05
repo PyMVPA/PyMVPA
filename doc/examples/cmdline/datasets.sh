@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/bin/sh
 
 set -e
 set -u
