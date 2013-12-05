@@ -347,7 +347,7 @@ def make_plot(ulay, olay, dims, pos, title=None,
 
     Returns
     -------
-    plt:
+    plt: plt
     '''
 
     # set some defaults
@@ -422,6 +422,136 @@ def make_plot(ulay, olay, dims, pos, title=None,
     if output_fn is not None:
         plt.savefig(output_fn, facecolor='black')
 
+
+def make_scatter(ulay, olay, output_fn=None):
+    '''
+    Generates a scatter plot between intensity values of underlay and overlay
+
+    Generates a plot of slices with different overlays and underlays
+
+    Parameters
+    ----------
+    ulay: np.ndarray or str or None
+        (filename of) underlay
+    olay: np.ndarray or str or None
+        (filename of) overlay
+    output_fn: None or str
+        If not None the output is saved to this file
+
+    Returns
+    -------
+    plt: plt
+    '''
+
+    cutoff_rel = .1  # ignore lowest 10% of values
+    figsize = (15, 12) # size of figure
+    histbincount = 25 # number of bins in histogram
+    internal_rel = .25 # only show voxels within 50% of center of mass
+
+    # load data
+    u = load_vol(ulay)
+    o = load_vol(olay, ulay)
+
+    # define cutoff function
+    def cutoff(x, cutoff_rel=cutoff_rel):
+        xr = x.ravel()
+        x_sorted = np.sort(xr)
+        cutoff_abs = xr[np.round(cutoff_rel * x.size)]
+        return cutoff_abs
+
+    # only keep voxels that survive cutoff in both underlay and overlay
+    msk = np.logical_and(o > cutoff(o), u > cutoff(u))
+    apply_msk = lambda x:np.asarray(x[msk], dtype=np.float_)
+
+    um, om = map(apply_msk, (u, o))
+
+    ## compute distance of each voxel from center of mass
+    sh = np.asarray(u.shape)
+    ndim = len(sh)
+    nf = np.prod(sh)
+
+    #
+    xyz = np.zeros((nf, ndim), dtype=u.dtype)
+
+    for dim in xrange(ndim):
+        r = np.arange(sh[dim])
+        vec_dim = np.ones(ndim)
+        vec_dim[dim] = sh[dim]
+        r_shaped = np.reshape(r, vec_dim)
+
+        tile_dim = sh.copy()
+        tile_dim[dim] = 1
+        dim_coord = np.tile(r_shaped, tile_dim)
+        xyz[:, dim] = dim_coord.ravel()
+
+    xyzm = np.asarray(xyz[msk.ravel(), :], dtype=np.float_) # mask & get to native float dtype
+    com = np.mean(xyzm, 0) # center of mass
+
+    delta = xyzm - com
+    c = np.sqrt(np.sum(delta ** 2, 1)) # distance from center of mass
+
+    c[c > np.max(c) * internal_rel] = np.Inf
+
+    # indices to sort by distance
+    ii = np.argsort(c)
+    ii = ii[np.isfinite(c[ii])] # remove infinite values
+    ii = ii[::-1] # reverse order - small ones on top
+
+    # apply indices
+    c = c[ii]
+    um = um[ii]
+    om = om[ii]
+
+
+    # build the scatter plot
+    # inspired by http://matplotlib.org/examples/pylab_examples/scatter_hist.html
+    # by the matplotlib development team
+
+    # definitions for the axes
+    left, width = 0.1, 0.65
+    bottom, height = 0.1, 0.65
+    bottom_h = left_h = left + width + 0.02
+
+    rect_scatter = [left, bottom, width, height]
+    rect_histx = [left, bottom_h, width, 0.2]
+    rect_histy = [left_h, bottom, 0.2, height]
+
+    # start with a rectangular Figure
+    plt.figure(figsize=figsize)
+
+    axScatter = plt.axes(rect_scatter)
+    axHistx = plt.axes(rect_histx)
+    axHisty = plt.axes(rect_histy)
+
+    nullfmt = plt.NullFormatter()
+    axHistx.xaxis.set_major_formatter(nullfmt)
+    axHisty.yaxis.set_major_formatter(nullfmt)
+
+    axScatter.scatter(um, om, c=c)
+    axScatter.set_xlabel('Underlay intensity')
+    axScatter.set_ylabel('Overlay intensity')
+
+    umax, omax = map(np.max, (um, om))
+
+    axScatter.set_xlim((0, umax))
+    axScatter.set_ylim((0, omax))
+
+    ubins = np.arange(histbincount + 1) * (umax / histbincount)
+    obins = np.arange(histbincount + 1) * (omax / histbincount)
+
+    axHistx.hist(um, bins=ubins)
+    axHisty.hist(om, bins=obins, orientation='horizontal')
+
+    axHistx.set_xlim(axScatter.get_xlim())
+    axHisty.set_ylim(axScatter.get_ylim())
+
+    title = '%s / %s (r=%.3f)' % (split(ulay)[1], split(olay)[1], np.corrcoef(um, om)[0, 1])
+    axHistx.set_title(title)
+
+    plt.draw()
+
+    if output_fn is not None:
+        plt.savefig(output_fn)
 
 def get_parser():
     description = '%s version %s\n%s' % \
