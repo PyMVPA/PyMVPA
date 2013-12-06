@@ -1248,7 +1248,7 @@ class Surface(object):
         # if this fails, then we just continue normally
         if self.same_topology(highres):
             d = np.sum((x - y) ** 2, axis=1) ** .5
-            if all(d[-np.isnan(d)] < epsilon):
+            if all(d[np.logical_not(np.isnan(d))] < epsilon):
                 for i in xrange(nx):
                     mapping[i] = i
                 return mapping
@@ -1375,7 +1375,7 @@ class Surface(object):
         if self.same_topology(highres):
             d = np.sum((x - y) ** 2, axis=1) ** .5
 
-            if all(d[-np.isnan(d)] < epsilon):
+            if all(d[np.logical_not(np.isnan(d))] < epsilon):
                 for i in xrange(nx):
                     mapping[i] = i
                 return mapping
