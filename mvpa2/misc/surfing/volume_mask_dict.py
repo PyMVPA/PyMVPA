@@ -533,7 +533,7 @@ class VolumeMaskDictionary(Mapping):
         '''
 
         if not self.same_layout(other):
-            raise ValueError("Cannot merge %r with %r" % (self, other))
+            raise ValueError("Cannot merge %s with %s" % (self, other))
 
         aks = self.aux_keys()
 
