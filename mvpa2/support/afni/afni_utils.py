@@ -113,7 +113,7 @@ def run_cmds(cmds, env=None, dryrun=False):
         if not dryrun:
             print("**>> Starting now:")
 
-            subprocess.call(cmd, env=env, shell=True)
+            subprocess.check_call(cmd, env=env, shell=True)
 
             print("**<< ... completed execution")
 
