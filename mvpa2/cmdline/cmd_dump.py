@@ -67,7 +67,7 @@ from mvpa2.datasets.eventrelated import eventrelated_dataset, find_events
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
-    import parser_add_common_args, hdf2ds, process_common_attr_opts, \
+    import parser_add_common_args, hdf2ds, \
            hdf5compression
 
 def _check_destination(args):

@@ -465,7 +465,7 @@ def parser_add_optgroup_from_def(parser, defn, exclusive=False, prefix=None):
         rgrp.add_argument(*optnames, **opt[1])
     return optgrp
 
-def process_common_attr_opts(ds, args):
+def process_common_dsattr_opts(ds, args):
     """Goes through an argument namespace and processes attribute options"""
     # legacy support
     if not args.add_sa_attr is None:
