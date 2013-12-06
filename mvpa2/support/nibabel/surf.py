@@ -913,31 +913,17 @@ class Surface(object):
         return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
 
     def __str__(self):
-        s = ['%r' % self]
+        # helper function to print coordinates. f should be np.min or np.max
+        func_coord2str = lambda f: '%.3f %.3f %.3f' % tuple(
+                                                        f(self.vertices, 0))
 
-        nfirst = 3 # how many of first and last nodes and faces to show
+        return '%s(%d vertices (range %s ... %s), %d faces)' % (
+                        self.__class__.__name__,
+                        self.nvertices,
+                        func_coord2str(np.min),
+                        func_coord2str(np.max),
+                        self.nfaces)
 
-        def getrange(n, nfirst=nfirst):
-            # gets the indices of first and last nodes (or all, if there
-            # are only a few)
-            if n < 2 * nfirst:
-                return xrange(n)
-            else:
-                r = range(nfirst)
-                r.extend(range(n - nfirst, n))
-                return r
-
-        def getlist(vs, prefix):
-            s = []
-            n = vs.shape[0]
-            for i in getrange(n):
-                s.append('%s %8d: %r' % (prefix, i, vs[i]))
-            return s
-
-        s.extend(getlist(self._v, "vertex"))
-        s.extend(getlist(self._f, "face"))
-
-        return "\n".join(s)
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
