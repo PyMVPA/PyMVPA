@@ -47,7 +47,7 @@ from mvpa2.datasets.eventrelated import eventrelated_dataset, find_events
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
-    import parser_add_common_args, parser_add_common_opt, \
+    import parser_add_common_opt, \
            ds2hdf5, hdf2ds, process_common_dsattr_opts, _load_csv_table
 
 parser_args = {
@@ -120,7 +120,7 @@ mod_events_grp = ('options for modifying or converting events', [
 def setup_parser(parser):
     from .helpers import parser_add_optgroup_from_def, \
         parser_add_common_attr_opts, single_required_hdf5output
-    parser_add_common_args(parser, pos=['multidata'])
+    parser_add_common_opt(parser, 'multidata', required=True)
     parser_add_optgroup_from_def(parser, define_events_grp, exclusive=True)
     parser_add_optgroup_from_def(parser, mod_events_grp)
     parser_add_common_attr_opts(parser)

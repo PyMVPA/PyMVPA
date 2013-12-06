@@ -20,7 +20,7 @@ from mvpa2.base import verbose
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
-        import parser_add_common_args, args2datasets, strip_from_docstring, \
+        import args2datasets, strip_from_docstring, parser_add_common_opt, \
                param2arg, ca2arg
 
 from mvpa2.algorithms.hyperalignment import Hyperalignment
@@ -72,7 +72,8 @@ def _transform_dss(srcs, masks, mappers, args):
 def setup_parser(parser):
     # order of calls is relevant!
     inputargs = parser.add_argument_group('input data arguments')
-    parser_add_common_args(inputargs, pos=['multidata'], opt=['multimask'])
+    parser_add_common_opt(inputargs, 'multidata', required=True)
+    parser_add_common_opt(inputargs, 'multimask')
     inputargs.add_argument('-t', '--transform', nargs='+', help="""\
 Additional datasets for transformation into the common space. The number and
 order of these datasets have to match those of the training dataset arguments
@@ -85,7 +86,7 @@ datasets are stored in the same format as the input data.""")
     for param in _supported_parameters:
         param2arg(algoparms, Hyperalignment, param)
     outopts = parser.add_argument_group('output options')
-    parser_add_common_args(outopts, opt=['output_prefix'], required=True)
+    parser_add_common_opt(outopts, 'output_prefix', required=True)
     for oopt in sorted(_output_specs):
         outopts.add_argument('--%s' % oopt, action='store_true',
             help=_output_specs[oopt]['help'])

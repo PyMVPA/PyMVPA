@@ -24,7 +24,7 @@ from mvpa2.datasets import vstack
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
-    import parser_add_common_args, parser_add_common_opt, ds2hdf5, hdf2ds, \
+    import parser_add_common_opt, ds2hdf5, hdf2ds, \
            get_crossvalidation_instance, crossvalidation_opts_grp, \
            arg2neighbor, script2obj
 
@@ -87,7 +87,7 @@ searchlight_constraints_opts_grp = ('options for constraining the searchlight', 
 def setup_parser(parser):
     from .helpers import parser_add_optgroup_from_def, \
         parser_add_common_attr_opts, single_required_hdf5output, ca_opts_grp
-    parser_add_common_args(parser, pos=['multidata'])
+    parser_add_common_opt(parser, 'multidata', required=True)
     parser_add_optgroup_from_def(parser, searchlight_opts_grp)
     parser_add_optgroup_from_def(parser, ca_opts_grp)
     parser_add_optgroup_from_def(parser, searchlight_constraints_opts_grp,

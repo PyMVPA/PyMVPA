@@ -78,7 +78,7 @@ from mvpa2.datasets import Dataset
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers import process_common_dsattr_opts, \
-        parser_add_common_args, hdf2ds
+        hdf2ds, parser_add_common_opt
 
 
 parser_args = {
@@ -134,7 +134,7 @@ def setup_parser(parser):
     from .helpers import parser_add_optgroup_from_def, \
         parser_add_common_attr_opts, single_required_hdf5output
     # order of calls is relevant!
-    parser_add_common_args(parser, pos=['data'], metavar='dataset', nargs='*',
+    parser_add_common_opt(parser, 'multidata', metavar='dataset', nargs='*',
             default=None)
     parser_add_optgroup_from_def(parser, datasrc_args, exclusive=True)
     parser_add_common_attr_opts(parser)

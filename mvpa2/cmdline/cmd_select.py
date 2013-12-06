@@ -61,7 +61,7 @@ from mvpa2.datasets.eventrelated import eventrelated_dataset, find_events
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
-    import parser_add_common_args, parser_add_common_opt, \
+    import parser_add_common_opt, \
            ds2hdf5, hdf2ds, _load_csv_table
 
 # map operator symbols to method names
@@ -166,7 +166,7 @@ strip_grp = ('options for removing attributes', [
 def setup_parser(parser):
     from .helpers import parser_add_optgroup_from_def, \
         parser_add_common_attr_opts, single_required_hdf5output
-    parser_add_common_args(parser, pos=['multidata'])
+    parser_add_common_opt(parser, 'multidata', required=True)
     parser_add_optgroup_from_def(parser, samples_grp, exclusive=True)
     parser_add_optgroup_from_def(parser, features_grp, exclusive=True)
     parser_add_optgroup_from_def(parser, strip_grp)
