@@ -126,7 +126,7 @@ class VolumeMaskDictionary(Mapping):
             raise TypeError("src should be int or str")
 
         if src in self._src2nbr:
-            raise ValueError('%r already in %r' % (src, self))
+            raise ValueError('%s already in %s' % (src, self))
 
 
         self._src2nbr[src] = np.asarray(nbrs, dtype=np.int)
@@ -138,7 +138,7 @@ class VolumeMaskDictionary(Mapping):
             n = len(nbrs)
             expected_keys = set(self.aux_keys())
             if expected_keys and (set(aux) != expected_keys):
-                raise ValueError("aux label mismatch: %r != %r" %
+                raise ValueError("aux label mismatch: %s != %s" %
                                 (set(aux), expected_keys))
             for k, v in aux.iteritems():
                 if type(v) is np.ndarray:
