@@ -66,8 +66,7 @@ from mvpa2.datasets import Dataset
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
-        import parser_add_common_opt, args2datasets, \
-               ds2hdf5
+        import parser_add_common_opt, ds2hdf5
 
 parser_args = {
     'formatter_class': argparse.RawDescriptionHelpFormatter,

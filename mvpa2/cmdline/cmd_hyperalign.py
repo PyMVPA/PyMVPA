@@ -20,7 +20,7 @@ from mvpa2.base import verbose
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
-        import args2datasets, strip_from_docstring, parser_add_common_opt, \
+        import strip_from_docstring, parser_add_common_opt, \
                param2arg, ca2arg
 
 from mvpa2.algorithms.hyperalignment import Hyperalignment
