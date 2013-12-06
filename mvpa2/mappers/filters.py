@@ -249,10 +249,10 @@ class IIRFilterMapper(Mapper):
                 warning("this version of scipy.signal.filtfilt() does not "
                         "support `padlen` and `padtype` arguments -- ignoring "
                         "them")
-                mapped = [filtfilt(self.__iir_num,
-                                   self.__iir_denom,
-                                   x)
-                        for x in data]
+            mapped = [filtfilt(self.__iir_num,
+                               self.__iir_denom,
+                               x)
+                    for x in data]
             mapped = np.array(mapped)
             if params.axis == 0:
                 mapped = mapped.T

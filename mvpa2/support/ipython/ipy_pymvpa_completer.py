@@ -38,10 +38,12 @@ It is a rip-off from IPython's ipy_traits_completer.py
 #############################################################################
 # External imports
 import mvpa2.base.collections as col
+from mvpa2.base import externals
 
-# IPython imports
-from IPython.ipapi import TryNext, get as ipget
-from IPython.genutils import dir2
+if externals.exists('running ipython env', raise_=True):
+    # IPython imports
+    from IPython.ipapi import TryNext, get as ipget
+    from IPython.genutils import dir2
 
 #############################################################################
 # Code begins
