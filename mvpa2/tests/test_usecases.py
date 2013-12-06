@@ -409,3 +409,30 @@ def test_rfe_sensmap():
                   senses.samples, senses_rm.samples)
     raise SkipTest("Known failure for repeated measures: https://github.com/PyMVPA/PyMVPA/issues/117")
 
+def test_remove_invariant_as_a_mapper():
+    from mvpa2.featsel.helpers import RangeElementSelector
+    from mvpa2.featsel.base import StaticFeatureSelection, SensitivityBasedFeatureSelection
+    from mvpa2.testing.datasets import datasets
+    from mvpa2.datasets.miscfx import remove_invariant_features
+
+    mapper = SensitivityBasedFeatureSelection(
+              lambda x: np.std(x, axis=0),
+              RangeElementSelector(lower=0, inclusive=False),
+              train_analyzer=False,
+              auto_train=True)
+
+    ds = datasets['uni2large'].copy()
+
+    ds.a['mapper'] = StaticFeatureSelection(np.arange(ds.nfeatures))
+    ds.fa['index'] = np.arange(ds.nfeatures)
+    ds.samples[:, [1, 8]] = 10
+
+    ds_out = mapper(ds)
+
+    # Validate that we are getting the same results as remove_invariant_features
+    ds_rifs = remove_invariant_features(ds)
+    assert_array_equal(ds_out.samples, ds_rifs.samples)
+    assert_array_equal(ds_out.fa.index, ds_rifs.fa.index)
+
+    assert_equal(ds_out.fa.index[1], 2)
+    assert_equal(ds_out.fa.index[8], 10)

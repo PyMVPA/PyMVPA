@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 import copy
 
-from mvpa2.base import externals, cfg
+from mvpa2.base import externals, cfg, warning
 from mvpa2.base.collections import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection
 from mvpa2.base.types import is_datasetlike
@@ -381,20 +381,10 @@ class AttrDataset(object):
 
 
     def append(self, other):
-        """Append the content of a Dataset.
+        """This method should not be used and will be removed in the future"""
+        warning("AttrDataset.append() is deprecated and will be removed. "
+                "Instead of ds.append(x) use: ds = vstack((ds, x), a=0)")
 
-        Parameters
-        ----------
-        other : AttrDataset
-          The content of this dataset will be append.
-
-        Notes
-        -----
-        No dataset attributes, or feature attributes will be merged!  These
-        respective properties of the *other* dataset are neither checked for
-        compatibility nor copied over to this dataset. However, all samples
-        attributes will be concatenated with the existing ones.
-        """
         if not self.nfeatures == other.nfeatures:
             raise DatasetError("Cannot merge datasets, because the number of "
                                "features does not match.")

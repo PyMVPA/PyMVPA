@@ -205,6 +205,7 @@ if externals.exists("nibabel"):
     from mvpa2.misc.fsl.melodic import *
 
 if externals.exists("pylab"):
+    from mvpa2.viz import *
     from mvpa2.misc.plot import *
     from mvpa2.misc.plot.erp import *
     if externals.exists(['griddata', 'scipy']):
