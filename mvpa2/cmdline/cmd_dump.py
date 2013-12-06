@@ -70,16 +70,16 @@ from mvpa2.cmdline.helpers \
     import parser_add_common_args, hdf2ds, \
            hdf5compression
 
-def _check_destination(args):
-    if args.destination is None:
-        raise ValueError("no output filename given (missing --destination)")
+def _check_output(args):
+    if args.output is None:
+        raise ValueError("no output filename given (missing --output)")
 
 def to_nifti(dumpy, ds, args):
     from mvpa2.datasets.mri import map2nifti
     # TODO allow overriding the nifti header
     # TODO allow overriding the mapper
     nimg = map2nifti(ds, dumpy)
-    nimg.to_filename(args.destination)
+    nimg.to_filename(args.output)
 
 parser_args = {
     'formatter_class': argparse.RawDescriptionHelpFormatter,
@@ -105,9 +105,9 @@ def setup_parser(parser):
         parser_add_common_attr_opts
     parser_add_common_args(parser, pos=['multidata'])
     parser_add_optgroup_from_def(parser, component_grp, exclusive=True)
-    parser.add_argument('-d', '--destination',
-                        help="""output destination. If no output destination
-                        is given it will be directed to stdout, if permitted by
+    parser.add_argument('-o', '--output',
+                        help="""output filename. If no output file name
+                        is given output will be directed to stdout, if permitted by
                         the data format""")
     parser.add_argument('-f', '--format', default='txt',
                         choices=('hdf5', 'nifti', 'npy', 'txt'),
@@ -136,8 +136,8 @@ def run(args):
         raise ValueError('no dataset component chosen')
     # How?
     if args.format == 'txt':
-        if args.destination:
-            out = open(args.destination, 'w')
+        if args.output:
+            out = open(args.output, 'w')
         else:
             out = sys.stdout
         try:
@@ -164,14 +164,14 @@ def run(args):
         if not out is sys.stdout:
             out.close()
     elif args.format == 'hdf5':
-        _check_destination(args)
-        if not args.destination.endswith('.hdf5'):
-            args.destination += '.hdf5'
-        h5save(args.destination, dumpy)
+        _check_output(args)
+        if not args.output.endswith('.hdf5'):
+            args.output += '.hdf5'
+        h5save(args.output, dumpy)
     elif args.format == 'npy':
-        _check_destination(args)
-        np.save(args.destination, dumpy)
+        _check_output(args)
+        np.save(args.output, dumpy)
     elif args.format == 'nifti':
-        _check_destination(args)
+        _check_output(args)
         to_nifti(dumpy, ds, args)
     return ds
