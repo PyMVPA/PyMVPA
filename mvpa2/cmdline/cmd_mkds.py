@@ -77,7 +77,7 @@ from mvpa2.base import verbose, warning, error
 from mvpa2.datasets import Dataset
 if __debug__:
     from mvpa2.base import debug
-from mvpa2.cmdline.helpers import process_common_attr_opts, \
+from mvpa2.cmdline.helpers import process_common_dsattr_opts, \
         parser_add_common_args, hdf2ds
 
 
@@ -176,7 +176,7 @@ def run(args):
             verbose(1, 'ignoring dataset input in favor of other data source -- remove either one to disambiguate')
 
     # act on all attribute options
-    ds = process_common_attr_opts(ds, args)
+    ds = process_common_dsattr_opts(ds, args)
 
     if not args.add_fsl_mcpar is None:
         from mvpa2.misc.fsl.base import McFlirtParams

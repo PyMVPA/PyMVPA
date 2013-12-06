@@ -48,7 +48,7 @@ if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
     import parser_add_common_args, parser_add_common_opt, \
-           ds2hdf5, hdf2ds, process_common_attr_opts, _load_csv_table
+           ds2hdf5, hdf2ds, process_common_dsattr_opts, _load_csv_table
 
 parser_args = {
     'formatter_class': argparse.RawDescriptionHelpFormatter,
@@ -195,7 +195,7 @@ def run(args):
                                 match=args.match_strategy,
                                 event_mapper=evmap)
     # act on all attribute options
-    evds = process_common_attr_opts(evds, args)
+    evds = process_common_dsattr_opts(evds, args)
     # and store
     ds2hdf5(evds, args.output, compression=args.hdf5_compression)
     return evds
