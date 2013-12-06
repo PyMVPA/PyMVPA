@@ -947,7 +947,7 @@ class Surface(object):
         ov = other.vertices
 
         # must be identical where NaNs occur
-        if np.any(np.logical_or(np.isnan(sv), np.isnan(ov))):
+        if np.any(np.logical_xor(np.isnan(sv), np.isnan(ov))):
             return False
 
         # difference in vertices
