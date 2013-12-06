@@ -679,7 +679,7 @@ class VolumeMaskDictionary(Mapping):
         d = volgeom.distance(xyz_srcs, xyz_trg)
         i = np.argmin(d)
         # d is a 2D array, get the row number with the lowest d
-        source = flat_srcs[i / xyz_trg.shape[0]]
+        source = flat_srcs[i // xyz_trg.shape[0]]
 
         return source
 

@@ -935,8 +935,9 @@ class VolumeBasedSurface(surf.Surface):
             src_ijk = self._vg.xyz2ijk(src_coord)
 
             # min and max ijk coordinates
-            mn = src_ijk.ravel() - max_extent
-            mx = src_ijk.ravel() + max_extent
+            mn = (src_ijk.ravel() - max_extent).astype(np.int_)
+            mx = (src_ijk.ravel() + max_extent).astype(np.int_)
+
 
             # set boundaries properly
             mn[mn < 0] = 0
