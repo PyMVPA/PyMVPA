@@ -48,7 +48,7 @@ from mvpa2.base import verbose, warning, error
 from mvpa2.datasets import vstack
 if __debug__:
     from mvpa2.base import debug
-from mvpa2.cmdline.helpers import parser_add_common_args, hdf2ds
+from mvpa2.cmdline.helpers import hdf2ds, parser_add_common_opt
 
 
 parser_args = {
@@ -56,7 +56,7 @@ parser_args = {
 }
 
 def setup_parser(parser):
-    parser_add_common_args(parser, pos=['multidata'], nargs='*')
+    parser_add_common_opt(parser, 'multidata', nargs='*')
     parser.add_argument('-e', '--eval', type=str, required=True,
             metavar='EXPR',
             help="""Python expression, or filename of a Python script,

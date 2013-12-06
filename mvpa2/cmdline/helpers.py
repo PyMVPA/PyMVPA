@@ -59,23 +59,18 @@ class HelpAction(argparse.Action):
         print helpstr
         sys.exit(0)
 
-def parser_add_common_args(parser, pos=None, opt=None, **kwargs):
-    for i, args in enumerate((pos, opt)):
-        if args is None:
-            continue
-        for arg in args:
-            arg_tmpl = globals()[arg]
-            arg_kwargs = arg_tmpl[2].copy()
-            arg_kwargs.update(kwargs)
-            if i:
-                parser.add_argument(*arg_tmpl[i], **arg_kwargs)
-            else:
-                if 'dest' in arg_kwargs:
-                    # not supported for positional arguments
-                    del arg_kwargs['dest']
-                parser.add_argument(arg_tmpl[i], **arg_kwargs)
 
 def parser_add_common_opt(parser, opt, names=None, **kwargs):
+    """Add a named option to a cmdline arg parser.
+
+    Parameters
+    ----------
+    opt: str
+      name of the option
+    names: tuple or None
+      sequence of names under which the option should be available.
+      If None, the default will be used.
+    """
     opt_tmpl = globals()[opt]
     opt_kwargs = opt_tmpl[2].copy()
     opt_kwargs.update(kwargs)

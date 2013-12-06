@@ -67,7 +67,7 @@ from mvpa2.datasets.eventrelated import eventrelated_dataset, find_events
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
-    import parser_add_common_args, hdf2ds, \
+    import hdf2ds, parser_add_common_opt, \
            hdf5compression
 
 def _check_output(args):
@@ -103,7 +103,7 @@ hdf5_grp =('option for HDF5 output', [
 def setup_parser(parser):
     from .helpers import parser_add_optgroup_from_def, \
         parser_add_common_attr_opts
-    parser_add_common_args(parser, pos=['multidata'])
+    parser_add_common_opt(parser, 'multidata', required=True)
     parser_add_optgroup_from_def(parser, component_grp, exclusive=True)
     parser.add_argument('-o', '--output',
                         help="""output filename. If no output file name

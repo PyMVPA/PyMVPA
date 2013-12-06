@@ -27,7 +27,7 @@ from mvpa2.base.dochelpers import _indent
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
-    import parser_add_common_args, hdf2ds, parser_add_optgroup_from_def
+    import hdf2ds, parser_add_optgroup_from_def, parser_add_common_opt
 
 parser_args = {
     'formatter_class': argparse.RawDescriptionHelpFormatter,
@@ -148,7 +148,7 @@ ds_descr_grp = ('options for dataset description', [
 ])
 
 def setup_parser(parser):
-    parser_add_common_args(parser, pos=['multidata'])
+    parser_add_common_opt(parser, 'multidata', required=True)
     parser_add_optgroup_from_def(parser, xfm_grp)
     parser_add_optgroup_from_def(parser, output_grp)
     parser_add_optgroup_from_def(parser, ds_descr_grp)

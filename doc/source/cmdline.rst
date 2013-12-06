@@ -76,9 +76,12 @@ Create a new PyMVPA command (for developers)
 
 For now just a few notes:
 
-1. No positional arguments, only options
+- No positional arguments, only options
 
-   The majority of all command (can) have very complex argument lists.
-   Positional arguments are harder to identify, and only offer a flat list
-   for structured input, without the possibility to specify nested list
-   like input.
+  The majority of all command (can) have very complex argument lists.
+  Positional arguments are harder to identify, and only offer a flat list
+  for structured input, without the possibility to specify nested list
+  like input.
+
+- An option specifying an output location should be called -o/-output-...
+

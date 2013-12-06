@@ -36,7 +36,7 @@ from mvpa2.datasets import vstack
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
-    import parser_add_common_args, parser_add_common_opt, \
+    import parser_add_common_opt, \
            ds2hdf5, hdf2ds, learner_opt, partitioner_opt, \
            learner_space_opt, arg2errorfx, get_crossvalidation_instance, \
            crossvalidation_opts_grp
@@ -49,7 +49,7 @@ parser_args = {
 def setup_parser(parser):
     from .helpers import parser_add_optgroup_from_def, \
         parser_add_common_attr_opts, single_required_hdf5output
-    parser_add_common_args(parser, pos=['multidata'])
+    parser_add_common_opt(parser, 'multidata', required=True)
     # make learner and partitioner options required
     cv_opts_grp = copy.deepcopy(crossvalidation_opts_grp)
     for i in (0,2):
