@@ -71,6 +71,12 @@ class VolSurf(object):
                      'pial=%r' % self._pial] + prefixes
         return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
 
+    def __str__(self):
+        return '%s(volgeom=%s, pial=%s, white=%s)' % (
+                                            self.__class__.__name__,
+                                            self._volgeom,
+                                            self._white,
+                                            self._pial)
 
     @property
     def pial_surface(self):
@@ -893,6 +899,9 @@ class VolumeBasedSurface(surf.Surface):
         prefixes_ = ['vg=%r' % self._vg] + prefixes
         return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
 
+    def __str__(self):
+        return '%s(volgeom=%s)' % (self.__class__.__name__,
+                                     self._vg)
 
     def __reduce__(self):
         return (self.__class__, (self._vg,))

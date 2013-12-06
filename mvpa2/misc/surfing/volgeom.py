@@ -150,10 +150,12 @@ class VolGeom(object):
 
     def __str__(self):
         sh = self.shape[:3]
-        s = '%s, %s = %d voxels' % (self.__class__.__name__,
+        s = '%s(%s = %d voxels' % (self.__class__.__name__,
                              '%d x %d x %d' % sh, self.nvoxels)
         if not self.mask is None:
             s += ', %d voxels survive the mask' % self.nvoxels_mask
+
+        s += ')'
         return s
 
 

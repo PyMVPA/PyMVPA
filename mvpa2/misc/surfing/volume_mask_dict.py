@@ -96,6 +96,10 @@ class VolumeMaskDictionary(Mapping):
 
         return "%s(%s)" % (self.__class__.__name__, ','.join(prefixes_))
 
+    def __str__(self):
+        return '%s: %d centers, volgeom="%s"' % (self.__class__.__name__,
+                                                 len(self._src2nbr),
+                                                 self._volgeom)
 
     def add(self, src, nbrs, aux=None):
         '''
