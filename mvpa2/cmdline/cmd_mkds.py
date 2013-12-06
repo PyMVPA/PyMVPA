@@ -156,6 +156,9 @@ def run(args):
         from mvpa2.datasets.mri import fmri_dataset
         vol_attr = dict()
         if not args.add_vol_attr is None:
+            # XXX add a way to use the mapper of an existing dataset to
+            # add a volume attribute without having to load the entire
+            # mri data again
             vol_attr = dict(args.add_vol_attr)
             if not len(args.add_vol_attr) == len(vol_attr):
                 warning("--vol-attr option with duplicate attribute name: "

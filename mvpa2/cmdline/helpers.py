@@ -70,6 +70,9 @@ def parser_add_common_args(parser, pos=None, opt=None, **kwargs):
             if i:
                 parser.add_argument(*arg_tmpl[i], **arg_kwargs)
             else:
+                if 'dest' in arg_kwargs:
+                    # not supported for positional arguments
+                    del arg_kwargs['dest']
                 parser.add_argument(arg_tmpl[i], **arg_kwargs)
 
 def parser_add_common_opt(parser, opt, names=None, **kwargs):
@@ -683,18 +686,16 @@ version = (
 )
 
 multidata = (
-    'data', ('-d', '--data'),
+    'data', ('-i', '--input'),
     {'nargs': '+',
-     'help': 'awesome description is pending'
+     'dest': 'data',
+     'metavar': 'DATASET',
+     'help': """path(s) to one or more PyMVPA dataset files. All datasets
+             will be merged into a single dataset (vstack'ed) in order of
+             specification. In some cases this option may be specified more than
+             once if multiple, but separate, input datasets are required."""
     }
 )
-
-data = (
-    'data', ('-d', '--data'),
-    {'help': 'awesome description is pending'
-    }
-)
-
 
 multimask = (
     'masks', ('-m', '--masks'),
