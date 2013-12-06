@@ -943,7 +943,17 @@ class Surface(object):
         if not isinstance(other, self.__class__):
             return False
 
-        return (np.all(np.abs(self.vertices - other.vertices) < _COORD_EPS)
+        sv = self.vertices
+        ov = other.vertices
+
+        # must be identical where NaNs occur
+        if np.any(np.logical_or(np.isnan(sv), np.isnan(ov))):
+            return False
+
+        # difference in vertices
+        v = np.abs(self.vertices - other.vertices)
+
+        return (np.all(np.logical_or(v < _COORD_EPS, np.isnan(v)))
                 and np.all(self.faces == other.faces))
 
     def __ne__(self, other):
