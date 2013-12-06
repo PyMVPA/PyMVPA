@@ -289,7 +289,7 @@ class SurfTests(unittest.TestCase):
         identities_input = [1, 2, 2, 0, 1, 0, 2, 0]
 
         # voxel indices to test
-        linrange = [0, 1, sz[2], sz[1] * sz[2]] + range(0, nv, nv / 100)
+        linrange = [0, 1, sz[2], sz[1] * sz[2]] + range(0, nv, nv // 100)
 
         lin = np.reshape(np.asarray(linrange), (-1,))
         ijk = vg.lin2ijk(lin)
@@ -607,7 +607,7 @@ class SurfTests(unittest.TestCase):
         tested_double_features = False
         for param in params:
             distance_metric, radius, ncenters = param
-            srcs = range(0, nv, nv / (ncenters or nv))
+            srcs = range(0, nv, nv // (ncenters or nv))
             sel = surf_voxel_selection.voxel_selection(vs, radius,
                                             source_surf_nodes=srcs,
                                             distance_metric=distance_metric)
@@ -895,7 +895,7 @@ class SurfTests(unittest.TestCase):
         # bigger one
         pw = s.pairwise_near_nodes(1.4)
         for i in xrange(n ** 2):
-            p, q = i / n, i % n
+            p, q = i // n, i % n
             offsets = sum(([] if q == 0 else [-1],
                          [] if q == n - 1 else [+1],
                          [] if p == 0 else [-n],
