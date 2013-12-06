@@ -265,9 +265,9 @@ class VolGeom(object):
         '''
 
         if not isinstance(lin, np.ndarray):
-            lin = np.asarray(lin, dtype=np.int)
+            lin = np.asarray(lin, dtype=np.int_)
         else:
-            lin = np.copy(lin)
+            lin = lin.astype(np.int_)
 
         lin = lin.ravel()
 
