@@ -74,4 +74,11 @@ to use PyMVPA's command line interface in actual scripts.
 Create a new PyMVPA command (for developers)
 ============================================
 
-write me
+For now just a few notes:
+
+1. No positional arguments, only options
+
+   The majority of all command (can) have very complex argument lists.
+   Positional arguments are harder to identify, and only offer a flat list
+   for structured input, without the possibility to specify nested list
+   like input.
