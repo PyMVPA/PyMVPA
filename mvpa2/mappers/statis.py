@@ -9,6 +9,7 @@ from operator import itemgetter
 import matplotlib as mpl
 import sys
 
+
 class StatisMapper(Mapper):
     """Implementation of STATIS.
     Compromise matrices are the optimal linear combination of
