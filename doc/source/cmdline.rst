@@ -85,3 +85,5 @@ For now just a few notes:
 
 - An option specifying an output location should be called -o/-output-...
 
+- Whenever a dataset needs to be loaded and there is no special reason to do
+  anything fancy, ``arg2ds()`` should be used to load it.

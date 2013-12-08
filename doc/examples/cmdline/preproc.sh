@@ -32,7 +32,7 @@ pymvpa2 preproc --filter-passband 0.005 0.067 \
                 --filter-stopband 0.0025 0.1 \
                 --sampling-rate 0.4 \
                 -o "$outdir"/spec_filtered.hdf5 \
-                "$outdir"/bold_ds.hdf5
+                -i "$outdir"/bold_ds.hdf5
 
 # EXAMPLE END
 

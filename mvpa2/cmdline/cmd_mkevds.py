@@ -48,7 +48,7 @@ if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
     import parser_add_common_opt, \
-           ds2hdf5, hdf2ds, process_common_dsattr_opts, _load_csv_table
+           ds2hdf5, arg2ds, process_common_dsattr_opts, _load_csv_table
 
 parser_args = {
     'formatter_class': argparse.RawDescriptionHelpFormatter,
@@ -128,9 +128,7 @@ def setup_parser(parser):
 
 
 def run(args):
-    dss = hdf2ds(args.data)
-    verbose(3, 'Loaded %i dataset(s)' % len(dss))
-    ds = vstack(dss)
+    ds = arg2ds(args.data)
     verbose(3, 'Concatenation yielded %i samples with %i features' % ds.shape)
     # build list of events
     events = []
