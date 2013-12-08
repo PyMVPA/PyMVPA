@@ -26,13 +26,13 @@ pymvpa2 mkds --mri-data "$dataroot"/bold.nii.gz \
             -o "$outdir"/bold_ds.hdf5
 
 # add another dummy datasets sample attribute from the command line
-pymvpa2 mkds --add-sa one 1 -o "$outdir"/ones.hdf5 "$outdir"/bold_ds.hdf5
+pymvpa2 mkds --add-sa one 1 -o "$outdir"/ones.hdf5 -i "$outdir"/bold_ds.hdf5
 
 # dump the just added attribute in txt formt and count its elements
-pymvpa2 dump --sa one -f txt "$outdir"/ones.hdf5 | wc -l
+pymvpa2 dump --sa one -f txt -i "$outdir"/ones.hdf5 | wc -l
 
 # show a summary of the dataset content
-pymvpa2 dsinfo "$outdir"/bold_ds.hdf5 | grep '^Dataset'
+pymvpa2 dsinfo -i "$outdir"/bold_ds.hdf5 | grep '^Dataset'
 
 # create a simple CSV table on the fly to define some "events" with attributes
 cat << EOT > "$outdir"/events.csv
@@ -49,10 +49,9 @@ pymvpa2 mkevds --csv-events  "$outdir"/events.csv --onset-column vol \
                --offset 3 \
                --duration 2 \
                --event-compression mean \
-               "$outdir"/bold_ds.hdf5
+               -i "$outdir"/bold_ds.hdf5
 
-# take a look at the resulting dataset
-pymvpa2 dsinfo "$outdir"/evds.hdf5
+pymvpa2 pytest -i "$outdir"/evds.hdf5 -e 'assert(len(dss[0]) == 3)'
 
 # EXAMPLE END
 

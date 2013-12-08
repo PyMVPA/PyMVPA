@@ -380,6 +380,16 @@ def hdf2ds(fnames):
                     dss.append(c)
     return dss
 
+def arg2ds(sources):
+    """Convert a sequence of dataset sources into a dataset.
+
+    This function would be used to used to convert a single --input
+    multidata specification into a dataset. For multiple --input
+    arguments execute this function in a loop.
+    """
+    from mvpa2.base.dataset import vstack
+    return vstack(hdf2ds(sources))
+
 def parser_add_common_attr_opts(parser):
     """Set up common parser options for adding dataset attributes"""
     for args in (attr_from_cmdline, attr_from_txt, attr_from_npy):

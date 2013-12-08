@@ -27,7 +27,7 @@ from mvpa2.base.dochelpers import _indent
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
-    import hdf2ds, parser_add_optgroup_from_def, parser_add_common_opt
+    import arg2ds, parser_add_optgroup_from_def, parser_add_common_opt
 
 parser_args = {
     'formatter_class': argparse.RawDescriptionHelpFormatter,
@@ -155,9 +155,7 @@ def setup_parser(parser):
 
 
 def run(args):
-    dss = hdf2ds(args.data)
-    verbose(3, 'Loaded %i dataset(s)' % len(dss))
-    ds = vstack(dss)
+    ds = arg2ds(args.data)
     verbose(3, 'Concatenation yielded %i samples with %i features' % ds.shape)
     if not args.numpy_xfm is None:
         from mvpa2.mappers.fx import FxMapper

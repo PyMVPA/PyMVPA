@@ -60,13 +60,13 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 import argparse
-from mvpa2.base.hdf5 import h5save, h5load
+from mvpa2.base.hdf5 import h5save
 from mvpa2.base import verbose, warning, error
 from mvpa2.datasets import Dataset
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
-        import parser_add_common_opt, ds2hdf5
+        import parser_add_common_opt, ds2hdf5, arg2ds
 
 parser_args = {
     'formatter_class': argparse.RawDescriptionHelpFormatter,
@@ -174,7 +174,7 @@ def run(args):
             if getattr(args, cattr) is None:
                 # only overwrite if individual option is not given
                 args.__setattr__(cattr, args.chunks)
-    ds = h5load(args.data)
+    ds = arg2ds(args.data)
     if not args.poly_detrend is None:
         if not args.detrend_chunks is None \
            and not args.detrend_chunks in ds.sa:
