@@ -36,5 +36,10 @@ pymvpa2 preproc --filter-passband 0.005 0.067 \
 
 # EXAMPLE END
 
+# check that the filtered dataset actually has the low freqs removed
+pymvpa2 pytest -i "$outdir"/bold_ds.hdf5 \
+               -i "$outdir"/spec_filtered.hdf5 \
+               -e 'assert np.all(np.fft.fft(dss[0][:,0])[:3] > np.fft.fft(dss[1][:,0])[:3])'
+
 # cleanup if working in tmpdir
 [ $have_tmpdir = 1 ] && rm -rf $outdir || true
