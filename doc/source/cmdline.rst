@@ -78,12 +78,23 @@ For now just a few notes:
 
 - No positional arguments, only options
 
-  The majority of all command (can) have very complex argument lists.
+  The majority of all commands (can) have very complex argument lists.
   Positional arguments are harder to identify, and only offer a flat list
   for structured input, without the possibility to specify nested list
   like input.
+
+- whenever possible use (and improve) common option definitions from
+  mvpa2.cmdline.helpers
 
 - An option specifying an output location should be called -o/-output-...
 
 - Whenever a dataset needs to be loaded and there is no special reason to do
   anything fancy, ``arg2ds()`` should be used to load it.
+
+  This will allow all relevant command to vstack input datasets on the fly,
+  and significantly shapes the "standard" workflow, as data can be keep in fine
+  grained structures avoiding the need to produce tailored datasets for any
+  particular operation.
+
+- If a command requires multiple separate datasets multiple --input options
+  should be used to specify them.
