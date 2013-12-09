@@ -13,7 +13,7 @@ Created on Feb 16, 2012
 
 @author: Nikolaas. N. Oosterhof (nikolaas.oosterhof@unitn.it)
 
-This function reads a NIML file and returns a dict that contains all 
+This function reads a NIML file and returns a dict that contains all
 NIML information in a tree-like structure (dicts for which some values
 are dicts themselves). Branches are stored in a 'nodes' field.
 
@@ -118,15 +118,15 @@ def _datastring2rawniml(s, niml):
     niform = niml.get('ni_form', None)
 
     if not niform or niform == 'text':
-        data = np.zeros((nrows, ncols), dtype=tp) # allocate space for data 
-        convertor = types.code2python_convertor(onetype) # string to type convertor 
+        data = np.zeros((nrows, ncols), dtype=tp) # allocate space for data
+        convertor = types.code2python_convertor(onetype) # string to type convertor
 
         vals = s.split(None) # split by whitespace seperator
         if len(vals) != ncols * nrows:
             raise ValueError("unexpected number of elements")
 
         for i, val in enumerate(vals):
-            data[i / ncols, i % ncols] = convertor(val)
+            data[i // ncols, i % ncols] = convertor(val)
 
     else:
         dtype = np.dtype(tp)
@@ -324,22 +324,22 @@ def _partial_string(s, i, maxlen=100):
 
 def string2rawniml(s, i=None):
     '''Parses a NIML string to a raw NIML tree-like structure
-    
+
     Parameters
     ----------
     s: bytearray
         string to be converted
     i: int
         Starting position in the string.
-        By default None is used, which means that the entire string is 
+        By default None is used, which means that the entire string is
         converted.
-        
+
     Returns
     -------
     r: the NIML result.
-        If input parameter i is None then a dictionary with NIML elements, or 
-        a list containing such elements, is returned. If i is an integer, 
-        then a tuple j, d is returned with d the new starting position and a 
+        If input parameter i is None then a dictionary with NIML elements, or
+        a list containing such elements, is returned. If i is an integer,
+        then a tuple j, d is returned with d the new starting position and a
         dictionary or list with the elements parsed so far.
     '''
 
@@ -351,10 +351,10 @@ def string2rawniml(s, i=None):
     debug('NIML', 'Parsing at %d, total length %d', (i, len(s)))
     # start parsing from header
     #
-    # the tricky part is that binary data can contain characters that also 
+    # the tricky part is that binary data can contain characters that also
     # indicate the end of a data segment, so 'typical' parsing with start
     # and end markers cannot be done. Instead the header of each part is
-    # read first, then the number of elements is computed based on the 
+    # read first, then the number of elements is computed based on the
     # header information, and the required number of bytes is converted.
     # From then on the remainder of the string is parsed as above.
 
@@ -445,8 +445,8 @@ def string2rawniml(s, i=None):
                 is_string = niml['ni_type'] == 'String' or \
                                 not 'ni_form' in niml
                 if is_string:
-                    # string form is handled separately. It's easy to parse 
-                    # because it cannot contain any end markers in the data 
+                    # string form is handled separately. It's easy to parse
+                    # because it cannot contain any end markers in the data
 
                     debug("NIML", "Parsing string body for %s", name)
 
@@ -481,7 +481,7 @@ def string2rawniml(s, i=None):
                     # convert data to raw NIML
                     data = _datastring2rawniml(data, niml)
 
-                    # if string data, replace esscape characters                    
+                    # if string data, replace esscape characters
                     if is_string_data:
                         data = decode_escape(data)
 
@@ -514,7 +514,7 @@ def string2rawniml(s, i=None):
                     # update position
                     i += nbytes
 
-                    # ensure that immediately after this segment there is an 
+                    # ensure that immediately after this segment there is an
                     # end-part marker
                     endstr = '</%s>' % name.decode()
                     if s[i:(i + len(endstr))].decode() != endstr:

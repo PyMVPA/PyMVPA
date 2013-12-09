@@ -96,6 +96,10 @@ class VolumeMaskDictionary(Mapping):
 
         return "%s(%s)" % (self.__class__.__name__, ','.join(prefixes_))
 
+    def __str__(self):
+        return '%s(%d centers, volgeom=%s)' % (self.__class__.__name__,
+                                               len(self._src2nbr),
+                                               self._volgeom)
 
     def add(self, src, nbrs, aux=None):
         '''
@@ -122,7 +126,7 @@ class VolumeMaskDictionary(Mapping):
             raise TypeError("src should be int or str")
 
         if src in self._src2nbr:
-            raise ValueError('%r already in %r' % (src, self))
+            raise ValueError('%s already in %s' % (src, self))
 
 
         self._src2nbr[src] = np.asarray(nbrs, dtype=np.int)
@@ -134,7 +138,7 @@ class VolumeMaskDictionary(Mapping):
             n = len(nbrs)
             expected_keys = set(self.aux_keys())
             if expected_keys and (set(aux) != expected_keys):
-                raise ValueError("aux label mismatch: %r != %r" %
+                raise ValueError("aux label mismatch: %s != %s" %
                                 (set(aux), expected_keys))
             for k, v in aux.iteritems():
                 if type(v) is np.ndarray:
@@ -533,7 +537,7 @@ class VolumeMaskDictionary(Mapping):
         '''
 
         if not self.same_layout(other):
-            raise ValueError("Cannot merge %r with %r" % (self, other))
+            raise ValueError("Cannot merge %s with %s" % (self, other))
 
         aks = self.aux_keys()
 
@@ -679,7 +683,7 @@ class VolumeMaskDictionary(Mapping):
         d = volgeom.distance(xyz_srcs, xyz_trg)
         i = np.argmin(d)
         # d is a 2D array, get the row number with the lowest d
-        source = flat_srcs[i / xyz_trg.shape[0]]
+        source = flat_srcs[i // xyz_trg.shape[0]]
 
         return source
 
