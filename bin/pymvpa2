@@ -20,6 +20,12 @@ from mvpa2.base import verbose, error
 if __debug__:
     from mvpa2.base import debug
 
+try:
+    import psyco
+    psyco.profile()
+except:
+    pass
+
 # what version are we talking
 from mvpa2.base.info import get_pymvpa_gitversion
 pymvpa_version = get_pymvpa_gitversion()
