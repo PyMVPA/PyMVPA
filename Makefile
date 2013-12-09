@@ -187,8 +187,6 @@ manpages: mkdir-MAN_DIR
 	@echo "I: Creating manpages"
 	PYTHONPATH=$(LPYTHONPATH) help2man -N -n 'preprocess fMRI data for PyMVPA' \
 		bin/pymvpa2-prep-fmri > $(MAN_DIR)/pymvpa2-prep-fmri.1
-	PYTHONPATH=$(LPYTHONPATH) help2man -N -n 'query stereotaxic atlases' \
-		bin/pymvpa2-atlaslabeler > $(MAN_DIR)/pymvpa2-atlaslabeler.1
 	PYTHONPATH=$(LPYTHONPATH) help2man -N -n 'start a PyMVPA tutorial session' \
 		bin/pymvpa2-tutorial > $(MAN_DIR)/pymvpa2-tutorial.1
 	PYTHONPATH=$(LPYTHONPATH) help2man --no-discard-stderr -N -n \
