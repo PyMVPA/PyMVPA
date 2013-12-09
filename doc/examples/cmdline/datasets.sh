@@ -34,6 +34,11 @@ pymvpa2 dump --sa one -f txt -i "$outdir"/ones.hdf5 | wc -l
 # show a summary of the dataset content
 pymvpa2 dsinfo -i "$outdir"/bold_ds.hdf5 | grep '^Dataset'
 
+# select the first 500 samples of the dataset
+pymvpa2 select --samples-by-index :500 \
+               -i "$outdir"/bold_ds.hdf5 \
+               -o "$outdir"/short_ds.hdf5
+
 # create a simple CSV table on the fly to define some "events" with attributes
 cat << EOT > "$outdir"/events.csv
 "vol","attr","part"
@@ -54,6 +59,7 @@ pymvpa2 mkevds --csv-events  "$outdir"/events.csv --onset-column vol \
 # EXAMPLE END
 
 pymvpa2 pytest -i "$outdir"/evds.hdf5 -e 'assert(len(dss[0]) == 3)'
+pymvpa2 pytest -i "$outdir"/short_ds.hdf5 -e 'assert(len(dss[0]) == 500)'
 
 # cleanup if working in tmpdir
 [ $have_tmpdir = 1 ] && rm -rf $outdir || true
