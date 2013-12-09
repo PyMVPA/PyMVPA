@@ -21,7 +21,8 @@ unittest framework such as 'nose'.
 
 In the namespace in which all expressions are evaluated the NumPy module is
 available via the alias 'np', and the nose.tools under the alias 'nt' (if
-installed). Any loaded datasets are avialable as a list ``dss``.
+installed). Any loaded datasets are available as a list named ``dss``. The first
+dataset in that list (if any) is available under the name ``ds``.
 
 Examples:
 
@@ -65,6 +66,9 @@ def setup_parser(parser):
 def run(args):
     if not args.data is None:
         dss = [arg2ds(d) for d in args.data]
+        if len(dss):
+            # convenience short-cut
+            ds = dss[0]
     try:
         import nose.tools as nt
     except ImportError:
