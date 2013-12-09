@@ -62,13 +62,10 @@ import sys
 import argparse
 from mvpa2.base import verbose, warning, error
 from mvpa2.base.hdf5 import h5save
-from mvpa2.datasets import Dataset, vstack
-from mvpa2.datasets.eventrelated import eventrelated_dataset, find_events
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
-    import hdf2ds, parser_add_common_opt, \
-           hdf5compression
+    import arg2ds, parser_add_common_opt, hdf5compression
 
 def _check_output(args):
     if args.output is None:
@@ -77,7 +74,6 @@ def _check_output(args):
 def to_nifti(dumpy, ds, args):
     from mvpa2.datasets.mri import map2nifti
     # TODO allow overriding the nifti header
-    # TODO allow overriding the mapper
     nimg = map2nifti(ds, dumpy)
     nimg.to_filename(args.output)
 
@@ -112,14 +108,16 @@ def setup_parser(parser):
     parser.add_argument('-f', '--format', default='txt',
                         choices=('hdf5', 'nifti', 'npy', 'txt'),
                         help="""output format""")
+    parser_add_common_opt(
+            parser, 'multidata', names=('--mapper-dataset',), dest='mapperds',
+            help="""path to a PyMVPA dataset whos mapper should be used for
+            reverse mapping features into volumetric space for NIfTI export.
+            By default the mapper in the input dataset is used.""")
     parser_add_optgroup_from_def(parser, hdf5_grp)
 
 
 def run(args):
-    dss = hdf2ds(args.data)
-    verbose(3, 'Loaded %i dataset(s)' % len(dss))
-    ds = vstack(dss)
-    verbose(3, 'Concatenation yielded %i samples with %i features' % ds.shape)
+    ds = arg2ds(args.data)
     # What?
     if args.samples:
         dumpy = ds.samples
@@ -173,5 +171,15 @@ def run(args):
         np.save(args.output, dumpy)
     elif args.format == 'nifti':
         _check_output(args)
-        to_nifti(dumpy, ds, args)
+        if args.fa:
+            # need to wrap into a length-1 sequence to survive rev-mapping
+            # properly
+            # TODO maybe we should allow more complex transformations, e.g.
+            # 2d features may just need a transpose() to fit into a NIfTI
+            dumpy = dumpy[None]
+        if args.mapperds is None:
+            mapperds = ds
+        else:
+            mapperds = arg2ds(args.data)
+        to_nifti(dumpy, mapperds, args)
     return ds
