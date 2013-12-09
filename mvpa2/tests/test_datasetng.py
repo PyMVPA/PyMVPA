@@ -374,16 +374,12 @@ def test_mergeds():
     ok_((data_append.chunks == l1).all())
 
     #
-    # appending
-    #
-
-    # we need the same samples attributes in both datasets
-    assert_raises(ValueError, vstack, (data2, data3))
-
-    #
     # vstacking
     #
     if __debug__:
+        # we need the same samples attributes in both datasets
+        assert_raises(ValueError, vstack, (data2, data3))
+
         # tested only in __debug__
         assert_raises(ValueError, vstack, (data0, data1, data2, data3))
     datasets = (data1, data2, data4)
