@@ -242,6 +242,7 @@ def collect_nose_tests(verbosity=1):
         'test_eeglab',
         'test_progress',
         'test_winner',
+        'test_viz',
         ]
 
     if not cfg.getboolean('tests', 'lowmem', default='no'):
