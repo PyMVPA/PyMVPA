@@ -354,5 +354,5 @@ collect_test_suites.__test__ = False
 run.__test__ = False
 __test__ = False
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     run(exit_=True, verbosity=3)
