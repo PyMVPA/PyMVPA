@@ -291,7 +291,10 @@ def run_tests_using_nose(limit=None, verbosity=1, exit_=False):
                             if nt[5:] in limit]
 
     # run the tests
-    _ = main(defaultTest=(), config=config, exit=exit_)
+    if limit is None or len(limit):
+        _ = main(defaultTest=(), config=config, exit=exit_)
+    else:
+        warning("Limit is degenerate (empty), no tests were ran")
 
 
 def run(limit=None, verbosity=None, exit_=False):
