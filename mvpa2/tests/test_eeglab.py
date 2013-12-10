@@ -59,10 +59,10 @@ class MEGTests(unittest.TestCase):
         assert_array_equal(sel_chan.channelids, ['Fpz', 'Pz'])
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(MEGTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
     runner.run()

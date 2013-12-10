@@ -151,10 +151,10 @@ class RegressionsTests(unittest.TestCase):
         # TODO: extend the test -- checking for validity of sensitivities etc
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(RegressionsTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
     runner.run()

@@ -1006,10 +1006,10 @@ class _Voxel_Count_Measure(Measure):
         return dset.nfeatures
 
 
-def suite():
+def suite():  # pragma: no cover
     """Create the suite"""
     return unittest.makeSuite(SurfTests)
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
     runner.run()

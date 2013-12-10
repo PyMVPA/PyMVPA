@@ -84,7 +84,7 @@ class SearchlightTests(unittest.TestCase):
 
 
 
-    #def _test_searchlights(self, ds, sls, roi_ids, result_all):
+    #def _test_searchlights(self, ds, sls, roi_ids, result_all):  # pragma: no cover
 
     @sweepargs(lrn_sllrn_SL_partitioner=
                [(GNB(common_variance=v, descr='GNB'), None,
@@ -728,11 +728,11 @@ class SearchlightTests(unittest.TestCase):
             for f in glob.glob(tfile + '*'):
                 os.unlink(f)
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(SearchlightTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
     runner.run()
 

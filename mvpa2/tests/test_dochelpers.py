@@ -174,11 +174,11 @@ class DochelpersTests(unittest.TestCase):
             repr(c2), '%(mod)sC2(p=%(mod)sC1(f=<bound %(mod)sC2%(c2id)s.trouble>)%(c1id)s)%(c2id)s' % locals())
 
 # TODO: more unittests
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(DochelpersTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
     runner.run()
 

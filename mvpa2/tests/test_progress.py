@@ -36,10 +36,10 @@ class ProgressTests(unittest.TestCase):
             assert_equal(s, pre + infix + post)
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(SensitivityAnalysersTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
     runner.run()

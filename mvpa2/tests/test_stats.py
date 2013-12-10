@@ -137,12 +137,12 @@ class StatsTests(unittest.TestCase):
         assert_array_almost_equal(c, c_np)
 
 
-def suite():
+def suite():  # pragma: no cover
     """Create the suite"""
     return unittest.makeSuite(StatsTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
     runner.run()
 

@@ -35,7 +35,7 @@ class GPRTests(unittest.TestCase):
     def test_linear(self):
         pass
 
-    def __test_gpr_model_selection(self):
+    def _test_gpr_model_selection(self):  # pragma: no cover
         """Smoke test for running model selection while getting GPRWeights
 
         TODO: DISABLED because setting of hyperparameters was not adopted for 0.6 (yet)
@@ -62,10 +62,10 @@ class GPRTests(unittest.TestCase):
 
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(GPRTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
     runner.run()

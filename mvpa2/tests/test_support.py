@@ -274,11 +274,11 @@ def test_mask2slice():
     assert_equal(mask2slice(slc), slice(None, 0, None))
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(SupportFxTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
     runner.run()
 

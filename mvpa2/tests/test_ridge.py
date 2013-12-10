@@ -54,11 +54,11 @@ class RidgeRegTests(unittest.TestCase):
         self.assertTrue((p == clf.ca.predictions).all())
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(RidgeRegTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
     runner.run()
 
