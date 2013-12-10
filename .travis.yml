@@ -24,7 +24,10 @@ before_install:
     # Note: it looks like the line could be truncated, thus spreading them through multiple lines
     - travis_retry sudo apt-get install shogun-python-modular $PY-mdp $PY-psutil $PY-sklearn
     - travis_retry sudo apt-get install liblapack-dev $PY-statsmodels $PY-reportlab ipython
-    - travis_retry sudo apt-get install $PY-pywt $PY-lxml
+    - travis_retry sudo apt-get install $PY-pywt $PY-lxml $PY-pprocess
+    # Very optional R interfaces via rpy2
+    - travis_retry sudo apt-get install $PY-rpy2
+    - echo "install.packages(c('lars', 'energy', 'elasticnet'), repos='http://cran.r-project.org')" | R --no-save
 install:
     - make
     - if [[ $MVPA_DEBUG_METRICS == all ]]; then pip install --user -v coveralls; fi
