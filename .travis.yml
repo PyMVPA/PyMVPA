@@ -28,7 +28,7 @@ before_install:
     # Very optional R interfaces via rpy2
     - travis_retry sudo apt-get install $PY-rpy2
     - mkdir -p $PWD/R-libs
-    - echo "install.packages(c('lars', 'energy', 'elasticnet'), '$PWD/R-libs', repos='http://cran.r-project.org')" | R --no-save
+    - echo "install.packages(c('energy', 'elasticnet'), '$PWD/R-libs', repos='http://cran.r-project.org')" | R --no-save
 install:
     - make
     - if [[ $MVPA_DEBUG_METRICS == all ]]; then pip install --user -v coveralls; fi
