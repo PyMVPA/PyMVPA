@@ -27,12 +27,13 @@ before_install:
     - travis_retry sudo apt-get install $PY-pywt $PY-lxml $PY-pprocess
     # Very optional R interfaces via rpy2
     - travis_retry sudo apt-get install $PY-rpy2
-    - echo "install.packages(c('lars', 'energy', 'elasticnet'), repos='http://cran.r-project.org')" | R --no-save
+    - mkdir -p $PWD/R-libs
+    - echo "install.packages(c('lars', 'energy', 'elasticnet'), '$PWD/R-libs', repos='http://cran.r-project.org')" | R --no-save
 install:
     - make
     - if [[ $MVPA_DEBUG_METRICS == all ]]; then pip install --user -v coveralls; fi
 script:
-    - export MVPA_TESTS_LABILE=no PYTHONPATH=. MVPA_MATPLOTLIB_BACKEND=agg PATH=$HOME/.local/bin:$PATH MVPA_EXTERNALS_RAISE_EXCEPTION=off
+    - export MVPA_TESTS_LABILE=no PYTHONPATH=. MVPA_MATPLOTLIB_BACKEND=agg PATH=$HOME/.local/bin:$PATH MVPA_EXTERNALS_RAISE_EXCEPTION=off R_LIBS=$PWD/R-libs
     # Run only nonlabile tests but via coverage for the last entry in the matrix
     - if [[ $MVPA_DEBUG_METRICS == all ]]; then cmd="coverage run --rcfile=.travis_coveragerc"; else cmd=""; fi
     - eval $cmd $(which nosetests) -v mvpa2 --with-doctest
