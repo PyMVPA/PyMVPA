@@ -66,7 +66,9 @@ from mvpa2.datasets import Dataset
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
-        import parser_add_common_opt, ds2hdf5, arg2ds
+        import parser_add_common_opt, ds2hdf5, \
+               arg2ds, parser_add_optgroup_from_def, \
+               single_required_hdf5output
 
 parser_args = {
     'formatter_class': argparse.RawDescriptionHelpFormatter,
@@ -162,9 +164,7 @@ def setup_parser(parser):
         srcgrp = parser.add_argument_group(src[0])
         for opt in src[1]:
             srcgrp.add_argument(opt[0], **opt[1])
-    outputgrp = parser.add_argument_group('output options')
-    parser_add_common_opt(outputgrp, 'output_file', required=True)
-    parser_add_common_opt(outputgrp, 'hdf5compression')
+    parser_add_optgroup_from_def(parser, single_required_hdf5output)
 
 
 def run(args):
