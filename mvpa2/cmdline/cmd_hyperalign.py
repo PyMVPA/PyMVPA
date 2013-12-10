@@ -21,7 +21,7 @@ if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
         import strip_from_docstring, parser_add_common_opt, \
-               param2arg, ca2arg
+               param2arg, ca2arg, arg2ds
 
 from mvpa2.algorithms.hyperalignment import Hyperalignment
 
@@ -55,10 +55,10 @@ _supported_parameters = (
     'alpha', 'level2_niter', 'ref_ds', 'zscore_all', 'zscore_common',
 )
 
-def _transform_dss(srcs, masks, mappers, args):
+def _transform_dss(srcs, mappers, args):
     if __debug__:
         debug('CMDLINE', "loading to-be-transformed data from %s" % srcs)
-    dss = args2datasets(srcs, masks)
+    dss = [arg2ds(d) for d in srcs]
     verbose(1, "Loaded %i to-be-transformed datasets" % len(dss))
     if __debug__:
         debug('CMDLINE', "transform datasets")
@@ -70,17 +70,19 @@ def setup_parser(parser):
     # order of calls is relevant!
     inputargs = parser.add_argument_group('input data arguments')
     parser_add_common_opt(inputargs, 'multidata', required=True)
-    inputargs.add_argument('-t', '--transform', nargs='+', help="""\
+    parser_add_common_opt(
+            inputargs, 'multidata',
+            names=('-t', '--transform'),
+             help="""\
 Additional datasets for transformation into the common space. The number and
 order of these datasets have to match those of the training dataset arguments
-as the correspond mapper will be used to transform each individual dataset.
-Likewise, the same masking is applied to these datasets. Transformed
-datasets are stored in the same format as the input data.""")
+as the correspond mapper will be used to transform each individual dataset.""")
     algoparms = parser.add_argument_group('algorithm parameters')
     for param in _supported_parameters:
         param2arg(algoparms, Hyperalignment, param)
     outopts = parser.add_argument_group('output options')
     parser_add_common_opt(outopts, 'output_prefix', required=True)
+    parser_add_common_opt(outopts, 'hdf5compression')
     for oopt in sorted(_output_specs):
         outopts.add_argument('--%s' % oopt, action='store_true',
             help=_output_specs[oopt]['help'])
@@ -90,7 +92,7 @@ datasets are stored in the same format as the input data.""")
                     % _supported_cas[ca]['output_suffix'])
 
 def run(args):
-    dss = args2datasets(args.data, args.masks)
+    dss = [arg2ds(d) for d in args.data]
     verbose(1, "Loaded %i input datasets" % len(dss))
     if __debug__:
         for i, ds in enumerate(dss):
@@ -117,7 +119,7 @@ def run(args):
         h5save('%s%s.hdf5' % (args.output_prefix,
                               _output_specs['commonspace']['output_suffix']),
                hyper.commonspace,
-               compression=9)
+               compression=args.hdf5_compression)
     for ca in _supported_cas:
         if __debug__:
             debug('CMDLINE', "check conditional attribute: '%s'" % ca)
@@ -132,13 +134,13 @@ def run(args):
             if __debug__:
                 debug('CMDLINE', "store mapper %i: %s" % (i, str(pm)))
             h5save('%s%s.hdf5' % (args.output_prefix, '_map%.3i' % i),
-                   pm, compression=9)
+                   pm, compression=args.hdf5_compression)
     if args.transform:
-        tdss, dss = _transform_dss(args.transform, args.masks, promappers, args)
+        tdss, dss = _transform_dss(args.transform, promappers, args)
         del dss
         verbose(1, "Store transformed datasets")
         for i, td in enumerate(tdss):
             if __debug__:
                 debug('CMDLINE', "store transformed data %i: %s" % (i, str(td)))
             h5save('%s%s.hdf5' % (args.output_prefix, '_transformed%.3i' % i),
-                   td, compression=9)
+                   td, compression=args.hdf5_compression)
