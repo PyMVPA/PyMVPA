@@ -48,7 +48,7 @@ def setup_module(module, verbosity=None):
     verbosity_dependencies = max(0, verbosity - 1)
     if verbosity_dependencies:
         externals.check_all_dependencies(verbosity=verbosity_dependencies)
-    elif __debug__ and verbosity:
+    elif __debug__ and verbosity: # pragma: no cover
         print('T: Skipping testing of all dependencies since verbosity '
               '(MVPA_TESTS_VERBOSITY) is too low')
 
