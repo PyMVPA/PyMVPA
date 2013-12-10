@@ -166,4 +166,5 @@ def suite():
 
 if __name__ == '__main__':
     import runner
+    runner.run()
 
