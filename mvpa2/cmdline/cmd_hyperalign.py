@@ -46,9 +46,6 @@ _output_specs = {
         'output_suffix': '_commonspace',
         'help': 'Store the final common space dataset after completion of level two.'
         },
-    'commonspace-image': {
-        'help': 'Equivalent to --commonspace, but store as an image (typically in NIfTI format).'
-        },
     'store-transformation': {
         'help': 'Store common space transformation mappers for each training dataset.',
         },
@@ -73,15 +70,12 @@ def setup_parser(parser):
     # order of calls is relevant!
     inputargs = parser.add_argument_group('input data arguments')
     parser_add_common_opt(inputargs, 'multidata', required=True)
-    parser_add_common_opt(inputargs, 'multimask')
     inputargs.add_argument('-t', '--transform', nargs='+', help="""\
 Additional datasets for transformation into the common space. The number and
 order of these datasets have to match those of the training dataset arguments
 as the correspond mapper will be used to transform each individual dataset.
 Likewise, the same masking is applied to these datasets. Transformed
 datasets are stored in the same format as the input data.""")
-    inputargs.add_argument('--transform-images', nargs='+',
-        help="Identical to --transform, but stores transformed data as images.")
     algoparms = parser.add_argument_group('algorithm parameters')
     for param in _supported_parameters:
         param2arg(algoparms, Hyperalignment, param)
@@ -96,9 +90,6 @@ datasets are stored in the same format as the input data.""")
                     % _supported_cas[ca]['output_suffix'])
 
 def run(args):
-    if __debug__:
-        debug('CMDLINE', "loading input data from %s" % args.data)
-        debug('CMDLINE', "loading input data masks from %s" % args.masks)
     dss = args2datasets(args.data, args.masks)
     verbose(1, "Loaded %i input datasets" % len(dss))
     if __debug__:
@@ -118,18 +109,6 @@ def run(args):
     promappers = hyper(dss)
     verbose(2, "Alignment reference is dataset %i" % hyper.ca.chosen_ref_ds)
     verbose(1, "Writing output")
-    # output
-    if args.commonspace_image:
-        if __debug__:
-            debug('CMDLINE', "write commonspace image")
-        from mvpa2.datasets.mri import map2nifti
-        import nibabel as nb
-        ref_ds = hyper.ca.chosen_ref_ds
-        img = map2nifti(dss[ref_ds], hyper.commonspace)
-        nb.save(img,
-                '%s%s.nii.gz' \
-                    % (args.output_prefix,
-                       _output_specs['commonspace']['output_suffix']))
     # save on memory and remove the training data
     del dss
     if args.commonspace:
@@ -163,16 +142,3 @@ def run(args):
                 debug('CMDLINE', "store transformed data %i: %s" % (i, str(td)))
             h5save('%s%s.hdf5' % (args.output_prefix, '_transformed%.3i' % i),
                    td, compression=9)
-    elif args.transform_images:
-        from mvpa2.datasets.mri import map2nifti
-        import nibabel as nb
-        tdss, dss = _transform_dss(args.transform_images, args.masks, promappers,
-                                   args)
-        verbose(1, "Store transformed datasets as images")
-        for i, td in enumerate(tdss):
-            if __debug__:
-                debug('CMDLINE', "store transformed data %i: %s" % (i, str(td)))
-            img = map2nifti(dss[i], td)
-            nb.save(img,
-                    '%s%s.nii.gz' \
-                        % (args.output_prefix, '_transformed%.3i' % i))
