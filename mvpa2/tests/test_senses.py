@@ -51,3 +51,4 @@ def test_splitclf_sensitivities():
 
 if __name__ == '__main__':
     import runner
+    runner.run()
