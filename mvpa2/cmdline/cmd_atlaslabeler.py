@@ -27,6 +27,10 @@ would provide summary over the MNI (or HarvardOxford-Cortical) atlas,
 .nii.gz of which were previously flirted (or fnirted) into the space of
 mask_vt.nii.gz and provided in '-f' argument.
 """
+# magic line for manpage summary
+# man: -*- % query stereotaxic atlases
+
+__docformat__ = 'restructuredtext'
 
 import re, sys, os
 import argparse
