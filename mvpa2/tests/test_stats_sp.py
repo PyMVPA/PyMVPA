@@ -321,7 +321,8 @@ class StatsTestsScipy(unittest.TestCase):
         """Test GLM
         """
         skip_if_no_external('statsmodels')
-        from mvpa2.measures.statsmodels_adaptor import GLM
+        import statsmodels.api as sm
+        from mvpa2.measures.statsmodels_adaptor import UnivariateStatsModels
         # play fmri
         # full-blown HRF with initial dip and undershoot ;-)
         hrf_x = np.linspace(0, 25, 250)
@@ -356,7 +357,8 @@ class StatsTestsScipy(unittest.TestCase):
         data = dataset_wizard(samples=np.array((wsignal, nsignal, nsignal)).T, targets=1)
 
         # check GLM betas
-        glm = GLM(X)
+        glm_gen = lambda y, x: sm.OLS(y, x)
+        glm = UnivariateStatsModels(X, model_gen=glm_gen)
         betas = glm(data)
 
         # betas for each feature and each regressor
@@ -374,7 +376,7 @@ class StatsTestsScipy(unittest.TestCase):
 
 
         # check GLM t values
-        glm = GLM(X, voi='tvalues')
+        glm = UnivariateStatsModels(X, res='tvalues', model_gen=glm_gen)
         tstats = glm(data)
 
         self.assertTrue(tstats.shape == betas.shape)
@@ -388,7 +390,7 @@ class StatsTestsScipy(unittest.TestCase):
 
         # check t-contrast -- should do the same as tvalues for the first
         # parameter
-        glm = GLM(X, voi=[1, 0])
+        glm = UnivariateStatsModels(X, res=[1, 0], model_gen=glm_gen)
         contrast = glm(data)
         assert_array_almost_equal(contrast.samples[0], tstats.samples[0])
         assert_equals(len(contrast), 5)
@@ -398,7 +400,7 @@ class StatsTestsScipy(unittest.TestCase):
             assert_true(1.5 < contrast.samples[2, 0] < 2.5)
 
         # check F-test
-        glm = GLM(X, voi=[[1, 0]])
+        glm = UnivariateStatsModels(X, res=[[1, 0]], model_gen=glm_gen)
         ftest = glm(data)
         assert_equals(len(ftest), 4)
         assert_true(ftest.samples[0, 0] > ftest.samples[0, 1])
