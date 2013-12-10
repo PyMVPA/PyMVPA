@@ -46,7 +46,6 @@ from mvpa2.mappers.detrend import poly_detrend
 from mvpa2.mappers.zscore import zscore
 from mvpa2.misc.neighborhood import Sphere, IndexQueryEngine
 from mvpa2.clfs.gnb import GNB
-from mvpa2.base.hdf5 import h5save, h5load
 
 
 class SurfVoxelSelectionTests(unittest.TestCase):
