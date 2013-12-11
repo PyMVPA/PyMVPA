@@ -15,7 +15,8 @@ import pylab as pl
 import numpy as np
 from mvpa2.datasets import Dataset
 
-def plot_confusion(ds, labels=None, xlabels_vertical=True):
+def plot_confusion(ds, labels=None, numbers=False, 
+                   numbers_alpha=None, xlabels_vertical=True):
     """Plot a confusiom matrix by calling viz.imshow().
     
     Parameters                                                                                                                  
@@ -53,10 +54,19 @@ def plot_confusion(ds, labels=None, xlabels_vertical=True):
         ds_cm.fa['targets'] = labels
     else:
         ds_cm = ds
+
+    _numbers = None
+    if numbers:
+        _numbers = {'fontsize': 14,
+                    'horizontalalignment': 'center',
+                    'verticalalignment': 'center'}
+        if numbers_alpha is not None:
+            _numbers['numbers_alpha']=numbers_alpha              
         
     fig, im, cb = imshow(ds_cm, 
                          xlabel_attr='predictions', 
-                         ylabel_attr='targets')
+                         ylabel_attr='targets',
+                         numbers = _numbers)
                                                   
     if xlabels_vertical:
         pl.setp(pl.getp(im.axes, 'xticklabels'), rotation='vertical')
@@ -65,15 +75,5 @@ def plot_confusion(ds, labels=None, xlabels_vertical=True):
     
 
 
-if __name__ == "__main__":
 
-    m = np.random.randint(6, size=(4,4))
-    ds = Dataset(m)
-    #ds.sa['predictions'] = (5,6,7,8)
-    #ds.fa['targets'] = (5,6,7,8)
-    ds.sa['predictions'] = ('Dog','Cat','Mouse','Bear')
-    ds.fa['targets'] = ('Dog','Cat','Mouse','Bear')   
-    labels = ('Mouse','Cat')    
-    
-    plot_confusion(ds, labels)
        
