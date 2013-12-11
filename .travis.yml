@@ -38,6 +38,8 @@ script:
     - export MVPA_TESTS_LABILE=no PYTHONPATH=.:$PYTHONPATH MVPA_MATPLOTLIB_BACKEND=agg PATH=$HOME/.local/bin:$PATH MVPA_EXTERNALS_RAISE_EXCEPTION=off R_LIBS=$PWD/R-libs
     # Run only nonlabile tests but via coverage for the last entry in the matrix
     - if [[ $MVPA_DEBUG_METRICS == all ]]; then cmd="coverage run --rcfile=.travis_coveragerc"; else cmd=""; fi
-    - eval $cmd $(which nosetests) -v mvpa2 --with-doctest -s
+    # Doctests are unguarded against absent externals
+    - if [[ $PYTHONPATH == mvpa2/tests/badexternals ]]; then doctests=""; else doctests="--with-doctest"; fi
+    - eval $cmd $(which nosetests) -v mvpa2 $doctests -s
 after_success:
     - if [[ $MVPA_DEBUG_METRICS == all ]]; then coveralls; fi
