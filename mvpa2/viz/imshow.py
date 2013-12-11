@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Multi-purpose dataset container with support for attributes."""
+
 
 __docformat__ = 'restructuredtext'
 
@@ -34,9 +34,11 @@ def imshow(matrix, xlabel_attr=None, ylabel_attr=None, numbers=None,
       If not 'None' matrix is treated as a Dataset and labels are
       extracted from the feature attribute named 'ylabel_attr'.
       The labels are used as the 'y_tick_lables' of the image.    
-    numbers : str or None
-      If not 'None' plots matrix values as text inside the image using
-      'numbers' as format string.   
+    numbers : dict, str or None
+      If not 'None' plots matrix values as text inside the image.
+      If a string is provided, then this string is used as format string.
+      In case that a dictionary is provided, the dictionary gets passed 
+      on to the text command, and, '%d' is used to format the values.
     **kwargs
       Additional parameters passed on to matshow().
 
@@ -48,7 +50,21 @@ def imshow(matrix, xlabel_attr=None, ylabel_attr=None, numbers=None,
     
     externals.exists("pylab", raise_=True)
     import pylab as pl
-
+    
+    # 
+    if numbers is not None:
+        if isinstance(numbers, str):
+            numbers_format = numbers
+            numbers_alpha = None
+            numbers_kwargs_ = {}            
+        elif isinstance(numbers, dict):
+            numbers_format = '%d'
+            numbers_alpha = numbers.pop('numbers_alpha', None)
+            numbers_kwargs_ = numbers
+        else:
+            raise TypeError("The argument to keyword 'numbers' must be "
+                            "either of type string or type dict")    
+    
     _xlabel = None
     _ylabel = None
 
@@ -57,8 +73,8 @@ def imshow(matrix, xlabel_attr=None, ylabel_attr=None, numbers=None,
         if xlabel_attr is not None and ylabel_attr is not None:           
             _xlabel = matrix.get_attr(xlabel_attr)[0].value  # LookupError
             _ylabel = matrix.get_attr(ylabel_attr)[0].value  # if it's not there
-            if not np.equal(_xlabel, _ylabel):
-                raise ValueError, "Elements in %s and $s " \
+            if not np.array_equal(_xlabel, _ylabel):
+                raise ValueError, "Elements in %s and %s " \
                                   "do not match" % (xlabel_attr, ylabel_attr)    
 
     matrix = np.asanyarray(matrix)
@@ -92,15 +108,18 @@ def imshow(matrix, xlabel_attr=None, ylabel_attr=None, numbers=None,
 
     # plot matrix values inside the image if number is set   
     if numbers is not None:
-        numbers_kwargs_ = {'fontsize': 14,
-                           'horizontalalignment': 'center',
-                           'verticalalignment': 'center'}
         colors = [im.to_rgba(0), im.to_rgba(maxv)]
         for i, cas in enumerate(matrix):
             for j, v in enumerate(cas):            
                 numbers_kwargs_['color'] = colors[int(v<maxv/2)]
-                pl.text(j, i, numbers % v, alpha=2.0, **numbers_kwargs_)
-    
-    pl.draw()
+                # code taken from old ConfusionMatrix.plot()
+                if numbers_alpha is None:
+                    alpha = 1.0
+                else:
+                    # scale non-linearly w.r.t. value
+                    alpha = 1 - np.array(1 - np.float(v)/maxv) ** numbers_alpha
+                pl.text(j, i, numbers_format % v, 
+                        alpha=alpha, **numbers_kwargs_)
+
     
     return fig, im, cb
