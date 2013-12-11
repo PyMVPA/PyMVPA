@@ -50,6 +50,7 @@ def sweepargs(**kwargs):
 
             failed_tests = {}
             skipped_tests = []
+            report_progress = cfg.get('tests', 'verbosity', default=1) > 1
             for argname in kwargs.keys():
                 for argvalue in kwargs[argname]:
                     if isinstance(argvalue, Classifier):
@@ -65,9 +66,12 @@ def sweepargs(**kwargs):
                             debug('TEST', 'Running %s on args=%r and kwargs=%r'
                                   % (method.__name__, args_, kwargs_))
                         method(*args_, **kwargs_)
+                        status = '+'
                     except SkipTest, e:
                         skipped_tests += [e]
+                        status = 'S'
                     except AssertionError, e:
+                        status = 'F'
                         estr = str(e)
                         etype, value, tb = sys.exc_info()
                         # literal representation of exception tb, so
@@ -96,6 +100,10 @@ def sweepargs(**kwargs):
                             msg = "%s on %s=%s" % (estr, argname, argvalue)
                             debug('TEST', 'Failed unittest: %s\n%s'
                                   % (eidstr, msg))
+                    if report_progress:
+                        sys.stdout.write(status)
+                        sys.stdout.flush()
+
                     untrain_clf(argvalue)
                     # TODO: handle different levels of unittests properly
                     if cfg.getboolean('tests', 'quick', False):
@@ -103,7 +111,9 @@ def sweepargs(**kwargs):
                         # the rest are omitted
                         # TODO: proper partitioning of unittests
                         break
-
+            if report_progress:
+                sys.stdout.write(' ')
+                sys.stdout.flush()
             if len(failed_tests):
                 # Lets now create a single AssertionError exception
                 # which would nicely incorporate all failed exceptions
