@@ -128,7 +128,7 @@ class RegressionsTests(unittest.TestCase):
     # conditioned that test_regressions was ran.  I could not spot
     # anything "stateful" on our Python side, and I guess it is
     # a problem of R's implementation
-    @sweepargs(regr=regrswh['regression', 'has_sensitivity', '!gpr'])
+    @sweepargs(regr=regrswh['regression', 'has_sensitivity', '!gpr', '!lars'])
     @reseed_rng()
     def test_sensitivities(self, regr):
         """Test "sensitivities" provided by regressions

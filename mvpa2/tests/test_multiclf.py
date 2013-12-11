@@ -57,6 +57,8 @@ _dsties1 = get_dsties1()
 #if True:
 @sweepargs(clf=clfswh['multiclass'])
 def test_multiclass_ties(clf):
+    if 'lars' in clf.__tags__:
+        raise SkipTest("Known to crash while running this test")
     ds = _dsties1
 
     # reassign data between ties, so we know that decision is data, not order driven
