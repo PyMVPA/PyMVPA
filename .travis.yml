@@ -13,6 +13,9 @@ env:
  matrix:
     - PYTHON=$PY
     - PYTHON="$PY -O"
+    - PYTHON="$PY -O" BOGUS=1
+    - PYTHON="$PY -O" BOGUS=2
+    - PYTHON="$PY -O" BOGUS=3
     - PYTHONPATH=mvpa2/tests/badexternals
     # Some DEBUG targets are excluded since either their output could not be redirected
     # or they augment output in the doctests
@@ -31,6 +34,8 @@ before_install:
     - travis_retry sudo apt-get install $PY-rpy2
     - mkdir -p $PWD/R-libs
     - echo "install.packages(c('energy', 'elasticnet'), '$PWD/R-libs', repos='http://cran.r-project.org')" | R --no-save
+    # Troubleshoot pprocess
+    - git clone git://github.com/yarikoptic/pprocess-debug; export PYTHONPATH=$PYTHONPATH:$PWD/pprocess-debug
 install:
     - make
     - if [[ $MVPA_DEBUG_METRICS == all ]]; then pip install --user -v coveralls; fi
