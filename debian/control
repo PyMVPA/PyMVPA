@@ -15,7 +15,7 @@ Build-Depends: debhelper (>= 7.0.50~),
                python-sphinx, python-numpydoc,
                graphviz, inkscape, imagemagick, bc,
                python-pprocess,
-Standards-Version: 3.9.3
+Standards-Version: 3.9.5
 Homepage: http://www.pymvpa.org
 Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/pymvpa.git
 Vcs-Git: git://git.debian.org/git/pkg-exppsy/pymvpa.git -b dist2/debian/proper/sid

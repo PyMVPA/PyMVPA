@@ -5,7 +5,7 @@ Source: https://github.com/PyMVPA/PyMVPA
 
 
 Files: *
-Copyright: Copyright,
+Copyright:
     2006-2012, Michael Hanke <michael.hanke@gmail.com>
     2007-2012, Yaroslav Halchenko <debian@onerussian.com>
     2007-2009, Per B. Sederberg <persed@princeton.edu>
@@ -13,14 +13,14 @@ Copyright: Copyright,
 License: Expat
 
 Files: debian/*
-Copyright: Copyright 2006-2011,
-    Michael Hanke <michael.hanke@gmail.com>
-    Yaroslav Halchenko <debian@onerussian.com>
+Copyright:
+    2006-2013, Michael Hanke <michael.hanke@gmail.com>
+    2006-2013, Yaroslav Halchenko <debian@onerussian.com>
 License: Expat
 
 
 Files: 3rd/libsvm/*
-Copyright: Copyright (c) 2000-2007 Chih-Chung Chang and Chih-Jen Lin
+Copyright: 2000-2007, Chih-Chung Chang and Chih-Jen Lin
 License: BSD-3
   The source tarball contains a partial copy of the LIBSVM package.  However,
   the corresponding library is available from the libsvm source package (or
