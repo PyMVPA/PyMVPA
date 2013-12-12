@@ -25,6 +25,7 @@ if __debug__:
 class GPRTests(unittest.TestCase):
 
     def test_basic(self):
+        skip_if_no_external('scipy') # needed by GPR code
         dataset = data_generators.linear1d_gaussian_noise()
         k = GeneralizedLinearKernel()
         clf = GPR(k)
