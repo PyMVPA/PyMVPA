@@ -8,7 +8,7 @@
 language: erlang
 env:
  global:
-    - PY=python PYSUF='' NOSETESTS=$(which nosetests)
+    - PY=python PYSUF=''
     # - PYTHON=python3 PYSUF=3 : python3-numpy not currently available
  matrix:
     - PYTHON=$PY DOCTESTS=--with-doctest
@@ -41,6 +41,7 @@ script:
     - export MVPA_DEBUG_METRICS=all  MVPA_DEBUG_OUTPUT=/dev/null
     - export MVPA_TESTS_LABILE=no  MVPA_TESTS_VERBOSITY=2  MVPA_TESTS_WTF=1
     - export PATH=$HOME/.local/bin:$PATH  PYTHONPATH=.:$PYTHONPATH  R_LIBS=$PWD/R-libs
+    - export NOSETESTS=$(which nosetests)
     - eval   $COVERAGE $NOSETESTS -v mvpa2 $DOCTESTS -s
 after_success:
     - if [ ! -z "$COVERAGE" ]; then coveralls; fi
