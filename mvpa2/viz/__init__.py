@@ -10,7 +10,10 @@
 
 __docformat__ = 'restructuredtext'
 
-import pylab as pl
+from mvpa2.base import externals
+if externals.exists('pylab', raise_=True):
+    import pylab as pl
+
 from mvpa2.base.node import ChainNode
 from mvpa2.base.dataset import is_datasetlike
 from mvpa2.generators.splitters import Splitter

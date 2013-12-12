@@ -9,9 +9,12 @@
 """Unit tests for PyMVPA ridge regression classifier"""
 
 from mvpa2.clfs.ridge import RidgeReg
-from scipy.stats import pearsonr
 from mvpa2.testing import *
 from mvpa2.testing.datasets import datasets
+
+skip_if_no_external('scipy')
+
+from scipy.stats import pearsonr
 
 class RidgeRegTests(unittest.TestCase):
 

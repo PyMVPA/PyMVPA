@@ -13,7 +13,9 @@ __docformat__ = 'restructuredtext'
 from mvpa2.base import externals
 externals._set_matplotlib_backend()
 
-import pylab as pl
+if externals.exists('pylab', raise_=True):
+    import pylab as pl
+
 import numpy as np
 
 from mvpa2.base.node import ChainNode
