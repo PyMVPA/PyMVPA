@@ -1,17 +1,18 @@
-pymvpa2 (2.2.0-5) UNRELEASED; urgency=low
+pymvpa2 (2.2.0-4) UNRELEASED; urgency=low
 
   * debian/control:
     - specify git branch for debian packaging of pymvpa2. Thanks Julien
       Cristau for the report
     - build-depends on python-numpydoc
+    - build-depends and recommends on python-pprocess (removed from the Debian
+      archive since we missed a dependency on it and otherwise was unused)
   * debian/rules:
     - mkdir target -lib directories before moving .so files.  It should resolve
       FTBFS with debhelper 9.20130507 and robustify build
     - quote paths with globs to avoid their expansion in find command.
       Thanks Julien Cristau for the hint
-  * 
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 26 Jul 2013 08:52:13 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 12 Dec 2013 08:55:02 -0500
 
 pymvpa2 (2.2.0-3) unstable; urgency=low
 

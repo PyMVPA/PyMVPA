@@ -13,7 +13,8 @@ Build-Depends: debhelper (>= 7.0.50~),
                libsvm-dev (>= 2.84.0),
                help2man,
                python-sphinx, python-numpydoc,
-               graphviz, inkscape, imagemagick, bc
+               graphviz, inkscape, imagemagick, bc,
+               python-pprocess,
 Standards-Version: 3.9.3
 Homepage: http://www.pymvpa.org
 Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/pymvpa.git
@@ -40,6 +41,7 @@ Recommends:
          python-sklearn,
          shogun-python-modular,
          liblapack-dev,
+         python-pprocess,
 Suggests:
          fslview, fsl,
          python-mvpa2-doc,
