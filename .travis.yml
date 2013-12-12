@@ -8,18 +8,16 @@
 language: erlang
 env:
  global:
-    - PY=python PYSUF=''
+    - PY=python PYSUF='' NOSETESTS=$(which nosetests)
     # - PYTHON=python3 PYSUF=3 : python3-numpy not currently available
  matrix:
-    - PYTHON=$PY
-    - PYTHON="$PY -O"
-    - PYTHON="$PY -O" BOGUS=1
-    - PYTHON="$PY -O" BOGUS=2
-    - PYTHON="$PY -O" BOGUS=3
+    - PYTHON=$PY DOCTESTS=--with-doctest
+    - PYTHON="$PY -O" DOCTESTS=--with-doctest
+    # Doctests are unguarded against absent externals, so no --with-doctest for them
     - PYTHONPATH=mvpa2/tests/badexternals
-    # Some DEBUG targets are excluded since either their output could not be redirected
-    # or they augment output in the doctests
-    - MVPA_DEBUG=ENFORCE_CA_ENABLED MVPA_DEBUG_METRICS=all MVPA_DEBUG_OUTPUT=/dev/null MVPA_TESTS_VERBOSITY=2 MVPA_TESTS_WTF=1
+    # Some DEBUG targets are excluded since either their output could
+    # not be redirected or they augment output in the doctests
+    - COVERAGE="coverage run --rcfile=.travis_coveragerc" MVPA_DEBUG=ENFORCE_CA_ENABLED  DOCTESTS=--with-doctest
 before_install:
     # The ultimate one-liner setup for NeuroDebian repository
     - bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
@@ -34,17 +32,15 @@ before_install:
     - travis_retry sudo apt-get install $PY-rpy2
     - mkdir -p $PWD/R-libs
     - echo "install.packages(c('energy', 'elasticnet'), '$PWD/R-libs', repos='http://cran.r-project.org')" | R --no-save
-    # Troubleshoot pprocess
-    - git clone git://github.com/yarikoptic/pprocess-debug; export PYTHONPATH=$PYTHONPATH:$PWD/pprocess-debug
 install:
     - make
-    - if [[ $MVPA_DEBUG_METRICS == all ]]; then pip install --user -v coveralls; fi
+    - if [ ! -z "$COVERAGE" ]; then pip install --user -v coveralls; fi
 script:
-    - export MVPA_TESTS_LABILE=no PYTHONPATH=.:$PYTHONPATH MVPA_MATPLOTLIB_BACKEND=agg PATH=$HOME/.local/bin:$PATH MVPA_EXTERNALS_RAISE_EXCEPTION=off R_LIBS=$PWD/R-libs
-    # Run only nonlabile tests but via coverage for the last entry in the matrix
-    - if [[ $MVPA_DEBUG_METRICS == all ]]; then cmd="coverage run --rcfile=.travis_coveragerc"; else cmd=""; fi
-    # Doctests are unguarded against absent externals
-    - if [[ $PYTHONPATH =~ mvpa2/tests/badexternals ]]; then doctests=""; else doctests="--with-doctest"; fi
-    - eval $cmd $(which nosetests) -v mvpa2 $doctests -s
+    # Run only nonlabile tests
+    - export MVPA_EXTERNALS_RAISE_EXCEPTION=off  MVPA_MATPLOTLIB_BACKEND=agg
+    - export MVPA_DEBUG_METRICS=all  MVPA_DEBUG_OUTPUT=/dev/null
+    - export MVPA_TESTS_LABILE=no  MVPA_TESTS_VERBOSITY=2  MVPA_TESTS_WTF=1
+    - export PATH=$HOME/.local/bin:$PATH  PYTHONPATH=.:$PYTHONPATH  R_LIBS=$PWD/R-libs
+    - eval   $COVERAGE $NOSETESTS -v mvpa2 $DOCTESTS -s
 after_success:
-    - if [[ $MVPA_DEBUG_METRICS == all ]]; then coveralls; fi
+    - if [ ! -z "$COVERAGE" ]; then coveralls; fi
