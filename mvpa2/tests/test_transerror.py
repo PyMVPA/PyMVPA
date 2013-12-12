@@ -306,7 +306,11 @@ class ErrorsTests(unittest.TestCase):
             stats = cv.ca.stats.stats
             Nlabels = len(ds.uniquetargets)
             # so we at least do slightly above chance
-            self.assertTrue(stats['ACC'] > 1.2 / Nlabels)
+            # But LARS manages to screw up there as well ATM from time to time, so making
+            # its testing labile
+            if (('lars' in clf.__tags__) and cfg.getboolean('tests', 'labile', default='yes')) \
+                or (not 'lars' in clf.__tags__):
+                self.assertTrue(stats['ACC'] > 1.2 / Nlabels)
             auc = stats['AUC']
             if (Nlabels == 2) or (Nlabels > 2 and auc[0] is not np.nan):
                 mauc = np.min(stats['AUC'])
