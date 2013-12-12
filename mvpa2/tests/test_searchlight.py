@@ -558,7 +558,7 @@ class SearchlightTests(unittest.TestCase):
     def test_swaroop_case(self):
         """Test hdf5 backend to pass results on Swaroop's usecase
         """
-
+        skip_if_no_external('h5py')
         from mvpa2.measures.base import Measure
         class sw_measure(Measure):
             def __init__(self):
