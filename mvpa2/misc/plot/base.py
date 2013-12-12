@@ -13,13 +13,14 @@ __docformat__ = 'restructuredtext'
 from mvpa2.base import externals
 externals._set_matplotlib_backend()
 
-if externals.exists('pylab', raise_=True):
-    import pylab as pl
-
 import numpy as np
 
 from mvpa2.base.node import ChainNode
-from mvpa2.misc.plot.tools import Pion, Pioff
+
+if externals.exists('pylab', raise_=True):
+    import pylab as pl
+    from mvpa2.misc.plot.tools import Pion, Pioff
+
 from mvpa2.misc.attrmap import AttributeMap
 from mvpa2.generators.splitters import Splitter
 from mvpa2.generators.partition import NFoldPartitioner
