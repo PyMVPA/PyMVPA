@@ -4,8 +4,9 @@ pymvpa2 (2.2.0-4) unstable; urgency=low
     - specify git branch for debian packaging of pymvpa2. Thanks Julien
       Cristau for the report
     - build-depends on python-numpydoc
-    - build-depends and recommends on python-pprocess (removed from the Debian
-      archive since we missed a dependency on it and otherwise was unused)
+    - recommend python-pprocess (removed from the Debian archive since we
+      missed a dependency on it and otherwise was unused, but is present
+      from NeuroDebian )
     - policy boosted to 3.9.5 (no changes)
   * debian/rules:
     - mkdir target -lib directories before moving .so files.  It should resolve
