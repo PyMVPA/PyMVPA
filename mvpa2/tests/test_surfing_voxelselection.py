@@ -208,7 +208,14 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         # four versions: array, nifti image, file name, fmri dataset
         volarr = np.ones(vol_shape)
         volimg = nb.Nifti1Image(volarr, vol_affine)
-        fd, volfn = tempfile.mkstemp('vol.nii', 'test'); os.close(fd)
+        # There is a detected problem with elderly NumPy's (e.g. 1.6.1
+        # on precise on travis) leading to segfaults while operating
+        # on memmapped volumes being forwarded to pprocess.
+        # Thus just making it compressed volume for those cases
+        suf = '.gz' \
+            if externals.exists('pprocess') and externals.versions['numpy'] < '1.6.2' \
+            else ''
+        fd, volfn = tempfile.mkstemp('vol.nii' + suf, 'test'); os.close(fd)
         volimg.to_filename(volfn)
         volds = fmri_dataset(volfn)
 
@@ -644,10 +651,11 @@ class _Voxel_Count_Measure(Measure):
     def _call(self, dset):
         return dset.nfeatures
 
-def suite():
+def suite():  # pragma: no cover
     """Create the suite"""
     return unittest.makeSuite(SurfVoxelSelectionTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()

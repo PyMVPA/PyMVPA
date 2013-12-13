@@ -118,9 +118,10 @@ class ReportTest(unittest.TestCase):
         shutil.rmtree(dirname, ignore_errors=True)
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(ReportTest)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()

@@ -36,10 +36,11 @@ class MEGTests(unittest.TestCase):
         self.assertTrue(meg.data[3, 0, 808] == -4.30692876e-12)
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(MEGTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 
