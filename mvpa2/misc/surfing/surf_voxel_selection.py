@@ -556,7 +556,7 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
         if results_backend == 'hdf5':
             externals.exists('h5py', raise_=True)
         elif results_backend is None:
-            if externals.exists('h5py'):
+            if externals.exists('h5py') and externals.versions['hdf5'] >= '1.8.7':
                 results_backend = 'hdf5'
             else:
                 results_backend = 'native'

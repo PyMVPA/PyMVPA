@@ -44,10 +44,11 @@ class WinnerTests(unittest.TestCase):
         for m, out in measures2out.iteritems():
             assert_array_equal(m()(ds).samples.ravel(), np.asarray(out))
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(WinnerTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

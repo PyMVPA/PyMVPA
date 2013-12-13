@@ -50,10 +50,6 @@ import sys
 from os import environ
 
 from mvpa2 import _random_seed
-profilelevel = None
-
-if environ.has_key('PROFILELEVEL'):
-    profilelevel = int(environ['PROFILELEVEL'])
 
 # Extend TestProgram to print out the seed which was used
 class TestProgramPyMVPA(unittest.TestProgram):
@@ -64,27 +60,34 @@ class TestProgramPyMVPA(unittest.TestProgram):
             sys.stdout.flush()
         super(TestProgramPyMVPA, self).run_tests()
 
-if profilelevel is None:
-    TestProgramPyMVPA()
-else:
-    profilelines = environ.has_key('PROFILELINES')
+def run():
+    profilelevel = None
 
-    import hotshot, hotshot.stats
-    pname = "%s.prof" % sys.argv[0]
-    prof = hotshot.Profile(pname, lineevents=profilelines)
-    try:
-        # actually return values are never setup
-        # since unittest.main sys.exit's
-        benchtime, stones = prof.runcall( unittest.main )
-    except SystemExit:
-        pass
-    print "Saving profile data into %s" % pname
-    prof.close()
-    if profilelevel > 0:
-        # we wanted to see the summary right here
-        # instead of just storing it into a file
-        print "Loading profile data from %s" % pname
-        stats = hotshot.stats.load(pname)
-        stats.strip_dirs()
-        stats.sort_stats('time', 'calls')
-        stats.print_stats(profilelevel)
+    if environ.has_key('PROFILELEVEL'):
+        profilelevel = int(environ['PROFILELEVEL'])
+
+
+    if profilelevel is None:
+        TestProgramPyMVPA()
+    else:
+        profilelines = environ.has_key('PROFILELINES')
+
+        import hotshot, hotshot.stats
+        pname = "%s.prof" % sys.argv[0]
+        prof = hotshot.Profile(pname, lineevents=profilelines)
+        try:
+            # actually return values are never setup
+            # since unittest.main sys.exit's
+            benchtime, stones = prof.runcall( unittest.main )
+        except SystemExit:
+            pass
+        print "Saving profile data into %s" % pname
+        prof.close()
+        if profilelevel > 0:
+            # we wanted to see the summary right here
+            # instead of just storing it into a file
+            print "Loading profile data from %s" % pname
+            stats = hotshot.stats.load(pname)
+            stats.strip_dirs()
+            stats.sort_stats('time', 'calls')
+            stats.print_stats(profilelevel)
