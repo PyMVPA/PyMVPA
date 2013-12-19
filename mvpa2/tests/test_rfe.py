@@ -560,10 +560,11 @@ class RFETests(unittest.TestCase):
         ok_(not 'slicearg=' in r)
         assert_equal(r, r0)
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(RFETests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

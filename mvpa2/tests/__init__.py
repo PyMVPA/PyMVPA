@@ -48,7 +48,7 @@ def setup_module(module, verbosity=None):
     verbosity_dependencies = max(0, verbosity - 1)
     if verbosity_dependencies:
         externals.check_all_dependencies(verbosity=verbosity_dependencies)
-    elif __debug__ and verbosity:
+    elif __debug__ and verbosity: # pragma: no cover
         print('T: Skipping testing of all dependencies since verbosity '
               '(MVPA_TESTS_VERBOSITY) is too low')
 
@@ -242,6 +242,7 @@ def collect_nose_tests(verbosity=1):
         'test_eeglab',
         'test_progress',
         'test_winner',
+        'test_viz',
         ]
 
     if not cfg.getboolean('tests', 'lowmem', default='no'):
@@ -290,7 +291,10 @@ def run_tests_using_nose(limit=None, verbosity=1, exit_=False):
                             if nt[5:] in limit]
 
     # run the tests
-    _ = main(defaultTest=(), config=config, exit=exit_)
+    if limit is None or len(limit):
+        _ = main(defaultTest=(), config=config, exit=exit_)
+    else:
+        warning("Limit is degenerate (empty), no tests were ran")
 
 
 def run(limit=None, verbosity=None, exit_=False):
@@ -353,5 +357,5 @@ collect_test_suites.__test__ = False
 run.__test__ = False
 __test__ = False
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     run(exit_=True, verbosity=3)

@@ -50,10 +50,11 @@ class PerturbationSensitivityAnalyzerTests(unittest.TestCase):
         self.assertTrue(-0.2 < np.mean(map) < 0.2)
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(PerturbationSensitivityAnalyzerTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 
