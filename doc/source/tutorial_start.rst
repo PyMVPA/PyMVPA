@@ -71,10 +71,10 @@ We can also access this information via the
 >>> print ds.shape
 (16, 577)
 
-The most important information for a classification analysis, besides the data,
-are the so-called :term:`label`\s or :term:`target`\s that are assigned to the
-samples, since they define the model that should be learned by a
-:term:`classifier`, and serve as target values to assess the prediction
+The most important pieces of information for a classification analysis, besides
+the data, are the so-called :term:`label`\s or :term:`target`\s that are
+assigned to the samples, since they define the model that should be learned
+by a :term:`classifier`, and serve as target values to assess the prediction
 accuracy. The dataset stores these targets in its collection of **s**\ample
 **a**\ttributes (hence the collection name ``sa``), and they can be accessed by
 their attribute name, either through the collection, or via a shortcut.
@@ -101,7 +101,7 @@ recode them into numerical values.
 Dealing With A Classifier
 =========================
 
-All that we are missing for a first attempt of a classification analysis of
+All that we are missing for a first attempt at a classification analysis of
 this dataset is a :term:`classifier`. This time we will not use a magic
 function to help us, but will create the classifier ourselves. The original study
 employed a so-called 1-nearest-neighbor classifier, using correlation as a
@@ -123,12 +123,12 @@ assigned to these neighbors.
   Access the built-in help to inspect the ``kNN`` class regarding additional
   configuration options.
 
-Now that we have a classifier instance it can be easily trained by passing the
+Now that we have a classifier instance, it can be easily trained by passing the
 dataset to its ``train()`` method.
 
 >>> clf.train(ds)
 
-A trained classifier can subsequently be used to perform classifications of
+A trained classifier can subsequently be used to perform classification of
 unlabeled samples. The classification can be assessed by comparing these
 predictions to the target labels.
 
@@ -150,19 +150,20 @@ same dataset that it got trained with.
   the accuracy varies with different values of ``k``. Why is that?
 
 Instead, we are interested in the generalizability of the classifier on new,
-unseen data so we could, in principle, use it to label unlabeled data. Because
-we only have a single dataset it needs to be split into (at least) two parts
-to achieve this. In the original study Haxby and colleagues split the dataset
-into pattern of activations from odd versus even-numbered runs. Our dataset
-has this information in the ``runtype`` sample attribute:
+unseen data. This would allow us, in principle, to use it to assign labels to
+unlabeled data. Because we only have a single dataset, it needs to be split
+into (at least) two parts to achieve this. In the original study, Haxby and
+colleagues split the dataset into patterns of activations from odd versus
+even-numbered runs. Our dataset has this information in the ``runtype`` sample
+attribute:
 
 >>> print ds.sa.runtype
 ['even' 'even' 'even' 'even' 'even' 'even' 'even' 'even' 'odd' 'odd' 'odd'
  'odd' 'odd' 'odd' 'odd' 'odd']
 
-Using this attribute we can now easily split the dataset into two. PyMVPA
+Using this attribute we can now easily split the dataset in two. PyMVPA
 datasets can be sliced in similar ways as NumPy_'s `ndarray`. The following
-calls select the subset of samples (i.e. rows in the datasets), where the value
+calls select the subset of samples (i.e. rows in the datasets) where the value
 of the ``runtype`` attribute is either the string 'even' or 'odd'.
 
 >>> ds_split1 = ds[ds.sa.runtype == 'odd']
@@ -172,17 +173,17 @@ of the ``runtype`` attribute is either the string 'even' or 'odd'.
 >>> len(ds_split2)
 8
 
-Now we could repeat the steps above: call ``train()`` with one dataset half and
-``predict()`` with the other, and compute the prediction accuracy manually.
-However, a more convenient way is to let the classifier do this for us.  Many
-objects in PyMVPA support a post-processing step that we can use to compute
-something from the actual results. The example below computes the
-*mismatch error* of classifier predictions and the *target* values stored in our
-dataset. To make this work, we do not call the classifier's ``predict()``
-method anymore, but "call" the classifier directly with the test dataset. This
-is a very common usage pattern in PyMVPA that we shall see a lot over the
-course of this tutorial.  Again, please note that we compute an error now,
-hence lower values represent more accurate classification.
+Now we could repeat the steps above: call ``train()`` with one dataset half
+and ``predict()`` with the other, and compute the prediction accuracy
+manually.  However, a more convenient way is to let the classifier do this for
+us.  Many objects in PyMVPA support a post-processing step that we can use to
+compute something from the actual results. The example below computes the
+*mismatch error* between the classifier predictions and the *target* values
+stored in our dataset. To make this work, we do not call the classifier's
+``predict()`` method anymore, but "call" the classifier directly with the test
+dataset. This is a very common usage pattern in PyMVPA that we shall see a lot
+over the course of this tutorial.  Again, please note that we compute an error
+now, hence lower values represent more accurate classification.
 
 >>> clf.set_postproc(BinaryFxNode(mean_mismatch_error, 'targets'))
 >>> clf.train(ds_split2)
@@ -191,8 +192,8 @@ hence lower values represent more accurate classification.
 0.125
 
 In this case, our choice of which half of the dataset is used for training and
-which half for testing was completely arbitrary, hence we also estimate the
-transfer error after swapping the roles:
+which half for testing was completely arbitrary, hence we could also estimate
+the transfer error after swapping the roles:
 
 >>> clf.train(ds_split1)
 >>> err = clf(ds_split2)
@@ -207,35 +208,36 @@ accuracy level comparable to the results reported in the original study.
 Cross-validation
 ================
 
-What we have just done manually, was splitting the dataset into
+What we have just done was manually split the dataset into
 combinations of training and testing datasets, given a specific sample attribute
--- in this case the information whether a *pattern of activation* or
+-- in this case whether a *pattern of activation* or
 :term:`sample` came from *even* or *odd* runs.  We ran the classification
 analysis on each split to estimate the performance of the
 classifier model. In general, this approach is called :term:`cross-validation`,
-and involves splitting the dataset in multiple pairs of subsets, choosing
+and involves splitting the dataset into multiple pairs of subsets, choosing
 sample groups by some criterion, and estimating the classifier performance by
 training it on the first dataset in a split and testing against the second
 dataset from the same split.
 
 PyMVPA provides a way to allow complete cross-validation procedures to run
-fully automatic, without the need for manual splitting of a dataset. Using the
-`~mvpa2.measures.base.CrossValidation` class a cross-validation is set up by
-specifying what measure should be computed on each dataset split, and how
-dataset splits shall be generated. The measure that is usually computed is the
-transfer error that we already looked at in the previous section. The second
-element, a :term:`generator` for datasets, is another very common tool in
-PyMVPA. The following example uses
+fully automatically, without the need for manual splitting of a dataset. Using
+the `~mvpa2.measures.base.CrossValidation` class, a cross-validation is set up
+by specifying what measure should be computed on each dataset split and how
+dataset splits should be generated. The measure that is usually computed is
+the transfer error that we already looked at in the previous section. The
+second element, a :term:`generator` for datasets, is another very common tool
+in PyMVPA. The following example uses
 `~mvpa2.generators.partition.HalfPartitioner`, a generator that, when called
-with a dataset, marks all samples regarding their association with the first or
-second half of the dataset. This happens based on the values of a specified
+with a dataset, marks all samples regarding their association with the first
+or second half of the dataset. This happens based on the values of a specified
 sample attribute -- in this case ``runtype`` -- much like the manual dataset
 splitting that we have performed earlier.
 `~mvpa2.generators.partition.HalfPartitioner` will make sure to subsequently
-assign samples to both halves, i.e. samples of the first half in the first
-generated dataset, will be in the second half of the second generated dataset.
-With these two techniques we can replicate our manual cross-validation easily --
-reusing our existing classifier, but without the custom post-processing step.
+assign samples to both halves, i.e. samples from the first half in the first
+generated dataset will be in the second half of the second generated dataset.
+With these two techniques we can replicate our manual cross-validation easily
+-- reusing our existing classifier, but without the custom post-processing
+step.
 
 >>> # disable post-processing again
 >>> clf.set_postproc(None)
@@ -253,10 +255,10 @@ reusing our existing classifier, but without the custom post-processing step.
   ``HalfPartitioner``.
 
 Once the ``cv`` object is created, it can be called with a dataset, just like
-we did with the classifier before. It will internally perform all dataset
+we did with the classifier before. It will internally perform all the dataset
 partitioning, split each generated dataset into training and testing sets
 (based on the partitions), and train and test the classifier repeatedly.
-Finally it will return the results of all cross-validation folds.
+Finally, it will return the results of all cross-validation folds.
 
 >>> cv_results = cv(ds)
 >>> np.mean(cv_results)
@@ -284,7 +286,7 @@ array([[ 0.   ],
   >>> print cv_results.sa.cvfolds
   [0 1]
 
-This could be the end of a very simple introduction into cross-validation with
+This could be the end of a very simple introduction to cross-validation with
 PyMVPA. However, since we were cheating a bit in the beginning, we actually
 still don't know how to import data other than the single subject from the
 Haxby study. This is the topic of the :ref:`next chapter <chap_tutorial_datasets>`.
