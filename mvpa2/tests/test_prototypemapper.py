@@ -127,10 +127,11 @@ class PrototypeMapperTests(unittest.TestCase):
         assert_array_equal(self.pm.proj.shape, (len(self.dataset.samples), len(self.prototypes_random)*len(self.similarities)))
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(PrototypeMapperTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 
