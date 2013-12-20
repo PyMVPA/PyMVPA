@@ -532,7 +532,8 @@ class VolumeMaskDictionary(Mapping):
 
     @property
     def meta(self):
-        return dict(self._meta)
+        # make a copy if a dict, otherwise return directly
+        return dict(self._meta) if type(self._meta) is dict else self._meta
 
     def is_same_layout(self, other):
         '''Check whether another instance has the same spatial layout
