@@ -34,3 +34,9 @@ def test_hist():
     plots = hist(ds.samples)
     assert_equal(len(plots), 1)
     assert_is_instance(plots[0], Subplot)
+
+def test_imshow():
+    from mvpa2.viz.imshow import imshow
+    from mvpa2.misc.data_generators import normal_feature_dataset
+    ds = normal_feature_dataset(10, 2, 18, 5)
+    im = imshow(ds)
