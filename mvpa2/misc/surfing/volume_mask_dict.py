@@ -463,15 +463,8 @@ class VolumeMaskDictionary(Mapping):
     def __len__(self):
         return len(self.__keys__())
 
-    # TODO: why creating a new list if .keys() would do that
-    #
-    # In [31]: %timeit list(d)
-    # 10000 loops, best of 3: 21.4 us per loop
-    #
-    # *In [32]: %timeit d.keys()
-    # 100000 loops, best of 3: 12.2 us per loop
     def __keys__(self):
-        return list(self._src2nbr)
+        return self._src2nbr.keys()
 
     def __iter__(self):
         return iter(self.__keys__())
