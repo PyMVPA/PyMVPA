@@ -554,7 +554,9 @@ class VolumeMaskDictionary(Mapping):
 
         return self.volgeom == other.volgeom and self.source == other.source
 
-    # TODO: shouldn't it be 'update'  mimicing dict.update?
+    # XXX:  shouldn't it be 'update'  mimicing dict.update?
+    # YYY:  'update' does not raise an error if the key to be added is
+    #       is already present; this method does.
     def merge(self, other):
         """Add masks from another instance
 
