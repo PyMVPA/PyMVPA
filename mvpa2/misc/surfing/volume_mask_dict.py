@@ -71,6 +71,17 @@ class VolumeMaskDictionary(Mapping):
             structure that contains the geometric information of
             (the centers of) each mask. In the case of surface-searchlights this
             should be a surface used as the center for searchlights.
+        meta: dict or None
+            Optional meta data stored with this instance (such as searchlight
+            radius and volumetric information). A use case is storing an instance
+            and loading it later, and then checking whether the meta information
+            is correct when it used to run a searchlight analysis.
+        src2nbr: dict or None
+            In a typical use case it contains a mapping from node center
+            indices to lists of voxel indices.
+        src2aux: dict or None
+            In a typical use case it can contain auxilery information such as
+            distance of each voxel to each center.
         """
         self._volgeom = volgeom.from_any(vg)
         self._source = source
@@ -195,10 +206,7 @@ class VolumeMaskDictionary(Mapping):
 
         return zip(*tuple_lists)
 
-    # TODO: deprecate?
-    #  - unused (thus untested),
-    #  - according to description maps from indices to tuples with the
-    #     same indices again -- what for?
+    @deprecated("use .get_tuple_list instead")
     def get_tuple_list_dict(self, *labels):
         """Return a dictionary of mapping that maps each mask index
         to tuples with mask indices and/or auxiliary
@@ -219,14 +227,15 @@ class VolumeMaskDictionary(Mapping):
             d[src] = self.get_tuple_list(src, *labels)
         return d
 
-    # TODO: should not be logically 'get_indices'?
+    # XXX:  should not be logically 'get_indices'?
     #       while 'def get' could just return the mask?
+    # YYY:  it's primary purpose is to store a mapping from
+    #       node indices to lists of voxel indices. In that use case
+    #       it would make sense to keep it as a mapping.
     #
-    #       Is it really needing to .tolist() thus creating
-    #       copies/slowing things down?
-    #
-    #       It overloads original Mapping.get which also
+    # XXX:  It overloads original Mapping.get which also
     #       had default... should it be the same here may be?
+    # YYY:  I don't see any solution with a reasonable default.
     def get(self, src):
         """Return the linear voxel indices of a mask
 
@@ -270,7 +279,9 @@ class VolumeMaskDictionary(Mapping):
             raise ValueError((msg + ', label %r') % (src, label))
         return self._src2aux[label][src].tolist()
 
-    # TODO: get_aux_labels?
+    # XXX:  get_aux_labels?
+    # YYY:  aux is also a dictionary (actually a dictionary with dictionaries)
+    #       so it seems more logical to use 'keys' instead of 'labels'.
     def aux_keys(self):
         '''Names of auxiliary labels
 
@@ -282,6 +293,7 @@ class VolumeMaskDictionary(Mapping):
         return self._src2aux.keys()
 
     def _ensure_has_target2sources(self):
+        '''Helper function to ensure that inverse mapping is set properly'''
         if not self._lazy_nbr2src:
             self._lazy_nbr2src = dict()
             for src in self.keys():
@@ -295,8 +307,6 @@ class VolumeMaskDictionary(Mapping):
         for i, target in enumerate(targets):
             if not contains[i]:
                 raise ValueError("Target not in volume: %s" % target)
-            #if self._lazy_nbr2src is None:
-            #    self._lazy_nbr2src = dict()
             if not target in self._lazy_nbr2src:
                 self._lazy_nbr2src[target] = set()
             self._lazy_nbr2src[target].add(src)
@@ -363,14 +373,12 @@ class VolumeMaskDictionary(Mapping):
             Nifti image where voxels have the value 1 for voxels that are
             included in one or more masks, and 0 elsewhere
         """
-        # TODO: my above dtype=np.int8 might kick back here, e.g.
-        # fslview iirc had difficulty with those
+        # XXX:  my above dtype=np.int8 might kick back here, e.g.
+        #       fslview iirc had difficulty with those
+        # YYY:  should we change to a different data type, e.g. int32?
         return nb.Nifti1Image(self.get_mask(), self.volgeom.affine)
 
-    # TODO: what is to be "selected" -- to be present in a mask?
-    #       or which were once queried? since when -- since construction
-    #       of this object or what?
-    #       a bit confusing/underdescribed... same applies to the next method
+
     def get_voxel_indices(self):
         """Returns voxel indices at least once selected
 
@@ -378,7 +386,10 @@ class VolumeMaskDictionary(Mapping):
         -------
         voxel_indices: list of tuple
             List of triples with sub-voxel indices that were selected
-            at least once
+            at least once since the initalization of this class.
+            That is, a triple (i,j,k) referring to a voxel V is an element
+            of voxel_indices iff there is at least one key k so that
+            self.get(k) contains the linear index of voxel V.
         """
         # get linear voxel indices
         lin_vox_set = set.union(*(set(self[k]) for k in self.keys()))
@@ -401,7 +412,10 @@ class VolumeMaskDictionary(Mapping):
         -------
         mask: np.ndarray (boolean)
             binary mask with ds.nfeatures values, with True for features that
-            were selected at least once
+            were selected at least once once since the initalization of this class.
+            That is, for a voxel (feature) with feature index i it holds that
+            mask[I] is True iff there is at least one key k so that
+            i in self.get(k).
 
         """
         # convert to tuples
