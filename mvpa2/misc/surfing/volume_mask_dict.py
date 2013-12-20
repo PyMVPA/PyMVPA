@@ -28,6 +28,8 @@ import numpy as np
 from mvpa2.base import externals
 from mvpa2.misc.surfing import volgeom
 
+from mvpa2.support.utils import deprecated
+
 if externals.exists('nibabel'):
     import nibabel as nb
 if externals.exists('h5py'):
@@ -183,7 +185,7 @@ class VolumeMaskDictionary(Mapping):
             if label is None:
                 tuple_list_elem = idxs.tolist()
             else:
-                vs = self.aux_get(src, label)
+                vs = self.get_aux(src, label)
                 if len(vs) == 1:
                     tuple_list_elem = [vs[0]] * n
                 else:
@@ -240,9 +242,11 @@ class VolumeMaskDictionary(Mapping):
         """
         return self._src2nbr[src].tolist()
 
-    # TODO: all others are get_*.  why not to get_aux?
-    #       Again -- is .tolist() needed?
+    @deprecated("use .get_aux instead")
     def aux_get(self, src, label):
+        return self.get_aux(src, label)
+
+    def get_aux(self, src, label):
         '''Auxiliary information of a mask
 
         Parameters
@@ -273,7 +277,7 @@ class VolumeMaskDictionary(Mapping):
         Returns
         -------
         keys: list of str
-            Names of auxiliary labels that are supported by aux_get
+            Names of auxiliary labels that are supported by get_aux
         '''
         return self._src2aux.keys()
 
@@ -509,7 +513,7 @@ class VolumeMaskDictionary(Mapping):
 
         for lab in self.aux_keys():
             for k in self.keys():
-                if self.aux_get(k, lab) != other.aux_get(k, lab):
+                if self.get_aux(k, lab) != other.get_aux(k, lab):
                     return False
 
         if self.meta != False or other.meta != False:
@@ -577,7 +581,7 @@ class VolumeMaskDictionary(Mapping):
 
             a_dict = dict()
             for ak in aks:
-                a_dict[ak] = other.aux_get(k, ak)
+                a_dict[ak] = other.get_aux(k, ak)
 
             if not a_dict:
                 a_dict = None
