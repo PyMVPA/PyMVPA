@@ -43,8 +43,8 @@ def imshow(matrix, xlabel_attr=None, ylabel_attr=None, numbers=None,
 
     Returns
     -------
-    fig, im, cb
-      Handlers to the created figure, image and colorbar, respectively.
+    matplotlib.AxesImage
+      Handler for the created image.
     """
 
     externals.exists("pylab", raise_=True)
@@ -119,4 +119,4 @@ def imshow(matrix, xlabel_attr=None, ylabel_attr=None, numbers=None,
                 pl.text(j, i, numbers_format % v,
                         alpha=alpha, **numbers_kwargs_)
 
-    return fig, im, cb
+    return im
