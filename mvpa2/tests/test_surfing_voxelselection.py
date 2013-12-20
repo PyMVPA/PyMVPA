@@ -12,7 +12,8 @@ from mvpa2.testing import *
 skip_if_no_external('nibabel')
 
 import numpy as np
-from numpy.testing.utils import assert_array_almost_equal, assert_array_equal
+from numpy.testing.utils import assert_array_almost_equal, assert_array_equal, \
+    assert_raises
 
 import nibabel as nb
 
@@ -453,6 +454,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                     assert_equal(sel, sel_copy)
 
 
+
     def test_surface_voxel_query_engine(self):
         vol_shape = (10, 10, 10, 1)
         vol_affine = np.identity(4)
@@ -487,6 +489,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
             assert_true(np.all(np.logical_and(5 <= counts, counts <= 18)))
             assert_equal(sl_map.nfeatures, expected_nfeatures)
+
 
 
     @reseed_rng()
@@ -542,6 +545,44 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
                             # decent agreement in any case between the two sets
                             assert_true(r < .5)
+
+    @with_tempfile('.h5py', 'voxsel')
+    def test_queryengine_io(self, fn):
+        skip_if_no_external('h5py')
+        from mvpa2.base.hdf5 import h5save, h5load
+
+        vol_shape = (10, 10, 10, 1)
+        vol_affine = np.identity(4)
+        vg = volgeom.VolGeom(vol_shape, vol_affine)
+
+        # generate some surfaces,
+        # and add some noise to them
+        sphere_density = 10
+        outer = surf.generate_sphere(sphere_density) * 5 + 8
+        inner = surf.generate_sphere(sphere_density) * 3 + 8
+        radius = 5.
+
+        qe = disc_surface_queryengine(radius, vg, inner, outer)
+        ds = fmri_dataset(vg.get_masked_nifti_image())
+
+        # the following is not really a strong requirement. XXX remove?
+        assert_raises(ValueError, lambda: qe[qe.ids[0]])
+
+        # check that after training it behaves well
+        qe.train(ds)
+        assert_equal(qe[qe.ids[0]][0], 883)
+
+        # test saving and loading
+        h5save(fn, qe)
+        qe_copy = h5load(fn)
+
+        # ensure keys are the same
+        assert_equal(qe.ids, qe_copy.ids)
+
+        # ensure values are the same
+        qe_copy.train(ds)
+        for id in qe.ids:
+            assert_equal(qe[id], qe_copy[id])
 
 
     def test_surface_minimal_lowres_voxel_selection(self):
