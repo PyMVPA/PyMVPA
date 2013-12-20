@@ -24,6 +24,7 @@ from mvpa2.cmdline.helpers \
                param2arg, ca2arg, arg2ds
 
 from mvpa2.algorithms.hyperalignment import Hyperalignment
+from mvpa2.mappers.procrustean import ProcrusteanMapper
 
 parser_args = {
     'description': strip_from_docstring(Hyperalignment.__doc__,
@@ -69,10 +70,11 @@ def _transform_dss(srcs, mappers, args):
 def setup_parser(parser):
     # order of calls is relevant!
     inputargs = parser.add_argument_group('input data arguments')
-    parser_add_common_opt(inputargs, 'multidata', required=True)
+    parser_add_common_opt(inputargs, 'multidata', action='append',
+            required=True)
     parser_add_common_opt(
             inputargs, 'multidata',
-            names=('-t', '--transform'),
+            names=('-t', '--transform'), dest='transform',
              help="""\
 Additional datasets for transformation into the common space. The number and
 order of these datasets have to match those of the training dataset arguments
@@ -92,7 +94,8 @@ as the correspond mapper will be used to transform each individual dataset.""")
                     % _supported_cas[ca]['output_suffix'])
 
 def run(args):
-    dss = [arg2ds(d) for d in args.data]
+    print args.data
+    dss = [arg2ds(d)[:,:100] for d in args.data]
     verbose(1, "Loaded %i input datasets" % len(dss))
     if __debug__:
         for i, ds in enumerate(dss):
@@ -106,7 +109,10 @@ def run(args):
     enabled_ca = [ca for ca in _supported_cas if getattr(args, ca)]
     if __debug__:
         debug('CMDLINE', "enabled conditional attributes: '%s'" % enabled_ca)
-    hyper = Hyperalignment(enable_ca=enabled_ca, **params)
+    hyper = Hyperalignment(enable_ca=enabled_ca,
+                           alignment=ProcrusteanMapper(svd='dgesvd',
+                                                       space='commonspace'),
+                           **params)
     verbose(1, "Running hyperalignment")
     promappers = hyper(dss)
     verbose(2, "Alignment reference is dataset %i" % hyper.ca.chosen_ref_ds)
