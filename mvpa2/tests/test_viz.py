@@ -36,7 +36,7 @@ def test_hist():
     assert_is_instance(plots[0], Subplot)
 
 def test_imshow():
-    from mvpa2.viz.imshow import imshow
+    from mvpa2.viz.imshow import matshow
     from mvpa2.misc.data_generators import normal_feature_dataset
     ds = normal_feature_dataset(10, 2, 18, 5)
-    im = imshow(ds)
+    im = matshow(ds)

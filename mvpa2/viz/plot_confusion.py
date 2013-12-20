@@ -10,14 +10,14 @@
 __docformat__ = 'restructuredtext'
 
 
-from imshow import imshow
+from imshow import matshow
 import pylab as pl
 import numpy as np
 from mvpa2.datasets import Dataset
 
 def plot_confusion(ds, labels=None, numbers=False, 
                    numbers_alpha=None, xlabels_vertical=True):
-    """Plot a confusiom matrix by calling viz.imshow().
+    """Plot a confusiom matrix by calling viz.matshow().
     
     Parameters                                                                                                                  
     ---------- 
@@ -47,7 +47,7 @@ def plot_confusion(ds, labels=None, numbers=False,
         cm[:,:np.size(p)]=cm[:,p]
         cm = cm[:np.size(p),:np.size(p)]
         
-        # make the constructed matrix a Dataset that imshow() can handle
+        # make the constructed matrix a Dataset that matshow() can handle
         # indicates that the current interface is rather clumsy
         ds_cm = Dataset(cm)
         ds_cm.sa['predictions'] = labels
@@ -63,10 +63,10 @@ def plot_confusion(ds, labels=None, numbers=False,
         if numbers_alpha is not None:
             _numbers['numbers_alpha']=numbers_alpha              
         
-    fig, im, cb = imshow(ds_cm, 
-                         xlabel_attr='predictions', 
-                         ylabel_attr='targets',
-                         numbers = _numbers)
+    im = matshow(ds_cm, 
+                 xlabel_attr='predictions', 
+                 ylabel_attr='targets',
+                 numbers = _numbers)
                                                   
     if xlabels_vertical:
         pl.setp(pl.getp(im.axes, 'xticklabels'), rotation='vertical')

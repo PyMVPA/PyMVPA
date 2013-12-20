@@ -16,9 +16,12 @@ import numpy as np
 from mvpa2.base import externals, types
 
 
-def imshow(matrix, xlabel_attr=None, ylabel_attr=None, numbers=None,
-           **kwargs):
-    """Plot a matrix by calling matshow() from matplotlib.
+def matshow(matrix, xlabel_attr=None, ylabel_attr=None, numbers=None,
+            **kwargs):
+    """Enhanced version of matplotlib's matshow().
+
+    This version is able to handle datasets, and label axis according to
+    dataset attribute values.
 
     Parameters
     ----------
