@@ -10,7 +10,7 @@
 __docformat__ = 'restructuredtext'
 
 
-from imshow import matshow
+from mvpa2.viz import matshow
 import pylab as pl
 import numpy as np
 from mvpa2.datasets import Dataset
