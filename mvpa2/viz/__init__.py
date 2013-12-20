@@ -125,6 +125,12 @@ def matshow(matrix, xlabel_attr=None, ylabel_attr=None, numbers=None,
     This version is able to handle datasets, and label axis according to
     dataset attribute values.
 
+    >>> from mvpa2.viz import matshow
+    >>> from mvpa2.misc.data_generators import normal_feature_dataset
+    >>> ds = normal_feature_dataset(10, 2, 18, 5)
+    >>> im = matshow(ds, ylabel_attr='targets', xlabel_attr='chunks',
+    ...               numbers='%.0f')
+
     Parameters
     ----------
     matrix : 2D array
@@ -176,9 +182,11 @@ def matshow(matrix, xlabel_attr=None, ylabel_attr=None, numbers=None,
         if xlabel_attr is not None and ylabel_attr is not None:
             _xlabel = matrix.get_attr(xlabel_attr)[0].value  # LookupError
             _ylabel = matrix.get_attr(ylabel_attr)[0].value  # if it's not there
-            if not np.array_equal(_xlabel, _ylabel):
-                raise ValueError, "Elements in %s and %s " \
-                                  "do not match" % (xlabel_attr, ylabel_attr)
+            # XXX The next three lines verify a condition that is not desired
+            # as far as I can see it (MIH)
+            #if not np.array_equal(_xlabel, _ylabel):
+            #    raise ValueError, "Elements in %s and %s " \
+            #                      "do not match" % (xlabel_attr, ylabel_attr)
 
     matrix = np.asanyarray(matrix)
 

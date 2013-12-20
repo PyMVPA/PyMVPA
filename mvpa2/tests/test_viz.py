@@ -38,5 +38,7 @@ def test_hist():
 def test_imshow():
     from mvpa2.viz import matshow
     from mvpa2.misc.data_generators import normal_feature_dataset
+    from matplotlib.colorbar import Colorbar
     ds = normal_feature_dataset(10, 2, 18, 5)
     im = matshow(ds)
+    assert_is_instance(im.colorbar[0], Colorbar)
