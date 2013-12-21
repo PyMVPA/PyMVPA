@@ -182,11 +182,6 @@ def matshow(matrix, xlabel_attr=None, ylabel_attr=None, numbers=None,
         if xlabel_attr is not None and ylabel_attr is not None:
             _xlabel = matrix.get_attr(xlabel_attr)[0].value  # LookupError
             _ylabel = matrix.get_attr(ylabel_attr)[0].value  # if it's not there
-            # XXX The next three lines verify a condition that is not desired
-            # as far as I can see it (MIH)
-            #if not np.array_equal(_xlabel, _ylabel):
-            #    raise ValueError, "Elements in %s and %s " \
-            #                      "do not match" % (xlabel_attr, ylabel_attr)
 
     matrix = np.asanyarray(matrix)
 
