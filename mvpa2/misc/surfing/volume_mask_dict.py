@@ -475,10 +475,17 @@ class VolumeMaskDictionary(Mapping):
                 self.__getstate__())
 
     def __getstate__(self):
-        # due to issues with saving self_nbr2src, it is not returned as part
+        # Note: due to issues with saving self_nbr2src, it is not returned as part
         # of the current state. instead it is derived when __setstate__ is
         # called.
-        return (self._volgeom, self._source, self._meta, self._src2nbr, self._src2aux)
+
+        # new as of Dec 2013: use more efficient storage method for h5save/load
+        src2nbr = self._dict_with_arrays2array_tuple(self._src2nbr)
+        src2aux = self._dict_with_arrays2array_tuple(self._src2aux)
+
+        s = (self._volgeom, self._source, self._meta, src2nbr, src2aux)
+        return s
+
 
     def __setstate__(self, s):
         if len(s) == 4:
@@ -489,6 +496,83 @@ class VolumeMaskDictionary(Mapping):
             warning('Using old (pre-12 Sep 2013) mapping - no meta data')
         else:
             self._volgeom, self._source, self._meta, self._src2nbr, self._src2aux = s
+
+        # new as of Dec 2013: use more efficient storage method for h5save/load
+        self._src2nbr = self._array_tuple2dict_with_arrays(self._src2nbr)
+        self._src2aux = self._array_tuple2dict_with_arrays(self._src2aux)
+
+    def _dict_with_arrays2array_tuple(self, d):
+        '''
+        Helper function to convert canonical representation of _src2nbr and
+        _src2aux as dicts to a more efficient tuple-based representation.
+
+        Input is a dictionary where each value has to be an array
+        Output is a tuple (keys, lengths, data)
+        '''
+        if d is None:
+            return None
+        if all(type(v) is dict for v in d.values()):
+            # probably src2aux, so run recursively
+            return dict((k, self._dict_with_arrays2array_tuple(v))
+                            for k, v in d.iteritems())
+
+        keys = np.asarray(d.keys())
+        lengths = np.asarray([len(d[key]) for key in keys])
+
+        ntotal = np.sum(lengths)
+        data = None # in case there are no keys
+        pos = 0
+        for i, (key, length) in enumerate(zip(keys, lengths)):
+            v = d[key]
+            if i == 0:
+                # allocate space
+                data = np.zeros((ntotal,), dtype=v.dtype)
+            elif data.dtype != v.dtype:
+                # ensure all values in the dict have the same datatype
+                raise ValuError('Type mismatch for keys %s and %s: %s != %s',
+                                    keys[0], key, data.dtype, v.dtype)
+
+            idxs = np.arange(length) + pos
+            data[idxs] = v
+            pos += length
+
+        return keys, lengths, data
+
+    def _array_tuple2dict_with_arrays(self, kld):
+        '''
+        Helper function to convert a more efficient tuple-based representation
+        of _src2nbr and _src2aux to canonical dicts
+
+        Input is a tuple (keys, lengths, data)
+        Output is a dictionary where each value has to be an array
+
+        '''
+        if kld is None:
+            return None
+        if type(kld) is dict:
+            if all(type(v) in (tuple, dict) for v in kld.values()):
+                # probably src2aux, so run recursively
+                return dict((k, self._array_tuple2dict_with_arrays(v))
+                            for k, v in kld.iteritems())
+            elif all(isinstance(v, np.ndarray) for v in kld.values()):
+                # old-style mapping
+                return kld
+            else:
+                raise ValueError('Unrecognized dict: %s' % kld)
+
+        keys, lengths, data = kld
+        d = dict()
+
+        pos = 0
+        for key, length in zip(keys, lengths):
+            d[key] = data[pos + np.arange(length)]
+            pos += length
+
+        return d
+
+
+
+
 
     def __eq__(self, other):
         """Compares this instance with another instance

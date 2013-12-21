@@ -562,7 +562,9 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         inner = surf.generate_sphere(sphere_density) * 3 + 8
         radius = 5.
 
-        qe = disc_surface_queryengine(radius, vg, inner, outer)
+        add_fa = ['center_distances', 'grey_matter_position']
+        qe = disc_surface_queryengine(radius, vg, inner, outer,
+                            add_fa=add_fa)
         ds = fmri_dataset(vg.get_masked_nifti_image())
 
         # the following is not really a strong requirement. XXX remove?
@@ -570,7 +572,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         # check that after training it behaves well
         qe.train(ds)
-        assert_equal(qe[qe.ids[0]][0], 883)
+        m = qe[qe.ids[0]]
+        assert_equal(qe[qe.ids[0]].samples[0, 0], 883)
 
         # test saving and loading
         h5save(fn, qe)
@@ -582,7 +585,18 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         # ensure values are the same
         qe_copy.train(ds)
         for id in qe.ids:
-            assert_equal(qe[id], qe_copy[id])
+            assert_array_equal(qe[id].samples, qe_copy[id].samples)
+
+        sel, sel_copy = qe.voxsel, qe_copy.voxsel
+        assert_equal(sel.aux_keys(), add_fa)
+        expected_values = [1.13851869106, 1.03270423412] # smoke test
+        for key, v in zip(add_fa, expected_values):
+            for id in qe.ids:
+                assert_array_equal(sel.get_aux(id, key), sel_copy.get_aux(id, key))
+
+            assert_array_almost_equal(sel.get_aux(qe.ids[0], key)[3], v)
+
+
 
 
     def test_surface_minimal_lowres_voxel_selection(self):
