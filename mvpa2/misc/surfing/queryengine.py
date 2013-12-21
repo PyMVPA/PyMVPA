@@ -149,7 +149,7 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
             # optionally add additional information from voxsel
             ds = AttrDataset(np.asarray(voxel_dataset_ids_flat)[np.newaxis])
             for n in self._add_fa:
-                fa_values = self.voxsel.aux_get(vertexid, n)
+                fa_values = self.voxsel.get_aux(vertexid, n)
                 assert(len(fa_values) == len(voxel_dataset_ids))
                 ds.fa[n] = sum([[x] * len(ids)
                                 for x, ids in zip(fa_values,
