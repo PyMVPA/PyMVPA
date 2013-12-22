@@ -489,11 +489,11 @@ class VolumeMaskDictionary(Mapping):
         return s
 
 
-    def _setstate_legacy(self, s):
-        # helper function to set the state as it was done prior to Dec 2013.
-        # this function is defined separately so that unit tests can
-        # override the __setstate__ method by this method and check for
-        # compatibility
+    def _setstate(self, s):
+        # helper function that actually sets the state
+        # it can be called by either __setstate__ or _setstate_legacy.
+        # the rationale for a separate function is that it allows for
+        # setting the state either with the up-to-date or the legacy method
         if len(s) == 4:
             # computatibilty thing: previous version (before Sep 12, 2013) did
             # not store meta
@@ -504,8 +504,17 @@ class VolumeMaskDictionary(Mapping):
             self._volgeom, self._source, self._meta, self._src2nbr, self._src2aux = s
 
 
+    @deprecated("should be used for testing compatibility only - "
+                            "otherwise use ._setstate instead")
+    def _setstate_legacy(self, s):
+        # helper function to set the state as it was done prior to Dec 2013.
+        # this function is defined separately so that unit tests can
+        # override the __setstate__ method by this method and check for
+        # compatibility
+        self._setstate(s)
+
     def __setstate__(self, s):
-        self._setstate_legacy(s)
+        self._setstate(s)
 
         # new as of Dec 2013: use more efficient storage method for h5save/load
         self._src2nbr = self._array_tuple2dict_with_arrays(self._src2nbr)
