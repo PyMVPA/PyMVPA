@@ -475,11 +475,13 @@ class VolumeMaskDictionary(Mapping):
                 self.__getstate__())
 
     def __getstate__(self):
-        # Note: due to issues with saving self_nbr2src, it is not returned as part
-        # of the current state. instead it is derived when __setstate__ is
-        # called.
+        # Note: due to issues with saving self_nbr2src, it is not returned
+        # as part of the current state. instead it is derived when
+        #  __setstate__ is called.
 
-        # new as of Dec 2013: use more efficient storage method for h5save/load
+        # new as of Dec 2013: support more efficient storage method for
+        # h5save/load
+
         src2nbr = self._dict_with_arrays2array_tuple(self._src2nbr)
         src2aux = self._dict_with_arrays2array_tuple(self._src2aux)
 
@@ -487,7 +489,11 @@ class VolumeMaskDictionary(Mapping):
         return s
 
 
-    def __setstate__(self, s):
+    def _setstate_legacy(self, s):
+        # helper function to set the state as it was done prior to Dec 2013.
+        # this function is defined separately so that unit tests can
+        # override the __setstate__ method by this method and check for
+        # compatibility
         if len(s) == 4:
             # computatibilty thing: previous version (before Sep 12, 2013) did
             # not store meta
@@ -496,6 +502,10 @@ class VolumeMaskDictionary(Mapping):
             warning('Using old (pre-12 Sep 2013) mapping - no meta data')
         else:
             self._volgeom, self._source, self._meta, self._src2nbr, self._src2aux = s
+
+
+    def __setstate__(self, s):
+        self._setstate_legacy(s)
 
         # new as of Dec 2013: use more efficient storage method for h5save/load
         self._src2nbr = self._array_tuple2dict_with_arrays(self._src2nbr)
@@ -506,8 +516,13 @@ class VolumeMaskDictionary(Mapping):
         Helper function to convert canonical representation of _src2nbr and
         _src2aux as dicts to a more efficient tuple-based representation.
 
-        Input is a dictionary where each value has to be an array
-        Output is a tuple (keys, lengths, data)
+        Input: dict d where for each key k, each value v[k] is a numpy array
+        Output: a tuple (keys, lengths, data) with each element a numpu array
+
+        It holds that:
+        - keys.tolist()==d.keys()
+        - if k is the i-th element in d.keys(), then
+              v[k]==data[offset+lengths[i]] where offset=np.sum(lenghts[:i])
         '''
         if d is None:
             return None
@@ -543,8 +558,13 @@ class VolumeMaskDictionary(Mapping):
         Helper function to convert a more efficient tuple-based representation
         of _src2nbr and _src2aux to canonical dicts
 
-        Input is a tuple (keys, lengths, data)
-        Output is a dictionary where each value has to be an array
+        Input: a tuple (keys, lengths, data) with each element a numpu array
+        Output: dict d where for each key k, each value v[k] is a numpy array
+
+        It holds that:
+        - keys.tolist()==d.keys()
+        - if k is the i-th element in d.keys(), then
+              v[k]==data[offset+lengths[i]] where offset=np.sum(lenghts[:i])
 
         '''
         if kld is None:
@@ -561,6 +581,11 @@ class VolumeMaskDictionary(Mapping):
                 raise ValueError('Unrecognized dict: %s' % kld)
 
         keys, lengths, data = kld
+
+        # keys must be python int or str, not numpy int or str
+        keys = keys.tolist()
+
+        # space for output
         d = dict()
 
         pos = 0
@@ -568,6 +593,9 @@ class VolumeMaskDictionary(Mapping):
             d[key] = data[pos + np.arange(length)]
             pos += length
 
+        if pos != data.size:
+            raise ValueError('data size mismatch: expected %s, found %s' %
+                                    (data.size, pos))
         return d
 
 
