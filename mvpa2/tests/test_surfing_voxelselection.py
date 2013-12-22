@@ -580,7 +580,9 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         for setstate_use_legacy in (False, True):
             # test saving and loading
-            #print setstate_use_legacy, voxsel.__setstate__
+
+            # test old-style (pre-Dec 2013) way of storing voxel selection
+            # results.
             if setstate_use_legacy:
                 voxsel.__setstate__ = voxsel._setstate_legacy
 
