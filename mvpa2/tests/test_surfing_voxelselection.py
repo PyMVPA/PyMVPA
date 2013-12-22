@@ -575,26 +575,35 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         m = qe[qe.ids[0]]
         assert_equal(qe[qe.ids[0]].samples[0, 0], 883)
 
-        # test saving and loading
-        h5save(fn, qe)
-        qe_copy = h5load(fn)
+        voxsel = qe.voxsel
+        setstate = voxsel.__setstate__
 
-        # ensure keys are the same
-        assert_equal(qe.ids, qe_copy.ids)
+        for setstate_use_legacy in (False, True):
+            # test saving and loading
+            #print setstate_use_legacy, voxsel.__setstate__
+            if setstate_use_legacy:
+                voxsel.__setstate__ = voxsel._setstate_legacy
 
-        # ensure values are the same
-        qe_copy.train(ds)
-        for id in qe.ids:
-            assert_array_equal(qe[id].samples, qe_copy[id].samples)
+            h5save(fn, qe)
 
-        sel, sel_copy = qe.voxsel, qe_copy.voxsel
-        assert_equal(sel.aux_keys(), add_fa)
-        expected_values = [1.13851869106, 1.03270423412] # smoke test
-        for key, v in zip(add_fa, expected_values):
+            qe_copy = h5load(fn)
+
+            # ensure keys are the same
+            assert_equal(qe.ids, qe_copy.ids)
+
+            # ensure values are the same
+            qe_copy.train(ds)
             for id in qe.ids:
-                assert_array_equal(sel.get_aux(id, key), sel_copy.get_aux(id, key))
+                assert_array_equal(qe[id].samples, qe_copy[id].samples)
 
-            assert_array_almost_equal(sel.get_aux(qe.ids[0], key)[3], v)
+            sel, sel_copy = qe.voxsel, qe_copy.voxsel
+            assert_equal(sel.aux_keys(), add_fa)
+            expected_values = [1.13851869106, 1.03270423412] # smoke test
+            for key, v in zip(add_fa, expected_values):
+                for id in qe.ids:
+                    assert_array_equal(sel.get_aux(id, key), sel_copy.get_aux(id, key))
+
+                assert_array_almost_equal(sel.get_aux(qe.ids[0], key)[3], v)
 
 
 
