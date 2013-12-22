@@ -553,7 +553,7 @@ class VolumeMaskDictionary(Mapping):
                 data = np.zeros((ntotal,), dtype=v.dtype)
             elif data.dtype != v.dtype:
                 # ensure all values in the dict have the same datatype
-                raise ValuError('Type mismatch for keys %s and %s: %s != %s',
+                raise ValueError('Type mismatch for keys %s and %s: %s != %s',
                                     keys[0], key, data.dtype, v.dtype)
 
             idxs = np.arange(length) + pos
