@@ -546,15 +546,24 @@ class VolumeMaskDictionary(Mapping):
         ntotal = np.sum(lengths)
         data = None # in case there are no keys
         pos = 0
+
+        def _same_dtype(p, q):
+            # helper function that returns whether p and q are of the same subtype.
+            # this function returns True if, for example:
+            #    p.dtype==np.float32 and q.dtype==np.float64
+            pt, qt = pqt = p.dtype, q.dtype
+            return pt == qt or np.issubdtype(pt, qt)
+
+
         for i, (key, length) in enumerate(zip(keys, lengths)):
             v = d[key]
             if i == 0:
                 # allocate space
                 data = np.zeros((ntotal,), dtype=v.dtype)
-            elif data.dtype != v.dtype:
+            elif not _same_dtype(data, v):
                 # ensure all values in the dict have the same datatype
-                raise ValueError('Type mismatch for keys %s and %s: %s != %s',
-                                    keys[0], key, data.dtype, v.dtype)
+                raise ValueError('Type mismatch for keys %s and %s: %s != %s' %
+                                    (keys[0], key, data.dtype, v.dtype))
 
             idxs = np.arange(length) + pos
             data[idxs] = v
