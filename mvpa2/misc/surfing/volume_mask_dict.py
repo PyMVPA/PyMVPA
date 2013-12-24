@@ -474,10 +474,20 @@ class VolumeMaskDictionary(Mapping):
                 (self._volgeom, self._source),
                 self.__getstate__())
 
+    @deprecated("should be used for testing compatibility only - "
+                            "otherwise use .__reduce__ instead")
+    def _reduce_legacy(self):
+        return (self.__class__,
+                (self._volgeom, self._source),
+                self._getstate_legacy())
+
+
     def _getstate(self):
         s = (self._volgeom, self._source, self._meta, self._src2nbr, self._src2aux)
         return s
 
+    @deprecated("should be used for testing compatibility only - "
+                            "otherwise use ._getstate instead")
     def _getstate_legacy(self):
         return self._getstate()
 
@@ -524,6 +534,7 @@ class VolumeMaskDictionary(Mapping):
         # override the __setstate__ method by this method and check for
         # compatibility
         self._setstate(s)
+
 
     def __setstate__(self, s):
         self._setstate(s)
