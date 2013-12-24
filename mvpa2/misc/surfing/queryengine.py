@@ -57,7 +57,7 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
         self.voxsel = voxsel
         self.space = space
         self._map_voxel_coord = None
-        self.add_fa = add_fa
+        self._add_fa = add_fa
 
     def __repr__(self, prefixes=[]):
         return super(SurfaceVerticesQueryEngine, self).__repr__(
