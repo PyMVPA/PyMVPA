@@ -31,6 +31,7 @@ from mvpa2.datasets.mri import fmri_dataset
 from mvpa2.support.nibabel import surf
 from mvpa2.misc.surfing import surf_voxel_selection, queryengine, volgeom, \
                                 volsurf
+from mvpa2.misc.surfing.volume_mask_dict import VolumeMaskDictionary
 
 from mvpa2.measures.searchlight import Searchlight
 from mvpa2.misc.surfing.queryengine import SurfaceVerticesQueryEngine, \
@@ -576,19 +577,44 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         assert_equal(qe[qe.ids[0]].samples[0, 0], 883)
 
         voxsel = qe.voxsel
-        setstate = voxsel.__setstate__
 
-        for setstate_use_legacy in (False, True):
-            # test saving and loading
+        # store the original methods
+        setstate_current = VolumeMaskDictionary.__dict__['__setstate__']
+        reduce_current = VolumeMaskDictionary.__dict__['__reduce__']
 
-            # test old-style (pre-Dec 2013) way of storing voxel selection
-            # results.
-            if setstate_use_legacy:
-                voxsel.__setstate__ = voxsel._setstate_legacy
+        # try all comobinations.
+        # end with both set to False so that VolumeMaskDictionary is back
+        # in its original state
+        # XXX is manipulating class methods this way too dangerous?
+        true_false_combis = [(i % 2 == 1, i // 2 == 0) for i in xrange(3, 7)]
+        for setstate_use_legacy, reduce_use_legacy in true_false_combis:
+            reducer = VolumeMaskDictionary._reduce_legacy \
+                            if reduce_use_legacy  \
+                                else reduce_current
+            VolumeMaskDictionary.__reduce__ = reducer
 
+            setstater = VolumeMaskDictionary._setstate_legacy \
+                            if setstate_use_legacy \
+                            else setstate_current
+            VolumeMaskDictionary.__setstate__ = setstater
+
+            indices_stored = voxsel.__reduce__()[2][3]
+
+            if reduce_use_legacy:
+                assert_equal(type(indices_stored), dict)
+                assert_equal(len(indices_stored), len(qe.ids))
+            else:
+                assert_equal(type(indices_stored), tuple)
+                assert_equal(len(indices_stored), 3)
+                for ix in indices_stored:
+                    assert_equal(type(ix), np.ndarray)
             h5save(fn, qe)
 
             qe_copy = h5load(fn)
+
+            if setstate_use_legacy and not reduce_use_legacy:
+                assert_raises(AttributeError, lambda: qe_copy.ids)
+                continue
 
             # ensure keys are the same
             assert_equal(qe.ids, qe_copy.ids)
@@ -606,7 +632,6 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                     assert_array_equal(sel.get_aux(id, key), sel_copy.get_aux(id, key))
 
                 assert_array_almost_equal(sel.get_aux(qe.ids[0], key)[3], v)
-
 
 
 
