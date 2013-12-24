@@ -69,6 +69,12 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
     def __reduce__(self):
         return (self.__class__, (self.voxsel, self.space, self._add_fa))
 
+    def __str__(self):
+        return '%s(%s, space=%s, add_fa=%s)' % (self.__class__.__name__,
+                                                self.voxsel,
+                                                self.space,
+                                                self.add_fa)
+
     @property
     def ids(self):
         return self.voxsel.keys()
@@ -156,6 +162,7 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
                                                   voxel_dataset_ids)], [])
             return ds
         return voxel_dataset_ids_flat
+
 
 
     def query(self, **kwargs):
