@@ -474,6 +474,13 @@ class VolumeMaskDictionary(Mapping):
                 (self._volgeom, self._source),
                 self.__getstate__())
 
+    def _getstate(self):
+        s = (self._volgeom, self._source, self._meta, self._src2nbr, self._src2aux)
+        return s
+
+    def _getstate_legacy(self):
+        return self._getstate()
+
     def __getstate__(self):
         # Note: due to issues with saving self_nbr2src, it is not returned
         # as part of the current state. instead it is derived when
@@ -482,11 +489,15 @@ class VolumeMaskDictionary(Mapping):
         # new as of Dec 2013: support more efficient storage method for
         # h5save/load
 
-        src2nbr = self._dict_with_arrays2array_tuple(self._src2nbr)
-        src2aux = self._dict_with_arrays2array_tuple(self._src2aux)
+        s = self._getstate()
 
-        s = (self._volgeom, self._source, self._meta, src2nbr, src2aux)
-        return s
+        # because of h5py issues when assigning values in the tuple s,
+        # here a new tuple is created
+        s3 = _dict_with_arrays2array_tuple(s[3])
+        s4 = _dict_with_arrays2array_tuple(s[4])
+        ss = s[:3] + (s3, s4)
+
+        return ss
 
 
     def _setstate(self, s):
@@ -494,6 +505,7 @@ class VolumeMaskDictionary(Mapping):
         # it can be called by either __setstate__ or _setstate_legacy.
         # the rationale for a separate function is that it allows for
         # setting the state either with the up-to-date or the legacy method
+
         if len(s) == 4:
             # computatibilty thing: previous version (before Sep 12, 2013) did
             # not store meta
@@ -517,107 +529,8 @@ class VolumeMaskDictionary(Mapping):
         self._setstate(s)
 
         # new as of Dec 2013: use more efficient storage method for h5save/load
-        self._src2nbr = self._array_tuple2dict_with_arrays(self._src2nbr)
-        self._src2aux = self._array_tuple2dict_with_arrays(self._src2aux)
-
-    def _dict_with_arrays2array_tuple(self, d):
-        '''
-        Helper function to convert canonical representation of _src2nbr and
-        _src2aux as dicts to a more efficient tuple-based representation.
-
-        Input: dict d where for each key k, each value v[k] is a numpy array
-        Output: a tuple (keys, lengths, data) with each element a numpu array
-
-        It holds that:
-        - keys.tolist()==d.keys()
-        - if k is the i-th element in d.keys(), then
-              v[k]==data[offset+lengths[i]] where offset=np.sum(lenghts[:i])
-        '''
-        if d is None:
-            return None
-        if all(type(v) is dict for v in d.values()):
-            # probably src2aux, so run recursively
-            return dict((k, self._dict_with_arrays2array_tuple(v))
-                            for k, v in d.iteritems())
-
-        keys = np.asarray(d.keys())
-        lengths = np.asarray([len(d[key]) for key in keys])
-
-        ntotal = np.sum(lengths)
-        data = None # in case there are no keys
-        pos = 0
-
-        def _same_dtype(p, q):
-            # helper function that returns whether p and q are of the same subtype.
-            # this function returns True if, for example:
-            #    p.dtype==np.float32 and q.dtype==np.float64
-            pt, qt = pqt = p.dtype, q.dtype
-            return pt == qt or np.issubdtype(pt, qt)
-
-
-        for i, (key, length) in enumerate(zip(keys, lengths)):
-            v = d[key]
-            if i == 0:
-                # allocate space
-                data = np.zeros((ntotal,), dtype=v.dtype)
-            elif not _same_dtype(data, v):
-                # ensure all values in the dict have the same datatype
-                raise ValueError('Type mismatch for keys %s and %s: %s != %s' %
-                                    (keys[0], key, data.dtype, v.dtype))
-
-            idxs = np.arange(length) + pos
-            data[idxs] = v
-            pos += length
-
-        return keys, lengths, data
-
-    def _array_tuple2dict_with_arrays(self, kld):
-        '''
-        Helper function to convert a more efficient tuple-based representation
-        of _src2nbr and _src2aux to canonical dicts
-
-        Input: a tuple (keys, lengths, data) with each element a numpu array
-        Output: dict d where for each key k, each value v[k] is a numpy array
-
-        It holds that:
-        - keys.tolist()==d.keys()
-        - if k is the i-th element in d.keys(), then
-              v[k]==data[offset+lengths[i]] where offset=np.sum(lenghts[:i])
-
-        '''
-        if kld is None:
-            return None
-        if type(kld) is dict:
-            if all(type(v) in (tuple, dict) for v in kld.values()):
-                # probably src2aux, so run recursively
-                return dict((k, self._array_tuple2dict_with_arrays(v))
-                            for k, v in kld.iteritems())
-            elif all(isinstance(v, np.ndarray) for v in kld.values()):
-                # old-style mapping
-                return kld
-            else:
-                raise ValueError('Unrecognized dict: %s' % kld)
-
-        keys, lengths, data = kld
-
-        # keys must be python int or str, not numpy int or str
-        keys = keys.tolist()
-
-        # space for output
-        d = dict()
-
-        pos = 0
-        for key, length in zip(keys, lengths):
-            d[key] = data[pos + np.arange(length)]
-            pos += length
-
-        if pos != data.size:
-            raise ValueError('data size mismatch: expected %s, found %s' %
-                                    (data.size, pos))
-        return d
-
-
-
+        self._src2nbr = _array_tuple2dict_with_arrays(self._src2nbr)
+        self._src2aux = _array_tuple2dict_with_arrays(self._src2aux)
 
 
     def __eq__(self, other):
@@ -873,6 +786,117 @@ class VolumeMaskDictionary(Mapping):
         i = np.argmin(d)
 
         return trgs[i / src_xyz.shape[0]]
+
+
+def _dict_with_arrays2array_tuple(d):
+    '''
+    Helper function to convert canonical representation of _src2nbr and
+    _src2aux as dicts to a more efficient tuple-based representation.
+
+    Input: dict d where for each key k, each value v[k] is a numpy array
+    Output: a tuple (keys, lengths, data) with each element a numpu array
+
+    It holds that:
+    - keys.tolist()==d.keys()
+    - if k is the i-th element in d.keys(), then
+          v[k]==data[offset+lengths[i]] where offset=np.sum(lenghts[:i])
+    '''
+
+    if d is None:
+        return None
+    if all(type(v) is dict for v in d.values()):
+        # probably src2aux, so run recursively
+        return dict((k, _dict_with_arrays2array_tuple(v))
+                        for k, v in d.iteritems())
+
+    keys = np.asarray(d.keys())
+
+    lengths = np.asarray([len(d[key]) for key in keys])
+
+    ntotal = np.sum(lengths)
+    data = None # in case there are no keys
+    pos = 0
+
+    def _same_dtype(p, q):
+        # helper function that returns whether p and q are of the same subtype.
+        # this function returns True if, for example:
+        #    p.dtype==np.float32 and q.dtype==np.float64
+        pt, qt = pqt = p.dtype, q.dtype
+        return pt == qt or np.issubdtype(pt, qt)
+
+
+    for i, (key, length) in enumerate(zip(keys, lengths)):
+        v = d[key]
+        if i == 0:
+            # allocate space
+            array_type = v.dtype
+
+            # for hdf5 conversion to 'native' float or 'int' is needed.
+            # (if v is np.int32 but np.float==np.float64 then h5save
+            #  fails to reduce the array properly because of 'unsave'
+            #  conversion)
+            set_types_in_order = (np.float, np.int)
+            for set_type in set_types_in_order:
+                if np.issubdtype(v.dtype, set_type):
+                    array_type = set_type
+                    break
+            data = np.zeros((ntotal,), array_type)
+        elif not _same_dtype(data, v):
+            # ensure all values in the dict have the same datatype
+            raise ValueError('Type mismatch for keys %s and %s: %s != %s' %
+                                (keys[0], key, data.dtype, v.dtype))
+
+        idxs = np.arange(length) + pos
+        data[idxs] = v
+        pos += length
+
+    return keys, lengths, data
+
+
+def _array_tuple2dict_with_arrays(kld):
+        '''
+        Helper function to convert a more efficient tuple-based representation
+        of _src2nbr and _src2aux to canonical dicts
+
+        Input: a tuple (keys, lengths, data) with each element a numpu array
+        Output: dict d where for each key k, each value v[k] is a numpy array
+
+        It holds that:
+        - keys.tolist()==d.keys()
+        - if k is the i-th element in d.keys(), then
+              v[k]==data[offset+lengths[i]] where offset=np.sum(lenghts[:i])
+
+        '''
+        if kld is None:
+            return None
+        if type(kld) is dict:
+            if all(type(v) in (tuple, dict) for v in kld.values()):
+                # probably src2aux, so run recursively
+                return dict((k, _array_tuple2dict_with_arrays(v))
+                            for k, v in kld.iteritems())
+            elif all(isinstance(v, np.ndarray) for v in kld.values()):
+                # old-style mapping
+                return kld
+            else:
+                raise ValueError('Unrecognized dict: %s' % kld)
+
+        keys, lengths, data = kld
+
+        # keys must be python int or str, not numpy int or str
+        keys = keys.tolist()
+
+        # space for output
+        d = dict()
+
+        pos = 0
+        for key, length in zip(keys, lengths):
+            d[key] = data[pos + np.arange(length)]
+            pos += length
+
+        if pos != data.size:
+            raise ValueError('data size mismatch: expected %s, found %s' %
+                                    (data.size, pos))
+        return d
 
 
 def from_any(s):
