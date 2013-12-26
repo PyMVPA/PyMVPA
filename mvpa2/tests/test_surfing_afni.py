@@ -429,15 +429,16 @@ class SurfTests(unittest.TestCase):
 
 
 
-def _test_afni_suma_spec():
+def _test_afni_suma_spec():  # pragma: no cover
     datapath = os.path.join(pymvpa_datadbroot,
                         'tutorial_data', 'tutorial_data', 'data', 'surfing')
     # TODO: test on surfing data
 
 
-def suite():
+def suite():  # pragma: no cover
     """Create the suite"""
     return unittest.makeSuite(SurfTests)
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()

@@ -167,19 +167,19 @@ def test_ex_from_masked():
     assert_array_equal(ds.chunks, [1])
 
     # now try adding pattern with wrong shape
-    assert_raises(DatasetError, ds.append,
-                  Dataset.from_wizard(np.ones((2, 3)), targets=1, chunks=1))
+    assert_raises(ValueError, vstack,
+                  (ds, Dataset.from_wizard(np.ones((2, 3)), targets=1, chunks=1)))
 
     # now add two real patterns
-    ds.append(Dataset.from_wizard(np.random.standard_normal((2, 5)),
-                                  targets=2, chunks=2))
+    ds = vstack((ds, Dataset.from_wizard(np.random.standard_normal((2, 5)),
+                                         targets=2, chunks=2)))
     assert_equal(ds.nsamples, 3)
     assert_array_equal(ds.targets, [1, 2, 2])
     assert_array_equal(ds.chunks, [1, 2, 2])
 
     # test unique class labels
-    ds.append(Dataset.from_wizard(np.random.standard_normal((2, 5)),
-                                  targets=3, chunks=5))
+    ds = vstack((ds, Dataset.from_wizard(np.random.standard_normal((2, 5)),
+                                         targets=3, chunks=5)))
     assert_array_equal(ds.sa['targets'].unique, [1, 2, 3])
 
     # test wrong attributes length
@@ -359,11 +359,7 @@ def test_mergeds():
     data4 = Dataset.from_wizard(np.ones((2, 5)), targets=3, chunks=2)
     data4.fa['test'] = np.arange(5)
 
-    # cannot merge if there are attributes missing in one of the datasets
-    assert_raises(DatasetError, data1.append, data0)
-
-    merged = data1.copy()
-    merged.append(data2)
+    merged = vstack((data1.copy(), data2))
 
     ok_(merged.nfeatures == 5)
     l12 = [1] * 5 + [2] * 3
@@ -371,24 +367,19 @@ def test_mergeds():
     ok_((merged.targets == l12).all())
     ok_((merged.chunks == l1).all())
 
-    data_append = data1.copy()
-    data_append.append(data2)
+    data_append = vstack((data1.copy(), data2))
 
     ok_(data_append.nfeatures == 5)
     ok_((data_append.targets == l12).all())
     ok_((data_append.chunks == l1).all())
 
     #
-    # appending
-    #
-
-    # we need the same samples attributes in both datasets
-    assert_raises(DatasetError, data2.append, data3)
-
-    #
     # vstacking
     #
     if __debug__:
+        # we need the same samples attributes in both datasets
+        assert_raises(ValueError, vstack, (data2, data3))
+
         # tested only in __debug__
         assert_raises(ValueError, vstack, (data0, data1, data2, data3))
     datasets = (data1, data2, data4)
@@ -531,19 +522,19 @@ def test_mergeds2():
     assert_array_equal(data.chunks, [1])
 
     # now try adding pattern with wrong shape
-    assert_raises(DatasetError,
-                  data.append,
-                  dataset_wizard(np.ones((2, 3)), targets=1, chunks=1))
+    assert_raises(ValueError,
+                  vstack,
+                  (data, dataset_wizard(np.ones((2, 3)), targets=1, chunks=1)))
 
     # now add two real patterns
     dss = datasets['uni2large'].samples
-    data.append(dataset_wizard(dss[:2, :5], targets=2, chunks=2))
+    data = vstack((data, dataset_wizard(dss[:2, :5], targets=2, chunks=2)))
     assert_equal(data.nfeatures, 5)
     assert_array_equal(data.targets, [1, 2, 2])
     assert_array_equal(data.chunks, [1, 2, 2])
 
     # test automatic origins
-    data.append(dataset_wizard(dss[3:5, :5], targets=3, chunks=[0, 1]))
+    data = vstack((data, (dataset_wizard(dss[3:5, :5], targets=3, chunks=[0, 1]))))
     assert_array_equal(data.chunks, [1, 2, 2, 0, 1])
 
     # test unique class labels
@@ -609,10 +600,8 @@ def test_combined_samplesfeature_selection():
 
 @reseed_rng()
 def test_labelpermutation_randomsampling():
-    ds = Dataset.from_wizard(np.ones((5, 10)), targets=range(5), chunks=1)
-    for i in xrange(1, 5):
-        ds.append(Dataset.from_wizard(np.ones((5, 10)) + i,
-                                      targets=range(5), chunks=i + 1))
+    ds = vstack([Dataset.from_wizard(np.ones((5, 10)), targets=range(5), chunks=i)
+                    for i in xrange(1, 6)])
     # assign some feature attributes
     ds.fa['roi'] = np.repeat(np.arange(5), 2)
     ds.fa['lucky'] = np.arange(10) % 2

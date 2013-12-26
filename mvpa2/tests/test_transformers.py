@@ -130,10 +130,11 @@ class TransformerTests(unittest.TestCase):
             self.assertEqual(distPValue.ca.positives_recovered[1], 0)
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(TransformerTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

@@ -16,7 +16,7 @@ from mvpa2.testing.tools import ok_, assert_array_equal, assert_true, \
         assert_array_almost_equal, SkipTest
 
 @reseed_rng()
-def _test_mcasey20120222():
+def _test_mcasey20120222():  # pragma: no cover
     # http://lists.alioth.debian.org/pipermail/pkg-exppsy-pymvpa/2012q1/002034.html
 
     # This one is conditioned on allowing # of samples to be changed
@@ -100,7 +100,7 @@ def test_sifter_superord_usecase():
     assert(np.mean(accs_regular) > .8)
     assert(np.mean(accs_super)   < .6)
 
-def _test_edmund_chong_20120907():
+def _test_edmund_chong_20120907():  # pragma: no cover
     # commented out to avoid syntax warnings while compiling
     # from mvpa2.suite import *
     from mvpa2.testing.datasets import datasets
@@ -409,3 +409,30 @@ def test_rfe_sensmap():
                   senses.samples, senses_rm.samples)
     raise SkipTest("Known failure for repeated measures: https://github.com/PyMVPA/PyMVPA/issues/117")
 
+def test_remove_invariant_as_a_mapper():
+    from mvpa2.featsel.helpers import RangeElementSelector
+    from mvpa2.featsel.base import StaticFeatureSelection, SensitivityBasedFeatureSelection
+    from mvpa2.testing.datasets import datasets
+    from mvpa2.datasets.miscfx import remove_invariant_features
+
+    mapper = SensitivityBasedFeatureSelection(
+              lambda x: np.std(x, axis=0),
+              RangeElementSelector(lower=0, inclusive=False),
+              train_analyzer=False,
+              auto_train=True)
+
+    ds = datasets['uni2large'].copy()
+
+    ds.a['mapper'] = StaticFeatureSelection(np.arange(ds.nfeatures))
+    ds.fa['index'] = np.arange(ds.nfeatures)
+    ds.samples[:, [1, 8]] = 10
+
+    ds_out = mapper(ds)
+
+    # Validate that we are getting the same results as remove_invariant_features
+    ds_rifs = remove_invariant_features(ds)
+    assert_array_equal(ds_out.samples, ds_rifs.samples)
+    assert_array_equal(ds_out.fa.index, ds_rifs.fa.index)
+
+    assert_equal(ds_out.fa.index[1], 2)
+    assert_equal(ds_out.fa.index[8], 10)

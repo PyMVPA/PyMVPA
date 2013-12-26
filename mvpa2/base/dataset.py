@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 import copy
 
-from mvpa2.base import externals, cfg
+from mvpa2.base import externals, cfg, warning
 from mvpa2.base.collections import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection
 from mvpa2.base.types import is_datasetlike
@@ -139,13 +139,14 @@ class AttrDataset(object):
 
     During selection data is only copied if necessary. If the slicing
     syntax is used the resulting dataset will share the samples with the
-    original dataset.
+    original dataset (here and below we compare .base against both ds.samples
+    and its .base for compatibility with NumPy < 1.7)
 
-    >>> sel1.samples.base is ds.samples.base
+    >>> sel1.samples.base in (ds.samples.base, ds.samples)
     False
-    >>> sel2.samples.base is ds.samples.base
+    >>> sel2.samples.base in (ds.samples.base, ds.samples)
     False
-    >>> sel3.samples.base is ds.samples.base
+    >>> sel3.samples.base in (ds.samples.base, ds.samples)
     True
 
     For feature selection the syntax is very similar they are just
@@ -170,7 +171,7 @@ class AttrDataset(object):
     array([[1, 2],
            [4, 5],
            [7, 8]])
-    >>> fsel.samples.base is ds.samples.base
+    >>> fsel.samples.base in (ds.samples.base, ds.samples)
     True
 
     Please note that simultaneous selection of samples and features is
@@ -381,20 +382,10 @@ class AttrDataset(object):
 
 
     def append(self, other):
-        """Append the content of a Dataset.
+        """This method should not be used and will be removed in the future"""
+        warning("AttrDataset.append() is deprecated and will be removed. "
+                "Instead of ds.append(x) use: ds = vstack((ds, x), a=0)")
 
-        Parameters
-        ----------
-        other : AttrDataset
-          The content of this dataset will be append.
-
-        Notes
-        -----
-        No dataset attributes, or feature attributes will be merged!  These
-        respective properties of the *other* dataset are neither checked for
-        compatibility nor copied over to this dataset. However, all samples
-        attributes will be concatenated with the existing ones.
-        """
         if not self.nfeatures == other.nfeatures:
             raise DatasetError("Cannot merge datasets, because the number of "
                                "features does not match.")

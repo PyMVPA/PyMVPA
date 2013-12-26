@@ -182,10 +182,11 @@ class SVMTests(unittest.TestCase):
         a[0,0] = 322           # the value which would overflow
         self.assertTrue(np.isfinite(clf._get_default_c(a)))
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(SVMTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

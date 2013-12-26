@@ -9,9 +9,12 @@
 """Unit tests for PyMVPA ridge regression classifier"""
 
 from mvpa2.clfs.ridge import RidgeReg
-from scipy.stats import pearsonr
 from mvpa2.testing import *
 from mvpa2.testing.datasets import datasets
+
+skip_if_no_external('scipy')
+
+from scipy.stats import pearsonr
 
 class RidgeRegTests(unittest.TestCase):
 
@@ -54,10 +57,11 @@ class RidgeRegTests(unittest.TestCase):
         self.assertTrue((p == clf.ca.predictions).all())
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(RidgeRegTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 
