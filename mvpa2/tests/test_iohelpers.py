@@ -274,10 +274,11 @@ class IOHelperTests(unittest.TestCase):
                     "Got the non-unique beast %s" % k)
                     """
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(IOHelperTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

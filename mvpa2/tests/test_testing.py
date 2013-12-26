@@ -13,6 +13,7 @@ import numpy as np
 from mvpa2.base.externals import versions
 from mvpa2.testing.tools import *
 
+import mvpa2.tests as mvtests
 
 def test_assert_objectarray_equal():
     if versions['numpy'] < '1.4':
@@ -46,3 +47,10 @@ def test_assert_objectarray_equal():
             assert_objectarray_equal(a, b, strict=False)
         else:
             assert_raises(AssertionError, assert_objectarray_equal, a, b, strict=False)
+
+# Set of basic smoke tests for tests collectors/runners
+def test_tests_run():
+    ok_(len(mvtests.collect_unit_tests()) > 10)
+    ok_(len(mvtests.collect_nose_tests()) > 10)
+    ok_(len(mvtests.collect_test_suites()) > 10)
+    mvtests.run(limit=[])

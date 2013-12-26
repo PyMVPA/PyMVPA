@@ -170,7 +170,7 @@ class HyperAlignmentTests(unittest.TestCase):
         self.assertEqual(rerrors.shape, (1, n))
 
 
-    def _test_on_swaroop_data(self):
+    def _test_on_swaroop_data(self):  # pragma: no cover
         #
         print "Running swaroops test on data we don't have"
         #from mvpa2.datasets.miscfx import zscore
@@ -278,10 +278,11 @@ class HyperAlignmentTests(unittest.TestCase):
 
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(HyperAlignmentTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 
