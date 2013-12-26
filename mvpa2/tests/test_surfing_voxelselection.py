@@ -679,7 +679,6 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                 for id in qe.ids:
                     assert_array_equal(voxsel.get(id), voxsel_copy.get(id))
 
-                print "LA"
 
 
 
