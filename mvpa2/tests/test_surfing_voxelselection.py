@@ -545,7 +545,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                                 assert_equal(x - y, set())
 
                             # decent agreement in any case between the two sets
-                            assert_true(r < .5)
+                            assert_true(r < .6)
 
     @with_tempfile('.h5py', 'voxsel')
     def test_queryengine_io(self, fn):
