@@ -244,7 +244,8 @@ from mvpa2.misc.surfing.queryengine import SurfaceVerticesQueryEngine, \
                                            SurfaceVoxelsQueryEngine, \
                                             disc_surface_queryengine
 
-from mvpa2.misc.surfing import surf_voxel_selection, volgeom, volsurf
+from mvpa2.misc.surfing import surf_voxel_selection, volgeom, \
+                                volsurf, volume_mask_dict
 
 __sdebug("nibabel afni")
 from mvpa2.support.nibabel import afni_niml_dset, afni_suma_1d, \
