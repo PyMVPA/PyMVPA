@@ -42,15 +42,15 @@ data -- this time selecting a subset of ventral temporal regions.
 As we know, this dataset consists of 12 concatenated experiment sessions.
 Every session had a stimulation block spanning multiple fMRI volumes for
 each of the eight stimulus categories. Stimulation blocks were separated by
-rest periods. What we want to do now, is to look at the spatio-temporal
+rest periods. What we want to do now is to look at the spatio-temporal
 signal across our region of interest and the full duration of the
 stimulation blocks. In other words, we want to perform a sensitivity
-analysis revealing the spatial temporal distribution of
+analysis revealing the spatial-temporal distribution of
 classification-relevant information.
 
 In this kind of analysis, we consider each stimulation block an
 :term:`event` and we need to create a representative sample for every one
-of them. In the context of an event-related fMRI classification analysis the
+of them. In the context of an event-related fMRI classification analysis, the
 literature offers three principal techniques:
 
 1. Choose a single representative volume.
@@ -63,7 +63,7 @@ sensitivity profile, hence we will choose this path.
 Event-related Pre-processing Is Not Event-related
 -------------------------------------------------
 
-For an event-related analysis most of the processing is done on data
+For an event-related analysis, most of the processing is done on data
 samples that are somehow derived from a set of events. The rest of the data
 could be considered irrelevant. However, some preprocessing is only
 meaningful when performed on the full time series and not on the segmented
@@ -78,7 +78,7 @@ not assume a contiguous linear trend throughout the whole time series.
 
 >>> poly_detrend(ds, polyord=1, chunks_attr='chunks')
 
-Let's make a copy of the de-trended dataset that we can later on use for
+Let's make a copy of the de-trended dataset that we can use later on for
 some visualization.
 
 >>> orig_ds = ds.copy()
@@ -104,7 +104,7 @@ In this example we will simply convert the block-design setup defined by
 the samples attributes into a list of events. With
 :func:`~mvpa2.datasets.eventrelated.find_events`, PyMVPA provides a
 function to convert sequential attributes into event lists. In our dataset,
-we have the stimulus conditions of each volume sample available as
+we have the stimulus conditions of each volume sample available in the
 ``targets`` sample attribute.
 
 >>> events = find_events(targets=ds.sa.targets, chunks=ds.sa.chunks)
@@ -117,15 +117,14 @@ we have the stimulus conditions of each volume sample available as
 {'chunks': 0.0, 'duration': 6, 'onset': 15, 'targets': 'rest'}
 {'chunks': 0.0, 'duration': 9, 'onset': 21, 'targets': 'face'}
 
-We are not only feeding the ``targets`` to the function but also the
-``chunks`` attribute since we do not want to have event spanning multiple
-recording sessions. All that is done by
-:func:`~mvpa2.datasets.eventrelated.find_events` is sequentially parsing
-all provided attributes and recording an event whenever the value in *any*
-of the attributes changes. The generated event definition is a dictionary
-that contains:
+We are feeding not only the ``targets`` to the function, but also the
+``chunks`` attribute, since we do not want to have events spanning multiple
+recording sessions. :func:`~mvpa2.datasets.eventrelated.find_events`
+sequentially parses all provided attributes and records an event whenever the
+value in *any* of the attributes changes. The generated event definition is a
+dictionary that contains:
 
-1. Onset of the event as index in the sequence (in this example this is a
+1. Onset of the event as an index in the sequence (in this example this is a
    volume id)
 2. Duration of the event in "number of sequence elements" (i.e. number of
    volumes). The duration is determined by counting the number of identical
@@ -179,7 +178,7 @@ True
   -- both for samples and for features. Look at each of them and think
   about what it could be useful for.
 
-At this point is worth looking at the dataset's mapper -- in particular at
+At this point it is worth looking at the dataset's mapper -- in particular at
 the last two items in the chain mapper that have been added during the
 conversion into events.
 
@@ -190,17 +189,17 @@ conversion into events.
 
   Reverse-map a single sample through the last two items in the chain
   mapper. Inspect the result and make sure it doesn't surprise. Now,
-  reverse map multiple samples at once and compare the result. Is this what
+  reverse-map multiple samples at once and compare the result. Is this what
   you would expect?
 
 The rest of our analysis is business as usual and is quickly done.  We want to
 perform a cross-validation analysis of an SVM classifier. We are not
 primarily interested in its performance, but in the weights it assigns to
-the features. Remember, each feature is now voxel-time-point, so we get a
-chance of looking at the spatio-temporal profile of classification relevant
+the features. Remember, each feature is now voxel-at-time-point, so we get a
+chance of looking at the spatio-temporal profile of classification-relevant
 information in the data. We will nevertheless enable computing of a confusion
 matrix, so we can assure ourselves that the classifier is performing
-reasonably well, because only a  generalizing model is worth
+reasonably well, because only a generalizing model is worth
 inspecting, as otherwise it overfits and the assigned weights
 could be meaningless.
 
@@ -317,9 +316,9 @@ voxel features``.
 >>> _ = pl.xlabel('Peristimulus volumes')
 
 That was it. Perhaps you are scared by the amount of code. Please note that
-it could have been done shorter, but this way allows to plot any other voxel
-coordinate combination as well. matplotlib allows for saving this figure in
-SVG_ format that allows for convenient post-processing in Inkscape_ -- a
+it could have been done shorter, but this way allows for plotting any other voxel
+coordinate combination as well. matplotlib also allows for saving this figure in
+SVG_ format, allowing for convenient post-processing in Inkscape_ -- a
 publication quality figure is only minutes away.
 
 .. _SVG: http://en.wikipedia.org/wiki/Scalable_Vector_Graphics
@@ -366,18 +365,17 @@ promised that there is more to it than what we already saw. And here it is:
 ...                  postproc=mean_sample())
 >>> res = sl(evds)
 
-Have you been able to deduce what this analysis will do? Clearly, it is
-some sort of searchlight, but it doesn't use
-:func:`~mvpa2.measures.searchlight.sphere_searchlight`. Instead, it
-utilizes :class:`~mvpa2.measures.searchlight.Searchlight`. Yes, your are
-correct this is a spatio-temporal searchlight. The searchlight focus
-travels along all possible locations in our ventral temporal ROI, but at
-the same time also along the peristimulus time segment covered by the
-events. The spatial searchlight extent is the center voxel and its
-immediate neighbors and the temporal dimension comprises of two additional ime-points in
-each direction. The result is again a dataset. Its shape is compatible
-with the mapper of ``evds``, hence it can also be back-projected into the
-original 4D fMRI brain space.
+Have you been able to deduce what this analysis will do? Clearly, it is some
+sort of searchlight, but it doesn't use
+:func:`~mvpa2.measures.searchlight.sphere_searchlight`. Instead, it utilizes
+:class:`~mvpa2.measures.searchlight.Searchlight`. Yes, your are correct this is
+a spatio-temporal searchlight. The searchlight focus travels along all possible
+locations in our ventral temporal ROI, but at the same time also along the
+peristimulus time segment covered by the events. The spatial searchlight extent
+is the center voxel and its immediate neighbors and the temporal dimension
+comprises of two additional time-points in each direction. The result is again
+a dataset. Its shape is compatible with the mapper of ``evds``, hence it can
+also be back-projected into the original 4D fMRI brain space.
 
 :class:`~mvpa2.measures.searchlight.Searchlight` is a powerful class that
 allows for complex runtime ROI generation. In this case it uses an
