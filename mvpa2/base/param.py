@@ -154,7 +154,13 @@ class Parameter(IndexedCollectable):
         paramsdoc = [paramsdoc]
         try:
             doc = self.__doc__.strip()
-            if not doc.endswith('.'): doc += '.'
+            if not doc.endswith('.'):
+                doc += '.'
+            if hasattr(self, 'choices') \
+              and ((hasattr(self, 'allowedtype') and 'string' in self.allowedtype)
+                   or np.all([isinstance(x, basestring) for x in self.choices])):
+                choices = ', '.join(repr(x) for x in self.choices)
+                doc += " [Choices: %s]" % choices
             try:
                 doc += " (Default: %r)" % (self.default,)
             except:
