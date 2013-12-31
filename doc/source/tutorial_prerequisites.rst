@@ -65,7 +65,7 @@ For Windows, `Python(x,y)`_ matches these requirements.  For MacOS X, the
 MacPorts_ project offers a large variety of Python packages (including
 PyMVPA).
 
-.. _Python(x,y): http://www.pythonxy.com
+.. _Python(x,y): https://code.google.com/p/pythonxy/
 .. _MacPorts: http://www.macports.org
 
 The ideal environment is, however, the Debian_ operating system. Debian
@@ -104,7 +104,7 @@ http://en.wikibooks.org/wiki/Non-Programmer's_Tutorial_for_Python_2.6
   Basic from-scratch introduction into Python. This should give you the basics,
   even if you had *no* prior programming experience.
 
-http://www.ibiblio.org/swaroopch/byteofpython/read/
+http://swaroopch.com/notes/python/
 
   From the author:
 
