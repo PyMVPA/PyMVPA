@@ -45,7 +45,7 @@ each of the eight stimulus categories. Stimulation blocks were separated by
 rest periods. What we want to do now is to look at the spatio-temporal
 signal across our region of interest and the full duration of the
 stimulation blocks. In other words, we want to perform a sensitivity
-analysis revealing the spatial-temporal distribution of
+analysis revealing the spatio-temporal distribution of
 classification-relevant information.
 
 In this kind of analysis, we consider each stimulation block an
@@ -368,7 +368,7 @@ promised that there is more to it than what we already saw. And here it is:
 Have you been able to deduce what this analysis will do? Clearly, it is some
 sort of searchlight, but it doesn't use
 :func:`~mvpa2.measures.searchlight.sphere_searchlight`. Instead, it utilizes
-:class:`~mvpa2.measures.searchlight.Searchlight`. Yes, your are correct this is
+:class:`~mvpa2.measures.searchlight.Searchlight`. Yes, you are correct this is
 a spatio-temporal searchlight. The searchlight focus travels along all possible
 locations in our ventral temporal ROI, but at the same time also along the
 peristimulus time segment covered by the events. The spatial searchlight extent

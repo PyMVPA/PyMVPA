@@ -51,8 +51,8 @@ observation, a :term:`sample`, in the dataset, and every column vector
 represents an individual variable, a :term:`feature`. The concepts of samples
 and features are essential for a dataset, hence we take a further, closer look.
 
-The dataset assumes the first axis of the data to be the sample-separating
-dimension. If the dataset is created using a one-dimensional vector it will
+The dataset assumes that the first axis of the data is to be used to define
+individual samples. If the dataset is created using a one-dimensional vector it will
 therefore have as many samples as elements in the vector, and only one feature.
 
 >>> one_d = [ 0, 1, 2, 3 ]
@@ -92,7 +92,7 @@ three types of :term:`attribute`\ s: :term:`sample attribute`, :term:`feature at
 For Samples
 -----------
 
-In a dataset, each :term:`sample` can have an arbitrary number of additional
+Each :term:`sample` in a dataset can have an arbitrary number of additional
 attributes. They are stored as vectors of the same length as the number of samples
 in a collection, and are accessible via the ``sa`` attribute. A collection is
 derived from a standard Python `dict`, and hence adding sample attributes
@@ -192,7 +192,7 @@ For The Dataset
 
 Finally, there can be also attributes, not per each sample, or each
 feature, but for the dataset as a whole: so called :term:`dataset
-attribute`\s. Assigning such attributes and accessing them later on works in
+attribute`\s. Both assigning such attributes and accessing them later on work in
 exactly the same way as for the other two types of attributes, except that dataset
 attributes are stored in their own collection which is accessible via the
 ``a`` property of the dataset.  However, in contrast to sample and feature
@@ -380,7 +380,7 @@ As expected, we get the same number of samples and also only 577 features
 explore this dataset a little further.
 
 Besides samples, the dataset offers a number of attributes that enhance the
-data with information that is present in the NIfTI image header for the file.
+data with information that is present in the NIfTI image file header.
 Each sample has information about its volume index in the time series and the
 actual acquisition time (relative to the beginning of the file). Moreover, the
 original voxel index (sometimes referred to as ``ijk``) for each feature is
