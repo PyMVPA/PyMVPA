@@ -85,7 +85,7 @@ be easy to read:
   of the dataset generator function.
 
 Now we want to run this analysis again, repeatedly and with a fresh
-permuation of the targets for each run. We need two pieces for the Monte
+permutation of the targets for each run. We need two pieces for the Monte
 Carlo shuffling. The first is an instance of an
 :class:`~mvpa2.generators.permutation.AttributePermutator` that will
 permute the target attribute of the dataset for each iteration.  We
@@ -133,7 +133,7 @@ statistical evaluation. The ``cv_mc`` :term:`conditional attribute`
 likelihood of an empirical value (i.e. the result from analysing the original
 dataset) being equal or lower to one under the *Null* hypothesis, i.e. no
 actual relevant signal in the data. Or in more concrete terms, the p-value
-is the fraction of results from the permutation analysis that are less than or
+is the fraction of permutation results less than or
 equal to the empirical result.
 
 
