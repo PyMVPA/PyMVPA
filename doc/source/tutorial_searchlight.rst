@@ -27,10 +27,10 @@ And that is despite the fact that we have analyzed the data repeatedly,
 with different classifiers and investigated error rates and confusion
 matrices. So what can we do?
 
-Ideally, we would like to have something that estimates a score per each feature
+Ideally, we would like to have someway to estimate a score for each feature
 that indicates how important that particular feature (most of the time a
 voxel) is in the context of a certain classification task. There are various
-possibilities to get a vector of such per feature scores in PyMVPA. We could
+possibilities to get a vector of such per-feature scores in PyMVPA. We could
 simply compute an ANOVA_ F-score per each feature, yielding scores that would
 tell us which features vary significantly between any of the categories in our
 dataset.
@@ -38,9 +38,10 @@ dataset.
 .. _ANOVA: http://en.wikipedia.org/wiki/Analysis_of_variance
 
 Before we can take a look at the implementation details, let's first
-recreate our preprocessed demo dataset. The code is taken verbatim from the
-:ref:`previous tutorial part <chap_tutorial_classifiers>` and should raise
-no questions. We get a dataset with one sample per category per run.
+recreate our preprocessed demo dataset. The code is very similar to that
+from the :ref:`previous tutorial part <chap_tutorial_classifiers>` and
+should raise no questions. We get a dataset with one sample per category
+per run.
 
 >>> from mvpa2.tutorial_suite import *
 >>> # alt: `ds = load_tutorial_results('ds_haxby2001')`
@@ -194,7 +195,7 @@ we would expect for random guessing of the classifier -- that is more than
 
   Look at the distribution of the errors
   (hint: ``hist(sphere_errors, bins=np.linspace(0, 1, 18))``.
-  What do you think in how many spheres the classifier actually picked up
+  In how many spheres do you think the classifier actually picked up
   real signal? What would be a good value to threshold the errors to
   distinguish false from true positives? Think of it in the context of
   statistical testing of fMRI data results. What problems are we facing
@@ -254,10 +255,10 @@ results and probably tried to interpret them. What conclusions did you draw
 from these analyses in terms of the neuroscientific aspects? What have you
 learned about object representation in the brain? In this case we have run
 8-way classification analyses and have looked at the average error rate across
-all conditions of thousands of sphere-shaped ROIs in the brain. In some spheres the
+all conditions in thousands of sphere-shaped ROIs in the brain. In some spheres the
 classifier could perform well, i.e. it could predict all
 samples equally well. However, this only applies to a handful of over 30k
-spheres we have tested, and does not unveil either classifier was capable of
+spheres we have tested, and does not reveal whether the classifier was capable of
 classifying *all* of the conditions or just some.  For the vast majority
 we observe errors somewhere
 between the theoretical chance level and zero and we don't know what caused
@@ -276,7 +277,7 @@ as it raises more questions than it answers.
 Moreover, a searchlight cannot detect signals that extend beyond a small
 local neighborhood. This property effectively limits the scope of analyses
 that can employ this strategy. A study looking a global brain circuitry
-will hardly restrict the analysis to patches of few cubic millimeters of
+will hardly restrict the analysis to patches of a few cubic millimeters of
 brain tissue. As we have seen before, searchlights also have another nasty
 aspect. Although they provide us with a multivariate localization measure,
 they also inherit the curse of univariate fMRI data analysis -- `multiple
