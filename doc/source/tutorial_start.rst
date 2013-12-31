@@ -161,7 +161,7 @@ attribute:
 ['even' 'even' 'even' 'even' 'even' 'even' 'even' 'even' 'odd' 'odd' 'odd'
  'odd' 'odd' 'odd' 'odd' 'odd']
 
-Using this attribute we can now easily split the dataset in two. PyMVPA
+Using this attribute we can now easily split the dataset in half. PyMVPA
 datasets can be sliced in similar ways as NumPy_'s `ndarray`. The following
 calls select the subset of samples (i.e. rows in the datasets) where the value
 of the ``runtype`` attribute is either the string 'even' or 'odd'.
