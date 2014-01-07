@@ -45,7 +45,7 @@ distribution using permutation testing. The *Null* distribution is
 estimated by computing the measure of interest multiple times using the original
 data samples but with permuted targets, presumably scrambling or destroying the
 signal of interest.  Since quite often the exploration of all permutations is
-unfeasible, Monte-Carlo testing (see :ref:`Nichols et al. (2006) <NH02>`)
+unfeasible, Monte-Carlo testing (see :ref:`Nichols et al. (2002) <NH02>`)
 allows us to obtain a stable estimate with only a limited number of random
 permutations.
 
