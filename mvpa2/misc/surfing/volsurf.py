@@ -380,7 +380,7 @@ class VolSurfMapping(VolSurf):
             Relative stop position of line (as in see start).
         start_mm: float (default: 0)
             Absolute start position offset (as in start_fr).
-        sttop_mm: float (default: 0)
+        stop_mm: float (default: 0)
             Absolute start position offset (as in start_fr).
 
 
@@ -603,7 +603,7 @@ class VolSurfMaximalMapping(VolSurfMapping):
             Relative stop position of line (as in see start).
         start_mm: float (default: 0)
             Absolute start position offset (as in start_fr).
-        sttop_mm: float (default: 0)
+        stop_mm: float (default: 0)
             Absolute start position offset (as in start_fr).
 
 
@@ -699,7 +699,7 @@ class VolSurfMinimalMapping(VolSurfMapping):
             Relative stop position of line (as in see start).
         start_mm: float (default: 0)
             Absolute start position offset (as in start_fr).
-        sttop_mm: float (default: 0)
+        stop_mm: float (default: 0)
             Absolute start position offset (as in start_fr).
 
         Notes
@@ -798,7 +798,7 @@ class VolSurfMinimalLowresMapping(VolSurfMinimalMapping):
             Relative stop position of line (as in see start).
         start_mm: float (default: 0)
             Absolute start position offset (as in start_fr).
-        sttop_mm: float (default: 0)
+        stop_mm: float (default: 0)
             Absolute start position offset (as in start_fr).
 
         Notes

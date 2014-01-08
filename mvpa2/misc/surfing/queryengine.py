@@ -408,7 +408,7 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
         Relative stop position of line (as in start_fr)
     start_mm: float (default: 0)
         Absolute start position offset (as in start_fr)
-    sttop_mm: float (default: 0)
+    stop_mm: float (default: 0)
         Absolute start position offset (as in start_fr)
     nsteps: int (default: 10)
         Number of steps from white to pial surface

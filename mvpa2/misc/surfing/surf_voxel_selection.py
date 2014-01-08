@@ -766,7 +766,7 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
         Relative stop position of line (as in see start)
     start_mm: float (default: 0)
         Absolute start position offset (as in start_fr)
-    sttop_mm: float (default: 0)
+    stop_mm: float (default: 0)
         Absolute start position offset (as in start_fr)
     nsteps: int (default: 10)
         Number of steps from white to pial surface
