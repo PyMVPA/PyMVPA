@@ -573,7 +573,14 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         # check that after training it behaves well
         qe.train(ds)
-        m = qe[qe.ids[0]]
+        i = qe.ids[0]
+        try:
+            m = qe[i]
+        except ValueError, e:
+            raise AssertionError(
+                'Failed to query %r from %r after training on %r. Exception was: %r'
+                 % (i, qe, ds, e))
+
         assert_equal(qe[qe.ids[0]].samples[0, 0], 883)
 
         voxsel = qe.voxsel
@@ -582,7 +589,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         setstate_current = VolumeMaskDictionary.__dict__['__setstate__']
         reduce_current = VolumeMaskDictionary.__dict__['__reduce__']
 
-        # try all comobinations.
+        # try all combinations.
         # end with both set to False so that VolumeMaskDictionary is back
         # in its original state
         # XXX is manipulating class methods this way too dangerous?
