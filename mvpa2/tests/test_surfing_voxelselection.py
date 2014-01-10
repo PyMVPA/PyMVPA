@@ -159,9 +159,9 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot,
                                                     'bold.nii.gz'),
-                                                    targets=attr.targets,
-                                                    chunks=attr.chunks,
-                                                    mask=mask)
+                               targets=attr.targets,
+                               chunks=attr.chunks,
+                               mask=mask)
 
         if run_slow:
             # do chunkswise linear detrending on dataset
@@ -269,11 +269,11 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
 
         params = dict(intermediate_=(intermediate, intermediatefn, None),
-                    center_nodes_=(None, range(nv)),
-                    volume_=(volimg, volfn, volds, volfngz, voldsgz),
-                    surf_src_=('filename', 'surf'),
-                    volume_mask_=(None, True, 0, 2),
-                    call_method_=("qe", "rvs", "gam"))
+                      center_nodes_=(None, range(nv)),
+                      volume_=(volimg, volfn, volds, volfngz, voldsgz),
+                      surf_src_=('filename', 'surf'),
+                      volume_mask_=(None, True, 0, 2),
+                      call_method_=("qe", "rvs", "gam"))
 
         combis = _cartprod(params) # compute all possible combinations
         combistep = 17  #173
