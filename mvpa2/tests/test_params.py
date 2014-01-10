@@ -131,6 +131,39 @@ class ParamsTests(unittest.TestCase):
         for p in 'count', 'disable_ca', 'postproc':
             self.assertTrue(p in estr)
 
+    def test_choices(self):
+        # Test doc strings for parameters with choices
+        class WithChoices(ClassWithCollections):
+            C = Parameter('choice1',
+                          choices=['choice1', 'choice2'],
+                          doc="documentation")
+            # We need __init__ to get 'custom' docstring
+            def __init__(self, **kwargs):
+                super(type(self), self).__init__(**kwargs)
+
+        c = WithChoices()
+        self.assertRaises(ValueError, c.params.__setattr__, 'C', 'bu')
+        c__doc__ = c.__init__.__doc__.replace('"', "'")
+        self.assertTrue("[Choices: 'choice1', 'choice2']" in c__doc__)
+        self.assertTrue("(Default: 'choice1')" in c__doc__)
+
+        # But we will not (at least for now) list choices if there are
+        # non-strings
+        class WithFuncChoices(ClassWithCollections):
+            C = Parameter('choice1',
+                          choices=['choice1', np.sum],
+                          doc="documentation")
+            # We need __init__ to get 'custom' docstring
+            def __init__(self, **kwargs):
+                super(type(self), self).__init__(**kwargs)
+
+        cf = WithFuncChoices()
+        self.assertRaises(ValueError, cf.params.__setattr__, 'C', 'bu')
+        cf.params.C = np.sum
+        cf__doc__ = cf.__init__.__doc__.replace('"', "'")
+        self.assertFalse("[Choices:" in cf__doc__)
+        self.assertTrue("(Default: 'choice1')" in cf__doc__)
+
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(ParamsTests)

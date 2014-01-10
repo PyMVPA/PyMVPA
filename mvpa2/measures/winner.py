@@ -108,7 +108,7 @@ class WinnerMeasure(Measure):
             to_copy[1][k] = copy.copy(v)
 
         # set source and target. feature attributes become
-        # sample attribtues; or vice versa
+        # sample attributes; or vice versa
         src, _ = to_leave
         trg = to_copy[1]
         prefix = self.__other_axis_prefix

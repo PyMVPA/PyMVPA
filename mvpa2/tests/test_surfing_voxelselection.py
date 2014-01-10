@@ -545,7 +545,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                                 assert_equal(x - y, set())
 
                             # decent agreement in any case between the two sets
-                            assert_true(r < .5)
+                            assert_true(r < .6)
 
     @with_tempfile('.h5py', 'voxsel')
     def test_queryengine_io(self, fn):
@@ -634,8 +634,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                 assert_array_almost_equal(sel.get_aux(qe.ids[0], key)[3], v)
 
 
-
-    def test_surface_minimal_lowres_voxel_selection(self):
+    @with_tempfile('.h5py', 'voxsel')
+    def test_surface_minimal_lowres_voxel_selection(self, fn):
         vol_shape = (4, 10, 10, 1)
         vol_affine = np.identity(4)
         vg = volgeom.VolGeom(vol_shape, vol_affine)
@@ -668,6 +668,18 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                     # require at least 60% agreement
                     delta = set.symmetric_difference(set(p), set(q))
                     assert_true(len(delta) < .8 * (len(p) + len(q)))
+
+            if externals.exists('h5py'):
+                from mvpa2.base.hdf5 import h5save, h5load
+
+                h5save(fn, voxsel)
+                voxsel_copy = h5load(fn)
+                assert_equal(voxsel.keys(), voxsel_copy.keys())
+
+                for id in qe.ids:
+                    assert_array_equal(voxsel.get(id), voxsel_copy.get(id))
+
+
 
 
     @reseed_rng()
