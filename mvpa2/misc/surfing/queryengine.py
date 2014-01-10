@@ -408,7 +408,7 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
         Relative stop position of line (as in start_fr)
     start_mm: float (default: 0)
         Absolute start position offset (as in start_fr)
-    sttop_mm: float (default: 0)
+    stop_mm: float (default: 0)
         Absolute start position offset (as in start_fr)
     nsteps: int (default: 10)
         Number of steps from white to pial surface
@@ -416,7 +416,7 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
         After how many searchlights an estimate should be printed of the
         remaining time until completion of all searchlights
     add_fa: None or list of strings
-        Feature attribtues from a dataset that should be returned if the
+        Feature attributes from a dataset that should be returned if the
         queryengine is called with a dataset.
     nproc: int or None
         Number of parallel threads. None means as many threads as the
