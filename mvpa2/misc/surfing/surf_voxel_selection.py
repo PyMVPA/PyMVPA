@@ -508,7 +508,7 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
 
 
     # structure to keep output data. Initialize with None, then
-    # make a sparse_attributes instance when we know what the attribtues are
+    # make a sparse_attributes instance when we know what the attributes are
     node2volume_attributes = None
 
     attribute_mapper = voxel_selector.disc_voxel_indices_and_attributes
@@ -766,7 +766,7 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
         Relative stop position of line (as in see start)
     start_mm: float (default: 0)
         Absolute start position offset (as in start_fr)
-    sttop_mm: float (default: 0)
+    stop_mm: float (default: 0)
         Absolute start position offset (as in start_fr)
     nsteps: int (default: 10)
         Number of steps from white to pial surface

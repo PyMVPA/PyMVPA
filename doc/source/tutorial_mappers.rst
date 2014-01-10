@@ -101,8 +101,8 @@ while the former encapsulates the two mappers into a processing pipeline.
 We can see that the mapper chain represents the processing history of the
 dataset like a breadcrumb track.
 
-As it has been mentioned, mappers  not only can transform a single dataset, but
-can be feed with other data (as long as it is compatible with the mapper).
+As it has been mentioned, mappers not only can transform a single dataset, but
+can be fed with other data (as long as it is compatible with the mapper).
 
 >>> fwdtest = np.arange(12).reshape(4,3)
 >>> print fwdtest
@@ -216,7 +216,7 @@ high/low/band-pass filtering, de-spiking, motion-correcting, intensity
 normalization, and so on. In this tutorial, we keep it simple. The data we
 have just loaded is already motion corrected. For every experiment that is
 longer than a few minutes, as in this case, temporal trend removal, or
-:term:`detrending` is crucial.
+:term:`detrending`, is crucial.
 
 Detrending
 ----------
@@ -261,7 +261,7 @@ possible approaches to fix it. For this tutorial we are again following a
 simple one, and perform a feature-wise, chunk-wise Z-scoring of the data.  This
 has many advantages. First, it is going to scale all features into approximately
 the same range, and also remove their mean.  The latter is quite important,
-since some classifiers cannot deal with not demeaned data. However, we are not
+since some classifiers cannot handle not-demeaned data. However, we are not
 going to perform a very simple Z-scoring removing the global mean, but use the
 *rest* condition samples of the data to estimate mean and standard deviation.
 Scaling features using these parameters yields a score corresponding to the
@@ -474,7 +474,7 @@ software.
    on top of the anatomical image in the demo dataset. Does it match our
    original mask image of ventral temporal cortex?
 
-There are much more mappers in PyMVPA than we could cover in the tutorial
+There are many more mappers in PyMVPA than we could cover in the tutorial
 part. Some more will be used in other parts, but even more can be found the
 :mod:`~mvpa2.mappers` module. Even though they all implement different
 transformations, they can all be used in the same way, and can all be
