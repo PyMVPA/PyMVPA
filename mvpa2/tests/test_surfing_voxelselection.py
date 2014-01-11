@@ -20,6 +20,7 @@ import nibabel as nb
 import os
 import tempfile
 
+from mvpa2.testing import  reseed_rng
 from mvpa2.testing.datasets import datasets
 
 from mvpa2 import cfg
@@ -32,6 +33,7 @@ from mvpa2.support.nibabel import surf
 from mvpa2.misc.surfing import surf_voxel_selection, queryengine, volgeom, \
                                 volsurf
 from mvpa2.misc.surfing.volume_mask_dict import VolumeMaskDictionary
+from mvpa2.misc.surfing import volume_mask_dict
 
 from mvpa2.measures.searchlight import Searchlight
 from mvpa2.misc.surfing.queryengine import SurfaceVerticesQueryEngine, \
@@ -159,9 +161,9 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot,
                                                     'bold.nii.gz'),
-                                                    targets=attr.targets,
-                                                    chunks=attr.chunks,
-                                                    mask=mask)
+                               targets=attr.targets,
+                               chunks=attr.chunks,
+                               mask=mask)
 
         if run_slow:
             # do chunkswise linear detrending on dataset
@@ -269,11 +271,11 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
 
         params = dict(intermediate_=(intermediate, intermediatefn, None),
-                    center_nodes_=(None, range(nv)),
-                    volume_=(volimg, volfn, volds, volfngz, voldsgz),
-                    surf_src_=('filename', 'surf'),
-                    volume_mask_=(None, True, 0, 2),
-                    call_method_=("qe", "rvs", "gam"))
+                      center_nodes_=(None, range(nv)),
+                      volume_=(volimg, volfn, volds, volfngz, voldsgz),
+                      surf_src_=('filename', 'surf'),
+                      volume_mask_=(None, True, 0, 2),
+                      call_method_=("qe", "rvs", "gam"))
 
         combis = _cartprod(params) # compute all possible combinations
         combistep = 17  #173
@@ -547,6 +549,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                             # decent agreement in any case between the two sets
                             assert_true(r < .6)
 
+    @reseed_rng()
     @with_tempfile('.h5py', 'voxsel')
     def test_queryengine_io(self, fn):
         skip_if_no_external('h5py')
@@ -573,7 +576,14 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         # check that after training it behaves well
         qe.train(ds)
-        m = qe[qe.ids[0]]
+        i = qe.ids[0]
+        try:
+            m = qe[i]
+        except ValueError, e:
+            raise AssertionError(
+                'Failed to query %r from %r after training on %r. Exception was: %r'
+                 % (i, qe, ds, e))
+
         assert_equal(qe[qe.ids[0]].samples[0, 0], 883)
 
         voxsel = qe.voxsel
@@ -582,11 +592,18 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         setstate_current = VolumeMaskDictionary.__dict__['__setstate__']
         reduce_current = VolumeMaskDictionary.__dict__['__reduce__']
 
-        # try all comobinations.
+        # try all combinations.
         # end with both set to False so that VolumeMaskDictionary is back
         # in its original state
         # XXX is manipulating class methods this way too dangerous?
         true_false_combis = [(i % 2 == 1, i // 2 == 0) for i in xrange(3, 7)]
+
+        # try different ways to load volume mask dictionaries
+        # first argument is filename, second argument is volume mask dictionary
+        vmd_load_methods = [lambda f, vmd: h5load(f),
+                            lambda f, vmd: volume_mask_dict.from_any(vmd),
+                            lambda f, vmd: volume_mask_dict.from_any(f),
+                            lambda f, vmd: vmd]
         for setstate_use_legacy, reduce_use_legacy in true_false_combis:
             reducer = VolumeMaskDictionary._reduce_legacy \
                             if reduce_use_legacy  \
@@ -624,14 +641,17 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             for id in qe.ids:
                 assert_array_equal(qe[id].samples, qe_copy[id].samples)
 
-            sel, sel_copy = qe.voxsel, qe_copy.voxsel
-            assert_equal(sel.aux_keys(), add_fa)
-            expected_values = [1.13851869106, 1.03270423412] # smoke test
-            for key, v in zip(add_fa, expected_values):
-                for id in qe.ids:
-                    assert_array_equal(sel.get_aux(id, key), sel_copy.get_aux(id, key))
+            sel = qe.voxsel
+            h5save(fn, sel)
+            for vmd_load_method in vmd_load_methods:
+                sel_copy = vmd_load_method(fn, sel)
+                assert_equal(sel.aux_keys(), add_fa)
+                expected_values = [1.13851869106, 1.03270423412] # smoke test
+                for key, v in zip(add_fa, expected_values):
+                    for id in qe.ids:
+                        assert_array_equal(sel.get_aux(id, key), sel_copy.get_aux(id, key))
 
-                assert_array_almost_equal(sel.get_aux(qe.ids[0], key)[3], v)
+                    assert_array_almost_equal(sel.get_aux(qe.ids[0], key)[3], v)
 
 
     @with_tempfile('.h5py', 'voxsel')
