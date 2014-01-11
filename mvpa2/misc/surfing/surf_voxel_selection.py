@@ -313,7 +313,6 @@ class VoxelSelector(object):
             return None, None
 
         idxs = attrs.pop(LINEAR_VOXEL_INDICES)
-
         return idxs, attrs
 
 
@@ -614,7 +613,6 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
                     debug('SVS', "Merging results from %d child "
                                  "processes using '%s' backend" %
                                  (len(blocks), results_backend))
-
             else:
                 # merge new with current data
                 node2volume_attributes.merge(result)
