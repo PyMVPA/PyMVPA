@@ -20,6 +20,7 @@ import nibabel as nb
 import os
 import tempfile
 
+from mvpa2.testing import  reseed_rng
 from mvpa2.testing.datasets import datasets
 
 from mvpa2 import cfg
@@ -160,9 +161,9 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot,
                                                     'bold.nii.gz'),
-                                                    targets=attr.targets,
-                                                    chunks=attr.chunks,
-                                                    mask=mask)
+                               targets=attr.targets,
+                               chunks=attr.chunks,
+                               mask=mask)
 
         if run_slow:
             # do chunkswise linear detrending on dataset
@@ -270,11 +271,11 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
 
         params = dict(intermediate_=(intermediate, intermediatefn, None),
-                    center_nodes_=(None, range(nv)),
-                    volume_=(volimg, volfn, volds, volfngz, voldsgz),
-                    surf_src_=('filename', 'surf'),
-                    volume_mask_=(None, True, 0, 2),
-                    call_method_=("qe", "rvs", "gam"))
+                      center_nodes_=(None, range(nv)),
+                      volume_=(volimg, volfn, volds, volfngz, voldsgz),
+                      surf_src_=('filename', 'surf'),
+                      volume_mask_=(None, True, 0, 2),
+                      call_method_=("qe", "rvs", "gam"))
 
         combis = _cartprod(params) # compute all possible combinations
         combistep = 17  #173
@@ -548,6 +549,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                             # decent agreement in any case between the two sets
                             assert_true(r < .6)
 
+    @reseed_rng()
     @with_tempfile('.h5py', 'voxsel')
     def test_queryengine_io(self, fn):
         skip_if_no_external('h5py')
@@ -574,7 +576,14 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         # check that after training it behaves well
         qe.train(ds)
-        m = qe[qe.ids[0]]
+        i = qe.ids[0]
+        try:
+            m = qe[i]
+        except ValueError, e:
+            raise AssertionError(
+                'Failed to query %r from %r after training on %r. Exception was: %r'
+                 % (i, qe, ds, e))
+
         assert_equal(qe[qe.ids[0]].samples[0, 0], 883)
 
         voxsel = qe.voxsel
@@ -583,7 +592,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         setstate_current = VolumeMaskDictionary.__dict__['__setstate__']
         reduce_current = VolumeMaskDictionary.__dict__['__reduce__']
 
-        # try all comobinations.
+        # try all combinations.
         # end with both set to False so that VolumeMaskDictionary is back
         # in its original state
         # XXX is manipulating class methods this way too dangerous?
