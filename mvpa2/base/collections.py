@@ -465,7 +465,7 @@ class Collection(dict):
                 # store documentation
                 self[k].__doc__ = doc
         else:
-            raise ValueError("Collection.upate() cannot handle '%s'."
+            raise ValueError("Collection.update() cannot handle '%s'."
                              % str(type(source)))
 
 
