@@ -20,6 +20,7 @@ import nibabel as nb
 import os
 import tempfile
 
+from mvpa2.testing import  reseed_rng
 from mvpa2.testing.datasets import datasets
 
 from mvpa2 import cfg
@@ -547,6 +548,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                             # decent agreement in any case between the two sets
                             assert_true(r < .6)
 
+    @reseed_rng()
     @with_tempfile('.h5py', 'voxsel')
     def test_queryengine_io(self, fn):
         skip_if_no_external('h5py')
