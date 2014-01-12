@@ -164,12 +164,10 @@ class VolumeMaskDictionary(Mapping):
                 else:
                     v_dtype = next(self._src2aux[k].itervalues()).dtype
 
-                if type(v) is np.ndarray:
-                    v_arr = v.astype(v_dtype)
-                elif type(v) in (list, tuple, int, float):
-                    v_arr = np.asarray(v, dtype=v_dtype)
-
-                v_arr = v_arr.ravel()
+                if any(isinstance(v, tp) for tp in (list, tuple, int, float, np.ndarray)):
+                    v_arr = np.asanyarray(v, dtype=v_dtype).ravel()
+                else:
+                    raise ValueError('illegal type %s for %s' % (type(v), v))
 
                 if len(v_arr) not in (n, 1):
                     raise ValueError('size mismatch: size %d != %d or 1' %
