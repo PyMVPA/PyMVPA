@@ -629,7 +629,7 @@ class VolumeMaskDictionary(Mapping):
         if not self.is_same_layout(other):
             raise ValueError("Cannot merge %s with %s" % (self, other))
 
-        if len(other.keys()) == 0:
+        if not other:
             # nothing to add, so we're done
             return
 
@@ -865,7 +865,7 @@ def _dict_with_arrays2array_tuple(d):
                                 (keys[0], key, data.dtype, v.dtype))
 
         idxs = np.arange(length) + pos
-        data[idxs] = v[:]# .astype(data.dtype, casting='same_kind')
+        data[idxs] = v
         pos += length
 
     return keys, lengths, data
