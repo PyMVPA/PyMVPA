@@ -155,17 +155,23 @@ class VolumeMaskDictionary(Mapping):
                 raise ValueError("aux label mismatch: %s != %s" %
                                 (set(aux), expected_keys))
             for k, v in aux.iteritems():
-                if type(v) is np.ndarray:
-                    v_arr = v.ravel()
-                elif type(v) in (list, tuple, int, float):
-                    v_arr = np.asarray(v).ravel()
+                if not k in self._src2aux:
+                    self._src2aux[k] = dict()
+
+                # ensure that values have the same datatype for different keys
+                if len(self._src2aux[k]) == 0:
+                    v_dtype = None
+                else:
+                    v_dtype = next(self._src2aux[k].itervalues()).dtype
+
+                if any(isinstance(v, tp) for tp in (list, tuple, int, float, np.ndarray)):
+                    v_arr = np.asanyarray(v, dtype=v_dtype).ravel()
+                else:
+                    raise ValueError('illegal type %s for %s' % (type(v), v))
 
                 if len(v_arr) not in (n, 1):
                     raise ValueError('size mismatch: size %d != %d or 1' %
                                         (len(v_arr), n))
-
-                if not k in self._src2aux:
-                    self._src2aux[k] = dict()
 
                 self._src2aux[k][src] = v_arr
 
@@ -500,7 +506,6 @@ class VolumeMaskDictionary(Mapping):
         # h5save/load
 
         s = self._getstate()
-
         # because of h5py issues when assigning values in the tuple s,
         # here a new tuple is created
         s3 = _dict_with_arrays2array_tuple(s[3])
@@ -538,7 +543,6 @@ class VolumeMaskDictionary(Mapping):
 
     def __setstate__(self, s):
         self._setstate(s)
-
         # new as of Dec 2013: use more efficient storage method for h5save/load
         self._src2nbr = _array_tuple2dict_with_arrays(self._src2nbr)
         self._src2aux = _array_tuple2dict_with_arrays(self._src2aux)
@@ -625,7 +629,20 @@ class VolumeMaskDictionary(Mapping):
         if not self.is_same_layout(other):
             raise ValueError("Cannot merge %s with %s" % (self, other))
 
+        if not other:
+            # nothing to add, so we're done
+            return
+
         aks = self.aux_keys()
+        if set(aks) != set(other.aux_keys()):
+            if len(self.keys()) == 0:
+                # current instance is empty, so use the keys from
+                # the other (necessarily non-empty because of the check above)
+                # instance
+                aks = other.aux_keys()
+            else:
+                raise ValueError('Different keys in merge: %s != %s' %
+                                (aks, other.aux_keys()))
 
 # TODO: optimization in case either one or both already have the
 #       inverse mapping from voxels to nodes
@@ -838,21 +855,11 @@ def _dict_with_arrays2array_tuple(d):
 
     for i, (key, length) in enumerate(zip(keys, lengths)):
         v = d[key]
-        if i == 0:
-            # allocate space
-            array_type = v.dtype
 
-            # for hdf5 conversion to 'native' float or 'int' is needed.
-            # (if v is np.int32 but np.float==np.float64 then h5save
-            #  fails to reduce the array properly because of 'unsave'
-            #  conversion)
-            set_types_in_order = (np.float, np.int)
-            for set_type in set_types_in_order:
-                if np.issubdtype(v.dtype, set_type):
-                    array_type = set_type
-                    break
-            data = np.zeros((ntotal,), array_type)
-        elif not _same_dtype(data, v):
+        if i == 0:
+            # allocate space for all data in d
+            data = np.zeros((ntotal,), dtype=v.dtype)
+        elif v.dtype != data.dtype:
             # ensure all values in the dict have the same datatype
             raise ValueError('Type mismatch for keys %s and %s: %s != %s' %
                                 (keys[0], key, data.dtype, v.dtype))
