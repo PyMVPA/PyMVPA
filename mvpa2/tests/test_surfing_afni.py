@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Unit tests for PyMVPA surface searchlight functions specific for 
+"""Unit tests for PyMVPA surface searchlight functions specific for
 handling AFNI datasets"""
 
 
@@ -39,7 +39,7 @@ class SurfTests(unittest.TestCase):
         return rng
 
     def test_afni_niml(self):
-        # just a bunch of tests 
+        # just a bunch of tests
 
         ps = afni_niml._partial_string
 
