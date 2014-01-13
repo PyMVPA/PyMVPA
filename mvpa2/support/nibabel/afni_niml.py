@@ -120,10 +120,12 @@ def _datastring2rawniml(s, niml):
 
     onetype = types.findonetype(tps)
 
-    if onetype is None:
+    if onetype is None or ([onetype] == types.str2codes('string') and
+                            len(tps) > 1):
         return _mixedtypes_datastring2rawniml(s, niml)
 
     if [onetype] == types.str2codes('string'):
+        # single string
         return decode_escape(s.decode()) # do not string2rawniml
 
     # numeric, either int or float
@@ -466,17 +468,23 @@ def string2rawniml(s, i=None):
 
                     debug("NIML", "Parsing string body for %s", name)
 
-                    is_string_data = niml['ni_type'] == 'String'
-                    is_mixed_data = len(set(niml['vec_typ'])) > 1
+                    vec_typ = niml['vec_typ']
+                    is_mixed_data = len(set(vec_typ)) > 1
+                    is_multiple_string_data = len(vec_typ) > 1 and types._one_str2code('String') == types.findonetype(vec_typ)
 
-                    if is_mixed_data:
-                        debug("NIML", "Data is mixed type")
-                        strpat = ('\s*(?P<data>.*)\s*</%s>' % \
+                    if is_mixed_data or is_multiple_string_data:
+                        debug("NIML", "Data is mixed type (string=%s)" % is_multiple_string_data)
+                        #strpat = ('\s*(?P<data>.*)\s*</%s>' % \
+                        #                        (name.decode())).encode()
+                        strpat = ('\s*(?P<data>.*?)\s*</%s>' % \
                                                 (name.decode())).encode()
+
                         m = re.match(strpat, s[i:], _RE_FLAGS)
+                        is_string_data = is_multiple_string_data
                     else:
                         # If the data type is string, it is surrounded by quotes
                         # Otherwise (numeric data) there are no quotes
+                        is_string_data = niml['ni_type'] == 'String'
                         quote = '"' if is_string_data else ''
 
                         # construct the regular pattern for this string
@@ -497,8 +505,8 @@ def string2rawniml(s, i=None):
                     # convert data to raw NIML
                     data = _datastring2rawniml(data, niml)
 
-                    # if string data, replace esscape characters
-                    if is_string_data:
+                    # if string data, replace escape characters
+                    if is_multiple_string_data or is_string_data:
                         data = decode_escape(data)
 
                     # store data

@@ -35,11 +35,24 @@ from mvpa2.support.nibabel import afni_niml as niml
 
 from mvpa2.base import warning, debug
 
-def _string2list(s, SEP=";"):
+def _string2list(s, SEP=";", warn_if_no_string=True):
     '''splits a string by SEP; if the last element is empty then it is not returned
-    
-    The rationale is that AFNI/NIML like to close the string with a ';' which 
-    would return one (empty) value too many'''
+
+    The rationale is that AFNI/NIML like to close the string with a ';' which
+    would return one (empty) value too many
+
+    If the input is already a list that has lists or tuples,
+    by default a warning is thrown because SUMA may puke over it.
+    '''
+    if isinstance(s, (list, tuple)):
+        if warn_if_no_string and \
+                    any(isinstance(s_elem, (list, tuple)) for s_elem in s):
+            # a short representation of the offending structure
+            s_str = '%r' % s if len(s) <= 1 else '[%s ... %s]' % (s[0], s[1])
+            warning('Two-dimensional string structure %s found - '
+                        'it may not be readable by SUMA.' % s_str)
+        return s
+
     r = s.split(SEP)
     if not r[-1]:
         r = r[:-1]
