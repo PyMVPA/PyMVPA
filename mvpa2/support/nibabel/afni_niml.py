@@ -47,11 +47,27 @@ _ESCAPE = {'&lt;':'<',
          '&amp;':'&',
          '&apos;':"'"}
 
+def support_lists(f):
+    '''Used as decorator to a function f, it will
+    apply f element-wise to an argument xs if xs is a list or tuple
+    Otherwise it just applies f to xs.
+
+    XXX should this be a more universal function for PyMVPA'''
+    def apply_f(x):
+        if isinstance(x, (list, tuple)):
+            # support nested lists/tuples
+            return map(apply_f, x)
+        else:
+            return f(x)
+    return apply_f
+
+@support_lists
 def decode_escape(s):
     for k, v in _ESCAPE.iteritems():
         s = s.replace(k, v)
     return s
 
+@support_lists
 def encode_escape(s):
     for k, v in _ESCAPE.iteritems():
         s = s.replace(v, k)
