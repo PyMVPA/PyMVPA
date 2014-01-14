@@ -471,11 +471,13 @@ def plot_ellipses(ds, sts, x=0, y=1, ci=.95, labels=None,
         j = np.linspace(0,2*np.pi,128)
         coords = np.hstack((    (np.cos(j)*a).reshape((-1,1)),
                         (np.sin(j)*b).reshape((-1,1))))
-        coords = np.mat(coords.dot(rot.T) + center)
+        coords = coords.dot(rot.T) + center
 
-        plt.plot(np.vstack((coords[:,0], coords[0,0])),
-                    np.vstack((coords[:,1], coords[0,1])),
+        plt.plot(np.hstack((coords[:,0], coords[0,0])),
+                    np.hstack((coords[:,1], coords[0,1])),
                     c=cmap[l], ls=linestyle[l], **kwargs)
+ 
+
         if scat:
             plt.scatter(points[:,0],points[:,1],c=cmap[l])
 

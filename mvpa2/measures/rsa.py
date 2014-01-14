@@ -222,7 +222,79 @@ class TargetDissimilarityCorrelationMeasure(Measure):
             return Dataset(np.array([rho,p]))
 
 
-            
+class DissimilarityMultiRegressMeasure(Measure):
+    """
+    This is a dataset measure that computes the multiple linear regression
+    between a specified set of model or predictor DSMs and the DSM derived from
+    the dataset.
+
+    Note: this transforms all dissimilarity data to ranks before calculating the
+    multiple regression.
+    """
+
+    is_trained = True # Indicate that this measure is always trained.
+
+    def __init__(self, X, pairwise_metric='correlation', center_data=False,**kwargs):
+        """Initialize
+
+        Parameters
+        ----------
+        X               :   The n X m predictor matrix with n the number of
+                            predictors, including a row of all ones for a
+                            constant term, and m is the length of the flattened
+                            upper triangle of the dissimilarity mattrices. Thus
+                            if the dataset in question has j rows, then the
+                            value of m = j(j-1)/2.
+
+        pairwise_metric :   String. Distance metric to use for calculating 
+                            pairwise vector distances for dissimilarity matrix 
+                            (DSM).  See scipy.spatial.distance.pdist for all 
+                            possible metrics.  (Default ='correlation', i.e. one 
+                            minus Pearson correlation) 
+        center_data :       boolean. (Optional. Default = False) If True then center 
+                            each column of the data matrix by subtracing the column 
+                            mean from each element  (by chunk if chunks_attr 
+                            specified). This is recommended especially when using 
+                            pairwise_metric = 'correlation'.  
+        square :            boolean. (Optional.  Default = False) If True return 
+                            the square distance matrices, if False, returns the 
+                            flattened lower triangle.
+    
+        """
+
+        Measure.__init__(self, **kwargs)
+        (m,n) = X.shape
+        for i in range(m):
+            X[i,:] = rankdata(X[i,:])
+
+        self.pairwise_metric = pairwise_metric
+        self.center_data = center_data
+
+    def _call(self,ds):
+
+        X = self.X
+
+        data = ds.samples
+        # center data if specified
+        if self.center_data:
+            data = data - np.mean(data,0)
+
+        # get dsm 
+        dsm = pdist(data,metric=self.pairwise_metric)
+        dsm = rankdata(dsm)
+        y = np.mat(dsm.reshape((1,-1)))
+
+        b = y * X.T * np.linalg.inv(X*X.T)
+        y_hat = np.dot(b,X)
+        r = np.corrcoef(y_hat,y)[1,0]
+        rsq = r*r
+        b = b[0,:].reshape((-1,1))
+        b = np.vstack((rsq,b))
+        b[np.isnan(b)] = 0
+
+
+        return Dataset(b)
+           
 
 
 
