@@ -48,11 +48,14 @@ _ESCAPE = {'&lt;':'<',
          '&apos;':"'"}
 
 def support_lists(f):
-    '''Used as decorator to a function f, it will
+    '''Decorater to allow a function to support list input (and output)
+
+    Used as decorator with a function f, it will
     apply f element-wise to an argument xs if xs is a list or tuple
     Otherwise it just applies f to xs.
 
-    XXX should this be a more universal function for PyMVPA'''
+    XXX should this be a more universal function for PyMVPA
+    '''
     def apply_f(x):
         if isinstance(x, (list, tuple)):
             # support nested lists/tuples
@@ -63,12 +66,14 @@ def support_lists(f):
 
 @support_lists
 def decode_escape(s):
+    '''Undoes NIML-specific escape characters'''
     for k, v in _ESCAPE.iteritems():
         s = s.replace(k, v)
     return s
 
 @support_lists
 def encode_escape(s):
+    '''Applies NIML-specific escape characters'''
     for k, v in _ESCAPE.iteritems():
         s = s.replace(v, k)
     return s
@@ -82,6 +87,7 @@ def _parse_keyvalues(s):
     return dict([(k.decode(), v.decode()) for k, v in m])
 
 def _mixedtypes_datastring2rawniml(s, niml):
+    '''Converts data with mixed types to raw NIML'''
     tps = niml['vec_typ']
     ncols = len(tps)
     nrows = niml['vec_len']
@@ -114,6 +120,7 @@ def _mixedtypes_datastring2rawniml(s, niml):
 
 
 def _datastring2rawniml(s, niml):
+    '''Converts data with uniform type to raw NIML'''
     debug('NIML', 'Raw string to NIML: %d characters', len(s))
 
     tps = niml['vec_typ']
@@ -168,9 +175,11 @@ def _datastring2rawniml(s, niml):
     return data
 
 def getnewidcode():
+    '''Provides a new (random) id code for a NIML dataset'''
     return ''.join(map(chr, [random.randint(65, 65 + 25) for _ in xrange(24)]))
 
 def setnewidcode(s):
+    '''Sets a new (random) id code in a NIML dataset'''
     tp = type(s)
     if tp is list:
         for v in s:
@@ -184,6 +193,29 @@ def setnewidcode(s):
                 setnewidcode(v)
 
 def find_attribute_node(niml_dict, key, value, just_one=True):
+    '''Finds a NIML node that matches a particular key and value
+
+    Parameters
+    ----------
+    niml_dict: dict
+        NIML dictionary in which the node is to be found
+    key: str
+        Key for a node that is to be found
+    value: str
+        Value associated with key that is to be found
+    just_one: boolean (default: True)
+        Indicates whether exactly one matching node is to be found.
+
+    Returns
+    -------
+    nd: dict or list.
+        NIML dictionary matching key and value. If just_one is True then, if
+        a single node is found, it returns a dict containing that node;
+        otherwise an exception is raised. If just_one is False then the output
+        is a list with matching nodes; this list is empty if no matching nodes
+        were found.
+    '''
+
     tp = type(niml_dict)
     if tp is list:
         r = sum([find_attribute_node(d, key, value, False)
@@ -210,6 +242,20 @@ def find_attribute_node(niml_dict, key, value, just_one=True):
 
 
 def rawniml2string(p, form='text'):
+    '''Converts a raw NIML element to string representation
+
+    Parameters
+    ----------
+    niml: dict
+        Raw NIML element
+    form: 'text', 'binary', 'base64'
+        Output form of niml
+
+    Returns
+    -------
+    s: bytearray
+        String representation of niml in output form 'form'.
+    '''
     if type(p) is list:
         nb = '\n'.encode()
         return nb.join(rawniml2string(v, form) for v in p)
@@ -245,6 +291,7 @@ def rawniml2string(p, form='text'):
     return b''.join((d[0], s_name, d[1], s_header, d[2], s_body, d[3], s_name, d[4]))
 
 def _data2string(data, form):
+    '''Converts a data element to binary, text or base64 representation'''
     if isinstance(data, basestring):
         return ('"%s"' % encode_escape(data)).encode()
 
@@ -292,6 +339,7 @@ def _data2string(data, form):
         raise TypeError("Unknown type %r" % type(data))
 
 def _header2string(p, keyfirst=['dset_type', 'self_idcode', 'filename', 'data_type'], keylast=['ni_form']):
+    '''Converts a header element to a string'''
     otherkeys = list(set(p.keys()) - (set(keyfirst) | set(keylast)))
 
     added = set()
@@ -307,6 +355,25 @@ def _header2string(p, keyfirst=['dset_type', 'self_idcode', 'filename', 'data_ty
     return ("\n".join(rs)).encode()
 
 def read(fn, itemifsingletonlist=True, postfunction=None):
+    '''Reads a NIML dataset
+
+    Parameters
+    ----------
+    fn: str
+        Filename of NIML dataset
+    itemifsingletonlist: boolean
+        If True and the NIML dataset contains of a single NIML element, then
+        that element is returned. Otherwise a list of NIML element is returned.
+    postfunction: None or callable
+        If not None then postfunction is applied to the result from reading
+        the NIML dataset.
+
+    Returns
+    -------
+    niml: list or dict
+        (list of) NIML element(s)
+    '''
+
     import io
     with io.FileIO(fn) as f:
         s = f.read()
@@ -321,6 +388,7 @@ def read(fn, itemifsingletonlist=True, postfunction=None):
         return r
 
 def _partial_string(s, i, maxlen=100):
+    '''Prints a string partially'''
 
     # length of the string to print
     n = len(s) - i
