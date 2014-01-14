@@ -48,7 +48,7 @@ def _string2list(s, SEP=";", warn_if_no_string=True):
         if warn_if_no_string and \
                     any(isinstance(s_elem, (list, tuple)) for s_elem in s):
             # a short representation of the offending structure
-            s_str = '%r' % s if len(s) <= 1 else '[%s ... %s]' % (s[0], s[1])
+            s_str = '%r' % s if len(s) <= 1 else '[%s ... %s]' % (s[0], s[-1])
             warning('Two-dimensional string structure %s found - '
                         'it may not be readable by SUMA.' % s_str)
         return s
