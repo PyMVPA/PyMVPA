@@ -22,6 +22,104 @@ _whitespace_re = re.compile('\n\s+|^\s+')
 
 __all__ = [ 'Parameter', 'KernelParameter' ]
 
+class DummyValidator(object):
+
+    def __call__(self, value, **kw_arg):
+        return value
+
+
+class ChoiceValidator(object):
+
+    def __init__(self, allowed):
+        self._allowed = allowed
+
+    def __call__(self, value):
+        return self.validate(value)        
+        
+    def validate(self, value):
+        if value not in self._allowed:
+            raise ValueError, "Value is not in %s" % (self._allowed, )
+        return value         
+
+
+class RangeValidator(object):
+
+    def __init__(self, min=None, max=None):
+        self._min = min
+        self._max = max
+        
+    def __call__(self, value):
+        return self.validate(value)        
+        
+    def validate(self, value):
+        if self._min is not None:
+            if value < self._min: 
+                raise ValueError, "Value must be at least %s" % (self._min, )
+        if self._max is not None:        
+            if value > self._max: 
+                raise ValueError, "Value must be at most %s" % (self._max, )
+        return value          
+
+
+class SingleParameter(object):
+    def __init__(self, default, ro=False,
+                 value=None, name=None, **kwarg):
+                     
+        self._dummy=DummyValidator()
+        self._constraints = {}
+        self._constraints.update(kwarg)
+        self.__default = default
+        self._ro = ro
+        
+        self._isset = False
+        if value is None:
+            self._setValue(self.__default, init=True)
+        else:
+            self._setValue(value, init=True)
+        
+
+    def reset_value(self):
+        """Reset value to the default"""
+        #IndexedCollectable.reset(self)
+        if not self.is_default and not self._ro:
+            self._isset = True
+            self.value = self.__default
+
+    def _setValue(self, var, init=False):
+        if self._ro and not init:
+            raise RuntimeError, "Value is read-only"    
+        var=self._constraints.get('converter', self._dummy)(var)
+        self._value = self._constraints.get('validator', self._dummy)(var)
+        self._isset = not init
+
+    @property
+    def is_default(self):
+        """Returns True if current value is bound to default one"""
+        return self._value is self.default
+        
+    @property
+    def equal_default(self):
+        """Returns True if current value is equal to default one"""
+        return self._value == self.__default        
+
+    def _set_default(self, value):
+        wasdefault = self.is_default
+        self.__default = value
+        if wasdefault:
+            self.reset_value()
+            self._isset = False
+
+
+    default = property(fget=lambda x:x.__default, fset=_set_default)
+    value =   property(fget=lambda x:x._value, fset=_setValue)      
+
+
+
+
+
+
+
+
 class Parameter(IndexedCollectable):
     """This class shall serve as a representation of a parameter.
 
