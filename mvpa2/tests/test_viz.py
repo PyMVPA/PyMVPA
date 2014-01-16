@@ -41,4 +41,4 @@ def test_imshow():
     from matplotlib.colorbar import Colorbar
     ds = normal_feature_dataset(10, 2, 18, 5)
     im = matshow(ds)
-    assert_is_instance(im.colorbar[0], Colorbar)
+    assert_is_instance(im.colorbar, Colorbar)
