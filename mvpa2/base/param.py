@@ -22,14 +22,34 @@ _whitespace_re = re.compile('\n\s+|^\s+')
 
 __all__ = [ 'Parameter', 'KernelParameter' ]
 
-class DummyValidator(object):
+class EnsureValue(object):
+    """Base class for input value conversion/validation.
 
-    def __call__(self, value, **kw_arg):
+    These classes are also meant to be able to generate appropriate
+    documentation on an appropriate parameter value.
+    """
+    def __init__(self):
+        return
+
+    def __call__(self, value):
+        # do any necessary checks or conversions, potentially catch exceptions
+        # and generate a meaningful error message
         return value
 
+    # proposed name -- please invent a better one
+    def get_doc(self):
+        # return meaningful docs or None
+        return None
 
+class EnsureFloat(EnsureValue):
+    def __call__(self, value):
+        return float(value)
+
+    def get_doc(self):
+        return 'value must be convertible to type float'
+
+# TODO needs update
 class ChoiceValidator(object):
-
     def __init__(self, allowed):
         self._allowed = allowed
 
@@ -42,6 +62,7 @@ class ChoiceValidator(object):
         return value
 
 
+# TODO needs update
 class RangeValidator(object):
 
     def __init__(self, min=None, max=None):
@@ -59,65 +80,6 @@ class RangeValidator(object):
             if value > self._max:
                 raise ValueError, "Value must be at most %s" % (self._max, )
         return value
-
-
-class SingleParameter(object):
-    def __init__(self, default, ro=False,
-                 value=None, name=None, **kwarg):
-
-        self._dummy=DummyValidator()
-        self._constraints = {}
-        self._constraints.update(kwarg)
-        self.__default = default
-        self._ro = ro
-
-        self._isset = False
-        if value is None:
-            self._setValue(self.__default, init=True)
-        else:
-            self._setValue(value, init=True)
-
-
-    def reset_value(self):
-        """Reset value to the default"""
-        #IndexedCollectable.reset(self)
-        if not self.is_default and not self._ro:
-            self._isset = True
-            self.value = self.__default
-
-    def _setValue(self, var, init=False):
-        if self._ro and not init:
-            raise RuntimeError, "Value is read-only"
-        var=self._constraints.get('converter', self._dummy)(var)
-        self._value = self._constraints.get('validator', self._dummy)(var)
-        self._isset = not init
-
-    @property
-    def is_default(self):
-        """Returns True if current value is bound to default one"""
-        return self._value is self.default
-
-    @property
-    def equal_default(self):
-        """Returns True if current value is equal to default one"""
-        return self._value == self.__default
-
-    def _set_default(self, value):
-        wasdefault = self.is_default
-        self.__default = value
-        if wasdefault:
-            self.reset_value()
-            self._isset = False
-
-
-    default = property(fget=lambda x:x.__default, fset=_set_default)
-    value =   property(fget=lambda x:x._value, fset=_setValue)
-
-
-
-
-
-
 
 
 class Parameter(IndexedCollectable):
@@ -148,13 +110,17 @@ class Parameter(IndexedCollectable):
       Increment/decrement step size hint for optimization
     """
 
-    def __init__(self, default, ro=False,  index=None,  value=None,
+    def __init__(self, default, constraints=None, ro=False,  index=None,  value=None,
                  name=None, doc=None, **kwargs):
         """Specify a Parameter with a default value and arbitrary
         number of additional attributes.
 
         Parameters
         ----------
+        constraints : callable
+          A functor that takes any input value, performs checks or type
+          conversions and finally returns a value that is appropriate for a
+          parameter or raises an exception.
         name : str
           Name of the parameter under which it should be available in its
           respective collection.
@@ -179,6 +145,7 @@ class Parameter(IndexedCollectable):
 
         self.__default = default
         self._ro = ro
+        self._constraints = constraints
 
         # needs to come after kwargs processing, since some debug statements
         # rely on working repr()
@@ -204,11 +171,10 @@ class Parameter(IndexedCollectable):
         state = dict([(k, getattr(self, k)) for k in self._additional_props])
         state['_additional_props'] = self._additional_props
         state.update(icr[2])
-        res = (self.__class__, (self.__default, self._ro) + icr[1], state)
+        res = (self.__class__, (self.__default, self._constraints, self._ro) + icr[1], state)
         #if __debug__ and 'COL_RED' in debug.active:
         #    debug('COL_RED', 'Returning %s for %s' % (res, self))
         return res
-
 
 
     def __str__(self):
@@ -254,6 +220,8 @@ class Parameter(IndexedCollectable):
             doc = self.__doc__.strip()
             if not doc.endswith('.'):
                 doc += '.'
+            if not self._constraints is None:
+                doc += ' Constraints: %s.' % self._constraints.get_doc()
             if hasattr(self, 'choices') \
               and ((hasattr(self, 'allowedtype') and 'string' in self.allowedtype)
                    or np.all([isinstance(x, basestring) for x in self.choices])):
@@ -285,6 +253,8 @@ class Parameter(IndexedCollectable):
             self.value = self.__default
 
     def _set(self, val, init=False):
+        if self._constraints is not None:
+            val = self._constraints(val)
         different_value = self._value != val
         isarray = isinstance(different_value, np.ndarray)
         if self._ro and not init:
@@ -341,6 +311,7 @@ class Parameter(IndexedCollectable):
 
     default = property(fget=lambda x:x.__default, fset=_set_default)
     value = property(fget=lambda x:x._value, fset=_set)
+
 
 class KernelParameter(Parameter):
     """Just that it is different beast"""
