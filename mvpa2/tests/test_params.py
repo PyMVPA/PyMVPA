@@ -14,7 +14,7 @@ import numpy as np
 
 from mvpa2.datasets.base import dataset_wizard
 from mvpa2.base.state import ClassWithCollections, ConditionalAttribute
-from mvpa2.base.param import Parameter, KernelParameter
+from mvpa2.base.param import Parameter, KernelParameter, EnsureFloat
 
 from mvpa2.testing.clfs import *
 
@@ -32,7 +32,7 @@ class BlankClass(ClassWithCollections):
     pass
 
 class SimpleClass(ClassWithCollections):
-    C = Parameter(1.0, min=0, doc="C parameter")
+    C = Parameter(1.0, constraints=EnsureFloat(), min=0, doc="C parameter")
 
 class MixedClass(ClassWithCollections):
     C = Parameter(1.0, min=0, doc="C parameter")
@@ -77,6 +77,15 @@ class ParamsTests(unittest.TestCase):
         # TODO: Test if we 'train' a classifier f we get is_set to false
         self.assertEqual(simple.params.C, 1.0)
         self.assertRaises(AttributeError, simple.params.__getattribute__, 'B')
+
+        # set int but get float
+        simple.params.C = 10
+        self.assertTrue(isinstance(simple.params.C, float))
+        # wrong type causes exception
+        self.assertRaises(ValueError, simple.params.__setattr__, 'C', 'somestr')
+
+        # check for presence of the constraints description
+        self.assertTrue(simple._paramsdoc[0][1].find('Constraints: ') > 0)
 
     def test_mixed(self):
         mixed  = MixedClass()
