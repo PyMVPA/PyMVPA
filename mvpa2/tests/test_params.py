@@ -14,7 +14,8 @@ import numpy as np
 
 from mvpa2.datasets.base import dataset_wizard
 from mvpa2.base.state import ClassWithCollections, ConditionalAttribute
-from mvpa2.base.param import Parameter, KernelParameter, EnsureFloat
+from mvpa2.base.param import Parameter, KernelParameter, \
+                             EnsureFloat, EnsureRange, EnsureChoice
 
 from mvpa2.testing.clfs import *
 
@@ -27,12 +28,20 @@ class ParametrizedClassifierExtended(ParametrizedClassifier):
         ParametrizedClassifier.__init__(self)
         self.kernel_params['kp2'] = \
             KernelParameter(200.0, doc="Very useful param")
+            
+            
+class ChoiceClass(ClassWithCollections):
+    C = Parameter('choice1',
+                  constraints=EnsureChoice(allowed=('choice1', 'choice2')),
+                  doc="documentation")                
 
 class BlankClass(ClassWithCollections):
     pass
 
 class SimpleClass(ClassWithCollections):
-    C = Parameter(1.0, constraints=EnsureFloat(), min=0, doc="C parameter")
+    C = Parameter(1.0, 
+                  constraints=(EnsureFloat(), EnsureRange(min=0.0, max=10.0)), 
+                  doc="C parameter")
 
 class MixedClass(ClassWithCollections):
     C = Parameter(1.0, min=0, doc="C parameter")
@@ -46,6 +55,11 @@ class ParamsTests(unittest.TestCase):
 
         self.assertRaises(AttributeError, blank.__getattribute__, 'ca')
         self.assertRaises(AttributeError, blank.__getattribute__, '')
+        
+    def test_choice(self):
+        c = ChoiceClass()
+        self.assertRaises(ValueError, c.params.__setattr__, 'C', 'bu')
+        
 
     def test_simple(self):
         simple  = SimpleClass()
@@ -83,6 +97,11 @@ class ParamsTests(unittest.TestCase):
         self.assertTrue(isinstance(simple.params.C, float))
         # wrong type causes exception
         self.assertRaises(ValueError, simple.params.__setattr__, 'C', 'somestr')
+        # value < min causes exception
+        self.assertRaises(ValueError, simple.params.__setattr__, 'C', -123.4)
+        # value > max causes exception
+        self.assertRaises(ValueError, simple.params.__setattr__, 'C', 123.4)
+
 
         # check for presence of the constraints description
         self.assertTrue(simple._paramsdoc[0][1].find('Constraints: ') > 0)
@@ -144,23 +163,23 @@ class ParamsTests(unittest.TestCase):
         # Test doc strings for parameters with choices
         class WithChoices(ClassWithCollections):
             C = Parameter('choice1',
-                          choices=['choice1', 'choice2'],
-                          doc="documentation")
+                  constraints=EnsureChoice(allowed=('choice1', 'choice2')),
+                  doc="documentation")
             # We need __init__ to get 'custom' docstring
             def __init__(self, **kwargs):
                 super(type(self), self).__init__(**kwargs)
-
+  
         c = WithChoices()
         self.assertRaises(ValueError, c.params.__setattr__, 'C', 'bu')
         c__doc__ = c.__init__.__doc__.replace('"', "'")
-        self.assertTrue("[Choices: 'choice1', 'choice2']" in c__doc__)
+        self.assertTrue("'choice1', 'choice2'" in c__doc__)
         self.assertTrue("(Default: 'choice1')" in c__doc__)
 
         # But we will not (at least for now) list choices if there are
         # non-strings
         class WithFuncChoices(ClassWithCollections):
             C = Parameter('choice1',
-                          choices=['choice1', np.sum],
+                          constraints=EnsureChoice(allowed=('choice1', np.sum)),
                           doc="documentation")
             # We need __init__ to get 'custom' docstring
             def __init__(self, **kwargs):
@@ -170,7 +189,6 @@ class ParamsTests(unittest.TestCase):
         self.assertRaises(ValueError, cf.params.__setattr__, 'C', 'bu')
         cf.params.C = np.sum
         cf__doc__ = cf.__init__.__doc__.replace('"', "'")
-        self.assertFalse("[Choices:" in cf__doc__)
         self.assertTrue("(Default: 'choice1')" in cf__doc__)
 
 

@@ -41,6 +41,13 @@ class EnsureValue(object):
         # return meaningful docs or None
         return None
 
+
+class EnsureInt(EnsureValue):
+    def __call__(self, value):
+        return int(value)    
+    def get_doc(self):
+        return 'value must be convertible to type int'
+
 class EnsureFloat(EnsureValue):
     def __call__(self, value):
         return float(value)
@@ -48,31 +55,26 @@ class EnsureFloat(EnsureValue):
     def get_doc(self):
         return 'value must be convertible to type float'
 
-# TODO needs update
-class ChoiceValidator(object):
+
+class EnsureChoice(EnsureValue):
     def __init__(self, allowed):
         self._allowed = allowed
 
     def __call__(self, value):
-        return self.validate(value)
-
-    def validate(self, value):
         if value not in self._allowed:
             raise ValueError, "Value is not in %s" % (self._allowed, )
-        return value
+        return value        
+
+    def get_doc(self):
+        return 'value must be in %s' % (self._allowed, )
 
 
-# TODO needs update
-class RangeValidator(object):
-
+class EnsureRange(EnsureValue):
     def __init__(self, min=None, max=None):
         self._min = min
         self._max = max
-
+        
     def __call__(self, value):
-        return self.validate(value)
-
-    def validate(self, value):
         if self._min is not None:
             if value < self._min:
                 raise ValueError, "Value must be at least %s" % (self._min, )
@@ -80,6 +82,15 @@ class RangeValidator(object):
             if value > self._max:
                 raise ValueError, "Value must be at most %s" % (self._max, )
         return value
+
+    def get_doc(self):
+        min_str='-inf' if self._min is None else str(self._min)
+        max_str='inf' if self._max is None else str(self._max)
+        return 'value must be in range (' + min_str + ', ' + max_str + ')'
+        
+    
+
+
 
 
 class Parameter(IndexedCollectable):
@@ -145,6 +156,8 @@ class Parameter(IndexedCollectable):
 
         self.__default = default
         self._ro = ro
+        if (constraints is not None) and (not isinstance(constraints, tuple)):
+            constraints = (constraints, )
         self._constraints = constraints
 
         # needs to come after kwargs processing, since some debug statements
@@ -220,13 +233,11 @@ class Parameter(IndexedCollectable):
             doc = self.__doc__.strip()
             if not doc.endswith('.'):
                 doc += '.'
+            # TODO: exclude non-strings from EnsureChoice()   
             if not self._constraints is None:
-                doc += ' Constraints: %s.' % self._constraints.get_doc()
-            if hasattr(self, 'choices') \
-              and ((hasattr(self, 'allowedtype') and 'string' in self.allowedtype)
-                   or np.all([isinstance(x, basestring) for x in self.choices])):
-                choices = ', '.join(repr(x) for x in self.choices)
-                doc += " [Choices: %s]" % choices
+                doc += ' Constraints: ' 
+                doc += ', '.join(c.get_doc() for c in self._constraints)
+                doc += '.'                    
             try:
                 doc += " (Default: %r)" % (self.default,)
             except:
@@ -254,7 +265,8 @@ class Parameter(IndexedCollectable):
 
     def _set(self, val, init=False):
         if self._constraints is not None:
-            val = self._constraints(val)
+            for c in self._constraints:
+                val = c(val)
         different_value = self._value != val
         isarray = isinstance(different_value, np.ndarray)
         if self._ro and not init:
@@ -266,19 +278,6 @@ class Parameter(IndexedCollectable):
             if __debug__:
                 debug("COL",
                       "Parameter: setting %s to %s " % (str(self), val))
-            if not isarray:
-                if hasattr(self, 'min') and val < self.min:
-                    raise ValueError, \
-                          "Minimal value for parameter %s is %s. Got %s" % \
-                          (self.name, self.min, val)
-                if hasattr(self, 'max') and val > self.max:
-                    raise ValueError, \
-                          "Maximal value for parameter %s is %s. Got %s" % \
-                          (self.name, self.max, val)
-                if hasattr(self, 'choices') and (not val in self.choices):
-                    raise ValueError, \
-                          "Valid choices for parameter %s are %s. Got %s" % \
-                          (self.name, self.choices, val)
             self._value = val
             # Set 'isset' only if not called from initialization routine
             self._isset = not init #True
