@@ -267,6 +267,10 @@ class DissimilarityMultiRegressMeasure(Measure):
         for i in range(m):
             X[i,:] = rankdata(X[i,:])
 
+        if isinstance(X, np.matrix):
+            self.X = X        
+        else:
+            self.X = np.matrix(X)
         self.pairwise_metric = pairwise_metric
         self.center_data = center_data
 
