@@ -297,7 +297,7 @@ class DissimilarityMultiRegressMeasure(Measure):
         b[np.isnan(b)] = 0
 
 
-        return Dataset(b)
+        return Dataset(np.asarray(b))
            
 
 
