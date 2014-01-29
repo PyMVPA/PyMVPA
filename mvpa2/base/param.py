@@ -43,10 +43,14 @@ class EnsureValue(object):
 
 
 class EnsureInt(EnsureValue):
+    """Derived class that ensures a input to be of type int,
+    and, raises a ValueException in case it is not.
+    """
     def __call__(self, value):
         return int(value)    
     def get_doc(self):
         return 'value must be convertible to type int'
+
 
 class EnsureFloat(EnsureValue):
     def __call__(self, value):
@@ -54,6 +58,18 @@ class EnsureFloat(EnsureValue):
 
     def get_doc(self):
         return 'value must be convertible to type float'
+        
+        
+class EnsureBool(EnsureValue):
+    def __call__(self, value):
+        return bool(value)
+
+    def get_doc(self):
+        return 'value must be convertible to type bool'        
+        
+        
+        
+        
 
 
 class EnsureChoice(EnsureValue):
@@ -66,7 +82,7 @@ class EnsureChoice(EnsureValue):
         return value        
 
     def get_doc(self):
-        return 'value must be in %s' % (self._allowed, )
+        return 'value must be in %s' % (str(self._allowed), )
 
 
 class EnsureRange(EnsureValue):
@@ -89,7 +105,39 @@ class EnsureRange(EnsureValue):
         return 'value must be in range (' + min_str + ', ' + max_str + ')'
         
     
+class ValidationError(Exception):
+    pass
 
+class OrConstrainer(object):
+    def __init__(self, constraints):
+        if not isinstance(constraints, tuple):
+            constraints = (constraints, )
+        self._constraints = constraints
+    def validate(self, value):
+        e_list = []
+        for i, c in enumerate(self._constraints):
+            try:
+                value = c(value)
+            except Exception, e:
+                e_list.append(e)
+            if len(e_list) == i: # something is fulfilled
+                break
+        if len(e_list) == len(self._constraints): # everything has failed
+            # TODO: Combine all the constraints to an error message
+            raise ValidationError("All given constraints are violated")
+        else:
+            return value
+
+
+class AndConstrainer(object):
+    def __init__(self, constraints):
+        if not isinstance(constraints, tuple):
+            constraints = (constraints, )
+        self._constraints = constraints    
+    def validate(self, value):
+        for c in (self._constraints):
+            value = c(value)
+        return value    
 
 
 
@@ -233,10 +281,11 @@ class Parameter(IndexedCollectable):
             doc = self.__doc__.strip()
             if not doc.endswith('.'):
                 doc += '.'
-            # TODO: exclude non-strings from EnsureChoice()   
+            # TODO: Update this to the use of Add/OrConstrainer    
             if not self._constraints is None:
                 doc += ' Constraints: ' 
-                doc += ', '.join(c.get_doc() for c in self._constraints)
+                doc += ', '.join(c.get_doc() for c in self._constraints
+                       if hasattr(c, 'get_doc'))
                 doc += '.'                    
             try:
                 doc += " (Default: %r)" % (self.default,)
@@ -264,9 +313,10 @@ class Parameter(IndexedCollectable):
             self.value = self.__default
 
     def _set(self, val, init=False):
-        if self._constraints is not None:
+        if self._constraints is not None:            
             for c in self._constraints:
-                val = c(val)
+                #val = c(val)
+                val = c.validate(val)
         different_value = self._value != val
         isarray = isinstance(different_value, np.ndarray)
         if self._ro and not init:
