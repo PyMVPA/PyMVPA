@@ -49,7 +49,9 @@ class RFE(IterativeFeatureSelection):
     certain dataset. These sensitivity maps are in turn used to discard
     unimportant features. For each feature selection the transfer error on some
     testdatset is computed. This procedure is repeated until a given
-    `StoppingCriterion` is reached.
+    `StoppingCriterion` is reached. For RFE setup 3 chunks are required. The algorithm
+    tries to estimate the stopping point by using cross-validation inside the training set.
+    Therefore, if the training set contains only 1 set, it can not split more. 
 
     References
     ----------
