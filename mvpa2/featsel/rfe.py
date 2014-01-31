@@ -49,9 +49,7 @@ class RFE(IterativeFeatureSelection):
     certain dataset. These sensitivity maps are in turn used to discard
     unimportant features. For each feature selection the transfer error on some
     testdatset is computed. This procedure is repeated until a given
-    `StoppingCriterion` is reached. For RFE setup 3 chunks are required. The algorithm
-    tries to estimate the stopping point by using cross-validation inside the training set.
-    Therefore, if the training set contains only 1 set, it can not split more. 
+    `StoppingCriterion` is reached. 
 
     References
     ----------
@@ -101,6 +99,9 @@ class RFE(IterativeFeatureSelection):
     ...           rfe,
     ...           # custom description
     ...           descr='LinSVM+RFE(splits_avg)' )
+    
+    Note: If you rely on cross-validation for the StoppingCriterion, make sure that you have at least 3 chunks
+    so that SplitClassifier could have at least 2 chunks to split. Otherwise it can one split more. 
 
     """
 
