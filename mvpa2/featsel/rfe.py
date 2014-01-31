@@ -49,7 +49,7 @@ class RFE(IterativeFeatureSelection):
     certain dataset. These sensitivity maps are in turn used to discard
     unimportant features. For each feature selection the transfer error on some
     testdatset is computed. This procedure is repeated until a given
-    `StoppingCriterion` is reached. 
+    `StoppingCriterion` is reached.
 
     References
     ----------
