@@ -101,7 +101,8 @@ class RFE(IterativeFeatureSelection):
     ...           descr='LinSVM+RFE(splits_avg)' )
     
     Note: If you rely on cross-validation for the StoppingCriterion, make sure that you have at least 3 chunks
-    so that SplitClassifier could have at least 2 chunks to split. Otherwise it can one split more. 
+    so that SplitClassifier could have at least 2 chunks to split. Otherwise it can not split more (one chunk
+    could not be splitted). 
 
     """
 
