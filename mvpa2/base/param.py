@@ -62,10 +62,13 @@ class EnsureFloat(EnsureValue):
         
 class EnsureBool(EnsureValue):
     def __call__(self, value):
-        return bool(value)
+        if isinstance(value, bool):
+            return value
+        else:
+            raise ValueError("Value must be of type bool")
 
     def get_doc(self):
-        return 'value must be convertible to type bool'        
+        return 'value must be of type bool'        
         
         
         
@@ -110,35 +113,32 @@ class ValidationError(Exception):
 
 class OrConstrainer(object):
     def __init__(self, constraints):
-        if not isinstance(constraints, tuple):
-            constraints = (constraints, )
         self._constraints = constraints
-    def validate(self, value):
+
+    def __call__(self, value):
+        if value==None:
+            if None in self._constraints:
+                return None
+            else:
+                raise ValueError("None is not an allowed value")                        
         e_list = []
-        for i, c in enumerate(self._constraints):
+        for c in self._constraints:
             try:
-                value = c(value)
+                return c(value)
             except Exception, e:
                 e_list.append(e)
-            if len(e_list) == i: # something is fulfilled
-                break
-        if len(e_list) == len(self._constraints): # everything has failed
-            # TODO: Combine all the constraints to an error message
-            raise ValidationError("All given constraints are violated")
-        else:
-            return value
+        raise ValidationError("All given constraints are violated")
+        
 
 
 class AndConstrainer(object):
     def __init__(self, constraints):
-        if not isinstance(constraints, tuple):
-            constraints = (constraints, )
         self._constraints = constraints    
-    def validate(self, value):
+
+    def __call__(self, value):
         for c in (self._constraints):
             value = c(value)
-        return value    
-
+        return value         
 
 
 class Parameter(IndexedCollectable):
@@ -161,10 +161,6 @@ class Parameter(IndexedCollectable):
 
     allowedtype : str
       Description of what types are allowed
-    min
-      Minimum value
-    max
-      Maximum value
     step
       Increment/decrement step size hint for optimization
     """
@@ -193,6 +189,26 @@ class Parameter(IndexedCollectable):
           cannot be changed
         value
           Actual value of the parameter to be assigned
+          
+        Examples
+        --------
+        -ensure the parameter to be of type float 
+        (None not allowed as value):
+        constraints = EnsureFloat()
+        >>> from mvpa2.base.param import Parameter, EnsureFloat
+        >>> C = Parameter(23.0,constraints=EnsureFloat())
+
+        -ensure the parameter to be of type float or to be None:
+        >>> from mvpa2.base.param import Parameter, EnsureFloat, OrConstrainer
+        >>> C = Parameter(23.0,constraints=OrConstrainer((EnsureFloat(), None)))
+          
+        -ensure the parameter to be None or to be of type float 
+        and lie in the inclusive range (7.0,44.0):          
+        >>> from mvpa2.base.param import Parameter, EnsureFloat, EnsureRange, 
+        ...                              OrConstrainer, AndConstrainer
+        >>> C = Parameter(23.0, OrConstrainer((AndConstrainer( (EnsureFloat(), 
+        ...                                    EnsureRange(min=7.0,max=44.0))),
+        ...                                    None)))
         """
         # XXX probably is too generic...
         # and potentially dangerous...
@@ -204,8 +220,6 @@ class Parameter(IndexedCollectable):
 
         self.__default = default
         self._ro = ro
-        if (constraints is not None) and (not isinstance(constraints, tuple)):
-            constraints = (constraints, )
         self._constraints = constraints
 
         # needs to come after kwargs processing, since some debug statements
@@ -314,9 +328,10 @@ class Parameter(IndexedCollectable):
 
     def _set(self, val, init=False):
         if self._constraints is not None:            
-            for c in self._constraints:
-                #val = c(val)
-                val = c.validate(val)
+#            for c in self._constraints:
+#                val = c(val)
+#                #val = c.validate(val)
+            val = self._constraints(val)    
         different_value = self._value != val
         isarray = isinstance(different_value, np.ndarray)
         if self._ro and not init:
