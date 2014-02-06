@@ -30,6 +30,148 @@ from mvpa2.misc.surfing import volgeom, surf_voxel_selection
 from mvpa2.base import warning
 
 
+class SurfaceQueryEngine(QueryEngineInterface):
+    '''
+    Query-engine that maps center nodes to indices of features
+    (nodes) that are near each center node.
+
+    This class is for mappings from surface to surface features;
+    for mappings from surface to voxel features, use
+    SurfaceVerticesQueryEngine.
+    '''
+
+    def __init__(self, surface, radius, distance_metric=None):
+        '''Make a new SurfaceQueryEngine
+
+        Parameters
+        ----------
+        surface: surf.Surface or str
+            surface object, or filename of a surface
+        radius: float
+            size of neighborhood.
+        distance_metric: str or None
+            'euclidean' or 'dijkstra'. None means 'dijkstra'.
+
+        Notes
+        -----
+        After training this instance on a dataset and calling it with
+        self.query_byid(vertex_id) as argument,
+        '''
+        self.surface = surface
+        self.radius = radius
+        self.distance_metric = distance_metric or 'dijkstra'
+        self._vertex2feature_map = None
+
+        allowed_metrics = ('dijkstra', 'euclidean')
+        if not self.distance_metric in allowed_metrics:
+            raise ValueError('distance_metric has to be in %s' %
+                                    (allowed_metrics,))
+
+    def __repr__(self, prefixes=[]):
+        return super(SurfaceQueryEngine, self).__repr__(
+                   prefixes=prefixes
+                   + _repr_attrs(self, ['surface'])
+                   + _repr_attrs(self, ['radius'])
+                   + _repr_attrs(self, ['distance_metric'],
+                                   default='voxel_indices'))
+    def __reduce__(self):
+        return (self.__class__, (self.surface,
+                                 self.radius,
+                                 self.distance_metric))
+
+    def __str__(self):
+        return '%s(%s, radius=%s, distance_metric=%s)' % \
+                                               (self.__class__.__name__,
+                                                self.surface,
+                                                self.radius,
+                                                self.distance_metric)
+
+    def _check_trained(self):
+        if self._vertex2feature_map is None:
+            raise ValueError('Not trained on dataset: %s' % self)
+
+
+    @property
+    def ids(self):
+        self._check_trained()
+        return self._vertex2feature_map.keys()
+
+    def untrain(self):
+        self._vertex2feature_map = None
+
+    def train(self, ds):
+        '''
+        Train the queryengine
+
+        Parameters
+        ----------
+        ds: Dataset
+            dataset with surface data. It should either have a field
+            .fa.node_indices (that indicates the node index of each
+            feature)
+        '''
+
+        fa_key = 'node_indices'
+        nvertices = self.surface.nvertices
+        nfeatures = ds.nfeatures
+
+        if not fa_key in ds.fa.keys():
+            raise ValueError('Attribute .fa.%s not found.', fa_key)
+
+        vertex_ids = ds.fa[fa_key].value.ravel()
+
+        # check that vertex_ids are not outside 0..nfeatures
+        delta = np.setdiff1d(vertex_ids, np.arange(nvertices))
+
+        if len(delta):
+            raise ValueError("Vertex id '%s' found that is not in "
+                             "np.arange(%d)" % (delta[0], nvertices))
+
+        # vertex_ids can have multiple occurences of the same node index
+        # for different features, hence use a list.
+        # initialize each vertex with an empty list
+        self._vertex2feature_map = v2f = dict((vertex_id, list())
+                                            for vertex_id in xrange(nvertices))
+
+        for feature_id, vertex_id in enumerate(vertex_ids):
+            v2f[vertex_id].append(feature_id)
+
+
+    def query(self, **kwargs):
+        raise NotImplementedError
+
+
+    def query_byid(self, vertex_id):
+        '''
+        Return feature ids of features near a vertex
+
+        Parameters
+        ----------
+        vertex_id: int
+            Index of vertex (i.e. node) on the surface
+
+        Returns
+        -------
+        feature_ids: list of int
+            Indices of features in the neighborhood of the vertex indexed
+            by 'vertex_id'
+        '''
+        self._check_trained()
+
+        if vertex_id < 0 or vertex_id >= self.surface.nvertices or \
+                        round(vertex_id) != vertex_id:
+            raise KeyError('vertex_id should be integer in range(%d)' %
+                                                self.surface.nvertices)
+
+        nearby_nodes = self.surface.circlearound_n2d(vertex_id,
+                                                    self.radius,
+                                                    self.distance_metric)
+
+        v2f = self._vertex2feature_map
+        return sum((v2f[node] for node in nearby_nodes), [])
+
+
+
 class SurfaceVerticesQueryEngine(QueryEngineInterface):
     '''
     Query-engine that maps center nodes to indices of features
@@ -37,6 +179,10 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
 
     In a typical use case such an instance is generated using
     the function 'disc_surface_queryengine'
+
+    This class is for mappings from surface to voxel features;
+    for mappings from surface to surface features, use
+    SurfaceQueryEngine.
     '''
 
     def __init__(self, voxsel, space='voxel_indices', add_fa=None):
