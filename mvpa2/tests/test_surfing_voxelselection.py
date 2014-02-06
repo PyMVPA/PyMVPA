@@ -59,7 +59,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         '''
         Tests to see whether results are identical for surface-based
-        searchlight (just one plane; Euclidian distnace) and volume-based
+        searchlight (just one plane; Euclidean distnace) and volume-based
         searchlight.
 
         Note that the current value is a float; if it were int, it would
@@ -103,7 +103,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         '''
         Run voxel selection with specified radius (in mm), using
-        Euclidian distance measure
+        Euclidean distance measure
         '''
         surf_voxsel = surf_voxel_selection.voxel_selection(vsm, radius,
                                                     distance_metric='e')
@@ -137,7 +137,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         surf_qe2 = disc_surface_queryengine(radius, maskfn, inner, outer,
                                             plane, volume_mask=True,
-                                            distance_metric='euclidian')
+                                            distance_metric='euclidean')
         surf_sl2 = Searchlight(meas, queryengine=surf_qe2,
                                postproc=postproc)
 
@@ -476,7 +476,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         for fallback, expected_nfeatures in ((True, 1000), (False, 183)):
             voxsel = surf_voxel_selection.voxel_selection(vs, radius)
-            qe = SurfaceVoxelsQueryEngine(voxsel, fallback_euclidian_distance=fallback)
+            qe = SurfaceVoxelsQueryEngine(voxsel, fallback_euclidean_distance=fallback)
 
             m = _Voxel_Count_Measure()
 

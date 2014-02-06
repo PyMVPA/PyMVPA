@@ -197,17 +197,17 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
                                   if feature_id in j]
 
     def feature_id2nearest_vertex_id(self, feature_id,
-                                     fallback_euclidian_distance=False):
+                                     fallback_euclidean_distance=False):
         '''Computes the index of the vertex nearest to a given voxel.
 
         Parameters
         ----------
         feature_id: int
             Feature index (referring to a voxel).
-        fallback_euclidian_distance: bool (default: False)
+        fallback_euclidean_distance: bool (default: False)
             If the voxel indexed by feature_id was not selected by any searchlight,
-            then None is returned if fallback_euclidian_distance is False, but
-            vertex_id with the nearest Euclidian distance is returned if True.
+            then None is returned if fallback_euclidean_distance is False, but
+            vertex_id with the nearest Euclidean distance is returned if True.
 
         Returns
         -------
@@ -224,7 +224,7 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
         lin_voxs = self.feature_id2linear_voxel_ids(feature_id)
 
         return self.voxsel.target2nearest_source(lin_voxs,
-                      fallback_euclidian_distance=fallback_euclidian_distance)
+                      fallback_euclidean_distance=fallback_euclidean_distance)
 
     def vertex_id2nearest_feature_id(self, vertex_id):
         '''Computes the index of the voxel nearest to a given vertex.
@@ -272,7 +272,7 @@ class SurfaceVoxelsQueryEngine(SurfaceVerticesQueryEngine):
     argument
     '''
     def __init__(self, voxsel, space='voxel_indices', add_fa=None,
-                 fallback_euclidian_distance=True):
+                 fallback_euclidean_distance=True):
         '''Makes a new SurfaceVoxelsQueryEngine
 
         Parameters
@@ -285,7 +285,7 @@ class SurfaceVoxelsQueryEngine(SurfaceVerticesQueryEngine):
         add_fa: list of str
             additional feature attributes that should be returned
             when this instance is called with a center node id.
-        fallback_euclidian_distance: bool (default: True)
+        fallback_euclidean_distance: bool (default: True)
             If True then every feature id will have voxels associated with
             it. That means that the number of self.ids is then equal to the
             number of features as the input dataset.
@@ -299,12 +299,12 @@ class SurfaceVoxelsQueryEngine(SurfaceVerticesQueryEngine):
                                                        add_fa=add_fa)
 
         self._feature_id2vertex_id = None
-        self.fallback_euclidian_distance = fallback_euclidian_distance
+        self.fallback_euclidean_distance = fallback_euclidean_distance
 
 
     def __repr__(self, prefixes=[]):
         prefixes_ = prefixes + _repr_attrs(self,
-                                          ['fallback_euclidian_distance'],
+                                          ['fallback_euclidean_distance'],
                                           default=False)
         return super(SurfaceVoxelsQueryEngine, self).__repr__(
                             prefixes=prefixes_)
@@ -312,7 +312,7 @@ class SurfaceVoxelsQueryEngine(SurfaceVerticesQueryEngine):
     def __reduce__(self):
         return (self.__class__, (self.voxsel, self.space,
                                  self._add_fa,
-                                 self.fallback_euclidian_distance))
+                                 self.fallback_euclidean_distance))
 
     @property
     def ids(self):
@@ -329,7 +329,7 @@ class SurfaceVoxelsQueryEngine(SurfaceVerticesQueryEngine):
 
         # Compute the mapping from voxel (feature) ids to node ids
 
-        fallback = self.fallback_euclidian_distance
+        fallback = self.fallback_euclidean_distance
         if fallback:
             # can use any feature id in ds
             feature_ids = range(ds.nfeatures)

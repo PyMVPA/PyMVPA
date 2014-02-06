@@ -527,7 +527,7 @@ class SurfTests(unittest.TestCase):
 
                     # index of node nearest to voxel i
                     src_anywhere = sel.target2nearest_source(i,
-                                            fallback_euclidian_distance=True)
+                                            fallback_euclidean_distance=True)
 
                     # coordinates of node nearest to voxel i
                     xyz_src = xyz[src_anywhere]
@@ -821,7 +821,7 @@ class SurfTests(unittest.TestCase):
 
     def test_agreement_surface_volume(self):
         '''test agreement between volume-based and surface-based
-        searchlights when using euclidian measure'''
+        searchlights when using euclidean measure'''
 
         #import runner
         def sum_ds(ds):
@@ -859,7 +859,7 @@ class SurfTests(unittest.TestCase):
         sel = surf_voxel_selection.voxel_selection(v, float(radius),
                                         source_surf=source_surf,
                                         source_surf_nodes=source_surf_nodes,
-                                        distance_metric='euclidian')
+                                        distance_metric='euclidean')
 
         qe = queryengine.SurfaceVerticesQueryEngine(sel)
         sl = Searchlight(sum_ds, queryengine=qe)
