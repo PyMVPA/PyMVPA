@@ -78,18 +78,22 @@ class SurfaceQueryEngine(QueryEngineInterface):
                    + _repr_attrs(self, ['surface'])
                    + _repr_attrs(self, ['radius'])
                    + _repr_attrs(self, ['distance_metric'],
-                                   default='voxel_indices'))
+                                   default='voxel_indices')
+                   + _repr_attrs(self, ['fa_node_key'],
+                                   default='node_indices'))
     def __reduce__(self):
         return (self.__class__, (self.surface,
                                  self.radius,
-                                 self.distance_metric))
+                                 self.distance_metric,
+                                 self.fa_node_key))
 
     def __str__(self):
-        return '%s(%s, radius=%s, distance_metric=%s)' % \
+        return '%s(%s, radius=%s, distance_metric=%s, fa_node_key=%s)' % \
                                                (self.__class__.__name__,
                                                 self.surface,
                                                 self.radius,
-                                                self.distance_metric)
+                                                self.distance_metric,
+                                                self.fa_node_key)
 
     def _check_trained(self):
         if self._vertex2feature_map is None:
