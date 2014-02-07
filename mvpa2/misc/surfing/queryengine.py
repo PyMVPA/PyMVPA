@@ -40,7 +40,8 @@ class SurfaceQueryEngine(QueryEngineInterface):
     SurfaceVerticesQueryEngine.
     '''
 
-    def __init__(self, surface, radius, distance_metric=None):
+    def __init__(self, surface, radius, distance_metric='dijkstra',
+                    fa_node_key='node_indices'):
         '''Make a new SurfaceQueryEngine
 
         Parameters
@@ -49,8 +50,11 @@ class SurfaceQueryEngine(QueryEngineInterface):
             surface object, or filename of a surface
         radius: float
             size of neighborhood.
-        distance_metric: str or None
-            'euclidean' or 'dijkstra'. None means 'dijkstra'.
+        distance_metric: str
+            'euclidean' or 'dijkstra' (default).
+        fa_node_key: str
+            Key for feature attribute that contains node indices
+            (default: 'node_indices').
 
         Notes
         -----
@@ -59,13 +63,14 @@ class SurfaceQueryEngine(QueryEngineInterface):
         '''
         self.surface = surface
         self.radius = radius
-        self.distance_metric = distance_metric or 'dijkstra'
+        self.distance_metric = distance_metric
+        self.fa_node_key = fa_node_key
         self._vertex2feature_map = None
 
         allowed_metrics = ('dijkstra', 'euclidean')
         if not self.distance_metric in allowed_metrics:
-            raise ValueError('distance_metric has to be in %s' %
-                                    (allowed_metrics,))
+            raise ValueError('distance_metric %s has to be in %s' %
+                                    (self.distance_metric, allowed_metrics))
 
     def __repr__(self, prefixes=[]):
         return super(SurfaceQueryEngine, self).__repr__(
@@ -106,12 +111,12 @@ class SurfaceQueryEngine(QueryEngineInterface):
         Parameters
         ----------
         ds: Dataset
-            dataset with surface data. It should either have a field
-            .fa.node_indices (that indicates the node index of each
-            feature)
+            dataset with surface data. It should have a field
+            .fa.node_indices that indicates the node index of each
+            feature.
         '''
 
-        fa_key = 'node_indices'
+        fa_key = self.fa_node_key
         nvertices = self.surface.nvertices
         nfeatures = ds.nfeatures
 

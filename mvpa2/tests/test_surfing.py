@@ -882,10 +882,13 @@ class SurfTests(unittest.TestCase):
         ds3 = hstack((ds, ds, ds))
 
         radius = 2.5
-        for distance_metric in ('euclidean', 'dijkstra', None, '<illegal>'):
+
+        # Note: sweepargs it not used to avoid re-generating the same
+        #       surface and dataset multiple times.
+        for distance_metric in ('euclidean', 'dijkstra', '<illegal>', None):
             builder = lambda: queryengine.SurfaceQueryEngine(s2, radius,
                                                              distance_metric)
-            if distance_metric == '<illegal>':
+            if distance_metric in ('<illegal>', None):
                 assert_raises(ValueError, builder)
                 continue
 
@@ -936,10 +939,8 @@ class SurfTests(unittest.TestCase):
                 assert_equal(set(feature_ids), set(fa_indices))
 
             # smoke tests
-            '%s' % qe
-            '%r' % qe
-
-
+            assert_true('SurfaceQueryEngine' in '%s' % qe)
+            assert_true('SurfaceQueryEngine' in '%r' % qe)
 
 
     def test_surf_pairs(self):
