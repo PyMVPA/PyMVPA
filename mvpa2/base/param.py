@@ -22,6 +22,7 @@ _whitespace_re = re.compile('\n\s+|^\s+')
 
 __all__ = [ 'Parameter', 'KernelParameter' ]
 
+
 class EnsureValue(object):
     """Base class for input value conversion/validation.
 
@@ -41,15 +42,18 @@ class EnsureValue(object):
         # return meaningful docs or None
         return None
 
-
-class EnsureInt(EnsureValue):
+        
+class EnsureInt(object):
     """Derived class that ensures a input to be of type int,
     and, raises a ValueException in case it is not.
     """
     def __call__(self, value):
-        return int(value)    
+        if hasattr(value,'__iter__'):
+            return map(int, value)
+        else:    
+            return int(value)    
     def get_doc(self):
-        return 'value must be convertible to type int'
+        return 'value must be convertible to type int'   
 
 
 class EnsureFloat(EnsureValue):
@@ -105,7 +109,7 @@ class EnsureRange(EnsureValue):
     def get_doc(self):
         min_str='-inf' if self._min is None else str(self._min)
         max_str='inf' if self._max is None else str(self._max)
-        return 'value must be in range (' + min_str + ', ' + max_str + ')'
+        return 'value must be in range [' + min_str + ', ' + max_str + ']'
         
     
 class ValidationError(Exception):
@@ -128,6 +132,15 @@ class OrConstrainer(object):
             except Exception, e:
                 e_list.append(e)
         raise ValidationError("All given constraints are violated")
+
+    def get_doc(self):
+        doc = ''
+        doc += '(' 
+        if None in self._constraints:
+            doc += 'None or '
+        doc += ' or '.join(c.get_doc() for c in self._constraints if hasattr(c, 'get_doc'))
+        doc += ')' 
+        return doc
         
 
 
@@ -138,7 +151,15 @@ class AndConstrainer(object):
     def __call__(self, value):
         for c in (self._constraints):
             value = c(value)
-        return value         
+        return value
+        
+    def get_doc(self):
+        doc = ''
+        doc += '(' 
+        doc += ', '.join(c.get_doc() for c in self._constraints if hasattr(c, 'get_doc'))
+        doc += ')' 
+        return doc
+         
 
 
 class Parameter(IndexedCollectable):
@@ -291,16 +312,15 @@ class Parameter(IndexedCollectable):
         if hasattr(paramsdoc, 'allowedtype'):
             paramsdoc += " : %s" % self.allowedtype
         paramsdoc = [paramsdoc]
+
         try:
             doc = self.__doc__.strip()
             if not doc.endswith('.'):
+                doc += '.'        
+            if self._constraints is not None:
+                doc += ' Constraints: '
+                doc += self._constraints.get_doc()
                 doc += '.'
-            # TODO: Update this to the use of Add/OrConstrainer    
-            if not self._constraints is None:
-                doc += ' Constraints: ' 
-                doc += ', '.join(c.get_doc() for c in self._constraints
-                       if hasattr(c, 'get_doc'))
-                doc += '.'                    
             try:
                 doc += " (Default: %r)" % (self.default,)
             except:
@@ -313,7 +333,6 @@ class Parameter(IndexedCollectable):
                                                  replace_whitespace=True)]
         except Exception, e:
             pass
-
         return '\n'.join(paramsdoc)
 
 
