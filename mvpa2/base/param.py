@@ -85,16 +85,16 @@ class EnsureNone(EnsureValue):
         return 'value must be `None`'
 
 class EnsureChoice(EnsureValue):
-    def __init__(self, allowed):
-        self._allowed = allowed
+    def __init__(self, *args):
+        self._allowed = args
 
     def __call__(self, value):
         if value not in self._allowed:
-            raise ValueError, "value is not in %s" % (self._allowed, )
+            raise ValueError, "value is not one of %s" % (self._allowed, )
         return value
 
     def get_doc(self):
-        return 'value must be in %s' % (str(self._allowed), )
+        return 'value must be one of %s' % (str(self._allowed), )
 
 
 class EnsureRange(EnsureValue):
@@ -114,7 +114,7 @@ class EnsureRange(EnsureValue):
     def get_doc(self):
         min_str='-inf' if self._min is None else str(self._min)
         max_str='inf' if self._max is None else str(self._max)
-        return 'value must be in range [' + min_str + ', ' + max_str + ']'
+        return 'value must be in range [%s, %s]' % (min_str, max_str)
 
 
 class ValidationError(Exception):
@@ -139,11 +139,12 @@ class AltConstraints(object):
         raise ValidationError("All given constraints are violated")
 
     def get_doc(self):
-        doc = ''
-        doc += '(' 
-        doc += ' or '.join(c.get_doc() for c in self.constraints if hasattr(c, 'get_doc'))
-        doc += ')' 
-        return doc
+        cs = [c.get_doc() for c in self.constraints if hasattr(c, 'get_doc')]
+        doc = ', or '.join(cs)
+        if len(cs) > 1:
+            return '(%s)' % doc
+        else:
+            return doc
 
 
 class Constraints(object):
@@ -156,11 +157,12 @@ class Constraints(object):
         return value
 
     def get_doc(self):
-        doc = ''
-        doc += '(' 
-        doc += ', '.join(c.get_doc() for c in self.constraints if hasattr(c, 'get_doc'))
-        doc += ')' 
-        return doc
+        cs = [c.get_doc() for c in self.constraints if hasattr(c, 'get_doc')]
+        doc = ', and '.join(cs)
+        if len(cs) > 1:
+            return '(%s)' % doc
+        else:
+            return doc
 
 
 class Parameter(IndexedCollectable):
@@ -319,11 +321,12 @@ class Parameter(IndexedCollectable):
             if not doc.endswith('.'):
                 doc += '.'
             if self.constraints is not None:
-                doc += ' Constraints: '
-                doc += self.constraints.get_doc()
-                doc += '.'
+                cdoc = self.constraints.get_doc()
+                if cdoc[0] == '(' and cdoc[-1] == ')':
+                    cdoc = cdoc[1:-1]
+                doc += ' Constraints: %s.' % cdoc
             try:
-                doc += " (Default: %r)" % (self.default,)
+                doc += " [Default: %r]" % (self.default,)
             except:
                 pass
             # Explicitly deal with multiple spaces, for some reason
