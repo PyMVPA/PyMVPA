@@ -20,7 +20,7 @@ if __debug__:
 
 _whitespace_re = re.compile('\n\s+|^\s+')
 
-__all__ = [ 'Parameter', 'KernelParameter' ]
+#__all__ = [ 'Parameter', 'KernelParameter' ]
 
 
 class EnsureValue(object):
@@ -69,11 +69,20 @@ class EnsureBool(EnsureValue):
         if isinstance(value, bool):
             return value
         else:
-            raise ValueError("Value must be of type bool")
+            raise ValueError("value must be of type bool")
 
     def get_doc(self):
         return 'value must be of type bool'
 
+class EnsureNone(EnsureValue):
+    def __call__(self, value):
+        if value is None:
+            return None
+        else:
+            raise ValueError("value must be `None`")
+
+    def get_doc(self):
+        return 'value must be `None`'
 
 class EnsureChoice(EnsureValue):
     def __init__(self, allowed):
@@ -81,7 +90,7 @@ class EnsureChoice(EnsureValue):
 
     def __call__(self, value):
         if value not in self._allowed:
-            raise ValueError, "Value is not in %s" % (self._allowed, )
+            raise ValueError, "value is not in %s" % (self._allowed, )
         return value
 
     def get_doc(self):
@@ -96,10 +105,10 @@ class EnsureRange(EnsureValue):
     def __call__(self, value):
         if self._min is not None:
             if value < self._min:
-                raise ValueError, "Value must be at least %s" % (self._min, )
+                raise ValueError, "value must be at least %s" % (self._min, )
         if self._max is not None:
             if value > self._max:
-                raise ValueError, "Value must be at most %s" % (self._max, )
+                raise ValueError, "value must be at most %s" % (self._max, )
         return value
 
     def get_doc(self):
@@ -113,7 +122,7 @@ class ValidationError(Exception):
 
 class AltConstraints(object):
     def __init__(self, *args):
-        self._constraints = args
+        self._constraints = [EnsureNone() if c is None else c for c in args]
 
     def __call__(self, value):
         if value==None:
@@ -132,8 +141,6 @@ class AltConstraints(object):
     def get_doc(self):
         doc = ''
         doc += '(' 
-        if None in self._constraints:
-            doc += 'None or '
         doc += ' or '.join(c.get_doc() for c in self._constraints if hasattr(c, 'get_doc'))
         doc += ')' 
         return doc
@@ -141,7 +148,7 @@ class AltConstraints(object):
 
 class Constraints(object):
     def __init__(self, *args):
-        self._constraints = args
+        self._constraints = [EnsureNone() if c is None else c for c in args]
 
     def __call__(self, value):
         for c in (self._constraints):
