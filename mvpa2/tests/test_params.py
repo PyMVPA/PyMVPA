@@ -33,7 +33,7 @@ class ParametrizedClassifierExtended(ParametrizedClassifier):
 
 class ChoiceClass(ClassWithCollections):
     C = Parameter('choice1',
-                  constraints=EnsureChoice(allowed=('choice1', 'choice2')),
+                  constraints=EnsureChoice('choice1', 'choice2'),
                   doc="documentation")
 
 class BlankClass(ClassWithCollections):
@@ -164,7 +164,7 @@ class ParamsTests(unittest.TestCase):
         # Test doc strings for parameters with choices
         class WithChoices(ClassWithCollections):
             C = Parameter('choice1',
-                  constraints=EnsureChoice(allowed=('choice1', 'choice2')),
+                  constraints=EnsureChoice('choice1', 'choice2'),
                   doc="documentation")
             # We need __init__ to get 'custom' docstring
             def __init__(self, **kwargs):
@@ -181,7 +181,7 @@ class ParamsTests(unittest.TestCase):
         # non-strings
         class WithFuncChoices(ClassWithCollections):
             C = Parameter('choice1',
-                          constraints=EnsureChoice(allowed=('choice1', np.sum)),
+                          constraints=EnsureChoice('choice1', np.sum),
                           doc="documentation")
             # We need __init__ to get 'custom' docstring
             def __init__(self, **kwargs):
