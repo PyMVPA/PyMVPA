@@ -48,7 +48,12 @@ class EnsureInt(object):
     and, raises a ValueException in case it is not.
     """
     def __call__(self, value):
-        if hasattr(value,'__iter__'):
+        if hasattr(value, 'dtype'):
+            import numpy as np
+            if not np.issubdtype(value.dtype, int):
+                raise ValueError("value must be of type bool")
+            return value
+        elif hasattr(value,'__iter__'):
             return map(int, value)
         else:
             return int(value)
