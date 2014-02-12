@@ -122,16 +122,16 @@ class ValidationError(Exception):
 
 class AltConstraints(object):
     def __init__(self, *args):
-        self._constraints = [EnsureNone() if c is None else c for c in args]
+        self.constraints = [EnsureNone() if c is None else c for c in args]
 
     def __call__(self, value):
         if value==None:
-            if None in self._constraints:
+            if None in self.constraints:
                 return None
             else:
                 raise ValueError("None is not an allowed value")
         e_list = []
-        for c in self._constraints:
+        for c in self.constraints:
             try:
                 return c(value)
             except Exception, e:
@@ -141,24 +141,24 @@ class AltConstraints(object):
     def get_doc(self):
         doc = ''
         doc += '(' 
-        doc += ' or '.join(c.get_doc() for c in self._constraints if hasattr(c, 'get_doc'))
+        doc += ' or '.join(c.get_doc() for c in self.constraints if hasattr(c, 'get_doc'))
         doc += ')' 
         return doc
 
 
 class Constraints(object):
     def __init__(self, *args):
-        self._constraints = [EnsureNone() if c is None else c for c in args]
+        self.constraints = [EnsureNone() if c is None else c for c in args]
 
     def __call__(self, value):
-        for c in (self._constraints):
+        for c in (self.constraints):
             value = c(value)
         return value
 
     def get_doc(self):
         doc = ''
         doc += '(' 
-        doc += ', '.join(c.get_doc() for c in self._constraints if hasattr(c, 'get_doc'))
+        doc += ', '.join(c.get_doc() for c in self.constraints if hasattr(c, 'get_doc'))
         doc += ')' 
         return doc
 
@@ -242,7 +242,7 @@ class Parameter(IndexedCollectable):
 
         self.__default = default
         self._ro = ro
-        self._constraints = constraints
+        self.constraints = constraints
 
         # needs to come after kwargs processing, since some debug statements
         # rely on working repr()
@@ -268,7 +268,7 @@ class Parameter(IndexedCollectable):
         state = dict([(k, getattr(self, k)) for k in self._additional_props])
         state['_additional_props'] = self._additional_props
         state.update(icr[2])
-        res = (self.__class__, (self.__default, self._constraints, self._ro) + icr[1], state)
+        res = (self.__class__, (self.__default, self.constraints, self._ro) + icr[1], state)
         #if __debug__ and 'COL_RED' in debug.active:
         #    debug('COL_RED', 'Returning %s for %s' % (res, self))
         return res
@@ -317,10 +317,10 @@ class Parameter(IndexedCollectable):
         try:
             doc = self.__doc__.strip()
             if not doc.endswith('.'):
-                doc += '.'        
-            if self._constraints is not None:
+                doc += '.'
+            if self.constraints is not None:
                 doc += ' Constraints: '
-                doc += self._constraints.get_doc()
+                doc += self.constraints.get_doc()
                 doc += '.'
             try:
                 doc += " (Default: %r)" % (self.default,)
@@ -347,11 +347,11 @@ class Parameter(IndexedCollectable):
             self.value = self.__default
 
     def _set(self, val, init=False):
-        if self._constraints is not None:
-#            for c in self._constraints:
+        if self.constraints is not None:
+#            for c in self.constraints:
 #                val = c(val)
 #                #val = c.validate(val)
-            val = self._constraints(val)    
+            val = self.constraints(val)    
         different_value = self._value != val
         isarray = isinstance(different_value, np.ndarray)
         if self._ro and not init:
