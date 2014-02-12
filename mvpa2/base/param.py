@@ -111,9 +111,9 @@ class EnsureRange(EnsureValue):
 class ValidationError(Exception):
     pass
 
-class OrConstrainer(object):
-    def __init__(self, constraints):
-        self._constraints = constraints
+class AltConstraints(object):
+    def __init__(self, *args):
+        self._constraints = args
 
     def __call__(self, value):
         if value==None:
@@ -139,9 +139,9 @@ class OrConstrainer(object):
         return doc
 
 
-class AndConstrainer(object):
-    def __init__(self, constraints):
-        self._constraints = constraints
+class Constraints(object):
+    def __init__(self, *args):
+        self._constraints = args
 
     def __call__(self, value):
         for c in (self._constraints):
@@ -214,16 +214,16 @@ class Parameter(IndexedCollectable):
         >>> C = Parameter(23.0,constraints=EnsureFloat())
 
         -ensure the parameter to be of type float or to be None:
-        >>> from mvpa2.base.param import Parameter, EnsureFloat, OrConstrainer
-        >>> C = Parameter(23.0,constraints=OrConstrainer((EnsureFloat(), None)))
+        >>> from mvpa2.base.param import Parameter, EnsureFloat, AltConstraints
+        >>> C = Parameter(23.0,constraints=AltConstraints(EnsureFloat(), None))
 
         -ensure the parameter to be None or to be of type float
         and lie in the inclusive range (7.0,44.0):
         >>> from mvpa2.base.param import Parameter, EnsureFloat, EnsureRange,
-        ...                              OrConstrainer, AndConstrainer
-        >>> C = Parameter(23.0, OrConstrainer((AndConstrainer( (EnsureFloat(),
-        ...                                    EnsureRange(min=7.0,max=44.0))),
-        ...                                    None)))
+        ...                              AltConstraints, Constraints
+        >>> C = Parameter(23.0, AltConstraints(Constraints(EnsureFloat(),
+        ...                                    EnsureRange(min=7.0,max=44.0)),
+        ...                                    None))
         """
         # XXX probably is too generic...
         # and potentially dangerous...
