@@ -16,7 +16,7 @@ from mvpa2.datasets.base import dataset_wizard
 from mvpa2.base.state import ClassWithCollections, ConditionalAttribute
 from mvpa2.base.param import Parameter, KernelParameter, EnsureBool, \
                              EnsureInt, EnsureFloat, EnsureRange, EnsureChoice, \
-                             OrConstrainer, AndConstrainer
+                             AltConstraints, Constraints
 
 from mvpa2.testing.clfs import *
 
@@ -29,23 +29,21 @@ class ParametrizedClassifierExtended(ParametrizedClassifier):
         ParametrizedClassifier.__init__(self)
         self.kernel_params['kp2'] = \
             KernelParameter(200.0, doc="Very useful param")
-            
-            
+
+
 class ChoiceClass(ClassWithCollections):
     C = Parameter('choice1',
                   constraints=EnsureChoice(allowed=('choice1', 'choice2')),
-                  doc="documentation")                
+                  doc="documentation")
 
 class BlankClass(ClassWithCollections):
     pass
 
 class SimpleClass(ClassWithCollections):
     C = Parameter(1.0, 
-                  constraints=AndConstrainer( (EnsureFloat(), 
-                                             EnsureRange(min=0.0, max=10.0)) ), 
+                  constraints=Constraints(EnsureFloat(),
+                                          EnsureRange(min=0.0, max=10.0)),
                   doc="C parameter")
-                  
-                  
 
 class MixedClass(ClassWithCollections):
     C = Parameter(1.0, constraints=EnsureRange(min=0), doc="C parameter")
@@ -59,11 +57,10 @@ class ParamsTests(unittest.TestCase):
 
         self.assertRaises(AttributeError, blank.__getattribute__, 'ca')
         self.assertRaises(AttributeError, blank.__getattribute__, '')
-        
+
     def test_choice(self):
         c = ChoiceClass()
         self.assertRaises(ValueError, c.params.__setattr__, 'C', 'bu')
-        
 
     def test_simple(self):
         simple  = SimpleClass()
