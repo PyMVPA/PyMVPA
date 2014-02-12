@@ -125,11 +125,6 @@ class AltConstraints(object):
         self.constraints = [EnsureNone() if c is None else c for c in args]
 
     def __call__(self, value):
-        if value==None:
-            if None in self.constraints:
-                return None
-            else:
-                raise ValueError("None is not an allowed value")
         e_list = []
         for c in self.constraints:
             try:
