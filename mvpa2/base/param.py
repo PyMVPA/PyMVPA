@@ -42,7 +42,7 @@ class EnsureValue(object):
         # return meaningful docs or None
         return None
 
-        
+
 class EnsureInt(object):
     """Derived class that ensures a input to be of type int,
     and, raises a ValueException in case it is not.
@@ -50,10 +50,10 @@ class EnsureInt(object):
     def __call__(self, value):
         if hasattr(value,'__iter__'):
             return map(int, value)
-        else:    
-            return int(value)    
+        else:
+            return int(value)
     def get_doc(self):
-        return 'value must be convertible to type int'   
+        return 'value must be convertible to type int'
 
 
 class EnsureFloat(EnsureValue):
@@ -62,8 +62,8 @@ class EnsureFloat(EnsureValue):
 
     def get_doc(self):
         return 'value must be convertible to type float'
-        
-        
+
+
 class EnsureBool(EnsureValue):
     def __call__(self, value):
         if isinstance(value, bool):
@@ -72,11 +72,7 @@ class EnsureBool(EnsureValue):
             raise ValueError("Value must be of type bool")
 
     def get_doc(self):
-        return 'value must be of type bool'        
-        
-        
-        
-        
+        return 'value must be of type bool'
 
 
 class EnsureChoice(EnsureValue):
@@ -86,7 +82,7 @@ class EnsureChoice(EnsureValue):
     def __call__(self, value):
         if value not in self._allowed:
             raise ValueError, "Value is not in %s" % (self._allowed, )
-        return value        
+        return value
 
     def get_doc(self):
         return 'value must be in %s' % (str(self._allowed), )
@@ -96,7 +92,7 @@ class EnsureRange(EnsureValue):
     def __init__(self, min=None, max=None):
         self._min = min
         self._max = max
-        
+
     def __call__(self, value):
         if self._min is not None:
             if value < self._min:
@@ -110,8 +106,8 @@ class EnsureRange(EnsureValue):
         min_str='-inf' if self._min is None else str(self._min)
         max_str='inf' if self._max is None else str(self._max)
         return 'value must be in range [' + min_str + ', ' + max_str + ']'
-        
-    
+
+
 class ValidationError(Exception):
     pass
 
@@ -124,7 +120,7 @@ class OrConstrainer(object):
             if None in self._constraints:
                 return None
             else:
-                raise ValueError("None is not an allowed value")                        
+                raise ValueError("None is not an allowed value")
         e_list = []
         for c in self._constraints:
             try:
@@ -141,25 +137,23 @@ class OrConstrainer(object):
         doc += ' or '.join(c.get_doc() for c in self._constraints if hasattr(c, 'get_doc'))
         doc += ')' 
         return doc
-        
 
 
 class AndConstrainer(object):
     def __init__(self, constraints):
-        self._constraints = constraints    
+        self._constraints = constraints
 
     def __call__(self, value):
         for c in (self._constraints):
             value = c(value)
         return value
-        
+
     def get_doc(self):
         doc = ''
         doc += '(' 
         doc += ', '.join(c.get_doc() for c in self._constraints if hasattr(c, 'get_doc'))
         doc += ')' 
         return doc
-         
 
 
 class Parameter(IndexedCollectable):
@@ -210,10 +204,10 @@ class Parameter(IndexedCollectable):
           cannot be changed
         value
           Actual value of the parameter to be assigned
-          
+
         Examples
         --------
-        -ensure the parameter to be of type float 
+        -ensure the parameter to be of type float
         (None not allowed as value):
         constraints = EnsureFloat()
         >>> from mvpa2.base.param import Parameter, EnsureFloat
@@ -222,12 +216,12 @@ class Parameter(IndexedCollectable):
         -ensure the parameter to be of type float or to be None:
         >>> from mvpa2.base.param import Parameter, EnsureFloat, OrConstrainer
         >>> C = Parameter(23.0,constraints=OrConstrainer((EnsureFloat(), None)))
-          
-        -ensure the parameter to be None or to be of type float 
-        and lie in the inclusive range (7.0,44.0):          
-        >>> from mvpa2.base.param import Parameter, EnsureFloat, EnsureRange, 
+
+        -ensure the parameter to be None or to be of type float
+        and lie in the inclusive range (7.0,44.0):
+        >>> from mvpa2.base.param import Parameter, EnsureFloat, EnsureRange,
         ...                              OrConstrainer, AndConstrainer
-        >>> C = Parameter(23.0, OrConstrainer((AndConstrainer( (EnsureFloat(), 
+        >>> C = Parameter(23.0, OrConstrainer((AndConstrainer( (EnsureFloat(),
         ...                                    EnsureRange(min=7.0,max=44.0))),
         ...                                    None)))
         """
@@ -346,7 +340,7 @@ class Parameter(IndexedCollectable):
             self.value = self.__default
 
     def _set(self, val, init=False):
-        if self._constraints is not None:            
+        if self._constraints is not None:
 #            for c in self._constraints:
 #                val = c(val)
 #                #val = c.validate(val)
