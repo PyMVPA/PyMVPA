@@ -129,9 +129,6 @@ class EnsureRange(EnsureValue):
         return 'value must be in range [%s, %s]' % (min_str, max_str)
 
 
-class ValidationError(Exception):
-    pass
-
 class AltConstraints(object):
     def __init__(self, *args):
         self.constraints = [EnsureNone() if c is None else c for c in args]
@@ -143,7 +140,7 @@ class AltConstraints(object):
                 return c(value)
             except Exception, e:
                 e_list.append(e)
-        raise ValidationError("All given constraints are violated")
+        raise ValueError("all alternative constraints violated")
 
     def get_doc(self):
         cs = [c.get_doc() for c in self.constraints if hasattr(c, 'get_doc')]
