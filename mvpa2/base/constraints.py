@@ -30,8 +30,14 @@ class EnsureValue(object):
         return value
 
     # proposed name -- please invent a better one
-    def get_doc(self):
+    def long_description(self):
         # return meaningful docs or None
+        # used as a comprehensive description in the parameter list
+        return self.short_description()
+
+    def short_description(self):
+        # return meaningful docs or None
+        # used as a condensed primer for the parameter lists
         return None
 
 class EnsureDType(object):
@@ -57,11 +63,14 @@ class EnsureDType(object):
         else:
             return self._dtype(value)
 
-    def get_doc(self):
+    def short_description(self):
         dtype_descr = str(self._dtype)
-        if dtype_descr[:6] == '<type ' and dtype_descr[-1] == '>':
-            dtype_descr = dtype_descr[6:-1]
-        return "value must be convertible to type %s" % dtype_descr
+        if dtype_descr[:7] == "<type '" and dtype_descr[-2:] == "'>":
+            dtype_descr = dtype_descr[7:-2]
+        return dtype_descr
+
+    def long_description(self):
+        return "value must be convertible to type '%s'" % self.short_description()
 
 class EnsureInt(EnsureDType):
     def __init__(self):
@@ -83,8 +92,11 @@ class EnsureBool(EnsureValue):
             raise ValueError(
                     "'%s' cannot be converted into a boolean" % value)
 
-    def get_doc(self):
+    def long_description(self):
         return 'value must be convertible to type bool'
+
+    def short_description(self):
+        return 'bool'
 
 class EnsureNone(EnsureValue):
     def __call__(self, value):
@@ -93,7 +105,10 @@ class EnsureNone(EnsureValue):
         else:
             raise ValueError("value must be `None`")
 
-    def get_doc(self):
+    def short_description(self):
+        return 'None'
+
+    def long_description(self):
         return 'value must be `None`'
 
 class EnsureChoice(EnsureValue):
@@ -105,9 +120,11 @@ class EnsureChoice(EnsureValue):
             raise ValueError, "value is not one of %s" % (self._allowed, )
         return value
 
-    def get_doc(self):
+    def long_description(self):
         return 'value must be one of %s' % (str(self._allowed), )
 
+    def short_description(self):
+        return '{%s}' % ', '.join([str(c) for c in self._allowed])
 
 class EnsureRange(EnsureValue):
     def __init__(self, min=None, max=None):
@@ -123,7 +140,7 @@ class EnsureRange(EnsureValue):
                 raise ValueError, "value must be at most %s" % (self._max, )
         return value
 
-    def get_doc(self):
+    def long_description(self):
         min_str='-inf' if self._min is None else str(self._min)
         max_str='inf' if self._max is None else str(self._max)
         return 'value must be in range [%s, %s]' % (min_str, max_str)
@@ -142,13 +159,23 @@ class AltConstraints(object):
                 e_list.append(e)
         raise ValueError("all alternative constraints violated")
 
-    def get_doc(self):
-        cs = [c.get_doc() for c in self.constraints if hasattr(c, 'get_doc')]
+    def long_description(self):
+        cs = [c.long_description() for c in self.constraints if hasattr(c, 'long_description')]
         doc = ', or '.join(cs)
         if len(cs) > 1:
             return '(%s)' % doc
         else:
             return doc
+
+    def short_description(self):
+        cs = [c.short_description() for c in self.constraints
+                    if hasattr(c, 'short_description') and not c.short_description() is None]
+        doc = ' or '.join(cs)
+        if len(cs) > 1:
+            return '(%s)' % doc
+        else:
+            return doc
+
 
 
 class Constraints(object):
@@ -160,9 +187,18 @@ class Constraints(object):
             value = c(value)
         return value
 
-    def get_doc(self):
-        cs = [c.get_doc() for c in self.constraints if hasattr(c, 'get_doc')]
+    def long_description(self):
+        cs = [c.long_description() for c in self.constraints if hasattr(c, 'long_description')]
         doc = ', and '.join(cs)
+        if len(cs) > 1:
+            return '(%s)' % doc
+        else:
+            return doc
+
+    def short_description(self):
+        cs = [c.short_description() for c in self.constraints
+                    if hasattr(c, 'short_description') and not c.short_description() is None]
+        doc = ' and '.join(cs)
         if len(cs) > 1:
             return '(%s)' % doc
         else:
