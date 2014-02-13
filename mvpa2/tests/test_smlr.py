@@ -68,10 +68,11 @@ class SMLRTests(unittest.TestCase):
         self.assertTrue(sens.shape == (len(data.UT) - 1, data.nfeatures))
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(SMLRTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

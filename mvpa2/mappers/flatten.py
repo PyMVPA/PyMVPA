@@ -219,7 +219,7 @@ class ProductFlattenMapper(FlattenMapper):
         factor_names = list(factor_names)
         space = '_'.join(factor_names) + '_indices'
 
-        FlattenMapper.__init__(self, shape=None, space=space, **kwargs)
+        FlattenMapper.__init__(self, space=space, **kwargs)
 
         self._factor_names = factor_names
         self._factor_values = None

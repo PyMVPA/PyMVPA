@@ -29,7 +29,7 @@ if __debug__:
 else:
     _ENFORCE_CA_ENABLED = False
 
-from mvpa2.testing.sweepargs import sweepargs
+from mvpa2.testing.sweep import sweepargs
 
 if __debug__:
     debug('INIT', 'mvpa2.testing end')

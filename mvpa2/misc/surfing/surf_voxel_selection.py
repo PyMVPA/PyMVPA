@@ -313,7 +313,6 @@ class VoxelSelector(object):
             return None, None
 
         idxs = attrs.pop(LINEAR_VOXEL_INDICES)
-
         return idxs, attrs
 
 
@@ -508,7 +507,7 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
 
 
     # structure to keep output data. Initialize with None, then
-    # make a sparse_attributes instance when we know what the attribtues are
+    # make a sparse_attributes instance when we know what the attributes are
     node2volume_attributes = None
 
     attribute_mapper = voxel_selector.disc_voxel_indices_and_attributes
@@ -523,13 +522,19 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
                            "to 1 (got nproc=%i) or set to default None"
                            % nproc)
 
-    if nproc is None and externals.exists('pprocess'):
-        try:
-            import pprocess
-            nproc = pprocess.get_number_of_cores() or 1
-            if _debug() :
-                debug("SVS", 'Using pprocess with %d cores' % nproc)
-        except:
+    if nproc is None:
+        if externals.exists('pprocess'):
+            try:
+                import pprocess
+                nproc = pprocess.get_number_of_cores() or 1
+                if _debug() :
+                    debug("SVS", 'Using pprocess with %d cores' % nproc)
+            except:
+                if _debug():
+                    debug("SVS", 'pprocess not available')
+
+        if nproc is None:
+            # importing pprocess failed - so use a single core
             nproc = 1
             debug("SVS", 'Using %d cores - pprocess not available' % nproc)
 
@@ -550,7 +555,7 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
         if results_backend == 'hdf5':
             externals.exists('h5py', raise_=True)
         elif results_backend is None:
-            if externals.exists('h5py'):
+            if externals.exists('h5py') and externals.versions['hdf5'] >= '1.8.7':
                 results_backend = 'hdf5'
             else:
                 results_backend = 'native'
@@ -608,7 +613,6 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
                     debug('SVS', "Merging results from %d child "
                                  "processes using '%s' backend" %
                                  (len(blocks), results_backend))
-
             else:
                 # merge new with current data
                 node2volume_attributes.merge(result)
@@ -760,7 +764,7 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
         Relative stop position of line (as in see start)
     start_mm: float (default: 0)
         Absolute start position offset (as in start_fr)
-    sttop_mm: float (default: 0)
+    stop_mm: float (default: 0)
         Absolute start position offset (as in start_fr)
     nsteps: int (default: 10)
         Number of steps from white to pial surface
