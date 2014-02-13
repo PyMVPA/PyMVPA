@@ -72,6 +72,30 @@ class EnsureDType(object):
     def long_description(self):
         return "value must be convertible to type '%s'" % self.short_description()
 
+class EnsureListOf(EnsureValue):
+    """Ensure that an input is a list of a particular data type
+    """
+    def __init__(self, dtype):
+        """
+        Parameters
+        ----------
+        dtype : functor
+        """
+        self._dtype = dtype
+
+    def __call__(self, value):
+        return map(self._dtype, value)
+
+    def short_description(self):
+        dtype_descr = str(self._dtype)
+        if dtype_descr[:7] == "<type '" and dtype_descr[-2:] == "'>":
+            dtype_descr = dtype_descr[7:-2]
+        return 'list(%s)' % dtype_descr
+
+    def long_description(self):
+        return "value must be convertible to %s" % self.short_description()
+
+
 class EnsureInt(EnsureDType):
     def __init__(self):
         EnsureDType.__init__(self, int)
@@ -97,6 +121,24 @@ class EnsureBool(EnsureValue):
 
     def short_description(self):
         return 'bool'
+
+class EnsureStr(EnsureValue):
+    def __init__(self):
+        EnsureValue.__init__(self)
+
+    def __call__(self, value):
+        if not isinstance(value, basestring):
+            # do not perform a blind conversion ala str(), as almost
+            # anything can be converted and the result is most likely
+            # unintended
+            raise ValueError("value is not a string")
+        return value
+
+    def long_description(self):
+        return 'value must be a string'
+
+    def short_description(self):
+        return 'str'
 
 class EnsureNone(EnsureValue):
     def __call__(self, value):
