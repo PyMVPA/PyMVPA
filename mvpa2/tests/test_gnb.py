@@ -56,10 +56,11 @@ class GNBTests(unittest.TestCase):
                         d1 = np.sum(v, axis=1) - 1.0
                         self.assertTrue(np.max(np.abs(d1)) < 1e-5)
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(GNBTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

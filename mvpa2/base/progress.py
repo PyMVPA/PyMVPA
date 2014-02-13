@@ -39,7 +39,7 @@ def seconds2prettystring(t, ndigits=0):
         return 'oo' # infinity
 
     seconds_per_day = 60 * 60 * 24
-    ndays = int(t) / seconds_per_day
+    ndays = int(t) // seconds_per_day
     nseconds = t - ndays * seconds_per_day
     sec_str = str(datetime.timedelta(seconds=nseconds))
 

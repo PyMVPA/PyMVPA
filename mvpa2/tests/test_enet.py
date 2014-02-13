@@ -70,10 +70,11 @@ class ENETTests(unittest.TestCase):
         self.assertTrue(sens.shape == (data.nfeatures,))
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(ENETTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

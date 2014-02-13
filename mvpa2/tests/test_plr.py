@@ -47,10 +47,11 @@ class PLRTests(unittest.TestCase):
         self.assertTrue(np.array(clf.ca.estimates).shape == np.array(p).shape)
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(PLRTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

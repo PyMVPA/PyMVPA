@@ -465,7 +465,7 @@ class Collection(dict):
                 # store documentation
                 self[k].__doc__ = doc
         else:
-            raise ValueError("Collection.upate() cannot handle '%s'."
+            raise ValueError("Collection.update() cannot handle '%s'."
                              % str(type(source)))
 
 
@@ -481,6 +481,16 @@ class Collection(dict):
             self[key].value = value
         except KeyError:
             _object_setattr(self, key, value)
+        except Exception, e:
+            # catch any other exception in order to provide a useful error message
+            errmsg = "parameter '%s' cannot accept value `%s` (%s)" % (key, value, str(e))
+            if key in self and not self[key].constraints is None:
+                cdoc = self[key].constraints.get_doc()
+                if cdoc[0] == '(' and cdoc[-1] == ')':
+                    cdoc = cdoc[1:-1]
+                errmsg += " [%s]" % cdoc
+            raise ValueError(errmsg)
+
 
     # TODO: unify with the rest of __repr__ handling
     def __repr__(self):

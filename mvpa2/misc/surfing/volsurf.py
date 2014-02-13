@@ -71,6 +71,12 @@ class VolSurf(object):
                      'pial=%r' % self._pial] + prefixes
         return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
 
+    def __str__(self):
+        return '%s(volgeom=%s, pial=%s, white=%s)' % (
+                                            self.__class__.__name__,
+                                            self._volgeom,
+                                            self._white,
+                                            self._pial)
 
     @property
     def pial_surface(self):
@@ -374,7 +380,7 @@ class VolSurfMapping(VolSurf):
             Relative stop position of line (as in see start).
         start_mm: float (default: 0)
             Absolute start position offset (as in start_fr).
-        sttop_mm: float (default: 0)
+        stop_mm: float (default: 0)
             Absolute start position offset (as in start_fr).
 
 
@@ -597,7 +603,7 @@ class VolSurfMaximalMapping(VolSurfMapping):
             Relative stop position of line (as in see start).
         start_mm: float (default: 0)
             Absolute start position offset (as in start_fr).
-        sttop_mm: float (default: 0)
+        stop_mm: float (default: 0)
             Absolute start position offset (as in start_fr).
 
 
@@ -693,7 +699,7 @@ class VolSurfMinimalMapping(VolSurfMapping):
             Relative stop position of line (as in see start).
         start_mm: float (default: 0)
             Absolute start position offset (as in start_fr).
-        sttop_mm: float (default: 0)
+        stop_mm: float (default: 0)
             Absolute start position offset (as in start_fr).
 
         Notes
@@ -792,7 +798,7 @@ class VolSurfMinimalLowresMapping(VolSurfMinimalMapping):
             Relative stop position of line (as in see start).
         start_mm: float (default: 0)
             Absolute start position offset (as in start_fr).
-        sttop_mm: float (default: 0)
+        stop_mm: float (default: 0)
             Absolute start position offset (as in start_fr).
 
         Notes
@@ -893,6 +899,9 @@ class VolumeBasedSurface(surf.Surface):
         prefixes_ = ['vg=%r' % self._vg] + prefixes
         return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
 
+    def __str__(self):
+        return '%s(volgeom=%s)' % (self.__class__.__name__,
+                                     self._vg)
 
     def __reduce__(self):
         return (self.__class__, (self._vg,))
@@ -935,8 +944,9 @@ class VolumeBasedSurface(surf.Surface):
             src_ijk = self._vg.xyz2ijk(src_coord)
 
             # min and max ijk coordinates
-            mn = src_ijk.ravel() - max_extent
-            mx = src_ijk.ravel() + max_extent
+            mn = (src_ijk.ravel() - max_extent).astype(np.int_)
+            mx = (src_ijk.ravel() + max_extent).astype(np.int_)
+
 
             # set boundaries properly
             mn[mn < 0] = 0
