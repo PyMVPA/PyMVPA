@@ -49,18 +49,19 @@ class EnsureDType(object):
         self._dtype = dtype
 
     def __call__(self, value):
-        if hasattr(value, 'dtype'):
+        if hasattr(value, '__array__'):
             import numpy as np
-            if not np.issubdtype(value.dtype, self._dtype):
-                raise ValueError("value must be of type '%s'" % self._dtype)
-            return value
+            return np.asanyarray(value, dtype=self._dtype)
         elif hasattr(value,'__iter__'):
             return map(self._dtype, value)
         else:
             return self._dtype(value)
 
     def get_doc(self):
-        return "value must be convertible to type '%s'" % self._dtype
+        dtype_descr = str(self._dtype)
+        if dtype_descr[:6] == '<type ' and dtype_descr[-1] == '>':
+            dtype_descr = dtype_descr[6:-1]
+        return "value must be convertible to type %s" % dtype_descr
 
 class EnsureInt(EnsureDType):
     def __init__(self):
