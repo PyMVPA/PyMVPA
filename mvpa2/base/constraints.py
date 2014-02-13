@@ -34,32 +34,41 @@ class EnsureValue(object):
         # return meaningful docs or None
         return None
 
-
-class EnsureInt(object):
-    """Derived class that ensures a input to be of type int,
-    and, raises a ValueException in case it is not.
+class EnsureDType(object):
+    """Ensure that an input is of a particular data type,
+    and, raises an Exception in case it is not.
     """
+    # TODO extend to support numpy-like dtype specs, e.g. 'int64'
+    # in addition to functors
+    def __init__(self, dtype):
+        """
+        Parameters
+        ----------
+        dtype : functor
+        """
+        self._dtype = dtype
+
     def __call__(self, value):
         if hasattr(value, 'dtype'):
             import numpy as np
-            if not np.issubdtype(value.dtype, int):
-                raise ValueError("value must be of type bool")
+            if not np.issubdtype(value.dtype, self._dtype):
+                raise ValueError("value must be of type '%s'" % self._dtype)
             return value
         elif hasattr(value,'__iter__'):
-            return map(int, value)
+            return map(self._dtype, value)
         else:
-            return int(value)
-    def get_doc(self):
-        return 'value must be convertible to type int'
-
-
-class EnsureFloat(EnsureValue):
-    def __call__(self, value):
-        return float(value)
+            return self._dtype(value)
 
     def get_doc(self):
-        return 'value must be convertible to type float'
+        return "value must be convertible to type '%s'" % self._dtype
 
+class EnsureInt(EnsureDType):
+    def __init__(self):
+        EnsureDType.__init__(self, int)
+
+class EnsureFloat(EnsureDType):
+    def __init__(self):
+        EnsureDType.__init__(self, float)
 
 class EnsureBool(EnsureValue):
     def __call__(self, value):
