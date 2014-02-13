@@ -170,8 +170,11 @@ class Parameter(IndexedCollectable):
         string or list of strings (if indent is None)
         """
         paramsdoc = '%s' % self.name
-        if hasattr(paramsdoc, 'allowedtype'):
-            paramsdoc += " : %s" % self.allowedtype
+        if not self.constraints is None:
+            sdoc = self.constraints.short_description()
+            if not sdoc is None:
+                # parameters are always optional
+                paramsdoc += " : %s, optional" % sdoc
         paramsdoc = [paramsdoc]
 
         try:
@@ -179,7 +182,7 @@ class Parameter(IndexedCollectable):
             if not doc.endswith('.'):
                 doc += '.'
             if self.constraints is not None:
-                cdoc = self.constraints.get_doc()
+                cdoc = self.constraints.long_description()
                 if cdoc[0] == '(' and cdoc[-1] == ')':
                     cdoc = cdoc[1:-1]
                 doc += ' Constraints: %s.' % cdoc
