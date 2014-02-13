@@ -74,11 +74,16 @@ class EnsureBool(EnsureValue):
     def __call__(self, value):
         if isinstance(value, bool):
             return value
+        elif value in ('0', 'no', 'off', 'disable', 'false'):
+            return False
+        elif value in ('1', 'yes', 'on', 'enable', 'true'):
+            return True
         else:
-            raise ValueError("value must be of type bool")
+            raise ValueError(
+                    "'%s' cannot be converted into a boolean" % value)
 
     def get_doc(self):
-        return 'value must be of type bool'
+        return 'value must be convertible to type bool'
 
 class EnsureNone(EnsureValue):
     def __call__(self, value):
