@@ -172,6 +172,8 @@ class Parameter(IndexedCollectable):
         paramsdoc = '%s' % self.name
         if not self.constraints is None:
             sdoc = self.constraints.short_description()
+            if sdoc[0] == '(' and sdoc[-1] == ')':
+                sdoc = sdoc[1:-1]
             if not sdoc is None:
                 # parameters are always optional
                 paramsdoc += " : %s, optional" % sdoc
