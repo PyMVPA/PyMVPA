@@ -484,11 +484,13 @@ class Collection(dict):
         except Exception, e:
             # catch any other exception in order to provide a useful error message
             errmsg = "parameter '%s' cannot accept value `%s` (%s)" % (key, value, str(e))
-            if key in self and not self[key].constraints is None:
+            try:
                 cdoc = self[key].constraints.long_description()
                 if cdoc[0] == '(' and cdoc[-1] == ')':
                     cdoc = cdoc[1:-1]
                 errmsg += " [%s]" % cdoc
+            except:
+                pass
             raise ValueError(errmsg)
 
 
