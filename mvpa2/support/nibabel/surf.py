@@ -759,7 +759,7 @@ class Surface(object):
         -------
         source_target2distance: dict
             A dictionary so that source_target2distance[i,j]=d means that the
-            Euclidian distance between nodes i and j is d, where i in src
+            Euclidean distance between nodes i and j is d, where i in src
             and j in trg.
 
         Notes

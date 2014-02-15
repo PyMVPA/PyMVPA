@@ -80,7 +80,7 @@ class VolumeMaskDictionary(Mapping):
             In a typical use case it contains a mapping from node center
             indices to lists of voxel indices.
         src2aux: dict or None
-            In a typical use case it can contain auxilery information such as
+            In a typical use case it can contain auxiliary information such as
             distance of each voxel to each center.
         """
         self._volgeom = volgeom.from_any(vg)
@@ -739,15 +739,15 @@ class VolumeMaskDictionary(Mapping):
         """
         return self._source
 
-    def target2nearest_source(self, target, fallback_euclidian_distance=False):
+    def target2nearest_source(self, target, fallback_euclidean_distance=False):
         """Find the voxel nearest to a mask center
 
         Parameters
         ==========
         target: int
             linear index of a voxel
-        fallback_euclidian_distance: bool (default: False)
-            Whether to use a euclidian distance metric if target is not in
+        fallback_euclidean_distance: bool (default: False)
+            Whether to use a euclidean distance metric if target is not in
             any of the masks in this instance
 
         Returns
@@ -755,9 +755,9 @@ class VolumeMaskDictionary(Mapping):
         src: int
             key index for the mask that contains target and is nearest to
             target. If target is not contained in any mask, then None is
-            returned if fallback_euclidian_distance is False, and the
-            index of the source nearest to target using a Euclidian distance
-            metric is returned if fallback_euclidian_distance is True
+            returned if fallback_euclidean_distance is False, and the
+            index of the source nearest to target using a Euclidean distance
+            metric is returned if fallback_euclidean_distance is True
         """
         targets = []
         if type(target) in (list, tuple):
@@ -776,7 +776,7 @@ class VolumeMaskDictionary(Mapping):
                     flat_srcs.append(j)
 
         if not flat_srcs:
-            if fallback_euclidian_distance:
+            if fallback_euclidean_distance:
                 flat_srcs = self.keys()
             else:
                 return None
@@ -803,7 +803,7 @@ class VolumeMaskDictionary(Mapping):
         =======
         target: int
             linear index of the voxel that is contained in the mask associated
-            with src and nearest (Euclidian distance) to src.
+            with src and nearest (Euclidean distance) to src.
         """
 
         trgs = self.__getitem__(source)

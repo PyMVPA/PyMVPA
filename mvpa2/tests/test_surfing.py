@@ -527,7 +527,7 @@ class SurfTests(unittest.TestCase):
 
                     # index of node nearest to voxel i
                     src_anywhere = sel.target2nearest_source(i,
-                                            fallback_euclidian_distance=True)
+                                            fallback_euclidean_distance=True)
 
                     # coordinates of node nearest to voxel i
                     xyz_src = xyz[src_anywhere]
@@ -821,7 +821,7 @@ class SurfTests(unittest.TestCase):
 
     def test_agreement_surface_volume(self):
         '''test agreement between volume-based and surface-based
-        searchlights when using euclidian measure'''
+        searchlights when using euclidean measure'''
 
         #import runner
         def sum_ds(ds):
@@ -859,7 +859,7 @@ class SurfTests(unittest.TestCase):
         sel = surf_voxel_selection.voxel_selection(v, float(radius),
                                         source_surf=source_surf,
                                         source_surf_nodes=source_surf_nodes,
-                                        distance_metric='euclidian')
+                                        distance_metric='euclidean')
 
         qe = queryengine.SurfaceVerticesQueryEngine(sel)
         sl = Searchlight(sum_ds, queryengine=qe)
@@ -867,6 +867,81 @@ class SurfTests(unittest.TestCase):
 
         # check whether they give the same results
         assert_array_equal(r.samples, m.samples)
+
+
+    def test_surf_queryengine(self):
+        s = surf.generate_plane((0, 0, 0), (0, 1, 0), (0, 0, 1), 4, 5)
+
+        # add scond layer
+        s2 = surf.merge(s, (s + (.01, 0, 0)))
+
+        ds = Dataset(samples=np.arange(20)[np.newaxis],
+                    fa=dict(node_indices=np.arange(39, 0, -2)))
+
+        # add more features (with shared node indices)
+        ds3 = hstack((ds, ds, ds))
+
+        radius = 2.5
+
+        # Note: sweepargs it not used to avoid re-generating the same
+        #       surface and dataset multiple times.
+        for distance_metric in ('euclidean', 'dijkstra', '<illegal>', None):
+            builder = lambda: queryengine.SurfaceQueryEngine(s2, radius,
+                                                             distance_metric)
+            if distance_metric in ('<illegal>', None):
+                assert_raises(ValueError, builder)
+                continue
+
+            qe = builder()
+
+            # untrained qe should give errors
+            assert_raises(ValueError, lambda:qe.ids)
+            assert_raises(ValueError, lambda:qe.query_byid(0))
+
+            # node index out of bounds should give error
+            ds_ = ds.copy()
+            ds_.fa.node_indices[0] = 100
+            assert_raises(ValueError, lambda: qe.train(ds_))
+
+            # lack of node indices should give error
+            ds_.fa.pop('node_indices')
+            assert_raises(ValueError, lambda: qe.train(ds_))
+
+
+            # train the qe
+            qe.train(ds3)
+
+            for node in np.arange(-1, s2.nvertices + 1):
+                if node < 0 or node >= s2.nvertices:
+                    assert_raises(KeyError, lambda: qe.query_byid(node))
+                    continue
+
+                feature_ids = np.asarray(qe.query_byid(node))
+
+                # node indices relative to ds
+                base_ids = feature_ids[feature_ids < 20]
+
+                # should have multiples of 20
+                assert_equal(set(feature_ids),
+                             set((base_ids[np.newaxis].T + \
+                                            [0, 20, 40]).ravel()))
+
+
+
+                node_indices = list(s2.circlearound_n2d(node,
+                                    radius, distance_metric or 'dijkstra'))
+
+                fa_indices = [fa_index for fa_index, node in
+                                    enumerate(ds3.fa.node_indices)
+                                    if node in node_indices]
+
+
+                assert_equal(set(feature_ids), set(fa_indices))
+
+            # smoke tests
+            assert_true('SurfaceQueryEngine' in '%s' % qe)
+            assert_true('SurfaceQueryEngine' in '%r' % qe)
+
 
     def test_surf_pairs(self):
         o, x, y = map(np.asarray, [(0, 0, 0), (0, 1, 0), (1, 0, 0)])
