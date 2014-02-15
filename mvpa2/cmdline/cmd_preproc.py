@@ -63,6 +63,7 @@ import argparse
 from mvpa2.base.hdf5 import h5save
 from mvpa2.base import verbose, warning, error
 from mvpa2.datasets import Dataset
+from mvpa2.mappers.detrend import PolyDetrendMapper
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
@@ -75,16 +76,10 @@ parser_args = {
 }
 
 detrend_args = ('options for data detrending', [
-    ('--poly-detrend',
-     dict(type=int, metavar='DEG',
-          help="""perform detrending by regressing out polynomials trends up
-               to order DEG.""")),
-    ('--detrend-chunks',
-     dict(type=str, default=None, metavar='CHUNKS_ATTR',
-          help="""name of a dataset sample attribute defining chunks of
-               samples that shall be detrended independently. By default
-               all no chunk-wise detrending is done.""")),
-    ('--detrend-coords',
+    (('--poly-detrend',), (PolyDetrendMapper, 'polyord'), dict(metavar='DEG')),
+    (('--detrend-chunks',), (PolyDetrendMapper, 'chunks_attr'),
+     dict(metavar='CHUNKS_ATTR')),
+    (('--detrend-coords',),
      dict(type=str, metavar='COORDS_ATTR',
          help="""name of a samples attribute that is added to the
               preprocessed dataset storing the coordinates of each sample in the
@@ -93,30 +88,27 @@ detrend_args = ('options for data detrending', [
               as sample coordinates in the space spanned by the polynomials.
               This can be used to detrend datasets with irregular sample
               spacing.""")),
-    ('--detrend-regrs',
-     dict(type=str, nargs='+', metavar='ATTR',
-          help="""names of sample attributes that shall serve as an additional
-          regressor during detrending. This can be used to, for example, regress
-          out motion-related confound in fMRI data."""))
+    (('--detrend-regrs',), (PolyDetrendMapper, 'opt_regs'),
+     dict(nargs='+', metavar='ATTR'))
 ])
 
 normalize_args = ('options for data normalization', [
-    ('--zscore',
+    (('--zscore',),
      dict(action='store_true',
           help="""perform feature normalization by Z-scoring.""")),
-    ('--zscore-chunks',
+    (('--zscore-chunks',),
      dict(metavar='CHUNKS_ATTR',
           help="""name of a dataset sample attribute defining chunks of
                samples that shall be Z-scored independently. By default
                no chunk-wise normalization is done.""")),
-    ('--zscore-params',
+    (('--zscore-params',),
      dict(metavar='PARAM', nargs=2, type=float,
           help="""define a fixed parameter set (mean, std) for Z-scoring,
                instead of computing from actual data.""")),
 ])
 
 bandpassfilter_args = ('options for spectral filtering', [
-    ('--filter-passband',
+    (('--filter-passband',),
      dict(metavar='FREQ', nargs='+', type=float,
           help="""critical frequencies of a Butterworth filter's pass band.
           Critical frequencies need to match the unit of the specified sampling
@@ -125,31 +117,31 @@ bandpassfilter_args = ('options for spectral filtering', [
           low and high-pass filters is single cutoff frequency must be
           provided. The type of filter (low/high-pass) is determined from the
           relation to the stop band frequency (--filter-stopband).""")),
-    ('--filter-stopband',
+    (('--filter-stopband',),
      dict(metavar='FREQ', nargs='+', type=float,
           help="""Analog setting to --filter-passband for specifying the
           filter's stop band.""")),
-    ('--sampling-rate',
+    (('--sampling-rate',),
      dict(metavar='FREQ', type=float,
           help="""sampling rate of the dataset. All frequency specifications
           need to match the unit of the sampling rate.""")),
-    ('--filter-passloss',
+    (('--filter-passloss',),
      dict(metavar='dB', type=float, default=1.0,
           help="""maximum loss in the passband (dB). Default: 1 dB""")),
-    ('--filter-stopattenuation',
+    (('--filter-stopattenuation',),
      dict(metavar='dB', type=float, default=30.0,
          help="""minimum attenuation in the stopband (dB). Default: 30 dB""")),
 ])
 
 common_args = ('common options for all preprocessing', [
-    ('--chunks',
+    (('--chunks',),
      dict(metavar='CHUNKS_ATTR',
           help="""shortcut option to enabled uniform chunkwise processing for
                all relevant preprocessing steps (see --zscore-chunks,
                --detrend-chunks). This global setting can be overwritten by
                additionally specifying the corresponding individual "chunk"
                options.""")),
-    ('--strip-invariant-features',
+    (('--strip-invariant-features',),
      dict(action='store_true',
           help="""After all pre-processing steps are done, strip all invariant
           features from the dataset.""")),
@@ -161,9 +153,7 @@ def setup_parser(parser):
     # order of calls is relevant!
     for src in (common_args, detrend_args, bandpassfilter_args,
                 normalize_args):
-        srcgrp = parser.add_argument_group(src[0])
-        for opt in src[1]:
-            srcgrp.add_argument(opt[0], **opt[1])
+        parser_add_optgroup_from_def(parser, src)
     parser_add_optgroup_from_def(parser, single_required_hdf5output)
 
 

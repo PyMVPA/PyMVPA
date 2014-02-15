@@ -20,6 +20,7 @@ from mvpa2.base import verbose
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.base.types import is_datasetlike
+from mvpa2.base.state import ClassWithCollections
 
 class HelpAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
@@ -99,15 +100,46 @@ def strip_from_docstring(doc, paragraphs=None, sections=None):
         out.append(par)
     return '\n\n'.join(out)
 
-def param2arg(parser, klass, param, arg_names=None):
-    param = klass._collections_template['params'][param]
+def param2arg(parser, param, arg_names=None, **kwargs):
+    """Convert a Node parameter into a parser argument.
+
+    Parameters
+    ----------
+    parser : instance
+      argparse parser instance (could be option group)
+    param : tuple or parameter instance
+      A length-2 tuple with the Node class (no instance) as first, and the
+      name of the parameter as second element.
+    arg_names : tuple(str), optional
+      Argument name(s) to overwrite the default parameter name.
+    **kwargs
+      Any addtional options are passed on to the `add_argument()` function
+      call.
+    """
+    if isinstance(param, tuple):
+        # get param instance
+        param = param[0]._collections_template['params'][param[1]]
     if arg_names is None:
+        # use parameter name as default argument name
         arg_names = ('--%s' % param.name.replace('_', '-'),)
-    # TODO add more useful information from the parameter definition
-    # into the parser
-    parser.add_argument(*arg_names, help=param.__doc__,
+    help = param.__doc__
+    if param.constraints is not None:
+        # include value contraint description and default
+        # into the help string
+        cdoc = param.constraints.long_description()
+        if cdoc[0] == '(' and cdoc[-1] == ')':
+            cdoc = cdoc[1:-1]
+        help += ' Constraints: %s.' % cdoc
+    try:
+        help += " [Default: %r]" % (param.default,)
+    except:
+        pass
+    # create the parameter, using the constraint instance for type
+    # conversion
+    parser.add_argument(*arg_names, help=help,
                         default=param.default,
-                        type=CmdArg2ParameterType(param))
+                        type=param.constraints,
+                        **kwargs)
 
 def ca2arg(parser, klass, ca, arg_names=None, help=None):
     ca = klass._collections_template['ca'][ca]
@@ -118,81 +150,6 @@ def ca2arg(parser, klass, ca, arg_names=None, help=None):
         help_ = help_ + help
     parser.add_argument(*arg_names, help=help_, default=False,
                         action='store_true')
-
-
-class CmdArg2ParameterType(object):
-    def __init__(self, param):
-        supported = ('allowedtype', 'min', 'max', 'name')
-        for p in supported:
-            varname = '_%s' % p
-            if hasattr(param, p):
-                setattr(self, varname, getattr(param, p))
-
-    def __call__(self, arg):
-        # interpret out type specs for parameters and return callables that convert
-        # cmdline args (i.e. strings) into the required format
-        # look here for more info: http://docs.python.org/library/argparse.html#type
-        converted = self._arg2types(arg)
-        self._range_check(converted)
-        return converted
-
-    def _range_check(self, val):
-        if hasattr(self, '_min'):
-            if val < self._min:
-                raise argparse.ArgumentTypeError(
-                        "range error "
-                        "(value '%s' less than configured minimum '%s')"
-                        % (val, self._min))
-        if hasattr(self, '_max'):
-            if val > self._max:
-                raise argparse.ArgumentTypeError(
-                        "range error "
-                        "(value '%s' larger than configured maximum '%s')"
-                        % (val, self._max))
-
-    def _arg2types(self, arg):
-        allowed = self._allowedtype
-        if __debug__:
-            debug('CMDLINE',
-                    "type conversion for parameter '%s': %s -> %s"
-                    % (self._name, arg, allowed))
-        # loop over alternatives
-        types = allowed.split(' or ')
-        # strip out types we would not need to convert anyway
-        not_convert_types = ('basestring', 'str')
-        effective_types = [t for t in types if not t in not_convert_types]
-        for type_ in effective_types:
-            try:
-                return self._arg2type(arg, type_)
-            except argparse.ArgumentTypeError:
-                if __debug__:
-                    debug('CMDLINE', "type conversion into '%s' failed" % type_)
-        # we only get here if conversion failed
-        if len([t for t in types if t in not_convert_types]):
-            # continuing without exception is possible
-            return arg
-        raise argparse.ArgumentTypeError(
-                "cannot convert '%s' into '%s'" % (arg, allowed))
-
-    def _arg2type(self, arg, allowed):
-        if allowed == None:
-            # we know nothing
-            if __debug__:
-                debug('CMDLINE',
-                      "skipping parameter value conversion -- no type "
-                      "spec for '%s' available" % self._name)
-            return arg
-        elif allowed == 'bool':
-            return arg2bool(arg)
-        elif allowed == 'int':
-            return int(arg)
-        elif allowed in ('None', 'none'):
-            return arg
-        elif allowed in ('float', 'float32', 'float64'):
-            return float(arg)
-        else:
-            raise argparse.ArgumentTypeError(
-                "unsupported parameter type specification: '%s'" % allowed)
 
 
 def arg2bool(arg):
@@ -398,6 +355,16 @@ def parser_add_common_attr_opts(parser):
 def parser_add_optgroup_from_def(parser, defn, exclusive=False, prefix=None):
     """Add an entire option group from a definition in a custom format
 
+    Parameters
+    ----------
+    parser : argparser instance
+    defn : tuple
+      Option group spec. Complicated beast. Grep source code for syntax examples.
+    exclusive : bool
+      Flag to make all options in the group mutually exclusive.
+    prefix : str
+      Prefix all option names with this string.
+
     Returns
     -------
     parser argument group
@@ -408,10 +375,32 @@ def parser_add_optgroup_from_def(parser, defn, exclusive=False, prefix=None):
     else:
         rgrp = optgrp
     for opt in defn[1]:
-        optnames = opt[0]
+        namespec = opt[0]
+        param = None
+        if len(namespec) == 2 and not isinstance(namespec[0], basestring) \
+          and issubclass(namespec[0], ClassWithCollections):
+            # parameter spec -> use its name
+            param = namespec[0]._collections_template['params'][namespec[1]]
+            optnames = ('--%s' % param.name.replace('_', '-'),)
+        else:
+            # take the literal names
+            optnames = namespec
         if not prefix is None:
+            # overwrite all option names with a common prefix
             optnames = ['%s%s' % (prefix, on.lstrip('-')) for on in optnames]
-        rgrp.add_argument(*optnames, **opt[1])
+        if param is None and len(opt) > 1 and not isinstance(opt[1], dict):
+            # parameter spec is given at 2nd position
+            param = opt[1]
+        if isinstance(opt[-1], dict):
+            # last element has kwags for add_argument
+            add_kwargs = opt[-1]
+        else:
+            # nothing to add
+            add_kwargs = {}
+        if not param is None:
+            param2arg(rgrp, param, arg_names=optnames, **add_kwargs)
+        else:
+            rgrp.add_argument(*optnames, **add_kwargs)
     return optgrp
 
 def process_common_dsattr_opts(ds, args):
