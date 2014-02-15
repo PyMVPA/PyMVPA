@@ -465,7 +465,7 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
 
 
     if distance_metric[0].lower() == 'e' and outside_node_margin:
-        # euclidian distance: identity mapping
+        # euclidean distance: identity mapping
         # this is *slow*
         n = source_surf.nvertices
         xyz = source_surf.vertices

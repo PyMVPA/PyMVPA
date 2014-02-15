@@ -883,7 +883,7 @@ def distance(p, q, r=2):
     q: np.ndarray (QxM)
         second array
     nrm: float (default: 2)
-        Norm used for distance computation. By default Euclidian distances
+        Norm used for distance computation. By default Euclidean distances
         are computed.
 
     Returns

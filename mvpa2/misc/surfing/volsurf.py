@@ -17,8 +17,6 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from functools import total_ordering
-
 from mvpa2.base import externals
 from mvpa2.misc.surfing import volgeom
 from mvpa2.support.nibabel import surf
@@ -621,51 +619,6 @@ class VolSurfMaximalMapping(VolSurfMapping):
         node2voxels_mapping, _ = self._get_node_voxels_maximal_mapping()
         return node2voxels_mapping
 
-
-@total_ordering
-class VoxelPosition(object):
-    '''Defines the position of a voxel in grey matter.
-
-    Helper class for minimal mapping
-
-    XXX: worthwhile to refactor and use this class universally
-         (in maximal mapper and voxel_node_mapping)?'''
-    def __init__(self, grey_position_fr, grey_position_mm):
-        self.grey_position_fr = grey_position_fr
-        self.grey_position_mm = grey_position_mm
-        if 0 <= grey_position_fr <= 1 and grey_position_mm != 0:
-            raise ValueError("Illegal position - in the grey matter?")
-
-    def __cmp__(self, other):
-        return self.grey_position_fr == other.grey_position_fr and \
-                    self.grey_postition_mm == other.grey_postition_mm
-
-    def __repr__(self):
-        return '%s(%s)' % (self.__class__.__name__,
-                              ','.join(map(str, [self.grey_position_fr,
-                                                self.grey_position_mm])))
-
-    def copy(self):
-        return self.__class__(grey_position_fr, grey_position_mm)
-
-    def __lt__(self, other):
-        '''Indicates whether self is closer to the center of grey matter
-        than other'''
-        if self.__cmp__(other):
-            return False
-        s_gr, o_gr = self.grey_position_fr - .5, other.grey_position_fr - .5
-        s_in, o_in = abs(s_gr) <= .5, abs(o_gr) <= .5 # self or other in grey matter
-        if s_in != o_in:
-            return s_in # only one in grey matter
-        elif s_in and o_in:
-            return s_gr < o_gr # both in grey matter - which one closer?
-
-        # both outside grey matter.
-        mm_diff = abs(self.grey_position_mm) - abs(other.grey_position_mm)
-        if mm_diff != 0:
-            return mm_diff < 0 # the closest one
-
-        return self.grey_position_mm > 0 # just arbitrary
 
 class VolSurfMinimalMapping(VolSurfMapping):
     def __init__(self, vg, white, pial, intermediate=None,
