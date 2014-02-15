@@ -14,7 +14,7 @@ import cmd_atlaslabeler
 import cmd_crossval
 import cmd_dsinfo
 import cmd_dump
-import cmd_hyperalign
+#import cmd_hyperalign
 import cmd_info
 import cmd_mkds
 import cmd_mkevds
