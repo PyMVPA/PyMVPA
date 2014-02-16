@@ -22,7 +22,7 @@ def test_hist():
     from matplotlib.axes import Subplot
     ds = normal_feature_dataset(10, 3, 10, 5)
     plots = hist(ds, ygroup_attr='targets', xgroup_attr='chunks',
-                 noticks=None, xlim=(-.5,.5), normed=True)
+                 noticks=None, xlim=(-.5, .5), normed=True)
     assert_equal(len(plots), 15)
     for sp in plots:
         assert_is_instance(sp, Subplot)
@@ -41,4 +41,4 @@ def test_imshow():
     from matplotlib.colorbar import Colorbar
     ds = normal_feature_dataset(10, 2, 18, 5)
     im = matshow(ds)
-    assert_is_instance(im.colorbar[0], Colorbar)
+    assert_is_instance(im.colorbar, Colorbar)
