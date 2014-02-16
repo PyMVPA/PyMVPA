@@ -266,9 +266,18 @@ class Classifier(Learner):
                 self.__changedData_isset = False
             predictions = self.predict(dataset)
             self.ca.reset_changed_temporarily()
-            self.ca.training_stats = self.__summary_class__(
-                targets=dataset.sa[self.get_space()].value,
-                predictions=predictions)
+            targets = dataset.sa[self.get_space()].value
+            if is_datasetlike(predictions) and (self.get_space() in predictions.fa):
+                # e.g. in case of pair-wise uncombined results - provide
+                # stats per each of the targets pairs
+                prediction_targets = predictions.fa[self.get_space()].value
+                self.ca.training_stats = {
+                    t: self.__summary_class__(
+                        targets=targets, predictions=predictions.samples[:, i])
+                    for i, t in enumerate(prediction_targets)}
+            else:
+                self.ca.training_stats = self.__summary_class__(
+                    targets=targets, predictions=predictions)
 
 
     def summary(self):

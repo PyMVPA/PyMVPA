@@ -201,3 +201,16 @@ def test_multiclass_without_combiner():
     assert_array_equal(np.unique(np.array(res.fa.targets.tolist())), ds.UT)
     # TODO -- check that we have all the pairs?
     assert_array_equal(res.sa['cvfolds'].unique, np.arange(len(ds.UC)))
+    if mcv.ca.is_enabled('training_stats'):
+        # we must have received a dictionary per each pair
+        training_stats = mcv.ca.training_stats
+        assert_equal(set(training_stats.keys()),
+                     set([('L1', 'L0'), ('L2', 'L1'), ('L2', 'L0')]))
+        for pair, cm in training_stats.iteritems():
+            assert_array_equal(cm.labels, ds.UT)
+            # we should have no predictions for absent label
+            assert_array_equal(cm.matrix[~np.in1d(ds.UT, pair)], 0)
+            # while altogether all samples were processed once
+            assert_array_equal(cm.stats['P'], len(ds))
+            # and number of sets should be equal number of chunks here
+            assert_equal(len(cm.sets), len(ds.UC))
