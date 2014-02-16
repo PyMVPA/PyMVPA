@@ -77,17 +77,16 @@ class Parameter(IndexedCollectable):
         -ensure the parameter to be of type float
         (None not allowed as value):
         constraints = EnsureFloat()
-        >>> from mvpa2.base.param import Parameter, EnsureFloat
+        >>> from mvpa2.base.param import Parameter
+        >>> from mvpa2.base.constraints import (EnsureFloat, EnsureRange,
+        ...                              AltConstraints, Constraints)
         >>> C = Parameter(23.0,constraints=EnsureFloat())
 
         -ensure the parameter to be of type float or to be None:
-        >>> from mvpa2.base.param import Parameter, EnsureFloat, AltConstraints
         >>> C = Parameter(23.0,constraints=AltConstraints(EnsureFloat(), None))
 
         -ensure the parameter to be None or to be of type float
         and lie in the inclusive range (7.0,44.0):
-        >>> from mvpa2.base.param import Parameter, EnsureFloat, EnsureRange,
-        ...                              AltConstraints, Constraints
         >>> C = Parameter(23.0, AltConstraints(Constraints(EnsureFloat(),
         ...                                    EnsureRange(min=7.0,max=44.0)),
         ...                                    None))
