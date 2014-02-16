@@ -41,4 +41,10 @@ def test_imshow():
     from matplotlib.colorbar import Colorbar
     ds = normal_feature_dataset(10, 2, 18, 5)
     im = matshow(ds)
-    assert_is_instance(im.colorbar, Colorbar)
+    # old mpl returns a tuple of Colorbar which is anyways available as its .ax
+    if isinstance(im.colorbar, tuple):
+        assert_is_instance(im.colorbar[0], Colorbar)
+        assert_true(im.colorbar[1] is im.colorbar[0].ax)
+    else:
+        # new mpls do it withough unnecessary duplication
+        assert_is_instance(im.colorbar, Colorbar)
