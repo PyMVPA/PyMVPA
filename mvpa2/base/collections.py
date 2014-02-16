@@ -483,7 +483,7 @@ class Collection(dict):
             _object_setattr(self, key, value)
         except Exception, e:
             # catch any other exception in order to provide a useful error message
-            errmsg = "parameter '%s' cannot accept value `%s` (%s)" % (key, value, str(e))
+            errmsg = "parameter '%s' cannot accept value `%r` (%s)" % (key, value, str(e))
             try:
                 cdoc = self[key].constraints.long_description()
                 if cdoc[0] == '(' and cdoc[-1] == ')':

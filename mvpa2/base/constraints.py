@@ -41,8 +41,7 @@ class EnsureValue(object):
         return None
 
 class EnsureDType(object):
-    """Ensure that an input is of a particular data type,
-    and, raises an Exception in case it is not.
+    """Ensure that an input (or several inputs) are of a particular data type.
     """
     # TODO extend to support numpy-like dtype specs, e.g. 'int64'
     # in addition to functors
@@ -56,7 +55,6 @@ class EnsureDType(object):
 
     def __call__(self, value):
         if hasattr(value, '__array__'):
-            import numpy as np
             return np.asanyarray(value, dtype=self._dtype)
         elif hasattr(value,'__iter__'):
             return map(self._dtype, value)
@@ -82,6 +80,7 @@ class EnsureListOf(EnsureValue):
         dtype : functor
         """
         self._dtype = dtype
+        super(EnsureListOf, self).__init__()
 
     def __call__(self, value):
         return map(self._dtype, value)
@@ -97,14 +96,24 @@ class EnsureListOf(EnsureValue):
 
 
 class EnsureInt(EnsureDType):
+    """Ensure that an input (or several inputs) are of a data type 'int'.
+    """
     def __init__(self):
         EnsureDType.__init__(self, int)
 
 class EnsureFloat(EnsureDType):
+    """Ensure that an input (or several inputs) are of a data type 'float'.
+    """
     def __init__(self):
         EnsureDType.__init__(self, float)
 
 class EnsureBool(EnsureValue):
+    """Ensure that an input is a bool.
+
+    A couple of literal labels are supported, such as:
+    False: '0', 'no', 'off', 'disable', 'false'
+    True: '1', 'yes', 'on', 'enable', 'true'
+    """
     def __call__(self, value):
         if isinstance(value, bool):
             return value
@@ -113,8 +122,7 @@ class EnsureBool(EnsureValue):
         elif value in ('1', 'yes', 'on', 'enable', 'true'):
             return True
         else:
-            raise ValueError(
-                    "'%s' cannot be converted into a boolean" % value)
+            raise ValueError("value must be converted to boolean")
 
     def long_description(self):
         return 'value must be convertible to type bool'
@@ -123,9 +131,10 @@ class EnsureBool(EnsureValue):
         return 'bool'
 
 class EnsureStr(EnsureValue):
-    def __init__(self):
-        EnsureValue.__init__(self)
+    """Ensure an input is a string.
 
+    No automatic conversion is attempted.
+    """
     def __call__(self, value):
         if not isinstance(value, basestring):
             # do not perform a blind conversion ala str(), as almost
@@ -141,6 +150,7 @@ class EnsureStr(EnsureValue):
         return 'str'
 
 class EnsureNone(EnsureValue):
+    """Ensure an input is of value `None`"""
     def __call__(self, value):
         if value is None:
             return None
@@ -154,12 +164,14 @@ class EnsureNone(EnsureValue):
         return 'value must be `None`'
 
 class EnsureChoice(EnsureValue):
+    """Ensure an input is element of a set of possible values"""
     def __init__(self, *args):
         self._allowed = args
+        super(EnsureChoice, self).__init__()
 
     def __call__(self, value):
         if value not in self._allowed:
-            raise ValueError, "value is not one of %s" % (self._allowed, )
+            raise ValueError("value is not one of %s" % (self._allowed, ))
         return value
 
     def long_description(self):
@@ -169,17 +181,22 @@ class EnsureChoice(EnsureValue):
         return '{%s}' % ', '.join([str(c) for c in self._allowed])
 
 class EnsureRange(EnsureValue):
+    """Ensure an input is within a particular range
+
+    No type checks are performed.
+    """
     def __init__(self, min=None, max=None):
         self._min = min
         self._max = max
+        super(EnsureRange, self).__init__()
 
     def __call__(self, value):
         if self._min is not None:
             if value < self._min:
-                raise ValueError, "value must be at least %s" % (self._min, )
+                raise ValueError("value must be at least %s" % (self._min, ))
         if self._max is not None:
             if value > self._max:
-                raise ValueError, "value must be at most %s" % (self._max, )
+                raise ValueError("value must be at most %s" % (self._max, ))
         return value
 
     def long_description(self):
@@ -189,6 +206,14 @@ class EnsureRange(EnsureValue):
 
 
 class AltConstraints(object):
+    """Logical OR for contraints.
+
+    An arbitrary number of constraints can be given. They are evaluated in the
+    order in which they were specified. The value returned by the first
+    contraint that does not raise an exception is the global return value.
+
+    Documentation is aggregated for all alternative constraints.
+    """
     def __init__(self, *args):
         self.constraints = [EnsureNone() if c is None else c for c in args]
 
@@ -221,6 +246,15 @@ class AltConstraints(object):
 
 
 class Constraints(object):
+    """Logical AND for contraints.
+
+    An arbitrary number of constraints can be given. They are evaluated in the
+    order in which they were specified. The return value of each contraint is
+    passed an an input into the next. The return value of the last contraint
+    is the global return value. No intermediate exceptions are caught.
+
+    Documentation is aggregated for all constraints.
+    """
     def __init__(self, *args):
         self.constraints = [EnsureNone() if c is None else c for c in args]
 
