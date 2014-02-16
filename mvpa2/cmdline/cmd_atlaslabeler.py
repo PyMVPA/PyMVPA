@@ -46,8 +46,9 @@ if __debug__:
 
 from mvpa2.atlases.transformation import *
 
-from mvpa2.atlases import Atlas, ReferencesAtlas, FSLProbabilisticAtlas, \
-     KNOWN_ATLASES, KNOWN_ATLAS_FAMILIES, XMLAtlasException
+if externals.exists('lxml', raise_=True):
+    from mvpa2.atlases import Atlas, ReferencesAtlas, FSLProbabilisticAtlas, \
+         KNOWN_ATLASES, KNOWN_ATLAS_FAMILIES, XMLAtlasException
 
 import numpy as np
 #import numpy.linalg as la
