@@ -49,16 +49,34 @@ includes a list of all available sub-commands on a particular system.
 Sub-command documentation
 =========================
 
+Create, modify and convert datasets
+-----------------------------------
+
 .. toctree::
 
    generated/cmd_mkds
    generated/cmd_mkevds
-   generated/cmd_info
-   generated/cmd_dump
+   generated/cmd_select
    generated/cmd_preproc
-   generated/cmd_hyperalign
-   generated/cmd_clfcv
+   generated/cmd_dsinfo
+   generated/cmd_dump
 
+Perform analyses
+----------------
+
+.. toctree::
+
+   generated/cmd_crossval
+   generated/cmd_searchlight
+
+Auxilliary command
+------------------
+
+.. toctree::
+
+   generated/cmd_info
+   generated/cmd_pytest
+   generated/cmd_atlaslabeler
 
 Example scripts
 ===============
