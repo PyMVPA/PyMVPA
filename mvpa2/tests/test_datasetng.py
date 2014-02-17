@@ -938,28 +938,32 @@ def test_other_samples_dtypes():
         assert_equal(ds.nfeatures, 1)
 
 
-def test_dataset_summary():
-    for ds in datasets.values() + [Dataset(np.array([None], dtype=object))]:
-        s = ds.summary()
-        ok_(s.startswith(str(ds)[1:-1])) # we strip surrounding '<...>'
-        # TODO: actual test of what was returned; to do that properly
-        #       RF the summary() so it is a dictionary
+@sweepargs(ds=datasets.values() + [
+    Dataset(np.array([None], dtype=object)),
+    dataset_wizard(np.arange(3), targets=['a', 'bc', 'd'], chunks=np.arange(3)),
+    dataset_wizard(np.arange(4), targets=['a', 'bc', 'a', 'bc'], chunks=[1, 1, 2, 2]),
+    ])
+def test_dataset_summary(ds):
+    s = ds.summary()
+    ok_(s.startswith(str(ds)[1:-1])) # we strip surrounding '<...>'
+    # TODO: actual test of what was returned; to do that properly
+    #       RF the summary() so it is a dictionary
 
-        summaries = []
-        if 'targets' in ds.sa:
-            summaries += ['Sequence statistics']
-            if 'chunks' in ds.sa:
-                summaries += ['Summary for targets', 'Summary for chunks']
+    summaries = []
+    if 'targets' in ds.sa:
+        summaries += ['Sequence statistics']
+        if 'chunks' in ds.sa:
+            summaries += ['Summary for targets', 'Summary for chunks']
 
-        # By default we should get all kinds of summaries
-        if not 'Number of unique targets >' in s:
-            for summary in summaries:
-                ok_(summary in s)
-
-        # If we give "wrong" targets_attr we should see none of summaries
-        s2 = ds.summary(targets_attr='bogus')
+    # By default we should get all kinds of summaries
+    if not 'Number of unique targets >' in s:
         for summary in summaries:
-            ok_(not summary in s2)
+            ok_(summary in s)
+
+    # If we give "wrong" targets_attr we should see none of summaries
+    s2 = ds.summary(targets_attr='bogus')
+    for summary in summaries:
+        ok_(not summary in s2)
 
 @nodebug(['ID_IN_REPR', 'MODULE_IN_REPR'])
 @with_tempfile(suffix='.hdf5')
