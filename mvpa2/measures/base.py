@@ -505,7 +505,16 @@ class CrossValidation(RepeatedMeasure):
                 # create empty stats container of matching type
                 ca.training_stats = node.ca['training_stats'].value.__class__()
             # harvest summary stats
-            ca['training_stats'].value.__iadd__(node.ca['training_stats'].value)
+            training_stats = node.ca['training_stats'].value
+            if isinstance(training_stats, dict):
+                # if it was a dictionary of results - we should collect them per item
+                for k,v in training_stats.iteritems():
+                    if not len(ca['training_stats'].value) or k not in ca['training_stats'].value:
+                        ca['training_stats'].value[k] = v
+                    else:
+                        ca['training_stats'].value[k].__iadd__(v)
+            else:
+                ca['training_stats'].value.__iadd__(node.ca['training_stats'].value)
 
         return result
 
@@ -633,7 +642,6 @@ class TransferMeasure(Measure):
                 warning("'training_stats' conditional attribute was enabled, "
                         "but the assigned measure '%s' either doesn't support "
                         "it, or it is disabled" % measure)
-
         return res
 
     measure = property(fget=lambda self:self.__measure)
