@@ -36,7 +36,9 @@ experiments.
 
 .. _ARV+13:
 
-**Andersson, P., Ramsey, N. F., Viergever, M. A. & Pluim, J. P.** (2013). 7T fMRI reveals feasibility of covert visual attention-based brain--computer interfacing with signals obtained solely from cortical grey matter accessible by subdural surface electrodes. *Clinical Neurophysiology*.
+**Andersson, P., Ramsey, N. F., Viergever, M. A. & Pluim, J. P.** (2013). 7T fMRI reveals feasibility of covert visual attention-based brain–computer interfacing with signals obtained solely from cortical grey matter accessible by subdural surface electrodes. *Clinical neurophysiology*, *124*, 2191-2197.
+  DOI: http://dx.doi.org/10.1016/j.clinph.2013.05.009
+
 
 .. _Ban09:
 
@@ -197,6 +199,12 @@ experiments.
 
 **Guyon, I. & Elisseeff, A.** (2003). An Introduction to Variable and Feature Selection. *Journal of Machine Learning*, *3*, 1157–1182.
   URL: http://www.jmlr.org/papers/v3/guyon03a.html
+
+
+.. _HBI+14:
+
+**Hanke, M., Baumgartner, F. J., Ibe, P., Kaule, F. R., Pollmann, S., Speck, O., Zinke, W. & Stadler, J.** (in press). A high-resolution 7-Tesla fMRI dataset from complex natural stimulation with an audio movie. *Scientific Data*.
+  URL: http://www.studyforrest.org
 
 
 .. _HHH+10:
@@ -481,6 +489,14 @@ experiments.
 
 **Man, K., Kaplan, J. T., Damasio, A. & Meyer, K.** (2012). Sight and sound converge to form modality-invariant representations in temporoparietal cortex. *The Journal of Neuroscience*, *32*, 16629-16636.
   DOI: http://dx.doi.org/10.1523/JNEUROSCI.2342-12.2012
+
+
+.. _MR13:
+
+**Manelis, A. & Reder, L. M.** (2013). He Who Is Well Prepared Has Half Won The Battle: An fMRI Study of Task Preparation. *Cerebral Cortex*.
+  DOI: http://dx.doi.org/10.1093/cercor/bht262
+
+  URL: http://cercor.oxfordjournals.org/content/early/2013/10/02/cercor.bht262.abstract
 
 
 .. _MHH10:
