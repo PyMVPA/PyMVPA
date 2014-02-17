@@ -79,6 +79,8 @@ if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers import process_common_dsattr_opts, \
         hdf2ds, parser_add_common_opt
+# necessary to enable dataset.summary()
+import mvpa2.datasets.miscfx
 
 
 parser_args = {
