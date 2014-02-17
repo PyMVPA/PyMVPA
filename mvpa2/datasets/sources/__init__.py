@@ -17,4 +17,4 @@ __docformat__ = 'restructuredtext'
 from mvpa2.base import externals
 
 if externals.exists('skl'):
-    from .sklearn_data import *
+    from .skl_data import *

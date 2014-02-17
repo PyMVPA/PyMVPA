@@ -6,9 +6,9 @@ Authors and Contributors
 
 The PyMVPA developers team currently consists of:
 
-* `Michael Hanke`_, Dartmouth College, USA
+* `Michael Hanke`_, University of Magdeburg, Germany
 * `Yaroslav O. Halchenko`_, Dartmouth College, USA
-* `Emanuele Olivetti`_, Fondazione Bruno Kessler, Italy
+* `Nikolaas N. Oosterhof`_, Dartmouth College, USA
 
 We are very grateful to the following people, who have contributed
 valuable advice, code or documentation to PyMVPA:
@@ -29,7 +29,7 @@ valuable advice, code or documentation to PyMVPA:
 * `James V. Haxby`_, Dartmouth College, USA
 * `James M. Hughes`_, Dartmouth College, USA
 * `James Kyle`_, UCLA, USA
-* `Nikolaas N. Oosterhof`_, Dartmouth College, USA
+* `Emanuele Olivetti`_, Fondazione Bruno Kessler, Italy
 * `Russell Poldrack`_, University of Texas, USA
 * `Stefan Pollmann`_, University of Magdeburg, Germany
 * Geethapriya Raghavan, University of Texas Austin, USA
@@ -43,7 +43,7 @@ valuable advice, code or documentation to PyMVPA:
 .. _Jyothi Swaroop Guntupalli: http://www.dartmouth.edu/~swaroop/
 .. _Valentin Haenel: http://www.cognition.tu-berlin.de/menue/members/valentin_haenel
 .. _Yaroslav O. Halchenko: http://www.onerussian.com
-.. _Michael Hanke: http://apsy.gse.uni-magdeburg.de/hanke
+.. _Michael Hanke: http://www.psychoinformatics.de
 .. _Stephen José Hanson: http://psychology.rutgers.edu/~jose
 .. _James V. Haxby: http://dbic.dartmouth.edu/haxby
 .. _James M. Hughes: http://www.cs.dartmouth.edu/~hughes/index.html
