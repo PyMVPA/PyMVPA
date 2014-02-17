@@ -140,6 +140,7 @@ clean:
 # clean docs
 	$(MAKE) -C doc clean
 	-@rm -f $(DOCSRC_DIR)/examples/*.rst
+	-@rm -f $(DOCSRC_DIR)/cmdline/*.rst
 # clean all bits and pieces
 	-@rm -f MANIFEST
 	-@rm -f mvpa2/clfs/lib*/*.so \
@@ -248,6 +249,10 @@ examples2rst-stamp: mkdir-DOCBUILD_DIR
 		--outdir $(DOCSRC_DIR)/examples \
 		--exclude doc/examples/searchlight_app.py \
 		doc/examples
+	tools/cmdex2rst \
+		--project PyMVPA \
+		--outdir $(DOCSRC_DIR)/cmdline/ \
+		doc/examples/cmdline
 	touch $@
 
 tutorial2notebooks: tutorial2notebooks-stamp
