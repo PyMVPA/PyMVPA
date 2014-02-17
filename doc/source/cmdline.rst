@@ -68,7 +68,10 @@ to use PyMVPA's command line interface in actual scripts.
 
 .. toctree::
 
+   cmdline/start_easy
    cmdline/datasets
+   cmdline/preproc
+   cmdline/query_pymvpa
 
 
 Create a new PyMVPA command (for developers)
