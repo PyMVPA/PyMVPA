@@ -36,7 +36,7 @@ if not pymvpa_version:
 
 def _license_info():
     return """\
-Copyright (c) 2006-2013 PyMVPA developers
+Copyright (c) 2006-2014 PyMVPA developers
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -82,8 +82,9 @@ parser = argparse.ArgumentParser(
                 fromfile_prefix_chars='@',
                 # usage="%(prog)s ...",
                 description="""\
-Here is an initial description that clearly needs improvement.
-Anyway, here are the currently available commands:
+This is the command line interface of the PyMVPA framework. Specific
+functionality is provided through a collection of sub-commands.
+Available sub-commands are:
 """,
                 epilog='',
                 formatter_class=argparse.RawDescriptionHelpFormatter,

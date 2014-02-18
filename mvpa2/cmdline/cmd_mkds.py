@@ -52,8 +52,8 @@ All options for loading data from NumPy NPY files support an optional parameter:
 ... --add-fa-npy <mandatory values> [MEMMAP]
 
 where 'MEMMAP' is a flag  that triggers whether the respective file shall be
-read by memory-mapping, i.e. not read (immediately) into memory. Enable with
-'yes', '1', 'true', 'enable' or 'on'.
+read by memory-mapping, i.e. not read (immediately) into memory. Enable by
+with on of: yes|1|true|enable|on'.
 
 Examples:
 

@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Travelling ROI analysis
+"""Traveling ROI analysis
 
 """
 
@@ -81,7 +81,8 @@ searchlight_constraints_opts_grp = ('options for constraining the searchlight', 
         scarceness of the sampling.""")),
     (('--roi-attr',), dict(metavar='ATTR',
         help="""name of a feature attribute whose non-zero values define
-        possible ROI seeds/centers. Conflicts""")),
+        possible ROI seeds/centers. This is only in effect if --scatter-rois
+        is not used.""")),
 ])
 
 def setup_parser(parser):
