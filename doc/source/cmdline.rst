@@ -58,7 +58,6 @@ Create, modify and convert datasets
    generated/cmd_mkevds
    generated/cmd_select
    generated/cmd_preproc
-   generated/cmd_dsinfo
    generated/cmd_dump
 
 Perform analyses
