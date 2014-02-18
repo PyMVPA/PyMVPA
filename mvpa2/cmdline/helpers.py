@@ -630,8 +630,9 @@ multidata = (
      'metavar': 'DATASET',
      'help': """path(s) to one or more PyMVPA dataset files. All datasets
              will be merged into a single dataset (vstack'ed) in order of
-             specification. In some cases this option may be specified more than
-             once if multiple, but separate, input datasets are required."""
+             specification. In some cases this option may need to be specified
+             more than once if multiple, but separate, input datasets are
+             required."""
     }
 )
 
@@ -673,9 +674,9 @@ learner_opt = (
 learner_space_opt = (
     'learnerspace', ('--learner-space',),
     {'type': str, 'default': 'targets',
-     'help': """name of a sample attribute defining the variable of interest
-             that is to be learned by a learner. By default this is an
-             attribute named 'targets'."""
+     'help': """name of a sample attribute that defines the model to be
+             learned by a learner. By default this is an attribute named
+             'targets'."""
     }
 )
 
@@ -813,7 +814,7 @@ crossvalidation_opts_grp = ('options for cross-validation setup', [
         sample selection be performed for each data fold. Default: 1""")),
     (('--permutations',), dict(type=int, default=0,
         help="""Number of Monte-Carlo permutation runs to be computed for
-        estimating an H0 distribution for al lcross-validation results. Enabling
+        estimating an H0 distribution for all cross-validation results. Enabling
         this option will make reports of corresponding p-values available in
         the result summary and output.""")),
     (('--prob-tail',), dict(choices=('left', 'right'), default='left',
