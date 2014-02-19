@@ -558,8 +558,8 @@ def run(args):
     if not (args.inputSpace == atlas.space or
             (args.inputSpace in ["MNI", "Talairach"] and
              atlas.space == "Talairach")):
-        raise XMLAtlasException("Unknown space '%s' which is not the same as atlas"
-                                "space '%s' either" % ( inputSpace, atlas.space ))
+        raise XMLAtlasException("Unknown space '%s' which is not the same as atlas "
+                                "space '%s' either" % ( args.inputSpace, atlas.space ))
 
     if query_voxel:
         # we do direct mapping
@@ -568,10 +568,11 @@ def run(args):
         verbose(2, "Chaining needed transformations")
         # by default -- no transformation
         if args.transformationFile:
-            externals.exists('scipy', raise_=True)
-            from scipy.io import read_array
+            #externals.exists('scipy', raise_=True)
+            # scipy.io.read_array was deprecated a while back (around 0.8.0)
+            from numpy import loadtxt
 
-            transfMatrix = read_array(args.transformationFile)
+            transfMatrix = loadtxt(args.transformationFile)
             coordT = Linear(transfMatrix, previous=coordT)
             verbose(2, "coordT got linear transformation from file %s" %
                        args.transformationFile)

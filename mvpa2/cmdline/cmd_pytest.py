@@ -11,12 +11,12 @@
 This command is mostly useful for testing functionality and results via the
 commandline interface and for asserting arbitrary conditions in scripts.
 
-First, optional dataset(s) are loaded from one or more source. Afterwards any
-number of given expression (see --eval) are evaluated. Such an expression can be
+First, optional dataset(s) are loaded from one or more sources. Afterwards any
+number of given expressions (see --eval) is evaluated. An expression can be
 given as an argument on the command line, read from a file, or from STDIN. The
 return value of any given expression is ignored (not evaluated anyhow), only
-exceptitons are treated as errors and cause the command to exit with a non-zero
-return value.  To implement tests and assertions is is best to utilize a Python
+exceptions are treated as errors and cause the command to exit with a non-zero
+return value.  To implement tests and assertions it is best to utilize a Python
 unittest framework such as 'nose'.
 
 In the namespace in which all expressions are evaluated the NumPy module is
@@ -32,7 +32,7 @@ Assert some condition
 
 Check for the presence of a particular sample attribute in a dataset
 
-  $ pymvpa2 pytest -e 'dss[0].sa.subj3' mydata.hdf5
+  $ pymvpa2 pytest -e 'dss[0].sa.subj3' -i mydata.hdf5
 
 """
 
@@ -77,7 +77,7 @@ def run(args):
         if expr == '-':
             exec sys.stdin
         elif os.path.isfile(expr):
-            execfile(expr, globals())
+            execfile(expr, globals(), locals())
         else:
             exec expr
 

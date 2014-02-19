@@ -8,8 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Create a PyMVPA dataset from various sources.
 
-This command converts data from various sources, such as text files, Numpy's
-NPY files, and MR (magnetic resonance) images into a PyMVPA dataset that is
+This command converts data from various sources, such as text files, NumPy's
+NPY files, and MR (magnetic resonance) images into a PyMVPA dataset that gets
 stored in HDF5 format. An arbitrary number of sample and feature attributes can
 be added to a dataset, and individual attributes can be read from
 heterogeneous sources (e.g. they do not have to be all from text files).
@@ -72,7 +72,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 import argparse
-from mvpa2.base.hdf5 import h5save
+
 from mvpa2.base import verbose, warning, error
 from mvpa2.datasets import Dataset
 if __debug__:
@@ -144,6 +144,7 @@ def setup_parser(parser):
     parser_add_optgroup_from_def(parser, single_required_hdf5output)
 
 def run(args):
+    from mvpa2.base.hdf5 import h5save
     ds = None
     if not args.txt_data is None:
         verbose(1, "Load data from TXT file '%s'" % args.txt_data)
