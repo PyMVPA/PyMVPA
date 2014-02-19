@@ -89,7 +89,7 @@ detrend_args = ('options for data detrending', [
               This can be used to detrend datasets with irregular sample
               spacing.""")),
     (('--detrend-regrs',), (PolyDetrendMapper, 'opt_regs'),
-     dict(nargs='+', metavar='ATTR'))
+     dict(nargs='+', metavar='ATTR', type=str))
 ])
 
 normalize_args = ('options for data normalization', [
