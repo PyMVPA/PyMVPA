@@ -61,7 +61,7 @@ import numpy as np
 import sys
 import argparse
 from mvpa2.base import verbose, warning, error
-from mvpa2.base.hdf5 import h5save
+
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
@@ -162,6 +162,7 @@ def run(args):
         if not out is sys.stdout:
             out.close()
     elif args.format == 'hdf5':
+        from mvpa2.base.hdf5 import h5save
         _check_output(args)
         if not args.output.endswith('.hdf5'):
             args.output += '.hdf5'
