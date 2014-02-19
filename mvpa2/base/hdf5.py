@@ -575,9 +575,15 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
     # try disassembling the object
     try:
         pieces = obj.__reduce__()
-    except TypeError:
+        if __debug__:
+            debug('HDF5', "Reduced '%s' (ref: %i) in [%s]"
+                          % (type(obj), obj_id, hdf.name))
+    except TypeError as te:
         # needs special treatment
         pieces = None
+        if __debug__:
+            debug('HDF5', "Failed to reduce '%s' (ref: %i) in [%s]: %s (%s)"
+                          % (type(obj), obj_id, hdf.name, te, obj))
 
     # common container handling, either __reduce__ was not possible
     # or it was the default implementation
