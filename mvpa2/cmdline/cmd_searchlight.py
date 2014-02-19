@@ -79,9 +79,11 @@ searchlight_constraints_opts_grp = ('options for constraining the searchlight', 
         the neighborhood (as defined by this option's argument) of a second
         ROI. Increasing the size of the neighborhood therefore increases the
         scarceness of the sampling.""")),
-    (('--roi-attr',), dict(metavar='ATTR',
+    (('--roi-attr',), dict(metavar='ATTR/EXPR', nargs='+',
         help="""name of a feature attribute whose non-zero values define
-        possible ROI seeds/centers. Conflicts""")),
+        possible ROI seeds/centers. Alternatively, this can also be an
+        expression like: parcellation_roi eq 16 (see the 'select' command
+        on information what expressions are supported).""")),
 ])
 
 def setup_parser(parser):
@@ -90,8 +92,7 @@ def setup_parser(parser):
     parser_add_common_opt(parser, 'multidata', required=True)
     parser_add_optgroup_from_def(parser, searchlight_opts_grp)
     parser_add_optgroup_from_def(parser, ca_opts_grp)
-    parser_add_optgroup_from_def(parser, searchlight_constraints_opts_grp,
-                                 exclusive=True)
+    parser_add_optgroup_from_def(parser, searchlight_constraints_opts_grp)
     parser_add_optgroup_from_def(parser, crossvalidation_opts_grp,
                                  prefix='--cv-')
     parser_add_optgroup_from_def(parser, single_required_hdf5output)
@@ -118,19 +119,32 @@ def run(args):
     # XXX add big switch to allow for setting up surface-based neighborhoods
     from mvpa2.misc.neighborhood import IndexQueryEngine
     qe = IndexQueryEngine(**dict(args.neighbors))
+    # determine ROIs
+    roi_ids = None
     # scatter_neighborhoods
     if not args.scatter_rois is None:
         from mvpa2.misc.neighborhood import scatter_neighborhoods
         attr, nb = args.scatter_rois
         coords = ds.fa[attr].value
         seed_coords, roi_ids = scatter_neighborhoods(nb, coords)
-        verbose(3, 'Attempting %i ROI analyses' % len(roi_ids))
-    elif not args.roi_attr is None:
-        verbose(3, 'Attempting ROI analyses in %s' % args.roi_attr)
-        roi_ids = args.roi_attr
-    else:
+    if not args.roi_attr is None:
+        if len(args.roi_attr) == 1 and args.roi_attr[0] in ds.fa.keys():
+            # name of an attribute -> pull non-zeroes
+            rids = ds.fa[args.roi_attr].value.nonzero()[0]
+        else:
+            # an expression?
+            from .cmd_select import _eval_attr_expr
+            rids = _eval_attr_expr(args.roi_attr, ds.fa).nonzero()[0]
+        if roi_ids is None:
+            roi_ids = args.roi_attr
+        else:
+            # intersect with previous roi_id list
+            roi_ids = list(set(roi_ids).intersection(rids))
+    if roi_ids is None:
         verbose(3, 'Attempting %i ROI analyses' % ds.nfeatures)
-        roi_ids = None
+    else:
+        verbose(3, 'Attempting %i ROI analyses' % len(roi_ids))
+
     from mvpa2.measures.searchlight import Searchlight
 
     sl = Searchlight(measure,
