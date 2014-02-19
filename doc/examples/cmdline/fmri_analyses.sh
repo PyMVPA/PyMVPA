@@ -71,14 +71,15 @@ pymvpa2 select \
 # --scatter-rois is for demo speed-up only
 pymvpa2 --dbg-channel SLC searchlight \
     --payload cv \
-    --neighbors 3 \
-    --scatter-rois 3 \
-    --nproc 2 \
+    --neighbors 4 \
+    --scatter-rois 5 \
     --roi-attr gm \
+    --nproc 2 \
     --cv-learner 'SMLR(lm=1.0)' \
     --cv-partitioner oddeven:chunks \
     --cv-errorfx mean_match_accuracy \
     --cv-avg-datafold-results \
+    --cv-permutations 10 \
     --hdf5-compression gzip \
     -i "$outdir"/faceshouses_brain.hdf5 \
     -o "$outdir"/sl_faces_vs_houses_brain.hdf5
@@ -87,6 +88,10 @@ pymvpa2 dump -s \
     -f nifti \
     -i "$outdir"/sl_faces_vs_houses_brain.hdf5 \
     -o "$outdir"/sl_faces_vs_houses_brain_ACC.nii.gz
+pymvpa2 dump --fa null_prob \
+    -f nifti \
+    -i "$outdir"/sl_faces_vs_houses_brain.hdf5 \
+    -o "$outdir"/sl_faces_vs_houses_brain_NP.nii.gz
 
 for roi in $(seq 48); do
     echo "Doing ROI $roi"

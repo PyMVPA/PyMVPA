@@ -86,6 +86,52 @@ searchlight_constraints_opts_grp = ('options for constraining the searchlight', 
         on information what expressions are supported).""")),
 ])
 
+
+# XXX this should eventually move into the main code base, once
+# sufficiently generalized
+def _fill_in_scattered_results(sl, dataset, roi_ids, results):
+    """this requires the searchlight conditional attribute 'roi_feature_ids'
+    to be enabled"""
+    import numpy as np
+    from mvpa2.datasets import Dataset
+
+    resmap = None
+    probmap = None
+    for resblock in results:
+        for res in resblock:
+            if resmap is None:
+                # prepare the result container
+                resmap = np.zeros((len(res), dataset.nfeatures),
+                                  dtype=res.samples.dtype)
+                if 'null_prob' in res.fa:
+                    # initialize the prob map also with zeroes, as p=0 can never
+                    # happen as an empirical result
+                    probmap = np.zeros((dataset.nfeatures,) + res.fa.null_prob.shape[1:],
+                                      dtype=res.samples.dtype)
+                observ_counter = np.zeros(dataset.nfeatures, dtype=int)
+            #project the result onto all features -- love broadcasting!
+            resmap[:, res.a.roi_feature_ids] += res.samples
+            if not probmap is None:
+                probmap[res.a.roi_feature_ids] += res.fa.null_prob
+            # increment observation counter for all relevant features
+            observ_counter[res.a.roi_feature_ids] += 1
+    # when all results have been added up average them according to the number
+    # of observations
+    observ_mask = observ_counter > 0
+    resmap[:, observ_mask] /= observ_counter[observ_mask]
+    result_ds = Dataset(resmap,
+                        fa={'observations': observ_counter})
+    if not probmap is None:
+        # transpose to make broadcasting work -- creates a view, so in-place
+        # modification still does the job
+        probmap.T[:,observ_mask] /= observ_counter[observ_mask]
+        result_ds.fa['null_prob'] = probmap.squeeze()
+    if 'mapper' in dataset.a:
+        import copy
+        result_ds.a['mapper'] = copy.copy(dataset.a.mapper)
+    return result_ds
+
+
 def setup_parser(parser):
     from .helpers import parser_add_optgroup_from_def, \
         parser_add_common_attr_opts, single_required_hdf5output, ca_opts_grp
@@ -121,12 +167,20 @@ def run(args):
     qe = IndexQueryEngine(**dict(args.neighbors))
     # determine ROIs
     roi_ids = None
+    aggregate_fx = args.aggregate_fx
     # scatter_neighborhoods
     if not args.scatter_rois is None:
         from mvpa2.misc.neighborhood import scatter_neighborhoods
         attr, nb = args.scatter_rois
         coords = ds.fa[attr].value
         seed_coords, roi_ids = scatter_neighborhoods(nb, coords)
+        if aggregate_fx is None:
+            # no custom one given -> use default "fill in" function
+            aggregate_fx = _fill_in_scattered_results
+            if args.enable_ca is None:
+                args.enable_ca = ['roi_feature_ids']
+            elif 'roi_feature_ids' not in args.enable_ca:
+                args.enable_ca += ['roi_feature_ids']
     if not args.roi_attr is None:
         if len(args.roi_attr) == 1 and args.roi_attr[0] in ds.fa.keys():
             # name of an attribute -> pull non-zeroes
@@ -152,7 +206,7 @@ def run(args):
                      roi_ids=roi_ids,
                      nproc=args.nproc,
                      results_backend=args.multiproc_backend,
-                     results_fx=args.aggregate_fx,
+                     results_fx=aggregate_fx,
                      enable_ca=args.enable_ca,
                      disable_ca=args.disable_ca)
     # XXX support me too!
@@ -162,6 +216,9 @@ def run(args):
     #                 null_dist
     # run 
     res = sl(ds)
+    if 'mapper' in res.a:
+        # strip the last mapper link in the chain, which would be the seed ID selection
+        res.a['mapper'] = res.a.mapper[:-1]
     # XXX create more output
     # and store
     ds2hdf5(res, args.output, compression=args.hdf5_compression)
