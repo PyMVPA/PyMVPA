@@ -49,5 +49,6 @@ def test_splitclf_sensitivities():
                      set((0, i + 1)))
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()

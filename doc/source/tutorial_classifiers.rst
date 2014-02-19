@@ -184,7 +184,7 @@ By now we have already done a few cross-validation analyses using two
 different classifiers and different pre-processing strategies. In all these
 cases we have just looked at the generalization performance or error.
 However, error rates hide a lot of interesting information that is very
-important for an interpretation of results. In our case we analyze a
+important for an interpretation of results. In our case we analyzed a
 dataset with eight different categories. An average misclassification rate
 doesn't tell us much about the contribution of each category to the
 prediction error. It could be that *half of the samples of each category*
@@ -197,7 +197,7 @@ despite the same average error rate.
 In psychological research this type of results is usually presented as a
 `contingency table`_ or `cross tabulation`_ of expected vs. empirical
 results. `Signal detection theory`_ offers a whole range of techniques to
-characterize classifier's performance based on that. From this angle a
+characterize such results. From this angle a
 classification analysis is hardly any different from a psychological
 experiment where a human observer performs a detection task, hence the same
 analysis procedures can be applied here as well.
@@ -223,7 +223,7 @@ Via the ``enable_ca`` argument we triggered computing confusion tables for
 all cross-validation folds, but otherwise there is no change in the code.
 Afterwards the aggregated confusion for the whole cross-validation
 procedure is available in the ``ca`` collection. Let's take a look (note
-that in the printed manual the output is truncated due to page width
+that in the printed manual the output is truncated due to page-width
 constraints -- please refer to the HTML-based version full the full matrix).
 
 >>> print cvte.ca.stats.as_string(description=True)
@@ -314,7 +314,7 @@ produce the desired results. We also saw that despite this encapsulation we
 can still get a fair amount of information about the performed analysis.
 However, what happens if we want to do some further processing of the data
 **within** the cross-validation analysis. That seems to be difficult, since
-we feed a whole dataset into the analysis, and only internally it get split
+we feed a whole dataset into the analysis, and only internally does it get split
 into the respective pieces.
 
 Of course there is a solution to this problem -- a :term:`meta-classifier`.
@@ -323,7 +323,7 @@ its own, but uses another classifier to do the actual work. In addition,
 the meta-classifier adds another processing step that is performed before
 the actual :term:`base-classifier` sees the data.
 
-An example of such meta-classifier is `~mvpa2.clfs.meta.MappedClassifier`.
+An example of such a meta-classifier is `~mvpa2.clfs.meta.MappedClassifier`.
 Its purpose is simple: Apply a mapper to both training and testing data
 before it is passed on to the internal base-classifier. With this technique
 it is possible to implement arbitrary pre-processing within a
@@ -391,15 +391,15 @@ figure out what is happening here.
    first two SVD components. Why does the kNN classifier perform so bad in
    comparison to the SVM (hint: think about the distance function)?
 
-In this tutorial part we took a look at classifiers. We have seen that
-regardless of the actual algorithm all classifiers are implementing the same
-interface. Because of that they can be replaced by another classifier without
+In this tutorial part we took a look at classifiers. We have seen that,
+regardless of the actual algorithm, all classifiers are implementing the same
+interface. Because of this, they can be replaced by another classifier without
 having to change any other part of the analysis code. Moreover, we have seen
 that it is possible to enable and access optional information that is offered
 by particular parts of the processing pipeline.
 
 However, we still have done little to address one of the major questions in
-neuroscience research, that is: Where does the information come from? One
+neuroscience research: Where does the information come from? One
 possible approach to this question is the topic of the :ref:`next tutorial part
 <chap_tutorial_searchlight>`.
 

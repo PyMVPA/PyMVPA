@@ -332,10 +332,11 @@ class StateTests(unittest.TestCase):
             self.assertEqual(sv.name, sv_dc.name)
             self.assertEqual(sv._instance_index, sv_dc._instance_index)
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(StateTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

@@ -1070,9 +1070,10 @@ class ClassifiersTests(unittest.TestCase):
             pl.xlim((0. - step/2, 1.+step/2))
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(ClassifiersTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()

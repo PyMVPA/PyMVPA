@@ -8,8 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''
 AFNI NIML dataset I/O support.
-Usually this type of datasets are used for functional data (timeseries, 
-preprocessed data), statistical maps or searchlight results. 
+Usually this type of datasets are used for functional data (timeseries,
+preprocessed data), statistical maps or searchlight results.
 
 Created on Feb 19, 2012
 
@@ -23,9 +23,9 @@ with the following fields:
    .history        String with history information
    .stats          list with statistical information for each column.
    .labels         list with labels of the data columns
-   .dset_type      String with the data set type 
-   
-Similarly, such a dict can be saved to a .niml.dset file using the 
+   .dset_type      String with the data set type
+
+Similarly, such a dict can be saved to a .niml.dset file using the
 afni_niml_dset.write function
 '''
 
@@ -35,11 +35,24 @@ from mvpa2.support.nibabel import afni_niml as niml
 
 from mvpa2.base import warning, debug
 
-def _string2list(s, SEP=";"):
+def _string2list(s, SEP=";", warn_if_no_string=True):
     '''splits a string by SEP; if the last element is empty then it is not returned
-    
-    The rationale is that AFNI/NIML like to close the string with a ';' which 
-    would return one (empty) value too many'''
+
+    The rationale is that AFNI/NIML like to close the string with a ';' which
+    would return one (empty) value too many
+
+    If the input is already a list that has lists or tuples,
+    by default a warning is thrown because SUMA may puke over it.
+    '''
+    if isinstance(s, (list, tuple)):
+        if warn_if_no_string and \
+                    any(isinstance(s_elem, (list, tuple)) for s_elem in s):
+            # a short representation of the offending structure
+            s_str = '%r' % s if len(s) <= 1 else '[%s ... %s]' % (s[0], s[-1])
+            warning('Two-dimensional string structure %s found - '
+                        'it may not be readable by SUMA.' % s_str)
+        return s
+
     r = s.split(SEP)
     if not r[-1]:
         r = r[:-1]
@@ -363,14 +376,14 @@ def sparse2full(dset, pad_to_ico_ld=None, pad_to_node=None,
                 ico_ld_surface_count=1, set_missing_values=0):
     '''
     Creates a 'full' dataset which has values associated with all nodes
-    
+
     Parameters
     ----------
     dset: dict
         afni_niml_dset-like dictionary with at least a field 'data'
     pad_to_node_ico_ld: int
-        number of linear divisions (only applicable if used through 
-        AFNI's MapIcosehedron) of the surface this dataset refers to. 
+        number of linear divisions (only applicable if used through
+        AFNI's MapIcosehedron) of the surface this dataset refers to.
     pad_to_node: int
         number of nodes of the surface this data
     ico_ld_surface_count: int (default: 1)
@@ -379,11 +392,11 @@ def sparse2full(dset, pad_to_ico_ld=None, pad_to_node=None,
         surface originally based on a left and right hemisphere
     set_missing_values: int or float (default: 0)
         value to which nodes not present in dset are set.
-    
+
     Returns
     -------
     dset: dict
-        afni_niml_dset-like dictionary with at least fields 'data' and 
+        afni_niml_dset-like dictionary with at least fields 'data' and
         'node_indices'.
     '''
 
@@ -460,7 +473,7 @@ def label2index(dset, label):
 def ttest(dsets, sa_labels=None, return_values='mt',
           set_NaN_to=0., compare_to=0.):
     '''Runs a one-sample t-test across datasets
-    
+
     Parameters
     ----------
     dsets: str or list of dicts
@@ -473,9 +486,9 @@ def ttest(dsets, sa_labels=None, return_values='mt',
     set_NaN_to: float or None (default: 0.)
         the value that NaNs in dsets replaced by. If None then NaNs are kept.
     compare_to: float (default: 0.)
-        t-tests are compared against the null hypothesis of a mean of 
+        t-tests are compared against the null hypothesis of a mean of
         compare_to.
-    
+
     Returns
     -------
     dset: dict

@@ -34,7 +34,7 @@ beyond what is touched by the tutorial. Typically, only the most important
 aspects will be mentioned and each building block in PyMVPA can be used in
 more flexible ways than what is shown. Enjoy the ride.
 
-Through the course of the tutorial we would analyze :ref:`real BOLD fMRI data
+Through the course of the tutorial we will analyze :ref:`real BOLD fMRI data
 <datadb_tutorial_data>`. Therefore, to be able to run the code in this
 tutorial, you need to download the :ref:`corresponding data from the PyMVPA
 website <datadb_tutorial_data>`. Once downloaded, extract the tarball, open a

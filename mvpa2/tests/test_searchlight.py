@@ -84,7 +84,7 @@ class SearchlightTests(unittest.TestCase):
 
 
 
-    #def _test_searchlights(self, ds, sls, roi_ids, result_all):
+    #def _test_searchlights(self, ds, sls, roi_ids, result_all):  # pragma: no cover
 
     @sweepargs(lrn_sllrn_SL_partitioner=
                [(GNB(common_variance=v, descr='GNB'), None,
@@ -558,7 +558,7 @@ class SearchlightTests(unittest.TestCase):
     def test_swaroop_case(self):
         """Test hdf5 backend to pass results on Swaroop's usecase
         """
-
+        skip_if_no_external('h5py')
         from mvpa2.measures.base import Measure
         class sw_measure(Measure):
             def __init__(self):
@@ -728,10 +728,11 @@ class SearchlightTests(unittest.TestCase):
             for f in glob.glob(tfile + '*'):
                 os.unlink(f)
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(SearchlightTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

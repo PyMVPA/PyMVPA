@@ -22,7 +22,7 @@ import mvpa2.kernels.np as npK
 from mvpa2.kernels.base import PrecomputedKernel, CachedKernel
 try:
     import mvpa2.kernels.sg as sgK
-    _has_sg = True
+    _has_sg = exists('shogun')
 except RuntimeError:
     _has_sg = False
 
@@ -236,6 +236,7 @@ class KernelTests(unittest.TestCase):
 
         @reseed_rng()
         def test_custom_sg(self):
+            skip_if_no_external('shogun')
             lk = sgK.LinearSGKernel()
             cl = sgK.CustomSGKernel(sgK.sgk.LinearKernel)
             poly = sgK.PolySGKernel()
@@ -344,10 +345,11 @@ class KernelTests(unittest.TestCase):
                             % (did, iid, p, dnorm))
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(KernelTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

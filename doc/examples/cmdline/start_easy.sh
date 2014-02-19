@@ -16,10 +16,12 @@ if [ -z "$outdir" ]; then
   have_tmpdir=1
 fi
 
-# EXAMPLE START
+#% EXAMPLE START
+#% Working with datasets
+#% =====================
 
-# load an fMRI dataset with some attributes for each volume
-# only include voxels that are non-zero in a mask image
+#% load an fMRI dataset with some attributes for each volume
+#% only include voxels that are non-zero in a mask image
 pymvpa2 mkds --mri-data "$dataroot"/bold.nii.gz \
             --add-sa-attr "$dataroot"/attributes_literal.txt  \
             --mask "$dataroot"/mask.nii.gz \
@@ -44,7 +46,7 @@ pymvpa2 crossval --learner 'SMLR(lm=1.0)' \
 echo -n "Error for cross-validation problem: "
 pymvpa2 dump -s -i "$outdir"/crossval_results.hdf5
 
-# EXAMPLE END
+#% EXAMPLE END
 
 pymvpa2 pytest -i "$outdir"/crossval_results.hdf5 \
                -e 'assert ds.shape == (1,1)' \

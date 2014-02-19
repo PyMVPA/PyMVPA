@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Evaluate arbitrary Python expressions for tests and assertions
+"""Evaluate arbitrary Python expressions (on datasets)
 
 This command is mostly useful for testing functionality and results via the
 commandline interface and for asserting arbitrary conditions in scripts.
