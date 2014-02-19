@@ -32,7 +32,7 @@ pymvpa2 mkds --add-sa one 1 -o "$outdir"/ones.hdf5 -i "$outdir"/bold_ds.hdf5
 pymvpa2 dump --sa one -f txt -i "$outdir"/ones.hdf5 | wc -l
 
 # show a summary of the dataset content
-pymvpa2 dsinfo -i "$outdir"/bold_ds.hdf5 | grep '^Dataset'
+pymvpa2 describe -i "$outdir"/bold_ds.hdf5 | grep '^Dataset'
 
 # select the first 500 samples of the dataset
 pymvpa2 select --samples-by-index :500 \
