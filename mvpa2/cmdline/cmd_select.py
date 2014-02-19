@@ -16,7 +16,7 @@ arbitrary attributes from the output dataset (see --strip-...).
 
 SELECTION BY INDEX
 
-All --...-by-index options accept a sequence of integer indices. Alternative
+All --...-by-index options accept a sequence of integer indices. Alternatively
 it is possible to specify regular sequences of indices using a START:STOP:STEP
 notation (zero-based). For example, ':5' selects the first five elements, '2:4'
 selects the third and fourth element, and ':20:2' selects all even numbered

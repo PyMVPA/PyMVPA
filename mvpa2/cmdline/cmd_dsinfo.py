@@ -119,7 +119,7 @@ xfm_grp = ('options for transforming dataset content before plotting', [
         of standard deviations for all features in a dataset""")),
 ])
 
-output_grp = ('options for output formating', [
+output_grp = ('options for output formatting', [
     (('--style',), dict(type=str, choices=info_fx.keys(),
         default='content_summary',
         help="""info type""")),

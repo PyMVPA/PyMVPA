@@ -25,7 +25,7 @@ of the dataset component is given.
 HDF5 STORAGE
 
 Arbitrary data (types) can be stored in HDF5 containers. For simple data that is
-natively supported by HDF5 a toplevel HDF5 dataset is created and contains all
+natively supported by HDF5 a top-level HDF5 dataset is created and contains all
 data. Complex, not natively supported data types are serialized before stored
 in HDF5.
 
@@ -44,11 +44,11 @@ Examples:
 
 Print a sample attribute
 
-  $ pymvpa2 dump mydata.hdf5 --sa subj
+  $ pymvpa2 dump -i mydata.hdf5 --sa subj
 
 Export the sample data array into NumPy's .npy format
 
-  $ pymvpa2 dump mydata.hdf5 -s -f npy -d mysamples.npy
+  $ pymvpa2 dump -i mydata.hdf5 -s -f npy -d mysamples.npy
 
 """
 
@@ -61,7 +61,7 @@ import numpy as np
 import sys
 import argparse
 from mvpa2.base import verbose, warning, error
-from mvpa2.base.hdf5 import h5save
+
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
@@ -162,6 +162,7 @@ def run(args):
         if not out is sys.stdout:
             out.close()
     elif args.format == 'hdf5':
+        from mvpa2.base.hdf5 import h5save
         _check_output(args)
         if not args.output.endswith('.hdf5'):
             args.output += '.hdf5'

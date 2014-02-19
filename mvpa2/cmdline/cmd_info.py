@@ -28,7 +28,7 @@ def setup_parser(parser):
     excl.add_argument(
             '--learner-warehouse', nargs='*', default=False, metavar='TAG',
             help="""list available algorithms in the learner warehouse.
-            Optionally, an arbitray number of tags can be specified to
+            Optionally, an arbitrary number of tags can be specified to
             constrain the listing to learners with matching tags.""")
     return parser
 

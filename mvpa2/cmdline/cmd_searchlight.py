@@ -11,7 +11,7 @@
 """
 
 # magic line for manpage summary
-# man: -*- % travelling ROI analysis
+# man: -*- % traveling ROI analysis
 
 __docformat__ = 'restructuredtext'
 
@@ -48,7 +48,7 @@ searchlight_opts_grp = ('options for searchlight setup', [
         location. By default grid coordinates for features are taken from
         a 'voxel_indices' feature attribute in the input dataset. If coordinates
         shall be taken from a different attribute, the radius value can be
-        prefixed with the attrubute name, i.e. 'altcoords:2'. For ROI shapes
+        prefixed with the attribute name, i.e. 'altcoords:2'. For ROI shapes
         other than spheres (with potentially additional parameters), the shape
         name can be specified as well, i.e. 'voxel_indices:HollowSphere:3:2'.
         All neighborhood objects from the mvpa2.misc.neighborhood module are
