@@ -8,8 +8,9 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Describe a dataset's content
 
-This command generates a comprehensive description of a dataset's content in
-text format and writes it to STDOUT.
+This command can produce a number of reports for datasets. Currently
+supported are summary statistics in text format, as well as basic plots.
+See the --report option for more information.
 
 """
 
@@ -107,7 +108,7 @@ def sample_histogram(ds, args):
     pl.show()
 
 info_fx = {
-        'content_summary' : txt_content_summary_terse,
+        'txtsummary' : txt_content_summary_terse,
         'sample_histogram' : sample_histogram,
 }
 
@@ -119,10 +120,7 @@ xfm_grp = ('options for transforming dataset content before plotting', [
         of standard deviations for all features in a dataset""")),
 ])
 
-output_grp = ('options for output formatting', [
-    (('--style',), dict(type=str, choices=info_fx.keys(),
-        default='content_summary',
-        help="""info type""")),
+output_grp = ('options for plot formatting', [
     (('--figure-title',), dict(type=str,
         help="""title for a plot""")),
     (('--histogram-bins',), dict(type=int, default=20,
@@ -149,6 +147,11 @@ ds_descr_grp = ('options for dataset description', [
 
 def setup_parser(parser):
     parser_add_common_opt(parser, 'multidata', required=True)
+    parser.add_argument('-r', '--report',
+            **dict(type=str, choices=info_fx.keys(),
+                 default='txtsummary',
+                 help="""choose a type of report. Default: terse summary in
+                 text format."""))
     parser_add_optgroup_from_def(parser, xfm_grp)
     parser_add_optgroup_from_def(parser, output_grp)
     parser_add_optgroup_from_def(parser, ds_descr_grp)
@@ -159,8 +162,7 @@ def run(args):
     verbose(3, 'Concatenation yielded %i samples with %i features' % ds.shape)
     if not args.numpy_xfm is None:
         from mvpa2.mappers.fx import FxMapper
-        print args.numpy_xfm
         fx, axis = args.numpy_xfm
         mapper = FxMapper(axis, fx)
         ds = ds.get_mapped(mapper)
-    info_fx[args.style](ds, args)
+    info_fx[args.report](ds, args)
