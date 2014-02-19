@@ -180,6 +180,6 @@ def run(args):
         if args.mapperds is None:
             mapperds = ds
         else:
-            mapperds = arg2ds(args.data)
+            mapperds = arg2ds(args.mapperds)
         to_nifti(dumpy, mapperds, args)
     return ds
