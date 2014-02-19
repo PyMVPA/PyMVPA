@@ -130,13 +130,13 @@ def run(args):
     if not args.roi_attr is None:
         if len(args.roi_attr) == 1 and args.roi_attr[0] in ds.fa.keys():
             # name of an attribute -> pull non-zeroes
-            rids = ds.fa[args.roi_attr].value.nonzero()[0]
+            rids = ds.fa[args.roi_attr[0]].value.nonzero()[0]
         else:
             # an expression?
             from .cmd_select import _eval_attr_expr
             rids = _eval_attr_expr(args.roi_attr, ds.fa).nonzero()[0]
         if roi_ids is None:
-            roi_ids = args.roi_attr
+            roi_ids = rids
         else:
             # intersect with previous roi_id list
             roi_ids = list(set(roi_ids).intersection(rids))
