@@ -116,6 +116,8 @@ def param2arg(parser, param, arg_names=None, **kwargs):
       Any addtional options are passed on to the `add_argument()` function
       call.
     """
+    if kwargs is None:
+        kwargs = {}
     if isinstance(param, tuple):
         # get param instance
         param = param[0]._collections_template['params'][param[1]]
@@ -124,6 +126,11 @@ def param2arg(parser, param, arg_names=None, **kwargs):
         arg_names = ('--%s' % param.name.replace('_', '-'),)
     help = param.__doc__
     if param.constraints is not None:
+        # allow for parameter setting overwrite via kwargs
+        if not 'default' in kwargs:
+            kwargs['default'] = param.default
+        if not 'type' in kwargs:
+            kwargs['type'] = param.constraints
         # include value contraint description and default
         # into the help string
         cdoc = param.constraints.long_description()
@@ -131,14 +138,12 @@ def param2arg(parser, param, arg_names=None, **kwargs):
             cdoc = cdoc[1:-1]
         help += ' Constraints: %s.' % cdoc
     try:
-        help += " [Default: %r]" % (param.default,)
+        help += " [Default: %r]" % (kwargs['default'],)
     except:
         pass
     # create the parameter, using the constraint instance for type
     # conversion
     parser.add_argument(*arg_names, help=help,
-                        default=param.default,
-                        type=param.constraints,
                         **kwargs)
 
 def ca2arg(parser, klass, ca, arg_names=None, help=None):
