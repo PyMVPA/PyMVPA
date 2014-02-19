@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Unit tests for PyMVPA surface searchlight functions specific for 
+"""Unit tests for PyMVPA surface searchlight functions specific for
 handling AFNI datasets"""
 
 
@@ -39,7 +39,7 @@ class SurfTests(unittest.TestCase):
         return rng
 
     def test_afni_niml(self):
-        # just a bunch of tests 
+        # just a bunch of tests
 
         ps = afni_niml._partial_string
 
@@ -123,6 +123,30 @@ class SurfTests(unittest.TestCase):
             garbage = "GARBAGE".encode()
             assert_raises((KeyError, ValueError), afni_niml.string2rawniml, s + garbage)
             assert_raises((KeyError, ValueError), afni_niml.string2rawniml, garbage + s)
+
+
+    @with_tempfile('.niml.dset', 'dset')
+    def test_afni_niml_dset_with_2d_strings(self, fn):
+        # test for 2D arrays with strings. These are possibly SUMA-incompatible
+        # but should still be handled properly for i/o.
+        # Addresses https://github.com/PyMVPA/PyMVPA/issues/163 (#163)
+        samples = np.asarray([[1, 2, 3], [4, 5, 6]])
+        labels = np.asarray(map(list, ['abcd', 'efgh']))
+        idxs = np.asarray([np.arange(10, 14), np.arange(20, 24)])
+
+        ds = Dataset(samples, sa=dict(labels=labels, idxs=idxs))
+
+        for fmt in ('binary', 'text', 'base64'):
+            niml.write(fn, ds, fmt)
+
+            ds_ = niml.read(fn)
+
+            assert_array_equal(ds.samples, ds_.samples)
+
+            for sa_key in ds.sa.keys():
+                v = ds.sa[sa_key].value
+                v_ = ds_.sa[sa_key].value
+                assert_array_equal(v, v_)
 
 
     @with_tempfile('.niml.dset', 'dset')

@@ -27,7 +27,7 @@ It is often desirable to be able to make statements like *"Performance is
 significantly above chance-level"*. To help with that PyMVPA supports *Null*
 hypothesis (aka *H0*) testing for any :class:`~mvpa2.measures.base.Measure`.
 
-However, as with other applications of statistics in classifier-based analyses
+However, as with other applications of statistics in classifier-based analyses,
 there is the problem that we typically do not know the distribution of a
 variable like error or performance under the *Null* hypothesis (i.e. the
 probability of a result given that there is no signal), hence we cannot easily
@@ -41,15 +41,15 @@ Monte Carlo -- here I come!
 ---------------------------
 
 One approach to deal with this situation is to *estimate* the *Null*
-distribution using permutation testing. The *Null* distribution is then
-estimated by computing the measure of interest multiple times using original
+distribution using permutation testing. The *Null* distribution is
+estimated by computing the measure of interest multiple times using the original
 data samples but with permuted targets, presumably scrambling or destroying the
 signal of interest.  Since quite often the exploration of all permutations is
-unfeasible, Monte-Carlo testing (see :ref:`Nichols et al. (2006) <NH02>`)
-allows to obtain stable estimate with only a limited number of random
+unfeasible, Monte-Carlo testing (see :ref:`Nichols et al. (2002) <NH02>`)
+allows us to obtain a stable estimate with only a limited number of random
 permutations.
 
-Given the results computed using permuted targets one can now determine the
+Given the results computed using permuted targets, we can now determine the
 probability of the empirical result (i.e. the one computed from the original
 training dataset) under the *no signal* condition. This is simply the fraction
 of results from the permutation runs that is larger or smaller than the
@@ -84,9 +84,9 @@ be easy to read:
   changes with different values of the signal-to-noise (``snr``) parameter
   of the dataset generator function.
 
-Now we want to run this analysis again, but more often and with a fresh
-permuation of the classifier for each run. We need two pieces for the Monte
-Carlo shuffling. The first of them is an instance of an
+Now we want to run this analysis again, repeatedly and with a fresh
+permutation of the targets for each run. We need two pieces for the Monte
+Carlo shuffling. The first is an instance of an
 :class:`~mvpa2.generators.permutation.AttributePermutator` that will
 permute the target attribute of the dataset for each iteration.  We
 will instruct it to perform 200 permutations. In a real analysis, the
@@ -102,9 +102,9 @@ number of permutations will often be more than that.
 The second necessary component for a Monte-Carlo-style estimation of the *Null*
 distribution is the actual "estimator".  :class:`~mvpa2.clfs.stats.MCNullDist`
 will use the already created ``permutator`` to shuffle the targets and later on
-report p-value from the left tail of the *Null* distribution, because we are
+report the p-value from the left tail of the *Null* distribution, because we are
 going to compute errors and we are interested in them being *lower* than chance.
-Finally we also ask for all results from Monte-Carlo shuffling to be stored for
+Finally, we also ask for all results from Monte-Carlo shuffling to be stored for
 subsequent visualization of the distribution.
 
 >>> distr_est = MCNullDist(permutator, tail='left', enable_ca=['dist_samples'])
@@ -130,10 +130,10 @@ Other than it taking a bit longer to compute, the performance did not change.
 But the additional waiting wasn't in vain, as we get the results of the
 statistical evaluation. The ``cv_mc`` :term:`conditional attribute`
 ``null_prob`` has a dataset that contains the p-values representing the
-likelihood of an empirical value (i.e. result from analysing the original
+likelihood of an empirical value (i.e. the result from analysing the original
 dataset) being equal or lower to one under the *Null* hypothesis, i.e. no
 actual relevant signal in the data. Or in more concrete terms, the p-value
-is the fraction of results from the permutation analysis that is less or
+is the fraction of permutation results less than or
 equal to the empirical result.
 
 
@@ -151,7 +151,7 @@ True
   What is the minimum p-value that we can get from 200 permutations?
 
 Let's practise our visualization skills a bit and create a quick plot to
-showing the *Null* distribution and how "significant" our
+show the *Null* distribution and how "significant" our
 empirical result is. And let's make a function for plotting to show off
 our Python-foo!
 
@@ -170,7 +170,7 @@ our Python-foo!
 ...                     np.asscalar(err))
 >>> # run pl.show() if the figure doesn't appear automatically
 
-You have seen that we created a histogram of the "distribution samples" stored
+You can see that we have created a histogram of the "distribution samples" stored
 in the *Null* distribution (because we asked for it previously).  We can also
 see that the *Null* or chance distribution is centered around the expected
 chance-level and the empirical error value is in the far left tail, thus
@@ -180,13 +180,13 @@ This wasn't too bad, right? We could stop here. But there is this smell....
 
 .. exercise::
 
-  The p-value that we have just computed, and the *Null* distribution we looked
-  at is, unfortunately, **invalid** -- at least if we want to know how likely
+  The p-value that we have just computed and the *Null* distribution we looked
+  at are, unfortunately, **invalid** -- at least if we want to know how likely
   it is to obtain our **empirical** result under a no-signal condition. Can you
   figure out why?
 
   PS: The answer is obviously in the next section, so do not spoil your learning
-  experience by reading it, before you thought about this issue!
+  experience by reading it before you have thought about this issue!
 
 
 Avoiding the trap OR Advanced magic 101
@@ -201,8 +201,8 @@ iteration the classifier was **tested** on new data/signal.
 However, we are actually interested in what the classifier has to say about the
 *actual* data, but when it was **trained** on randomly permuted data.
 
-Doing a whole-dataset permutation is a common mistake with very beneficial 
-side-effects -- as you see in a bit. Sadly, doing the permuting rights (i.e.
+Doing a whole-dataset permutation is a common mistake with very beneficial
+side-effects -- as you will see in a bit. Sadly, doing the permuting correctly (i.e.
 in the training portion of the dataset only) is a bit more complicated due to
 the data-folding scheme that we have to deal with. Here is how it goes:
 
@@ -333,7 +333,7 @@ Family-friendly
 
 When going through this chapter you might have thought: "Jeez, why do they need
 to return a single p-value in a freaking dataset?" But there is a good reason
-for this. Let set up another cross-validation procedure. This one is basically
+for this. Lets set up another cross-validation procedure. This one is basically
 identical to the last one, except for not averaging classifier performances
 across data-folds (i.e. ``postproc=mean_sample()``).
 
@@ -377,7 +377,7 @@ discriminate data from two possible classes. In many cases we can assume that a
 classifier that *cannot* discriminate these two classes would perform at a
 chance-level of 0.5 (ACC). If it does that we would conclude that there is no
 signal of interest in the data, or our classifier of choice cannot pick it up.
-However, there is a whole universe of classification problems, where it is not
+However, there is a whole universe of classification problems where it is not
 that simple.
 
 Let's revisit the classification problem from :ref:`the chapter on classifiers
@@ -399,7 +399,7 @@ procedure the chosen classifier makes correct predictions for approximately
 half of the data points. The big question is now: **What does that tell us?**
 
 There are many scenarios that could lead to this prediction performance. It
-could be that the fitted classifier model is very good, but only capture the
+could be that the fitted classifier model is very good, but only captures the
 data variance for half of the data categories/classes. It could also be that
 the classifier model quality is relatively poor and makes an equal amount of
 errors for all classes. In both cases the average accuracy will be around 50%,
@@ -414,8 +414,8 @@ Interesting hypotheses in the context of this dataset could be whether the data
 carry a signal that can be used to distinguish brain response patterns from
 animate vs.  inanimate stimulus categories, or whether data from object-like
 stimuli are all alike and can only be distinguished from random noise, etc. One
-can imagine to run such an analysis on data from different parts of the brain
-and the results change -- without necessarily having a big impact on the
+can imagine running such an analysis on data from different parts of the brain
+and the results changing -- without necessarily having a big impact on the
 overall classification accuracy.
 
 A lot more interesting information is available from the confusion matrix, a
@@ -433,18 +433,19 @@ contingency table showing prediction targets vs. actual predictions.
 
 We can see a strong diagonal, but also block-like structure, and have to
 realize that simply staring at the matrix doesn't help us to easily assess the
-likelihood of any of our hypothesis being true or false. It is trivial to do a
+likelihood of any of our hypotheses being true or false. It is trivial to do a
 Chi-square test of the confusion table...
 
 >>> print 'Chi^2: %.3f (p=%.3f)' % cv.ca.stats.stats["CHI^2"]
 Chi^2: 1942.519 (p=0.000)
 
-... but, again, it doesn't tell us anything other than the classifier not just
-doing random guesses. It would be much more useful, if we could estimate how
-likely it is, given the observed confusion matrix, that the employed classifier
-is able to discriminate *all* stimulus classes from each other, and not just a
-subset. Even more useful would be, if we could relate this probability to
-specific alternative hypotheses, such as an animate/inanimate-only distinction.
+... but, again, it doesn't tell us anything other than that the classifier is
+not just doing random guesses. It would be much more useful if we could
+estimate how likely it is, given the observed confusion matrix, that the
+employed classifier is able to discriminate *all* stimulus classes from each
+other, and not just a subset. Even more useful would be if we could relate
+this probability to specific alternative hypotheses, such as an
+animate/inanimate-only distinction.
 
 :ref:`Olivetti et al. (2012) <OGA2012>` have devised a method that allows for
 doing exactly that. The confusion matrix is analyzed in a Bayesian framework
@@ -465,9 +466,9 @@ This algorithm is available in the
 >>> print cv_results.fa.stat
 ['log(p(C|H))' 'log(p(H|C))']
 
-Most likely hypothesis to explain this confusion matrix
+Most likely hypothesis to explain this confusion matrix:
 
-print cv_results.sa.hypothesis[np.argsort(cv_results.samples[:,1])[-1]]
+>>> print cv_results.sa.hypothesis[np.argsort(cv_results.samples[:,1])[-1]]
 [['bottle'], ['cat'], ['chair'], ['face'], ['house'], ['scissors'], ['scrambledpix'], ['shoe']]
 
 

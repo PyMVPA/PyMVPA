@@ -57,7 +57,7 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
         self.voxsel = voxsel
         self.space = space
         self._map_voxel_coord = None
-        self.add_fa = add_fa
+        self._add_fa = add_fa
 
     def __repr__(self, prefixes=[]):
         return super(SurfaceVerticesQueryEngine, self).__repr__(
@@ -68,6 +68,12 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
 
     def __reduce__(self):
         return (self.__class__, (self.voxsel, self.space, self._add_fa))
+
+    def __str__(self):
+        return '%s(%s, space=%s, add_fa=%s)' % (self.__class__.__name__,
+                                                self.voxsel,
+                                                self.space,
+                                                self.add_fa)
 
     @property
     def ids(self):
@@ -149,13 +155,14 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
             # optionally add additional information from voxsel
             ds = AttrDataset(np.asarray(voxel_dataset_ids_flat)[np.newaxis])
             for n in self._add_fa:
-                fa_values = self.voxsel.aux_get(vertexid, n)
+                fa_values = self.voxsel.get_aux(vertexid, n)
                 assert(len(fa_values) == len(voxel_dataset_ids))
                 ds.fa[n] = sum([[x] * len(ids)
                                 for x, ids in zip(fa_values,
                                                   voxel_dataset_ids)], [])
             return ds
         return voxel_dataset_ids_flat
+
 
 
     def query(self, **kwargs):
@@ -401,7 +408,7 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
         Relative stop position of line (as in start_fr)
     start_mm: float (default: 0)
         Absolute start position offset (as in start_fr)
-    sttop_mm: float (default: 0)
+    stop_mm: float (default: 0)
         Absolute start position offset (as in start_fr)
     nsteps: int (default: 10)
         Number of steps from white to pial surface
@@ -409,7 +416,7 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
         After how many searchlights an estimate should be printed of the
         remaining time until completion of all searchlights
     add_fa: None or list of strings
-        Feature attribtues from a dataset that should be returned if the
+        Feature attributes from a dataset that should be returned if the
         queryengine is called with a dataset.
     nproc: int or None
         Number of parallel threads. None means as many threads as the
