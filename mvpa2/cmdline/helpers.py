@@ -784,7 +784,11 @@ attr_from_npy = ('options for attributes from stored Numpy arrays', [
 single_required_hdf5output = ('output options', [
     (('-o', '--output'), dict(type=str, required=True,
          help="""output filename ('.hdf5' extension is added automatically if
-         necessary).""")),
+         necessary). NOTE: The output format is suitable for data exchange between
+         PyMVPA commands, but is not recommended for long-term storage or exchange
+         as its specific content may vary depending on the actual software
+         environment. For long-term storage consider conversion into other data
+         formats (see 'dump' command).""")),
     hdf5compression[1:],
 ])
 
