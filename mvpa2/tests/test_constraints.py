@@ -104,6 +104,11 @@ class SimpleConstraintsTests(unittest.TestCase):
         # since no type checks are performed
         self.assertRaises(ValueError, lambda: c('7'))
 
+    def test_listof(self):
+        c = EnsureListOf(str)
+        assert_equal(c(['a', 'b']), ['a', 'b'])
+        assert_equal(c(['a1', 'b2']), ['a1', 'b2'])
+
 
 class ComplexConstraintsTests(unittest.TestCase):
 
