@@ -8,8 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Create a PyMVPA dataset from various sources.
 
-This command converts data from various sources, such as text files, Numpy's
-NPY files, and MR (magnetic resonance) images into a PyMVPA dataset that is
+This command converts data from various sources, such as text files, NumPy's
+NPY files, and MR (magnetic resonance) images into a PyMVPA dataset that gets
 stored in HDF5 format. An arbitrary number of sample and feature attributes can
 be added to a dataset, and individual attributes can be read from
 heterogeneous sources (e.g. they do not have to be all from text files).
