@@ -22,7 +22,7 @@ def test_hist():
     from matplotlib.axes import Subplot
     ds = normal_feature_dataset(10, 3, 10, 5)
     plots = hist(ds, ygroup_attr='targets', xgroup_attr='chunks',
-                 noticks=None, xlim=(-.5,.5), normed=True)
+                 noticks=None, xlim=(-.5, .5), normed=True)
     assert_equal(len(plots), 15)
     for sp in plots:
         assert_is_instance(sp, Subplot)
@@ -34,3 +34,17 @@ def test_hist():
     plots = hist(ds.samples)
     assert_equal(len(plots), 1)
     assert_is_instance(plots[0], Subplot)
+
+def test_imshow():
+    from mvpa2.viz import matshow
+    from mvpa2.misc.data_generators import normal_feature_dataset
+    from matplotlib.colorbar import Colorbar
+    ds = normal_feature_dataset(10, 2, 18, 5)
+    im = matshow(ds)
+    # old mpl returns a tuple of Colorbar which is anyways available as its .ax
+    if isinstance(im.colorbar, tuple):
+        assert_is_instance(im.colorbar[0], Colorbar)
+        assert_true(im.colorbar[1] is im.colorbar[0].ax)
+    else:
+        # new mpls do it withough unnecessary duplication
+        assert_is_instance(im.colorbar, Colorbar)

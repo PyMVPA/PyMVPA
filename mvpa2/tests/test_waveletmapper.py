@@ -124,7 +124,7 @@ class WaveletMappersTests(unittest.TestCase):
 
 
     ##REF: Name was automagically refactored
-    def _test_compare_to_old(self):
+    def _test_compare_to_old(self):  # pragma: no cover
         """Good just to compare if I didn't screw up anything... treat
         it as a regression test
         """
@@ -152,10 +152,11 @@ class WaveletMappersTests(unittest.TestCase):
                     "Got %s and %s" % (d3d_wd, d3d_wd_))
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(WaveletMappersTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

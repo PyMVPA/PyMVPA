@@ -52,8 +52,8 @@ All options for loading data from NumPy NPY files support an optional parameter:
 ... --add-fa-npy <mandatory values> [MEMMAP]
 
 where 'MEMMAP' is a flag  that triggers whether the respective file shall be
-read by memory-mapping, i.e. not read (immediately) into memory. Enable with
-'yes', '1', 'true', 'enable' or 'on'.
+read by memory-mapping, i.e. not read (immediately) into memory. Enable by
+with on of: yes|1|true|enable|on'.
 
 Examples:
 
@@ -79,6 +79,8 @@ if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers import process_common_dsattr_opts, \
         hdf2ds, parser_add_common_opt
+# necessary to enable dataset.summary()
+import mvpa2.datasets.miscfx
 
 
 parser_args = {

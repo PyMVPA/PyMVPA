@@ -160,10 +160,11 @@ class SVMKernelTests(unittest.TestCase):
         # were just ints, and then non-unique after vstack
         assert_array_equal(errs.samples, errs_.samples)
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(SVMKernelTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

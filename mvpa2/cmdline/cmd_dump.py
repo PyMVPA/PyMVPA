@@ -110,7 +110,7 @@ def setup_parser(parser):
                         help="""output format""")
     parser_add_common_opt(
             parser, 'multidata', names=('--mapper-dataset',), dest='mapperds',
-            help="""path to a PyMVPA dataset whos mapper should be used for
+            help="""path to a PyMVPA dataset whose mapper should be used for
             reverse mapping features into volumetric space for NIfTI export.
             By default the mapper in the input dataset is used.""")
     parser_add_optgroup_from_def(parser, hdf5_grp)

@@ -14,7 +14,7 @@ predictions performance is tests on a separate partion of the data.
 
 A summary of a learner performance is written to STDOUT. Depending on the
 particular setup of the cross-validation analysis, either the learner's raw
-predictions or summary statistics are return in an output dataset.
+predictions or summary statistics are returned in an output dataset.
 
 If Monte-Carlo permutation testing is enabled (see --permutations) a second
 output dataset with the corresponding p-values is stored as well (filename

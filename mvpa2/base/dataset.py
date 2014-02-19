@@ -139,13 +139,14 @@ class AttrDataset(object):
 
     During selection data is only copied if necessary. If the slicing
     syntax is used the resulting dataset will share the samples with the
-    original dataset.
+    original dataset (here and below we compare .base against both ds.samples
+    and its .base for compatibility with NumPy < 1.7)
 
-    >>> sel1.samples.base is ds.samples.base
+    >>> sel1.samples.base in (ds.samples.base, ds.samples)
     False
-    >>> sel2.samples.base is ds.samples.base
+    >>> sel2.samples.base in (ds.samples.base, ds.samples)
     False
-    >>> sel3.samples.base is ds.samples.base
+    >>> sel3.samples.base in (ds.samples.base, ds.samples)
     True
 
     For feature selection the syntax is very similar they are just
@@ -170,7 +171,7 @@ class AttrDataset(object):
     array([[1, 2],
            [4, 5],
            [7, 8]])
-    >>> fsel.samples.base is ds.samples.base
+    >>> fsel.samples.base in (ds.samples.base, ds.samples)
     True
 
     Please note that simultaneous selection of samples and features is
