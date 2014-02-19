@@ -60,7 +60,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 import argparse
-from mvpa2.base.hdf5 import h5save
+
 from mvpa2.base import verbose, warning, error
 from mvpa2.datasets import Dataset
 from mvpa2.mappers.detrend import PolyDetrendMapper

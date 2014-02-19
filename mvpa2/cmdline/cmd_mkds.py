@@ -72,7 +72,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 import argparse
-from mvpa2.base.hdf5 import h5save
+
 from mvpa2.base import verbose, warning, error
 from mvpa2.datasets import Dataset
 if __debug__:
@@ -144,6 +144,7 @@ def setup_parser(parser):
     parser_add_optgroup_from_def(parser, single_required_hdf5output)
 
 def run(args):
+    from mvpa2.base.hdf5 import h5save
     ds = None
     if not args.txt_data is None:
         verbose(1, "Load data from TXT file '%s'" % args.txt_data)
