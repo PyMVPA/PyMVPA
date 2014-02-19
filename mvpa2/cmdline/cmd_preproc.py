@@ -44,12 +44,12 @@ Examples:
 
 Normalize all features in a dataset by Z-scoring
 
-  $ pymvpa2 preproc --zscore -o ds_preprocessed dataset.hdf5
+  $ pymvpa2 preproc --zscore -o ds_preprocessed -i dataset.hdf5
 
 Perform Z-scoring and quadratic detrending of all features, but process all
 samples sharing a unique value of the "chunks" sample attribute individually
 
-  $ pymvpa2 preproc --chunks "chunks" --poly-detrend 2 --zscore -o ds_pp2 ds.hdf5
+  $ pymvpa2 preproc --chunks "chunks" --poly-detrend 2 --zscore -o ds_pp2 -i ds.hdf5
 
 """
 

@@ -160,7 +160,7 @@ def arg2bool(arg):
         return True
     else:
         raise argparse.ArgumentTypeError(
-                "'%s' cannot be converted into a boolean" % arg)
+                "'%s' cannot be converted into a boolean" % (arg,))
 
 def arg2none(arg):
     arg = arg.lower()
@@ -168,7 +168,7 @@ def arg2none(arg):
         return None
     else:
         raise argparse.ArgumentTypeError(
-                "'%s' cannot be converted into `None`" % arg)
+                "'%s' cannot be converted into `None`" % (arg,))
 
 def arg2learner(arg, index=0):
     from mvpa2.clfs.warehouse import clfswh
@@ -184,13 +184,13 @@ def arg2learner(arg, index=0):
             learner = clfswh.__getitem__(*arg.split(':'))
             if not len(learner):
                 raise argparse.ArgumentTypeError(
-                    "not match for given learner capabilities %s in the warehouse" % arg)
+                    "not match for given learner capabilities %s in the warehouse" % (arg,))
             return learner[index]
         except ValueError:
             # unknown tag
             raise argparse.ArgumentTypeError(
                 "'%s' is neither a known classifier description, nor a script, "
-                "nor a sequence of valid learner capabilities" % arg)
+                "nor a sequence of valid learner capabilities" % (arg,))
 
 def script2obj(filepath):
     locals = {}
@@ -292,10 +292,10 @@ def ds2hdf5(ds, fname, compression=None):
 
     Parameters
     ----------
-    ds : Datasset or list(Dataset)
+    ds : Dataset or list(Dataset)
       One or more datasets to store
     fname : str
-      Filename of the output file. if it doesn't end with '.hdf5', such an
+      Filename of the output file. If it doesn't end with '.hdf5', such an
       extension will be appended.
     compression : {'gzip','lzf','szip'} or 1-9
       compression type for HDF5 storage. Available values depend on the specific
@@ -548,7 +548,7 @@ def get_crossvalidation_instance(learner, partitioner, errorfx,
     # set learner space
     learner.set_space(learner_space)
     # setup generator for data folding -- put in a chain node for easy
-    # ammending
+    # amending
     gennode = ChainNode([partitioner], space=partitioner.get_space())
     if avg_datafold_results:
         from mvpa2.mappers.fx import mean_sample
@@ -684,7 +684,7 @@ partitioner_opt = (
     'partitioner', ('--partitioner',),
     {'type': arg2partitioner,
      'help': """select a data folding scheme. Supported arguments are: 'half'
-             for split-half, partitioning, 'oddeven' for partitioning into odd
+             for split-half partitioning, 'oddeven' for partitioning into odd
              and even chunks, 'group-X' where X can be any positive integer for
              partitioning in X groups, 'n-X' where X can be any positive
              integer for leave-X-chunks out partitioning. By default

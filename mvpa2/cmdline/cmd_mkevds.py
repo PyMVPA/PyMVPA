@@ -28,7 +28,7 @@ Examples:
 
 Extract two events comprising of four consecutive samples from a dataset.
 
-  $ pymvpa2 mkevds --onset-samples 3 9 --event-nsamples 4 -o evds.hdf5 mydata*.hdf5
+  $ pymvpa2 mkevds --onsets 3 9 --duration 4 -o evds.hdf5 -i 'mydata*.hdf5'
 
 """
 
