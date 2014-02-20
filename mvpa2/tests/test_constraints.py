@@ -118,11 +118,23 @@ class ComplexConstraintsTests(unittest.TestCase):
         assert_equal(c(7.0), 7.0)
         c = Constraints(EnsureFloat(), EnsureRange(min=4.0))
         assert_equal(c(7.0), 7.0)
+        # __and__ form
+        c = EnsureFloat() & EnsureRange(min=4.0)
+        assert_equal(c(7.0), 7.0)
+        assert_raises(ValueError, c, 3.9)
         c = Constraints(EnsureFloat(), EnsureRange(min=4), EnsureRange(max=9))
         assert_equal(c(7.0), 7.0)
-        # this should always fail
-        c = Constraints(EnsureFloat(), EnsureRange(max=4), EnsureRange(min=9))
-        self.assertRaises(ValueError, lambda: c(1.0))
+        assert_raises(ValueError, c, 3.9)
+        assert_raises(ValueError, c, 9.01)
+        # __and__ form
+        c = EnsureFloat() & EnsureRange(min=4) & EnsureRange(max=9)
+        assert_equal(c(7.0), 7.0)
+        assert_raises(ValueError, c, 3.99)
+        assert_raises(ValueError, c, 9.01)
+        # and reordering should not have any effect
+        c = Constraints(EnsureRange(max=4), EnsureRange(min=9), EnsureFloat())
+        assert_raises(ValueError, c, 3.99)
+        assert_raises(ValueError, c, 9.01)
 
     def test_altconstraints(self):
         # this should always work
@@ -131,9 +143,19 @@ class ComplexConstraintsTests(unittest.TestCase):
         c = AltConstraints(EnsureFloat(), EnsureNone())
         assert_equal(c(7.0), 7.0)
         assert_equal(c(None), None)
+        # __or__ form
+        c = EnsureFloat() | EnsureNone()
+        assert_equal(c(7.0), 7.0)
+        assert_equal(c(None), None)
+
         # this should always fail
         c = Constraints(EnsureRange(min=0, max=4), EnsureRange(min=9, max=11))
-        self.assertRaises(ValueError, lambda: c(7.0))
+        assert_raises(ValueError, c, 7.0)
+        c = EnsureRange(min=0, max=4) | EnsureRange(min=9, max=11)
+        assert_equal(c(3.0), 3.0)
+        assert_equal(c(9.0), 9.0)
+        assert_raises(ValueError, c, 7.0)
+        assert_raises(ValueError, c, -1.0)
 
     def test_both(self):
         # this should always work
