@@ -206,11 +206,11 @@ class EnsureRange(EnsureValue):
 
 
 class AltConstraints(object):
-    """Logical OR for contraints.
+    """Logical OR for constraints.
 
     An arbitrary number of constraints can be given. They are evaluated in the
     order in which they were specified. The value returned by the first
-    contraint that does not raise an exception is the global return value.
+    constraint that does not raise an exception is the global return value.
 
     Documentation is aggregated for all alternative constraints.
     """
@@ -246,11 +246,11 @@ class AltConstraints(object):
 
 
 class Constraints(object):
-    """Logical AND for contraints.
+    """Logical AND for constraints.
 
     An arbitrary number of constraints can be given. They are evaluated in the
-    order in which they were specified. The return value of each contraint is
-    passed an an input into the next. The return value of the last contraint
+    order in which they were specified. The return value of each constraint is
+    passed an input into the next. The return value of the last constraint
     is the global return value. No intermediate exceptions are caught.
 
     Documentation is aggregated for all constraints.
