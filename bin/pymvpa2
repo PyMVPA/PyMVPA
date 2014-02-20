@@ -14,7 +14,6 @@ __docformat__ = 'restructuredtext'
 import sys
 import argparse
 import textwrap
-import mvpa2.cmdline as mvcmd
 from mvpa2.cmdline import helpers
 from mvpa2.base.constraints import EnsureBool
 from mvpa2.base import verbose, error, cfg
@@ -26,6 +25,21 @@ try:
     psyco.profile()
 except:
     pass
+
+# need to correspond to files in mvpa2.cmdline.cmd_???
+enabled_cmds = [
+  'info',
+  'mkds',
+  'mkevds',
+  'describe',
+  'dump',
+  'preproc',
+  'crossval',
+  'searchlight',
+  'select',
+  'atlaslabeler',
+  'pytest'
+]
 
 # what version are we talking
 from mvpa2.base.info import get_pymvpa_gitversion
@@ -119,12 +133,17 @@ parser.add_argument('--verbose', action='store', nargs='?', type=int,
 subparsers = parser.add_subparsers()
 # for all subcommand modules it can find
 cmd_short_description = []
-for cmd in sorted([c for c in dir(mvcmd) if c.startswith('cmd_')]):
-    cmd_name = cmd[4:]
-    subcmdmod = getattr(__import__('mvpa2.cmdline',
-                                   globals(), locals(),
-                                   [cmd], -1),
-                        cmd)
+for cmd_name in enabled_cmds:
+    cmd = 'cmd_%s' % cmd_name
+    try:
+        subcmdmod = getattr(__import__('mvpa2.cmdline',
+                                       globals(), locals(),
+                                       [cmd], -1),
+                            cmd)
+    except ImportError:
+        cmd_short_description.append(('(%s)' % cmd_name,
+                                      'not available in this installation'))
+        continue
     # deal with optional parser args
     if 'parser_args' in subcmdmod.__dict__:
         parser_args = subcmdmod.parser_args
