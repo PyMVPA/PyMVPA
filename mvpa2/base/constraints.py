@@ -6,7 +6,9 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##g
-"""Parameter representation"""
+"""Parameter validation"""
+
+# TODO: __str__ / __repr__'s
 
 __docformat__ = 'restructuredtext'
 
@@ -15,21 +17,24 @@ import numpy as np
 if __debug__:
     from mvpa2.base import debug
 
-class EnsureValue(object):
+class Constraint(object):
     """Base class for input value conversion/validation.
 
     These classes are also meant to be able to generate appropriate
     documentation on an appropriate parameter value.
     """
-    def __init__(self):
-        return
+
+    def __and__(self, other):
+        return Constraints(self, other)
+
+    def __or__(self, other):
+        return AltConstraints(self, other)
 
     def __call__(self, value):
         # do any necessary checks or conversions, potentially catch exceptions
         # and generate a meaningful error message
-        return value
+        raise NotImplementedError("abstract class")
 
-    # proposed name -- please invent a better one
     def long_description(self):
         # return meaningful docs or None
         # used as a comprehensive description in the parameter list
@@ -38,9 +43,9 @@ class EnsureValue(object):
     def short_description(self):
         # return meaningful docs or None
         # used as a condensed primer for the parameter lists
-        return None
+        raise NotImplementedError("abstract class")
 
-class EnsureDType(object):
+class EnsureDType(Constraint):
     """Ensure that an input (or several inputs) are of a particular data type.
     """
     # TODO extend to support numpy-like dtype specs, e.g. 'int64'
@@ -70,7 +75,22 @@ class EnsureDType(object):
     def long_description(self):
         return "value must be convertible to type '%s'" % self.short_description()
 
-class EnsureListOf(EnsureValue):
+
+class EnsureInt(EnsureDType):
+    """Ensure that an input (or several inputs) are of a data type 'int'.
+    """
+    def __init__(self):
+        """Initializes EnsureDType with int"""
+        EnsureDType.__init__(self, int)
+
+class EnsureFloat(EnsureDType):
+    """Ensure that an input (or several inputs) are of a data type 'float'.
+    """
+    def __init__(self):
+        """Initializes EnsureDType with float"""
+        EnsureDType.__init__(self, float)
+
+class EnsureListOf(Constraint):
     """Ensure that an input is a list of a particular data type
     """
     def __init__(self, dtype):
@@ -95,19 +115,7 @@ class EnsureListOf(EnsureValue):
         return "value must be convertible to %s" % self.short_description()
 
 
-class EnsureInt(EnsureDType):
-    """Ensure that an input (or several inputs) are of a data type 'int'.
-    """
-    def __init__(self):
-        EnsureDType.__init__(self, int)
-
-class EnsureFloat(EnsureDType):
-    """Ensure that an input (or several inputs) are of a data type 'float'.
-    """
-    def __init__(self):
-        EnsureDType.__init__(self, float)
-
-class EnsureBool(EnsureValue):
+class EnsureBool(Constraint):
     """Ensure that an input is a bool.
 
     A couple of literal labels are supported, such as:
@@ -130,7 +138,7 @@ class EnsureBool(EnsureValue):
     def short_description(self):
         return 'bool'
 
-class EnsureStr(EnsureValue):
+class EnsureStr(Constraint):
     """Ensure an input is a string.
 
     No automatic conversion is attempted.
@@ -149,7 +157,7 @@ class EnsureStr(EnsureValue):
     def short_description(self):
         return 'str'
 
-class EnsureNone(EnsureValue):
+class EnsureNone(Constraint):
     """Ensure an input is of value `None`"""
     def __call__(self, value):
         if value is None:
@@ -163,10 +171,17 @@ class EnsureNone(EnsureValue):
     def long_description(self):
         return 'value must be `None`'
 
-class EnsureChoice(EnsureValue):
+class EnsureChoice(Constraint):
     """Ensure an input is element of a set of possible values"""
-    def __init__(self, *args):
-        self._allowed = args
+
+    def __init__(self, *values):
+        """
+        Parameters
+        ----------
+        *values
+           Possible accepted values.
+        """
+        self._allowed = values
         super(EnsureChoice, self).__init__()
 
     def __call__(self, value):
@@ -180,12 +195,20 @@ class EnsureChoice(EnsureValue):
     def short_description(self):
         return '{%s}' % ', '.join([str(c) for c in self._allowed])
 
-class EnsureRange(EnsureValue):
+class EnsureRange(Constraint):
     """Ensure an input is within a particular range
 
     No type checks are performed.
     """
     def __init__(self, min=None, max=None):
+        """
+        Parameters
+        ----------
+        min
+            Minimal value to be accepted in the range
+        max
+            Maximal value to be accepted in the range
+        """
         self._min = min
         self._max = max
         super(EnsureRange, self).__init__()
@@ -205,17 +228,31 @@ class EnsureRange(EnsureValue):
         return 'value must be in range [%s, %s]' % (min_str, max_str)
 
 
-class AltConstraints(object):
-    """Logical OR for contraints.
+class AltConstraints(Constraint):
+    """Logical OR for constraints.
 
     An arbitrary number of constraints can be given. They are evaluated in the
     order in which they were specified. The value returned by the first
-    contraint that does not raise an exception is the global return value.
+    constraint that does not raise an exception is the global return value.
 
     Documentation is aggregated for all alternative constraints.
     """
-    def __init__(self, *args):
-        self.constraints = [EnsureNone() if c is None else c for c in args]
+    def __init__(self, *constraints):
+        """
+        Parameters
+        ----------
+        *constraints
+           Alternative constraints
+        """
+        super(AltConstraints, self).__init__()
+        self.constraints = [EnsureNone() if c is None else c for c in constraints]
+
+    def __or__(self, other):
+        if isinstance(other, AltConstraints):
+            self.constraints.extend(other.constraints)
+        else:
+            self.constraints.append(other)
+        return self
 
     def __call__(self, value):
         e_list = []
@@ -245,18 +282,32 @@ class AltConstraints(object):
 
 
 
-class Constraints(object):
-    """Logical AND for contraints.
+class Constraints(Constraint):
+    """Logical AND for constraints.
 
     An arbitrary number of constraints can be given. They are evaluated in the
-    order in which they were specified. The return value of each contraint is
-    passed an an input into the next. The return value of the last contraint
+    order in which they were specified. The return value of each constraint is
+    passed an input into the next. The return value of the last constraint
     is the global return value. No intermediate exceptions are caught.
 
     Documentation is aggregated for all constraints.
     """
-    def __init__(self, *args):
-        self.constraints = [EnsureNone() if c is None else c for c in args]
+    def __init__(self, *constraints):
+        """
+        Parameters
+        ----------
+        *constraints
+           Constraints all of which must be satisfied
+        """
+        super(Constraints, self).__init__()
+        self.constraints = [EnsureNone() if c is None else c for c in constraints]
+
+    def __and__(self, other):
+        if isinstance(other, Constraints):
+            self.constraints.extend(other.constraints)
+        else:
+            self.constraints.append(other)
+        return self
 
     def __call__(self, value):
         for c in (self.constraints):
