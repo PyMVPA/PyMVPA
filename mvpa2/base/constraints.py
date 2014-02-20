@@ -21,8 +21,6 @@ class EnsureValue(object):
     These classes are also meant to be able to generate appropriate
     documentation on an appropriate parameter value.
     """
-    def __init__(self):
-        return
 
     def __call__(self, value):
         # do any necessary checks or conversions, potentially catch exceptions
@@ -99,12 +97,14 @@ class EnsureInt(EnsureDType):
     """Ensure that an input (or several inputs) are of a data type 'int'.
     """
     def __init__(self):
+        """Initializes EnsureDType with int"""
         EnsureDType.__init__(self, int)
 
 class EnsureFloat(EnsureDType):
     """Ensure that an input (or several inputs) are of a data type 'float'.
     """
     def __init__(self):
+        """Initializes EnsureDType with float"""
         EnsureDType.__init__(self, float)
 
 class EnsureBool(EnsureValue):
@@ -165,8 +165,15 @@ class EnsureNone(EnsureValue):
 
 class EnsureChoice(EnsureValue):
     """Ensure an input is element of a set of possible values"""
-    def __init__(self, *args):
-        self._allowed = args
+
+    def __init__(self, *values):
+        """
+        Parameters
+        ----------
+        *values
+           Possible accepted values.
+        """
+        self._allowed = values
         super(EnsureChoice, self).__init__()
 
     def __call__(self, value):
@@ -186,6 +193,14 @@ class EnsureRange(EnsureValue):
     No type checks are performed.
     """
     def __init__(self, min=None, max=None):
+        """
+        Parameters
+        ----------
+        min
+            Minimal value to be accepted in the range
+        max
+            Maximal value to be accepted in the range
+        """
         self._min = min
         self._max = max
         super(EnsureRange, self).__init__()
@@ -214,8 +229,14 @@ class AltConstraints(object):
 
     Documentation is aggregated for all alternative constraints.
     """
-    def __init__(self, *args):
-        self.constraints = [EnsureNone() if c is None else c for c in args]
+    def __init__(self, *constraints):
+        """
+        Parameters
+        ----------
+        *constraints
+           Alternative constraints
+        """
+        self.constraints = [EnsureNone() if c is None else c for c in constraints]
 
     def __call__(self, value):
         e_list = []
@@ -255,8 +276,14 @@ class Constraints(object):
 
     Documentation is aggregated for all constraints.
     """
-    def __init__(self, *args):
-        self.constraints = [EnsureNone() if c is None else c for c in args]
+    def __init__(self, *constraints):
+        """
+        Parameters
+        ----------
+        *constraints
+           Constraints all of which must be satisfied
+        """
+        self.constraints = [EnsureNone() if c is None else c for c in constraints]
 
     def __call__(self, value):
         for c in (self.constraints):
