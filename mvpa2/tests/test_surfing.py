@@ -909,7 +909,7 @@ class SurfTests(unittest.TestCase):
 
             qe = builder()
 
-            # test i/o and ensure that the loaded instance is trained
+            # test i/o and ensure that the untrained instance is not trained
             if externals.exists('h5py'):
                 fd, qefn = tempfile.mkstemp('qe.hdf5', 'test'); os.close(fd)
                 h5save(qefn, qe)
@@ -933,6 +933,13 @@ class SurfTests(unittest.TestCase):
 
             # train the qe
             qe.train(ds3)
+
+            # test i/o and ensure that the loaded instance is trained
+            if externals.exists('h5py'):
+                fd, qefn = tempfile.mkstemp('qe.hdf5', 'test'); os.close(fd)
+                h5save(qefn, qe)
+                qe = h5load(qefn)
+                os.remove(qefn)
 
             for node in np.arange(-1, s2.nvertices + 1):
                 if node < 0 or node >= s2.nvertices:
