@@ -953,7 +953,15 @@ class Surface(object):
         return not self.__eq__(other)
 
     def __reduce__(self):
-        return (self.__class__, (self._v, self._f))
+        # these are lazily computed on the first call to e.g. node2faces
+        lazy_keys = ('_n2f', '_f2el', '_v2ael', '_e2f', '_nbrs')
+        lazy_dict = dict()
+        for lazy_key in lazy_keys:
+            if lazy_key in self.__dict__:
+                lazy_dict[lazy_key] = self.__dict__[lazy_key]
+
+
+        return (self.__class__, (self._v, self._f), lazy_dict)
 
     def same_topology(self, other):
         '''
