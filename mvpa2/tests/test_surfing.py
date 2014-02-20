@@ -153,11 +153,10 @@ class SurfTests(unittest.TestCase):
 
         # test i/o and ensure that the loaded instance is trained
         if externals.exists('h5py'):
-            fd, surffn = tempfile.mkstemp('qe.hdf5', 'test'); os.close(fd)
-            h5save(surffn, qe)
-            qe = h5load(surffn)
+            fd, surffn = tempfile.mkstemp('surf.hdf5', 'test'); os.close(fd)
+            h5save(surffn, s2)
+            s2 = h5load(surffn)
             os.remove(surffn)
-
 
 
         assert_array_almost_equal(s.vertices, s2.vertices, 4)
