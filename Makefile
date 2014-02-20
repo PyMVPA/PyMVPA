@@ -429,7 +429,8 @@ tc-%: build
 		MVPA_WARNINGS_SUPPRESS=1 \
 		sh ./doc/examples/cmdline/$*.sh > /dev/null 2>&1
 
-testcmdline: tc-datasets tc-preproc tc-start_easy tc-query_pymvpa
+testcmdline: tc-datasets tc-preproc tc-start_easy tc-query_pymvpa \
+             tc-fmri_analyses
 
 te-%: build
 	@echo -n "I: Testing example $*: "
