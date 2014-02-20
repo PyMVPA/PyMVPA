@@ -280,8 +280,8 @@ def test_multiclass_pairs_svm_searchlight():
     ds.sa.targets = range(ntargets) * (nsamples//ntargets)
     ds.sa.chunks = np.arange(nsamples) // ntargets
     # and add some obvious signal where it is due
-    ds.samples[:, 55] += 10*ds.sa.targets   # for all 4 targets
-    ds.samples[:, 35] += 10*(ds.sa.targets % 2) # so we have conflicting labels
+    ds.samples[:, 55] += 15*ds.sa.targets   # for all 4 targets
+    ds.samples[:, 35] += 15*(ds.sa.targets % 2) # so we have conflicting labels
     # while 35 would still be just for 2 categories which would conflict
 
     mclf = MulticlassClassifier(LinearCSVMC(),
