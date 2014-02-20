@@ -63,8 +63,6 @@ class SurfTests(unittest.TestCase):
         assert_true(v.shape == (102, 3))
         assert_true(f.shape == (200, 3))
 
-
-
         # another surface
         t = s * 10 + 2
         assert_true(t.same_topology(s))
@@ -152,6 +150,15 @@ class SurfTests(unittest.TestCase):
         surf.write(fn, s, overwrite=True)
         s2 = surf.read(fn)
         os.remove(fn)
+
+        # test i/o and ensure that the loaded instance is trained
+        if externals.exists('h5py'):
+            fd, surffn = tempfile.mkstemp('qe.hdf5', 'test'); os.close(fd)
+            h5save(surffn, qe)
+            qe = h5load(surffn)
+            os.remove(surffn)
+
+
 
         assert_array_almost_equal(s.vertices, s2.vertices, 4)
         assert_array_almost_equal(s.faces, s2.faces, 4)
@@ -725,6 +732,15 @@ class SurfTests(unittest.TestCase):
                                     # information about each near-disk-voxels
                                     add_fa=['center_distances',
                                             'grey_matter_position'])
+
+                # test i/o ensuring that when loading it is still trained
+                if externals.exists('h5py'):
+                    fd, qefn = tempfile.mkstemp('qe.hdf5', 'test'); os.close(fd)
+                    h5save(qefn, qe)
+                    qe = h5load(qefn)
+                    os.remove(qefn)
+
+
                 assert_false('ERROR' in repr(qe))   #  to check if repr works
                 voxelcounter = _Voxel_Count_Measure()
                 searchlight = Searchlight(voxelcounter, queryengine=qe, roi_ids=keys, nproc=1,
@@ -893,6 +909,14 @@ class SurfTests(unittest.TestCase):
                 continue
 
             qe = builder()
+
+            # test i/o and ensure that the loaded instance is trained
+            if externals.exists('h5py'):
+                fd, qefn = tempfile.mkstemp('qe.hdf5', 'test'); os.close(fd)
+                h5save(qefn, qe)
+                qe = h5load(qefn)
+                os.remove(qefn)
+
 
             # untrained qe should give errors
             assert_raises(ValueError, lambda:qe.ids)
