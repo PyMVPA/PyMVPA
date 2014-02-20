@@ -79,7 +79,7 @@ pymvpa2 --dbg-channel SLC searchlight \
     --cv-partitioner oddeven:chunks \
     --cv-errorfx mean_match_accuracy \
     --cv-avg-datafold-results \
-    --cv-permutations 10 \
+    --cv-permutations 2 \
     --hdf5-compression gzip \
     -i "$outdir"/faceshouses_brain.hdf5 \
     -o "$outdir"/sl_faces_vs_houses_brain.hdf5
