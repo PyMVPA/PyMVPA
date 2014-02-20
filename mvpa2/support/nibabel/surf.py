@@ -110,11 +110,13 @@ class Surface(object):
 
         if not hasattr(self, '_n2f'):
             # run the first time this function is called
-            n2f = collections.defaultdict(list)
+            n2f = dict()
             for i in xrange(self._nf):
                 fi = self._f[i]
                 for j in xrange(3):
                     p = fi[j]
+                    if not p in n2f:
+                        n2f[p] = []
                     n2f[p].append(i)
             self._n2f = n2f
 
@@ -245,7 +247,7 @@ class Surface(object):
 
 
         if not hasattr(self, '_nbrs'):
-            nbrs = collections.defaultdict(dict)
+            nbrs = dict()
             for i in xrange(self._nf):
                 fi = self._f[i]
 
@@ -265,6 +267,11 @@ class Surface(object):
                            + (pv[2] - qv[2]) * (pv[2] - qv[2]))
 
                     dist = math.sqrt(sqdist)
+                    if not p in nbrs:
+                        nbrs[p] = dict()
+                    if not q in nbrs:
+                        nbrs[q] = dict()
+
                     nbrs[q][p] = dist
                     nbrs[p][q] = dist
 
