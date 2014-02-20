@@ -24,10 +24,10 @@ class SimpleConstraintsTests(unittest.TestCase):
         assert_equal(c('7'), 7)
         assert_equal(c([7,3]), [7,3])
         # this should always fail
-        self.assertRaises(ValueError, lambda: c('fail'))
-        self.assertRaises(ValueError, lambda: c([3, 'fail']))
+        assert_raises(ValueError, lambda: c('fail'))
+        assert_raises(ValueError, lambda: c([3, 'fail']))
         # this will also fail
-        self.assertRaises(ValueError, lambda: c('17.0'))
+        assert_raises(ValueError, lambda: c('17.0'))
 
     def test_float(self):
         c = EnsureFloat()
@@ -37,8 +37,8 @@ class SimpleConstraintsTests(unittest.TestCase):
         assert_equal(c('7'), 7.0)
         assert_equal(c([7.0,'3.0']), [7.0,3.0])
         # this should always fail
-        self.assertRaises(ValueError, lambda: c('fail'))
-        self.assertRaises(ValueError, lambda: c([3.0, 'fail']))
+        assert_raises(ValueError, lambda: c('fail'))
+        assert_raises(ValueError, lambda: c([3.0, 'fail']))
 
     def test_bool(self):
         c = EnsureBool()
@@ -58,10 +58,10 @@ class SimpleConstraintsTests(unittest.TestCase):
         assert_equal(c('off'), False)
         assert_equal(c('disable'), False)
         # this should always fail
-        self.assertRaises(ValueError, lambda: c('True'))
-        self.assertRaises(ValueError, lambda: c('False'))
-        self.assertRaises(ValueError, lambda: c(0))
-        self.assertRaises(ValueError, lambda: c(1))
+        assert_raises(ValueError, lambda: c('True'))
+        assert_raises(ValueError, lambda: c('False'))
+        assert_raises(ValueError, lambda: c(0))
+        assert_raises(ValueError, lambda: c(1))
 
     def test_str(self):
         c = EnsureStr()
@@ -69,19 +69,19 @@ class SimpleConstraintsTests(unittest.TestCase):
         assert_equal(c('hello'), 'hello')
         assert_equal(c('7.0'), '7.0')
         # this should always fail
-        self.assertRaises(ValueError, lambda: c(['ab']))
-        self.assertRaises(ValueError, lambda: c(['a', 'b']))
-        self.assertRaises(ValueError, lambda: c(('a', 'b')))
+        assert_raises(ValueError, lambda: c(['ab']))
+        assert_raises(ValueError, lambda: c(['a', 'b']))
+        assert_raises(ValueError, lambda: c(('a', 'b')))
         # no automatic conversion attempted
-        self.assertRaises(ValueError, lambda: c(7.0))
+        assert_raises(ValueError, lambda: c(7.0))
 
     def test_none(self):
         c = EnsureNone()
         # this should always work
         assert_equal(c(None), None)
         # this should always fail
-        self.assertRaises(ValueError, lambda: c('None'))
-        self.assertRaises(ValueError, lambda: c([]))
+        assert_raises(ValueError, lambda: c('None'))
+        assert_raises(ValueError, lambda: c([]))
 
     def test_choice(self):
         c = EnsureChoice('choice1', 'choice2', None)
@@ -89,20 +89,29 @@ class SimpleConstraintsTests(unittest.TestCase):
         assert_equal(c('choice1'), 'choice1')
         assert_equal(c(None), None)
         # this should always fail
-        self.assertRaises(ValueError, lambda: c('fail'))
-        self.assertRaises(ValueError, lambda: c('None'))
+        assert_raises(ValueError, lambda: c('fail'))
+        assert_raises(ValueError, lambda: c('None'))
 
     def test_range(self):
         c = EnsureRange(min=3, max=7)
         # this should always work
         assert_equal(c(3.0), 3.0)
         # this should always fail
-        self.assertRaises(ValueError, lambda: c(2.9999999))
-        self.assertRaises(ValueError, lambda: c(77))
-        self.assertRaises(ValueError, lambda: c('fail'))
-        self.assertRaises(ValueError, lambda: c((3,4)))
+        assert_raises(ValueError, lambda: c(2.9999999))
+        assert_raises(ValueError, lambda: c(77))
+        assert_raises(ValueError, lambda: c('fail'))
+        assert_raises(ValueError, lambda: c((3,4)))
         # since no type checks are performed
-        self.assertRaises(ValueError, lambda: c('7'))
+        assert_raises(ValueError, lambda: c('7'))
+
+        # Range doesn't have to be numeric
+        c = EnsureRange(min="e", max="qqq")
+        assert_equal(c('e'), 'e')
+        assert_equal(c('fa'), 'fa')
+        assert_equal(c('qq'), 'qq')
+        assert_raises(ValueError, c, 'a')
+        assert_raises(ValueError, c, 'qqqa')
+
 
     def test_listof(self):
         c = EnsureListOf(str)
@@ -165,7 +174,7 @@ class ComplexConstraintsTests(unittest.TestCase):
         assert_equal(c(7.0), 7.0)
         assert_equal(c(None), None)
         # this should always fail
-        self.assertRaises(ValueError, lambda: c(77.0))
+        assert_raises(ValueError, lambda: c(77.0))
 
 
 
