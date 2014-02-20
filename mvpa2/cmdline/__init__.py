@@ -6,19 +6,8 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-""""""
+"""PyMVPA command line interface module"""
 
 __docformat__ = 'restructuredtext'
 
-import cmd_atlaslabeler
-import cmd_crossval
-import cmd_describe
-import cmd_dump
-#import cmd_hyperalign
-import cmd_info
-import cmd_mkds
-import cmd_mkevds
-import cmd_preproc
-import cmd_pytest
-import cmd_searchlight
-import cmd_select
+# NOTE: enable commands directly in bin/pymvpa2
