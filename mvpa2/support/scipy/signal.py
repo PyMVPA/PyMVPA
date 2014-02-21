@@ -90,9 +90,9 @@ if externals.exists('scipy', raise_=True):
 
             >>> from scipy import signal
             >>> b, a = signal.butter(8, 0.125)
-            >>> y = signal.filtfilt(b, a, x, padlen=150)
-            >>> np.abs(y - xlow).max()
-            9.1086182074789912e-06
+            >>> y = filtfilt(b, a, x, padlen=150)
+            >>> print('%.5g' % np.abs(y - xlow).max())
+            9.1086e-06
 
             We get a fairly clean result for this artificial example because
             the odd extension is exact, and with the moderately long padding,
