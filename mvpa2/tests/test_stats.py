@@ -27,7 +27,7 @@ nulldist_sweep = [ MCNullDist(permutator, tail='any'),
                    MCNullDist(permutator, tail='right')]
 
 if externals.exists('scipy'):
-    from mvpa2.support.stats import scipy
+    from mvpa2.support.scipy.stats import scipy
     from scipy.stats import f_oneway
     from mvpa2.clfs.stats import rv_semifrozen
     nulldist_sweep += [ MCNullDist(permutator, scipy.stats.norm,
