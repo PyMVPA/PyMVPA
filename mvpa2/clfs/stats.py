@@ -627,7 +627,7 @@ class AdaptiveNormal(AdaptiveNullDist):
 
 
 if externals.exists('scipy'):
-    from mvpa2.support.stats import scipy
+    from mvpa2.support.scipy.stats import scipy
     from scipy.stats import kstest
 
     """

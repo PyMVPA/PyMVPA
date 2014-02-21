@@ -249,7 +249,7 @@ class DistPValue(ClassWithCollections):
 
 
     def __call__(self, x):
-        from mvpa2.support.stats import scipy
+        from mvpa2.support.scipy.stats import scipy
         import scipy.stats as stats
 
         # some local bindings
