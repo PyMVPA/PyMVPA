@@ -72,6 +72,10 @@ class SurfaceQueryEngine(QueryEngineInterface):
             raise ValueError('distance_metric %s has to be in %s' %
                                     (self.distance_metric, allowed_metrics))
 
+        if self.distance_metric == 'dijkstra':
+            # Pre-compute neighbor information (and ignore the output).
+            surface.neighbors
+
     def __repr__(self, prefixes=[]):
         return super(SurfaceQueryEngine, self).__repr__(
                    prefixes=prefixes
@@ -81,6 +85,7 @@ class SurfaceQueryEngine(QueryEngineInterface):
                                    default='dijkstra')
                    + _repr_attrs(self, ['fa_node_key'],
                                    default='node_indices'))
+
     def __reduce__(self):
         return (self.__class__, (self.surface,
                                  self.radius,
