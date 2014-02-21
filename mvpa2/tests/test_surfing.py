@@ -48,7 +48,8 @@ class SurfTests(unittest.TestCase):
     'Ground truth' is whatever output is returned by the implementation
     as of mid-Aug 2012"""
 
-    def test_surf(self):
+    @with_tempfile('.asc', 'test_surf')
+    def test_surf(self, temp_fn):
         """Some simple testing with surfaces
         """
 
@@ -146,17 +147,13 @@ class SurfTests(unittest.TestCase):
             assert_true(abs(v - ds2[k]) < eps)
 
         # test I/O (through ascii files)
-        fd, fn = tempfile.mkstemp('surf.asc', 'surftest'); os.close(fd)
-        surf.write(fn, s, overwrite=True)
-        s2 = surf.read(fn)
-        os.remove(fn)
+        surf.write(temp_fn, s, overwrite=True)
+        s2 = surf.read(temp_fn)
 
         # test i/o and ensure that the loaded instance is trained
         if externals.exists('h5py'):
-            fd, surffn = tempfile.mkstemp('surf.hdf5', 'test'); os.close(fd)
-            h5save(surffn, s2)
-            s2 = h5load(surffn)
-            os.remove(surffn)
+            h5save(temp_fn, s2)
+            s2 = h5load(temp_fn)
 
 
         assert_array_almost_equal(s.vertices, s2.vertices, 4)
@@ -191,14 +188,12 @@ class SurfTests(unittest.TestCase):
 
         assert_true(s.nodes_on_border(0))
 
-    def test_surf_fs_asc(self):
+    @with_tempfile('.asc', 'test_surf')
+    def test_surf_fs_asc(self, temp_fn):
         s = surf.generate_sphere(5) * 100
 
-        fd, fn = tempfile.mkstemp('surf', 'test'); os.close(fd)
-        surf_fs_asc.write(fn, s, overwrite=True)
-
-        t = surf_fs_asc.read(fn)
-        os.remove(fn)
+        surf_fs_asc.write(temp_fn, s, overwrite=True)
+        t = surf_fs_asc.read(temp_fn)
 
         assert_array_almost_equal(s.vertices, t.vertices)
         assert_array_almost_equal(s.vertices, t.vertices)
@@ -226,7 +221,9 @@ class SurfTests(unittest.TestCase):
             eps = 666 if side_facing == 'm' else .001
             assert_true((abs(m.center_of_mass) < eps).all())
 
-    def test_volgeom(self):
+
+    @with_tempfile('.nii', 'test_vol')
+    def test_volgeom(self, temp_fn):
         sz = (17, 71, 37, 73) # size of 4-D 'brain volume'
         d = 2. # voxel size
         xo, yo, zo = -6., -12., -20. # origin
@@ -335,13 +332,12 @@ class SurfTests(unittest.TestCase):
         # some I/O testing
 
         img = vg.get_empty_nifti_image()
-        fd, fn = tempfile.mkstemp('.nii', 'test'); os.close(fd)
-        img.to_filename(fn)
+        img.to_filename(temp_fn)
 
-        assert_true(os.path.exists(fn))
+        assert_true(os.path.exists(temp_fn))
 
         vg2 = volgeom.from_any(img)
-        vg3 = volgeom.from_any(fn)
+        vg3 = volgeom.from_any(temp_fn)
 
         assert_array_equal(vg.affine, vg2.affine)
         assert_array_equal(vg.affine, vg3.affine)
@@ -349,9 +345,8 @@ class SurfTests(unittest.TestCase):
         assert_equal(vg.shape[:3], vg2.shape[:3], 0)
         assert_equal(vg.shape[:3], vg3.shape[:3], 0)
 
-        os.remove(fn)
-
         assert_true(len('%s%r' % (vg, vg)) > 0)
+
 
     def test_volgeom_masking(self):
         maskstep = 5
@@ -579,7 +574,6 @@ class SurfTests(unittest.TestCase):
                                  vg.contains_lin(lin_min))
 
 
-
     def test_surf_voxel_selection(self):
         vol_shape = (10, 10, 10)
         vol_affine = np.identity(4)
@@ -667,6 +661,8 @@ class SurfTests(unittest.TestCase):
 
 
                 # test I/O with surfaces
+                # XXX the @tempfile decorator only supports a single filename
+                #     hence this method does not use it
                 fd, outerfn = tempfile.mkstemp('outer.asc', 'test'); os.close(fd)
                 fd, innerfn = tempfile.mkstemp('inner.asc', 'test'); os.close(fd)
                 fd, volfn = tempfile.mkstemp('vol.nii', 'test'); os.close(fd)
@@ -884,7 +880,8 @@ class SurfTests(unittest.TestCase):
         assert_array_equal(r.samples, m.samples)
 
 
-    def test_surf_queryengine(self):
+    @with_tempfile('.h5py', 'qe')
+    def test_surf_queryengine(self, qefn):
         s = surf.generate_plane((0, 0, 0), (0, 1, 0), (0, 0, 1), 4, 5)
 
         # add scond layer
@@ -936,10 +933,8 @@ class SurfTests(unittest.TestCase):
 
             # test i/o and ensure that the loaded instance is trained
             if externals.exists('h5py'):
-                fd, qefn = tempfile.mkstemp('qe.hdf5', 'test'); os.close(fd)
                 h5save(qefn, qe)
                 qe = h5load(qefn)
-                os.remove(qefn)
 
             for node in np.arange(-1, s2.nvertices + 1):
                 if node < 0 or node >= s2.nvertices:
@@ -1014,8 +1009,8 @@ class SurfTests(unittest.TestCase):
 
         assert_true(len(pw) == 0)
 
-
-    def test_surf_gifti(self):
+    @with_tempfile('surf.surf.gii', 'surftest')
+    def test_surf_gifti(self, fn):
             # From section 14.4 in GIFTI Surface Data Format Version 1.0
             # (with some adoptions)
 
@@ -1077,7 +1072,7 @@ class SurfTests(unittest.TestCase):
 </Data>
 </DataArray>
 </GIFTI>'''
-            _, fn = tempfile.mkstemp('surf.surf.gii', 'surftest')
+
             with open(fn, 'w') as f:
                 f.write(test_data)
 
@@ -1085,7 +1080,6 @@ class SurfTests(unittest.TestCase):
             s = surf.read(fn)
             surf.write(fn, s)
             s = surf.read(fn)
-            os.unlink(fn)
 
             v = np.zeros((4, 3))
             v[0, 0] = 10.5
