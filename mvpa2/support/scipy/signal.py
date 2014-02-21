@@ -14,13 +14,16 @@ import numpy as np
 
 from mvpa2.base import externals
 if externals.exists('scipy', raise_=True):
-    from scipy.signal import resample
-
     if externals.versions['scipy'] >= '0.11':
         from scipy.signal import filtfilt
     else:
-        from scipy.signal._arraytools import axis_reverse, axis_slice, odd_ext
+        if externals.versions['scipy'] >= '0.10':
+            from scipy.signal._arraytools import axis_reverse, axis_slice, odd_ext, const_ext
+        else:
+            from ._arraytools import axis_reverse, axis_slice, odd_ext, const_ext
+
         from scipy.signal import lfilter, lfilter_zi
+
         # Taken from scipy 0.11, all version before are broken see
         # https://bugs.debian.org/736185
         def filtfilt(b, a, x, axis=-1, padtype='odd', padlen=None):
