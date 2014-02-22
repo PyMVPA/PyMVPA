@@ -13,11 +13,12 @@ __docformat__ = 'restructuredtext'
 import copy
 import numpy as np
 from mvpa2.misc.support import Event, value2idx
+from mvpa2.datasets import Dataset
 from mvpa2.base.dataset import _expand_attribute
 from mvpa2.mappers.fx import _uniquemerge2literal
 from mvpa2.mappers.flatten import FlattenMapper
 from mvpa2.mappers.boxcar import BoxcarMapper
-from mvpa2.base import warning
+from mvpa2.base import warning, externals
 
 
 def find_events(**kwargs):
@@ -92,9 +93,148 @@ def find_events(**kwargs):
 
     return events
 
+def _events2dict(events):
+    evvars = {}
+    for k in events[0]:
+        try:
+            evvars[k] = [e[k] for e in events]
+        except KeyError:
+            raise ValueError("Each event property must be present for all "
+                             "events (could not find '%s')" % k)
+    return evvars
 
-def eventrelated_dataset(ds, events=None, time_attr=None, match='prev',
-                         eprefix='event', event_mapper=None):
+def _evvars2ds(ds, evvars, eprefix):
+    for a in evvars:
+        if not eprefix is None and a in ds.sa:
+            # if there is already a samples attribute like this, it got mapped
+            # previously (e.g. by BoxcarMapper and is multi-dimensional).
+            # We move it aside under new `eprefix` name
+            ds.sa[eprefix + '_' + a] = ds.sa[a]
+        ds.sa[a] = evvars[a]
+    return ds
+
+
+def _extract_boxcar_events(
+        ds, events=None, time_attr=None, match='prev',
+        eprefix='event', event_mapper=None):
+    """see eventrelated_dataset() for docs"""
+    # relabel argument
+    conv_strategy = {'prev': 'floor',
+                     'next': 'ceil',
+                     'closest': 'round'}[match]
+
+    if not time_attr is None:
+        tvec = ds.sa[time_attr].value
+        # we are asked to convert onset time into sample ids
+        descr_events = []
+        for ev in events:
+            # do not mess with the input data
+            ev = copy.deepcopy(ev)
+            # best matching sample
+            idx = value2idx(ev['onset'], tvec, conv_strategy)
+            # store offset of sample time and real onset
+            ev['orig_offset'] = ev['onset'] - tvec[idx]
+            # rescue the real onset into a new attribute
+            ev['orig_onset'] = ev['onset']
+            ev['orig_duration'] = ev['duration']
+            # figure out how many samples we need
+            ev['duration'] = \
+                    len(tvec[idx:][tvec[idx:] < ev['onset'] + ev['duration']])
+            # new onset is sample index
+            ev['onset'] = idx
+            descr_events.append(ev)
+    else:
+        descr_events = events
+    # convert the event specs into the format expected by BoxcarMapper
+    # take the first event as an example of contained keys
+    evvars = _events2dict(descr_events)
+    # checks
+    for p in ['onset', 'duration']:
+        if not p in evvars:
+            raise ValueError("'%s' is a required property for all events."
+                             % p)
+    boxlength = max(evvars['duration'])
+    if __debug__:
+        if not max(evvars['duration']) == min(evvars['duration']):
+            warning('Boxcar mapper will use maximum boxlength (%i) of all '
+                    'provided Events.'% boxlength)
+
+    # finally create, train und use the boxcar mapper
+    bcm = BoxcarMapper(evvars['onset'], boxlength, space=eprefix)
+    bcm.train(ds)
+    ds = ds.get_mapped(bcm)
+    if event_mapper is None:
+        # at last reflatten the dataset
+        # could we add some meaningful attribute during this mapping, i.e. would
+        # assigning 'inspace' do something good?
+        ds = ds.get_mapped(FlattenMapper(shape=ds.samples.shape[1:]))
+    else:
+        ds = ds.get_mapped(event_mapper)
+    # add samples attributes for the events, simply dump everything as a samples
+    # attribute
+    # special case onset and duration in case of conversion into descrete time
+    if not time_attr is None:
+        for attr in ('onset', 'duration'):
+            evvars[attr] = [e[attr] for e in events]
+    ds = _evvars2ds(ds, evvars, eprefix)
+
+    return ds
+
+
+def _fit_hrf_event_model(
+        ds, events, time_attr, condition_attr='targets', design_kwargs=None,
+        glmfit_kwargs=None, eprefix='event'):
+    if externals.exists('nipy', raise_=True):
+        from nipy.modalities.fmri.glm import GeneralLinearModel
+        from nipy.modalities.fmri.design_matrix import make_dmtx
+
+    evvars = _events2dict(events)
+    add_paradigm_kwargs = {}
+    if 'amplitude' in evvars:
+        add_paradigm_kwargs['amplitude'] = evvars['amplitude']
+    # create paradigm
+    if 'duration' in evvars:
+        from nipy.modalities.fmri.experimental_paradigm import BlockParadigm
+        # NiPy considers everything with a duration as a block paradigm
+        paradigm = BlockParadigm(
+                        con_id=evvars[condition_attr],
+                        onset=evvars['onset'],
+                        duration=evvars['duration'],
+                        **add_paradigm_kwargs)
+    else:
+        from nipy.modalities.fmri.experimental_paradigm \
+                import EventRelatedParadigm
+        paradigm = EventRelatedParadigm(
+                        con_id=evvars[condition_attr],
+                        onset=evvars['onset'],
+                        **add_paradigm_kwargs)
+
+    # create design matrix -- all kinds of fancy additional regr can be
+    # auto-generated
+    if design_kwargs is None:
+        design_kwargs = {}
+    design_matrix = make_dmtx(ds.sa[time_attr].value,
+                              paradigm,
+                              **design_kwargs)
+    # GLM
+    glm = GeneralLinearModel(design_matrix.matrix)
+    if glmfit_kwargs is None:
+        glmfit_kwargs = {}
+    glm.fit(ds.samples, **glmfit_kwargs)
+
+    # turn results into a dataset and record the regressor names
+    model_params = Dataset(
+                        glm.get_beta(),
+                        sa={condition_attr: design_matrix.names},
+                        fa=ds.fa,
+                        a=ds.a) # this last one might be a bit to opportunistic
+    return model_params
+
+
+def eventrelated_dataset(ds, events, time_attr=None, match='prev',
+                         eprefix='event', event_mapper=None,
+                         condition_attr='targets', design_kwargs=None,
+                         glmfit_kwargs=None, model='boxcar'):
     """Segment a dataset into a set of events.
 
     This function can be used to extract event-related samples from any
@@ -117,6 +257,7 @@ def eventrelated_dataset(ds, events=None, time_attr=None, match='prev',
     ----------
     ds : Dataset
       The samples of this input dataset have to be in whatever ascending order.
+    model : {'boxcar', 'hrf'}
     events : list
       Each event definition has to specify ``onset`` and ``duration``. All other
       attributes will be passed on to the sample attributes collection of the
@@ -185,79 +326,24 @@ def eventrelated_dataset(ds, events=None, time_attr=None, match='prev',
     array([[ 1.11111111,  1.66666667,  2.22222222,  2.77777778],
            [ 2.22222222,  2.77777778,  3.33333333,  3.88888889]])
     """
-    # relabel argument
-    conv_strategy = {'prev': 'floor',
-                     'next': 'ceil',
-                     'closest': 'round'}[match]
+    if not len(events):
+        raise ValueError("no events specified")
 
-    if not time_attr is None:
-        tvec = ds.sa[time_attr].value
-        # we are asked to convert onset time into sample ids
-        descr_events = []
-        for ev in events:
-            # do not mess with the input data
-            ev = copy.deepcopy(ev)
-            # best matching sample
-            idx = value2idx(ev['onset'], tvec, conv_strategy)
-            # store offset of sample time and real onset
-            ev['orig_offset'] = ev['onset'] - tvec[idx]
-            # rescue the real onset into a new attribute
-            ev['orig_onset'] = ev['onset']
-            ev['orig_duration'] = ev['duration']
-            # figure out how many samples we need
-            ev['duration'] = \
-                    len(tvec[idx:][tvec[idx:] < ev['onset'] + ev['duration']])
-            # new onset is sample index
-            ev['onset'] = idx
-            descr_events.append(ev)
+    if model == 'boxcar':
+        return _extract_boxcar_events(
+                    ds, events=events, time_attr=time_attr, match=match,
+                    eprefix=eprefix, event_mapper=event_mapper)
+    elif model == 'hrf':
+        if condition_attr is None:
+            raise ValueError(
+                    "missing name of event attribute with condition names")
+        if time_attr is None:
+            raise ValueError(
+                    "missing name of attribute with sample timing information")
+        return _fit_hrf_event_model(
+                    ds, events=events, time_attr=time_attr,
+                    condition_attr=condition_attr,
+                    design_kwargs=design_kwargs, glmfit_kwargs=glmfit_kwargs,
+                    eprefix=eprefix)
     else:
-        descr_events = events
-    # convert the event specs into the format expected by BoxcarMapper
-    # take the first event as an example of contained keys
-    evvars = {}
-    for k in descr_events[0]:
-        try:
-            evvars[k] = [e[k] for e in descr_events]
-        except KeyError:
-            raise ValueError("Each event property must be present for all "
-                             "events (could not find '%s')" % k)
-    # checks
-    for p in ['onset', 'duration']:
-        if not p in evvars:
-            raise ValueError("'%s' is a required property for all events."
-                             % p)
-    boxlength = max(evvars['duration'])
-    if __debug__:
-        if not max(evvars['duration']) == min(evvars['duration']):
-            warning('Boxcar mapper will use maximum boxlength (%i) of all '
-                    'provided Events.'% boxlength)
-
-    # finally create, train und use the boxcar mapper
-    bcm = BoxcarMapper(evvars['onset'], boxlength, space=eprefix)
-    bcm.train(ds)
-    ds = ds.get_mapped(bcm)
-    if event_mapper is None:
-        # at last reflatten the dataset
-        # could we add some meaningful attribute during this mapping, i.e. would
-        # assigning 'inspace' do something good?
-        ds = ds.get_mapped(FlattenMapper(shape=ds.samples.shape[1:]))
-    else:
-        ds = ds.get_mapped(event_mapper)
-    # add samples attributes for the events, simply dump everything as a samples
-    # attribute
-    for a in evvars:
-        if not eprefix is None and a in ds.sa:
-            # if there is already a samples attribute like this, it got mapped
-            # by BoxcarMapper (i.e. is multi-dimensional). We move it aside
-            # under new `eprefix` name
-            ds.sa[eprefix + '_' + a] = ds.sa[a]
-        if a in ['onset', 'duration']:
-            # special case: we want the non-discrete, original onset and
-            # duration
-            if not time_attr is None:
-                # but only if there was a conversion happining, since otherwise
-                # we get the same info from BoxcarMapper
-                ds.sa[a] = [e[a] for e in events]
-        else:
-            ds.sa[a] = evvars[a]
-    return ds
+        raise ValueError("unknown event model '%s'" % model)
