@@ -14,6 +14,8 @@ from mvpa2.mappers.flatten import FlattenMapper
 from mvpa2.mappers.boxcar import BoxcarMapper
 from mvpa2.mappers.fx import FxMapper
 from mvpa2.datasets.eventrelated import find_events, eventrelated_dataset
+from mvpa2.misc.data_generators import load_example_fmri_dataset
+from mvpa2.mappers.zscore import zscore
 
 
 def test_erdataset():
@@ -97,3 +99,36 @@ def test_erdataset():
                                                nfeatures))
     assert_array_equal(rds.sa.myattr, np.repeat(results.sa.myattr,
                                                expected_nsamples))
+
+def test_hrf_modeling():
+    ds = load_example_fmri_dataset(literal=True)
+    events = find_events(targets=ds.sa.targets, chunks=ds.sa.chunks)
+    tr = ds.a.imghdr['pixdim'][4]
+    for ev in events:
+        for a in ('onset', 'duration'):
+            ev[a] = ev[a] * tr
+    evds = eventrelated_dataset(ds, events, time_attr='time_coords',
+                                condition_attr='targets',
+                                design_kwargs=dict(drift_model='blank'),
+                                glmfit_kwargs=dict(model='ols'),
+                                model='hrf')
+    # same voxels
+    assert_equal(ds.nfeatures, evds.nfeatures)
+    assert_array_equal(ds.fa.voxel_indices, evds.fa.voxel_indices)
+    # one sample for each condition, plus constant
+    assert_equal(sorted(ds.sa['targets'].unique), sorted(evds.sa.targets[:-1]))
+    assert_equal(evds.sa.targets[-1], 'constant')
+    # with centered data
+    zscore(ds)
+    evds_demean = eventrelated_dataset(ds, events, time_attr='time_coords',
+                                condition_attr='targets',
+                                design_kwargs=dict(drift_model='blank'),
+                                glmfit_kwargs=dict(model='ols'),
+                                model='hrf')
+    # after demeaning the constant should consume a lot less
+    assert(evds[evds.sa.targets == 'constant'].samples.mean() \
+            > evds_demean[evds.sa.targets == 'constant'].samples.mean())
+    # from eyeballing the sensitivity example -- would be better to test this on
+    # the tutorial data
+    assert(evds_demean[evds.sa.targets == 'shoe'].samples.max() \
+            > evds_demean[evds.sa.targets == 'bottle'].samples.max())
