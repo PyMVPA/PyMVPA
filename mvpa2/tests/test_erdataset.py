@@ -132,3 +132,31 @@ def test_hrf_modeling():
     # the tutorial data
     assert(evds_demean[evds.sa.targets == 'shoe'].samples.max() \
             > evds_demean[evds.sa.targets == 'bottle'].samples.max())
+    # custom regressors
+    evds_regrs = eventrelated_dataset(ds, events, time_attr='time_coords',
+                                condition_attr='targets',
+                                regr_attrs=['time_indices'],
+                                design_kwargs=dict(drift_model='blank'),
+                                glmfit_kwargs=dict(model='ols'),
+                                model='hrf')
+    # one more output sample
+    assert_equal(len(evds_regrs) - 1, len(evds))
+    # comes last before constant
+    assert_equal('time_indices', evds_regrs.sa.targets[-2])
+    # order is otherwise unchanged
+    assert_array_equal(evds.sa.targets[:-1], evds_regrs.sa.targets[:-2])
+    # custom regressors from external sources
+    evds_regrs = eventrelated_dataset(ds, events, time_attr='time_coords',
+                                condition_attr='targets',
+                                regr_attrs=['time_coords'],
+                                design_kwargs=dict(drift_model='blank',
+                                                   add_regs=np.linspace(1, -1, len(ds))[None].T,
+                                                   add_reg_names=['negative_trend']),
+                                glmfit_kwargs=dict(model='ols'),
+                                model='hrf')
+    # two more output sample
+    assert_equal(len(evds_regrs) - 2, len(evds))
+    # comes last before constant
+    assert_array_equal(['negative_trend','time_coords'], evds_regrs.sa.targets[-3:-1])
+    # order is otherwise unchanged
+    assert_array_equal(evds.sa.targets[:-1], evds_regrs.sa.targets[:-3])
