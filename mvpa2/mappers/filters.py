@@ -13,8 +13,10 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa2.base import externals
+
 if externals.exists('scipy', raise_=True):
-    from scipy.signal import resample, filtfilt
+    from scipy.signal import resample
+    from mvpa2.support.scipy.signal import filtfilt
 
 from mvpa2.base import warning
 from mvpa2.base.param import Parameter
@@ -23,7 +25,6 @@ from mvpa2.mappers.base import Mapper
 from mvpa2.datasets import Dataset
 from mvpa2.base.dataset import vstack
 from mvpa2.generators.splitters import Splitter
-
 
 class FFTResampleMapper(Mapper):
     """Mapper for FFT-based resampling.
