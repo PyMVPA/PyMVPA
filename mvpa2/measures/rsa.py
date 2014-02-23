@@ -70,9 +70,12 @@ class DissimilarityMatrixMeasure(Measure):
         
         # if square return value make dsm square 
         if self.square:
-            dsm = squareform(dsm)
-        
-        return Dataset(dsm) 
+            # add some attributes
+            ds = Dataset(squareform(dsm))
+        else:
+            # add some attributes
+            ds = Dataset(dsm) 
+        return ds
 
 
 class DissimilarityConsistencyMeasure(Measure):
