@@ -171,6 +171,7 @@ def setup_package():
                            'mvpa2.support.nipy',
                            'mvpa2.support.ipython',
                            'mvpa2.support.nibabel',
+                           'mvpa2.support.scipy',
                            'mvpa2.testing',
                            'mvpa2.tests',
                            'mvpa2.tests.badexternals',
