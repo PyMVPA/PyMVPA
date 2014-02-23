@@ -101,6 +101,7 @@ def test_erdataset():
                                                expected_nsamples))
 
 def test_hrf_modeling():
+    skip_if_no_external('nibabel')
     ds = load_example_fmri_dataset(literal=True)
     events = find_events(targets=ds.sa.targets, chunks=ds.sa.chunks)
     tr = ds.a.imghdr['pixdim'][4]
