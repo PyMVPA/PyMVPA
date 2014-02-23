@@ -23,7 +23,8 @@ from mvpa2.base.types import is_datasetlike
 from mvpa2.base.dataset import DatasetError, vstack, hstack, all_equal, \
                                 stack_by_unique_feature_attribute, \
                                 stack_by_unique_sample_attribute
-from mvpa2.datasets.base import dataset_wizard, Dataset, HollowSamples
+from mvpa2.datasets.base import dataset_wizard, Dataset, HollowSamples, \
+                                ds2npz, npz2ds
 from mvpa2.misc.data_generators import normal_feature_dataset
 from mvpa2.testing import reseed_rng
 import mvpa2.support.copy as copy
@@ -997,6 +998,21 @@ def test_h5py_io(dsfile):
         #assert_equal('#'.join(repr(ds.a.mapper).split('#')[:-1]),
         #             '#'.join(repr(ds2.a.mapper).split('#')[:-1]))
         pass
+
+@with_tempfile(suffix='.npz')
+def test_npzexport(npzfile):
+    # store random dataset to file
+    ds = datasets['3dlarge']
+    ds2npz(npzfile, ds)
+    # reload and check for identity
+    ds2 = npz2ds(npzfile)
+    assert_array_equal(ds.samples, ds2.samples)
+    for attr in ds.sa:
+        assert_array_equal(ds.sa[attr].value, ds2.sa[attr].value)
+    for attr in ds.fa:
+        assert_array_equal(ds.fa[attr].value, ds2.fa[attr].value)
+    # there is no mapper in this storage format
+    assert_false('mapper' in ds2.a)
 
 
 def test_all_equal():

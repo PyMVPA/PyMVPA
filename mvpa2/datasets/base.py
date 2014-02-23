@@ -519,3 +519,25 @@ class HollowSamples(object):
     def view(self):
         """Return itself"""
         return self
+
+
+def ds2npz(filename, ds, compressed=True):
+    """Convert a dataset into NumPy's NPZ format for permanent storage"""
+    content = {}
+    content['samples'] = ds.samples
+    for cid, col in (('sa::', ds.sa), ('fa::', ds.fa)):
+        for attr in col:
+            content[cid + attr] = col[attr].value
+    if compressed:
+        savefx = np.savez_compressed
+    else:
+        savefx = np.savez
+    savefx(filename, **content)
+
+def npz2ds(filename):
+    """Load a dataset from NumPy's NPZ format"""
+    content = np.load(filename)
+    sa = dict([(c[4:], content[c]) for c in content if c.startswith('sa::')])
+    fa = dict([(c[4:], content[c]) for c in content if c.startswith('fa::')])
+    ds = AttrDataset(content['samples'], sa=sa, fa=fa)
+    return ds
