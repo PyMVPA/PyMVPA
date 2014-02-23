@@ -256,46 +256,96 @@ def eventrelated_dataset(ds, events, time_attr=None, match='prev',
                          eprefix='event', event_mapper=None,
                          condition_attr='targets', design_kwargs=None,
                          glmfit_kwargs=None, regr_attrs=None, model='boxcar'):
-    """Segment a dataset into a set of events.
+    """Segment a dataset by modeling events.
 
     This function can be used to extract event-related samples from any
-    time-series based dataset (actually, it don't have to be time series, but
-    could also be any other type of ordered samples). Boxcar-shaped event
-    samples, potentially spanning multiple input samples can be automatically
-    extracted using :class:`~mvpa2.misc.support.Event` definition lists.  For
-    each event all samples covering that particular event are used to form the
-    corresponding sample.
+    (time-series) based dataset. The principal event modeling approaches are
+    available (see ``model`` argument):
 
-    An event definition is a dictionary that contains ``onset`` (as sample index
-    in the input dataset), ``duration`` (as number of consecutive samples after
-    the onset), as well as an arbitrary number of additional attributes.
+    1. Boxcar model: (multiple) consecutive samples are extracted for each
+                     event, and are either returned in a flattened shape,
+                     or subject to further processing.
+    2. HRF model:    a univariate GLM is fitted for each feature and model
+                     parameters are returned as samples. Model parameters
+                     returned for each regressor in the design matrix. Using
+                     NiPy design matrices can be generated with a variety of
+                     customizations (HRF model, confound regressors, ...).
 
-    Alternatively, ``onset`` and ``duration`` may also be given as real time
-    stamps (or durations). In this case a to be specified samples attribute in
-    the input dataset will be used to convert these into sample indices.
+    Events are specified as a list of dictionaries
+    (see:class:`~mvpa2.misc.support.Event`) for a helper class. Each dictionary
+    contains all relevant attributes to describe an event. This is at least the
+    ``onset`` time of an event, but can also comprise of ``duration``,
+    ``amplitude``, and arbitrary other attributes -- depending on the selected
+    event model.
+
+    Boxcar event model details
+    --------------------------
+
+    For each event all samples covering that particular event are used to form
+    a corresponding sample. One sample for each event is returned. Event
+    specification dictionaries must contain an ``onset`` attribute (as sample
+    index in the input dataset), ``duration`` (as number of consecutive samples
+    after the onset). Any number of additional attributes can be present in an
+    event specification. Those attributes are included as sample attributes in
+    the returned dataset.
+
+    Alternatively, ``onset`` and ``duration`` may also be given in a
+    non-discrete time specification. In this case a dataset attribute needs to
+    be specified that contains time-stamps for each input data sample, and is
+    used to convert times into discrete sample indices (see ``match``
+    argument).
+
+    A mapper instance can be provided (see ``event_mapper``) to implement
+    futher processing of each event sample, for example in order to yield
+    average samples.
+
+    HRF event model details
+    -----------------------
+
+    The event specifications are used to generate a design matrix with for a
+    number of conditions. In addition to the mandatory ``onset`` information
+    each event defintion needs to include a label in order to associate
+    individual events to conditions (the design matrix will contain at least
+    one regressors for each condition). The name of this label attribute must
+    be specified too (see ``condition_attr`` argument).
+
+    NiPy is used to generate the actual design matrix. It is required to
+    specify a dataset sample attribute that contains time-stamps for all input
+    data samples (see ``time_attr``).  All of NiPy's customization options are
+    available (see ``design_kwargs`` argument). In addition additional
+    regressors from sample attributes of the input dataset can be included in
+    the design matrix (see ``regr_attrs``).
+
+    The actual GLM fit is also performed by NiPy and can be fully customized
+    (see ``glmfit_kwargs``).
 
     Parameters
     ----------
     ds : Dataset
       The samples of this input dataset have to be in whatever ascending order.
-    model : {'boxcar', 'hrf'}
     events : list
-      Each event definition has to specify ``onset`` and ``duration``. All other
-      attributes will be passed on to the sample attributes collection of the
-      returned dataset.
+      Each event definition has to specify ``onset`` and ``duration``. All
+      other attributes will be passed on to the sample attributes collection of
+      the returned dataset.
+    model : {'boxcar', 'hrf'}
+      Event model selection -- see documentation for details.
     time_attr : str or None
-      If not None, the ``onset`` and ``duration`` specs from the event list will
-      be converted using information from this sample attribute. Its values will
-      be treated as in-the-same-unit and are used to determine corresponding
-      samples from real-value onset and duration definitions.
+      Attribute with dataset sample time-stamps.
+      For boxcar modeling, if not None, the ``onset`` and ``duration`` specs
+      from the event list will be converted using information from this sample
+      attribute. Its values will be treated as in-the-same-unit and are used to
+      determine corresponding samples from real-value onset and duration
+      definitions.
+      For HRF modeling this argument is mandatory .
     match : {'prev', 'next', 'closest'}
-      Strategy used to match real-value onsets to sample indices. 'prev' chooses
-      the closes preceding samples, 'next' the closest following sample and
-      'closest' to absolute closest sample.
+      For boxcar modeling: strategy used to match real-value onsets to sample
+      indices. 'prev' chooses the closes preceding samples, 'next' the closest
+      following sample and 'closest' to absolute closest sample.
     eprefix : str or None
-      If not None, this prefix is used to name additional attributes generated
-      by the underlying `~mvpa2.mappers.boxcar.BoxcarMapper`. If it is set to
-      None, no additional attributes will be created.
+      For boxcar modeling: if not None, this prefix is used to name additional
+      attributes generated by the underlying
+      `~mvpa2.mappers.boxcar.BoxcarMapper`. If it is set to None, no additional
+      attributes will be created.
     event_mapper : Mapper
       This mapper is used to forward-map the dataset containing the boxcar event
       samples. If None (default) a FlattenMapper is employed to convert
@@ -304,12 +354,32 @@ def eventrelated_dataset(ds, events, time_attr=None, match='prev',
       e.g. averaging samples within an event boxcar using an FxMapper. Any
       mapper needs to keep the sample axis unchanged, i.e. number and order of
       samples remain the same.
+    condition_attr : str
+      For HRF modeling: name of the event attribute with the condition labels.
+    design_kwargs : dict
+      Arbitrary keyword arguments for NiPy's make_dmtx() used for design matrix
+      generation. Choose HRF model, confund rgeressors, etc.
+    glmfit_kwargs : dict
+      Arbitrary keyword arguments for NiPy's GeneralLinearModel.fit() used for
+      estimating model parameter. Choose fitting algorithm: OLS or AR1.
+    regr_attrs : list
+      List of dataset sample attribute names that shall be extracted from the
+      input dataset and used as additional regressors in the design matrix.
 
     Returns
     -------
     Dataset
-      The returned dataset has one sample per each event definition that has
-      been passed to the function.
+      In case of a boxcar model, the returned dataset has one sample per each
+      event definition that has been passed to the function. Additional
+      event attributes are included as sample attributes.
+
+      In case of an HRF model, one sample for each regressor/conditions in the
+      design matrix is returned. The condition names are included as a sample
+      attribute with the name specified by the ``condition_attr`` argument.
+      The actual design design regressors are included as ``regressors`` sample
+      attribute. An instance with the fitted NiPy GLM results is included as
+      a dataset attribute ``glmfit``, and can be used for computing contrasts
+      subsequently.
 
     Examples
     --------
@@ -346,6 +416,25 @@ def eventrelated_dataset(ds, events, time_attr=None, match='prev',
     >>> rt_eds.sa.record_time
     array([[ 1.11111111,  1.66666667,  2.22222222,  2.77777778],
            [ 2.22222222,  2.77777778,  3.33333333,  3.88888889]])
+
+    And finally some simplistic HRF modeling:
+
+    >>> ds.sa['time_coords'] = np.linspace(0, 50, len(ds))
+    >>> events = [{'onset': 2, 'duration': 4, 'condition': 'one'},
+    ...           {'onset': 4, 'duration': 4, 'condition': 'two'}]
+    >>> hrf_estimates = eventrelated_dataset(
+    ...                   ds, events,
+    ...                   time_attr='time_coords',
+    ...                   condition_attr='condition',
+    ...                   design_kwargs=dict(drift_model='blank'),
+    ...                   glmfit_kwargs=dict(model='ols'),
+    ...                   model='hrf')
+    >>> print hrf_estimates.sa.condition
+    ['one' 'two' 'constant']
+    >>> print hrf_estimates.shape
+    (3, 25)
+    >>> len(hrf_estimates.a.glmfit.get_mse())
+    25
     """
     if not len(events):
         raise ValueError("no events specified")

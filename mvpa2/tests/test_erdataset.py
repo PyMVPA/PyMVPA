@@ -132,6 +132,9 @@ def test_hrf_modeling():
     # the tutorial data
     assert(evds_demean[evds.sa.targets == 'shoe'].samples.max() \
             > evds_demean[evds.sa.targets == 'bottle'].samples.max())
+    # HRF models
+    assert('regressors' in evds.sa)
+    assert_equal(evds.sa.regressors.shape[1], len(ds))
     # custom regressors
     evds_regrs = eventrelated_dataset(ds, events, time_attr='time_coords',
                                 condition_attr='targets',
