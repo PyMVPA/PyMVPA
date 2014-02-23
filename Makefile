@@ -140,6 +140,7 @@ clean:
 # clean docs
 	$(MAKE) -C doc clean
 	-@rm -f $(DOCSRC_DIR)/examples/*.rst
+	-@rm -f $(DOCSRC_DIR)/cmdline/*.rst
 # clean all bits and pieces
 	-@rm -f MANIFEST
 	-@rm -f mvpa2/clfs/lib*/*.so \
@@ -187,14 +188,20 @@ manpages: mkdir-MAN_DIR
 	@echo "I: Creating manpages"
 	PYTHONPATH=$(LPYTHONPATH) help2man -N -n 'preprocess fMRI data for PyMVPA' \
 		bin/pymvpa2-prep-fmri > $(MAN_DIR)/pymvpa2-prep-fmri.1
-	PYTHONPATH=$(LPYTHONPATH) help2man -N -n 'query stereotaxic atlases' \
-		bin/pymvpa2-atlaslabeler > $(MAN_DIR)/pymvpa2-atlaslabeler.1
 	PYTHONPATH=$(LPYTHONPATH) help2man -N -n 'start a PyMVPA tutorial session' \
 		bin/pymvpa2-tutorial > $(MAN_DIR)/pymvpa2-tutorial.1
 	PYTHONPATH=$(LPYTHONPATH) help2man --no-discard-stderr -N -n \
 			'preprocess FreeSurfer surfaces for AFNI/SUMA' \
 			bin/pymvpa2-prep-afni-surf > $(MAN_DIR)/pymvpa2-prep-afni-surf.1
-
+	PYTHONPATH=$(LPYTHONPATH) help2man --no-discard-stderr \
+		--help-option="--help-np" -N -n "command line interface for PyMVPA" \
+			bin/pymvpa2 > $(MAN_DIR)/pymvpa2.1
+	for cmd in $$(grep import < mvpa2/cmdline/__init__.py | cut -d _ -f 2-); do \
+		summary="$$(grep 'man: -*-' < mvpa2/cmdline/cmd_$${cmd}.py | cut -d '%' -f 2-)"; \
+		PYTHONPATH=$(LPYTHONPATH) help2man --no-discard-stderr \
+			--help-option="--help-np" -N -n "$$summary" \
+				"bin/pymvpa2 $${cmd}" > $(MAN_DIR)/pymvpa2-$${cmd}.1 ; \
+	done
 
 references:
 	@echo "I: Generating references"
@@ -205,7 +212,7 @@ mpl-stamp: build
 	echo "backend : Agg" >| $(CURDIR)/build/matplotlibrc
 	touch $@
 
-htmldoc: examples2rst build pics mpl-stamp tutorial2notebooks
+htmldoc: examples2rst build pics mpl-stamp tutorial2notebooks manpages
 	@echo "I: Creating an HTML version of documentation"
 	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off \
 		PYTHONPATH=$(CURDIR):$(PYTHONPATH) \
@@ -242,6 +249,10 @@ examples2rst-stamp: mkdir-DOCBUILD_DIR
 		--outdir $(DOCSRC_DIR)/examples \
 		--exclude doc/examples/searchlight_app.py \
 		doc/examples
+	tools/cmdex2rst \
+		--project PyMVPA \
+		--outdir $(DOCSRC_DIR)/cmdline/ \
+		doc/examples/cmdline
 	touch $@
 
 tutorial2notebooks: tutorial2notebooks-stamp
@@ -410,6 +421,17 @@ unittest-debug: build
 unittests: unittest-nonlabile unittest unittest-badexternals \
            unittest-optimization unittest-ca unittest-debug
 
+tc-%: build
+	@PYTHONPATH=.:$(PYTHONPATH) PATH=./bin:$(PATH) \
+		MVPA_MATPLOTLIB_BACKEND=agg \
+		MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
+		MVPA_DATADB_ROOT=datadb \
+		MVPA_WARNINGS_SUPPRESS=1 \
+		sh ./doc/examples/cmdline/$*.sh > /dev/null 2>&1
+
+testcmdline: tc-datasets tc-preproc tc-start_easy tc-query_pymvpa \
+             tc-fmri_analyses
+
 te-%: build
 	@echo -n "I: Testing example $*: "
 	@[ -z "$$MVPA_TESTS_LOGDIR" ]  \
@@ -557,11 +579,11 @@ test-prep-fmri:
 	&& head -1 $$td/T/func_mc.par | grep -q '0  0  0' \
 
 
-test: unittests testmanual testsuite testexamples testcfg testourcfg
+test: unittests testmanual testsuite testexamples testcfg testourcfg testcmdline
 
 # Target to be called after some major refactoring
 # It skips some flavors of unittests
-testrefactor: unittest testmanual testsuite testexamples
+testrefactor: unittest testmanual testsuite testexamples testcmdline
 
 coverage: $(COVERAGE_REPORT)
 $(COVERAGE_REPORT): build

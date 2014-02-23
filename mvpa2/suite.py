@@ -34,6 +34,7 @@ __sdebug('base')
 from mvpa2.base import *
 from mvpa2.base.attributes import *
 from mvpa2.base.collections import *
+from mvpa2.base.constraints import *
 from mvpa2.base.config import *
 from mvpa2.base.dataset import *
 from mvpa2.base.externals import *
