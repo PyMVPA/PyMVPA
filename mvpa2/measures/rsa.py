@@ -13,8 +13,10 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 from mvpa2.measures.base import Measure
 from mvpa2.datasets.base import Dataset
-from scipy.spatial.distance import pdist, squareform
-from scipy.stats import rankdata, pearsonr
+from mvpa2.base import externals
+if externals.exists('scipy', raise_=True):
+    from scipy.spatial.distance import pdist, squareform
+    from scipy.stats import rankdata, pearsonr
 
 class DissimilarityMatrixMeasure(Measure):
     """Compute dissimiliarity matrix for samples in a dataset
