@@ -183,7 +183,7 @@ def _extract_boxcar_events(
 
 def _fit_hrf_event_model(
         ds, events, time_attr, condition_attr='targets', design_kwargs=None,
-        glmfit_kwargs=None, eprefix='event'):
+        glmfit_kwargs=None, regr_attrs=None, eprefix='event'):
     if externals.exists('nipy', raise_=True):
         from nipy.modalities.fmri.glm import GeneralLinearModel
         from nipy.modalities.fmri.design_matrix import make_dmtx
@@ -213,6 +213,25 @@ def _fit_hrf_event_model(
     # auto-generated
     if design_kwargs is None:
         design_kwargs = {}
+    if not regr_attrs is None:
+        names = []
+        regrs = []
+        for attr in regr_attrs:
+            names.append(attr)
+            regrs.append(ds.sa[attr].value)
+        if len(regrs) < 2:
+            regrs = [regrs]
+        regrs = np.hstack(regrs).T
+        if 'add_regs' in design_kwargs:
+            design_kwargs['add_regs'] = np.hstack((design_kwargs['add_regs'],
+                                                   regrs))
+        else:
+            design_kwargs['add_regs'] = regrs
+        if 'add_reg_names' in design_kwargs:
+            design_kwargs['add_reg_names'].extend(names)
+        else:
+            design_kwargs['add_reg_names'] = names
+
     design_matrix = make_dmtx(ds.sa[time_attr].value,
                               paradigm,
                               **design_kwargs)
@@ -225,16 +244,18 @@ def _fit_hrf_event_model(
     # turn results into a dataset and record the regressor names
     model_params = Dataset(
                         glm.get_beta(),
-                        sa={condition_attr: design_matrix.names},
+                        sa={condition_attr: design_matrix.names,
+                            'regressors': design_matrix.matrix.T},
                         fa=ds.fa,
                         a=ds.a) # this last one might be a bit to opportunistic
+    model_params.a['glmfit'] = glm
     return model_params
 
 
 def eventrelated_dataset(ds, events, time_attr=None, match='prev',
                          eprefix='event', event_mapper=None,
                          condition_attr='targets', design_kwargs=None,
-                         glmfit_kwargs=None, model='boxcar'):
+                         glmfit_kwargs=None, regr_attrs=None, model='boxcar'):
     """Segment a dataset into a set of events.
 
     This function can be used to extract event-related samples from any
@@ -344,6 +365,6 @@ def eventrelated_dataset(ds, events, time_attr=None, match='prev',
                     ds, events=events, time_attr=time_attr,
                     condition_attr=condition_attr,
                     design_kwargs=design_kwargs, glmfit_kwargs=glmfit_kwargs,
-                    eprefix=eprefix)
+                    regr_attrs=regr_attrs, eprefix=eprefix)
     else:
         raise ValueError("unknown event model '%s'" % model)
