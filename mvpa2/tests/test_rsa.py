@@ -34,7 +34,7 @@ def test_DissimilarityConsistencyMeasure():
     chunks = np.repeat(np.array((0,1)),3)
     # correct results
     cres1 = 0.41894348
-    cres2 = np.array([[ 0.16137995, 0.73062639, 0.59441713]])
+    cres2 = np.array([[ 0.16137995, 0.73062639, 0.59441713]]).T
     dc1 = data[0:3,:] - np.mean(data[0:3,:],0)
     dc2 = data[3:6,:] - np.mean(data[3:6,:],0)
     center = squareform(np.corrcoef(pdist(dc1,'correlation'),pdist(dc2,'correlation')), 
