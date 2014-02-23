@@ -227,6 +227,8 @@ class EnsureRange(Constraint):
         max_str='inf' if self._max is None else str(self._max)
         return 'value must be in range [%s, %s]' % (min_str, max_str)
 
+    def short_description(self):
+        None
 
 class AltConstraints(Constraint):
     """Logical OR for constraints.
