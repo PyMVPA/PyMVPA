@@ -68,9 +68,12 @@ def test_DissimilarityMatrixMeasure():
     chunks = np.repeat(np.array((0,1)),3)
     ds = dataset_wizard(samples=data, targets=targets, chunks=chunks)
     data_c = data - np.mean(data,0)
-    euc = pdist(data, 'euclidean').reshape((1,-1))
-    pear = pdist(data, 'correlation').reshape((1,-1))
-    city = pdist(data, 'cityblock').reshape((1,-1))
+    # DSM matrix elements should come out as samples of one feature
+    # to be in line with what e.g. a classifier returns -- facilitates
+    # collection in a searchlight ...
+    euc = pdist(data, 'euclidean')[None].T
+    pear = pdist(data, 'correlation')[None].T
+    city = pdist(data, 'cityblock')[None].T
     center_sq = squareform(pdist(data_c,'correlation'))
 
     # Now center each chunk separately
