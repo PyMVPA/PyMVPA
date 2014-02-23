@@ -8,7 +8,9 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for rsa measures"""
 
-from mvpa2.testing import sweepargs
+from mvpa2.testing import *
+skip_if_no_external('scipy')
+
 from mvpa2.testing.datasets import datasets
 from mvpa2.measures.anova import OneWayAnova
 
@@ -19,7 +21,10 @@ from mvpa2.datasets.base import dataset_wizard, Dataset
 from mvpa2.testing.tools import *
 
 from mvpa2.measures.rsa import *
+from mvpa2.base import externals
 import scipy.stats as stats
+from scipy.spatial.distance import pdist, squareform
+from scipy.stats import rankdata, pearsonr
 
 data = np.array([[ 0.22366105, 0.51562476, 0.62623543, 0.28081652, 0.56513533],
                 [ 0.22077129, 0.63013374, 0.19641318, 0.38466208, 0.60788347],
