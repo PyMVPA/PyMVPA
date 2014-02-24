@@ -92,9 +92,9 @@ class UnivariateStatsModels(FeaturewiseMeasure):
     ...                             add_constant=True)
     >>> res = usm(endog)
     >>> print res
-    <Dataset: 5x2@float64, <sa: descr>>
+    <Dataset: 6x2@float64, <sa: descr>>
     >>> print res.sa.descr
-    ['tvalue' 'pvalue' 'effect' 'sd' 'df']
+    ['tvalue' 'pvalue' 'effect' 'sd' 'df' 'zvalue']
 
     F-test for a contrast matrix, again with additional test statistics in the
     result dataset. The contrast vector is pass on to the ``f_test()`` function
