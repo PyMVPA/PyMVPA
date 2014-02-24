@@ -10,6 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
+from itertools import combinations
 import numpy as np
 from mvpa2.measures.base import Measure
 from mvpa2.datasets.base import Dataset
@@ -50,9 +51,11 @@ class DissimilarityMatrixMeasure(Measure):
         Returns
         -------
         Dataset
-          Contains a column vector of length = n(n-1)/2 of pairwise distances
-          between all samples if square=False; square dissimilarty matrix if
-          square=True.
+          If square is False, contains a column vector of length = n(n-1)/2 of
+          pairwise distances between all samples. A sample attribute ``pairs``
+          indicated the indices of input samples for each individual pair.
+          If square is False, the dataset contains a square dissimilarty matrix
+          and the entire sample attributes collection of the input dataset.
         """
 
         Measure.__init__(self, **kwargs)
@@ -72,12 +75,14 @@ class DissimilarityMatrixMeasure(Measure):
 
         # if square return value make dsm square
         if self.square:
-            # add some attributes
-            ds = Dataset(squareform(dsm))
+            # re-add the sample attributes -- should still be valid
+            out = Dataset(squareform(dsm),
+                          sa=ds.sa)
         else:
             # add some attributes
-            ds = Dataset(dsm)
-        return ds
+            out = Dataset(dsm,
+                          sa=dict(pairs=list(combinations(range(len(ds)), 2))))
+        return out
 
 
 class DissimilarityConsistencyMeasure(Measure):
