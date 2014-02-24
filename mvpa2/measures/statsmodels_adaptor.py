@@ -16,7 +16,7 @@ from mvpa2.base import externals
 
 # do conditional to be able to build module reference
 if externals.exists('scipy', raise_=True):
-    from mvpa2.support.stats import scipy
+    from mvpa2.support.scipy.stats import scipy
     import scipy.stats as stats
 
 if externals.exists('statsmodels', raise_=True):
