@@ -305,6 +305,14 @@ experiments.
   DOI: http://dx.doi.org/10.1038/nrn1931
 
 
+.. _HSC+14:
+
+**Helfinstein, S. M., Schonberg, T., Congdon, E., Karlsgodt, K. H., Mumford, J. A., Sabb, F. W., Cannon, T. D., London, E. D., Bilder, R. M. & Poldrack, R. A.** (2014). Predicting risky choices from brain activity patterns. *Proceedings of the National Academy of Sciences*, *111*, 2470-2475.
+  DOI: http://dx.doi.org/10.1073/pnas.1321728111
+
+  URL: http://www.pnas.org/content/111/7/2470.abstract
+
+
 .. _HBL+12:
 
 **Hiroyuki, A., Brian, M., Li, N., Yumiko, S. & Massimo, P.** (2012). Decoding Semantics across fMRI sessions with Different Stimulus Modalities: A practical MVPA Study. *Frontiers in Neuroinformatics*, *6*.
