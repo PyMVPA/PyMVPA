@@ -356,7 +356,10 @@ if externals.exists('skl'):
 
 
     if _skl_version >= '0.8':
-        sklPLSRegression = _skl_import('pls', 'PLSRegression')
+        if _skl_version >= '0.14':
+            sklPLSRegression = _skl_import('cross_decomposition', 'PLSRegression')
+        else:
+            sklPLSRegression = _skl_import('pls', 'PLSRegression')
         # somewhat silly use of PLS, but oh well
         regrswh += SKLLearnerAdapter(sklPLSRegression(n_components=1),
                                      tags=['linear', 'regression'],

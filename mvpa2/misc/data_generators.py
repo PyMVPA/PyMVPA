@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 import os
 import numpy as np
 
+from mvpa2.base import externals
 from mvpa2.datasets.base import dataset_wizard, Dataset
 from mvpa2 import pymvpa_dataroot, pymvpa_datadbroot
 from mvpa2.misc.fx import get_random_rotation
@@ -366,7 +367,11 @@ def load_datadb_tutorial_data(path=os.path.join(
                               nimg.get_header())
     elif isinstance(roi, tuple) or isinstance(roi, list):
         nimg = nb.load(os.path.join(path, 'mask_hoc.nii.gz'))
-        tmpmask = np.zeros(nimg.get_shape(), dtype='bool')
+        if externals.versions['nibabel'] >= '1.2':
+            img_shape = nimg.shape
+        else:
+            img_shape = nimg.get_shape()
+        tmpmask = np.zeros(img_shape, dtype='bool')
         for r in roi:
             tmpmask = np.logical_or(tmpmask, nimg.get_data() == r)
         mask = nb.Nifti1Image(tmpmask.astype(int), nimg.get_affine(),

@@ -113,15 +113,23 @@ def test_nifti_mapper(filename):
 
     # test mapping of ndarray
     vol = map2nifti(data, np.ones((294912,), dtype='int16'))
-    assert_equal(vol.get_shape(), (128, 96, 24))
+    if externals.versions['nibabel'] >= '1.2': 
+        vol_shape = vol.shape
+    else:
+        vol_shape = vol.get_shape()
+    assert_equal(vol_shape, (128, 96, 24))
     assert_true((vol.get_data() == 1).all())
     # test mapping of the dataset
     vol = map2nifti(data)
-    assert_equal(vol.get_shape(), (128, 96, 24, 2))
+    assert_equal(vol_shape, (128, 96, 24, 2))
     ok_(isinstance(vol, data.a.imgtype))
 
     # test providing custom imgtypes
     vol = map2nifti(data, imgtype=nibabel.Nifti1Pair)
+    if externals.versions['nibabel'] >= '1.2': 
+        vol_shape = vol.shape
+    else:
+        vol_shape = vol.get_shape()
     ok_(isinstance(vol, nibabel.Nifti1Pair))
 
     # Lets generate a dataset using an alternative format (MINC)
@@ -203,11 +211,19 @@ def test_er_nifti_dataset():
     # map back into voxel space, should ignore addtional features
     nim = map2nifti(ds)
     # origsamples has t,x,y,z
-    assert_equal(nim.get_shape(), origsamples.shape[1:] + (len(ds) * 4,))
+    if externals.versions['nibabel'] >= '1.2': 
+        vol_shape = vol.shape
+    else:
+        vol_shape = vol.get_shape()
+    assert_equal(vol_shape, origsamples.shape[1:] + (len(ds) * 4,))
     # check shape of a single sample
     nim = map2nifti(ds, ds.samples[0])
+    if externals.versions['nibabel'] >= '1.2': 
+        vol_shape = vol.shape
+    else:
+        vol_shape = vol.get_shape()
     # pynifti image has [t,]z,y,x
-    assert_equal(nim.get_shape(), (40, 20, 1, 4))
+    assert_equal(vol_shape, (40, 20, 1, 4))
 
     # and now with masking
     ds = fmri_dataset(tssrc, mask=masrc)
