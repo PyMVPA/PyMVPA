@@ -121,12 +121,16 @@ def test_nifti_mapper(filename):
     assert_true((vol.get_data() == 1).all())
     # test mapping of the dataset
     vol = map2nifti(data)
+    if externals.versions['nibabel'] >= '1.2':
+        vol_shape = vol.shape
+    else:
+        vol_shape = vol.get_shape()
     assert_equal(vol_shape, (128, 96, 24, 2))
     ok_(isinstance(vol, data.a.imgtype))
 
     # test providing custom imgtypes
     vol = map2nifti(data, imgtype=nibabel.Nifti1Pair)
-    if externals.versions['nibabel'] >= '1.2': 
+    if externals.versions['nibabel'] >= '1.2':
         vol_shape = vol.shape
     else:
         vol_shape = vol.get_shape()
@@ -211,17 +215,17 @@ def test_er_nifti_dataset():
     # map back into voxel space, should ignore addtional features
     nim = map2nifti(ds)
     # origsamples has t,x,y,z
-    if externals.versions['nibabel'] >= '1.2': 
-        vol_shape = vol.shape
+    if externals.versions['nibabel'] >= '1.2':
+        vol_shape = nim.shape
     else:
-        vol_shape = vol.get_shape()
+        vol_shape = nim.get_shape()
     assert_equal(vol_shape, origsamples.shape[1:] + (len(ds) * 4,))
     # check shape of a single sample
     nim = map2nifti(ds, ds.samples[0])
-    if externals.versions['nibabel'] >= '1.2': 
-        vol_shape = vol.shape
+    if externals.versions['nibabel'] >= '1.2':
+        vol_shape = nim.shape
     else:
-        vol_shape = vol.get_shape()
+        vol_shape = nim.get_shape()
     # pynifti image has [t,]z,y,x
     assert_equal(vol_shape, (40, 20, 1, 4))
 
