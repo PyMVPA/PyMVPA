@@ -45,7 +45,7 @@ class DissimilarityMatrixMeasure(Measure):
           This is recommended especially when using
           pairwise_metric='correlation'. Default: False
         square : bool, optional
-          If True return the square distance matrices, if False, returns the
+          If True return the square distance matrix, if False, returns the
           flattened lower triangle. Default: False
 
         Returns
@@ -53,8 +53,8 @@ class DissimilarityMatrixMeasure(Measure):
         Dataset
           If square is False, contains a column vector of length = n(n-1)/2 of
           pairwise distances between all samples. A sample attribute ``pairs``
-          indicated the indices of input samples for each individual pair.
-          If square is False, the dataset contains a square dissimilarty matrix
+          identifies the indices of input samples for each individual pair.
+          If square is True, the dataset contains a square dissimilarty matrix
           and the entire sample attributes collection of the input dataset.
         """
 
@@ -99,7 +99,8 @@ class DissimilarityConsistencyMeasure(Measure):
     """Indicate that this measure is always trained."""
 
     def __init__(self, chunks_attr='chunks', pairwise_metric='correlation',
-                    consistency_metric='pearson', center_data=False, **kwargs):
+                 consistency_metric='pearson', center_data=False,
+                 square=False, **kwargs):
         """
         Parameters
         ----------
@@ -119,14 +120,17 @@ class DissimilarityConsistencyMeasure(Measure):
           column mean from each element  (by chunk if chunks_attr specified).
           This is recommended especially when using
           pairwise_metric='correlation'.
+        square : bool, optional
+          If True return the square similarity matrix, if False, returns the
+          flattened lower triangle. Default: False
 
         Returns
         -------
         Dataset
-          Contains an array of the pairwise correlations between the DSMs
-          defined for each chunk of the dataset. Length of array will be
-          N(N-1)/2 for N chunks.
-
+          Contains an the pairwise correlations between the DSMs
+          computed from each chunk of the input dataset. If square is False,
+          this is a column vector of length N(N-1)/2 for N chunks. If square
+          is True, this is a square matrix of size NxN for N chunks.
         """
         # TODO: Another metric for consistency metric could be the "Rv"
         # coefficient...  (ac)
@@ -137,31 +141,38 @@ class DissimilarityConsistencyMeasure(Measure):
         self.consistency_metric = consistency_metric
         self.chunks_attr = chunks_attr
         self.center_data = center_data
+        self.square = square
 
     def _call(self, dataset):
         """Computes the average correlation in similarity structure across chunks."""
 
         chunks_attr = self.chunks_attr
-        nchunks = len(np.unique(dataset.sa[chunks_attr]))
+        nchunks = len(dataset.sa[chunks_attr].unique)
         if nchunks < 2:
             raise StandardError("This measure calculates similarity consistency across "
                                 "chunks and is not meaningful for datasets with only "
                                 "one chunk:")
         dsms = []
-        for chunk in np.unique(dataset.sa[chunks_attr]):
-            data = dataset.samples[dataset.sa[chunks_attr]==chunk,:]
+        chunks = []
+        for chunk in dataset.sa[chunks_attr].unique:
+            data = np.atleast_2d(
+                    dataset.samples[dataset.sa[chunks_attr].value == chunk,:])
             if self.center_data:
                 data = data - np.mean(data,0)
-            dsm = pdist(data,self.pairwise_metric)
-            #print dsm.shape
+            dsm = pdist(data, self.pairwise_metric)
             dsms.append(dsm)
+            chunks.append(chunk)
         dsms = np.vstack(dsms)
 
         if self.consistency_metric=='spearman':
             dsms = np.apply_along_axis(rankdata, 1, dsms)
         corrmat = np.corrcoef(dsms)
-
-        return Dataset(squareform(corrmat,checks=False))
+        if self.square:
+            ds = Dataset(corrmat, sa={self.chunks_attr: chunks})
+        else:
+            ds = Dataset(squareform(corrmat,checks=False),
+                         sa=dict(pairs=list(combinations(chunks, 2))))
+        return ds
 
 class TargetDissimilarityCorrelationMeasure(Measure):
     """Calculate the correlations of DissimilarityMatrixMeasures with a target
