@@ -147,18 +147,15 @@ class DissimilarityConsistencyMeasure(Measure):
             raise StandardError("This measure calculates similarity consistency across "
                                 "chunks and is not meaningful for datasets with only "
                                 "one chunk:")
-        dsms = None
-
+        dsms = []
         for chunk in np.unique(dataset.sa[chunks_attr]):
             data = dataset.samples[dataset.sa[chunks_attr]==chunk,:]
             if self.center_data:
                 data = data - np.mean(data,0)
             dsm = pdist(data,self.pairwise_metric)
             #print dsm.shape
-            if dsms is None:
-                dsms = dsm
-            else:
-                dsms = np.vstack((dsms,dsm))
+            dsms.append(dsm)
+        dsms = np.vstack(dsms)
 
         if self.consistency_metric=='spearman':
             dsms = np.apply_along_axis(rankdata, 1, dsms)
