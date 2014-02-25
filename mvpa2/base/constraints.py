@@ -61,7 +61,7 @@ class EnsureDType(Constraint):
     def __call__(self, value):
         if hasattr(value, '__array__'):
             return np.asanyarray(value, dtype=self._dtype)
-        elif hasattr(value,'__iter__'):
+        elif hasattr(value, '__iter__') and not isinstance(value, basestring):
             return map(self._dtype, value)
         else:
             return self._dtype(value)
