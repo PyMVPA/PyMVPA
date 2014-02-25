@@ -22,7 +22,7 @@ if externals.exists('scipy', raise_=True):
 class DissimilarityMatrixMeasure(Measure):
     """Compute dissimiliarity matrix for samples in a dataset
 
-    Dissimilarity Matrix `Measure` returns the lower triangle of the n x n
+    Dissimilarity Matrix `Measure` returns the upper triangle of the n x n
     disimilarity matrix defined as the pairwise distances between samples in
     the dataset, and where n is the number of samples.
     """
@@ -46,7 +46,7 @@ class DissimilarityMatrixMeasure(Measure):
           pairwise_metric='correlation'. Default: False
         square : bool, optional
           If True return the square distance matrix, if False, returns the
-          flattened lower triangle. Default: False
+          flattened upper triangle. Default: False
 
         Returns
         -------
@@ -122,12 +122,12 @@ class DissimilarityConsistencyMeasure(Measure):
           pairwise_metric='correlation'.
         square : bool, optional
           If True return the square similarity matrix, if False, returns the
-          flattened lower triangle. Default: False
+          flattened upper triangle. Default: False
 
         Returns
         -------
         Dataset
-          Contains an the pairwise correlations between the DSMs
+          Contains the pairwise correlations between the DSMs
           computed from each chunk of the input dataset. If square is False,
           this is a column vector of length N(N-1)/2 for N chunks. If square
           is True, this is a square matrix of size NxN for N chunks.
