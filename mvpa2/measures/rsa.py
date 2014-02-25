@@ -191,9 +191,6 @@ class TargetDissimilarityCorrelationMeasure(Measure):
         """
         Parameters
         ----------
-        dataset :
-          Dataset with N samples such that corresponding dissimilarity matrix
-          has N*(N-1)/2 unique pairwise distances
         target_dsm : array (length N*(N-1)/2)
           Target dissimilarity matrix
         pairwise_metric : str
@@ -212,8 +209,8 @@ class TargetDissimilarityCorrelationMeasure(Measure):
         Returns
         -------
         Dataset
-          Dataset contains the correlation coefficient (rho) only or rho
-          plus p, when corrcoef_only is set to false.
+          If ``corrcoef_only`` is True, contains one feature: the correlation
+          coefficient (rho); or otherwise two-fetaures: rho plus p.
         """
         # init base classes first
         Measure.__init__(self, **kwargs)
@@ -237,6 +234,6 @@ class TargetDissimilarityCorrelationMeasure(Measure):
             dsm = rankdata(dsm)
         rho, p = pearsonr(dsm,self.target_dsm)
         if self.corrcoef_only:
-            return Dataset(np.array([rho,]))
+            return Dataset([rho], fa={'metrics': ['rho']})
         else:
-            return Dataset(np.array([rho,p]))
+            return Dataset([[rho,p]], fa={'metrics': ['rho', 'p']})

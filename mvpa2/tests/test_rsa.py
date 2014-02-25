@@ -125,10 +125,14 @@ def test_TargetDissimilarityCorrelationMeasure():
     a2 = tdcm2(ds)
     a3 = tdcm3(ds)
     a4 = tdcm4(ds)
-    assert_array_almost_equal(a1.samples,ans1.reshape(-1,1))
-    assert_array_almost_equal(a2.samples,ans2.reshape(-1,1))
-    assert_array_almost_equal(a3.samples,ans3.reshape(-1,1))
-    assert_array_almost_equal(a4.samples,ans1[0].reshape(-1,1))
+    assert_array_almost_equal(a1.samples.squeeze(),ans1)
+    assert_array_equal(a1.fa.metrics, ['rho', 'p'])
+    assert_array_almost_equal(a2.samples.squeeze(),ans2)
+    assert_array_equal(a2.fa.metrics, ['rho', 'p'])
+    assert_array_almost_equal(a3.samples.squeeze(),ans3)
+    assert_array_equal(a3.fa.metrics, ['rho', 'p'])
+    assert_array_almost_equal(a4.samples.squeeze(),ans1[0])
+    assert_array_equal(a4.fa.metrics, ['rho'])
 
 
 
