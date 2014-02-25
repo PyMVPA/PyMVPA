@@ -23,7 +23,7 @@ class SimpleConstraintsTests(unittest.TestCase):
         assert_equal(c(7), 7)
         assert_equal(c(7.0), 7)
         assert_equal(c('7'), 7)
-        assert_equal(c([7,3]), [7,3])
+        assert_equal(c([7, 3]), [7, 3])
         # this should always fail
         assert_raises(ValueError, lambda: c('fail'))
         assert_raises(ValueError, lambda: c([3, 'fail']))
@@ -36,7 +36,7 @@ class SimpleConstraintsTests(unittest.TestCase):
         assert_equal(c(7.0), 7.0)
         assert_equal(c(7), 7.0)
         assert_equal(c('7'), 7.0)
-        assert_equal(c([7.0,'3.0']), [7.0,3.0])
+        assert_equal(c([7.0, '3.0']), [7.0, 3.0])
         # this should always fail
         assert_raises(ValueError, lambda: c('fail'))
         assert_raises(ValueError, lambda: c([3.0, 'fail']))
@@ -174,8 +174,8 @@ class ComplexConstraintsTests(unittest.TestCase):
 
     def test_both(self):
         # this should always work
-        c= AltConstraints(Constraints(EnsureFloat(),\
-                                      EnsureRange(min=7.0,max=44.0)),\
+        c = AltConstraints(Constraints(EnsureFloat(), \
+                                      EnsureRange(min=7.0, max=44.0)), \
                                       EnsureNone())
         assert_equal(c(7.0), 7.0)
         assert_equal(c(None), None)
