@@ -186,11 +186,11 @@ class EnsureChoice(Constraint):
 
     def __call__(self, value):
         if value not in self._allowed:
-            raise ValueError("value is not one of %s" % (self._allowed, ))
+            raise ValueError("value is not one of %s" % (self._allowed,))
         return value
 
     def long_description(self):
-        return 'value must be one of %s' % (str(self._allowed), )
+        return 'value must be one of %s' % (str(self._allowed),)
 
     def short_description(self):
         return '{%s}' % ', '.join([str(c) for c in self._allowed])
@@ -216,15 +216,15 @@ class EnsureRange(Constraint):
     def __call__(self, value):
         if self._min is not None:
             if value < self._min:
-                raise ValueError("value must be at least %s" % (self._min, ))
+                raise ValueError("value must be at least %s" % (self._min,))
         if self._max is not None:
             if value > self._max:
-                raise ValueError("value must be at most %s" % (self._max, ))
+                raise ValueError("value must be at most %s" % (self._max,))
         return value
 
     def long_description(self):
-        min_str='-inf' if self._min is None else str(self._min)
-        max_str='inf' if self._max is None else str(self._max)
+        min_str = '-inf' if self._min is None else str(self._min)
+        max_str = 'inf' if self._max is None else str(self._max)
         return 'value must be in range [%s, %s]' % (min_str, max_str)
 
     def short_description(self):
