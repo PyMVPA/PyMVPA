@@ -183,10 +183,10 @@ def _extract_boxcar_events(
 
 def _fit_hrf_event_model(
         ds, events, time_attr, condition_attr='targets', design_kwargs=None,
-        glmfit_kwargs=None, regr_attrs=None, eprefix='event'):
+        glmfit_kwargs=None, regr_attrs=None, eprefix='event', conditions=None):
     if externals.exists('nipy', raise_=True):
-        from nipy.modalities.fmri.glm import GeneralLinearModel
         from nipy.modalities.fmri.design_matrix import make_dmtx
+        from mvpa2.mappers.nipy_glm import NiPyGLMMapper
 
     evvars = _events2dict(events)
     add_paradigm_kwargs = {}
@@ -235,20 +235,13 @@ def _fit_hrf_event_model(
     design_matrix = make_dmtx(ds.sa[time_attr].value,
                               paradigm,
                               **design_kwargs)
+    # push design into source dataset
+    for i, reg in enumerate(design_matrix.names):
+        ds.sa[reg] = design_matrix.matrix[:, i]
     # GLM
-    glm = GeneralLinearModel(design_matrix.matrix)
-    if glmfit_kwargs is None:
-        glmfit_kwargs = {}
-    glm.fit(ds.samples, **glmfit_kwargs)
-
-    # turn results into a dataset and record the regressor names
-    model_params = Dataset(
-                        glm.get_beta(),
-                        sa={condition_attr: design_matrix.names,
-                            'regressors': design_matrix.matrix.T},
-                        fa=ds.fa,
-                        a=ds.a) # this last one might be a bit to opportunistic
-    model_params.a['glmfit'] = glm
+    glm = NiPyGLMMapper(design_matrix.names, glmfit_kwargs=glmfit_kwargs,
+            add_design=True, add_glmfit=True, space=condition_attr)
+    model_params = glm(ds)
     return model_params
 
 
