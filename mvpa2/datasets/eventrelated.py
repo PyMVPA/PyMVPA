@@ -302,19 +302,18 @@ def eventrelated_dataset(ds, events, time_attr=None, match='prev',
     HRF event model details
     -----------------------
 
-    The event specifications are used to generate a design matrix with for a
-    number of conditions. In addition to the mandatory ``onset`` information
-    each event defintion needs to include a label in order to associate
+    The event specifications are used to generate a design matrix for all
+    present conditions. In addition to the mandatory ``onset`` information
+    each event definition needs to include a label in order to associate
     individual events to conditions (the design matrix will contain at least
-    one regressors for each condition). The name of this label attribute must
+    one regressor for each condition). The name of this label attribute must
     be specified too (see ``condition_attr`` argument).
 
-    NiPy is used to generate the actual design matrix. It is required to
+    NiPy is used to generate the actual design matrix.  It is required to
     specify a dataset sample attribute that contains time-stamps for all input
-    data samples (see ``time_attr``).  All of NiPy's customization options are
-    available (see ``design_kwargs`` argument). In addition additional
-    regressors from sample attributes of the input dataset can be included in
-    the design matrix (see ``regr_attrs``).
+    data samples (see ``time_attr``).  NiPy operation could be customized (see
+    ``design_kwargs`` argument). Additional regressors from sample attributes
+    of the input dataset can be included in the design matrix (see ``regr_attrs``).
 
     The actual GLM fit is also performed by NiPy and can be fully customized
     (see ``glmfit_kwargs``).
@@ -336,7 +335,7 @@ def eventrelated_dataset(ds, events, time_attr=None, match='prev',
       attribute. Its values will be treated as in-the-same-unit and are used to
       determine corresponding samples from real-value onset and duration
       definitions.
-      For HRF modeling this argument is mandatory .
+      For HRF modeling this argument is mandatory.
     match : {'prev', 'next', 'closest'}
       For boxcar modeling: strategy used to match real-value onsets to sample
       indices. 'prev' chooses the closes preceding samples, 'next' the closest
@@ -358,7 +357,7 @@ def eventrelated_dataset(ds, events, time_attr=None, match='prev',
       For HRF modeling: name of the event attribute with the condition labels.
     design_kwargs : dict
       Arbitrary keyword arguments for NiPy's make_dmtx() used for design matrix
-      generation. Choose HRF model, confund rgeressors, etc.
+      generation. Choose HRF model, confound regressors, etc.
     glmfit_kwargs : dict
       Arbitrary keyword arguments for NiPy's GeneralLinearModel.fit() used for
       estimating model parameter. Choose fitting algorithm: OLS or AR1.
@@ -373,10 +372,10 @@ def eventrelated_dataset(ds, events, time_attr=None, match='prev',
       event definition that has been passed to the function. Additional
       event attributes are included as sample attributes.
 
-      In case of an HRF model, one sample for each regressor/conditions in the
+      In case of an HRF model, one sample for each regressor/condition in the
       design matrix is returned. The condition names are included as a sample
       attribute with the name specified by the ``condition_attr`` argument.
-      The actual design design regressors are included as ``regressors`` sample
+      The actual design regressors are included as ``regressors`` sample
       attribute. An instance with the fitted NiPy GLM results is included as
       a dataset attribute ``glmfit``, and can be used for computing contrasts
       subsequently.
