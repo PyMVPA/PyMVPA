@@ -22,7 +22,8 @@ from mvpa2.base.externals import versions
 from mvpa2.base.types import is_datasetlike
 from mvpa2.base.dataset import DatasetError, vstack, hstack, all_equal, \
                                 stack_by_unique_feature_attribute, \
-                                stack_by_unique_sample_attribute
+                                stack_by_unique_sample_attribute, \
+                                DatasetAttributeInjector
 from mvpa2.datasets.base import dataset_wizard, Dataset, HollowSamples
 from mvpa2.misc.data_generators import normal_feature_dataset
 from mvpa2.testing import reseed_rng
@@ -1041,3 +1042,15 @@ def test_hollow_samples():
     assert_equal(ds.samples.dtype, int)
     assert_equal(ds.shape, sshape)
 
+def test_attributeinjector():
+    ds = datasets['3dsmall']
+    sa = range(len(ds))
+    fa = range(ds.nfeatures)
+    a = 'weired'
+    inj = DatasetAttributeInjector(sa={'weired': sa},
+                                   fa={'weired2': fa},
+                                   a={'weired3': a})
+    ds_inj = inj(ds)
+    assert_array_equal(ds_inj.sa.weired, sa)
+    assert_array_equal(ds_inj.fa.weired2, fa)
+    assert_array_equal(ds_inj.a.weired3, a)

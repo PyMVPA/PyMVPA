@@ -1128,10 +1128,40 @@ class DatasetAttributeExtractor(object):
         return "%s(%s, %s)" % (self.__class__.__name__,
                                repr(self._col), repr(self._key))
 
-
 # shortcut that allows for more finger/screen-friendly specification of
 # attribute extraction
 DAE = DatasetAttributeExtractor
+
+class DatasetAttributeInjector(object):
+    """Inject attributes into a dataset
+
+    This is useful for passing attributes into a dataset at any level
+    of a processing pipeline -- even if they do not fit into the original
+    dataset (shape).
+    """
+    def __init__(self, sa=None, fa=None, a=None):
+        """
+        Parameters
+        ----------
+        sa : dict or None
+          Dictionary used to update a dataset's sample attribute collection
+        fa : dict or None
+          Dictionary used to update a dataset's feature attribute collection
+        a : dict or None
+          Dictionary used to update a dataset's attribute collection
+        """
+        self.sa = sa
+        self.fa = fa
+        self.a = a
+
+    def __call__(self, ds):
+        if not self.sa is None:
+            ds.sa.update(self.sa)
+        if not self.fa is None:
+            ds.fa.update(self.fa)
+        if not self.a is None:
+            ds.a.update(self.a)
+        return ds
 
 
 @datasetmethod
