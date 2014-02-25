@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 """
 =============================================
  Using scikit-learn transformers with PyMVPA
@@ -49,7 +52,7 @@ from mvpa2 import cfg
 from mvpa2.mappers.skl_adaptor import SKLTransformer
 
 # load the S-curve dataset 
-from mvpa2.datasets.sources.sklearn_data import skl_s_curve
+from mvpa2.datasets.sources.skl_data import skl_s_curve
 ds = skl_s_curve(n_points)
 
 """
