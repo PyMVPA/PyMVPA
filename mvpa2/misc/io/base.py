@@ -211,83 +211,83 @@ class ColumnData(dict):
         # make a clean table
         self.clear()
 
-        file_ = open(filename, 'r')
+        with open(filename, 'r') as file_:
 
-        self._header_order = None
+            self._header_order = None
 
-        [ file_.readline() for x in range(skiplines) ]
-        """Simply skip some lines"""
-        # make column names, either take header or generate
-        if header == True:
-            # read first line and split by 'sep'
-            hdr = file_.readline().split(headersep)
-            # remove bogus empty header titles
-            hdr = [ x for x in hdr if len(x.strip()) ]
-            self._header_order = hdr
-        elif isinstance(header, list):
-            hdr = header
-        else:
-            hdr = [ str(i) for i in xrange(len(file_.readline().split(sep))) ]
-            # reset file to not miss the first line
-            file_.seek(0)
             [ file_.readline() for x in range(skiplines) ]
+            """Simply skip some lines"""
+            # make column names, either take header or generate
+            if header == True:
+                # read first line and split by 'sep'
+                hdr = file_.readline().split(headersep)
+                # remove bogus empty header titles
+                hdr = [ x for x in hdr if len(x.strip()) ]
+                self._header_order = hdr
+            elif isinstance(header, list):
+                hdr = header
+            else:
+                hdr = [ str(i) for i in xrange(len(file_.readline().split(sep))) ]
+                # reset file to not miss the first line
+                file_.seek(0)
+                [ file_.readline() for x in range(skiplines) ]
 
 
-        # string in lists: one per column
-        tbl = [ [] for i in xrange(len(hdr)) ]
+            # string in lists: one per column
+            tbl = [ [] for i in xrange(len(hdr)) ]
 
-        # store whether dtype should be determined automagically
-        auto_dtype = dtype is None
+            # store whether dtype should be determined automagically
+            auto_dtype = dtype is None
 
-        # do per column dtypes
-        if not isinstance(dtype, list):
-            dtype = [dtype] * len(hdr)
+            # do per column dtypes
+            if not isinstance(dtype, list):
+                dtype = [dtype] * len(hdr)
 
-        # parse line by line and feed into the lists
-        for line in file_:
-            # get rid of leading and trailing whitespace
-            line = line.strip()
-            # ignore empty lines and comment lines
-            if not line or line.startswith('#'):
-                continue
-            l = line.split(sep)
+            # parse line by line and feed into the lists
+            for line in file_:
+                # get rid of leading and trailing whitespace
+                line = line.strip()
+                # ignore empty lines and comment lines
+                if not line or line.startswith('#'):
+                    continue
+                l = line.split(sep)
 
-            if not len(l) == len(hdr):
-                raise RuntimeError, \
-                      "Number of entries in line [%i] does not match number " \
-                      "of columns in header [%i]." % (len(l), len(hdr))
+                if not len(l) == len(hdr):
+                    raise RuntimeError, \
+                          "Number of entries in line [%i] does not match number " \
+                          "of columns in header [%i]." % (len(l), len(hdr))
 
-            for i, v in enumerate(l):
-                if not dtype[i] is None:
-                    try:
-                        v = dtype[i](v)
-                    except ValueError:
-                        warning("Can't convert %r to desired datatype %r." %
-                                (v, dtype) + " Leaving original type")
-                tbl[i].append(v)
+                for i, v in enumerate(l):
+                    if not dtype[i] is None:
+                        try:
+                            v = dtype[i](v)
+                        except ValueError:
+                            warning("Can't convert %r to desired datatype %r." %
+                                    (v, dtype) + " Leaving original type")
+                    tbl[i].append(v)
 
-        if auto_dtype:
-            attempt_convert_dtypes = (int, float)
+            if auto_dtype:
+                attempt_convert_dtypes = (int, float)
 
-            for i in xrange(len(tbl)):
-                values = tbl[i]
+                for i in xrange(len(tbl)):
+                    values = tbl[i]
 
-                for attempt_convert_dtype in attempt_convert_dtypes:
-                    try:
-                        values = map(attempt_convert_dtype, values)
-                        tbl[i] = values
-                        break
-                    except:
-                        continue
+                    for attempt_convert_dtype in attempt_convert_dtypes:
+                        try:
+                            values = map(attempt_convert_dtype, values)
+                            tbl[i] = values
+                            break
+                        except:
+                            continue
 
-        # check
-        if not len(tbl) == len(hdr):
-            raise RuntimeError, "Number of columns read from file does not " \
-                                "match the number of header entries."
+            # check
+            if not len(tbl) == len(hdr):
+                raise RuntimeError, "Number of columns read from file does not " \
+                                    "match the number of header entries."
 
-        # fill dict
-        for i, v in enumerate(hdr):
-            self[v] = tbl[i]
+            # fill dict
+            for i, v in enumerate(hdr):
+                self[v] = tbl[i]
 
 
     def __iadd__(self, other):
