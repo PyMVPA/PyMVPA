@@ -72,20 +72,26 @@ class SurfaceQueryEngine(QueryEngineInterface):
             raise ValueError('distance_metric %s has to be in %s' %
                                     (self.distance_metric, allowed_metrics))
 
+        if self.distance_metric == 'dijkstra':
+            # Pre-compute neighbor information (and ignore the output).
+            surface.neighbors
+
     def __repr__(self, prefixes=[]):
         return super(SurfaceQueryEngine, self).__repr__(
                    prefixes=prefixes
                    + _repr_attrs(self, ['surface'])
                    + _repr_attrs(self, ['radius'])
                    + _repr_attrs(self, ['distance_metric'],
-                                   default='voxel_indices')
+                                   default='dijkstra')
                    + _repr_attrs(self, ['fa_node_key'],
                                    default='node_indices'))
+
     def __reduce__(self):
         return (self.__class__, (self.surface,
                                  self.radius,
                                  self.distance_metric,
-                                 self.fa_node_key))
+                                 self.fa_node_key),
+                            dict(_vertex2feature_map=self._vertex2feature_map))
 
     def __str__(self):
         return '%s(%s, radius=%s, distance_metric=%s, fa_node_key=%s)' % \
@@ -222,7 +228,8 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
             + _repr_attrs(self, ['add_fa'], []))
 
     def __reduce__(self):
-        return (self.__class__, (self.voxsel, self.space, self._add_fa))
+        return (self.__class__, (self.voxsel, self.space, self._add_fa),
+                            dict(_map_voxel_coord=self._map_voxel_coord))
 
     def __str__(self):
         return '%s(%s, space=%s, add_fa=%s)' % (self.__class__.__name__,
@@ -467,7 +474,8 @@ class SurfaceVoxelsQueryEngine(SurfaceVerticesQueryEngine):
     def __reduce__(self):
         return (self.__class__, (self.voxsel, self.space,
                                  self._add_fa,
-                                 self.fallback_euclidean_distance))
+                                 self.fallback_euclidean_distance),
+                                dict(_feature_id2vertex_id=self._feature_id2vertex_id))
 
     @property
     def ids(self):
