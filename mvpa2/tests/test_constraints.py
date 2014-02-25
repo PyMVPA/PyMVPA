@@ -13,6 +13,7 @@ from mvpa2.testing import *
 import unittest
 
 from mvpa2.base.constraints import *
+import sys
 
 class SimpleConstraintsTests(unittest.TestCase):
 
@@ -22,7 +23,7 @@ class SimpleConstraintsTests(unittest.TestCase):
         assert_equal(c(7), 7)
         assert_equal(c(7.0), 7)
         assert_equal(c('7'), 7)
-        assert_equal(c([7,3]), [7,3])
+        assert_equal(c([7, 3]), [7, 3])
         # this should always fail
         assert_raises(ValueError, lambda: c('fail'))
         assert_raises(ValueError, lambda: c([3, 'fail']))
@@ -35,7 +36,7 @@ class SimpleConstraintsTests(unittest.TestCase):
         assert_equal(c(7.0), 7.0)
         assert_equal(c(7), 7.0)
         assert_equal(c('7'), 7.0)
-        assert_equal(c([7.0,'3.0']), [7.0,3.0])
+        assert_equal(c([7.0, '3.0']), [7.0, 3.0])
         # this should always fail
         assert_raises(ValueError, lambda: c('fail'))
         assert_raises(ValueError, lambda: c([3.0, 'fail']))
@@ -96,13 +97,18 @@ class SimpleConstraintsTests(unittest.TestCase):
         c = EnsureRange(min=3, max=7)
         # this should always work
         assert_equal(c(3.0), 3.0)
+
+        # Python 3 raises an TypeError if incompatible types are compared,
+        # whereas Python 2 raises a ValueError
+        type_error = TypeError if sys.version_info[0] >= 3 else ValueError
+
         # this should always fail
         assert_raises(ValueError, lambda: c(2.9999999))
         assert_raises(ValueError, lambda: c(77))
-        assert_raises(ValueError, lambda: c('fail'))
-        assert_raises(ValueError, lambda: c((3,4)))
+        assert_raises(type_error, lambda: c('fail'))
+        assert_raises(type_error, lambda: c((3, 4)))
         # since no type checks are performed
-        assert_raises(ValueError, lambda: c('7'))
+        assert_raises(type_error, lambda: c('7'))
 
         # Range doesn't have to be numeric
         c = EnsureRange(min="e", max="qqq")
@@ -168,8 +174,8 @@ class ComplexConstraintsTests(unittest.TestCase):
 
     def test_both(self):
         # this should always work
-        c= AltConstraints(Constraints(EnsureFloat(),\
-                                      EnsureRange(min=7.0,max=44.0)),\
+        c = AltConstraints(Constraints(EnsureFloat(), \
+                                      EnsureRange(min=7.0, max=44.0)), \
                                       EnsureNone())
         assert_equal(c(7.0), 7.0)
         assert_equal(c(None), None)
