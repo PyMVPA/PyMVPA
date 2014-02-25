@@ -349,38 +349,36 @@ class ColumnData(dict):
         sep : str, optional
           String that is written as a separator between to data columns.
         """
-        # XXX do the try: except: dance
-        file_ = open(filename, 'w')
 
-        # write header
-        if header_order == None:
-            if self._header_order is None:
-                col_hdr = self.keys()
+        with open(filename, 'w') as file_:
+
+            # write header
+            if header_order == None:
+                if self._header_order is None:
+                    col_hdr = self.keys()
+                else:
+                    # use stored order + newly added keys at the last columns
+                    col_hdr = self._header_order + \
+                              list(set(self.keys()).difference(
+                                                    set(self._header_order)))
             else:
-                # use stored order + newly added keys at the last columns
-                col_hdr = self._header_order + \
-                          list(set(self.keys()).difference(
-                                                set(self._header_order)))
-        else:
-            if not len(header_order) == self.ncolumns:
-                raise ValueError, 'Header list does not match number of ' \
-                                  'columns.'
-            for k in header_order:
-                if not self.has_key(k):
-                    raise ValueError, 'Unknown key [%r]' % (k,)
-            col_hdr = header_order
+                if not len(header_order) == self.ncolumns:
+                    raise ValueError, 'Header list does not match number of ' \
+                                      'columns.'
+                for k in header_order:
+                    if not self.has_key(k):
+                        raise ValueError, 'Unknown key [%r]' % (k,)
+                col_hdr = header_order
 
-        if header == True:
-            file_.write(sep.join(col_hdr) + '\n')
+            if header == True:
+                file_.write(sep.join(col_hdr) + '\n')
 
-        # for all rows
-        for r in xrange(self.nrows):
-            # get attributes for all keys
-            l = [str(self[k][r]) for k in col_hdr]
-            # write to file with proper separator
-            file_.write(sep.join(l) + '\n')
-
-        file_.close()
+            # for all rows
+            for r in xrange(self.nrows):
+                # get attributes for all keys
+                l = [str(self[k][r]) for k in col_hdr]
+                # write to file with proper separator
+                file_.write(sep.join(l) + '\n')
 
 
     @property
