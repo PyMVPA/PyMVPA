@@ -92,6 +92,8 @@ def _mixedtypes_datastring2rawniml(s, niml):
     ncols = len(tps)
     nrows = niml['vec_len']
 
+    s = s.decode() # convert bytearray to string
+
     lines = s.strip().split(_TEXT_ROWSEP)
     if len(lines) != nrows:
         raise ValueError("Expected %d rows, but found %d" % (nrows, len(lines)))
