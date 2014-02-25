@@ -51,6 +51,9 @@ from mvpa2.mappers.zscore import zscore
 from mvpa2.misc.neighborhood import Sphere, IndexQueryEngine
 from mvpa2.clfs.gnb import GNB
 
+if externals.exists('h5py'):
+    from mvpa2.base.hdf5 import h5save, h5load
+
 
 class SurfVoxelSelectionTests(unittest.TestCase):
 
@@ -478,6 +481,14 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             voxsel = surf_voxel_selection.voxel_selection(vs, radius)
             qe = SurfaceVoxelsQueryEngine(voxsel, fallback_euclidean_distance=fallback)
 
+            # test i/o and ensure that the loaded instance is trained
+            if externals.exists('h5py'):
+                fd, qefn = tempfile.mkstemp('qe.hdf5', 'test'); os.close(fd)
+                h5save(qefn, qe)
+                qe = h5load(qefn)
+                os.remove(qefn)
+
+
             m = _Voxel_Count_Measure()
 
             sl = Searchlight(m, queryengine=qe)
@@ -636,8 +647,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             # ensure keys are the same
             assert_equal(qe.ids, qe_copy.ids)
 
-            # ensure values are the same
-            qe_copy.train(ds)
+            # ensure values are the same and that qe_copy is trained
             for id in qe.ids:
                 assert_array_equal(qe[id].samples, qe_copy[id].samples)
 
