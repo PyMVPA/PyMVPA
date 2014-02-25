@@ -36,6 +36,12 @@ class CmdlineHelpersTest(unittest.TestCase):
         v = split_comma_semicolon_lists(s, dtype=dtype)
         assert_equal(v, t)
 
+    def test_robust_import(self):
+        # just a smoke test to assure that import of cmdline
+        # submodule would not fail if some external dependencies
+        # is missing
+        import mvpa2.cmdline
+
 def suite():  # pragma: no cover
     return unittest.makeSuite(CmdlineHelpersTest)
 
