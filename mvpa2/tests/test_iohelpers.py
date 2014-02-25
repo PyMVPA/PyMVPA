@@ -31,9 +31,9 @@ class IOHelperTests(unittest.TestCase):
         3 4 5
         """
         fd, fpath = mkstemp('mvpa', 'test'); os.close(fd)
-        file = open(fpath, 'w')
-        file.write(ex1)
-        file.close()
+
+        with open(fpath, 'w') as file:
+            file.write(ex1)
 
         # intentionally rely on defaults
         d = ColumnData(fpath, header=True)
@@ -255,7 +255,10 @@ class IOHelperTests(unittest.TestCase):
         # use our function
         design = read_fsl_design(fname)
         # and just load manually to see either we match fine
-        set_lines = [x for x in open(fname).readlines()
+        with open(fname) as f:
+            read_lines = f.readlines()
+
+        set_lines = [x for x in read_lines
                      if x.startswith('set ')]
         assert_equal(len(set_lines), len(design))
 
