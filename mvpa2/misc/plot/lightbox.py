@@ -101,6 +101,8 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
     def handle_arg(arg):
         """Helper which would read in SpatialImage if necessary
         """
+        if arg is None:
+            return arg
         if isinstance(arg, basestring):
             arg = nb.load(arg)
             argshape = arg.get_shape()
@@ -110,9 +112,19 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                         arg.get_data().reshape(argshape + (1,)*(3-len(argshape))),
                         arg.get_affine(),
                         arg.get_header())
-        if isinstance(arg, np.ndarray):
-            if len(arg.shape) != 3:
-                raise ValueError, "For now just handling 3D volumes"
+        else:
+            argshape = arg.shape
+
+        if len(argshape) == 4:
+            if argshape[-1] > 1:
+                warning("For now plot_lightbox can handle only 3d, 4d data was provided."
+                        " Plotting only the first volume")
+            if isinstance(arg, SpatialImage):
+                arg = nb.Nifti1Image(arg.get_data()[..., 0], arg.get_affine(), arg.get_header())
+            else:
+                arg = arg[..., 0]
+        elif len(argshape) != 3:
+            raise ValueError, "For now just handling 3D volumes"
         return arg
 
     bg = handle_arg(background)
@@ -519,39 +531,3 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
 
     plotter.fig.plotter = plotter
     return plotter.fig
-
-
-if __name__ == "__main__":
-    # for easy debugging
-    import os
-    from mvpa2.base import cfg
-    impath = os.path.join('datadb', 'tutorial_data', 'tutorial_data', 'data')
-    plot_lightbox(
-        #background = NiftiImage('%s/anat.nii.gz' % impath),
-        background = '%s/anat.nii.gz' % impath,
-        background_mask = None,
-        overlay = nb.load('%s/example_bold.nii.gz' % impath), #.get_data(),
-        overlay_mask = '%s/mask_brain.nii.gz' % impath,
-        #
-        do_stretch_colors = False,
-        add_colorbar = True,
-        cmap_bg = 'gray',
-        cmap_overlay = 'hot', # YlOrRd_r # pl.cm.autumn
-        #
-        fig = None,
-        # vlim describes value limits
-        # clim color limits (same by default)
-        vlim = [100, None],
-        #vlim_type = 'symneg_z',
-        interactive = True,
-        #
-        #nrows = 2,
-        #ncolumns = 3,
-        add_info = (1, 2),
-        add_hist = (0, 2),
-        #
-        slices = [20, 23, 26, 29, 32, 35]
-        )
-
-    pl.show()
-
