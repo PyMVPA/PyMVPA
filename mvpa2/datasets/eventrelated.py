@@ -240,7 +240,7 @@ def _fit_hrf_event_model(
         ds.sa[reg] = design_matrix.matrix[:, i]
     # GLM
     glm = NiPyGLMMapper(design_matrix.names, glmfit_kwargs=glmfit_kwargs,
-            add_design=True, add_glmfit=True, space=condition_attr)
+            return_design=True, return_glmfit=True, space=condition_attr)
     model_params = glm(ds)
     return model_params
 

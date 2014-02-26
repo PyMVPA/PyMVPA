@@ -22,27 +22,60 @@ from mvpa2.datasets import Dataset
 from mvpa2.mappers.base import Mapper
 
 class NiPyGLMMapper(Mapper):
-    def __init__(self, regs, glmfit_kwargs=None, add_design=False,
-                 add_glmfit=False, **kwargs):
+    """
+    First regressors from the dataset, then additional regressors, and a
+    potential constant is added last.
+    """
+    def __init__(self, regs, glmfit_kwargs=None, return_design=False,
+                 return_glmfit=False, add_regs=None, add_constant=False,
+                 **kwargs):
+        if not 'space' in kwargs:
+            kwargs['space'] = 'regressor_names'
         Mapper.__init__(self, auto_train=True, **kwargs)
-        self.regs = regs
+        self.regs = list(regs)
         if glmfit_kwargs is None:
             glmfit_kwargs = {}
         self.glmfit_kwargs = glmfit_kwargs
-        self.add_design = add_design
-        self.add_glmfit = add_glmfit
+        self.return_design = return_design
+        self.return_glmfit = return_glmfit
+        self.add_constant = add_constant
+        if add_regs is None:
+            add_regs = []
+        self.add_regs = tuple(add_regs)
 
     def _forward_dataset(self, ds):
-        X = np.vstack([ds.sa[reg].value for reg in self.regs]).T
+        X = None
+        if len(self.regs):
+            X = np.vstack([ds.sa[reg].value for reg in self.regs]).T
+        if len(self.add_regs):
+            regs = []
+            reg_names = []
+            for reg in self.add_regs:
+                regs.append(reg[1])
+                reg_names.append(reg[0])
+            if X is None:
+                X = np.vstack(regs).T
+            else:
+                X = np.vstack([X.T] + regs).T
+            self.regs += reg_names
+        if self.add_constant:
+            constant = np.ones(len(ds))
+            if X is None:
+                X = constant[None].T
+            else:
+                X = np.vstack((X.T, constant)).T
+            self.regs.append('constant')
+        if X is None:
+            raise ValueError("no design specified")
         glm = GeneralLinearModel(X)
         glm.fit(ds.samples, **self.glmfit_kwargs)
         out = Dataset(glm.get_beta(),
                         sa={self.get_space(): self.regs},
                         fa=ds.fa,
                         a=ds.a) # this last one might be a bit to opportunistic
-        if self.add_design:
+        if self.return_design:
             out.sa['regressors'] = X.T
-        if self.add_glmfit:
+        if self.return_glmfit:
             out.a['glmfit'] = glm
         return out
  
