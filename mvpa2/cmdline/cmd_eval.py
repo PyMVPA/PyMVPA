@@ -28,11 +28,11 @@ Examples:
 
 Assert some condition
 
-  $ pymvpa2 pytest -e 'assert(4==4)'
+  $ pymvpa2 eval -e 'assert(4==4)'
 
 Check for the presence of a particular sample attribute in a dataset
 
-  $ pymvpa2 pytest -e 'dss[0].sa.subj3' -i mydata.hdf5
+  $ pymvpa2 eval -e 'dss[0].sa.subj3' -i mydata.hdf5
 
 """
 

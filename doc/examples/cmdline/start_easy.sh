@@ -48,7 +48,7 @@ pymvpa2 dump -s -i "$outdir"/crossval_results.hdf5
 
 #% EXAMPLE END
 
-pymvpa2 pytest -i "$outdir"/crossval_results.hdf5 \
+pymvpa2 eval -i "$outdir"/crossval_results.hdf5 \
                -e 'assert ds.shape == (1,1)' \
                -e 'assert ds.samples[0,0] < 0.1'
 
