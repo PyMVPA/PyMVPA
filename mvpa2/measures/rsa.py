@@ -15,6 +15,9 @@ import numpy as np
 from mvpa2.measures.base import Measure
 from mvpa2.datasets.base import Dataset
 from mvpa2.base import externals
+from mvpa2.base.param import Parameter
+from mvpa2.base.constraints import EnsureChoice
+
 if externals.exists('scipy', raise_=True):
     from scipy.spatial.distance import pdist, squareform
     from scipy.stats import rankdata, pearsonr
@@ -29,25 +32,22 @@ class DissimilarityMatrixMeasure(Measure):
 
     is_trained = True # Indicate that this measure is always trained.
 
-    def __init__(self, pairwise_metric='correlation', center_data=False,
-                    square=False, **kwargs):
-        """
-        Parameters
-        ----------
-        pairwise_metric : str
+    pairwise_metric = Parameter('correlation', constraints='str', doc="""\
           Distance metric to use for calculating pairwise vector distances for
           dissimilarity matrix (DSM).  See scipy.spatial.distance.pdist for
-          all possible metrics.  (Default: 'correlation', i.e. one minus
-          Pearson correlation)
-        center_data : bool, optional
-          If True then center each column of the data matrix by subtracing the
-          column mean from each element  (by chunk if chunks_attr specified).
-          This is recommended especially when using
-          pairwise_metric='correlation'. Default: False
-        square : bool, optional
-          If True return the square distance matrix, if False, returns the
-          flattened upper triangle. Default: False
+          all possible metrics.""")
 
+    center_data = Parameter(False, constraints='bool', doc="""\
+          If True then center each column of the data matrix by subtracing the
+          column mean from each element. This is recommended especially when
+          using pairwise_metric='correlation'.""")
+
+    square = Parameter(False, constraints='bool', doc="""\
+          If True return the square distance matrix, if False, returns the
+          flattened upper triangle.""")
+
+    def __init__(self, **kwargs):
+        """
         Returns
         -------
         Dataset
@@ -59,22 +59,19 @@ class DissimilarityMatrixMeasure(Measure):
         """
 
         Measure.__init__(self, **kwargs)
-        self.pairwise_metric = pairwise_metric
-        self.center_data = center_data
-        self.square = square
 
     def _call(self,ds):
 
         data = ds.samples
         # center data if specified
-        if self.center_data:
+        if self.params.center_data:
             data = data - np.mean(data,0)
 
         # get dsm
-        dsm = pdist(data,metric=self.pairwise_metric)
+        dsm = pdist(data,metric=self.params.pairwise_metric)
 
         # if square return value make dsm square
-        if self.square:
+        if self.params.square:
             # re-add the sample attributes -- should still be valid
             out = Dataset(squareform(dsm),
                           sa=ds.sa)
@@ -98,32 +95,34 @@ class DissimilarityConsistencyMeasure(Measure):
     is_trained = True
     """Indicate that this measure is always trained."""
 
-    def __init__(self, chunks_attr='chunks', pairwise_metric='correlation',
-                 consistency_metric='pearson', center_data=False,
-                 square=False, **kwargs):
-        """
-        Parameters
-        ----------
-        chunks_attr : str
+    chunks_attr = Parameter('chunks', constraints='str', doc="""\
           Chunks attribute to use for chunking dataset. Can be any samples
-          attribute. Default: 'chunks'
-        pairwise_metric : str
+          attribute.""")
+
+    pairwise_metric = Parameter('correlation', constraints='str', doc="""\
           Distance metric to use for calculating dissimilarity matrices from
           the set of samples in each chunk specified. See
-          spatial.distance.pdist for all possible metrics.
-          Default: 'correlation', i.e. one minus Pearson correlation
-        consistency_metric: {'pearson', 'spearman'}
-          Correlation measure to use for the correlation between dissimilarity
-          matrices. Default: 'pearson'.
-        center_data : bool, optional
-          If True then center each column of the data matrix by subtracing the
-          column mean from each element  (by chunk if chunks_attr specified).
-          This is recommended especially when using
-          pairwise_metric='correlation'.
-        square : bool, optional
-          If True return the square similarity matrix, if False, returns the
-          flattened upper triangle. Default: False
+          spatial.distance.pdist for all possible metrics.""")
 
+    consistency_metric = Parameter('pearson',
+                                   constraints=EnsureChoice('pearson',
+                                                            'spearman'),
+                                   doc="""\
+          Correlation measure to use for the correlation between dissimilarity
+          matrices.""")
+
+    center_data = Parameter(False, constraints='bool', doc="""\
+          If True then center each column of the data matrix by subtracing the
+          column mean from each element. This is recommended especially when
+          using pairwise_metric='correlation'.""")
+
+    square = Parameter(False, constraints='bool', doc="""\
+          If True return the square distance matrix, if False, returns the
+          flattened upper triangle.""")
+
+
+    def __init__(self, **kwargs):
+        """
         Returns
         -------
         Dataset
@@ -137,16 +136,10 @@ class DissimilarityConsistencyMeasure(Measure):
         # init base classes first
         Measure.__init__(self, **kwargs)
 
-        self.pairwise_metric = pairwise_metric
-        self.consistency_metric = consistency_metric
-        self.chunks_attr = chunks_attr
-        self.center_data = center_data
-        self.square = square
-
     def _call(self, dataset):
         """Computes the average correlation in similarity structure across chunks."""
 
-        chunks_attr = self.chunks_attr
+        chunks_attr = self.params.chunks_attr
         nchunks = len(dataset.sa[chunks_attr].unique)
         if nchunks < 2:
             raise StandardError("This measure calculates similarity consistency across "
@@ -157,18 +150,18 @@ class DissimilarityConsistencyMeasure(Measure):
         for chunk in dataset.sa[chunks_attr].unique:
             data = np.atleast_2d(
                     dataset.samples[dataset.sa[chunks_attr].value == chunk,:])
-            if self.center_data:
+            if self.params.center_data:
                 data = data - np.mean(data,0)
-            dsm = pdist(data, self.pairwise_metric)
+            dsm = pdist(data, self.params.pairwise_metric)
             dsms.append(dsm)
             chunks.append(chunk)
         dsms = np.vstack(dsms)
 
-        if self.consistency_metric=='spearman':
+        if self.params.consistency_metric=='spearman':
             dsms = np.apply_along_axis(rankdata, 1, dsms)
         corrmat = np.corrcoef(dsms)
-        if self.square:
-            ds = Dataset(corrmat, sa={self.chunks_attr: chunks})
+        if self.params.square:
+            ds = Dataset(corrmat, sa={self.params.chunks_attr: chunks})
         else:
             ds = Dataset(squareform(corrmat,checks=False),
                          sa=dict(pairs=list(combinations(chunks, 2))))
@@ -185,26 +178,33 @@ class TargetDissimilarityCorrelationMeasure(Measure):
     is_trained = True
     """Indicate that this measure is always trained."""
 
-    def __init__(self, target_dsm, pairwise_metric='correlation',
-                    comparison_metric='pearson', center_data = False,
-                    corrcoef_only = False, **kwargs):
+    pairwise_metric = Parameter('correlation', constraints='str', doc="""\
+          Distance metric to use for calculating pairwise vector distances for
+          dissimilarity matrix (DSM).  See scipy.spatial.distance.pdist for
+          all possible metrics.""")
+
+    comparison_metric = Parameter('pearson',
+                                   constraints=EnsureChoice('pearson',
+                                                            'spearman'),
+                                   doc="""\
+          Similarity measure to be used for comparing dataset DSM with the
+          target DSM.""")
+
+    center_data = Parameter(False, constraints='bool', doc="""\
+          If True then center each column of the data matrix by subtracing the
+          column mean from each element. This is recommended especially when
+          using pairwise_metric='correlation'.""")
+
+    corrcoef_only = Parameter(False, constraints='bool', doc="""\
+          If True, return only the correlation coefficient (rho), otherwise
+          return rho and probability, p.""")
+
+    def __init__(self, target_dsm, **kwargs):
         """
         Parameters
         ----------
         target_dsm : array (length N*(N-1)/2)
           Target dissimilarity matrix
-        pairwise_metric : str
-          To be used by pdist to calculate dataset DSM. Default: 'correlation',
-          see scipy.spatial.distance.pdist for other metric options.
-        comparison_metric : {'pearson', 'spearman'}
-          To be used for comparing dataset dsm with target dsm.
-          Default: 'pearson'
-        center_data : bool
-          Center data by subtracting mean column values from columns prior to
-          calculating dataset dsm. Default: False
-        corrcoef_only : bool
-          If true, return only the correlation coefficient (rho), otherwise
-          return rho and probability, p. Default: False
 
         Returns
         -------
@@ -214,26 +214,19 @@ class TargetDissimilarityCorrelationMeasure(Measure):
         """
         # init base classes first
         Measure.__init__(self, **kwargs)
-        if comparison_metric not in ['spearman','pearson']:
-            raise Exception("comparison_metric %s is not in "
-                            "['spearman','pearson']" % comparison_metric)
         self.target_dsm = target_dsm
-        if comparison_metric == 'spearman':
+        if self.params.comparison_metric == 'spearman':
             self.target_dsm = rankdata(target_dsm)
-        self.pairwise_metric = pairwise_metric
-        self.comparison_metric = comparison_metric
-        self.center_data = center_data
-        self.corrcoef_only = corrcoef_only
 
     def _call(self,dataset):
         data = dataset.samples
-        if self.center_data:
+        if self.params.center_data:
             data = data - np.mean(data,0)
-        dsm = pdist(data,self.pairwise_metric)
-        if self.comparison_metric=='spearman':
+        dsm = pdist(data,self.params.pairwise_metric)
+        if self.params.comparison_metric=='spearman':
             dsm = rankdata(dsm)
         rho, p = pearsonr(dsm,self.target_dsm)
-        if self.corrcoef_only:
+        if self.params.corrcoef_only:
             return Dataset([rho], fa={'metrics': ['rho']})
         else:
             return Dataset([[rho,p]], fa={'metrics': ['rho', 'p']})
