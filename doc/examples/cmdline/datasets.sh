@@ -58,8 +58,8 @@ pymvpa2 mkevds --csv-events  "$outdir"/events.csv --onset-column vol \
 
 # EXAMPLE END
 
-pymvpa2 pytest -i "$outdir"/evds.hdf5 -e 'assert(len(dss[0]) == 3)'
-pymvpa2 pytest -i "$outdir"/short_ds.hdf5 -e 'assert(len(dss[0]) == 500)'
+pymvpa2 eval -i "$outdir"/evds.hdf5 -e 'assert(len(dss[0]) == 3)'
+pymvpa2 eval -i "$outdir"/short_ds.hdf5 -e 'assert(len(dss[0]) == 500)'
 
 # cleanup if working in tmpdir
 [ $have_tmpdir = 1 ] && rm -rf $outdir || true
