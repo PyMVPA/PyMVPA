@@ -49,13 +49,13 @@ mtds = mtgs(ds)
 
 # basic ROI RSA -- dissimilarity matrix for the entire ROI
 from mvpa2.measures import rsa
-dsm = rsa.DissimilarityMatrixMeasure(square=True)
+dsm = rsa.PDist(square=True)
 res = dsm(mtds)
 plot_mtx(res, mtds.sa.targets, 'ROI pattern correlation distances')
 
 # same as above, but done in a searchlight fashion
 from mvpa2.measures.searchlight import sphere_searchlight
-dsm = rsa.DissimilarityMatrixMeasure(square=False)
+dsm = rsa.PDist(square=False)
 sl = sphere_searchlight(dsm, 2)
 slres = sl(mtds)
 # score each searchlight sphere result wrt global pattern dissimilarity
@@ -76,7 +76,7 @@ mtcds = mtcgs(ds)
 
 # searchlight consistency measure -- how correlated are the structures
 # across runs
-dscm = rsa.DissimilarityConsistencyMeasure()
+dscm = rsa.PDistConsistency()
 sl_cons = sphere_searchlight(dscm, 2)
 slres_cons = sl_cons(mtcds)
 # mean correlation
@@ -90,7 +90,7 @@ plot_mtx(squareform(slres.samples[:, mean_consistency.argmax()]),
 
 # let's see where in the brain we find dissimilarity structures that are
 # similar to out most stable one
-tdsm = rsa.TargetDissimilarityCorrelationMeasure(
+tdsm = rsa.PDist2Target(
             slres.samples[:, mean_consistency.argmax()])
 # using a searchlight
 from mvpa2.base.learner import ChainLearner

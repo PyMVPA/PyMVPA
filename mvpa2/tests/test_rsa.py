@@ -34,7 +34,7 @@ data = np.array([[ 0.22366105, 0.51562476, 0.62623543, 0.28081652, 0.56513533],
                 [ 0.32113428, 0.16916899, 0.53471886, 0.93321617, 0.22531679]])
 
 
-def test_DissimilarityConsistencyMeasure():
+def test_PDistConsistency():
     targets = np.tile(xrange(3),2)
     chunks = np.repeat(np.array((0,1)),3)
     # correct results
@@ -51,17 +51,17 @@ def test_DissimilarityConsistencyMeasure():
                         checks=False).reshape((1,-1))
     
     ds = dataset_wizard(samples=data, targets=targets, chunks=chunks)
-    dscm = DissimilarityConsistencyMeasure()
+    dscm = PDistConsistency()
     res1 = dscm(ds)
-    dscm_c = DissimilarityConsistencyMeasure(center_data=True)
+    dscm_c = PDistConsistency(center_data=True)
     res2 = dscm_c(ds)
-    dscm_sp = DissimilarityConsistencyMeasure(consistency_metric='spearman')
+    dscm_sp = PDistConsistency(consistency_metric='spearman')
     res3 = dscm_sp(ds)
     ds.append(ds)
     chunks = np.repeat(['one', 'two', 'three'], 4)
     ds.sa['chunks'] = chunks
     res4 = dscm(ds)
-    dscm_sq = DissimilarityConsistencyMeasure(square=True)
+    dscm_sq = PDistConsistency(square=True)
     res4_sq = dscm_sq(ds)
     for i, p in enumerate(res4.sa.pairs):
         sqval =  np.asscalar(res4_sq[res4_sq.sa.chunks == p[0],
@@ -74,7 +74,7 @@ def test_DissimilarityConsistencyMeasure():
 
 
 
-def test_DissimilarityMatrixMeasure():
+def test_PDist():
     targets = np.tile(xrange(3),2)
     chunks = np.repeat(np.array((0,1)),3)
     ds = dataset_wizard(samples=data, targets=targets, chunks=chunks)
@@ -88,10 +88,10 @@ def test_DissimilarityMatrixMeasure():
     center_sq = squareform(pdist(data_c,'correlation'))
 
     # Now center each chunk separately
-    dsm1 = DissimilarityMatrixMeasure()
-    dsm2 = DissimilarityMatrixMeasure(pairwise_metric='euclidean')
-    dsm3 = DissimilarityMatrixMeasure(pairwise_metric='cityblock')
-    dsm4 = DissimilarityMatrixMeasure(center_data=True,square=True)
+    dsm1 = PDist()
+    dsm2 = PDist(pairwise_metric='euclidean')
+    dsm3 = PDist(pairwise_metric='cityblock')
+    dsm4 = PDist(center_data=True,square=True)
     assert_array_almost_equal(dsm1(ds).samples,pear)
     assert_array_almost_equal(dsm2(ds).samples,euc)
     dsm_res = dsm3(ds)
@@ -108,18 +108,18 @@ def test_DissimilarityMatrixMeasure():
     # sample attributes are carried over
     assert_almost_equal(ds.sa.targets, dsm_res.sa.targets)
 
-def test_TargetDissimilarityCorrelationMeasure():
+def test_PDist2Target():
     ds = Dataset(data)
     tdsm = range(15)
     ans1 = np.array([0.30956920104253222, 0.26152022709856804])
     ans2 = np.array([0.53882710751962437, 0.038217527859375197])
     ans3 = np.array([0.33571428571428574, 0.22121153763932569])
-    tdcm1 = TargetDissimilarityCorrelationMeasure(tdsm)
-    tdcm2 = TargetDissimilarityCorrelationMeasure(tdsm,
+    tdcm1 = PDist2Target(tdsm)
+    tdcm2 = PDist2Target(tdsm,
                                             pairwise_metric='euclidean')
-    tdcm3 = TargetDissimilarityCorrelationMeasure(tdsm,
+    tdcm3 = PDist2Target(tdsm,
                                 comparison_metric = 'spearman')
-    tdcm4 = TargetDissimilarityCorrelationMeasure(tdsm,
+    tdcm4 = PDist2Target(tdsm,
                                     corrcoef_only=True)
     a1 = tdcm1(ds)
     a2 = tdcm2(ds)

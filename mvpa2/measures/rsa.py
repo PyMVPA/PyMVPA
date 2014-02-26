@@ -22,12 +22,12 @@ if externals.exists('scipy', raise_=True):
     from scipy.spatial.distance import pdist, squareform
     from scipy.stats import rankdata, pearsonr
 
-class DissimilarityMatrixMeasure(Measure):
+class PDist(Measure):
     """Compute dissimiliarity matrix for samples in a dataset
 
-    Dissimilarity Matrix `Measure` returns the upper triangle of the n x n
-    disimilarity matrix defined as the pairwise distances between samples in
-    the dataset, and where n is the number of samples.
+    This `Measure` returns the upper triangle of the n x n disimilarity matrix
+    defined as the pairwise distances between samples in the dataset, and where
+    n is the number of samples.
     """
 
     is_trained = True # Indicate that this measure is always trained.
@@ -82,8 +82,8 @@ class DissimilarityMatrixMeasure(Measure):
         return out
 
 
-class DissimilarityConsistencyMeasure(Measure):
-    """Calculate the correlations of DissimilarityMatrixMeasures across chunks
+class PDistConsistency(Measure):
+    """Calculate the correlations of PDist measures across chunks
 
     This measures the consistency in similarity structure across runs
     within individuals, or across individuals if the target dataset is made from
@@ -167,8 +167,8 @@ class DissimilarityConsistencyMeasure(Measure):
                          sa=dict(pairs=list(combinations(chunks, 2))))
         return ds
 
-class TargetDissimilarityCorrelationMeasure(Measure):
-    """Calculate the correlations of DissimilarityMatrixMeasures with a target
+class PDist2Target(Measure):
+    """Calculate the correlations of PDist measures with a target
 
     Target dissimilarity correlation `Measure`. Computes the correlation between
     the dissimilarity matrix defined over the pairwise distances between the
