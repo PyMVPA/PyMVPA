@@ -332,3 +332,23 @@ class Constraints(Constraint):
             return '(%s)' % doc
         else:
             return doc
+
+constraint_spec_map = {
+    'float': EnsureFloat(),
+    'int': EnsureInt(),
+    'bool': EnsureBool(),
+    'str': EnsureStr(),
+    }
+
+def expand_contraint_spec(spec):
+    """Helper to translate literal contraint specs into functional ones
+
+    e.g. 'float' -> EnsureFloat()
+    """
+    if spec is None or hasattr(spec, '__call__'):
+        return spec
+    else:
+        try:
+            return constraint_spec_map[spec]
+        except KeyError:
+            raise ValueError("unsupport constraint specification '%r'" % (spec,))
