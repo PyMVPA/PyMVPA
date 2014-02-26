@@ -240,7 +240,7 @@ def _fit_hrf_event_model(
         ds.sa[reg] = design_matrix.matrix[:, i]
     # GLM
     glm = NiPyGLMMapper(design_matrix.names, glmfit_kwargs=glmfit_kwargs,
-            return_design=True, return_glmfit=True, space=condition_attr)
+            return_design=True, return_model=True, space=condition_attr)
     model_params = glm(ds)
     return model_params
 
@@ -425,7 +425,7 @@ def eventrelated_dataset(ds, events, time_attr=None, match='prev',
     ['one' 'two' 'constant']
     >>> print hrf_estimates.shape
     (3, 25)
-    >>> len(hrf_estimates.a.glmfit.get_mse())
+    >>> len(hrf_estimates.a.model.get_mse())
     25
     """
     if not len(events):
