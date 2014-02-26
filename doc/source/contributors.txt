@@ -14,6 +14,8 @@ We are very grateful to the following people, who have contributed
 valuable advice, code or documentation to PyMVPA:
 
 * Florian Baumgartner, University of Magdeburg, Germany
+* Sven Buchholz, University of Magdeburg, Germany
+* Andrew C. Connolly, Dartmouth College, USA
 * Michael W. Cole, Washington University in St. Louis, USA
 * Ceyhun Çakar
 * Reka Daniel, Princeton University, USA
