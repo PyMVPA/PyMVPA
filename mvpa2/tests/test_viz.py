@@ -9,6 +9,7 @@
 '''Tests for visualizations'''
 
 
+from mvpa2 import pymvpa_dataroot
 from mvpa2.testing import *
 from nose.tools import *
 
@@ -48,3 +49,34 @@ def test_imshow():
     else:
         # new mpls do it withough unnecessary duplication
         assert_is_instance(im.colorbar, Colorbar)
+
+def test_lightbox():
+    # smoketest for lightbox - moved from its .py __main__
+    from mvpa2.misc.plot.lightbox import plot_lightbox
+    fig = plot_lightbox(
+        #background = NiftiImage('%s/anat.nii.gz' % impath),
+        background = os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+        background_mask = None,
+        overlay = os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+        overlay_mask = os.path.join(pymvpa_dataroot, 'mask.nii.gz'),
+        #
+        do_stretch_colors = False,
+        add_colorbar = True,
+        cmap_bg = 'gray',
+        cmap_overlay = 'hot', # YlOrRd_r # pl.cm.autumn
+        #
+        fig = None,
+        # vlim describes value limits
+        # clim color limits (same by default)
+        vlim = [1500, None],
+        #vlim_type = 'symneg_z',
+        interactive = True,
+        #
+        #nrows = 2,
+        #ncolumns = 3,
+        add_info = (1, 2),
+        add_hist = (0, 2),
+        #
+        slices = [0]
+        )
+    assert_true(fig)
