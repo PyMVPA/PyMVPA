@@ -1260,19 +1260,15 @@ class SplitClassifier(CombinedClassifier):
 
         clf_hastestdataset = hasattr(clf_template, 'testdataset')
 
-        # for proper and easier debugging - first define classifiers and then
-        # train them
-        for split in self.__partitioner.get_partition_specs(dataset):
+        self.ca.splits = []
+
+        for i, pset in enumerate(self.__partitioner.generate(dataset)):
             if __debug__:
                 debug("CLFSPL_", "Deepcopying %s for %s",
                       (clf_template, self))
             clf = clf_template.clone()
             bclfs.append(clf)
-        self.clfs = bclfs
 
-        self.ca.splits = []
-
-        for i, pset in enumerate(self.__partitioner.generate(dataset)):
             if __debug__:
                 debug("CLFSPL", "Training classifier for split %d", (i,))
 
@@ -1282,7 +1278,7 @@ class SplitClassifier(CombinedClassifier):
             if ca.is_enabled("splits"):
                 self.ca.splits.append(split)
 
-            clf = self.clfs[i]
+            clf = bclfs[i]
 
             # assign testing dataset if given classifier can digest it
             if clf_hastestdataset:
@@ -1311,6 +1307,9 @@ class SplitClassifier(CombinedClassifier):
             if ca.is_enabled("training_stats"):
                 # XXX this is broken, as it cannot deal with not yet set ca
                 ca.training_stats += clf.ca.training_stats
+        # need to be assigned after the entire list populated since
+        # _set_classifiers places them into a tuple
+        self.clfs = bclfs
 
 
     @group_kwargs(prefixes=['slave_'], passthrough=True)
