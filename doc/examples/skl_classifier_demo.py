@@ -2,25 +2,27 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
-========================================
- Using scikit-learn learners with PyMVPA
-========================================
+============================================
+ Using scikit-learn classifiers with PyMVPA
+============================================
 
 Scikit-learn is a rich library of algorithms, many of them implementing the
-`learner API`_. PyMVPA provides a wrapper class,
+`estimator and predictor API`_. PyMVPA provides the wrapper class,
 :class:`~mvpa2.clfs.skl.base.SKLLearnerAdapter` that enables the use
 of all of these algorithms within the PyMVPA framework. With this adaptor
-the transformer API is presented as a PyMVPA mapper interface that is fully
-compatible with all other building blocks of PyMVPA.
+these aspects of the scikit-learn API are presented through a PyMVPA
+learner interface that is fully compatible with all other building blocks of
+PyMVPA.
 
 In this example we demonstrate this interface by mimicking the "`Nearest 
 Neighbors Classification`_" example from the scikit-learn documentation --
 applying the minimal modifications necessary to run two variants of the 
 scikit-learn k-nearest neighbors algorithm implementation on PyMVPA datasets.
 
-.. _learner API: http://scikit-learn.org/stable/developers/#apis-of-scikit-learn-objects
+.. _estimator and predictor API: http://scikit-learn.org/stable/developers/#apis-of-scikit-learn-objects
 .. _Nearest Neighbors Classification: http://scikit-learn.org/stable/auto_examples/neighbors/plot_classification.html
 """
+
 print(__doc__)
 
 import numpy as np
@@ -42,8 +44,10 @@ from mvpa2 import cfg
 from mvpa2.clfs.skl.base import SKLLearnerAdapter
 
 # load the iris dataset
-from mvpa2.datasets.sources.sklearn_data import skl_iris
+from mvpa2.datasets.sources.skl_data import skl_iris
 iris = skl_iris()
+# compact dataset summary
+print iris
 
 """
 The original example uses only the first two features of the dataset, 
@@ -56,13 +60,10 @@ iris=iris[:,[0,1]]
 d = {'setosa':0, 'versicolor':1, 'virginica':2}
 
 """
-For later visualization we need a dictionary that
-maps feature names into numerival values.
-Besides that, we continue with practically identical code.
+For visualization we will later map the literal class labels onto
+numerival values. Besides that, we continue with practically identical code.
 """
 
-
-X = iris.samples
 h = .02  # step size in the mesh
 
 cmap_light = ListedColormap(['#FFAAAA', '#AAFFAA', '#AAAAFF'])
@@ -74,16 +75,16 @@ for weights in ['uniform', 'distance']:
     clf = neighbors.KNeighborsClassifier(n_neighbors, weights=weights)
     wrapped_clf=SKLLearnerAdapter(clf)
     wrapped_clf.train(iris)
-    
-    
+
     """
     The following lines are an example of the only significant modification
     with respect to a pure scikit-learn implementation: the classifier is
     wrapped into the adaptor.  The result is a PyMVPA classifier, hence can 
-    be called with a dataset that contains both samples and targets -- without 
-    explcitly calling ``fit()`` and ``transform()``. 
-    """    
-    
+    be called with a dataset that contains both samples and targets.
+    """
+
+    # shortcut
+    X = iris.samples
     # Plot the decision boundary. For that, we will assign a color to each
     # point in the mesh [x_min, m_max]x[y_min, y_max].
     x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
@@ -91,7 +92,7 @@ for weights in ['uniform', 'distance']:
     xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
                          np.arange(y_min, y_max, h))
     Z = wrapped_clf.predict(np.c_[xx.ravel(), yy.ravel()])
-                  
+
     # to put the result into a color plot we now need numerical targets
     num_Z = np.array([d[v] for v in Z])
     num_Z = num_Z.reshape(xx.shape)
@@ -105,6 +106,15 @@ for weights in ['uniform', 'distance']:
     pl.ylim(yy.min(), yy.max())
     pl.title("3-Class classification (k = %i, weights = '%s')"
              % (n_neighbors, weights))
+
+"""
+This example shows that a PyMVPA classifier can be used in pretty much the
+same way as the corresponding scikit-learn API. What this example does not show
+is that with the :class:`~mvpa2.clfs.skl.base.SKLLearnerAdapter` class any
+scikit-learn classifier can be employed in arbitrarily complex PyMVPA
+processing pipelines and is enhanced with automatic training and all other
+functionality of PyMVPA classifier implementations.
+"""
 
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
