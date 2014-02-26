@@ -322,12 +322,15 @@ def linear1d_gaussian_noise(size=100, slope=0.5, intercept=1.0,
     return dataset_wizard(samples=x[:, None], targets=y)
 
 
-def load_example_fmri_dataset():
+def load_example_fmri_dataset(literal=False):
     """Load minimal fMRI dataset that is shipped with PyMVPA."""
     from mvpa2.datasets.mri import fmri_dataset
     from mvpa2.misc.io import SampleAttributes
 
-    attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
+    if literal:
+        attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes_literal.txt'))
+    else:
+        attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
     ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
                       targets=attr.targets, chunks=attr.chunks,
                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
