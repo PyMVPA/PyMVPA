@@ -40,13 +40,14 @@ class NiPyGLMMapper(Mapper):
         self.return_glmfit = return_glmfit
         self.add_constant = add_constant
         if add_regs is None:
-            add_regs = []
+            add_regs = tuple()
         self.add_regs = tuple(add_regs)
 
     def _forward_dataset(self, ds):
         X = None
-        if len(self.regs):
-            X = np.vstack([ds.sa[reg].value for reg in self.regs]).T
+        regs = list(self.regs)
+        if len(regs):
+            X = np.vstack([ds.sa[reg].value for reg in regs]).T
         if len(self.add_regs):
             regs = []
             reg_names = []
@@ -57,20 +58,20 @@ class NiPyGLMMapper(Mapper):
                 X = np.vstack(regs).T
             else:
                 X = np.vstack([X.T] + regs).T
-            self.regs += reg_names
+            regs += reg_names
         if self.add_constant:
             constant = np.ones(len(ds))
             if X is None:
                 X = constant[None].T
             else:
                 X = np.vstack((X.T, constant)).T
-            self.regs.append('constant')
+            regs.append('constant')
         if X is None:
             raise ValueError("no design specified")
         glm = GeneralLinearModel(X)
         glm.fit(ds.samples, **self.glmfit_kwargs)
         out = Dataset(glm.get_beta(),
-                        sa={self.get_space(): self.regs},
+                        sa={self.get_space(): regs},
                         fa=ds.fa,
                         a=ds.a) # this last one might be a bit to opportunistic
         if self.return_design:
