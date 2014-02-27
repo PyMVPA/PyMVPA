@@ -6,9 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""
-
-"""
+"""GLMMapper implementation based on the statsmodels package."""
 
 __docformat__ = 'restructuredtext'
 
@@ -23,10 +21,30 @@ from mvpa2.datasets import Dataset
 from mvpa2.mappers.glm import GLMMapper
 
 class StatsmodelsGLMMapper(GLMMapper):
-    """
+    """Statsmodels-based GLMMapper implementation
+
+    This is basically a front-end for
+    :class:`~mvpa2.measures.statsmodels_adaptor.UnivariateStatsModels`.
+    In particular, it supports all ``model_gen`` and ``results`` arguments
+    as described in the documentation for this class.
     """
     def __init__(self, regs, model_gen=None, results='params',
                  **kwargs):
+        """
+        Parameters
+        ----------
+        regs : list
+          Names of sample attributes to be extracted from an input dataset and
+          used as design matrix columns.
+        model_gen : callable, optional
+          See UnivariateStatsModels documentation for details on the
+          specification of the model fitting procedure. By default an
+          OLS model is used.
+        results : str or array, optional
+          See UnivariateStatsModels documentation for details on the
+          specification of model fit results. By default parameter
+          estimates are returned.
+        """
         GLMMapper.__init__(self, regs, **kwargs)
         self.result_expr = results
         if model_gen is None:

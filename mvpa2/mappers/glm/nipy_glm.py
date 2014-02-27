@@ -6,9 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""
-
-"""
+"""GLMMapper implementation based on the NiPy package."""
 
 __docformat__ = 'restructuredtext'
 
@@ -22,11 +20,25 @@ from mvpa2.datasets import Dataset
 from mvpa2.mappers.glm import GLMMapper
 
 class NiPyGLMMapper(GLMMapper):
+    """NiPy-based GLMMapper implementation
+
+    This is basically a front-end for
+    :class:`~ nipy.modalities.fmri.glm.GeneralLinearModel`.
+    In particular, it supports all keyword arguments of its
+    ``fit()`` method.
     """
-    First regressors from the dataset, then additional regressors, and a
-    potential constant is added last.
-    """
+
     def __init__(self, regs, glmfit_kwargs=None, **kwargs):
+        """
+        Parameters
+        ----------
+        regs : list
+          Names of sample attributes to be extracted from an input dataset and
+          used as design matrix columns.
+        glmfit_kwargs : dict, optional
+          Keyword arguments to be passed to GeneralLinearModel.fit().
+          By default an AR1 model is used.
+        """
         GLMMapper.__init__(self, regs, **kwargs)
         if glmfit_kwargs is None:
             glmfit_kwargs = {}

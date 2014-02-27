@@ -84,6 +84,7 @@ Mappers: Data Transformations
    mappers.flatten
    mappers.fx
    mappers.fxy
+   mappers.glm
    mappers.lle
    mappers.mdp_adaptor
    mappers.procrustean
