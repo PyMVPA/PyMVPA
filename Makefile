@@ -196,7 +196,7 @@ manpages: mkdir-MAN_DIR
 	PYTHONPATH=$(LPYTHONPATH) help2man --no-discard-stderr \
 		--help-option="--help-np" -N -n "command line interface for PyMVPA" \
 			bin/pymvpa2 > $(MAN_DIR)/pymvpa2.1
-	for cmd in $$(grep import < mvpa2/cmdline/__init__.py | cut -d _ -f 2-); do \
+	for cmd in $$(tr "\n'," ' ' < bin/pymvpa2 | sed -e 's/.*enabled_cmds = \[//' -e 's/\].*//'); do \
 		summary="$$(grep 'man: -*-' < mvpa2/cmdline/cmd_$${cmd}.py | cut -d '%' -f 2-)"; \
 		PYTHONPATH=$(LPYTHONPATH) help2man --no-discard-stderr \
 			--help-option="--help-np" -N -n "$$summary" \
