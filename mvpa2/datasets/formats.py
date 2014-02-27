@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""I/O helpers for some commonly used formats for datasets.
+"""Support for commonly used data source formats.
 
 """
 

@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""NeuroImaging Markup Language (NIML) support.
+"""Support for storage using the NeuroImaging Markup Language (NIML).
 
 Supports storing most typical values (samples, feature attributes, sample
 attributes, dataset attributes) that are in a dataset in NIML format, as

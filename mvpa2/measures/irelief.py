@@ -7,8 +7,8 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""FeaturewiseMeasure performing multivariate Iterative RELIEF
-(I-RELIEF) algorithm.
+"""Multivariate Iterative RELIEF
+
 See : Y. Sun, Iterative RELIEF for Feature Weighting: Algorithms, Theories,
 and Applications, IEEE Trans. on Pattern Analysis and Machine Intelligence
 (TPAMI), vol. 29, no. 6, pp. 1035-1051, June 2007."""

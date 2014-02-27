@@ -6,8 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Nodes that generate multiple datasets.
-"""
+"""Generate multiple output datasets form a single input"""
 
 __docformat__ = 'restructuredtext'
 

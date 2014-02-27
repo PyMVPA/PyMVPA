@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Measure of consistency between dissimilarity matrices across chunks."""
+"""Representational (dis)similarity analysis"""
 
 __docformat__ = 'restructuredtext'
 

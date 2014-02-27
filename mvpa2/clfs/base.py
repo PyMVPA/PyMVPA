@@ -6,8 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Base class for all XXX learners: classifiers and regressions.
-"""
+"""Plumbing for all learners (classifiers and regressions)"""
 
 __docformat__ = 'restructuredtext'
 

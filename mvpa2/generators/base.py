@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Generators for dataset resampling."""
+"""Repeat and filter as sequence of dataset"""
 
 __docformat__ = 'restructuredtext'
 

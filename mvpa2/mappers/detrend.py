@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Mapper for data detrending."""
+"""Polynomial de-trending and regression."""
 
 __docformat__ = 'restructuredtext'
 

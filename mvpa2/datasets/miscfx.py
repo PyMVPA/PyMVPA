@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Misc function performing operations on datasets.
+"""Miscellaneous functions to perform operations on datasets.
 
 All the functions defined in this module must accept dataset as the
 first argument since they are bound to Dataset class in the trailer.

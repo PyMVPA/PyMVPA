@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""sklearn interface module.
+"""Use scikit-learn transformer as mappers.
 
 This module provides an adaptor to use sklearn transformers as PyMVPA mappers.
 """
