@@ -1,6 +1,7 @@
 pymvpa2 (2.2.0+git1180-g574dff8-1) neurodebian-devel; urgency=low
 
   * Sample of a fresh state of pre-release development
+    - contains all  patches from under debian/patches/ so those are dropped
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 26 Feb 2014 23:54:21 -0500
 
