@@ -61,6 +61,13 @@ from numpy.testing import (
 def assert_array_lequal(x, y):
     assert_array_less(-y, -x)
 
+if sys.version_info < (2, 7):
+    # compatibility helpers for testing functions introduced in more recent versions
+    # of unittest/nose
+
+    def assert_is_instance(obj, cls, msg=None):
+        assert_true(isinstance(obj, cls), msg=msg)
+
 def skip_if_no_external(dep, ver_dep=None, min_version=None, max_version=None):
     """Raise SkipTest if external is missing
 
