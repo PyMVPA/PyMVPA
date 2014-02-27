@@ -453,23 +453,30 @@ class SurfTests(unittest.TestCase):
         assert_array_equal(m['myroi'], unique_nodes)
 
 
-
-    def test_afni_suma_spec(self):
+    @with_tempfile()
+    def test_afni_suma_spec(self, temp_dir):
 
         # XXX this function generates quite a few temporary files,
         #     which are removed at the end.
         #     the decorator @with_tempfile seems unsuitable as it only
         #     supports a single temporary file
 
+        # make temporary directory
+        os.mkdir(temp_dir)
+
         # generate surfaces
         inflated_surf = surf.generate_plane((0, 0, 0), (0, 1, 0), (0, 0, 1),
                                                     10, 10)
         white_surf = inflated_surf + 1.
 
+        # helper function
+        _tmp = lambda x:os.path.join(temp_dir, x)
+
+
         # filenames for surfaces and spec file
-        fd, inflated_fn = tempfile.mkstemp('_lh_inflated.asc'); os.close(fd)
-        fd, white_fn = tempfile.mkstemp('_lh_white.asc'); os.close(fd)
-        fd, spec_fn = tempfile.mkstemp('lh.spec'); os.close(fd)
+        inflated_fn = _tmp('_lh_inflated.asc')
+        white_fn = _tmp('_lh_white.asc')
+        spec_fn = _tmp('lh.spec')
 
         spec_dir = os.path.split(spec_fn)[0]
 
@@ -527,9 +534,11 @@ class SurfTests(unittest.TestCase):
         lh_spec = spec
         rh_spec_fn = spec_fn.replace('lh', 'rh')
 
-        rh_inflated_fn = inflated_fn.replace('_lh', '_rh')
-        rh_white_fn = white_fn.replace('_lh', '_rh')
-        fd, rh_spec_fn = tempfile.mkstemp('rh.spec'); os.close(fd)
+        rh_inflated_fn = _tmp(os.path.split(inflated_fn)[1].replace('_lh',
+                                                                    '_rh'))
+        rh_white_fn = _tmp(os.path.split(white_fn)[1].replace('_lh',
+                                                              '_rh'))
+        rh_spec_fn = _tmp('rh.spec')
 
         rh_white = dict(SurfaceFormat='ASCII',
             EmbedDimension='3',
@@ -582,9 +591,6 @@ class SurfTests(unittest.TestCase):
         assert_equal([s['SurfaceState'] for s in mh_spec.surfaces],
                     ['smoothwm'] + ['CoM%sinflated' % i for i in 'msiap'])
 
-        # remove temporary files
-        for fn in set(all_temp_fns):
-            os.unlink(fn)
 
 
 
