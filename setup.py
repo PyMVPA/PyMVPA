@@ -156,6 +156,7 @@ def setup_package():
                            'mvpa2.featsel',
                            'mvpa2.kernels',
                            'mvpa2.mappers',
+                           'mvpa2.mappers.glm',
                            'mvpa2.generators',
                            'mvpa2.measures',
                            'mvpa2.misc',

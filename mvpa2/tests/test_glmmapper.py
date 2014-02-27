@@ -13,15 +13,13 @@ import numpy as np
 from mvpa2.testing.tools import *
 
 skip_if_no_external('scipy')
-skip_if_no_external('nipy')
-skip_if_no_external('statsmodels')
 
 from scipy import signal
 from mvpa2.datasets import Dataset
 if externals.exists('nipy'):
-    from mvpa2.mappers.nipy_glm import NiPyGLMMapper
+    from mvpa2.mappers.glm import NiPyGLMMapper
 if externals.exists('statsmodels'):
-    from mvpa2.mappers.statsmodels_glm import StatsmodelsGLMMapper
+    from mvpa2.mappers.glm import StatsmodelsGLMMapper
 from mvpa2.misc.fx import double_gamma_hrf, single_gamma_hrf
 
 def get_bold():
@@ -64,6 +62,8 @@ def test_glm_mapper():
     if externals.exists('statsmodels'):
         implementations.append(StatsmodelsGLMMapper)
     results = []
+    if not len(implementations):
+        raise SkipTest
     for klass in implementations:
         pest = klass(reg_names)(bold)
         assert_equal(pest.shape, (len(reg_names), bold.nfeatures))
