@@ -108,18 +108,18 @@ def test_PDist():
     # sample attributes are carried over
     assert_almost_equal(ds.sa.targets, dsm_res.sa.targets)
 
-def test_PDist2Target():
+def test_PDistTargetSimilarity():
     ds = Dataset(data)
     tdsm = range(15)
     ans1 = np.array([0.30956920104253222, 0.26152022709856804])
     ans2 = np.array([0.53882710751962437, 0.038217527859375197])
     ans3 = np.array([0.33571428571428574, 0.22121153763932569])
-    tdcm1 = PDist2Target(tdsm)
-    tdcm2 = PDist2Target(tdsm,
+    tdcm1 = PDistTargetSimilarity(tdsm)
+    tdcm2 = PDistTargetSimilarity(tdsm,
                                             pairwise_metric='euclidean')
-    tdcm3 = PDist2Target(tdsm,
+    tdcm3 = PDistTargetSimilarity(tdsm,
                                 comparison_metric = 'spearman')
-    tdcm4 = PDist2Target(tdsm,
+    tdcm4 = PDistTargetSimilarity(tdsm,
                                     corrcoef_only=True)
     a1 = tdcm1(ds)
     a2 = tdcm2(ds)
