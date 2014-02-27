@@ -10,6 +10,10 @@ dataroot=${MVPA_DATA_ROOT:-"datadb/tutorial_data/tutorial_data/data"}
 
 # where to place output; into tmp by default
 outdir=${MVPA_EXAMPLE_WORKDIR:-}
+
+# which classifier we will use through out the analyses
+clf=${MVPA_EXAMPLE_CLF:-'SMLR(lm=1.0)'}
+
 have_tmpdir=0
 if [ -z "$outdir" ]; then
   outdir=$(mktemp -d)
@@ -34,10 +38,6 @@ pymvpa2 mkds \
 #% Obtain a summary of the dataset content
 pymvpa2 describe -i "$outdir"/bold.hdf5
 
-echo "Number of ROIs in the Harvard-Oxford cortial atlas: "
-pymvpa2 dump --fa hoc -f txt -i "$outdir"/bold.hdf5 | sort | uniq | wc -l
-
-
 pymvpa2 preproc --poly-detrend 0 \
                 --detrend-regrs mc_x mc_y mc_z mc_rot1 mc_rot2 mc_rot3 \
                 --filter-passband 0.005 0.067 \
@@ -55,7 +55,7 @@ pymvpa2 select \
     -o "$outdir"/faceshouses_inVT.hdf5
 
 pymvpa2 crossval \
-    --learner 'SMLR(lm=1.0)' \
+    --learner "$clf" \
     --partitioner n-1 \
     --errorfx mean_match_accuracy \
     --avg-datafold-results \
@@ -75,7 +75,7 @@ pymvpa2 --dbg-channel SLC searchlight \
     --scatter-rois 5 \
     --roi-attr gm \
     --nproc 2 \
-    --cv-learner 'SMLR(lm=1.0)' \
+    --cv-learner "$clf" \
     --cv-partitioner oddeven:chunks \
     --cv-errorfx mean_match_accuracy \
     --cv-avg-datafold-results \
@@ -93,22 +93,26 @@ pymvpa2 dump --fa null_prob \
     -i "$outdir"/sl_faces_vs_houses_brain.hdf5 \
     -o "$outdir"/sl_faces_vs_houses_brain_NP.nii.gz
 
-for roi in $(seq 48); do
-    echo "Doing ROI $roi"
+hoc_rois=( $(pymvpa2 exec -i "$outdir"/bold.hdf5 -e 'print(" ".join(map(str, dss[0].fa["hoc"].unique)))') )
+echo "Number of ROIs in the Harvard-Oxford cortial atlas: ${#hoc_rois[*]}"
 
+for roi in ${hoc_rois[*]}; do
+    echo -en " ROI $roi\t"
     pymvpa2 select --features-by-attr hoc eq $roi \
-    -i "$outdir"/faceshouses_brain.hdf5 \
-    -o "$outdir"/roi_tmp.hdf5
+        -i "$outdir"/faceshouses_brain.hdf5 \
+        -o "$outdir"/roi_tmp.hdf5
 
+    nfeatures=$(pymvpa2 exec -i "$outdir"/roi_tmp.hdf5 -e "print(dss[0].nfeatures)")
     resultds="${outdir}/xval_faces_vs_houses_inROI${roi}.hdf5"
 
+    echo -en "$nfeatures features\taccuracy="
     pymvpa2 crossval \
-        --learner 'SMLR(lm=1.0)' \
+        --learner "$clf" \
         --partitioner n-1 \
         --errorfx mean_match_accuracy \
         --avg-datafold-results \
         -i "$outdir"/roi_tmp.hdf5 \
-        -o $resultds 2> /dev/null | grep "ACC%"
+        -o $resultds | awk -e '/ACC%/{printf "%.2f%%\n", $2}'
 done
 
 
