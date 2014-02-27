@@ -77,6 +77,7 @@ class Warehouse(object):
         if matches is None:
             matches = {}
         self.__matches = matches
+        self.__descriptions = {}
 
     def __getitem__(self, *args):
         if isinstance(args[0], tuple):
@@ -129,6 +130,10 @@ class Warehouse(object):
             if not hasattr(item, '__tags__'):
                 raise ValueError, "Cannot register %s " % item + \
                       "which has no __tags__ defined"
+            if item.descr in self.__descriptions:
+                raise ValueError("Cannot register %s, " % item + \
+                      "an item with descriptions '%s' already exists" \
+                      % item.descr)
             if len(item.__tags__) == 0:
                 raise ValueError, "Cannot register %s " % item + \
                       "which has empty __tags__"
@@ -139,7 +144,12 @@ class Warehouse(object):
             else:
                 raise ValueError, 'Unknown clf internal(s) %s' % \
                       clf_internals.difference(self._known_tags)
+            # access by descr
+            self.__descriptions[item.descr] = item
         return self
+
+    def get_by_descr(self, descr):
+        return self.__descriptions[descr]
 
     @property
     def internals(self):
@@ -152,11 +162,31 @@ class Warehouse(object):
         """
         return [(x.descr, x.__tags__) for x in self.__items]
 
+    def print_registered(self, *args):
+        if not len(args):
+            args = (slice(None))
+        import numpy as np
+        import textwrap
+        # sort by description
+        for lrn in sorted(self.__getitem__(args), key=lambda x: x.descr.lower()):
+            print '%s\n%s' % (
+                    lrn.descr,
+                    textwrap.fill(', '.join(np.unique(lrn.__tags__)), 70,
+                                  initial_indent=' ' * 4,
+                                  subsequent_indent=' ' * 4)
+                )
+
     @property
     def items(self):
         """Registered items
         """
         return self.__items
+
+    @property
+    def descriptions(self):
+        """Descriptions of registered items"""
+        return self.__descriptions.keys()
+
 
 clfswh = Warehouse(known_tags=_KNOWN_INTERNALS) # classifiers
 regrswh = Warehouse(known_tags=_KNOWN_INTERNALS) # regressions
