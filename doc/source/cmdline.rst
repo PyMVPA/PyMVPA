@@ -77,6 +77,8 @@ Auxilliary command
    generated/cmd_exec
    generated/cmd_atlaslabeler
 
+.. _cmdline_example_scripts:
+
 Example scripts
 ===============
 
@@ -86,8 +88,7 @@ to use PyMVPA's command line interface in actual scripts.
 .. toctree::
 
    cmdline/start_easy
-   cmdline/datasets
-   cmdline/preproc
+   cmdline/fmri_analyses
    cmdline/query_pymvpa
 
 
