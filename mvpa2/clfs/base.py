@@ -259,10 +259,10 @@ class Classifier(Learner):
                 # e.g. in case of pair-wise uncombined results - provide
                 # stats per each of the targets pairs
                 prediction_targets = predictions.fa[self.get_space()].value
-                ca.training_stats = {
-                    t: self.__summary_class__(
-                        targets=targets, predictions=predictions.samples[:, i])
-                    for i, t in enumerate(prediction_targets)}
+                ca.training_stats = dict(
+                    (t, self.__summary_class__(
+                        targets=targets, predictions=predictions.samples[:, i]))
+                    for i, t in enumerate(prediction_targets))
             else:
                 ca.training_stats = self.__summary_class__(
                     targets=targets, predictions=predictions)
