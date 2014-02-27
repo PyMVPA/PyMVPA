@@ -517,7 +517,7 @@ class SurfTests(unittest.TestCase):
         # test 'smart' surface file matching
         assert_equal(spec.get_surface_file('smo'), white_fn)
         assert_equal(spec.get_surface_file('inflated'), inflated_fn)
-        assert_equal(spec.get_surface_file('x'), None)
+        assert_equal(spec.get_surface_file('this should be None'), None)
 
         # test i/o
         spec.write(spec_fn)
