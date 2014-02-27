@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Classes for meta classifiers -- classifiers which use other classifiers
+"""Meta classifiers -- classifiers which use other classifiers or preprocessing
 
 Meta Classifiers can be grouped according to their function as
 

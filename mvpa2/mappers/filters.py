@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Filtering mappers."""
+"""Spectral filtering and FFT-based resampling."""
 
 __docformat__ = 'restructuredtext'
 

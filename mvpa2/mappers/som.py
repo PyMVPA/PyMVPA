@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Self-organizing map (SOM) mapper."""
+"""Self-organizing map (SOM)."""
 
 __docformat__ = 'restructuredtext'
 

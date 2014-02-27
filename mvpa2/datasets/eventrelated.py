@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Dataset for event-related samples."""
+"""Functions for event segmentation or modeling of dataset."""
 
 __docformat__ = 'restructuredtext'
 

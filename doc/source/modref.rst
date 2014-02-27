@@ -38,6 +38,7 @@ Basic Facilities
    base.attributes
    base.collections
    base.config
+   base.constraints
    base.dochelpers
    base.externals
    base.hdf5
@@ -67,7 +68,7 @@ Datasets: Input, Output, Storage and Preprocessing
    datasets.niml
    datasets.eeglab
    datasets.miscfx
-   datasets.sources.sklearn_data
+   datasets.sources.skl_data
 
 
 Mappers: Data Transformations
@@ -91,8 +92,10 @@ Mappers: Data Transformations
    mappers.projection
    mappers.prototype
    mappers.shape
+   mappers.skl_adaptor
    mappers.slicing
    mappers.som
+   mappers.staticprojection
    mappers.svd
    mappers.wavelet
    mappers.zscore
@@ -165,16 +168,11 @@ Measures: Searchlights and Sensitivties
 
    measures.base
    measures.anova
-   measures.corrcoef
-   measures.corrstability
-   measures.ds
    measures.irelief
    measures.noiseperturbation
-   measures.pls
-   measures.adhocsearchlightbase
    measures.gnbsearchlight
    measures.nnsearchlight
-   measures.rsm
+   measures.rsa
    measures.searchlight
    measures.statsmodels_adaptor
    measures.winner
@@ -213,7 +211,6 @@ Miscellaneous
    atlases.warehouse
    misc.args
    misc.attrmap
-   misc.cmdline
    misc.data_generators
    misc.dcov
    misc.errorfx
@@ -252,6 +249,7 @@ Basic Plotting Utilities
 .. autosummary::
    :toctree: generated
 
+   viz
    misc.plot
    misc.plot.base
    misc.plot.erp

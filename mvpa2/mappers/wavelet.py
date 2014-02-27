@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Wavelet mappers"""
+"""Wavelet transformation"""
 
 from mvpa2.base import externals
 

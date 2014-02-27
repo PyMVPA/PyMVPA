@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##g
-"""Parameter validation"""
+"""Helper for parameter validation, documentation and conversion"""
 
 # TODO: __str__ / __repr__'s
 

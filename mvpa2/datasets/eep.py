@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Dataset that gets its samples from an EEP binary file"""
+"""Support for the binary EEP file format for EEG data"""
 
 __docformat__ = 'restructuredtext'
 

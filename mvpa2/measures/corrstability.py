@@ -6,8 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""FeaturewiseMeasure of stability of labels across chunks based
-on correlation."""
+"""Stability of labels across chunks based on correlation."""
 
 __docformat__ = 'restructuredtext'
 

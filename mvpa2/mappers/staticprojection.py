@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Static Projection mapper"""
+"""Transform data via static projection matrices"""
 
 __docformat__ = 'restructuredtext'
 
