@@ -169,7 +169,8 @@ def run(args):
     roi_ids = None
     aggregate_fx = args.aggregate_fx
     # scatter_neighborhoods
-    if not args.scatter_rois is None:
+    seed_coords = None
+    if args.scatter_rois is not None:
         from mvpa2.misc.neighborhood import scatter_neighborhoods
         attr, nb = args.scatter_rois
         coords = ds.fa[attr].value
@@ -181,7 +182,7 @@ def run(args):
                 args.enable_ca = ['roi_feature_ids']
             elif 'roi_feature_ids' not in args.enable_ca:
                 args.enable_ca += ['roi_feature_ids']
-    if not args.roi_attr is None:
+    if args.roi_attr is not None:
         if len(args.roi_attr) == 1 and args.roi_attr[0] in ds.fa.keys():
             # name of an attribute -> pull non-zeroes
             rids = ds.fa[args.roi_attr[0]].value.nonzero()[0]
@@ -214,9 +215,9 @@ def run(args):
     #                 tmp_prefix
     #                 nblocks
     #                 null_dist
-    # run 
+    # run
     res = sl(ds)
-    if 'mapper' in res.a:
+    if (seed_coords is not None) and ('mapper' in res.a):
         # strip the last mapper link in the chain, which would be the seed ID selection
         res.a['mapper'] = res.a.mapper[:-1]
     # XXX create more output
