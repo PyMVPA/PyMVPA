@@ -19,7 +19,7 @@ from mvpa2.base.constraints import *
 from mvpa2.testing.clfs import *
 
 class ParametrizedClassifier(SameSignClassifier):
-    p1 = Parameter(1.0)
+    p1 = Parameter(1.0, constraints='float')
     kp1 = KernelParameter(100.0)
 
 class ParametrizedClassifierExtended(ParametrizedClassifier):
@@ -193,6 +193,13 @@ class ParamsTests(unittest.TestCase):
         #self.assertTrue('choice2' in c__doc__)
         #self.assertTrue("(Default: 'choice1')" in c__doc__)        
         #self.assertTrue("(Default: 'choice1')" in cf__doc__)
+
+    def test_simple_specs(self):
+        p = Parameter(1.0, constraints='int')
+        self.assertTrue(p.value is 1)
+        self.assertTrue(p.constraints is constraint_spec_map['int'])
+        self.assertRaises(ValueError, Parameter, 'a', constraints='int')
+        self.assertRaises(ValueError, Parameter, 1.0, constraints='str')
 
 
 def suite():  # pragma: no cover
