@@ -167,7 +167,7 @@ class PDistConsistency(Measure):
                          sa=dict(pairs=list(combinations(chunks, 2))))
         return ds
 
-class PDist2Target(Measure):
+class PDistTargetSimilarity(Measure):
     """Calculate the correlations of PDist measures with a target
 
     Target dissimilarity correlation `Measure`. Computes the correlation between

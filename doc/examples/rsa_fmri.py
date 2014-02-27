@@ -89,8 +89,8 @@ plot_mtx(squareform(slres.samples[:, mean_consistency.argmax()]),
          'Most consistent searchlight pattern correlation distances')
 
 # let's see where in the brain we find dissimilarity structures that are
-# similar to out most stable one
-tdsm = rsa.PDist2Target(
+# similar to our most stable one
+tdsm = rsa.PDistTargetSimilarity(
             slres.samples[:, mean_consistency.argmax()])
 # using a searchlight
 from mvpa2.base.learner import ChainLearner
