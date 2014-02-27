@@ -25,19 +25,19 @@ def as_list(v):
 
 def afni_fileparts(fn):
     '''File parts for afni filenames.
-    
+
     Returns a tuple with these four parts.
-    
+
     Also works for .nii files, in which case the third part is the empty
-    
+
     Not tested for other file types
-    
+
     Parameters
     ----------
     whole filename
       PATH/TO/FILE/NAME+orig.HEAD
-      
-    
+
+
     Returns
     -------
     fullpath: str
@@ -48,7 +48,7 @@ def afni_fileparts(fn):
       +orig
     extensions: str
       .HEAD
-    
+
     '''
 
     tail, head = os.path.split(fn)
@@ -84,7 +84,7 @@ def afni_fileexists(fn):
     ----------
     fn : str
         AFNI filename (possibly without .HEAD or .BRIK extension)
-    
+
     Returns
     -------
     bool
@@ -102,10 +102,10 @@ def run_cmds(cmds, env=None, dryrun=False):
     if env is None:
         env = os.environ
 
-    # if cmds is just one command, make a singleton list    
+    # if cmds is just one command, make a singleton list
     cmds = as_list(cmds)
 
-    # run each command    
+    # run each command
     for cmd in cmds:
         print("** Will execute the following commands:")
         for c in cmd.split(';'):
@@ -113,25 +113,30 @@ def run_cmds(cmds, env=None, dryrun=False):
         if not dryrun:
             print("**>> Starting now:")
 
-            subprocess.call(cmd, env=os.environ, shell=True)
+            subprocess.check_call(cmd, env=env, shell=True)
 
             print("**<< ... completed execution")
 
+def cmd_capture_output(cmd, env=None):
+    if env is None:
+        env = os.environ
+    return subprocess.check_output(cmd, env=env, shell=True)
+
 def which(f, env=None):
     '''Finds the full path to a file in the path
-    
+
     Parameters
     ----------
     f: str
         Filename of executable
-    env (optional): 
+    env (optional):
         Environment in which path is found.
         By default this is the environment in which python runs
-        
-    
+
+
     Returns
     str
-        Full path of 'f' if 'f' is executable and in the path, 'f' itself 
+        Full path of 'f' if 'f' is executable and in the path, 'f' itself
         if 'f' is a path, None otherwise
     '''
     if env == None:
@@ -279,8 +284,8 @@ The software in the following files is covered under the MIT License
 ''' +
     '\n'.join(map(lambda x:' - ' + x, outputfns)) +
     '''
-Parts of this software is or will be included in PyMVPA. 
-For information see http://www.pymvpa.org. 
+Parts of this software is or will be included in PyMVPA.
+For information see http://www.pymvpa.org.
 
 -------------------------------------------------------------------------
 The MIT License

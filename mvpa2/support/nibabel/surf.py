@@ -110,11 +110,13 @@ class Surface(object):
 
         if not hasattr(self, '_n2f'):
             # run the first time this function is called
-            n2f = collections.defaultdict(list)
+            n2f = dict()
             for i in xrange(self._nf):
                 fi = self._f[i]
                 for j in xrange(3):
                     p = fi[j]
+                    if not p in n2f:
+                        n2f[p] = []
                     n2f[p].append(i)
             self._n2f = n2f
 
@@ -245,7 +247,7 @@ class Surface(object):
 
 
         if not hasattr(self, '_nbrs'):
-            nbrs = collections.defaultdict(dict)
+            nbrs = dict()
             for i in xrange(self._nf):
                 fi = self._f[i]
 
@@ -265,6 +267,11 @@ class Surface(object):
                            + (pv[2] - qv[2]) * (pv[2] - qv[2]))
 
                     dist = math.sqrt(sqdist)
+                    if not p in nbrs:
+                        nbrs[p] = dict()
+                    if not q in nbrs:
+                        nbrs[q] = dict()
+
                     nbrs[q][p] = dist
                     nbrs[p][q] = dist
 
@@ -759,7 +766,7 @@ class Surface(object):
         -------
         source_target2distance: dict
             A dictionary so that source_target2distance[i,j]=d means that the
-            Euclidian distance between nodes i and j is d, where i in src
+            Euclidean distance between nodes i and j is d, where i in src
             and j in trg.
 
         Notes
@@ -913,45 +920,48 @@ class Surface(object):
         return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
 
     def __str__(self):
-        s = ['%r' % self]
+        # helper function to print coordinates. f should be np.min or np.max
+        func_coord2str = lambda f: '%.3f %.3f %.3f' % tuple(
+                                                        f(self.vertices, 0))
 
-        nfirst = 3 # how many of first and last nodes and faces to show
+        return '%s(%d vertices (range %s ... %s), %d faces)' % (
+                        self.__class__.__name__,
+                        self.nvertices,
+                        func_coord2str(np.min),
+                        func_coord2str(np.max),
+                        self.nfaces)
 
-        def getrange(n, nfirst=nfirst):
-            # gets the indices of first and last nodes (or all, if there
-            # are only a few)
-            if n < 2 * nfirst:
-                return xrange(n)
-            else:
-                r = range(nfirst)
-                r.extend(range(n - nfirst, n))
-                return r
-
-        def getlist(vs, prefix):
-            s = []
-            n = vs.shape[0]
-            for i in getrange(n):
-                s.append('%s %8d: %r' % (prefix, i, vs[i]))
-            return s
-
-        s.extend(getlist(self._v, "vertex"))
-        s.extend(getlist(self._f, "face"))
-
-        return "\n".join(s)
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False
 
-        p, q = self.vertices, other.vertices
-        return (np.all(np.abs(p - q) < _COORD_EPS) | np.all(np.isnan(p) == np.isnan(q))
+        sv = self.vertices
+        ov = other.vertices
+
+        # must be identical where NaNs occur
+        if np.any(np.logical_xor(np.isnan(sv), np.isnan(ov))):
+            return False
+
+        # difference in vertices
+        v = np.abs(self.vertices - other.vertices)
+
+        return (np.all(np.logical_or(v < _COORD_EPS, np.isnan(v)))
                 and np.all(self.faces == other.faces))
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __reduce__(self):
-        return (self.__class__, (self._v, self._f))
+        # these are lazily computed on the first call to e.g. node2faces
+        lazy_keys = ('_n2f', '_f2el', '_v2ael', '_e2f', '_nbrs')
+        lazy_dict = dict()
+        for lazy_key in lazy_keys:
+            if lazy_key in self.__dict__:
+                lazy_dict[lazy_key] = self.__dict__[lazy_key]
+
+
+        return (self.__class__, (self._v, self._f), lazy_dict)
 
     def same_topology(self, other):
         '''
@@ -1253,8 +1263,7 @@ class Surface(object):
         # if this fails, then we just continue normally
         if self.same_topology(highres):
             d = np.sum((x - y) ** 2, axis=1) ** .5
-
-            if all(d < epsilon):
+            if all(d[np.logical_not(np.isnan(d))] < epsilon):
                 for i in xrange(nx):
                     mapping[i] = i
                 return mapping
@@ -1381,7 +1390,7 @@ class Surface(object):
         if self.same_topology(highres):
             d = np.sum((x - y) ** 2, axis=1) ** .5
 
-            if all(d < epsilon):
+            if all(d[np.logical_not(np.isnan(d))] < epsilon):
                 for i in xrange(nx):
                     mapping[i] = i
                 return mapping
@@ -1466,6 +1475,101 @@ class Surface(object):
             mapping[i] = idxs[minpos]
 
         return mapping
+
+    def vonoroi_map_to_high_resolution_surf(self, highres_surf,
+                                highres_indices=None, epsilon=.001,
+                                    accept_only_icosahedron=False):
+        '''
+        Computes a Vonoroi mapping for the current (low-res) surface
+
+        Parameters
+        ----------
+        highres_surf: Surface
+            High-resolution surface.
+        highres_indices: np.ndarray
+            List of indices in high-res surface that have to be mapped.
+        epsilon: float
+            maximum margin (distance) between nodes mapped from low to
+            high resolution surface. Default None, which implies .001.
+        accept_only_icosahedron: bool
+            if True, then this function raises an error if the number of
+            nodes does not match those which would be expected from
+            MapIcosahedorn.
+
+        Returns
+        -------
+        high2high_in_low: dict
+            A mapping so that high2high_in_low[high_idx]=(high_in_low_idx,d)
+            means that the node on the high-res surface indexed by high_idx is
+            nearest (in a Dijsktra distance sense) distance d to the node on the
+            high-res surface high_in_low_idx that has a corresponding
+            node on the low-res surface
+        '''
+
+        # the set of indidces that will serve as keys in high2high_in_low
+        if highres_indices is None:
+            highres_indices = np.arange(highres_surf.nvertices)
+        highres_indices = set(highres_indices)
+
+
+        low2high = self.map_to_high_resolution_surf(highres_surf, epsilon,
+                                                  accept_only_icosahedron)
+
+
+
+        # reverse mapping, only containing nodes that are both in
+        # highres_indices and have a partner in self (lowres)
+        high2low = dict((v, k) for k, v in low2high.iteritems()
+                                if v in highres_indices)
+
+        # node indices in high-res surface that have a mapping
+        # and thus are acceptable
+        highres_center_set = set(high2low)
+
+
+        # starting value for radius
+        radius = np.mean(self.average_node_edge_length)
+        max_radius = radius * 10000.
+
+        # set of node indices of low-res surface
+        lowres_node_set = set(xrange(self.nvertices))
+
+        # space for output
+        high2high_in_low = dict()
+
+        # continue increasing radius until all high-res nodes
+        # have been mapped to a low-res node
+        while set(high2high_in_low) != highres_indices:
+            for highres_index in highres_indices:
+                if highres_index in high2high_in_low:
+                    # already has a low-res node mapped to it
+                    continue
+
+                # compute distances in high-res surface
+                ds = highres_surf.dijkstra_distance(highres_index, radius)
+
+                common = set.intersection(set(ds), highres_center_set)
+
+                if len(common):
+                    # keep only distances to allowed nodes
+                    small_ds = dict((k, v) for k, v in ds.iteritems() if k in common)
+
+                    # find nearest node
+                    nearest_node_highres = min(small_ds, key=small_ds.get)
+                    d = small_ds[nearest_node_highres]
+
+                    # store the result
+                    high2high_in_low[highres_index] = (nearest_node_highres, d)
+
+            radius *= 2
+
+            if radius > max_radius:
+                # safety mechanism to avoid endless loop
+                raise RuntimeError("Radius increased to %d - too big" % radius)
+
+
+        return high2high_in_low
+
 
     @property
     def face_areas(self):

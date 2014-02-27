@@ -36,7 +36,9 @@ experiments.
 
 .. _ARV+13:
 
-**Andersson, P., Ramsey, N. F., Viergever, M. A. & Pluim, J. P.** (2013). 7T fMRI reveals feasibility of covert visual attention-based brain--computer interfacing with signals obtained solely from cortical grey matter accessible by subdural surface electrodes. *Clinical Neurophysiology*.
+**Andersson, P., Ramsey, N. F., Viergever, M. A. & Pluim, J. P.** (2013). 7T fMRI reveals feasibility of covert visual attention-based brain–computer interfacing with signals obtained solely from cortical grey matter accessible by subdural surface electrodes. *Clinical neurophysiology*, *124*, 2191-2197.
+  DOI: http://dx.doi.org/10.1016/j.clinph.2013.05.009
+
 
 .. _Ban09:
 
@@ -199,6 +201,12 @@ experiments.
   URL: http://www.jmlr.org/papers/v3/guyon03a.html
 
 
+.. _HBI+14:
+
+**Hanke, M., Baumgartner, F. J., Ibe, P., Kaule, F. R., Pollmann, S., Speck, O., Zinke, W. & Stadler, J.** (in press). A high-resolution 7-Tesla fMRI dataset from complex natural stimulation with an audio movie. *Scientific Data*.
+  URL: http://www.studyforrest.org
+
+
 .. _HHH+10:
 
 **Hanke, M., Halchenko, Y. O., Haxby, J. V. & Pollmann, S.** (2010). Statistical learning analysis in neuroscience: aiming for transparency. *Frontiers in Neuroscience*, *4*, 38–43.
@@ -295,6 +303,14 @@ experiments.
   concerning the privacy of personal thought.*
 
   DOI: http://dx.doi.org/10.1038/nrn1931
+
+
+.. _HSC+14:
+
+**Helfinstein, S. M., Schonberg, T., Congdon, E., Karlsgodt, K. H., Mumford, J. A., Sabb, F. W., Cannon, T. D., London, E. D., Bilder, R. M. & Poldrack, R. A.** (2014). Predicting risky choices from brain activity patterns. *Proceedings of the National Academy of Sciences*, *111*, 2470-2475.
+  DOI: http://dx.doi.org/10.1073/pnas.1321728111
+
+  URL: http://www.pnas.org/content/111/7/2470.abstract
 
 
 .. _HBL+12:
@@ -481,6 +497,14 @@ experiments.
 
 **Man, K., Kaplan, J. T., Damasio, A. & Meyer, K.** (2012). Sight and sound converge to form modality-invariant representations in temporoparietal cortex. *The Journal of Neuroscience*, *32*, 16629-16636.
   DOI: http://dx.doi.org/10.1523/JNEUROSCI.2342-12.2012
+
+
+.. _MR13:
+
+**Manelis, A. & Reder, L. M.** (2013). He Who Is Well Prepared Has Half Won The Battle: An fMRI Study of Task Preparation. *Cerebral Cortex*.
+  DOI: http://dx.doi.org/10.1093/cercor/bht262
+
+  URL: http://cercor.oxfordjournals.org/content/early/2013/10/02/cercor.bht262.abstract
 
 
 .. _MHH10:

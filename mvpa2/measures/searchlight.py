@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Implementation of the Searchlight algorithm"""
+"""Searchlight implementation for arbitrary measures and spaces"""
 
 __docformat__ = 'restructuredtext'
 

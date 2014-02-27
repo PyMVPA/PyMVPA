@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Dataset for magnetic resonance imaging (MRI) data.
+"""Support for magnetic resonance imaging (MRI) data IO.
 
 This module offers functions to import into PyMVPA MRI data from files
 in any format supported by NiBabel_ (e.g. NIfTI, MINC, Analyze), and

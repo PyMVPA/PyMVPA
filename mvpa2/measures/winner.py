@@ -6,8 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Winner take all measures, where the output consists of a single sample
-or feature."""
+"""Data aggregation procedures"""
 
 __docformat__ = 'restructuredtext'
 
@@ -108,7 +107,7 @@ class WinnerMeasure(Measure):
             to_copy[1][k] = copy.copy(v)
 
         # set source and target. feature attributes become
-        # sample attribtues; or vice versa
+        # sample attributes; or vice versa
         src, _ = to_leave
         trg = to_copy[1]
         prefix = self.__other_axis_prefix

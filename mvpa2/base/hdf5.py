@@ -220,7 +220,8 @@ def _update_obj_state_from_hdf(obj, hdf, memo):
             obj.__setstate__(state)
         else:
             state = _hdf_dict_to_obj(hdf['state'], memo)
-            obj.__dict__.update(state)
+            if state:
+                obj.__dict__.update(state)
         if __debug__:
             debug('HDF5', "Updated %i state items." % len(state))
 
@@ -574,9 +575,15 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
     # try disassembling the object
     try:
         pieces = obj.__reduce__()
-    except TypeError:
+        if __debug__:
+            debug('HDF5', "Reduced '%s' (ref: %i) in [%s]"
+                          % (type(obj), obj_id, hdf.name))
+    except TypeError as te:
         # needs special treatment
         pieces = None
+        if __debug__:
+            debug('HDF5', "Failed to reduce '%s' (ref: %i) in [%s]: %s (%s)"
+                          % (type(obj), obj_id, hdf.name, te, obj))
 
     # common container handling, either __reduce__ was not possible
     # or it was the default implementation
@@ -638,7 +645,10 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
         # there is something in the state
         state = pieces[2]
         if __debug__:
-            debug('HDF5', "Store object state (%i items)." % len(state))
+            if state is not None:
+                debug('HDF5', "Store object state (%i items)." % len(state))
+            else:
+                debug('HDF5', "Storing object with None state")
         # need to set noid since state dict is unique to an object
         obj2hdf(grp, state, name='state', memo=memo, noid=True,
                 **kwargs)

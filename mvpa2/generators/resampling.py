@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Generators for dataset resampling."""
+"""Dataset content resampling (e.g. balance number of samples per condition)"""
 
 __docformat__ = 'restructuredtext'
 

@@ -39,7 +39,7 @@ class ArgsHelpersTest(unittest.TestCase):
 
             @group_kwargs(prefixes=['slave_'], assign=True)
             def __init__(self, **kwargs):
-                selftop.failUnless(hasattr(self, '_slave_kwargs'))
+                selftop.assertTrue(hasattr(self, '_slave_kwargs'))
                 self.method_passedempty()
                 self.method_passed(1, custom_p1=144, bugax=1)
                 self.method_filtered(1, custom_p1=123)
@@ -47,20 +47,20 @@ class ArgsHelpersTest(unittest.TestCase):
             @group_kwargs(prefixes=['custom_'], passthrough=True)
             def method_passedempty(self, **kwargs):
                 # we must have it even though it is empty
-                selftop.failUnless('custom_kwargs' in kwargs)
+                selftop.assertTrue('custom_kwargs' in kwargs)
 
             @group_kwargs(prefixes=['custom_', 'buga'], passthrough=True)
             def method_passed(self, a, custom_kwargs, bugakwargs, **kwargs):
                 # we must have it even though it is empty
-                selftop.failUnless(custom_kwargs == {'p1':144})
-                selftop.failUnless(bugakwargs == {'x':1})
-                selftop.failUnless(not hasattr(self, '_custom_kwargs'))
+                selftop.assertTrue(custom_kwargs == {'p1':144})
+                selftop.assertTrue(bugakwargs == {'x':1})
+                selftop.assertTrue(not hasattr(self, '_custom_kwargs'))
 
             @group_kwargs(prefixes=['custom_'])
             def method_filtered(self, a, **kwargs):
                 # we must have it even though it is empty
-                selftop.failUnlessEqual(a, 1)
-                selftop.failUnless(not 'custom_kwargs' in kwargs)
+                selftop.assertEqual(a, 1)
+                selftop.assertTrue(not 'custom_kwargs' in kwargs)
 
             def method(self):
                 return 123
@@ -74,10 +74,11 @@ class ArgsHelpersTest(unittest.TestCase):
         self.assertTrue(c1.method_decorated() == 124)
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(ArgsHelpersTest)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

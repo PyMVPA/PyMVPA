@@ -18,7 +18,7 @@ import math
 
 def seconds2prettystring(t, ndigits=0):
     '''Prints seconds in a pretty form
-    
+
     Parameters
     ----------
     t: float
@@ -26,11 +26,11 @@ def seconds2prettystring(t, ndigits=0):
     ndigits: int (default: 0)
         how many digits are used to show time in seconds (after
         the decimal sign '.')
-        
+
     Returns
     s: str
         time represented as a string HH:MM:SS
-        
+
     '''
     if t < 0:
         return '-' + seconds2prettystring(-t, ndigits)
@@ -39,7 +39,7 @@ def seconds2prettystring(t, ndigits=0):
         return 'oo' # infinity
 
     seconds_per_day = 60 * 60 * 24
-    ndays = int(t) / seconds_per_day
+    ndays = int(t) // seconds_per_day
     nseconds = t - ndays * seconds_per_day
     sec_str = str(datetime.timedelta(seconds=nseconds))
 
@@ -58,9 +58,9 @@ def seconds2prettystring(t, ndigits=0):
 
 def eta_string(start_time, progress, msg=None,
                 progress_bar_width=18, show_percentage=True):
-    '''Simple linear extrapolation to estimate how much time is needed 
+    '''Simple linear extrapolation to estimate how much time is needed
     to complete a task.
-    
+
     Parameters
     ----------
     starttime
@@ -73,12 +73,12 @@ def eta_string(start_time, progress, msg=None,
         Width of progress bar. If zero then no progress bar is shown.
     show_percentage: bool (default: True)
         Show progress in percentage?
-        
+
     Returns
     -------
     eta
-        Estimated time until completion formatter pretty, 
-    
+        Estimated time until completion formatter pretty,
+
     Notes
     -----
     ETA refers to "estimated time of arrival".
@@ -138,10 +138,10 @@ class ProgressBar(object):
                         show_percentage=True):
         '''
         Initializes the progress bar
-        
+
         Parameters
         ----------
-        start_time: float or None (default) 
+        start_time: float or None (default)
             Start time relative to the start of the Epoch. If None it takes
             the current time.
         progress_bar_width: int (default: 18)
@@ -156,10 +156,10 @@ class ProgressBar(object):
 
     def start(self, start_time=None):
         '''Resets the start time
-        
+
         Parameters
         ----------
-        start_time: float or None (default) 
+        start_time: float or None (default)
             Start time relative to the start of the Epoch. If None it takes
             the current time.
         '''
@@ -170,18 +170,18 @@ class ProgressBar(object):
     def __call__(self, progress, msg=None):
         '''
         Returns a string representation of progress
-        
+
         Parameters
         ----------
         progress: float
             Between 0 (nothing completed) and 1 (fully completed)
         msg: str (optional)
             Message that describes progress - is added to the output
-        
+
         Returns
         -------
         bar: str
-            A text representation of progress. 
+            A text representation of progress.
         '''
         return eta_string(self._start_time, progress, msg,
                           progress_bar_width=self._progress_bar_width,

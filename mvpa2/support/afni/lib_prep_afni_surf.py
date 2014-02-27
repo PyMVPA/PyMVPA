@@ -55,6 +55,7 @@ For typical usage it requires three arguments:
 (1) "-e epi_filename"  or  "-a anat_filename"
 (2) "-d freesurfer/directory/surf"
 (3) "-r outputdir"'
+(*) "-T" [if "epi_filename" / "anat_filename" is in template (MNI/Tal) space"
 
 Notes:
 
@@ -92,13 +93,15 @@ def getdefaults():
        'overwrite':False, # delete directories and files before running commands - BE CAREFUL with this option
        'hemi':'l+r', # hemispheres to process, usually l+r
        'mi_icopat':'ico%d_', # pattern for icosehedron output; placeholder is for ld
-       'usenifti':False, # maybe provide some nifti support in the future
        'expvol_ss':True,
        'verbose':True,
        'al2expsuffix':'_al2exp',
        'sssuffix':'_ss',
        'alsuffix':'_al',
-       'hemimappingsuffix':'hemi_correspondence.1D'
+       'hemimappingsuffix':'hemi_correspondence.1D',
+       'outvol_space':None, # output space, one of 'MNI', 'TLRC', 'MNI_ANAT', None, 'ORIG'
+       'outvol_ext': None, # '+tlrc','+orig','.nii','.nii.gz'
+       'outvol_fullext':None
        }
 
     return d
@@ -167,60 +170,62 @@ def augmentconfig(c):
 
     # update steps
     if c.get('steps', 'all') == 'all':
-        c['steps'] = 'toafni+mapico+moresurfs+skullstrip+align+makespec+makespecboth'
+        c['steps'] = 'toafni+mapico+moresurfs+skullstrip+align+makespec+makespecboth+makesurfmasks'
 
+
+
+    hasanatvol = 'anatvol' in c and c['anatvol']
+    hasepivol = 'epivol' in c and c['epivol']
+    hasexpvol = 'expvol' in c and c['expvol']
+    hasisepi = 'isepi' in c
+
+    if hasexpvol:
+        if hasanatvol or hasepivol:
+            raise Exception("expvol specified, but also anatvol or epivol - illegal!")
+        if not hasisepi:
+            raise Exception("not specified whether expvol is EPI (yes) or anat (no)")
+
+    else:
+        if hasanatvol:
+            if 'epivol' in c and c['epivol']:
+                raise Exception("Cannot have both anatvol and epivol")
+            else:
+                c['expvol'] = c['anatvol']
+                c['isepi'] = False
+                del(c['anatvol'])
+        else:
+            if hasepivol:
+                c['expvol'] = c['epivol']
+                c['isepi'] = True
+                del(c['epivol'])
+            else:
+                print("Warning: no anatomical or functional experimental voume defined")
+
+    def yesno2bool(d, k): # dict, key
+        '''Assuming d[k] contains the word 'yes' or 'no', makes d[k] a boolean
+        (True=='yes',False=='no'); otherwise an exception is thrown. The dict is updated'''
+        val = d[k]
+        if val is None:
+            b = False
+        elif type(val) == bool:
+            b = val
+        else:
+            v = val.lower()
+            if v == 'yes':
+                b = True
+            elif v == 'no':
+                b = False
+            else:
+                raise Exception("Not yes or no: %s" % val)
+        d[k] = b
+
+    yesno2bool(c, 'AddEdge')
 
     if c['identity']:
-        c['expvol_ss'] = c['anatval_ss'] = c['AddEdge'] = False
+        c['expvol_ss'] = c['anatval_ss'] = False
     else:
-        hasanatvol = 'anatvol' in c and c['anatvol']
-        hasepivol = 'epivol' in c and c['epivol']
-        hasexpvol = 'expvol' in c and c['expvol']
-        hasisepi = 'isepi' in c
-
-        if hasexpvol:
-            if hasanatvol or hasepivol:
-                raise Exception("expvol specified, but also anatvol or epivol - illegal!")
-            if not hasisepi:
-                raise Exception("not specified whether expvol is EPI (yes) or anat (no)")
-
-        else:
-            if hasanatvol:
-                if 'epivol' in c and c['epivol']:
-                    raise Exception("Cannot have both anatvol and epivol")
-                else:
-                    c['expvol'] = c['anatvol']
-                    c['isepi'] = False
-                    del(c['anatvol'])
-            else:
-                if hasepivol:
-                    c['expvol'] = c['epivol']
-                    c['isepi'] = True
-                    del(c['epivol'])
-                else:
-                    print("Warning: no anatomical or functional experimental voume defined")
-
-        def yesno2bool(d, k): # dict, key
-            '''Assuming d[k] contains the word 'yes' or 'no', makes d[k] a boolean
-            (True=='yes',False=='no'); otherwise an exception is thrown. The dict is updated'''
-            val = d[k]
-            if val is None:
-                b = False
-            elif type(val) == bool:
-                b = val
-            else:
-                v = val.lower()
-                if v == 'yes':
-                    b = True
-                elif v == 'no':
-                    b = False
-                else:
-                    raise Exception("Not yes or no: %s" % val)
-            d[k] = b
-
         yesno2bool(c, 'expvol_ss')
         yesno2bool(c, 'isepi')
-        yesno2bool(c, 'AddEdge')
 
     # see if we can get the fs_sid
     # (only if surfdir is set properly)
@@ -249,6 +254,37 @@ def augmentconfig(c):
         if pathvar in c and c[pathvar]:
             c[pathvar] = os.path.abspath(c[pathvar])
             print "Set absolute path for %s: %s" % (pathvar, c[pathvar])
+
+    if c['template'] and c['notemplate']:
+        error('Cannot have both template and notemplate')
+
+    if 'expvol' in c:
+        p, n, o, e = utils.afni_fileparts(c['expvol'])
+
+        if c.get('outvol_space', None) is None:
+            cmd = '3dAttribute TEMPLATE_SPACE %s' % c['expvol']
+            outvol_space = utils.cmd_capture_output(cmd)
+            outvol_space = outvol_space.split('~')[0].strip()
+            if len(outvol_space) and not c['notemplate'] and outvol_space.lower() != 'orig':
+                print "Detected TEMPLATE_SPACE=%s" % outvol_space
+                c['outvol_space'] = outvol_space
+                if o == '+orig':
+                    o = '+tlrc'
+                    print "Template space '%s' detected: output has extension %s" % (outvol_space, o)
+                c['template'] = True
+            else:
+                c['outvol_space'] = '+orig'
+
+        if len(o): #'+orig' or '+tlrc'
+            c['outvol_ext'] = o
+            c['outvol_fullext'] = o + e
+            c['outvol_view'] = o[1:]
+        else:
+            # For NIFTI - output in orig or tlrc
+            c['outvol_view'] = 'tlrc' if c['template'] else 'orig'
+            c['outvol_ext'] = '+' + c['outvol_view']
+            c['outvol_fullext'] = c['outvol_ext'] + '.HEAD'
+
 
     return c
 
@@ -311,7 +347,7 @@ def run_mapico(config, env):
                     print("Seems MapIcosahedron was already run for %sh with ld=%d" % (hemi, icold))
                     continue
 
-            cmd = ('MapIcosahedron -overwrite -spec %s_%sh.spec -ld %d -prefix %s' %
+            cmd = ('MapIcosahedron -overwrite -spec %s_%sh.spec -ld %d -fix_cut_surfaces -prefix %s' %
                        (sid, hemi, icold, icoprefix))
             cmds.append(cmd)
         if cmds:
@@ -362,10 +398,52 @@ def run_moresurfs(config, env):
                 else:
                     print "%s already exists" % fns[2]
 
-def run_skullstrip(config, env):
+def _set_vol_space_cmd(fn, config):
+    param = ''
+    del_cmd = ''
 
-    if config['identity']:
-        return
+    p, n, o, e = utils.afni_fileparts(fn)
+
+    space = config.get('outvol_space', None)
+    if space is not None:
+        param += ' -space %s' % space
+
+    view = config.get('outvol_view')
+    if view is not None:
+        param += ' -view %s' % view
+
+        if len(o) and o[0] == '+' and o[1:].lower() != view.lower():
+            trgfn = '%s/%s+%s' % (p, n, view.lower())
+            del_cmd = 'rm %s*; ' % trgfn
+
+
+    if param:
+        p, n, o, e = utils.afni_fileparts(fn)
+        cmd = 'cd %s; %s 3drefit -overwrite %s %s' % (p, del_cmd, param, n + o + e)
+    else:
+        cmd = 'echo "Not changing view or space for %s"' % fn
+    return cmd
+
+def _convert_vol_space_to_orig_cmd(fn):
+    p, n, o, e = utils.afni_fileparts(fn)
+    if o == '+orig':
+        return "echo '%s' is already in orig space - no conversion" % fn
+
+    t = '__tmp_foo_'
+    while os.path.exists(p + '/' + t + o + e):
+        t += 'x'
+
+    cmds = ['cd %s' % p,
+          '3drename -overwrite %s%s %s%s' % (n, o, t, o),
+          '3drefit -view orig %s%s' % (t, o),
+          '3drename -overwrite %s+orig %s+orig' % (t, n)]
+
+    return ';'.join(cmds)
+
+
+
+def run_skullstrip(config, env):
+    fullext = config['outvol_fullext']
 
     overwrite = config['overwrite']
     refdir = config['refdir']
@@ -388,8 +466,8 @@ def run_skullstrip(config, env):
                              'T1.nii']]
 
     surfvol_trgs = ['%s/%s' % (refdir, fn)
-                  for fn in ['%s_SurfVol_ss+orig.HEAD' % sid,
-                             '%s_SurfVol+orig.HEAD' % sid]]
+                  for fn in ['%s_SurfVol_ss%s' % (sid, fullext),
+                             '%s_SurfVol%s' % (sid, fullext)]]
 
     for src, trg in zip(surfvol_srcs, surfvol_trgs):
         if os.path.exists(trg) and not overwrite:
@@ -397,8 +475,9 @@ def run_skullstrip(config, env):
         else:
             t_p, t_n, t_o, t_e = utils.afni_fileparts(trg)
             trg_short = '%s%s' % (t_n, t_o)
-            cmds.append('cd "%s"; 3dcopy -overwrite %s ./%s' %
+            cmds.append('cd "%s"; 3dresample -overwrite -orient LPI -inset %s -prefix ./%s' %
                         (refdir, src, trg_short))
+            cmds.append(_set_vol_space_cmd('%s/%s+orig' % (refdir, t_n), config))
 
     # process experimental volume.
     expvol_src = config['expvol']
@@ -406,41 +485,45 @@ def run_skullstrip(config, env):
     [e_p, e_n, e_o, e_e] = utils.afni_fileparts(expvol_src)
 
     expvol_trg_prefix = '%s%s' % (e_n, config['sssuffix'] if do_ss else '')
+    expvol_trg_tmp_prefix = '__tmp_%s' % expvol_trg_prefix
 
-    if 'nii' in e_e:
-        # ensure e_n+orig is in refdir
-        if overwrite or not utils.afni_fileexists('%s/%s+orig.HEAD' % (refdir, e_n)):
-            print "Converting %s from NIFTI to AFNI format" % e_n
-            cmds.append('cd "%s"; 3dbucket -overwrite -prefix ./%s+orig %s' % (refdir, e_n, expvol_src))
-            cmds.append('if [ -e %s/%s+tlrc.HEAD ]; then 3drefit -view orig -space ORIG %s/%s+tlrc; else echo "File in orig orientation - no refit necessary"; fi' % (refdir, e_n, refdir, e_n))
-
-        expvol_src = '%s/%s+orig.HEAD' % (refdir, e_n)
-
-    expvol_trg = '%s/%s+orig.HEAD' % (refdir, expvol_trg_prefix)
+    expvol_trg = '%s/%s%s' % (refdir, expvol_trg_prefix, fullext)
 
     print "Attempt %s -> %s" % (expvol_src, expvol_trg)
 
+    ext = config['outvol_ext']
+
     if overwrite or not utils.afni_fileexists(expvol_trg):
         if do_ss:
-            cmds.append('cd "%s";3dSkullStrip -overwrite -prefix ./%s+orig -input %s' %
-                            (refdir, expvol_trg_prefix, expvol_src))
+            cmds.append('cd "%s";3dSkullStrip -overwrite -prefix ./%s%s -input %s' %
+                            (refdir, expvol_trg_tmp_prefix, ext, expvol_src))
         else:
-            cmds.append('cd "%s";3dbucket -overwrite -prefix ./%s+orig %s' %
-                            (refdir, expvol_trg_prefix, expvol_src))
+            cmds.append('cd "%s";3dbucket -overwrite -prefix ./%s%s %s' %
+                            (refdir, expvol_trg_tmp_prefix, ext, expvol_src))
+        cmds.append('cd "%s"; 3dresample -overwrite -orient LPI -prefix %s -inset %s%s' %
+                            (refdir, expvol_trg_prefix, expvol_trg_tmp_prefix, ext))
+        cmds.append('rm %s/%s*' % (refdir, expvol_trg_tmp_prefix))
+        cmds.append(_set_vol_space_cmd(expvol_trg, config))
     else:
-        print "No skull strip because already exists: %s+orig" % expvol_trg_prefix
+        print "No skull strip because already exists: %s%s" % (expvol_trg_prefix, ext)
 
     utils.run_cmds(cmds, env)
 
 def run_alignment(config, env):
     '''Aligns anat (which is assumed to be aligned with EPI data) to FreeSurfer SurfVol
 
-    This function strips the anatomicals (by default), then uses @SUMA_AlignToExperiment
+    This function strips the anatomicals (by default), then uses align_epi_anat.py
     to estimate the alignment, then applies this transformation to the non-skull-stripped
     SurfVol and also to the surfaces. Some alignment headers will be nuked'''
     overwrite = config['overwrite']
     alignsuffix = config['al2expsuffix']
     refdir = config['refdir']
+
+    fullext = config['outvol_fullext']
+    ext = config['outvol_ext']
+
+    if config['sid'] is None:
+        raise ValueError('Need sid')
 
     cmds = []
     if not os.path.exists(config['refdir']):
@@ -448,13 +531,13 @@ def run_alignment(config, env):
 
     # two volumes may have to be stripped: the inpput anatomical, and the surfvol.
     # put them in a list here and process them similarly
-    surfvol = '%(refdir)s/%(sid)s_SurfVol+orig.HEAD' % config
-    surfvol_ss = '%(refdir)s/%(sid)s_SurfVol_ss+orig.HEAD' % config
+    surfvol = '%(refdir)s/%(sid)s_SurfVol%(outvol_fullext)s' % config
+    surfvol_ss = '%(refdir)s/%(sid)s_SurfVol%(sssuffix)s%(outvol_fullext)s' % config
 
     e_p, e_n, _, _ = utils.afni_fileparts(config['expvol'])
     if config['expvol_ss']:
         e_n = '%s%s' % (e_n, config['sssuffix'])
-    expvol = '%s/%s+orig.HEAD' % (refdir, e_n)
+    expvol = '%s/%s%s' % (refdir, e_n, fullext)
 
     volsin = [surfvol_ss, expvol]
     for volin in volsin:
@@ -465,14 +548,17 @@ def run_alignment(config, env):
     ssalprefix = '%s%s' % (a_n, alignsuffix)
 
     unity = "1 0 0 0 0 1 0 0 0 0 1 0" # we all like unity, don't we?
-    if config['identity']:
-        fullmatrixfn = '"MATRIX(%s)"' % unity.replace(" ", ",")
-    else:
-        fullmatrixfn = '%s_mat.aff12.1D' % ssalprefix
 
-        aloutfns = ['%s+orig.HEAD' % ssalprefix, fullmatrixfn] # expected output files if alignment worked
+    fullmatrixfn = '%s_mat.aff12.1D' % ssalprefix
+    aloutfns = ['%s%s' % (ssalprefix, fullext), fullmatrixfn] # expected output files if alignment worked
+    if config['overwrite'] or not all([os.path.exists('%s/%s' % (refdir, f)) for f in aloutfns]):
+        alignedfn = '%s/%s%s' % (refdir, ssalprefix, fullext)
 
-        if config['overwrite'] or not all([os.path.exists('%s/%s' % (refdir, f)) for f in aloutfns]):
+        if config['identity']:
+            fullmatrix_content = '"MATRIX(%s)"' % unity.replace(" ", ",")
+
+            cmd = 'cd "%s"; cat_matvec %s > %s; 3dcopy -overwrite %s%s %s%s%s' % (refdir, fullmatrix_content, fullmatrixfn, a_n, ext, a_n, alignsuffix, ext)
+        else:
             # use different inputs depending on whether expvol is EPI or ANAT
             twovolpat = ('-anat %s -epi %s -anat2epi -epi_base 0 -anat_has_skull no -epi_strip None' if config['isepi']
                        else '-dset1 %s -dset2 %s -dset1to2 -dset1_strip None -dset2_strip None')
@@ -480,15 +566,22 @@ def run_alignment(config, env):
             twovolsuffix = twovolpat % (volsin[0], volsin[1])
 
             aea_opts = config['aea_opts']
+            if config['template']:
+                aea_opts += " -Allineate_opts '-maxrot 10 -maxshf 10 -maxscl 1.5'"
             # align_epi_anat.py
             cmd = 'cd "%s"; align_epi_anat.py -overwrite -suffix %s %s %s' % (refdir, alignsuffix, twovolsuffix, aea_opts)
-            cmds.append(cmd)
 
-        else:
-            print "Alignment already done - skipping"
+        cmds.append(cmd)
+
+        cmds.append(_set_vol_space_cmd(alignedfn, config))
+
+        utils.run_cmds(cmds, env)
+
+    else:
+        print "Alignment already done - skipping"
 
         # run these commands first, then check if everything worked properly
-        utils.run_cmds(cmds, env)
+
 
     cmds = []
 
@@ -504,7 +597,7 @@ def run_alignment(config, env):
 
     # make an aligned, non-skullstripped version of SurfVol in refdir
     alprefix = '%s_SurfVol%s' % (config['sid'], alignsuffix)
-    svalignedfn = '%s/%s+orig.HEAD' % (refdir, alprefix)
+    svalignedfn = '%s/%s%s' % (refdir, alprefix, fullext)
 
     newgrid = 1 # size of anatomical grid in mm. We'll have to resample, otherwise 3dWarp does
               # not respect the corners of the volume (as of April 2012)
@@ -517,6 +610,8 @@ def run_alignment(config, env):
         surfvolfn = '%s/T1.nii' % config['sumadir']
         cmds.append('cd "%s";3dWarp -overwrite -newgrid %f -matvec_out2in `cat_matvec -MATRIX %s` -prefix ./%s %s' %
                     (refdir, newgrid, matrixfn, alprefix, surfvolfn))
+        cmds.append(_set_vol_space_cmd('%s/%s+orig' % (refdir, alprefix), config))
+
     else:
         print '%s already exists - skipping Warp' % svalignedfn
 
@@ -524,7 +619,7 @@ def run_alignment(config, env):
     cmds = []
 
     # nuke afni headers
-    headernukefns = ['%s+orig.HEAD' % f for f in [ssalprefix, alprefix]]
+    headernukefns = ['%s%s' % (f, fullext) for f in [ssalprefix, alprefix]]
     headernukefields = ['ALLINEATE_MATVEC_B2S_000000',
                       'ALLINEATE_MATVEC_S2B_000000',
                       'WARPDRIVE_MATVEC_FOR_000000',
@@ -543,38 +638,87 @@ def run_alignment(config, env):
             # only refit if not already in AFNI history (which is stored in HEADfile)
             cmd = 'cd "%s"; m=`grep "%s" %s | wc -w`; if [ $m -eq 0 ]; then %s; else echo "File %s seems already 3drefitted"; fi' % (refdir, refitcmd, fn, refitcmd, fn)
             cmds.append(cmd)
+    utils.run_cmds('; '.join(cmds), env)
+    cmds = []
 
     # run AddEdge so that volumes can be inspected visually for alignment
     if config['AddEdge']:
-        basedset = volsin[1]
-        [d, n, o, e] = utils.afni_fileparts(basedset)
-        if 'nii' in e:
-            o = '+orig'
-            if overwrite or not os.path.exists('%s/%s+orig.HEAD' % refdir, n):
-                cmds.append('cd %s; 3dcopy -overwrite %s.nii %s%s' % (refdir, n, n, o))
+        use_ss = config['expvol_ss']
 
-        dset = '%s+orig.HEAD' % alprefix
-        n_dset = utils.afni_fileparts(dset)[1]
+        # ae_{e,s}_n are AddEdge names for expvol and surfvol
+        ae_e_n = utils.afni_fileparts(config['expvol'])[1]
+        if use_ss:
+            ae_e_n += config['sssuffix']
+        ae_s_n = ssalprefix #if use_ss else alprefix
 
-        addedge_fns = ['_ae.ExamineList.log']
+        # *_ne have the output extension as well
+        ae_e_ne = ae_e_n + ext
+        ae_s_ne = ae_s_n + ext
+
+        addedge_fns = ['%s/_ae.ExamineList.log' % refdir]
 
         exts = ['HEAD', 'BRIK']
-        addedge_rootfns = ['%s_%s+orig' % (n, postfix)
-                            for postfix in ['e3', 'ec', n_dset + '_ec']]
-        addedge_rootfns.extend(['%s_%s+orig' % (n_dset, postfix)
+        orig_ext = '+orig'
+        addedge_rootfns = ['%s_%s%%s' % (ae_e_n, postfix)
+                            for postfix in ['e3', 'ec', ae_s_n + '_ec']]
+        addedge_rootfns.extend(['%s_%s%%s' % (ae_s_n, postfix)
                             for postfix in ['e3', 'ec']])
 
-        addedge_fns = ['%s.%s' % (fn, e) for fn in addedge_rootfns for e in exts]
+        addedge_fns_pat = ['%s.%s' % (fn, e) for fn in addedge_rootfns for e in exts]
 
-        addegde_pathfns = map(lambda x:os.path.join(refdir, x), addedge_fns)
-
-        addegde_exists = map(os.path.exists, addegde_pathfns)
+        addegde_pathfns_orig = map(lambda x:os.path.join(refdir, x % '+orig'), addedge_fns_pat) + addedge_fns
+        addegde_pathfns_ext = map(lambda x:os.path.join(refdir, x % ext), addedge_fns_pat)
+        addegde_exists = map(os.path.exists, addegde_pathfns_ext)
         if overwrite or not all(addegde_exists):
-            if overwrite:
-                cmds.extend(map(lambda fn : 'rm "%s"' % fn, addegde_pathfns))
-            cmds.append('cd %s; \@AddEdge %s%s %s' % (refdir, n, o, dset))
+            ae_ns = (ae_e_n, ae_s_n)
+
+            cmds.extend(map(lambda fn : 'if [ -e "%s" ]; then rm "%s"; fi' % (fn, fn), addegde_pathfns_orig + addegde_pathfns_ext))
+            cmds.append(';'.join(['cd %s' % refdir] +
+                                 [_convert_vol_space_to_orig_cmd('%s/%s%s' % (refdir, n, ext))
+                                            for n in ae_ns] +
+                                 ['\@AddEdge %s+orig %s+orig' % ae_ns]))
+
+            set_space_fns = addegde_pathfns_orig + ['%s/%s%s.%s' % (refdir, fn, orig_ext, exts[0]) for fn in ae_ns]
+
+            for fn in set_space_fns: #['%s/%s' % (refdir, fn % orig_ext) for fn in addedge_fns_pat]:
+                if fn.endswith('.log'):
+                    continue
+                cmds.append('if [ -e %s ]; then %s; fi' % (fn, _set_vol_space_cmd(fn, config)))
+
+            utils.run_cmds(cmds, env)
+            cmds = []
+
         else:
             print "AddEdge seems to have been run already"
+
+        sid = config['sid']
+        plot_slice_fns = [(ae_e_n + '_e3', ae_s_n + '_e3', '%s_qa_e3.png' % sid),
+                          (None, ae_e_n + '_' + ae_s_n + '_ec', '%s_qa_ec.png' % sid)]
+
+
+        plot_slice_imgfns = ['%s/%s' % (refdir, fn) for fn in plot_slice_fns]
+        if overwrite or not all(map(os.path.exists, plot_slice_imgfns)):
+            slice_dims = [0, 1, 2]
+            slice_pos = [.35, .45, .55, .65]
+            for fns in plot_slice_fns:
+                input_fns = []
+                for i, fn in enumerate(fns):
+                    if fn is not None:
+                        fn = '%s/%s' % (refdir, fn)
+                        if i <= 1:
+                            fn += ext
+                    input_fns.append(fn)
+
+                fn1, fn2, fnout = input_fns
+                if not os.path.exists(fnout):
+                    _make_slice_plot(fn1, fn2, fnout)
+                    print "QA Image saved to %s" % fnout
+                else:
+                    print "Already exists: %s" % fnout
+        else:
+            print "QA images already exist"
+
+
 
     # because AFNI uses RAI orientation but FreeSurfer LPI, make a new
     # affine transformation matrix in which the signs of
@@ -634,6 +778,21 @@ def run_alignment(config, env):
 
     utils.run_cmds(cmds, env)
 
+def _make_slice_plot(ulay, olay, fnout, raise_=False):
+    if raise_:
+        from mvpa2.support.afni import lib_plot_slices
+    else:
+        try:
+            from mvpa2.support.afni import lib_plot_slices
+        except:
+            print "No slice plotting supported"
+            return
+
+    slice_dims = [0, 1, 2]
+    slice_pos = [.35, .45, .55, .65]
+
+    lib_plot_slices.make_plot(ulay, olay, slice_dims, slice_pos, output_fn=fnout)
+
 
 def run_makespec(config, env):
     '''Generates the SUMA specifcation files for all hemispheres and ld values'''
@@ -677,12 +836,26 @@ def run_makespec_bothhemis(config, env):
             specfn = afni_suma_spec.canonical_filename(icold, hemi,
                                                        config['alsuffix'])
             specpathfn = os.path.join(refdir, specfn)
+            s = afni_suma_spec.read(specpathfn)
+
             specs.append(afni_suma_spec.read(specpathfn))
 
-        specs = afni_suma_spec.hemi_pairs_add_views(specs,
-                            'inflated', ext, refdir, overwrite=overwrite)
-        specs = afni_suma_spec.hemi_pairs_add_views(specs,
-                            'sphere.reg', ext, refdir, overwrite=overwrite)
+        add_states = ['inflated', 'full.patch.flat', 'sphere.reg']
+        add_states_required = [True, False, True] # flat surface is optional
+        for add_state, is_req in zip(add_states, add_states_required):
+            has_state = all([len(spec.find_surface_from_state(add_state)) == 1
+                                    for spec in specs])
+
+            if not has_state:
+                if is_req:
+                    error('cannot find state %s' % add_state)
+                else:
+                    # skip this state
+                    print "Optional state %s not found - skipping" % add_state
+                    continue
+
+            specs = afni_suma_spec.hemi_pairs_add_views(specs,
+                            add_state, ext, refdir, overwrite=overwrite)
 
 
         spec_both = afni_suma_spec.combine_left_right(specs)
@@ -707,10 +880,109 @@ def run_makespec_bothhemis(config, env):
             full_path = lambda x:os.path.join(refdir, x)
             for fn_out, fns_in in surfs_to_join.iteritems():
                 surfs_in = [surf.read(full_path(fn)) for fn in fns_in]
+
+                if all(['full.patch.flat' in fn for fn in fns_in]):
+                    # left hemi of flat; rotate 180 degrees, reposition again
+                    surfs_in[0] = surfs_in[0] * [-1, -1, 1]
+                    surfs_in = surf.reposition_hemisphere_pairs(surfs_in[0], surfs_in[1], 'm')
+
                 surf_merged = surf.merge(*surfs_in)
+
                 if config['overwrite'] or not os.path.exists(full_path(fn_out)):
                     surf.write(full_path(fn_out), surf_merged)
                     print "Merged surfaces written to %s" % fn_out
+
+def run_makesurfmasks(config, env):
+    refdir = config['refdir']
+    overwrite = config['overwrite']
+
+    if config['sid'] is None:
+        raise ValueError('Need sid')
+
+    sumfn = '%s_qa_surf_mask' % config['sid'] # output file
+
+    fullext = config['outvol_fullext']
+    volor = config['outvol_ext']
+
+    sumfn_path = '%s/%s%s' % (refdir, sumfn, fullext)
+    qafn_path = '%s/%s.png' % (refdir, sumfn)
+    checkfn_paths = (sumfn_path, qafn_path)
+    if all(map(os.path.exists, checkfn_paths)) and not overwrite:
+        print "Already exist: %s" % (", ".join(checkfn_paths))
+        return
+
+    icolds, hemis = _get_hemis_icolds(config)
+
+    volexts = ['%s%s' % (volor, e) for e in '.HEAD', '.BRIK*']
+
+
+
+
+    sssuffix = config['sssuffix'] if config['expvol_ss'] else ''
+    expvol_fn = '%s%s%s' % (utils.afni_fileparts(config['expvol'])[1],
+                            sssuffix,
+                            volor)
+
+
+    #if overwrite or not os.path.exists('%s/%s' % (refdir, sv_al_nii_fn)):
+    #    cmd = 'cd %s; 3dcopy -overwrite %s %s' % (refdir, sv_al_orig_fn, sv_al_nii_fn)
+    #    utils.run_cmds(cmd, env)
+
+
+    if hemis != ['l', 'r']:
+        raise ValueError("Cannot run without left and right hemisphere")
+
+    icold = max(icolds)
+
+    oneDfn = '__t.1D'
+    oneDtfn = '__tt.1D' # transposed
+    cmds = ['cd %s' % refdir,
+             '1deval -1D: -num %d -expr 1 > %s' % (icold ** 2 * 10 + 1, oneDfn),
+             '1dtranspose %s > %s' % (oneDfn, oneDtfn)]
+
+    utils.run_cmds(';'.join(cmds), env)
+
+
+    tmpfns = [oneDfn, oneDtfn]
+
+    s2v_cmd = ('3dSurf2Vol -map_func mask2 -data_expr "a*%%d" -spec %%s %%s -sv %s'
+             ' -grid_parent %s. -prefix %%s -sdata %s -overwrite') % \
+                                (expvol_fn, expvol_fn, oneDtfn)
+
+    infix2val = {'-surf_A pial':1,
+               '-surf_A smoothwm':2,
+               '-surf_A smoothwm -surf_B pial -f_steps 20': 4}
+
+    volfns = []
+    for hemi in hemis:
+        specfn = afni_suma_spec.canonical_filename(icold, hemi,
+                                                       config['alsuffix'])
+
+        for infix, val in infix2val.iteritems():
+            fnprefix = '__m%d_%sh' % (val, hemi)
+            cmd = s2v_cmd % (val, specfn, infix, fnprefix)
+            utils.run_cmds('cd %s;%s' % (refdir, cmd))
+            tmpfns.extend(['%s%s' % (fnprefix, e) for e in volexts])
+            volfns.append(fnprefix + volor)
+
+    cmds = ['cd %s' % refdir]
+    catfn = '__cat'
+    cmds.extend(['3dTcat -overwrite -prefix %s %s' % (catfn, ' '.join(volfns)),
+                 '3dTstat -overwrite -sum -prefix %s %s%s' % (sumfn, catfn, volor)])
+    tmpfns.extend(['%s%s' % (catfn, e) for e in volexts])
+
+
+    cmds.extend('rm %s' % fn for fn in tmpfns)
+    cmds.append('echo "Surface mask in %s"' % sumfn)
+
+    utils.run_cmds(';'.join(cmds), env)
+
+    # make plot
+    if overwrite or not os.path.exists(qafn_path):
+        expvol_path = '%s/%s' % (refdir, expvol_fn)
+        _make_slice_plot(expvol_path,
+                         sumfn_path,
+                         qafn_path)
 
 
 def suma_makerunsuma(fnout, specfn, surfvol):
@@ -755,11 +1027,10 @@ def suma_makespec(directory, surfprefix, surf_format, fnout=None, removepostfix=
                 surfname = surfname[:-len(removepostfix)]
             surfname2filename[surfname] = fn
 
-
     # only include these surfaces
     usesurfs = ['smoothwm', 'intermediate', 'pial', 'semiinflated',
-                 'tqinflated', 'inflated', 'sphere.reg']
-    isanatomical = dict(zip(usesurfs, [True, True, True] + [False] * 4))
+                 'tqinflated', 'inflated', 'full.patch.flat', 'sphere.reg']
+    isanatomical = dict(zip(usesurfs, [True, True, True] + [False] * 5))
 
 
     # make the spec file
@@ -772,6 +1043,9 @@ def suma_makespec(directory, surfprefix, surf_format, fnout=None, removepostfix=
 
     lines.append('')
     localdomainparent = surfname2filename.get('smoothwm', None)
+
+    ndim = lambda x:2 if 'full.patch' in x else 3
+
     for surfname in usesurfs:
         if surfname in surfname2filename:
             ldp = ('SAME' if (not localdomainparent or
@@ -784,7 +1058,7 @@ def suma_makespec(directory, surfprefix, surf_format, fnout=None, removepostfix=
                           'LocalDomainParent = %s' % ldp,
                           'LocalCurvatureParent = %s' % ldp,
                           'SurfaceState = %s' % surfname,
-                          'EmbedDimension = 3',
+                          'EmbedDimension = %d' % ndim(surfname),
                           'Anatomical = %s' % ('Y' if isanatomical[surfname] else 'N'),
                          ''])
             if localdomainparent is None:
@@ -830,7 +1104,8 @@ def run_all(config, env):
                'skullstrip':run_skullstrip,
                'align':run_alignment,
                'makespec':run_makespec,
-               'makespecboth':run_makespec_bothhemis}
+               'makespecboth':run_makespec_bothhemis,
+               'makesurfmasks':run_makesurfmasks}
 
     if not all(s in step2func for s in steps):
         raise Exception("Illegal step in %s" % steps)
@@ -867,16 +1142,23 @@ remove and/or overwrite existing files.'''
     parser.add_argument("-e", "--epivol", required=False, help="EPI data of interest")
     parser.add_argument('-x', "--expvol", required=False, help="Experimental volume to which SurfVol is aligned")
     parser.add_argument('-E', "--isepi", required=False, choices=yesno, help="Is the experimental volume an EPI (yes) or anatomical (no)")
-    parser.add_argument("-r", "--refdir", required=True, help="Output directory in which volumes and surfaces are in reference to ANATVOL or EPIVOL")
-    parser.add_argument("-p", "--steps", default='all', help='Processing steps separated by "+"-characters. "all" is the default and equivalent to "toafni+mapico+moresurfs+skullstrip+align+makespec+makespecboth"')
+    parser.add_argument('-r', '-o', "--refdir", required=True, help="Output directory in which volumes and surfaces are in reference to ANATVOL or EPIVOL")
+    parser.add_argument("-p", "--steps", default='all', help='Processing steps separated by "+"-characters. "all" is the default and equivalent to "toafni+mapico+moresurfs+skullstrip+align+makespec+makespecboth+makesurfmasks"')
     parser.add_argument("-l", "--ld", default="4+8+16+32+64+128", help="MapIcosahedron linear devisions, e.g. 80, or 16+96 (for both 16 or 96). The default is 4+8+16+32+64+128")
-    parser.add_argument("-o", "--overwrite", action='store_true', default=False, help="Overwrite existing files")
+    parser.add_argument("--overwrite", action='store_true', default=False, help="Overwrite existing files")
     parser.add_argument('--hemi', default='l+r', choices=['l', 'r', 'l+r'], help='Hemispheres to process ([l+r])')
     parser.add_argument('-S', "--expvol_ss", default='yes', choices=yesno, help='Skull strip experimental volume ([yes],no)')
     parser.add_argument('--aea_opts', default='-cmass cmass+xyz -big_move', help="Options given to align_epi_anat ([-cmass cmass+xyz -big_move])")
     parser.add_argument('-I', '--identity', action="store_true", default=False, help="Use identity transformation between SurfVol and anat/epivol (no alignment)")
     parser.add_argument('-A', '--AddEdge', default='yes', choices=yesno, help="Run AddEdge on aligned volumes ([yes])")
     parser.add_argument('-f', '--surfformat', default='ascii', choices=['gifti', 'ascii'], help="Output format of surfaces: 'ascii' (default - for now) or 'gifti'")
+    parser.add_argument('-T', '--template', action="store_true", default=False, help="Indicate that the experimental volume (suppplied by '-e', '-a', or '-x') is in template space. This will add \"-Allineate_opts '-maxrot 10 -maxshf 10 -maxscl 1.5'\" to --aea_opts")
+    parser.add_argument('-t', '--notemplate', action="store_true", default=False, help="Indicate that the experimental volume (suppplied by '-e', '-a', or '-x') is not in template space. ")
+
+    # expvol_space  (template space) MNI, TLRC, MNI_ANAT, None
+    # expvol_ext      +tlrc, +orig, .nii, .nii.gz
+    # expvol_fullext  +tlrc.HEAD (set based on
+
     return parser
 
 def getoptions():
@@ -955,5 +1237,6 @@ Parameters
 
 # apply setting the documentation
 _set_run_surf_anat_preproc_doc()
+
 
 

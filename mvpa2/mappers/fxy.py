@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-""""""
+"""Evaluate functions on pairs of datasets"""
 
 __docformat__ = 'restructuredtext'
 

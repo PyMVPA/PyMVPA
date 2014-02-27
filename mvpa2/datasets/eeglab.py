@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Dataset for EEGLAB electrode-time series in text format.
+"""Support for EEGLAB's electrode-time series text file format.
 
 This module offers functions to import data from EEGLAB_ text files.
 

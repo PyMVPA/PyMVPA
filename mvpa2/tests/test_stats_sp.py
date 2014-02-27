@@ -391,7 +391,7 @@ class StatsTestsScipy(unittest.TestCase):
         glm = GLM(X, voi=[1, 0])
         contrast = glm(data)
         assert_array_almost_equal(contrast.samples[0], tstats.samples[0])
-        assert_equals(len(contrast), 5)
+        assert_equals(len(contrast), 6)
         # we should be able to recover the approximate effect size of the signal
         # which is constructed with a baseline offset of 2 (see above)
         if cfg.getboolean('tests', 'labile', default='yes'):
@@ -423,11 +423,12 @@ class StatsTestsScipy(unittest.TestCase):
         pass
 
 
-def suite():
+def suite():  # pragma: no cover
     """Create the suite"""
     return unittest.makeSuite(StatsTestsScipy)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

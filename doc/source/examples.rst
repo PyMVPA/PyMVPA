@@ -82,5 +82,7 @@ Miscellaneous
 
 .. toctree::
 
+   examples/skl_transformer_demo
+   examples/skl_classifier_demo
    examples/kerneldemo
    examples/curvefitting

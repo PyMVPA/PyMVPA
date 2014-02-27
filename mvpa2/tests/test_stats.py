@@ -27,7 +27,7 @@ nulldist_sweep = [ MCNullDist(permutator, tail='any'),
                    MCNullDist(permutator, tail='right')]
 
 if externals.exists('scipy'):
-    from mvpa2.support.stats import scipy
+    from mvpa2.support.scipy.stats import scipy
     from scipy.stats import f_oneway
     from mvpa2.clfs.stats import rv_semifrozen
     nulldist_sweep += [ MCNullDist(permutator, scipy.stats.norm,
@@ -137,11 +137,12 @@ class StatsTests(unittest.TestCase):
         assert_array_almost_equal(c, c_np)
 
 
-def suite():
+def suite():  # pragma: no cover
     """Create the suite"""
     return unittest.makeSuite(StatsTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

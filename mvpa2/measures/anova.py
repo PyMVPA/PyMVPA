@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""FeaturewiseMeasure performing a univariate ANOVA."""
+"""Univariate ANOVA"""
 
 __docformat__ = 'restructuredtext'
 

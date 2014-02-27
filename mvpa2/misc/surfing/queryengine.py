@@ -30,6 +30,163 @@ from mvpa2.misc.surfing import volgeom, surf_voxel_selection
 from mvpa2.base import warning
 
 
+class SurfaceQueryEngine(QueryEngineInterface):
+    '''
+    Query-engine that maps center nodes to indices of features
+    (nodes) that are near each center node.
+
+    This class is for mappings from surface to surface features;
+    for mappings from surface to voxel features, use
+    SurfaceVerticesQueryEngine.
+    '''
+
+    def __init__(self, surface, radius, distance_metric='dijkstra',
+                    fa_node_key='node_indices'):
+        '''Make a new SurfaceQueryEngine
+
+        Parameters
+        ----------
+        surface: surf.Surface or str
+            surface object, or filename of a surface
+        radius: float
+            size of neighborhood.
+        distance_metric: str
+            'euclidean' or 'dijkstra' (default).
+        fa_node_key: str
+            Key for feature attribute that contains node indices
+            (default: 'node_indices').
+
+        Notes
+        -----
+        After training this instance on a dataset and calling it with
+        self.query_byid(vertex_id) as argument,
+        '''
+        self.surface = surface
+        self.radius = radius
+        self.distance_metric = distance_metric
+        self.fa_node_key = fa_node_key
+        self._vertex2feature_map = None
+
+        allowed_metrics = ('dijkstra', 'euclidean')
+        if not self.distance_metric in allowed_metrics:
+            raise ValueError('distance_metric %s has to be in %s' %
+                                    (self.distance_metric, allowed_metrics))
+
+        if self.distance_metric == 'dijkstra':
+            # Pre-compute neighbor information (and ignore the output).
+            surface.neighbors
+
+    def __repr__(self, prefixes=[]):
+        return super(SurfaceQueryEngine, self).__repr__(
+                   prefixes=prefixes
+                   + _repr_attrs(self, ['surface'])
+                   + _repr_attrs(self, ['radius'])
+                   + _repr_attrs(self, ['distance_metric'],
+                                   default='dijkstra')
+                   + _repr_attrs(self, ['fa_node_key'],
+                                   default='node_indices'))
+
+    def __reduce__(self):
+        return (self.__class__, (self.surface,
+                                 self.radius,
+                                 self.distance_metric,
+                                 self.fa_node_key),
+                            dict(_vertex2feature_map=self._vertex2feature_map))
+
+    def __str__(self):
+        return '%s(%s, radius=%s, distance_metric=%s, fa_node_key=%s)' % \
+                                               (self.__class__.__name__,
+                                                self.surface,
+                                                self.radius,
+                                                self.distance_metric,
+                                                self.fa_node_key)
+
+    def _check_trained(self):
+        if self._vertex2feature_map is None:
+            raise ValueError('Not trained on dataset: %s' % self)
+
+
+    @property
+    def ids(self):
+        self._check_trained()
+        return self._vertex2feature_map.keys()
+
+    def untrain(self):
+        self._vertex2feature_map = None
+
+    def train(self, ds):
+        '''
+        Train the queryengine
+
+        Parameters
+        ----------
+        ds: Dataset
+            dataset with surface data. It should have a field
+            .fa.node_indices that indicates the node index of each
+            feature.
+        '''
+
+        fa_key = self.fa_node_key
+        nvertices = self.surface.nvertices
+        nfeatures = ds.nfeatures
+
+        if not fa_key in ds.fa.keys():
+            raise ValueError('Attribute .fa.%s not found.', fa_key)
+
+        vertex_ids = ds.fa[fa_key].value.ravel()
+
+        # check that vertex_ids are not outside 0..nfeatures
+        delta = np.setdiff1d(vertex_ids, np.arange(nvertices))
+
+        if len(delta):
+            raise ValueError("Vertex id '%s' found that is not in "
+                             "np.arange(%d)" % (delta[0], nvertices))
+
+        # vertex_ids can have multiple occurences of the same node index
+        # for different features, hence use a list.
+        # initialize each vertex with an empty list
+        self._vertex2feature_map = v2f = dict((vertex_id, list())
+                                            for vertex_id in xrange(nvertices))
+
+        for feature_id, vertex_id in enumerate(vertex_ids):
+            v2f[vertex_id].append(feature_id)
+
+
+    def query(self, **kwargs):
+        raise NotImplementedError
+
+
+    def query_byid(self, vertex_id):
+        '''
+        Return feature ids of features near a vertex
+
+        Parameters
+        ----------
+        vertex_id: int
+            Index of vertex (i.e. node) on the surface
+
+        Returns
+        -------
+        feature_ids: list of int
+            Indices of features in the neighborhood of the vertex indexed
+            by 'vertex_id'
+        '''
+        self._check_trained()
+
+        if vertex_id < 0 or vertex_id >= self.surface.nvertices or \
+                        round(vertex_id) != vertex_id:
+            raise KeyError('vertex_id should be integer in range(%d)' %
+                                                self.surface.nvertices)
+
+        nearby_nodes = self.surface.circlearound_n2d(vertex_id,
+                                                    self.radius,
+                                                    self.distance_metric)
+
+        v2f = self._vertex2feature_map
+        return sum((v2f[node] for node in nearby_nodes), [])
+
+
+
 class SurfaceVerticesQueryEngine(QueryEngineInterface):
     '''
     Query-engine that maps center nodes to indices of features
@@ -37,6 +194,10 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
 
     In a typical use case such an instance is generated using
     the function 'disc_surface_queryengine'
+
+    This class is for mappings from surface to voxel features;
+    for mappings from surface to surface features, use
+    SurfaceQueryEngine.
     '''
 
     def __init__(self, voxsel, space='voxel_indices', add_fa=None):
@@ -57,7 +218,7 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
         self.voxsel = voxsel
         self.space = space
         self._map_voxel_coord = None
-        self.add_fa = add_fa
+        self._add_fa = add_fa
 
     def __repr__(self, prefixes=[]):
         return super(SurfaceVerticesQueryEngine, self).__repr__(
@@ -67,7 +228,14 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
             + _repr_attrs(self, ['add_fa'], []))
 
     def __reduce__(self):
-        return (self.__class__, (self.voxsel, self.space, self._add_fa))
+        return (self.__class__, (self.voxsel, self.space, self._add_fa),
+                            dict(_map_voxel_coord=self._map_voxel_coord))
+
+    def __str__(self):
+        return '%s(%s, space=%s, add_fa=%s)' % (self.__class__.__name__,
+                                                self.voxsel,
+                                                self.space,
+                                                self.add_fa)
 
     @property
     def ids(self):
@@ -135,6 +303,9 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
             attributes stored in voxel_ids.fa.
 
         """
+        if self._map_voxel_coord is None:
+            raise ValueError("No voxel mapping - did you train?")
+
         voxel_unmasked_ids = self.voxsel.get(vertexid)
 
         # map into dataset
@@ -146,13 +317,14 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
             # optionally add additional information from voxsel
             ds = AttrDataset(np.asarray(voxel_dataset_ids_flat)[np.newaxis])
             for n in self._add_fa:
-                fa_values = self.voxsel.aux_get(vertexid, n)
+                fa_values = self.voxsel.get_aux(vertexid, n)
                 assert(len(fa_values) == len(voxel_dataset_ids))
                 ds.fa[n] = sum([[x] * len(ids)
                                 for x, ids in zip(fa_values,
                                                   voxel_dataset_ids)], [])
             return ds
         return voxel_dataset_ids_flat
+
 
 
     def query(self, **kwargs):
@@ -187,17 +359,17 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
                                   if feature_id in j]
 
     def feature_id2nearest_vertex_id(self, feature_id,
-                                     fallback_euclidian_distance=False):
+                                     fallback_euclidean_distance=False):
         '''Computes the index of the vertex nearest to a given voxel.
 
         Parameters
         ----------
         feature_id: int
             Feature index (referring to a voxel).
-        fallback_euclidian_distance: bool (default: False)
+        fallback_euclidean_distance: bool (default: False)
             If the voxel indexed by feature_id was not selected by any searchlight,
-            then None is returned if fallback_euclidian_distance is False, but
-            vertex_id with the nearest Euclidian distance is returned if True.
+            then None is returned if fallback_euclidean_distance is False, but
+            vertex_id with the nearest Euclidean distance is returned if True.
 
         Returns
         -------
@@ -214,7 +386,7 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
         lin_voxs = self.feature_id2linear_voxel_ids(feature_id)
 
         return self.voxsel.target2nearest_source(lin_voxs,
-                      fallback_euclidian_distance=fallback_euclidian_distance)
+                      fallback_euclidean_distance=fallback_euclidean_distance)
 
     def vertex_id2nearest_feature_id(self, vertex_id):
         '''Computes the index of the voxel nearest to a given vertex.
@@ -262,7 +434,7 @@ class SurfaceVoxelsQueryEngine(SurfaceVerticesQueryEngine):
     argument
     '''
     def __init__(self, voxsel, space='voxel_indices', add_fa=None,
-                 fallback_euclidian_distance=True):
+                 fallback_euclidean_distance=True):
         '''Makes a new SurfaceVoxelsQueryEngine
 
         Parameters
@@ -275,7 +447,7 @@ class SurfaceVoxelsQueryEngine(SurfaceVerticesQueryEngine):
         add_fa: list of str
             additional feature attributes that should be returned
             when this instance is called with a center node id.
-        fallback_euclidian_distance: bool (default: True)
+        fallback_euclidean_distance: bool (default: True)
             If True then every feature id will have voxels associated with
             it. That means that the number of self.ids is then equal to the
             number of features as the input dataset.
@@ -289,12 +461,12 @@ class SurfaceVoxelsQueryEngine(SurfaceVerticesQueryEngine):
                                                        add_fa=add_fa)
 
         self._feature_id2vertex_id = None
-        self.fallback_euclidian_distance = fallback_euclidian_distance
+        self.fallback_euclidean_distance = fallback_euclidean_distance
 
 
     def __repr__(self, prefixes=[]):
         prefixes_ = prefixes + _repr_attrs(self,
-                                          ['fallback_euclidian_distance'],
+                                          ['fallback_euclidean_distance'],
                                           default=False)
         return super(SurfaceVoxelsQueryEngine, self).__repr__(
                             prefixes=prefixes_)
@@ -302,7 +474,8 @@ class SurfaceVoxelsQueryEngine(SurfaceVerticesQueryEngine):
     def __reduce__(self):
         return (self.__class__, (self.voxsel, self.space,
                                  self._add_fa,
-                                 self.fallback_euclidian_distance))
+                                 self.fallback_euclidean_distance),
+                                dict(_feature_id2vertex_id=self._feature_id2vertex_id))
 
     @property
     def ids(self):
@@ -319,7 +492,7 @@ class SurfaceVoxelsQueryEngine(SurfaceVerticesQueryEngine):
 
         # Compute the mapping from voxel (feature) ids to node ids
 
-        fallback = self.fallback_euclidian_distance
+        fallback = self.fallback_euclidean_distance
         if fallback:
             # can use any feature id in ds
             feature_ids = range(ds.nfeatures)
@@ -353,13 +526,16 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
                              outside_node_margin=None,
                              results_backend=None,
                              tmp_prefix='tmpvoxsel',
-                             output_modality='surface'):
+                             output_modality='surface',
+                             node_voxel_mapping='maximal'):
     """
     Voxel selection wrapper for multiple center nodes on the surface
 
     WiP
     XXX currently the last parameter 'output_modality' determines
     what kind of query engine is returned - is that bad?
+
+    XXX: have to decide whether to use minimal_voxel_mapping=True as default
 
     Parameters
     ----------
@@ -395,7 +571,7 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
         Relative stop position of line (as in start_fr)
     start_mm: float (default: 0)
         Absolute start position offset (as in start_fr)
-    sttop_mm: float (default: 0)
+    stop_mm: float (default: 0)
         Absolute start position offset (as in start_fr)
     nsteps: int (default: 10)
         Number of steps from white to pial surface
@@ -403,7 +579,7 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
         After how many searchlights an estimate should be printed of the
         remaining time until completion of all searchlights
     add_fa: None or list of strings
-        Feature attribtues from a dataset that should be returned if the
+        Feature attributes from a dataset that should be returned if the
         queryengine is called with a dataset.
     nproc: int or None
         Number of parallel threads. None means as many threads as the
@@ -428,6 +604,10 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
         (trailing file path separator is not added automagically).
     output_modality: 'surface' or 'volume' (default: 'surface')
         Indicates whether the output is surface-based
+    node_voxel_mapping: 'minimal' or 'maximal'
+        If 'minimal' then each voxel is associated with at most one node.
+        If 'maximal' it is associated with as many nodes that contain the
+        voxel (default: 'maximal')
 
     Returns
     -------
@@ -457,7 +637,8 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
                                 nsteps=nsteps, eta_step=eta_step, nproc=nproc,
                                 outside_node_margin=outside_node_margin,
                                 results_backend=results_backend,
-                                tmp_prefix=tmp_prefix)
+                                tmp_prefix=tmp_prefix,
+                                node_voxel_mapping=node_voxel_mapping)
 
 
     qe = modality2class[output_modality](voxsel, add_fa=add_fa)

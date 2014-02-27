@@ -11,6 +11,8 @@
 __docformat__ = 'restructuredtext'
 
 import time
+
+from mvpa2.base.dataset import AttrDataset
 from mvpa2.base.node import Node, ChainNode
 from mvpa2.base.state import ConditionalAttribute
 from mvpa2.base.types import is_datasetlike
@@ -59,6 +61,16 @@ class Learner(Node):
 
     training_time = ConditionalAttribute(enabled=True,
         doc="Time (in seconds) it took to train the learner")
+
+    trained_targets = ConditionalAttribute(enabled=True,
+        doc="Set of unique targets (or any other space) it has"
+            " been trained on (if present in the dataset trained on)")
+
+    trained_nsamples = ConditionalAttribute(enabled=True,
+        doc="Number of samples it has been trained on")
+
+    trained_dataset = ConditionalAttribute(enabled=False,
+        doc="The dataset it has been trained on")
 
 
     def __init__(self, auto_train=False, force_train=False, **kwargs):
@@ -198,7 +210,14 @@ class Learner(Node):
         -------
         None
         """
-        pass
+        ca = self.ca
+        if ca.is_enabled('trained_targets') and isinstance(ds, AttrDataset):
+            space = self.get_space()
+            if space in ds.sa:
+                ca.trained_targets = ds.sa[space].unique
+
+        ca.trained_dataset = ds
+        ca.trained_nsamples = len(ds)
 
 
     def _set_trained(self, status=True):

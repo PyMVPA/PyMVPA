@@ -13,11 +13,14 @@ __docformat__ = 'restructuredtext'
 from mvpa2.base import externals
 externals._set_matplotlib_backend()
 
-import pylab as pl
 import numpy as np
 
 from mvpa2.base.node import ChainNode
-from mvpa2.misc.plot.tools import Pion, Pioff
+
+if externals.exists('pylab', raise_=True):
+    import pylab as pl
+    from mvpa2.misc.plot.tools import Pion, Pioff
+
 from mvpa2.misc.attrmap import AttributeMap
 from mvpa2.generators.splitters import Splitter
 from mvpa2.generators.partition import NFoldPartitioner
@@ -211,69 +214,14 @@ def plot_err_line_missing(data, x=None, errtype='ste', curves=None,
 def plot_feature_hist(dataset, xlim=None, noticks=True,
                       targets_attr='targets', chunks_attr=None,
                     **kwargs):
-    """Plot histograms of feature values for each labels.
-
-    Parameters
-    ----------
-    dataset : Dataset
-    xlim : None or 2-tuple
-      Common x-axis limits for all histograms.
-    noticks : bool
-      If True, no axis ticks will be plotted. This is useful to save
-      space in large plots.
-    targets_attr : string, optional
-      Name of samples attribute to be used as targets
-    chunks_attr : None or string
-      If a string, a histogram will be plotted per each target and each
-      chunk (as defined in sa named `chunks_attr`), resulting is a
-      histogram grid (targets x chunks).
-    **kwargs
-      Any additional arguments are passed to matplotlib's hist().
+    """This function is deprecated and will be removed. Replacement mvpa2.viz.hist()
     """
-    lsplit = ChainNode([NFoldPartitioner(1, attr=targets_attr),
-                        Splitter('partitions', attr_values=[2])])
-    csplit = ChainNode([NFoldPartitioner(1, attr=chunks_attr),
-                        Splitter('partitions', attr_values=[2])])
-
-    nrows = len(dataset.sa[targets_attr].unique)
-    ncols = len(dataset.sa[chunks_attr].unique)
-
-    def doplot(data):
-        """Just a little helper which plots the histogram and removes
-        ticks etc"""
-
-        pl.hist(data, **kwargs)
-
-        if xlim is not None:
-            pl.xlim(xlim)
-
-        if noticks:
-            pl.yticks([])
-            pl.xticks([])
-
-    fig = 1
-
-    # for all labels
-    for row, ds in enumerate(lsplit.generate(dataset)):
-        if chunks_attr:
-            for col, d in enumerate(csplit.generate(ds)):
-
-                pl.subplot(nrows, ncols, fig)
-                doplot(d.samples.ravel())
-
-                if row == 0:
-                    pl.title('C:' + str(d.sa[chunks_attr].unique[0]))
-                if col == 0:
-                    pl.ylabel('L:' + str(d.sa[targets_attr].unique[0]))
-
-                fig += 1
-        else:
-            pl.subplot(1, nrows, fig)
-            doplot(ds.samples)
-
-            pl.title('L:' + str(ds.sa[targets_attr].unique[0]))
-
-            fig += 1
+    import warnings
+    warnings.warn("plot_feature_hist() is deprecated and will be removed",
+                  DeprecationWarning)
+    from mvpa2.viz import hist
+    return hist(dataset, xlim=xlim, noticks=noticks, ygroup_attr=targets_attr,
+                xgroup_attr=chunks_attr, **kwargs)
 
 
 ##REF: Name was automagically refactored

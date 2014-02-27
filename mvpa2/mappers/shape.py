@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Mappers that modify the shape of a dataset"""
+"""Basic dataset shape modifications."""
 
 __docformat__ = 'restructuredtext'
 

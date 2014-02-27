@@ -96,7 +96,7 @@ class HyperAlignmentTests(unittest.TestCase):
             self.assertEqual(idhashes_targets, idhashes_targets_,
                 msg="Hyperalignment must not change original data targets.")
 
-            self.assertEqual(ref_ds, ha.ca.choosen_ref_ds)
+            self.assertEqual(ref_ds, ha.ca.chosen_ref_ds)
 
             # Map data back
 
@@ -170,7 +170,7 @@ class HyperAlignmentTests(unittest.TestCase):
         self.assertEqual(rerrors.shape, (1, n))
 
 
-    def _test_on_swaroop_data(self):
+    def _test_on_swaroop_data(self):  # pragma: no cover
         #
         print "Running swaroops test on data we don't have"
         #from mvpa2.datasets.miscfx import zscore
@@ -278,10 +278,11 @@ class HyperAlignmentTests(unittest.TestCase):
 
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(HyperAlignmentTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

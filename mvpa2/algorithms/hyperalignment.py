@@ -98,7 +98,7 @@ class Hyperalignment(ClassWithCollections):
 
     # XXX Who cares whether it was chosen, or specified? This should be just
     # 'ref_ds'
-    choosen_ref_ds = ConditionalAttribute(enabled=True,
+    chosen_ref_ds = ConditionalAttribute(enabled=True,
             doc="""Index of the input dataset used as 1st-level reference
                 dataset.""")
 
@@ -200,7 +200,7 @@ class Hyperalignment(ClassWithCollections):
                 raise ValueError, "Requested reference dataset %i is out of " \
                       "bounds. We have only %i datasets provided" \
                       % (ref_ds, ndatasets)
-        ca.choosen_ref_ds = ref_ds
+        ca.chosen_ref_ds = ref_ds
         # zscore all data sets
         # ds = [ zscore(ds, chunks_attr=None) for ds in datasets]
 

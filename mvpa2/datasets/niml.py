@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""NeuroImaging Markup Language (NIML) support.
+"""Support for storage using the NeuroImaging Markup Language (NIML).
 
 Supports storing most typical values (samples, feature attributes, sample
 attributes, dataset attributes) that are in a dataset in NIML format, as
@@ -57,7 +57,7 @@ def from_niml(dset, fa_labels=[], sa_labels=[], a_labels=[]):
         Keys in dset that are enforced to be sample attributes
     a_labels: list
         Keys in dset that are enforced to be dataset attributes
-    
+
     Returns
     -------
     dataset: mvpa2.base.Dataset
@@ -121,7 +121,7 @@ def from_niml(dset, fa_labels=[], sa_labels=[], a_labels=[]):
 
                         while isinstance(v, basestring):
                             # strings are seperated by ';'
-                            # XXX what if this is part of the value 
+                            # XXX what if this is part of the value
                             # intended by the user?
                             v = v.split(';')
 
@@ -147,7 +147,7 @@ def from_niml(dset, fa_labels=[], sa_labels=[], a_labels=[]):
 
         # try to be smart and deduce this from dimensions.
         # this only works if nfeatures!=nsamples otherwise it would be
-        # ambiguous 
+        # ambiguous
         # XXX is this ugly?
         if nfeatures != nsamples:
             try:
@@ -170,12 +170,12 @@ def from_niml(dset, fa_labels=[], sa_labels=[], a_labels=[]):
 
 def to_niml(ds):
     '''Convert a Dataset to a NIML dataset
-    
+
     Parameters
     ----------
     dataset: mvpa2.base.Dataset
         A PyMVPA Dataset
-   
+
     Returns
     -------
     dset: dict
@@ -226,10 +226,10 @@ def to_niml(ds):
 def hstack(dsets, pad_to_feature_index=None, hstack_method='drop_nonunique',
                 set_empty_value=0.):
     '''Stacks NIML datasets while considering node indices
-    
+
     Parameters
     ----------
-    dsets: list 
+    dsets: list
         datasets to be stacked
     pad_to_feature_index: list or int or None
         If a list then it should be of the same length as dsets and indicates
@@ -240,7 +240,7 @@ def hstack(dsets, pad_to_feature_index=None, hstack_method='drop_nonunique',
         How datasets are stacked; see dataset.hstack.
     set_empty_value: float
         Value to which empty (padded) dataset values are set.
-    
+
     Returns
     dset: Dataset
         Data combined from all dset in dsets.
@@ -332,7 +332,7 @@ def _find_sample_labels(dset, sample_labels):
         if label in dset_keys:
             sample_label = dset.sa[label].value
             if isinstance(sample_label, basestring):
-                # split using 
+                # split using
                 sample_label = sample_label.split(';')
 
             # they can be of any type so ensure they are strings
@@ -439,7 +439,7 @@ def from_any(x):
         Dataset instance
     '''
     if isinstance(x, basestring):
-        return read(fn)
+        return read(x)
     elif isinstance(x, dict):
         return from_niml(x)
     elif isinstance(x, Dataset):

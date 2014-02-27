@@ -150,10 +150,12 @@ class VolGeom(object):
 
     def __str__(self):
         sh = self.shape[:3]
-        s = '%s, %s = %d voxels' % (self.__class__.__name__,
+        s = '%s(%s = %d voxels' % (self.__class__.__name__,
                              '%d x %d x %d' % sh, self.nvoxels)
         if not self.mask is None:
             s += ', %d voxels survive the mask' % self.nvoxels_mask
+
+        s += ')'
         return s
 
 
@@ -263,9 +265,10 @@ class VolGeom(object):
         '''
 
         if not isinstance(lin, np.ndarray):
-            lin = np.asarray(lin, dtype=np.int)
+            lin = np.asarray(lin, dtype=np.int_)
         else:
-            lin = np.copy(lin)
+            lin = lin.astype(np.int_)
+
         lin = lin.ravel()
 
         n = np.shape(lin)[0]
@@ -273,7 +276,7 @@ class VolGeom(object):
 
         ijk = np.zeros((n, 3), dtype=int)
         for i, f in enumerate(fs):
-            v = lin / f
+            v = lin // f
             ijk[:, i] = v[:]
             lin -= v * f
 
@@ -880,7 +883,7 @@ def distance(p, q, r=2):
     q: np.ndarray (QxM)
         second array
     nrm: float (default: 2)
-        Norm used for distance computation. By default Euclidian distances
+        Norm used for distance computation. By default Euclidean distances
         are computed.
 
     Returns

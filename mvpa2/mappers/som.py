@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Self-organizing map (SOM) mapper."""
+"""Self-organizing map (SOM)."""
 
 __docformat__ = 'restructuredtext'
 
@@ -50,7 +50,7 @@ class SimpleSOMMapper(Mapper):
             Kohonen layer.
         distance_metric: callable or None
             Kernel distance metric between elements in Kohonen layer. If None
-            then Euclidian distance is used. Otherwise it should be a 
+            then Euclidean distance is used. Otherwise it should be a 
             callable that accepts two input arguments x and y and returns
             the distance d through d=distance_metric(x,y)
         initialization_func: callable or None

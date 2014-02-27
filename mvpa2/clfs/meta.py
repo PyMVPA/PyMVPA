@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Classes for meta classifiers -- classifiers which use other classifiers
+"""Meta classifiers -- classifiers which use other classifiers or preprocessing
 
 Meta Classifiers can be grouped according to their function as
 
@@ -24,7 +24,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa2.misc.args import group_kwargs
-from mvpa2.base.types import is_sequence_type
+from mvpa2.base.types import is_sequence_type, asobjarray
 from mvpa2.base.param import Parameter
 
 from mvpa2.datasets import Dataset
@@ -540,17 +540,18 @@ class CombinedClassifier(BoostedClassifier):
     `PredictionsCombiner` functor.
     """
 
-    def __init__(self, clfs=None, combiner=None, **kwargs):
+    def __init__(self, clfs=None, combiner='auto', **kwargs):
         """Initialize the instance.
 
         Parameters
         ----------
         clfs : list of Classifier
           list of classifier instances to use
-        combiner : PredictionsCombiner
-          callable which takes care about combining multiple
-          results into a single one (e.g. maximal vote for
-          classification, MeanPrediction for regression))
+        combiner : PredictionsCombiner, optional
+          callable which takes care about combining multiple results into a single
+          one. If default ('auto') chooses `MaximalVote` for classification and
+          `MeanPrediction` for regression. If None is provided -- no combination is
+          done
         kwargs : dict
           dict of keyworded arguments which might get used
           by State or Classifier
@@ -566,7 +567,10 @@ class CombinedClassifier(BoostedClassifier):
         BoostedClassifier.__init__(self, clfs, **kwargs)
 
         self.__combiner = combiner
-        """Functor destined to combine results of multiple classifiers"""
+        """Input argument describing which "combiner" to use to combine results of multiple classifiers"""
+
+        self._combiner = None
+        """Actual combiner which would be decided upon later"""
 
 
     def __repr__(self, prefixes=[]):
@@ -579,12 +583,14 @@ class CombinedClassifier(BoostedClassifier):
     def combiner(self):
         # Decide either we are dealing with regressions
         # by looking at 1st learner
-        if self.__combiner is None:
-            self.__combiner = (
-                MaximalVote,
-                MeanPrediction)[int(self.clfs[0].__is_regression__)]()
-        return self.__combiner
-
+        if self._combiner is None:
+            if isinstance(self.__combiner, basestring) and self.__combiner == 'auto':
+                self._combiner = (
+                    MaximalVote,
+                    MeanPrediction)[int(self.clfs[0].__is_regression__)]()
+            else:
+                self._combiner = self.__combiner
+        return self._combiner
 
     def summary(self):
         """Provide summary for the `CombinedClassifier`.
@@ -602,9 +608,11 @@ class CombinedClassifier(BoostedClassifier):
         """Untrain `CombinedClassifier`
         """
         try:
-            self.__combiner.untrain()
+            self._combiner.untrain()
         except:
             pass
+        finally:
+            self._combiner = None
         super(CombinedClassifier, self)._untrain()
 
 
@@ -613,24 +621,30 @@ class CombinedClassifier(BoostedClassifier):
         """
         BoostedClassifier._train(self, dataset)
 
-        # combiner might need to train as well
-        self.combiner.train(self.clfs, dataset)
+        # combiner might need to be defined and trained as well at this point
+        if self.combiner is not None:
+            self.combiner.train(self.clfs, dataset)
 
 
     def _predict(self, dataset):
         """Predict using `CombinedClassifier`
         """
         ca = self.ca
-        cca = self.combiner.ca
-        BoostedClassifier._predict(self, dataset)
-        if ca.is_enabled("estimates"):
-            cca.enable('estimates')
-        # combiner will make use of conditional attributes instead of only predictions
-        # returned from _predict
-        predictions = self.combiner(self.clfs, dataset)
+        predictions = BoostedClassifier._predict(self, dataset)
+        if self.combiner is not None:
+            cca = self.combiner.ca
+            if ca.is_enabled("estimates"):
+                cca.enable('estimates')
+
+            # combiner will make use of conditional attributes instead of only predictions
+            # returned from _predict
+            predictions = self.combiner(self.clfs, dataset)
+        else:
+            cca = None
+
         ca.predictions = predictions
 
-        if ca.is_enabled("estimates"):
+        if ca.is_enabled("estimates") and cca is not None:
             if cca.is_active("estimates"):
                 # XXX or may be we could leave simply up to accessing .combiner?
                 ca.estimates = cca.estimates
@@ -641,7 +655,6 @@ class CombinedClassifier(BoostedClassifier):
                             " .estimates cannot be provided directly, access .clfs"
                             % self)
         return predictions
-
 
 
 class TreeClassifier(ProxyClassifier):
@@ -939,22 +952,20 @@ class BinaryClassifier(ProxyClassifier):
         ProxyClassifier.__init__(self, clf, **kwargs)
 
         # Handle labels
-        sposlabels = set(poslabels)
-        sneglabels = set(neglabels)
 
         # TODO: move to use AttributeMap
         #self._attrmap = AttributeMap(dict([(l, -1) for l in sneglabels] +
         #                                  [(l, +1) for l in sposlabels]))
 
         # check if there is no overlap
-        overlap = sposlabels.intersection(sneglabels)
+        overlap = set(poslabels).intersection(neglabels)
         if len(overlap)>0:
             raise ValueError("Sets of positive and negative labels for " +
                 "BinaryClassifier must not overlap. Got overlap " %
                 overlap)
 
-        self.__poslabels = list(sposlabels)
-        self.__neglabels = list(sneglabels)
+        self.__poslabels = poslabels
+        self.__neglabels = neglabels
 
         # define what values will be returned by predict: if there is
         # a single label - return just it alone, otherwise - whole
@@ -1050,11 +1061,11 @@ class BinaryClassifier(ProxyClassifier):
 
 
 class MulticlassClassifier(CombinedClassifier):
-    """`CombinedClassifier` to perform multiclass using a list of
-    `BinaryClassifier`.
+    """Perform multiclass classification using a list of binary classifiers.
 
-    such as 1-vs-1 (ie in pairs like LIBSVM does) or 1-vs-all (which
-    is yet to think about)
+    Based on a `CombinedClassifier` for which it constructs a list of
+    binary 1-vs-1 (ie in pairs like LIBSVM does) or 1-vs-all (which is
+    yet to think about) classifiers.
     """
 
     raw_predictions_ds = ConditionalAttribute(enabled=False,
@@ -1148,12 +1159,27 @@ class MulticlassClassifier(CombinedClassifier):
 
         predictions = super(MulticlassClassifier, self)._predict(dataset)
 
-        if ca.is_enabled("raw_predictions_ds"):
-            ca.raw_predictions_ds = \
-                Dataset(np.array(ca.raw_predictions).T,
-                    fa={'pos': [clf.poslabels for clf in self.clfs],
-                        'neg': [clf.neglabels for clf in self.clfs]})
-        return predictions
+        if ca.is_enabled("raw_predictions_ds") or self.combiner is None:
+            if self.combiner is None:
+                raw_predictions = predictions
+            else:
+                # we should fetch those from ca
+                raw_predictions = ca.raw_predictions
+
+            # assign pos and neg to fa while squeezing out
+            # degenerate dimensions which are there to possibly accomodate
+            # 1-vs-all cases
+
+            # for consistency -- place into object array of tuples
+            # (Sensitivity analyzers already do the same)
+            pairs = zip(np.array([np.squeeze(clf.neglabels) for clf in self.clfs]).tolist(),
+                        np.array([np.squeeze(clf.poslabels) for clf in self.clfs]).tolist())
+            ca.raw_predictions_ds = raw_predictions_ds = \
+                Dataset(np.array(raw_predictions).T, fa={self.space: asobjarray(pairs)})
+        if self.combiner is None:
+            return raw_predictions_ds
+        else:
+            return predictions
 
 
 class SplitClassifier(CombinedClassifier):
@@ -1234,19 +1260,15 @@ class SplitClassifier(CombinedClassifier):
 
         clf_hastestdataset = hasattr(clf_template, 'testdataset')
 
-        # for proper and easier debugging - first define classifiers and then
-        # train them
-        for split in self.__partitioner.get_partition_specs(dataset):
+        self.ca.splits = []
+
+        for i, pset in enumerate(self.__partitioner.generate(dataset)):
             if __debug__:
                 debug("CLFSPL_", "Deepcopying %s for %s",
                       (clf_template, self))
             clf = clf_template.clone()
             bclfs.append(clf)
-        self.clfs = bclfs
 
-        self.ca.splits = []
-
-        for i, pset in enumerate(self.__partitioner.generate(dataset)):
             if __debug__:
                 debug("CLFSPL", "Training classifier for split %d", (i,))
 
@@ -1256,7 +1278,7 @@ class SplitClassifier(CombinedClassifier):
             if ca.is_enabled("splits"):
                 self.ca.splits.append(split)
 
-            clf = self.clfs[i]
+            clf = bclfs[i]
 
             # assign testing dataset if given classifier can digest it
             if clf_hastestdataset:
@@ -1285,6 +1307,9 @@ class SplitClassifier(CombinedClassifier):
             if ca.is_enabled("training_stats"):
                 # XXX this is broken, as it cannot deal with not yet set ca
                 ca.training_stats += clf.ca.training_stats
+        # need to be assigned after the entire list populated since
+        # _set_classifiers places them into a tuple
+        self.clfs = bclfs
 
 
     @group_kwargs(prefixes=['slave_'], passthrough=True)

@@ -51,8 +51,25 @@ Institutions Where PyMVPA Is Known To Be Used
 Studies employing PyMVPA
 ========================
 
+2014
+----
+
+* :ref:`Hanke et al., Scientific Data (in press) <HBI+14>`. A high-resolution
+  7-Tesla fMRI dataset from complex natural stimulation with an audio movie.
+* :ref:`Helfinstein et al. PNAS (2014) <HSC+14>`. Predicting risky choices from
+  brain activity patterns.
+
 2013
 ----
+
+* :ref:`Anderson et al., Clinical Neuropsychology (2013) <ARV+13>`. 7T fMRI
+  reveals feasibility of covert visual attention-based brain–computer
+  interfacing with signals obtained solely from cortical grey matter accessible
+  by subdural surface electrodes
+
+* :ref:`Manelis and Reder, Cerebral Cortex (2013) <MR13>`.
+  He Who Is Well Prepared Has Half Won The Battle: An fMRI Study of Task
+  Preparation
 
 * :ref:`Kohler et al., NeuroImage (2013) <KFR+13>`. Pattern classification
   precedes region-average hemodynamic response in early visual cortex.

@@ -6,14 +6,16 @@ Authors and Contributors
 
 The PyMVPA developers team currently consists of:
 
-* `Michael Hanke`_, Dartmouth College, USA
+* `Michael Hanke`_, University of Magdeburg, Germany
 * `Yaroslav O. Halchenko`_, Dartmouth College, USA
-* `Emanuele Olivetti`_, Fondazione Bruno Kessler, Italy
+* `Nikolaas N. Oosterhof`_, Dartmouth College, USA
 
 We are very grateful to the following people, who have contributed
 valuable advice, code or documentation to PyMVPA:
 
 * Florian Baumgartner, University of Magdeburg, Germany
+* Sven Buchholz, University of Magdeburg, Germany
+* Andrew C. Connolly, Dartmouth College, USA
 * Michael W. Cole, Washington University in St. Louis, USA
 * Ceyhun Çakar
 * Reka Daniel, Princeton University, USA
@@ -29,7 +31,7 @@ valuable advice, code or documentation to PyMVPA:
 * `James V. Haxby`_, Dartmouth College, USA
 * `James M. Hughes`_, Dartmouth College, USA
 * `James Kyle`_, UCLA, USA
-* `Nikolaas N. Oosterhof`_, Dartmouth College, USA
+* `Emanuele Olivetti`_, Fondazione Bruno Kessler, Italy
 * `Russell Poldrack`_, University of Texas, USA
 * `Stefan Pollmann`_, University of Magdeburg, Germany
 * Geethapriya Raghavan, University of Texas Austin, USA
@@ -43,7 +45,7 @@ valuable advice, code or documentation to PyMVPA:
 .. _Jyothi Swaroop Guntupalli: http://www.dartmouth.edu/~swaroop/
 .. _Valentin Haenel: http://www.cognition.tu-berlin.de/menue/members/valentin_haenel
 .. _Yaroslav O. Halchenko: http://www.onerussian.com
-.. _Michael Hanke: http://apsy.gse.uni-magdeburg.de/hanke
+.. _Michael Hanke: http://www.psychoinformatics.de
 .. _Stephen José Hanson: http://psychology.rutgers.edu/~jose
 .. _James V. Haxby: http://dbic.dartmouth.edu/haxby
 .. _James M. Hughes: http://www.cs.dartmouth.edu/~hughes/index.html
@@ -89,6 +91,9 @@ PyMVPA:
 
 German Federal Ministry of Education and Research
   * BMBF 01GQ11112
+
+German federal state of Saxony-Anhalt
+  * Project: Center for Behavioral Brain Sciences
 
 German Academic Exchange Service
   * PPP-USA D/05/504/7

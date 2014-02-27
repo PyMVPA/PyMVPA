@@ -13,22 +13,25 @@ if __debug__:
     debug('INIT', 'mvpa2.clfs.libsmlrc')
 
 import numpy as np
-import ctypes as C
 import os
 import sys
 
-from mvpa2.clfs.libsmlrc.ctypes_helper import extend_args, c_darray
+from mvpa2.base import externals
+if externals.exists('ctypes', raise_=True):
+    import ctypes as C
 
-# connect to library that's in this directory
-if sys.platform == 'win32':
-    # on windows things get tricky as we compile this lib as an extension
-    # so it get a .pyd name suffix instead of .dll
-    smlrlib = C.cdll[os.path.join(os.path.dirname(__file__), 'smlrc.pyd')]
-elif sys.platform == 'darwin':
-    # look for .so extension on Mac (not .dylib this time)
-    smlrlib = C.cdll[os.path.join(os.path.dirname(__file__), 'smlrc.so')]
-else:
-    smlrlib = np.ctypeslib.load_library('smlrc', os.path.dirname(__file__))
+    from mvpa2.clfs.libsmlrc.ctypes_helper import extend_args, c_darray
+
+    # connect to library that's in this directory
+    if sys.platform == 'win32':
+        # on windows things get tricky as we compile this lib as an extension
+        # so it get a .pyd name suffix instead of .dll
+        smlrlib = C.cdll[os.path.join(os.path.dirname(__file__), 'smlrc.pyd')]
+    elif sys.platform == 'darwin':
+        # look for .so extension on Mac (not .dylib this time)
+        smlrlib = C.cdll[os.path.join(os.path.dirname(__file__), 'smlrc.so')]
+    else:
+        smlrlib = np.ctypeslib.load_library('smlrc', os.path.dirname(__file__))
 
 # wrap the stepwise function
 def stepwise_regression(*args):

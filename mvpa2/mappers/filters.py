@@ -6,22 +6,25 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Filtering mappers."""
+"""Spectral filtering and FFT-based resampling."""
 
 __docformat__ = 'restructuredtext'
 
 import numpy as np
 
 from mvpa2.base import externals
+
 if externals.exists('scipy', raise_=True):
     from scipy.signal import resample
+    from mvpa2.support.scipy.signal import filtfilt
 
+from mvpa2.base import warning
+from mvpa2.base.param import Parameter
 from mvpa2.base.dochelpers import _str, borrowkwargs
 from mvpa2.mappers.base import Mapper
 from mvpa2.datasets import Dataset
 from mvpa2.base.dataset import vstack
 from mvpa2.generators.splitters import Splitter
-
 
 class FFTResampleMapper(Mapper):
     """Mapper for FFT-based resampling.
@@ -176,4 +179,97 @@ def fft_resample(ds, num, **kwargs):
       FFTResampleMapper.
     """
     dm = FFTResampleMapper(num, **kwargs)
+    return dm.forward(ds)
+
+
+class IIRFilterMapper(Mapper):
+    """Mapper using IIR filters for data transformation.
+
+    This mapper is able to perform any IIR-based low-pass, high-pass, or
+    band-pass frequency filtering. This is a front-end for SciPy's filtfilt(),
+    hence its usage looks almost exactly identical, and any of SciPy's IIR
+    filters can be used with this mapper:
+
+    >>> from scipy import signal
+    >>> b, a = signal.butter(8, 0.125)
+    >>> mapper = IIRFilterMapper(b, a, padlen=150)
+
+    """
+
+    axis = Parameter(0, allowedtype='int',
+            doc="""The axis of `x` to which the filter is applied. By default
+            the filter is applied to all features along the samples axis""")
+
+    padtype = Parameter('odd', allowedtype="{'odd', 'even', 'constant', None}",
+            doc="""Must be 'odd', 'even', 'constant', or None.  This determines
+            the type of extension to use for the padded signal to which the
+            filter is applied.  If `padtype` is None, no padding is used.  The
+            default is 'odd'""")
+
+    padlen = Parameter(None, allowedtype="int or None",
+            doc="""The number of elements by which to extend `x` at both ends
+            of `axis` before applying the filter. This value must be less than
+            `x.shape[axis]-1`.  `padlen=0` implies no padding. The default
+            value is 3*max(len(a),len(b))""")
+
+    def __init__(self, b, a, **kwargs):
+        """
+        All constructor parameters are analogs of filtfilt() or are passed
+        on to the Mapper base class.
+
+        Parameters
+        ----------
+        b : (N,) array_like
+            The numerator coefficient vector of the filter.
+        a : (N,) array_like
+            The denominator coefficient vector of the filter.  If a[0]
+            is not 1, then both a and b are normalized by a[0].
+        """
+        Mapper.__init__(self, auto_train=True, **kwargs)
+        self.__iir_num = b
+        self.__iir_denom = a
+
+    def _forward_data(self, data):
+        params = self.params
+        try:
+            mapped = filtfilt(self.__iir_num,
+                              self.__iir_denom,
+                              data,
+                              axis=params.axis,
+                              padtype=params.padtype,
+                              padlen=params.padlen)
+        except TypeError:
+            # we have an ancient scipy, do manually
+            # but is will only support 2d arrays
+            if params.axis == 0:
+                data = data.T
+            if params.axis > 1:
+                raise ValueError("this version of scipy does not "
+                                 "support nd-arrays for filtfilt()")
+            if not (params['padlen'].is_default and params['padtype'].is_default):
+                warning("this version of scipy.signal.filtfilt() does not "
+                        "support `padlen` and `padtype` arguments -- ignoring "
+                        "them")
+            mapped = [filtfilt(self.__iir_num,
+                               self.__iir_denom,
+                               x)
+                    for x in data]
+            mapped = np.array(mapped)
+            if params.axis == 0:
+                mapped = mapped.T
+        return mapped
+
+
+@borrowkwargs(IIRFilterMapper, '__init__')
+def iir_filter(ds, *args, **kwargs):
+    """IIR-based frequency filtering.
+
+    Parameters
+    ----------
+    ds : Dataset
+    **kwargs
+      For all other arguments, please see the documentation of
+      IIRFilterMapper.
+    """
+    dm = IIRFilterMapper(*args, **kwargs)
     return dm.forward(ds)

@@ -15,6 +15,10 @@ import numpy as np
 from mvpa2.base import externals
 
 # do conditional to be able to build module reference
+if externals.exists('scipy', raise_=True):
+    from mvpa2.support.scipy.stats import scipy
+    import scipy.stats as stats
+
 if externals.exists('statsmodels', raise_=True):
     import statsmodels.api as sm
 
@@ -88,9 +92,9 @@ class UnivariateStatsModels(FeaturewiseMeasure):
     ...                             add_constant=True)
     >>> res = usm(endog)
     >>> print res
-    <Dataset: 5x2@float64, <sa: descr>>
+    <Dataset: 6x2@float64, <sa: descr>>
     >>> print res.sa.descr
-    ['tvalue' 'pvalue' 'effect' 'sd' 'df']
+    ['tvalue' 'pvalue' 'effect' 'sd' 'df' 'zvalue']
 
     F-test for a contrast matrix, again with additional test statistics in the
     result dataset. The contrast vector is pass on to the ``f_test()`` function
@@ -127,25 +131,25 @@ class UnivariateStatsModels(FeaturewiseMeasure):
         Parameters
         ----------
         exog : array-like
-            Column ordered (observations in rows) design matrix.
+          Column ordered (observations in rows) design matrix.
         model_gen : callable
-            Callable that returns a StatsModels model when called like
-            ``model_gen(endog, exog)``.
+          Callable that returns a StatsModels model when called like
+          ``model_gen(endog, exog)``.
         res : {'params', 'tvalues', ...} or 1d array or 2d array or callable
           Variable of interest that should be reported as feature-wise
           measure. If a str, the corresponding attribute of the model fit result
           class is returned (e.g. 'tvalues'). If a 1d-array, it is passed
           to the fit result class' ``t_test()`` function as a t-contrast vector.
           If a 2d-array, it is passed to the ``f_test()`` function as a
-          contrast matrix. If both latter cases a number of common test
-          statistics are return in the rows of the result dataset. A description
+          contrast matrix.  In both latter cases a number of common test
+          statistics are returned in the rows of the result dataset. A description
           is available in the 'descr' sample attribute. Any other datatype
           passed to this argument will be treated as a callable, the model
           fit result is passed to it, and its return value(s) is aggregated
           in the result dataset.
-        add_constant : bool
-            If True, a constant will be added to the design matrix that is
-            passed to ``exog``.
+        add_constant : bool, optional
+          If True, a constant will be added to the design matrix that is
+          passed to ``exog``.
         """
         FeaturewiseMeasure.__init__(self, **kwargs)
         self._exog = exog
@@ -161,13 +165,17 @@ class UnivariateStatsModels(FeaturewiseMeasure):
         """Helper for apply_along_axis()"""
         res = self._res
         results = self._model_gen(Y, self._exog).fit()
+        t_to_z = lambda t, df: stats.norm.ppf(stats.t.cdf(t, df))
         if isinstance(res, np.ndarray):
             if len(res.shape) == 1:
                 tstats = results.t_test(self._res)
                 return [np.asscalar(i) for i in [tstats.tvalue,
                                                  tstats.pvalue,
                                                  tstats.effect,
-                                                 tstats.sd]] + [tstats.df_denom]
+                                                 tstats.sd,
+                                                 np.array(tstats.df_denom),
+                                                 t_to_z(tstats.tvalue, tstats.df_denom)]]
+
             elif len(res.shape) == 2:
                 fstats = results.f_test(self._res)
                 return [np.asscalar(i) for i in
@@ -190,7 +198,7 @@ class UnivariateStatsModels(FeaturewiseMeasure):
         res = self._res
         if isinstance(res, np.ndarray):
             if len(res.shape) == 1:
-                sa = ['tvalue', 'pvalue', 'effect', 'sd', 'df']
+                sa = ['tvalue', 'pvalue', 'effect', 'sd', 'df', 'zvalue']
             elif len(res.shape) == 2:
                 sa = ['fvalue', 'pvalue', 'df_num', 'df_denom']
         elif isinstance(res, str):
@@ -210,14 +218,9 @@ class GLM(UnivariateStatsModels):
     class.
     """
     def __init__(self, design, voi='pe', **kwargs):
-        import warnings
-        warnings.warn("The 'GLM' class is deprecated. Please migrate to UnivariateStatsModels",
-                      DeprecationWarning)
-        if voi == 'pe':
-            voi = 'params'
-        elif voi == 'zstat':
-            raise ValueError("GLM class no longer supports 'zstat' reports."
-                             " Please migrate to UnivariateStatsModels and tvalues.")
+        if isinstance(voi, str):
+            # Possibly remap to adjusted interface
+            voi = {'pe': 'params', 'zstat': 'zvalue'}.get(voi, voi)
         UnivariateStatsModels.__init__(
                               self,
                               design,

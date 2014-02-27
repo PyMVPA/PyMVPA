@@ -44,6 +44,7 @@ doc/examples/match_distribution_report
 doc/examples/match_distribution_report.pdf
 .eric4project
 doc/source/examples
+doc/source/cmdline/
 doc/source/generated
 doc/api
 /datadb

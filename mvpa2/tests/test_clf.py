@@ -17,11 +17,13 @@ from mvpa2.testing.datasets import *
 from mvpa2.testing.clfs import *
 
 from mvpa2.support.copy import deepcopy
+from mvpa2.base.node import ChainNode
 from mvpa2.base import externals
 
 from mvpa2.datasets.base import dataset_wizard
 from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner
 from mvpa2.generators.permutation import AttributePermutator
+from mvpa2.generators.resampling import Balancer
 from mvpa2.generators.splitters import Splitter
 
 from mvpa2.misc.exceptions import UnknownStateError
@@ -164,7 +166,7 @@ class ClassifiersTests(unittest.TestCase):
 
         self.assertTrue(bclf1.predict(testdata) ==
                         [['sp', 'sn'], ['sp', 'sn'], ['sp', 'sn'],
-                         ['dn', 'dp'], ['dn', 'dp']])
+                         ['dp', 'dn'], ['dp', 'dn']])
 
         self.assertTrue((ds.targets == orig_labels).all(),
                         msg="BinaryClassifier should not alter labels")
@@ -439,6 +441,28 @@ class ClassifiersTests(unittest.TestCase):
         #self.assertEqual(clf.predict(ds.samples), list(ds.targets),
         #                     msg="Should classify correctly")
 
+    def test_split_clf_on_chainpartitioner(self):
+        # pretty much a smoke test for #156
+        ds = datasets['uni2small']
+        part = ChainNode([NFoldPartitioner(cvtype=1),
+                          Balancer(attr='targets', count=2,
+                                   limit='partitions', apply_selection=True)])
+        partitions = list(part.generate(ds))
+        sclf = SplitClassifier(sample_clf_lin, part, enable_ca=['stats', 'splits'])
+        sclf.train(ds)
+        pred = sclf.predict(ds)
+        assert_equal(len(pred), len(ds))  # rudimentary check
+        assert_equal(len(sclf.ca.splits), len(partitions))
+        assert_equal(len(sclf.clfs), len(partitions))
+
+        # now let's do sensitivity analyzer just in case
+        sclf.untrain()
+        sensana = sclf.get_sensitivity_analyzer()
+        sens = sensana(ds)
+        # basic check that sensitivities varied across splits
+        from mvpa2.mappers.fx import FxMapper
+        sens_stds = FxMapper('samples', np.std, uattrs=['targets'])(sens)
+        assert_true(np.any(sens_stds != 0))
 
     def test_mapped_classifier(self):
         samples = np.array([ [ 0,  0, -1], [ 1, 0, 1],
@@ -1070,9 +1094,10 @@ class ClassifiersTests(unittest.TestCase):
             pl.xlim((0. - step/2, 1.+step/2))
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(ClassifiersTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
