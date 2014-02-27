@@ -185,3 +185,14 @@ def test_zscore():
 
     assert_array_almost_equal(np.std(ds, axis=0)/np.array(stds),
                               np.std(dsz, axis=0))
+
+def test_zscore_withoutchunks():
+    # just a smoke test to see if all issues of
+    # https://github.com/PyMVPA/PyMVPA/issues/26
+    # are fixed
+    from mvpa2.datasets import Dataset
+    ds = Dataset(np.arange(32).reshape((8,-1)), sa=dict(targets=range(8)))
+    zscore(ds, chunks_attr=None)
+    assert(np.any(ds.samples != np.arange(32).reshape((8,-1))))
+    ds_summary = ds.summary()
+    assert(ds_summary is not None)
