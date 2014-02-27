@@ -14,6 +14,7 @@ import re
 import textwrap
 import numpy as np
 from mvpa2.base.state import IndexedCollectable
+from mvpa2.base.constraints import expand_contraint_spec
 
 if __debug__:
     from mvpa2.base import debug
@@ -101,7 +102,7 @@ class Parameter(IndexedCollectable):
 
         self.__default = default
         self._ro = ro
-        self.constraints = constraints
+        self.constraints = expand_contraint_spec(constraints)
 
         # needs to come after kwargs processing, since some debug statements
         # rely on working repr()
