@@ -2,28 +2,25 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
-==========================================
- Using scikit-learn regressors with PyMVPA
-==========================================
+============================================
+ Using scikit-learn regressions with PyMVPA
+============================================
 
-Scikit-learn is a rich library of algorithms, many of them implementing the
-`estimator and predictor API`_. PyMVPA provides the wrapper class,
-:class:`~mvpa2.clfs.skl.base.SKLLearnerAdapter` that enables the use
-of all of these algorithms within the PyMVPA framework. With this adaptor
-these aspects of the scikit-learn API are presented through a PyMVPA
-learner interface that is fully compatible with all other building blocks of
-PyMVPA.
+This is practically part two of the example on `using scikit-learn classifiers
+with PyMVPA <example_skl_classifier_demo>`. Just like classifiers,
+implementations of regression algorithms in scikit-learn use the
+`estimator and predictor API`_. Consequently, the same wrapper class
+(:class:`~mvpa2.clfs.skl.base.SKLLearnerAdapter`) as before is applicable
+when using scikit-learn regressions in PyMVPA.
 
-In this example we demonstrate this interface by mimicking the "`Decision 
-Tree Regression`_" example from the scikit-learn documentation --
-applying the minimal modifications necessary to the scikit-learn decision tree 
-regression algorithm (with two different paramter settings) implementation on 
-a PyMVPA dataset.
+The example demonstrates this by mimicking the "`Decision Tree Regression`_"
+example from the scikit-learn documentation -- applying the minimal
+modifications necessary to the scikit-learn decision tree regression algorithm
+(with two different parameter settings) implementation on a PyMVPA dataset.
 
 .. _estimator and predictor API: http://scikit-learn.org/stable/developers/#apis-of-scikit-learn-objects
 .. _Decision Tree Regression: http://scikit-learn.org/stable/auto_examples/tree/plot_tree_regression.html 
 """
-
 
 print(__doc__)
 
@@ -44,14 +41,14 @@ adaptor class. We also use a convenient way to convert the data into a proper
 # this first import is only required to run the example a part of the test suite
 from mvpa2 import cfg
 from mvpa2.clfs.skl.base import SKLLearnerAdapter
-from mvpa2.suite import *
+from mvpa2.datasets import dataset_wizard
 ds_train=dataset_wizard(samples=X, targets=y)
 
 
 """
 The following lines are an example of the only significant modification
-with respect to a pure scikit-learn implementation: the regressor is
-wrapped into the adaptor. The result is a PyMVPA classifier, hence can 
+with respect to a pure scikit-learn implementation: the regression is
+wrapped into the adaptor. The result is a PyMVPA learner, hence can 
 be called with a dataset that contains both samples and targets.
 """
 
@@ -78,16 +75,6 @@ pl.xlabel("data")
 pl.ylabel("target")
 pl.title("Decision Tree Regression")
 pl.legend()
-
-
-"""
-This example shows that a PyMVPA classifier can be used in pretty much the
-same way as the corresponding scikit-learn API. What this example does not show
-is that with the :class:`~mvpa2.clfs.skl.base.SKLLearnerAdapter` class any
-scikit-learn classifier can be employed in arbitrarily complex PyMVPA
-processing pipelines and is enhanced with automatic training and all other
-functionality of PyMVPA classifier implementations.
-"""
 
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
