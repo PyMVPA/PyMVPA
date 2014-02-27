@@ -165,9 +165,9 @@ if externals.exists('mdp'):
 if externals.exists('mdp ge 2.4'):
     from mvpa2.mappers.lle import *
 if externals.exists('nipy'):
-    from mvpa2.mappers.nipy_glm import *
+    from mvpa2.mappers.glm.nipy_glm import *
 if externals.exists('statsmodels'):
-    from mvpa2.mappers.statsmodels_glm import *
+    from mvpa2.mappers.glm.statsmodels_glm import *
 
 
 
