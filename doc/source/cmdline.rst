@@ -74,7 +74,7 @@ Auxilliary command
 .. toctree::
 
    generated/cmd_info
-   generated/cmd_pytest
+   generated/cmd_exec
    generated/cmd_atlaslabeler
 
 Example scripts
