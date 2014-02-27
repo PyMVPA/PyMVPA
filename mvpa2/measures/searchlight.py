@@ -15,10 +15,14 @@ if __debug__:
 
 import numpy as np
 import tempfile, os
+import time
 
+import mvpa2
 from mvpa2.base import externals, warning
+from mvpa2.base.types import is_datasetlike
 from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
 from mvpa2.base.types import is_datasetlike
+from mvpa2.base.progress import ProgressBar
 if externals.exists('h5py'):
     # Is optionally required for passing searchlight
     # results via storing/reloading hdf5 files
@@ -30,7 +34,7 @@ from mvpa2.featsel.base import StaticFeatureSelection
 from mvpa2.measures.base import Measure
 from mvpa2.base.state import ConditionalAttribute
 from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
-
+from mvpa2.mappers.base import ChainMapper
 
 class BaseSearchlight(Measure):
     """Base class for searchlights.
@@ -44,6 +48,9 @@ class BaseSearchlight(Measure):
 
     roi_feature_ids = ConditionalAttribute(enabled=False,
         doc="Feature IDs for all generated ROIs.")
+
+    roi_center_ids = ConditionalAttribute(enabled=True,
+        doc="Center ID for all generated ROIs.")
 
     is_trained = True
     """Indicate that this measure is always trained."""
@@ -75,7 +82,8 @@ class BaseSearchlight(Measure):
             raise RuntimeError("The 'pprocess' module is required for "
                                "multiprocess searchlights. Please either "
                                "install python-pprocess, or reduce `nproc` "
-                               "to 1 (got nproc=%i)" % nproc)
+                               "to 1 (got nproc=%i) or set to default None"
+                               % nproc)
 
         self._queryengine = queryengine
         if roi_ids is not None and not isinstance(roi_ids, str) \
@@ -122,13 +130,14 @@ class BaseSearchlight(Measure):
             roi_ids = self.__roi_ids
             # safeguard against stupidity
             if __debug__:
-                if max(roi_ids) >= dataset.nfeatures:
-                    raise IndexError, \
-                          "Maximal center_id found is %s whenever given " \
-                          "dataset has only %d features" \
-                          % (max(roi_ids), dataset.nfeatures)
+                qe_ids = self._queryengine.ids # known to qe
+                if not set(qe_ids).issuperset(roi_ids):
+                    raise IndexError(
+                          "Some roi_ids are not known to the query engine %s: %s"
+                          % (self._queryengine,
+                             set(roi_ids).difference(qe_ids)))
         else:
-            roi_ids = np.arange(dataset.nfeatures)
+            roi_ids = self._queryengine.ids
 
         # pass to subclass
         results = self._sl_call(dataset, roi_ids, nproc)
@@ -142,13 +151,25 @@ class BaseSearchlight(Measure):
                 # there is an additional selection step that needs to be
                 # expressed by another mapper
                 mapper = copy.copy(dataset.a.mapper)
-                mapper.append(StaticFeatureSelection(roi_ids,
-                                                     dshape=dataset.shape[1:]))
+
+                # NNO if the orignal mapper has no append (because it's not a
+                # chainmapper, for example), we make our own chainmapper.
+                #
+                # THe original code was:
+                # mapper.append(StaticFeatureSelection(roi_ids,
+                #                                     dshape=dataset.shape[1:]))
+                feat_sel_mapper = StaticFeatureSelection(roi_ids,
+                                                     dshape=dataset.shape[1:])
+                if 'append' in dir(mapper):
+                    mapper.append(feat_sel_mapper)
+                else:
+                    mapper = ChainMapper([dataset.a.mapper,
+                                          feat_sel_mapper])
+
                 results.a['mapper'] = mapper
 
         # charge state
         self.ca.raw_results = results
-
         # return raw results, base-class will take care of transformations
         return results
 
@@ -203,11 +224,38 @@ class Searchlight(BaseSearchlight):
             sl.ca.roi_feature_ids = [r.a.roi_feature_ids for r in results]
         if sl.ca.is_enabled('roi_sizes'):
             sl.ca.roi_sizes = [r.a.roi_sizes for r in results]
+        if sl.ca.is_enabled('roi_center_ids'):
+            sl.ca.roi_center_ids = [r.a.roi_center_ids for r in results]
+
+        if 'mapper' in dataset.a:
+            # since we know the space we can stick the original mapper into the
+            # results as well
+            if roi_ids is None:
+                result_ds.a['mapper'] = copy.copy(dataset.a.mapper)
+            else:
+                # there is an additional selection step that needs to be
+                # expressed by another mapper
+                mapper = copy.copy(dataset.a.mapper)
+
+                # NNO if the orignal mapper has no append (because it's not a
+                # chainmapper, for example), we make our own chainmapper.
+                feat_sel_mapper = StaticFeatureSelection(
+                                    roi_ids, dshape=dataset.shape[1:])
+                if hasattr(mapper, 'append'):
+                    mapper.append(feat_sel_mapper)
+                else:
+                    mapper = ChainMapper([dataset.a.mapper,
+                                          feat_sel_mapper])
+
+                result_ds.a['mapper'] = mapper
+
+        # store the center ids as a feature attribute
+        result_ds.fa['center_ids'] = roi_ids
 
         return result_ds
 
-
     def __init__(self, datameasure, queryengine, add_center_fa=False,
+                 results_postproc_fx=None,
                  results_backend='native',
                  results_fx=None,
                  tmp_prefix='tmpsl',
@@ -225,6 +273,10 @@ class Searchlight(BaseSearchlight):
           seed (e.g. sphere center) for the respective ROI. If True, the
           attribute is named 'roi_seed', the provided string is used as the name
           otherwise.
+        results_postproc_fx : callable
+          Called with all the results computed in a block for possible
+          post-processing which needs to be done in parallel instead of serial
+          aggregation in results_fx.
         results_backend : ('native', 'hdf5'), optional
           Specifies the way results are provided back from a processing block
           in case of nproc > 1. 'native' is pickling/unpickling of results by
@@ -249,6 +301,7 @@ class Searchlight(BaseSearchlight):
         """
         BaseSearchlight.__init__(self, queryengine, **kwargs)
         self.datameasure = datameasure
+        self.results_postproc_fx = results_postproc_fx
         self.results_backend = results_backend.lower()
         if self.results_backend == 'hdf5':
             # Assure having hdf5
@@ -269,6 +322,7 @@ class Searchlight(BaseSearchlight):
             prefixes=prefixes
             + _repr_attrs(self, ['datameasure'])
             + _repr_attrs(self, ['add_center_fa'], default=False)
+            + _repr_attrs(self, ['results_postproc_fx'])
             + _repr_attrs(self, ['results_backend'], default='native')
             + _repr_attrs(self, ['results_fx', 'nblocks'])
             )
@@ -299,8 +353,9 @@ class Searchlight(BaseSearchlight):
             for iblock, block in enumerate(roi_blocks):
                 # should we maybe deepcopy the measure to have a unique and
                 # independent one per process?
+                seed = mvpa2.get_random_seed()
                 compute(block, dataset, copy.copy(self.__datameasure),
-                        iblock=iblock)
+                        seed=seed, iblock=iblock)
         else:
             # otherwise collect the results in an 1-item list
             p_results = [
@@ -332,42 +387,71 @@ class Searchlight(BaseSearchlight):
         return result_ds
 
 
-    def _proc_block(self, block, ds, measure, iblock='main'):
+    def _proc_block(self, block, ds, measure, seed=None, iblock='main'):
         """Little helper to capture the parts of the computation that can be
         parallelized
 
         Parameters
         ----------
-        iblock
+        seed
+          RNG seed.  Should be provided e.g. in child process invocations
+          to guarantee that they all seed differently to not keep generating
+          the same sequencies due to reusing the same copy of numpy's RNG
+        block
           Critical for generating non-colliding temp filenames in case
           of hdf5 backend.  Otherwise RNGs of different processes might
           collide in their temporary file names leading to problems.
         """
+        if seed is not None:
+            mvpa2.seed(seed)
         if __debug__:
             debug_slc_ = 'SLC_' in debug.active
             debug('SLC',
                   "Starting computing block for %i elements" % len(block))
+            start_time = time.time()
         results = []
         store_roi_feature_ids = self.ca.is_enabled('roi_feature_ids')
         store_roi_sizes = self.ca.is_enabled('roi_sizes')
-        assure_dataset = store_roi_feature_ids or store_roi_sizes
+        store_roi_center_ids = self.ca.is_enabled('roi_center_ids')
+
+        assure_dataset = any([store_roi_feature_ids,
+                              store_roi_sizes,
+                              store_roi_center_ids])
+
         # put rois around all features in the dataset and compute the
         # measure within them
+        bar = ProgressBar()
+
         for i, f in enumerate(block):
             # retrieve the feature ids of all features in the ROI from the query
             # engine
-            roi_fids = self._queryengine[f]
+            roi_specs = self._queryengine[f]
 
             if __debug__ and  debug_slc_:
-                debug('SLC_', 'For %r query returned ids %r' % (f, roi_fids))
+                debug('SLC_', 'For %r query returned roi_specs %r'
+                      % (f, roi_specs))
+
+            if is_datasetlike(roi_specs):
+                # TODO: unittest
+                assert(len(roi_specs) == 1)
+                roi_fids = roi_specs.samples[0]
+            else:
+                roi_fids = roi_specs
 
             # slice the dataset
             roi = ds[:, roi_fids]
 
+            if is_datasetlike(roi_specs):
+                for n, v in roi_specs.fa.iteritems():
+                    roi.fa[n] = v
+
             if self.__add_center_fa:
                 # add fa to indicate ROI seed if requested
                 roi_seed = np.zeros(roi.nfeatures, dtype='bool')
-                roi_seed[roi_fids.index(f)] = True
+                if f in roi_fids:
+                    roi_seed[roi_fids.index(f)] = True
+                else:
+                    warning("Center feature attribute id %s not found" % f)
                 roi.fa[self.__add_center_fa] = roi_seed
 
             # compute the datameasure and store in results
@@ -381,15 +465,24 @@ class Searchlight(BaseSearchlight):
                 res.a['roi_feature_ids'] = roi_fids
             if store_roi_sizes:
                 res.a['roi_sizes'] = roi.nfeatures
+            if store_roi_center_ids:
+                res.a['roi_center_ids'] = f
             results.append(res)
 
             if __debug__:
-                debug('SLC', "Doing %i ROIs: %i (%i features) [%i%%]" \
-                    % (len(block),
-                       f+1,
-                       roi.nfeatures,
-                       float(i+1)/len(block)*100,), cr=True)
+                msg = 'ROI %i (%i/%i), %i features' % \
+                            (f + 1, i + 1, len(block), roi.nfeatures)
+                debug('SLC', bar(float(i + 1) / len(block), msg), cr=True)
 
+        if __debug__:
+            # just to get to new line
+            debug('SLC', '')
+
+        if self.results_postproc_fx:
+            if __debug__:
+                debug('SLC', "Post-processing %d results in proc_block using %s"
+                      % (len(results), self.results_postproc_fx))
+            results = self.results_postproc_fx(results)
         if self.results_backend == 'native':
             pass                        # nothing special
         elif self.results_backend == 'hdf5':
@@ -439,7 +532,8 @@ class Searchlight(BaseSearchlight):
                            fset=__set_datameasure)
     add_center_fa = property(fget=lambda self: self.__add_center_fa)
 
-@borrowkwargs(Searchlight, '__init__', exclude=['roi_ids'])
+
+@borrowkwargs(Searchlight, '__init__', exclude=['roi_ids', 'queryengine'])
 def sphere_searchlight(datameasure, radius=1, center_ids=None,
                        space='voxel_indices', **kwargs):
     """Creates a `Searchlight` to run a scalar `Measure` on

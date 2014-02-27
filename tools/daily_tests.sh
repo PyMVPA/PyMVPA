@@ -30,6 +30,7 @@ TESTS_COMMON="unittests testmanual testsuite testsphinx testexamples testcfg"
 repo="git://github.com/PyMVPA/PyMVPA.git"
 remotes="git://github.com/yarikoptic/PyMVPA.git yarikoptic
 git://github.com/hanke/PyMVPA.git hanke
+git://github.com/nno/PyMVPA.git nick
 git://github.com/otizonaizit/PyMVPA.git tiziano"
 
 # Associative array with tests lists per branch
@@ -46,7 +47,8 @@ done
 
 # Python3 testing -- origin and tiziano
 TESTS_BRANCHES["origin/master"]+=" unittest-py3"
-TESTS_BRANCHES["tiziano/master"]=" unittest-py3"
+TESTS_BRANCHES["hanke/master"]+=" cmdline_modular"
+# TESTS_BRANCHES["tiziano/master"]=" unittest-py3"
 
 # all known tests
 TESTS_ALL=`echo "${TESTS_BRANCHES[*]}" | tr ' ' '\n' | sort | uniq`
@@ -216,5 +218,6 @@ sweep >| $logfile 2>&1
 
 # Email using mime-construct with results per branch in attachements
 mime-construct --to yoh@onerussian.com --to michael.hanke@gmail.com --to opossumnano@gmail.com \
+    --to nikolaas.oosterhof@unitn.it \
     --subject  "PyMVPA: daily testing: +$succeeded/-$failed" \
     --file "$logfile" $blogfiles

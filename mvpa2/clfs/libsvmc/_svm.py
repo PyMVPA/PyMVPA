@@ -371,7 +371,7 @@ class SVMModel:
                              "problem"
         #only C_SVC, NU_SVC goes in
         if not self.probability:
-            raise TypeError, "model does not support probabiliy estimates"
+            raise TypeError, "model does not support probability estimates"
 
         #convert x into SVMNode, alloc a double array to receive probabilities
         data = seq_to_svm_node(x)

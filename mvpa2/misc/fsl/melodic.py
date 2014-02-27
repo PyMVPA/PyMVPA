@@ -39,6 +39,10 @@ class MelodicResults( object ):
         else:
             self._rpath = rpath
         self._ic = nb.load(os.path.join(rpath, 'melodic_IC' + fext))
+        if externals.versions['nibabel'] >= '1.2':
+            self._icshape = self._ic.shape
+        else:
+            self._icshape = self._ic.get_shape()
         self._mask = nb.load(os.path.join(rpath, 'mask' + fext))
         self._tmodes = np.loadtxt(os.path.join(rpath, 'melodic_Tmodes' ))
         self._smodes = np.loadtxt(os.path.join(rpath, 'melodic_Smodes'))
@@ -73,8 +77,8 @@ class MelodicResults( object ):
     path     = property(fget=lambda self: self._rpath )
     ic       = property(fget=lambda self: np.rollaxis(self._ic.get_data(), -1))
     mask     = property(fget=lambda self: self._mask.get_data())
-    nic      = property(fget=lambda self: self._ic.get_shape()[3])
-    extent   = property(fget=lambda self: self._ic.get_shape()[:3])
+    nic      = property(fget=lambda self: self._icshape()[3])
+    extent   = property(fget=lambda self: self._icshape()[:3])
     tmodes   = property(fget=get_tmodes)
     smodes   = property(fget=lambda self: self._smodes.T )
     icstats = property(fget=lambda self: self._icstats,

@@ -15,7 +15,7 @@ skip_if_no_external('scipy')
 import numpy as np
 
 from mvpa2.datasets import Dataset, vstack
-from mvpa2.mappers.filters import FFTResampleMapper
+from mvpa2.mappers.filters import FFTResampleMapper, iir_filter
 
 def test_resample():
     time = np.linspace(0, 2*np.pi, 100)
@@ -56,3 +56,23 @@ def test_resample():
     # each individual chunks should be identical to previous dataset
     assert_array_almost_equal(mds.samples, mcds.samples[:10])
     assert_array_almost_equal(mds.samples, mcds.samples[10:])
+
+
+def test_iirfilter():
+    # dataset with one feature from two waves
+    t = np.linspace(0, 1.0, 2001)
+    xlow = np.sin(2 * np.pi * 5 * t)
+    xhigh = np.sin(2 * np.pi * 250 * t)
+    x = xlow + xhigh
+    ds = Dataset(x, sa={'sid': np.arange(len(x))}, fa={'fid':['theone']})
+
+    # butterworth filter with a cutoff between the waves
+    from scipy import signal
+    b, a = signal.butter(8, 0.125)
+    mds = iir_filter(ds, b, a, padlen=150)
+    # check we get just the slow wave out (compensate for edge artifacts)
+    assert_false(np.sum(np.abs(mds.samples[100:-100,0] - xlow[100:-100]) > 0.001))
+    assert_equal(len(ds.sa), len(mds.sa))
+    assert_equal(len(ds.fa), len(mds.fa))
+    assert_array_equal(ds.fa.fid, mds.fa.fid)
+    assert_array_equal(ds.sa.sid, mds.sa.sid)

@@ -398,7 +398,7 @@ class SplitterTests(unittest.TestCase):
             else:
                 assert_true(s[0].samples.base is None)
             # we get slicing all the time
-            assert_true(s[1].samples.base.base is self.data.samples)
+            assert_true(is_the_same_base(s[1].samples))
         step_ds = Dataset(np.random.randn(20,2),
                           sa={'chunks': np.tile([0,1], 10)})
         oes = OddEvenPartitioner()
@@ -411,14 +411,15 @@ class SplitterTests(unittest.TestCase):
         assert_equal(len(splits), 2)
         for s in splits:
             # we get slicing all the time
-            assert_true(s[0].samples.base.base is step_ds.samples)
-            assert_true(s[1].samples.base.base is step_ds.samples)
+            assert_true(is_the_same_base(s[0].samples, step_ds.samples))
+            assert_true(is_the_same_base(s[1].samples, step_ds.samples))
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(SplitterTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

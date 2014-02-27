@@ -14,10 +14,6 @@ from mvpa2.base import externals
 
 import numpy as np
 
-if externals.exists('scipy', raise_=True):
-    # TODO: implement corrcoef optionally without scipy, e.g. np.corrcoef
-    from scipy.stats import pearsonr
-
 from mvpa2.measures.base import FeaturewiseMeasure
 from mvpa2.datasets.base import Dataset
 
@@ -29,7 +25,8 @@ class CorrCoef(FeaturewiseMeasure):
     is_trained = True
     """Indicate that this measure is always trained."""
 
-    def __init__(self, pvalue=False, attr='targets', **kwargs):
+    def __init__(self, pvalue=False, attr='targets',
+                        corr_backend=None, **kwargs):
         """Initialize
 
         Parameters
@@ -39,20 +36,40 @@ class CorrCoef(FeaturewiseMeasure):
           instead of pure correlation coefficient
         attr : str
           What attribut to correlate with
+        corr_backend: None or 'builtin' or 'scipy' (default: None)
+          Which function to use to compute correlations.
+          None means 'scipy' if pvalue else 'builtin'.
         """
         # init base classes first
+
         FeaturewiseMeasure.__init__(self, **kwargs)
 
         self.__pvalue = int(pvalue)
         self.__attr = attr
+        self.__corr_backend = corr_backend
 
 
     def _call(self, dataset):
         """Computes featurewise scores."""
+        backend = self.__corr_backend
+
+        if backend is None:
+            # if p values needed, use scipy
+            # otherwise
+            backend = ['builtin', 'scipy'][self.__pvalue]
+
+        if backend == 'builtin':
+            if self.__pvalue:
+                raise ValueError("Not supported: 'builtin' and pvalue=True")
+            pearsonr = lambda x, y:(pearson_correlation(x, y),)
+        elif self.__corr_backend == 'scipy':
+            if externals.exists('scipy', raise_=True):
+            # TODO: implement corrcoef optionally without scipy, e.g. np.corrcoef
+                from scipy.stats import pearsonr
 
         attrdata = dataset.sa[self.__attr].value
-        if ( np.issubdtype(attrdata.dtype, 'c') or
-             np.issubdtype(attrdata.dtype, 'U') ):
+        if (np.issubdtype(attrdata.dtype, 'c') or
+             np.issubdtype(attrdata.dtype, 'U')):
             raise ValueError("Correlation coefficent measure is not meaningful "
                              "for datasets with literal labels.")
 
@@ -77,3 +94,57 @@ class CorrCoef(FeaturewiseMeasure):
             result[ifeature] = corrv
 
         return Dataset(result[np.newaxis])
+
+def pearson_correlation(x, y=None):
+    '''Computes pearson correlations on matrices
+
+    Parameters
+    ----------
+    x: np.ndarray or Dataset
+        PxM array
+    y: np.ndarray or Dataset or None (the default).
+        PxN array. If None, then y=x.
+
+    Returns
+    -------
+    c: np.ndarray
+        MxN array with c[i,j]=r(x[:,i],y[:,j])
+
+    Notes
+    -----
+    Unlike numpy. this function behaves like matlab's 'corr' function.
+    Its numerical precision is slightly lower than numpy's correlate function.
+    Unlike scipy's 'pearsonr' function it does not return p values.
+    TODO integrate with CorrCoef
+
+    '''
+
+    if y is None:
+        y = x
+
+    def _get_data(ds):
+        # support for dataset
+        try:
+            return ds.samples
+        except:
+            return ds
+
+    x = _get_data(x)
+    y = _get_data(y)
+
+
+    xd = x - np.mean(x, axis=0)
+    yd = y - np.mean(y, axis=0)
+
+    if xd.shape[0] != yd.shape[0]:
+        raise ValueError("Shape mismatch: %s != %s" % (xd.shape, yd.shape))
+
+    # normalize
+    n = 1. / (x.shape[0] - 1) # normalize
+
+    # standard deviation
+    xs = (n * np.sum(xd * xd, axis=0)) ** -.5
+    ys = (n * np.sum(yd * yd, axis=0)) ** -.5
+
+    return n * np.dot(xd.T, yd) * np.tensordot(xs, ys, 0)
+

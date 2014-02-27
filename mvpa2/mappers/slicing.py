@@ -22,6 +22,12 @@ class SliceMapper(Mapper):
     """Baseclass of Mapper that slice a Dataset in various ways.
     """
     def __init__(self, slicearg, **kwargs):
+        """
+        Parameters
+        ----------
+        slicearg
+          Argument for slicing
+        """
         Mapper.__init__(self, **kwargs)
         self._safe_assign_slicearg(slicearg)
 

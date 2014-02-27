@@ -12,6 +12,11 @@ from mvpa2.base.dochelpers import single_or_plural, borrowdoc, borrowkwargs
 
 import unittest
 
+if __debug__:
+    from mvpa2.base import debug
+
+from mvpa2.testing.tools import SkipTest
+
 class DochelpersTests(unittest.TestCase):
 
     def test_basic(self):
@@ -134,11 +139,46 @@ class DochelpersTests(unittest.TestCase):
         self.assertEqual(sldoc.count('disable_ca'), 1)
 
 
+    def test_recursive_reprs(self):
+        # https://github.com/PyMVPA/PyMVPA/issues/122
+
+        from mvpa2.base.param import Parameter
+        from mvpa2.base.state import ClassWithCollections
+
+        class C1(ClassWithCollections):
+            f = Parameter(None)
+
+        class C2(ClassWithCollections):
+            p = Parameter(None)
+            def trouble(self, results):
+                return results
+
+        # provide non-default value of sl
+        c1 = C1()
+        c2 = C2(p=c1)
+        # bind sl's results_fx to hsl's instance method
+        c2.params.p.params.f = c2.trouble
+        c1id = c2id = mod = ''
+        # kaboom -- this should not crash now
+        if __debug__:
+            if 'ID_IN_REPR' in debug.active:
+                from mvpa2.base.dochelpers import _strid
+                c1id = _strid(c1)
+                c2id = _strid(c2)
+
+            if 'MODULE_IN_REPR' in debug.active:
+                mod = 'mvpa2.tests.test_dochelpers.'
+                raise SkipTest("TODO: needs similar handling in _saferepr")
+
+        self.assertEqual(
+            repr(c2), '%(mod)sC2(p=%(mod)sC1(f=<bound %(mod)sC2%(c2id)s.trouble>)%(c1id)s)%(c2id)s' % locals())
+
 # TODO: more unittests
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(DochelpersTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

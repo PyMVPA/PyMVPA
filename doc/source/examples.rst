@@ -51,8 +51,10 @@ Analysis
    examples/searchlight_minimal
    examples/searchlight
    examples/searchlight_dsm
+   examples/searchlight_surf
    examples/sensanas
    examples/svdclf
+   examples/svm_margin
    examples/permutation_test
    examples/nested_cv
    examples/match_distribution
@@ -80,5 +82,7 @@ Miscellaneous
 
 .. toctree::
 
+   examples/skl_transformer_demo
+   examples/skl_classifier_demo
    examples/kerneldemo
    examples/curvefitting

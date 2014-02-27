@@ -24,13 +24,13 @@ if externals.exists('cran-energy'):
 
 @reseed_rng()
 def test_euclidean_distances():
-    x = np.random.normal(size=(4, 10)) + np.random.normal()*10
+    x = np.random.normal(size=(4, 10)) + np.random.normal() * 10
     d = _euclidean_distances(x, uv=True)
     # trust no one!
     distances = np.zeros((4, 10, 10))
     for ix, x_ in enumerate(x.T):
         for iy, y_ in enumerate(x.T):
-            distances[:, ix, iy] = np.sqrt((x_ - y_)**2)
+            distances[:, ix, iy] = np.sqrt((x_ - y_) ** 2)
     assert_array_equal(d, distances)
 
 
@@ -40,9 +40,9 @@ def test_dCOV_against_R_energy():
     for N in xrange(1, 10): # sweep through size of the first data
         # We will compare to R implementation
         M, T = 4, 30
-        x = np.random.normal(size=(N, T)) + np.random.normal()*10
+        x = np.random.normal(size=(N, T)) + np.random.normal() * 10
         R = np.random.normal(size=(N, M))
-        y = 10*np.dot(R.T, x) + np.random.normal(size=(M, T)) \
+        y = 10 * np.dot(R.T, x) + np.random.normal(size=(M, T)) \
             + np.random.normal(size=(M,))[:, None] # offset
 
         # To assure that works for not all_est
@@ -55,13 +55,13 @@ def test_dCOV_against_R_energy():
                                  dCOV(x, y, uv=uv)):
                 assert_array_almost_equal(out, outp)
 
-
+@labile(5, 1)
 def test_dCOV():
     # Few simple tests to verify that the measure seems to be ok
     for N in xrange(1, 10): # sweep through size of the first data
         # We will compare to R implementation
         M, T = 4, 100
-        x = np.random.normal(size=(N, T)) + np.random.normal()*10
+        x = np.random.normal(size=(N, T)) + np.random.normal() * 10
         R = np.random.normal(size=(N, M))
 
         # linearly dependent variable after rotation
@@ -74,7 +74,7 @@ def test_dCOV():
         # independent below is a heuristic (for T=100) and we should
         # just implement proper bootstrap significance estimation for
         # dCor
-        ok_(dCor < 0.2+N/2.0)           # should be really high but might fluctuate
+        ok_(dCor < 0.2 + N / 2.0)           # should be really high but might fluctuate
 
         # the same variable -- things should match for dCov and dVar's
         dCov, dCor, dVarx, dVary = dCOV(x, x)
@@ -86,7 +86,7 @@ def test_dCOV():
         #    + np.random.normal(size=(M,))[:, None] # offset
 
         # Test that would work on vectors
-        dCov, dCor, dVarx, dVary = dCOV(np.arange(N), np.sin(np.arange(N)/3.))
-        if N>1:
+        dCov, dCor, dVarx, dVary = dCOV(np.arange(N), np.sin(np.arange(N) / 3.))
+        if N > 1:
             ok_(dCor > 0.6)           # should be really high but might fluctuate
-        assert_equal(dcorcoef(np.arange(N), np.sin(np.arange(N)/3.)),  dCor)
+        assert_equal(dcorcoef(np.arange(N), np.sin(np.arange(N) / 3.)), dCor)

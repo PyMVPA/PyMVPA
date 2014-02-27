@@ -22,30 +22,34 @@ class SOMMapperTests(unittest.TestCase):
                           [1., 0., 0.], [0., 1., 1.], [1., 0., 1.],
                           [1., 1., 0.], [1., 1., 1.]])
 
-        # only small SOM for speed reasons
-        som = SimpleSOMMapper((10, 5), 200, learning_rate=0.05)
+        distance_measures = (None, lambda x, y:(x ** 3 + y ** 3) ** (1. / 3))
 
-        # no acces when nothing is there
-        self.assertRaises(RuntimeError, som._access_kohonen)
+        for distance_measure in distance_measures:
+            # only small SOM for speed reasons
+            som = SimpleSOMMapper((10, 5), 200, learning_rate=0.05)
 
-        som.train(colors)
+            # no acces when nothing is there
+            self.assertRaises(RuntimeError, som._access_kohonen)
 
-        fmapped = som.forward(colors)
-        self.assertTrue(fmapped.shape == (8, 2))
+            som.train(colors)
 
-        # reverse mapping
-        rmapped = som.reverse(fmapped)
+            fmapped = som.forward(colors)
+            self.assertTrue(fmapped.shape == (8, 2))
 
-        if cfg.getboolean('tests', 'labile', default='yes'):
-            # should approximately restore the input, but could fail
-            # with bad initialisation
-            self.assertTrue((np.round(rmapped) == colors).all())
+            # reverse mapping
+            rmapped = som.reverse(fmapped)
+
+            if cfg.getboolean('tests', 'labile', default='yes'):
+                # should approximately restore the input, but could fail
+                # with bad initialisation
+                self.assertTrue((np.round(rmapped) == colors).all())
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(SOMMapperTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

@@ -29,11 +29,11 @@ class SupportFxTests(unittest.TestCase):
                               transform_with_boxcar,
                               data,
                               sp,
-                              0 )
+                              0)
 
         # now do an identity transformation
         trans = transform_with_boxcar(data, sp, 1)
-        self.assertTrue( (trans == data).all() )
+        self.assertTrue((trans == data).all())
 
         # now check for illegal boxes
         self.assertRaises(ValueError,
@@ -44,16 +44,16 @@ class SupportFxTests(unittest.TestCase):
 
         # now something that should work
         sp = np.arange(9)
-        trans = transform_with_boxcar( data, sp, 2)
-        self.assertTrue( ( trans == \
-                           [0.5,1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5] ).all() )
+        trans = transform_with_boxcar(data, sp, 2)
+        self.assertTrue((trans == \
+                           [0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5]).all())
 
 
         # now test for proper data shape
-        data = np.ones((10,3,4,2))
+        data = np.ones((10, 3, 4, 2))
         sp = [ 2, 4, 3, 5 ]
-        trans = transform_with_boxcar( data, sp, 4)
-        self.assertTrue( trans.shape == (4,3,4,2) )
+        trans = transform_with_boxcar(data, sp, 4)
+        self.assertTrue(trans.shape == (4, 3, 4, 2))
 
 
 
@@ -77,16 +77,16 @@ class SupportFxTests(unittest.TestCase):
 
     def test_mof_n_combinations(self):
         self.assertEqual(
-            unique_combinations( range(3), 1 ), [[0],[1],[2]] )
+            unique_combinations(range(3), 1), [[0], [1], [2]])
         self.assertEqual(
             unique_combinations(
-                        range(4), 2 ),
+                        range(4), 2),
                         [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]]
                         )
         self.assertEqual(
             unique_combinations(
-                        range(4), 3 ),
-                        [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]] )
+                        range(4), 3),
+                        [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]])
 
 
     @reseed_rng()
@@ -96,7 +96,7 @@ class SupportFxTests(unittest.TestCase):
             limited = list(xrandom_unique_combinations(range(n), 3, limit))
             self.assertEqual(len(limited), limit)
             # See if we would obtain the same
-            for k in [1, 2, 3, int(n/2), n]:
+            for k in [1, 2, 3, int(n / 2), n]:
                 all_random = list(xrandom_unique_combinations(range(n), k))
                 all_ = list(xunique_combinations(range(n), k))
                 self.assertEqual(sorted(all_random), sorted(all_))
@@ -104,8 +104,15 @@ class SupportFxTests(unittest.TestCase):
         # test that we are not sampling the same space -- two
         # consecutive samples within large number very unlikely not
         # have more than few overlapping samples
-        c1, c2 = xrandom_unique_combinations(range(1000), 10, 2)
-        self.assertTrue(len(set(c1).intersection(c2)) < 2)
+        iter_count = 100
+        overlapping_count = 0
+        for k in xrange(iter_count):
+            c1, c2 = xrandom_unique_combinations(range(1000), 10, 2)
+            if len(set(c1).intersection(c2)) == 2:
+                overlapping_count += 1
+
+        # assume this happens less than 10 percent of the time
+        self.assertTrue(overlapping_count * 10 < iter_count)
 
 
     def test_break_points(self):
@@ -122,34 +129,34 @@ class SupportFxTests(unittest.TestCase):
     def test_map_overlap(self):
         mo = MapOverlap()
 
-        maps = [[1,0,1,0],
-                [1,0,0,1],
-                [1,0,1,0]]
+        maps = [[1, 0, 1, 0],
+                [1, 0, 0, 1],
+                [1, 0, 1, 0]]
 
         overlap = mo(maps)
 
-        self.assertEqual(overlap, 1./len(maps[0]))
-        self.assertTrue((mo.overlap_map == [1,0,0,0]).all())
-        self.assertTrue((mo.spread_map == [0,0,1,1]).all())
-        self.assertTrue((mo.ovstats_map == [1,0,2./3,1./3]).all())
+        self.assertEqual(overlap, 1. / len(maps[0]))
+        self.assertTrue((mo.overlap_map == [1, 0, 0, 0]).all())
+        self.assertTrue((mo.spread_map == [0, 0, 1, 1]).all())
+        self.assertTrue((mo.ovstats_map == [1, 0, 2. / 3, 1. / 3]).all())
 
         mo = MapOverlap(overlap_threshold=0.5)
         overlap = mo(maps)
-        self.assertEqual(overlap, 2./len(maps[0]))
-        self.assertTrue((mo.overlap_map == [1,0,1,0]).all())
-        self.assertTrue((mo.spread_map == [0,0,0,1]).all())
-        self.assertTrue((mo.ovstats_map == [1,0,2./3,1./3]).all())
+        self.assertEqual(overlap, 2. / len(maps[0]))
+        self.assertTrue((mo.overlap_map == [1, 0, 1, 0]).all())
+        self.assertTrue((mo.spread_map == [0, 0, 0, 1]).all())
+        self.assertTrue((mo.ovstats_map == [1, 0, 2. / 3, 1. / 3]).all())
 
 
     @reseed_rng()
-    @sweepargs(pair=[(np.random.normal(size=(10,20)), np.random.normal(size=(10,20))),
-                     ([1,2,3,0], [1,3,2,0]),
-                     ((1,2,3,1), (1,3,2,1))])
+    @sweepargs(pair=[(np.random.normal(size=(10, 20)), np.random.normal(size=(10, 20))),
+                     ([1, 2, 3, 0], [1, 3, 2, 0]),
+                     ((1, 2, 3, 1), (1, 3, 2, 1))])
     def test_id_hash(self, pair):
         a, b = pair
         a1 = deepcopy(a)
         a_1 = idhash(a)
-        self.assertTrue(a_1 == idhash(a),  msg="Must be of the same idhash")
+        self.assertTrue(a_1 == idhash(a), msg="Must be of the same idhash")
         self.assertTrue(a_1 != idhash(b), msg="Must be of different idhash")
         if isinstance(a, np.ndarray):
             self.assertTrue(a_1 != idhash(a.T), msg=".T must be of different idhash")
@@ -169,12 +176,18 @@ class SupportFxTests(unittest.TestCase):
             i_con = asobjarray(i)
             self.assertTrue(i_con.dtype is np.dtype('object'))
             self.assertEqual(len(i), len(i_con))
-            self.assertTrue(np.all(i == i_con))
+
+            # Note: in Python3 the ['a' , 2, '3'] list is converted to
+            # an array with elements 'a', '2',' and '3' (i.e. string representation
+            # for the second element), and thus np.all(i==i_con) fails.
+            # Instead here each element is tested for equality seperately
+            # XXX is this an issue?
+            self.assertTrue(np.all((i[j] == i_con[j]) for j in xrange(len(i))))
 
     @reseed_rng()
     def test_correlation(self):
         # data: 20 samples, 80 features
-        X = np.random.rand(20,80)
+        X = np.random.rand(20, 80)
 
         C = 1 - one_minus_correlation(X, X)
 
@@ -184,12 +197,12 @@ class SupportFxTests(unittest.TestCase):
         self.assertTrue((np.abs(np.diag(C) - 1).mean() < 0.00001).all())
 
         # now two different
-        Y = np.random.rand(5,80)
+        Y = np.random.rand(5, 80)
         C2 = 1 - one_minus_correlation(X, Y)
         # get nsample x nssample correlation matrix
         self.assertTrue(C2.shape == (20, 5))
         # external validity check -- we are dealing with correlations
-        self.assertTrue(C2[10,2] - np.corrcoef(X[10], Y[2])[0,1] < 0.000001)
+        self.assertTrue(C2[10, 2] - np.corrcoef(X[10], Y[2])[0, 1] < 0.000001)
 
     def test_version_to_tuple(self):
         """Test conversion of versions from strings
@@ -208,7 +221,7 @@ class SupportFxTests(unittest.TestCase):
             ('0.0.1', '0.0.2'),
             ('0.0.1', '0.1'),
             ('0.0.1', '0.1.0'),
-            ('0.0.1', '0.0.1a'),        # this might be a bit unconventional?
+            ('0.0.1', '0.0.1a'), # this might be a bit unconventional?
             ('0.0.1', '0.0.1+svn234'),
             ('0.0.1+svn234', '0.0.1+svn235'),
             ('0.0.1dev1', '0.0.1'),
@@ -258,7 +271,7 @@ def test_limit_filter():
                        ds.sa.chunks)
     assert_array_equal(get_limit_filter({'chunks': 3}, ds.sa),
                        ds.sa.chunks == 3)
-    assert_array_equal(get_limit_filter({'chunks': [3,1]}, ds.sa),
+    assert_array_equal(get_limit_filter({'chunks': [3, 1]}, ds.sa),
                        np.logical_or(ds.sa.chunks == 3,
                                      ds.sa.chunks == 1))
 
@@ -267,10 +280,11 @@ def test_mask2slice():
     assert_equal(mask2slice(slc), slice(None, 0, None))
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(SupportFxTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

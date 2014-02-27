@@ -34,6 +34,7 @@ __sdebug('base')
 from mvpa2.base import *
 from mvpa2.base.attributes import *
 from mvpa2.base.collections import *
+from mvpa2.base.constraints import *
 from mvpa2.base.config import *
 from mvpa2.base.dataset import *
 from mvpa2.base.externals import *
@@ -44,6 +45,7 @@ from mvpa2.base.param import *
 from mvpa2.base.state import *
 from mvpa2.base.node import *
 from mvpa2.base.learner import *
+from mvpa2.base.progress import *
 
 __sdebug('h5py')
 if externals.exists('h5py'):
@@ -118,6 +120,11 @@ from mvpa2.datasets.eventrelated import *
 if externals.exists('nibabel') :
     from mvpa2.datasets.mri import *
 from mvpa2.datasets.sources import *
+from mvpa2.datasets import niml
+from mvpa2.datasets.niml import from_niml, to_niml
+from mvpa2.datasets import eeglab
+from mvpa2.datasets.eeglab import eeglab_dataset
+
 
 __sdebug('generators')
 from mvpa2.generators.base import *
@@ -142,6 +149,7 @@ from mvpa2.mappers.flatten import *
 from mvpa2.mappers.shape import *
 from mvpa2.mappers.prototype import *
 from mvpa2.mappers.projection import *
+from mvpa2.mappers.staticprojection import *
 from mvpa2.mappers.svd import *
 from mvpa2.mappers.procrustean import *
 from mvpa2.mappers.boxcar import *
@@ -170,6 +178,7 @@ from mvpa2.measures.searchlight import *
 from mvpa2.measures.gnbsearchlight import *
 from mvpa2.measures.nnsearchlight import *
 from mvpa2.measures.corrstability import *
+from mvpa2.measures.winner import *
 
 __sdebug('misc')
 from mvpa2.support.copy import *
@@ -197,17 +206,22 @@ if externals.exists("nibabel"):
     from mvpa2.misc.fsl.melodic import *
 
 if externals.exists("pylab"):
+    from mvpa2.viz import *
     from mvpa2.misc.plot import *
     from mvpa2.misc.plot.erp import *
     if externals.exists(['griddata', 'scipy']):
         from mvpa2.misc.plot.topo import *
     from mvpa2.misc.plot.lightbox import plot_lightbox
 
+    if externals.exists(['matplotlib', 'griddata']):
+        from mvpa2.misc.plot.flat_surf import \
+                FlatSurfacePlotter, curvature_from_any
+
 __sdebug("scipy dependents")
 if externals.exists("scipy"):
-    from mvpa2.support.stats import scipy
+    from mvpa2.support.scipy.stats import scipy
     from mvpa2.measures.corrcoef import *
-    from mvpa2.measures.ds import *
+    from mvpa2.measures.rsa import *
     from mvpa2.clfs.ridge import *
     from mvpa2.clfs.plr import *
     from mvpa2.misc.stats import *
@@ -226,20 +240,41 @@ __sdebug("atlases")
 if externals.exists("lxml") and externals.exists("nibabel"):
     from mvpa2.atlases import *
 
+__sdebug("surface searchlight")
+from mvpa2.misc.surfing.queryengine import SurfaceVerticesQueryEngine, \
+                                           SurfaceVoxelsQueryEngine, \
+                                            disc_surface_queryengine
+
+from mvpa2.misc.surfing import surf_voxel_selection, volgeom, \
+                                volsurf, volume_mask_dict
+
+from mvpa2.misc.surfing.volume_mask_dict import VolumeMaskDictionary
+
+__sdebug("nibabel afni")
+from mvpa2.support.nibabel import afni_niml_dset, afni_suma_1d, \
+                                  afni_suma_spec, surf_fs_asc, surf, \
+				                  surf_caret, \
+                                  afni_niml_roi, afni_niml_annot
+if externals.exists('nibabel'):
+    from mvpa2.support.nibabel import surf_gifti
+
 
 __sdebug("ipython goodies")
 if externals.exists("running ipython env"):
-    from mvpa2.support.ipython import *
-    ipy_activate_pymvpa_goodies()
+    try:
+        from mvpa2.support.ipython import *
+        ipy_activate_pymvpa_goodies()
+    except Exception, e:
+        warning("Failed to activate custom IPython completions due to %s" % e)
 
-def suite_stats():
+def suite_stats(scope_dict={}):
     """Return cruel dict of things which evil suite provides
     """
 
-    glbls = globals()
+    scope_dict = scope_dict or globals()
     import types
     # Compatibility layer for Python3
-    try: 
+    try:
         from io import FileIO as BuiltinFileType
     except ImportError:
         BuiltinFileType = types.FileType
@@ -321,11 +356,11 @@ def suite_stats():
                             ind = doc.index('\n')
                         except:
                             ind = 1000
-                        s+= ": " + doc[:min(ind, 80)]
+                        s += ": " + doc[:min(ind, 80)]
                     except:
                         pass
             return s
 
-    return EnvironmentStatistics(globals())
+    return EnvironmentStatistics(scope_dict)
 
 __sdebug("THE END of mvpa2.suite imports")

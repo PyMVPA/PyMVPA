@@ -14,6 +14,9 @@ import os
 import sys
 from glob import glob
 
+if sys.version_info[:2] < (2, 6):
+    raise RuntimeError("PyMVPA requires Python 2.6 or higher")
+
 # some config settings
 bind_libsvm = 'local' # choices: 'local', 'system', None
 
@@ -82,22 +85,22 @@ else:
 # define the extension modules
 libsvmc_ext = Extension(
     'mvpa2.clfs.libsvmc._svmc',
-    sources = libsvmc_extra_sources + ['mvpa2/clfs/libsvmc/svmc.i'],
-    include_dirs = libsvmc_include_dirs,
-    library_dirs = libsvmc_library_dirs,
-    libraries    = libsvmc_libraries,
-    language     = 'c++',
-    extra_link_args = extra_link_args,
-    swig_opts    = ['-I' + d for d in libsvmc_include_dirs])
+    sources=libsvmc_extra_sources + ['mvpa2/clfs/libsvmc/svmc.i'],
+    include_dirs=libsvmc_include_dirs,
+    library_dirs=libsvmc_library_dirs,
+    libraries=libsvmc_libraries,
+    language='c++',
+    extra_link_args=extra_link_args,
+    swig_opts=['-I' + d for d in libsvmc_include_dirs])
 
 smlrc_ext = Extension(
     'mvpa2.clfs.libsmlrc.smlrc',
-    sources = [ 'mvpa2/clfs/libsmlrc/smlr.c' ],
+    sources=[ 'mvpa2/clfs/libsmlrc/smlr.c' ],
     #library_dirs = library_dirs,
-    libraries = ['m'],
+    libraries=['m'] if not sys.platform.startswith('win') else [],
     # extra_compile_args = ['-O0'],
-    extra_link_args = extra_link_args,
-    language = 'c')
+    extra_link_args=extra_link_args,
+    language='c')
 
 ext_modules = [smlrc_ext]
 
@@ -123,14 +126,14 @@ def setup_package():
     os.chdir(src_path)
     sys.path.insert(0, src_path)
 
-    setup(name         = 'pymvpa2',
-          version      = '2.0.1',
-          author       = 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
-          author_email = 'pkg-exppsy-pymvpa@lists.alioth.debian.org',
-          license      = 'MIT License',
-          url          = 'http://www.pymvpa.org',
-          description  = 'Multivariate pattern analysis',
-          long_description = \
+    setup(name='pymvpa2',
+          version='2.2.0',
+          author='Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
+          author_email='pkg-exppsy-pymvpa@lists.alioth.debian.org',
+          license='MIT License',
+          url='http://www.pymvpa.org',
+          description='Multivariate pattern analysis',
+          long_description=\
               "PyMVPA is a Python module intended to ease pattern classification " \
               "analyses of large datasets. It provides high-level abstraction of " \
               "typical processing steps and a number of implementations of some " \
@@ -139,7 +142,7 @@ def setup_package():
               "PyMVPA is truly free software (in every respect) and " \
               "additionally requires nothing but free-software to run.",
           # please maintain alphanumeric order
-          packages     = [ 'mvpa2',
+          packages=[ 'mvpa2',
                            'mvpa2.algorithms',
                            'mvpa2.atlases',
                            'mvpa2.base',
@@ -160,23 +163,29 @@ def setup_package():
                            'mvpa2.misc.fsl',
                            'mvpa2.misc.io',
                            'mvpa2.misc.plot',
+                           'mvpa2.misc.surfing',
+                           'mvpa2.sandbox',
                            'mvpa2.support',
+                           'mvpa2.support.afni',
                            'mvpa2.support.bayes',
                            'mvpa2.support.nipy',
                            'mvpa2.support.ipython',
+                           'mvpa2.support.nibabel',
+                           'mvpa2.support.scipy',
                            'mvpa2.testing',
                            'mvpa2.tests',
                            'mvpa2.tests.badexternals',
+                           'mvpa2.viz',
                            ],
-          data_files = [('mvpa2', ['mvpa2/COMMIT_HASH']),
+          data_files=[('mvpa2', ['mvpa2/COMMIT_HASH']),
                         ('mvpa2/data',
                          [f for f in glob(os.path.join('mvpa2', 'data', '*'))
                              if os.path.isfile(f)]),
                         ('mvpa2/data/bv',
                          [f for f in glob(os.path.join('mvpa2', 'data', 'bv', '*'))
                              if os.path.isfile(f)])],
-          scripts      = glob(os.path.join('bin', '*')),
-          ext_modules  = ext_modules
+          scripts=glob(os.path.join('bin', '*')),
+          ext_modules=ext_modules
           )
 
 

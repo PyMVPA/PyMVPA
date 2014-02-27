@@ -20,7 +20,9 @@ import os
 from mvpa2.base import cfg
 from mvpa2.base.externals import versions
 from mvpa2.base.types import is_datasetlike
-from mvpa2.base.dataset import DatasetError, vstack, hstack
+from mvpa2.base.dataset import DatasetError, vstack, hstack, all_equal, \
+                                stack_by_unique_feature_attribute, \
+                                stack_by_unique_sample_attribute
 from mvpa2.datasets.base import dataset_wizard, Dataset, HollowSamples
 from mvpa2.misc.data_generators import normal_feature_dataset
 from mvpa2.testing import reseed_rng
@@ -165,27 +167,27 @@ def test_ex_from_masked():
     assert_array_equal(ds.chunks, [1])
 
     # now try adding pattern with wrong shape
-    assert_raises(DatasetError, ds.append,
-                  Dataset.from_wizard(np.ones((2,3)), targets=1, chunks=1))
+    assert_raises(ValueError, vstack,
+                  (ds, Dataset.from_wizard(np.ones((2, 3)), targets=1, chunks=1)))
 
     # now add two real patterns
-    ds.append(Dataset.from_wizard(np.random.standard_normal((2, 5)),
-                                  targets=2, chunks=2))
+    ds = vstack((ds, Dataset.from_wizard(np.random.standard_normal((2, 5)),
+                                         targets=2, chunks=2)))
     assert_equal(ds.nsamples, 3)
     assert_array_equal(ds.targets, [1, 2, 2])
     assert_array_equal(ds.chunks, [1, 2, 2])
 
     # test unique class labels
-    ds.append(Dataset.from_wizard(np.random.standard_normal((2, 5)),
-                                  targets=3, chunks=5))
+    ds = vstack((ds, Dataset.from_wizard(np.random.standard_normal((2, 5)),
+                                         targets=3, chunks=5)))
     assert_array_equal(ds.sa['targets'].unique, [1, 2, 3])
 
     # test wrong attributes length
     assert_raises(ValueError, Dataset.from_wizard,
-                  np.random.standard_normal((4,2,3,4)), targets=[1, 2, 3],
+                  np.random.standard_normal((4, 2, 3, 4)), targets=[1, 2, 3],
                   chunks=2)
     assert_raises(ValueError, Dataset.from_wizard,
-                  np.random.standard_normal((4,2,3,4)), targets=[1, 2, 3, 4],
+                  np.random.standard_normal((4, 2, 3, 4)), targets=[1, 2, 3, 4],
                   chunks=[2, 2, 2])
 
     # no test one that is using from_masked
@@ -214,7 +216,7 @@ def test_multidim_attrs():
     # but have 2d labels and 3d chunks -- whatever that is
     ds = Dataset.from_wizard(samples.copy(),
                              targets=samples.copy(),
-                             chunks=np.random.normal(size=(2,10,4,2)))
+                             chunks=np.random.normal(size=(2, 10, 4, 2)))
     assert_equal(ds.nsamples, 2)
     assert_equal(ds.nfeatures, 12)
     assert_equal(ds.sa.targets.shape, (2, 3, 4))
@@ -357,36 +359,27 @@ def test_mergeds():
     data4 = Dataset.from_wizard(np.ones((2, 5)), targets=3, chunks=2)
     data4.fa['test'] = np.arange(5)
 
-    # cannot merge if there are attributes missing in one of the datasets
-    assert_raises(DatasetError, data1.append, data0)
+    merged = vstack((data1.copy(), data2))
 
-    merged = data1.copy()
-    merged.append(data2)
-
-    ok_( merged.nfeatures == 5 )
-    l12 = [1]*5 + [2]*3
-    l1 = [1]*8
+    ok_(merged.nfeatures == 5)
+    l12 = [1] * 5 + [2] * 3
+    l1 = [1] * 8
     ok_((merged.targets == l12).all())
     ok_((merged.chunks == l1).all())
 
-    data_append = data1.copy()
-    data_append.append(data2)
+    data_append = vstack((data1.copy(), data2))
 
     ok_(data_append.nfeatures == 5)
     ok_((data_append.targets == l12).all())
     ok_((data_append.chunks == l1).all())
 
     #
-    # appending
-    #
-
-    # we need the same samples attributes in both datasets
-    assert_raises(DatasetError, data2.append, data3)
-
-    #
     # vstacking
     #
     if __debug__:
+        # we need the same samples attributes in both datasets
+        assert_raises(ValueError, vstack, (data2, data3))
+
         # tested only in __debug__
         assert_raises(ValueError, vstack, (data0, data1, data2, data3))
     datasets = (data1, data2, data4)
@@ -394,7 +387,7 @@ def test_mergeds():
     assert_equal(merged.shape,
                  (np.sum([len(ds) for ds in datasets]), data1.nfeatures))
     assert_true('test' in merged.fa)
-    assert_array_equal(merged.sa.targets, [1]*5 + [2]*3 + [3]*2)
+    assert_array_equal(merged.sa.targets, [1] * 5 + [2] * 3 + [3] * 2)
 
     #
     # hstacking
@@ -405,7 +398,7 @@ def test_mergeds():
     assert_equal(merged.shape,
                  (len(data1), np.sum([ds.nfeatures for ds in datasets])))
     assert_true('chunks' in merged.sa)
-    assert_array_equal(merged.fa.one, [1]*5 + [0]*5)
+    assert_array_equal(merged.fa.one, [1] * 5 + [0] * 5)
 
 def test_hstack():
     """Additional tests for hstacking of datasets
@@ -418,8 +411,99 @@ def test_hstack():
     for fav in ds3dstacked.fa.itervalues():
         v = fav.value
         ok_(len(v) == nf3)
-        assert_array_equal(v[:nf1], v[nf1:2*nf1])
-        assert_array_equal(v[2*nf1:], v[nf1:2*nf1])
+        assert_array_equal(v[:nf1], v[nf1:2 * nf1])
+        assert_array_equal(v[2 * nf1:], v[nf1:2 * nf1])
+
+def test_stack_add_dataset_attributes():
+    data0 = Dataset.from_wizard(np.ones((5, 5)), targets=1)
+    data0.a['one'] = np.ones(2)
+    data0.a['two'] = 2
+    data0.a['three'] = 'three'
+    data0.a['common'] = range(10)
+    data0.a['array'] = np.arange(10)
+    data1 = Dataset.from_wizard(np.ones((5, 5)), targets=1)
+    data1.a['one'] = np.ones(3)
+    data1.a['two'] = 3
+    data1.a['four'] = 'four'
+    data1.a['common'] = range(10)
+    data1.a['array'] = np.arange(10)
+
+
+    vstacker = lambda x: vstack((data0, data1), a=x)
+    hstacker = lambda x: hstack((data0, data1), a=x)
+
+    add_params = (1, None, 'unique', 'uniques', 'all', 'drop_nonunique')
+
+    for stacker in (vstacker, hstacker):
+        for add_param in add_params:
+            if add_param == 'unique':
+                assert_raises(DatasetError, stacker, add_param)
+                continue
+
+            r = stacker(add_param)
+
+            if add_param == 1:
+                assert_array_equal(data1.a.one, r.a.one)
+                assert_equal(r.a.two, 3)
+                assert_equal(r.a.four, 'four')
+                assert_true('three' not in r.a.keys())
+                assert_true('array' in r.a.keys())
+            elif add_param == 'uniques':
+                assert_equal(set(r.a.keys()),
+                             set(['one', 'two', 'three',
+                                  'four', 'common', 'array']))
+                assert_equal(r.a.two, (2, 3))
+                assert_equal(r.a.four, ('four',))
+            elif add_param == 'all':
+                assert_equal(set(r.a.keys()),
+                             set(['one', 'two', 'three',
+                                  'four', 'common', 'array']))
+                assert_equal(r.a.two, (2, 3))
+                assert_equal(r.a.three, ('three', None))
+            elif add_param == 'drop_nonunique':
+                assert_equal(set(r.a.keys()),
+                             set(['common', 'three', 'four', 'array']))
+                assert_equal(r.a.three, 'three')
+                assert_equal(r.a.four, 'four')
+                assert_equal(r.a.common, range(10))
+                assert_array_equal(r.a.array, np.arange(10))
+
+
+def test_unique_stack():
+    data = Dataset(np.reshape(np.arange(24), (4, 6)),
+                        sa=dict(x=[0, 1, 0, 1]),
+                        fa=dict(y=[x for x in 'abccba']))
+
+    sa_stack = stack_by_unique_sample_attribute(data, 'x')
+    assert_equal(sa_stack.shape, (2, 12))
+    assert_array_equal(sa_stack.fa.x, [0] * 6 + [1] * 6)
+    assert_array_equal(sa_stack.fa.y, [x for x in 'abccbaabccba'])
+
+    fa_stack = stack_by_unique_feature_attribute(data, 'y')
+    assert_equal(fa_stack.shape, (12, 2))
+    assert_array_equal(fa_stack.sa.x, [0, 1] * 6)
+    assert_array_equal(fa_stack.sa.y, [y for y in 'aaaabbbbcccc'])
+    #assert_array_equal(fa_stack.fa.y,[''])
+
+    # check values match the fa or sa
+    for i in xrange(4):
+        for j in xrange(6):
+            d = data[i, j]
+            for k, other in enumerate((sa_stack, fa_stack)):
+                msk = other.samples == d.samples
+                ii, jj = np.nonzero(msk) # find matching indices in other
+
+                o = other[ii, jj]
+                coll = [o.fa, o.sa][k]
+
+                assert_equal(coll.x, d.sa.x)
+                assert_equal(coll.y, d.fa.y)
+
+    ystacker = lambda y: lambda x: stack_by_unique_feature_attribute(x, y)
+    assert_raises(KeyError, ystacker('z'), data)
+
+    data.fa['z'] = [z for z in '123451']
+    assert_raises(ValueError, ystacker('z'), data)
 
 def test_mergeds2():
     """Test composition of new datasets by addition of existing ones
@@ -438,19 +522,19 @@ def test_mergeds2():
     assert_array_equal(data.chunks, [1])
 
     # now try adding pattern with wrong shape
-    assert_raises(DatasetError,
-                  data.append,
-                  dataset_wizard(np.ones((2,3)), targets=1, chunks=1))
+    assert_raises(ValueError,
+                  vstack,
+                  (data, dataset_wizard(np.ones((2, 3)), targets=1, chunks=1)))
 
     # now add two real patterns
     dss = datasets['uni2large'].samples
-    data.append(dataset_wizard(dss[:2, :5], targets=2, chunks=2))
+    data = vstack((data, dataset_wizard(dss[:2, :5], targets=2, chunks=2)))
     assert_equal(data.nfeatures, 5)
     assert_array_equal(data.targets, [1, 2, 2])
     assert_array_equal(data.chunks, [1, 2, 2])
 
     # test automatic origins
-    data.append(dataset_wizard(dss[3:5, :5], targets=3, chunks=[0, 1]))
+    data = vstack((data, (dataset_wizard(dss[3:5, :5], targets=3, chunks=[0, 1]))))
     assert_array_equal(data.chunks, [1, 2, 2, 0, 1])
 
     # test unique class labels
@@ -467,8 +551,8 @@ def test_mergeds2():
 
 def test_combined_samplesfeature_selection():
     data = dataset_wizard(np.arange(20).reshape((4, 5)).view(myarray),
-                   targets=[1,2,3,4],
-                   chunks=[5,6,7,8])
+                   targets=[1, 2, 3, 4],
+                   chunks=[5, 6, 7, 8])
 
     # array subclass survives
     ok_(isinstance(data.samples, myarray))
@@ -516,13 +600,11 @@ def test_combined_samplesfeature_selection():
 
 @reseed_rng()
 def test_labelpermutation_randomsampling():
-    ds = Dataset.from_wizard(np.ones((5, 10)),     targets=range(5), chunks=1)
-    for i in xrange(1, 5):
-        ds.append(Dataset.from_wizard(np.ones((5, 10)) + i,
-                                      targets=range(5), chunks=i+1))
+    ds = vstack([Dataset.from_wizard(np.ones((5, 10)), targets=range(5), chunks=i)
+                    for i in xrange(1, 6)])
     # assign some feature attributes
     ds.fa['roi'] = np.repeat(np.arange(5), 2)
-    ds.fa['lucky'] = np.arange(10)%2
+    ds.fa['lucky'] = np.arange(10) % 2
     # use subclass for testing if it would survive
     ds.samples = ds.samples.view(myarray)
 
@@ -741,7 +823,7 @@ def test_repr():
                              % cfg_repr)
 
 def test_str():
-    args = ( np.arange(12, dtype=np.int8).reshape((4, 3)),
+    args = (np.arange(12, dtype=np.int8).reshape((4, 3)),
              range(4),
              [1, 1, 2, 2])
     for iargs in range(1, len(args)):
@@ -856,28 +938,32 @@ def test_other_samples_dtypes():
         assert_equal(ds.nfeatures, 1)
 
 
-def test_dataset_summary():
-    for ds in datasets.values() + [Dataset(np.array([None], dtype=object))]:
-        s = ds.summary()
-        ok_(s.startswith(str(ds)[1:-1])) # we strip surrounding '<...>'
-        # TODO: actual test of what was returned; to do that properly
-        #       RF the summary() so it is a dictionary
+@sweepargs(ds=datasets.values() + [
+    Dataset(np.array([None], dtype=object)),
+    dataset_wizard(np.arange(3), targets=['a', 'bc', 'd'], chunks=np.arange(3)),
+    dataset_wizard(np.arange(4), targets=['a', 'bc', 'a', 'bc'], chunks=[1, 1, 2, 2]),
+    ])
+def test_dataset_summary(ds):
+    s = ds.summary()
+    ok_(s.startswith(str(ds)[1:-1])) # we strip surrounding '<...>'
+    # TODO: actual test of what was returned; to do that properly
+    #       RF the summary() so it is a dictionary
 
-        summaries = []
-        if 'targets' in ds.sa:
-            summaries += ['Sequence statistics']
-            if 'chunks' in ds.sa:
-                summaries += ['Summary for targets', 'Summary for chunks']
+    summaries = []
+    if 'targets' in ds.sa:
+        summaries += ['Sequence statistics']
+        if 'chunks' in ds.sa:
+            summaries += ['Summary for targets', 'Summary for chunks']
 
-        # By default we should get all kinds of summaries
-        if not 'Number of unique targets >' in s:
-            for summary in summaries:
-                ok_(summary in s)
-
-        # If we give "wrong" targets_attr we should see none of summaries
-        s2 = ds.summary(targets_attr='bogus')
+    # By default we should get all kinds of summaries
+    if not 'Number of unique targets >' in s:
         for summary in summaries:
-            ok_(not summary in s2)
+            ok_(summary in s)
+
+    # If we give "wrong" targets_attr we should see none of summaries
+    s2 = ds.summary(targets_attr='bogus')
+    for summary in summaries:
+        ok_(not summary in s2)
 
 @nodebug(['ID_IN_REPR', 'MODULE_IN_REPR'])
 @with_tempfile(suffix='.hdf5')
@@ -913,18 +999,45 @@ def test_h5py_io(dsfile):
         pass
 
 
+def test_all_equal():
+    # all these values are supposed to be different from each other
+    # but equal to themselves
+    a = np.random.normal(size=(10, 10)) + 1000.
+    b = np.zeros((10, 10))
+    c = np.zeros(10)
+    d = np.zeros(11)
+    e = 0
+    f = None
+    g = True
+    h = ''
+    i = 'a'
+
+    values = [a, b, c, d, e, f, g, h, i]
+    for ii, v in enumerate(values):
+        for jj, w in enumerate(values):
+            assert_equal(all_equal(v, w), ii == jj)
+
+    # ensure that this function behaves like the 
+    # standard python '==' comparator for singulars
+    singulars = [0, None, True, False, '', 1, 'a']
+    for v in singulars:
+        for w in singulars:
+            assert_equal(all_equal(v, w), v == w)
+
+
 def test_hollow_samples():
-    sshape = (10,5)
+    sshape = (10, 5)
     ds = Dataset(HollowSamples(sshape, dtype=int),
                  sa={'targets': np.tile(['one', 'two'], sshape[0] / 2)})
     assert_equal(ds.shape, sshape)
     assert_equal(ds.samples.dtype, int)
     # should give us features [1,3] and samples [2,3,5]
-    mds = ds[[2,3,5], 1::2]
-    assert_array_equal(mds.samples.sid, [2,3,5])
-    assert_array_equal(mds.samples.fid, [1,3])
+    mds = ds[[2, 3, 5], 1::2]
+    assert_array_equal(mds.samples.sid, [2, 3, 5])
+    assert_array_equal(mds.samples.fid, [1, 3])
     assert_equal(mds.shape, (3, 2))
     assert_equal(ds.samples.dtype, mds.samples.dtype)
     # orig should stay pristine
     assert_equal(ds.samples.dtype, int)
     assert_equal(ds.shape, sshape)
+

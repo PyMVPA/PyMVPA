@@ -22,7 +22,7 @@ import mvpa2.kernels.np as npK
 from mvpa2.kernels.base import PrecomputedKernel, CachedKernel
 try:
     import mvpa2.kernels.sg as sgK
-    _has_sg = True
+    _has_sg = exists('shogun')
 except RuntimeError:
     _has_sg = False
 
@@ -32,7 +32,7 @@ class KernelTests(unittest.TestCase):
     """
 
     # mvpa2.kernel stuff
-    
+
     def kernel_equiv(self, k1, k2, accuracy=None, relative_precision=0.6):
         """Test how accurately two kernels agree
 
@@ -76,20 +76,20 @@ class KernelTests(unittest.TestCase):
             # first check if dtypes are the same
             ok_(k1m.dtype is k2m.dtype)
 
-            k12mean = 0.5*(np.abs(k1m) + np.abs(k2m))
+            k12mean = 0.5 * (np.abs(k1m) + np.abs(k2m))
             scales = np.ones(k12mean.shape)
 
             # don't bother dealing with values which would be within
             # resolution -- ** operation would lead to NaNs or 0s
             k12mean_nz = k12mean >= np.finfo(k1m.dtype).resolution * 1e+1
-            scales[k12mean_nz] = 10**np.floor(np.log10(k12mean[k12mean_nz]))
+            scales[k12mean_nz] = 10 ** np.floor(np.log10(k12mean[k12mean_nz]))
             for a in (k1m, k2m):
                 # lets normalize by exponent first
                 anz = a != 0
                 # "remove" exponent
                 a[anz] /= scales[anz]
 
-            accuracy = 10**-(np.finfo(k1m.dtype).precision * relative_precision)
+            accuracy = 10 ** -(np.finfo(k1m.dtype).precision * relative_precision)
 
         diff = np.abs(k1m - k2m)
         dmax = diff.max()               # and maximal difference
@@ -103,12 +103,12 @@ class KernelTests(unittest.TestCase):
 
         self.assertTrue(np.all(k1m.astype('float32') == \
                               k2m.astype('float32')),
-                        '\n%s\nand\n%s\nare unequal as float32'%(k1, k2))
+                        '\n%s\nand\n%s\nare unequal as float32' % (k1, k2))
 
 
     def test_linear_kernel(self):
         """Simplistic testing of linear kernel"""
-        d1 = Dataset(np.asarray([range(5)]*10, dtype=float))
+        d1 = Dataset(np.asarray([range(5)] * 10, dtype=float))
         lk = npK.LinearKernel()
         lk.compute(d1)
         self.assertTrue(lk._k.shape == (10, 10),
@@ -128,20 +128,20 @@ class KernelTests(unittest.TestCase):
     @reseed_rng()
     def test_cached_kernel(self):
         nchunks = 5
-        n = 50*nchunks
+        n = 50 * nchunks
         d = Dataset(np.random.randn(n, 132))
         d.sa.chunks = np.random.randint(nchunks, size=n)
-        
+
         # We'll compare against an Rbf just because it has a parameter to change
         rk = npK.RbfKernel(sigma=1.5)
-        
+
         # Assure two kernels are independent for this test
         ck = CachedKernel(kernel=npK.RbfKernel(sigma=1.5))
         ck.compute(d) # Initial cache of all data
-        
+
         self.assertTrue(ck._recomputed,
                         'CachedKernel was not initially computed')
-        
+
         # Try some splitting
         for chunk in [d[d.sa.chunks == i] for i in range(nchunks)]:
             rk.compute(chunk)
@@ -159,7 +159,7 @@ class KernelTests(unittest.TestCase):
         rk.compute(d)
         self.assertTrue(np.all(rk._k == ck._k),
                         'Cached and rbf kernels disagree after kernel change')
-        
+
         # Now test handling new data
         d2 = Dataset(np.random.randn(32, 43))
         ck.compute(d2)
@@ -167,7 +167,7 @@ class KernelTests(unittest.TestCase):
                         "CachedKernel did not automatically recompute new data")
         ck.compute(d)
         self.assertTrue(ck._recomputed,
-                        "CachedKernel did not recompute old data which had\n" +\
+                        "CachedKernel did not recompute old data which had\n" + \
                         "previously been computed, but had the cache overriden")
 
     if _has_sg:
@@ -190,20 +190,21 @@ class KernelTests(unittest.TestCase):
             self.assertTrue((nk._k.astype('float32') == \
                              sk.as_raw_np().astype('float32')).all(),
                             'Failure converting arrays between NP as SG')
-            
+
         @reseed_rng()
         def test_linear_sg(self):
             d1 = np.random.randn(105, 32)
             d2 = np.random.randn(41, 32)
-            
+
             nk = npK.LinearKernel()
             sk = sgK.LinearSGKernel()
             nk.compute(d1, d2)
             sk.compute(d1, d2)
-            
+
             self.kernel_equiv(nk, sk)
-            
+
         @reseed_rng()
+        @labile(5, 1)
         def test_poly_sg(self):
             d1 = np.random.randn(105, 32)
             d2 = np.random.randn(41, 32)
@@ -215,9 +216,9 @@ class KernelTests(unittest.TestCase):
                 nk.params.degree = p
                 sk.compute(d1, d2)
                 nk.compute(d1, d2)
-                
+
                 self.kernel_equiv(nk, sk)
-                
+
         @reseed_rng()
         def test_rbf_sg(self):
             d1 = np.random.randn(105, 32)
@@ -230,11 +231,12 @@ class KernelTests(unittest.TestCase):
                 nk.params.sigma = s
                 sk.compute(d1, d2)
                 nk.compute(d1, d2)
-                
+
                 self.kernel_equiv(nk, sk)
-                
+
         @reseed_rng()
         def test_custom_sg(self):
+            skip_if_no_external('shogun')
             lk = sgK.LinearSGKernel()
             cl = sgK.CustomSGKernel(sgK.sgk.LinearKernel)
             poly = sgK.PolySGKernel()
@@ -277,7 +279,7 @@ class KernelTests(unittest.TestCase):
         for i in range(true_size[0]):
             for j in range(true_size[1]):
                 #ed_manual[i,j] = np.sqrt(((data[i,:] - data[j,:] )** 2).sum())
-                ed_manual[i,j] = ((data[i,:] - data[j,:] )** 2).sum()
+                ed_manual[i, j] = ((data[i, :] - data[j, :]) ** 2).sum()
         ed_manual[ed_manual < 0] = 0
 
         self.assertTrue(np.diag(ed_manual).sum() < 0.0000000001)
@@ -292,19 +294,19 @@ class KernelTests(unittest.TestCase):
         weight = np.abs(data0[11, :60])
 
         self.assertRaises(ValueError, pnorm_w_python,
-                              data0[:10,:2], p=1.2, heuristic='buga')
+                              data0[:10, :2], p=1.2, heuristic='buga')
         self.assertRaises(ValueError, pnorm_w_python,
-                              data0[:10,:2], weight=weight)
+                              data0[:10, :2], weight=weight)
 
         self.assertRaises(ValueError, pnorm_w_python,
-                              data0[:10,:2], data0[:10, :3],
+                              data0[:10, :2], data0[:10, :3],
                               weight=weight)
         self.assertRaises(ValueError, pnorm_w,
-                              data0[:10,:2], data0[:10, :3],
+                              data0[:10, :2], data0[:10, :3],
                               weight=weight)
 
         self.assertRaises(ValueError, pnorm_w,
-                              data0[:10,:2], weight=weight)
+                              data0[:10, :2], weight=weight)
 
         # some sanity checks
         for did, (data1, data2, w) in enumerate(
@@ -336,17 +338,18 @@ class KernelTests(unittest.TestCase):
                                     use_sq_euclidean=False, **kwargs)
                      for h in ('auto', 'samples', 'features')]):
                     dnorm = np.linalg.norm(d2 - d, 'fro')
-                    self.assertTrue(dnorm/d0norm < 1e-7,
+                    self.assertTrue(dnorm / d0norm < 1e-7,
                         msg="Failed comparison of different implementations on "
                             "data #%d, implementation #%d, p=%s. "
                             "Norm of the difference is %g"
                             % (did, iid, p, dnorm))
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(KernelTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

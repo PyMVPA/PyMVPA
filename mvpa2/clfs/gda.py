@@ -54,6 +54,9 @@ class GDA(Classifier):
              choices=["laplacian_smoothing", "uniform", "ratio"],
              doc="""How to compute prior distribution.""")
 
+    allow_pinv = Parameter(True,
+             allowedtype='bool',
+             doc="""Allow pseudo-inverse in case of degenerate covariance(s).""")
 
     def __init__(self, **kwargs):
         """Initialize a GDA classifier.
@@ -173,6 +176,19 @@ class GDA(Classifier):
 
         return predictions
 
+    def _inv(self, cov):
+        try:
+            return np.linalg.inv(cov)
+        except Exception, e:
+            if self.params.allow_pinv:
+                try:
+                    return np.linalg.pinv(cov)
+                except Exception, e:
+                    pass
+            raise DegenerateInputError, \
+              "Data is probably singular, since inverse fails. Got %s"\
+              % (e,)
+
 
 class LDA(GDA):
     """Linear Discriminant Analysis.
@@ -196,12 +212,7 @@ class LDA(GDA):
             / (np.sum(self.nsamples_per_class) - nlabels)
 
         # For now as simple as that -- see notes on top
-        try:
-            covi = np.linalg.inv(cov)
-        except Exception, e:
-            raise DegenerateInputError, \
-                  "Data is probably singular, since inverse fails. Got %s"\
-                  % (e,)
+        covi = self._inv(cov)
 
         # Precompute and store the actual separating hyperplane and offset
         self._w = np.dot(covi, self.means.T)
@@ -236,12 +247,7 @@ class QDA(GDA):
 
         for ic, cov in enumerate(self.cov):
             cov /= float(self.nsamples_per_class[ic])
-            try:
-                self._icov[ic] = np.linalg.inv(cov)
-            except Exception, e:
-                raise DegenerateInputError, \
-                      "Data is probably singular, since inverse fails. Got %s"\
-                      % (e,)
+            self._icov[ic] = self._inv(cov)
 
         self._b = np.array([np.log(p) - 0.5 * np.log(np.linalg.det(c))
                             for p,c in zip(self.priors, self.cov)])

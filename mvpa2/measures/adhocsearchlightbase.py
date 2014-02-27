@@ -124,8 +124,8 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
     some stats are not needed (eg per sample X^2's) for M1NN, so we
     should make them optional depending on the derived class
 
-    Note
-    ----
+    Notes
+    -----
 
     refactored from the original GNBSearchlight
 
@@ -134,7 +134,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
     # TODO: implement parallelization (see #67) and then uncomment
     __init__doc__exclude__ = ['nproc']
 
-    def __init__(self, generator, qe, errorfx=mean_mismatch_error,
+    def __init__(self, generator, queryengine, errorfx=mean_mismatch_error,
                  indexsum=None,
                  reuse_neighbors=False,
                  **kwargs):
@@ -144,8 +144,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         ----------
         generator : `Generator`
           Some `Generator` to prepare partitions for cross-validation.
-        qe : `QueryEngine`
-          Query engine which would provide neighborhood information
+          It must not change "targets", thus e.g. no AttributePermutator's
         errorfx : func, optional
           Functor that computes a scalar error value from the vectors of
           desired and predicted values (e.g. subclass of `ErrorFunction`).
@@ -161,7 +160,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         """
 
         # init base class first
-        BaseSearchlight.__init__(self, qe, **kwargs)
+        BaseSearchlight.__init__(self, queryengine, **kwargs)
 
         self._errorfx = errorfx
         self._generator = generator
@@ -349,9 +348,19 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         # XXX we could make it even more lightweight I guess...
         dataset_indicies = Dataset(np.arange(nsamples), sa=dataset.sa)
         splitter = Splitter(attr=generator.get_space())
-        splits = list(tuple(splitter.generate(ds_))
-                      for ds_ in generator.generate(dataset_indicies))
-        nsplits = len(splits)
+        partitions = list(generator.generate(dataset_indicies))
+        if __debug__:
+            for p in partitions:
+                if not (np.all(p.sa[targets_sa_name].value == labels)):
+                    raise NotImplementedError(
+                        "%s does not yet support partitioners altering the targets "
+                        "(e.g. permutators)" % self.__class__)
+
+        nsplits = len(partitions)
+        # ATM we need to keep the splits instead since they are used
+        # in two places in the code: step 2 and 5
+        splits = list(tuple(splitter.generate(ds_)) for ds_ in partitions)
+        del partitions                    # not used any longer
 
         # 2. Figure out the new 'chunks x labels' blocks of combinations
         #    of samples

@@ -26,7 +26,7 @@ The mvpa package contains the following subpackages and modules:
 :author: `Michael Hanke <michael.hanke@gmail.com>`__,
          `Yaroslav Halchenko <debian@onerussian.com>`__,
          `Per B. Sederberg <persed@princeton.edu>`__
-:requires: Python 2.4+
+:requires: Python 2.6+
 :version: 2.2.0
 :see: `The PyMVPA webpage <http://www.pymvpa.org>`__
 :see: `GIT Repository Browser <http://github.com/PyMVPA/PyMVPA>`__
@@ -98,7 +98,7 @@ else:
 # RNGs control
 #
 
-from mvpa2._random import _random_seed, seed
+from mvpa2._random import _random_seed, seed, get_random_seed
 
 #
 # Testing

@@ -384,6 +384,8 @@ class RangeElementSelector(ElementSelector):
                   (len(result), len_seq))
         return result
 
+    lower = property(lambda self: self.__range[0])
+    upper = property(lambda self: self.__range[1])
 
 class TailSelector(ElementSelector):
     """Select elements from a tail of a distribution.

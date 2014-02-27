@@ -33,7 +33,7 @@ from mvpa2.base.types import asobjarray
 from mvpa2.base.dochelpers import enhanced_doc_string, _str, _repr_attrs
 from mvpa2.base import externals, warning
 from mvpa2.clfs.stats import auto_null_dist
-from mvpa2.base.dataset import AttrDataset
+from mvpa2.base.dataset import AttrDataset, vstack
 from mvpa2.datasets import Dataset, vstack, hstack
 from mvpa2.mappers.fx import BinaryFxNode
 from mvpa2.generators.splitters import Splitter
@@ -121,9 +121,16 @@ class Measure(Learner):
     def _postcall(self, dataset, result):
         """Some postprocessing on the result
         """
-        # post-processing
-        result = super(Measure, self)._postcall(dataset, result)
-        if not self.__null_dist is None:
+        if self.__null_dist is None:
+            # do base-class postcall and be done
+            result = super(Measure, self)._postcall(dataset, result)
+        else:
+            # don't do a full base-class postcall, only do the
+            # postproc-application here, to gain result compatibility with the
+            # fitted null distribution -- necessary to be able to use
+            # a Node's 'pass_attr' to pick up ca.null_prob
+            result = self._apply_postproc(dataset, result)
+
             if self.ca.is_enabled('null_t'):
                 # get probability under NULL hyp, but also request
                 # either it belong to the right tail
@@ -164,7 +171,8 @@ class Measure(Learner):
                 # get probability of result under NULL hypothesis if available
                 # and don't request tail information
                 self.ca.null_prob = self.__null_dist.p(result)
-
+            # now do the second half of postcall and invoke pass_attr
+            result = self._pass_attr(dataset, result)
         return result
 
 
@@ -183,21 +191,38 @@ class ProxyMeasure(Measure):
     measure into this class and assign arbitrary post-processing nodes to the
     wrapper, instead of the measure itself.
     """
-    def __init__(self, measure, **kwargs):
+
+    def __init__(self, measure, skip_train=False, **kwargs):
+        """
+        Parameters
+        ----------
+        skip_train : bool, optional
+          Flag whether the measure does not need to be really trained,
+          since proxied measure is guaranteed to be trained appropriately
+          prior to this call.  Use with caution
+        """
+
         # by default auto train
         kwargs['auto_train'] = kwargs.get('auto_train', True)
         Measure.__init__(self, **kwargs)
         self.__measure = measure
+        self.skip_train = skip_train
 
     def __repr__(self, prefixes=[]):
         """String representation of a `ProxyMeasure`
         """
         return super(ProxyMeasure, self).__repr__(
             prefixes=prefixes
-            + _repr_attrs(self, ['measure']))
+            + _repr_attrs(self, ['measure'])
+            + _repr_attrs(self, ['skip_train'], default=False)
+            )
 
     def _train(self, ds):
-        self.measure.train(ds)
+        if not self.skip_train:
+            self.measure.train(ds)
+        else:
+            # only flag that it was trained
+            self._set_trained()
 
 
     def _call(self, ds):
@@ -326,9 +351,9 @@ class RepeatedMeasure(Measure):
 
         # stack all results into a single Dataset
         if concat_as == 'samples':
-            results = vstack(results)
+            results = vstack(results, True)
         elif concat_as == 'features':
-            results = hstack(results)
+            results = hstack(results, True)
         else:
             raise ValueError("Unkown concatenation mode '%s'" % concat_as)
         # no need to store the raw results, since the Measure class will
@@ -435,7 +460,7 @@ class CrossValidation(RepeatedMeasure):
             # because it is guaranteed to yield two splits) and is more likely
             # to fail in visible ways if the attribute does not have 0,1,2
             # values at all (i.e. a literal train/test/spareforlater attribute)
-            splitter = Splitter(generator.get_space(), attr_values=(1,2))
+            splitter = Splitter(generator.get_space(), attr_values=(1, 2))
         # transfer measure to wrap the learner
         # splitter used the output space of the generator to know what to split
         tm = TransferMeasure(learner, splitter, postproc=enode)
@@ -480,7 +505,16 @@ class CrossValidation(RepeatedMeasure):
                 # create empty stats container of matching type
                 ca.training_stats = node.ca['training_stats'].value.__class__()
             # harvest summary stats
-            ca['training_stats'].value.__iadd__(node.ca['training_stats'].value)
+            training_stats = node.ca['training_stats'].value
+            if isinstance(training_stats, dict):
+                # if it was a dictionary of results - we should collect them per item
+                for k,v in training_stats.iteritems():
+                    if not len(ca['training_stats'].value) or k not in ca['training_stats'].value:
+                        ca['training_stats'].value[k] = v
+                    else:
+                        ca['training_stats'].value[k].__iadd__(v)
+            else:
+                ca['training_stats'].value.__iadd__(node.ca['training_stats'].value)
 
         return result
 
@@ -598,7 +632,7 @@ class TransferMeasure(Measure):
                     targets=res.sa[measure.get_space()].value,
                     # XXX this should really accept the full dataset
                     predictions=res.samples[:, 0],
-                    estimates = measure.ca.get('estimates', None))
+                    estimates=measure.ca.get('estimates', None))
                 ca.stats = stats
         if ca.is_enabled('training_stats'):
             if measure.ca.has_key("training_stats") \
@@ -608,7 +642,6 @@ class TransferMeasure(Measure):
                 warning("'training_stats' conditional attribute was enabled, "
                         "but the assigned measure '%s' either doesn't support "
                         "it, or it is disabled" % measure)
-
         return res
 
     measure = property(fget=lambda self:self.__measure)
@@ -626,10 +659,10 @@ class FeaturewiseMeasure(Measure):
         """Adjusts per-feature-measure for computed `result`
         """
         # This method get the 'result' either as a 1D array, or as a Dataset
-        # everything else is illegal
-        if __debug__ \
-               and not isinstance(result, AttrDataset) \
-               and not len(result.shape) == 1:
+        # everything else is illegal.
+
+
+        if not (len(result.shape) == 1 or isinstance(result, AttrDataset)):
             raise RuntimeError("FeaturewiseMeasures have to return "
                                "their results as 1D array, or as a Dataset "
                                "(error made by: '%s')." % repr(self))
@@ -811,7 +844,7 @@ class CombinedFeaturewiseMeasure(FeaturewiseMeasure):
     # XXX think again about combiners... now we have it in here and as
     #     well as in the parent -- FeaturewiseMeasure
     # YYY because we don't use parent's _call. Needs RF
-    def __init__(self, analyzers=None,  # XXX should become actually 'measures'
+    def __init__(self, analyzers=None, # XXX should become actually 'measures'
                  sa_attr='combinations',
                  **kwargs):
         """Initialize CombinedFeaturewiseMeasure
@@ -856,14 +889,11 @@ class CombinedFeaturewiseMeasure(FeaturewiseMeasure):
 
         sa_attr = self._sa_attr
         if isinstance(sensitivities[0], AttrDataset):
-            smerged = None
+            smerged = []
             for i, s in enumerate(sensitivities):
                 s.sa[sa_attr] = np.repeat(i, len(s))
-                if smerged is None:
-                    smerged = s
-                else:
-                    smerged.append(s)
-            sensitivities = smerged
+                smerged.append(s)
+            sensitivities = vstack(smerged)
         else:
             sensitivities = \
                 Dataset(sensitivities,
@@ -1130,4 +1160,5 @@ class MappedClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
 
     def __str__(self):
         return _str(self, str(self.clf))
+
 

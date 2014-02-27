@@ -14,9 +14,11 @@
 Tutorial Introduction to PyMVPA
 *******************************
 
-This chapter offers a tutorial introduction into PyMVPA. In the tutorial we are
-going to take a look at all major parts of PyMVPA, introduce the most important
-concepts, and explore particular functionality in real-life analysis examples.
+In this tutorial we are going to take a look at all major parts of PyMVPA,
+introduce the most important concepts, and explore particular functionality in
+real-life analysis examples. This tutorial also serves as basic course
+material for workshops on introductions to MVPA. Please contact us, if you are
+interested in hosting a PyMVPA workshop at your institution.
 
 Please note that this tutorial is only concerned with aspects directly related
 to PyMVPA.  It does **not** teach basic Python_ programming. If you are new to
@@ -32,7 +34,7 @@ beyond what is touched by the tutorial. Typically, only the most important
 aspects will be mentioned and each building block in PyMVPA can be used in
 more flexible ways than what is shown. Enjoy the ride.
 
-Through the course of the tutorial we would analyze :ref:`real BOLD fMRI data
+Through the course of the tutorial we will analyze :ref:`real BOLD fMRI data
 <datadb_tutorial_data>`. Therefore, to be able to run the code in this
 tutorial, you need to download the :ref:`corresponding data from the PyMVPA
 website <datadb_tutorial_data>`. Once downloaded, extract the tarball, open a

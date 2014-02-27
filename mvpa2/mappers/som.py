@@ -30,24 +30,34 @@ class SimpleSOMMapper(Mapper):
     kernel.
     """
     def __init__(self, kshape, niter, learning_rate=0.005,
-                 iradius=None):
+                 iradius=None, distance_metric=None, initialization_func=None):
         """
         Parameters
         ----------
         kshape : (int, int)
-          Shape of the internal Kohonen layer. Currently, only 2D Kohonen
-          layers are supported, although the length of an axis might be set
-          to 1.
+            Shape of the internal Kohonen layer. Currently, only 2D Kohonen
+            layers are supported, although the length of an axis might be set
+            to 1.
         niter : int
-          Number of iteration during network training.
+            Number of iteration during network training.
         learning_rate : float
-          Initial learning rate, which will continuously decreased during
-          network training.
+            Initial learning rate, which will continuously decreased during
+            network training.
         iradius : float or None
-          Initial radius of the Gaussian neighborhood kernel radius, which
-          will continuously decreased during network training. If `None`
-          (default) the radius is set equal to the longest edge of the
-          Kohonen layer.
+            Initial radius of the Gaussian neighborhood kernel radius, which
+            will continuously decreased during network training. If `None`
+            (default) the radius is set equal to the longest edge of the
+            Kohonen layer.
+        distance_metric: callable or None
+            Kernel distance metric between elements in Kohonen layer. If None
+            then Euclidean distance is used. Otherwise it should be a 
+            callable that accepts two input arguments x and y and returns
+            the distance d through d=distance_metric(x,y)
+        initialization_func: callable or None
+            Initialization function to set self._K, that should take one 
+            argument with training samples and return an numpy array. If None,
+            then values in the returned array are taken from a standard normal 
+            distribution.  
         """
         # init base class
         Mapper.__init__(self)
@@ -58,6 +68,11 @@ class SimpleSOMMapper(Mapper):
             self.radius = self.kshape.max()
         else:
             self.radius = iradius
+
+        if distance_metric is None:
+            self.distance_metric = lambda x, y: (x ** 2 + y ** 2) ** 0.5
+        else:
+            self.distance_metric = distance_metric
 
         # learning rate
         self.lrate = learning_rate
@@ -71,31 +86,58 @@ class SimpleSOMMapper(Mapper):
 
         # the internal kohonen layer
         self._K = None
+        self._dqd = None
+        self._initialization_func = initialization_func
+
+    @accepts_dataset_as_samples
+    def _pretrain(self, samples):
+        """Perform network pre-training.
+
+        Parameters
+        ----------
+        samples : array-like
+            Used for unsupervised training of the SOM
+        """
+        ifunc = self._initialization_func
+        # XXX initialize with clever default, e.g. plain of first two PCA
+        # components
+        if ifunc is None:
+             ifunc = lambda x:np.random.standard_normal(tuple(self.kshape) \
+                                                             + (x.shape[1],))
+
+        self._K = ifunc(samples)
+
+         # precompute distance kernel between elements in the Kohonen layer
+        # that will remain constant throughout the training
+        # (just compute one quadrant, as the distances are symmetric)
+        # XXX maybe do other than squared Euclidean?
+        self._dqd = np.fromfunction(self.distance_metric,
+                             self.kshape, dtype='float')
 
 
     @accepts_dataset_as_samples
     def _train(self, samples):
         """Perform network training.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         samples : array-like
-          Used for unsupervised training of the SOM.
+            Used for unsupervised training of the SOM.
+          
+        Notes
+        -----
+        It is assumed that prior to calling this method the _pretrain method 
+        was called with the same argument.  
         """
-        # XXX initialize with clever default, e.g. plain of first two PCA
-        # components
-        self._K = np.random.standard_normal(tuple(self.kshape) + (samples.shape[1],))
+
+        # ensure that dqd was set properly
+        dqd = self._dqd
+        if dqd is None:
+            raise ValueError("This should not happen - was _pretrain called?")
 
         # units weight vector deltas for batch training
         # (height x width x #features)
         unit_deltas = np.zeros(self._K.shape, dtype='float')
-
-        # precompute distance kernel between elements in the Kohonen layer
-        # that will remain constant throughout the training
-        # (just compute one quadrant, as the distances are symmetric)
-        # XXX maybe do other than squared Euclidean?
-        dqd = np.fromfunction(lambda x, y: (x**2 + y**2)**0.5,
-                             self.kshape, dtype='float')
 
         # for all iterations
         for it in xrange(1, self.niter + 1):
@@ -123,14 +165,14 @@ class SimpleSOMMapper(Mapper):
                             # lower right
                             k[:self.kshape[0] - b[0], :self.kshape[1] - b[1]]))
                                ))
-                unit_deltas += infl[:,:,np.newaxis] * (s - self._K)
+                unit_deltas += infl[:, :, np.newaxis] * (s - self._K)
 
             # apply cumulative unit deltas
             self._K += unit_deltas
 
             if __debug__:
                 debug("SOM", "Iteration %d/%d done: ||unit_deltas||=%g" %
-                      (it, self.niter, np.sqrt(np.sum(unit_deltas **2))))
+                      (it, self.niter, np.sqrt(np.sum(unit_deltas ** 2))))
 
             # reset unit deltas
             unit_deltas.fill(0.)

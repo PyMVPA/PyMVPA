@@ -13,11 +13,11 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 import copy
 
-from mvpa2.base import externals, cfg
+from mvpa2.base import externals, cfg, warning
 from mvpa2.base.collections import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection
 from mvpa2.base.types import is_datasetlike
-from mvpa2.base.dochelpers import _str
+from mvpa2.base.dochelpers import _str, _strid
 
 if __debug__:
     from mvpa2.base import debug
@@ -139,13 +139,14 @@ class AttrDataset(object):
 
     During selection data is only copied if necessary. If the slicing
     syntax is used the resulting dataset will share the samples with the
-    original dataset.
+    original dataset (here and below we compare .base against both ds.samples
+    and its .base for compatibility with NumPy < 1.7)
 
-    >>> sel1.samples.base is ds.samples
+    >>> sel1.samples.base in (ds.samples.base, ds.samples)
     False
-    >>> sel2.samples.base is ds.samples
+    >>> sel2.samples.base in (ds.samples.base, ds.samples)
     False
-    >>> sel3.samples.base is ds.samples
+    >>> sel3.samples.base in (ds.samples.base, ds.samples)
     True
 
     For feature selection the syntax is very similar they are just
@@ -170,7 +171,7 @@ class AttrDataset(object):
     array([[1, 2],
            [4, 5],
            [7, 8]])
-    >>> fsel.samples.base is ds.samples
+    >>> fsel.samples.base in (ds.samples.base, ds.samples)
     True
 
     Please note that simultaneous selection of samples and features is
@@ -373,28 +374,18 @@ class AttrDataset(object):
         out = self.__class__(samples,
                              sa=self.sa.copy(a=sa, deep=deep, memo=memo),
                              fa=self.fa.copy(a=fa, deep=deep, memo=memo),
-                             a =self.a.copy(a=a,   deep=deep, memo=memo))
+                             a=self.a.copy(a=a, deep=deep, memo=memo))
         if __debug__:
-            debug('DS_', "Return dataset copy (ID: %s) of source (ID: %s)"
-                         % (id(out), id(self)))
+            debug('DS_', "Return dataset copy %s of source %s"
+                         % (_strid(out), _strid(self)))
         return out
 
 
     def append(self, other):
-        """Append the content of a Dataset.
+        """This method should not be used and will be removed in the future"""
+        warning("AttrDataset.append() is deprecated and will be removed. "
+                "Instead of ds.append(x) use: ds = vstack((ds, x), a=0)")
 
-        Parameters
-        ----------
-        other : AttrDataset
-          The content of this dataset will be append.
-
-        Notes
-        -----
-        No dataset attributes, or feature attributes will be merged!  These
-        respective properties of the *other* dataset are neither checked for
-        compatibility nor copied over to this dataset. However, all samples
-        attributes will be concatenated with the existing ones.
-        """
         if not self.nfeatures == other.nfeatures:
             raise DatasetError("Cannot merge datasets, because the number of "
                                "features does not match.")
@@ -643,7 +634,7 @@ def datasetmethod(func):
     return func
 
 
-def vstack(datasets):
+def vstack(datasets, a=None):
     """Stacks datasets vertically (appending samples).
 
     Feature attribute collections are merged incrementally, attribute with
@@ -661,7 +652,20 @@ def vstack(datasets):
     Parameters
     ----------
     datasets : tuple
-      Sequence of datasets to be stacked.
+        Sequence of datasets to be stacked.
+    a: {'unique','drop_nonunique','uniques','all'} or True or False or None (default: None)
+        Indicates which dataset attributes from datasets are stored
+        in merged_dataset. If an int k, then the dataset attributes from
+        datasets[k] are taken. If 'unique' then it is assumed that any
+        attribute common to more than one dataset in datasets is unique;
+        if not an exception is raised. If 'drop_nonunique' then as 'unique',
+        except that exceptions are not raised. If 'uniques' then, for each
+        attribute,  any unique value across the datasets is stored in a tuple
+        in merged_datasets. If 'all' then each attribute present in any
+        dataset across datasets is stored as a tuple in merged_datasets;
+        missing values are replaced by None. If None (the default) then no
+        attributes are stored in merged_dataset. True is equivalent to
+        'drop_nonunique'. False is equivalent to None.
 
     Returns
     -------
@@ -689,10 +693,11 @@ def vstack(datasets):
     for ds in datasets:
         merged.fa.update(ds.fa)
 
+    _stack_add_equal_dataset_attributes(merged, datasets, a)
     return merged
 
 
-def hstack(datasets):
+def hstack(datasets, a=None):
     """Stacks datasets horizontally (appending features).
 
     Sample attribute collections are merged incrementally, attribute with
@@ -705,7 +710,20 @@ def hstack(datasets):
     Parameters
     ----------
     datasets : tuple
-      Sequence of datasets to be stacked.
+        Sequence of datasets to be stacked.
+    a: {'unique','drop_nonunique','uniques','all'} or True or False or None (default: None)
+        Indicates which dataset attributes from datasets are stored
+        in merged_dataset. If an int k, then the dataset attributes from
+        datasets[k] are taken. If 'unique' then it is assumed that any
+        attribute common to more than one dataset in datasets is unique;
+        if not an exception is raised. If 'drop_nonunique' then as 'unique',
+        except that exceptions are not raised. If 'uniques' then, for each
+        attribute,  any unique value across the datasets is stored in a tuple
+        in merged_datasets. If 'all' then each attribute present in any
+        dataset across datasets is stored as a tuple in merged_datasets;
+        missing values are replaced by None. If None (the default) then no
+        attributes are stored in merged_dataset. True is equivalent to
+        'drop_nonunique'. False is equivalent to None.
 
     Returns
     -------
@@ -739,7 +757,160 @@ def hstack(datasets):
     for ds in datasets:
         merged.sa.update(ds.sa)
 
+    _stack_add_equal_dataset_attributes(merged, datasets, a)
+
     return merged
+
+
+def all_equal(x, y):
+    '''General function that compares two values. Usually this function
+    behaves like x==y and type(x)==type(y), but for numpy arrays it
+    behaves like np.array_equal(x==y).
+
+    Parameters
+    ----------
+    x, y : any type
+        Elements to be compared
+
+    Returns
+    -------
+    eq: bool
+        True iff x and y are equal. If in the comparison of x and y
+        and exception is thrown then False is returned
+        This comparison is performed element-wise, if applicable, and
+        in that case True is only returned if all elements are equal
+    '''
+
+    # an equality comparison that also works on numpy arrays
+    try:
+        eq = x == y
+    except:
+        return False
+
+    # eq could be a numpy array or similar. See if it has a length
+    try:
+        len(eq) # that's fine, so we can zip x and y (below)
+                # and compare by elements
+    except TypeError:
+        # if it's just a bool (or boolean-like, such as numpy.bool_)
+        # then see if it is True or not
+        if eq == True or eq == False:
+            # also consider the case that eq is a numpy boolean array
+            # with just a single element - so compare to True
+            return eq == True
+        else:
+            # no idea what to do
+            raise
+
+    # because of numpy's broadcasting either x or y may
+    # be a scaler yet eq could be an array
+    try:
+        same_length = len(x) == len(y)
+        if not same_length:
+            return False
+    except:
+        return False
+
+    # do a recursive call on all elements
+    return all(all_equal(xx, yy) for (xx, yy) in zip(x, y))
+
+def _stack_add_equal_dataset_attributes(merged_dataset, datasets, a=None):
+    """Helper function for vstack and hstack to find dataset
+    attributes common to a set of datasets, and at them to the output.
+    Note:by default this function does nothing because testing for equality
+    may be messy for certain types; to override a value should be assigned
+    to the add_keys argument.
+
+    Parameters
+    ----------
+    merged_dataset: Dataset
+        the output dataset to which attributes are added
+    datasets: tuple of Dataset
+        Sequence of datasets to be stacked. Only attributes present
+        in all datasets and with identical values are put in
+        merged_dataset
+    a: {'unique','drop_nonunique','uniques','all'} or True or False or None (default: None).
+        Indicates which dataset attributes from datasets are stored
+        in merged_dataset. If an int k, then the dataset attributes from
+        datasets[k] are taken. If 'unique' then it is assumed that any
+        attribute common to more than one dataset in datasets is unique;
+        if not an exception is raised. If 'drop_nonunique' then as 'unique',
+        except that exceptions are not raised. If 'uniques' then, for each
+        attribute,  any unique value across the datasets is stored in a tuple
+        in merged_datasets. If 'all' then each attribute present in any
+        dataset across datasets is stored as a tuple in merged_datasets;
+        missing values are replaced by None. If None (the default) then no
+        attributes are stored in merged_dataset. True is equivalent to
+        'drop_nonunique'. False is equivalent to None.
+    """
+    if a is None or a is False:
+        # do nothing
+        return
+    elif a is True:
+        a = 'drop_nonunique'
+
+    if not datasets:
+        # empty - so nothing to do
+        return
+
+    if type(a) is int:
+        base_dataset = datasets[a]
+
+        for key in base_dataset.a.keys():
+            merged_dataset.a[key] = base_dataset.a[key].value
+
+        return
+
+    allowed_values = ['unique', 'uniques', 'drop_nonunique', 'all']
+    if not a in allowed_values:
+        raise ValueError("a should be an int or one of "
+                        "%r" % allowed_values)
+
+    # consider all keys that are present in at least one dataset
+    all_keys = set.union(*[set(dataset.a.keys()) for dataset in datasets])
+
+
+    def _contains(xs, y, comparator=all_equal):
+        for x in xs:
+            if comparator(x, y):
+                return True
+        return False
+
+    for key in all_keys:
+        add_key = True
+        values = []
+        for i, dataset in enumerate(datasets):
+            if not key in dataset.a:
+                if a == 'all':
+                    values.append(None)
+                continue
+
+            value = dataset.a[key].value
+
+            if a in ('drop_nonunique', 'unique'):
+                if not values:
+                    values.append(value)
+                elif not _contains(values, value):
+                    if a == 'unique':
+                        raise DatasetError("Not unique dataset attribute value "
+                                         " for %s: %s and %s" %
+                                            (key, values[0], value))
+                    else:
+                        add_key = False
+                        break
+            elif a == 'uniques':
+                if not _contains(values, value):
+                    values.append(value)
+            elif a == 'all':
+                values.append(value)
+            else:
+                raise ValueError("this should not happen: %s" % a)
+
+        if add_key:
+            if a in ('drop_nonunique', 'unique'):
+                merged_dataset.a[key] = values[0]
+            else:
+                merged_dataset.a[key] = tuple(values)
 
 
 def _expand_attribute(attr, length, attr_name):
@@ -762,6 +933,150 @@ def _expand_attribute(attr, length, attr_name):
     except TypeError:
         # make sequence of identical value matching the desired length
         return np.repeat(attr, length)
+
+def stack_by_unique_sample_attribute(dataset, sa_label):
+    """Performs hstack based on unique values in sa_label
+
+    Parameters
+    ----------
+    dataset: Dataset
+        input dataset.
+    sa_label: str
+        sample attribute label according which samples in dataset
+        are stacked.
+
+    Returns
+    -------
+    stacked_dataset: Dataset
+        A dataset where matching features are joined (hstacked).
+        If the number of matching features differs for values in sa_label
+        and exception is raised.
+    """
+
+    unq, masks = _get_unique_attribute_masks(dataset.sa[sa_label].value)
+
+    ds = []
+    for i, mask in enumerate(masks):
+        d = dataset[mask, :]
+        d.fa[sa_label] = [unq[i]] * d.nfeatures
+        ds.append(d)
+
+    stacked_ds = hstack(ds, True)
+    stacked_ds.sa.pop(sa_label)
+
+    return stacked_ds
+
+
+def stack_by_unique_feature_attribute(dataset, fa_label):
+    """Performs vstack based on unique values in fa_label
+
+    Parameters
+    ----------
+    dataset: Dataset
+        input dataset.
+    fa_label: str
+        feature attribute label according which samples in dataset
+        are stacked.
+
+    Returns
+    stacked_dataset: Dataset
+        A dataset where matching samples are joined. This dataset has
+        a sample attribute fa_label added and the feature attribute
+        fa_label removed.
+        If the number of matching features differs for values in sa_label
+        and exception is raised.
+    """
+
+    unq, masks = _get_unique_attribute_masks(dataset.fa[fa_label].value)
+
+    ds = []
+    for i, mask in enumerate(masks):
+        d = dataset[:, mask]
+        d.sa[fa_label] = [unq[i]] * d.nsamples
+        ds.append(d)
+
+    stacked_ds = vstack(ds, True)
+    stacked_ds.fa.pop(fa_label)
+
+    return stacked_ds
+
+
+def _get_unique_attribute_masks(xs, raise_unequal_count=True):
+    '''Helper function to get masks for each unique value'''
+    unq = np.unique(xs)
+    masks = [x == xs for x in unq]
+
+    if raise_unequal_count:
+        hs = [np.sum(mask) for mask in masks]
+
+        for i, h in enumerate(hs):
+            if i == 0:
+                h0 = h
+            elif h != h0:
+                raise ValueError('Value mismatch between input 0 and %d:'
+                                 ' %s != %s' % (i, h, h0))
+    return unq, masks
+
+def split_by_sample_attribute(ds, sa_label, raise_unequal_count=True):
+    '''Splits a dataset based on unique values of a sample attribute
+
+    Parameters
+    ----------
+    d: Dataset
+        input dataset
+    sa_label: str or list of str
+        sample attribute label(s) on which the split is based
+
+    Returns
+    -------
+    ds: list of Dataset
+        List with n datasets, if d.sa[sa_label] has n unique values
+    '''
+    if type(sa_label) in (list, tuple):
+        label0 = sa_label[0]
+        sas = split_by_sample_attribute(ds, label0, raise_unequal_count)
+        if len(sa_label) == 1:
+            return sas
+        else:
+            return sum([split_by_sample_attribute(sa, sa_label[1:],
+                                                  raise_unequal_count)
+                                for sa in sas], [])
+
+    _, masks = _get_unique_attribute_masks(ds.sa[sa_label].value,
+                                    raise_unequal_count=raise_unequal_count)
+
+    return [ds[mask, :].copy(deep=False) for mask in masks]
+
+
+def split_by_feature_attribute(ds, fa_label, raise_unequal_count=True):
+    '''Splits a dataset based on unique values of a feature attribute
+
+    Parameters
+    ----------
+    d: Dataset
+        input dataset
+    sa_label: str or list of str
+        sample attribute label(s) on which the split is based
+
+    Returns
+    -------
+    ds: list of Dataset
+        List with n datasets, if d.fa[fa_label] has n unique values
+    '''
+    if type(fa_label) in (list, tuple):
+        label0 = fa_label[0]
+        fas = split_by_feature_attribute(ds, label0, raise_unequal_count)
+        if len(fa_label) == 1:
+            return fas
+        else:
+            return sum([split_by_feature_attribute(fa, fa_label[1:],
+                                                   raise_unequal_count)
+                                for fa in fas], [])
+
+    _, masks = _get_unique_attribute_masks(ds.fa[fa_label].value,
+                                    raise_unequal_count=raise_unequal_count)
+
+    return [ds[:, mask].copy(deep=False) for mask in masks]
 
 
 

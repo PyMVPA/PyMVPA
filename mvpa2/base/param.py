@@ -14,6 +14,7 @@ import re
 import textwrap
 import numpy as np
 from mvpa2.base.state import IndexedCollectable
+from mvpa2.base.constraints import expand_contraint_spec
 
 if __debug__:
     from mvpa2.base import debug
@@ -21,6 +22,7 @@ if __debug__:
 _whitespace_re = re.compile('\n\s+|^\s+')
 
 __all__ = [ 'Parameter', 'KernelParameter' ]
+
 
 class Parameter(IndexedCollectable):
     """This class shall serve as a representation of a parameter.
@@ -42,21 +44,21 @@ class Parameter(IndexedCollectable):
 
     allowedtype : str
       Description of what types are allowed
-    min
-      Minimum value
-    max
-      Maximum value
     step
       Increment/decrement step size hint for optimization
     """
 
-    def __init__(self, default, ro=False,  index=None,  value=None,
+    def __init__(self, default, constraints=None, ro=False,  index=None,  value=None,
                  name=None, doc=None, **kwargs):
         """Specify a Parameter with a default value and arbitrary
         number of additional attributes.
 
         Parameters
         ----------
+        constraints : callable
+          A functor that takes any input value, performs checks or type
+          conversions and finally returns a value that is appropriate for a
+          parameter or raises an exception.
         name : str
           Name of the parameter under which it should be available in its
           respective collection.
@@ -70,6 +72,25 @@ class Parameter(IndexedCollectable):
           cannot be changed
         value
           Actual value of the parameter to be assigned
+
+        Examples
+        --------
+        -ensure the parameter to be of type float
+        (None not allowed as value):
+        constraints = EnsureFloat()
+        >>> from mvpa2.base.param import Parameter
+        >>> from mvpa2.base.constraints import (EnsureFloat, EnsureRange,
+        ...                              AltConstraints, Constraints)
+        >>> C = Parameter(23.0,constraints=EnsureFloat())
+
+        -ensure the parameter to be of type float or to be None:
+        >>> C = Parameter(23.0,constraints=AltConstraints(EnsureFloat(), None))
+
+        -ensure the parameter to be None or to be of type float
+        and lie in the inclusive range (7.0,44.0):
+        >>> C = Parameter(23.0, AltConstraints(Constraints(EnsureFloat(),
+        ...                                    EnsureRange(min=7.0,max=44.0)),
+        ...                                    None))
         """
         # XXX probably is too generic...
         # and potentially dangerous...
@@ -81,6 +102,7 @@ class Parameter(IndexedCollectable):
 
         self.__default = default
         self._ro = ro
+        self.constraints = expand_contraint_spec(constraints)
 
         # needs to come after kwargs processing, since some debug statements
         # rely on working repr()
@@ -106,11 +128,10 @@ class Parameter(IndexedCollectable):
         state = dict([(k, getattr(self, k)) for k in self._additional_props])
         state['_additional_props'] = self._additional_props
         state.update(icr[2])
-        res = (self.__class__, (self.__default, self._ro) + icr[1], state)
+        res = (self.__class__, (self.__default, self.constraints, self._ro) + icr[1], state)
         #if __debug__ and 'COL_RED' in debug.active:
         #    debug('COL_RED', 'Returning %s for %s' % (res, self))
         return res
-
 
 
     def __str__(self):
@@ -149,14 +170,26 @@ class Parameter(IndexedCollectable):
         string or list of strings (if indent is None)
         """
         paramsdoc = '%s' % self.name
-        if hasattr(paramsdoc, 'allowedtype'):
-            paramsdoc += " : %s" % self.allowedtype
+        if not self.constraints is None:
+            sdoc = self.constraints.short_description()
+            if not sdoc is None:
+                if sdoc[0] == '(' and sdoc[-1] == ')':
+                    sdoc = sdoc[1:-1]
+                # parameters are always optional
+                paramsdoc += " : %s, optional" % sdoc
         paramsdoc = [paramsdoc]
+
         try:
             doc = self.__doc__.strip()
-            if not doc.endswith('.'): doc += '.'
+            if not doc.endswith('.'):
+                doc += '.'
+            if self.constraints is not None:
+                cdoc = self.constraints.long_description()
+                if cdoc[0] == '(' and cdoc[-1] == ')':
+                    cdoc = cdoc[1:-1]
+                doc += ' Constraints: %s.' % cdoc
             try:
-                doc += " (Default: %r)" % (self.default,)
+                doc += " [Default: %r]" % (self.default,)
             except:
                 pass
             # Explicitly deal with multiple spaces, for some reason
@@ -167,7 +200,6 @@ class Parameter(IndexedCollectable):
                                                  replace_whitespace=True)]
         except Exception, e:
             pass
-
         return '\n'.join(paramsdoc)
 
 
@@ -181,6 +213,11 @@ class Parameter(IndexedCollectable):
             self.value = self.__default
 
     def _set(self, val, init=False):
+        if self.constraints is not None:
+#            for c in self.constraints:
+#                val = c(val)
+#                #val = c.validate(val)
+            val = self.constraints(val)    
         different_value = self._value != val
         isarray = isinstance(different_value, np.ndarray)
         if self._ro and not init:
@@ -192,19 +229,6 @@ class Parameter(IndexedCollectable):
             if __debug__:
                 debug("COL",
                       "Parameter: setting %s to %s " % (str(self), val))
-            if not isarray:
-                if hasattr(self, 'min') and val < self.min:
-                    raise ValueError, \
-                          "Minimal value for parameter %s is %s. Got %s" % \
-                          (self.name, self.min, val)
-                if hasattr(self, 'max') and val > self.max:
-                    raise ValueError, \
-                          "Maximal value for parameter %s is %s. Got %s" % \
-                          (self.name, self.max, val)
-                if hasattr(self, 'choices') and (not val in self.choices):
-                    raise ValueError, \
-                          "Valid choices for parameter %s are %s. Got %s" % \
-                          (self.name, self.choices, val)
             self._value = val
             # Set 'isset' only if not called from initialization routine
             self._isset = not init #True
@@ -237,6 +261,7 @@ class Parameter(IndexedCollectable):
 
     default = property(fget=lambda x:x.__default, fset=_set_default)
     value = property(fget=lambda x:x._value, fset=_set)
+
 
 class KernelParameter(Parameter):
     """Just that it is different beast"""

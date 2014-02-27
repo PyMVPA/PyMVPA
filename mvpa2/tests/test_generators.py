@@ -13,7 +13,7 @@ import numpy as np
 
 from mvpa2.testing.tools import ok_, assert_array_equal, assert_true, \
         assert_false, assert_equal, assert_raises, assert_almost_equal, \
-        reseed_rng
+        reseed_rng, assert_not_equal
 
 from mvpa2.datasets import dataset_wizard, Dataset
 from mvpa2.generators.splitters import Splitter
@@ -119,6 +119,10 @@ def test_attrpermute():
     # first ten should remain first ten
     assert_false(np.any(pds.sa.ids[:10] > 9))
 
+    # verify that implausible assure=True would not work
+    permutation = AttributePermutator('targets', limit='ids', assure=True)
+    assert_raises(RuntimeError, permutation, ds)
+
     # same thing, but only permute single chunk
     permutation = AttributePermutator('ids', limit={'chunks': 3})
     pds = permutation(ds)
@@ -139,7 +143,8 @@ def test_attrpermute():
 
     # and now try generating more permutations
     nruns = 2
-    permutation = AttributePermutator(['targets', 'ids'], assure=True, count=nruns)
+    permutation = AttributePermutator(['targets', 'ids'],
+                                      assure=True, count=nruns)
     pds = list(permutation.generate(ds))
     assert_equal(len(pds), nruns)
     for p in pds:
@@ -151,6 +156,39 @@ def test_attrpermute():
     pds = permutation(ds)
     assert_false(np.all(pds.fa.ids == ds.fa.ids))
 
+    # now chunk-wise uattrs strategy (reassignment)
+    permutation = AttributePermutator('targets', limit='chunks',
+                                      strategy='uattrs', assure=True)
+    pds = permutation(ds)
+    # Due to assure above -- we should have changed things
+    assert_not_equal(zip(ds.targets), zip(pds.targets))
+    # in each chunk we should have unique remappings
+    for c in ds.UC:
+        chunk_idx = ds.C == c
+        otargets, ptargets = ds.targets[chunk_idx], pds.sa.targets[chunk_idx]
+        # we still have the same targets
+        assert_equal(set(ptargets), set(otargets))
+        # we have only 1-to-1 mappings
+        assert_true(len(set(zip(otargets, ptargets))), len(set(otargets)))
+
+    ds.sa['odds'] = ds.sa.ids % 2
+    # test combinations
+    permutation = AttributePermutator(['targets', 'odds'], limit='chunks',
+                                       strategy='uattrs', assure=True)
+    pds = permutation(ds)
+    # Due to assure above -- we should have changed things
+    assert_not_equal(zip(ds.targets,   ds.sa.odds),
+                     zip(pds.targets, pds.sa.odds))
+    # In each chunk we should have unique remappings
+    for c in ds.UC:
+        chunk_idx = ds.C == c
+        otargets, ptargets = ds.targets[chunk_idx], pds.sa.targets[chunk_idx]
+        oodds, podds = ds.sa.odds[chunk_idx], pds.sa.odds[chunk_idx]
+        # we still have the same targets
+        assert_equal(set(ptargets), set(otargets))
+        assert_equal(set(oodds), set(podds))
+        # at the end we have the same mapping
+        assert_equal(set(zip(otargets, oodds)), set(zip(ptargets, podds)))
 
 @reseed_rng()
 def test_balancer():
@@ -180,6 +218,16 @@ def test_balancer():
     assert_equal(res.sa['chunks'].unique, (3,))
     assert_equal(get_nelements_per_value(res.sa.targets).values(),
                  [2] * 4)
+    # same but include all offlimit samples
+    bal = Balancer(limit={'chunks': 3}, include_offlimit=True,
+                   apply_selection=True)
+    res = bal(ds)
+    assert_array_equal(res.sa['chunks'].unique, range(10))
+    # chunk three still balanced, but the rest is not, i.e. all samples included
+    assert_equal(get_nelements_per_value(res[res.sa.chunks == 3].sa.targets).values(),
+                 [2] * 4)
+    assert_equal(get_nelements_per_value(res.sa.chunks).values(),
+                 [10, 10, 10, 8, 10, 10, 10, 10, 10, 10])
     # fixed amount
     bal = Balancer(amount=1, limit={'chunks': 3}, apply_selection=True)
     res = bal(ds)

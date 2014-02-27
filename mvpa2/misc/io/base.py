@@ -113,7 +113,7 @@ class ColumnData(dict):
         # intialize with default
         self._header_order = None
 
-        if isinstance(source, str):
+        if isinstance(source, basestring):
             self._from_file(source, header=header, sep=sep, headersep=headersep,
                            dtype=dtype, skiplines=skiplines)
 
@@ -146,7 +146,7 @@ class ColumnData(dict):
                 # elsewhere
                 exec 'from %s import %s' % (self.__module__,
                                             self.__class__.__name__)
-                exec "%s.%s = property(fget=%s)"  % \
+                exec "%s.%s = property(fget=%s)" % \
                      (self.__class__.__name__, k_, getter)
                 # TODO!!! Check if it is safe actually here to rely on value of
                 #         k in lambda. May be it is treated as continuation and
@@ -184,10 +184,10 @@ class ColumnData(dict):
 
     def __str__(self):
         s = self.__class__.__name__
-        if len(self.keys())>0:
+        if len(self.keys()) > 0:
             s += " %d rows, %d columns [" % \
                  (self.nrows, self.ncolumns)
-            s += reduce(lambda x, y: x+" %s" % y, self.keys())
+            s += reduce(lambda x, y: x + " %s" % y, self.keys())
             s += "]"
         return s
 
@@ -211,66 +211,83 @@ class ColumnData(dict):
         # make a clean table
         self.clear()
 
-        file_ = open(filename, 'r')
+        with open(filename, 'r') as file_:
 
-        self._header_order = None
+            self._header_order = None
 
-        [ file_.readline() for x in range(skiplines) ]
-        """Simply skip some lines"""
-        # make column names, either take header or generate
-        if header == True:
-            # read first line and split by 'sep'
-            hdr = file_.readline().split(headersep)
-            # remove bogus empty header titles
-            hdr = [ x for x in hdr if len(x.strip()) ]
-            self._header_order = hdr
-        elif isinstance(header, list):
-            hdr = header
-        else:
-            hdr = [ str(i) for i in xrange(len(file_.readline().split(sep))) ]
-            # reset file to not miss the first line
-            file_.seek(0)
             [ file_.readline() for x in range(skiplines) ]
+            """Simply skip some lines"""
+            # make column names, either take header or generate
+            if header == True:
+                # read first line and split by 'sep'
+                hdr = file_.readline().split(headersep)
+                # remove bogus empty header titles
+                hdr = [ x for x in hdr if len(x.strip()) ]
+                self._header_order = hdr
+            elif isinstance(header, list):
+                hdr = header
+            else:
+                hdr = [ str(i) for i in xrange(len(file_.readline().split(sep))) ]
+                # reset file to not miss the first line
+                file_.seek(0)
+                [ file_.readline() for x in range(skiplines) ]
 
 
-        # string in lists: one per column
-        tbl = [ [] for i in xrange(len(hdr)) ]
+            # string in lists: one per column
+            tbl = [ [] for i in xrange(len(hdr)) ]
 
-        # do per column dtypes
-        if not isinstance(dtype, list):
-            dtype = [dtype] * len(hdr)
+            # store whether dtype should be determined automagically
+            auto_dtype = dtype is None
 
-        # parse line by line and feed into the lists
-        for line in file_:
-            # get rid of leading and trailing whitespace
-            line = line.strip()
-            # ignore empty lines and comment lines
-            if not line or line.startswith('#'):
-                continue
-            l = line.split(sep)
+            # do per column dtypes
+            if not isinstance(dtype, list):
+                dtype = [dtype] * len(hdr)
 
-            if not len(l) == len(hdr):
-                raise RuntimeError, \
-                      "Number of entries in line [%i] does not match number " \
-                      "of columns in header [%i]." % (len(l), len(hdr))
+            # parse line by line and feed into the lists
+            for line in file_:
+                # get rid of leading and trailing whitespace
+                line = line.strip()
+                # ignore empty lines and comment lines
+                if not line or line.startswith('#'):
+                    continue
+                l = line.split(sep)
 
-            for i, v in enumerate(l):
-                if not dtype[i] is None:
-                    try:
-                        v = dtype[i](v)
-                    except ValueError:
-                        warning("Can't convert %r to desired datatype %r." %
-                                (v, dtype) + " Leaving original type")
-                tbl[i].append(v)
+                if not len(l) == len(hdr):
+                    raise RuntimeError, \
+                          "Number of entries in line [%i] does not match number " \
+                          "of columns in header [%i]." % (len(l), len(hdr))
 
-        # check
-        if not len(tbl) == len(hdr):
-            raise RuntimeError, "Number of columns read from file does not " \
-                                "match the number of header entries."
+                for i, v in enumerate(l):
+                    if not dtype[i] is None:
+                        try:
+                            v = dtype[i](v)
+                        except ValueError:
+                            warning("Can't convert %r to desired datatype %r." %
+                                    (v, dtype) + " Leaving original type")
+                    tbl[i].append(v)
 
-        # fill dict
-        for i, v in enumerate(hdr):
-            self[v] = tbl[i]
+            if auto_dtype:
+                attempt_convert_dtypes = (int, float)
+
+                for i in xrange(len(tbl)):
+                    values = tbl[i]
+
+                    for attempt_convert_dtype in attempt_convert_dtypes:
+                        try:
+                            values = map(attempt_convert_dtype, values)
+                            tbl[i] = values
+                            break
+                        except:
+                            continue
+
+            # check
+            if not len(tbl) == len(hdr):
+                raise RuntimeError, "Number of columns read from file does not " \
+                                    "match the number of header entries."
+
+            # fill dict
+            for i, v in enumerate(hdr):
+                self[v] = tbl[i]
 
 
     def __iadd__(self, other):
@@ -397,7 +414,10 @@ class SampleAttributes(ColumnData):
           behavior as of `ColumnData`
         """
         if literallabels:
-            dtypes = [str, float]
+            if header is None:
+                dtypes = [str, float]
+            else:
+                dtypes = None
         else:
             dtypes = float
 
@@ -582,7 +602,7 @@ def labels2chunks(labels, method="alllabels", ignore_labels=None):
         chunks = np.array(chunks)
         # fix up a bit the trailer
         if seenlabels != alllabels:
-            chunks[chunks == chunk] = chunk-1
+            chunks[chunks == chunk] = chunk - 1
         chunks = list(chunks)
     else:
         errmsg = "Unknown method to derive chunks is requested. Known are:\n"

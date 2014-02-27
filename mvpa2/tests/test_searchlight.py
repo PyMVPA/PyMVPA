@@ -58,17 +58,40 @@ class SearchlightTests(unittest.TestCase):
         ok_(not 'nproc' in GNBSearchlight.__doc__)
         ok_(not 'nproc' in sphere_gnbsearchlight.__doc__)
         # but present elsewhere
-        ok_(    'nproc' in sphere_searchlight.__doc__)
-        ok_(    'nproc' in Searchlight.__init__.__doc__)
+        ok_('nproc' in sphere_searchlight.__doc__)
+        ok_('nproc' in Searchlight.__init__.__doc__)
+
+    # https://github.com/PyMVPA/PyMVPA/issues/106
+    def test_searchlights_doc_qe(self):
+        # queryengine should not be provided to sphere_* helpers
+        for sl in (sphere_searchlight,
+                   sphere_gnbsearchlight,
+                   sphere_m1nnsearchlight):
+            for kw in ('queryengine', 'qe'):
+                ok_(not kw in sl.__doc__,
+                    msg='There should be no %r in %s.__doc__' % (kw, sl))
+
+        # queryengine should be provided in corresponding classes __doc__s
+        for sl in (Searchlight,
+                   GNBSearchlight,
+                   M1NNSearchlight):
+            for kw in ('queryengine',):
+                ok_(kw in sl.__init__.__doc__,
+                    msg='There should be %r in %s.__init__.__doc__' % (kw, sl))
+            for kw in ('qe',):
+                ok_(not kw in sl.__init__.__doc__,
+                    msg='There should be no %r in %s.__init__.__doc__' % (kw, sl))
 
 
 
-    #def _test_searchlights(self, ds, sls, roi_ids, result_all):
+    #def _test_searchlights(self, ds, sls, roi_ids, result_all):  # pragma: no cover
 
     @sweepargs(lrn_sllrn_SL_partitioner=
                [(GNB(common_variance=v, descr='GNB'), None,
                  sphere_gnbsearchlight,
-                 NFoldPartitioner(cvtype=1))
+                 NFoldPartitioner(cvtype=1),
+                 0.                       # correction for the error range
+                 )
                  for v in (True, False)] +
                # Mean 1 NN searchlights
                [(ChainMapper(
@@ -76,14 +99,16 @@ class SearchlightTests(unittest.TestCase):
                     kNN(1)], space='targets', descr='M1NN'),
                  kNN(1),
                  sphere_m1nnsearchlight,
-                 NFoldPartitioner(0.5, selection_strategy='random', count=20)),
+                 NFoldPartitioner(0.5, selection_strategy='random', count=20),
+                 0.05),
                 # the same but with NFold(1) partitioner since it still should work
                 (ChainMapper(
                    [mean_group_sample(['targets', 'partitions']),
                     kNN(1)], space='targets', descr='NF-M1NN'),
                  kNN(1),
                  sphere_m1nnsearchlight,
-                 NFoldPartitioner(1)),
+                 NFoldPartitioner(1),
+                 0.05),
                 ]
                )
     @sweepargs(do_roi=(False, True))
@@ -95,7 +120,7 @@ class SearchlightTests(unittest.TestCase):
         Test of and adhoc searchlight anyways requires a ground-truth
         comparison to the generic version, so we are doing sweepargs here
         """
-        lrn, sllrn, SL, partitioner = lrn_sllrn_SL_partitioner
+        lrn, sllrn, SL, partitioner, correction = lrn_sllrn_SL_partitioner
         ## if results_backend == 'hdf5' and not common_variance:
         ##     # no need for full combination of all possible arguments here
         ##     return
@@ -189,9 +214,12 @@ class SearchlightTests(unittest.TestCase):
             # makes sense only if number of features was big enough
             # to get some stable estimate of mean
             if not do_roi or nroi > 20:
-                # was for binary, somewhat labile with M1NN
-                #self.assertTrue(0.4 < results.samples.mean() < 0.6)
-                self.assertTrue(0.68 < results.samples.mean() < 0.82)
+                # correction here is for M1NN class which has wider distribution
+                self.assertTrue(
+                    0.67 - correction < results.samples.mean() < 0.85 + correction,
+                    msg="Out of range mean result: "
+                    "lrn: %s  sllrn: %s  NROI: %d  MEAN: %.3f"
+                    % (lrn, sllrn, nroi, results.samples.mean(),))
 
             mean_errors = results.samples.mean(axis=0)
             # that we do get different errors ;)
@@ -283,15 +311,15 @@ class SearchlightTests(unittest.TestCase):
     def test_partial_searchlight_with_full_report(self):
         ds = self.dataset.copy()
         center_ids = np.zeros(ds.nfeatures, dtype='bool')
-        center_ids[[3,50]] = True
+        center_ids[[3, 50]] = True
         ds.fa['center_ids'] = center_ids
         # compute N-1 cross-validation for each sphere
         cv = CrossValidation(GNB(), NFoldPartitioner())
         # contruct diameter 1 (or just radius 0) searchlight
         # one time give center ids as a list, the other one takes it from the
         # dataset itself
-        sls = (sphere_searchlight(cv, radius=0, center_ids=[3,50]),
-               sphere_searchlight(None, radius=0, center_ids=[3,50]),
+        sls = (sphere_searchlight(cv, radius=0, center_ids=[3, 50]),
+               sphere_searchlight(None, radius=0, center_ids=[3, 50]),
                sphere_searchlight(cv, radius=0, center_ids='center_ids'),
                )
         for sl in sls:
@@ -335,7 +363,7 @@ class SearchlightTests(unittest.TestCase):
             # first vstack in cv and then hstack in searchlight --
             # thus 2 leading dimensions
             # TODO: RF? make searchlight/crossval smarter?
-            errorfx=lambda *a: cm(*a)[None, None,:])
+            errorfx=lambda *a: cm(*a)[None, None, :])
         # contruct diameter 2 (or just radius 1) searchlight
         sl = sphere_searchlight(cv, radius=1, center_ids=[3, 5, 50])
 
@@ -356,14 +384,14 @@ class SearchlightTests(unittest.TestCase):
         # since input dataset is probably balanced (otherwise adjust
         # to be per label): sum within columns (thus axis=-2) should
         # be identical to per-class/chunk number of samples
-        samples_per_classchunk = len(ds)/(len(ds.UT)*len(ds.UC))
-        ok_(np.all(np.sum(mat, axis=-2) == samples_per_classchunk))
+        samples_per_classchunk = len(ds) / (len(ds.UT) * len(ds.UC))
+        ok_(np.all(np.sum(mat, axis= -2) == samples_per_classchunk))
         # and if we compute accuracies manually -- they should
         # correspond to the one from sl_gross
         assert_array_almost_equal(res_gross.samples,
                            # from accuracies to errors
-                           1-(mat[...,0,0] + mat[..., 1,1]).astype(float)
-                           / (2*samples_per_classchunk))
+                           1 - (mat[..., 0, 0] + mat[..., 1, 1]).astype(float)
+                           / (2 * samples_per_classchunk))
 
         # and now for those who remained sited -- lets perform H0 MC
         # testing of this searchlight... just a silly one with minimal
@@ -373,7 +401,7 @@ class SearchlightTests(unittest.TestCase):
 
         # once again -- need explicit leading dimension to avoid
         # vstacking during cross-validation
-        cv.postproc=lambda x: sum_sample()(x)[None,:]
+        cv.postproc = lambda x: sum_sample()(x)[None, :]
 
         sl = sphere_searchlight(cv, radius=1, center_ids=[3, 5, 50],
                                 null_dist=MCNullDist(permutator, tail='right',
@@ -414,7 +442,7 @@ class SearchlightTests(unittest.TestCase):
             return chisquare(cv.ca.stats.matrix)[0]
 
         sl = sphere_searchlight(getconfusion, radius=0,
-                         center_ids=[3,50])
+                         center_ids=[3, 50])
 
         # run searchlight
         results = sl(self.dataset)
@@ -455,14 +483,14 @@ class SearchlightTests(unittest.TestCase):
 
         # Create a new sample attribute which will be used along with
         # every searchlight
-        ds.sa['beh'] = np.random.normal(size=(ds.nsamples,2))
+        ds.sa['beh'] = np.random.normal(size=(ds.nsamples, 2))
 
         # and now for fun -- lets create custom linar regression
         # targets out of some random feature and beh linearly combined
         rfeature = np.random.randint(ds.nfeatures)
         ds.sa.targets = np.dot(
             np.hstack((ds.sa.beh,
-                       ds.samples[:, rfeature:rfeature+1])),
+                       ds.samples[:, rfeature:rfeature + 1])),
             np.array([0.3, 0.2, 0.3]))
 
         class CrossValidationWithBeh(CrossValidation):
@@ -493,6 +521,7 @@ class SearchlightTests(unittest.TestCase):
 
         # elsewhere they should tend to be better but not guaranteed
 
+    @labile(5, 1)
     def test_usecase_concordancesl(self):
         import numpy as np
         from mvpa2.base.dataset import vstack
@@ -506,11 +535,11 @@ class SearchlightTests(unittest.TestCase):
 
         def corr12(ds):
             corr = np.corrcoef(ds.samples)
-            assert(corr.shape == (2,2)) # for paranoid ones
+            assert(corr.shape == (2, 2)) # for paranoid ones
             return corr[0, 1]
 
-        for nsc,  thr, thr_mean in (
-            (0,   1.0, 1.0),
+        for nsc, thr, thr_mean in (
+            (0, 1.0, 1.0),
             (0.1, 0.3, 0.8)):   # just a bit of noise
             ds2 = ds1.copy(deep=True)    # make a copy for the 2nd subject
             ds2.sa['subject'] = [2]
@@ -529,18 +558,18 @@ class SearchlightTests(unittest.TestCase):
     def test_swaroop_case(self):
         """Test hdf5 backend to pass results on Swaroop's usecase
         """
-
+        skip_if_no_external('h5py')
         from mvpa2.measures.base import Measure
         class sw_measure(Measure):
             def __init__(self):
-                Measure.__init__(self, auto_train = True)
+                Measure.__init__(self, auto_train=True)
             def _call(self, dataset):
                 # For performance measures -- increase to 50-200
                 # np.sum here is just to get some meaningful value in
                 # them
                 #return np.ones(shape=(2, 2))*np.sum(dataset)
                 return Dataset(
-                    np.array([{'d': np.ones(shape=(5,5))*np.sum(dataset)}],
+                    np.array([{'d': np.ones(shape=(5, 5)) * np.sum(dataset)}],
                              dtype=object))
         results = []
         ds = datasets['3dsmall'].copy(deep=True)
@@ -607,7 +636,7 @@ class SearchlightTests(unittest.TestCase):
 
         tfile = tempfile.mktemp('mvpa', 'test-sl')
 
-        ds = datasets['3dsmall'].copy()[:, :71] # smaller copy
+        ds = datasets['3dsmall'].copy()[:, :25] # smaller copy
         ds.fa['voxel_indices'] = ds.fa.myspace
         ds.fa['feature_id'] = np.arange(ds.nfeatures)
 
@@ -617,7 +646,7 @@ class SearchlightTests(unittest.TestCase):
         # figure out max number of features to be given to any proc_block
         # yoh: not sure why I had to +1 here... but now it became more robust and
         # still seems to be doing what was demanded so be it
-        max_block = int(ceil(ds.nfeatures  / float(nblocks))+1)
+        max_block = int(ceil(ds.nfeatures / float(nblocks)) + 1)
 
         def print_(s, *args):
             """For local debugging"""
@@ -644,13 +673,24 @@ class SearchlightTests(unittest.TestCase):
                         r = np.asscalar(r.samples)
                     os.unlink(r)         # remove generated file
                 print_("WAITING")
-            return res
+
+            results_ds = hstack(sum(res, []))
+
+            # store the center ids as a feature attribute since we use
+            # them for testing
+            results_ds.fa['center_ids'] = roi_ids
+            return results_ds
+
+        def results_postproc_fx(results):
+            for ds in results:
+                ds.fa['test_postproc'] = np.atleast_1d(ds.a.roi_center_ids**2)
+            return results
 
         def measure(ds):
             """The "measure" will check if a run with the same "index" from
                previous block has been processed by now
             """
-            f = '%s+%03d' % (tfile, ds.fa.feature_id[0] % (max_block*nproc))
+            f = '%s+%03d' % (tfile, ds.fa.feature_id[0] % (max_block * nproc))
             print_("FID:%d f:%s" % (ds.fa.feature_id[0], f))
 
             # allow for up to few seconds to wait for the file to
@@ -659,6 +699,7 @@ class SearchlightTests(unittest.TestCase):
             t0 = time.time()
             while os.path.exists(f) and time.time() - t0 < 4.:
                 time.sleep(0.5) # so it does take time to compute the measure
+                pass
             if os.path.exists(f):
                 print_("ERROR: ", f)
                 raise AssertionError("File %s must have been processed by now"
@@ -671,6 +712,7 @@ class SearchlightTests(unittest.TestCase):
                                 radius=0,
                                 nproc=nproc,
                                 nblocks=nblocks,
+                                results_postproc_fx=results_postproc_fx,
                                 results_fx=results_fx,
                                 center_ids=np.arange(ds.nfeatures)
                                 )
@@ -678,15 +720,19 @@ class SearchlightTests(unittest.TestCase):
         assert_equal(len(glob.glob(tfile + '*')), 0) # so no junk around
         try:
             res = sl(ds)
+            assert_equal(res.nfeatures, ds.nfeatures)
+            # verify that we did have results_postproc_fx called
+            assert_array_equal(res.fa.test_postproc, np.power(res.fa.center_ids, 2))
         finally:
             # remove those generated left-over files
-            for f in glob.glob(tfile +'*'):
+            for f in glob.glob(tfile + '*'):
                 os.unlink(f)
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(SearchlightTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

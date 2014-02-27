@@ -17,11 +17,13 @@ from mvpa2.testing.datasets import *
 from mvpa2.testing.clfs import *
 
 from mvpa2.support.copy import deepcopy
+from mvpa2.base.node import ChainNode
 from mvpa2.base import externals
 
 from mvpa2.datasets.base import dataset_wizard
 from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner
 from mvpa2.generators.permutation import AttributePermutator
+from mvpa2.generators.resampling import Balancer
 from mvpa2.generators.splitters import Splitter
 
 from mvpa2.misc.exceptions import UnknownStateError
@@ -164,7 +166,7 @@ class ClassifiersTests(unittest.TestCase):
 
         self.assertTrue(bclf1.predict(testdata) ==
                         [['sp', 'sn'], ['sp', 'sn'], ['sp', 'sn'],
-                         ['dn', 'dp'], ['dn', 'dp']])
+                         ['dp', 'dn'], ['dp', 'dn']])
 
         self.assertTrue((ds.targets == orig_labels).all(),
                         msg="BinaryClassifier should not alter labels")
@@ -202,7 +204,6 @@ class ClassifiersTests(unittest.TestCase):
     # yoh: I guess we have skipped meta constructs because they would
     #      need targets attribute specified in both slave and wrapper
     @sweepargs(lrn=clfswh['!meta']+regrswh['!meta'])
-    @reseed_rng()
     def test_custom_targets(self, lrn):
         """Simple test if a learner could cope with custom sa not targets
         """
@@ -211,6 +212,8 @@ class ClassifiersTests(unittest.TestCase):
         # to assure that if they depend on some random seed -- they
         # would use the same value.  Currently we have such stochastic
         # behavior in SMLR
+        # yoh: we explicitly seed right before calling a CVs below so
+        #      this setting of .seed is of no real effect/testing
         if 'seed' in lrn.params:
             from mvpa2 import _random_seed
             lrn = lrn.clone()              # clone the beast
@@ -231,7 +234,10 @@ class ClassifiersTests(unittest.TestCase):
                         msg="'targets' should remain in original ds")
 
         try:
+            mvpa2.seed()
             cve = te(ds)
+
+            mvpa2.seed()
             cve_ = te_(ds_)
         except Exception, e:
             self.fail("Failed with %r" % e)
@@ -247,13 +253,11 @@ class ClassifiersTests(unittest.TestCase):
             and not ('gpr' in lrn.__tags__
                      and 'non-linear' in lrn.__tags__)
             ):
-            ## if str(lrn) == "SVM(svm_impl='EPSILON_SVR', kernel=LinearLSKernel())":
-            ##     # TODO investigate segfault
-            ##     import pydb
-            ##     pydb.debugger()
-
+            mvpa2.seed()
             s = lrn.get_sensitivity_analyzer()(ds)
+            mvpa2.seed()
             s_ = lrn_.get_sensitivity_analyzer()(ds_)
+
             isreg = lrn.__is_regression__
             # ^ is XOR so we shouldn't get get those sa's in
             # regressions at all
@@ -437,6 +441,28 @@ class ClassifiersTests(unittest.TestCase):
         #self.assertEqual(clf.predict(ds.samples), list(ds.targets),
         #                     msg="Should classify correctly")
 
+    def test_split_clf_on_chainpartitioner(self):
+        # pretty much a smoke test for #156
+        ds = datasets['uni2small']
+        part = ChainNode([NFoldPartitioner(cvtype=1),
+                          Balancer(attr='targets', count=2,
+                                   limit='partitions', apply_selection=True)])
+        partitions = list(part.generate(ds))
+        sclf = SplitClassifier(sample_clf_lin, part, enable_ca=['stats', 'splits'])
+        sclf.train(ds)
+        pred = sclf.predict(ds)
+        assert_equal(len(pred), len(ds))  # rudimentary check
+        assert_equal(len(sclf.ca.splits), len(partitions))
+        assert_equal(len(sclf.clfs), len(partitions))
+
+        # now let's do sensitivity analyzer just in case
+        sclf.untrain()
+        sensana = sclf.get_sensitivity_analyzer()
+        sens = sensana(ds)
+        # basic check that sensitivities varied across splits
+        from mvpa2.mappers.fx import FxMapper
+        sens_stds = FxMapper('samples', np.std, uattrs=['targets'])(sens)
+        assert_true(np.any(sens_stds != 0))
 
     def test_mapped_classifier(self):
         samples = np.array([ [ 0,  0, -1], [ 1, 0, 1],
@@ -641,20 +667,22 @@ class ClassifiersTests(unittest.TestCase):
 
         clf.ca.reset_changed_temporarily()
 
+    # TODO: PLR expects [0,1], not [-1, 1] and apparently we do not
+    #       do remapping
+    #@sweepargs(clf=clfswh['!plr', 'binary'])
+    # For now just test on a representative SVM
     @sweepargs(clf=clfswh['linear', 'svm', 'libsvm', '!meta'])
     def test_multiclass_classifier(self, clf):
-        oldC = None
-        # XXX somewhat ugly way to force non-dataspecific C value.
+        # Force non-dataspecific C value.
         # Otherwise multiclass libsvm builtin and our MultiClass would differ
         # in results
-        if clf.params.has_key('C') and clf.params.C<0:
-            oldC = clf.params.C
-            clf.params.C = 1.0                 # reset C to be 1
-        svm, svm2 = clf, clf.clone()
+        svm = clf.clone()                 # operate on clone to avoid side-effects
+        if svm.params.has_key('C') and svm.params.C<0:
+            svm.params.C = 1.0                 # reset C to be 1
+        svm2 = svm.clone()
         svm2.ca.enable(['training_stats'])
 
-        mclf = MulticlassClassifier(clf=svm,
-                                   enable_ca=['training_stats'])
+        mclf = MulticlassClassifier(clf=svm, enable_ca=['training_stats'])
 
         # with explicit MaximalVote with the conditional attributes
         # enabled
@@ -662,8 +690,9 @@ class ClassifiersTests(unittest.TestCase):
                                        combiner=MaximalVote(enable_ca=['estimates', 'predictions']),
                                        enable_ca=['training_stats'])
 
+        ds_train = datasets['uni2small']
         for clf_ in svm2, mclf, mclf_mv:
-            clf_.train(datasets['uni2small'])
+            clf_.train(ds_train)
         s1 = str(mclf.ca.training_stats)
         s2 = str(svm2.ca.training_stats)
         s3 = str(mclf_mv.ca.training_stats)
@@ -682,8 +711,7 @@ class ClassifiersTests(unittest.TestCase):
         # enabled
         # recompute accuracy on predictions for training_stats
         training_acc = np.sum(mclf_mv.combiner.ca.predictions ==
-                              datasets['uni2small'].targets) \
-                              / float(len(datasets['uni2small']))
+                              ds_train.targets) / float(len(ds_train))
         # should match
         assert_equal(mclf_mv.ca.training_stats.stats['ACC'], training_acc)
 
@@ -703,9 +731,6 @@ class ClassifiersTests(unittest.TestCase):
                         msg="UnTrained Boosted classifier should not be trained")
         self.assertTrue(not np.array([x.trained for x in mclf.clfs]).any(),
             msg="UnTrained Boosted classifier should have no primary classifiers trained")
-
-        if oldC is not None:
-            clf.params.C = oldC
 
         # TODO: test combiners, e.g. MaximalVote and ca they store
 
@@ -735,6 +760,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
     @sweepargs(clf=clfswh['retrainable'])
+    @reseed_rng()
     def test_retrainables(self, clf):
         # XXX we agreed to not worry about this for the initial 0.6 release
         raise SkipTest
@@ -1068,9 +1094,10 @@ class ClassifiersTests(unittest.TestCase):
             pl.xlim((0. - step/2, 1.+step/2))
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(ClassifiersTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()

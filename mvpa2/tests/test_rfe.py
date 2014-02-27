@@ -429,7 +429,7 @@ class RFETests(unittest.TestCase):
         percent = 80
         dataset = datasets['uni4large']
         #dataset = dataset[:, dataset.a.nonbogus_features]
-        
+
         rfesvm_split = LinearCSVMC()
         fs = \
             RFE(rfesvm_split.get_sensitivity_analyzer(
@@ -513,10 +513,58 @@ class RFETests(unittest.TestCase):
         self.assertTrue(error < 0.4)
         self.assertTrue(cv.ca.null_prob < 0.05)
 
-def suite():
+    @reseed_rng()
+    @labile(3, 1)
+    def test_SplitRFE(self):
+        # just a smoke test ATM
+        from mvpa2.clfs.svm import LinearCSVMC
+        from mvpa2.clfs.meta import MappedClassifier
+        from mvpa2.misc.data_generators import normal_feature_dataset
+        #import mvpa2.featsel.rfe
+        #reload(mvpa2.featsel.rfe)
+        from mvpa2.featsel.rfe import RFE, SplitRFE
+        from mvpa2.generators.partition import NFoldPartitioner
+        from mvpa2.featsel.helpers import FractionTailSelector
+        from mvpa2.testing import ok_, assert_equal
+
+        clf = LinearCSVMC(C=1)
+        dataset = normal_feature_dataset(perlabel=20, nlabels=2, nfeatures=30,
+                                         snr=1., nonbogus_features=[1,5])
+        # flip one of the meaningful features around to see
+        # if we are still getting proper selection
+        dataset.samples[:, dataset.a.nonbogus_features[1]] *= -1
+        # 4 partitions should be enough for testing
+        partitioner = NFoldPartitioner(count=4)
+
+        rfeclf = MappedClassifier(
+            clf, SplitRFE(clf,
+                          partitioner,
+                          fselector=FractionTailSelector(
+                              0.2, mode='discard', tail='lower')))
+        r0 = repr(rfeclf)
+
+        ok_(rfeclf.mapper.nfeatures_min == 0)
+        rfeclf.train(dataset)
+        ok_(rfeclf.mapper.nfeatures_min > 0)
+        predictions = rfeclf(dataset).samples
+
+        # at least 1 of the nonbogus-features should be chosen
+        ok_(len(set(dataset.a.nonbogus_features).intersection(
+                rfeclf.mapper.slicearg)) > 0)
+        # check repr to have all needed pieces
+        r = repr(rfeclf)
+        s = str(rfeclf)
+        ok_(('partitioner=NFoldP' in r) or
+            ('partitioner=mvpa2.generators.partition.NFoldPartitioner' in r))
+        ok_('lrn=' in r)
+        ok_(not 'slicearg=' in r)
+        assert_equal(r, r0)
+
+def suite():  # pragma: no cover
     return unittest.makeSuite(RFETests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

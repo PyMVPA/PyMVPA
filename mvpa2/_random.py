@@ -19,10 +19,14 @@ if __debug__:
 # RNG seeding
 #
 
+def get_random_seed():
+    """Generate a random int good for seeding RNG via `seed` function"""
+    return int(np.random.uniform()*(2**31-1))
+
 if cfg.has_option('general', 'seed'):
     _random_seed = cfg.getint('general', 'seed')
 else:
-    _random_seed = int(np.random.uniform()*(2**31-1))
+    _random_seed = get_random_seed()
 
 def seed(random_seed=_random_seed):
     """Uniform and combined seeding of all relevant random number

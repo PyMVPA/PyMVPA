@@ -17,10 +17,11 @@ from mvpa2.clfs.meta import SplitClassifier
 from mvpa2.clfs.smlr import SMLR
 
 @reseed_rng()
+@labile(5, 1)
 def test_splitclf_sensitivities():
     datasets = [normal_feature_dataset(perlabel=100, nlabels=2,
                                        nfeatures=4,
-                                       nonbogus_features=[0, i+1],
+                                       nonbogus_features=[0, i + 1],
                                        snr=1, nchunks=2)
                 for i in xrange(2)]
 
@@ -45,8 +46,9 @@ def test_splitclf_sensitivities():
     # and we should have "selected" "correct" voxels
     for i, senses in enumerate((senses1, senses2)):
         assert_equal(set(np.argsort(np.max(np.abs(senses), axis=0))[-2:]),
-                     set((0, i+1)))
+                     set((0, i + 1)))
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()

@@ -23,8 +23,14 @@
     font-size: 1.5em;
     text-align: right;
     position: relative;
-    top: 100px;
+    top: 10px;
   }
+
+#header div.logos {
+	display: block;
+	margin-top: 15px;
+    float: right;
+}
 
 body {
     font-family: {{ theme_bodyfont }};
@@ -304,5 +310,16 @@ tt {
 
 tt.xref {
     font-size: 16px;
+}
+
+iframe.twitter-timeline {
+    border-bottom: 1px dotted #aaa;
+    margin-left: 1%;
+    width: 99%;
+}
+
+div.tweet {
+    border-bottom: 1px dotted #aaa;
+    margin-left: 2em;
 }
 

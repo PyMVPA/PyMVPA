@@ -46,7 +46,7 @@ def _offset(ax, x, y):
     elif 'BlendedAffine2D' in d:
         # some newer versions of matplotlib
         return ax.transData + \
-               mlt.Affine2D().translate(x,y)
+               mlt.Affine2D().translate(x, y)
     elif 'blend_xy_sep_transform' in d:
         trans = mlt.blend_xy_sep_transform(ax.transData, ax.transData)
         # Now we set the offset in pixels
@@ -90,9 +90,9 @@ def _make_centeredaxis(ax, loc, offset=5, ai=0, mult=1.0,
     ymin, ymax = ax.get_ylim()
 
     xlocs = [l for l in ax.xaxis.get_ticklocs()
-            if l>=xmin and l<=xmax]
+            if l >= xmin and l <= xmax]
     ylocs = [l for l in ax.yaxis.get_ticklocs()
-            if l>=ymin and l<=ymax]
+            if l >= ymin and l <= ymax]
 
     if ai == 0:
         hlocs = ylocs
@@ -119,9 +119,9 @@ def _make_centeredaxis(ax, loc, offset=5, ai=0, mult=1.0,
     else:
         raise ValueError, "Illegal ai=%s" % ai
 
-    args = [ (locs, [loc]*len(locs)),
+    args = [ (locs, [loc] * len(locs)),
              (vrange, [loc, loc]),
-             [locs, (loc,)*len(locs)]
+             [locs, (loc,) * len(locs)]
              ]
 
     offset_abs = offset + ticklength
@@ -190,7 +190,8 @@ def plot_erp(data, SR=500, onsets=None,
       Duration (in seconds) to be plotted after the onset.
     pre_mean : float
       Duration (in seconds) at the beginning of the window which is used
-      for deriving the mean of the signal. If None, pre_mean = pre
+      for deriving the mean of the signal. If None, pre_mean = pre. If 0,
+      then the mean is not subtracted from the signal.
     errtype : None or 'ste' or 'std' or 'ci95' or list of previous three
       Type of error value to be computed per datapoint.  'ste' --
       standard error of the mean, 'std' -- standard deviation 'ci95'
@@ -231,8 +232,8 @@ def plot_erp(data, SR=500, onsets=None,
 
         # We are working with a full timeline
         bcm = BoxcarMapper(onsets,
-                           boxlength = int(SR * duration),
-                           offset = -int(SR * pre))
+                           boxlength=int(SR * duration),
+                           offset= -int(SR * pre))
         erp_data = bcm(data)
 
         # override values since we are using Boxcar
@@ -270,7 +271,7 @@ def plot_erp(data, SR=500, onsets=None,
     if not (pre_mean == 0 or pre_mean is None):
         # mean of pre-onset signal accross trials
         erp_baseline = np.mean(
-            erp_data[:, int((pre_onset-pre_mean)*SR):int(pre_onset*SR)])
+            erp_data[:, int((pre_onset - pre_mean) * SR):int(pre_onset * SR)])
         # center data on pre-onset mean
         # NOTE: make sure that we make a copy of the data to don't
         #       alter the original. Better be safe than sorry
@@ -465,7 +466,7 @@ def plot_erps(erps, data=None, ax=None, pre=0.2, post=None,
 
     def set_limits():
         """Helper to set x and y limits"""
-        ax.set_xlim( (-pre, post) )
+        ax.set_xlim((-pre, post))
         if ylim != None:
             ax.set_ylim(*ylim)
 

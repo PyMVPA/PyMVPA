@@ -6,11 +6,15 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-""""""
+"""Datasets originating from code outside of PyMVPA
+
+Contains wrapper and adapter methods interfacing data provided by other
+packages as PyMVPA datasets.
+"""
 
 __docformat__ = 'restructuredtext'
 
 from mvpa2.base import externals
 
 if externals.exists('skl'):
-    from .sklearn_data import *
+    from .skl_data import *

@@ -63,7 +63,7 @@ if _cfgfile:
 cfg = __Singleton('cfg', ConfigManager(_cfgfile))
 
 verbose = __Singleton("verbose", LevelLogger(
-    handlers = cfg.get('verbose', 'output', default='stdout').split(',')))
+    handlers=cfg.get('verbose', 'output', default='stdout').split(',')))
 
 # Not supported/explained/used by now since verbose(0, is to print errors
 #error = __Singleton("error", LevelLogger(
@@ -129,7 +129,7 @@ class WarningLog(OnceLogger):
         fullmsg = "WARNING: %s" % msg
         if not self.__explanation_seen:
             self.__explanation_seen = True
-            fullmsg += "\n * Please note: warnings are "  + \
+            fullmsg += "\n * Please note: warnings are " + \
                   "printed only once, but underlying problem might " + \
                   "occur many times *"
         if bt and self.__btlevels > 0:
@@ -184,44 +184,46 @@ if __debug__:
     # debug.register_metric('vmem')
 
     # List agreed sets for debug
-    debug.register('PY',   "No suppression of various warnings (numpy, scipy) etc.")
+    debug.register('PY', "No suppression of various warnings (numpy, scipy) etc.")
     debug.register('VERBOSE', "Verbose control debugging")
-    debug.register('DBG',  "Debug output itself")
+    debug.register('DBG', "Debug output itself")
     debug.register('STDOUT', "To decorate stdout with debug metrics")
     debug.register('DOCH', "Doc helpers")
     debug.register('INIT', "Just sequence of inits")
     debug.register('RANDOM', "Random number generation")
-    debug.register('EXT',  "External dependencies")
+    debug.register('EXT', "External dependencies")
     debug.register('EXT_', "External dependencies (verbose)")
     debug.register('TEST', "Debug unittests")
     debug.register('MODULE_IN_REPR', "Include module path in __repr__")
     debug.register('ID_IN_REPR', "Include id in __repr__")
     debug.register('CMDLINE', "Handling of command line parameters")
 
-    debug.register('NO',   "Nodes")
-    debug.register('DG',   "Data generators")
+    debug.register('NO', "Nodes")
+    debug.register('DG', "Data generators")
     debug.register('LAZY', "Miscelaneous 'lazy' evaluations")
     debug.register('LOOP', "Support's loop construct")
-    debug.register('PLR',  "PLR call")
-    debug.register('NBH',  "Neighborhood estimations")
-    debug.register('SLC',  "Searchlight call")
+    debug.register('PLR', "PLR call")
+    debug.register('NBH', "Neighborhood estimations")
+    debug.register('SLC', "Searchlight call")
     debug.register('SLC_', "Searchlight call (verbose)")
-    debug.register('SA',   "Sensitivity analyzers")
-    debug.register('SOM',  "Self-organizing-maps (SOM)")
+    debug.register('SVS', "Surface-based voxel selection (a.k.a. 'surfing')")
+    debug.register('SA', "Sensitivity analyzers")
+    debug.register('SOM', "Self-organizing-maps (SOM)")
     debug.register('IRELIEF', "Various I-RELIEFs")
-    debug.register('SA_',  "Sensitivity analyzers (verbose)")
-    debug.register('PSA',  "Perturbation analyzer call")
+    debug.register('SA_', "Sensitivity analyzers (verbose)")
+    debug.register('PSA', "Perturbation analyzer call")
     debug.register('RFEC', "Recursive Feature Elimination call")
     debug.register('RFEC_', "Recursive Feature Elimination call (verbose)")
     debug.register('IFSC', "Incremental Feature Search call")
-    debug.register('DS',   "*Dataset")
+    debug.register('DS', "*Dataset")
     debug.register('DS_NIFTI', "NiftiDataset(s)")
-    debug.register('DS_',  "*Dataset (verbose)")
-    debug.register('DS_ID',   "ID Datasets")
-    debug.register('DS_STATS',"Datasets statistics")
-    debug.register('SPL',   "*Splitter")
+    debug.register('DS_', "*Dataset (verbose)")
+    debug.register('DS_ID', "ID Datasets")
+    debug.register('DS_STATS', "Datasets statistics")
+    debug.register('SPL', "*Splitter")
+    debug.register('APERM', "AttributePermutator")
 
-    debug.register('TRAN',  "Transformers")
+    debug.register('TRAN', "Transformers")
     debug.register('TRAN_', "Transformers (verbose)")
 
     # CHECKs
@@ -236,23 +238,23 @@ if __debug__:
     debug.register('CHECK_STABILITY', "Checking for numerical stability")
     debug.register('ENFORCE_CA_ENABLED', "Forcing all ca to be enabled")
 
-    debug.register('MAP',   "*Mapper")
-    debug.register('MAP_',  "*Mapper (verbose)")
-    debug.register('FX',    "FxMapper")
-    debug.register('ZSCM',  "ZScoreMapper")
+    debug.register('MAP', "*Mapper")
+    debug.register('MAP_', "*Mapper (verbose)")
+    debug.register('FX', "FxMapper")
+    debug.register('ZSCM', "ZScoreMapper")
 
-    debug.register('COL',  "Generic Collectable")
-    debug.register('COL_RED',  "__reduce__ of collectables")
+    debug.register('COL', "Generic Collectable")
+    debug.register('COL_RED', "__reduce__ of collectables")
     debug.register('UATTR', "Attributes with unique")
-    debug.register('ST',   "State")
-    debug.register('STV',  "State Variable")
+    debug.register('ST', "State")
+    debug.register('STV', "State Variable")
     debug.register('COLR', "Collector for ca and classifier parameters")
-    debug.register('ES',   "Element selectors")
+    debug.register('ES', "Element selectors")
 
-    debug.register('LRN',    "Base learners")
+    debug.register('LRN', "Base learners")
     # TODO remove once everthing is a learner
-    debug.register('CLF',    "Base Classifiers")
-    debug.register('CLF_',   "Base Classifiers (verbose)")
+    debug.register('CLF', "Base Classifiers")
+    debug.register('CLF_', "Base Classifiers (verbose)")
     #debug.register('CLF_TB',
     #    "Report traceback in train/predict. Helps to resolve WTF calls it")
     debug.register('CLFBST', "BoostClassifier")
@@ -260,50 +262,50 @@ if __debug__:
     debug.register('CLFPRX', "ProxyClassifier")
     debug.register('CLFBIN', "BinaryClassifier")
     debug.register('CLFTREE', "TreeClassifier")
-    debug.register('CLFMC',  "MulticlassClassifier")
+    debug.register('CLFMC', "MulticlassClassifier")
     debug.register('CLFSPL', "SplitClassifier")
-    debug.register('CLFSPL_',"SplitClassifier (verbose)")
-    debug.register('CLFFS',  "FeatureSelectionClassifier")
+    debug.register('CLFSPL_', "SplitClassifier (verbose)")
+    debug.register('CLFFS', "FeatureSelectionClassifier")
     debug.register('CLFFS_', "FeatureSelectionClassifier (verbose)")
 
-    debug.register('STAT',   "Statistics estimates")
-    debug.register('STAT_',  "Statistics estimates (verbose)")
+    debug.register('STAT', "Statistics estimates")
+    debug.register('STAT_', "Statistics estimates (verbose)")
     debug.register('STAT__', "Statistics estimates (very verbose)")
     debug.register('STATMC', "Progress in Monte-Carlo estimation")
 
-    debug.register('FS',     "FeatureSelections")
-    debug.register('FS_',    "FeatureSelections (verbose)")
-    debug.register('FSPL',   "FeatureSelectionPipeline")
+    debug.register('FS', "FeatureSelections")
+    debug.register('FS_', "FeatureSelections (verbose)")
+    debug.register('FSPL', "FeatureSelectionPipeline")
 
-    debug.register('KNN',    "kNN")
+    debug.register('KNN', "kNN")
 
-    debug.register('SVM',    "SVM")
-    debug.register('SVM_',   "SVM (verbose)")
+    debug.register('SVM', "SVM")
+    debug.register('SVM_', "SVM (verbose)")
     debug.register('LIBSVM', "Internal libsvm output")
 
-    debug.register('SMLR',    "SMLR")
-    debug.register('SMLR_',   "SMLR verbose")
+    debug.register('SMLR', "SMLR")
+    debug.register('SMLR_', "SMLR verbose")
 
-    debug.register('LARS',    "LARS")
-    debug.register('LARS_',   "LARS (verbose)")
+    debug.register('LARS', "LARS")
+    debug.register('LARS_', "LARS (verbose)")
 
-    debug.register('ENET',    "ENET")
-    debug.register('ENET_',   "ENET (verbose)")
+    debug.register('ENET', "ENET")
+    debug.register('ENET_', "ENET (verbose)")
 
-    debug.register('GLMNET',    "GLMNET")
-    debug.register('GLMNET_',   "GLMNET (verbose)")
+    debug.register('GLMNET', "GLMNET")
+    debug.register('GLMNET_', "GLMNET (verbose)")
 
-    debug.register('GNB',     "GNB - Gaussian Naive Bayes")
+    debug.register('GNB', "GNB - Gaussian Naive Bayes")
 
-    debug.register('GPR',     "GPR")
+    debug.register('GPR', "GPR")
     debug.register('GPR_WEIGHTS', "Track progress of GPRWeights computation")
-    debug.register('KRN',     "Kernels module (mvpa2.kernels)")
-    debug.register('KRN_SG',  "Shogun kernels module (mvpa2.kernels.sg)")
-    debug.register('SAL',     "Samples lookup (for cached kernels)")
+    debug.register('KRN', "Kernels module (mvpa2.kernels)")
+    debug.register('KRN_SG', "Shogun kernels module (mvpa2.kernels.sg)")
+    debug.register('SAL', "Samples lookup (for cached kernels)")
     debug.register('MOD_SEL', "Model Selector (also makes openopt's iprint=0)")
     debug.register('OPENOPT', "OpenOpt toolbox verbose (iprint=1)")
 
-    debug.register('SG',  "PyMVPA SG wrapping")
+    debug.register('SG', "PyMVPA SG wrapping")
     debug.register('SG_', "PyMVPA SG wrapping verbose")
     debug.register('SG__', "PyMVPA SG wrapping debug")
     debug.register('SG_GC', "For all entities enable highest level"
@@ -317,25 +319,26 @@ if __debug__:
     debug.register('SG_PROGRESS',
                    "Internal shogun progress bar during computation")
 
-    debug.register('IOH',    "IO Helpers")
-    debug.register('HDF5',   "HDF5 IO")
-    debug.register('CM',   "Confusion matrix computation")
-    debug.register('ROC',  "ROC analysis")
+    debug.register('IOH', "IO Helpers")
+    debug.register('NIML', "NeuroImaging Markup Language")
+    debug.register('HDF5', "HDF5 IO")
+    debug.register('CM', "Confusion matrix computation")
+    debug.register('ROC', "ROC analysis")
     debug.register('REPM', "Repeated measure (e.g. super-class of CrossValidation)")
     debug.register('CERR', "Various ClassifierErrors")
 
-    debug.register('HPAL',   "Hyperalignment")
-    debug.register('HPAL_',  "Hyperalignment (verbose)")
-    debug.register('ATL',    "Atlases")
-    debug.register('ATL_',   "Atlases (verbose)")
-    debug.register('ATL__',  "Atlases (very verbose)")
+    debug.register('HPAL', "Hyperalignment")
+    debug.register('HPAL_', "Hyperalignment (verbose)")
+    debug.register('ATL', "Atlases")
+    debug.register('ATL_', "Atlases (verbose)")
+    debug.register('ATL__', "Atlases (very verbose)")
 
-    debug.register('PLLB',   "plot_lightbox")
+    debug.register('PLLB', "plot_lightbox")
 
-    debug.register('REP',    "Reports")
-    debug.register('REP_',   "Reports (verbose)")
+    debug.register('REP', "Reports")
+    debug.register('REP_', "Reports (verbose)")
 
-    debug.register('SUITE',  "Import of mvpa2.suite")
+    debug.register('SUITE', "Import of mvpa2.suite")
 
     debug.register('ATTRREFER', "Debugging of top-level attribute referencing, "
                    "needed for current refactoring carried out in tent/flexds")
@@ -376,8 +379,19 @@ if __debug__:
                 finally:
                     self._inhere = False
 
+            def flush(self):
+                self.stdout.flush()
+
         _out = _pymvpa_stdout_debug(sys)
 
+else: # if not __debug__
+
+    # this debugger function does absolutely nothing.
+    # It avoids the need of using 'if __debug__' for debug(...) calls.    
+
+    from mvpa2.base.verbosity import BlackHoleLogger
+
+    debug = __Singleton("debug", BlackHoleLogger())
 
 if __debug__:
     debug('INIT', 'mvpa2.base end')

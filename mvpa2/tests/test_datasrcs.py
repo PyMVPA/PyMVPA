@@ -16,7 +16,7 @@ def test_sklearn_data_wrappers():
     if externals.versions['skl'] >= '0.9':
         from sklearn import datasets as skldata
     else:
-        from scitkits.learn import datasets as skldata
+        from scikits.learn import datasets as skldata
     import inspect
     found_fx = 0
     for fx in skldata.__dict__:
@@ -29,5 +29,10 @@ def test_sklearn_data_wrappers():
         # fx() signatures must be the same
         assert_equal(inspect.getargspec(getattr(skldata, fx)),
                      inspect.getargspec(getattr(mvpads, 'skl_%s' % fx[5:])))
+        if fx in ('load_iris',):
+            # add this one if sklearn issue #2865 is resolved
+            # 'load_boston'):
+            assert_array_equal(getattr(skldata, fx)()['data'],
+                               getattr(mvpads, 'skl_%s' % fx[5:])().samples)
     # if we do not get a whole bunch, something changed
     assert_true(found_fx > 15)

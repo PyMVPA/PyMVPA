@@ -13,9 +13,11 @@ __docformat__ = 'restructuredtext'
 import os
 import numpy as np
 
+from mvpa2.base import externals
 from mvpa2.datasets.base import dataset_wizard, Dataset
 from mvpa2 import pymvpa_dataroot, pymvpa_datadbroot
 from mvpa2.misc.fx import get_random_rotation
+from mvpa2.base.dataset import vstack
 
 if __debug__:
     from mvpa2.base import debug
@@ -32,6 +34,7 @@ def multiple_chunks(func, n_chunks, *args, **kwargs):
     -------
     ds : `mvpa2.datasets.base.Dataset`
     """
+    dss = []
     for chunk in xrange(n_chunks):
         ds_ = func(*args, **kwargs)
         # might not have chunks at all
@@ -39,12 +42,9 @@ def multiple_chunks(func, n_chunks, *args, **kwargs):
             ds_.sa['chunks'] = np.repeat(chunk + 1, ds_.nsamples)
         else:
             ds_.sa.chunks[:] = chunk + 1
-        if chunk == 0:
-            ds = ds_
-        else:
-            ds.append(ds_)
+        dss.append(ds_)
 
-    return ds
+    return vstack(dss)
 
 
 ##REF: Name was automagically refactored
@@ -322,12 +322,15 @@ def linear1d_gaussian_noise(size=100, slope=0.5, intercept=1.0,
     return dataset_wizard(samples=x[:, None], targets=y)
 
 
-def load_example_fmri_dataset():
+def load_example_fmri_dataset(literal=False):
     """Load minimal fMRI dataset that is shipped with PyMVPA."""
     from mvpa2.datasets.mri import fmri_dataset
     from mvpa2.misc.io import SampleAttributes
 
-    attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
+    if literal:
+        attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes_literal.txt'))
+    else:
+        attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
     ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
                       targets=attr.targets, chunks=attr.chunks,
                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
@@ -367,7 +370,11 @@ def load_datadb_tutorial_data(path=os.path.join(
                               nimg.get_header())
     elif isinstance(roi, tuple) or isinstance(roi, list):
         nimg = nb.load(os.path.join(path, 'mask_hoc.nii.gz'))
-        tmpmask = np.zeros(nimg.get_shape(), dtype='bool')
+        if externals.versions['nibabel'] >= '1.2':
+            img_shape = nimg.shape
+        else:
+            img_shape = nimg.get_shape()
+        tmpmask = np.zeros(img_shape, dtype='bool')
         for r in roi:
             tmpmask = np.logical_or(tmpmask, nimg.get_data() == r)
         mask = nb.Nifti1Image(tmpmask.astype(int), nimg.get_affine(),

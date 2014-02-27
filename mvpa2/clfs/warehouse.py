@@ -22,6 +22,8 @@ from mvpa2.clfs.gda import LDA, QDA
 from mvpa2.clfs.gnb import GNB
 from mvpa2.kernels.np import LinearKernel, SquaredExponentialKernel, \
      GeneralizedLinearKernel
+from mvpa2.featsel.rfe import SplitRFE
+
 
 # Helpers
 from mvpa2.base import externals, cfg
@@ -30,7 +32,7 @@ from mvpa2.mappers.fx import absolute_features, maxofabs_sample
 from mvpa2.clfs.smlr import SMLRWeights
 from mvpa2.featsel.helpers import FractionTailSelector, \
     FixedNElementTailSelector, RangeElementSelector
-
+from mvpa2.generators.partition import OddEvenPartitioner
 from mvpa2.featsel.base import SensitivityBasedFeatureSelection
 
 # Kernels
@@ -354,7 +356,10 @@ if externals.exists('skl'):
 
 
     if _skl_version >= '0.8':
-        sklPLSRegression = _skl_import('pls', 'PLSRegression')
+        if _skl_version >= '0.14':
+            sklPLSRegression = _skl_import('cross_decomposition', 'PLSRegression')
+        else:
+            sklPLSRegression = _skl_import('pls', 'PLSRegression')
         # somewhat silly use of PLS, but oh well
         regrswh += SKLLearnerAdapter(sklPLSRegression(n_components=1),
                                      tags=['linear', 'regression'],
@@ -378,7 +383,9 @@ if externals.exists('skl'):
                                         descr='skl.LassoLars()')
 
         _elastic_net = SKLLearnerAdapter(
-            sklElasticNet(alpha=.01, rho=.3),
+            sklElasticNet(alpha=.01,
+                          **{'l1_ratio' if externals.versions['skl'] >= '0.13'
+                                        else 'rho': .3}),
             tags=['enet', 'regression', 'linear', # 'has_sensitivity',
                  'does_feature_selection'],
             descr='skl.ElasticNet()')
@@ -440,7 +447,6 @@ clfswh += \
            FractionTailSelector(0.05, mode='select', tail='upper')),
         descr="GNB on 5%(ANOVA)")
 
-
 # GPR
 if externals.exists('scipy'):
     from mvpa2.clfs.gpr import GPR
@@ -491,6 +497,16 @@ if len(clfswh['linear', 'svm']) > 0:
                 RangeElementSelector(mode='select')),
              descr="LinSVM on SMLR(lm=0.1) non-0")
 
+    _rfeclf = linearSVMC.clone()
+    clfswh += \
+         FeatureSelectionClassifier(
+             _rfeclf,
+             SplitRFE(
+                 _rfeclf,
+                 OddEvenPartitioner(),
+                 fselector=FractionTailSelector(
+                     0.2, mode='discard', tail='lower')),
+             descr="LinSVM with nested-CV RFE")
 
     clfswh += \
         FeatureSelectionClassifier(

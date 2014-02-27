@@ -146,22 +146,40 @@ class MNI2Tal_MatthewBrett(TransformationBase):
     http://imaging.mrc-cbu.cam.ac.uk/imaging/MniTalairach
     """
 
+    _UPPER = np.array([ [0.9900, 0, 0, 0 ],
+                        [0, 0.9688, 0.0460, 0 ],
+                        [0,-0.0485, 0.9189, 0 ],
+                        [0, 0, 0, 1.0000] ] )
+    _LOWER = np.array( [ [0.9900, 0, 0, 0 ],
+                         [0, 0.9688, 0.0420, 0 ],
+                         [0,-0.0485, 0.8390, 0 ],
+                         [0, 0, 0, 1.0000] ] )
+
     def __init__(self, *args, **kwargs):
         TransformationBase.__init__(self, *args, **kwargs)
-        self.__upper = Linear( np.array([ [0.9900, 0, 0, 0 ],
-                                          [0, 0.9688, 0.0460, 0 ],
-                                          [0,-0.0485, 0.9189, 0 ],
-                                          [0, 0, 0, 1.0000] ] ) )
-
-        self.__lower = Linear(np.array( [ [0.9900, 0, 0, 0 ],
-                                          [0, 0.9688, 0.0420, 0 ],
-                                          [0,-0.0485, 0.8390, 0 ],
-                                          [0, 0, 0, 1.0000] ] ) )
+        self.__upper = Linear(self._UPPER)
+        self.__lower = Linear(self._LOWER)
 
     def apply(self, coord):
         return {True: self.__upper,
                 False: self.__lower}[coord[2]>=0][coord]
 
+
+class Tal2MNI_MatthewBrett(TransformationBase):
+    """
+    Inverse of MNI2Tal_MatthewBrett
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        TransformationBase.__init__(self, *args, **kwargs)
+        self.__upper = Linear(np.linalg.inv(MNI2Tal_MatthewBrett._UPPER))
+        self.__lower = Linear(np.linalg.inv(MNI2Tal_MatthewBrett._LOWER))
+
+    def apply(self, coord):
+
+        return {True: self.__upper,
+                False: self.__lower}[coord[2]>=0][coord]
 
 def mni_to_tal_meyer_lindenberg98 (*args, **kwargs):
     """
@@ -257,4 +275,6 @@ if __name__ == '__main__':
     print tl[(1,3,2)]
     print tli[[1,3,2]]
     print tml[[1,3,2]]
+    t = MNI2Tal_MatthewBrett()([10, 12, 14])
+    print t, Tal2MNI_MatthewBrett()(t)
 #   print t[(1,3,2,2)]

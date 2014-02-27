@@ -24,10 +24,32 @@ containing descriptions of interesting analysis methods or fruitful
 experiments.
 
 
+.. _AHL+13:
+
+**Adluru, N., Hanlon, B. M., Lutz, A., Lainhart, J. E., Alexander, A. L. & Davidson, R. J.** (2013). Penalized Likelihood Phenotyping: Unifying Voxelwise Analyses and Multi-Voxel Pattern Analyses in Neuroimaging. *Neuroinformatics*, 1-21.
+  DOI: http://dx.doi.org/10.1007/s12021-012-9175-9
+
+
+.. _AVM+12:
+
+**Albanese, D., Visintainer, R., Merler, S., Riccadonna, S., Jurman, G. & Furlanello, C.** (2012). mlpy: machine learning Python. *arXiv preprint arXiv:1202.6548*.
+
+.. _ARV+13:
+
+**Andersson, P., Ramsey, N. F., Viergever, M. A. & Pluim, J. P.** (2013). 7T fMRI reveals feasibility of covert visual attention-based brain–computer interfacing with signals obtained solely from cortical grey matter accessible by subdural surface electrodes. *Clinical neurophysiology*, *124*, 2191-2197.
+  DOI: http://dx.doi.org/10.1016/j.clinph.2013.05.009
+
+
 .. _Ban09:
 
 **Bandettini, P. A.** (2009). Seven topics in functional magnetic resonance imaging. *Journal of Integrative Neuroscience*, *8*, 371–403.
   URL: http://www.ncbi.nlm.nih.gov/pubmed/19938211
+
+
+.. _BHG+13:
+
+**Baumgartner, F., Hanke, M., Geringswald, F., Zinke, W., Speck, O. & Pollmann, S.** (2013). Evidence for feature binding in the superior parietal lobule. *NeuroImage*, *68*, 173-180.
+  DOI: http://dx.doi.org/10.1016/j.neuroimage.2012.12.002
 
 
 .. _CCK+11:
@@ -44,6 +66,12 @@ experiments.
   DOI: http://dx.doi.org/10.1093/cercor/bhr061
 
   URL: http://cercor.oxfordjournals.org/content/early/2011/06/27/cercor.bhr061.short
+
+
+.. _CBR+12:
+
+**Carter, R. M., Bowling, D. L., Reeck, C. & Huettel, S. A.** (2012). A distinct role of the temporal-parietal junction in predicting socially guided decisions. *Science*, *337*, 109-111.
+  DOI: http://dx.doi.org/10.1126/science.1219681
 
 
 .. _CPL+06:
@@ -86,6 +114,12 @@ experiments.
   URL: http://www.ncbi.nlm.nih.gov/pubmed/20661296
 
 
+.. _CEZ+11:
+
+**Cole, M. W., Etzel, J. A., Zacks, J. M., Schneider, W. & Braver, T. S.** (2011). Rapid transfer of abstract rules to novel contexts in human lateral prefrontal cortex. *Frontiers in Human Neuroscience*, *5*.
+  DOI: http://dx.doi.org/10.3389/fnhum.2011.00142
+
+
 .. _CGG+12:
 
 **Connolly, A. C., Guntupalli, J. S., Gors, J., Hanke, M., Halchenko, Y. O., Wu, Y., Abdi, H. & Haxby, J. V.** (2012). The Representation of Biological Classes in the Human Brain. *Journal of Neuroscience*, *32*, 2608-2618.
@@ -102,12 +136,30 @@ experiments.
   URL: http://portal.acm.org/citation.cfm?id=1248548
 
 
+.. _DTM+11:
+
+**Duff, E. P., Trachtenberg, A. J., CE, C. E. M., Howard, M. A., Wilson, F., Smith, S. M. & Woolrich, M. W.** (2011). Task-driven ICA feature generation for accurate and interpretable prediction using fMRI. *NeuroImage*, *60*, 189-203.
+  URL: http://www.ncbi.nlm.nih.gov/pubmed/22227050
+
+
 .. _EHJ+04:
 
 **Efron, B., Trevor, H., Johnstone, I. & Tibshirani, R.** (2004). Least Angle Regression. *Annals of Statistics*, *32*, 407–499.
   Keywords: :keyword:`least angle regression`, :keyword:`LARS`
 
   DOI: http://dx.doi.org/10.1214/009053604000000067
+
+
+.. _EDT+12:
+
+**Ekman, M., Derrfuss, J., Tittgemeyer, M. & Fiebach, C. J.** (2012). Predicting errors from reconfiguration patterns in human brain networks. *Proceedings of the National Academy of Sciences*, *109*, 16714-16719.
+  DOI: http://dx.doi.org/10.1073/pnas.1207523109
+
+
+.. _FWJ+12:
+
+**Farrell, D., Webb, H., Johnston, M. A., Poulsen, T. A., O’Meara, F., Christensen, L. L., Beier, L., Borchert, T. V. & Nielsen, J. E.** (2012). Toward Fast Determination of Protein Stability Maps: Experimental and Theoretical Analysis of Mutants of a Nocardiopsis prasina Serine Protease. *Biochemistry*, *51*, 5339-5347.
+  DOI: http://dx.doi.org/10.1021/bi201926f
 
 
 .. _Fis25:
@@ -147,6 +199,12 @@ experiments.
 
 **Guyon, I. & Elisseeff, A.** (2003). An Introduction to Variable and Feature Selection. *Journal of Machine Learning*, *3*, 1157–1182.
   URL: http://www.jmlr.org/papers/v3/guyon03a.html
+
+
+.. _HBI+14:
+
+**Hanke, M., Baumgartner, F. J., Ibe, P., Kaule, F. R., Pollmann, S., Speck, O., Zinke, W. & Stadler, J.** (in press). A high-resolution 7-Tesla fMRI dataset from complex natural stimulation with an audio movie. *Scientific Data*.
+  URL: http://www.studyforrest.org
 
 
 .. _HHH+10:
@@ -192,10 +250,22 @@ experiments.
   DOI: http://dx.doi.org/10.1162/neco.2007.09-06-340
 
 
+.. _HS11:
+
+**Hanson, S. J. & Schmidt, A.** (2011). High-resolution imaging of the fusiform face area (FFA) using multivariate non-linear classifiers shows diagnosticity for non-face categories. *NeuroImage*, *54*, 1715-1734.
+  DOI: http://dx.doi.org/10.1016/j.neuroimage.2010.08.02
+
+
 .. _HMH04:
 
 **Hanson, S. J., Matsuka, T. & Haxby, J. V.** (2004). Combinatorial codes in ventral temporal lobe for object recognition: Haxby (2001) revisited: is there a "face" area?. *NeuroImage*, *23*, 156–166.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2004.05.020
+
+
+.. _HSN+13:
+
+**Hassabis, D., Spreng, R. N., Rusu, A. A., Robbins, C. A., Mar, R. A. & Schacter, D. L.** (2013). Imagine all the people: How the brain creates and uses personality models to predict behavior. *Cerebral Cortex*.
+  DOI: http://dx.doi.org/10.1093/cercor/bht042
 
 
 .. _HTF09:
@@ -235,6 +305,14 @@ experiments.
   DOI: http://dx.doi.org/10.1038/nrn1931
 
 
+.. _HSC+14:
+
+**Helfinstein, S. M., Schonberg, T., Congdon, E., Karlsgodt, K. H., Mumford, J. A., Sabb, F. W., Cannon, T. D., London, E. D., Bilder, R. M. & Poldrack, R. A.** (2014). Predicting risky choices from brain activity patterns. *Proceedings of the National Academy of Sciences*, *111*, 2470-2475.
+  DOI: http://dx.doi.org/10.1073/pnas.1321728111
+
+  URL: http://www.pnas.org/content/111/7/2470.abstract
+
+
 .. _HBL+12:
 
 **Hiroyuki, A., Brian, M., Li, N., Yumiko, S. & Massimo, P.** (2012). Decoding Semantics across fMRI sessions with Different Stimulus Modalities: A practical MVPA Study. *Frontiers in Neuroinformatics*, *6*.
@@ -243,6 +321,12 @@ experiments.
   DOI: http://dx.doi.org/10.3389/fninf.2012.00024
 
   URL: http://www.frontiersin.org/Neuroinformatics/10.3389/fninf.2012.00024/full
+
+
+.. _HRB+11:
+
+**Hollmann, M., Rieger, J. W., Baecke, S., Lützkendorf, R., Müller, C., Adolf, D. & Bernarding, J.** (2011). Predicting decisions in human social interactions using real-time fMRI and pattern classification. *PloS one*, *6*, e25304.
+  DOI: http://dx.doi.org/10.1371/journal.pone.0025304
 
 
 .. _Ioa05:
@@ -256,6 +340,14 @@ experiments.
   Keywords: :keyword:`hypothesis testing`
 
   DOI: http://dx.doi.org/10.1371/journal.pmed.0020124
+
+
+.. _JK12:
+
+**Jain, A. & Kemp, C. C.** (2012). Improving robot manipulation with data-driven object-centric models of everyday forces. *Autonomous Robots*, 1-17.
+  DOI: http://dx.doi.org/10.1007/s10514-013-9344-1
+
+  URL: http://www.hrl.gatech.edu/pdf/improve_everyday_forces.pdf
 
 
 .. _JP11:
@@ -292,6 +384,12 @@ experiments.
   DOI: http://dx.doi.org/10.1038/nn1444
 
 
+.. _KM12:
+
+**Kaplan, J. T. & Meyer, K.** (2012). Multivariate pattern analysis reveals common neural patterns across individuals during touch observation. *Neuroimage*, *60*, 204-212.
+  DOI: http://dx.doi.org/10.1016/j.neuroimage.2011.12.059
+
+
 .. _KKO+11:
 
 **Kaunitz, L. N., Kamienkowski, J. E., Olivetti, E., Murphy, B., Avesani, P. & Melcher, D. P.** (2011). Intercepting the first pass: rapid categorization is suppressed for unseen stimuli. *Frontiers in Perception Science*, *2*, 198.
@@ -307,6 +405,12 @@ experiments.
 **Kienzle, W., Franz, M. O., Schölkopf, B. & Wichmann, F. A.** (In press). Center-surround patterns emerge as optimal predictors for human saccade targets. *Journal of Vision*.
   *This paper offers an approach to make sense out of feature sensitivities of
   non-linear classifiers.*
+
+
+.. _KFR+13:
+
+**Kohler, P. J., Fogelson, S. V., Reavis, E. A., Meng, M., Guntupalli, J. S., Hanke, M., Halchenko, Y. O., Connolly, A. C., Haxby, J. V. & Tse, P. U.** (2013). Pattern classification precedes region-average hemodynamic response in early visual cortex. *NeuroImage*, *78*, 249-260.
+  DOI: http://dx.doi.org/10.1016/j.neuroimage.2013.04.019
 
 
 .. _KGB06:
@@ -356,7 +460,7 @@ experiments.
 
 .. _LaC10:
 
-**Laconte, S. M.** (2010). Decoding fMRI brain states in real-time. *Neuroimage*.
+**Laconte, S. M.** (2010). Decoding fMRI brain states in real-time. *NeuroImage*.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2010.06.052
 
   URL: http://www.ncbi.nlm.nih.gov/pubmed/20600972
@@ -376,6 +480,32 @@ experiments.
 .. _LB10:
 
 **Legge, D. & Badii, A.** (2010). An Application of Pattern Matching for the Adjustment of Quality of Service Metrics. The International Conference on Emerging Network Intelligence.
+
+.. _LB13:
+
+**Lescroart, M. D. & Biederman, I.** (2013). Cortical representation of medial axis structure. *Cerebral Cortex*, *23*, 629-637.
+  DOI: http://dx.doi.org/10.1093/cercor/bhs046
+
+
+.. _LMH+13:
+
+**Liang, M., Mouraux, A., Hu, L. & Iannetti, G.** (2013). Primary sensory cortices contain distinguishable spatial patterns of activity for each sense. *Nature communications*, *4*.
+  DOI: http://dx.doi.org/10.1038/ncomms2979
+
+
+.. _KKD+12:
+
+**Man, K., Kaplan, J. T., Damasio, A. & Meyer, K.** (2012). Sight and sound converge to form modality-invariant representations in temporoparietal cortex. *The Journal of Neuroscience*, *32*, 16629-16636.
+  DOI: http://dx.doi.org/10.1523/JNEUROSCI.2342-12.2012
+
+
+.. _MR13:
+
+**Manelis, A. & Reder, L. M.** (2013). He Who Is Well Prepared Has Half Won The Battle: An fMRI Study of Task Preparation. *Cerebral Cortex*.
+  DOI: http://dx.doi.org/10.1093/cercor/bht262
+
+  URL: http://cercor.oxfordjournals.org/content/early/2013/10/02/cercor.bht262.abstract
+
 
 .. _MHH10:
 
@@ -399,6 +529,24 @@ experiments.
   DOI: http://dx.doi.org/10.1007/s10334-010-0228-5
 
   URL: http://www.ncbi.nlm.nih.gov/pubmed/20972883
+
+
+.. _MRO13:
+
+**McNamee, D., Rangel, A. & O'Doherty, J. P.** (2013). Category-dependent and category-independent goal-value codes in human ventromedial prefrontal cortex. *Nature neuroscience*, *16*, 479-485.
+  DOI: http://dx.doi.org/10.1038/nn.3337
+
+
+.. _MSB+12:
+
+**Merrill, J., Sammler, D., Bangert, M., Goldhahn, D., Lohmann, G., Turner, R. & Friederici, A. D.** (2012). Perception of words and pitch patterns in song and speech. *Frontiers in psychology*, *3*, 76.
+  DOI: http://dx.doi.org/10.3389/fpsyg.2012.000
+
+
+.. _MK11:
+
+**Meyer, K. & Kaplan, J. T.** (2011). Cross-Modal Multivariate Pattern Analysis. *Journal of visualized experiments: JoVE*.
+  DOI: http://dx.doi.org/10.3791/3307
 
 
 .. _MKE+11:
@@ -454,9 +602,31 @@ experiments.
   DOI: http://dx.doi.org/10.1162/jocn.2007.19.11.1735
 
 
+.. _OGA2012:
+
+**Olivetti, E., Greiner, S. & Avesani, P.** (2012). Induction in Neuroscience with Classification: Issues and Solutions. Machine Learning and Interpretation in Neuroimaging, 42-50.
+  DOI: http://dx.doi.org/10.1007/978-3-642-34713-9_6
+
+
 .. _OVG+10:
 
 **Olivetti, E., Veeramachaneni, S., Greiner, S. & Avesani, P.** (2010). Brain Connectivity Analysis by Reduction to Pair Classification. The 2nd IAPR International Workshop on Cognitive Information Processing.
+
+.. _OWD+11:
+
+**Oosterhof, N. N., Wiestler, T., Downing, P. E. & Diedrichsen, J.** (2011). A comparison of volume-based and surface-based multi-voxel pattern analysis. *NeuroImage*, *56*, 593-600.
+
+.. _PVG+11:
+
+**Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., Blondel, M., Prettenhofer, P., Weiss, R., Dubourg, V., Vanderplas, J., Passos, A., Cournapeau, D., Brucher, M., Perrot, M. & Duchesnay, E.** (2011). Scikit-learn: Machine Learning in Python. *Journal of Machine Learning Research*, *12*, 2825-2830.
+  URL: http://dl.acm.org/citation.cfm?id=1953048.2078195
+
+
+.. _PB11:
+
+**Pereira, F. & Botvinick, M.** (2011). Information mapping with pattern classifiers: a comparative study. *Neuroimage*, *56*, 476-496.
+  DOI: http://dx.doi.org/10.1016/j.neuroimage.2010.05.026
+
 
 .. _PMB09:
 
@@ -482,7 +652,7 @@ experiments.
 
 .. _RC12:
 
-**Raizada, R. D. & Connolly, A. C.** (In press). What makes different people's representations alike: neural similarity-space solves the problem of across-subject fMRI decoding. *Journal of Cognitive Neuroscience*.
+**Raizada, R. D. & Connolly, A. C.** (2012). What makes different people's representations alike: neural similarity-space solves the problem of across-subject fMRI decoding. *Journal of Cognitive Neuroscience*, *24*, 868-877.
   URL: http://raizadalab.org/publications.html
 
 
@@ -508,6 +678,12 @@ experiments.
   Keywords: :keyword:`statistical learning`, :keyword:`kernel methods`, :keyword:`error estimation`
 
 
+.. _SRR+13:
+
+**Schrouff, J., Rosa, M. J., Rondina, J., Marquand, A., Chu, C., Ashburner, J., Phillips, C., Richiardi, J. & Mourão-Miranda, J.** (2013). PRoNTo: Pattern Recognition for Neuroimaging Toolbox. *Neuroinformatics*, 1-19.
+  DOI: http://dx.doi.org/10.1007/s12021-013-9178-1
+
+
 .. _SSS+11:
 
 **Shackman, A. J., Salomons, T. V., Slagter, H. A., Fox, A. S., Winter, J. J. & Davidson, R. J.** (2011). The integration of negative affect, pain and cognitive control in the cingulate cortex. *Nature Reviews Neuroscience*, *12*, 154–167.
@@ -522,10 +698,34 @@ experiments.
   DOI: http://dx.doi.org/10.1111/j.1756-8765.2010.01092.x
 
 
+.. _SCR+13:
+
+**Smith, D. V., Clithero, J. A., Rorden, C. & Karnath, H.** (2013). Decoding the anatomical network of spatial attention. *Proceedings of the National Academy of Sciences*, *110*, 1518-1523.
+  DOI: http://dx.doi.org/10.1073/pnas.1210126110
+
+
+.. _SFK+12:
+
+**Sobhani, M., Fox, G. R., Kaplan, J. & Aziz-Zadeh, L.** (2012). Interpersonal liking modulates motor-related neural regions. *PloS one*, *7*, e46809.
+  DOI: http://dx.doi.org/10.1371/journal.pone.0046809
+
+
 .. _SS09:
 
 **Spacek, M. & Swindale, N.** (2009). Python in Neuroscience. *The Neuromorphic Engineer*.
   DOI: http://dx.doi.org/10.2417/1200907.1682
+
+
+.. _ST12:
+
+**Stelzer, J., Chen, Y. & Turner, R.** (2012). Statistical inference and multiple testing correction in classification-based multi-voxel pattern analysis (MVPA): Random permutations and cluster size control. *NeuroImage*, *65*, 69-82.
+  DOI: http://dx.doi.org/10.1016/j.neuroimage.2012.09.063
+
+
+.. _SPB+13:
+
+**Strnad, L., Peelen, M. V., Bedny, M. & Caramazza, A.** (2013). Multivoxel Pattern Analysis Reveals Auditory Motion Information in MT+ of Both Congenitally Blind and Sighted Individuals. *PloS one*, *8*, e63198.
+  DOI: http://dx.doi.org/10.1371/journal.pone.0063198
 
 
 .. _SET+09:
@@ -547,6 +747,12 @@ experiments.
   DOI: http://dx.doi.org/10.1109/IROS.2009.5354290
 
 
+.. _vdL+12:
+
+**Van der Laan, L. N., De Ridder, D. T., Viergever, M. A. & Smeets, P. A.** (2012). Appearance matters: neural correlates of food choice and packaging aesthetics. *PloS one*, *7*, e41738.
+  DOI: http://dx.doi.org/10.1371/journal.pone.0041738
+
+
 .. _Vap95:
 
 **Vapnik, V.** (1995). The Nature of Statistical Learning Theory. Springer: New York.
@@ -566,6 +772,18 @@ experiments.
   URL: http://www.ncbi.nlm.nih.gov/pubmed/16504092
 
 
+.. _VCL11:
+
+**Vickery, T. J., Chun, M. M. & Lee, D.** (2011). Ubiquity and Specificity of Reinforcement Signals throughout the Human Brain . *Neuron *, *72*, 166-177.
+  DOI: http://dx.doi.org/10.1016/j.neuron.2011.08.011
+
+  URL: http://www.sciencedirect.com/science/article/pii/S089662731100732X
+
+
+.. _VCG12:
+
+**Viswanathan, S., Cieslak, M. & Grafton, S. T.** (2012). On the geometric structure of fMRI searchlight-based information maps. *arXiv preprint arXiv:1210.6317*.
+
 .. _WCW+07:
 
 **Wang, Z., Childress, A. R., Wang, J. & Detre, J. A.** (2007). Support vector machine learning-based fMRI data group analysis. *NeuroImage*, *36*, 1139–51.
@@ -576,7 +794,7 @@ experiments.
 
 .. _WTB+10:
 
-**Woolgar, A., Thompson, R., Bor, D. & Duncan, J.** (2010). Multi-voxel coding of stimuli, rules, and responses in human frontoparietal cortex. *Neuroimage*.
+**Woolgar, A., Thompson, R., Bor, D. & Duncan, J.** (2010). Multi-voxel coding of stimuli, rules, and responses in human frontoparietal cortex. *NeuroImage*.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2010.04.035
 
   URL: http://www.ncbi.nlm.nih.gov/pubmed/20406690

@@ -38,6 +38,7 @@ Miscellaneous
       misc.sampleslookup
       misc.stats
       misc.support
+      misc.surfing
       misc.transformers
       misc.vproperty
 

@@ -79,7 +79,7 @@ class TransformerTests(unittest.TestCase):
         for axis in [None, 0, 1, 2]:
             oversum = OverAxis(np.sum, axis=axis)(data)
             sum_ = np.sum(data, axis=axis)
-            self.assertTrue(np.all(sum_ == oversum))
+            assert_array_almost_equal(sum_, oversum)
 
         # Transformer which doesn't modify dimensionality of the data
         data = data.reshape((6, -1))
@@ -130,10 +130,11 @@ class TransformerTests(unittest.TestCase):
             self.assertEqual(distPValue.ca.positives_recovered[1], 0)
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(TransformerTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 

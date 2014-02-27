@@ -191,6 +191,10 @@ manpages: mkdir-MAN_DIR
 		bin/pymvpa2-atlaslabeler > $(MAN_DIR)/pymvpa2-atlaslabeler.1
 	PYTHONPATH=$(LPYTHONPATH) help2man -N -n 'start a PyMVPA tutorial session' \
 		bin/pymvpa2-tutorial > $(MAN_DIR)/pymvpa2-tutorial.1
+	PYTHONPATH=$(LPYTHONPATH) help2man --no-discard-stderr -N -n \
+			'preprocess FreeSurfer surfaces for AFNI/SUMA' \
+			bin/pymvpa2-prep-afni-surf > $(MAN_DIR)/pymvpa2-prep-afni-surf.1
+
 
 references:
 	@echo "I: Generating references"
@@ -212,6 +216,7 @@ htmldoc: examples2rst build pics mpl-stamp tutorial2notebooks
 	cd $(HTML_DIR)/workshops && ln -sf ../_static
 	cd $(HTML_DIR)/datadb && ln -sf ../_static
 	cp $(DOCSRC_DIR)/pics/history_splash.png $(HTML_DIR)/_images/
+	cp $(DOC_DIR)/pics/*-logo_h*.png $(HTML_DIR)/_static/
 
 pdfdoc: examples2rst build pics pdfdoc-stamp
 pdfdoc-stamp: mpl-stamp
@@ -496,7 +501,7 @@ testsuite:
 	 sed -e 's/^.*from *\(mvpa[^ ]*\) im.*/from \1 import/g' | \
 	 sort | uniq | \
 	 grep -v -e 'mvpa.\.base\.dochelpers' \
-			 -e 'mvpa.\.\(tests\|testing\|support\)' \
+			 -e 'mvpa.\.\(tests\|testing\|sandbox\|support\)' \
 			 -e 'mvpa.\.misc\.args' \
 			 -e 'mvpa.\.clfs\.\(libsvmc\|sg\|spam\)' \
 	| while read i; do \
@@ -657,10 +662,13 @@ bdist_mpkg: 3rd
 #
 
 fetch-data:
-	@echo "I: fetching data from datadb"
-	@rsync $(RSYNC_OPTS) $(DATA_URI)/tutorial_data $(DATA_URI)/mnist \
-		$(DATA_URI)/face_inversion_demo datadb \
-        $(DATA_URI)/hyperalignment_tutorial_data \
+	echo "I: fetching data from datadb"
+	[ -e datadb ] || mkdir -p datadb
+	rsync $(RSYNC_OPTS) $(DATA_URI)/tutorial_data $(DATA_URI)/mnist \
+		$(DATA_URI)/face_inversion_demo \
+	      	$(DATA_URI)/hyperalignment_tutorial_data \
+                $(DATA_URI)/haxby2001 \
+		datadb/ 
 	@for ds in datadb/*; do \
 		echo " I: looking at $$ds"; \
 		cd $(CURDIR)/$${ds} && \

@@ -13,11 +13,17 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
+from mvpa2.base.dochelpers import _repr_attrs
+
 from mvpa2.base.node import Node
 from mvpa2.base.dochelpers import _str, _repr
 from mvpa2.misc.support import get_limit_filter
 
 from mvpa2.support.utils import deprecated
+from mvpa2.mappers.fx import _product
+
+if __debug__:
+    from mvpa2.base import debug
 
 class AttributePermutator(Node):
     """Node to permute one a more attributes in a dataset.
@@ -32,7 +38,8 @@ class AttributePermutator(Node):
     The permuted output dataset shares the samples container with the input
     dataset.
     """
-    def __init__(self, attr, count=1, limit=None, assure=False, **kwargs):
+    def __init__(self, attr, count=1, limit=None, assure=False,
+                 strategy='simple', rng=np.random, **kwargs):
         """
         Parameters
         ----------
@@ -51,6 +58,14 @@ class AttributePermutator(Node):
           or sequence thereof) attribute value, where all key-value combinations
           across all given items define a "selection" of to-be-permuted samples
           or features.
+        strategy : 'simple', 'uattrs'
+          'simple' strategy is the straightfoward permutation of attributes (given
+          the limit).  In some sense it assumes independence of those samples.
+          'uattrs' strategy looks at unique values of attr (or their unique
+          combinations in case of `attr` being a list), and "permutes" those
+          unique combinations values thus breaking their assignment to the samples
+          but preserving any dependencies between samples within the same unique
+          combination.
         assure : bool
           If set, by-chance non-permutations will be prevented, i.e. it is
           checked that at least two items change their position. Since this
@@ -63,6 +78,8 @@ class AttributePermutator(Node):
         self._limit = limit
         self._pcfg = None
         self._assure_permute = assure
+        self.strategy = strategy
+        self.rng = rng
 
 
     def _get_pcfg(self, ds):
@@ -92,55 +109,98 @@ class AttributePermutator(Node):
             # wrap single attr name into tuple to simplify the code
             pattr = (pattr,)
 
-        # shallow copy of the dataset for output
-        out = ds.copy(deep=False)
+        # get actual attributes
+        in_pattrs = [ds.get_attr(pa)[0] for pa in pattr]
 
-        for limit_value in np.unique(pcfg):
-            if pcfg.dtype == np.bool:
-                # simple boolean filter -> do nothing on False
-                if not limit_value:
-                    continue
-                # otherwise get indices of "selected ones"
-                limit_idx = pcfg.nonzero()[0]
-            else:
-                # non-boolean limiter -> determine "chunk" and permute within
-                limit_idx = (pcfg == limit_value).nonzero()[0]
+        # Method to use for permutations
+        try:
+            permute_fx = getattr(self, "_permute_%s" % self.strategy)
+        except AttributeError:
+            raise ValueError("Unknown permutation strategy %r" % self.strategy)
 
-            # permute indices once and later apply the same permutation to all
-            # desired attributes
-            # make ten attempts of assure is set
-            if assure_permute:
-                proceed = False
-                for i in range(10):
-                    perm_idx = np.random.permutation(limit_idx)
-                    if not np.all(perm_idx == limit_idx):
-                        proceed = True
-                        break
-                if not proceed:
-                    raise RuntimeError(
-                          "Cannot assure permutation of %s.%s for "
-                          "some reason (dataset %s). Should not happen"
-                          % (pattr, ds))
-            else:
-                perm_idx = np.random.permutation(limit_idx)
+        for i in xrange(10):  # for the case of assure_permute
+            # shallow copy of the dataset for output
+            out = ds.copy(deep=False)
 
-            # need list to index properly
-            limit_idx = list(limit_idx)
+            out_pattrs = [out.get_attr(pa)[0] for pa in pattr]
+            # replace .values with copies in out_pattrs so we do
+            # not override original values
+            for pa in out_pattrs:
+                pa.value = pa.value.copy()
 
-            # for all to be permuted attrs
-            for pa in pattr:
-                # input attr and collection
-                in_pattr, in_collection = ds.get_attr(pa)
-                # output attr and collection
-                out_pattr, out_collection = out.get_attr(pa)
-                # make a copy of the attr value array to decouple ownership
-                out_values = out_pattr.value.copy()
-                # replace all values in current limit with permutations
-                out_values[limit_idx] = in_pattr.value[perm_idx]
-                # reassign the attribute to overwrite any previous one
-                out_pattr.value = out_values
+            for limit_value in np.unique(pcfg):
+                if pcfg.dtype == np.bool:
+                    # simple boolean filter -> do nothing on False
+                    if not limit_value:
+                        continue
+                    # otherwise get indices of "selected ones"
+                    limit_idx = pcfg.nonzero()[0]
+                else:
+                    # non-boolean limiter -> determine "chunk" and permute within
+                    limit_idx = (pcfg == limit_value).nonzero()[0]
+
+                # need list to index properly
+                limit_idx = list(limit_idx)
+
+                permute_fx(limit_idx, in_pattrs, out_pattrs)
+
+            if not assure_permute:
+                break
+
+            # otherwise check if we differ from original, and if so -- break
+            differ = False
+            for in_pattr, out_pattr in zip(in_pattrs, out_pattrs):
+                differ = differ or np.any(in_pattr.value != out_pattr.value)
+                if differ: break                 # leave check loop if differ
+            if differ: break                     # leave 10 loop, otherwise go to the next round
+
+        if assure_permute and not differ:
+            raise RuntimeError(
+                "Cannot assure permutation of %s with limit %r for "
+                "some reason (dataset %s). Should not happen"
+                % (pattr, self._limit, ds))            
 
         return out
+
+
+    def _permute_simple(self, limit_idx, in_pattrs, out_pattrs):
+        """The simplest permutation
+        """
+        perm_idx = self.rng.permutation(limit_idx)
+
+        if __debug__:
+            debug('APERM', "Obtained permutation %s", (perm_idx, ))
+
+        # for all to be permuted attrs
+        for in_pattr, out_pattr in zip(in_pattrs, out_pattrs):
+            # replace all values in current limit with permutations
+            # of the original ds's attributes
+            out_pattr.value[limit_idx] = in_pattr.value[perm_idx]
+
+
+    def _permute_uattrs(self, limit_idx, in_pattrs, out_pattrs):
+        """Provide a permutation given a specified strategy
+        """
+        # Select given limit_idx
+        pattrs_lim = [p.value[limit_idx] for p in in_pattrs]
+        # convert to list of tuples
+        pattrs_lim_zip = zip(*pattrs_lim)
+        # find unique groups
+        unique_groups = list(set(pattrs_lim_zip))
+        # now we need to permute the groups to generate remapping
+        # get permutation indexes first
+        perm_idx = self.rng.permutation(np.arange(len(unique_groups)))
+        # generate remapping
+        remapping = dict([(t, unique_groups[i])
+                          for t, i in zip(unique_groups, perm_idx)])
+        if __debug__:
+            debug('APERM', "Using remapping %s", (remapping,))
+
+        for i, in_group in zip(limit_idx, pattrs_lim_zip):
+            out_group = remapping[in_group]
+            # now we need to assign them ot out_pattrs
+            for pa, out_v in zip(out_pattrs, out_group):
+                pa.value[i] = out_v
 
 
     def generate(self, ds):
@@ -149,6 +209,8 @@ class AttributePermutator(Node):
         self._pcfg = self._get_pcfg(ds)
         # permute as often as requested
         for i in xrange(self.count):
+            ## if __debug__:
+            ##     debug('APERM', "%s generating %i-th permutation", (self, i))
             yield self(ds)
 
         # reset permutation setup to do the right thing upon next call to object
@@ -166,6 +228,8 @@ class AttributePermutator(Node):
             + _repr_attrs(self, ['count'], default=1)
             + _repr_attrs(self, ['limit'])
             + _repr_attrs(self, ['assure'], default=False)
+            + _repr_attrs(self, ['strategy'], default='permute')
+            + _repr_attrs(self, ['rng'], default=np.random)
             )
 
     @property

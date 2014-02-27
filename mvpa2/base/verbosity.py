@@ -192,7 +192,7 @@ class LevelLogger(Logger):
         if level <= self.level:
             if self.lfprev and self.indent:
                 # indent if previous line ended with newline
-                msg = self.indent*level + msg
+                msg = self.indent * level + msg
             Logger.__call__(self, msg, *args, **kwargs)
 
     level = property(fget=lambda self: self.__level, fset=_set_level)
@@ -323,7 +323,7 @@ class SetLogger(Logger):
         """
 
         if setid in self.__active:
-            if len(msg)>0 and self.__printsetid:
+            if len(msg) > 0 and self.__printsetid:
                 msg = "[%%-%ds] " % self.__maxstrlength % (setid) + msg
             Logger.__call__(self, msg, *args, **kwargs)
 
@@ -335,7 +335,7 @@ class SetLogger(Logger):
         if setid in self.__registered:
             raise ValueError, \
                   "Setid %s is already known with description '%s'" % \
-                  ( `setid`, self.__registered[setid] )
+                  (`setid`, self.__registered[setid])
         self.__registered[setid] = description
 
 
@@ -378,6 +378,7 @@ if __debug__:
 
     __pymvpa_pid__ = getpid()
 
+
     def parse_status(field='VmSize', value_only=False):
         """Return stat information on current process.
 
@@ -402,16 +403,21 @@ if __debug__:
         return match
 
     def get_vmem_from_status():
-        """Return a string summary about utilization of virtual memory
+        """Return utilization of virtual memory
 
         Deprecated implementation which relied on parsing proc/PID/status
         """
         rss, vms = [parse_status(field=x, value_only=True)
                   for x in ['VmRSS', 'VmSize']]
-        if rss[-3:] == vms[-3:]:
+        if rss is None or vms is None:
+            # So not available on this system -- signal with negatives
+            # but do not crash
+            return (-1, -1)
+        if rss[-3:] == vms[-3:] and rss[-3:] == ' kB':
             # the same units
-            rss = rss[:-3]                # strip from rss
-        return "RSS/VMS: %s/%s" % (rss, vms)
+            rss = int(rss[:-3])                # strip from rss
+            vms = int(vms[:-3])
+        return (rss, vms)
 
     try:
         # we prefer to use psutil if available
@@ -423,19 +429,44 @@ if __debug__:
         __pymvpa_process__ = __Process(__pymvpa_pid__)
 
         def get_vmem():
-            """Return a string summary about utilization of virtual memory
+            """Return utilization of virtual memory
 
             Generic implementation using psutil
             """
             mi = __pymvpa_process__.get_memory_info()
             # in later versions of psutil mi is a named tuple.
             # but that is not the case on Debian squeeze with psutil 0.1.3
-            rss = mi[0]/1024
-            vms = mi[1]/1024
-            return "RSS/VMS: %d/%d kB" % (rss, vms)
+            rss = mi[0] / 1024
+            vms = mi[1] / 1024
+            return (rss, vms)
 
     except ImportError:
         get_vmem = get_vmem_from_status
+
+    def get_vmem_str():
+        """Return  a string summary about utilization of virtual_memory
+        """
+        vmem = get_vmem()
+        try:
+            return "RSS/VMS: %d/%d kB" % vmem
+        except:
+            return "RSS/VMS: %s" % str(vmem)
+
+    def _get_vmem_max_str_gen():
+        """Return peak vmem utilization so far.
+
+        It is a generator, get_vmem_max_str later is bound to .next
+        of it - to mimic static variables
+        """
+        rss_max = 0
+        vms_max = 0
+
+        while True:
+            rss, vms = get_vmem()
+            rss_max = max(rss, rss_max)
+            vms_max = max(vms, vms_max)
+            yield "max RSS/VMS: %d/%d kB" % (rss_max, vms_max)
+    get_vmem_max_str = _get_vmem_max_str_gen().next
 
     def mbasename(s):
         """Custom function to include directory name if filename is too common
@@ -526,7 +557,8 @@ if __debug__:
         _known_metrics = {
             # TODO: make up Windows-friendly version or pure Python platform
             # independent version (probably just make use of psutil)
-            'vmem' : get_vmem,
+            'vmem' : get_vmem_str,
+            'vmem_max' : get_vmem_max_str,
             'pid' : getpid, # lambda : parse_status(field='Pid'),
             'asctime' : time.asctime,
             'tb' : TraceBack(),
@@ -610,17 +642,17 @@ if __debug__:
 
             msg_ = ' / '.join([str(x()) for x in self.__metrics])
 
-            if len(msg_)>0:
+            if len(msg_) > 0:
                 msg_ = "{%s}" % msg_
 
             if len(msg) > 0:
                 # determine blank offset using backstacktrace
                 if self._offsetbydepth:
-                    level = len(traceback.extract_stack())-2
+                    level = len(traceback.extract_stack()) - 2
                 else:
                     level = 1
 
-                if len(msg)>250 and 'DBG' in self.active and not setid.endswith('_TB'):
+                if len(msg) > 250 and 'DBG' in self.active and not setid.endswith('_TB'):
                     tb = traceback.extract_stack(limit=2)
                     msg += "  !!!2LONG!!!. From %s" % str(tb[0])
 
@@ -642,3 +674,29 @@ if __debug__:
 
         metrics = property(fget=lambda x:x.__metrics,
                            fset=register_metric)
+
+
+if not __debug__:
+    class BlackHoleLogger(SetLogger):
+        '''A logger that does absolutely nothing - it is used as a fallback
+        so that debug(...) can still be called even if not __debug__'''
+        def __init__(self, metrics=None, offsetbydepth=True, *args, **kwargs):
+            '''Initializes the logger - ignores all input arguments'''
+
+            # do not be evil - initialize through the parent class
+            SetLogger.__init__(self, *args, **kwargs)
+
+        def __call__(self, setid, msg, *args, **kwargs):
+            pass
+
+        def register_metric(self, func):
+            pass
+
+        def register(self, setid, description):
+            pass
+
+        def set_active_from_string(self, value):
+            pass
+
+        def print_registered(self, detailed=True):
+            print "BlackHoleLogger: nothing registered "

@@ -10,11 +10,16 @@
 
 __docformat__ = 'restructuredtext'
 
+from mvpa2.base import externals
 if __debug__:
     from mvpa2.base import debug
     debug('INIT', 'mvpa2.clfs.skl')
 
-from mvpa2.clfs.skl.base import SKLLearnerAdapter
+# to pacify the nose
+# (see e.g. http://nipy.bic.berkeley.edu/builders/pymvpa-py2.7-osx-10.8/builds/4/steps/shell_3/logs/stdio)
+# import submodules only if skl they need is available
+if externals.exists('skl'):
+    from mvpa2.clfs.skl.base import SKLLearnerAdapter
 
 if __debug__:
     debug('INIT', 'mvpa2.clfs.skl end')

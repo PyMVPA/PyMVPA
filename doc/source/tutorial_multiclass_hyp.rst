@@ -80,7 +80,7 @@ is able to discriminate *all* stimulus classes from each other, and not just a
 subset. Even more useful would be, if we could relate this probability to
 specific alternative hypotheses, such as an animate/inanimate-only distinction.
 
-:ref:`Olivetto et al. (2012) <OGA2012>` have devised a method that allows for
+:ref:`Olivetti et al. (2012) <OGA2012>` have devised a method that allows for
 doing exactly that. The confusion matrix is analyzed in a Bayesian framework
 regarding the statistical dependency of observed and predicted class labels.
 Confusions within a set of classes that cannot be discriminated should be

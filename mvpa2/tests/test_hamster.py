@@ -42,6 +42,9 @@ class HamsterHelperTests(unittest.TestCase):
         0 1 2
         3 4 5
         """
+        skip_if_no_external('cPickle')
+        skip_if_no_external('gzip')
+
         ex2 = {'d1': np.random.normal(size=(4,4))}
 
         hamster = Hamster(ex1=ex1)
@@ -96,7 +99,9 @@ class HamsterHelperTests(unittest.TestCase):
         self.assertTrue(hamster.boo is hamster2.boo)
 
         # cleanup
+        gzipped.close()
         os.remove(filename_gz)
+        gzbogus.close()
         os.remove(filename_bogusgz)
 
     @reseed_rng()
@@ -118,10 +123,11 @@ class HamsterHelperTests(unittest.TestCase):
 
 
 
-def suite():
+def suite():  # pragma: no cover
     return unittest.makeSuite(HamsterHelperTests)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import runner
+    runner.run()
 
