@@ -51,6 +51,7 @@ def test_imshow():
         assert_is_instance(im.colorbar, Colorbar)
 
 def test_lightbox():
+    skip_if_no_external('nibabel') # used for loading the niftis here
     # smoketest for lightbox - moved from its .py __main__
     from mvpa2.misc.plot.lightbox import plot_lightbox
     fig = plot_lightbox(

@@ -102,7 +102,10 @@ def test_erdataset():
 
 def test_hrf_modeling():
     skip_if_no_external('nibabel')
+    skip_if_no_external('nipy') # ATM relies on NiPy's GLM implementation
     ds = load_example_fmri_dataset(literal=True)
+    # TODO: simulate short dataset with known properties and use it
+    # for testing
     events = find_events(targets=ds.sa.targets, chunks=ds.sa.chunks)
     tr = ds.a.imghdr['pixdim'][4]
     for ev in events:
