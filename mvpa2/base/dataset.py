@@ -671,6 +671,11 @@ def vstack(datasets, a=None):
     -------
     AttrDataset (or respective subclass)
     """
+    if not len(datasets):
+        raise ValueError('concatenation of zero-length sequences is impossible')
+    if not len(datasets) > 1:
+        # trivial vstack
+        return datasets[0]
     # fall back to numpy if it is not a dataset
     if not is_datasetlike(datasets[0]):
         return AttrDataset(np.vstack(datasets))
@@ -733,6 +738,11 @@ def hstack(datasets, a=None):
     # XXX Use CombinedMapper in here whenever it comes back
     #
 
+    if not len(datasets):
+        raise ValueError('concatenation of zero-length sequences is impossible')
+    if not len(datasets) > 1:
+        # trivial hstack
+        return datasets[0]
     # fall back to numpy if it is not a dataset
     if not is_datasetlike(datasets[0]):
         # we might get a list of 1Ds that would yield wrong results when
