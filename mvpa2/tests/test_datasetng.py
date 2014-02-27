@@ -1041,3 +1041,17 @@ def test_hollow_samples():
     assert_equal(ds.samples.dtype, int)
     assert_equal(ds.shape, sshape)
 
+def test_assign_sa():
+    # https://github.com/PyMVPA/PyMVPA/issues/149
+    ds = Dataset(np.arange(6).reshape((2,-1)), sa=dict(targets=range(2)))
+    ds.sa['task'] = ds.sa['targets']
+    # so it should be a new collectable now
+    assert_equal(ds.sa['task'].name, 'task')
+    assert_equal(ds.sa['targets'].name, 'targets') # this lead to issue reported in 149
+    assert('task' in ds.sa.keys())
+    assert('targets' in ds.sa.keys())
+    ds1 = ds[:, 1]
+    assert('task' in ds1.sa.keys())
+    assert('targets' in ds1.sa.keys()) # issue reported in 149
+    assert_equal(ds1.sa['task'].name, 'task')
+    assert_equal(ds1.sa['targets'].name,'targets')

@@ -403,9 +403,20 @@ class Collection(dict):
                   "attribute or a method with such a name is already present " \
                   "in dict interface.  Choose some other name." % (key, self)
         if not isinstance(value, Collectable):
-            value = Collectable(value)
-        # overwrite the Collectable's name with the given one
-        value.name = key
+            value = Collectable(value, name=key)
+        else:
+            if not value.name: # None assigned -- just use the Collectable
+                value.name = key
+            elif value.name == key: # assigned the same -- use the Collectable
+                pass
+            else: # use the copy and assign new name
+                # see https://github.com/PyMVPA/PyMVPA/issues/149
+                # for the original issue.  __copy__ directly to avoid copy.copy
+                # doing the same + few more checks
+                value = value.__copy__()
+                # overwrite the Collectable's name with the given one
+                value.name = key
+
         _object_setitem(self, key, value)
 
 
