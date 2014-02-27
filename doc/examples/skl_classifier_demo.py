@@ -93,15 +93,18 @@ for weights in ['uniform', 'distance']:
                          np.arange(y_min, y_max, h))
     Z = wrapped_clf.predict(np.c_[xx.ravel(), yy.ravel()])
 
-    # to put the result into a color plot we now need numerical targets
-    num_Z = np.array([d[v] for v in Z])
-    num_Z = num_Z.reshape(xx.shape)
-    pl.figure()
-    pl.pcolormesh(xx, yy, num_Z, cmap=cmap_light)
+    # to put the result into a color plot we now need numerical values
+    # this can be done nicely in PyMVPA
+    from mvpa2.datasets.formats import AttributeMap
+    Z = AttributeMap().to_numeric(Z)
+    Z = Z.reshape(xx.shape)
 
-    # For plotting the training points we need numerical targets again
-    num_y = [d[v] for v in iris.targets]
-    pl.scatter(X[:, 0], X[:, 1], c=num_y, cmap=cmap_bold)
+    pl.figure()
+    pl.pcolormesh(xx, yy, Z, cmap=cmap_light)
+
+    # For plotting the training points we convert to numerical values again
+    pl.scatter(X[:, 0], X[:, 1], c=AttributeMap().to_numeric(iris.targets), 
+                                 cmap=cmap_bold)
     pl.xlim(xx.min(), xx.max())
     pl.ylim(yy.min(), yy.max())
     pl.title("3-Class classification (k = %i, weights = '%s')"
