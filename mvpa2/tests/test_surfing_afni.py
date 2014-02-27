@@ -17,7 +17,8 @@ import tempfile
 
 from mvpa2.testing import *
 
-from mvpa2.support.nibabel import afni_niml, afni_niml_dset, afni_niml_roi
+from mvpa2.support.nibabel import afni_niml, afni_niml_dset, afni_niml_roi, \
+                                                surf, afni_suma_spec
 from mvpa2.datasets import niml
 from mvpa2.datasets.base import Dataset
 
@@ -453,10 +454,138 @@ class SurfTests(unittest.TestCase):
 
 
 
-def _test_afni_suma_spec():  # pragma: no cover
-    datapath = os.path.join(pymvpa_datadbroot,
-                        'tutorial_data', 'tutorial_data', 'data', 'surfing')
-    # TODO: test on surfing data
+    def test_afni_suma_spec(self):
+
+        # XXX this function generates quite a few temporary files,
+        #     which are removed at the end.
+        #     the decorator @with_tempfile seems unsuitable as it only
+        #     supports a single temporary file
+
+        # generate surfaces
+        inflated_surf = surf.generate_plane((0, 0, 0), (0, 1, 0), (0, 0, 1),
+                                                    10, 10)
+        white_surf = inflated_surf + 1.
+
+        # filenames for surfaces and spec file
+        fd, inflated_fn = tempfile.mkstemp('_lh_inflated.asc'); os.close(fd)
+        fd, white_fn = tempfile.mkstemp('_lh_white.asc'); os.close(fd)
+        fd, spec_fn = tempfile.mkstemp('lh.spec'); os.close(fd)
+
+        spec_dir = os.path.split(spec_fn)[0]
+
+        # generate SUMA-like spec dictionary
+        white = dict(SurfaceFormat='ASCII',
+            EmbedDimension='3',
+            SurfaceType='FreeSurfer',
+            SurfaceName=white_fn,
+            Anatomical='Y',
+            LocalCurvatureParent='SAME',
+            LocalDomainParent='SAME',
+            SurfaceState='smoothwm')
+
+        inflated = dict(SurfaceFormat='ASCII',
+            EmbedDimension='3',
+            SurfaceType='FreeSurfer',
+            SurfaceName=inflated_fn,
+            Anatomical='N',
+            LocalCurvatureParent=white_fn,
+            LocalDomainParent=white_fn,
+            SurfaceState='inflated')
+
+        # make SurfaceSpec object
+        spec = afni_suma_spec.SurfaceSpec([white], directory=spec_dir)
+        spec.add_surface(inflated)
+
+        # test __str__ and __repr__
+        assert_true('SurfaceSpec instance with 2 surfaces'
+                        ', 2 states ' in '%s' % spec)
+        assert_true(('%r' % spec).startswith('SurfaceSpec'))
+
+        # test finding surfaces
+        inflated_ = spec.find_surface_from_state('inflated')
+        assert_equal([(1, inflated)], inflated_)
+
+        empty = spec.find_surface_from_state('unknown')
+        assert_equal(empty, [])
+
+        # test .same_states
+        minimal = afni_suma_spec.SurfaceSpec([dict(SurfaceState=s)
+                                            for s in ('smoothwm', 'inflated')])
+        assert_true(spec.same_states(minimal))
+        assert_false(spec.same_states(afni_suma_spec.SurfaceSpec(dict())))
+
+        # test 'smart' surface file matching
+        assert_equal(spec.get_surface_file('smo'), white_fn)
+        assert_equal(spec.get_surface_file('inflated'), inflated_fn)
+        assert_equal(spec.get_surface_file('x'), None)
+
+        # test i/o
+        spec.write(spec_fn)
+        spec_ = afni_suma_spec.from_any(spec_fn)
+
+        # prepare for another (right-hemisphere) spec file
+        lh_spec = spec
+        rh_spec_fn = spec_fn.replace('lh', 'rh')
+
+        rh_inflated_fn = inflated_fn.replace('_lh', '_rh')
+        rh_white_fn = white_fn.replace('_lh', '_rh')
+        fd, rh_spec_fn = tempfile.mkstemp('rh.spec'); os.close(fd)
+
+        rh_white = dict(SurfaceFormat='ASCII',
+            EmbedDimension='3',
+            SurfaceType='FreeSurfer',
+            SurfaceName=rh_white_fn,
+            Anatomical='Y',
+            LocalCurvatureParent='SAME',
+            LocalDomainParent='SAME',
+            SurfaceState='smoothwm')
+
+        rh_inflated = dict(SurfaceFormat='ASCII',
+            EmbedDimension='3',
+            SurfaceType='FreeSurfer',
+            SurfaceName=rh_inflated_fn,
+            Anatomical='N',
+            LocalCurvatureParent=rh_white_fn,
+            LocalDomainParent=rh_white_fn,
+            SurfaceState='inflated')
+
+        rh_spec = afni_suma_spec.SurfaceSpec([rh_white], directory=spec_dir)
+        rh_spec.add_surface(rh_inflated)
+
+        # write files
+        all_temp_fns = [spec_fn, rh_spec_fn]
+        for fn, s in [(rh_inflated_fn, inflated_surf),
+                      (rh_white_fn, white_surf),
+                      (inflated_fn, inflated_surf),
+                      (white_fn, white_surf)]:
+            surf.write(fn, s)
+            all_temp_fns.append(fn)
+
+        # test adding views
+        added_specs = afni_suma_spec.hemi_pairs_add_views((lh_spec, rh_spec),
+                                                          'inflated', '.asc')
+
+        for hemi, added_spec in zip(('l', 'r'), added_specs):
+            states = ['smoothwm', 'inflated'] + ['CoM%sinflated' % i
+                                                    for i in 'msiap']
+            assert_equal(states, [s['SurfaceState']
+                                  for s in added_specs[0].surfaces])
+            all_temp_fns.extend([s['SurfaceName']
+                                 for s in added_spec.surfaces])
+
+        # test combining specs (bh=both hemispheres)
+        bh_spec = afni_suma_spec.combine_left_right(added_specs)
+
+        # test merging specs (mh=merged hemispheres)
+        mh_spec, mh_surfs = afni_suma_spec.merge_left_right(bh_spec)
+
+        assert_equal([s['SurfaceState'] for s in mh_spec.surfaces],
+                    ['smoothwm'] + ['CoM%sinflated' % i for i in 'msiap'])
+
+        # remove temporary files
+        for fn in set(all_temp_fns):
+            os.unlink(fn)
+
 
 
 def suite():  # pragma: no cover
