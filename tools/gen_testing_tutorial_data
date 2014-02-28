@@ -1,0 +1,94 @@
+#!/bin/bash
+# emacs: -*- mode: shell-script; c-basic-offset: 4; tab-width: 4; indent-tabs-mode: t -*-
+# vi: set ft=sh sts=4 ts=4 sw=4 noet:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+
+set -e
+
+_error() {
+	echo "E: $@"
+	exit 1
+}
+
+_info() {
+	echo "I: $@"
+}
+
+_resample() {
+	infile="$1"
+	res=$2
+	out="$3"
+	if echo $infile | grep -q 'mask_'; then
+	 	interp=NN
+	else
+	 	interp=Linear
+	fi
+	_info "Resampling $infile using $interp interpolation for resolution $res"
+	# for _hoc we need to run up *forms first
+	if echo $infile | grep  -q '_hoc.nii.gz'; then
+		_info "Tuning up $infile q/s-forms"
+		python -c "if True:
+		import nibabel as nib;
+		vt=nib.load('${infile/_hoc/_vt}');
+		hoc=nib.load('${infile}');
+		hoc.set_qform(vt.get_qform());
+		hoc.set_sform(vt.get_sform());
+		hoc.to_filename('$tempd/temp-hoc.nii.gz');"
+		infile=$tempd/temp-hoc.nii.gz
+	fi
+
+	3dresample -dxyz $res $res $res -prefix $tempd/temp -rmode $interp \
+		-inset $infile
+	outfile=$(/bin/ls $tempd/temp+*.BRIK)
+	outprefix=${outfile//.BRIK/}
+	3dAFNItoNIFTI -prefix $out $outprefix
+	nib-ls -v -s $out
+	rm -f $tempd/temp*
+}
+
+# resolution in mm
+res=25
+
+tempd=$(mktemp -d)
+mkdir -p $tempd
+
+_info "Temporary dir: $tempd"
+
+dataroot=${MVPA_DATA_ROOT:-"datadb/tutorial_data/tutorial_data/data"}
+# dataroot_test=mvpa2/data/tutorial_data_masked/data
+dataroot_test=mvpa2/data/tutorial_data_${res}mm/data
+
+#mask_file=$1
+#_info "Using maskfile $mask_file to mask all tutorial_data NIfTIs"
+
+#[ ! -z "$FSLDIR" ] || source /etc/fsl/fsl.sh
+
+source /etc/afni/afni.sh
+
+set -u
+
+# [ -e "$mask_file" ] || _error "Mask file $mask_file not found"
+[ -e mvpa2/__init__.py ] || _error "Must be run in top directory of PyMVPA project"
+
+mkdir -p $dataroot_test
+
+_info "Copying regular files under $dataroot_test"
+cp $dataroot/*.{txt,par} $dataroot_test/
+
+for f in $dataroot/*.nii.gz; do
+#	if echo $f | grep -q 'anat.*\.nii\.gz'; then
+#		_info "Copying $f as is"
+#		cp $f $dataroot_test
+#	else
+#		_info "Masking $f"
+#		fslmaths $f -mas $mask_file $dataroot_test/$(basename $f)
+#	fi
+	_resample $f $res $dataroot_test/$(basename $f)
+done
+
+rm -rf $tempd
