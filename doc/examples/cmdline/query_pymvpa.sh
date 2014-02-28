@@ -22,7 +22,7 @@ pymvpa2 info --debug | grep -i searchlight
 #% retrieved.
 
 # what version of nibabel is used by pymvpa?
-pymvpa2 info --externals |grep nibabel
+pymvpa2 info --externals | grep nibabel
 
 #% When run without arguments, the ``info`` command generates a comprehensive
 #% report on the computational environment that is very useful for productive
@@ -30,6 +30,6 @@ pymvpa2 info --externals |grep nibabel
 
 # create a description of the computing environment that can be posted on the
 # pymvpa mailing list to make a bug report more informative
-pymvpa2 info > $outdir/mysystem.txt
+pymvpa2 info
 
 #% EXAMPLE END
