@@ -242,17 +242,43 @@ def _recon_customobj_customrecon(hdf, memo):
             raise e
     recon = mod.__dict__[recon_name]
 
+    obj = None
     if 'rcargs' in hdf:
         recon_args_hdf = hdf['rcargs']
         if __debug__:
             debug('HDF5', "Load reconstructor args in [%s]"
                           % recon_args_hdf.name)
+        if 'objref' in hdf.attrs:
+            # XXX TODO YYY ZZZ WHATEVER
+            # yoh: the problem is that inside this beast might be references
+            # to current, not yet constructed object, and if we follow
+            # Python docs we should call recon with *recon_args, thus we
+            # cannot initiate the beast witout them.  But if recon is a class
+            # with __new__ we could may be first __new__ and then only __init__
+            # with recon_args?
+            if '__new__' in dir(recon):
+                try:
+                    # TODO: what if multiple inheritance?
+                    obj = recon.__bases__[0].__new__(recon)
+                except:
+                    # try direct __new__
+                    try:
+                        obj = recon.__new__()
+                    except:
+                        # give up and hope for the best
+                        obj = None
+                if obj is not None:
+                    memo[hdf.attrs['objref']] = obj
         recon_args = _hdf_tupleitems_to_obj(recon_args_hdf, memo)
     else:
         recon_args = ()
 
     # reconstruct
-    obj = recon(*recon_args)
+    if obj is None:
+        obj = recon(*recon_args)
+    else:
+        # Let only to init it
+        obj.__init__(*recon_args)
     # insert any stored object state
     _update_obj_state_from_hdf(obj, hdf, memo)
     return obj
@@ -628,8 +654,8 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
         # needs special treatment
         pieces = None
         if __debug__:
-            debug('HDF5', "Failed to reduce '%s' (ref: %i) in [%s]: %s (%s)"
-                          % (type(obj), obj_id, hdf.name, te, obj))
+            debug('HDF5', "Failed to reduce '%s' (ref: %i) in [%s]: %s" # (%s)"
+                          % (type(obj), obj_id, hdf.name, te)) #, obj))
 
     # common container handling, either __reduce__ was not possible
     # or it was the default implementation

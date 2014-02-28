@@ -353,3 +353,21 @@ def test_nested_obj_arrays(f, backend, a):
     a_ = saveload(a, f, backend=backend)
     # import pydb; pydb.debugger()
     ok_(a_[1][2] is a_)
+
+@sweepargs(backend=['hdf5','pickle'])
+@with_tempfile()
+def test_ca_col(f, backend):
+    from mvpa2.base.state import ConditionalAttributesCollection, ConditionalAttribute
+    c1 = ConditionalAttribute(name='ca1', enabled=True)
+    #c2 = ConditionalAttribute(name='test2', enabled=True)
+    col = ConditionalAttributesCollection([c1], name='whoknows')
+    col.ca1 = col # {0: c1, 1: [None, col]}  # nest badly
+    assert_true(col.ca1 is col)
+    col_ = saveload(col, f, backend=backend)
+    # seems to work niceish with pickle
+    #print col_, col_.ca1, col_.ca1.ca1, col_.ca1.ca1.ca1
+    assert_true(col_.ca1.ca1 is col_.ca1)
+    # but even there top-level assignment test fails, which means it creates two
+    # instances
+    if backend != 'pickle':
+        assert_true(col_.ca1 is col_)
