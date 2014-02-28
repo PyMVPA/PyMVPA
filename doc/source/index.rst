@@ -19,8 +19,8 @@ PyMVPA stands for **M**\ ulti\ **V**\ ariate **P**\ attern **A**\ nalysis
  <table style="border-style:none;overflow:scroll">
   <tr>
    <td>
-    <a href="download.html">
-     <img alt="Download" src="_static/download_icon.jpg" title="Download and Installation" />
+    <a href="installation.html">
+     <img alt="Installation" src="_static/download_icon.jpg" title="Download and Installation" />
     </a>
    </td>
    <td>
@@ -40,7 +40,7 @@ PyMVPA stands for **M**\ ulti\ **V**\ ariate **P**\ attern **A**\ nalysis
    </td>
   </tr>
   <tr>
-    <td style="text-align:center"><a href="download.html">Download</a></td>
+    <td style="text-align:center"><a href="installation.html">Installation</a></td>
     <td style="text-align:center"><a href="tutorial.html">Tutorial</a></td>
     <td style="text-align:center"><a href="docoverview.html">Documentation</a></td>
     <td style="text-align:center"><a href="support.html">Support</a></td>

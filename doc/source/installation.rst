@@ -18,6 +18,10 @@ a comprehensive list of software dependencies, as well as recommendation for
 additional software packages that further enhance the functionality provided by
 PyMVPA.
 
+If you don't want to read this whole document, and you are on a Debian-based
+system, such as Ubuntu, all you need to know it::
+
+  sudo aptitude install python-mvpa2
 
 .. _requirements:
 
@@ -179,10 +183,10 @@ Installing Binary Packages
    Ubuntu is no excuse ;-)
 
 The easiest way to obtain PyMVPA is to use pre-built binary packages.
-Currently we provide such packages or installers for the Debian/Ubuntu family
-(see below). If there are no binary packages for your operating system or platform
-yet, you can build PyMVPA from source.  Please refer to `Building from Source`_
-for more information.
+Currently we provide such packages for the Debian/Ubuntu family, additional
+installers are provided by contributors (see below). If there are no binary
+packages for your operating system or platform yet, you can build PyMVPA from
+source.  Please refer to `Building from Source`_ for more information.
 
 .. note::
 
@@ -231,8 +235,11 @@ Windows
 -------
 
 There are a few Python distributions for Windows. In theory all of them should
-work equally well. However, we only tested the standard Python distribution
-from www.python.org (with version 2.5.2).
+work equally well. Christoph Gohlke runs a `repository of unofficial Windows
+binaries`_ for various scientific Python packages, including PyMVPA, that could
+ease deploying a PyMVPA installation on Windows significantly.
+
+.. _repository of unofficial Windows binaries: http://www.lfd.uci.edu/~gohlke/pythonlibs/
 
 First you need to download and install Python. Use the Python installer for
 this job. Yo do not need to install the Python test suite and utility scripts.

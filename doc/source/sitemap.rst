@@ -8,7 +8,6 @@ PyMVPA.org Sitemap
    :maxdepth: 2
 
    whoisusingit
-   download
    manual
    datadb
    examples
