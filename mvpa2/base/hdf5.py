@@ -152,7 +152,11 @@ def hdf2obj(hdf, memo=None):
             elif cls_name == 'tuple':
                 obj = _hdf_tupleitems_to_obj(hdf, memo)
             elif cls_name == 'list':
-                obj = _hdf_list_to_obj(hdf, memo)
+                # could be used also for storing object ndarrays
+                if 'is_objarray' in hdf.attrs:
+                    obj = _hdf_list_to_objarray(hdf, memo)
+                else:
+                    obj = _hdf_list_to_obj(hdf, memo)
             elif cls_name == 'dict':
                 obj = _hdf_dict_to_obj(hdf, memo)
             elif cls_name == 'type':
@@ -168,16 +172,6 @@ def hdf2obj(hdf, memo=None):
     #
     # Final post-processing
     #
-    if 'is_objarray' in hdf.attrs:
-        # need to handle special case of arrays of objects
-        if np.isscalar(obj):
-            obj = np.array(obj, dtype=np.object)
-        else:
-            obj = asobjarray(obj)
-        if 'shape' in hdf.attrs:
-            shape = tuple(hdf.attrs['shape'])
-            if shape != obj.shape:
-                obj = obj.reshape(shape)
 
     # track if desired
     if objref:
@@ -330,6 +324,37 @@ def _hdf_dict_to_obj(hdf, memo, skip=None):
                         for item in items_container
                             if not item in skip])
 
+def _hdf_list_to_objarray(hdf, memo):
+    if not ('shape' in hdf.attrs):
+        if __debug__:
+            debug('HDF5', "Enountered objarray stored without shape (due to a bug "
+                "in post 2.1 release).  Some nested structures etc might not be "
+                "loaded incorrectly")
+        # yoh: we have possibly a problematic case due to my fix earlier
+        # resolve to old logic:  nested referencing might not work :-/
+        obj = _hdf_list_to_obj(hdf, memo)
+        # need to handle special case of arrays of objects
+        if np.isscalar(obj):
+            obj = np.array(obj, dtype=np.object)
+        else:
+            obj = asobjarray(obj)
+    else:
+        shape = tuple(hdf.attrs['shape'])
+        # reserve space first
+        if len(shape):
+            obj = np.empty(np.prod(shape), dtype=object)
+        else:
+            # scalar
+            obj = np.array(None, dtype=object)
+        # now load the items from the list, noting existence of this
+        # container
+        obj_items = _hdf_list_to_obj(hdf, memo, target_container=obj)
+        # assign to the object array
+        for i, v in enumerate(obj_items):
+            obj[i] = v
+        if len(shape) and shape != obj.shape:
+            obj = obj.reshape(shape)
+    return obj
 
 def _hdf_list_to_obj(hdf, memo, target_container=None):
     """Convert an HDF item sequence into a list
@@ -507,7 +532,9 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
                     debug('HDF5', "array(objects) -> list(objects)")
                 obj = list(obj.flatten())
                 # make sure we don't ref this temporary list object
-                noid = True
+                # noid = True
+                # yoh: obj_id is of the original obj here so should
+                # be stored
             # flag that we messed with the original type
             is_objarray = True
             # and re-estimate the content's nd-array-ness
@@ -537,17 +564,18 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
             # objref for scalar items would be overkill
             hdf[name].attrs.create('objref', obj_id)
             # store object reference to be able to detect duplicates
-            memo[obj_id] = obj
             if __debug__:
                 debug('HDF5', "Record objref in memo-dict (%i)" % obj_id)
+            memo[obj_id] = obj
+
         ## yoh: was not sure why we have to assign here as well as below to grp
         ##      so commented out and seems to work just fine ;)
-        ## if is_objarray:
-        ##     # we need to confess the true origin
-        ##     hdf[name].attrs.create('is_objarray', True)
-        ##     ## if len(objarray_shape) > 1:
-        ##     ##     # it was of more than 1 dimension
-        ##     ##     hdf[name].attrs.create('objarray_shape', objarray_shape)
+        ## yoh: because it never reaches grp! (see return below)
+        if is_objarray:
+            # we need to confess the true origin
+            hdf[name].attrs.create('is_objarray', True)
+            # it was of more than 1 dimension or it was a scalar
+            hdf[name].attrs.create('shape', shape)
 
         # handle scalars giving numpy scalars different flag
         if is_numpy_scalar:

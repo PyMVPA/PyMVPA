@@ -255,8 +255,7 @@ def test_save_load_object_dtype_ds(obj=None):
     f = tempfile.NamedTemporaryFile()
 
     # save/reload
-    h5save(f.name, obj)
-    obj_ = h5load(f.name)
+    obj_ = saveload(obj, f.name)
 
     # and compare
     # neh -- not versatile enough
@@ -343,3 +342,14 @@ def test_nested_obj(f, backend, obj):
     # 3rd level
     ok_(obj_[1][2][1] is obj_)
 
+_nested_a = np.array([1, 2], dtype=object)
+_nested_a[1] = {1: 0, 2: _nested_a}
+
+@sweepargs(a=[_nested_a])
+@sweepargs(backend=['hdf5', 'pickle'])
+@with_tempfile()
+def test_nested_obj_arrays(f, backend, a):
+    assert_equal(a.dtype, np.object)
+    a_ = saveload(a, f, backend=backend)
+    # import pydb; pydb.debugger()
+    ok_(a_[1][2] is a_)
