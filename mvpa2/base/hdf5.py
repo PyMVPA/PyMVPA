@@ -181,6 +181,8 @@ def hdf2obj(hdf, memo=None):
 
     # track if desired
     if objref:
+        if __debug__:
+            debug('HDF5', "Placing %s objref '%s' to memo", (obj, objref))
         memo[objref] = obj
     if __debug__:
         debug('HDF5', "Done loading %s [%s]"
@@ -316,9 +318,12 @@ def _hdf_dict_to_obj(hdf, memo, skip=None):
         items_container = hdf['items']
 
     if items_container.attrs.get('__keys_in_tuple__', 0):
-        items = _hdf_list_to_obj(hdf, memo)
-        items = [i for i in items if not i[0] in skip]
-        return dict(items)
+        # pre-create the object so it could be correctly
+        # objref'ed/used in memo
+        d = dict()
+        items = _hdf_list_to_obj(hdf, memo, target_container=d)
+        d.update([i for i in items if not i[0] in skip])
+        return d
     else:
         # legacy files had keys as group names
         return dict([(item, hdf2obj(items_container[item], memo=memo))
@@ -326,8 +331,14 @@ def _hdf_dict_to_obj(hdf, memo, skip=None):
                             if not item in skip])
 
 
-def _hdf_list_to_obj(hdf, memo):
-    """Convert an HDF item sequence into a list"""
+def _hdf_list_to_obj(hdf, memo, target_container=None):
+    """Convert an HDF item sequence into a list
+
+    Lists are used for storing also dicts.  To properly reference
+    the actual items in memo, target_container could be specified
+    to point to the actual data structure to be referenced, which
+    later would get populated with list's items.
+    """
     # new-style files have explicit length
     if 'length' in hdf.attrs:
         length = hdf.attrs['length']
@@ -357,10 +368,17 @@ def _hdf_list_to_obj(hdf, memo):
     # need to put items list in memo before starting to parse to allow to detect
     # self-inclusion of this list in itself
     if 'objref' in hdf.attrs:
-        obj_id = hdf.attrs['objref']
-        memo[obj_id] = items
-        if __debug__:
-            debug('HDF5', "Track sequence under ref: %i)" % length)
+        objref = hdf.attrs['objref']
+        if target_container is None:
+            if __debug__:
+                debug('HDF5', "Track sequence with %i elements under objref '%s'"
+                              % (length, objref))
+            memo[objref] = items
+        else:
+            if __debug__:
+                debug('HDF5', "Track provided target_container under objref '%s'",
+                      objref)
+            memo[objref] = target_container
     # for all expected items
     for i in xrange(length):
         if __debug__:
