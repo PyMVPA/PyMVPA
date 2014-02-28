@@ -448,7 +448,7 @@ tcc-%: build
 
 testcmdline: tc-start_easy tc-query_pymvpa tc-fmri_analyses
 
-coveragecmdline: tcc-start_easy tcc-query_pymvpa tcc-fmri_analyses
+coveragecmdline: tcc-query_pymvpa tcc-fmri_analyses
 
 te-%: build
 	@echo -n "I: Testing example $*: "
