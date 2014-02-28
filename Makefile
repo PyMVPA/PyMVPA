@@ -429,8 +429,28 @@ tc-%: build
 		MVPA_WARNINGS_SUPPRESS=1 \
 		sh ./doc/examples/cmdline/$*.sh > /dev/null 2>&1
 
+# test cmdline with coverage report
+# MVPA_DATA_ handling is because some examples use tutorial_data
+# while others testing data (mvpa2/data)
+tcc-%: build
+	@echo "I: testing $* cmdline example with coverage"
+	@grep MVPA_DATA_ROOT.*datadb ./doc/examples/cmdline/$*.sh \
+	&& MVPA_DATA_="MVPA_DATA_ROOT=$$PWD/mvpa2/data/tutorial_data_25mm/data" || : ; \
+	eval PYTHONPATH=.:$(PYTHONPATH) \
+		PATH=$$PWD/tools/coverage-bin:$$PWD/bin:$(PATH) \
+		$${MVPA_DATA_} \
+		MVPA_TESTS_QUICK=yes \
+		MVPA_MATPLOTLIB_BACKEND=agg \
+		MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
+		MVPA_DATADB_ROOT=datadb \
+		MVPA_WARNINGS_SUPPRESS=1 \
+		bash ./doc/examples/cmdline/$*.sh > /dev/null
+
 testcmdline: tc-datasets tc-preproc tc-start_easy tc-query_pymvpa \
              tc-fmri_analyses
+
+coveragecmdline: tcc-datasets tcc-preproc tcc-start_easy tcc-query_pymvpa \
+			 tcc-fmri_analyses
 
 te-%: build
 	@echo -n "I: Testing example $*: "
