@@ -97,7 +97,10 @@ class Logger(object):
         """
 
         if args is not None:
-            msg = msg % args
+            try:
+                msg = msg % args
+            except Exception as e:
+                msg = "%s [%% FAILED due to %s]" % (msg, e)
 
         if 'msgargs' in kwargs:
             msg = msg % kwargs['msgargs']
