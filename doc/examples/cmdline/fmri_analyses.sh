@@ -113,6 +113,8 @@ for roi in ${hoc_rois[*]}; do
         --avg-datafold-results \
         -i "$outdir"/roi_tmp.hdf5 \
         -o $resultds | awk -e '/ACC%/{printf "%.2f%%\n", $2}'
+
+    [ -z "${MVPA_TESTS_QUICK:-}" ] || break  # reserved for testing
 done
 
 
