@@ -301,3 +301,45 @@ def test_save_load_python_objs(obj):
 
     assert_equal(type(obj), type(obj_))
     assert_equal(obj, obj_)
+
+def saveload(obj, f, backend='hdf5'):
+    """Helper to save/load using some of tested backends
+    """
+    if backend == 'hdf5':
+        h5save(f, obj)
+        #import os; os.system('h5dump %s' % f)
+        obj_ = h5load(f)
+    else:
+        #check pickle -- does it correctly
+        import cPickle
+        with open(f, 'w') as f_:
+            cPickle.dump(obj, f_)
+        with open(f) as f_:
+            obj_ = cPickle.load(f_)
+    return obj_
+
+# Test some nasty nested constructs of mutable beasts
+_nested_d = {0: 2}
+_nested_d[1] = {
+    0: {3: 4}, # to ease comprehension of the dump
+    1: _nested_d}
+_nested_d[1][2] = ['crap', _nested_d]   # 3rd level of nastiness
+
+_nested_l = [2, None]
+_nested_l[1] = [{3: 4}, _nested_l, None]
+_nested_l[1][2] = ['crap', _nested_l]   # 3rd level of nastiness
+
+@sweepargs(obj=[_nested_d, _nested_l])
+@sweepargs(backend=['hdf5', 'pickle'])
+@with_tempfile()
+def test_nested_obj(f, backend, obj):
+    ok_(obj[1][1] is obj)
+    obj_ = saveload(obj, f, backend=backend)
+    assert_equal(obj_[0], 2)
+    assert_equal(obj_[1][0], {3: 4})
+    ok_(obj_[1][1] is obj_)
+    ok_(obj_[1][1] is not obj)  # nobody does teleportation
+
+    # 3rd level
+    ok_(obj_[1][2][1] is obj_)
+
