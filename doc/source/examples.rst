@@ -50,6 +50,7 @@ Analysis strategies and Background
    examples/searchlight
    examples/searchlight_dsm
    examples/searchlight_surf
+   examples/rsa_fmri
    examples/sensanas
    examples/svdclf
    examples/permutation_test
