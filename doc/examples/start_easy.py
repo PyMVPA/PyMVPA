@@ -8,40 +8,58 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """
-Tiny Example of a Full Cross-Validation
-=======================================
+A simple start
+==============
 
-Very, very simple example showing a complete cross-validation procedure
-with no fancy additions whatsoever.
+Here we show how to perform a simple cross-validated classification analysis
+with PyMVPA. This script is the exact equivalent of the
+:ref:`example_cmdline_start_easy` example, but using the Python API instead of
+the command line interface.
+
+First, we import the PyMVPA suite to enable all PyMVPA building blocks
 """
 
-# get PyMVPA running
 from mvpa2.suite import *
 
-# load PyMVPA example dataset
+"""
+Now we load an fMRI dataset with some attributes for each volume, only
+considering voxels that are non-zero in a mask image.
+"""
+
 attr = SampleAttributes(os.path.join(pymvpa_dataroot,
                         'attributes_literal.txt'))
 dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
                        targets=attr.targets, chunks=attr.chunks,
                        mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
-# do chunkswise linear detrending on dataset
+"""
+Next we remove linear trends by polynomial regression for each voxel and
+each chunk (recording run) of the dataset individually.
+"""
+
 poly_detrend(dataset, polyord=1, chunks_attr='chunks')
 
-# zscore dataset relative to baseline ('rest') mean
-zscore(dataset, chunks_attr='chunks', param_est=('targets', ['rest']))
+"""
+For this example we are only interested in data samples that correspond
+to the ``face`` or to the ``house`` condition.
+"""
 
-# select class face and house for this demo analysis
-# would work with full datasets (just a little slower)
 dataset = dataset[np.array([l in ['face', 'house'] for l in dataset.sa.targets],
                           dtype='bool')]
 
-# setup cross validation procedure, using SMLR classifier
-cv = CrossValidation(SMLR(), OddEvenPartitioner())
+"""
+The setup for our cross-validation analysis include the selection of a
+classifier, and a partitioning scheme, and an error function
+to convert literal predictions into a quantitative performance metric.
+"""
 
-# and run it
-error = np.mean(cv(dataset))
+cv = CrossValidation(SMLR(), OddEvenPartitioner(), errorfx=mean_mismatch_error)
+error = cv(dataset)
+
+"""
+The resulting dataset contains the computed accuracy.
+"""
 
 # UC: unique chunks, UT: unique targets
 print "Error for %i-fold cross-validation on %i-class problem: %f" \
-      % (len(dataset.UC), len(dataset.UT), error)
+      % (len(dataset.UC), len(dataset.UT), np.mean(error))
