@@ -42,6 +42,7 @@ import h5py
 import os
 import os.path as osp
 
+from mvpa2.base import externals
 from mvpa2.base.types import asobjarray
 
 if __debug__:
@@ -601,7 +602,11 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
             # we need to confess the true origin
             hdf[name].attrs.create('is_objarray', True)
             # it was of more than 1 dimension or it was a scalar
-            hdf[name].attrs.create('shape', shape)
+            if not len(shape) and externals.versions['hdf5'] < '1.8.7':
+                if __debug__:
+                    debug('HDF5', "Versions of hdf5 before 1.8.7 have problems with empty arrays")
+            else:
+                hdf[name].attrs.create('shape', shape)
 
         # handle scalars giving numpy scalars different flag
         if is_numpy_scalar:
