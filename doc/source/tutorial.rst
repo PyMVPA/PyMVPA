@@ -71,6 +71,7 @@ command, or use the provided `IPython notebooks`_ for each tutorial part.
    tutorial_mappers
    tutorial_classifiers
    tutorial_searchlight
+   tutorial_meta_classifiers
    tutorial_sensitivity
    tutorial_eventrelated
    tutorial_significance
