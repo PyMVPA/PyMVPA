@@ -132,11 +132,6 @@ having to change any other part of the analysis code. Moreover, we have seen
 that it is possible to enable and access optional information that is offered
 by particular parts of the processing pipeline.
 
-However, we still have done little to address one of the major questions in
-neuroscience research: Where does the information come from? One
-possible approach to this question is the topic of the :ref:`next tutorial part
-<chap_tutorial_searchlight>`.
-
 .. Think about adding a demo of the classifiers warehouse.
   .. exercise::
      Try doing the Z-Scoring before computing the mean samples per category.
