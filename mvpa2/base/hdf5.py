@@ -42,6 +42,7 @@ import h5py
 import os
 import os.path as osp
 
+import mvpa2
 from mvpa2.base import externals
 from mvpa2.base.types import asobjarray
 
@@ -761,7 +762,8 @@ def h5save(filename, data, name=None, mode='w', mkdir=True, **kwargs):
         if target_dir and not osp.exists(target_dir):
             os.makedirs(target_dir)
     hdf = h5py.File(filename, mode)
-    hdf.attrs.create('__pymvpa_hdf5_version__', 1)
+    hdf.attrs.create('__pymvpa_hdf5_version__', '2')
+    hdf.attrs.create('__pymvpa_version__', mvpa2.__version__)
     try:
         obj2hdf(hdf, data, name, **kwargs)
     finally:

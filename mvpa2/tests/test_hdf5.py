@@ -402,3 +402,10 @@ def test_save_load_FlattenMapper(f):
     ds_r = fm.reverse(ds_)
     fm_ = saveload(fm, f)
     assert_equal(fm_.shape, fm.shape)
+
+@with_tempfile()
+def test_versions(f):
+    h5save(f, [])
+    hdf = h5py.File(f, 'r')
+    assert_equal(hdf.attrs.get('__pymvpa_hdf5_version__'), '2')
+    assert_equal(hdf.attrs.get('__pymvpa_version__'), mvpa2.__version__)
