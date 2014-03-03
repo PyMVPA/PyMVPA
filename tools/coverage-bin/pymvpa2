@@ -1,0 +1,20 @@
+#!/bin/bash
+#
+# A little helper to overload default pymvpa2 executable with the one ran
+# through coverage
+
+set -eu
+
+curbin=$(which pymvpa2)
+curdir=$(dirname $curbin)
+
+COVERAGE_RUN=${COVERAGE:-python-coverage run}
+
+export PATH=${PATH//$curdir:/}
+newbin=$(which pymvpa2)
+if [ $newbin = $curbin ]; then
+   echo "E: binary remained the same: $newbin" >&2
+   exit 1
+fi
+
+$COVERAGE_RUN -a $newbin "$@"
