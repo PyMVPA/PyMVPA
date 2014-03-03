@@ -45,15 +45,15 @@ package.
 
 If you want to prevent yourself from re-typing all code snippets into the
 terminal window, you might want to investigate IPython's ``%cpaste``
-command.
+command, or use the provided `IPython notebooks`_ for each tutorial part.
 
 .. _Python: http://www.python.org
+.. _IPython notebook: http://ipython.org/notebook
 
 .. toctree::
    :maxdepth: 2
 
    tutorial_prerequisites
-   tutorial_start
    tutorial_datasets
    tutorial_mappers
    tutorial_classifiers
