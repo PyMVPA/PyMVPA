@@ -43,5 +43,6 @@ script:
     - export PATH=$HOME/.local/bin:$PATH  PYTHONPATH=.:$PYTHONPATH  R_LIBS=$PWD/R-libs
     - export NOSETESTS=$(which nosetests)
     - eval   $COVERAGE $NOSETESTS -v mvpa2 $DOCTESTS -s
+    - if [ ! -z "$COVERAGE" ]; then make coveragecmdline; fi
 after_success:
     - if [ ! -z "$COVERAGE" ]; then coveralls; fi
