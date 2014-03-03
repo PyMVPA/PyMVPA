@@ -13,8 +13,6 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa2.base import externals
-if externals.exists('pylab', raise_=True):
-    import pylab as pl
 
 from mvpa2.base.node import ChainNode
 from mvpa2.base.dataset import is_datasetlike
@@ -75,6 +73,9 @@ def hist(dataset, xgroup_attr=None, ygroup_attr=None,
     list
       List of figure handlers for all generated subplots.
     """
+    externals.exists("pylab", raise_=True)
+    import pylab as pl
+
     xgroup = {'attr': xgroup_attr}
     ygroup = {'attr': ygroup_attr}
     for grp in (xgroup, ygroup):

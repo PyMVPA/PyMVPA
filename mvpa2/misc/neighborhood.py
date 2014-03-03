@@ -597,7 +597,7 @@ class CachedQueryEngine(QueryEngineInterface):
           If `dataset`'s .fa were changed -- it would raise an
           exception telling to `untrain` explicitly, since the idea is
           to reuse CachedQueryEngine with the same engine and same
-          dataset (up to variation of .sa, such as labels permutation
+          dataset (up to variation of .sa, such as labels permutation)
         """
         ds_fa_hash = idhash_(dataset.fa) + ':%d' % dataset.fa._uniform_length
         if self._trained_ds_fa_hash is None:
@@ -689,7 +689,7 @@ def scatter_neighborhoods(neighbor_gen, coords, deterministic=False):
       Callable that return a list of neighborhood element coordinates, when
       called with a seed coordinate (cf. Sphere)
     coords : list
-      List of candidate corrdinates that can serve as neighborhood seeds or
+      List of candidate coordinates that can serve as neighborhood seeds or
       elements.
     deterministic : bool
       If true, performs seed placement using an OrderedDict (available in

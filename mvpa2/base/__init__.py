@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Base functionality of PyMVPA
+"""Plumbing layer for PyMVPA
 
 Module Organization
 ===================

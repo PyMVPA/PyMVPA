@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##g
-"""Parameter validation"""
+"""Helper for parameter validation, documentation and conversion"""
 
 # TODO: __str__ / __repr__'s
 
@@ -125,12 +125,13 @@ class EnsureBool(Constraint):
     def __call__(self, value):
         if isinstance(value, bool):
             return value
-        elif value in ('0', 'no', 'off', 'disable', 'false'):
-            return False
-        elif value in ('1', 'yes', 'on', 'enable', 'true'):
-            return True
-        else:
-            raise ValueError("value must be converted to boolean")
+        elif isinstance(value, basestring):
+            value = value.lower()
+            if value in ('0', 'no', 'off', 'disable', 'false'):
+                return False
+            elif value in ('1', 'yes', 'on', 'enable', 'true'):
+                return True
+        raise ValueError("value must be converted to boolean")
 
     def long_description(self):
         return 'value must be convertible to type bool'

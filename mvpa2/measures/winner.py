@@ -6,8 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Winner take all measures, where the output consists of a single sample
-or feature."""
+"""Data aggregation procedures"""
 
 __docformat__ = 'restructuredtext'
 

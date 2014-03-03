@@ -6,9 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""This is a `FeaturewiseMeasure` that uses a scalar `Measure` and
-selective noise perturbation to compute a sensitivity map.
-"""
+"""Derive sensitivity maps for a metric by selective noise perturbation"""
 
 __docformat__ = 'restructuredtext'
 

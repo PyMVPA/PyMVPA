@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Dataset for event-related samples."""
+"""Functions for event segmentation or modeling of dataset."""
 
 __docformat__ = 'restructuredtext'
 
@@ -186,7 +186,7 @@ def _fit_hrf_event_model(
         glmfit_kwargs=None, regr_attrs=None, eprefix='event', conditions=None):
     if externals.exists('nipy', raise_=True):
         from nipy.modalities.fmri.design_matrix import make_dmtx
-        from mvpa2.mappers.nipy_glm import NiPyGLMMapper
+        from mvpa2.mappers.glm import NiPyGLMMapper
 
     evvars = _events2dict(events)
     add_paradigm_kwargs = {}

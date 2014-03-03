@@ -6,12 +6,12 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""MultiVariate Pattern Analysis
+"""Framework for multivariate pattern analysis (MVPA)
 
 
 Package Organization
 ====================
-The mvpa package contains the following subpackages and modules:
+The mvpa2 package contains the following subpackages and modules:
 
 :group Algorithms: algorithms
 :group Anatomical Atlases: atlases
@@ -26,18 +26,16 @@ The mvpa package contains the following subpackages and modules:
 :author: `Michael Hanke <michael.hanke@gmail.com>`__,
          `Yaroslav Halchenko <debian@onerussian.com>`__,
          `Per B. Sederberg <persed@princeton.edu>`__
+         `Nikolaas N. Oosterhof <n.n.oosterhof@googlemail.com>`__
 :requires: Python 2.6+
 :version: 2.2.0
 :see: `The PyMVPA webpage <http://www.pymvpa.org>`__
 :see: `GIT Repository Browser <http://github.com/PyMVPA/PyMVPA>`__
 
 :license: The MIT License <http://www.opensource.org/licenses/mit-license.php>
-:copyright: |copy| 2006-2012 Michael Hanke <michael.hanke@gmail.com>
-:copyright: |copy| 2007-2012 Yaroslav O. Halchenko <debian@onerussian.com>
-
-:newfield contributor: Contributor, Contributors (Alphabetical Order)
-:contributor: `Emanuele Olivetti <emanuele@relativita.com>`__
-:contributor: `Per B. Sederberg <persed@princeton.edu>`__
+:copyright: |copy| 2006-2014 Michael Hanke <michael.hanke@gmail.com>
+:copyright: |copy| 2007-2014 Yaroslav O. Halchenko <debian@onerussian.com>
+:copyright: |copy| 2012-2014 Nikolaas N. Oosterhof <n.n.oosterhof@googlemail.com>
 
 .. |copy| unicode:: 0xA9 .. copyright sign
 """
@@ -156,6 +154,22 @@ if cfg.getboolean('debug', 'wtf', default=False):
         sys.stdout.write(str(wtfs))
         return ret
     sys.excepthook = _pymvpa_excepthook
+
+# Attach custom top-level exception handler
+if cfg.getboolean('debug', 'pdb', default=False):
+    import sys
+    _sys_excepthook = sys.excepthook
+    def _pymvpa_pdb_excepthook(type, value, tb):
+        if hasattr(sys, 'ps1') or not sys.stderr.isatty():
+            # we are in interactive mode or we don't have a tty-like
+            # device, so we call the default hook
+            sys.__excepthook__(type, value, tb)
+        else:
+            import traceback, pdb
+            traceback.print_exception(type, value, tb)
+            print
+            pdb.post_mortem(tb)
+    sys.excepthook = _pymvpa_pdb_excepthook
 
 if __debug__:
     debug('INIT', 'mvpa end')

@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-""""""
+"""Helpers for feature selection (scoring, selection strategies)"""
 
 __docformat__ = 'restructuredtext'
 
