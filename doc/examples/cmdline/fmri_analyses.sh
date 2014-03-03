@@ -10,6 +10,10 @@ dataroot=${MVPA_DATA_ROOT:-"datadb/tutorial_data/tutorial_data/data"}
 
 # where to place output; into tmp by default
 outdir=${MVPA_EXAMPLE_WORKDIR:-}
+
+# which classifier we will use through out the analyses
+clf=${MVPA_EXAMPLE_CLF:-'SMLR(lm=1.0)'}
+
 have_tmpdir=0
 if [ -z "$outdir" ]; then
   outdir=$(mktemp -d)
@@ -96,7 +100,7 @@ pymvpa2 select \
 #% fed and extended with custom Python scripts.
 
 pymvpa2 crossval \
-    --learner 'SMLR(lm=1.0)' \
+    --learner "$clf" \
     --partitioner n-1 \
     --errorfx mean_match_accuracy \
     --avg-datafold-results \
@@ -117,7 +121,7 @@ pymvpa2 select \
 
 #% The ``searchlight`` command can be used to compute arbitrary metric in this
 #% fashion, but has built-in support for cross-validated classification analyses
-#% (``--paylab``).  Spherical ROI with a radius of 4 voxels (``--neighbors``) will
+#% (``--payload``).  Spherical ROI with a radius of 4 voxels (``--neighbors``) will
 #% be generated, centered on gray-matter voxels only (``--roi-attr``). The
 #% computation will be parallelized with up to two concurrent processes.
 
@@ -130,7 +134,7 @@ pymvpa2 --dbg-channel SLC searchlight \
     --scatter-rois 5 \
     --roi-attr gm \
     --nproc 2 \
-    --cv-learner 'SMLR(lm=1.0)' \
+    --cv-learner "$clf" \
     --cv-partitioner oddeven:chunks \
     --cv-errorfx mean_match_accuracy \
     --cv-avg-datafold-results \
@@ -156,29 +160,39 @@ pymvpa2 dump --fa null_prob \
 #% boundaries is an iterative ROI analysis -- cycling through a number of
 #% ROIs that are defined by localizers or an atlas. Here we perform the
 #% cross-validated classification analysis shown above on all areas defined
-#% in the Harvard-Oxford cortical atlas.
+#% in the Harvard-Oxford cortical atlas and present in our data.
 
-for roi in $(seq 48); do
-    echo "Doing ROI $roi"
+hoc_rois=( $(pymvpa2 exec -i "$outdir"/bold.hdf5 -e 'print(" ".join(map(str, dss[0].fa["hoc"].unique)))') )
+echo "ROIs of the Harvard-Oxford cortial atlas present in the data: ${hoc_rois[*]}"
+
+for roi in ${hoc_rois[*]}; do
+    echo -en " ROI $roi\t"
 
 #% Select corresponding voxels.
 
     pymvpa2 select --features-by-attr hoc eq $roi \
-    -i "$outdir"/faceshouses_brain.hdf5 \
-    -o "$outdir"/roi_tmp.hdf5
+        -i "$outdir"/faceshouses_brain.hdf5 \
+        -o "$outdir"/roi_tmp.hdf5
 
+#% Report number of voxels present in the given ROI.
+
+    nfeatures=$(pymvpa2 exec -i "$outdir"/roi_tmp.hdf5 -e "print(dss[0].nfeatures)")
     resultds="${outdir}/xval_faces_vs_houses_inROI${roi}.hdf5"
 
-#% And run the cross validation, printing only the overall accuracy
+    echo -en "$nfeatures voxels\taccuracy="
+
+#% And run the cross validation, finally printing the overall accuracy
 #% as a result on the console.
 
     pymvpa2 crossval \
-        --learner 'SMLR(lm=1.0)' \
+        --learner "$clf" \
         --partitioner n-1 \
         --errorfx mean_match_accuracy \
         --avg-datafold-results \
         -i "$outdir"/roi_tmp.hdf5 \
-        -o $resultds 2> /dev/null | grep "ACC%"
+        -o $resultds | awk '/ACC%/{printf "%.2f%%\n", $2}'
+
+    [ -z "${MVPA_TESTS_QUICK:-}" ] || break  # reserved for testing
 done
 
 #% EXAMPLE END

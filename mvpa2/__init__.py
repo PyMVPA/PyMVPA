@@ -155,5 +155,21 @@ if cfg.getboolean('debug', 'wtf', default=False):
         return ret
     sys.excepthook = _pymvpa_excepthook
 
+# Attach custom top-level exception handler
+if cfg.getboolean('debug', 'pdb', default=False):
+    import sys
+    _sys_excepthook = sys.excepthook
+    def _pymvpa_pdb_excepthook(type, value, tb):
+        if hasattr(sys, 'ps1') or not sys.stderr.isatty():
+            # we are in interactive mode or we don't have a tty-like
+            # device, so we call the default hook
+            sys.__excepthook__(type, value, tb)
+        else:
+            import traceback, pdb
+            traceback.print_exception(type, value, tb)
+            print
+            pdb.post_mortem(tb)
+    sys.excepthook = _pymvpa_pdb_excepthook
+
 if __debug__:
     debug('INIT', 'mvpa end')

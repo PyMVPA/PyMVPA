@@ -255,8 +255,7 @@ def test_save_load_object_dtype_ds(obj=None):
     f = tempfile.NamedTemporaryFile()
 
     # save/reload
-    h5save(f.name, obj)
-    obj_ = h5load(f.name)
+    obj_ = saveload(obj, f.name)
 
     # and compare
     # neh -- not versatile enough
@@ -301,3 +300,74 @@ def test_save_load_python_objs(obj):
 
     assert_equal(type(obj), type(obj_))
     assert_equal(obj, obj_)
+
+def saveload(obj, f, backend='hdf5'):
+    """Helper to save/load using some of tested backends
+    """
+    if backend == 'hdf5':
+        h5save(f, obj)
+        #import os; os.system('h5dump %s' % f)
+        obj_ = h5load(f)
+    else:
+        #check pickle -- does it correctly
+        import cPickle
+        with open(f, 'w') as f_:
+            cPickle.dump(obj, f_)
+        with open(f) as f_:
+            obj_ = cPickle.load(f_)
+    return obj_
+
+# Test some nasty nested constructs of mutable beasts
+_nested_d = {0: 2}
+_nested_d[1] = {
+    0: {3: 4}, # to ease comprehension of the dump
+    1: _nested_d}
+_nested_d[1][2] = ['crap', _nested_d]   # 3rd level of nastiness
+
+_nested_l = [2, None]
+_nested_l[1] = [{3: 4}, _nested_l, None]
+_nested_l[1][2] = ['crap', _nested_l]   # 3rd level of nastiness
+
+@sweepargs(obj=[_nested_d, _nested_l])
+@sweepargs(backend=['hdf5', 'pickle'])
+@with_tempfile()
+def test_nested_obj(f, backend, obj):
+    ok_(obj[1][1] is obj)
+    obj_ = saveload(obj, f, backend=backend)
+    assert_equal(obj_[0], 2)
+    assert_equal(obj_[1][0], {3: 4})
+    ok_(obj_[1][1] is obj_)
+    ok_(obj_[1][1] is not obj)  # nobody does teleportation
+
+    # 3rd level
+    ok_(obj_[1][2][1] is obj_)
+
+_nested_a = np.array([1, 2], dtype=object)
+_nested_a[1] = {1: 0, 2: _nested_a}
+
+@sweepargs(a=[_nested_a])
+@sweepargs(backend=['hdf5', 'pickle'])
+@with_tempfile()
+def test_nested_obj_arrays(f, backend, a):
+    assert_equal(a.dtype, np.object)
+    a_ = saveload(a, f, backend=backend)
+    # import pydb; pydb.debugger()
+    ok_(a_[1][2] is a_)
+
+@sweepargs(backend=['hdf5','pickle'])
+@with_tempfile()
+def test_ca_col(f, backend):
+    from mvpa2.base.state import ConditionalAttributesCollection, ConditionalAttribute
+    c1 = ConditionalAttribute(name='ca1', enabled=True)
+    #c2 = ConditionalAttribute(name='test2', enabled=True)
+    col = ConditionalAttributesCollection([c1], name='whoknows')
+    col.ca1 = col # {0: c1, 1: [None, col]}  # nest badly
+    assert_true(col.ca1 is col)
+    col_ = saveload(col, f, backend=backend)
+    # seems to work niceish with pickle
+    #print col_, col_.ca1, col_.ca1.ca1, col_.ca1.ca1.ca1
+    assert_true(col_.ca1.ca1 is col_.ca1)
+    # but even there top-level assignment test fails, which means it creates two
+    # instances
+    if backend != 'pickle':
+        assert_true(col_.ca1 is col_)
