@@ -371,3 +371,34 @@ def test_ca_col(f, backend):
     # instances
     if backend != 'pickle':
         assert_true(col_.ca1 is col_)
+
+# regression tests for datasets which have been previously saved
+
+def test_reg_load_hyperalignment_example_hdf5():
+    from mvpa2 import pymvpa_datadbroot
+    filepath = os.path.join(pymvpa_datadbroot,
+                        'hyperalignment_tutorial_data',
+                        'hyperalignment_tutorial_data.hdf5.gz')
+    if not os.path.exists(filepath):
+        raise SkipTest("No hyperalignment tutorial data available under %s" %
+                       filepath)
+    ds_all = h5load(filepath)
+
+    ds = ds_all[0]
+    # First mapper was a FlattenMapper
+    flat_mapper = ds.a.mapper[0]
+    assert_equal(flat_mapper.shape, (61, 73, 61))
+    assert_equal(flat_mapper.pass_attr, None)
+    assert_false('ERROR' in str(flat_mapper))
+    ds_reversed = ds.a.mapper.reverse(ds)
+    assert_equal(ds_reversed.shape, (len(ds),) + flat_mapper.shape)
+
+@with_tempfile()
+def test_save_load_FlattenMapper(f):
+    from mvpa2.mappers.flatten import FlattenMapper
+    fm = FlattenMapper()
+    ds = datasets['3dsmall']
+    ds_ = fm(ds)
+    ds_r = fm.reverse(ds_)
+    fm_ = saveload(fm, f)
+    assert_equal(fm_.shape, fm.shape)
