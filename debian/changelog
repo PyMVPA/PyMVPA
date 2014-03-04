@@ -1,9 +1,9 @@
-pymvpa2 (2.2.0+git1419-g1ad7844-1) neurodebian-devel; urgency=low
+pymvpa2 (2.2.0+git1435-g94a1926-1) neurodebian-devel; urgency=low
 
   * Sample of a fresh state of pre-release development
     - contains all  patches from under debian/patches/ so those are dropped
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 03 Mar 2014 11:35:16 +0100
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 04 Mar 2014 22:26:40 +0100
 
 pymvpa2 (2.2.0-4) unstable; urgency=low
 
