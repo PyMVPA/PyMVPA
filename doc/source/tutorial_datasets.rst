@@ -364,7 +364,7 @@ specify a mask image. Such a mask image is generated in pretty much any fMRI
 analysis pipeline -- may it be a full-brain mask computed during
 skull-stripping, or an activation map from a functional localizer. We are going
 to use the original GLM-based localizer mask of ventral temporal cortex
-from Haxby et al. (2001). We already know that it comprises 577 voxels.
+from Haxby et al. (2001).
 Let's reload the dataset:
 
 >>> ds = fmri_dataset(os.path.join(path, 'bold.nii.gz'),
@@ -374,7 +374,7 @@ Let's reload the dataset:
 >>> ds.nfeatures
 577
 
-As expected, we get the same number of samples and also only 577 features
+As expected, we get the same number of samples, but now only 577 features
 -- voxels corresponding to non-zero elements in the mask image. Now, let's
 explore this dataset a little further.
 
