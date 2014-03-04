@@ -10,9 +10,9 @@
 .. index:: Tutorial, Dataset concepts
 .. _chap_tutorial_datasets:
 
-***********************************
-Part 2: Dataset Basics and Concepts
-***********************************
+*****************************
+ Dataset Basics and Concepts
+*****************************
 
 .. note::
 
@@ -25,8 +25,10 @@ serves as the primary form of input data storage, but also as a container for
 more complex results returned by some algorithm. In this tutorial part we will
 take a look at what a dataset consists of, and how it works.
 
-In the simplest case, a dataset only contains *data* that is a matrix of
-numerical values.
+Most datasets in PyMVPA are represented as a two-dimensional array, where the
+first axis is the samples axis, and the second axis represents the
+:term:`feature`\s of the samples.  In the simplest case, a dataset only
+contains *data* that is a matrix of numerical values.
 
 >>> from mvpa2.tutorial_suite import *
 >>> data = [[  1,  1, -1],
@@ -209,12 +211,10 @@ True
 Slicing, resampling, feature selection
 ======================================
 
-At this point we can already construct a dataset from simple arrays and
-enrich it with an arbitrary number of additional attributes. But just
-having a dataset isn't enough. From part one of this tutorial we already
-know that we need to be able to select subsets of a dataset for further
-processing, and we also know that this is possible with PyMVPA's datasets.
-Now it is time to have a closer look into how it works.
+At this point we can already construct a dataset from simple arrays and enrich
+it with an arbitrary number of additional attributes. But just having a dataset
+isn't enough. We often need to be able to select subsets of a dataset for
+further processing.
 
 Slicing a dataset (i.e. selecting specific subsets) is very similar to
 slicing a NumPy array. It actually works *almost* identically. A dataset
@@ -324,16 +324,15 @@ We see that both attributes are still there and, moreover, also the
 appropriate subsets have been selected.
 
 
-Loading fMRI data
-=================
+Load fMRI data
+==============
 
-Enough theoretical foreplay -- let's look at a concrete example with an
-fMRI dataset. PyMVPA has several helper functions to load data from
-specialized formats, and the one for fMRI data is
-`~mvpa2.datasets.mri.fmri_dataset()`. The example dataset we are going to
-look at is a single subject from Haxby et al. (2001) that we already
-loaded in part one of this tutorial. For more convenience and less typing,
-we first specify the path of the directory with the fMRI data.
+Enough theoretical foreplay -- let's look at a concrete example with an fMRI
+dataset. PyMVPA has several helper functions to load data from specialized
+formats, and the one for fMRI data is `~mvpa2.datasets.mri.fmri_dataset()`. The
+example dataset we are going to look at is a single subject from Haxby et al.
+(2001).  For more convenience and less typing, we first specify the path of the
+directory with the fMRI data.
 
 >>> path=os.path.join(tutorial_data_path, 'data')
 
@@ -354,7 +353,7 @@ two-dimensional dataset with 1452 samples (these are volumes in the NIfTI
 file), and over 160k features (these are voxels in the volume). The voxels
 are represented as a one-dimensional vector, and it seems that they have
 lost their association with the 3D-voxel-space. However, this is not the
-case, as we will see in the next chapter.  PyMVPA represents
+case, as we will see later.  PyMVPA represents
 data in this simple format to make it compatible with a vast range of generic
 algorithms that expect data to be a simple matrix.
 
@@ -365,7 +364,7 @@ specify a mask image. Such a mask image is generated in pretty much any fMRI
 analysis pipeline -- may it be a full-brain mask computed during
 skull-stripping, or an activation map from a functional localizer. We are going
 to use the original GLM-based localizer mask of ventral temporal cortex
-from Haxby et al. (2001). We already know that it comprises 577 voxels.
+from Haxby et al. (2001).
 Let's reload the dataset:
 
 >>> ds = fmri_dataset(os.path.join(path, 'bold.nii.gz'),
@@ -375,9 +374,14 @@ Let's reload the dataset:
 >>> ds.nfeatures
 577
 
-As expected, we get the same number of samples and also only 577 features
+As expected, we get the same number of samples, but now only 577 features
 -- voxels corresponding to non-zero elements in the mask image. Now, let's
 explore this dataset a little further.
+
+.. exercise::
+
+  Explore the dataset attribute collections. What kind of information do they
+  contain?
 
 Besides samples, the dataset offers a number of attributes that enhance the
 data with information that is present in the NIfTI image file header.
@@ -387,14 +391,6 @@ original voxel index (sometimes referred to as ``ijk``) for each feature is
 available too.  Finally, the dataset also contains information about the
 dimensionality of the input volumes, voxel size, and any other NIfTI-specific
 information since it also includes a dump of the full NIfTI image header.
-
-.. note::
-   Previously (0.4.x versions and 0.5 development prior March 03, 2010),
-   PyMVPA exposed 4D (and 3D with degenerate 1st dimension) data in ``tkji``
-   (corresponds to ``tzyx`` if volumes were axial slices in
-   neurologic convention) order of dimensions.  Now it uses more convenient
-   order ``tijk`` (corresponding to ``txyz``), which will match the order exposed
-   by NiBabel (PyNIfTI and NiftiImage still expose them as ``tkji``).
 
 >>> ds.sa.time_indices[:5]
 array([0, 1, 2, 3, 4])
@@ -415,8 +411,8 @@ True
 
 In addition to all this information, the dataset also carries a key additional
 attribute: the *mapper*. A mapper is an important concept in PyMVPA, and
-hence worth devoting the whole :ref:`next tutorial chapter
-<chap_tutorial_mappers>` to it.
+hence has its own :ref:`tutorial chapter
+<chap_tutorial_mappers>`.
 
 >>> print ds.a.mapper
 <Chain: <Flatten>-<StaticFeatureSelection>>
@@ -439,8 +435,8 @@ duplicating all data in memory -- meaning both datasets now share the sample
 data and any change done to ``ds`` will also affect ``stripped``.
 
 
-Storage
-=======
+Intermediate Storage
+====================
 
 Some data preprocessing can take a long time.  One would rather prevent
 having to do it over and over again, and instead just store the preprocessed data
@@ -480,3 +476,8 @@ transparently.
 True
 >>> # cleanup the temporary directory, and everything it includes
 >>> shutil.rmtree(tempdir, ignore_errors=True)
+
+Note that this type of dataset storage is not appropriate from long-term archival
+of data, as it relies on a stable software environment. For long-term storage,
+use other formats.
+

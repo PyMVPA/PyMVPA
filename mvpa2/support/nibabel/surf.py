@@ -956,9 +956,20 @@ class Surface(object):
         # these are lazily computed on the first call to e.g. node2faces
         lazy_keys = ('_n2f', '_f2el', '_v2ael', '_e2f', '_nbrs')
         lazy_dict = dict()
-        for lazy_key in lazy_keys:
-            if lazy_key in self.__dict__:
-                lazy_dict[lazy_key] = self.__dict__[lazy_key]
+        # TODO: add in efficient way to translate these dictionaries
+        #       to something like a numpy array, and implement the 
+        #       translation back. Types for these dicts:
+        #       _n2f: int -> [int]
+        #       _f2el: array
+        #       _v2ael: array
+        #       _e2f: (int,int) -> int
+        #       _nbrs: int -> (int -> float)
+        #       
+        # For now this this functionaltiy is switched off,
+        # because pickling it (also with hdf5) takes a long time
+        #for lazy_key in lazy_keys:
+        #    if lazy_key in self.__dict__:
+        #        lazy_dict[lazy_key] = self.__dict__[lazy_key]
 
 
         return (self.__class__, (self._v, self._f), lazy_dict)

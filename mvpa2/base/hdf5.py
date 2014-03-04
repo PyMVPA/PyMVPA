@@ -42,12 +42,18 @@ import h5py
 import os
 import os.path as osp
 
+import mvpa2
 from mvpa2.base import externals
 from mvpa2.base.types import asobjarray
 
 if __debug__:
     from mvpa2.base import debug
 
+# don't ask -- makes history re-education a breeze
+universal_classname_remapper = {
+    ('mvpa2.mappers.base', 'FeatureSliceMapper'):
+        ('mvpa2.featsel.base', 'StaticFeatureSelection'),
+}
 # Comment: H5Py defines H5Error
 class HDF5ConversionError(Exception):
     """Generic exception to be thrown while doing conversions to/from HDF5
@@ -193,8 +199,7 @@ def _recon_functype(hdf):
     if __debug__:
         debug('HDF5', "Load '%s.%s.%s' [%s]"
                       % (mod_name, cls_name, ft_name, hdf.name))
-    mod = __import__(mod_name, fromlist=[cls_name])
-    obj = mod.__dict__[ft_name]
+    mod, obj = _import_from_thin_air(mod_name, ft_name, cls_name=cls_name)
     return obj
 
 def _get_subclass_entry(cls, clss, exc_msg="", exc=NotImplementedError):
@@ -232,16 +237,7 @@ def _recon_customobj_customrecon(hdf, memo):
         debug('HDF5', "Load from custom reconstructor '%s.%s' [%s]"
                       % (mod_name, recon_name, hdf.name))
     # turn names into definitions
-    try:
-        mod = __import__(mod_name, fromlist=[recon_name])
-    except ImportError, e:
-        if mod_name.startswith('mvpa') and not mod_name.startswith('mvpa2'):
-            # try to be gentle on data that got stored with PyMVPA 0.5 or 0.6
-            mod_name = mod_name.replace('mvpa', 'mvpa2', 1)
-            mod = __import__(mod_name, fromlist=[recon_name])
-        else:
-            raise e
-    recon = mod.__dict__[recon_name]
+    mod, recon = _import_from_thin_air(mod_name, recon_name)
 
     obj = None
     if 'rcargs' in hdf:
@@ -285,15 +281,11 @@ def _recon_customobj_customrecon(hdf, memo):
     return obj
 
 
-def _recon_customobj_defaultrecon(hdf, memo):
-    """Reconstruct a custom object from HDF using the default recontructor"""
-    cls_name = hdf.attrs['class']
-    mod_name = hdf.attrs['module']
-    if __debug__:
-        debug('HDF5', "Load class instance '%s.%s' instance [%s]"
-                      % (mod_name, cls_name, hdf.name))
+def _import_from_thin_air(mod_name, importee, cls_name=None):
+    if cls_name is None:
+        cls_name = importee
     try:
-        mod = __import__(mod_name, fromlist=[cls_name])
+        mod = __import__(mod_name, fromlist=[importee])
     except ImportError, e:
         if mod_name.startswith('mvpa') and not mod_name.startswith('mvpa2'):
             # try to be gentle on data that got stored with PyMVPA 0.5 or 0.6
@@ -301,7 +293,23 @@ def _recon_customobj_defaultrecon(hdf, memo):
             mod = __import__(mod_name, fromlist=[cls_name])
         else:
             raise e
-    cls = mod.__dict__[cls_name]
+    try:
+        imp = mod.__dict__[importee]
+    except KeyError:
+        mod_name, importee = universal_classname_remapper[(mod_name, importee)]
+        mod = __import__(mod_name, fromlist=[cls_name])
+        imp = mod.__dict__[importee]
+    return mod, imp
+
+
+def _recon_customobj_defaultrecon(hdf, memo):
+    """Reconstruct a custom object from HDF using the default recontructor"""
+    cls_name = hdf.attrs['class']
+    mod_name = hdf.attrs['module']
+    if __debug__:
+        debug('HDF5', "Load class instance '%s.%s' instance [%s]"
+                      % (mod_name, cls_name, hdf.name))
+    mod, cls = _import_from_thin_air(mod_name, cls_name)
 
     # create the object
     # use specialized __new__ if necessary or beneficial
@@ -343,7 +351,19 @@ def _hdf_dict_to_obj(hdf, memo, skip=None):
         # objref'ed/used in memo
         d = dict()
         items = _hdf_list_to_obj(hdf, memo, target_container=d)
-        d.update([i for i in items if not i[0] in skip])
+        # some time back we had attribute names stored as arrays
+        for k, v in items:
+            if k in skip:
+                continue
+            try:
+                d[k] = v
+            except TypeError:
+                # fucked up dataset -- trying our best
+                if isinstance(k, np.ndarray):
+                    d[np.asscalar(k)] = v
+                else:
+                    # no idea, really
+                    raise
         return d
     else:
         # legacy files had keys as group names
@@ -761,7 +781,8 @@ def h5save(filename, data, name=None, mode='w', mkdir=True, **kwargs):
         if target_dir and not osp.exists(target_dir):
             os.makedirs(target_dir)
     hdf = h5py.File(filename, mode)
-    hdf.attrs.create('__pymvpa_hdf5_version__', 1)
+    hdf.attrs.create('__pymvpa_hdf5_version__', '2')
+    hdf.attrs.create('__pymvpa_version__', mvpa2.__version__)
     try:
         obj2hdf(hdf, data, name, **kwargs)
     finally:

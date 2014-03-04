@@ -37,27 +37,41 @@ more flexible ways than what is shown. Enjoy the ride.
 Through the course of the tutorial we will analyze :ref:`real BOLD fMRI data
 <datadb_tutorial_data>`. Therefore, to be able to run the code in this
 tutorial, you need to download the :ref:`corresponding data from the PyMVPA
-website <datadb_tutorial_data>`. Once downloaded, extract the tarball, open a
-terminal, go into the directory with the extracted tarball content and run:
-:command:`./start_tutorial_session.sh`. On a NeuroDebian-enabled system,
-the tutorial data is also available from the ``python-mvpa2-tutorialdata``
-package.
+website <datadb_tutorial_data>`. Once downloaded, extract the tarball.  On a
+NeuroDebian-enabled system, the tutorial data is also available from the
+``python-mvpa2-tutorialdata`` package.
+
+The ``pymvpa2-tutorial`` command (installed with PyMVPA) can be invoked in a
+console in order to launch a tutorial session. If the tutorial data was
+downloaded manually it may be necessary to specify the appropriate
+``--tutorial-data-path`` option (see ``pymvpa2-tutorial --help`` for more
+information).
+
+Virtually every Python script starts with some ``import`` statements that load
+functionality provided elsewhere. Likewise a tutorial session need to import
+the PyMVPA packages and some little helpers we are going to use in the
+tutorial::
+
+>>> from mvpa2.tutorial_suite import *
+
+If this command succeeds without error, everything is ready to go.
 
 If you want to prevent yourself from re-typing all code snippets into the
 terminal window, you might want to investigate IPython's ``%cpaste``
-command.
+command, or use the provided `IPython notebooks`_ for each tutorial part.
 
 .. _Python: http://www.python.org
+.. _IPython notebook: http://ipython.org/notebook
 
 .. toctree::
    :maxdepth: 2
 
    tutorial_prerequisites
-   tutorial_start
    tutorial_datasets
    tutorial_mappers
    tutorial_classifiers
    tutorial_searchlight
+   tutorial_meta_classifiers
    tutorial_sensitivity
    tutorial_eventrelated
    tutorial_significance
