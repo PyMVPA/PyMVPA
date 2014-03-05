@@ -21,7 +21,7 @@
   [`ipynb <notebooks/tutorial_mappers.ipynb>`_]
 
 In the tutorial part :ref:`chap_tutorial_datasets` we have discovered a
-magic ingredient of datasets: a mapper. Mappers are probably the most
+magic ingredient of datasets: a :class:`~mvpa2.mappers.base.Mapper`. Mappers are probably the most
 powerful concept in PyMVPA, and there is little one would do without them.
 
 In general, a mapper is an algorithm that transforms data.
@@ -48,8 +48,9 @@ but we will shortly see some nice convenience aspects.
 >>> ds.shape
 (5, 12)
 
-A mapper is a :term:`dataset attribute`, hence it is stored in the
-corresponding attribute collection. However, not every dataset actually has
+Some datasets (such as the ones `~mvpa2.datasets.mri.fmri_dataset()` with a
+mask) contain mappers as a :term:`dataset attribute` ``.a.mapper``.
+However, not every dataset actually has
 a mapper. For example, the simple one we have just created doesn't have any:
 
 >>> 'mapper' in ds.a
@@ -121,7 +122,7 @@ one in ``subds``. By looking at the forward-mapped data, we can verify that the
 correct features have been chosen.
 
 
-========================================
+.. ========================================
 
 We have pretty much all the pieces to start a first analysis.  We know how to
 load fMRI data from time series images, we know how to add and access
@@ -197,7 +198,69 @@ directly:
 <SampleAttributesCollection: chunks,targets,time_coords,time_indices>
 
 We got the dataset that we already know from the last part, but this time
-is also has information about chunks and targets.
+is also has information about chunks and targets.  Now it is a good time to
+obtain a `~mvpa2.datasets.miscfx.summary()` overview of the dataset: basic
+statistics, balance in number of samples among targets per chunk, etc.:
+
+>>> print fds.summary()
+Dataset: 1452x577@int16, <sa: chunks,targets,time_coords,time_indices>, <fa: voxel_indices>, <a: imghdr,imgtype,mapper,voxel_dim,voxel_eldim>
+stats: mean=1656.47 std=342.034 var=116988 min=352 max=2805
+<BLANKLINE>
+Counts of targets in each chunk:
+  chunks\targets bottle cat chair face house rest scissors scrambledpix shoe
+                   ---  ---  ---   ---  ---   ---    ---        ---      ---
+       0.0          9    9    9     9    9    49      9          9        9
+       1.0          9    9    9     9    9    49      9          9        9
+       2.0          9    9    9     9    9    49      9          9        9
+       3.0          9    9    9     9    9    49      9          9        9
+       4.0          9    9    9     9    9    49      9          9        9
+       5.0          9    9    9     9    9    49      9          9        9
+       6.0          9    9    9     9    9    49      9          9        9
+       7.0          9    9    9     9    9    49      9          9        9
+       8.0          9    9    9     9    9    49      9          9        9
+       9.0          9    9    9     9    9    49      9          9        9
+      10.0          9    9    9     9    9    49      9          9        9
+      11.0          9    9    9     9    9    49      9          9        9
+<BLANKLINE>
+Summary for targets across chunks
+    targets  mean std min max #chunks
+   bottle      9   0   9   9     12
+     cat       9   0   9   9     12
+    chair      9   0   9   9     12
+    face       9   0   9   9     12
+    house      9   0   9   9     12
+    rest      49   0   49  49    12
+  scissors     9   0   9   9     12
+scrambledpix   9   0   9   9     12
+    shoe       9   0   9   9     12
+<BLANKLINE>
+Summary for chunks across targets
+  chunks mean  std min max #targets
+    0    13.4 12.6  9   49     9
+    1    13.4 12.6  9   49     9
+    2    13.4 12.6  9   49     9
+    3    13.4 12.6  9   49     9
+    4    13.4 12.6  9   49     9
+    5    13.4 12.6  9   49     9
+    6    13.4 12.6  9   49     9
+    7    13.4 12.6  9   49     9
+    8    13.4 12.6  9   49     9
+    9    13.4 12.6  9   49     9
+   10    13.4 12.6  9   49     9
+   11    13.4 12.6  9   49     9
+Sequence statistics for 1452 entries from set ['bottle', 'cat', 'chair', 'face', 'house', 'rest', 'scissors', 'scrambledpix', 'shoe']
+Counter-balance table for orders up to 2:
+Targets/Order O1                           |  O2                           |
+   bottle:    96  0  0  0  0  12  0  0  0  |  84  0  0  0  0  24  0  0  0  |
+     cat:      0 96  0  0  0  12  0  0  0  |   0 84  0  0  0  24  0  0  0  |
+    chair:     0  0 96  0  0  12  0  0  0  |   0  0 84  0  0  24  0  0  0  |
+    face:      0  0  0 96  0  12  0  0  0  |   0  0  0 84  0  24  0  0  0  |
+    house:     0  0  0  0 96  12  0  0  0  |   0  0  0  0 84  24  0  0  0  |
+    rest:     12 12 12 12 12 491 12 12 12  |  24 24 24 24 24 394 24 24 24  |
+  scissors:    0  0  0  0  0  12 96  0  0  |   0  0  0  0  0  24 84  0  0  |
+scrambledpix:  0  0  0  0  0  12  0 96  0  |   0  0  0  0  0  24  0 84  0  |
+    shoe:      0  0  0  0  0  12  0  0 96  |   0  0  0  0  0  24  0  0 84  |
+Correlations: min=-0.19 max=0.88 mean=-0.00069 sum(abs)=77
 
 The next step is to extract the *patterns of activation* from the dataset
 that we are interested in. But wait! We know that fMRI data is
@@ -260,10 +323,11 @@ possible approaches to fix it. For this tutorial we are again following a
 simple one, and perform a feature-wise, chunk-wise Z-scoring of the data.  This
 has many advantages. First, it is going to scale all features into approximately
 the same range, and also remove their mean.  The latter is quite important,
-since some classifiers cannot handle not-demeaned data. However, we are not
+since some classifiers are impaired when working with data having large offsets.
+However, we are not
 going to perform a very simple Z-scoring removing the global mean, but use the
-*rest* condition samples of the data to estimate mean and standard deviation.
-Scaling features using these parameters yields a score corresponding to the
+*rest* condition samples of the dataset to estimate mean and standard deviation.
+Scaling dataset features using these parameters yields a score corresponding to the
 per time-point voxel intensity difference from the *rest* average.
 
 This type of data :term:`normalization` is, you guessed it, also
@@ -271,7 +335,7 @@ implemented as a mapper:
 
 >>> zscorer = ZScoreMapper(param_est=('targets', ['rest']))
 
-This configures to perform a chunk-wise (the default) Z-scoring, while
+This configures to perform a :term:`chunk`\-wise (the default) Z-scoring, while
 estimating mean and standard deviation from samples targets with 'rest' in
 the respective chunk of data.
 
@@ -345,8 +409,17 @@ since this is also a mapper, a new dataset with mean samples is returned:
 >>> print fds.sa.targets
 ['bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe'
  'bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe']
+>>> print fds.sa.chunks
+['0.0+2.0+4.0+6.0+8.0+10.0' '0.0+2.0+4.0+6.0+8.0+10.0'
+ '0.0+2.0+4.0+6.0+8.0+10.0' '0.0+2.0+4.0+6.0+8.0+10.0'
+ '0.0+2.0+4.0+6.0+8.0+10.0' '0.0+2.0+4.0+6.0+8.0+10.0'
+ '0.0+2.0+4.0+6.0+8.0+10.0' '0.0+2.0+4.0+6.0+8.0+10.0'
+ '1.0+3.0+5.0+7.0+9.0+11.0' '1.0+3.0+5.0+7.0+9.0+11.0'
+ '1.0+3.0+5.0+7.0+9.0+11.0' '1.0+3.0+5.0+7.0+9.0+11.0'
+ '1.0+3.0+5.0+7.0+9.0+11.0' '1.0+3.0+5.0+7.0+9.0+11.0'
+ '1.0+3.0+5.0+7.0+9.0+11.0' '1.0+3.0+5.0+7.0+9.0+11.0']
 
-Here we go! We now have a fully-preprocessed dataset: detrended, normalized,
+Here we go! We now have a fully-preprocessed dataset: masked, detrended, normalized,
 with one sample per stimulus condition that is an average for odd and even runs
 respectively. Now we could do some serious classification, and this will be
 shown in :ref:`chap_tutorial_classifiers`, but there is still an

@@ -31,9 +31,13 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
-* 2.3.0 (XX 2013)
+* 2.3.0 (Thu, 5 March 2014)
 
-  * New functionality (73 commits)
+  * **Warning**: Due to a significant number of new features and some internal
+    changes, loading of HDF5 files saved with previous versions might be
+    impaired.
+
+  * New functionality (>73 commits)
 
     - Multi-threaded, surface-based searchlight queryengine
       :func:`~mvpa2.misc.surfing.queryengine.disc_surface_queryengine`
@@ -60,15 +64,23 @@ Releases
       ``pymvpa2-prep-afni-surf`` for surface-based analyses.
     - Winner-take-all measures :mod:`~mvpa2.measures.winner`.
 
-  * Enhancements (130 commits)
+  * Enhancements (>130 commits)
 
     - :func:`~mvpa2.datasets.mri.fmri_dataset` load support for AFNI NIFTI
       volumes with time in the fifth dimension (data is automagically squeezed
       to 4D).
+    - :func:`~mvpa2.datasets.mri.map2nifti` sets ``cal_`` fields to correspond
+      to the range of the data.
+    - Many parts of the tutorial were reworked, set of examples expanded, and
+      also converted to IPython notebooks.
+    - :func:`~mvpa2.datasets.eventrelated` extended to output GLM regression
+      fits as features (relying on NiPy for GLM modeling).
 
-  * Fixes (88 commits)
+  * Fixes (>88 commits)
 
     - Makefile fetch-data retrieves the data correctly.
+    - HDF5 backend fixes to deal with nested/recursive structures and higher
+      tollerance in loading HDF5 from older version
 
 
 * 2.2.0 (Sun, Sep 16 2012)

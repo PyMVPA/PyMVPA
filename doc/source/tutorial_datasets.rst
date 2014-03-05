@@ -26,7 +26,7 @@ more complex results returned by some algorithm. In this tutorial part we will
 take a look at what a dataset consists of, and how it works.
 
 Most datasets in PyMVPA are represented as a two-dimensional array, where the
-first axis is the samples axis, and the second axis represents the
+first axis is the :term:`sample`\s axis, and the second axis represents the
 :term:`feature`\s of the samples.  In the simplest case, a dataset only
 contains *data* that is a matrix of numerical values.
 
@@ -73,7 +73,7 @@ second axis represents the features
 4
 
 In this case we have a dataset with three samples and four features, where each
-feature is a 2x3 matrix. In case somebody is wondering now, why not simply
+feature is a 2x3 matrix. In case somebody is wondering now why not simply
 treat each value in the data array as its own feature (yielding 24 features) --
 stay tuned, as this is going to be of importance later on.
 
@@ -124,7 +124,7 @@ array([ 0.,  1.,  3.])
 
 However, for most interactive uses of PyMVPA this type of access to attributes'
 ``.value`` is relatively cumbersome (too much typing), therefore collections offer direct
-attribute access by name:
+access by name:
 
 >>> ds.sa.some_attr
 array([ 0.,  1.,  1.,  3.])
@@ -193,8 +193,8 @@ For The Dataset
 ---------------
 
 Finally, there can be also attributes, not per each sample, or each
-feature, but for the dataset as a whole: so called :term:`dataset
-attribute`\s. Both assigning such attributes and accessing them later on work in
+feature, but for the dataset as a whole: so called :term:`dataset attribute`\s.
+Both assigning such attributes and accessing them later on work in
 exactly the same way as for the other two types of attributes, except that dataset
 attributes are stored in their own collection which is accessible via the
 ``a`` property of the dataset.  However, in contrast to sample and feature
@@ -247,15 +247,13 @@ array([[ 1,  1, -1],
 
 .. exercise::
 
-  Search the `NumPy documentation`_ for the difference between "basic slicing"
+  Search the `NumPy documentation <http://docs.scipy.org/doc/>`__ for the difference between "basic slicing"
   and "advanced indexing". The aspect of memory consumption, especially,
   applies to dataset slicing as well, and being aware of this fact might
   help to write more efficient analysis scripts. Which of the three slicing
   approaches above is the most memory-efficient?  Which of the three slicing
   approaches above might lead to unexpected side-effects if the output dataset
   gets modified?
-
-.. _NumPy documentation: http://docs.scipy.org/doc/
 
 
 All three slicing-styles are equally applicable to the selection of feature
@@ -269,7 +267,7 @@ array([[ 1, -1],
        [ 0, -1]])
 
 By applying a selection by indices to the second axis, we can easily get
-the last two features of our example dataset. Please note the `:` is supplied
+the last two features of our example dataset. Please note that the ``:`` is supplied
 for the first axis slicing. This is the Python way to indicate *take everything
 along this axis*, thus including all samples.
 
@@ -287,8 +285,8 @@ might have expected is this:
 >>> ds.samples[[0,1], [0,2]]
 array([1, 0])
 
-The above code applies the same slicing directly to the NumPy array with
-the samples, and the result is fundamentally different. For NumPy arrays
+The above code applies the same slicing directly to the NumPy array of
+``.samples``, and the result is fundamentally different. For NumPy arrays
 this style of slicing allows selection of specific elements by their indices on
 each axis of an array. For PyMVPA's datasets this mode is not very useful,
 instead we typically want to select rows and columns, i.e. samples and
@@ -321,7 +319,7 @@ created:
 ['me' 'nobody']
 
 We see that both attributes are still there and, moreover, also the
-appropriate subsets have been selected.
+corresponding subsets have been selected.
 
 
 Load fMRI data
@@ -348,7 +346,7 @@ that has all runs of the experiment concatenated into a single file.
 >>> ds.shape
 (1452, 163840)
 
-We can notice two things. First, it worked! Second, we get a
+We can notice two things. First -- *it worked!* Second, we obtained a
 two-dimensional dataset with 1452 samples (these are volumes in the NIfTI
 file), and over 160k features (these are voxels in the volume). The voxels
 are represented as a one-dimensional vector, and it seems that they have
@@ -357,7 +355,7 @@ case, as we will see later.  PyMVPA represents
 data in this simple format to make it compatible with a vast range of generic
 algorithms that expect data to be a simple matrix.
 
-We just loaded all data from that NIfTI file, but usually we would be
+We loaded all data from that NIfTI file, but usually we would be
 interested in a subset only, i.e. "brain voxels".
 `~mvpa2.datasets.mri.fmri_dataset` is capable of performing data masking. We just need to
 specify a mask image. Such a mask image is generated in pretty much any fMRI
@@ -411,8 +409,7 @@ True
 
 In addition to all this information, the dataset also carries a key additional
 attribute: the *mapper*. A mapper is an important concept in PyMVPA, and
-hence has its own :ref:`tutorial chapter
-<chap_tutorial_mappers>`.
+hence has its own :ref:`tutorial chapter <chap_tutorial_mappers>`.
 
 >>> print ds.a.mapper
 <Chain: <Flatten>-<StaticFeatureSelection>>

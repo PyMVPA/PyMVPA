@@ -183,10 +183,32 @@ def _extract_boxcar_events(
 
 def _fit_hrf_event_model(
         ds, events, time_attr, condition_attr='targets', design_kwargs=None,
-        glmfit_kwargs=None, regr_attrs=None, eprefix='event', conditions=None):
+        glmfit_kwargs=None, regr_attrs=None):
     if externals.exists('nipy', raise_=True):
         from nipy.modalities.fmri.design_matrix import make_dmtx
         from mvpa2.mappers.glm import NiPyGLMMapper
+
+    # Decide/device condition attribute on which GLM will actually be done
+    if isinstance(condition_attr, basestring):
+        # must be a list/tuple/array for the logic below
+        condition_attr = [condition_attr]
+
+    glm_condition_attr = 'regressor_names' # actual regressors
+    glm_condition_attr_map = {con: dict() for con in condition_attr}    #
+    # to map back to original conditions
+    events = copy.deepcopy(events)  # since we are modifying in place
+    for event in events:
+        if glm_condition_attr in event:
+            raise ValueError("Event %s already has %s defined.  Should not "
+                             "happen.  Choose another name if defined it"
+                             % (event, glm_condition_attr))
+        compound_label = event[glm_condition_attr] = \
+            'glm_label_' + '+'.join(
+                str(event[con]) for con in condition_attr)
+        # and mapping back to original values, without str()
+        # for each condition:
+        for con in condition_attr:
+            glm_condition_attr_map[con][compound_label] = event[con]
 
     evvars = _events2dict(events)
     add_paradigm_kwargs = {}
@@ -197,7 +219,7 @@ def _fit_hrf_event_model(
         from nipy.modalities.fmri.experimental_paradigm import BlockParadigm
         # NiPy considers everything with a duration as a block paradigm
         paradigm = BlockParadigm(
-                        con_id=evvars[condition_attr],
+                        con_id=evvars[glm_condition_attr],
                         onset=evvars['onset'],
                         duration=evvars['duration'],
                         **add_paradigm_kwargs)
@@ -205,10 +227,9 @@ def _fit_hrf_event_model(
         from nipy.modalities.fmri.experimental_paradigm \
                 import EventRelatedParadigm
         paradigm = EventRelatedParadigm(
-                        con_id=evvars[condition_attr],
+                        con_id=evvars[glm_condition_attr],
                         onset=evvars['onset'],
                         **add_paradigm_kwargs)
-
     # create design matrix -- all kinds of fancy additional regr can be
     # auto-generated
     if design_kwargs is None:
@@ -231,17 +252,40 @@ def _fit_hrf_event_model(
             design_kwargs['add_reg_names'].extend(names)
         else:
             design_kwargs['add_reg_names'] = names
-
     design_matrix = make_dmtx(ds.sa[time_attr].value,
                               paradigm,
                               **design_kwargs)
+
     # push design into source dataset
-    for i, reg in enumerate(design_matrix.names):
-        ds.sa[reg] = design_matrix.matrix[:, i]
+    glm_regs = [
+        (reg, design_matrix.matrix[:, i])
+        for i, reg in enumerate(design_matrix.names)]
+
     # GLM
-    glm = NiPyGLMMapper(design_matrix.names, glmfit_kwargs=glmfit_kwargs,
-            return_design=True, return_model=True, space=condition_attr)
+    glm = NiPyGLMMapper([], glmfit_kwargs=glmfit_kwargs,
+            add_regs=glm_regs,
+            return_design=True, return_model=True, space=glm_condition_attr)
+
     model_params = glm(ds)
+
+    # some regressors might be corresponding not to original condition_attr
+    # so let's separate them out
+    regressor_names = model_params.sa[glm_condition_attr].value
+    condition_regressors = np.array([v in glm_condition_attr_map.values()[0]
+                                     for v in regressor_names])
+    assert(condition_regressors.dtype == np.bool)
+    if not np.all(condition_regressors):
+        # some regressors do not correspond to conditions and would need
+        # to be taken into a separate dataset
+        model_params.a['add_regs'] = model_params[~condition_regressors]
+        # then we process the rest
+        model_params = model_params[condition_regressors]
+        regressor_names = model_params.sa[glm_condition_attr].value
+
+    # now define proper condition sa's
+    for con, con_map in glm_condition_attr_map.iteritems():
+        model_params.sa[con] = [con_map[v] for v in regressor_names]
+    model_params.sa.pop(glm_condition_attr) # remove generated one
     return model_params
 
 
@@ -348,6 +392,8 @@ def eventrelated_dataset(ds, events, time_attr=None, match='prev',
       samples remain the same.
     condition_attr : str
       For HRF modeling: name of the event attribute with the condition labels.
+      Can be a list of those (e.g. ['targets', 'chunks'] combination of which
+      would constitute a condition.
     design_kwargs : dict
       Arbitrary keyword arguments for NiPy's make_dmtx() used for design matrix
       generation. Choose HRF model, confound regressors, etc.
@@ -422,11 +468,17 @@ def eventrelated_dataset(ds, events, time_attr=None, match='prev',
     ...                   glmfit_kwargs=dict(model='ols'),
     ...                   model='hrf')
     >>> print hrf_estimates.sa.condition
-    ['one' 'two' 'constant']
+    ['one' 'two']
     >>> print hrf_estimates.shape
-    (3, 25)
+    (2, 25)
     >>> len(hrf_estimates.a.model.get_mse())
     25
+
+    Additional regressors used in GLM modeling are also available in a
+    dataset attribute:
+
+    >>> print hrf_estimates.a.add_regs.sa.regressor_names
+    ['constant']
     """
     if not len(events):
         raise ValueError("no events specified")
@@ -446,6 +498,6 @@ def eventrelated_dataset(ds, events, time_attr=None, match='prev',
                     ds, events=events, time_attr=time_attr,
                     condition_attr=condition_attr,
                     design_kwargs=design_kwargs, glmfit_kwargs=glmfit_kwargs,
-                    regr_attrs=regr_attrs, eprefix=eprefix)
+                    regr_attrs=regr_attrs)
     else:
         raise ValueError("unknown event model '%s'" % model)

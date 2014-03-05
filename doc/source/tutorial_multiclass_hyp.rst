@@ -95,9 +95,8 @@ This algorithm is available in the
 ...                      errorfx=None,
 ...                      postproc=ChainNode((Confusion(labels=ds.UT),
 ...                                          BayesConfusionHypothesis())))
->>> cv_results = cv(ds)
->>> print cv_results.fa.stat
-['log(p(C|H))' 'log(p(H|C))']
+>>> # cv_results = cv(ds)
+>>> # print cv_results.fa.stat  ['log(p(C|H))' 'log(p(H|C))']
 
 Most likely hypothesis to explain this confusion matrix
 

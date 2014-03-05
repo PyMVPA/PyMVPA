@@ -74,4 +74,5 @@ command, or use the provided `IPython notebooks`_ for each tutorial part.
    tutorial_meta_classifiers
    tutorial_sensitivity
    tutorial_eventrelated
+   tutorial_eventrelated_searchlight
    tutorial_significance
