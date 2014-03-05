@@ -175,7 +175,7 @@ chunks.
 Before we can run a classification analysis we still need to normalize each
 feature (GLM parameters estimates for each voxel at this point).
 
->>> zscore(evds, chunks_attr=none)
+>>> zscore(evds, chunks_attr=None)
 
 The rest is straight-forward: we set up a cross-validation analysis with
 a chosen classifier and run it:
@@ -184,7 +184,7 @@ a chosen classifier and run it:
 >>> cv = CrossValidation(clf, NFoldPartitioner(attr='chunks'))
 >>> cv_glm = cv(evds)
 >>> print '%.2f' % np.mean(cv_glm)
-0.08
+0.04
 
 Not bad! Let's compare that to a simpler approach that is also suitable for
 block-design experiments like this one.
