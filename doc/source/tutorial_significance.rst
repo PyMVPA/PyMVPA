@@ -10,9 +10,9 @@
 .. index:: Tutorial, statistical testing, monte-carlo, permutation
 .. _chap_tutorial_significance:
 
-**************************************************
-Part 8: The Earth Is Round -- Significance Testing
-**************************************************
+***********************************************
+WiP: The Earth Is Round -- Significance Testing
+***********************************************
 
 .. note::
 
