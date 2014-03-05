@@ -110,6 +110,13 @@ if bind_libsvm:
 # Notes on the setup
 # Version scheme is: major.minor.patch<suffix>
 
+def get_full_dir(path):
+    path_split = path.split('/') # so we could run setup.py on any platform
+    path_proper = os.path.join(*path_split)
+    return (path_proper,
+            [f for f in glob(os.path.join(path_proper, '*'))
+             if os.path.isfile(f)])
+
 # define the setup
 def setup_package():
     # Perform 2to3 if needed
@@ -180,12 +187,10 @@ def setup_package():
                            'mvpa2.viz',
                            ],
           data_files=[('mvpa2', ['mvpa2/COMMIT_HASH']),
-                        ('mvpa2/data',
-                         [f for f in glob(os.path.join('mvpa2', 'data', '*'))
-                             if os.path.isfile(f)]),
-                        ('mvpa2/data/bv',
-                         [f for f in glob(os.path.join('mvpa2', 'data', 'bv', '*'))
-                             if os.path.isfile(f)])],
+                        get_full_dir('mvpa2/data'),
+                        get_full_dir('mvpa2/data/bv'),
+                        get_full_dir('mvpa2/data/tutorial_data_25mm/data'),
+          ],
           scripts=glob(os.path.join('bin', '*')),
           ext_modules=ext_modules
           )
