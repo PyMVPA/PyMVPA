@@ -21,7 +21,7 @@
   [`ipynb <notebooks/tutorial_mappers.ipynb>`_]
 
 In the tutorial part :ref:`chap_tutorial_datasets` we have discovered a
-magic ingredient of datasets: a mapper. Mappers are probably the most
+magic ingredient of datasets: a :class:`~mvpa2.mappers.base.Mapper`. Mappers are probably the most
 powerful concept in PyMVPA, and there is little one would do without them.
 
 In general, a mapper is an algorithm that transforms data.
@@ -48,8 +48,9 @@ but we will shortly see some nice convenience aspects.
 >>> ds.shape
 (5, 12)
 
-A mapper is a :term:`dataset attribute`, hence it is stored in the
-corresponding attribute collection. However, not every dataset actually has
+Some datasets (such as the ones `~mvpa2.datasets.mri.fmri_dataset()` with a
+mask) contain mappers as a :term:`dataset attribute` ``.a.mapper``.
+However, not every dataset actually has
 a mapper. For example, the simple one we have just created doesn't have any:
 
 >>> 'mapper' in ds.a
@@ -260,10 +261,11 @@ possible approaches to fix it. For this tutorial we are again following a
 simple one, and perform a feature-wise, chunk-wise Z-scoring of the data.  This
 has many advantages. First, it is going to scale all features into approximately
 the same range, and also remove their mean.  The latter is quite important,
-since some classifiers cannot handle not-demeaned data. However, we are not
+since some classifiers are impaired when working with data having large offsets.
+However, we are not
 going to perform a very simple Z-scoring removing the global mean, but use the
-*rest* condition samples of the data to estimate mean and standard deviation.
-Scaling features using these parameters yields a score corresponding to the
+*rest* condition samples of the dataset to estimate mean and standard deviation.
+Scaling dataset features using these parameters yields a score corresponding to the
 per time-point voxel intensity difference from the *rest* average.
 
 This type of data :term:`normalization` is, you guessed it, also
@@ -271,7 +273,7 @@ implemented as a mapper:
 
 >>> zscorer = ZScoreMapper(param_est=('targets', ['rest']))
 
-This configures to perform a chunk-wise (the default) Z-scoring, while
+This configures to perform a :term:`chunk`\-wise (the default) Z-scoring, while
 estimating mean and standard deviation from samples targets with 'rest' in
 the respective chunk of data.
 
@@ -345,8 +347,17 @@ since this is also a mapper, a new dataset with mean samples is returned:
 >>> print fds.sa.targets
 ['bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe'
  'bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe']
+>>> print fds.sa.chunks
+['0.0+2.0+4.0+6.0+8.0+10.0' '0.0+2.0+4.0+6.0+8.0+10.0'
+ '0.0+2.0+4.0+6.0+8.0+10.0' '0.0+2.0+4.0+6.0+8.0+10.0'
+ '0.0+2.0+4.0+6.0+8.0+10.0' '0.0+2.0+4.0+6.0+8.0+10.0'
+ '0.0+2.0+4.0+6.0+8.0+10.0' '0.0+2.0+4.0+6.0+8.0+10.0'
+ '1.0+3.0+5.0+7.0+9.0+11.0' '1.0+3.0+5.0+7.0+9.0+11.0'
+ '1.0+3.0+5.0+7.0+9.0+11.0' '1.0+3.0+5.0+7.0+9.0+11.0'
+ '1.0+3.0+5.0+7.0+9.0+11.0' '1.0+3.0+5.0+7.0+9.0+11.0'
+ '1.0+3.0+5.0+7.0+9.0+11.0' '1.0+3.0+5.0+7.0+9.0+11.0']
 
-Here we go! We now have a fully-preprocessed dataset: detrended, normalized,
+Here we go! We now have a fully-preprocessed dataset: masked, detrended, normalized,
 with one sample per stimulus condition that is an average for odd and even runs
 respectively. Now we could do some serious classification, and this will be
 shown in :ref:`chap_tutorial_classifiers`, but there is still an
