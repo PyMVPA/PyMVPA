@@ -32,6 +32,7 @@ Recommends:
          python-matplotlib,
          python-mdp,
          python-nibabel,
+         python-nipy,
          python-psutil,
          python-psyco,
          python-pywt,
