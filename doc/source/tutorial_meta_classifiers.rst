@@ -44,6 +44,7 @@ cross-validation analysis.
 Before we get into that, let's reproduce the dataset from
 :ref:`chap_tutorial_classifiers`:
 
+>>> from mvpa2.tutorial_suite import *
 >>> # directory that contains the data files
 >>> datapath = os.path.join(tutorial_data_path, 'data')
 >>> # load the raw data
