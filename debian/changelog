@@ -1,4 +1,4 @@
-pymvpa2 (2.2.0+git1436-g8101a90-1) neurodebian-devel; urgency=low
+pymvpa2 (2.2.0+git1459-g851b606-1) neurodebian-devel; urgency=low
 
   * Sample of a fresh state of pre-release development
     - contains all  patches from under debian/patches/ so those are dropped
@@ -7,7 +7,7 @@ pymvpa2 (2.2.0+git1436-g8101a90-1) neurodebian-devel; urgency=low
   * debian/rules
     - do not compress .sh scripts (cmdline examples)
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 04 Mar 2014 22:35:13 +0100
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 05 Mar 2014 22:11:53 +0100
 
 pymvpa2 (2.2.0-4) unstable; urgency=low
 
