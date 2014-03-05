@@ -121,7 +121,7 @@ one in ``subds``. By looking at the forward-mapped data, we can verify that the
 correct features have been chosen.
 
 
-========================================
+.. ========================================
 
 We have pretty much all the pieces to start a first analysis.  We know how to
 load fMRI data from time series images, we know how to add and access
