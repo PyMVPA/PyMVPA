@@ -212,7 +212,7 @@ mpl-stamp: build
 	echo "backend : Agg" >| $(CURDIR)/build/matplotlibrc
 	touch $@
 
-htmldoc: examples2rst build pics mpl-stamp tutorial2notebooks manpages
+htmldoc: examples2rst build pics mpl-stamp notebooks manpages
 	@echo "I: Creating an HTML version of documentation"
 	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off \
 		PYTHONPATH=$(CURDIR):$(PYTHONPATH) \
@@ -255,8 +255,8 @@ examples2rst-stamp: mkdir-DOCBUILD_DIR
 		doc/examples/cmdline
 	touch $@
 
-tutorial2notebooks: tutorial2notebooks-stamp
-tutorial2notebooks-stamp:
+notebooks: notebooks-stamp
+notebooks-stamp: examples2rst
 	mkdir -p $(NOTEBOOKBUILD_DIR)
 	tools/rst2ipnbpy \
 		--baseurl http://pymvpa.org \
@@ -264,8 +264,9 @@ tutorial2notebooks-stamp:
 		--glossary_baseurl http://pymvpa.org/glossary.html \
 		--outdir $(NOTEBOOKBUILD_DIR) \
 		--exclude doc/source/tutorial_prerequisites.rst \
+		--exclude doc/source/examples/searchlight_surf.rst \
 		--verbose \
-		doc/source/tutorial_*.rst
+		doc/source/tutorial_*.rst doc/source/examples/*.rst
 	touch $@
 
 apidoc: apidoc-stamp
