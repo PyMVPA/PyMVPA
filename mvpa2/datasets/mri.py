@@ -137,6 +137,16 @@ def map2nifti(dataset, data=None, imghdr=None, imgtype=None):
                       'No image type found in %s. Using default Nifti1Image.'
                       % (dataset.a))
 
+    # set meaningful range
+    try:
+        if not imghdr is None:
+            if 'cal_max' in imghdr:
+                imghdr['cal_max'] = dsarray.max()
+                imghdr['cal_min'] = dsarray.min()
+    except:
+        # probably not a NIfTI header
+        pass
+
     # Augment header if data dsarray dtype could not be represented
     # with imghdr.get_data_dtype()
 
