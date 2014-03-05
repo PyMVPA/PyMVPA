@@ -69,6 +69,12 @@ Releases
     - :func:`~mvpa2.datasets.mri.fmri_dataset` load support for AFNI NIFTI
       volumes with time in the fifth dimension (data is automagically squeezed
       to 4D).
+    - :func:`~mvpa2.datasets.mri.map2nifti` sets ``cal_`` fields to correspond
+      to the range of the data.
+    - Many parts of the tutorial were reworked, set of examples expanded, and
+      also converted to IPython notebooks.
+    - :func:`~mvpa2.datasets.eventrelated` extended to output GLM regression
+      fits as features (relying on NiPy for GLM modeling).
 
   * Fixes (>88 commits)
 
