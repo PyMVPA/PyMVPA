@@ -165,34 +165,30 @@ for test_run in range(nruns):
     featsels = [StaticFeatureSelection(fselector(fscore)) for fscore in fscores]
     ds_train_fs = [featsels[i].forward(sd) for i, sd in enumerate(ds_train)]
 
-    """
-    Perform hyperalignment on the training data with default parameters.
-    Computing hyperalignment parameters is as simple as calling the
-    hyperalignment object with a list of datasets. All datasets must have the
-    same number of samples and time-locked responses are assumed.
-    Hyperalignment returns a list of mappers corresponding to subjects in the
-    same order as the list of datasets we passed in.
-    """
+
+    # Perform hyperalignment on the training data with default parameters.
+    # Computing hyperalignment parameters is as simple as calling the
+    # hyperalignment object with a list of datasets. All datasets must have the
+    # same number of samples and time-locked responses are assumed.
+    # Hyperalignment returns a list of mappers corresponding to subjects in the
+    # same order as the list of datasets we passed in.
+
 
     hyper = Hyperalignment()
     hypmaps = hyper(ds_train_fs)
 
-    """
-    Applying hyperalignment parameters is similar to applying any mapper in
-    PyMVPA. We start by selecting the voxels that we used to derive the
-    hyperalignment parameters. And then apply the hyperalignment parameters
-    by running the test dataset through the forward() function of the mapper.
-    """
+    # Applying hyperalignment parameters is similar to applying any mapper in
+    # PyMVPA. We start by selecting the voxels that we used to derive the
+    # hyperalignment parameters. And then apply the hyperalignment parameters
+    # by running the test dataset through the forward() function of the mapper.
 
     ds_test_fs = [featsels[i].forward(sd) for i, sd in enumerate(ds_test)]
     ds_hyper = [ hypmaps[i].forward(sd) for i, sd in enumerate(ds_test_fs)]
 
-    """
-    Now, we have a list of datasets with feature correspondence in a common
-    space derived from the training data. Just as in the between-subject
-    analyses of anatomically aligned data we can stack them all up and run the
-    crossvalidation analysis.
-    """
+    # Now, we have a list of datasets with feature correspondence in a common
+    # space derived from the training data. Just as in the between-subject
+    # analyses of anatomically aligned data we can stack them all up and run the
+    # crossvalidation analysis.
 
     ds_hyper = vstack(ds_hyper)
     # zscore each subject individually after transformation for optimal
