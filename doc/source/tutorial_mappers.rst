@@ -198,7 +198,69 @@ directly:
 <SampleAttributesCollection: chunks,targets,time_coords,time_indices>
 
 We got the dataset that we already know from the last part, but this time
-is also has information about chunks and targets.
+is also has information about chunks and targets.  Now it is a good time to
+obtain a `~mvpa2.datasets.miscfx.summary()` overview of the dataset: basic
+statistics, balance in number of samples among targets per chunk, etc.:
+
+>>> print fds.summary()
+Dataset: 1452x577@int16, <sa: chunks,targets,time_coords,time_indices>, <fa: voxel_indices>, <a: imghdr,imgtype,mapper,voxel_dim,voxel_eldim>
+stats: mean=1656.47 std=342.034 var=116988 min=352 max=2805
+<BLANKLINE>
+Counts of targets in each chunk:
+  chunks\targets bottle cat chair face house rest scissors scrambledpix shoe
+                   ---  ---  ---   ---  ---   ---    ---        ---      ---
+       0.0          9    9    9     9    9    49      9          9        9
+       1.0          9    9    9     9    9    49      9          9        9
+       2.0          9    9    9     9    9    49      9          9        9
+       3.0          9    9    9     9    9    49      9          9        9
+       4.0          9    9    9     9    9    49      9          9        9
+       5.0          9    9    9     9    9    49      9          9        9
+       6.0          9    9    9     9    9    49      9          9        9
+       7.0          9    9    9     9    9    49      9          9        9
+       8.0          9    9    9     9    9    49      9          9        9
+       9.0          9    9    9     9    9    49      9          9        9
+      10.0          9    9    9     9    9    49      9          9        9
+      11.0          9    9    9     9    9    49      9          9        9
+<BLANKLINE>
+Summary for targets across chunks
+    targets  mean std min max #chunks
+   bottle      9   0   9   9     12
+     cat       9   0   9   9     12
+    chair      9   0   9   9     12
+    face       9   0   9   9     12
+    house      9   0   9   9     12
+    rest      49   0   49  49    12
+  scissors     9   0   9   9     12
+scrambledpix   9   0   9   9     12
+    shoe       9   0   9   9     12
+<BLANKLINE>
+Summary for chunks across targets
+  chunks mean  std min max #targets
+    0    13.4 12.6  9   49     9
+    1    13.4 12.6  9   49     9
+    2    13.4 12.6  9   49     9
+    3    13.4 12.6  9   49     9
+    4    13.4 12.6  9   49     9
+    5    13.4 12.6  9   49     9
+    6    13.4 12.6  9   49     9
+    7    13.4 12.6  9   49     9
+    8    13.4 12.6  9   49     9
+    9    13.4 12.6  9   49     9
+   10    13.4 12.6  9   49     9
+   11    13.4 12.6  9   49     9
+Sequence statistics for 1452 entries from set ['bottle', 'cat', 'chair', 'face', 'house', 'rest', 'scissors', 'scrambledpix', 'shoe']
+Counter-balance table for orders up to 2:
+Targets/Order O1                           |  O2                           |
+   bottle:    96  0  0  0  0  12  0  0  0  |  84  0  0  0  0  24  0  0  0  |
+     cat:      0 96  0  0  0  12  0  0  0  |   0 84  0  0  0  24  0  0  0  |
+    chair:     0  0 96  0  0  12  0  0  0  |   0  0 84  0  0  24  0  0  0  |
+    face:      0  0  0 96  0  12  0  0  0  |   0  0  0 84  0  24  0  0  0  |
+    house:     0  0  0  0 96  12  0  0  0  |   0  0  0  0 84  24  0  0  0  |
+    rest:     12 12 12 12 12 491 12 12 12  |  24 24 24 24 24 394 24 24 24  |
+  scissors:    0  0  0  0  0  12 96  0  0  |   0  0  0  0  0  24 84  0  0  |
+scrambledpix:  0  0  0  0  0  12  0 96  0  |   0  0  0  0  0  24  0 84  0  |
+    shoe:      0  0  0  0  0  12  0  0 96  |   0  0  0  0  0  24  0  0 84  |
+Correlations: min=-0.19 max=0.88 mean=-0.00069 sum(abs)=77
 
 The next step is to extract the *patterns of activation* from the dataset
 that we are interested in. But wait! We know that fMRI data is
