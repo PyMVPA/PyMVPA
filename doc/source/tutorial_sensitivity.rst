@@ -10,9 +10,9 @@
 .. index:: Tutorial
 .. _chap_tutorial_sensitivity:
 
-*********************************************************
-Part 6: Looking Without Searching -- Sensitivity Analysis
-*********************************************************
+*******************************************************
+Classification Model Parameters -- Sensitivity Analysis
+*******************************************************
 
 .. note::
 
@@ -20,13 +20,13 @@ Part 6: Looking Without Searching -- Sensitivity Analysis
   <http://ipython.org/ipython-doc/dev/interactive/htmlnotebook.html>`_:
   [`ipynb <notebooks/tutorial_sensitivity.ipynb>`_]
 
-In the :ref:`previous tutorial part <chap_tutorial_searchlight>` we made a
-first attempt at localizing information in the brain that is relevant to a
-particular classification analyses. While we were relatively successful,
-we experienced some problems and also had to wait quite a bit. Here we want
-to look at another approach to localization. To get started, we pre-process
-the data as we have done before and perform volume averaging to get a
-single sample per stimulus category and original experiment session.
+In the :ref:`chap_tutorial_searchlight` we made a first attempt at localizing
+information in the brain that is relevant to a particular classification
+analyses. While we were relatively successful, we experienced some problems and
+also had to wait quite a bit. Here we want to look at another approach to
+localization. To get started, we pre-process the data as we have done before
+and perform volume averaging to get a single sample per stimulus category and
+original experiment session.
 
 >>> from mvpa2.tutorial_suite import *
 >>> # alt: `ds = load_tutorial_results('ds_haxby2001_blkavg_brain')`
@@ -45,16 +45,17 @@ single sample per stimulus category and original experiment session.
 
 .. h5save('results/ds_haxby2001_blkavg_brain.hdf5', ds)
 
-A searchlight analysis on this dataset would look exactly as we have seen
-:ref:`before <chap_tutorial_searchlight>`, but it would take a bit longer
-due to a higher number of samples. The error map that is the result of a
-searchlight analysis only offers an approximate localization. First, it is
-smeared by the overlapping spheres and second the sphere-shaped ROIs
-probably do not reflect the true shape and extent of functional subregions
-in the brain. Therefore, it mixes and matches things that might not belong
-together. It would be much nicer if we were able to obtain a
-per-feature measure, where each value can really be attributed to the
-respective feature and not just to an area surrounding it.
+A searchlight analysis on this dataset would look exactly as we have seen in
+:ref:`chap_tutorial_searchlight`, but it would take a bit longer due to a
+higher number of samples. The error map that is the result of a searchlight
+analysis only offers an approximate localization. First, it is smeared by the
+overlapping spheres and second the sphere-shaped ROIs probably do not reflect
+the true shape and extent of functional subregions in the brain. Therefore, it
+mixes and matches things that might not belong together. This can be mitigated
+to some degree by using more clever searchlight algorithms (see
+:ref:`example_searchlight_surf`).  But it would also be much nicer if we were
+able to obtain a per-feature measure, where each value can really be attributed
+to the respective feature and not just to an area surrounding it.
 
 .. _chap_magic_feature_selection:
 
@@ -107,15 +108,14 @@ that there is some signal in the data, hence we can attribute this failure
 to the classifier. In most situations it would be as likely that there is
 actually no signal in the data...
 
-Often people claim that classification performance improves with :term:`feature
-selection`. If we can reduce the dataset to the important ones, the
-classifier wouldn't have to deal with all the noise anymore. A simple
-approach would be to compute a full-brain ANOVA and only go with the
-voxels that show some level of variance between categories. From the
-:ref:`previous tutorial part <chap_tutorial_searchlight>` we know how to
-compute the desired F-scores and we could use them to manually select features
-with some threshold. However, PyMVPA offers a more convenient way --
-feature selectors:
+Often people claim that classification performance improves with
+:term:`feature selection`. If we can reduce the dataset to the important ones,
+the classifier wouldn't have to deal with all the noise anymore. A simple
+approach would be to compute a full-brain ANOVA and only go with the voxels
+that show some level of variance between categories. From the
+:ref:`chap_tutorial_searchlight` we know how to compute the desired F-scores
+and we could use them to manually select features with some threshold. However,
+PyMVPA offers a more convenient way -- feature selectors:
 
 >>> fsel = SensitivityBasedFeatureSelection(
 ...            OneWayAnova(),
@@ -137,8 +137,9 @@ This is the dataset we wanted, so we can rerun the cross-validation and see
 if it helped. But first, take a step back and look at this code snippet again.
 There is an object that gets called with a dataset and returns a dataset. You
 cannot prevent noticing the striking similarity between a measure in PyMVPA or
-a mapper. And yes, feature selection procedures are also :term:`processing
-object`\ s and work just like measures or mappers. Now back to the analysis:
+a mapper. And yes, feature selection procedures are also
+:term:`processing object`\ s and work just like measures or mappers. Now back
+to the analysis:
 
 >>> results = cvte(ds_p)
 >>> print np.round(cvte.ca.stats.stats['ACC%'], 1)
@@ -248,7 +249,7 @@ the importance of features in the dataset. With the approach we have used
 above, the classifier is trained on 500 features. We can only have its
 opinion about those. Although this is just few times larger than a typical
 searchlight sphere, we have lifted the spatial constraint of
-searchlights -- these features can come from all over the brain.
+searchlights -- these features can come from all over an ROI.
 
 However, we still want to consider more features, so we are changing the
 feature selection to retain more.
