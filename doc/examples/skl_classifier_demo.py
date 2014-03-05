@@ -110,6 +110,10 @@ for weights in ['uniform', 'distance']:
     pl.title("3-Class classification (k = %i, weights = '%s')"
              % (n_neighbors, weights))
 
+if cfg.getboolean('examples', 'interactive', True):
+    # show all the cool figures
+    pl.show()
+
 """
 This example shows that a PyMVPA classifier can be used in pretty much the
 same way as the corresponding scikit-learn API. What this example does not show
@@ -118,7 +122,3 @@ scikit-learn classifier can be employed in arbitrarily complex PyMVPA
 processing pipelines and is enhanced with automatic training and all other
 functionality of PyMVPA classifier implementations.
 """
-
-if cfg.getboolean('examples', 'interactive', True):
-    # show all the cool figures
-    pl.show()
