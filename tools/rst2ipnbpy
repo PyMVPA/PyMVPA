@@ -159,7 +159,9 @@ class ReST2IPyNB(object):
                 for ex in self._doctest_parser.get_examples(child.rawsource):
                     if needs_new_codecell:
                         self._add_codecell()
-                    self._add2buffer('%s%s' % (' ' * ex.indent, ex.source),
+                    # Filter out possible doctest directives
+                    source = re.sub('#  *doctest:[^\n]*', '', ex.source)
+                    self._add2buffer('%s%s' % (' ' * ex.indent, source),
                                      newline=False)
                     self._flush_buffer(startnew=True)
                     needs_new_codecell = len(ex.want) > 0
