@@ -103,7 +103,7 @@ def test_erdataset():
 def test_hrf_modeling():
     skip_if_no_external('nibabel')
     skip_if_no_external('nipy') # ATM relies on NiPy's GLM implementation
-    ds = load_example_fmri_dataset(literal=True)
+    ds = load_example_fmri_dataset('25mm') #literal=True)
     # TODO: simulate short dataset with known properties and use it
     # for testing
     events = find_events(targets=ds.sa.targets, chunks=ds.sa.chunks)
@@ -186,6 +186,16 @@ def test_hrf_modeling():
                                 model='hrf')
     assert_true('add_regs' in evds_regrs.a)
     assert_true('time_indices' in evds_regrs.a.add_regs.sa.regressor_names)
-    
+
     assert_equal(len(ds.UC) * len(ds.UT), len(evds_regrs))
     assert_equal(len(evds_regrs.UC) * len(evds_regrs.UT), len(evds_regrs))
+
+    from mvpa2.mappers.fx import mean_group_sample
+    evds_regrs_meaned = mean_group_sample(['targets'])(evds_regrs)
+    assert_array_equal(evds_regrs_meaned.T, evds.T) # targets should be the same
+
+    #corr = np.corrcoef(np.vstack((evds.samples, evds_regrs_meaned)))
+    #import pydb; pydb.debugger()
+    #pass
+    #i = 1
+

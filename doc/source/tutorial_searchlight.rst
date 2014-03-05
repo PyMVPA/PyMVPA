@@ -278,8 +278,8 @@ that can employ this strategy. A study looking a global brain circuitry
 will hardly restrict the analysis to patches of a few cubic millimeters of
 brain tissue. As we have seen before, searchlights also have another nasty
 aspect. Although they provide us with a multivariate localization measure,
-they also inherit the curse of univariate fMRI data analysis -- `multiple
-comparisons`_.
+they also inherit the curse of univariate fMRI data analysis --
+`multiple comparisons`_.
 
 .. _multiple comparisons: http://en.wikipedia.org/wiki/Multiple_comparisons
 
