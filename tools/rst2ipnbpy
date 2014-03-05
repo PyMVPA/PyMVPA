@@ -20,6 +20,9 @@ import json
 from copy import deepcopy
 from optparse import OptionParser
 
+# regexp to skip nodes content of which matches
+_re_skip = re.compile('This tutorial part is also available.*IPython notebook')
+
 def prep_rest(rest):
     # implementing above in python 2.6 compatible fashion
     # which lacks flags keyword argument for re.subn
@@ -133,6 +136,8 @@ class ReST2IPyNB(object):
     def _parse(self, doctree):
         for child in doctree.children:
             tag = child.tagname
+            if _re_skip.search(str(child)):
+                continue
             if tag == 'title':
                 self._add_headingcell(self._state['sec_depth'])
                 self._parse(child)
@@ -222,8 +227,7 @@ class ReST2IPyNB(object):
             elif tag == 'reference':
                 self._flush_buffer()
                 self._parse(child)
-                self._buffer = '[%s][%s]' % (self._buffer,
-                                             child.attributes['name'])
+                self._buffer = '[%(name)s](%(refuri)s)' % child.attributes
             elif tag in ['comment', 'target']:
                 pass
             elif tag == 'definition_list':
@@ -283,7 +287,7 @@ class ReST2IPyNB(object):
                                     exercise_text,
                                     settings_overrides=self._doctree_parser_settings))
                     self._flush_buffer()
-                    self._currcell['source'].insert(0, '- - -\n*Exercise*')
+                    self._currcell['source'].insert(0, '- - -\n**Exercise**')
                     self._add_codecell()
                     self._add2buffer('# you can use this cell to for this exercise\n')
                     self._add_markdowncell()
