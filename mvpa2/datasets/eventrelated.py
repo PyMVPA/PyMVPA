@@ -469,12 +469,16 @@ def eventrelated_dataset(ds, events, time_attr=None, match='prev',
     ...                   model='hrf')
     >>> print hrf_estimates.sa.condition
     ['one' 'two']
-    >>> print hrf_estimates.a.other_regressors.sa.regressor_names
-    ['constant']
     >>> print hrf_estimates.shape
     (2, 25)
     >>> len(hrf_estimates.a.model.get_mse())
     25
+
+    Additional regressors used in GLM modeling are also available in a
+    dataset attribute:
+
+    >>> print hrf_estimates.a.add_regs.sa.regressor_names
+    ['constant']
     """
     if not len(events):
         raise ValueError("no events specified")
