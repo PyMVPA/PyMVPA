@@ -10,9 +10,9 @@
 .. index:: Tutorial, event-related fMRI
 .. _chap_tutorial_eventrelated:
 
-***********************************************************
-Part 7: "When Is The Signal" -- Event-related Data Analysis
-***********************************************************
+*****************************
+ Event-related Data Analysis
+*****************************
 
 .. note::
 
@@ -20,45 +20,31 @@ Part 7: "When Is The Signal" -- Event-related Data Analysis
   <http://ipython.org/ipython-doc/dev/interactive/htmlnotebook.html>`_:
   [`ipynb <notebooks/tutorial_eventrelated.ipynb>`_]
 
-In all previous tutorial parts we have analyzed the same fMRI data. We
-analyzed it using a number of different strategies, but they all had one
-thing in common: A sample in each dataset was always a single fMRI volume.
-Sometimes, we have limited ourselves to just a specific region of interest,
-sometimes we averaged many fMRI volumes into a single one. In all cases,
-however, a feature always corresponded to a voxel in the fMRI volume and
-appeared only once in the dataset.
+In all previous tutorial parts we have analyzed the same fMRI data. We analyzed
+it using a number of different strategies, but they all had one thing in
+common: A sample in each dataset was always a single volume from an fMRI time
+series.  Sometimes, we have limited ourselves to just a specific temporal
+windows of interest, sometimes we averaged many fMRI volumes into a single one.
+In all cases, however, a feature always corresponded to a voxel in the fMRI
+volume and appeared only once in the dataset.
 
 In this part we are going to extend the analysis beyond the spatial
 dimensions and will consider *time* as another aspect of our data.
-This is a common thing to do, for example, in ERP-analyses of EEG data.
-Here we are going to employ a similar approach in our well-known example
-data -- this time selecting a subset of ventral temporal regions.
+We will demonstrate two different approaches: 1) modeling of experimental
+conditions and proceed with an analysis of model parameter estimates, and
+2) the extraction of spatio-temporal data samples. The latter approach is
+common, for example, in ERP-analyses of EEG data.
+
+Let's start with our well-known example dataset -- this time selecting a subset
+of ventral temporal regions.
 
 >>> from mvpa2.tutorial_suite import *
 >>> ds = get_raw_haxby2001_data(roi=(36,38,39,40))
->>> print ds.shape
-(1452, 941)
 
 As we know, this dataset consists of 12 concatenated experiment sessions.
 Every session had a stimulation block spanning multiple fMRI volumes for
 each of the eight stimulus categories. Stimulation blocks were separated by
-rest periods. What we want to do now is to look at the spatio-temporal
-signal across our region of interest and the full duration of the
-stimulation blocks. In other words, we want to perform a sensitivity
-analysis revealing the spatio-temporal distribution of
-classification-relevant information.
-
-In this kind of analysis, we consider each stimulation block an
-:term:`event` and we need to create a representative sample for every one
-of them. In the context of an event-related fMRI classification analysis, the
-literature offers three principal techniques:
-
-1. Choose a single representative volume.
-2. Compress all relevant volumes into a single one (averaging or parametric fit).
-3. Consider the full event-related time series.
-
-Obviously, only the third approach can possibly provide us with a temporal
-sensitivity profile, hence we will choose this path.
+rest periods.
 
 Event-related Pre-processing Is Not Event-related
 -------------------------------------------------
@@ -70,11 +56,8 @@ meaningful when performed on the full time series and not on the segmented
 event samples. An example is the detrending that typically needs to be done
 on the original, continuous time series.
 
-In its current shape our dataset consists of 1452 samples that represent
-contiguous fMRI volumes. At this stage we can easily perform linear
-detrending. Again, we are going to do it per each experiment run (the
-dataset has runs encoded in the ``chunks`` sample attribute), since we do
-not assume a contiguous linear trend throughout the whole time series.
+In its current shape our datasets consists of samples that represent contiguous
+fMRI volumes. At this stage we can easily perform linear detrending.
 
 >>> poly_detrend(ds, polyord=1, chunks_attr='chunks')
 
@@ -83,28 +66,21 @@ some visualization.
 
 >>> orig_ds = ds.copy()
 
-We still need to normalize each feature (i.e. a voxel at this point). In
-this case we are, again, going to Z-score them, using the mean and standard
-deviation from the experiment's rest condition. The resulting values might
-be interpreted as "activation scores". We are again doing it per each run.
+Design Specification
+--------------------
 
->>> zscore(ds, chunks_attr='chunks', param_est=('targets', 'rest'))
+For any event-related analysis we need some information on the experiment
+design: when was stimulated with what for how long (and maybe with what
+intensity).  In PyMVPA this is done by compiling a list of event definitions.
+In many cases, an event is defined by *onset*, *duration* and potentially a
+number of additional properties, such as stimulus condition or recording
+session number.
 
-
-From Timeseries To Events
--------------------------
-
-After detrending and normalization, we can now segment the time series into
-a set of events. To achieve this we have to compile a list of event
-definitions first. An event is defined by *onset*, *duration* and
-potentially a number of additional properties, such as stimulus condition
-or recording session number.
-
-In this example we will simply convert the block-design setup defined by
-the samples attributes into a list of events. With
-:func:`~mvpa2.datasets.eventrelated.find_events`, PyMVPA provides a
-function to convert sequential attributes into event lists. In our dataset,
-we have the stimulus conditions of each volume sample available in the
+To see how such events definitions look like, we will simply convert the
+block-design setup defined by the samples attributes of our dataset into a list
+of events.  With :func:`~mvpa2.datasets.eventrelated.find_events`, PyMVPA
+provides a function to convert sequential attributes into event lists. In our
+dataset, we have the stimulus conditions of each volume sample available in the
 ``targets`` sample attribute.
 
 >>> events = find_events(targets=ds.sa.targets, chunks=ds.sa.chunks)
@@ -144,8 +120,122 @@ We can easily filter out all other events.
 {'chunks': 0.0, 'duration': 9, 'onset': 63, 'targets': 'house'}
 {'chunks': 1.0, 'duration': 9, 'onset': 127, 'targets': 'face'}
 {'chunks': 1.0, 'duration': 9, 'onset': 213, 'targets': 'house'}
->>> np.unique([e['duration'] for e in events])
-array([9])
+
+Response Modeling
+-----------------
+
+Whenever we have to deal with data were multiple concurrent signals
+are overlapping in time, such as in fast event-related fMRI studies,
+it often makes sense to fit an appropriate model to the data and
+proceed with an analysis of model parameter estimates, instead of
+the raw data.
+
+PyMVPA can make use of NiPy's GLM modeling capabilities. It expects
+information on stimulation events to be given as actual time stamps
+and not data sample indices, hence we have to convert our event list.
+
+>>> # temporal distance between samples/volume is the volume repetition time
+>>> TR = np.median(np.diff(ds.sa.time_coords))
+>>> # convert onsets and durations into timestamps
+>>> for ev in events:
+...     ev['onset'] = (ev['onset'] * TR)
+...     ev['duration'] = ev['duration'] * TR
+
+Now we can fit a model of the hemodynamic response to all relevant
+stimulus conditions. The function
+:func:`~mvpa2.datasets.eventrelated.eventrelated_dataset` does everything
+for us. For a given input dataset we need to provide a list of events,
+the name of an attribute with a time stamp for each sample, and information
+on what conditions we would like to have modeled. The latter is specified
+to the ``condition_attr`` argument. This can be a single attribute name
+in which case all unique values will be used as conditions. It can also
+be a sequence of multiple attribute names, and all combinations of unique
+values of the attributes will be used as conditions. In the following example
+``('targets', 'chunks')`` indicates that we want a separate model for each
+stimulation condition (``targets``) for each run of our example dataset
+(``chunks``).
+
+>>> evds = eventrelated_dataset(ds,
+...                             events,
+...                             model='hrf',
+...                             time_attr='time_coords',
+...                             condition_attr=('targets', 'chunks'))
+>>> print len(evds)
+24
+
+This yields one parameter estimate sample for each target value for each
+chunks.
+
+.. exercise::
+
+  Explore the ``evds`` dataset. It contains the generated HRF model.
+  Find and plot (some of) them. Take a look at the parameter estimate
+  samples themselves -- can you spot a pattern?
+
+Before we can run a classification analysis we still need to normalize each
+feature (GLM parameters estimates for each voxel at this point).
+
+>>> zscore(evds, chunks_attr=none)
+
+The rest is straight-forward: we set up a cross-validation analysis with
+a chosen classifier and run it:
+
+>>> clf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
+>>> cv = CrossValidation(clf, NFoldPartitioner(attr='chunks'))
+>>> cv_glm = cv(evds)
+>>> print '%.2f' % np.mean(cv_glm)
+0.08
+
+Not bad! Let's compare that to a simpler approach that is also suitable for
+block-design experiments like this one.
+
+>>> zscore(ds, param_est=('targets', ['rest']))
+>>> avgds = ds.get_mapped(mean_group_sample(['targets', 'chunks']))
+>>> avgds = avgds[np.array([t in ['face', 'house'] for t in avgds.sa.targets])]
+
+We normalize all voxels with respect to the ``rest`` condition. This yields
+some crude kind of "activation" score for all stimulation conditions.
+Subsequently, we average all sample of a condition in each run. This yield
+a dataset of the same size as from the GLM modeling. We can re-use the
+cross-validation setup.
+
+>>> cv_avg = cv(avgds)
+>>> print '%.2f' % np.mean(cv_avg)
+0.04
+
+Not bad either. However, it is worth repeating that this simple average-sample
+approach is limited to block-designs with a clear temporal separation of
+all signals of interest, whereas the HRF modeling is more suitable for
+experiments with fast stimulation alternation.
+
+.. exercise::
+
+  Think about what need to be done to perform odd/even run GLM modeling.
+
+From Timeseries To Spatio-temporal Samples
+------------------------------------------
+
+Now we want to try something different. Instead of compressing all temporal
+information into a single model parameter estimate, we can also consider the
+entire spatio-temporal signal across our region of interest and the full
+duration of the stimulation blocks. In other words, we can perform a
+sensitivity analysis (see :ref:`chap_tutorial_sensitivity`) revealing the
+spatio-temporal distribution of classification-relevant information.
+
+Before we start with our event-extraction, we want to normalize each feature
+(i.e. a voxel at this point). In this case we are, again, going to Z-score
+them, using the mean and standard deviation from the experiment's rest
+condition, and the resulting values might be interpreted as "activation
+scores".
+
+>>> zscore(ds, chunks_attr='chunks', param_est=('targets', 'rest'))
+
+For this analysis we do not have to convert event onset information into
+time-stamp, but can operate on sample indices, hence we start with the
+original event list again.
+
+>>> events = find_events(targets=ds.sa.targets, chunks=ds.sa.chunks)
+>>> events = [ev for ev in events if ev['targets'] in ['house', 'face']]
 
 All of our events are of the same length, 9 consecutive fMRI volumes. Later
 on we would like to view the temporal sensitivity profile from *before* until
@@ -191,6 +281,7 @@ conversion into events.
   mapper. Inspect the result and make sure it doesn't surprise. Now,
   reverse-map multiple samples at once and compare the result. Is this what
   you would expect?
+
 
 The rest of our analysis is business as usual and is quickly done.  We want to
 perform a cross-validation analysis of an SVM classifier. We are not
@@ -357,7 +448,7 @@ of PyMVPA for "multi-space" analysis. From the :ref:`previous tutorial part
 <chap_tutorial_searchlight>` we know how to do searchlight analyses and it was
 promised that there is more to it than what we already saw. And here it is:
 
->>> cvte = CrossValidation(LinearCSVMC(), NFoldPartitioner(),
+>>> cvte = CrossValidation(GNB(), NFoldPartitioner(),
 ...                        postproc=mean_sample())
 >>> sl = Searchlight(cvte,
 ...                  IndexQueryEngine(voxel_indices=Sphere(1),
