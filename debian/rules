@@ -28,7 +28,7 @@ override_dh_auto_build:
 ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 	$(MAKE) htmldoc
 	-rm build/html/_static/jquery.js build/html/_static/underscore.js
-	$(MAKE) tutorial2notebooks
+	$(MAKE) notebooks
 endif
 
 
