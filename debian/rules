@@ -102,4 +102,4 @@ dev-changelog:
 
 ## immediately useable documentation and exemplar scripts/data
 override_dh_compress:
-	dh_compress -X.py -X.html -X.pdf -X.css -X.jpg -X.txt -X.js -X.json -X.rtc -Xobjects.inv -X.ipynb
+	dh_compress -X.py -X.html -X.pdf -X.css -X.jpg -X.txt -X.js -X.json -X.rtc -Xobjects.inv -X.ipynb -X.sh
