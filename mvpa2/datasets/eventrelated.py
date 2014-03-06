@@ -194,7 +194,7 @@ def _fit_hrf_event_model(
         condition_attr = [condition_attr]
 
     glm_condition_attr = 'regressor_names' # actual regressors
-    glm_condition_attr_map = {con: dict() for con in condition_attr}    #
+    glm_condition_attr_map = dict([(con, dict()) for con in condition_attr])    #
     # to map back to original conditions
     events = copy.deepcopy(events)  # since we are modifying in place
     for event in events:
