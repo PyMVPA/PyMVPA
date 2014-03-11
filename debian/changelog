@@ -1,3 +1,10 @@
+pymvpa2 (2.3.0-2) UNRELEASED; urgency=low
+
+  * debian/control
+    - man2html to build-depends
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 11 Mar 2014 10:13:04 -0400
+
 pymvpa2 (2.3.0-1) unstable; urgency=low
 
   * Perspective fresh upstream release

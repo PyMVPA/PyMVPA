@@ -11,7 +11,7 @@ Build-Depends: debhelper (>= 7.0.50~),
                python-h5py,
                python-lxml,
                libsvm-dev (>= 2.84.0),
-               help2man,
+               help2man, man2html,
                python-sphinx, python-numpydoc,
                graphviz, inkscape, imagemagick, bc,
 Standards-Version: 3.9.5
