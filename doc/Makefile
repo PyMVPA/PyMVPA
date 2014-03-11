@@ -15,6 +15,8 @@ ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) sou
 
 .PHONY: help clean html dirhtml pickle json htmlhelp qthelp latex changes linkcheck doctest
 
+export SHELL=/bin/bash
+
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  html      to make standalone HTML files"
@@ -45,7 +47,7 @@ generate-stamp:
 	# wipe everything that is not pymvpa to prevent suffering from the bugs
 	# of other in subsequent stages
 	find source/generated -type f ! -name 'mvpa*' -delete
-	for man in $(BUILDDIR)/man/pymvpa*; do \
+	set -e; set -o pipefail; for man in $(BUILDDIR)/man/pymvpa*; do \
 		manfile=$$(basename $${man}) ; \
 		cmd=$${manfile#pymvpa2-*} ; \
 		cmd=$${cmd%*.1} ; \
