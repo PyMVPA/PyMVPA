@@ -37,7 +37,6 @@ class Partitioner(Node):
     """
 
     _STRATEGIES = ('first', 'random', 'equidistant')
-    _NPERLABEL_STR = ['equal', 'all']
 
     def __init__(self,
                  count=None,
