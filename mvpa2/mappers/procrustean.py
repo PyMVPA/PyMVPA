@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 from mvpa2.base import externals
 from mvpa2.base.param import Parameter
+from mvpa2.base.constraints import EnsureChoice
 from mvpa2.base.types import is_datasetlike
 from mvpa2.mappers.projection import ProjectionMapper
 
@@ -34,27 +35,27 @@ class ProcrusteanMapper(ProjectionMapper):
 
     See: http://en.wikipedia.org/wiki/Procrustes_transformation
     """
-    scaling = Parameter(True, allowedtype='bool',
+    scaling = Parameter(True, constraints='bool',
                 doc="""Estimate a global scaling factor for the transformation
                        (no longer rigid body)""")
-    reflection = Parameter(True, allowedtype='bool',
+    reflection = Parameter(True, constraints='bool',
                  doc="""Allow for the data to be reflected (so it might not be
                      a rotation. Effective only for non-oblique transformations.
                      """)
-    reduction = Parameter(True, allowedtype='bool',
+    reduction = Parameter(True, constraints='bool',
                  doc="""If true, it is allowed to map into lower-dimensional
                      space. Forward transformation might be suboptimal then and
                      reverse transformation might not recover all original
                      variance.""")
-    oblique = Parameter(False, allowedtype='bool',
+    oblique = Parameter(False, constraints='bool',
                  doc="""Either to allow non-orthogonal transformation -- might
                      heavily overfit the data if there is less samples than
                      dimensions. Use `oblique_rcond`.""")
-    oblique_rcond = Parameter(-1, allowedtype='float',
+    oblique_rcond = Parameter(-1, constraints='float',
                  doc="""Cutoff for 'small' singular values to regularize the
                      inverse. See :class:`~numpy.linalg.lstsq` for more
                      information.""")
-    svd = Parameter('numpy', allowedtype='string (numpy, scipy, dgesvd)',
+    svd = Parameter('numpy', constraints=EnsureChoice('numpy', 'scipy', 'dgesvd'),
                  doc="""Implementation of SVD to use. dgesvd requires ctypes to
                  be available.""")
     def __init__(self, space='targets', **kwargs):
