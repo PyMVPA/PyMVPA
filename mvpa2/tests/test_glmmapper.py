@@ -16,10 +16,8 @@ skip_if_no_external('scipy')
 
 from scipy import signal
 from mvpa2.datasets import Dataset
-if externals.exists('nipy'):
-    from mvpa2.mappers.glm import NiPyGLMMapper
-if externals.exists('statsmodels'):
-    from mvpa2.mappers.glm import StatsmodelsGLMMapper
+
+from mvpa2.mappers.glm import *
 from mvpa2.misc.fx import double_gamma_hrf, single_gamma_hrf
 
 def get_bold():
