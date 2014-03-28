@@ -88,7 +88,7 @@ class FxMapper(Mapper):
             + _repr_attrs(self, ['axis', 'fx', 'uattrs'])
             + _repr_attrs(self, ['fxargs'], default=())
             + _repr_attrs(self, ['attrfx'], default='merge')
-            + _repr_attrs(self, ['sorted'], default='sorted')
+            + _repr_attrs(self, ['order'], default='sorted')
             )
 
 

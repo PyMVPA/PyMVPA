@@ -89,6 +89,8 @@ def test_samplesgroup_mapper_test_order_occurrence():
                         chunks=[0]*4 + [1]*4)
 
     m = mean_group_sample(['targets', 'chunks'], order='occurrence')
+    assert_true('order=' in repr(m))
+
     mds = ds.get_mapped(m)
 
     assert_array_equal(mds.sa.targets, [1, 0] * 2)
