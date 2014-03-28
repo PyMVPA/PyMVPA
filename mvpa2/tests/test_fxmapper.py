@@ -97,8 +97,9 @@ def test_samplesgroup_mapper_test_order_occurrence():
     assert_array_equal(mds.sa.chunks, [0]*2 + [1]*2)
     assert_array_equal(mds.samples[:, 0], [1, 2, 5, 6])
 
-    # and if we ordered as 'sorted' (default)
+    # and if we ordered as 'uattrs' (default)
     m = mean_group_sample(['targets', 'chunks'])
+    assert_false('order=' in repr(m))
     mds = ds.get_mapped(m)
 
     assert_array_equal(mds.sa.targets, [0, 1] * 2)
