@@ -31,9 +31,16 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
-* 2.? (???, ? ? ?)
+* 2.3.1 (???, ? ? ?)
 
   * Don't wait to long listing the changes...
+
+  * Enhancements (?? ENH, OPT, and NF commits)
+
+    - :class:`~mvpa2.mappers.fx.FxMapper` now will provide consistent order
+      of groups of items.  It also got a new argument `order` with available
+      value of 'occurrence' to that groups would get ordered by their occurance
+      in the original dataset.
 
 * 2.3.0 (Thu, 5 March 2014)
 
