@@ -32,12 +32,6 @@ def _get_lim(data, lim):
             raise ValueError("Know only 'same'. Got %s" % (lim,))
     return lim
 
-def test_get_lim():
-    d = np.arange(10)
-    assert_equal(_get_lim(d, 'same'), (0, 9))
-    assert_equal(_get_lim(d,  None), None)
-    assert_equal(_get_lim(d,  (1, 3)), (1, 3))
-
 def hist(dataset, xgroup_attr=None, ygroup_attr=None,
          xlim='same', ylim='same', noticks=False,
          **kwargs):
