@@ -34,7 +34,7 @@ class FxMapper(Mapper):
     """Indicate that this mapper is always trained."""
 
     def __init__(self, axis, fx, fxargs=None, uattrs=None,
-                 attrfx='merge', order='sorted'):
+                 attrfx='merge', order='uattrs'):
         """
         Parameters
         ----------
@@ -51,15 +51,16 @@ class FxMapper(Mapper):
           determined. If the content of the attribute is not uniform for a
           samples group a unique string representation is created.
           If `None`, attributes are not altered.
-        order : {'sorted', 'occurrence', None}
-          If which order groups should be merged together.  If `None`, the order
-          is imposed only by the order of `uattrs` as keys in the dictionary, thus
-          can vary from run to run.  If `'occurrence'`, groups will be ordered by
-          the first occurrence of group samples in original dataset.  If `'sorted'`,
-          groups will be sorted by the values of uattrs with follow-up attr having
-          higher importance for ordering (e.g. `uattrs=['targets', 'chunks']`
-          `order='sorted'`  would order groups first by `chunks` and then by
-          `targets` within each chunk).
+        order : {'uattrs', 'occurrence', None}
+          If which order groups should be merged together.  If `None` (default
+          before 2.3.1), the order is imposed only by the order of
+          `uattrs` as keys in the dictionary, thus can vary from run to run.
+          If `'occurrence'`, groups will be ordered by the first occurrence
+          of group samples in original dataset. If `'uattrs'`, groups will be
+          sorted by the values of uattrs with follow-up attr having higher
+          importance for ordering (e .g. `uattrs=['targets', 'chunks']` would
+          order groups first by `chunks` and then by `targets` within each
+          chunk).
         """
         Mapper.__init__(self)
 
@@ -77,7 +78,7 @@ class FxMapper(Mapper):
             self.__attrfx = _uniquemerge2literal
         else:
             self.__attrfx = attrfx
-        assert(order in (None, 'sorted', 'occurrence'))
+        assert(order in (None, 'uattrs', 'occurrence'))
         self.__order = order
 
 
@@ -88,7 +89,7 @@ class FxMapper(Mapper):
             + _repr_attrs(self, ['axis', 'fx', 'uattrs'])
             + _repr_attrs(self, ['fxargs'], default=())
             + _repr_attrs(self, ['attrfx'], default='merge')
-            + _repr_attrs(self, ['order'], default='sorted')
+            + _repr_attrs(self, ['order'], default='uattrs')
             )
 
 
@@ -246,7 +247,7 @@ class FxMapper(Mapper):
                 for i, attr in enumerate(col):
                     attrs[attr].append(fxed_attrs[i])
             # possibly take care about collecting information to have groups ordered
-            if order == 'sorted':
+            if order == 'uattrs':
                 # reverse order as per docstring -- most of the time we have
                 # used uattrs=['targets', 'chunks'] and did expect chunks being
                 # groupped together.
@@ -326,7 +327,8 @@ def mean_group_sample(attrs, attrfx='merge', **kwargs):
     The sample groups are identified by the unique combination of all
     values of a set of provided sample attributes.  Order of output
     samples might differ from original and correspond to sorted order
-    of corresponding `attrs`.
+    of corresponding `attrs`  by default.  Use `order='occurrence'` if you would
+    like to maintain the order.
 
     Parameters
     ----------
@@ -388,7 +390,8 @@ def mean_group_feature(attrs, attrfx='merge', **kwargs):
     The feature groups are identified by the unique combination of all values of
     a set of provided feature attributes.  Order of output
     features might differ from original and correspond to sorted order
-    of corresponding `attrs`.
+    of corresponding `attrs` by default.  Use `order='occurrence'` if you would
+    like to maintain the order.
 
     Parameters
     ----------
