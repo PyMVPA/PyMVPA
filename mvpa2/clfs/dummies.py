@@ -52,7 +52,7 @@ class RandomClassifier(Classifier):
     """Dummy classifier deciding on labels absolutely randomly
     """
 
-    __tags__ = ['random']
+    __tags__ = ['random', 'non-deterministic']
 
     same = Parameter(
         False, allowedtype='bool',
@@ -70,6 +70,9 @@ class RandomClassifier(Classifier):
     @accepts_dataset_as_samples
     def _predict(self, data):
         l = len(self._ulabels)
+        # oh those lovely random estimates, for now just an estimate
+        # per sample. Since we are random after all -- keep it random
+        self.ca.estimates = np.random.normal(size=len(data))
         if is_datasetlike(data) and self.params.same:
             # decide on mapping between original labels
             labels_map = dict(
