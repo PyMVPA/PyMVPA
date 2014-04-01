@@ -416,7 +416,7 @@ def eventrelated_dataset(ds, events, time_attr=None, match='prev',
       attribute with the name specified by the ``condition_attr`` argument.
       The actual design regressors are included as ``regressors`` sample
       attribute. An instance with the fitted NiPy GLM results is included as
-      a dataset attribute ``glmfit``, and can be used for computing contrasts
+      a dataset attribute ``model``, and can be used for computing contrasts
       subsequently.
 
     Examples
