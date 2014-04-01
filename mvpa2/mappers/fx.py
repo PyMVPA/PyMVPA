@@ -34,7 +34,7 @@ class FxMapper(Mapper):
     """Indicate that this mapper is always trained."""
 
     def __init__(self, axis, fx, fxargs=None, uattrs=None,
-                 attrfx='merge'):
+                 attrfx='merge', order='uattrs'):
         """
         Parameters
         ----------
@@ -51,6 +51,16 @@ class FxMapper(Mapper):
           determined. If the content of the attribute is not uniform for a
           samples group a unique string representation is created.
           If `None`, attributes are not altered.
+        order : {'uattrs', 'occurrence', None}
+          If which order groups should be merged together.  If `None` (default
+          before 2.3.1), the order is imposed only by the order of
+          `uattrs` as keys in the dictionary, thus can vary from run to run.
+          If `'occurrence'`, groups will be ordered by the first occurrence
+          of group samples in original dataset. If `'uattrs'`, groups will be
+          sorted by the values of uattrs with follow-up attr having higher
+          importance for ordering (e .g. `uattrs=['targets', 'chunks']` would
+          order groups first by `chunks` and then by `targets` within each
+          chunk).
         """
         Mapper.__init__(self)
 
@@ -68,6 +78,8 @@ class FxMapper(Mapper):
             self.__attrfx = _uniquemerge2literal
         else:
             self.__attrfx = attrfx
+        assert(order in (None, 'uattrs', 'occurrence'))
+        self.__order = order
 
 
     @borrowdoc(Mapper)
@@ -77,7 +89,9 @@ class FxMapper(Mapper):
             + _repr_attrs(self, ['axis', 'fx', 'uattrs'])
             + _repr_attrs(self, ['fxargs'], default=())
             + _repr_attrs(self, ['attrfx'], default='merge')
+            + _repr_attrs(self, ['order'], default='uattrs')
             )
+
 
     def __str__(self):
         return _str(self, fx=self.__fx.__name__)
@@ -204,10 +218,13 @@ class FxMapper(Mapper):
         self.__attrcombs = dict(zip(self.__uattrs,
                                 [col[attr].unique for attr in self.__uattrs]))
         # let it generate all combinations of unique elements in any attr
+        order = self.order
+        order_keys = []
         for comb in _orthogonal_permutations(self.__attrcombs):
             selector = reduce(np.multiply,
                                 [array_whereequal(col[attr].value, value)
                                  for attr, value in comb.iteritems()])
+
             # process the samples
             if axis == 0:
                 samples = ds.samples[selector]
@@ -229,6 +246,25 @@ class FxMapper(Mapper):
                                     for attr in col]
                 for i, attr in enumerate(col):
                     attrs[attr].append(fxed_attrs[i])
+            # possibly take care about collecting information to have groups ordered
+            if order == 'uattrs':
+                # reverse order as per docstring -- most of the time we have
+                # used uattrs=['targets', 'chunks'] and did expect chunks being
+                # groupped together.
+                order_keys.append([comb[a] for a in self.__uattrs[::-1]])
+            elif order == 'occurrence':
+                # First index should be sufficient since we are dealing
+                # with unique non-overlapping groups here (AFAIK ;) )
+                order_keys.append(np.where(selector)[0][0])
+
+        if order:
+            # reorder our groups using collected "order_keys"
+            # data
+            order_idxs = argsort(order_keys)
+            mdata = [mdata[i] for i in order_idxs]
+            # and attributes
+            attrs = dict((k, [v[i] for i in order_idxs])
+                         for k,v in attrs.iteritems())
 
         if axis == 0:
             mdata = np.vstack(mdata)
@@ -261,6 +297,7 @@ class FxMapper(Mapper):
     fxargs = property(fget=lambda self:self.__fxargs)
     uattrs = property(fget=lambda self:self.__uattrs)
     attrfx = property(fget=lambda self:self.__attrfx)
+    order = property(fget=lambda self:self.__order)
 
 #
 # Convenience functions to create some useful mapper with less complexity
@@ -284,13 +321,14 @@ def mean_sample(attrfx='merge'):
     return FxMapper('samples', np.mean, attrfx=attrfx)
 
 
-def mean_group_sample(attrs, attrfx='merge'):
+def mean_group_sample(attrs, attrfx='merge', **kwargs):
     """Returns a mapper that computes the mean samples of unique sample groups.
 
     The sample groups are identified by the unique combination of all
     values of a set of provided sample attributes.  Order of output
     samples might differ from original and correspond to sorted order
-    of corresponding `attrs`.
+    of corresponding `attrs`  by default.  Use `order='occurrence'` if you would
+    like to maintain the order.
 
     Parameters
     ----------
@@ -307,7 +345,7 @@ def mean_group_sample(attrs, attrfx='merge'):
     -------
     FxMapper instance.
     """
-    return FxMapper('samples', np.mean, uattrs=attrs, attrfx=attrfx)
+    return FxMapper('samples', np.mean, uattrs=attrs, attrfx=attrfx, **kwargs)
 
 
 def sum_sample(attrfx='merge'):
@@ -346,13 +384,14 @@ def mean_feature(attrfx='merge'):
     return FxMapper('features', np.mean, attrfx=attrfx)
 
 
-def mean_group_feature(attrs, attrfx='merge'):
+def mean_group_feature(attrs, attrfx='merge', **kwargs):
     """Returns a mapper that computes the mean features of unique feature groups.
 
     The feature groups are identified by the unique combination of all values of
     a set of provided feature attributes.  Order of output
     features might differ from original and correspond to sorted order
-    of corresponding `attrs`.
+    of corresponding `attrs` by default.  Use `order='occurrence'` if you would
+    like to maintain the order.
 
     Parameters
     ----------
@@ -369,7 +408,7 @@ def mean_group_feature(attrs, attrfx='merge'):
     -------
     FxMapper instance.
     """
-    return FxMapper('features', np.mean, uattrs=attrs, attrfx=attrfx)
+    return FxMapper('features', np.mean, uattrs=attrs, attrfx=attrfx, **kwargs)
 
 
 def absolute_features():
@@ -447,6 +486,16 @@ def merge2first(attrs):
     First element of the input sequence.
     """
     return attrs[0]
+
+def argsort(seq, reverse=False):
+    """Return indices to get sequence sorted
+    """
+    # Based on construct from
+    # http://stackoverflow.com/questions/3071415/efficient-method-to-calculate-the-rank-vector-of-a-list-in-python
+    # Thanks!
+
+    # cmp was not passed through since seems to be absent in python3
+    return sorted(range(len(seq)), key=seq.__getitem__, reverse=reverse)
 
 def _orthogonal_permutations(a_dict):
     """

@@ -19,9 +19,9 @@ from mvpa2.datasets.base import dataset_wizard, Dataset
 from mvpa2.testing.tools import *
 
 def test_samplesgroup_mapper():
-    data = np.arange(24).reshape(8,3)
+    data = np.arange(24).reshape(8, 3)
     labels = [0, 1] * 4
-    chunks = np.repeat(np.array((0,1)),4)
+    chunks = np.repeat(np.array((0, 1)), 4)
 
     # correct results
     csamples = [[3, 4, 5], [6, 7, 8], [15, 16, 17], [18, 19, 20]]
@@ -64,6 +64,47 @@ def test_samplesgroup_mapper():
     mapped = ds_.get_mapped(m)
     ok_(len(mapped) == 3)
     ok_(not None in mapped.sa.origids)
+
+    # with such a dataset we should get identical results if we order groups
+    # by their occurence
+    mo = mean_group_sample(['targets', 'chunks'], order='occurrence')
+    mappedo = ds.get_mapped(mo)
+    assert_array_equal(mappedo.samples, csamples)
+    assert_array_equal(mappedo.targets, clabels)
+    assert_array_equal(mappedo.chunks, cchunks)
+
+    # but if we would get different result if we swap order
+    # of specified uattrs: now first targets would be groupped
+    # and only then chunks:
+    mr = mean_group_sample(['chunks', 'targets'])
+    mappedr = ds.get_mapped(mr)
+    # which effectively swaps two comparison targets in this fake dataset
+    assert_array_equal(mappedr.targets, cchunks)
+    assert_array_equal(mappedr.chunks, clabels)
+
+def test_samplesgroup_mapper_test_order_occurrence():
+    data = np.arange(8)[:, None]
+    ds = dataset_wizard(samples=data,
+                        targets=[1, 0]*4,
+                        chunks=[0]*4 + [1]*4)
+
+    m = mean_group_sample(['targets', 'chunks'], order='occurrence')
+    assert_true('order=' in repr(m))
+
+    mds = ds.get_mapped(m)
+
+    assert_array_equal(mds.sa.targets, [1, 0] * 2)
+    assert_array_equal(mds.sa.chunks, [0]*2 + [1]*2)
+    assert_array_equal(mds.samples[:, 0], [1, 2, 5, 6])
+
+    # and if we ordered as 'uattrs' (default)
+    m = mean_group_sample(['targets', 'chunks'])
+    assert_false('order=' in repr(m))
+    mds = ds.get_mapped(m)
+
+    assert_array_equal(mds.sa.targets, [0, 1] * 2)
+    assert_array_equal(mds.sa.chunks, [0]*2 + [1]*2)
+    assert_array_equal(mds.samples[:, 0], [2, 1, 6, 5])
 
 def test_featuregroup_mapper():
     ds = Dataset(np.arange(24).reshape(3,8))

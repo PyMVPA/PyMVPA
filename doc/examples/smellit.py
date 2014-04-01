@@ -23,18 +23,31 @@ ds = load_example_fmri_dataset()
 # only use the first 5 chunks to save some cpu-cycles
 ds = ds[ds.chunks < 5]
 
-# take a look at the distribution of the feature values in all
-# sample categories and chunks
+"""
+It is always useful to have a quick look at the summary of the dataset and
+verify that statistics (mean, standard deviation) are in the expected range,
+that there is balance among targets/chunks, and that order is balanced (where
+appropriate).
+"""
+
+print ds.summary()
+
+"""
+Now we can take a look at the distribution of the feature values in all
+sample categories and chunks.
+"""
+
+pl.figure(figsize=(14, 14)) # larger figure
 hist(ds, xgroup_attr='chunks', ygroup_attr='targets', noticks=None,
-     bins=20, normed=True, xlim=(0, ds.samples.max()))
+     bins=20, normed=True)
 
 # next only works with floating point data
 ds.samples = ds.samples.astype('float')
 
-# look at sample similiarity
+# look at sample similarity
 # Note, the decreasing similarity with increasing temporal distance
 # of the samples
-pl.figure()
+pl.figure(figsize=(14, 6))
 pl.subplot(121)
 plot_samples_distance(ds, sortbyattr='chunks')
 pl.title('Sample distances (sorted by chunks)')
@@ -54,13 +67,13 @@ poly_detrend(ds, polyord=2, chunks_attr='chunks')
 print 'Z-Scoring data'
 zscore(ds)
 
-pl.figure()
+pl.figure(figsize=(14, 6))
 pl.subplot(121)
 plot_samples_distance(ds, sortbyattr='chunks')
 pl.title('Distances: z-scored, detrended (sorted by chunks)')
 pl.subplot(122)
 plot_samples_distance(ds, sortbyattr='targets')
-pl.title('Distances: z-scored, detrended (sorted by targets)')
+pl.title('Distances: z-scored, detrended (sorted by targets)');
 if cfg.getboolean('examples', 'interactive', True):
     pl.show()
 

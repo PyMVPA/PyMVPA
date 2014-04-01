@@ -23,7 +23,7 @@ from mvpa2.clfs.gnb import GNB
 from mvpa2.kernels.np import LinearKernel, SquaredExponentialKernel, \
      GeneralizedLinearKernel
 from mvpa2.featsel.rfe import SplitRFE
-
+from mvpa2.clfs.dummies import RandomClassifier
 
 # Helpers
 from mvpa2.base import externals, cfg
@@ -47,7 +47,7 @@ _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
         'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet',
         'gnb', 'plr', 'rpy2', 'swig', 'skl', 'lda', 'qda',
-        'random-forest', 'extra-trees']
+        'random-forest', 'extra-trees', 'random']
 
 class Warehouse(object):
     """Class to keep known instantiated classifiers
@@ -207,6 +207,10 @@ clfswh += [ SMLR(lm=0.1, implementation="C", descr="SMLR(lm=0.1)"),
 clfswh += \
      [ MulticlassClassifier(SMLR(lm=0.1),
                             descr='Pairs+maxvote multiclass on SMLR(lm=0.1)') ]
+
+clfswh += [ RandomClassifier(descr="Random"),
+            RandomClassifier(same=True, descr="RandomSame"),
+            ]
 
 if externals.exists('libsvm'):
     from mvpa2.clfs.libsvmc import svm as libsvm
