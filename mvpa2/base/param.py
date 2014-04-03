@@ -157,7 +157,7 @@ class Parameter(IndexedCollectable):
         if self._ro:
             s += ', ro=True'
         if not self.is_default:
-            s += ', value=%r' % self.value
+            s += ', value=%r' % (self.value, )
         s += ')'
         return s
 

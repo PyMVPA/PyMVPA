@@ -114,7 +114,30 @@ class EnsureListOf(Constraint):
     def long_description(self):
         return "value must be convertible to %s" % self.short_description()
 
+class EnsureTupleOf(Constraint):
+    """Ensure that an input is a tuple of a particular data type
+    """
+    def __init__(self, dtype):
+        """
+        Parameters
+        ----------
+        dtype : functor
+        """
+        self._dtype = dtype
+        super(EnsureTupleOf, self).__init__()
 
+    def __call__(self, value):
+        return tuple(map(self._dtype, value))
+
+    def short_description(self):
+        dtype_descr = str(self._dtype)
+        if dtype_descr[:7] == "<type '" and dtype_descr[-2:] == "'>":
+            dtype_descr = dtype_descr[7:-2]
+        return 'tuple(%s)' % dtype_descr
+
+    def long_description(self):
+        return "value must be convertible to %s" % self.short_description()        
+            
 class EnsureBool(Constraint):
     """Ensure that an input is a bool.
 
