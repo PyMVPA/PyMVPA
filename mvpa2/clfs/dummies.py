@@ -55,7 +55,7 @@ class RandomClassifier(Classifier):
     __tags__ = ['random', 'non-deterministic']
 
     same = Parameter(
-        False, allowedtype='bool',
+        False, constraints='bool',
         doc="If a dataset arrives to predict, assign identical (but random) label "
             "to all samples having the same label in original, thus mimiquing the "
             "situation where testing samples are not independent.")
