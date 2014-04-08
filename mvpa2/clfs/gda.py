@@ -32,6 +32,7 @@ from mvpa2.base import warning, externals
 from mvpa2.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa2.base.learner import DegenerateInputError
 from mvpa2.base.param import Parameter
+from mvpa2.base.constraints import EnsureChoice
 from mvpa2.base.state import ConditionalAttribute
 #from mvpa2.measures.base import Sensitivity
 
@@ -50,12 +51,11 @@ class GDA(Classifier):
 
 
     prior = Parameter('laplacian_smoothing',
-             allowedtype='basestring',
-             choices=["laplacian_smoothing", "uniform", "ratio"],
+             constraints=EnsureChoice('laplacian_smoothing', 'uniform', 'ratio'),
              doc="""How to compute prior distribution.""")
 
     allow_pinv = Parameter(True,
-             allowedtype='bool',
+             constraints='bool',
              doc="""Allow pseudo-inverse in case of degenerate covariance(s).""")
 
     def __init__(self, **kwargs):

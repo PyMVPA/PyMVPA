@@ -120,7 +120,7 @@ class Classifier(Learner):
     doing regression for instance...."""
 
     # TODO: make it available only for actually retrainable classifiers
-    retrainable = Parameter(False, allowedtype='bool',
+    retrainable = Parameter(False, constraints='bool',
         doc="""Either to enable retraining for 'retrainable' classifier.""",
         index=1002)
 
