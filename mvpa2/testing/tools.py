@@ -15,6 +15,7 @@ __docformat__ = 'restructuredtext'
 import glob, os, sys, shutil
 import tempfile
 import unittest
+from contextlib import contextmanager
 
 import numpy as np
 
@@ -67,6 +68,26 @@ if sys.version_info < (2, 7):
 
     def assert_is_instance(obj, cls, msg=None):
         assert_true(isinstance(obj, cls), msg=msg)
+
+if externals.exists('mock'):
+    import mock
+
+    @contextmanager
+    def assert_warnings(messages):
+        with mock.patch("warnings.warn") as mock_warnings:
+            yield
+            #import pydb; pydb.debugger()
+            warning_list = [(call[2]['category'], call[1][0])
+                            for call in mock_warnings.mock_calls]
+            assert_equal(
+                messages,
+                warning_list
+            )
+else:
+    @contextmanager
+    def assert_warnings(messages):
+        yield
+        raise SkipTest, "install mock for testing either warnings were issued"
 
 def skip_if_no_external(dep, ver_dep=None, min_version=None, max_version=None):
     """Raise SkipTest if external is missing
