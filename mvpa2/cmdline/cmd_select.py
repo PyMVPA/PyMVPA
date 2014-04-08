@@ -62,7 +62,7 @@ if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
     import parser_add_common_opt, \
-           ds2hdf5, hdf2ds, _load_csv_table
+           ds2hdf5, hdf2ds
 
 # map operator symbols to method names
 attr_operators = {
