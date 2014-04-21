@@ -26,6 +26,7 @@ class CorrStability(FeaturewiseMeasure):
 
     """
 
+    is_trained = True
     def __init__(self, attr='targets', **kwargs):
         """Initialize
 
@@ -41,10 +42,10 @@ class CorrStability(FeaturewiseMeasure):
 
 
     def _call(self, dataset):
-        """Computes featurewise scores."""
+        """Computes feature-wise scores."""
 
-        # get the attributes (usally the labels) and the samples
-        attrdata = eval('dataset.' + self.__attr)
+        # get the attributes (usually the labels) and the samples
+        attrdata = dataset.sa[self.__attr].value
         samples = dataset.samples
 
         # take mean within chunks
@@ -58,7 +59,7 @@ class CorrStability(FeaturewiseMeasure):
                     # no instances, so skip
                     continue
                 # append the mean, and the label/chunk info
-                dat.append(samples[ind,:].mean(0))
+                dat.append(samples[ind, :].mean(0))
                 labels.append(l)
                 chunks.append(c)
 
@@ -90,6 +91,6 @@ class CorrStability(FeaturewiseMeasure):
         dat2 = dat[ind2,:] - dat[ind2,:].mean(0)[np.newaxis,:].repeat(dat[ind2,:].shape[0],0)
 
         # calculate the correlation from the covariance and std
-        covar = (dat1*dat2).mean(0) / dat1.std(0) * dat2.std(0)
-
+        covar = (dat1*dat2).mean(0) / (dat1.std(0) * dat2.std(0))
+        covar[np.isnan(covar)] = 0.0 # reset nan's to 0s
         return covar
