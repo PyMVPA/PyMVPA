@@ -15,9 +15,11 @@ import numpy as np
 from mvpa2.measures.base import FeaturewiseMeasure
 
 class CorrStability(FeaturewiseMeasure):
-    """`FeaturewiseMeasure` that assesses feature stability
-    across runs for each unique label by correlating label activity
-    for pairwise combinations of the chunks.
+    """Correlation of a feature values per each target across chunks.
+
+    It will assesses feature stability across runs for each unique label by
+    correlating feature values across all labels for pairwise combinations of
+    the chunks.
 
     If there are multiple samples with the same label in a single
     chunk (as is typically the case) this algorithm will take the
@@ -27,25 +29,23 @@ class CorrStability(FeaturewiseMeasure):
     """
 
     is_trained = True
-    def __init__(self, attr='targets', **kwargs):
+
+    def __init__(self, space='targets', **kwargs):
         """Initialize
 
         Parameters
         ----------
-        attr : str
-          Attribute to correlate across chunks.
+        space : str
+          What samples attribute to use as targets (labels).
         """
         # init base classes first
-        FeaturewiseMeasure.__init__(self, **kwargs)
-
-        self.__attr = attr
-
+        FeaturewiseMeasure.__init__(self, space=space, **kwargs)
 
     def _call(self, dataset):
         """Computes feature-wise scores."""
 
         # get the attributes (usually the labels) and the samples
-        attrdata = dataset.sa[self.__attr].value
+        attrdata = dataset.sa[self.space].value
         samples = dataset.samples
 
         # take mean within chunks
