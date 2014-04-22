@@ -81,7 +81,7 @@ class RFE(IterativeFeatureSelection):
     ...                                     FxMapper('samples', np.abs)])),
     ...           # use the error stored in the confusion matrix of split classifier
     ...           ConfusionBasedError(rfesvm_split, confusion_state='stats'),
-    ...           # we just extract error from confusion, so need to split dataset
+    ...           # we just extract error from confusion, so no need to split dataset
     ...           Repeater(2),
     ...           # select 50% of the best on each step
     ...           fselector=FractionTailSelector(
@@ -170,18 +170,10 @@ class RFE(IterativeFeatureSelection):
 
         Parameters
         ----------
-        dataset : Dataset
+        ds : Dataset
           used to compute sensitivity maps and train a classifier
           to determine the transfer error
-        testdataset : Dataset
-          used to test the trained classifer to determine the
-          transfer error
 
-        Returns a tuple of two new datasets with the feature subset of
-        `dataset` that had the lowest transfer error of all tested
-        sets until the stopping criterion was reached. The first
-        dataset is the feature subset of the training data and the
-        second the selection of the test dataset.
         """
         # get the initial split into train and test
         dataset, testdataset = self._get_traintest_ds(ds)
@@ -309,7 +301,11 @@ class RFE(IterativeFeatureSelection):
             # select corresponding sensitivity values if they are not
             # recomputed
             if not self.__update_sensitivity:
-                sensitivity = sensitivity[selected_ids]
+                if len(sensitivity.shape) >= 2:
+                    assert(sensitivity.shape[0] == 1) # there must be only 1 sample
+                    sensitivity = sensitivity[:, selected_ids]
+                else:
+                    sensitivity = sensitivity[selected_ids]
 
             # need to update the test dataset as well
             # XXX why should it ever become None?
@@ -386,7 +382,8 @@ class SplitRFE(RFE):
     def __init__(self, lrn, partitioner,
                  fselector,
                  errorfx=mean_mismatch_error,
-                 analyzer_postproc=maxofabs_sample(),
+                 analyzer_postproc=None,
+                 fmeasure=None,
                  # callback?
                  **kwargs):
         """
@@ -404,11 +401,34 @@ class SplitRFE(RFE):
         errorfx : func, optional
           Functor to use for estimation of cross-validation error
         analyzer_postproc : func, optional
-          Function to provide to the sensitivity analyzer as postproc
+          Function to provide to the sensitivity analyzer as postproc.  If no
+          fmeasure is provided and classifier sensitivity is used, then
+          maxofabs_sample() would be used for this postproc, unless other
+          value is provided
+        fmeasure : Function, optional
+          Featurewise measure.  If None was provided, lrn's sensitivity
+          analyzer will be used.
         """
         # Initialize itself preparing for the 2nd invocation
         # with determined number of nfeatures_min
-        fmeasure = lrn.get_sensitivity_analyzer(postproc=analyzer_postproc)
+        # TODO:  move this into _train since better not to assign anything here
+        # to avoid possible problems with copies needing to deal with the same
+        # lrn... but then we might like again to reconsider delegation instead
+        # of subclassing here....
+        if fmeasure is None:
+            if __debug__:
+                debug('RFE', 'fmeasure was not provided, taking the sensitivity'
+                             ' analyzer for %s' % lrn)
+            fmeasure = lrn.get_sensitivity_analyzer(
+                postproc=analyzer_postproc if analyzer_postproc is not None
+                                           else maxofabs_sample())
+            train_pmeasure = False
+        else:
+            assert analyzer_postproc is None, "There should be no explicit " \
+                    "one when fmeasure is specified"
+            # if user provided explicit value -- use it! otherwise, we do want
+            # to train an arbitrary fmeasure
+            train_pmeasure = kwargs.pop('train_pmeasure', True)
 
         RFE.__init__(self,
                      fmeasure,
@@ -416,7 +436,7 @@ class SplitRFE(RFE):
                      Repeater(2),
                      fselector=fselector,
                      bestdetector=None,
-                     train_pmeasure=False,
+                     train_pmeasure=train_pmeasure,
                      stopping_criterion=None,
                      **kwargs)
         self._lrn = lrn                   # should not be modified, thus _
@@ -429,7 +449,7 @@ class SplitRFE(RFE):
             prefixes=prefixes
             + _repr_attrs(self, ['lrn', 'partitioner'])
             + _repr_attrs(self, ['errorfx'], default=mean_mismatch_error)
-            + _repr_attrs(self, ['analyzer_postproc'], default=maxofabs_sample())
+            + _repr_attrs(self, ['analyzer_postproc'], default=None)
             )
 
 
@@ -441,7 +461,7 @@ class SplitRFE(RFE):
         pmeasure = ProxyMeasure(self.lrn,
                                 postproc=BinaryFxNode(self.errorfx,
                                                       self.lrn.space),
-                                skip_train=True   # do not train since fmeasure will
+                                skip_train=not self.train_pmeasure   # do not train since fmeasure will
                                 )
 
         # First we need to replicate our RFE construct but this time
@@ -451,7 +471,7 @@ class SplitRFE(RFE):
                   Splitter('partitions'),
                   fselector=self.fselector,
                   bestdetector=None,
-                  train_pmeasure=False,
+                  train_pmeasure=self.train_pmeasure,
                   stopping_criterion=None,   # full "track"
                   update_sensitivity=self.update_sensitivity,
                   enable_ca=['errors', 'nfeatures'])
@@ -488,7 +508,7 @@ class SplitRFE(RFE):
 
         if __debug__:
             debug("RFEC", "Stage 2: running RFE on full training dataset to "
-                  "distil best %d features" % nfeatures_min)
+                  "obtain the best %d features" % nfeatures_min)
 
         super(SplitRFE, self)._train(dataset)
 
