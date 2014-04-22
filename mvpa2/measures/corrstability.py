@@ -59,7 +59,7 @@ class CorrStability(FeaturewiseMeasure):
                     # no instances, so skip
                     continue
                 # append the mean, and the label/chunk info
-                dat.append(samples[ind, :].mean(0))
+                dat.append(np.mean(samples[ind, :], axis=0))
                 labels.append(l)
                 chunks.append(c)
 
@@ -87,8 +87,8 @@ class CorrStability(FeaturewiseMeasure):
         ind2 = np.asarray(ind2)
 
         # remove the mean from the datasets
-        dat1 = dat[ind1,:] - dat[ind1,:].mean(0)[np.newaxis,:].repeat(dat[ind1,:].shape[0],0)
-        dat2 = dat[ind2,:] - dat[ind2,:].mean(0)[np.newaxis,:].repeat(dat[ind2,:].shape[0],0)
+        dat1 = dat[ind1] - dat[ind1].mean(0)[np.newaxis]
+        dat2 = dat[ind2] - dat[ind2].mean(0)[np.newaxis]
 
         # calculate the correlation from the covariance and std
         covar = (dat1*dat2).mean(0) / (dat1.std(0) * dat2.std(0))
