@@ -10,6 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
+from mvpa2.base import externals
 from mvpa2.base.dochelpers import _repr_attrs
 from mvpa2.support.copy import copy
 from mvpa2.clfs.transerror import ClassifierError
@@ -31,6 +32,9 @@ from mvpa2.generators.base import Repeater
 
 import numpy as np
 from mvpa2.base.state import ConditionalAttribute
+
+if externals.exists('joblib'):
+    import joblib as jl
 
 if __debug__:
     from mvpa2.base import debug
@@ -143,7 +147,7 @@ class RFE(IterativeFeatureSelection):
           features that should be kept.
         update_sensitivity : bool
           If False the sensitivity map is only computed once and reused
-          for each iteration. Otherwise the senstitivities are
+          for each iteration. Otherwise the sensitivities are
           recomputed at each selection step.
         nfeatures_min : int
           Number of features for RFE to stop if reached.
@@ -357,6 +361,11 @@ class RFE(IterativeFeatureSelection):
     nfeatures_min = property(fget=_get_nfeatures_min, fset=_set_nfeatures_min)
     update_sensitivity = property(fget=lambda self: self.__update_sensitivity)
 
+def _process_partition(rfe, partition):
+    """Helper function to be used to parallelize SplitRFE
+    """
+    rfe.train(partition)
+    return rfe.ca.errors, rfe.ca.nfeatures
 
 class SplitRFE(RFE):
     """RFE with the nested cross-validation to estimate optimal number of features.
@@ -379,11 +388,17 @@ class SplitRFE(RFE):
        'nfeatures_min'   # will get 'trained'
        ]
 
+    nested_errors = ConditionalAttribute(
+        doc="History of errors per each nested split")
+    nested_nfeatures = ConditionalAttribute(
+        doc="History of # of features left per each nested split")
+
     def __init__(self, lrn, partitioner,
                  fselector,
                  errorfx=mean_mismatch_error,
                  analyzer_postproc=None,
                  fmeasure=None,
+                 nproc=1,
                  # callback?
                  **kwargs):
         """
@@ -417,15 +432,15 @@ class SplitRFE(RFE):
         # of subclassing here....
         if fmeasure is None:
             if __debug__:
-                debug('RFE', 'fmeasure was not provided, taking the sensitivity'
-                             ' analyzer for %s' % lrn)
+                debug('RFE', 'fmeasure was not provided, will be using the '
+                             'sensitivity analyzer for %s' % lrn)
             fmeasure = lrn.get_sensitivity_analyzer(
                 postproc=analyzer_postproc if analyzer_postproc is not None
                                            else maxofabs_sample())
             train_pmeasure = False
         else:
             assert analyzer_postproc is None, "There should be no explicit " \
-                    "one when fmeasure is specified"
+                    "analyzer_postproc when fmeasure is specified"
             # if user provided explicit value -- use it! otherwise, we do want
             # to train an arbitrary fmeasure
             train_pmeasure = kwargs.pop('train_pmeasure', True)
@@ -443,6 +458,7 @@ class SplitRFE(RFE):
         self.partitioner = partitioner
         self.errorfx = errorfx
         self.analyzer_postproc = analyzer_postproc
+        self.nproc = nproc
 
     def __repr__(self, prefixes=[]):
         return super(SplitRFE, self).__repr__(
@@ -450,6 +466,7 @@ class SplitRFE(RFE):
             + _repr_attrs(self, ['lrn', 'partitioner'])
             + _repr_attrs(self, ['errorfx'], default=mean_mismatch_error)
             + _repr_attrs(self, ['analyzer_postproc'], default=None)
+            + _repr_attrs(self, ['nproc'], default=1)
             )
 
 
@@ -481,10 +498,21 @@ class SplitRFE(RFE):
         if __debug__:
             debug("RFEC", "Stage 1: initial nested CV/RFE for %s", (dataset,))
 
-        for partition in self.partitioner.generate(dataset):
-            rfe.train(partition)
-            errors.append(rfe.ca.errors)
-            nfeatures.append(rfe.ca.nfeatures)
+        if self.nproc != 1 and externals.exists('joblib'):
+            nested_results = jl.Parallel(self.nproc)(
+                jl.delayed(_process_partition)(rfe, partition)
+                for partition in self.partitioner.generate(dataset))
+        else:
+            nested_results = [
+                _process_partition(rfe, partition)
+                for partition in self.partitioner.generate(dataset)]
+
+        # unzip
+        errors = [x[0] for x in nested_results]
+        nfeatures = [x[1] for x in nested_results]
+
+        self.ca.nested_nfeatures = nfeatures
+        self.ca.nested_errors = errors
 
         # mean errors across splits and find optimal number
         errors_mean = np.mean(errors, axis=0)

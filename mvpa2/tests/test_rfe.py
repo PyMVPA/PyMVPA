@@ -557,6 +557,7 @@ class RFETests(unittest.TestCase):
         # at least 1 of the nonbogus-features should be chosen
         ok_(len(set(dataset.a.nonbogus_features).intersection(
                 rfeclf.mapper.slicearg)) > 0)
+
         # check repr to have all needed pieces
         r = repr(rfeclf)
         s = str(rfeclf)
@@ -565,6 +566,16 @@ class RFETests(unittest.TestCase):
         ok_('lrn=' in r)
         ok_(not 'slicearg=' in r)
         assert_equal(r, r0)
+
+        if externals.exists('joblib'):
+            rfeclf.mapper.nproc = -1
+            # compare results against the one ran in parallel
+            _slicearg = rfeclf.mapper.slicearg
+            _predictions = predictions
+            rfeclf.train(dataset)
+            predictions = rfeclf(dataset).samples
+            assert_array_equal(predictions, _predictions)
+            assert_array_equal(_slicearg, rfeclf.mapper.slicearg)
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(RFETests)
