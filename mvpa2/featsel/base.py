@@ -404,7 +404,8 @@ class IterativeFeatureSelection(FeatureSelection):
     def _untrain(self):
         if __debug__:
             debug("FS_", "Untraining Iterative FS: %s" % self)
-        self._fmeasure.untrain()
+        if self._fmeasure is not None:
+            self._fmeasure.untrain()
         if self._pmeasure is not None:
             self._pmeasure.untrain()
         # ask base class to do its untrain
