@@ -397,6 +397,9 @@ class IterativeFeatureSelection(FeatureSelection):
         self._bestdetector = bestdetector
         self._train_pmeasure = train_pmeasure
 
+    # TODO!
+    #def __repr__(self):
+    #    raise NotImplementedError
 
     def _untrain(self):
         if __debug__:

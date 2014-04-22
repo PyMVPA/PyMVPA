@@ -33,6 +33,7 @@ from mvpa2.clfs.transerror import ConfusionBasedError
 from mvpa2.misc.attrmap import AttributeMap
 from mvpa2.clfs.stats import MCNullDist
 from mvpa2.measures.base import ProxyMeasure, CrossValidation
+from mvpa2.measures.anova import OneWayAnova
 
 from mvpa2.base.state import UnknownStateError
 
@@ -515,7 +516,9 @@ class RFETests(unittest.TestCase):
 
     @reseed_rng()
     @labile(3, 1)
-    def test_SplitRFE(self):
+    # Let's test with clf sens analyzer AND OneWayAnova
+    @sweepargs(fmeasure=(None, OneWayAnova()))
+    def test_SplitRFE(self, fmeasure):
         # just a smoke test ATM
         from mvpa2.clfs.svm import LinearCSVMC
         from mvpa2.clfs.meta import MappedClassifier
@@ -540,7 +543,10 @@ class RFETests(unittest.TestCase):
             clf, SplitRFE(clf,
                           partitioner,
                           fselector=FractionTailSelector(
-                              0.2, mode='discard', tail='lower')))
+                              0.2, mode='discard', tail='lower'),
+                          fmeasure=fmeasure,
+                           # need to update only when using clf's sens anal
+                          update_sensitivity=fmeasure is None))
         r0 = repr(rfeclf)
 
         ok_(rfeclf.mapper.nfeatures_min == 0)
