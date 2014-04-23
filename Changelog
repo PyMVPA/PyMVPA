@@ -42,6 +42,12 @@ Releases
       value of 'occurrence' to that groups would get ordered by their occurance
       in the original dataset.
 
+  * Fixes
+
+    - :class:`~mvpa2.mappers.corrstability.CorrStability` should be able to
+      deal with other sample attributes (not only 'targets') and should divide
+      by variance correctly to provide correlation coefficient as output.
+
 * 2.3.0 (Thu, 5 March 2014)
 
   * **Warning**: Due to a significant number of new features and some internal
