@@ -15,9 +15,11 @@ import numpy as np
 from mvpa2.measures.base import FeaturewiseMeasure
 
 class CorrStability(FeaturewiseMeasure):
-    """`FeaturewiseMeasure` that assesses feature stability
-    across runs for each unique label by correlating label activity
-    for pairwise combinations of the chunks.
+    """Correlation of a feature values per each target across chunks.
+
+    It will assesses feature stability across runs for each unique label by
+    correlating feature values across all labels for pairwise combinations of
+    the chunks.
 
     If there are multiple samples with the same label in a single
     chunk (as is typically the case) this algorithm will take the
@@ -26,25 +28,24 @@ class CorrStability(FeaturewiseMeasure):
 
     """
 
-    def __init__(self, attr='targets', **kwargs):
+    is_trained = True
+
+    def __init__(self, space='targets', **kwargs):
         """Initialize
 
         Parameters
         ----------
-        attr : str
-          Attribute to correlate across chunks.
+        space : str
+          What samples attribute to use as targets (labels).
         """
         # init base classes first
-        FeaturewiseMeasure.__init__(self, **kwargs)
-
-        self.__attr = attr
-
+        FeaturewiseMeasure.__init__(self, space=space, **kwargs)
 
     def _call(self, dataset):
-        """Computes featurewise scores."""
+        """Computes feature-wise scores."""
 
-        # get the attributes (usally the labels) and the samples
-        attrdata = eval('dataset.' + self.__attr)
+        # get the attributes (usually the labels) and the samples
+        attrdata = dataset.sa[self.space].value
         samples = dataset.samples
 
         # take mean within chunks
@@ -58,7 +59,7 @@ class CorrStability(FeaturewiseMeasure):
                     # no instances, so skip
                     continue
                 # append the mean, and the label/chunk info
-                dat.append(samples[ind,:].mean(0))
+                dat.append(np.mean(samples[ind, :], axis=0))
                 labels.append(l)
                 chunks.append(c)
 
@@ -86,10 +87,10 @@ class CorrStability(FeaturewiseMeasure):
         ind2 = np.asarray(ind2)
 
         # remove the mean from the datasets
-        dat1 = dat[ind1,:] - dat[ind1,:].mean(0)[np.newaxis,:].repeat(dat[ind1,:].shape[0],0)
-        dat2 = dat[ind2,:] - dat[ind2,:].mean(0)[np.newaxis,:].repeat(dat[ind2,:].shape[0],0)
+        dat1 = dat[ind1] - dat[ind1].mean(0)[np.newaxis]
+        dat2 = dat[ind2] - dat[ind2].mean(0)[np.newaxis]
 
         # calculate the correlation from the covariance and std
-        covar = (dat1*dat2).mean(0) / dat1.std(0) * dat2.std(0)
-
+        covar = (dat1*dat2).mean(0) / (dat1.std(0) * dat2.std(0))
+        covar[np.isnan(covar)] = 0.0 # reset nan's to 0s
         return covar

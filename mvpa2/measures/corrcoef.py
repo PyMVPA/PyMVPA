@@ -32,7 +32,7 @@ class CorrCoef(FeaturewiseMeasure):
         Parameters
         ----------
         pvalue : bool
-          Either to report p-value of pearsons correlation coefficient
+          Either to report p-value of the Pearson's correlation coefficient
           instead of pure correlation coefficient
         attr : str
           What attribut to correlate with
