@@ -656,6 +656,12 @@ experiments.
   URL: http://raizadalab.org/publications.html
 
 
+.. _REA+14:
+
+**Rueschemeyer, S., Ekman, M., van Ackeren, M. & Kilner, J.** (2014). Observing, Performing, and Understanding Actions: Revisiting the Role of Cortical Motor Areas in Processing of Action Words. *Journal of Cognitive Neuroscience*.
+  DOI: http://dx.doi.org/10.1162/jocn_a_00576
+
+
 .. _SMM+08:
 
 **Sato, J. R., Mourão-Miranda, J., Martin, M. d. G. M., Amaro, E., Morettin, P. A. & Brammer, M. J.** (2008). The impact of functional connectivity changes on support vector machines mapping of fMRI data. *Journal of Neuroscience Methods*, *172*, 94–104.
