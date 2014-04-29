@@ -1068,17 +1068,18 @@ if externals.exists('scipy'):
             if plot_cdf:
                 pl.plot(x, nonparam.cdf(x), 'k--', linewidth=1)
 
-            p_thr = p
-
             data_p = _pvalue(data, nonparam.cdf, nonparam.rcdf, tail)
-            data_p_thr = (data_p <= p_thr).ravel()
 
             npd = Nonparametric(data)
             x_p = _pvalue(x, npd.cdf, npd.rcdf, tail)
-            x_p_thr = np.abs(x_p) <= p_thr
-            # color bars which pass thresholding in red
-            for thr, bar_ in zip(x_p_thr[expand_tails:], hist[2]):
-                bar_.set_facecolor(('w','r')[int(thr)])
+
+            if p is not None:
+                data_p_thr = (data_p <= p).ravel()
+                x_p_thr = np.abs(x_p) <= p
+
+                # color bars which pass thresholding in red
+                for thr, bar_ in zip(x_p_thr[expand_tails:], hist[2]):
+                    bar_.set_facecolor(('w','r')[int(thr)])
 
             if not len(matches):
                 # no matches were provided
@@ -1096,12 +1097,13 @@ if externals.exists('scipy'):
                     label += '(D=%.2f)' % (D)
 
                 xcdf_p = np.abs(_pvalue(x, dist.cdf, rcdf, tail))
-                xcdf_p_thr = (xcdf_p <= p_thr).ravel()
+                if p is not None:
+                    xcdf_p_thr = (xcdf_p <= p).ravel()
 
                 if p is not None and legend > 2:
                     # We need to compare detection under given p
                     data_cdf_p = np.abs(_pvalue(data, dist.cdf, rcdf, tail))
-                    data_cdf_p_thr = (data_cdf_p <= p_thr).ravel()
+                    data_cdf_p_thr = (data_cdf_p <= p).ravel()
 
                     # true positives
                     tp = np.logical_and(data_cdf_p_thr, data_p_thr)
