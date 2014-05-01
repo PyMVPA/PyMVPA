@@ -1,9 +1,11 @@
-pymvpa2 (2.3.0-2) UNRELEASED; urgency=low
+pymvpa2 (2.3.0-3) unstable; urgency=low
 
   * debian/control
     - man2html to build-depends
+  * debian/patches
+    - 2.3.0-37-g269c43c.diff to resolve FTBFS on trusty
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 11 Mar 2014 10:13:04 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 01 May 2014 14:23:56 -0400
 
 pymvpa2 (2.3.0-1) unstable; urgency=low
 
