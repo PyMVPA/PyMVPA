@@ -255,7 +255,7 @@ class Collection(BaseCollection):
           If True - do not complain about wrong key
         """
         if isinstance(key, basestring):
-            if key.upper() == 'ALL':
+            if key.lower() == 'all':
                 for key_ in self:
                     self._action(key_, func, missingok=missingok, **kwargs)
             else:
@@ -823,6 +823,23 @@ class ClassWithCollections(object):
 
         return self
 
+    @classmethod
+    def _custom_kwargs_sort_items(cls, **kwargs):
+        """Custom sorting of kwargs to fulfill premises of pymvpa
+
+        Some time ago the world was square and we could assume
+        that enable_ca always comes before disable_ca.  But we
+        were misguided, thus now we need to provide a custom
+        sorting routine to sort disable_ca after enable_ca
+        """
+
+        def _key(x):
+            k = x[0]
+            if k == 'enable_ca':
+                return 'ZZZZZZ'
+            return k
+
+        return sorted(kwargs.items(), key=_key)
 
     def __init__(self, descr=None, **kwargs):
         """Initialize ClassWithCollections object
@@ -843,7 +860,8 @@ class ClassWithCollections(object):
             collections = self._collections
             # Assign attributes values if they are given among
             # **kwargs
-            for arg, argument in kwargs.items():
+
+            for arg, argument in self._custom_kwargs_sort_items(**kwargs):
                 isset = False
                 for collection in collections.itervalues():
                     if collection._is_initializable(arg):
