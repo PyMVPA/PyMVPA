@@ -53,7 +53,7 @@ def test_assert_objectarray_equal():
 def test_tests_run():
     ok_(len(mvtests.collect_unit_tests()) > 10)
     ok_(len(mvtests.collect_nose_tests()) > 10)
-    ok_(len(mvtests.collect_test_suites()) > 10)
+    ok_(len(mvtests.collect_test_suites(instantiate=False)) > 10)
     mvtests.run(limit=[])
 
 @sweepargs(suffix=['', 'customsuffix'])
