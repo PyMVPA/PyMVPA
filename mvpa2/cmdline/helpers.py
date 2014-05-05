@@ -16,6 +16,8 @@ import sys
 import copy
 import os
 
+import numpy as np
+
 from mvpa2.base import verbose
 if __debug__:
     from mvpa2.base import debug
