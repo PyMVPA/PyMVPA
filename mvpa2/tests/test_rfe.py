@@ -34,6 +34,7 @@ from mvpa2.misc.attrmap import AttributeMap
 from mvpa2.clfs.stats import MCNullDist
 from mvpa2.measures.base import ProxyMeasure, CrossValidation
 from mvpa2.measures.anova import OneWayAnova
+from mvpa2.measures.fx import targets_mutualinfo_kde, targets_dcorrcoef
 
 from mvpa2.base.state import UnknownStateError
 
@@ -517,7 +518,11 @@ class RFETests(unittest.TestCase):
     @reseed_rng()
     @labile(3, 1)
     # Let's test with clf sens analyzer AND OneWayAnova
-    @sweepargs(fmeasure=(None, OneWayAnova()))
+    @sweepargs(fmeasure=(None,  # use clf's sensitivity analyzer
+                         OneWayAnova(), # ad-hoc feature-wise measure
+                         # targets_mutualinfo_kde(), # FxMeasure
+                         targets_dcorrcoef(), # FxMeasure wrapper
+               ))
     def test_SplitRFE(self, fmeasure):
         # just a smoke test ATM
         from mvpa2.clfs.svm import LinearCSVMC
@@ -531,19 +536,19 @@ class RFETests(unittest.TestCase):
         from mvpa2.testing import ok_, assert_equal
 
         clf = LinearCSVMC(C=1)
-        dataset = normal_feature_dataset(perlabel=20, nlabels=2, nfeatures=30,
-                                         snr=1., nonbogus_features=[1,5])
+        dataset = normal_feature_dataset(perlabel=20, nlabels=2, nfeatures=11,
+                                         snr=1., nonbogus_features=[1, 5])
         # flip one of the meaningful features around to see
         # if we are still getting proper selection
         dataset.samples[:, dataset.a.nonbogus_features[1]] *= -1
-        # 4 partitions should be enough for testing
-        partitioner = NFoldPartitioner(count=4)
+        # 3 partitions should be enough for testing
+        partitioner = NFoldPartitioner(count=3)
 
         rfeclf = MappedClassifier(
             clf, SplitRFE(clf,
                           partitioner,
                           fselector=FractionTailSelector(
-                              0.2, mode='discard', tail='lower'),
+                              0.5, mode='discard', tail='lower'),
                           fmeasure=fmeasure,
                            # need to update only when using clf's sens anal
                           update_sensitivity=fmeasure is None))
