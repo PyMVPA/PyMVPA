@@ -231,6 +231,7 @@ def collect_nose_tests(verbosity=1):
         'test_datameasure',
         'test_dcov',
         'test_corrstability',
+        'test_fxmeasure',
 
         # Misc
         'test_misc',
