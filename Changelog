@@ -33,7 +33,20 @@ Releases
 
 * 2.3.1 (???, ? ? ?)
 
-  * Don't wait to long listing the changes...
+  * Don't wait too long listing the changes...
+
+  * API changes
+
+    - Deprecation: :class:`~mvpa2.base.param.Parameter` now uses `constraints` argument
+      of type :class:`~mvpa2.base.constraints.Constraint` instead of string
+      `allowedtype`.  `allowedtype` argument will be removed completely in the
+      future 2.4 release.
+
+  * New changes
+
+    - :mod:`~mvpa2.clfs.dummies` now provides utterly useful
+      :class:`~mvpa2.clfs.dummies.RandomClassifier` and others for code testing
+      which could also be used to verify absent double-dipping etc.
 
   * Enhancements (?? ENH, OPT, and NF commits)
 
@@ -49,6 +62,7 @@ Releases
       by variance correctly to provide correlation coefficient as output.
     - robustify check scipy's rdist which should avoid crash upon import of
       mvpa2.suite because of stripped down scipy 1.4.0 API.
+    - various typos in docstrings (we do welcome contributions ;) ).
 
 * 2.3.0 (Thu, 5 March 2014)
 
