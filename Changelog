@@ -47,6 +47,8 @@ Releases
     - :class:`~mvpa2.mappers.corrstability.CorrStability` should be able to
       deal with other sample attributes (not only 'targets') and should divide
       by variance correctly to provide correlation coefficient as output.
+    - robustify check scipy's rdist which should avoid crash upon import of
+      mvpa2.suite because of stripped down scipy 1.4.0 API.
 
 * 2.3.0 (Thu, 5 March 2014)
 
