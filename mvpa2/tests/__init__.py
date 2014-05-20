@@ -155,16 +155,18 @@ def collect_unit_tests(verbosity=1):
     tests += optional_tests
     return tests
 
-def collect_test_suites(verbosity=1):
+def collect_test_suites(verbosity=1, instantiate=True):
     tests = collect_unit_tests(verbosity=verbosity)
     # import all test modules
     for t in tests:
         # TODO: exclude tests which fail to import: e.g. on Windows
         # could get WindowsError due to missing msvcr90.dll
         exec 'import mvpa2.tests.' + t
-
-    # instantiate all tests suites and return dict of them (with ID as key)
-    return dict([(t[5:], eval('mvpa2.tests.' + t + '.suite()')) for t in tests ])
+    if instantiate:
+        # instantiate all tests suites and return dict of them (with ID as key)
+        return dict([(t[5:], eval('mvpa2.tests.' + t + '.suite()')) for t in tests ])
+    else:
+        return tests
 
 
 def collect_nose_tests(verbosity=1):
@@ -230,6 +232,7 @@ def collect_nose_tests(verbosity=1):
         'test_transerror',
         'test_datameasure',
         'test_dcov',
+        'test_corrstability',
 
         # Misc
         'test_misc',

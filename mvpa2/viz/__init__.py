@@ -19,9 +19,21 @@ from mvpa2.base.dataset import is_datasetlike
 from mvpa2.generators.splitters import Splitter
 from mvpa2.generators.partition import NFoldPartitioner
 
+def _get_lim(data, lim):
+    """Helper function to unify setting the limits
+    """
+    if lim is None:
+        return None
+    if isinstance(lim, basestring):
+        lim = lim.lower()
+        if lim == 'same':
+            return (data.min(), data.max())
+        else:
+            raise ValueError("Know only 'same'. Got %s" % (lim,))
+    return lim
+
 def hist(dataset, xgroup_attr=None, ygroup_attr=None,
-         xlim=None, ylim=None,
-         noticks=False,
+         xlim='same', ylim='same', noticks=False,
          **kwargs):
     """Compute and draw feature histograms (for groups of samples)
 
@@ -55,10 +67,12 @@ def hist(dataset, xgroup_attr=None, ygroup_attr=None,
       If a string, a histogram will be plotted per each target and each
       chunk (as defined in sa named `chunks_attr`), resulting is a
       histogram grid (targets x chunks).
-    xlim : None or 2-tuple, optional
-      Common x-axis limits for all histograms.
-    ylim : None or 2-tuple, optional
-      Common y-axis limits for all histograms.
+    xlim : None or 2-tuple or 'same', optional
+      Common x-axis limits for all histograms.  By default all plots will have
+      the same range of values.  Set to None if you would like to let them vary.
+    ylim : None or 2-tuple or 'same', optional
+      Common y-axis limits for all histograms.  If same, heights for all
+      histograms will be made equal depending on the data.
     noticks : bool or None, optional
       If True, no axis ticks will be plotted. If False, each histogram subplot
       will have its own ticks. If None, only the outer subplots will
@@ -93,6 +107,7 @@ def hist(dataset, xgroup_attr=None, ygroup_attr=None,
     nrows = ygroup['npanels']
     ncols = xgroup['npanels']
     subplots = []
+    ylim_ = (0, 0)
     # for all labels
     for row, ds in enumerate(ygroup['gen'](ygroup['split'], dataset)):
         for col, d in enumerate(xgroup['gen'](xgroup['split'], ds)):
@@ -101,10 +116,16 @@ def hist(dataset, xgroup_attr=None, ygroup_attr=None,
                 data = d.samples
             else:
                 data = d
-            ax.hist(data.ravel(), **kwargs)
+            (n, bins, patches) = ax.hist(data.ravel(), **kwargs)
             if xlim is not None:
-                pl.xlim(xlim)
-
+                pl.xlim(_get_lim(data, xlim))
+            if ylim is not None:
+                if isinstance(ylim, basestring) and ylim.lower() == 'same':
+                    ylim_ = (min(ylim_[0], min(n)), max(ylim_[1], max(n)))
+                else:
+                    pl.ylim(ylim)
+                # for 'same' we would have needed to estimate histograms first
+                # and then adjust their ylim
             if noticks is True or (noticks is None and row < nrows - 1):
                 pl.xticks([])
             if noticks is True or (noticks is None and col > 0):
@@ -116,6 +137,10 @@ def hist(dataset, xgroup_attr=None, ygroup_attr=None,
                 pl.ylabel(str(d.sa[ygroup['attr']].unique[0]))
             fig += 1
             subplots.append(ax)
+    # if we have changed ylim_
+    if ylim_ != (0, 0):
+        for ax in subplots:
+            ax.set_ylim(ylim_)
     return subplots
 
 

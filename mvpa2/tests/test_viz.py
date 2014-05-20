@@ -17,6 +17,14 @@ skip_if_no_external('pylab')
 
 import numpy as np
 
+def test_get_lim():
+    from mvpa2.viz import _get_lim
+    d = np.arange(10)
+    assert_equal(_get_lim(d, 'same'), (0, 9))
+    assert_raises(ValueError, _get_lim, d, 'wrong')
+    assert_equal(_get_lim(d,  None), None)
+    assert_equal(_get_lim(d,  (1, 3)), (1, 3))
+
 def test_hist():
     from mvpa2.viz import hist
     from mvpa2.misc.data_generators import normal_feature_dataset

@@ -31,6 +31,40 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
+* 2.3.1 (Tue, 20 May 2014)
+
+  Primarily a bugfix release pushed out to avoid mvpa2.suite meltdown
+  if new scipy 1.4.0 is used.
+
+  * API changes
+
+    - Deprecation: :class:`~mvpa2.base.param.Parameter` now uses `constraints` argument
+      of type :class:`~mvpa2.base.constraints.Constraint` instead of string
+      `allowedtype`.  `allowedtype` argument will be removed completely in the
+      future 2.4 release.
+
+  * New changes
+
+    - :mod:`~mvpa2.clfs.dummies` now provides utterly useful
+      :class:`~mvpa2.clfs.dummies.RandomClassifier` and others for code testing
+      which could also be used to verify absent double-dipping etc.
+
+  * Enhancements
+
+    - :class:`~mvpa2.mappers.fx.FxMapper` now will provide consistent order
+      of groups of items.  It also got a new argument `order` with available
+      value of 'occurrence' to that groups would get ordered by their occurance
+      in the original dataset.
+
+  * Fixes
+
+    - :class:`~mvpa2.mappers.corrstability.CorrStability` should be able to
+      deal with other sample attributes (not only 'targets') and should divide
+      by variance correctly to provide correlation coefficient as output.
+    - robustify check scipy's rdist which should avoid crash upon import of
+      mvpa2.suite because of stripped down scipy 1.4.0 API.
+    - various typos in docstrings (we do welcome contributions ;) ).
+
 * 2.3.0 (Thu, 5 March 2014)
 
   * **Warning**: Due to a significant number of new features and some internal
@@ -63,6 +97,16 @@ Releases
     - Freesurfer/AFNI/SUMA preprocessing wrapper script
       ``pymvpa2-prep-afni-surf`` for surface-based analyses.
     - Winner-take-all measures :mod:`~mvpa2.measures.winner`.
+    - New command line interface that provides access to the most commonly
+      used functionality (dataset creation, pre-processing, cross-vlaidation,
+      searchlights and data export).
+    - :class:`~mvpa2.mappers.glm.GLMMapper for data transformation into
+      parameter estimates of a general linear model (built from pre-defined
+      regressors and/or dataset sample attributes. Two implementations with
+      different features are provided:
+      :class:`~mvpa2.mappers.glm.statsmodels_glm.StatsmodelsGLMMapper` and
+      :class:`~mvpa2.mappers.glm.nipy_glm.NiPyGLMMapper`.
+    - Spectral filtering mapper :class:`~mvpa2.mappers.filters.IIRFilter`.
 
   * Enhancements (>130 commits)
 
@@ -74,7 +118,17 @@ Releases
     - Many parts of the tutorial were reworked, set of examples expanded, and
       also converted to IPython notebooks.
     - :func:`~mvpa2.datasets.eventrelated` extended to output GLM regression
-      fits as features (relying on NiPy for GLM modeling).
+      fits as features from HRF models (relying on NiPy for GLM modeling).
+    - Class parameters now support programatic validation of values,
+      auto-generated documentation and improved error messages.
+    - More informative progress bar for long running processes, such as
+      searchlights.
+    - Replace all (broken) implementations for similarity structure analyses
+      with new measures for computing pairwise pattern distances, and their
+      consistency, or similarity to a target structure
+      (:mod:`~mvpa2.measures.rsa`).
+    - New examples to show integration with scikit-learn implementations of
+      classification, regression, and data transformation algorithm.
 
   * Fixes (>88 commits)
 

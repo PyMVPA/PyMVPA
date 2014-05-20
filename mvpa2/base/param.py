@@ -12,6 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import re
 import textwrap
+import warnings
 import numpy as np
 from mvpa2.base.state import IndexedCollectable
 from mvpa2.base.constraints import expand_contraint_spec
@@ -42,8 +43,6 @@ class Parameter(IndexedCollectable):
     or we wouldn't know that it was changed
     Here is a list of possible additional attributes:
 
-    allowedtype : str
-      Description of what types are allowed
     step
       Increment/decrement step size hint for optimization
     """
@@ -81,10 +80,10 @@ class Parameter(IndexedCollectable):
         >>> from mvpa2.base.param import Parameter
         >>> from mvpa2.base.constraints import (EnsureFloat, EnsureRange,
         ...                              AltConstraints, Constraints)
-        >>> C = Parameter(23.0,constraints=EnsureFloat())
+        >>> C = Parameter(23.0, constraints=EnsureFloat())
 
         -ensure the parameter to be of type float or to be None:
-        >>> C = Parameter(23.0,constraints=AltConstraints(EnsureFloat(), None))
+        >>> C = Parameter(23.0, constraints=AltConstraints(EnsureFloat(), None))
 
         -ensure the parameter to be None or to be of type float
         and lie in the inclusive range (7.0,44.0):
@@ -92,6 +91,12 @@ class Parameter(IndexedCollectable):
         ...                                    EnsureRange(min=7.0,max=44.0)),
         ...                                    None))
         """
+        allowedtype = kwargs.pop('allowedtype', None)
+        if allowedtype is not None:
+            warnings.warn(
+                "allowedtype option was deprecated in favor of constraints. "
+                "Adjust your code, provided value '%s' was ignored"
+                % str(allowedtype), category=DeprecationWarning)
         # XXX probably is too generic...
         # and potentially dangerous...
         # let's at least keep track of what is passed
@@ -157,7 +162,7 @@ class Parameter(IndexedCollectable):
         if self._ro:
             s += ', ro=True'
         if not self.is_default:
-            s += ', value=%r' % self.value
+            s += ', value=%r' % (self.value, )
         s += ')'
         return s
 

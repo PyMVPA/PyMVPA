@@ -18,6 +18,7 @@ from mvpa2.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa2.measures.base import Sensitivity
 from mvpa2.misc.exceptions import ConvergenceError
 from mvpa2.base.param import Parameter
+from mvpa2.base.constraints import *
 from mvpa2.base.state import ConditionalAttribute
 from mvpa2.datasets.base import Dataset
 
@@ -74,32 +75,35 @@ class SMLR(Classifier):
                  'random_tie_breaking']
     # XXX: later 'kernel-based'?
 
-    lm = Parameter(.1, min=1e-10, allowedtype='float',
+    lm = Parameter(.1, constraints=EnsureFloat() & EnsureRange(min=1e-10),
              doc="""The penalty term lambda.  Larger values will give rise to
              more sparsification.""")
 
-    convergence_tol = Parameter(1e-3, min=1e-10, max=1.0, allowedtype='float',
+    convergence_tol = Parameter(1e-3, 
+             constraints=EnsureFloat() & EnsureRange(min=1e-10, max=1.0),
              doc="""When the weight change for each cycle drops below this value
              the regression is considered converged.  Smaller values
              lead to tighter convergence.""")
 
-    resamp_decay = Parameter(0.5, allowedtype='float', min=0.0, max=1.0,
+    resamp_decay = Parameter(0.5, 
+             constraints=EnsureFloat() & EnsureRange(min=0.0, max=1.0),
              doc="""Decay rate in the probability of resampling a zero weight.
              1.0 will immediately decrease to the min_resamp from 1.0, 0.0
              will never decrease from 1.0.""")
 
-    min_resamp = Parameter(0.001, allowedtype='float', min=1e-10, max=1.0,
+    min_resamp = Parameter(0.001, 
+             constraints=EnsureFloat() & EnsureRange(min=1e-10, max=1.0),
              doc="Minimum resampling probability for zeroed weights")
 
-    maxiter = Parameter(10000, allowedtype='int', min=1,
+    maxiter = Parameter(10000, constraints=EnsureInt() & EnsureRange(min=1),
              doc="""Maximum number of iterations before stopping if not
              converged.""")
 
-    has_bias = Parameter(True, allowedtype='bool',
+    has_bias = Parameter(True, constraints='bool',
              doc="""Whether to add a bias term to allow fits to data not through
              zero""")
 
-    fit_all_weights = Parameter(True, allowedtype='bool',
+    fit_all_weights = Parameter(True, constraints='bool',
              doc="""Whether to fit weights for all classes or to the number of
             classes minus one.  Both should give nearly identical results, but
             if you set fit_all_weights to True it will take a little longer
@@ -108,13 +112,12 @@ class SMLR(Classifier):
             point is the same.""")
 
     implementation = Parameter(_DEFAULT_IMPLEMENTATION,
-             allowedtype='basestring',
-             choices=["C", "Python"],
+             constraints=EnsureChoice('C', 'Python'),
              doc="""Use C or Python as the implementation of
              stepwise_regression. C version brings significant speedup thus is
              the default one.""")
 
-    ties = Parameter('random', allowedtype='string',
+    ties = Parameter('random', constraints='str',
                      doc="""Resolve ties which could occur.  At the moment
                      only obvious ties resulting in identical weights
                      per two classes are detected and resolved
@@ -122,16 +125,16 @@ class SMLR(Classifier):
                      the estimates of tied categories.
                      Set to False to avoid this behavior""")
 
-    seed = Parameter(_random_seed, allowedtype='None or int',
+    seed = Parameter(_random_seed, constraints=EnsureNone() | EnsureInt(),
              doc="""Seed to be used to initialize random generator, might be
              used to replicate the run""")
 
-    unsparsify = Parameter(False, allowedtype='bool',
+    unsparsify = Parameter(False, constraints='bool',
              doc="""***EXPERIMENTAL*** Whether to unsparsify the weights via
              regression. Note that it likely leads to worse classifier
              performance, but more interpretable weights.""")
 
-    std_to_keep = Parameter(2.0, allowedtype='float',
+    std_to_keep = Parameter(2.0, constraints='float',
              doc="""Standard deviation threshold of weights to keep when
              unsparsifying.""")
 

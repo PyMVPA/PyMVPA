@@ -23,7 +23,8 @@ For users
 
 .. comment to separate the two lists
 
-* :ref:`Tutorial <chap_tutorial>` (hands-on introduction).
+* :ref:`Tutorial <chap_tutorial>` (hands-on topics)
+* :ref:`Courses <chap_courses>` (course materials)
 * :ref:`chap_examples` (batteries included)
 
 .. comment to separate the two lists
