@@ -2,6 +2,8 @@ pymvpa2 (2.3.1-1) unstable; urgency=medium
 
   * Fresh upstream release (should be tollerant now to scipy API change in
     1.4.0)
+  * debian/watch
+    - adjusted to monitor/fetch from github tags
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 20 May 2014 08:43:24 -0400
 

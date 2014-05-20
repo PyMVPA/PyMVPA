@@ -1,2 +1,3 @@
 version=3
-http://alioth.debian.org/frs/?group_id=30954 .*/pymvpa_([\d\.]+)\.tar\.gz
+opts="filenamemangle=s/.*\/(.*)/pymvpa2-$1/,uversionmangle=s/rc/~rc/g" \
+ https://github.com/PyMVPA/PyMVPA/tags .*archive/upstream/([\d\.a-z]+)\.tar\.gz
