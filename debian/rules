@@ -16,7 +16,7 @@ export HOME=$(CURDIR)/build
 # one ring to rule them all ...
 %:
 # need to enforce distutils, since we also have a makefile
-	dh $@ --buildsystem=python_distutils --builddirectory=build
+	dh $@ --with=python2 --buildsystem=python_distutils --builddirectory=build
 
 override_dh_auto_configure:
 	dh_auto_configure
@@ -64,8 +64,8 @@ endif
 	| grep -e 'pymvpa2-\(analysis\)' \
 	| xargs -r rm -rf
 
-override_dh_pysupport:
-	dh_pysupport
+override_dh_python2:
+	dh_python2
 	if [ -x /usr/bin/dh_numpy ]; then dh_numpy; fi
 
 override_dh_installchangelogs:

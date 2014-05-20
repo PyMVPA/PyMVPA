@@ -6,6 +6,8 @@ pymvpa2 (2.3.1-1) unstable; urgency=medium
     - adjusted to monitor/fetch from github tags
   * debian/patches
     - all removed
+  * debian/{control,rules}
+    - use dh_python2 instead of deprecated pysupport
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 20 May 2014 08:43:24 -0400
 
