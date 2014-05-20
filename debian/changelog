@@ -4,6 +4,8 @@ pymvpa2 (2.3.1-1) unstable; urgency=medium
     1.4.0)
   * debian/watch
     - adjusted to monitor/fetch from github tags
+  * debian/patches
+    - all removed
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 20 May 2014 08:43:24 -0400
 
