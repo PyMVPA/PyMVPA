@@ -15,6 +15,7 @@ Build-Depends: debhelper (>= 7.0.50~),
                help2man, man2html,
                python-sphinx, python-numpydoc,
                graphviz, inkscape, imagemagick, bc,
+               python-matplotlib,
 Standards-Version: 3.9.5
 Homepage: http://www.pymvpa.org
 Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/pymvpa.git

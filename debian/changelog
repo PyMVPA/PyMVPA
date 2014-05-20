@@ -8,6 +8,8 @@ pymvpa2 (2.3.1-1) unstable; urgency=medium
     - all removed
   * debian/{control,rules}
     - use dh_python2 instead of deprecated pysupport
+    - add matplotlib to build-depends and set its backend to Agg during
+      testing
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 20 May 2014 08:43:24 -0400
 

@@ -46,7 +46,7 @@ ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 		echo "I: Running PyMVPA unittests using python$$buildver"; \
 		cd $(CURDIR)/debian/tmp/usr/lib/python$$buildver/*-packages && \
 		PYTHONPATH=. MVPA_TESTS_LABILE=no MVPA_TESTS_LOWMEM=yes \
-		MVPA_TESTS_QUICK=yes MVPA_TESTS_VERBOSITY=3 \
+		MVPA_TESTS_QUICK=yes MVPA_TESTS_VERBOSITY=3 MVPA_MATPLOTLIB_BACKEND=agg \
 		python$$buildver mvpa2/tests/__init__.py \
 		|| exit 1 ; find . -type f -name '*.pyc' -delete ; \
 	done
