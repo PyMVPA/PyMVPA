@@ -134,7 +134,7 @@ def setup_package():
     sys.path.insert(0, src_path)
 
     setup(name='pymvpa2',
-          version='2.3.0',
+          version='2.3.1',
           author='Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
           author_email='pkg-exppsy-pymvpa@lists.alioth.debian.org',
           license='MIT License',

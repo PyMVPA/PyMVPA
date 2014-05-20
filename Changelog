@@ -31,9 +31,10 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
-* 2.3.1 (???, ? ? ?)
+* 2.3.1 (Tue, 20 May 2014)
 
-  * Don't wait too long listing the changes...
+  Primarily a bugfix release pushed out to avoid mvpa2.suite meltdown
+  if new scipy 1.4.0 is used.
 
   * API changes
 
@@ -48,7 +49,7 @@ Releases
       :class:`~mvpa2.clfs.dummies.RandomClassifier` and others for code testing
       which could also be used to verify absent double-dipping etc.
 
-  * Enhancements (?? ENH, OPT, and NF commits)
+  * Enhancements
 
     - :class:`~mvpa2.mappers.fx.FxMapper` now will provide consistent order
       of groups of items.  It also got a new argument `order` with available
