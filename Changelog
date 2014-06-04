@@ -31,6 +31,20 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
+* 2.3.2 (???, ? ? ?)
+
+  * Don't wait too long listing the changes...
+
+  * API changes
+
+  * Enhancements (?? ENH, OPT, and NF commits)
+
+  * Fixes
+
+    - :func:`~mvpa2.misc.plot.lightbox.plot_lightbox` should take a
+	  slice index from the last dimension, not the leading one if no
+	  `slices` argument was provided
+
 * 2.3.1 (Tue, 20 May 2014)
 
   Primarily a bugfix release pushed out to avoid mvpa2.suite meltdown
