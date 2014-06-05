@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 if __debug__:
     from mvpa2.base import debug
 
+import inspect, re
 import numpy as np
 
 from mvpa2.base import externals
@@ -48,6 +49,21 @@ class BinaryFxFeaturewiseMeasure(FeaturewiseMeasure):
             + _repr_attrs(self, ['uni'], default=True)
             + _repr_attrs(self, ['numeric'], default=False)
             )
+
+    def __str__(self, *args, **kwargs):
+        fx_str = str(self.fx)
+        # TODO: unify within dochelpers functionality?
+        if fx_str.startswith("<function") and hasattr(self.fx, '__name__'):
+            fx_str = self.fx.__name__
+        if fx_str == "<lambda>":
+            try:
+                # where feasible -- extract actual code
+                fx_str = inspect.getsource(self.fx).strip()
+                # tidy it up
+                fx_str = re.sub("^\s*[A-Za-z_]*\s*=\s*", "", fx_str)
+            except:
+                pass
+        return super(BinaryFxFeaturewiseMeasure, self).__str__(fx_str, *args, **kwargs)
 
     def _call(self, ds):
         y = ds.sa[self.space].value

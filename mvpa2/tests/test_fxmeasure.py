@@ -18,7 +18,7 @@ from mvpa2.measures.fx import targets_mutualinfo_kde, targets_dcorrcoef
 
 from mvpa2.testing import sweepargs
 from mvpa2.testing.datasets import datasets as tdatasets
-from mvpa2.testing import assert_array_equal, assert_array_less, assert_equal
+from mvpa2.testing import assert_array_equal, assert_array_less, assert_equal, ok_
 
 @sweepargs(ds=tdatasets.itervalues())
 def test_BinaryFxFeatureMeasure(ds):
@@ -33,6 +33,7 @@ def test_BinaryFxFeatureMeasure(ds):
     assert(len(out) == 1)
     assert_array_equal(out.samples, out_uni)
     assert_equal(out.fa, out_uni.fa)
+    ok_(str(fx).startswith("<BinaryFxFeaturewiseMeasure: lambda x, y:"))
 
 _nonlin_tests = [(dataset_wizard([0, 1-0.01, 0, 1],
                                  targets=['a', 'b', 'a', 'b']),
@@ -75,3 +76,6 @@ def test_BinaryFxFeatureMeasure_mi(fx, ds_mi):
     mi = res.samples[0]
     assert_array_less(mi_min, mi)
     assert_array_less(mi, mi_max)
+    fx_str = str(fx)
+    assert_equal(fx_str, "<BinaryFxFeaturewiseMeasure: %s>" % fx.fx.__name__)
+
