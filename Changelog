@@ -42,8 +42,8 @@ Releases
   * Fixes
 
     - :func:`~mvpa2.misc.plot.lightbox.plot_lightbox` should take a
-	  slice index from the last dimension, not the leading one if no
-	  `slices` argument was provided
+      slice index from the last dimension, not the leading one if no
+      `slices` argument was provided
 
 * 2.3.1 (Tue, 20 May 2014)
 
