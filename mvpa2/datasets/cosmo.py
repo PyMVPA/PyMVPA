@@ -135,6 +135,20 @@ from mvpa2.measures.searchlight import Searchlight
 from mvpa2.base import debug, warning
 
 
+def _numpy_array_astype_unsafe(arr, type_):
+    '''
+    Helper function to deal with API change in numpy.
+
+    Rationale: prior to version 1.7 it seems the 'casting' argument is not
+    supported, whereas later versions do support it.
+    '''
+    casting_support_version = '1.7'
+
+    if np.__version__ < casting_support_version:
+        return arr.astype(type_)
+    else:
+        return arr.astype(type_, casting='unsafe')
+
 def _from_singleton(x, ndim=2):
     '''
     If x is an array of shape (1,1,...1) with ndim dimensions it returns the
@@ -706,7 +720,8 @@ class CosmoQueryEngine(QueryEngineInterface):
                 if not np.all(np.equal(nbr_fids, np.round(nbr_fids))):
                     raise ValueError('Non-integer indices for id %s' % id)
 
-                nbr_fids_vec_int = nbr_fids_vec.astype(np.int_, casting='unsafe')
+                nbr_fids_vec_int = _numpy_array_astype_unsafe(nbr_fids_vec,
+                                                              np.int_)
 
                 # store mapping, convert base 1 (Matlab) to base 0 (Python)
                 mapping[int(id)] = nbr_fids_vec_int - 1
