@@ -35,6 +35,16 @@ Releases
 
   * Don't wait too long listing the changes...
 
+  * New functionality
+
+    - Support for CoSMoMVPA (http://cosmomvpa.org) in
+      :mod:`~mvpa2.datasets.cosmo` providing dataset input/output
+      (:meth:`mvpa2.datasets.cosmo.cosmo_dataset` and
+      :meth:`mvpa2.datasets.cosmo.map2cosmo`) and neighborhood input
+      (:class:`~mvpa2.datasets.cosmo.CosmoQueryEngine). This allows for
+      for running searchlights (:class:`mvpa2.datasets.cosmo.CosmoSearchlight)
+      on data from CoSMoMVPA (fMRI and MEEG).
+
   * API changes
 
   * Enhancements (?? ENH, OPT, and NF commits)
