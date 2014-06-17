@@ -746,10 +746,11 @@ class CosmoQueryEngine(QueryEngineInterface):
         template = self._dataset_template
         ids = self.ids
 
-        return ('%s(%d center ids (%d .. %d), fa keys=%s, a keys=%s' %
+        return ('%s(%d center ids (%d .. %d), <fa: %s>, <a: %s>' %
                         (self.__class__.__name__, len(ids),
                          np.min(ids), np.max(ids),
-                         template.fa.keys(), template.a.keys()))
+                         ', '.join(template.fa.keys()),
+                         ', '.join(template.a.keys())))
 
     def __reduce__(self):
         '''
