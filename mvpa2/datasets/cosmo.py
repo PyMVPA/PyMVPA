@@ -855,7 +855,10 @@ class CosmoQueryEngine(QueryEngineInterface):
         ds_copy = ds.copy()
 
         # apply dataset and feature attributes
+        ds_copy.a.clear()
         ds_copy.a.update(ds_template.a)
+
+        ds_copy.fa.clear()
         ds_copy.fa.update(ds_template.fa)
 
         return ds_copy
@@ -951,4 +954,3 @@ class CosmoSearchlight(Searchlight):
         # set dataset (.a) and feature (.fa) attributes
         queryengine = self._queryengine
         return queryengine.set_output_dataset_attributes(ds_result)
-
