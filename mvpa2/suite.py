@@ -124,6 +124,10 @@ from mvpa2.datasets import niml
 from mvpa2.datasets.niml import from_niml, to_niml
 from mvpa2.datasets import eeglab
 from mvpa2.datasets.eeglab import eeglab_dataset
+if externals.exists('scipy') :
+    from mvpa2.datasets import cosmo
+    from mvpa2.datasets.cosmo import map2cosmo, cosmo_dataset, \
+                                     CosmoQueryEngine, CosmoSearchlight
 
 
 __sdebug('generators')
