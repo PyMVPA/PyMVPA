@@ -7,6 +7,8 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
+"""Unit tests for CoSMoMVPA dataset (http://cosmomvpa.org)"""
+
 from mvpa2.testing.tools import assert_raises, ok_, assert_true, assert_equal, \
      assert_array_equal, with_tempfile
 from mvpa2.testing import skip_if_no_external
