@@ -66,6 +66,7 @@ Datasets: Input, Output, Storage and Preprocessing
    datasets.formats
    datasets.mri
    datasets.niml
+   datasets.cosmo
    datasets.eeglab
    datasets.miscfx
    datasets.sources.skl_data
