@@ -38,64 +38,62 @@ in CoSMoMVPA using cosmo_{fmri,meeg,surface}_dataset---, and
 information for each feature in ds---such a struct is typically defined
 in CoSMoMVPA using cosmo_neighborhood.
 
-Alternatively they can be defined directly in matlab; for a toy example, consider
-the following Matlab code
+Here a simple toy example is illustrated using the example data in
+mvpa2/data/cosmo.
 
->> ds=struct();
->> ds.samples=[1 2 3; 4 5 6];
->> ds.a.name='input';
->> ds.fa.i=[3 2 1];
->> ds.fa.j=[1 2 2];
->> ds.sa.chunks=[2 2]';
->> ds.sa.targets=[1 2]';
->> ds.sa.labels={'yin','yan'};
->> save('simple_ds.mat','-struct','ds');
+Import modules and set data paths
 
->> nbrhood=struct();
->> nbrhood.neighbors={1, [1 3], [1 2 3], [2 2]};
->> nbrhood.fa.k=[4 3 2 1];
->> nbrhood.a.name='output';
->> save('simple_nbrhood.mat','-struct','nbrhood');
+>>> import mvpa2
+>>> import os
+>>> from mvpa2.datasets.cosmo import from_any, CosmoSearchlight
+>>> from mvpa2.mappers.fx import mean_feature
+>>> data_path=os.path.join(mvpa2.pymvpa_dataroot,'cosmo')
+>>> fn_mat_ds=os.path.join(data_path,'ds_tiny.mat')
+>>> fn_mat_nbrhood=os.path.join(data_path,'nbrhood_tiny.mat')
 
-These can be stored in Matlab by
+Import CoSMoMVPA dataset
 
->> save('ds.mat','-struct','ds')
->> save('nbrhood.mat','-struct','nbrhood')
+>>> ds=from_any(fn_mat_ds)
+>>> print ds
+<Dataset: 2x3@float64, <sa: chunks,labels,targets>, <fa: i,j>, <a: name>>
 
-and loaded in Python using
+Import CoSMoMVPA neighborhood; it is converted to a query engine.
 
->> from mvpa2.datasets.cosmo import *
->> ds=from_any('ds.mat')
->> qe=from_any('nbrhood.mat')
+>>> qe=from_any(fn_mat_nbrhood)
+>>> print qe
+CosmoQueryEngine(4 center ids (0 .. 3), <fa: k>, <sa: name>
 
-where ds is a Dataset and qe a CosmoQueryEngine that extends
-QueryEngineInterface. If m is a measure of choice, a searchlight can be run
-either through
+Define a simple measure that takes the mean over features in each searchlight
+>>> measure=mean_feature()
 
->> sl=Searchlight(m, qe)
->> res=sl(ds)
->> res_with_a_and_fa=qe.set_output_dataset_attributes(res)
+Define a searchlight using the CosmoQueryEngine
+>>> sl=CosmoSearchlight(measure, qe)
 
-(where the last command ensures that feature and dataset attributes
-in nbrhood are applied to the output from the searchlight)
+Run the searchlight on the input dataset
 
-or directly through
+>>> ds_sl=sl(ds)
+>>> print ds_sl
+<Dataset: 2x4@float64, <sa: chunks,labels,targets>, <fa: k>, <a: name>>
 
->> sl=CosmoSearchlight(m, qe)
->> res_with_a_and_fa=sl(ds)
+Note that the output dataset has the feature and sample attributes taken
+from the queryengine, *not* the dataset.
 
-or
+Alternatively it is possible to run the searchlight directly using the filename
+of the neighborhood .mat file:
 
->> sl=CosmoSearchlight(m, 'nbrhood.mat')
->> res_with_a_and_fa=sl(ds)
+>>> sl=CosmoSearchlight(measure, fn_mat_nbrhood)
+>>> ds_sl=sl(ds)
+>>> print ds_sl
+<Dataset: 2x4@float64, <sa: chunks,labels,targets>, <fa: k>, <a: name>>
 
-Subsequently the result can be stored in Python using
+Leaving the doctest format here, subsequently the result can be
+stored in Python using
 
->> map2cosmo(res_with_a_and_fa,'res_with_a_and_fa.mat')
+>(Python)> map2cosmo(ds_sl,'ds_sl.mat')
 
 and loaded in Matlab using
 
->> res_with_a_and_fa=importdata('res_with_a_and_fa.mat')
+>(Matlab)> ds_sl=importdata('ds_sl.mat')
 
 so that in Matlab res_with_a_and_fa is a dataset struct with the output
 of applying measure m to the neighborhoods defined in nbrhood.
