@@ -860,8 +860,9 @@ class CosmoQueryEngine(QueryEngineInterface):
 
         Returns
         ds_copy : Dataset
-            copy of ds, augmented with feature (.fa) and dataset (.a)
-            attributes provided to the contstructor of this instance
+            copy of ds, but with feature (.fa) and dataset (.a)
+            attributes provided to the contstructor of this instance.
+            The .fa and .a from the input ds are removed first.
         '''
         if not 'center_ids' in ds.fa:
             raise KeyError('Dataset seems not to be the result from '
