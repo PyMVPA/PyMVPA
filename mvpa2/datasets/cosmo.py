@@ -81,7 +81,7 @@ and loaded in Python using::
 <Dataset: 2x3@float64, <sa: chunks,labels,targets>, <fa: i,j>, <a: name>>
 >>> qe=from_any(fn_mat_nbrhood)
 >>> print qe
-CosmoQueryEngine(4 center ids (0 .. 3), <fa: k>, <sa: name>
+CosmoQueryEngine(4 center ids (0 .. 3), <fa: k>, <a: name>
 
 where ds is a :class:`~mvpa2.datasets.base.Dataset` and qe a
 :class:`~mvpa2.datasets.cosmo.CosmoQueryEngine`.
@@ -115,7 +115,6 @@ stored in Python using::
   >> map2cosmo(ds_sl,'ds_sl.mat')
 
 and loaded in Matlab using::
-
 
   >> ds_sl=importdata('ds_sl.mat')
 
