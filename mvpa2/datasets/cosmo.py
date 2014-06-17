@@ -14,34 +14,60 @@ struct, which is converted to a PyMVPA Dataset object; and (2) loading
 a CoSMoMVPA neighborhood struct, which is converted to a CoSMoQueryEngine
 object that inherits from QueryEngineInterface.
 
-A use case is running searchlights on MEEG data. For example
-(1) FieldTrip is used to preprocess MEEG data;
-(2) CoSMoMVPA is used to convert the preprocessed MEEG data to a CoSMoMVPA
-    dataset struct and generate neighborhood information for the searchlight;
-(3) this module (mvpa2.datasets.cosmo) is used to import the preprocessed MEEG
-    data and the neighborhood information into PyMVPA-objects
-(4) PyMVPA is used to run a searchlight with a Measure of interest
-(5) this module (mvpa2.datasets.cosmo) is used to export the searchlight output
-    to a CoSMoMVPA dataset struct
-(6) CoSMoMVPA is used to convert the CoSMoMVPA dataset struct with the
-    searchlight output to a FieldTrip struct
-(7) FieldTrip is used to visualize the results
+A use case is running searchlights on MEEG data, e.g.:
+
+1. FieldTrip_ is used to preprocess MEEG data
+2. CoSMoMVPA is used to convert the preprocessed MEEG data to a CoSMoMVPA
+   dataset struct and generate neighborhood information for the searchlight
+3. this module (mvpa2.datasets.cosmo) is used to import the preprocessed MEEG
+   data and the neighborhood information into PyMVPA-objects
+4. PyMVPA is used to run a searchlight with a Measure of interest
+5. this module (mvpa2.datasets.cosmo) is used to export the searchlight output
+   to a CoSMoMVPA dataset struct
+6. CoSMoMVPA is used to convert the CoSMoMVPA dataset struct with the
+   searchlight output to a FieldTrip struct
+7. FieldTrip is used to visualize the results
 
 
 Example
 =======
-Suppose that in Matlab using CoSMoMVPA, there is
-(1) a struct ds (with fields .samples, .sa, .fa and .a) containing a dataset (e.g. an
-fMRI, MEEG, or surface-based dataset)---such a struct is typically defined
-in CoSMoMVPA using cosmo_{fmri,meeg,surface}_dataset---, and
-(2) a struct nbrhood (with fields .neighbors, .fa and .a) containing neighborhood
-information for each feature in ds---such a struct is typically defined
-in CoSMoMVPA using cosmo_neighborhood.
 
-Here a simple toy example is illustrated using the example data in
-mvpa2/data/cosmo.
+Suppose that in Matlab using CoSMoMVPA, two structs were created:
 
-Import modules and set data paths
+ds (with fields .samples, .sa, .fa and .a)
+   containing a dataset (e.g. an fMRI, MEEG, or surface-based dataset).
+   Such a struct is typically defined in CoSMoMVPA using
+   cosmo_{fmri,meeg,surface}_dataset
+nbrhood (with fields .neighbors, .fa and .a)
+   containing neighborhood information for each feature in ds.
+   Such a struct is typically defined in CoSMoMVPA using cosmo_neighborhood.
+
+Alternatively they can be defined in Matlab directly without use of CoSMoMVPA
+functionality.  For a toy example, consider the following Matlab code::
+
+  >> ds=struct();
+  >> ds.samples=[1 2 3; 4 5 6];
+  >> ds.a.name='input';
+  >> ds.fa.i=[1 2 3];
+  >> ds.fa.j=[1 2 2];
+  >> ds.sa.chunks=[2 2]';
+  >> ds.sa.targets=[1 2]';
+  >> ds.sa.labels={'a','b','c','d';'e','f','g','h'};
+  >> save('ds_tiny.mat','-struct','ds');
+
+  >> nbrhood=struct();
+  >> nbrhood.neighbors={1, [1 3], [1 2 3], [2 2]};
+  >> nbrhood.fa.k=[4 3 2 1];
+  >> nbrhood.a.name='output';
+  >> save('nbrhood_tiny.mat','-struct','nbrhood');
+
+
+These can be stored in Matlab by::
+
+  >> save('ds.mat','-struct','ds')
+  >> save('nbrhood.mat','-struct','nbrhood')
+
+and loaded in Python using::
 
 >>> import mvpa2
 >>> import os
@@ -50,27 +76,22 @@ Import modules and set data paths
 >>> data_path=os.path.join(mvpa2.pymvpa_dataroot,'cosmo')
 >>> fn_mat_ds=os.path.join(data_path,'ds_tiny.mat')
 >>> fn_mat_nbrhood=os.path.join(data_path,'nbrhood_tiny.mat')
-
-Import CoSMoMVPA dataset
-
 >>> ds=from_any(fn_mat_ds)
 >>> print ds
 <Dataset: 2x3@float64, <sa: chunks,labels,targets>, <fa: i,j>, <a: name>>
-
-Import CoSMoMVPA neighborhood; it is converted to a query engine.
-
 >>> qe=from_any(fn_mat_nbrhood)
 >>> print qe
 CosmoQueryEngine(4 center ids (0 .. 3), <fa: k>, <sa: name>
 
-Define a simple measure that takes the mean over features in each searchlight
+where ds is a :class:`~mvpa2.datasets.base.Dataset` and qe a
+:class:`~mvpa2.datasets.cosmo.CosmoQueryEngine`.
+
+A :class:`~mvpa2.measures.base.Measure` of choice can be used for a searchlight;
+here the measure simply takes the mean over features in each searchlight::
 >>> measure=mean_feature()
 
-Define a searchlight using the CosmoQueryEngine
+A searchlight can be run the CosmoQueryEngine
 >>> sl=CosmoSearchlight(measure, qe)
-
-Run the searchlight on the input dataset
-
 >>> ds_sl=sl(ds)
 >>> print ds_sl
 <Dataset: 2x4@float64, <sa: chunks,labels,targets>, <fa: k>, <a: name>>
@@ -78,31 +99,35 @@ Run the searchlight on the input dataset
 Note that the output dataset has the feature and sample attributes taken
 from the queryengine, *not* the dataset.
 
-Alternatively it is possible to run the searchlight directly using the filename
-of the neighborhood .mat file:
+Alternatively it is possible to run the searchlight directly using the
+filename of the neighborhood .mat file::
 
 >>> sl=CosmoSearchlight(measure, fn_mat_nbrhood)
 >>> ds_sl=sl(ds)
 >>> print ds_sl
 <Dataset: 2x4@float64, <sa: chunks,labels,targets>, <fa: k>, <a: name>>
 
+which gives the same result as above.
+
 Leaving the doctest format here, subsequently the result can be
-stored in Python using
+stored in Python using::
 
->(Python)> map2cosmo(ds_sl,'ds_sl.mat')
+  >> map2cosmo(ds_sl,'ds_sl.mat')
 
-and loaded in Matlab using
+and loaded in Matlab using::
 
->(Matlab)> ds_sl=importdata('ds_sl.mat')
 
-so that in Matlab res_with_a_and_fa is a dataset struct with the output
-of applying measure m to the neighborhoods defined in nbrhood.
+  >> ds_sl=importdata('ds_sl.mat')
+
+so that in Matlab ds_sl is a dataset struct with the output
+of applying measure to the neighborhoods defined in nbrhood.
 
 Notes
 =====
+
 - This function does not provide or deal with mappers associated with a dataset.
   For this reason map2nifti does not work on PyMVPA fmri datasets that were
-  imported from CoSMoMVPA format using  this module; instead, CoSMoMVPA's
+  imported from CoSMoMVPA using this module.  Instead, CoSMoMVPA's
   map2fmri in Matlab can be used to map results to nifti and other formats
 - The main difference between the searchlight approach in CoSMoMVPA versus
   PyMVPA is that CoSMoMVPA allows for setting feature (.fa) and dataset
@@ -113,7 +138,8 @@ Notes
   a time-course of MVP results for the output; where the input data has
   features of time by sensor, while the output data has only time.
 
-.. _CoSMoMVPA: github.com/CoSMoMVPA
+.. _CoSMoMVPA: http://www.github.com/CoSMoMVPA
+.. _FieldTrip: http://fieldtrip.fcdonders.nl/
 """
 
 __docformat__ = 'restructuredtext'
