@@ -51,7 +51,7 @@ static int smlr_clear(PyObject *m) {
 
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
-        "smlr",
+        "smlrc",
         NULL,
         sizeof(struct module_state),
         smlr_methods,
@@ -63,27 +63,27 @@ static struct PyModuleDef moduledef = {
 
 #define INITERROR return NULL
 
-PyObject *
-PyInit_smlr(void)
+PyMODINIT_FUNC
+PyInit_smlrc(void)
 
 #else
 #define INITERROR return
 
-void
-initsmlr(void)
+PyMODINIT_FUNC
+initsmlrc(void)
 #endif
 {
 #if PY_MAJOR_VERSION >= 3
     PyObject *module = PyModule_Create(&moduledef);
 #else
-    PyObject *module = Py_InitModule("smlr", smlr_methods);
+    PyObject *module = Py_InitModule("smlrc", smlr_methods);
 #endif
     struct module_state *st = GETSTATE(module);
 
     if (module == NULL) {
         INITERROR;
     }
-    st->error = PyErr_NewException("smlr.Error", NULL, NULL);
+    st->error = PyErr_NewException("smlrc.Error", NULL, NULL);
     if (st->error == NULL) {
         Py_DECREF(module);
         INITERROR;
@@ -342,19 +342,3 @@ stepwise_regression(int w_rows, int w_cols, double w[],
   return cycle;
 }
 
-/*tiziano:
-   I am unsure if the following is still needed after
-   the changes due to Python 3 compatibility
-  yoh:
-   Without it Windows build seems to be broken
-   http://nipy.bic.berkeley.edu/builders/pymvpa-py2.6-xp/builds/10/steps/shell_2/logs/stdio
-   so returning for Python2 at least for now */
-#if PY_MAJOR_VERSION < 3
-/* make dummy module definition to satisfy distutils on win32
- * which cannot compile non-extension libraries
- */
-PyMODINIT_FUNC initsmlrc(void)
-{
-        Py_InitModule3("smlrc", NULL, "");
-}
-#endif
