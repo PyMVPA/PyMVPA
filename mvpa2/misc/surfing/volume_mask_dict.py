@@ -353,8 +353,46 @@ class VolumeMaskDictionary(Mapping):
 
         return sorted(self._lazy_nbr2src.keys())
 
-    def get_mask(self):
+    def _check_has_keys(self, keys=None, raise_=True):
+        """
+        Check that a list of keys is present; if not raise an error
+
+        Parameters
+        ----------
+        keys: list or None
+            List of keys that must be a subset of self.keys()
+        raise_: boolean
+            If True an error is raised if at least one key is not present
+            in self.keys()
+
+        Returns
+        -------
+        is_present: boolean
+            If keys is None this function always returns True. Otherwise
+            this function returns True if and only if every key in keys
+            is present in self.keys(). If that is not the case and raise_
+            is True and exception is raised.
+        """
+        if keys is None:
+            return True
+
+        missing_keys = set(keys).difference(set(self.keys()))
+        n_missing = len(missing_keys)
+        has_missing = n_missing > 0
+        if has_missing and raise_:
+                raise KeyError('%d keys (including "%s") not present' %
+                                            (n_missing, missing_keys.pop()))
+        return has_missing
+
+
+    def get_mask(self, keys=None):
         """Return a mask for voxels that are included in one or more masks
+
+        Parameters
+        ----------
+        keys: list or None
+            Indices of center ids for which the associated masks must be
+            used. If None, all keys are used.
 
         Returns
         -------
@@ -362,16 +400,26 @@ class VolumeMaskDictionary(Mapping):
             Three-dimensional array with True for voxels that are
             included in one or more masks, and False elsewhere
         """
-
+        self._check_has_keys(keys)
         self._ensure_has_target2sources()
         m_lin = np.zeros((self.volgeom.nvoxels, 1), dtype=np.int8)
-        for nbr in self._lazy_nbr2src.iterkeys():
-            m_lin[nbr] = 1
+
+        if keys is None:
+            keys = self.keys()
+
+        for key in keys:
+            m_lin[self[key]] = 1
 
         return np.reshape(m_lin, self.volgeom.shape[:3])
 
-    def get_nifti_image_mask(self):
+    def get_nifti_image_mask(self, keys=None):
         """Return a NIfTI image with the voxels included in any mask
+
+        Parameters
+        ----------
+        keys: list or None
+            Indices of center ids for which the associated masks must be
+            used. If None, all keys are used.
 
         Returns
         -------
@@ -382,11 +430,17 @@ class VolumeMaskDictionary(Mapping):
         # XXX:  my above dtype=np.int8 might kick back here, e.g.
         #       fslview iirc had difficulty with those
         # YYY:  should we change to a different data type, e.g. int32?
-        return nb.Nifti1Image(self.get_mask(), self.volgeom.affine)
+        return nb.Nifti1Image(self.get_mask(keys=keys), self.volgeom.affine)
 
 
-    def get_voxel_indices(self):
+    def get_voxel_indices(self, keys=None):
         """Returns voxel indices at least once selected
+
+        Parameters
+        ----------
+        keys: list or None
+            Indices of center ids for which the associated masks must be
+            used. If None, all keys are used.
 
         Returns
         -------
@@ -397,15 +451,20 @@ class VolumeMaskDictionary(Mapping):
             of voxel_indices iff there is at least one key k so that
             self.get(k) contains the linear index of voxel V.
         """
+        self._check_has_keys(keys=keys)
+
+        if keys is None:
+            keys = self.keys()
+
         # get linear voxel indices
-        lin_vox_set = set.union(*(set(self[k]) for k in self.keys()))
+        lin_vox_set = set.union(*(set(self[k]) for k in keys))
 
         # convert to array
         lin_vox_arr = np.asarray(list(lin_vox_set))
 
         return map(tuple, self.volgeom.lin2ijk(lin_vox_arr))
 
-    def get_dataset_feature_mask(self, ds):
+    def get_dataset_feature_mask(self, ds, keys=None):
         """For a dataset return a mask of features that were selected
         at least once
 
@@ -413,6 +472,9 @@ class VolumeMaskDictionary(Mapping):
         ----------
         ds: Dataset
             A dataset with field .fa.voxel_indices
+        keys: list or None
+            Indices of center ids for which the associated masks must be
+            used. If None, all keys are used.
 
         Returns
         -------
@@ -426,7 +488,7 @@ class VolumeMaskDictionary(Mapping):
         """
         # convert to tuples
         ds_voxel_indices = map(tuple, ds.fa.voxel_indices)
-        sel_voxel_indices = map(tuple, self.get_voxel_indices())
+        sel_voxel_indices = map(tuple, self.get_voxel_indices(keys=keys))
 
         set_ds_voxel_indices = set(ds_voxel_indices)
         set_sel_voxel_indices = set(sel_voxel_indices)
@@ -439,13 +501,16 @@ class VolumeMaskDictionary(Mapping):
 
         return np.asarray([d in sel_voxel_indices for d in ds_voxel_indices])
 
-    def get_minimal_dataset(self, ds):
+    def get_minimal_dataset(self, ds, keys=None):
         """For a dataset return only portion with features which were selected
 
         Parameters
         ----------
         ds: Dataset
             A dataset with field .fa.voxel_indices
+        keys: list or None
+            Indices of center ids for which the associated masks must be
+            used. If None, all keys are used.
 
         Returns
         -------
@@ -460,7 +525,7 @@ class VolumeMaskDictionary(Mapping):
         voxel selection
         """
 
-        ds_mask = self.get_dataset_feature_mask(ds)
+        ds_mask = self.get_dataset_feature_mask(ds, keys=keys)
         return ds[:, ds_mask]
 
     def __getitem__(self, key):
