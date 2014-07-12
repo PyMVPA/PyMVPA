@@ -330,9 +330,16 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
     def query(self, **kwargs):
         raise NotImplementedError
 
-    def get_masked_nifti_image(self):
-        '''Returns a nifti image indicating which voxels are included
+    def get_masked_nifti_image(self, center_ids=None):
+        '''
+        Returns a nifti image indicating which voxels are included
         in one or more searchlights.
+
+        Parameters
+        ----------
+        center_ids: list or None
+            Indices of center ids for which the associated masks must be
+            used. If None, all center_ids are used.
 
         Returns
         -------
@@ -340,7 +347,7 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
             Nifti image with value zero for voxels that we not selected, and
             non-zero values for selected voxels.
         '''
-        msk = self.voxsel.get_mask()
+        msk = self.voxsel.get_mask(keys=center_ids)
         import nibabel as nb
         img = nb.Nifti1Image(msk, self.voxsel.volgeom.affine)
         return img
@@ -516,6 +523,33 @@ class SurfaceVoxelsQueryEngine(SurfaceVerticesQueryEngine):
     def untrain(self):
         super(SurfaceVoxelsQueryEngine, self).untrain(ds)
         self._feature_id2vertex_id = None
+
+    def get_masked_nifti_image(self, center_ids=None):
+        '''
+        Returns a nifti image indicating which voxels are included
+        in one or more searchlights.
+
+        Parameters
+        ----------
+        center_ids: list or None
+            Indices of center ids for which the associated masks must be
+            used. If None, all center_ids are used.
+
+        Returns
+        -------
+        img: nibabel.Nifti1Image
+            Nifti image with value zero for voxels that we not selected, and
+            non-zero values for selected voxels.
+        '''
+        if center_ids is None:
+            center_ids = self.ids
+
+        vertex_ids = [self._feature_id2vertex_id[center_id]
+                                for center_id in center_ids]
+        parent = super(SurfaceVoxelsQueryEngine, self)
+        return parent.get_masked_nifti_image(center_ids=vertex_ids)
+
+
 
 
 def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
