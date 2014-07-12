@@ -756,6 +756,59 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         min_ds = sel.get_minimal_dataset(ds)
         assert_array_equal(min_ds.samples, ds[:, fid_mask].samples)
 
+    def test_mask_with_keys(self):
+        vol_shape = (10, 10, 10, 3)
+        vol_affine = np.identity(4)
+        vg = volgeom.VolGeom(vol_shape, vol_affine)
+
+        data = np.random.normal(size=vol_shape)
+        msk = np.ones(vol_shape[:3])
+        msk[:, 1:-1:2, :] = 0
+
+        ni_data = nb.Nifti1Image(data, vol_affine)
+        ni_msk = nb.Nifti1Image(msk, vol_affine)
+
+        ds = fmri_dataset(ni_data, mask=ni_msk)
+
+        sphere_density = 20
+        outer = surf.generate_sphere(sphere_density) * 10. + 5
+        inner = surf.generate_sphere(sphere_density) * 7. + 5
+
+
+        radius = 10
+        sel = surf_voxel_selection.run_voxel_selection(radius, ds, inner, outer)
+
+        qe_ids2nvoxels = {SurfaceVoxelsQueryEngine:
+                                    {(1, 2, 3):13,
+                                    tuple(np.arange(0, 200, 2)): 82,
+                                    (601,): None},
+                        SurfaceVerticesQueryEngine:
+                                    {(1, 2, 3):None,
+                                    (205, 209, 210, 214):36}}
+
+        for constructor, ids2nfeatures in qe_ids2nvoxels.iteritems():
+            qe = constructor(sel)
+            qe.train(ds)
+            img = qe.get_masked_nifti_image()
+            assert_array_equal(img.get_data(),
+                                qe.get_masked_nifti_image(qe.ids).get_data())
+
+            img_getter = qe.get_masked_nifti_image
+            for ids, nfeatures in ids2nfeatures.iteritems():
+                ids_list = list(ids)
+
+                if nfeatures is None:
+                    assert_raises(KeyError, img_getter, ids_list)
+                else:
+                    img = img_getter(ids_list)
+                    nfeatures_found = np.sum(img.get_data())
+                    assert_equal(nfeatures, nfeatures_found)
+                    if constructor is SurfaceVerticesQueryEngine:
+                        assert_array_equal(sel.get_nifti_image_mask(ids_list).get_data(),
+                                    qe.get_masked_nifti_image(ids_list).get_data())
+
+
+
 
 def _cartprod(d):
     '''makes a combinatorial explosion from a dictionary
