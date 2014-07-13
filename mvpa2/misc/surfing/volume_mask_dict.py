@@ -399,6 +399,12 @@ class VolumeMaskDictionary(Mapping):
         msk: np.ndarray
             Three-dimensional array with True for voxels that are
             included in one or more masks, and False elsewhere
+
+        Notes
+        -----
+        When using surface-based searchlights, a use case of this function is
+        to get the voxels that were associated with the searchlights in a
+        subset of all nodes on a cortical surface.
         """
         self._check_has_keys(keys)
         self._ensure_has_target2sources()
@@ -426,6 +432,12 @@ class VolumeMaskDictionary(Mapping):
         msk: nibabel.Nifti1Image
             Nifti image where voxels have the value 1 for voxels that are
             included in one or more masks, and 0 elsewhere
+
+        Notes
+        -----
+        When using surface-based searchlights, a use case of this function is
+        to get the voxels that were associated with the searchlights in a
+        subset of all nodes on a cortical surface.
         """
         # XXX:  my above dtype=np.int8 might kick back here, e.g.
         #       fslview iirc had difficulty with those
@@ -450,6 +462,12 @@ class VolumeMaskDictionary(Mapping):
             That is, a triple (i,j,k) referring to a voxel V is an element
             of voxel_indices iff there is at least one key k so that
             self.get(k) contains the linear index of voxel V.
+
+        Notes
+        -----
+        When using surface-based searchlights, a use case of this function is
+        to get the voxels that were associated with the searchlights in a
+        subset of all nodes on a cortical surface.
         """
         self._check_has_keys(keys=keys)
 
@@ -484,6 +502,12 @@ class VolumeMaskDictionary(Mapping):
             That is, for a voxel (feature) with feature index i it holds that
             mask[I] is True iff there is at least one key k so that
             i in self.get(k).
+
+        Notes
+        -----
+        When using surface-based searchlights, a use case of this function is
+        to get the voxels that were associated with the searchlights in a
+        subset of all nodes on a cortical surface.
 
         """
         # convert to tuples

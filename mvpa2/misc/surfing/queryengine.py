@@ -540,6 +540,12 @@ class SurfaceVoxelsQueryEngine(SurfaceVerticesQueryEngine):
         img: nibabel.Nifti1Image
             Nifti image with value zero for voxels that we not selected, and
             non-zero values for selected voxels.
+
+        Notes
+        -----
+        When using surface-based searchlights, a use case of this function is
+        to get the voxels that were associated with the searchlights in a
+        subset of all nodes on a cortical surface.
         '''
         if center_ids is None:
             center_ids = self.ids
