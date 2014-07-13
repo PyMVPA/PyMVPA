@@ -12,8 +12,8 @@ from mvpa2.testing import *
 skip_if_no_external('nibabel')
 
 import numpy as np
-from numpy.testing.utils import assert_array_almost_equal, assert_array_equal, \
-    assert_raises
+from numpy.testing.utils import assert_array_almost_equal, \
+        assert_array_equal, assert_raises
 
 import nibabel as nb
 
@@ -174,7 +174,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             poly_detrend(dataset, polyord=1, chunks_attr='chunks')
 
             # zscore dataset relative to baseline ('rest') mean
-            zscore(dataset, chunks_attr='chunks', param_est=('targets', ['rest']))
+            zscore(dataset, chunks_attr='chunks',
+                        param_est=('targets', ['rest']))
 
         # select class face and house for this demo analysis
         # would work with full datasets (just a little slower)
@@ -220,7 +221,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         # on memmapped volumes being forwarded to pprocess.
         # Thus just making it compressed volume for those cases
         suf = '.gz' \
-            if externals.exists('pprocess') and externals.versions['numpy'] < '1.6.2' \
+            if (externals.exists('pprocess') and
+                    externals.versions['numpy'] < '1.6.2') \
             else ''
         fd, volfn = tempfile.mkstemp('vol.nii' + suf, 'test'); os.close(fd)
         volimg.to_filename(volfn)
@@ -240,9 +242,12 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         intermediate = inner * .5 + outer * .5
         nv = outer.nvertices
 
-        fd, outerfn = tempfile.mkstemp('outer.asc', 'test'); os.close(fd)
-        fd, innerfn = tempfile.mkstemp('inner.asc', 'test'); os.close(fd)
-        fd, intermediatefn = tempfile.mkstemp('intermediate.asc', 'test'); os.close(fd)
+        fd, outerfn = tempfile.mkstemp('outer.asc', 'test')
+        os.close(fd)
+        fd, innerfn = tempfile.mkstemp('inner.asc', 'test')
+        os.close(fd)
+        fd, intermediatefn = tempfile.mkstemp('intermediate.asc', 'test')
+        os.close(fd)
 
         for s, fn in zip([outer, inner, intermediate],
                          [outerfn, innerfn, intermediatefn]):
@@ -429,8 +434,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         for outside_node_margin in outside_node_margins:
             for radius in radii:
                 selector = lambda:surf_voxel_selection.voxel_selection(vs,
-                                            radius,
-                                            outside_node_margin=outside_node_margin)
+                                    radius,
+                                    outside_node_margin=outside_node_margin)
 
                 if type(radius) is int and outside_node_margin is True:
                     assert_raises(ValueError, selector)
@@ -448,7 +453,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                     if outside_node_margin is True and \
                                  externals.versions['hdf5'] < '1.8.7':
                         raise SkipTest("Versions of hdf5 before 1.8.7 have "
-                                                    "problems with empty arrays")
+                                             "problems with empty arrays")
 
                     h5save(fn, sel)
                     sel_copy = h5load(fn)
@@ -479,7 +484,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         for fallback, expected_nfeatures in ((True, 1000), (False, 183)):
             voxsel = surf_voxel_selection.voxel_selection(vs, radius)
-            qe = SurfaceVoxelsQueryEngine(voxsel, fallback_euclidean_distance=fallback)
+            qe = SurfaceVoxelsQueryEngine(voxsel,
+                                        fallback_euclidean_distance=fallback)
 
             # test i/o and ensure that the loaded instance is trained
             if externals.exists('h5py'):
@@ -557,7 +563,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                             if type(radius) is float:
                                 assert_equal(x - y, set())
 
-                            # decent agreement in any case between the two sets
+                            # decent agreement in any case
+                            # between the two sets
                             assert_true(r < .6)
 
     @reseed_rng()
@@ -592,7 +599,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             m = qe[i]
         except ValueError, e:
             raise AssertionError(
-                'Failed to query %r from %r after training on %r. Exception was: %r'
+                'Failed to query %r from %r after training on %r. '
+                'Exception was: %r'
                  % (i, qe, ds, e))
 
         assert_equal(qe[qe.ids[0]].samples[0, 0], 883)
@@ -659,9 +667,11 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                 expected_values = [1.13851869106, 1.03270423412] # smoke test
                 for key, v in zip(add_fa, expected_values):
                     for id in qe.ids:
-                        assert_array_equal(sel.get_aux(id, key), sel_copy.get_aux(id, key))
+                        assert_array_equal(sel.get_aux(id, key),
+                                           sel_copy.get_aux(id, key))
 
-                    assert_array_almost_equal(sel.get_aux(qe.ids[0], key)[3], v)
+                    assert_array_almost_equal(sel.get_aux(qe.ids[0], key)[3],
+                                                                            v)
 
 
     @with_tempfile('.h5py', 'voxsel')
@@ -676,10 +686,12 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         sphere_density = 10
         radius = 10
 
-        outer = surf.generate_plane((0, 0, 4), (0, .4, 0), (0, 0, .4), 14, 14)
+        outer = surf.generate_plane((0, 0, 4), (0, .4, 0),
+                                    (0, 0, .4), 14, 14)
         inner = outer + 2
 
-        source = surf.generate_plane((0, 0, 4), (0, .8, 0), (0, 0, .8), 7, 7) + 1
+        source = surf.generate_plane((0, 0, 4), (0, .8, 0),
+                                     (0, 0, .8), 7, 7) + 1
 
         for i, nvm in enumerate(('minimal', 'minimal_lowres')):
             qe = disc_surface_queryengine(radius, vg, inner,
@@ -707,7 +719,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                 assert_equal(voxsel.keys(), voxsel_copy.keys())
 
                 for id in qe.ids:
-                    assert_array_equal(voxsel.get(id), voxsel_copy.get(id))
+                    assert_array_equal(voxsel.get(id),
+                                       voxsel_copy.get(id))
 
 
 
@@ -733,7 +746,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
 
         radius = 10
-        sel = surf_voxel_selection.run_voxel_selection(radius, ds, inner, outer)
+        sel = surf_voxel_selection.run_voxel_selection(radius, ds,
+                                                       inner, outer)
 
 
         sel_fids = set.union(*(set(sel[k]) for k in sel.keys()))
