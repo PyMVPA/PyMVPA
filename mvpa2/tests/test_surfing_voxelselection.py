@@ -776,15 +776,22 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
 
         radius = 10
-        sel = surf_voxel_selection.run_voxel_selection(radius, ds, inner, outer)
+        sel = surf_voxel_selection.run_voxel_selection(radius, ds,
+                                                       inner, outer)
 
+        # in the mapping below:
+        # (tup: None) means that tup as input should raise a KeyError
+        # (tup: i) with i an int means that tup as input should return i
+        #          elements
         qe_ids2nvoxels = {SurfaceVoxelsQueryEngine:
                                     {(1, 2, 3):13,
                                     tuple(np.arange(0, 200, 2)): 82,
-                                    (601,): None},
+                                    (601,): None,
+                                    None: 126},
                         SurfaceVerticesQueryEngine:
                                     {(1, 2, 3):None,
-                                    (205, 209, 210, 214):36}}
+                                    (205, 209, 210, 214):36,
+                                    None: 126}}
 
         for constructor, ids2nfeatures in qe_ids2nvoxels.iteritems():
             qe = constructor(sel)
@@ -795,17 +802,32 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
             img_getter = qe.get_masked_nifti_image
             for ids, nfeatures in ids2nfeatures.iteritems():
-                ids_list = list(ids)
 
-                if nfeatures is None:
+                ids_list = ids if ids is None else list(ids)
+                if nfeatures is None and ids is not None:
                     assert_raises(KeyError, img_getter, ids_list)
                 else:
                     img = img_getter(ids_list)
                     nfeatures_found = np.sum(img.get_data())
                     assert_equal(nfeatures, nfeatures_found)
                     if constructor is SurfaceVerticesQueryEngine:
-                        assert_array_equal(sel.get_nifti_image_mask(ids_list).get_data(),
-                                    qe.get_masked_nifti_image(ids_list).get_data())
+                        expected_image = qe.get_masked_nifti_image(ids_list)
+                        expected_mask = expected_image.get_data()
+                        check_mask_func = lambda x:assert_array_equal(
+                                                        expected_mask, x)
+                        check_image_func = lambda x:check_mask_func(
+                                            x.get_data()) and \
+                                            assert_array_equal(x.get_affine(),
+                                                  expected_image.get_affine())
+
+                        check_mask_func(sel.get_mask(ids_list))
+                        check_image_func(sel.get_nifti_image_mask(ids_list))
+
+                        tups = sel.get_voxel_indices(ids_list)
+                        tups_mask = np.zeros(expected_mask.shape)
+                        for tup in tups:
+                            tups_mask[tup] += 1
+                        assert_array_equal(expected_mask != 0, tups_mask != 0)
 
 
 
