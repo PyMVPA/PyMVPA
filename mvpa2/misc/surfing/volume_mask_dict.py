@@ -354,8 +354,7 @@ class VolumeMaskDictionary(Mapping):
         return sorted(self._lazy_nbr2src.keys())
 
     def _check_has_keys(self, keys=None, raise_=True):
-        """
-        Check that a list of keys is present; if not raise an error
+        """Check that a list of keys is present; if not raise an error
 
         Parameters
         ----------
