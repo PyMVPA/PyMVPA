@@ -62,7 +62,8 @@ class VolumeMaskDictionary(Mapping):
     """
     # TODO: docs for src2nbr and src2aux
     def __init__(self, vg, source, meta=None, src2nbr=None, src2aux=None):
-        """
+        """Initialize a VolumeMaskDictionary
+
         Parameters
         ----------
         vg: volgeom.VolGeom or fmri_dataset-like or str
@@ -637,7 +638,7 @@ class VolumeMaskDictionary(Mapping):
 
 
     def __eq__(self, other):
-        """Compares this instance with another instance
+        """Compare this instance with another instance for equality
 
         Parameters
         ----------
@@ -678,7 +679,16 @@ class VolumeMaskDictionary(Mapping):
 
     @property
     def meta(self):
-        # make a copy if a dict, otherwise return directly
+        '''Return meta information such as number of node indices
+
+        Returns
+        -------
+        meta: dict or False
+            dictionary with meta information, or False if no such information
+            is present. The latter case is to be compatible with old-style
+            instances loaded with h5load
+        '''
+
         return dict(self._meta) if type(self._meta) is dict else self._meta
 
     def is_same_layout(self, other):
@@ -905,17 +915,21 @@ class VolumeMaskDictionary(Mapping):
 
 
 def _dict_with_arrays2array_tuple(d):
-    '''
-    Helper function to convert canonical representation of _src2nbr and
+    '''Helper: converts to a more efficient tuple-based representation
+
+    This function converts a canonical representation of _src2nbr and
     _src2aux as dicts to a more efficient tuple-based representation.
+    As a result, i/o operations using h5{load,save} are faster.
 
     Input: dict d where for each key k, each value v[k] is a numpy array
-    Output: a tuple (keys, lengths, data) with each element a numpu array
+    Output: a tuple (keys, lengths, data) with each element a numpy array
 
     It holds that:
     - keys.tolist()==d.keys()
     - if k is the i-th element in d.keys(), then
           v[k]==data[offset+lengths[i]] where offset=np.sum(lenghts[:i])
+
+    The 'inverse' of this function is _array_tuple2dict_with_arrays
     '''
 
     if d is None:
@@ -960,8 +974,9 @@ def _dict_with_arrays2array_tuple(d):
 
 
 def _array_tuple2dict_with_arrays(kld):
-        '''
-        Helper function to convert a more efficient tuple-based representation
+        '''Helper: converts from a tuple-based representation to dictionaries
+
+        This function converts a more efficient tuple-based representation
         of _src2nbr and _src2aux to canonical dicts
 
         Input: a tuple (keys, lengths, data) with each element a numpu array
@@ -972,6 +987,7 @@ def _array_tuple2dict_with_arrays(kld):
         - if k is the i-th element in d.keys(), then
               v[k]==data[offset+lengths[i]] where offset=np.sum(lenghts[:i])
 
+        The 'inverse' of this function is _dict_with_arrays2array_tuple
         '''
         if kld is None:
             return None
