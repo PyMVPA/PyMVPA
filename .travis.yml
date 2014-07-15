@@ -22,12 +22,12 @@ before_install:
     # The ultimate one-liner setup for NeuroDebian repository
     - bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
     # - sudo apt-get install $PYTHON-dev
-    - travis_retry sudo apt-get install swig $PY-numpy $PY-scipy $PY-matplotlib $PY-h5py $PY-nose $PY-nibabel
+    - travis_retry sudo apt-get install swig $PY-numpy $PY-scipy $PY-matplotlib $PY-h5py $PY-nose $PY-nibabel $PY-mock
     # Optional Python modules
     # Note: it looks like the line could be truncated, thus spreading them through multiple lines
     - travis_retry sudo apt-get install shogun-python-modular $PY-mdp $PY-psutil $PY-sklearn
     - travis_retry sudo apt-get install liblapack-dev $PY-statsmodels $PY-reportlab ipython
-    - travis_retry sudo apt-get install $PY-pywt $PY-lxml $PY-pprocess
+    - travis_retry sudo apt-get install $PY-pywt $PY-lxml $PY-pprocess $PY-nipy
     # Very optional R interfaces via rpy2
     - travis_retry sudo apt-get install $PY-rpy2
     - mkdir -p $PWD/R-libs
@@ -43,5 +43,6 @@ script:
     - export PATH=$HOME/.local/bin:$PATH  PYTHONPATH=.:$PYTHONPATH  R_LIBS=$PWD/R-libs
     - export NOSETESTS=$(which nosetests)
     - eval   $COVERAGE $NOSETESTS -v mvpa2 $DOCTESTS -s
+    - if [ ! -z "$COVERAGE" ]; then make coveragecmdline; fi
 after_success:
     - if [ ! -z "$COVERAGE" ]; then coveralls; fi

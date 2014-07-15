@@ -124,6 +124,10 @@ from mvpa2.datasets import niml
 from mvpa2.datasets.niml import from_niml, to_niml
 from mvpa2.datasets import eeglab
 from mvpa2.datasets.eeglab import eeglab_dataset
+if externals.exists('scipy') :
+    from mvpa2.datasets import cosmo
+    from mvpa2.datasets.cosmo import map2cosmo, cosmo_dataset, \
+                                     CosmoQueryEngine, CosmoSearchlight
 
 
 __sdebug('generators')
@@ -164,6 +168,7 @@ if externals.exists('mdp'):
     from mvpa2.mappers.mdp_adaptor import *
 if externals.exists('mdp ge 2.4'):
     from mvpa2.mappers.lle import *
+from mvpa2.mappers.glm import *
 
 __sdebug('measures')
 from mvpa2 import measures
@@ -221,7 +226,7 @@ __sdebug("scipy dependents")
 if externals.exists("scipy"):
     from mvpa2.support.scipy.stats import scipy
     from mvpa2.measures.corrcoef import *
-    from mvpa2.measures.ds import *
+    from mvpa2.measures.rsa import *
     from mvpa2.clfs.ridge import *
     from mvpa2.clfs.plr import *
     from mvpa2.misc.stats import *

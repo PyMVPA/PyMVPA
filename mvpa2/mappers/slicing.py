@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Mappers for Dataset slicing."""
+"""Collection of dataset slicing procedures."""
 
 __docformat__ = 'restructuredtext'
 

@@ -62,7 +62,8 @@ class VolumeMaskDictionary(Mapping):
     """
     # TODO: docs for src2nbr and src2aux
     def __init__(self, vg, source, meta=None, src2nbr=None, src2aux=None):
-        """
+        """Initialize a VolumeMaskDictionary
+
         Parameters
         ----------
         vg: volgeom.VolGeom or fmri_dataset-like or str
@@ -353,40 +354,105 @@ class VolumeMaskDictionary(Mapping):
 
         return sorted(self._lazy_nbr2src.keys())
 
-    def get_mask(self):
+    def _check_has_keys(self, keys=None, raise_=True):
+        """Check that a list of keys is present; if not raise an error
+
+        Parameters
+        ----------
+        keys: list or None
+            List of keys that must be a subset of self.keys()
+        raise_: boolean
+            If True an error is raised if at least one key is not present
+            in self.keys()
+
+        Returns
+        -------
+        is_present: boolean
+            If keys is None this function always returns True. Otherwise
+            this function returns True if and only if every key in keys
+            is present in self.keys(). If that is not the case and raise_
+            is True and exception is raised.
+        """
+        if keys is None:
+            return True
+
+        missing_keys = set(keys).difference(set(self.keys()))
+        n_missing = len(missing_keys)
+        has_missing = n_missing > 0
+        if has_missing and raise_:
+                raise KeyError('%d keys (including "%s") not present' %
+                                            (n_missing, missing_keys.pop()))
+        return has_missing
+
+
+    def get_mask(self, keys=None):
         """Return a mask for voxels that are included in one or more masks
+
+        Parameters
+        ----------
+        keys: list or None
+            Indices of center ids for which the associated masks must be
+            used. If None, all keys are used.
 
         Returns
         -------
         msk: np.ndarray
             Three-dimensional array with True for voxels that are
             included in one or more masks, and False elsewhere
-        """
 
+        Notes
+        -----
+        When using surface-based searchlights, a use case of this function is
+        to get the voxels that were associated with the searchlights in a
+        subset of all nodes on a cortical surface.
+        """
+        self._check_has_keys(keys)
         self._ensure_has_target2sources()
         m_lin = np.zeros((self.volgeom.nvoxels, 1), dtype=np.int8)
-        for nbr in self._lazy_nbr2src.iterkeys():
-            m_lin[nbr] = 1
+
+        if keys is None:
+            keys = self.keys()
+
+        for key in keys:
+            m_lin[self[key]] = 1
 
         return np.reshape(m_lin, self.volgeom.shape[:3])
 
-    def get_nifti_image_mask(self):
+    def get_nifti_image_mask(self, keys=None):
         """Return a NIfTI image with the voxels included in any mask
+
+        Parameters
+        ----------
+        keys: list or None
+            Indices of center ids for which the associated masks must be
+            used. If None, all keys are used.
 
         Returns
         -------
         msk: nibabel.Nifti1Image
             Nifti image where voxels have the value 1 for voxels that are
             included in one or more masks, and 0 elsewhere
+
+        Notes
+        -----
+        When using surface-based searchlights, a use case of this function is
+        to get the voxels that were associated with the searchlights in a
+        subset of all nodes on a cortical surface.
         """
         # XXX:  my above dtype=np.int8 might kick back here, e.g.
         #       fslview iirc had difficulty with those
         # YYY:  should we change to a different data type, e.g. int32?
-        return nb.Nifti1Image(self.get_mask(), self.volgeom.affine)
+        return nb.Nifti1Image(self.get_mask(keys=keys), self.volgeom.affine)
 
 
-    def get_voxel_indices(self):
+    def get_voxel_indices(self, keys=None):
         """Returns voxel indices at least once selected
+
+        Parameters
+        ----------
+        keys: list or None
+            Indices of center ids for which the associated masks must be
+            used. If None, all keys are used.
 
         Returns
         -------
@@ -396,16 +462,27 @@ class VolumeMaskDictionary(Mapping):
             That is, a triple (i,j,k) referring to a voxel V is an element
             of voxel_indices iff there is at least one key k so that
             self.get(k) contains the linear index of voxel V.
+
+        Notes
+        -----
+        When using surface-based searchlights, a use case of this function is
+        to get the voxels that were associated with the searchlights in a
+        subset of all nodes on a cortical surface.
         """
+        self._check_has_keys(keys=keys)
+
+        if keys is None:
+            keys = self.keys()
+
         # get linear voxel indices
-        lin_vox_set = set.union(*(set(self[k]) for k in self.keys()))
+        lin_vox_set = set.union(*(set(self[k]) for k in keys))
 
         # convert to array
         lin_vox_arr = np.asarray(list(lin_vox_set))
 
         return map(tuple, self.volgeom.lin2ijk(lin_vox_arr))
 
-    def get_dataset_feature_mask(self, ds):
+    def get_dataset_feature_mask(self, ds, keys=None):
         """For a dataset return a mask of features that were selected
         at least once
 
@@ -413,6 +490,9 @@ class VolumeMaskDictionary(Mapping):
         ----------
         ds: Dataset
             A dataset with field .fa.voxel_indices
+        keys: list or None
+            Indices of center ids for which the associated masks must be
+            used. If None, all keys are used.
 
         Returns
         -------
@@ -423,10 +503,16 @@ class VolumeMaskDictionary(Mapping):
             mask[I] is True iff there is at least one key k so that
             i in self.get(k).
 
+        Notes
+        -----
+        When using surface-based searchlights, a use case of this function is
+        to get the voxels that were associated with the searchlights in a
+        subset of all nodes on a cortical surface.
+
         """
         # convert to tuples
         ds_voxel_indices = map(tuple, ds.fa.voxel_indices)
-        sel_voxel_indices = map(tuple, self.get_voxel_indices())
+        sel_voxel_indices = map(tuple, self.get_voxel_indices(keys=keys))
 
         set_ds_voxel_indices = set(ds_voxel_indices)
         set_sel_voxel_indices = set(sel_voxel_indices)
@@ -439,13 +525,16 @@ class VolumeMaskDictionary(Mapping):
 
         return np.asarray([d in sel_voxel_indices for d in ds_voxel_indices])
 
-    def get_minimal_dataset(self, ds):
+    def get_minimal_dataset(self, ds, keys=None):
         """For a dataset return only portion with features which were selected
 
         Parameters
         ----------
         ds: Dataset
             A dataset with field .fa.voxel_indices
+        keys: list or None
+            Indices of center ids for which the associated masks must be
+            used. If None, all keys are used.
 
         Returns
         -------
@@ -460,7 +549,7 @@ class VolumeMaskDictionary(Mapping):
         voxel selection
         """
 
-        ds_mask = self.get_dataset_feature_mask(ds)
+        ds_mask = self.get_dataset_feature_mask(ds, keys=keys)
         return ds[:, ds_mask]
 
     def __getitem__(self, key):
@@ -549,7 +638,7 @@ class VolumeMaskDictionary(Mapping):
 
 
     def __eq__(self, other):
-        """Compares this instance with another instance
+        """Compare this instance with another instance for equality
 
         Parameters
         ----------
@@ -590,7 +679,16 @@ class VolumeMaskDictionary(Mapping):
 
     @property
     def meta(self):
-        # make a copy if a dict, otherwise return directly
+        '''Return meta information such as number of node indices
+
+        Returns
+        -------
+        meta: dict or False
+            dictionary with meta information, or False if no such information
+            is present. The latter case is to be compatible with old-style
+            instances loaded with h5load
+        '''
+
         return dict(self._meta) if type(self._meta) is dict else self._meta
 
     def is_same_layout(self, other):
@@ -817,17 +915,21 @@ class VolumeMaskDictionary(Mapping):
 
 
 def _dict_with_arrays2array_tuple(d):
-    '''
-    Helper function to convert canonical representation of _src2nbr and
+    '''Helper: converts to a more efficient tuple-based representation
+
+    This function converts a canonical representation of _src2nbr and
     _src2aux as dicts to a more efficient tuple-based representation.
+    As a result, i/o operations using h5{load,save} are faster.
 
     Input: dict d where for each key k, each value v[k] is a numpy array
-    Output: a tuple (keys, lengths, data) with each element a numpu array
+    Output: a tuple (keys, lengths, data) with each element a numpy array
 
     It holds that:
     - keys.tolist()==d.keys()
     - if k is the i-th element in d.keys(), then
           v[k]==data[offset+lengths[i]] where offset=np.sum(lenghts[:i])
+
+    The 'inverse' of this function is _array_tuple2dict_with_arrays
     '''
 
     if d is None:
@@ -872,8 +974,9 @@ def _dict_with_arrays2array_tuple(d):
 
 
 def _array_tuple2dict_with_arrays(kld):
-        '''
-        Helper function to convert a more efficient tuple-based representation
+        '''Helper: converts from a tuple-based representation to dictionaries
+
+        This function converts a more efficient tuple-based representation
         of _src2nbr and _src2aux to canonical dicts
 
         Input: a tuple (keys, lengths, data) with each element a numpu array
@@ -884,6 +987,7 @@ def _array_tuple2dict_with_arrays(kld):
         - if k is the i-th element in d.keys(), then
               v[k]==data[offset+lengths[i]] where offset=np.sum(lenghts[:i])
 
+        The 'inverse' of this function is _dict_with_arrays2array_tuple
         '''
         if kld is None:
             return None

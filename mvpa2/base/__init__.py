@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Base functionality of PyMVPA
+"""Plumbing layer for PyMVPA
 
 Module Organization
 ===================
@@ -252,7 +252,7 @@ if __debug__:
     debug.register('ES', "Element selectors")
 
     debug.register('LRN', "Base learners")
-    # TODO remove once everthing is a learner
+    # TODO remove once everything is a learner
     debug.register('CLF', "Base Classifiers")
     debug.register('CLF_', "Base Classifiers (verbose)")
     #debug.register('CLF_TB',

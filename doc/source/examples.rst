@@ -21,11 +21,14 @@ can be found in the `doc/examples/` directory in the source package. This
 directory might include some more special-interest examples which are not listed
 here.
 
+All examples listed here utilize the Python API of PyMVPA. Additional examples
+that demonstrate the command line interface are
+:ref:`also available <cmdline_example_scripts>`.
+
 Some examples need to access a sample dataset available in the `data/`
 directory within the root of the PyMVPA hierarchy, and thus have to be invoked
-directly from PyMVPA root (e.g. `doc/examples/searchlight.py`).
-Alternatively, one can download a full example dataset, which is explained in
-the next section.
+directly from PyMVPA root (e.g. `doc/examples/searchlight.py`).  Alternatively,
+one can download :ref:`a full example dataset <datadb_tutorial_data>`.
 
 Preprocessing
 =============
@@ -36,31 +39,25 @@ Preprocessing
    examples/smellit
 
 
-Analysis
-========
+Analysis strategies and Background
+==================================
 
 .. toctree::
 
-   examples/hyperplane_demo
    examples/start_easy
-   examples/smlr
-   examples/clfs_examples
-   examples/gpr
-   examples/gpr_model_selection0
-   examples/cachedkernel
+   examples/hyperplane_demo
    examples/searchlight_minimal
    examples/searchlight
    examples/searchlight_dsm
    examples/searchlight_surf
+   examples/rsa_fmri
    examples/sensanas
    examples/svdclf
-   examples/svm_margin
    examples/permutation_test
    examples/nested_cv
    examples/match_distribution
    examples/eventrelated
    examples/hyperalignment
-   examples/mdp_mnist
    examples/eyemovements
 
 
@@ -76,11 +73,26 @@ Visualization
    examples/som
    examples/mri_plot
 
+Integrate with 3rd-party software
+=================================
 
-Miscellaneous
-=============
+.. toctree::
+
+   examples/skl_transformer_demo
+   examples/skl_classifier_demo
+   examples/skl_regression_demo
+   examples/mdp_mnist
+
+Special interest and Miscellaneous
+==================================
 
 .. toctree::
 
    examples/kerneldemo
+   examples/cachedkernel
    examples/curvefitting
+   examples/clfs_examples
+   examples/svm_margin
+   examples/smlr
+   examples/gpr
+   examples/gpr_model_selection0

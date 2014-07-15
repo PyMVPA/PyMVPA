@@ -1,0 +1,203 @@
+#!/usr/bin/python
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+""""""
+
+__docformat__ = 'restructuredtext'
+
+import sys
+import argparse
+import textwrap
+from mvpa2.cmdline import helpers
+from mvpa2.base.constraints import EnsureBool
+from mvpa2.base import verbose, error, cfg
+if __debug__:
+    from mvpa2.base import debug
+
+try:
+    import psyco
+    psyco.profile()
+except:
+    pass
+
+# need to correspond to files in mvpa2.cmdline.cmd_???
+enabled_cmds = [
+  'info',
+  'mkds',
+  'mkevds',
+  'describe',
+  'dump',
+  'preproc',
+  'crossval',
+  'searchlight',
+  'select',
+  'atlaslabeler',
+  'exec'
+]
+
+# what version are we talking
+from mvpa2.base.info import get_pymvpa_gitversion
+pymvpa_version = get_pymvpa_gitversion()
+if not pymvpa_version:
+    import mvpa2
+    pymvpa_version = mvpa2.__version__
+
+def _license_info():
+    return """\
+Copyright (c) 2006-2014 PyMVPA developers
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+Written by Michael Hanke & Yaroslav Halchenko, and numerous other contributors.
+"""
+
+# handler for common/non-command-specific cmdline arguments
+def _proc_common_args(args):
+    # debug
+    if __debug__ and args.common_debug:
+        for dbg in args.common_debug:
+            debug.active += dbg
+    # verbosity
+    if __debug__:
+        debug("CMDLINE", "Setting verbose.level to %s" % str(args.common_verbose))
+    verbose.level = args.common_verbose
+    for pl in args.preload:
+        if __debug__:
+            debug("CMDLINE", "Executing preload script '%s'" % pl)
+        exec pl
+        pl.close()
+
+
+# setup cmdline args parser
+# main parser
+parser = argparse.ArgumentParser(
+                fromfile_prefix_chars='@',
+                # usage="%(prog)s ...",
+                description="""\
+This is the command line interface of the PyMVPA framework. Specific
+functionality is provided through a collection of sub-commands.
+Available sub-commands are:
+""",
+                epilog='',
+                formatter_class=argparse.RawDescriptionHelpFormatter,
+                add_help=False
+            )
+# common options
+helpers.parser_add_common_opt(parser, 'help')
+helpers.parser_add_common_opt(parser,
+                              'version',
+                              version='pymvpa2 %s\n\n%s' % (pymvpa_version,
+                                                          _license_info()))
+if __debug__:
+    parser.add_argument(
+        '--dbg', action='store_true', dest='dbg_fallback',
+        help="invoke a debugger when a crash occurs")
+    parser.add_argument(
+        '--dbg-channel', action='append', nargs=1, type=str, dest='common_debug',
+        help="enable debug channel (see 'info' command for available channels)")
+parser.add_argument(
+    '--preload', action='append', type=argparse.FileType('r'), default=list(),
+    help="""filename of a custom Python script that is executed prior to, and in
+    the same session as the actual command. This can be used to modify the
+    execution environment, for example creating a custom classifier
+    instance. This option can be given multiple times, and the associated
+    scripts are ran in order of their appearance on the command line.""")
+parser.add_argument('--verbose', action='store', nargs='?', type=int,
+                    dest='common_verbose',
+                    default=0, help='output verbosity level')
+
+
+# subparsers
+subparsers = parser.add_subparsers()
+# for all subcommand modules it can find
+cmd_short_description = []
+for cmd_name in enabled_cmds:
+    cmd = 'cmd_%s' % cmd_name
+    try:
+        subcmdmod = getattr(__import__('mvpa2.cmdline',
+                                       globals(), locals(),
+                                       [cmd], -1),
+                            cmd)
+    except ImportError:
+        cmd_short_description.append(('(%s)' % cmd_name,
+                                      'not available in this installation'))
+        continue
+    # deal with optional parser args
+    if 'parser_args' in subcmdmod.__dict__:
+        parser_args = subcmdmod.parser_args
+    else:
+        parser_args = dict()
+    # use module description, if no explicit description is available
+    if not 'description' in parser_args:
+        parser_args['description'] = subcmdmod.__doc__
+    # create subparser, use module suffix as cmd name
+    subparser = subparsers.add_parser(cmd_name, add_help=False, **parser_args)
+    # all subparser can report the version
+    helpers.parser_add_common_opt(
+            subparser, 'version',
+            version='pymvpa2-%s %s\n\n%s' % (cmd_name, pymvpa_version,
+                                             _license_info()))
+    # our own custom help for all commands
+    helpers.parser_add_common_opt(subparser, 'help')
+    # let module configure the parser
+    subcmdmod.setup_parser(subparser)
+    # configure 'run' function for this command
+    subparser.set_defaults(func=subcmdmod.run)
+    # store short description for later
+    sdescr = getattr(subcmdmod, 'short_description',
+                     parser_args['description'].split('\n')[0])
+    cmd_short_description.append((cmd_name, sdescr))
+
+# create command summary
+cmd_summary = []
+for cd in cmd_short_description:
+    cmd_summary.append('%s: %s\n' \
+                       % (cd[0],
+                          textwrap.fill(cd[1], 75,
+                              initial_indent=' ' * max(0, 12 - len(cd[0])),
+                              subsequent_indent=' ' * 16)))
+parser.description = '%s\n%s\n\n%s' \
+        % (parser.description,
+           '\n'.join(cmd_summary),
+           textwrap.fill("""\
+Detailed usage information for individual commands is
+available via command-specific help options, i.e.:
+%s <command> --help""" % sys.argv[0],
+                            75, initial_indent='',
+                            subsequent_indent=''))
+
+# parse cmd args
+args = parser.parse_args()
+# process common arguments
+_proc_common_args(args)
+# run the function associated with the selected command
+try:
+    args.func(args)
+except Exception as exc:
+    error('%s (%s)' % (str(exc), exc.__class__.__name__), critical=False)
+    if args.dbg_fallback or EnsureBool()(cfg.get('debug', 'cmdline', default=False)):
+        import pdb
+        pdb.post_mortem()
+    sys.exit(1)

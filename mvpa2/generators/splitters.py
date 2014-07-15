@@ -6,8 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Generator nodes to split dataset into multiple parts.
-"""
+"""Split a single input dataset into multiple parts"""
 
 __docformat__ = 'restructuredtext'
 

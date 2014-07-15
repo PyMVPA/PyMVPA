@@ -15,6 +15,8 @@ ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) sou
 
 .PHONY: help clean html dirhtml pickle json htmlhelp qthelp latex changes linkcheck doctest
 
+export SHELL=/bin/bash
+
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  html      to make standalone HTML files"
@@ -29,10 +31,10 @@ help:
 	@echo "  doctest   to run all doctests embedded in the documentation (if enabled)"
 
 clean:
-	-rm -rf $(BUILDDIR) source/generated source/examples
+	-rm -rf $(BUILDDIR) source/generated
 	-rm generate-stamp
 
-SPHINXEXT_PATH=$(shell python -c 'import sphinx; from distutils.version import LooseVersion; print LooseVersion(sphinx.__version__) < "1.1.2" and "sphinxext" or "/usr/share/pyshared/sphinx/ext"')
+SPHINXEXT_PATH=$(shell python -c 'import sphinx.ext; from distutils.version import LooseVersion; print LooseVersion(sphinx.__version__) < "1.1.2" and "sphinxext" or sphinx.ext.__path__[0]')
 #SPHINXEXT_PATH=sphinxext
 
 generate: generate-stamp
@@ -45,6 +47,14 @@ generate-stamp:
 	# wipe everything that is not pymvpa to prevent suffering from the bugs
 	# of other in subsequent stages
 	find source/generated -type f ! -name 'mvpa*' -delete
+	set -e; set -o pipefail; for man in $(BUILDDIR)/man/pymvpa*; do \
+		manfile=$$(basename $${man}) ; \
+		cmd=$${manfile#pymvpa2-*} ; \
+		cmd=$${cmd%*.1} ; \
+		man2html $${man} | sed -n '/<HR>/{:a;n;/<HR>/b;p;ba}' | sed -n '/<A NAME/{:a;n;/This document was created by/b;p;ba}' > source/generated/$${manfile}.html ; \
+		underline="*****************$$(echo $${cmd} | tr A-Za-z0-9 \*)" ; \
+		echo ".. index:: command line, $${cmd}\n.. _chap_cmdline_$${cmd}\n\n$${underline}\nMan page for \`\`$${cmd}\`\`\n$${underline}\n\n.. raw:: html\n   :file: $${manfile}.html\n" > source/generated/cmd_$${cmd}.rst ; \
+	done
 	@touch $@
 
 html: generate

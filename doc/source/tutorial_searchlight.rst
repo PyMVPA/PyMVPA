@@ -10,9 +10,9 @@
 .. index:: Tutorial
 .. _chap_tutorial_searchlight:
 
-******************
-Part 5: Searchlite
-******************
+**************************************
+Looking here and there -- Searchlights
+**************************************
 
 .. note::
 
@@ -20,14 +20,13 @@ Part 5: Searchlite
   <http://ipython.org/ipython-doc/dev/interactive/htmlnotebook.html>`_:
   [`ipynb <notebooks/tutorial_searchlight.ipynb>`_]
 
-The :ref:`previous tutorial part <chap_tutorial_classifiers>` ended with
-the insight that we still have no clue about where in the brain (or our
-chosen ROIs) the signal is located that is picked up by the classifier.
-And that is despite the fact that we have analyzed the data repeatedly,
-with different classifiers and investigated error rates and confusion
-matrices. So what can we do?
+In :ref:`chap_tutorial_classifiers` we have seen how we can implement a
+classification analysis, but we still have no clue about where in the brain (or
+our chosen ROIs) our signal of interest is located.  And that is despite the
+fact that we have analyzed the data repeatedly, with different classifiers and
+investigated error rates and confusion matrices. So what can we do?
 
-Ideally, we would like to have someway to estimate a score for each feature
+Ideally, we would like to have some way to estimate a score for each feature
 that indicates how important that particular feature (most of the time a
 voxel) is in the context of a certain classification task. There are various
 possibilities to get a vector of such per-feature scores in PyMVPA. We could
@@ -37,11 +36,10 @@ dataset.
 
 .. _ANOVA: http://en.wikipedia.org/wiki/Analysis_of_variance
 
-Before we can take a look at the implementation details, let's first
-recreate our preprocessed demo dataset. The code is very similar to that
-from the :ref:`previous tutorial part <chap_tutorial_classifiers>` and
-should raise no questions. We get a dataset with one sample per category
-per run.
+Before we can take a look at the implementation details, let's first recreate
+our preprocessed demo dataset. The code is very similar to that from
+:ref:`chap_tutorial_classifiers` and should raise no questions. We get a
+dataset with one sample per category per run.
 
 >>> from mvpa2.tutorial_suite import *
 >>> # alt: `ds = load_tutorial_results('ds_haxby2001')`
@@ -264,7 +262,7 @@ we observe errors somewhere
 between the theoretical chance level and zero and we don't know what caused
 the error to decrease. We don't even know which samples get misclassified.
 
-From the :ref:`previous tutorial part <chap_tutorial_classifiers>` we know
+From :ref:`chap_tutorial_classifiers` we know
 that there is a way out of this dilemma. We can look at the confusion
 matrix of a classifier to get a lot more information that is otherwise
 hidden. However, we cannot reasonably do this for thousands of searchlight
@@ -280,9 +278,8 @@ that can employ this strategy. A study looking a global brain circuitry
 will hardly restrict the analysis to patches of a few cubic millimeters of
 brain tissue. As we have seen before, searchlights also have another nasty
 aspect. Although they provide us with a multivariate localization measure,
-they also inherit the curse of univariate fMRI data analysis -- `multiple
-comparisons`_. The :ref:`next tutorial part <chap_tutorial_sensitivity>`
-will offers some alternatives that are more gentle in this respect.
+they also inherit the curse of univariate fMRI data analysis --
+`multiple comparisons`_.
 
 .. _multiple comparisons: http://en.wikipedia.org/wiki/Multiple_comparisons
 
@@ -290,5 +287,4 @@ Despite these limitations a searchlight analysis can be a valuable
 exploratory tool if used appropriately. The capabilities of PyMVPA's searchlight
 implementation go beyond what we looked at in this tutorial. It is not only
 possible to run *spatial* searchlights, but multiple spaces can be
-considered simultaneously. We will get back to these more advanced topics later
-on.
+considered simultaneously.

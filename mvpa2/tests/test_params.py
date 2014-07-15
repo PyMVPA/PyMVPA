@@ -17,9 +17,10 @@ from mvpa2.base.state import ClassWithCollections, ConditionalAttribute
 from mvpa2.base.param import Parameter, KernelParameter
 from mvpa2.base.constraints import *
 from mvpa2.testing.clfs import *
+from mvpa2.testing import assert_warnings
 
 class ParametrizedClassifier(SameSignClassifier):
-    p1 = Parameter(1.0)
+    p1 = Parameter(1.0, constraints='float')
     kp1 = KernelParameter(100.0)
 
 class ParametrizedClassifierExtended(ParametrizedClassifier):
@@ -55,6 +56,15 @@ class ParamsTests(unittest.TestCase):
 
         self.assertRaises(AttributeError, blank.__getattribute__, 'ca')
         self.assertRaises(AttributeError, blank.__getattribute__, '')
+
+    def test_deprecated_allowedtype(self):
+        with assert_warnings(
+                [(DeprecationWarning,
+                  "allowedtype option was deprecated in favor of constraints. "
+                  "Adjust your code, provided value 'str' was ignored")]):
+            p = Parameter(1.0, allowedtype="str")
+            self.assertRaises(AttributeError, lambda p: p.allowedtype, p)
+            self.assertEqual(p.constraints, None)
 
     def test_choice(self):
         c = ChoiceClass()
@@ -193,6 +203,13 @@ class ParamsTests(unittest.TestCase):
         #self.assertTrue('choice2' in c__doc__)
         #self.assertTrue("(Default: 'choice1')" in c__doc__)        
         #self.assertTrue("(Default: 'choice1')" in cf__doc__)
+
+    def test_simple_specs(self):
+        p = Parameter(1.0, constraints='int')
+        self.assertTrue(p.value is 1)
+        self.assertTrue(p.constraints is constraint_spec_map['int'])
+        self.assertRaises(ValueError, Parameter, 'a', constraints='int')
+        self.assertRaises(ValueError, Parameter, 1.0, constraints='str')
 
 
 def suite():  # pragma: no cover

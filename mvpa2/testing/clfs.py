@@ -24,13 +24,13 @@ from mvpa2.measures.base import FeaturewiseMeasure
 #
 # first deal with classifiers which do not have external deps
 #
-from mvpa2.clfs.base import Classifier
+from mvpa2.clfs.dummies import *
 from mvpa2.clfs.smlr import SMLR
 from mvpa2.clfs.knn import *
 
 from mvpa2.clfs.warehouse import clfswh, regrswh
 from mvpa2.base import externals
-from mvpa2.base.types import accepts_dataset_as_samples
+
 
 __all__ = ['clfswh', 'regrswh', 'Classifier', 'SameSignClassifier',
            'Less1Classifier', 'sample_clf_nl', 'sample_clf_lin',
@@ -44,42 +44,6 @@ if externals.exists('libsvm') or externals.exists('shogun'):
         __all__ += ['libsvm', 'LinearNuSVMC']
     if externals.exists('shogun'):
         __all__ += ['sg']
-#
-# Few silly classifiers
-#
-class SameSignClassifier(Classifier):
-    """Dummy classifier which reports +1 class if both features have
-    the same sign, -1 otherwise"""
-
-    __tags__ = ['notrain2predict']
-    def __init__(self, **kwargs):
-        Classifier.__init__(self, **kwargs)
-
-    def _train(self, data):
-        # we don't need that ;-)
-        pass
-
-    @accepts_dataset_as_samples
-    def _predict(self, data):
-        data = np.asanyarray(data)
-        datalen = len(data)
-        estimates = []
-        for d in data:
-            estimates.append(2*int( (d[0]>=0) == (d[1]>=0) )-1)
-        self.ca.predictions = estimates
-        self.ca.estimates = estimates            # just for the sake of having estimates
-        return estimates
-
-
-class Less1Classifier(SameSignClassifier):
-    """Dummy classifier which reports +1 class if abs value of max less than 1"""
-    def _predict(self, data):
-        datalen = len(data)
-        estimates = []
-        for d in data:
-            estimates.append(2*int(max(d)<=1)-1)
-        self.predictions = estimates
-        return estimates
 
 
 class SillySensitivityAnalyzer(FeaturewiseMeasure):

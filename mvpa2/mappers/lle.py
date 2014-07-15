@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Local Linear Embedding Data mapper.
+"""Local Linear Embedding.
 
 This is a wrapper class around the corresponding MDP nodes LLE and HLLE
 (since MDP 2.4).

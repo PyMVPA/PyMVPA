@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Prototype-based Mapper."""
+"""Project data onto a space defined by prototypes via a similarity function"""
 
 import numpy as np
 

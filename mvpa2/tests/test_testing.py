@@ -12,6 +12,7 @@ import numpy as np
 
 from mvpa2.base.externals import versions
 from mvpa2.testing.tools import *
+from mvpa2.testing.sweep import *
 
 import mvpa2.tests as mvtests
 
@@ -52,5 +53,35 @@ def test_assert_objectarray_equal():
 def test_tests_run():
     ok_(len(mvtests.collect_unit_tests()) > 10)
     ok_(len(mvtests.collect_nose_tests()) > 10)
-    ok_(len(mvtests.collect_test_suites()) > 10)
+    ok_(len(mvtests.collect_test_suites(instantiate=False)) > 10)
     mvtests.run(limit=[])
+
+@sweepargs(suffix=['', 'customsuffix'])
+@sweepargs(prefix=['', 'customprefix'])
+#@sweepargs(mkdir=(True, False))
+def test_with_tempfile(suffix, prefix): #, mkdir):
+    files = []
+
+    @with_tempfile(suffix, prefix) #, mkdir=mkdir)
+    def testf(f):
+        assert_false(os.path.exists(f)) # not yet
+        if suffix:
+            assert_true(f.endswith(suffix))
+        if prefix:
+            assert_true(os.path.basename(f).startswith(prefix))
+        #assert_true(os.path.isdir(f) == dir_)
+        # make sure it is writable
+        with open(f, 'w') as f_:
+            f_.write('load')
+            files.append(f)
+        assert_true(os.path.exists(f)) # should be there
+        # and we should be able to create a bunch of those with other suffixes
+        with open(f + '1', 'w') as f_:
+            f_.write('load')
+            files.append(f + '1')
+
+    testf()
+    # now we need to figure out what file was actually
+    assert_equal(len(files), 2)
+    assert_false(os.path.exists(files[0]))
+    assert_false(os.path.exists(files[1]))
