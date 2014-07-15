@@ -704,7 +704,7 @@ class CosmoQueryEngine(QueryEngineInterface):
             if not isinstance(v, np.ndarray):
                 raise TypeError('Value %s for key %s must be numpy array' %
                                                                     (v, k))
-            if not np.issubdtype(v.dtype, np.int_):
+            if not np.issubdtype(np.int_, v.dtype):
                 raise ValueError('Value %s for key %s must be int' % (v, k))
 
 
