@@ -133,6 +133,7 @@ def main():
     if want_notebook:
         notebook_dstdir = workdir
         ipy_args.append('--notebook-dir=%s' % notebook_dstdir)
+        ipy_args.append('--pylab=inline') # let's do inline figures
         if not os.path.exists(notebook_dstdir):
             os.makedirs(notebook_dstdir)
         notebook_files = glob.glob(os.path.join(notebook_srcdir, '*.ipynb'))

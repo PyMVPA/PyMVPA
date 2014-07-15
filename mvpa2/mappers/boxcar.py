@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Data mapper"""
+"""Transform consecutive samples into individual multi-dimensional samples"""
 
 __docformat__ = 'restructuredtext'
 

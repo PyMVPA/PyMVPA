@@ -128,7 +128,9 @@ def test_array_collectable_unique(a):
         x_ = set(x)
         if sys.version_info[0] < 3:
             x_ = list(x_)
-        return repr(np.sort(x_))
+            return repr(sorted(x_))
+        else:
+            return repr(np.sort(x_))
 
     assert_equal(repr_(a_flat), repr_(c.unique))
     # even if we request it 2nd time ;)

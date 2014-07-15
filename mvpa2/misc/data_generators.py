@@ -322,18 +322,26 @@ def linear1d_gaussian_noise(size=100, slope=0.5, intercept=1.0,
     return dataset_wizard(samples=x[:, None], targets=y)
 
 
-def load_example_fmri_dataset():
+def load_example_fmri_dataset(name='1slice', literal=False):
     """Load minimal fMRI dataset that is shipped with PyMVPA."""
     from mvpa2.datasets.mri import fmri_dataset
     from mvpa2.misc.io import SampleAttributes
 
-    attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
-    ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+    dspath, mask = {
+        '1slice': (pymvpa_dataroot, 'mask.nii.gz'),
+        '25mm': (os.path.join(
+            pymvpa_dataroot,'tutorial_data_25mm', 'data'), 'mask_brain.nii.gz')
+    }[name]
+
+    if literal:
+        attr = SampleAttributes(os.path.join(dspath, 'attributes_literal.txt'))
+    else:
+        attr = SampleAttributes(os.path.join(dspath, 'attributes.txt'))
+    ds = fmri_dataset(samples=os.path.join(dspath, 'bold.nii.gz'),
                       targets=attr.targets, chunks=attr.chunks,
-                      mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+                      mask=os.path.join(dspath, mask))
 
     return ds
-
 
 def load_datadb_tutorial_data(path=os.path.join(
       pymvpa_datadbroot, 'tutorial_data', 'tutorial_data', 'data'),

@@ -110,11 +110,13 @@ class Surface(object):
 
         if not hasattr(self, '_n2f'):
             # run the first time this function is called
-            n2f = collections.defaultdict(list)
+            n2f = dict()
             for i in xrange(self._nf):
                 fi = self._f[i]
                 for j in xrange(3):
                     p = fi[j]
+                    if not p in n2f:
+                        n2f[p] = []
                     n2f[p].append(i)
             self._n2f = n2f
 
@@ -245,7 +247,7 @@ class Surface(object):
 
 
         if not hasattr(self, '_nbrs'):
-            nbrs = collections.defaultdict(dict)
+            nbrs = dict()
             for i in xrange(self._nf):
                 fi = self._f[i]
 
@@ -265,6 +267,11 @@ class Surface(object):
                            + (pv[2] - qv[2]) * (pv[2] - qv[2]))
 
                     dist = math.sqrt(sqdist)
+                    if not p in nbrs:
+                        nbrs[p] = dict()
+                    if not q in nbrs:
+                        nbrs[q] = dict()
+
                     nbrs[q][p] = dist
                     nbrs[p][q] = dist
 
@@ -946,7 +953,26 @@ class Surface(object):
         return not self.__eq__(other)
 
     def __reduce__(self):
-        return (self.__class__, (self._v, self._f))
+        # these are lazily computed on the first call to e.g. node2faces
+        lazy_keys = ('_n2f', '_f2el', '_v2ael', '_e2f', '_nbrs')
+        lazy_dict = dict()
+        # TODO: add in efficient way to translate these dictionaries
+        #       to something like a numpy array, and implement the 
+        #       translation back. Types for these dicts:
+        #       _n2f: int -> [int]
+        #       _f2el: array
+        #       _v2ael: array
+        #       _e2f: (int,int) -> int
+        #       _nbrs: int -> (int -> float)
+        #       
+        # For now this this functionaltiy is switched off,
+        # because pickling it (also with hdf5) takes a long time
+        #for lazy_key in lazy_keys:
+        #    if lazy_key in self.__dict__:
+        #        lazy_dict[lazy_key] = self.__dict__[lazy_key]
+
+
+        return (self.__class__, (self._v, self._f), lazy_dict)
 
     def same_topology(self, other):
         '''

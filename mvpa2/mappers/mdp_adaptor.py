@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""MDP interface module.
+"""Wrapper to use MDP nodes and flows as PyMVPA mappers.
 
 This module provides to mapper that allow embedding MDP nodes, or flows
 into PyMVPA.

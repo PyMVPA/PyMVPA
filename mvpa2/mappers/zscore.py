@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Mapper for data normalization by Z-Scoring."""
+"""Data normalization by Z-Scoring."""
 
 __docformat__ = 'restructuredtext'
 

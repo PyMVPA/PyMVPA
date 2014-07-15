@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-""""""
+"""Dataset partitioning strategies"""
 
 __docformat__ = 'restructuredtext'
 
@@ -37,7 +37,6 @@ class Partitioner(Node):
     """
 
     _STRATEGIES = ('first', 'random', 'equidistant')
-    _NPERLABEL_STR = ['equal', 'all']
 
     def __init__(self,
                  count=None,

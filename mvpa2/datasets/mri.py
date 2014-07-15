@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Dataset for magnetic resonance imaging (MRI) data.
+"""Support for magnetic resonance imaging (MRI) data IO.
 
 This module offers functions to import into PyMVPA MRI data from files
 in any format supported by NiBabel_ (e.g. NIfTI, MINC, Analyze), and
@@ -136,6 +136,16 @@ def map2nifti(dataset, data=None, imghdr=None, imgtype=None):
                 debug('DS_NIFTI',
                       'No image type found in %s. Using default Nifti1Image.'
                       % (dataset.a))
+
+    # set meaningful range
+    try:
+        if not imghdr is None:
+            if 'cal_max' in imghdr:
+                imghdr['cal_max'] = dsarray.max()
+                imghdr['cal_min'] = dsarray.min()
+    except:
+        # probably not a NIfTI header
+        pass
 
     # Augment header if data dsarray dtype could not be represented
     # with imghdr.get_data_dtype()

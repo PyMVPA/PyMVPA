@@ -6,8 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""An efficient implementation of searchlight for GNB.
-"""
+"""Support functionality for GNB and M1NN searchlights"""
 
 __docformat__ = 'restructuredtext'
 

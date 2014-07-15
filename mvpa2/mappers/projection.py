@@ -6,6 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Base class for mappers doing linear transformations"""
 
 __docformat__ = 'restructuredtext'
 

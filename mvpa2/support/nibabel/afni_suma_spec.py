@@ -263,7 +263,6 @@ def hemi_pairs_add_views(spec_both, state, ext, directory=None, overwrite=False)
 
             for fn, surf_ in zip(newfns, surf_both_moved):
                 surf.write(fn, surf_, overwrite)
-                print "Written %s" % fn
 
     return tuple(spec_both_new)
 

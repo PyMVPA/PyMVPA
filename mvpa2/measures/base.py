@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Base classes for measures: algorithms that quantify properties of datasets.
+"""Plumbing for measures: algorithms that quantify properties of datasets.
 
 Besides the `Measure` base class this module also provides the
 (abstract) `FeaturewiseMeasure` class. The difference between a general

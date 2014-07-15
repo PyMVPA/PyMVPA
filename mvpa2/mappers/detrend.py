@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Mapper for data detrending."""
+"""Polynomial de-trending and regression."""
 
 __docformat__ = 'restructuredtext'
 
@@ -33,7 +33,8 @@ if externals.exists('scipy', raise_=True):
 
 from mvpa2.base.dochelpers import _str, borrowkwargs
 from mvpa2.mappers.base import Mapper
-
+from ..base.param import Parameter
+from ..base import constraints as cts
 
 class PolyDetrendMapper(Mapper):
     """Mapper for regression-based removal of polynomial trends.
@@ -84,32 +85,38 @@ class PolyDetrendMapper(Mapper):
     >>> np.sum(np.abs(mds)) < 0.00001
     True
     """
-    def __init__(self, polyord=1, chunks_attr=None, opt_regs=None, **kwargs):
-        """
-        Parameters
-        ----------
-        polyord : int or list, optional
-          Order of the Legendre polynomial to remove from the data.  This
+    polyord = Parameter(1, doc=\
+          """Order of the Legendre polynomial to remove from the data.  This
           will remove every polynomial up to and including the provided
           value.  For example, 3 will remove 0th, 1st, 2nd, and 3rd order
           polynomials from the data.  np.B.: The 0th polynomial is the
           baseline shift, the 1st is the linear trend.
-          If you specify a single int and `chunks_attr` is not None, then this value
+          If you specify a single int and the `chunks_attr` parameter is not None, then this value
           is used for each chunk.  You can also specify a different polyord
           value for each chunk by providing a list or ndarray of polyord
-          values the length of the number of chunks.
-        chunks_attr : str or None
-          If None, the whole dataset is detrended at once. Otherwise, the given
+          values with the length equal to the number of chunks.""",
+          constraints=cts.AltConstraints(cts.EnsureInt()))
+
+    chunks_attr = Parameter(None, doc=\
+          """If None, the whole dataset is detrended at once. Otherwise, the given
           samples attribute (given by its name) is used to define chunks of the
           dataset that are processed individually. In that case, all the samples
           within a chunk should be in contiguous order and the chunks should be
           sorted in order from low to high -- unless the dataset provides
           information about the coordinate of each sample in the space that
-          should be spanned be the polynomials (see `inspace` argument).
-        opt_regs : list or None
-          Optional list of sample attribute names that should be used as
-          additional regressors.  One example would be to regress out motion
-          parameters.
+          should be spanned be the polynomials (see `space` argument).""",
+          constraints=cts.AltConstraints(None, cts.EnsureStr()))
+
+    opt_regs = Parameter(None, doc=\
+          """List of sample attribute names that should be used as
+          additional regressors.  An example use would be to regress out motion
+          parameters.""",
+          constraints=cts.AltConstraints(None, cts.EnsureListOf(str)))
+
+    def __init__(self, polyord=1, chunks_attr=None, opt_regs=None, **kwargs):
+        """
+        Parameters
+        ----------
         space : str or None
           If not None, a samples attribute of the same name is added to the
           mapped dataset that stores the coordinates of each sample in the
@@ -118,9 +125,10 @@ class PolyDetrendMapper(Mapper):
           as sample coordinates in the space that should be spanned by the
           polynomials.
         """
-        self.__chunks_attr = chunks_attr
-        self.__polyord = polyord
-        self.__opt_reg = opt_regs
+        # keep param init for historical reasons
+        self.params.chunks_attr = chunks_attr
+        self.params.polyord = polyord
+        self.params.opt_regs = opt_regs
 
         # things that come from train()
         self._polycoords = None
@@ -137,14 +145,13 @@ class PolyDetrendMapper(Mapper):
         s = super(PolyDetrendMapper, self).__repr__()
         return s.replace("(",
                          "(polyord=%i, chunks_attr=%s, opt_regs=%s, "
-                          % (self.__polyord,
-                             repr(self.__chunks_attr),
-                             repr(self.__opt_reg)),
+                          % (self.params.polyord,
+                             repr(self.params.chunks_attr),
+                             repr(self.params.opt_regs)),
                          1)
 
-
     def __str__(self):
-        return _str(self, ord=self.__polyord)
+        return _str(self, ord=self.params.polyord)
 
 
     def _scale_array(self, a):
@@ -194,9 +201,9 @@ class PolyDetrendMapper(Mapper):
 
     def _train(self, ds):
         # local binding
-        chunks_attr = self.__chunks_attr
-        polyord = self.__polyord
-        opt_reg = self.__opt_reg
+        chunks_attr = self.params.chunks_attr
+        polyord = self.params.polyord
+        opt_reg = self.params.opt_regs
         inspace = self.get_space()
         self._polycoords = None
 

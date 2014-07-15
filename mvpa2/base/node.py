@@ -44,6 +44,16 @@ class Node(ClassWithCollections):
         doc="Computed results before invoking postproc. " +
             "Stored only if postproc is not None.")
 
+    # Work-around for "happily-broken-by-design" HDF5 storage
+    # serialization: upon reconstruction, no __init__ is called
+    # so no private attributes, introduced since the moment when
+    # original structure was serialized, would get populated.
+    # "More proper" solution would be finally to implement a full
+    # chain of __reduce__ and __setstate__s for derived classes (and use
+    # Parameters more).  For now we would simply define those with default
+    # values also at class level.
+    __pass_attr = None
+
     def __init__(self, space=None, pass_attr=None, postproc=None, **kwargs):
         """
         Parameters

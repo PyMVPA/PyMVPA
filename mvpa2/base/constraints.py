@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##g
-"""Parameter validation"""
+"""Helper for parameter validation, documentation and conversion"""
 
 # TODO: __str__ / __repr__'s
 
@@ -114,7 +114,30 @@ class EnsureListOf(Constraint):
     def long_description(self):
         return "value must be convertible to %s" % self.short_description()
 
+class EnsureTupleOf(Constraint):
+    """Ensure that an input is a tuple of a particular data type
+    """
+    def __init__(self, dtype):
+        """
+        Parameters
+        ----------
+        dtype : functor
+        """
+        self._dtype = dtype
+        super(EnsureTupleOf, self).__init__()
 
+    def __call__(self, value):
+        return tuple(map(self._dtype, value))
+
+    def short_description(self):
+        dtype_descr = str(self._dtype)
+        if dtype_descr[:7] == "<type '" and dtype_descr[-2:] == "'>":
+            dtype_descr = dtype_descr[7:-2]
+        return 'tuple(%s)' % dtype_descr
+
+    def long_description(self):
+        return "value must be convertible to %s" % self.short_description()        
+            
 class EnsureBool(Constraint):
     """Ensure that an input is a bool.
 
@@ -125,12 +148,13 @@ class EnsureBool(Constraint):
     def __call__(self, value):
         if isinstance(value, bool):
             return value
-        elif value in ('0', 'no', 'off', 'disable', 'false'):
-            return False
-        elif value in ('1', 'yes', 'on', 'enable', 'true'):
-            return True
-        else:
-            raise ValueError("value must be converted to boolean")
+        elif isinstance(value, basestring):
+            value = value.lower()
+            if value in ('0', 'no', 'off', 'disable', 'false'):
+                return False
+            elif value in ('1', 'yes', 'on', 'enable', 'true'):
+                return True
+        raise ValueError("value must be converted to boolean")
 
     def long_description(self):
         return 'value must be convertible to type bool'
@@ -332,3 +356,23 @@ class Constraints(Constraint):
             return '(%s)' % doc
         else:
             return doc
+
+constraint_spec_map = {
+    'float': EnsureFloat(),
+    'int': EnsureInt(),
+    'bool': EnsureBool(),
+    'str': EnsureStr(),
+    }
+
+def expand_contraint_spec(spec):
+    """Helper to translate literal contraint specs into functional ones
+
+    e.g. 'float' -> EnsureFloat()
+    """
+    if spec is None or hasattr(spec, '__call__'):
+        return spec
+    else:
+        try:
+            return constraint_spec_map[spec]
+        except KeyError:
+            raise ValueError("unsupport constraint specification '%r'" % (spec,))

@@ -29,7 +29,7 @@ from mvpa2.misc.io.base import SampleAttributes
 def test_nifti_dataset():
     """Basic testing of NiftiDataset
     """
-    ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d.nii.gz'),
+    ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'example4d.nii.gz'),
                        targets=[1,2], sprefix='voxel')
     assert_equal(ds.nfeatures, 294912)
     assert_equal(ds.nsamples, 2)

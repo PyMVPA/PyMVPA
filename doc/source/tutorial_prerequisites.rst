@@ -46,13 +46,13 @@ Python programs after a weekend of training.
 What Do I Need To Get Python Running
 ------------------------------------
 
-PyMVPA code is compatible with Python 2.X series (more precisely >= 2.4).
+PyMVPA code is compatible with Python 2.X series (more precisely >= 2.6).
 Python 3.x is supported as well, but not as widely used (yet), and many
 3rd-party Python modules are still lacking Python 3 support. For now, we
 recommend Python 2.7 for production, but Python 2.6 should work equally well.
 
 Any machine which has Python 2.X available can be used for PyMVPA-based
-processing (see :ref:`Download section <chap_download>` on how to deploy
+processing (see :ref:`chap_installation>` on how to deploy
 PyMVPA on your system). Any GNU/Linux distribution already comes with Python
 by default. The Python website offers `installers for Windows and MacOS X`_.
 
@@ -68,7 +68,7 @@ PyMVPA).
 .. _Python(x,y): https://code.google.com/p/pythonxy/
 .. _MacPorts: http://www.macports.org
 
-The ideal environment is, however, the Debian_ operating system. Debian
+The *ideal* environment is, however, the Debian_ operating system. Debian
 offers the largest selection of free and open-source software in the world,
 and runs on almost any machine. Moreover, the NeuroDebian_ project provides
 Debian packages for a number of popular neuroscience software package, such

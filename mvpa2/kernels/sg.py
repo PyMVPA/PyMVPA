@@ -176,13 +176,13 @@ class PolySGKernel(_BasicSGKernel):
     __kernel_cls__ = sgk.PolyKernel
     __kernel_name__ = 'poly'
     __kp_order__ = ('degree', 'inhomogenous')
-    degree = Parameter(2, allowedtype=int, doc="Polynomial order of the kernel")
-    inhomogenous = Parameter(True, allowedtype=bool,
+    degree = Parameter(2, constraints='int', doc="Polynomial order of the kernel")
+    inhomogenous = Parameter(True, constraints='bool',
                              doc="Whether +1 is added within the expression")
 
     if not exists('sg ge 0.6.5'):
 
-        use_normalization = Parameter(False, allowedtype=bool,
+        use_normalization = Parameter(False, constraints='bool',
                                       doc="Optional normalization")
         __kp_order__ = __kp_order__ + ('use_normalization',)
 

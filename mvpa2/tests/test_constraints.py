@@ -47,6 +47,7 @@ class SimpleConstraintsTests(unittest.TestCase):
         assert_equal(c(True), True)
         assert_equal(c(False), False)
         # all that resuls in True
+        assert_equal(c('True'), True)
         assert_equal(c('true'), True)
         assert_equal(c('1'), True)
         assert_equal(c('yes'), True)
@@ -54,15 +55,14 @@ class SimpleConstraintsTests(unittest.TestCase):
         assert_equal(c('enable'), True)
         # all that resuls in False
         assert_equal(c('false'), False)
+        assert_equal(c('False'), False)
         assert_equal(c('0'), False)
         assert_equal(c('no'), False)
         assert_equal(c('off'), False)
         assert_equal(c('disable'), False)
         # this should always fail
-        assert_raises(ValueError, lambda: c('True'))
-        assert_raises(ValueError, lambda: c('False'))
-        assert_raises(ValueError, lambda: c(0))
-        assert_raises(ValueError, lambda: c(1))
+        assert_raises(ValueError, c, 0)
+        assert_raises(ValueError, c, 1)
 
     def test_str(self):
         c = EnsureStr()
@@ -124,7 +124,12 @@ class SimpleConstraintsTests(unittest.TestCase):
         assert_equal(c(['a', 'b']), ['a', 'b'])
         assert_equal(c(['a1', 'b2']), ['a1', 'b2'])
 
-
+    def test_tupleof(self):
+        c = EnsureTupleOf(str)
+        assert_equal(c(('a', 'b')), ('a', 'b'))
+        assert_equal(c(('a1', 'b2')), ('a1', 'b2'))
+        
+        
 class ComplexConstraintsTests(unittest.TestCase):
 
     def test_constraints(self):

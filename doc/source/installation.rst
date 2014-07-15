@@ -18,6 +18,10 @@ a comprehensive list of software dependencies, as well as recommendation for
 additional software packages that further enhance the functionality provided by
 PyMVPA.
 
+If you don't want to read this whole document, and you are on a Debian-based
+system, such as Ubuntu, all you need to know it::
+
+  sudo aptitude install python-mvpa2
 
 .. _requirements:
 
@@ -58,9 +62,12 @@ Must Have
 
 The following software packages are required or PyMVPA will not work at all.
 
-  Python_ 2.4 with ctypes_ 1.0.1 or a later Python 2.X release
-    Python 2.6 is preferable release since that is the version we use for PyMVPA
-    development.  Python 3.X is not yet supported.
+  Python_ 2.x
+    These days there should be little reason to use anything older than
+    Python 2.7. However, if you are on a tight budget 2.6, or even 2.5 should
+    work -- maybe even 2.4 with (at least) ctypes_ 1.0.1.
+    Python 3.X should work too, but none of the core developers are using it
+    in production (yet), hence it should be considered as less tested.
   NumPy_
     PyMVPA makes extensive use of NumPy to store and handle data. There is no
     way around it.
@@ -81,11 +88,11 @@ packages. It is strongly recommended to install these packages as well, if
 they are available on a particular target platform.
 
   SciPy_: linear algebra, standard distributions, signal processing, data IO
-    SciPy_ is mainly used by the statistical testing and the logistic
-    regression classifier code. However, the SciPy package provides a lot of
+    SciPy_ is mainly used by the statistical testing, and some data
+    transformation algorithms. However, the SciPy package provides a lot of
     functionality that might be relevant in the context of PyMVPA, e.g.
     IO support for Matlab .mat files.
-  NiBabel_: access to NIfTI files
+  NiBabel_: access to NIfTI and other neuroimaging file formats
     PyMVPA provides a convenient wrapper for datasets stored in the NIfTI
     format, that internally uses NiBabel. If you don't need that, NiBabel is
     not necessary, but otherwise it makes it really easy to read from and write
@@ -102,10 +109,10 @@ they are available on a particular target platform.
 Suggestions
 -----------
 
-The following list of software is again not required by PyMVPA, but these
-packages add additional functionality (e.g. classifiers implemented in external
-libraries) and might make life a lot easier by leading to more efficiency when
-using PyMVPA.
+The following list of software is, again, not required by PyMVPA, but these
+packages provide additional functionality (e.g. classifiers implemented in
+external libraries) and might make life a lot easier by leading to more
+efficiency when using PyMVPA.
 
   IPython_: frontend
     If you want to use PyMVPA interactively it is strongly recommend to use
@@ -123,6 +130,9 @@ using PyMVPA.
     Similar to FSL, AFNI is a free package for processing (f)MRI data.
     Though its primary data file format is BRIK files, it has the ability
     to read and write NIFTI files, which easily integrate with PyMVPA.
+  scikit-learn_: large parts of its functionality
+    PyMVPA can make use of pretty much any algorithm that implements the
+    transformer or estimator and predictor API.
   Shogun_: various classifiers
     PyMVPA currently can make use of several SVM implementations of the
     Shogun_ toolbox. It requires the modular python interface of Shogun to be
@@ -147,6 +157,7 @@ using PyMVPA.
     to produce publication quality figures. The examples shipped with PyMVPA
     show a number of possibilities how to use matplotlib for data visualization.
 
+.. _scikit-learn: http://scikit-learn.org
 .. _Shogun: http://www.shogun-toolbox.org
 .. _LIBSVM: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
 .. _matplotlib: http://matplotlib.sourceforge.net/
@@ -172,18 +183,17 @@ Installing Binary Packages
    Ubuntu is no excuse ;-)
 
 The easiest way to obtain PyMVPA is to use pre-built binary packages.
-Currently we provide such packages or installers for the Debian/Ubuntu family
-(see below). If there are no binary packages for your operating system or platform
-yet, you can build PyMVPA from source.  Please refer to `Building from Source`_
-for more information.
+Currently we provide such packages for the Debian/Ubuntu family, additional
+installers are provided by contributors (see below). If there are no binary
+packages for your operating system or platform yet, you can build PyMVPA from
+source.  Please refer to `Building from Source`_ for more information.
 
 .. note::
 
-  If you have difficulties deploying PyMVPA itself or third-party modules,
-  such as Shogun, on non Debian-based systems, we would advise you to give a
-  try to `NeuroDebian virtual machine`_ which would allow you to benefit from
-  Debian packaging of PyMVPA and its dependencies by running Debian in a
-  virtualized environment.
+  If you have difficulties deploying PyMVPA or its dependencies, we recommend
+  that you try the `NeuroDebian virtual machine`_. With this virtual appliance
+  you'll be able to deploy a fully functional computing environment, including
+  PyMVPA, in a matter of minutes on any operating system.
 
 .. _NeuroDebian virtual machine: http://neuro.debian.net/vm.html
 
@@ -212,13 +222,10 @@ Debian backports and inofficial Ubuntu packages
 -----------------------------------------------
 
 Backports for the current Debian stable release and binary packages for recent
-Ubuntu releases are available from a `NeuroDebian Repository`_.
-Please read the `package repository instructions`_ to learn about
-how to obtain them. Otherwise install as you would do with any other Debian
-package.
+Ubuntu releases are available from a `NeuroDebian Repository`_.  Please refer
+to NeuroDebian for installation instructions.
 
 .. _NeuroDebian Repository: http://neuro.debian.net
-.. _package repository instructions: http://neuro.debian.net/#how-to-use-this-repository
 
 .. index:: Windows, Windows installer
 .. _install_win:
@@ -228,8 +235,11 @@ Windows
 -------
 
 There are a few Python distributions for Windows. In theory all of them should
-work equally well. However, we only tested the standard Python distribution
-from www.python.org (with version 2.5.2).
+work equally well. Christoph Gohlke runs a `repository of unofficial Windows
+binaries`_ for various scientific Python packages, including PyMVPA, that could
+ease deploying a PyMVPA installation on Windows significantly.
+
+.. _repository of unofficial Windows binaries: http://www.lfd.uci.edu/~gohlke/pythonlibs/
 
 First you need to download and install Python. Use the Python installer for
 this job. Yo do not need to install the Python test suite and utility scripts.
@@ -426,34 +436,24 @@ Windows systems.
 
 .. index:: releases, development snapshot
 
-Three Ways to Obtain the Sources
---------------------------------
+Obtain the Sources
+------------------
 
-The first step is obtaining the sources. The source code tarballs of all
-PyMVPA releases are available from the `PyMVPA project website`_.
-Alternatively, one can also download a tarball of the latest development
-snapshot_ (i.e. the current state of the *master* branch of the PyMVPA source
-code repository).
-
-.. _snapshot:  http://github.com/PyMVPA/PyMVPA/archives/master
 .. index:: Git, Git repository
 
-If you want to have access to both, the full PyMVPA history and the latest
-development code, you can use the PyMVPA Git_ repository, which is publicly
-available. To view the repository, please point your web browser to gitweb:
-
-  http://github.com/PyMVPA/PyMVPA
-
-The gitweb browser also allows to download arbitrary development snapshots
-of PyMVPA. For a full clone (aka checkout) of the PyMVPA repository simply
-do:
+Get the sources by cloning the Git_ repository on GitHub_:
 
   :command:`git clone git://github.com/PyMVPA/PyMVPA.git`
 
 After a short while you will have a `PyMVPA` directory below your current
 working directory, that contains the PyMVPA repository.
 
+If you are not familiar with Git or GitHub, visit the `GitHub help pages`_ for
+more information and tutorials.
+
 .. _Git: http://git.or.cz/
+.. _GitHub: https://github.com/PyMVPA/PyMVPA
+.. _GitHub help pages: https://help.github.com
 
 .. index:: build instructions
 
@@ -527,7 +527,7 @@ Alternative build procedure
 
 Alternatively, if you are doing development in PyMVPA or if you
 simply do not want (or do not have sufficient permissions to do so) to
-install PyMVPA system wide, you can simply call `make` (same `make
+install PyMVPA system wide, you can simply call `make` (same as `make
 build`) in the top-level directory of the source tree to build
 PyMVPA. Then extend or define your environment variable `PYTHONPATH`
 to point to the root of PyMVPA sources (i.e. where you invoked all

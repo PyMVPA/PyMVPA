@@ -24,6 +24,7 @@ from mvpa2.base.dochelpers import handle_docstring, _rst, _rst_section, \
 
 from mvpa2.clfs.base import Classifier
 from mvpa2.base.param import Parameter
+from mvpa2.base.constraints import EnsureListOf
 
 if __debug__:
     from mvpa2.base import debug
@@ -67,7 +68,9 @@ class _SVM(Classifier):
     # Placeholder: map kernel names to sensitivity classes, ie
     # 'linear':LinearSVMWeights, for each backend
     _KNOWN_SENSITIVITIES={}
-    kernel = Parameter(None, allowedtype=Kernel,
+    kernel = Parameter(None,
+                       # XXX: Currently, can't be ensured using constraints
+                       # allowedtype=Kernel,
                        doc='Kernel object', index=-1)
 
     _SVM_PARAMS = {
@@ -89,11 +92,11 @@ class _SVM(Classifier):
                   doc='Flag to signal either probability estimate is obtained '
                       'within LIBSVM'),
         'shrinking': Parameter(1, doc='Either shrinking is to be conducted'),
-        'weight_label': Parameter([], allowedtype='[int]',
+        'weight_label': Parameter([], constraints=EnsureListOf(int),
                   doc='To be used in conjunction with weight for custom '
                       'per-label weight'),
         # TODO : merge them into a single dictionary
-        'weight': Parameter([], allowedtype='[double]',
+        'weight': Parameter([], constraints=EnsureListOf(float),
                   doc='Custom weights per label'),
         # For some reason setting up epsilon to 1e-5 slowed things down a bit
         # in comparison to how it was before (in yoh/master) by up to 20%... not clear why
