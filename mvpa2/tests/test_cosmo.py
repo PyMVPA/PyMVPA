@@ -144,6 +144,7 @@ def _assert_set_equal(x, y):
 
 @with_tempfile('.mat', 'matlab_file')
 def test_cosmo_dataset(fn):
+    skip_if_no_external('scipy', min_version='0.8')
     mat = _create_small_mat_dataset_dict()
     ds_mat = cosmo.from_any(mat)
     savemat(fn, mat)
@@ -177,6 +178,7 @@ def test_cosmo_dataset(fn):
 
 @with_tempfile('.mat', 'matlab_file')
 def test_cosmo_queryengine(fn):
+    skip_if_no_external('scipy', min_version='0.8')
     nbrhood_mat = _create_small_mat_nbrhood_dict()
     neighbors = nbrhood_mat['neighbors']
     savemat(fn, nbrhood_mat)
