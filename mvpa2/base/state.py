@@ -792,7 +792,7 @@ class ClassWithCollections(object):
 
         # need to check to avoid override of enabled ca in the case
         # of multiple inheritance, like both ClassWithCollectionsl and
-        # Harvestable
+        # Harvestable (note: Harvestable was refactored away)
         if '_collections' not in s__dict__:
             s__class__ = self.__class__
 
