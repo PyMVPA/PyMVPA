@@ -185,7 +185,7 @@ def collect_nose_tests(verbosity=1):
         'test_splitter',
         'test_generators',
         'test_niftidataset',
-        'test_cosmo'
+        'test_cosmo',
         'test_eepdataset',
         'test_erdataset',
         'test_datasrcs',
