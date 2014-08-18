@@ -54,6 +54,27 @@ def remove_invariant_features(dataset):
     """
     return dataset[:, dataset.samples.std(axis=0).nonzero()[0]]
 
+@datasetmethod
+def remove_nonfinite_features(dataset):
+    """Returns a new dataset with all non-finite (NaN,Inf) features removed
+
+    Removes all feature for which not all values are finite
+
+    Parameters
+    ----------
+    dataset : Dataset
+        Input dataset
+
+    Returns
+    -------
+    finite_dataset: Dataset
+        Dataset based on data form the input, but only the features
+        for which all samples are finite are kept.
+    """
+
+    return dataset[:, np.all(np.isfinite(dataset.samples),axis=0)]
+    
+
 
 @datasetmethod
 ##REF: Name was automagically refactored
