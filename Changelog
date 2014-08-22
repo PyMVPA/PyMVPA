@@ -44,6 +44,8 @@ Releases
       (:class:`~mvpa2.datasets.cosmo.CosmoQueryEngine). This allows for
       for running searchlights (:class:`mvpa2.datasets.cosmo.CosmoSearchlight)
       on data from CoSMoMVPA (fMRI and MEEG).
+    - :func:`~mvpa2.datasets.miscfx.remove_nonfinite_features` removes
+      features with non-finite values, i.e. NaNs or Infs, for any sample.
 
   * API changes
 
