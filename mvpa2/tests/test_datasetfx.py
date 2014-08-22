@@ -16,7 +16,7 @@ import numpy as np
 from mvpa2.base import externals
 from mvpa2.datasets.base import dataset_wizard
 from mvpa2.datasets.miscfx import remove_invariant_features, coarsen_chunks, \
-        aggregate_features, SequenceStats
+        aggregate_features, SequenceStats, remove_nonfinite_features
 
 
 from mvpa2.misc.data_generators import normal_feature_dataset
@@ -45,6 +45,20 @@ class MiscDatasetFxTests(unittest.TestCase):
 
         self.assertTrue(dsc.nfeatures == 1)
         self.assertTrue((dsc.samples == r).all())
+
+
+    @reseed_rng()
+    def test_nonfinite_features_removal(self):
+        r = np.random.normal(size=(4, 5))
+        ds = dataset_wizard(r, targets=1, chunks=1)
+        ds.samples[2,0]=np.NaN
+        ds.samples[3,3]=np.Inf
+
+        dsc = remove_nonfinite_features(ds)
+
+        self.assertTrue(dsc.nfeatures == 3)
+        assert_array_equal(ds[:, [1, 2, 4]].samples, dsc.samples)
+
 
 
     def test_coarsen_chunks(self):
