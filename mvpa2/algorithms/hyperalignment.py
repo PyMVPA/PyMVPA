@@ -26,6 +26,7 @@ import numpy as np
 
 from mvpa2.base.state import ConditionalAttribute, ClassWithCollections
 from mvpa2.base.param import Parameter
+from mvpa2.base.constraints import *
 from mvpa2.mappers.procrustean import ProcrusteanMapper
 from mvpa2.datasets import Dataset
 from mvpa2.mappers.base import ChainMapper
@@ -107,34 +108,35 @@ class Hyperalignment(ClassWithCollections):
     # the ``space`` of the mapper determines where the algorithm places the
     # common space definition in the datasets
     alignment = Parameter(ProcrusteanMapper(space='commonspace'), # might provide allowedtype
-            allowedtype='basestring',
+	    # XXX Currently, there's no way to handle this with connstraints  
             doc="""The multidimensional transformation mapper. If
             `None` (default) an instance of
             :class:`~mvpa2.mappers.procrustean.ProcrusteanMapper` is
             used.""")
 
-    alpha = Parameter(1, allowedtype='float32', min=0, max=1,
+    alpha = Parameter(1, constraints=EnsureFloat() & EnsureRange(min=0, max=1),
             doc="""Regularization parameter to traverse between (Shrinkage)-CCA
                 (canonical correlation analysis) and regular hyperalignment.
                 Setting alpha to 1 makes the algorithm identical to
                 hyperalignment and alpha of 0 makes it CCA. By default,
                 it is 1, therefore hyperalignment. """)
 
-    level2_niter = Parameter(1, allowedtype='int', min=0,
+    level2_niter = Parameter(1, constraints=EnsureInt() & EnsureRange(min=0),
             doc="Number of 2nd-level iterations.")
 
-    ref_ds = Parameter(None, allowedtype='int', min=0,
+    ref_ds = Parameter(None, constraints=(EnsureInt() & EnsureRange(min=0) 
+                                          | EnsureNone()),
             doc="""Index of a dataset to use as 1st-level common space
                 reference.  If `None`, then the dataset with the maximum
                 number of features is used.""")
 
-    zscore_all = Parameter(False, allowedtype='bool',
+    zscore_all = Parameter(False, constraints='bool',
             doc="""Flag to Z-score all datasets prior hyperalignment.
             Turn it off if Z-scoring is not desired or was already performed.
             If True, returned mappers are ChainMappers with the Z-scoring
             prepended to the actual projection.""")
 
-    zscore_common = Parameter(True, allowedtype='bool',
+    zscore_common = Parameter(True, constraints='bool',
             doc="""Flag to Z-score the common space after each adjustment.
                 This should be left enabled in most cases.""")
 

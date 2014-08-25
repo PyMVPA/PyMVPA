@@ -303,7 +303,9 @@ def __check_stablerdist():
         # elderly test on top
         # ATM all known implementations which implement custom cdf for
         #     rdist are misbehaving, so there should be no _cdf
-        if '_cdf' in scipy.stats.distributions.rdist_gen.__dict__.keys():
+        distributions = scipy.stats.distributions
+        if 'rdist_gen' in dir(distributions) \
+            and ('_cdf' in distributions.rdist_gen.__dict__.keys()):
             raise ImportError, \
                   "scipy.stats carries misbehaving rdist distribution"
     except ZeroDivisionError:
@@ -572,6 +574,7 @@ _KNOWN = {'libsvm':'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'nipy': "__check('nipy')",
           'nipy.neurospin': "__check_nipy_neurospin()",
           'statsmodels': 'import statsmodels.api as __',
+          'mock': "__check('mock')",
           }
 
 

@@ -28,7 +28,7 @@ The mvpa2 package contains the following subpackages and modules:
          `Per B. Sederberg <persed@princeton.edu>`__
          `Nikolaas N. Oosterhof <n.n.oosterhof@googlemail.com>`__
 :requires: Python 2.6+
-:version: 2.2.0
+:version: 2.3.1
 :see: `The PyMVPA webpage <http://www.pymvpa.org>`__
 :see: `GIT Repository Browser <http://github.com/PyMVPA/PyMVPA>`__
 
@@ -43,7 +43,7 @@ The mvpa2 package contains the following subpackages and modules:
 __docformat__ = 'restructuredtext'
 
 # canonical PyMVPA version string
-__version__ = '2.2.0'
+__version__ = '2.3.1'
 
 import os
 import random
@@ -154,6 +154,22 @@ if cfg.getboolean('debug', 'wtf', default=False):
         sys.stdout.write(str(wtfs))
         return ret
     sys.excepthook = _pymvpa_excepthook
+
+# Attach custom top-level exception handler
+if cfg.getboolean('debug', 'pdb', default=False):
+    import sys
+    _sys_excepthook = sys.excepthook
+    def _pymvpa_pdb_excepthook(type, value, tb):
+        if hasattr(sys, 'ps1') or not sys.stderr.isatty():
+            # we are in interactive mode or we don't have a tty-like
+            # device, so we call the default hook
+            sys.__excepthook__(type, value, tb)
+        else:
+            import traceback, pdb
+            traceback.print_exception(type, value, tb)
+            print
+            pdb.post_mortem(tb)
+    sys.excepthook = _pymvpa_pdb_excepthook
 
 if __debug__:
     debug('INIT', 'mvpa end')

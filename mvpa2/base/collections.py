@@ -54,7 +54,12 @@ class Collectable(object):
         """
         if doc is not None:
             # to prevent newlines in the docstring
-            doc = re.sub('[\n ]+', ' ', doc)
+            try:
+                doc = re.sub('[\n ]+', ' ', doc)
+            except TypeError:
+                # catch some old datasets stored in HDF5
+                doc = re.sub('[\n ]+', ' ', np.asscalar(doc))
+
         self.__doc__ = doc
         self.__name = name
         self._value = None

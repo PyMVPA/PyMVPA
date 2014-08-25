@@ -20,6 +20,9 @@ import json
 from copy import deepcopy
 from optparse import OptionParser
 
+# regexp to skip nodes content of which matches
+_re_skip = re.compile('This tutorial part is also available.*IPython notebook')
+
 def prep_rest(rest):
     # implementing above in python 2.6 compatible fashion
     # which lacks flags keyword argument for re.subn
@@ -133,6 +136,8 @@ class ReST2IPyNB(object):
     def _parse(self, doctree):
         for child in doctree.children:
             tag = child.tagname
+            if _re_skip.search(str(child)):
+                continue
             if tag == 'title':
                 self._add_headingcell(self._state['sec_depth'])
                 self._parse(child)
@@ -154,10 +159,16 @@ class ReST2IPyNB(object):
                 for ex in self._doctest_parser.get_examples(child.rawsource):
                     if needs_new_codecell:
                         self._add_codecell()
-                    self._add2buffer('%s%s' % (' ' * ex.indent, ex.source),
+                    # Filter out possible doctest directives
+                    source = re.sub('#  *doctest:[^\n]*', '', ex.source)
+                    self._add2buffer('%s%s' % (' ' * ex.indent, source),
                                      newline=False)
                     self._flush_buffer(startnew=True)
                     needs_new_codecell = len(ex.want) > 0
+            elif tag == 'literal_block':
+                self._add_codecell()
+                self._add2buffer(child.rawsource)
+                self._flush_buffer(startnew=True)
             elif tag == 'section':
                 self._state['sec_depth'] += 1
                 self._parse(child)
@@ -199,6 +210,11 @@ class ReST2IPyNB(object):
                             % [m for m in re.match(':ref:(.*) <|:ref:(.*)',
                                                    self._buffer).groups()
                                                         if not m is None][0]
+                elif self._buffer.startswith(':math:'):
+                    self._buffer = '$%s$' \
+                            % [m for m in re.match(':math:(.*) <|:math:(.*)',
+                                                   self._buffer).groups()
+                                                        if not m is None][0]
                 elif re.match(':([a-z]+):', self._buffer):
                     # catch other ref type we should handle, but do not yet
                     raise RuntimeError("unhandled reference type '%s'" % self._buffer)
@@ -216,14 +232,20 @@ class ReST2IPyNB(object):
             elif tag == 'literal':
                 # strip one layer of backticks
                 self._add2buffer(child.rawsource[1:-1])
+            elif tag == 'math_block':
+                # wrap in $$ $$
+                for ch in child.children:
+                    self._add2buffer('\n$$%s$$\n' % ch)
             elif tag == 'problematic':
                 print 'PROBLEMATIC: %s' % child
                 self._parse(child)
             elif tag == 'reference':
                 self._flush_buffer()
                 self._parse(child)
-                self._buffer = '[%s][%s]' % (self._buffer,
-                                             child.attributes['name'])
+                if 'name' in child.attributes:
+                    self._buffer = '[%(name)s](%(refuri)s)' % child.attributes
+                else:
+                    self._buffer = '%(refuri)s' % child.attributes
             elif tag in ['comment', 'target']:
                 pass
             elif tag == 'definition_list':
@@ -255,7 +277,7 @@ class ReST2IPyNB(object):
                     self._parse(c)
             elif tag == 'term':
                 self._parse(child.children[0])
-            elif tag == 'figure':
+            elif tag in ['figure', 'image'] :
                 # this can't be expressed in markdown
                 self._flush_buffer()
                 file_url = '%s/%s.html' % (self._baseurl,
@@ -283,11 +305,13 @@ class ReST2IPyNB(object):
                                     exercise_text,
                                     settings_overrides=self._doctree_parser_settings))
                     self._flush_buffer()
-                    self._currcell['source'].insert(0, '- - -\n*Exercise*')
+                    self._currcell['source'].insert(0, '- - -\n**Exercise**')
                     self._add_codecell()
                     self._add2buffer('# you can use this cell to for this exercise\n')
                     self._add_markdowncell()
                     self._currcell['source'].append('- - -\n')
+                elif child.children[0].astext() == 'Unknown directive type "seealso".':
+                    pass
                 elif child.children[0].astext() == 'Unknown directive type "todo".':
                     pass
                 else:

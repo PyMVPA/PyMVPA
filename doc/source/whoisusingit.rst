@@ -100,6 +100,8 @@ Studies employing PyMVPA
 2012
 ----
 
+.. cummulative impact this year: 81.406
+
 * :ref:`Viswanathan et al., arXiv preprint (2012) <VCG12>`. On the geometric
   structure of fMRI searchlight-based information maps.
 
@@ -148,7 +150,9 @@ Studies employing PyMVPA
 2011
 ----
 
-* :ref:`Cole et al, Frontiers in Human Neuroscience (2011) <CEZ+11`. Rapid
+.. cummulative impact this year: 75.619
+
+* :ref:`Cole et al, Frontiers in Human Neuroscience (2011) <CEZ+11>`. Rapid
   Transfer of Abstract Rules to Novel Contexts in Human Lateral Prefrontal
   Cortex.
 
@@ -191,6 +195,8 @@ Studies employing PyMVPA
 2010
 ----
 
+.. cummulative impact this year: 34.078
+
 * :ref:`Woolgar et al., NeuroImage (2010) <WTB+10>`: Multi-voxel coding of
   stimuli, rules, and responses in human frontoparietal cortex.
 
@@ -214,6 +220,8 @@ Studies employing PyMVPA
 
 2009
 ----
+
+.. cummulative impact this year: 11.98
 
 * :ref:`Trautmann et al., IEEE/RSJ International Conference on Intelligent
   Robots and Systems (2009) <TRL09>`: Development of an autonomous robot for

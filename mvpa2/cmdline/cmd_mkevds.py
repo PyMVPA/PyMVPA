@@ -12,12 +12,12 @@ An arbitrary number of input datasets is loaded from HDF5 storage. All loaded
 datasets are concatenated along the samples axis. Based on information about
 onset and duration of a sequence of events corresponding samples are extracted
 from the input datasets and converted into event samples. It is possible for an
-event sample to consist of multiple input sample (i.e. temporal windows).
+event sample to consist of multiple input samples (i.e. temporal windows).
 
 Events are defined by onset sample ID and number of consecutive samples that
 comprise an event. However, events can also be defined as temporal onsets and
 durations, which will be translated into sample IDs using time stamp information
-in the input datasets
+in the input datasets.
 
 Analogous to the 'mkds' command the event-related dataset can be extended with
 arbitrary feature and sample attributes (one value per event for the latter).
@@ -74,7 +74,7 @@ define_events_grp = ('options for defining events (choose one)', [
         are supported. A CSV file must contain a header line with field names
         as a first row. The table must include an 'onset' column, and can
         optionally include an arbitrary number of additional columns
-        (e.g. duration, target). All values are pass on to the event-related
+        (e.g. duration, target). All values are passed on to the event-related
         samples. If '-' is given as a value the CSV table is read from STDIN.
         """)),
     (('--fsl-ev3',), dict(type=str, nargs='+', metavar='FILENAME',
@@ -87,7 +87,7 @@ mod_events_grp = ('options for modifying or converting events', [
     (('--time-attr',), dict(type=str, metavar='ATTR',
         help="""dataset attribute with time stamps for input samples. Onset and
         duration for all events will be converted using this information. All
-        values are assumed to be in the same unit.""")),
+        values are assumed to be of the same units.""")),
     (('--onset-column',), dict(type=str, metavar='ATTR',
         help="""name of the column in the CSV event table that indicates event
         onsets""")),

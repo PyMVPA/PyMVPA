@@ -196,7 +196,7 @@ manpages: mkdir-MAN_DIR
 	PYTHONPATH=$(LPYTHONPATH) help2man --no-discard-stderr \
 		--help-option="--help-np" -N -n "command line interface for PyMVPA" \
 			bin/pymvpa2 > $(MAN_DIR)/pymvpa2.1
-	for cmd in $$(grep import < mvpa2/cmdline/__init__.py | cut -d _ -f 2-); do \
+	for cmd in $$(tr "\n'," ' ' < bin/pymvpa2 | sed -e 's/.*enabled_cmds = \[//' -e 's/\].*//'); do \
 		summary="$$(grep 'man: -*-' < mvpa2/cmdline/cmd_$${cmd}.py | cut -d '%' -f 2-)"; \
 		PYTHONPATH=$(LPYTHONPATH) help2man --no-discard-stderr \
 			--help-option="--help-np" -N -n "$$summary" \
@@ -212,7 +212,7 @@ mpl-stamp: build
 	echo "backend : Agg" >| $(CURDIR)/build/matplotlibrc
 	touch $@
 
-htmldoc: examples2rst build pics mpl-stamp tutorial2notebooks manpages
+htmldoc: examples2rst build pics mpl-stamp notebooks manpages
 	@echo "I: Creating an HTML version of documentation"
 	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off \
 		PYTHONPATH=$(CURDIR):$(PYTHONPATH) \
@@ -255,8 +255,8 @@ examples2rst-stamp: mkdir-DOCBUILD_DIR
 		doc/examples/cmdline
 	touch $@
 
-tutorial2notebooks: tutorial2notebooks-stamp
-tutorial2notebooks-stamp:
+notebooks: notebooks-stamp
+notebooks-stamp: examples2rst
 	mkdir -p $(NOTEBOOKBUILD_DIR)
 	tools/rst2ipnbpy \
 		--baseurl http://pymvpa.org \
@@ -264,8 +264,9 @@ tutorial2notebooks-stamp:
 		--glossary_baseurl http://pymvpa.org/glossary.html \
 		--outdir $(NOTEBOOKBUILD_DIR) \
 		--exclude doc/source/tutorial_prerequisites.rst \
+		--exclude doc/source/examples/searchlight_surf.rst \
 		--verbose \
-		doc/source/tutorial_*.rst
+		doc/source/tutorial_*.rst doc/source/examples/*.rst
 	touch $@
 
 apidoc: apidoc-stamp
@@ -429,8 +430,26 @@ tc-%: build
 		MVPA_WARNINGS_SUPPRESS=1 \
 		sh ./doc/examples/cmdline/$*.sh > /dev/null 2>&1
 
-testcmdline: tc-datasets tc-preproc tc-start_easy tc-query_pymvpa \
-             tc-fmri_analyses
+# test cmdline with coverage report
+# MVPA_DATA_ handling is because some examples use tutorial_data
+# while others testing data (mvpa2/data)
+tcc-%: build
+	@echo "I: testing $* cmdline example with coverage"
+	@grep MVPA_DATA_ROOT.*datadb ./doc/examples/cmdline/$*.sh \
+	&& MVPA_DATA_="MVPA_DATA_ROOT=$$PWD/mvpa2/data/tutorial_data_25mm/data" || : ; \
+	eval PYTHONPATH=.:$(PYTHONPATH) \
+		PATH=$$PWD/tools/coverage-bin:$$PWD/bin:$(PATH) \
+		$${MVPA_DATA_} \
+		MVPA_TESTS_QUICK=yes \
+		MVPA_MATPLOTLIB_BACKEND=agg \
+		MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
+		MVPA_DATADB_ROOT=datadb \
+		MVPA_WARNINGS_SUPPRESS=1 \
+		bash ./doc/examples/cmdline/$*.sh > /dev/null
+
+testcmdline: tc-start_easy tc-query_pymvpa tc-fmri_analyses
+
+coveragecmdline: tcc-query_pymvpa tcc-fmri_analyses
 
 te-%: build
 	@echo -n "I: Testing example $*: "

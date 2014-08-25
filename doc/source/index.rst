@@ -5,9 +5,10 @@
 PyMVPA is a Python_ package intended to ease statistical learning analyses of
 large datasets. It offers an extensible framework with a high-level interface
 to a broad range of algorithms for classification, regression, feature
-selection, data import and export. While it is not limited to the neuroimaging
-domain, it is eminently suited for such datasets. PyMVPA is truly free software
-(in every respect) and additionally requires nothing but free-software to run.
+selection, data import and export. It is designed to integrate well with
+related software packages, such as scikit-learn_, and MDP_. While it is not
+limited to the neuroimaging domain, it is eminently suited for such datasets.
+PyMVPA is free software and requires nothing but free-software to run.
 
 PyMVPA stands for **M**\ ulti\ **V**\ ariate **P**\ attern **A**\ nalysis
 (:term:`MVPA`) in **Py**\ thon.
@@ -19,8 +20,8 @@ PyMVPA stands for **M**\ ulti\ **V**\ ariate **P**\ attern **A**\ nalysis
  <table style="border-style:none;overflow:scroll">
   <tr>
    <td>
-    <a href="download.html">
-     <img alt="Download" src="_static/download_icon.jpg" title="Download and Installation" />
+    <a href="installation.html">
+     <img alt="Installation" src="_static/download_icon.jpg" title="Download and Installation" />
     </a>
    </td>
    <td>
@@ -40,7 +41,7 @@ PyMVPA stands for **M**\ ulti\ **V**\ ariate **P**\ attern **A**\ nalysis
    </td>
   </tr>
   <tr>
-    <td style="text-align:center"><a href="download.html">Download</a></td>
+    <td style="text-align:center"><a href="installation.html">Installation</a></td>
     <td style="text-align:center"><a href="tutorial.html">Tutorial</a></td>
     <td style="text-align:center"><a href="docoverview.html">Documentation</a></td>
     <td style="text-align:center"><a href="support.html">Support</a></td>

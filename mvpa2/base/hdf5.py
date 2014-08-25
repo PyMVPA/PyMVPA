@@ -42,11 +42,18 @@ import h5py
 import os
 import os.path as osp
 
+import mvpa2
+from mvpa2.base import externals
 from mvpa2.base.types import asobjarray
 
 if __debug__:
     from mvpa2.base import debug
 
+# don't ask -- makes history re-education a breeze
+universal_classname_remapper = {
+    ('mvpa2.mappers.base', 'FeatureSliceMapper'):
+        ('mvpa2.featsel.base', 'StaticFeatureSelection'),
+}
 # Comment: H5Py defines H5Error
 class HDF5ConversionError(Exception):
     """Generic exception to be thrown while doing conversions to/from HDF5
@@ -152,7 +159,11 @@ def hdf2obj(hdf, memo=None):
             elif cls_name == 'tuple':
                 obj = _hdf_tupleitems_to_obj(hdf, memo)
             elif cls_name == 'list':
-                obj = _hdf_list_to_obj(hdf, memo)
+                # could be used also for storing object ndarrays
+                if 'is_objarray' in hdf.attrs:
+                    obj = _hdf_list_to_objarray(hdf, memo)
+                else:
+                    obj = _hdf_list_to_obj(hdf, memo)
             elif cls_name == 'dict':
                 obj = _hdf_dict_to_obj(hdf, memo)
             elif cls_name == 'type':
@@ -168,19 +179,11 @@ def hdf2obj(hdf, memo=None):
     #
     # Final post-processing
     #
-    if 'is_objarray' in hdf.attrs:
-        # need to handle special case of arrays of objects
-        if np.isscalar(obj):
-            obj = np.array(obj, dtype=np.object)
-        else:
-            obj = asobjarray(obj)
-        if 'shape' in hdf.attrs:
-            shape = tuple(hdf.attrs['shape'])
-            if shape != obj.shape:
-                obj = obj.reshape(shape)
 
     # track if desired
     if objref:
+        if __debug__:
+            debug('HDF5', "Placing %s objref '%s' to memo", (obj, objref))
         memo[objref] = obj
     if __debug__:
         debug('HDF5', "Done loading %s [%s]"
@@ -196,8 +199,7 @@ def _recon_functype(hdf):
     if __debug__:
         debug('HDF5', "Load '%s.%s.%s' [%s]"
                       % (mod_name, cls_name, ft_name, hdf.name))
-    mod = __import__(mod_name, fromlist=[cls_name])
-    obj = mod.__dict__[ft_name]
+    mod, obj = _import_from_thin_air(mod_name, ft_name, cls_name=cls_name)
     return obj
 
 def _get_subclass_entry(cls, clss, exc_msg="", exc=NotImplementedError):
@@ -235,31 +237,69 @@ def _recon_customobj_customrecon(hdf, memo):
         debug('HDF5', "Load from custom reconstructor '%s.%s' [%s]"
                       % (mod_name, recon_name, hdf.name))
     # turn names into definitions
-    try:
-        mod = __import__(mod_name, fromlist=[recon_name])
-    except ImportError, e:
-        if mod_name.startswith('mvpa') and not mod_name.startswith('mvpa2'):
-            # try to be gentle on data that got stored with PyMVPA 0.5 or 0.6
-            mod_name = mod_name.replace('mvpa', 'mvpa2', 1)
-            mod = __import__(mod_name, fromlist=[recon_name])
-        else:
-            raise e
-    recon = mod.__dict__[recon_name]
+    mod, recon = _import_from_thin_air(mod_name, recon_name)
 
+    obj = None
     if 'rcargs' in hdf:
         recon_args_hdf = hdf['rcargs']
         if __debug__:
             debug('HDF5', "Load reconstructor args in [%s]"
                           % recon_args_hdf.name)
+        if 'objref' in hdf.attrs:
+            # XXX TODO YYY ZZZ WHATEVER
+            # yoh: the problem is that inside this beast might be references
+            # to current, not yet constructed object, and if we follow
+            # Python docs we should call recon with *recon_args, thus we
+            # cannot initiate the beast witout them.  But if recon is a class
+            # with __new__ we could may be first __new__ and then only __init__
+            # with recon_args?
+            if '__new__' in dir(recon):
+                try:
+                    # TODO: what if multiple inheritance?
+                    obj = recon.__bases__[0].__new__(recon)
+                except:
+                    # try direct __new__
+                    try:
+                        obj = recon.__new__()
+                    except:
+                        # give up and hope for the best
+                        obj = None
+                if obj is not None:
+                    memo[hdf.attrs['objref']] = obj
         recon_args = _hdf_tupleitems_to_obj(recon_args_hdf, memo)
     else:
         recon_args = ()
 
     # reconstruct
-    obj = recon(*recon_args)
+    if obj is None:
+        obj = recon(*recon_args)
+    else:
+        # Let only to init it
+        obj.__init__(*recon_args)
     # insert any stored object state
     _update_obj_state_from_hdf(obj, hdf, memo)
     return obj
+
+
+def _import_from_thin_air(mod_name, importee, cls_name=None):
+    if cls_name is None:
+        cls_name = importee
+    try:
+        mod = __import__(mod_name, fromlist=[importee])
+    except ImportError, e:
+        if mod_name.startswith('mvpa') and not mod_name.startswith('mvpa2'):
+            # try to be gentle on data that got stored with PyMVPA 0.5 or 0.6
+            mod_name = mod_name.replace('mvpa', 'mvpa2', 1)
+            mod = __import__(mod_name, fromlist=[cls_name])
+        else:
+            raise e
+    try:
+        imp = mod.__dict__[importee]
+    except KeyError:
+        mod_name, importee = universal_classname_remapper[(mod_name, importee)]
+        mod = __import__(mod_name, fromlist=[cls_name])
+        imp = mod.__dict__[importee]
+    return mod, imp
 
 
 def _recon_customobj_defaultrecon(hdf, memo):
@@ -269,16 +309,7 @@ def _recon_customobj_defaultrecon(hdf, memo):
     if __debug__:
         debug('HDF5', "Load class instance '%s.%s' instance [%s]"
                       % (mod_name, cls_name, hdf.name))
-    try:
-        mod = __import__(mod_name, fromlist=[cls_name])
-    except ImportError, e:
-        if mod_name.startswith('mvpa') and not mod_name.startswith('mvpa2'):
-            # try to be gentle on data that got stored with PyMVPA 0.5 or 0.6
-            mod_name = mod_name.replace('mvpa', 'mvpa2', 1)
-            mod = __import__(mod_name, fromlist=[cls_name])
-        else:
-            raise e
-    cls = mod.__dict__[cls_name]
+    mod, cls = _import_from_thin_air(mod_name, cls_name)
 
     # create the object
     # use specialized __new__ if necessary or beneficial
@@ -316,18 +347,70 @@ def _hdf_dict_to_obj(hdf, memo, skip=None):
         items_container = hdf['items']
 
     if items_container.attrs.get('__keys_in_tuple__', 0):
-        items = _hdf_list_to_obj(hdf, memo)
-        items = [i for i in items if not i[0] in skip]
-        return dict(items)
+        # pre-create the object so it could be correctly
+        # objref'ed/used in memo
+        d = dict()
+        items = _hdf_list_to_obj(hdf, memo, target_container=d)
+        # some time back we had attribute names stored as arrays
+        for k, v in items:
+            if k in skip:
+                continue
+            try:
+                d[k] = v
+            except TypeError:
+                # fucked up dataset -- trying our best
+                if isinstance(k, np.ndarray):
+                    d[np.asscalar(k)] = v
+                else:
+                    # no idea, really
+                    raise
+        return d
     else:
         # legacy files had keys as group names
         return dict([(item, hdf2obj(items_container[item], memo=memo))
                         for item in items_container
                             if not item in skip])
 
+def _hdf_list_to_objarray(hdf, memo):
+    if not ('shape' in hdf.attrs):
+        if __debug__:
+            debug('HDF5', "Enountered objarray stored without shape (due to a bug "
+                "in post 2.1 release).  Some nested structures etc might not be "
+                "loaded incorrectly")
+        # yoh: we have possibly a problematic case due to my fix earlier
+        # resolve to old logic:  nested referencing might not work :-/
+        obj = _hdf_list_to_obj(hdf, memo)
+        # need to handle special case of arrays of objects
+        if np.isscalar(obj):
+            obj = np.array(obj, dtype=np.object)
+        else:
+            obj = asobjarray(obj)
+    else:
+        shape = tuple(hdf.attrs['shape'])
+        # reserve space first
+        if len(shape):
+            obj = np.empty(np.prod(shape), dtype=object)
+        else:
+            # scalar
+            obj = np.array(None, dtype=object)
+        # now load the items from the list, noting existence of this
+        # container
+        obj_items = _hdf_list_to_obj(hdf, memo, target_container=obj)
+        # assign to the object array
+        for i, v in enumerate(obj_items):
+            obj[i] = v
+        if len(shape) and shape != obj.shape:
+            obj = obj.reshape(shape)
+    return obj
 
-def _hdf_list_to_obj(hdf, memo):
-    """Convert an HDF item sequence into a list"""
+def _hdf_list_to_obj(hdf, memo, target_container=None):
+    """Convert an HDF item sequence into a list
+
+    Lists are used for storing also dicts.  To properly reference
+    the actual items in memo, target_container could be specified
+    to point to the actual data structure to be referenced, which
+    later would get populated with list's items.
+    """
     # new-style files have explicit length
     if 'length' in hdf.attrs:
         length = hdf.attrs['length']
@@ -357,10 +440,17 @@ def _hdf_list_to_obj(hdf, memo):
     # need to put items list in memo before starting to parse to allow to detect
     # self-inclusion of this list in itself
     if 'objref' in hdf.attrs:
-        obj_id = hdf.attrs['objref']
-        memo[obj_id] = items
-        if __debug__:
-            debug('HDF5', "Track sequence under ref: %i)" % length)
+        objref = hdf.attrs['objref']
+        if target_container is None:
+            if __debug__:
+                debug('HDF5', "Track sequence with %i elements under objref '%s'"
+                              % (length, objref))
+            memo[objref] = items
+        else:
+            if __debug__:
+                debug('HDF5', "Track provided target_container under objref '%s'",
+                      objref)
+            memo[objref] = target_container
     # for all expected items
     for i in xrange(length):
         if __debug__:
@@ -489,7 +579,9 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
                     debug('HDF5', "array(objects) -> list(objects)")
                 obj = list(obj.flatten())
                 # make sure we don't ref this temporary list object
-                noid = True
+                # noid = True
+                # yoh: obj_id is of the original obj here so should
+                # be stored
             # flag that we messed with the original type
             is_objarray = True
             # and re-estimate the content's nd-array-ness
@@ -519,17 +611,22 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
             # objref for scalar items would be overkill
             hdf[name].attrs.create('objref', obj_id)
             # store object reference to be able to detect duplicates
-            memo[obj_id] = obj
             if __debug__:
                 debug('HDF5', "Record objref in memo-dict (%i)" % obj_id)
+            memo[obj_id] = obj
+
         ## yoh: was not sure why we have to assign here as well as below to grp
         ##      so commented out and seems to work just fine ;)
-        ## if is_objarray:
-        ##     # we need to confess the true origin
-        ##     hdf[name].attrs.create('is_objarray', True)
-        ##     ## if len(objarray_shape) > 1:
-        ##     ##     # it was of more than 1 dimension
-        ##     ##     hdf[name].attrs.create('objarray_shape', objarray_shape)
+        ## yoh: because it never reaches grp! (see return below)
+        if is_objarray:
+            # we need to confess the true origin
+            hdf[name].attrs.create('is_objarray', True)
+            # it was of more than 1 dimension or it was a scalar
+            if not len(shape) and externals.versions['hdf5'] < '1.8.7':
+                if __debug__:
+                    debug('HDF5', "Versions of hdf5 before 1.8.7 have problems with empty arrays")
+            else:
+                hdf[name].attrs.create('shape', shape)
 
         # handle scalars giving numpy scalars different flag
         if is_numpy_scalar:
@@ -582,8 +679,8 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
         # needs special treatment
         pieces = None
         if __debug__:
-            debug('HDF5', "Failed to reduce '%s' (ref: %i) in [%s]: %s (%s)"
-                          % (type(obj), obj_id, hdf.name, te, obj))
+            debug('HDF5', "Failed to reduce '%s' (ref: %i) in [%s]: %s" # (%s)"
+                          % (type(obj), obj_id, hdf.name, te)) #, obj))
 
     # common container handling, either __reduce__ was not possible
     # or it was the default implementation
@@ -684,7 +781,8 @@ def h5save(filename, data, name=None, mode='w', mkdir=True, **kwargs):
         if target_dir and not osp.exists(target_dir):
             os.makedirs(target_dir)
     hdf = h5py.File(filename, mode)
-    hdf.attrs.create('__pymvpa_hdf5_version__', 1)
+    hdf.attrs.create('__pymvpa_hdf5_version__', '2')
+    hdf.attrs.create('__pymvpa_version__', mvpa2.__version__)
     try:
         obj2hdf(hdf, data, name, **kwargs)
     finally:

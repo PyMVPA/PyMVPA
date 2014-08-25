@@ -180,17 +180,13 @@ weighted_output_Z = input_space_X * weights[0] + input_space_Y * weights[1]
 """
 The weighted output gets turned into the category-decision `+1`
 if it is greater than 0, and `-1` if it is less than zero.
-Let's plot the decision surface color-coded.
+Let's plot the decision surface color-coded and then plot the zero-meaned
+sumo and basketball data on top.
 """
 
 pl.figure()
 pl.pcolor(input_space_X, input_space_Y, weighted_output_Z,
          cmap=pl.cm.Spectral)
-
-"""
-Let's plot the zero-meaned sumo and basketball data on top of this.
-"""
-
 pl.plot(zero_meaned_data[all_desired_output == 1, 0],
        zero_meaned_data[all_desired_output == 1, 1],
        'ro', linewidth=2, label="Sumo wrestlers")

@@ -27,6 +27,7 @@ from mvpa2.base import warning, externals
 from mvpa2.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa2.base.param import Parameter
 from mvpa2.base.state import ConditionalAttribute
+from mvpa2.base.constraints import EnsureChoice
 #from mvpa2.measures.base import Sensitivity
 
 
@@ -79,20 +80,19 @@ class GNB(Classifier):
     __tags__ = [ 'gnb', 'linear', 'non-linear',
                        'binary', 'multiclass' ]
 
-    common_variance = Parameter(False, allowedtype='bool',
+    common_variance = Parameter(False, constraints='bool',
              doc="""Use the same variance across all classes.""")
 
     prior = Parameter('laplacian_smoothing',
-             allowedtype='basestring',
-             choices=["laplacian_smoothing", "uniform", "ratio"],
+             constraints=EnsureChoice('laplacian_smoothing', 'uniform', 'ratio'),
              doc="""How to compute prior distribution.""")
 
-    logprob = Parameter(True, allowedtype='bool',
+    logprob = Parameter(True, constraints='bool',
              doc="""Operate on log probabilities.  Preferable to avoid unneeded
              exponentiation and loose precision.
              If set, logprobs are stored in `values`""")
 
-    normalize = Parameter(False, allowedtype='bool',
+    normalize = Parameter(False, constraints='bool',
              doc="""Normalize (log)prob by P(data).  Requires probabilities thus
              for `logprob` case would require exponentiation of 'logprob's, thus
              disabled by default since does not impact classification output.

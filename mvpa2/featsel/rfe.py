@@ -398,6 +398,9 @@ class SplitRFE(RFE):
         partitioner : Partitioner
           Used to generate cross-validation partitions for cross-validation
           to deduce optimal number of features to maintain
+        fselector : Functor
+          Given a sensitivity map it has to return the ids of those
+          features that should be kept.
         errorfx : func, optional
           Functor to use for estimation of cross-validation error
         analyzer_postproc : func, optional

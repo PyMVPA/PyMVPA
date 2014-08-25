@@ -24,7 +24,11 @@ import copy
 from mvpa2.base.dochelpers import _repr_attrs
 
 class WinnerMeasure(Measure):
-    '''General class for returning a dataset with size 1 along one dimension'''
+    '''Select a "winning" element along samples or features.
+
+    Given the specification would return a Dataset with a single sample
+    (or feature).
+    '''
     is_trained = True
     def __init__(self, axis, fx, other_axis_prefix=None, **kwargs):
         '''

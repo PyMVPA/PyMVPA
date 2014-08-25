@@ -50,7 +50,7 @@ class FlattenMapper(Mapper):
         # by default auto train
         kwargs['auto_train'] = kwargs.get('auto_train', True)
         Mapper.__init__(self, **kwargs)
-        self._origshape = None         # pylint pacifier
+        self.__origshape = None         # pylint pacifier
         self.__maxdims = maxdims
         if not shape is None:
             self._train_with_shape(shape)
@@ -83,7 +83,7 @@ class FlattenMapper(Mapper):
         """
         # infer the sample shape from the data under the assumption that the
         # first axis is the samples-separating dimension
-        self._origshape = shape
+        self.__origshape = shape
         # flag the mapper as trained
         self._set_trained()
 
@@ -93,7 +93,7 @@ class FlattenMapper(Mapper):
         # local binding
         nsamples = data.shape[0]
         sshape = data.shape[1:]
-        oshape = self._origshape
+        oshape = self.__origshape
 
         if oshape is None:
             raise RuntimeError("FlattenMapper needs to be trained before it "
@@ -133,9 +133,9 @@ class FlattenMapper(Mapper):
             attr = dataset.fa[k].value
             # the maximmum number of axis to flatten in the attr
             if not self.__maxdims is None:
-                maxdim = min(len(self._origshape), self.__maxdims)
+                maxdim = min(len(self.__origshape), self.__maxdims)
             else:
-                maxdim = len(self._origshape)
+                maxdim = len(self.__origshape)
             multiplier = mds.nfeatures \
                     / np.prod(attr.shape[:maxdim])
             if __debug__:
@@ -161,7 +161,7 @@ class FlattenMapper(Mapper):
         # local binding
         nsamples = data.shape[0]
         sshape = data.shape[1:]
-        oshape = self._origshape
+        oshape = self.__origshape
         return data.reshape((nsamples,) + oshape + sshape[1:])
 
 
@@ -184,7 +184,7 @@ class FlattenMapper(Mapper):
             del mds.fa[inspace]
         return mds
 
-    shape = property(fget=lambda self:self._origshape)
+    shape = property(fget=lambda self:self.__origshape)
     maxdims = property(fget=lambda self:self.__maxdims)
 
 class ProductFlattenMapper(FlattenMapper):
@@ -196,12 +196,12 @@ class ProductFlattenMapper(FlattenMapper):
     This class' name contains 'product' because it maps feature
     attributes in a cartesian-product way."""
 
-    def __init__(self, factor_names, **kwargs):
+    def __init__(self, factor_names, factor_values=None, **kwargs):
         '''
         Parameters
         ----------
         factor_names: iterable
-            The names and values for each dimension. If the dataset to
+            The names for each dimension. If the dataset to
             be flattened is shaped ns X nf1 x nf2 x ... x nfN, then
             factor_names should have a length of N. Furthermore
             when applied to a dataset ds, it should have each
@@ -211,27 +211,46 @@ class ProductFlattenMapper(FlattenMapper):
             with size ns X (nf1 * nf2 * ... * nfN) with
             feature attributes nameK and nameKindices for each nameK
             in the factor names.
-        reverse_set_fa: bool
+        factor_values: iterable or None
+            Optionally the factor values for each dimension. If
+            not provided or set to None, then it will be inferred
+            upon training on a dataset. Setting this parameter
+            explicitly means this instance does not have to be trained.
         '''
         kwargs['auto_train'] = kwargs.get('auto_train', True)
 
         # make sure the factor names and values are properly set
         factor_names = list(factor_names)
-        space = '_'.join(factor_names) + '_indices'
 
-        FlattenMapper.__init__(self, space=space, **kwargs)
+        # override default value for space argument
+        space = kwargs.get('space', None)
+        if kwargs.get('space', None) is None:
+            kwargs['space'] = '_'.join(factor_names) + '_indices'
+
+        super(ProductFlattenMapper, self).__init__(**kwargs)
 
         self._factor_names = factor_names
-        self._factor_values = None
+
+        if factor_values is not None:
+            if len(factor_values) != len(factor_names):
+                raise ValueError('factor_values must have %d elements, '
+                                 'found %d' % (len(factor_names),
+                                               len(factor_names)))
+        self._factor_values = factor_values
 
     def __repr__(self, prefixes=[]):
         return super(ProductFlattenMapper, self).__repr__(
                         prefixes=prefixes
-                        + _repr_attrs(self, ['factor_names']))
+                        + _repr_attrs(self, ['factor_names',
+                                             'factor_values']))
 
     @property
     def factor_names(self):
         return self._factor_names
+
+    @property
+    def factor_values(self):
+        return self._factor_values
 
     def _train(self, ds):
         super(ProductFlattenMapper, self)._train(ds)
@@ -247,8 +266,7 @@ class ProductFlattenMapper(FlattenMapper):
 
     def _check_factor_name_values(self, ds):
         ### currently unished...
-        if self._factor_values is None:
-            raise ValueError("Dataset is not trained")
+        self._check_is_trained()
         for nm, value in zip(*(self._factor_names, self._factor_values)):
             if any(ds.a[nm].value != value):
                 raise ValueError("Mismatch for attribute %s: %s != %s" %
@@ -260,7 +278,7 @@ class ProductFlattenMapper(FlattenMapper):
 
         mds = super(ProductFlattenMapper, self)._forward_dataset(dataset)
 
-        oshape = self._origshape
+        oshape = self.shape
 
         factor_names_values = zip(*(self._factor_names, self._factor_values))
         # now map all the factor names and values to feature attributes
@@ -298,8 +316,17 @@ class ProductFlattenMapper(FlattenMapper):
 
         return mds
 
+    def _check_is_trained(self):
+        if self._factor_values is None or self.shape is None:
+            raise ValueError("Dataset is not trained, and factor_values not "
+                             "given in constructor of %s" %
+                                            self.__class__.__name__)
+
+
+
     def _reverse_dataset(self, dataset):
-        #self._train(dataset)
+        self._check_is_trained()
+
         factor_names_values = zip(*(self._factor_names, self._factor_values))
 
         mds = super(ProductFlattenMapper, self)._reverse_dataset(dataset)
@@ -353,11 +380,6 @@ class ProductFlattenMapper(FlattenMapper):
                 vs = vs.swapaxes(0, dim)
 
             n = vs.shape[0]
-            print values
-            print n
-
-            print len(values)
-
             assert(n == len(values))
 
             unq_vs = []

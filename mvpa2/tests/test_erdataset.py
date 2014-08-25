@@ -103,7 +103,7 @@ def test_erdataset():
 def test_hrf_modeling():
     skip_if_no_external('nibabel')
     skip_if_no_external('nipy') # ATM relies on NiPy's GLM implementation
-    ds = load_example_fmri_dataset(literal=True)
+    ds = load_example_fmri_dataset('25mm') #literal=True)
     # TODO: simulate short dataset with known properties and use it
     # for testing
     events = find_events(targets=ds.sa.targets, chunks=ds.sa.chunks)
@@ -120,8 +120,8 @@ def test_hrf_modeling():
     assert_equal(ds.nfeatures, evds.nfeatures)
     assert_array_equal(ds.fa.voxel_indices, evds.fa.voxel_indices)
     # one sample for each condition, plus constant
-    assert_equal(sorted(ds.sa['targets'].unique), sorted(evds.sa.targets[:-1]))
-    assert_equal(evds.sa.targets[-1], 'constant')
+    assert_equal(sorted(ds.sa['targets'].unique), sorted(evds.sa.targets))
+    assert_equal(evds.a.add_regs.sa.regressor_names[0], 'constant')
     # with centered data
     zscore(ds)
     evds_demean = eventrelated_dataset(ds, events, time_attr='time_coords',
@@ -130,15 +130,17 @@ def test_hrf_modeling():
                                 glmfit_kwargs=dict(model='ols'),
                                 model='hrf')
     # after demeaning the constant should consume a lot less
-    assert(evds[evds.sa.targets == 'constant'].samples.mean() \
-            > evds_demean[evds.sa.targets == 'constant'].samples.mean())
+    assert(evds.a.add_regs[0].samples.mean()
+           > evds_demean.a.add_regs[0].samples.mean())
     # from eyeballing the sensitivity example -- would be better to test this on
     # the tutorial data
     assert(evds_demean[evds.sa.targets == 'shoe'].samples.max() \
-            > evds_demean[evds.sa.targets == 'bottle'].samples.max())
+           > evds_demean[evds.sa.targets == 'bottle'].samples.max())
     # HRF models
     assert('regressors' in evds.sa)
+    assert('regressors' in evds.a.add_regs.sa)
     assert_equal(evds.sa.regressors.shape[1], len(ds))
+
     # custom regressors
     evds_regrs = eventrelated_dataset(ds, events, time_attr='time_coords',
                                 condition_attr='targets',
@@ -146,12 +148,16 @@ def test_hrf_modeling():
                                 design_kwargs=dict(drift_model='blank'),
                                 glmfit_kwargs=dict(model='ols'),
                                 model='hrf')
-    # one more output sample
-    assert_equal(len(evds_regrs) - 1, len(evds))
+    # verify that nothing screwed up time_coords
+    assert_equal(ds.sa.time_coords[0], 0)
+    assert_equal(len(evds_regrs), len(evds))
+    # one more output sample in .a.add_regs
+    assert_equal(len(evds_regrs.a.add_regs) - 1, len(evds.a.add_regs))
     # comes last before constant
-    assert_equal('time_indices', evds_regrs.sa.targets[-2])
-    # order is otherwise unchanged
-    assert_array_equal(evds.sa.targets[:-1], evds_regrs.sa.targets[:-2])
+    assert_equal('time_indices', evds_regrs.a.add_regs.sa.regressor_names[-2])
+    # order of main regressors is unchanged
+    assert_array_equal(evds.sa.targets, evds_regrs.sa.targets)
+
     # custom regressors from external sources
     evds_regrs = eventrelated_dataset(ds, events, time_attr='time_coords',
                                 condition_attr='targets',
@@ -161,9 +167,35 @@ def test_hrf_modeling():
                                                    add_reg_names=['negative_trend']),
                                 glmfit_kwargs=dict(model='ols'),
                                 model='hrf')
-    # two more output sample
-    assert_equal(len(evds_regrs) - 2, len(evds))
+    assert_equal(len(evds_regrs), len(evds))
+    # But we got one more in additional regressors
+    assert_equal(len(evds_regrs.a.add_regs) - 2, len(evds.a.add_regs))
     # comes last before constant
-    assert_array_equal(['negative_trend','time_coords'], evds_regrs.sa.targets[-3:-1])
+    assert_array_equal(['negative_trend', 'time_coords', 'constant'],
+                       evds_regrs.a.add_regs.sa.regressor_names)
     # order is otherwise unchanged
-    assert_array_equal(evds.sa.targets[:-1], evds_regrs.sa.targets[:-3])
+    assert_array_equal(evds.sa.targets, evds_regrs.sa.targets)
+
+    # HRF models with estimating per each chunk
+    assert_equal(ds.sa.time_coords[0], 0)
+    evds_regrs = eventrelated_dataset(ds, events, time_attr='time_coords',
+                                condition_attr=['targets', 'chunks'],
+                                regr_attrs=['time_indices'],
+                                design_kwargs=dict(drift_model='blank'),
+                                glmfit_kwargs=dict(model='ols'),
+                                model='hrf')
+    assert_true('add_regs' in evds_regrs.a)
+    assert_true('time_indices' in evds_regrs.a.add_regs.sa.regressor_names)
+
+    assert_equal(len(ds.UC) * len(ds.UT), len(evds_regrs))
+    assert_equal(len(evds_regrs.UC) * len(evds_regrs.UT), len(evds_regrs))
+
+    from mvpa2.mappers.fx import mean_group_sample
+    evds_regrs_meaned = mean_group_sample(['targets'])(evds_regrs)
+    assert_array_equal(evds_regrs_meaned.T, evds.T) # targets should be the same
+
+    #corr = np.corrcoef(np.vstack((evds.samples, evds_regrs_meaned)))
+    #import pydb; pydb.debugger()
+    #pass
+    #i = 1
+
