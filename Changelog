@@ -39,10 +39,10 @@ Releases
 
     - Support for CoSMoMVPA (http://cosmomvpa.org) in
       :mod:`~mvpa2.datasets.cosmo` providing dataset input/output
-      (:meth:`mvpa2.datasets.cosmo.cosmo_dataset` and
-      :meth:`mvpa2.datasets.cosmo.map2cosmo`) and neighborhood input
-      (:class:`~mvpa2.datasets.cosmo.CosmoQueryEngine). This allows for
-      for running searchlights (:class:`mvpa2.datasets.cosmo.CosmoSearchlight)
+      (:meth:`~mvpa2.datasets.cosmo.cosmo_dataset` and
+      :meth:`~mvpa2.datasets.cosmo.map2cosmo`) and neighborhood input
+      (:class:`~mvpa2.datasets.cosmo.CosmoQueryEngine`). This allows for
+      for running searchlights (:class:`mvpa2.datasets.cosmo.CosmoSearchlight`)
       on data from CoSMoMVPA (fMRI and MEEG).
     - :func:`~mvpa2.datasets.miscfx.remove_nonfinite_features` removes
       features with non-finite values, i.e. NaNs or Infs, for any sample.
@@ -51,11 +51,16 @@ Releases
 
   * Enhancements (?? ENH, OPT, and NF commits)
 
+    - :class:`~mvpa2.mappers.flatten.ProductFlattenMapper` accepts explicit names of factors in the constructor.
+
   * Fixes
 
     - :func:`~mvpa2.misc.plot.lightbox.plot_lightbox` should take a
       slice index from the last dimension, not the leading one if no
       `slices` argument was provided
+    - Improved Python3k compatibility in :mod:`~mvpa2.base.state`, :mod:`~mvpa2.tests.test_testing.py`, :mod:`~mvpa2.tests`, and :mod:`~mvpa2.clfs.stats` modules, and in libsvmlrc msvc building.
+    - Partial fix for compatibility with ancient scipy on SPARC using :mod:`~mvpa2.datasets.cosmo`.
+
 
 * 2.3.1 (Tue, 20 May 2014)
 
