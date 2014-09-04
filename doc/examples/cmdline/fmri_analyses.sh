@@ -14,10 +14,10 @@ outdir=${MVPA_EXAMPLE_WORKDIR:-}
 # which classifier we will use through out the analyses
 clf=${MVPA_EXAMPLE_CLF:-'SMLR(lm=1.0)'}
 
-have_tmpdir=0
 if [ -z "$outdir" ]; then
   outdir=$(mktemp -d)
-  have_tmpdir=1
+  # cleanup if working in tmpdir upon failure/exit
+  trap "rm -rf \"$outdir\"" TERM INT EXIT
 fi
 
 #% EXAMPLE START
@@ -196,6 +196,3 @@ for roi in ${hoc_rois[*]}; do
 done
 
 #% EXAMPLE END
-
-# cleanup if working in tmpdir
-[ $have_tmpdir = 1 ] && rm -rf $outdir || true
