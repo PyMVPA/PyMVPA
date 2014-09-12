@@ -16,7 +16,7 @@ from mvpa2.tests.test_stats import *
 
 from scipy import signal
 from mvpa2.clfs.stats import match_distribution, rv_semifrozen
-from mvpa2.misc.stats import chisquare
+from mvpa2.misc.stats import chisquare, binomial_proportion_ci
 from mvpa2.misc.attrmap import AttributeMap
 from mvpa2.datasets.base import dataset_wizard
 from mvpa2.generators.permutation import AttributePermutator
@@ -422,6 +422,27 @@ class StatsTestsScipy(unittest.TestCase):
         #   test_transerror.py:ErrorsTests.test_confusionmatrix_nulldist
         pass
 
+def test_binomial_proportion_ci():
+    # compare to gold-standard values from the matlab implementation
+    from numpy import testing as npt
+    n = 100
+    X = 50
+    p = .05
+    matlab_truth = {
+        'wald': (.4020, .5980),
+        'wilson': (.4038, .5962),
+        'agresti-coull': (.4038, .5962),
+        'jeffreys': (.4032, .5968),
+        'clopper-pearson': (.3983, .6017),
+        'arc-sine': (.4026, .5974),
+        'logit': (.4032, .5968),
+        'anscombe': (.4037, .5963)
+    }
+    for m in matlab_truth.keys():
+        npt.assert_array_almost_equal(matlab_truth[m],
+                                      binomial_proportion_ci(n, X, p, m),
+                                      decimal=4,
+                                      err_msg=m)
 
 def suite():  # pragma: no cover
     """Create the suite"""

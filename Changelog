@@ -46,6 +46,8 @@ Releases
       on data from CoSMoMVPA (fMRI and MEEG).
     - :func:`~mvpa2.datasets.miscfx.remove_nonfinite_features` removes
       features with non-finite values, i.e. NaNs or Infs, for any sample.
+    - :func:`~mvpa2.misc.stats.binomial_proportion_ci` for computing
+      confidence intervals on proportions of Bernoulli trial outcomes.
 
   * API changes
 
