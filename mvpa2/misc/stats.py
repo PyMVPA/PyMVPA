@@ -304,25 +304,3 @@ def binomial_proportion_ci(n, X, alpha, meth='jeffreys'):
         raise ValueError('unknown confidence interval method')
 
     return L, U
-
-if __name__ == '__main__':
-    # compare to gold-standard values from the matlab implementation
-    from numpy import testing as npt
-    n = 100
-    X = 50
-    p = .05
-    matlab_truth = {
-        'wald': (.4020, .5980),
-        'wilson': (.4038, .5962),
-        'agresti-coull': (.4038, .5962),
-        'jeffreys': (.4032, .5968),
-        'clopper-pearson': (.3983, .6017),
-        'arc-sine': (.4026, .5974),
-        'logit': (.4032, .5968),
-        'anscombe': (.4037, .5963)
-    }
-    for m in matlab_truth.keys():
-        npt.assert_array_almost_equal(matlab_truth[m],
-                                      binomial_proportion_ci(n, X, p, m),
-                                      decimal=4,
-                                      err_msg=m)
