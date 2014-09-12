@@ -14,10 +14,14 @@ import os
 import numpy as np
 
 from mvpa2.base import externals
+
 from mvpa2.datasets.base import dataset_wizard, Dataset
 from mvpa2 import pymvpa_dataroot, pymvpa_datadbroot
 from mvpa2.misc.fx import get_random_rotation
 from mvpa2.base.dataset import vstack
+
+from mvpa2.misc.fx import double_gamma_hrf, single_gamma_hrf
+from mvpa2.misc.support import Event
 
 if __debug__:
     from mvpa2.base import debug
@@ -398,7 +402,7 @@ load_datadb_demo_blockfmri = load_datadb_tutorial_data
    "using" already.  Deprecate entirely whenever tutorial_data gets updated.
 """
 
-def autocorrelated_noise(ds, sr, cutoff, lfnl=3.0, bord=10, hfnl=None):
+def autocorrelated_noise(ds, sr, cutoff, lfnl=3.0, bord=10, hfnl=None, add_baseline=True):
     """Generate a dataset with samples being temporally autocorrelated noise.
 
     Parameters
@@ -444,7 +448,8 @@ def autocorrelated_noise(ds, sr, cutoff, lfnl=3.0, bord=10, hfnl=None):
     nsamples = lfilter(fb, fa, nsamples, axis=0)
 
     # add the pedestal
-    nsamples += msample
+    if add_baseline:
+        nsamples += msample
 
     # HF noise
     if not hfnl is None:
@@ -488,3 +493,102 @@ def random_affine_transformation(ds, scale_fac=100., shift_fac=10.):
                    a={'random_rotation': R,
                       'random_scale': random_scale,
                       'random_shift': random_shift})
+
+
+def simple_hrf_dataset(events=[1, 20, 25, 50, 60, 90, 92, 140],
+                       hrf_gen=lambda t:double_gamma_hrf(t) - single_gamma_hrf(t, 0.8, 1, 0.05),
+                       fir_length=15,
+                       nsamples=None,
+                       tr=2.0,
+                       tres=1,
+                       baseline=800.0,
+                       signal_level=1,
+                       noise='normal',
+                       noise_level=1,
+                       resampling='scipy',
+                       ):
+    """
+    events: list of Events or ndarray of onsets for simple(r) designs
+    """
+    if isinstance(events, np.ndarray) or not isinstance(events[0], dict):
+        events = [Event(onset=o) for o in events]
+    else:
+        assert(isinstance(events, list))
+        for e in events:
+            assert(isinstance(e, dict))
+
+    # play fmri
+    # full-blown HRF with initial dip and undershoot ;-)
+    hrf_x = np.arange(0, float(fir_length)*tres, tres)
+    if isinstance(hrf_gen, np.ndarray):
+        # just accept provided HRF and only verify size match
+        assert(len(hrf_x) == len(hrf_gen))
+        hrf = hrf_gen
+    else:
+        # actually generate it
+        hrf = hrf_gen(hrf_x)
+    if not nsamples:
+        # estimate number of samples needed if not provided
+        max_onset = max([e['onset'] for e in events])
+        nsamples = int(max_onset/tres + len(hrf_x)*1.5)
+
+    # come up with an experimental design
+    fast_er = np.zeros(nsamples)
+    for e in events:
+        on = int(e['onset'] / float(tres))
+        off = int((e['onset'] + e.get('duration', 1.)) / float(tres))
+        if off == on:
+            off += 1                      # so we have at least 1 point
+        assert(range(on, off))
+        fast_er[on:off] = e.get('intensity', 1)
+    # high resolution model of the convolved regressor
+    model_hr = np.convolve(fast_er, hrf)[:nsamples]
+
+    # downsample the regressor to fMRI resolution
+    if resampling == 'scipy':
+        from scipy import signal
+        model_lr = signal.resample(model_hr,
+                                   int(tres * nsamples / tr),
+                                   window='ham')
+    elif resampling == 'naive':
+        if tr % tres != 0.0:
+            raise ValueError("You must use resample='scipy' since your TR=%.2g"
+                             " is not multiple of tres=%.2g" % (tr, tres))
+        if tr < tres:
+            raise ValueError("You must use resample='scipy' since your TR=%.2g"
+                             " is less than tres=%.2g" % (tr, tres))
+        step = int(tr // tres)
+        model_lr = model_hr[::step]
+    else:
+        raise ValueError("resampling can only be 'scipy' or 'naive'. Got %r"
+                         % resampling)
+
+    # generate artifical fMRI data: two voxels one is noise, one has
+    # something
+    wsignal = baseline + model_lr*signal_level
+    nsignal = np.ones(wsignal.shape) * baseline
+
+    # build design matrix: bold-regressor and constant
+    design = np.array([model_lr, np.repeat(1, len(model_lr))]).T
+
+    # two 'voxel' dataset
+    ds = dataset_wizard(samples=np.array((wsignal, nsignal)).T, targets=1)
+    ds.a['baseline'] = baseline
+    ds.a['tr'] = tr
+    ds.sa['design'] = design
+
+    ds.fa['signal_level'] = [signal_level, False]
+
+    if noise == 'autocorrelated':
+        # this one seems to be quite unstable and can provide really
+        # funky noise at times
+        noise = autocorrelated_noise(ds, 1/tr, 1/(2*tr),
+                                     lfnl=noise_level, hfnl=noise_level,
+                                     add_baseline=False)
+    elif noise == 'normal':
+        noise = np.random.randn(*ds.shape) * noise_level
+    else:
+        raise ValueError(noise)
+    ds.sa['noise'] = noise
+    ds.samples += noise
+    return ds
