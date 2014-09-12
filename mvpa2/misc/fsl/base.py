@@ -242,7 +242,7 @@ class FslGLMDesign(object):
             pl.xticks(np.array(axcenters), range(self.mat.shape[1]))
         elif style == 'matrix':
             pl.pcolor(self.mat, **kwargs)
-            ticks = np.arange(1, self.mat.shape[1]+1)
+            ticks = np.arange(1, self.mat.shape[1] + 1)
             pl.xticks(ticks - 0.5, ticks)
         else:
             raise ValueError, "Unknown plotting style '%s'" % style
@@ -250,7 +250,7 @@ class FslGLMDesign(object):
         # labels and turn y-axis upside down
         pl.ylabel('Samples (top to bottom)')
         pl.xlabel('Regressors')
-        pl.ylim(self.mat.shape[0],0)
+        pl.ylim(self.mat.shape[0], 0)
 
 
 def read_fsl_design(fsf_file):

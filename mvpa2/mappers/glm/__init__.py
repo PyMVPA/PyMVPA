@@ -14,7 +14,7 @@ GLM based on different 3rd-party packages.
 
 __docformat__ = 'restructuredtext'
 
-__all__ = ['GLMMapper']
+__all__ = [ ] # GLMMapper is to be used only to derive specific implementations
 
 import numpy as np
 
@@ -40,6 +40,10 @@ class GLMMapper(Mapper):
     subclass. Most commonly, however, is a mapped dataset that has the same
     number of features as the input, and each sample contains the parameter
     estimates corresponding to a design matrix column.
+
+    This is a base class, thus is not supposed to be used directly by users
+    which should use specific implementations suchas NiPyGLMMapper and
+    StatsmodelsGLMMapper.
     """
     # TODO optimize design matrix generation in case no regressor comes from the
     # input dataset and everything can be precomputed

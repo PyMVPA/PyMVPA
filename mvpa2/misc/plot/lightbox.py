@@ -281,7 +281,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             # Figure out subplots
             dshape = func.shape
             if slices is None:
-                slices = range(func.shape[0])
+                slices = range(func.shape[-1])
             nslices = len(slices)
 
             # more or less square alignment ;-)

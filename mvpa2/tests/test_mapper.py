@@ -140,7 +140,19 @@ def test_product_flatten():
     # apply flattening to ds
     names, values = zip(*(product_name_values))
 
-    flattener = ProductFlattenMapper(names)
+    flattened_ds = None
+
+    # test both with explicit values for factor_values and without
+    for with_values in (False, True):
+        # the order of False and True is critical.
+        # In the first iteration flattened_ds is set and used in the second
+        # iteration
+        args = {}
+        if with_values:
+            factor_values = [v for n, v in product_name_values]
+            args['factor_values'] = factor_values
+
+        flattener = ProductFlattenMapper(names, **args)
 
     # test I/O (only if h5py is available)
     if externals.exists('h5py'):
@@ -152,6 +164,12 @@ def test_product_flatten():
         h5save(testfn, flattener)
         flattener = h5load(testfn)
         os.unlink(testfn)
+
+    if flattened_ds is None:
+        assert_raises(ValueError, flattener.reverse, ds)
+    else:
+        ds_ = flattener.reverse(flattened_ds)
+        assert_equal(ds.samples, ds_.samples)
 
     mds = flattener(ds)
 
@@ -189,6 +207,9 @@ def test_product_flatten():
 
     flattener = ProductFlattenMapper(names)
     assert_raises(KeyError, flattener, ds)
+
+    # for next iterations
+    flattened_ds = mds
 
 
 def test_subset():

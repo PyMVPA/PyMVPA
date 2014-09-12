@@ -17,6 +17,14 @@ skip_if_no_external('pylab')
 
 import numpy as np
 
+def test_get_lim():
+    from mvpa2.viz import _get_lim
+    d = np.arange(10)
+    assert_equal(_get_lim(d, 'same'), (0, 9))
+    assert_raises(ValueError, _get_lim, d, 'wrong')
+    assert_equal(_get_lim(d,  None), None)
+    assert_equal(_get_lim(d,  (1, 3)), (1, 3))
+
 def test_hist():
     from mvpa2.viz import hist
     from mvpa2.misc.data_generators import normal_feature_dataset
@@ -50,7 +58,8 @@ def test_imshow():
         # new mpls do it withough unnecessary duplication
         assert_is_instance(im.colorbar, Colorbar)
 
-def test_lightbox():
+@sweepargs(slices=([0], None))
+def test_lightbox(slices):
     skip_if_no_external('nibabel') # used for loading the niftis here
     # smoketest for lightbox - moved from its .py __main__
     from mvpa2.misc.plot.lightbox import plot_lightbox
@@ -78,6 +87,6 @@ def test_lightbox():
         add_info = (1, 2),
         add_hist = (0, 2),
         #
-        slices = [0]
+        slices = slices
         )
     assert_true(fig)

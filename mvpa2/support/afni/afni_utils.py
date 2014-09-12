@@ -222,17 +222,27 @@ def _package_afni_nibabel_for_standalone(outputdir, rootname='python'):
                         # get everything from import to end of line
                         # with enough spaces in front
                         newline = (' ' * i) + ' '.join(words[(n - 1):])
-                        print line
-                        print ' -> ', newline
+                        #print line
+                        #print ' -> ', newline
                         break
                     else:
                         if pkg in words:
-                            raise ValueError("Not supported in %s: %s" % (path_fn, line))
+                            print("Not supported in %s: %s" % (path_fn, line))
+                            newline=False
+                            break
+
+            if newline is False:
+                newlines=[]
+                break
 
             if newline is None:
                 newline = line
 
             newlines.append(newline)
+
+        if not len(newlines):
+            print "skipping %s" % fn
+            continue
 
         if fn.startswith('lib_'):
             repls = [('lib_', 'pymvpa2-'), ('.py', ''), ('_', '-')]
@@ -255,8 +265,6 @@ def _package_afni_nibabel_for_standalone(outputdir, rootname='python'):
             else:
                 raise ValueError("not found: %s" % parentfn)
 
-            print newlines
-
             trgfn = os.path.join(outputdir_files, fn.replace('lib_', ''))
         else:
             trgfn = op.join(outputdir_files, fn)
@@ -277,7 +285,7 @@ def _package_afni_nibabel_for_standalone(outputdir, rootname='python'):
     readme = ('''
 AFNI I/O and wrapper functions in python
 
-Copyright 2010-2013 Nikolaas N. Oosterhof <nikolaas.oosterhof@unitn.it>
+Copyright 2010-2014 Nikolaas N. Oosterhof <nikolaas.oosterhof@unitn.it>
 
 The software in the following files is covered under the MIT License
 (included below):
@@ -306,7 +314,8 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.''')
+THE SOFTWARE.
+''')
 
     readmefn = op.join(outputdir_files, 'COPYING')
     with open(readmefn, 'w') as f:

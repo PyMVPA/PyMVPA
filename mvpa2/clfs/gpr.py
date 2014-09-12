@@ -19,6 +19,7 @@ from mvpa2.base import externals, warning
 from mvpa2.base.state import ConditionalAttribute
 from mvpa2.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa2.base.param import Parameter
+from mvpa2.base.constraints import EnsureFloat, EnsureNone, EnsureRange
 from mvpa2.kernels.np import SquaredExponentialKernel, GeneralizedLinearKernel, \
      LinearKernel
 from mvpa2.measures.base import Sensitivity
@@ -114,7 +115,8 @@ class GPR(Classifier):
     # the same and define kernel parameter appropriately... TODO, but SVMs
     # already kinda do it nicely ;-)
 
-    sigma_noise = Parameter(0.001, allowedtype='float', min=1e-10,
+    sigma_noise = Parameter(0.001, 
+        constraints=EnsureFloat() & EnsureRange(min=1e-10),
         doc="the standard deviation of the gaussian noise.")
 
     # XXX For now I don't introduce kernel parameter since yet to unify
@@ -123,7 +125,8 @@ class GPR(Classifier):
     #    doc="Kernel object defining the covariance between instances. "
     #        "(Defaults to KernelSquaredExponential if None in arguments)")
 
-    lm = Parameter(None, min=0.0, allowedtype='None or float',
+    lm = Parameter(None,
+        constraints=((EnsureFloat() & EnsureRange(min=0.0)) | EnsureNone()),
         doc="""The regularization term lambda.
         Increase this when the kernel matrix is not positive definite. If None,
         some regularization will be provided upon necessity""")

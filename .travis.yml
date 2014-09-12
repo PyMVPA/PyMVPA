@@ -22,7 +22,7 @@ before_install:
     # The ultimate one-liner setup for NeuroDebian repository
     - bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
     # - sudo apt-get install $PYTHON-dev
-    - travis_retry sudo apt-get install swig $PY-numpy $PY-scipy $PY-matplotlib $PY-h5py $PY-nose $PY-nibabel
+    - travis_retry sudo apt-get install swig $PY-numpy $PY-scipy $PY-matplotlib $PY-h5py $PY-nose $PY-nibabel $PY-mock
     # Optional Python modules
     # Note: it looks like the line could be truncated, thus spreading them through multiple lines
     - travis_retry sudo apt-get install shogun-python-modular $PY-mdp $PY-psutil $PY-sklearn

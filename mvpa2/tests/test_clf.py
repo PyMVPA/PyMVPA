@@ -933,7 +933,7 @@ class ClassifiersTests(unittest.TestCase):
     #    svmocas -- segfaults -- reported to mailing list
     #    GNB, LDA, QDA -- cannot train since 1 sample isn't sufficient
     #    to assess variance
-    @sweepargs(clf=clfswh['!smlr', '!knn', '!gnb', '!lda', '!qda', '!lars', '!meta', '!ridge', '!needs_population'])
+    @sweepargs(clf=clfswh['!random', '!smlr', '!knn', '!gnb', '!lda', '!qda', '!lars', '!meta', '!ridge', '!needs_population'])
     def test_correct_dimensions_order(self, clf):
         """To check if known/present Classifiers are working properly
         with samples being first dimension. Started to worry about
