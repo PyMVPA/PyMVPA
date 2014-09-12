@@ -20,6 +20,7 @@ if externals.exists('scipy', raise_=True):
 
 from mvpa2.base import warning
 from mvpa2.base.param import Parameter
+from mvpa2.base.constraints import EnsureChoice, EnsureInt, EnsureNone
 from mvpa2.base.dochelpers import _str, borrowkwargs
 from mvpa2.mappers.base import Mapper
 from mvpa2.datasets import Dataset
@@ -196,17 +197,18 @@ class IIRFilterMapper(Mapper):
 
     """
 
-    axis = Parameter(0, allowedtype='int',
+    axis = Parameter(0, constraints='int',
             doc="""The axis of `x` to which the filter is applied. By default
             the filter is applied to all features along the samples axis""")
 
-    padtype = Parameter('odd', allowedtype="{'odd', 'even', 'constant', None}",
+    padtype = Parameter('odd', 
+            constraints=EnsureChoice('odd', 'even', 'constant') | EnsureNone(),
             doc="""Must be 'odd', 'even', 'constant', or None.  This determines
             the type of extension to use for the padded signal to which the
             filter is applied.  If `padtype` is None, no padding is used.  The
             default is 'odd'""")
 
-    padlen = Parameter(None, allowedtype="int or None",
+    padlen = Parameter(None, constraints=EnsureInt() | EnsureNone(),
             doc="""The number of elements by which to extend `x` at both ends
             of `axis` before applying the filter. This value must be less than
             `x.shape[axis]-1`.  `padlen=0` implies no padding. The default

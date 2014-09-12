@@ -28,7 +28,7 @@ class LinearSVMWeights(Sensitivity):
 
     _ATTRIBUTE_COLLECTIONS = ['params']
 
-    split_weights = Parameter(False, allowedtype='bool',
+    split_weights = Parameter(False, constraints='bool',
                   doc="If binary classification either to sum SVs per each "
                       "class separately.  Note: be careful with interpretation"
                       " of the values")

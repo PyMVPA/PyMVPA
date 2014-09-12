@@ -124,7 +124,12 @@ class SimpleConstraintsTests(unittest.TestCase):
         assert_equal(c(['a', 'b']), ['a', 'b'])
         assert_equal(c(['a1', 'b2']), ['a1', 'b2'])
 
-
+    def test_tupleof(self):
+        c = EnsureTupleOf(str)
+        assert_equal(c(('a', 'b')), ('a', 'b'))
+        assert_equal(c(('a1', 'b2')), ('a1', 'b2'))
+        
+        
 class ComplexConstraintsTests(unittest.TestCase):
 
     def test_constraints(self):

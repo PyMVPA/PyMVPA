@@ -32,6 +32,7 @@ from mvpa2.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa2.base.learner import FailedToTrainError
 from mvpa2.measures.base import Sensitivity
 from mvpa2.base.param import Parameter
+from mvpa2.base.constraints import *
 from mvpa2.datasets.base import Dataset
 
 if __debug__:
@@ -94,40 +95,39 @@ class _GLMNET(Classifier):
                  ]
 
     family = Parameter('gaussian',
-                       allowedtype='basestring',
-                       choices=["gaussian", "multinomial"],
+                       constraints=EnsureChoice('gaussian', 'multinomial'),
                        ro=True,
                        doc="""Response type of your targets (either 'gaussian'
                        for regression or 'multinomial' for classification).""")
 
-    alpha = Parameter(1.0, min=0.01, max=1.0, allowedtype='float',
+    alpha = Parameter(1.0, constraints=EnsureFloat() & EnsureRange(min=0.01, max=1.0),
                       doc="""The elastic net mixing parameter.
                       Larger values will give rise to
                       less L2 regularization, with alpha=1.0
                       as a true LASSO penalty.""")
 
-    nlambda = Parameter(100, allowedtype='int', min=1,
+    nlambda = Parameter(100, constraints=EnsureInt() & EnsureRange(min=1),
                         doc="""Maximum number of lambdas to calculate
                         before stopping if not converged.""")
 
-    standardize = Parameter(True, allowedtype='bool',
+    standardize = Parameter(True, constraints='bool',
                             doc="""Whether to standardize the variables
                             prior to fitting.""")
 
-    thresh = Parameter(1e-4, min=1e-10, max=1.0, allowedtype='float',
+    thresh = Parameter(1e-4, constraints=EnsureFloat() & EnsureRange(min=1e-10, max=1.0),
              doc="""Convergence threshold for coordinate descent.""")
 
-    pmax = Parameter(None, min=1, allowedtype='None or int',
+    pmax = Parameter(None, 
+             constraints=((EnsureInt() & EnsureRange(min=1)) | EnsureNone()),
              doc="""Limit the maximum number of variables ever to be
              nonzero.""")
 
-    maxit = Parameter(100, min=10, allowedtype='int',
+    maxit = Parameter(100, constraints=EnsureInt() & EnsureRange(min=10),
              doc="""Maximum number of outer-loop iterations for
              'multinomial' families.""")
 
     model_type = Parameter('covariance',
-                           allowedtype='basestring',
-                           choices=["covariance", "naive"],
+                           constraints=EnsureChoice('covariance', 'naive'),
              doc="""'covariance' saves all inner-products ever
              computed and can be much faster than 'naive'. The
              latter can be more efficient for

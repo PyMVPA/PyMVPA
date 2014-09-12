@@ -25,6 +25,7 @@ import numpy as np
 
 from mvpa2.base.state import ConditionalAttribute
 from mvpa2.base.param import Parameter
+from mvpa2.base.constraints import EnsureFloat, EnsureListOf
 from mvpa2.misc.exceptions import InvalidHyperparameterError
 from mvpa2.clfs.distance import squared_euclidean_distance
 from mvpa2.kernels.base import NumpyKernel
@@ -54,7 +55,7 @@ class RbfKernel(NumpyKernel):
     """Radial basis function (aka Gausian, aka ) kernel
     K(a,b) = exp(-||a-b||**2/sigma)
     """
-    sigma = Parameter(1.0, allowedtype=float, doc="Width parameter sigma")
+    sigma = Parameter(1.0, constraints='float', doc="Width parameter sigma")
     
     def _compute(self, d1, d2):
         # Do the Rbf
@@ -245,11 +246,11 @@ class ExponentialKernel(NumpyKernel):
 
     """
 
-    length_scale = Parameter(1.0, allowedtype='float or ndarray', doc="""
+    length_scale = Parameter(1.0, constraints=EnsureFloat() | EnsureListOf(float), doc="""
         The characteristic length-scale (or length-scales) of the phenomenon
         under investigation.""")
 
-    sigma_f = Parameter(1.0, allowedtype='float',
+    sigma_f = Parameter(1.0, constraints='float',
         doc="""Signal standard deviation.""")
 
     def __init__(self, *args, **kwargs):
