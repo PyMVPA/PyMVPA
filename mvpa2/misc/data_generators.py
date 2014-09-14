@@ -328,6 +328,8 @@ def linear1d_gaussian_noise(size=100, slope=0.5, intercept=1.0,
 
 def load_example_fmri_dataset(name='1slice', literal=False):
     """Load minimal fMRI dataset that is shipped with PyMVPA."""
+    from mvpa2.datasets.openfmri import \
+            OpenFMRIDataset, openfmri_model2target_attr
     from mvpa2.datasets.mri import fmri_dataset
     from mvpa2.misc.io import SampleAttributes
 
@@ -337,13 +339,32 @@ def load_example_fmri_dataset(name='1slice', literal=False):
             pymvpa_dataroot,'tutorial_data_25mm', 'data'), 'mask_brain.nii.gz')
     }[name]
 
+    if name == '1slice' and literal:
+        openfmri = OpenFMRIDataset(os.path.join(pymvpa_dataroot, 'openfmri'))
+        subj = 1
+        task = 1
+        dss = []
+        for run in range(1,13):
+            d = openfmri.get_bold_run_dataset(subj, task, run=run, flavor=name,
+                                              chunks=run,
+                                              mask=os.path.join(dspath, mask))
+            design = openfmri.get_bold_run_model(subj, task, run)
+            d.sa['targets'] = openfmri_model2target_attr(d.sa.time_coords,
+                                                         design,
+                                                         noinfolabel='rest')
+            dss.append(d)
+        ds = vstack(dss)
+        ds.a['mapper'] = dss[0].a.mapper
+        return ds
+
     if literal:
         attr = SampleAttributes(os.path.join(dspath, 'attributes_literal.txt'))
     else:
         attr = SampleAttributes(os.path.join(dspath, 'attributes.txt'))
-    ds = fmri_dataset(samples=os.path.join(dspath, 'bold.nii.gz'),
-                      targets=attr.targets, chunks=attr.chunks,
-                      mask=os.path.join(dspath, mask))
+
+        ds = fmri_dataset(samples=os.path.join(dspath, 'bold.nii.gz'),
+                          targets=attr.targets, chunks=attr.chunks,
+                          mask=os.path.join(dspath, mask))
 
     return ds
 

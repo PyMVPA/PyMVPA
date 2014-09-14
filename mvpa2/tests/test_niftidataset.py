@@ -20,6 +20,7 @@ if not externals.exists('nibabel'):
 from mvpa2.base.dataset import vstack
 from mvpa2 import pymvpa_dataroot
 from mvpa2.datasets.mri import fmri_dataset, _load_anyimg, map2nifti
+from mvpa2.datasets.openfmri import OpenFMRIDataset, openfmri_model2target_attr
 from mvpa2.datasets.eventrelated import eventrelated_dataset
 from mvpa2.misc.fsl import FslEV3
 from mvpa2.misc.support import Event, value2idx
@@ -100,6 +101,31 @@ def test_fmridataset():
     assert_array_equal(ds.fa.myintmask, np.arange(1, ds.nfeatures + 1))
     # we know that imgtype must be:
     ok_(ds.a.imgtype is nibabel.Nifti1Image)
+
+def test_openfmri_dataset():
+    openfmri = OpenFMRIDataset(os.path.join(pymvpa_dataroot, 'openfmri'))
+    subj = 1
+    task = 1
+    run = 1
+    # load single run
+    ds = openfmri.get_bold_run_dataset(subj, task, run, flavor='1slice',
+                                       mask=os.path.join(pymvpa_dataroot,
+                                                         'mask.nii.gz'))
+    # basic shape
+    assert_equal(len(ds), 121)
+    assert_equal(ds.nfeatures, 530)
+    # functional mapper
+    assert_equal(ds.O.shape, (121, 40, 20, 1))
+
+    # check conversion of model into sample attribute
+    design = openfmri.get_bold_run_model(subj, task, run)
+    targets = openfmri_model2target_attr(ds.sa.time_coords,
+                                         design,
+                                         noinfolabel='rest')
+    attr = SampleAttributes(os.path.join(pymvpa_dataroot,
+                                         'attributes_literal.txt'))
+    assert_array_equal(attr['targets'][:len(ds)], targets)
+
 
 @with_tempfile(suffix='.img')
 def test_nifti_mapper(filename):

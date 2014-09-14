@@ -22,12 +22,9 @@ We start by loading PyMVPA and the example fMRI dataset.
 
 from mvpa2.suite import *
 
-# load PyMVPA example dataset
-attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes_literal.txt'))
-dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                       targets=attr.targets,
-                       chunks=attr.chunks,
-                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+# load PyMVPA example dataset with literal labels
+dataset = load_example_fmri_dataset(literal=True)
+print dataset.a
 
 """As with classifiers it is easy to define a bunch of sensitivity
 analyzers. It is usually possible to simply call `get_sensitivity_analyzer()`
