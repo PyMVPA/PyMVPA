@@ -443,6 +443,17 @@ def test_binomial_proportion_ci():
                                       binomial_proportion_ci(n, X, p, m),
                                       decimal=4,
                                       err_msg=m)
+        # can deal with the extremes
+        # those two have numerical limits
+        if not m in ('clopper-pearson', 'logit'):
+            npt.assert_array_almost_equal(
+                    binomial_proportion_ci(1000, 1000, .05, m),
+                    [1, 1],
+                    decimal=2)
+            npt.assert_array_almost_equal(
+                    binomial_proportion_ci(1000, 0, .05, m),
+                    [0, 0],
+                    decimal=2)
 
 def suite():  # pragma: no cover
     """Create the suite"""

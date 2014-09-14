@@ -221,6 +221,10 @@ def _ttest_finish(df, t, alternative):
 def binomial_proportion_ci(n, X, alpha, meth='jeffreys'):
     """Compute the confidence interval for a set of Bernoulli trials
 
+    Most, if not all, implemented methods assume statistical independence
+    of the Bernoulli trial outcomes. Computed confidence intervals
+    may be invalid if this condition is violated.
+
     This is a re-implementation of Matlab code originally written by
     Anderson Winkler and Tom Nichols.
 
