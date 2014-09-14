@@ -11,10 +11,12 @@ import sys
 
 
 class StatisMapper(Mapper):
-    """Implementation of STATIS.
-    Compromise matrices are the optimal linear combination of
-    cross-product matrices, the general eigen decomposition of
-    which yield same results as left generalized singular vectors
+    """Implementation of STATIS as presented in:
+
+    Abdi, H., Williams, L.J., Valentin, D., & Bennani-Dosse, M. (2012). STATIS
+    and DISTATIS: Optimum multi-table principal component analysis and three way
+    metric multidimensional scaling. Wiley Interdisciplinary Reviews:
+    Computational Statistics, 4, 124-167.
     """
     def __init__(self,tables_attr='chunks', bootstrap_iter=0,
                 keep_dims = 'all',
