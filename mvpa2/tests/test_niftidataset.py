@@ -103,28 +103,39 @@ def test_fmridataset():
     ok_(ds.a.imgtype is nibabel.Nifti1Image)
 
 def test_openfmri_dataset():
-    openfmri = OpenFMRIDataset(os.path.join(pymvpa_dataroot, 'openfmri'))
-    subj = 1
-    task = 1
-    run = 1
-    # load single run
-    ds = openfmri.get_bold_run_dataset(subj, task, run, flavor='1slice',
-                                       mask=os.path.join(pymvpa_dataroot,
-                                                         'mask.nii.gz'))
-    # basic shape
-    assert_equal(len(ds), 121)
-    assert_equal(ds.nfeatures, 530)
-    # functional mapper
-    assert_equal(ds.O.shape, (121, 40, 20, 1))
+    of = OpenFMRIDataset(os.path.join(pymvpa_dataroot, 'openfmri'))
+    sub_ids = of.get_subj_ids()
+    assert_equal(sub_ids, [1, 'phantom'])
+    assert_equal(of.get_scan_properties(), {'TR': '2.5'})
+    tasks = of.get_task_descriptions()
+    assert_equal(tasks, {1: 'object viewing'})
+    task = tasks.keys()[0]
+    run_ids = of.get_bold_run_ids(sub_ids[0], task)
+    assert_equal(run_ids, range(1, 13))
+    task_runs = of.get_task_bold_run_ids(task)
+    assert_equal(task_runs, {1: range(1, 13)})
 
-    # check conversion of model into sample attribute
-    design = openfmri.get_bold_run_model(subj, task, run)
-    targets = openfmri_model2target_attr(ds.sa.time_coords,
-                                         design,
-                                         noinfolabel='rest')
-    attr = SampleAttributes(os.path.join(pymvpa_dataroot,
-                                         'attributes_literal.txt'))
-    assert_array_equal(attr['targets'][:len(ds)], targets)
+    orig_attrs = SampleAttributes(os.path.join(pymvpa_dataroot,
+                                               'attributes_literal.txt'))
+    for subj, runs in task_runs.iteritems():
+        for run in runs:
+            # load single run
+            ds = of.get_bold_run_dataset(subj, task, run, flavor='1slice',
+                                         mask=os.path.join(pymvpa_dataroot,
+                                                           'mask.nii.gz'))
+            # basic shape
+            assert_equal(len(ds), 121)
+            assert_equal(ds.nfeatures, 530)
+            # functional mapper
+            assert_equal(ds.O.shape, (121, 40, 20, 1))
+
+            # check conversion of model into sample attribute
+            design = of.get_bold_run_model(subj, task, run)
+            targets = openfmri_model2target_attr(ds.sa.time_coords,
+                                                 design,
+                                                 noinfolabel='rest')
+            assert_array_equal(
+                orig_attrs['targets'][(run - 1) * 121: run * len(ds)], targets)
 
 
 @with_tempfile(suffix='.img')

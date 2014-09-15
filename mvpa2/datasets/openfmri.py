@@ -11,31 +11,39 @@
 
 __docformat__ = 'restructuredtext'
 
+import os
 from os.path import join as _opj
 import nibabel as nb
 import numpy as np
 from mvpa2.datasets.mri import fmri_dataset
 from mvpa2.datasets import vstack
 
+def _prefix(prefix, val):
+    if isinstance(val, int):
+        return '%s%.3i' % (prefix, val)
+    else:
+        return '%s%s' % (prefix, val)
+
 def _cond2id(val):
-    return 'cond%.3i' % val
+    return _prefix('cond', val)
 
 def _model2id(val):
-    return 'model%.3i' % val
+    return _prefix('model', val)
 
 def _sub2id(val):
-    return 'sub%.3i' % val
+    return _prefix('sub', val)
 
 def _taskrun(task, run):
-    return 'task%.3i_run%.3i' % (task, run)
+    return '%s_%s' % (_prefix('task', task), _prefix('run', run))
 
 
 class OpenFMRIDataset(object):
     """Handler for datasets following the openfmri.org layout specifications
 
-    At present, this handler provides functions to access BOLD images of
-    individual acquisition runs, build datasets from individual BOLD images,
-    and load stimulation design specifications for individual runs.
+    At present, this handler provides functions to query and access a number of
+    dataset properties, BOLD images of individual acquisition runs, build
+    datasets from individual BOLD images, and load stimulation design
+    specifications for individual runs.
     """
     def __init__(self, basedir):
         """
@@ -46,6 +54,95 @@ class OpenFMRIDataset(object):
           subdirectories).
         """
         self._basedir = basedir
+
+    def get_subj_ids(self):
+        """Return a (sorted) list of IDs for all subjects in the dataset
+
+        Standard numerical subject IDs a returned as integer values. All other
+        types of IDs are returned as strings with the 'sub' prefix stripped.
+        """
+        ids = []
+        for item in os.listdir(self._basedir):
+            if item.startswith('sub') \
+               and os.path.isdir(_opj(self._basedir, item)):
+                id_ = item[3:]
+                try:
+                    id_ = int(id_)
+                except:
+                    pass
+                ids.append(id_)
+        return sorted(ids)
+
+    def get_scan_properties(self):
+        """Returns a dictionary with the scan properties listed in scan_key.txt
+        """
+        props = {}
+        fname = _opj(self._basedir, 'scan_key.txt')
+        if os.path.exists(fname):
+            for line in open(fname, 'r'):
+                key = line.split()[0]
+                value = line[len(key):].strip()
+                props[key] = value
+        return props
+
+    def get_task_descriptions(self):
+        """Returns a dictionary with the tasks defined in the dataset
+
+        Dictionary keys are integer task IDs, values are task description
+        strings.
+        """
+        tasks = {}
+        fname = _opj(self._basedir, 'task_key.txt')
+        if os.path.exists(fname):
+            for line in open(fname, 'r'):
+                key = line.split()[0]
+                value = line[len(key):].strip()
+                if key.startswith('task'):
+                    key = key[4:]
+                key = int(key)
+                tasks[key] = value
+        return tasks
+
+    def get_bold_run_ids(self, subj, task):
+        """Returns (sorted) list of run IDs for a given subject and task
+
+        Typically, run IDs are integer values, but string IDs are supported
+        as well.
+
+        Parameters
+        ----------
+        subj : int or str
+          Subject ID
+        task : int or str
+          Run ID
+        """
+        ids = []
+        task_prefix = _prefix('task', task)
+        bold_dir = _opj(self._basedir, _sub2id(subj), 'BOLD')
+        if not os.path.exists(bold_dir):
+            return ids
+        for item in os.listdir(bold_dir):
+            if item.startswith('%s_' % (task_prefix,)) \
+               and os.path.isdir(_opj(bold_dir, item)):
+                id_ = item[len(task_prefix) + 4:]
+                try:
+                    id_ = int(id_)
+                except:
+                    pass
+                ids.append(id_)
+        return sorted(ids)
+
+    def get_task_bold_run_ids(self, task):
+        """Return a dictionary with run IDs by subjects for a given task
+
+        Dictionary keys are subject IDs, values are lists of run IDs.
+        """
+        out = {}
+        for sub in self.get_subj_ids():
+            runs = self.get_bold_run_ids(sub, task)
+            if len(runs):
+                out[sub] = runs
+        return out
 
     def get_bold_run_image(self, subj, task, run, flavor=None):
         """Returns a NiBabel image instance for the BOLD data of a 
