@@ -20,8 +20,8 @@ if not externals.exists('nibabel'):
 from mvpa2.base.dataset import vstack
 from mvpa2 import pymvpa_dataroot
 from mvpa2.datasets.mri import fmri_dataset, _load_anyimg, map2nifti
-from mvpa2.datasets.openfmri import OpenFMRIDataset, openfmri_model2target_attr
-from mvpa2.datasets.eventrelated import eventrelated_dataset
+from mvpa2.datasets.openfmri import OpenFMRIDataset
+from mvpa2.datasets.eventrelated import eventrelated_dataset, events2sample_attr
 from mvpa2.misc.fsl import FslEV3
 from mvpa2.misc.support import Event, value2idx
 from mvpa2.misc.io.base import SampleAttributes
@@ -130,10 +130,10 @@ def test_openfmri_dataset():
             assert_equal(ds.O.shape, (121, 40, 20, 1))
 
             # check conversion of model into sample attribute
-            design = of.get_bold_run_model(subj, task, run)
-            targets = openfmri_model2target_attr(ds.sa.time_coords,
-                                                 design,
-                                                 noinfolabel='rest')
+            events = of.get_bold_run_model(subj, task, run)
+            targets = events2sample_attr(events,
+                                         ds.sa.time_coords,
+                                         noinfolabel='rest')
             assert_array_equal(
                 orig_attrs['targets'][(run - 1) * 121: run * len(ds)], targets)
 

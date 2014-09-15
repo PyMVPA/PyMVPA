@@ -236,68 +236,30 @@ class OpenFMRIDataset(object):
                          'condition_key.txt')
         def_data = np.recfromtxt(def_fname)
         defs = {}
+        events = []
         # load model meta data
         for dd in def_data:
             task = defs.setdefault(int(dd[0][4:]), {})
             cond = task.setdefault(int(dd[1][4:]), {})
             cond['name'] = dd[2]
+        ev_fields = ('onset', 'duration', 'intensity')
         # get onset info for specific subject/task/run combo
         for task_id, task_dict in defs.iteritems():
+            task_descr = self.get_task_descriptions()[task_id]
             for cond_id, cond_dict in task_dict.iteritems():
                 stim_fname = _opj(self._basedir, _sub2id(subj), 'model',
                                   _model2id(model), 'onsets',
                                   _taskrun(task_id, run),
                                   '%s.txt' % _cond2id(cond_id))
-                cond_dict['stimulation'] = \
-                        np.atleast_1d(
-                            np.recfromtxt(
-                                stim_fname,
-                                names=('onset', 'duration', 'intensity')))
-        return defs
-
-def openfmri_model2target_attr(time_coords, model, noinfolabel=None,
-                               onset_shift=0.0):
-    """Build a target attribute array form an openfmri stimulation model
-
-    Parameters
-    ----------
-    time_coords : array
-      sample timing information array
-      (typically taking from dataset.sa.time_coords)
-    model : dict
-      stimulation design specifications from
-      OpenFMRIDataset.get_bold_run_model()
-    noinfolabel : str
-      condition label to assign to all samples for which no stimulation
-      condition information is contained in the model. Example: 'rest'
-    onset_shift : float
-      All stimulation onset timestamps are shifted by the given amount
-      before being transformed into discrete sample indices.
-      Default: 0.0
-
-    Returns
-    -------
-    list
-      Sequence with literal conditions labels -- one item per element
-      in the ``time_coords`` array.
-    """
-    sa = [None] * len(time_coords)
-    for task_id, task_dict in model.iteritems():
-        for cond_id, cond_dict in task_dict.iteritems():
-            for stim in cond_dict['stimulation']:
-                onset = stim['onset'] + onset_shift
-                # first sample ending after stimulus onset
-                onset_samp_idx = np.argwhere(time_coords[1:] > onset)[0,0]
-                # deselect all volume starting before the end of the stimulation
-                duration_mask = time_coords < (onset + stim['duration'])
-                duration_mask[:onset_samp_idx] = False
-                # assign all matching samples the condition ID
-                for samp_idx in np.argwhere(duration_mask).T[0]:
-                    sa[samp_idx] = cond_dict['name']
-    if not noinfolabel is None:
-        for i, a in enumerate(sa):
-            if a is None:
-                sa[i] = noinfolabel
-    return sa
+                evdata = np.atleast_1d(
+                           np.recfromtxt(stim_fname, names=ev_fields))
+                for ev in evdata:
+                    evdict = dict(zip(ev_fields,
+                                      [ev[field] for field in ev_fields]))
+                    evdict['task'] = task_descr
+                    evdict['condition'] = cond_dict['name']
+                    evdict['run'] = run
+                    events.append(evdict)
+        return events
 
 # XXX load model info for HRF model
