@@ -122,7 +122,8 @@ one in ``subds``. By looking at the forward-mapped data, we can verify that the
 correct features have been chosen.
 
 
-.. ========================================
+Load real data
+--------------
 
 We have pretty much all the pieces to start a first analysis.  We know how to
 load fMRI data from time series images, we know how to add and access
@@ -169,38 +170,107 @@ volume in the NIfTI image.
 
 >>> # directory that contains the data files
 >>> datapath = os.path.join(tutorial_data_path, 'data')
->>> attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
+>>> attr_fname = os.path.join(datapath, 'sub001', 'BOLD', 'task001_run001', 'attributes.txt')
+>>> attr = SampleAttributes(attr_fname)
 >>> len(attr.targets)
-1452
+121
 >>> print np.unique(attr.targets)
 ['bottle' 'cat' 'chair' 'face' 'house' 'rest' 'scissors' 'scrambledpix'
  'shoe']
 >>> len(attr.chunks)
-1452
+121
 >>> print np.unique(attr.chunks)
-[  0.   1.   2.   3.   4.   5.   6.   7.   8.   9.  10.  11.]
+[ 0.]
 
 :class:`~mvpa2.misc.io.base.SampleAttributes` allows us to load this type of file, and access its
-content. We got 1452 label and chunk values, one for each volume. Moreover,
-we see that there are nine different conditions and 12 different chunks.
+content. We got 121 labels and chunk values, one for each volume. Moreover,
+we see that there are nine different conditions and all samples are associated
+with the same chunk. The attributes file for a different scan/run would
+increment the chunk value.
 
 Now we can load the fMRI data, as we have done before -- only loading
 voxels corresponding to a mask of ventral temporal cortex, and assign the
 samples attributes to the dataset. `~mvpa2.datasets.mri.fmri_dataset()` allows us to pass them
 directly:
 
->>> fds = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
+>>> bold_fname = os.path.join(datapath,
+...                           'sub001', 'BOLD', 'task001_run001', 'bold.nii.gz')
+>>> mask_fname = os.path.join(datapath,
+...                           'sub001', 'masks', 'orig', 'vt.nii.gz')
+>>> fds = fmri_dataset(samples=bold_fname,
 ...                    targets=attr.targets, chunks=attr.chunks,
-...                    mask=os.path.join(datapath, 'mask_vt.nii.gz'))
+...                    mask=mask_fname)
 >>> fds.shape
-(1452, 577)
+(121, 577)
 >>> print fds.sa
 <SampleAttributesCollection: chunks,targets,time_coords,time_indices>
 
 We got the dataset that we already know from the last part, but this time
-is also has information about chunks and targets.  Now it is a good time to
-obtain a `~mvpa2.datasets.miscfx.summary()` overview of the dataset: basic
-statistics, balance in number of samples among targets per chunk, etc.:
+is also has information about chunks and targets.
+
+More structure, less duplication of work
+----------------------------------------
+
+Although one could craft individual attribute files for each fMRI scan, doing
+so would be suboptimal. Typically, stimulation is not synchronous with
+fMRI volume sampling rate, hence timeing information would be lost. Moreover,
+information on stimulation, or experiment design in general, is mosty likely
+available already in different form or shape.
+
+To ease working with a broad range of datasets, PyMVPA comes with dedicated
+support for datasets following the specifications used by the openfmri.org_
+data sharing platform. These are simple guidelines for file name conventions
+and design specification that can easily be adopted for your own data.
+
+.. _openfmri.org: http://www.openfmri.org
+
+.. exercise::
+
+  The tutorial data you are working with is following the openfmri.org
+  scheme. Open the dataset folder and inspect the structure and content
+  of the files with meta data.
+
+Accessing such a dataset is done via a handler that simply needs to know
+where the dataset is stored on disk. This handler offers convenient access
+to basic information, such as the number of subjects, task descriptions,
+and other properties.
+
+>>> dhandle = OpenFMRIDataset(datapath)
+>>> dhandle.get_subj_ids()
+[1]
+>>> dhandle.get_task_descriptions()
+{1: 'object viewing'}
+
+More importantly it supports access to information on experiment design:
+
+>>> model = 1
+>>> subj = 1
+>>> run = 1
+>>> events = dhandle.get_bold_run_model(model, subj, run)
+>>> for ev in events[:2]:
+...     print ev
+{'task': 'object viewing', 'run': 1, 'onset': 157.5, 'intensity': 1, 'duration': 22.5, 'condition': 'house'}
+{'task': 'object viewing', 'run': 1, 'onset': 195.0, 'intensity': 1, 'duration': 22.5, 'condition': 'scrambledpix'}
+
+As you can see, the stimulus timing is available in a standard Python dictionary
+for each event. This includes onset and duration of the stimulation, as well
+as literal condition labels, and task descriptions.
+
+Access to the actual BOLD fMRI data is equally simple:
+
+>>> task = 1
+>>> fds = dhandle.get_bold_run_dataset(subj, task, run, mask=mask_fname)
+>>> print fds
+Dataset: 121x577@int16, <sa: run,subj,task,time_coords,time_indices>, <fa: voxel_indices>, <a: imghdr,imgtype,mapper,voxel_dim,voxel_eldim>>
+
+The method ``get_bold_run_dataset()`` work the same way as ``fmri_dataset()``,
+and also supports the same arguments. However, instead of giving a custom
+filename BOLD data is identified by subject, task, and acquisition run ID.
+
+us information
+Now it is a good time to obtain a `~mvpa2.datasets.miscfx.summary()` overview
+of the dataset: basic statistics, balance in number of samples among targets
+per chunk, etc.:
 
 >>> print fds.summary()
 Dataset: 1452x577@int16, <sa: chunks,targets,time_coords,time_indices>, <fa: voxel_indices>, <a: imghdr,imgtype,mapper,voxel_dim,voxel_eldim>
