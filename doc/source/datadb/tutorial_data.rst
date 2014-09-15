@@ -212,6 +212,12 @@ Changelog
 0.3
   * Removed tutorial_lib.py which is superseded by using
     mvpa2.tutorial_suite
+  * Removed start_tutorial_session.sh which is superseded
+    by the pymvpa2-tutorial command
+  * Removed outdated intermediate tutorial results. The tutorial
+    can now be ran on downsampled data that allow for near-realtime
+    computing on reasonable hardware.
+  * Data is now structured according to an openfmri.org-like scheme.
 
 0.2
   * Updated tutorial code to work with PyMVPA 0.6
