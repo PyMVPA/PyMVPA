@@ -328,8 +328,8 @@ def linear1d_gaussian_noise(size=100, slope=0.5, intercept=1.0,
 
 def load_example_fmri_dataset(name='1slice', literal=False):
     """Load minimal fMRI dataset that is shipped with PyMVPA."""
-    from mvpa2.datasets.openfmri import \
-            OpenFMRIDataset, openfmri_model2target_attr
+    from mvpa2.datasets.eventrelated import events2sample_attr
+    from mvpa2.datasets.openfmri import OpenFMRIDataset
     from mvpa2.datasets.mri import fmri_dataset
     from mvpa2.misc.io import SampleAttributes
 
@@ -350,10 +350,9 @@ def load_example_fmri_dataset(name='1slice', literal=False):
             d.sa['run_time_coords'] = d.sa.time_coords
             d.sa['time_coords'] = \
                     d.sa.time_coords + (len(dss) * len(d) * 2.5)
-            design = openfmri.get_bold_run_model(subj, task, run)
-            d.sa['targets'] = openfmri_model2target_attr(d.sa.run_time_coords,
-                                                         design,
-                                                         noinfolabel='rest')
+            events = openfmri.get_bold_run_model(subj, task, run)
+            d.sa['targets'] = events2sample_attr(events, d.sa.run_time_coords,
+                                                 noinfolabel='rest')
             dss.append(d)
         ds = vstack(dss)
         ds.a = dss[0].a

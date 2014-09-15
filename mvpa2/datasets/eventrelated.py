@@ -20,6 +20,51 @@ from mvpa2.mappers.flatten import FlattenMapper
 from mvpa2.mappers.boxcar import BoxcarMapper
 from mvpa2.base import warning, externals
 
+def events2sample_attr(events, time_coords, noinfolabel=None,
+                       onset_shift=0.0, condition_attr='condition'):
+    """Build a sample attribute array form an event list
+
+    Parameters
+    ----------
+    events : list
+      event specifications as consumed by eventrelated_dataset()
+    time_coords : array
+      sample timing information array
+      (typically taking from dataset.sa.time_coords)
+    noinfolabel : str
+      condition label to assign to all samples for which no stimulation
+      condition information is contained in the events. Example: 'rest'
+    onset_shift : float
+      All stimulation onset timestamps are shifted by the given amount
+      before being transformed into discrete sample indices.
+      Default: 0.0
+    condition_attr : str
+      Name of the key in the event dictionary whose value shall be used as
+      as attribute value for the associated sample(s).
+
+    Returns
+    -------
+    list
+      Sequence with literal conditions labels -- one item per element
+      in the ``time_coords`` array.
+    """
+    sa = [None] * len(time_coords)
+    for ev in events:
+        onset = ev['onset'] + onset_shift
+        # first sample ending after stimulus onset
+        onset_samp_idx = np.argwhere(time_coords[1:] > onset)[0,0]
+        # deselect all volume starting before the end of the stimulation
+        duration_mask = time_coords < (onset + ev['duration'])
+        duration_mask[:onset_samp_idx] = False
+        # assign all matching samples the condition ID
+        for samp_idx in np.argwhere(duration_mask).T[0]:
+            sa[samp_idx] = ev[condition_attr]
+    if not noinfolabel is None:
+        for i, a in enumerate(sa):
+            if a is None:
+                sa[i] = noinfolabel
+    return sa
+
 
 def find_events(**kwargs):
     """Detect changes in multiple synchronous sequences.
