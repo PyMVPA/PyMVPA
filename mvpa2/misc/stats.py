@@ -216,3 +216,95 @@ def _ttest_finish(df, t, alternative):
         t = np.asscalar(t)
 
     return t, prob
+
+
+def binomial_proportion_ci(n, X, alpha, meth='jeffreys'):
+    """Compute the confidence interval for a set of Bernoulli trials
+
+    Most, if not all, implemented methods assume statistical independence
+    of the Bernoulli trial outcomes. Computed confidence intervals
+    may be invalid if this condition is violated.
+
+    This is a re-implementation of Matlab code originally written by
+    Anderson Winkler and Tom Nichols.
+
+    Parameters
+    ==========
+    n : int
+      Number of trials
+    X : int
+      Number of successful trials.
+    alpha : float
+      Coverage of the confidence interval. For 95% CI, use alpha = 0.05.
+    meth : {'wald', 'wilson', 'agresti-coull', 'jeffreys', 'clopper-pearson', 'arc-sine', 'logit', 'anscombe'}
+      Interval estimation method.
+
+    Returns
+    =======
+    2-tuple
+      With the lower and upper bound for the confidence interval.
+
+    See also
+    ========
+    Brown LD, Cai TT, DasGupta AA. Interval estimation for a
+    binomial proportion. Statistical Science. 2001 16(2):101-133.
+
+    http://brainder.org/2012/04/21/confidence-intervals-for-bernoulli-trials/
+    """
+
+    from scipy import stats
+    from numpy import sqrt, sin, arcsin, log, exp
+
+    n = float(n)
+    X = float(X)
+    k  = stats.norm.ppf(1 - alpha / 2.)
+    p  = X / n          # Proportion of successes
+    q  = 1 - p          # Proportion of failures
+    Xt = X + (k**2) / 2 # Modified number of sucesses
+    nt = n + k**2       # Modified number of trials
+    pt = Xt / nt        # Modified proportion of successes
+    qt = 1 - pt         # Modified proportion of failures
+
+    # be tolerant
+    meth = meth.lower()
+    if meth == 'wald':
+        L = p - k * sqrt(p * q / n)
+        U = p + k * sqrt(p * q / n)
+    elif meth == 'wilson':
+        a = k * sqrt(n * p * q + (k**2) / 4) / nt
+        L = pt - a
+        U = pt + a
+    elif meth == 'agresti-coull':
+        a = k * sqrt(pt * qt / nt)
+        L = pt - a
+        U = pt + a
+    elif meth == 'jeffreys':
+        L = stats.beta.ppf(    alpha / 2, X + .5, n - X + .5)
+        U = stats.beta.ppf(1 - alpha / 2, X + .5, n - X + .5)
+    elif meth == 'clopper-pearson':
+        L = stats.beta.ppf(    alpha / 2, X,     n - X + 1)
+        U = stats.beta.ppf(1 - alpha / 2, X + 1, n - X)
+    elif meth == 'arc-sine':
+        pa = (X + 3 / 8) / (n + 3 / 4)
+        as_ = arcsin(sqrt(pa))
+        a = k / (2 * sqrt(n))
+        L  = sin(as_ - a)**2
+        U  = sin(as_ + a)**2
+    elif meth == 'logit':
+        lam  = log(X / (n - X))
+        sqVhat = sqrt(n / (X * (n - X)))
+        exlamL = exp(lam - k * sqVhat)
+        exlamU = exp(lam + k * sqVhat)
+        L    = exlamL / (1 + exlamL)
+        U    = exlamU / (1 + exlamU)
+    elif meth == 'anscombe':
+        lam  = log((X + .5) / (n - X + .5))
+        sqVhat = sqrt((n + 1) * (n + 2) / (n * (X + 1) * (n - X + 1)))
+        exlamL = exp(lam - k * sqVhat)
+        exlamU = exp(lam + k * sqVhat)
+        L    = exlamL / (1 + exlamL)
+        U    = exlamU / (1 + exlamU)
+    else:
+        raise ValueError('unknown confidence interval method')
+
+    return L, U
