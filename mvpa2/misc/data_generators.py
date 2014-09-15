@@ -344,7 +344,7 @@ def load_example_fmri_dataset(name='1slice', literal=False):
         subj = 1
         task = 1
         dss = []
-        for run in range(1,13):
+        for run in openfmri.get_bold_run_ids(subj, task):
             d = openfmri.get_bold_run_dataset(subj, task, run=run, flavor=name,
                                               chunks=run,
                                               mask=os.path.join(dspath, mask))
