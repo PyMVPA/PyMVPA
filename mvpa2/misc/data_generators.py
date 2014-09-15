@@ -333,38 +333,38 @@ def load_example_fmri_dataset(name='1slice', literal=False):
     from mvpa2.datasets.mri import fmri_dataset
     from mvpa2.misc.io import SampleAttributes
 
-    dspath, mask = {
-        '1slice': (pymvpa_dataroot, 'mask.nii.gz'),
-        '25mm': (os.path.join(
-            pymvpa_dataroot,'tutorial_data_25mm', 'data'), 'mask_brain.nii.gz')
-    }[name]
+    basedir = os.path.join(pymvpa_dataroot, 'openfmri')
+    mask = {'1slice': os.path.join(pymvpa_dataroot, 'mask.nii.gz'),
+            '25mm': os.path.join(basedir, 'sub001', 'masks', '25mm',
+                    'brain.nii.gz')}[name]
 
-    if name == '1slice' and literal:
-        openfmri = OpenFMRIDataset(os.path.join(pymvpa_dataroot, 'openfmri'))
+    if literal:
+        openfmri = OpenFMRIDataset(basedir)
         subj = 1
         task = 1
         dss = []
         for run in openfmri.get_bold_run_ids(subj, task):
             d = openfmri.get_bold_run_dataset(subj, task, run=run, flavor=name,
-                                              chunks=run,
-                                              mask=os.path.join(dspath, mask))
+                    chunks=run-1, mask=mask)
+            # re-imagine the global time_coords of a concatenated time series
+            d.sa['run_time_coords'] = d.sa.time_coords
+            d.sa['time_coords'] = \
+                    d.sa.time_coords + (len(dss) * len(d) * 2.5)
             design = openfmri.get_bold_run_model(subj, task, run)
-            d.sa['targets'] = openfmri_model2target_attr(d.sa.time_coords,
+            d.sa['targets'] = openfmri_model2target_attr(d.sa.run_time_coords,
                                                          design,
                                                          noinfolabel='rest')
             dss.append(d)
         ds = vstack(dss)
-        ds.a['mapper'] = dss[0].a.mapper
-        return ds
-
-    if literal:
-        attr = SampleAttributes(os.path.join(dspath, 'attributes_literal.txt'))
+        ds.a = dss[0].a
     else:
-        attr = SampleAttributes(os.path.join(dspath, 'attributes.txt'))
-
-        ds = fmri_dataset(samples=os.path.join(dspath, 'bold.nii.gz'),
+        if name == '25mm':
+            raise ValueError("The 25mm dataset is no longer available with "
+                             "numerical labels")
+        attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
+        ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
                           targets=attr.targets, chunks=attr.chunks,
-                          mask=os.path.join(dspath, mask))
+                          mask=mask)
 
     return ds
 
