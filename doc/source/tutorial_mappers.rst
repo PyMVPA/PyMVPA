@@ -213,14 +213,14 @@ More structure, less duplication of work
 
 Although one could craft individual attribute files for each fMRI scan, doing
 so would be suboptimal. Typically, stimulation is not synchronous with
-fMRI volume sampling rate, hence timeing information would be lost. Moreover,
-information on stimulation, or experiment design in general, is mosty likely
+fMRI volume sampling rate, hence timing information would be lost. Moreover,
+information on stimulation, or experiment design in general, is most likely
 available already in different form or shape.
 
 To ease working with a broad range of datasets, PyMVPA comes with dedicated
 support for datasets following the specifications used by the openfmri.org_
-data sharing platform. These are simple guidelines for file name conventions
-and design specification that can easily be adopted for your own data.
+data-sharing platform. These are simple guidelines for file name conventions
+and design specification that can be easily adopted for your own data.
 
 .. _openfmri.org: http://www.openfmri.org
 
@@ -228,7 +228,9 @@ and design specification that can easily be adopted for your own data.
 
   The tutorial data you are working with is following the openfmri.org
   scheme. Open the dataset folder and inspect the structure and content
-  of the files with meta data.
+  of the files with meta data. Notice, that it is possible to run a standard
+  analysis using, for example, FSL's FEAT directly on this data in unmodified
+  form.
 
 Accessing such a dataset is done via a handler that simply needs to know
 where the dataset is stored on disk. This handler offers convenient access
@@ -241,7 +243,7 @@ and other properties.
 >>> dhandle.get_task_descriptions()
 {1: 'object viewing'}
 
-More importantly it supports access to information on experiment design:
+More importantly, it supports access to information on experiment design:
 
 >>> model = 1
 >>> subj = 1
@@ -252,45 +254,95 @@ More importantly it supports access to information on experiment design:
 {'task': 'object viewing', 'run': 1, 'onset': 157.5, 'intensity': 1, 'duration': 22.5, 'condition': 'house'}
 {'task': 'object viewing', 'run': 1, 'onset': 195.0, 'intensity': 1, 'duration': 22.5, 'condition': 'scrambledpix'}
 
-As you can see, the stimulus timing is available in a standard Python dictionary
-for each event. This includes onset and duration of the stimulation, as well
-as literal condition labels, and task descriptions.
+As you can see, the stimulus design information is available in a list of
+standard Python dictionaries for each event. This includes onset and duration
+of the stimulation, as well as literal condition labels, and task descriptions.
 
-Access to the actual BOLD fMRI data is equally simple:
+With a utility function it is straightforward to convert such an event list
+into a sample attribute array like the one we have loaded from a file before.
+``events2sample_attr()`` uses the sample acquisition time information stored in
+the dataset's ``time_coords`` sample attribute to match stimulation events to
+data samples.
+
+>>> targets = events2sample_attr(events, fds.sa.time_coords,
+...                              noinfolabel='rest', onset_shift=0.0)
+>>> print np.unique([attr.targets[i] == targets[i] for i in range(len(targets))])
+[ True]
+>>> print np.unique(attr.targets)
+['bottle' 'cat' 'chair' 'face' 'house' 'rest' 'scissors' 'scrambledpix'
+ 'shoe']
+ >>> print len(fds), len(targets)
+ 121 121
+
+Note, that the conversion of stimulation events to attributes arrays
+is a rather crude way of labeling fMRI data that only works well with
+block-design-like experiments. We will see other approaches later in this
+tutorial.
+
+In addition to experiment design information, the dataset handler also offers
+convenient access to the actual BOLD fMRI data:
 
 >>> task = 1
 >>> fds = dhandle.get_bold_run_dataset(subj, task, run, mask=mask_fname)
 >>> print fds
-Dataset: 121x577@int16, <sa: run,subj,task,time_coords,time_indices>, <fa: voxel_indices>, <a: imghdr,imgtype,mapper,voxel_dim,voxel_eldim>>
+<Dataset: 121x577@int16, <sa: run,subj,task,time_coords,time_indices>, <fa: voxel_indices>, <a: imghdr,imgtype,mapper,voxel_dim,voxel_eldim>>
 
-The method ``get_bold_run_dataset()`` work the same way as ``fmri_dataset()``,
-and also supports the same arguments. However, instead of giving a custom
-filename BOLD data is identified by subject, task, and acquisition run ID.
+The method ``get_bold_run_dataset()`` works the same way as ``fmri_dataset()``,
+which we have seen before, and also supports the same arguments. However,
+instead of giving a custom filename, BOLD data is identified by subject, task,
+and acquisition run IDs.
 
-us information
+Multi-session data
+~~~~~~~~~~~~~~~~~~
+
+Many fMRI experiments involve multiple runs. Loading such data is best done
+in a loop. The following code snippet loads all available runs for the object
+viewing task from our example subject in the dataset.
+
+>>> task = 1   # object viewing task
+>>> model = 1  # image stimulus category model
+>>> subj = 1
+>>> run_datasets = []
+>>> for run_id in dhandle.get_task_bold_run_ids(task)[subj]:
+...     # load design info for this run
+...     run_events = dhandle.get_bold_run_model(model, subj, run_id)
+...     # load BOLD data for this run (with masking); add 0-based chunk ID
+...     run_ds = dhandle.get_bold_run_dataset(subj, task, run_id,
+...                                           chunks=run_id -1,
+...                                           mask=mask_fname)
+...     # convert event info into a sample attribute and assign as 'targets'
+...     run_ds.sa['targets'] = events2sample_attr(
+...                 run_events, run_ds.sa.time_coords, noinfolabel='rest')
+...     # additional time series preprocessing can go here
+...     run_datasets.append(run_ds)
+>>> # this is PyMVPA's vstack() for merging samples from multiple datasets
+>>> # a=0 indicates that the dataset attributes of the first run should be used
+>>> # for the merged dataset
+>>> fds = vstack(run_datasets, a=0)
+
 Now it is a good time to obtain a `~mvpa2.datasets.miscfx.summary()` overview
 of the dataset: basic statistics, balance in number of samples among targets
 per chunk, etc.:
 
 >>> print fds.summary()
-Dataset: 1452x577@int16, <sa: chunks,targets,time_coords,time_indices>, <fa: voxel_indices>, <a: imghdr,imgtype,mapper,voxel_dim,voxel_eldim>
+Dataset: 1452x577@int16, <sa: chunks,run,subj,targets,task,time_coords,time_indices>, <fa: voxel_indices>, <a: imghdr,imgtype,mapper,voxel_dim,voxel_eldim>
 stats: mean=1656.47 std=342.034 var=116988 min=352 max=2805
 <BLANKLINE>
 Counts of targets in each chunk:
   chunks\targets bottle cat chair face house rest scissors scrambledpix shoe
                    ---  ---  ---   ---  ---   ---    ---        ---      ---
-       0.0          9    9    9     9    9    49      9          9        9
-       1.0          9    9    9     9    9    49      9          9        9
-       2.0          9    9    9     9    9    49      9          9        9
-       3.0          9    9    9     9    9    49      9          9        9
-       4.0          9    9    9     9    9    49      9          9        9
-       5.0          9    9    9     9    9    49      9          9        9
-       6.0          9    9    9     9    9    49      9          9        9
-       7.0          9    9    9     9    9    49      9          9        9
-       8.0          9    9    9     9    9    49      9          9        9
-       9.0          9    9    9     9    9    49      9          9        9
-      10.0          9    9    9     9    9    49      9          9        9
-      11.0          9    9    9     9    9    49      9          9        9
+        0           9    9    9     9    9    49      9          9        9
+        1           9    9    9     9    9    49      9          9        9
+        2           9    9    9     9    9    49      9          9        9
+        3           9    9    9     9    9    49      9          9        9
+        4           9    9    9     9    9    49      9          9        9
+        5           9    9    9     9    9    49      9          9        9
+        6           9    9    9     9    9    49      9          9        9
+        7           9    9    9     9    9    49      9          9        9
+        8           9    9    9     9    9    49      9          9        9
+        9           9    9    9     9    9    49      9          9        9
+       10           9    9    9     9    9    49      9          9        9
+       11           9    9    9     9    9    49      9          9        9
 <BLANKLINE>
 Summary for targets across chunks
     targets  mean std min max #chunks
@@ -480,14 +532,10 @@ since this is also a mapper, a new dataset with mean samples is returned:
 ['bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe'
  'bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe']
 >>> print fds.sa.chunks
-['0.0+2.0+4.0+6.0+8.0+10.0' '0.0+2.0+4.0+6.0+8.0+10.0'
- '0.0+2.0+4.0+6.0+8.0+10.0' '0.0+2.0+4.0+6.0+8.0+10.0'
- '0.0+2.0+4.0+6.0+8.0+10.0' '0.0+2.0+4.0+6.0+8.0+10.0'
- '0.0+2.0+4.0+6.0+8.0+10.0' '0.0+2.0+4.0+6.0+8.0+10.0'
- '1.0+3.0+5.0+7.0+9.0+11.0' '1.0+3.0+5.0+7.0+9.0+11.0'
- '1.0+3.0+5.0+7.0+9.0+11.0' '1.0+3.0+5.0+7.0+9.0+11.0'
- '1.0+3.0+5.0+7.0+9.0+11.0' '1.0+3.0+5.0+7.0+9.0+11.0'
- '1.0+3.0+5.0+7.0+9.0+11.0' '1.0+3.0+5.0+7.0+9.0+11.0']
+['0+2+4+6+8+10' '0+2+4+6+8+10' '0+2+4+6+8+10' '0+2+4+6+8+10' '0+2+4+6+8+10'
+ '0+2+4+6+8+10' '0+2+4+6+8+10' '0+2+4+6+8+10' '1+3+5+7+9+11' '1+3+5+7+9+11'
+ '1+3+5+7+9+11' '1+3+5+7+9+11' '1+3+5+7+9+11' '1+3+5+7+9+11' '1+3+5+7+9+11'
+ '1+3+5+7+9+11']
 
 Here we go! We now have a fully-preprocessed dataset: masked, detrended, normalized,
 with one sample per stimulus condition that is an average for odd and even runs
