@@ -29,7 +29,6 @@ and perform volume averaging to get a single sample per stimulus category and
 original experiment session.
 
 >>> from mvpa2.tutorial_suite import *
->>> # alt: `ds = load_tutorial_results('ds_haxby2001_blkavg_brain')`
 >>> ds = get_raw_haxby2001_data(roi='brain')
 >>> print ds.shape
 (1452, 39912)
@@ -281,7 +280,6 @@ As you can see, this even works for our meta-classifier. And again this
 analyzer is a :term:`processing object` that returns the desired sensitivity
 when called with a dataset.
 
->>> # alt: `sens = load_tutorial_results('res_haxby2001_sens_5pANOVA')`
 >>> sens = sensana(ds)
 >>> type(sens)
 <class 'mvpa2.datasets.base.Dataset'>
@@ -325,7 +323,6 @@ that takes a basic measure, adds a processing step to it and behaves like a
 measure itself. The meta-measure we want to use is
 :class:`~mvpa2.measures.base.RepeatedMeasure`.
 
->>> # alt: `sens = load_tutorial_results('res_haxby2001_splitsens_5pANOVA')`
 >>> sensana = fclf.get_sensitivity_analyzer(postproc=maxofabs_sample())
 >>> cv_sensana = RepeatedMeasure(sensana,
 ...                              ChainNode((NFoldPartitioner(),

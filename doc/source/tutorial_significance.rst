@@ -735,7 +735,6 @@ To allow for easy inspection of dataset to prevent such obvious confounds,
 dataset:
 
 >>> from mvpa2.tutorial_suite import *
->>> # alt: `ds = load_tutorial_results('ds_haxby2001')`
 >>> ds = get_haxby2001_data(roi='vt')
 >>> print ds.summary()
 Dataset: 16x577@float64, <sa: chunks,runtype,targets,time_coords,time_indices>, <fa: voxel_indices>, <a: imghdr,imgtype,mapper,voxel_dim,voxel_eldim>

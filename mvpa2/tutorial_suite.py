@@ -95,8 +95,3 @@ def get_haxby2001_data_alternative(path=None, roi='vt', grp_avg=True):
 def get_haxby2001_clf():
     clf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
     return clf
-
-
-def load_tutorial_results(name, path=os.path.join(tutorial_data_path,
-                                                  'results')):
-    return h5load(os.path.join(path, name + '.hdf5'))
