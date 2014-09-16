@@ -369,7 +369,7 @@ def load_example_fmri_dataset(name='1slice', literal=False):
 
 def load_datadb_tutorial_data(path=os.path.join(
       pymvpa_datadbroot, 'tutorial_data', 'tutorial_data', 'data'),
-    roi='brain'):
+    roi='brain', add_fa=None):
     """Loads the block-design demo dataset from PyMVPA dataset DB.
 
     Parameters
@@ -384,6 +384,9 @@ def load_datadb_tutorial_data(path=os.path.join(
       provided it may contain int values that a processed as explained
       before, but the union of a ROIs is taken to produce the final mask.
       If None, no masking is performed.
+    add_fa : dict
+      Passed on to the dataset creator function (see fmri_dataset() for
+      more information).
     """
     import nibabel as nb
     from mvpa2.datasets.openfmri import OpenFMRIDataset
@@ -411,6 +414,8 @@ def load_datadb_tutorial_data(path=os.path.join(
             tmpmask = np.logical_or(tmpmask, nimg.get_data() == r)
         mask = nb.Nifti1Image(tmpmask.astype(int), nimg.get_affine(),
                               nimg.get_header())
+    elif isinstance(roi, nb.Nifti1Image):
+        mask=roi
     else:
         raise ValueError("Got something as mask that I cannot handle.")
     run_datasets = []
@@ -420,7 +425,8 @@ def load_datadb_tutorial_data(path=os.path.join(
         # load BOLD data for this run (with masking); add 0-based chunk ID
         run_ds = dhandle.get_bold_run_dataset(subj, task, run_id,
                                               chunks=run_id -1,
-                                              mask=mask)
+                                              mask=mask,
+                                              add_fa=add_fa)
         # convert event info into a sample attribute and assign as 'targets'
         run_ds.sa['targets'] = events2sample_attr(
                     run_events, run_ds.sa.time_coords, noinfolabel='rest')
