@@ -78,9 +78,7 @@ def test_fmridataset():
     data = maskimg.get_data().copy()
     data[data>0] = np.arange(1, np.sum(data) + 1)
     maskimg = nibabel.Nifti1Image(data, None, maskimg.get_header())
-    attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
     ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'bold.nii.gz'),
-                      targets=attr.targets, chunks=attr.chunks,
                       mask=maskimg,
                       sprefix='subj1',
                       add_fa={'myintmask': maskimg})
@@ -88,7 +86,7 @@ def test_fmridataset():
     assert_equal(len(ds), 1452)
     assert_true(ds.nfeatures, 530)
     assert_array_equal(sorted(ds.sa.keys()),
-            ['chunks', 'targets', 'time_coords', 'time_indices'])
+            ['time_coords', 'time_indices'])
     assert_array_equal(sorted(ds.fa.keys()),
             ['myintmask', 'subj1_indices'])
     assert_array_equal(sorted(ds.a.keys()),

@@ -44,17 +44,11 @@ arguments. In this case we are loading a thresholded zstat-map of a category
 selectivity contrast for voxels ventral temporal cortex."""
 
 # data path
-datapath = os.path.join(pymvpa_datadbroot,
-                        'tutorial_data', 'tutorial_data', 'data')
-# source of class targets and chunks definitions
-attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
-
-dataset = fmri_dataset(
-                samples=os.path.join(datapath, 'bold.nii.gz'),
-                targets=attr.targets,
-                chunks=attr.chunks,
-                mask=os.path.join(datapath, 'mask_brain.nii.gz'),
-                add_fa={'vt_thr_glm': os.path.join(datapath, 'mask_vt.nii.gz')})
+datapath = os.path.join(mvpa2.cfg.get('location', 'tutorial data'), 'data')
+dataset = load_datadb_tutorial_data(
+        roi='brain',
+        add_fa={'vt_thr_glm': os.path.join(datapath, 'sub001', 'masks',
+                                                     'orig', 'vt.nii.gz')})
 
 """The dataset is now loaded and contains all brain voxels as features, and all
 volumes as samples. To precondition this data for the intended analysis we have
@@ -122,9 +116,9 @@ to the processing object, and storing the result."""
 
 # setup plotting parameters (not essential for the analysis itself)
 plot_args = {
-    'background' : os.path.join(datapath, 'anat.nii.gz'),
-    'background_mask' : os.path.join(datapath, 'mask_brain.nii.gz'),
-    'overlay_mask' : os.path.join(datapath, 'mask_vt.nii.gz'),
+    'background' : os.path.join(datapath, 'sub001', 'anatomy', 'highres001.nii.gz'),
+    'background_mask' : os.path.join(datapath, 'sub001', 'masks', 'orig', 'brain.nii.gz'),
+    'overlay_mask' : os.path.join(datapath, 'sub001', 'masks', 'orig', 'vt.nii.gz'),
     'do_stretch_colors' : False,
     'cmap_bg' : 'gray',
     'cmap_overlay' : 'autumn', # YlOrRd_r # pl.cm.autumn
