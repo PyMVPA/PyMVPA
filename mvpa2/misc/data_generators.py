@@ -386,19 +386,22 @@ def load_datadb_tutorial_data(path=os.path.join(
       If None, no masking is performed.
     """
     import nibabel as nb
-    from mvpa2.datasets.mri import fmri_dataset
-    from mvpa2.misc.io import SampleAttributes
+    from mvpa2.datasets.openfmri import OpenFMRIDataset
+    from mvpa2.datasets.eventrelated import events2sample_attr
+    task = model = subj = 1
+    dhandle = OpenFMRIDataset(path)
+    maskpath = os.path.join(path, 'sub001', 'masks', 'orig')
     if roi is None:
         mask = None
     elif isinstance(roi, str):
-        mask = os.path.join(path, 'mask_' + roi + '.nii.gz')
+        mask = os.path.join(maskpath, roi + '.nii.gz')
     elif isinstance(roi, int):
-        nimg = nb.load(os.path.join(path, 'mask_hoc.nii.gz'))
+        nimg = nb.load(os.path.join(maskpath, 'hoc.nii.gz'))
         tmpmask = nimg.get_data() == roi
         mask = nb.Nifti1Image(tmpmask.astype(int), nimg.get_affine(),
                               nimg.get_header())
     elif isinstance(roi, tuple) or isinstance(roi, list):
-        nimg = nb.load(os.path.join(path, 'mask_hoc.nii.gz'))
+        nimg = nb.load(os.path.join(maskpath, 'hoc.nii.gz'))
         if externals.versions['nibabel'] >= '1.2':
             img_shape = nimg.shape
         else:
@@ -410,10 +413,23 @@ def load_datadb_tutorial_data(path=os.path.join(
                               nimg.get_header())
     else:
         raise ValueError("Got something as mask that I cannot handle.")
-    attr = SampleAttributes(os.path.join(path, 'attributes.txt'))
-    ds = fmri_dataset(samples=os.path.join(path, 'bold.nii.gz'),
-                      targets=attr.targets, chunks=attr.chunks,
-                      mask=mask)
+    run_datasets = []
+    for run_id in dhandle.get_task_bold_run_ids(task)[subj]:
+        # load design info for this run
+        run_events = dhandle.get_bold_run_model(model, subj, run_id)
+        # load BOLD data for this run (with masking); add 0-based chunk ID
+        run_ds = dhandle.get_bold_run_dataset(subj, task, run_id,
+                                              chunks=run_id -1,
+                                              mask=mask)
+        # convert event info into a sample attribute and assign as 'targets'
+        run_ds.sa['targets'] = events2sample_attr(
+                    run_events, run_ds.sa.time_coords, noinfolabel='rest')
+        # additional time series preprocessing can go here
+        run_datasets.append(run_ds)
+    # this is PyMVPA's vstack() for merging samples from multiple datasets
+    # a=0 indicates that the dataset attributes of the first run should be used
+    # for the merged dataset
+    ds = vstack(run_datasets, a=0)
     return ds
 
 
