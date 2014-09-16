@@ -53,8 +53,8 @@ Options:
   --clean-workdir       delete tutorial session data on exit
   --overwrite-notebook  overwrite existing notebook files in the tutorial
                         session directory
-  --tutorial-data-path  path to the tutorial data (need to contain
-                        'data' and 'results' directories)
+  --tutorial-data-path  path to the tutorial data (need to contain the
+                        'data' directory)
   --tutorial-notebooks-path
                         path to the tutorial notebooks
 """ % sys.argv[0]
@@ -114,8 +114,12 @@ def main():
                   % (dir, dst)
             continue
         if not os.path.exists(src):
-            print "Cannot find tutorial data at '%s'" % src
-            sys.exit(1)
+            # only the data dir is absolutely critical
+            if dir == 'data':
+                print "Cannot find tutorial data at '%s'" % src
+                sys.exit(1)
+            else:
+                continue
         if hasattr(os, 'symlink'):
             os.symlink(src, dst)
         else:

@@ -253,7 +253,6 @@ time series dataset into event-related samples. PyMVPA offers
 perform this conversion. Let's just do it, it only needs the original
 dataset and our list of events.
 
->>> # alt: `evds = load_tutorial_results('ds_haxby2001_blkev_facehouse')`
 >>> evds = eventrelated_dataset(ds, events=events)
 >>> len(evds) == len(events)
 True
