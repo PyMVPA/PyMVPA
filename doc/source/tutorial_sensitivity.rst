@@ -91,8 +91,8 @@ That was surprisingly quick, wasn't it? But was it any good?
 26.0
 >>> print cvte.ca.stats.matrix
 [[1 1 2 3 0 1 1 1]
- [1 2 2 0 2 2 3 1]
- [5 3 3 0 4 4 0 2]
+ [1 2 2 0 2 3 3 1]
+ [5 3 3 0 4 3 0 2]
  [3 2 0 5 0 0 0 1]
  [0 3 1 0 3 2 0 0]
  [0 0 0 0 0 0 1 0]
@@ -261,7 +261,7 @@ feature selection to retain more.
 ...                        enable_ca=['stats'])
 >>> results = cvte(ds)
 >>> print np.round(cvte.ca.stats.stats['ACC%'], 1)
-70.8
+69.8
 
 A drop of 8% in accuracy on about 4 times the number of features. This time
 we asked for the top 5% of F-scores.
@@ -370,14 +370,14 @@ processing pipeline a bit.
 >>> print sens.shape
 (336, 39912)
 >>> print cv_sensana.clf.ca.stats.matrix
-[[ 5  0  3  0  0  3  0  1]
+[[ 5  0  3  0  0  3  0  2]
  [ 0  9  0  0  0  0  0  0]
  [ 0  2  4  0  0  1  0  0]
  [ 2  1  0 12  0  0  0  0]
  [ 0  0  0  0 12  0  0  0]
  [ 3  0  4  0  0  6  2  1]
  [ 0  0  1  0  0  0 10  0]
- [ 2  0  0  0  0  2  0 10]]
+ [ 2  0  0  0  0  2  0  9]]
 
 I guess that deserves some explanation. We wrap our
 :class:`~mvpa2.clfs.meta.FeatureSelectionClassifier` with a new thing, a

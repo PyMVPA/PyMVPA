@@ -170,7 +170,8 @@ volume in the NIfTI image.
 
 >>> # directory that contains the data files
 >>> datapath = os.path.join(tutorial_data_path, 'data')
->>> attr_fname = os.path.join(datapath, 'sub001', 'BOLD', 'task001_run001', 'attributes.txt')
+>>> attr_fname = os.path.join(datapath, 'sub001', 'BOLD', 'task001_run001',
+...                           'attributes.txt')
 >>> attr = SampleAttributes(attr_fname)
 >>> len(attr.targets)
 121
