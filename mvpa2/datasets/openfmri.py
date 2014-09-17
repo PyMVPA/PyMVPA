@@ -36,6 +36,19 @@ def _sub2id(val):
 def _taskrun(task, run):
     return '%s_%s' % (_prefix('task', task), _prefix('run', run))
 
+def _id2int(id_, strip=None):
+    if strip is None and isinstance(id_, basestring):
+        for s in ('sub', 'task', 'model', 'run', 'cond'):
+            if id_.startswith(s):
+                id_ = id_[len(s):]
+                break
+    else:
+        id_ = id_[strip:]
+    try:
+        id_ = int(id_)
+    except:
+        pass
+    return id_
 
 class OpenFMRIDataset(object):
     """Handler for datasets following the openfmri.org layout specifications
@@ -65,12 +78,7 @@ class OpenFMRIDataset(object):
         for item in os.listdir(self._basedir):
             if item.startswith('sub') \
                and os.path.isdir(_opj(self._basedir, item)):
-                id_ = item[3:]
-                try:
-                    id_ = int(id_)
-                except:
-                    pass
-                ids.append(id_)
+                ids.append(_id2int(item))
         return sorted(ids)
 
     def get_scan_properties(self):
@@ -97,9 +105,7 @@ class OpenFMRIDataset(object):
             for line in open(fname, 'r'):
                 key = line.split()[0]
                 value = line[len(key):].strip()
-                if key.startswith('task'):
-                    key = key[4:]
-                key = int(key)
+                key = _id2int(key)
                 tasks[key] = value
         return tasks
 
@@ -124,12 +130,7 @@ class OpenFMRIDataset(object):
         for item in os.listdir(bold_dir):
             if item.startswith('%s_' % (task_prefix,)) \
                and os.path.isdir(_opj(bold_dir, item)):
-                id_ = item[len(task_prefix) + 4:]
-                try:
-                    id_ = int(id_)
-                except:
-                    pass
-                ids.append(id_)
+                ids.append(_id2int(item, strip=len(task_prefix) + 4))
         return sorted(ids)
 
     def get_task_bold_run_ids(self, task):
@@ -216,10 +217,10 @@ class OpenFMRIDataset(object):
 
         Parameters
         ----------
+        model : int
+          Model identifier.
         subj : int
           Subject identifier.
-        task : int
-          Task ID (see task_key.txt)
         run : int
           Run ID.
 
