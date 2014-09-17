@@ -276,4 +276,75 @@ class OpenFMRIDataset(object):
                 events.append(evdict)
         return events
 
-# XXX load model info for HRF model
+    def get_model_bold_dataset(self, model, subj,
+                          preprocfx=None, modelfx=None, stack=True,
+                          flavor=None, mask=None, add_fa=None,
+                          **kwargs):
+        """Build a PyMVPA dataset for a model defined in the OpenFMRI dataset
+
+        Parameters
+        ----------
+        model : int
+          Model ID.
+        subj : int or str or list
+          Integer, or string ID of the subject whose data shall be considered.
+          Alternatively, a list of IDs can be given and data from all matching
+          subjects will be loaded at once.
+        preprocfx : callable or None
+          If not None, this callable will be called with each run bold dataset
+          as an argument before ``modelfx`` is executed. The callable must
+          return a dataset.
+        modelfx : callable or None
+          This callable will be called with each run dataset and the respective
+          event list for each run as arguments, In addition all additional
+          **kwargs of this method will be passed on to this callable. The
+          callable must return a dataset. If None, ``conditionlabeled_dataset``
+          will be used as a default callable.
+        stack : boolean
+          Flag whether to stack all run datasets into a single dataset, or whether
+          to return a list of datasets.
+        flavor
+          See get_bold_run_dataset() documentation
+        mask
+          See fmri_dataset() documentation.
+        add_fa
+          See fmri_dataset() documentation.
+          BOLD data flavor to access (see dataset description)
+        Returns
+        -------
+        Dataset or list
+          Depending on the ``stack`` argument either a single dataset or a list
+          of datasets for all subject/task/run combinations relevant to the model
+          will be returned. In the stacked case the dataset attributes of the
+          returned dataset are taken from the first run dataset, and are assumed
+          to be identical for all of them.
+        """
+        if modelfx is None:
+            # loading a model dataset without actually considering the model
+            # probably makes little sense, so at least create an attribute
+            from mvpa2.datasets.eventrelated import conditionlabeled_dataset
+            modelfx=conditionlabeled_dataset
+        conds = self.get_model_conditions(model)
+        # what tasks do we need to consider for this model
+        tasks = np.unique([c['task'] for c in conds])
+        if isinstance(subj, int) or isinstance(subj, basestring):
+            subj = [subj]
+        dss = []
+        for sub in subj:
+            for task in tasks:
+                for run in self.get_bold_run_ids(sub, task):
+                    events = self.get_bold_run_model(model, task, run)
+                    if not len(events):
+                        # nothing in this run for the given model
+                        # it could be argued whether we'd still want this data loaded
+                        # XXX maybe a flag?
+                        continue
+                    d = self.get_bold_run_dataset(sub, task, run=run, flavor=flavor,
+                            chunks=run-1, mask=mask, add_fa=add_fa)
+                    if not preprocfx is None:
+                        d = preprocfx(d)
+                    d = modelfx(d, events, **kwargs)
+                    dss.append(d)
+        if stack:
+            dss = vstack(dss, a=0)
+        return dss
