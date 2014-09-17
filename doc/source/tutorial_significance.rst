@@ -737,14 +737,14 @@ dataset:
 >>> from mvpa2.tutorial_suite import *
 >>> ds = get_haxby2001_data(roi='vt')
 >>> print ds.summary()
-Dataset: 16x577@float64, <sa: chunks,runtype,targets,time_coords,time_indices>, <fa: voxel_indices>, <a: imghdr,imgtype,mapper,voxel_dim,voxel_eldim>
+Dataset: 16x577@float64, <sa: chunks,run,runtype,subj,targets,task,time_coords,time_indices>, <fa: voxel_indices>, <a: imghdr,imgtype,mapper,voxel_dim,voxel_eldim>
 stats: mean=11.5788 std=13.7772 var=189.811 min=-49.5554 max=97.292
 <BLANKLINE>
 Counts of targets in each chunk:
-      chunks\targets     bottle cat chair face house scissors scrambledpix shoe
-                           ---  ---  ---   ---  ---     ---        ---      ---
-0.0+2.0+4.0+6.0+8.0+10.0    1    1    1     1    1       1          1        1
-1.0+3.0+5.0+7.0+9.0+11.0    1    1    1     1    1       1          1        1
+  chunks\targets bottle cat chair face house scissors scrambledpix shoe
+                   ---  ---  ---   ---  ---     ---        ---      ---
+  0+2+4+6+8+10      1    1    1     1    1       1          1        1
+  1+3+5+7+9+11      1    1    1     1    1       1          1        1
 <BLANKLINE>
 Summary for targets across chunks
     targets  mean std min max #chunks
@@ -758,9 +758,9 @@ scrambledpix   1   0   1   1     2
     shoe       1   0   1   1     2
 <BLANKLINE>
 Summary for chunks across targets
-          chunks         mean std min max #targets
-0.0+2.0+4.0+6.0+8.0+10.0   1   0   1   1      8
-1.0+3.0+5.0+7.0+9.0+11.0   1   0   1   1      8
+    chunks   mean std min max #targets
+0+2+4+6+8+10   1   0   1   1      8
+1+3+5+7+9+11   1   0   1   1      8
 Sequence statistics for 16 entries from set ['bottle', 'cat', 'chair', 'face', 'house', 'scissors', 'scrambledpix', 'shoe']
 Counter-balance table for orders up to 2:
 Targets/Order O1                |  O2                |
@@ -785,7 +785,7 @@ informative to look at the original sequence.  To do so avoiding loading a
 complete dataset we would simply provide the stimuli sequence to
 :class:`~mvpa2.clfs.miscfx.SequenceStats` for the analysis:
 
->>> attributes_filename = os.path.join(tutorial_data_path, 'data', 'attributes.txt')
+>>> attributes_filename = os.path.join(pymvpa_dataroot, 'attributes_literal.txt')
 >>> attr = SampleAttributes(attributes_filename)
 >>> targets = np.array(attr.targets)
 >>> ss = SequenceStats(attr.targets)
