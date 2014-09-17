@@ -20,6 +20,37 @@ from mvpa2.mappers.flatten import FlattenMapper
 from mvpa2.mappers.boxcar import BoxcarMapper
 from mvpa2.base import warning, externals
 
+def conditionlabeled_dataset(ds, events, label_attr='targets', time_attr='time_coords',
+                             **kwargs):
+    """Convert events into a condition label attribute of a dataset
+
+    This function is a convenience front-end to ``events2sample_attr()`` and supports
+    the same arguments.
+
+    Parameters
+    ----------
+    ds : dataset
+      To be labeled dataset.
+    events : list
+      List of dictionaries with event definitions.
+    label_attr : str
+      Name of the sample attribute with the conditions labels in the output dataset.
+      Note that any existing attribute with this name will be overwritten.
+    time_attr : str
+      Name of the sample attribute with the time stamps (time coordinate) for all data
+      samples. This information will be used to match samples with conditions
+    **kwargs
+      All other arguments will be passed on to ``events2sample_attr()``
+
+    Returns
+    -------
+    Dataset
+      with condition label attribute
+    """
+    attr = events2sample_attr(events, ds.sa[time_attr].value, **kwargs)
+    ds.sa[label_attr] = attr
+    return ds
+
 def events2sample_attr(events, time_coords, noinfolabel=None,
                        onset_shift=0.0, condition_attr='condition'):
     """Build a sample attribute array form an event list
