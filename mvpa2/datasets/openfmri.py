@@ -212,6 +212,20 @@ class OpenFMRIDataset(object):
             ds.sa[name] = np.repeat(var, len(ds))
         return ds
 
+    def get_model_conditions(self, model):
+        def_fname = _opj(self._basedir, 'models', _model2id(model),
+                         'condition_key.txt')
+        def_data = np.recfromtxt(def_fname)
+        conds = []
+        # load model meta data
+        for dd in def_data:
+            cond = {}
+            cond['task'] = _id2int(dd[0])
+            cond['id'] = _id2int(dd[1])
+            cond['name'] = dd[2]
+            conds.append(cond)
+        return conds
+
     def get_bold_run_model(self, model, subj, run):
         """Returns the stimulation design for a particular subject/task/run.
 
@@ -233,34 +247,26 @@ class OpenFMRIDataset(object):
           'onset', 'duration', 'intensity'.
         """
 
-        def_fname = _opj(self._basedir, 'models', _model2id(model),
-                         'condition_key.txt')
-        def_data = np.recfromtxt(def_fname)
-        defs = {}
+        conditions = self.get_model_conditions(model)
         events = []
-        # load model meta data
-        for dd in def_data:
-            task = defs.setdefault(int(dd[0][4:]), {})
-            cond = task.setdefault(int(dd[1][4:]), {})
-            cond['name'] = dd[2]
         ev_fields = ('onset', 'duration', 'intensity')
         # get onset info for specific subject/task/run combo
-        for task_id, task_dict in defs.iteritems():
+        for cond in conditions:
+            task_id = cond['task']
             task_descr = self.get_task_descriptions()[task_id]
-            for cond_id, cond_dict in task_dict.iteritems():
-                stim_fname = _opj(self._basedir, _sub2id(subj), 'model',
-                                  _model2id(model), 'onsets',
-                                  _taskrun(task_id, run),
-                                  '%s.txt' % _cond2id(cond_id))
-                evdata = np.atleast_1d(
-                           np.recfromtxt(stim_fname, names=ev_fields))
-                for ev in evdata:
-                    evdict = dict(zip(ev_fields,
-                                      [ev[field] for field in ev_fields]))
-                    evdict['task'] = task_descr
-                    evdict['condition'] = cond_dict['name']
-                    evdict['run'] = run
-                    events.append(evdict)
+            stim_fname = _opj(self._basedir, _sub2id(subj), 'model',
+                              _model2id(model), 'onsets',
+                              _taskrun(task_id, run),
+                              '%s.txt' % _cond2id(cond['id']))
+            evdata = np.atleast_1d(
+                       np.recfromtxt(stim_fname, names=ev_fields))
+            for ev in evdata:
+                evdict = dict(zip(ev_fields,
+                                  [ev[field] for field in ev_fields]))
+                evdict['task'] = task_descr
+                evdict['condition'] = cond['name']
+                evdict['run'] = run
+                events.append(evdict)
         return events
 
 # XXX load model info for HRF model
