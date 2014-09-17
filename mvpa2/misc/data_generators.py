@@ -339,23 +339,17 @@ def load_example_fmri_dataset(name='1slice', literal=False):
                     'brain.nii.gz')}[name]
 
     if literal:
-        openfmri = OpenFMRIDataset(basedir)
+        model = 1
         subj = 1
-        task = 1
-        dss = []
-        for run in openfmri.get_bold_run_ids(subj, task):
-            d = openfmri.get_bold_run_dataset(subj, task, run=run, flavor=name,
-                    chunks=run-1, mask=mask)
-            # re-imagine the global time_coords of a concatenated time series
-            d.sa['run_time_coords'] = d.sa.time_coords
-            d.sa['time_coords'] = \
-                    d.sa.time_coords + (len(dss) * len(d) * 2.5)
-            events = openfmri.get_bold_run_model(subj, task, run)
-            d.sa['targets'] = events2sample_attr(events, d.sa.run_time_coords,
-                                                 noinfolabel='rest')
-            dss.append(d)
-        ds = vstack(dss)
-        ds.a = dss[0].a
+        openfmri = OpenFMRIDataset(basedir)
+        ds = openfmri.get_model_bold_dataset(model, subj, flavor=name,
+                                             mask=mask, noinfolabel='rest')
+        # re-imagine the global time_coords of a concatenated time series
+        # this is only for the purpose of keeping the example data in the
+        # exact same shape as it has always been. in absolute terms this makes no
+        # sense as there is no continuous time in this dataset
+        ds.sa['run_time_coords'] = ds.sa.time_coords
+        ds.sa['time_coords'] = np.arange(len(ds)) * 2.5
     else:
         if name == '25mm':
             raise ValueError("The 25mm dataset is no longer available with "
@@ -418,24 +412,8 @@ def load_datadb_tutorial_data(path=os.path.join(
         mask=roi
     else:
         raise ValueError("Got something as mask that I cannot handle.")
-    run_datasets = []
-    for run_id in dhandle.get_task_bold_run_ids(task)[subj]:
-        # load design info for this run
-        run_events = dhandle.get_bold_run_model(model, subj, run_id)
-        # load BOLD data for this run (with masking); add 0-based chunk ID
-        run_ds = dhandle.get_bold_run_dataset(subj, task, run_id,
-                                              chunks=run_id -1,
-                                              mask=mask,
-                                              add_fa=add_fa)
-        # convert event info into a sample attribute and assign as 'targets'
-        run_ds.sa['targets'] = events2sample_attr(
-                    run_events, run_ds.sa.time_coords, noinfolabel='rest')
-        # additional time series preprocessing can go here
-        run_datasets.append(run_ds)
-    # this is PyMVPA's vstack() for merging samples from multiple datasets
-    # a=0 indicates that the dataset attributes of the first run should be used
-    # for the merged dataset
-    ds = vstack(run_datasets, a=0)
+    ds = dhandle.get_model_dataset(model, subj, mask=mask, add_fa=add_fa,
+                                   noinfolabel='rest')
     return ds
 
 
