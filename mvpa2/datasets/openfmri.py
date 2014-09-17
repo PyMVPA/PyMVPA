@@ -17,6 +17,7 @@ import nibabel as nb
 import numpy as np
 from mvpa2.datasets.mri import fmri_dataset
 from mvpa2.datasets import vstack
+from mvpa2.base import warning
 
 def _prefix(prefix, val):
     if isinstance(val, int):
@@ -258,8 +259,14 @@ class OpenFMRIDataset(object):
                               _model2id(model), 'onsets',
                               _taskrun(task_id, run),
                               '%s.txt' % _cond2id(cond['id']))
-            evdata = np.atleast_1d(
+            try:
+                evdata = np.atleast_1d(
                        np.recfromtxt(stim_fname, names=ev_fields))
+            except IOError:
+                warning("onset definition file '%s' not found; no information "
+                        "about condition '%s' for run %i"
+                        % (stim_fname, cond['name'], run))
+                continue
             for ev in evdata:
                 evdict = dict(zip(ev_fields,
                                   [ev[field] for field in ev_fields]))
