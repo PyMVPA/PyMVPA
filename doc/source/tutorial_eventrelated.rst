@@ -346,9 +346,7 @@ plotting facilities, this shouldn't be hard to read.
 >>> # linestyles and colors for plotting
 >>> vx_lty = ['-', '--']
 >>> t_col = ['b', 'r']
-
->>> # whole figure will have three rows -- this is the first
->>> _ = pl.subplot(311)
+>>>
 >>> # for each of the example voxels
 >>> for i, v in enumerate(example_voxels):
 ...     # get a slicing array matching just to current example voxel
@@ -369,10 +367,9 @@ plotting facilities, this shouldn't be hard to read.
 >>> _ = pl.legend()
 >>> _ = pl.xlim((0,12))
 
-In the next figure row we do exactly the same again, but this time for the
+In the next figure we do exactly the same again, but this time for the
 normalized data.
 
->>> _ = pl.subplot(312)
 >>> for i, v in enumerate(example_voxels):
 ...     slicer = np.array([tuple(idx) == v for idx in ds.fa.voxel_indices])
 ...     evds_norm = eventrelated_dataset(ds[:, slicer], events=events)
@@ -391,12 +388,11 @@ dataset's chain mapper (look at ``evds.a.mapper`` for the whole chain).
 This will reshape the sensitivities into ``cross-validation fold x volume x
 voxel features``.
 
->>> _ = pl.subplot(313)
 >>> # L1 normalization of sensitivity maps per split to make them
 >>> # comparable
 >>> normed = sens.get_mapped(FxMapper(axis='features', fx=l1_normed))
 >>> smaps = evds.a.mapper[-1].reverse(normed)
-
+>>>
 >>> for i, v in enumerate(example_voxels):
 ...     slicer = np.array([tuple(idx) == v for idx in ds.fa.voxel_indices])
 ...     smap = smaps.samples[:,:,slicer].squeeze()
