@@ -67,8 +67,8 @@ idea. We created an object instance ``aov`` being a
 This one differs little from a call to
 :class:`~mvpa2.measures.base.CrossValidation`.  Both are objects that get
 instantiated (potentially with some custom arguments) and yield the results in
-a dataset when called with an input dataset. This is called a :term:`processing
-object` and is a common concept in PyMVPA.
+a dataset when called with an input dataset. This is called a
+:term:`processing object` and is a common concept in PyMVPA.
 
 However, there is a difference between the two processing objects.
 :class:`~mvpa2.measures.base.CrossValidation` returns a dataset with a single
