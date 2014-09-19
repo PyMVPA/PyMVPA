@@ -332,7 +332,7 @@ example dataset we are going to look at is a single subject from Haxby et al.
 (2001).  For more convenience and less typing, we first specify the path of the
 directory with the fMRI data.
 
->>> path=os.path.join(tutorial_data_path, 'data')
+>>> path = os.path.join(tutorial_data_path, 'data')
 
 In the simplest case, we now let `~mvpa2.datasets.mri.fmri_dataset` do its job,
 by just pointing it to the fMRI data file. The data is stored as a NIfTI file
