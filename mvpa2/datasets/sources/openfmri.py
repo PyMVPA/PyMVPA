@@ -13,9 +13,7 @@ __docformat__ = 'restructuredtext'
 
 import os
 from os.path import join as _opj
-import nibabel as nb
 import numpy as np
-from mvpa2.datasets.mri import fmri_dataset
 from mvpa2.datasets import vstack
 from mvpa2.base import warning
 
@@ -203,6 +201,7 @@ class OpenFMRIDataset(object):
         -------
         Dataset
         """
+        from mvpa2.datasets.mri import fmri_dataset
 
         bold_img = self.get_bold_run_image(subj, task, run, flavor=flavor)
 
