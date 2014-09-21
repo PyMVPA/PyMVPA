@@ -405,7 +405,7 @@ def table2string(table, out=None):
         table[i] += [''] * (Nelements_max - len(table_))
 
     # figure out lengths within each column
-    atable = np.asarray(table)
+    atable = np.asarray(table).astype(str)
     # eat whole entry while computing width for @w (for wide)
     markup_strip = re.compile('^@([lrc]|w.*)')
     col_width = [ max( [len(markup_strip.sub('', x))
