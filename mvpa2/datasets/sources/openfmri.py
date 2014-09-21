@@ -11,6 +11,8 @@
 
 __docformat__ = 'restructuredtext'
 
+__all__ = [ 'OpenFMRIDataset' ]
+
 import os
 from os.path import join as _opj
 import numpy as np
