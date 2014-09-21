@@ -313,7 +313,7 @@ def _recon_customobj_defaultrecon(hdf, memo):
 
     # create the object
     # use specialized __new__ if necessary or beneficial
-    pcls, = _get_subclass_entry(cls, ((dict,), (list,), (object,)),
+    pcls, = _get_subclass_entry(cls, ((dict,), (list,), (tuple,), (object,)),
                                 "Do not know how to create instance of %(cls)s")
     obj = pcls.__new__(cls)
     # insert any stored object state
@@ -321,15 +321,25 @@ def _recon_customobj_defaultrecon(hdf, memo):
 
     # do we process a container?
     if 'items' in hdf:
-        # charge the items -- handling depends on the parent class
-        pcls, umeth, cfunc = _get_subclass_entry(
-            cls,
-            ((dict, 'update', _hdf_dict_to_obj),
-             (list, 'extend', _hdf_list_to_obj)),
-            "Unhandled container type (got: '%(cls)s').")
-        if __debug__:
-            debug('HDF5', "Populating %s object." % pcls)
-        getattr(obj, umeth)(cfunc(hdf, memo))
+        try:
+            # charge the items -- handling depends on the parent class
+            pcls, umeth, cfunc = _get_subclass_entry(
+                cls,
+                ((dict, 'update', _hdf_dict_to_obj),
+                 (list, 'extend', _hdf_list_to_obj)),
+                "Unhandled container type (got: '%(cls)s').")
+            if __debug__:
+                debug('HDF5', "Populating %s object." % pcls)
+            getattr(obj, umeth)(cfunc(hdf, memo))
+        except NotImplementedError, e:
+            if issubclass(cls, tuple) \
+                and hasattr(obj, '_asdict') and hasattr(obj, '_make'):
+                # this is an ugly hack to support NamedTuples -- which
+                # for some fucked-up reason needs this items as args
+                # instead of a sequence like tuple itself
+                obj = obj._make(_hdf_tupleitems_to_obj(hdf, memo))
+            else:
+                raise e
         if __debug__:
             debug('HDF5', "Loaded %i items." % len(obj))
 
