@@ -329,7 +329,7 @@ def linear1d_gaussian_noise(size=100, slope=0.5, intercept=1.0,
 def load_example_fmri_dataset(name='1slice', literal=False):
     """Load minimal fMRI dataset that is shipped with PyMVPA."""
     from mvpa2.datasets.eventrelated import events2sample_attr
-    from mvpa2.datasets.openfmri import OpenFMRIDataset
+    from mvpa2.datasets.sources.openfmri import OpenFMRIDataset
     from mvpa2.datasets.mri import fmri_dataset
     from mvpa2.misc.io import SampleAttributes
 
@@ -383,7 +383,7 @@ def load_datadb_tutorial_data(path=os.path.join(
       more information).
     """
     import nibabel as nb
-    from mvpa2.datasets.openfmri import OpenFMRIDataset
+    from mvpa2.datasets.sources.openfmri import OpenFMRIDataset
     from mvpa2.datasets.eventrelated import events2sample_attr
     task = model = subj = 1
     dhandle = OpenFMRIDataset(path)

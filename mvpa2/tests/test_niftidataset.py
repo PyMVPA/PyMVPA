@@ -20,7 +20,7 @@ if not externals.exists('nibabel'):
 from mvpa2.base.dataset import vstack
 from mvpa2 import pymvpa_dataroot
 from mvpa2.datasets.mri import fmri_dataset, _load_anyimg, map2nifti
-from mvpa2.datasets.openfmri import OpenFMRIDataset
+from mvpa2.datasets.sources.openfmri import OpenFMRIDataset
 from mvpa2.datasets.eventrelated import eventrelated_dataset, events2sample_attr
 from mvpa2.misc.fsl import FslEV3
 from mvpa2.misc.support import Event, value2idx
