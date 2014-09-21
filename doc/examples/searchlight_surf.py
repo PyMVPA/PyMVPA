@@ -234,7 +234,11 @@ dataset (object viewing with 8 object categories). Note that we use the
 mask that came from the voxel selection.
 """
 
-dataset = OpenFMRIDataset(datapath).get_model_dataset(1, 1, mask=mask)
+model = 1
+subject = 1
+of = OpenFMRIDataset(datapath)
+dataset = of.get_model_bold_dataset(model, subject,
+                                    noinfolabel='rest', mask=mask)
 
 """
 Apply some typical preprocessing steps
