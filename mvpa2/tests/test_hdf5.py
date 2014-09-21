@@ -286,6 +286,13 @@ if hasattr(collections, 'OrderedDict'):
                          collections.OrderedDict(a9=1, a0=2)])
 if hasattr(collections, 'Counter'):
     _python_objs.append([collections.Counter({'red': 4, 'blue': 2})])
+if hasattr(collections, 'namedtuple'):
+    _NamedTuple = collections.namedtuple('_NamedTuple', ['red', 'blue'])
+    # And the one with non-matching name
+    _NamedTuple_ = collections.namedtuple('NamedTuple', ['red', 'blue'])
+    _python_objs.extend([_NamedTuple(4, 2),
+                         _NamedTuple_(4, 2),])
+
 
 @sweepargs(obj=_python_objs)
 def test_save_load_python_objs(obj):
@@ -295,9 +302,14 @@ def test_save_load_python_objs(obj):
     f = tempfile.NamedTemporaryFile()
 
     # save/reload
-    h5save(f.name, obj)
-    obj_ = h5load(f.name)
-
+    try:
+        h5save(f.name, obj)
+    except Exception, e:
+        raise AssertionError("Failed to h5save %s: %s" % (obj, e))
+    try:
+        obj_ = h5load(f.name)
+    except Exception, e:
+        raise AssertionError("Failed to h5load %s: %s" % (obj, e))
     assert_equal(type(obj), type(obj_))
     assert_equal(obj, obj_)
 
