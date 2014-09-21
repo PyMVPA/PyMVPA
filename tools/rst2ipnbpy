@@ -307,7 +307,7 @@ class ReST2IPyNB(object):
                     self._flush_buffer()
                     self._currcell['source'].insert(0, '- - -\n**Exercise**')
                     self._add_codecell()
-                    self._add2buffer('# you can use this cell to for this exercise\n')
+                    self._add2buffer('# you can use this cell for this exercise\n')
                     self._add_markdowncell()
                     self._currcell['source'].append('- - -\n')
                 elif child.children[0].astext() == 'Unknown directive type "seealso".':
