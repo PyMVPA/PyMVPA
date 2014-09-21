@@ -713,10 +713,25 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
                     raise HDF5ConversionError("Cannot store locally defined "
                                               "function '%s'" % cls_name)
             else:
-                if not cls_name in dir(__import__(src_module,
-                                                  fromlist=[cls_name])):
-                    raise HDF5ConversionError("Cannot store locally defined "
-                                              "class '%s'" % cls_name)
+                mod_content = dir(__import__(src_module,
+                                             fromlist=[cls_name]))
+                if not cls_name in mod_content:
+                    # sometimes the class name is not the name of the type
+                    # instance imported from the module, e.g. NamedTuple
+                    # stored with a different object name
+                    # we can fix this by looking through the classes of the
+                    # module and search for the type instance that
+                    # matches the class
+                    found = False
+                    for stuff in mod_content:
+                        stuffobj = _import_from_thin_air(src_module, stuff)[1]
+                        if isinstance(stuffobj, type) \
+                           and stuffobj.__name__ == cls_name:
+                            cls_name = stuff
+                            found = True
+                    if not found:
+                        raise HDF5ConversionError("Cannot store locally defined "
+                                                  "class '%s'" % cls_name)
         # store class info (fully-qualified)
         grp.attrs.create('class', cls_name)
         grp.attrs.create('module', src_module)
