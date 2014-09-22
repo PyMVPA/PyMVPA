@@ -313,7 +313,7 @@ def _recon_customobj_defaultrecon(hdf, memo):
 
     # create the object
     # use specialized __new__ if necessary or beneficial
-    pcls, = _get_subclass_entry(cls, ((dict,), (list,), (object,)),
+    pcls, = _get_subclass_entry(cls, ((dict,), (list,), (tuple,), (object,)),
                                 "Do not know how to create instance of %(cls)s")
     obj = pcls.__new__(cls)
     # insert any stored object state
@@ -321,15 +321,25 @@ def _recon_customobj_defaultrecon(hdf, memo):
 
     # do we process a container?
     if 'items' in hdf:
-        # charge the items -- handling depends on the parent class
-        pcls, umeth, cfunc = _get_subclass_entry(
-            cls,
-            ((dict, 'update', _hdf_dict_to_obj),
-             (list, 'extend', _hdf_list_to_obj)),
-            "Unhandled container type (got: '%(cls)s').")
-        if __debug__:
-            debug('HDF5', "Populating %s object." % pcls)
-        getattr(obj, umeth)(cfunc(hdf, memo))
+        try:
+            # charge the items -- handling depends on the parent class
+            pcls, umeth, cfunc = _get_subclass_entry(
+                cls,
+                ((dict, 'update', _hdf_dict_to_obj),
+                 (list, 'extend', _hdf_list_to_obj)),
+                "Unhandled container type (got: '%(cls)s').")
+            if __debug__:
+                debug('HDF5', "Populating %s object." % pcls)
+            getattr(obj, umeth)(cfunc(hdf, memo))
+        except NotImplementedError, e:
+            if issubclass(cls, tuple) \
+                and hasattr(obj, '_asdict') and hasattr(obj, '_make'):
+                # this is an ugly hack to support NamedTuples -- which
+                # for some fucked-up reason needs this items as args
+                # instead of a sequence like tuple itself
+                obj = obj._make(_hdf_tupleitems_to_obj(hdf, memo))
+            else:
+                raise e
         if __debug__:
             debug('HDF5', "Loaded %i items." % len(obj))
 
@@ -703,10 +713,25 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
                     raise HDF5ConversionError("Cannot store locally defined "
                                               "function '%s'" % cls_name)
             else:
-                if not cls_name in dir(__import__(src_module,
-                                                  fromlist=[cls_name])):
-                    raise HDF5ConversionError("Cannot store locally defined "
-                                              "class '%s'" % cls_name)
+                mod_content = dir(__import__(src_module,
+                                             fromlist=[cls_name]))
+                if not cls_name in mod_content:
+                    # sometimes the class name is not the name of the type
+                    # instance imported from the module, e.g. NamedTuple
+                    # stored with a different object name
+                    # we can fix this by looking through the classes of the
+                    # module and search for the type instance that
+                    # matches the class
+                    found = False
+                    for stuff in mod_content:
+                        stuffobj = _import_from_thin_air(src_module, stuff)[1]
+                        if isinstance(stuffobj, type) \
+                           and stuffobj.__name__ == cls_name:
+                            cls_name = stuff
+                            found = True
+                    if not found:
+                        raise HDF5ConversionError("Cannot store locally defined "
+                                                  "class '%s'" % cls_name)
         # store class info (fully-qualified)
         grp.attrs.create('class', cls_name)
         grp.attrs.create('module', src_module)
