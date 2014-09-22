@@ -41,6 +41,7 @@ class FxMapper(Mapper):
         axis : {'samples', 'features'}
         fx : callable
         fxargs : tuple
+          Passed as *args to ``fx``
         uattrs : list
           List of attribute names to consider. All possible combinations
           of unique elements of these attributes are used to determine the
@@ -432,6 +433,14 @@ def maxofabs_sample():
     """Returns a mapper that finds max of absolute values of all samples.
     """
     return FxMapper('samples', max_of_abs)
+
+def binomial_proportion_ci_sample(width=.95, meth='jeffreys'):
+    from mvpa2.misc.stats import binomial_proportion_ci_from_bool
+    return FxMapper('samples',
+                    binomial_proportion_ci_from_bool,
+                    fxargs=(1-width, meth))
+
+
 #
 # Utility functions
 #

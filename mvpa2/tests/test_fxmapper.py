@@ -230,3 +230,28 @@ def test_uniquemerge2literal():
     assert_array_equal(_uniquemerge2literal([[2,3,4],[2,3,4]]), [[2, 3, 4]])
     assert_equal(_uniquemerge2literal([2,2,2]), [2])
     assert_array_equal(_uniquemerge2literal(['L1', 'L1']), ['L1'])
+
+def test_bin_prop_ci():
+    n = 100
+    succ_thresh = np.random.randint(n)
+    acc = 1 - (float(succ_thresh) / n)
+    bl = np.random.random(n) < acc
+    ds = Dataset(bl)
+    m95 = binomial_proportion_ci_sample()
+    m50 = binomial_proportion_ci_sample(width=0.5)
+    cids = m95(ds)
+    assert_equal(cids.shape, (2, 1))
+    # accuracy is in the CI
+    assert_true(acc < cids.samples[1,0])
+    assert_true(acc > cids.samples[0,0])
+    # more than one feature
+    ds = Dataset(np.transpose([bl, np.logical_not(bl)]))
+    ci95 = m95(ds)
+    assert_equal(ci95.shape, (2, 2))
+    # CIs should be inverse
+    assert_array_almost_equal(1-ci95.samples[0,::-1], ci95.samples[1])
+    ci50 = m50(ds)
+    assert_array_almost_equal(1-ci50.samples[0,::-1], ci50.samples[1])
+    # 50% interval is smaller than 95%
+    assert_true(np.all(ci95.samples[0] < ci50.samples[0]))
+    assert_true(np.all(ci95.samples[1] > ci50.samples[1]))
