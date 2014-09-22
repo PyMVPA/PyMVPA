@@ -15,6 +15,8 @@ import inspect
 
 from mvpa2.base import warning
 from mvpa2.base.node import Node
+from mvpa2.base.param import Parameter
+from mvpa2.base.constraints import *
 from mvpa2.datasets import Dataset
 from mvpa2.base.dochelpers import _str, _repr_attrs
 from mvpa2.mappers.base import Mapper
@@ -243,10 +245,9 @@ class FxMapper(Mapper):
             mdata.append(fxed_samples)
             if not self.__attrfx is None:
                 # and now all samples attributes
-                fxed_attrs = [self.__attrfx(col[attr].value[selector])
-                                    for attr in col]
                 for i, attr in enumerate(col):
-                    attrs[attr].append(fxed_attrs[i])
+                    fxed_attr = self.__attrfx(col[attr].value[selector])
+                    attrs[attr].append(fxed_attr)
             # possibly take care about collecting information to have groups ordered
             if order == 'uattrs':
                 # reverse order as per docstring -- most of the time we have
@@ -434,12 +435,49 @@ def maxofabs_sample():
     """
     return FxMapper('samples', max_of_abs)
 
-def binomial_proportion_ci_sample(width=.95, meth='jeffreys'):
-    from mvpa2.misc.stats import binomial_proportion_ci_from_bool
-    return FxMapper('samples',
-                    binomial_proportion_ci_from_bool,
-                    fxargs=(1-width, meth))
 
+class BinomialProportionCI(Mapper):
+    """Compute binomial proportion confidence intervals
+
+    This is a convenience frontend for binomial_proportion_ci_from_bool()
+    and supports all methods implemented in this function.
+
+    The confidence interval is computed independently for each feature column.
+    The returned dataset contains two samples.  The first one contains the
+    lower CI boundary and the second sample the upper boundary.
+
+    Returns
+    -------
+    dataset
+    """
+
+    is_trained = True
+
+    width = Parameter(.95,
+                      constraints=EnsureFloat() & EnsureRange(min=0, max=1),
+                      doc="Confidence interval width")
+    meth = Parameter('jeffreys',
+                     constraints=EnsureChoice('wald', 'wilson', 'agresti-coull',
+                                              'jeffreys', 'clopper-pearson',
+                                              'arc-sine', 'logit', 'anscombe'),
+                     doc="Interval estimation method")
+
+    def __init__(self, **kwargs):
+        Mapper.__init__(self, **kwargs)
+
+    def _train(self, ds):
+        pass
+
+    def _forward_data(self, data):
+        from mvpa2.misc.stats import binomial_proportion_ci_from_bool
+        return binomial_proportion_ci_from_bool(data, axis=0,
+                                                alpha=1-self.params.width,
+                                                meth=self.params.meth)
+
+    def _forward_dataset(self, ds):
+        msamp = self._forward_data(ds.samples)
+        mds = Dataset(msamp, sa=dict(ci_boundary=['lower', 'upper']))
+        return mds
 
 #
 # Utility functions
