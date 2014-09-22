@@ -942,6 +942,7 @@ def test_other_samples_dtypes():
     Dataset(np.array([None], dtype=object)),
     dataset_wizard(np.arange(3), targets=['a', 'bc', 'd'], chunks=np.arange(3)),
     dataset_wizard(np.arange(4), targets=['a', 'bc', 'a', 'bc'], chunks=[1, 1, 2, 2]),
+    dataset_wizard(np.arange(4), targets=['a', 'bc', 'a', None], chunks=[1, 1, 2, 2]),
     ])
 def test_dataset_summary(ds):
     s = ds.summary()
