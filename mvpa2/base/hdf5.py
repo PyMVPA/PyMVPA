@@ -135,6 +135,14 @@ def hdf2obj(hdf, memo=None):
 
         mod_name = hdf.attrs['module']
 
+        if __debug__:
+            if 'class' in hdf.attrs:
+                debug('HDF5', "Found class info %s.%s"
+                              % (mod_name, hdf.attrs['class']))
+            else:
+                debug('HDF5', "Found recon info %s.%s"
+                              % (mod_name, hdf.attrs['recon']))
+
         if 'recon' in hdf.attrs:
             # Custom objects custom reconstructor
             obj = _recon_customobj_customrecon(hdf, memo)
@@ -735,6 +743,9 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
         # store class info (fully-qualified)
         grp.attrs.create('class', cls_name)
         grp.attrs.create('module', src_module)
+        if __debug__:
+            debug('HDF5', "Stored class info: %s.%s"
+                          % (src_module, cls_name))
 
         if hasattr(obj, '__name__'):
             # for functions/types we need a name for reconstruction
@@ -759,6 +770,10 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
                           % len(pieces[1]))
         grp.attrs.create('recon', pieces[0].__name__)
         grp.attrs.create('module', pieces[0].__module__)
+        if __debug__:
+            debug('HDF5', "Stored reconstructor info: %s.%s"
+                          % (pieces[0].__module__, pieces[0].__name__))
+
         args = grp.create_group('rcargs')
         _seqitems_to_hdf(pieces[1], args, memo, **kwargs)
 
