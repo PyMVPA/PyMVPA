@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA SampleGroup mapper"""
 
-from mvpa2.testing import sweepargs
+from mvpa2.testing import sweepargs, skip_if_no_external
 from mvpa2.testing.datasets import datasets
 from mvpa2.measures.anova import OneWayAnova
 
@@ -232,13 +232,14 @@ def test_uniquemerge2literal():
     assert_array_equal(_uniquemerge2literal(['L1', 'L1']), ['L1'])
 
 def test_bin_prop_ci():
+    skip_if_no_external('scipy')
     n = 100
     succ_thresh = np.random.randint(n)
     acc = 1 - (float(succ_thresh) / n)
     bl = np.random.random(n) < acc
     ds = Dataset(bl)
-    m95 = binomial_proportion_ci_sample()
-    m50 = binomial_proportion_ci_sample(width=0.5)
+    m95 = BinomialProportionCI()
+    m50 = BinomialProportionCI(width=0.5)
     cids = m95(ds)
     assert_equal(cids.shape, (2, 1))
     # accuracy is in the CI
@@ -255,3 +256,5 @@ def test_bin_prop_ci():
     # 50% interval is smaller than 95%
     assert_true(np.all(ci95.samples[0] < ci50.samples[0]))
     assert_true(np.all(ci95.samples[1] > ci50.samples[1]))
+    assert_equal(list(ci50.sa.ci_boundary), ['lower', 'upper'])
+

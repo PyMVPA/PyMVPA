@@ -74,7 +74,7 @@ error function and the post processing of our previous analysis setup.
 ...         clf,
 ...         partitioner,
 ...         errorfx=prediction_target_matches,
-...         postproc=binomial_proportion_ci_sample(width=.95, meth='jeffreys'))
+...         postproc=BinomialProportionCI(width=.95, meth='jeffreys'))
 >>> ci_result = cv(ds)
 >>> ci = ci_result.samples[:, 0]
 >>> ci[0] < np.asscalar(acc) < ci[1]
