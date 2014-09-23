@@ -218,7 +218,7 @@ def _ttest_finish(df, t, alternative):
     return t, prob
 
 
-def binomial_proportion_ci(n, X, alpha, meth='jeffreys'):
+def binomial_proportion_ci(n, X, alpha=.05, meth='jeffreys'):
     """Compute the confidence interval for a set of Bernoulli trials
 
     Most, if not all, implemented methods assume statistical independence
@@ -232,17 +232,19 @@ def binomial_proportion_ci(n, X, alpha, meth='jeffreys'):
     ==========
     n : int
       Number of trials
-    X : int
-      Number of successful trials.
+    X : int or array
+      Number of successful trials. This can be a 1D array.
     alpha : float
-      Coverage of the confidence interval. For 95% CI, use alpha = 0.05.
+      Coverage of the confidence interval. For a 95% CI (default), use
+      alpha = 0.05.
     meth : {'wald', 'wilson', 'agresti-coull', 'jeffreys', 'clopper-pearson', 'arc-sine', 'logit', 'anscombe'}
       Interval estimation method.
 
     Returns
     =======
-    2-tuple
-      With the lower and upper bound for the confidence interval.
+    2-item array or 2D array
+      With the lower and upper bound for the confidence interval. If X was given
+      as a vector with p items a 2xp array is returned.
 
     See also
     ========
@@ -256,7 +258,7 @@ def binomial_proportion_ci(n, X, alpha, meth='jeffreys'):
     from numpy import sqrt, sin, arcsin, log, exp
 
     n = float(n)
-    X = float(X)
+    X = np.asanyarray(X, dtype=float)
     k  = stats.norm.ppf(1 - alpha / 2.)
     p  = X / n          # Proportion of successes
     q  = 1 - p          # Proportion of failures
@@ -307,4 +309,20 @@ def binomial_proportion_ci(n, X, alpha, meth='jeffreys'):
     else:
         raise ValueError('unknown confidence interval method')
 
-    return L, U
+    return np.array((L, U))
+
+
+def binomial_proportion_ci_from_bool(arr, axis=0, *args, **kwargs):
+    """Convenience wrapper for ``binomial_proportion_ci()`` with boolean input
+
+    Parameters
+    ----------
+    arr : array
+      Boolean array
+    axis : int
+    *args, **kwargs
+      All other arguments are passed on to binomial_proportion_ci().
+    """
+    return binomial_proportion_ci(arr.shape[axis], np.sum(arr, axis=axis),
+                                  *args, **kwargs)
+
