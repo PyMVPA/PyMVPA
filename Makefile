@@ -436,7 +436,7 @@ tc-%: build
 tcc-%: build
 	@echo "I: testing $* cmdline example with coverage"
 	@grep MVPA_DATA_ROOT.*datadb ./doc/examples/cmdline/$*.sh \
-	&& MVPA_DATA_="MVPA_DATA_ROOT=$$PWD/mvpa2/data/tutorial_data_25mm/data" || : ; \
+	&& MVPA_DATA_="MVPA_DATA_ROOT=$$PWD/mvpa2/data/tutorial_data_20mm/data" || : ; \
 	eval PYTHONPATH=.:$(PYTHONPATH) \
 		PATH=$$PWD/tools/coverage-bin:$$PWD/bin:$(PATH) \
 		$${MVPA_DATA_} \

@@ -42,7 +42,7 @@ fi
 pymvpa2 mkds \
    --mri-data "$dataroot"/bold.nii.gz \
    --mask "$dataroot"/mask_brain.nii.gz \
-   --add-sa-attr "$dataroot"/attributes_literal.txt  \
+   --add-sa-attr "$dataroot"/attributes.txt  \
    --add-vol-attr hoc "$dataroot"/mask_hoc.nii.gz \
    --add-vol-attr gm "$dataroot"/mask_gray.nii.gz \
    --add-vol-attr vt "$dataroot"/mask_vt.nii.gz \
