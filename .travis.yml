@@ -6,6 +6,8 @@
 # travis-ci; it uses virtualenvs, they do not have numpy, scipy, matplotlib,
 # and it is impractical to build them
 language: erlang
+cache:
+  - apt
 env:
  global:
     - PY=python PYSUF=''
