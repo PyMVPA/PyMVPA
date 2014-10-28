@@ -1,0 +1,19 @@
+--- a/doc/source/index.rst
++++ b/doc/source/index.rst
+@@ -51,15 +51,7 @@ PyMVPA stands for **M**\ ulti\ **V**\ ar
+ News
+ ====
+ 
+-.. raw:: html
+-
+- <a class="twitter-timeline" href="https://twitter.com/pymvpa"
+-    data-widget-id="434978943293083648"
+-    data-link-color="#820430"
+-    height="150px"
+-    data-show-replies="false"
+-    data-chrome="noheader nofooter transparent">Tweets by @pymvpa</a>
+- <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
++Visit us on twitter_.
+ 
+ .. _twitter: http://twitter.com/pymvpa
+ 

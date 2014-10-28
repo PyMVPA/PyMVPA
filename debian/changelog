@@ -8,8 +8,10 @@ pymvpa2 (2.3.1-2) unstable; urgency=medium
     - changeset_5f62f33a7d84dca01c2aae69a4d4c0a00469ae7b.diff
       to fix up url to the h5py intersphinx
   * debian/upstream -> debian/upstream/metadata
+  * debian/patches
+    - deb_no_twitter_privacy_breach -- just refer to twitter instead
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 28 Oct 2014 10:47:40 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 28 Oct 2014 11:56:59 -0400
 
 pymvpa2 (2.3.1-1) unstable; urgency=medium
 
