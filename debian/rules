@@ -13,9 +13,6 @@ gitver = $(shell [ -x /usr/bin/git ] && git describe --tags --match 'upstream/*'
 
 export HOME=$(CURDIR)/build
 
-export http_proxy=http://127.0.0.1:9/
-export https_proxy=http://127.0.0.1:9/
-
 # one ring to rule them all ...
 %:
 # need to enforce distutils, since we also have a makefile
@@ -30,7 +27,8 @@ override_dh_auto_build:
 	dh_auto_build -- --with-libsvm
 	$(MAKE) manpages
 ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
-	$(MAKE) htmldoc
+	http_proxy=http://127.0.0.1:9/ https_proxy=http://127.0.0.1:9/ \
+		$(MAKE) htmldoc
 	-rm build/html/_static/jquery.js build/html/_static/underscore.js
 	$(MAKE) notebooks
 endif
@@ -109,5 +107,7 @@ override_dh_compress:
 	dh_compress -X.py -X.html -X.pdf -X.css -X.jpg -X.txt -X.js -X.json -X.rtc -Xobjects.inv -X.ipynb -X.sh
 
 cache_intersphinx:
+	rm -rf debian/intersphinx
+	-rm doc/cache_intersphinx-stamp
 	make -C doc cache_intersphinx
 	mv doc/source/intersphinx debian/
