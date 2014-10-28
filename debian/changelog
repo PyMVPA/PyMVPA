@@ -7,6 +7,7 @@ pymvpa2 (2.3.1-2) unstable; urgency=medium
       for the report and pointers to the resolution
     - changeset_5f62f33a7d84dca01c2aae69a4d4c0a00469ae7b.diff
       to fix up url to the h5py intersphinx
+  * debian/upstream -> debian/upstream/metadata
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 28 Oct 2014 10:47:40 -0400
 
