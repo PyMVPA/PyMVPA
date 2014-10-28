@@ -13,6 +13,9 @@ gitver = $(shell [ -x /usr/bin/git ] && git describe --tags --match 'upstream/*'
 
 export HOME=$(CURDIR)/build
 
+export http_proxy=http://127.0.0.1:9/
+export https_proxy=http://127.0.0.1:9/
+
 # one ring to rule them all ...
 %:
 # need to enforce distutils, since we also have a makefile
