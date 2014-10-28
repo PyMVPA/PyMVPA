@@ -1,3 +1,13 @@
+pymvpa2 (2.3.1-2) unstable; urgency=medium
+
+  * debian/patches
+    - changeset_f12e1c41b7cf6b59b686c8f78d55ffba1eced8e1.diff
+      + debian/rules changes to cache intersphinx mappings under
+      debian/intersphinx (Closes: #765300).  Thanks Sandro Tosi
+      for the report and pointers to the resolution
+
+ --
+
 pymvpa2 (2.3.1-1) unstable; urgency=medium
 
   * Fresh upstream release (should be tollerant now to scipy API change in

@@ -35,10 +35,6 @@ without accessing network
  html: generate
  	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
  	@echo
---- /dev/null
-+++ b/doc/source/.gitignore
-@@ -0,0 +1 @@
-+intersphinx
 --- a/doc/source/conf.py
 +++ b/doc/source/conf.py
 @@ -304,3 +304,42 @@ intersphinx_mapping = {'http://docs.pyth

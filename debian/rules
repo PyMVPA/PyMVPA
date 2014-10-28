@@ -24,6 +24,7 @@ export https_proxy=http://127.0.0.1:9/
 override_dh_auto_configure:
 	dh_auto_configure
 	mkdir -p $(CURDIR)/build
+	cp -rp debian/intersphinx doc/source/
 
 override_dh_auto_build:
 	dh_auto_build -- --with-libsvm
@@ -106,3 +107,7 @@ dev-changelog:
 ## immediately useable documentation and exemplar scripts/data
 override_dh_compress:
 	dh_compress -X.py -X.html -X.pdf -X.css -X.jpg -X.txt -X.js -X.json -X.rtc -Xobjects.inv -X.ipynb -X.sh
+
+cache_intersphinx:
+	make -C doc cache_intersphinx
+	mv doc/source/intersphinx debian/
