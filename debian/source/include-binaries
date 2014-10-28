@@ -1,0 +1,5 @@
+debian/intersphinx/docs.h5py.org_objects.inv
+debian/intersphinx/docs.python.org_objects.inv
+debian/intersphinx/docs.scipy.org_objects.inv
+debian/intersphinx/matplotlib.sourceforge.net_objects.inv
+debian/intersphinx/nipy.sourceforge.net_objects.inv
