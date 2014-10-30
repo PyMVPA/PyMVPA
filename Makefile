@@ -428,7 +428,7 @@ tc-%: build
 		MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
 		MVPA_DATADB_ROOT=datadb \
 		MVPA_WARNINGS_SUPPRESS=1 \
-		sh ./doc/examples/cmdline/$*.sh > /dev/null 2>&1
+		bash ./doc/examples/cmdline/$*.sh > /dev/null 2>&1
 
 # test cmdline with coverage report
 # MVPA_DATA_ handling is because some examples use tutorial_data
