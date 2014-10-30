@@ -120,12 +120,16 @@ def test_openfmri_dataset():
             # load single run
             ds = of.get_bold_run_dataset(subj, task, run, flavor='1slice',
                                          mask=os.path.join(pymvpa_dataroot,
-                                                           'mask.nii.gz'))
+                                                           'mask.nii.gz'),
+                                         add_sa='bold_moest.txt')
             # basic shape
             assert_equal(len(ds), 121)
             assert_equal(ds.nfeatures, 530)
             # functional mapper
             assert_equal(ds.O.shape, (121, 40, 20, 1))
+            # additional attributes present
+            for i in range(6):
+                assert_true('bold_moest.txt_%i' % (i,) in ds.sa)
 
             # check conversion of model into sample attribute
             events = of.get_bold_run_model(subj, task, run)

@@ -178,7 +178,8 @@ class OpenFMRIDataset(object):
                      fname)
         return nb.load(fname)
 
-    def get_bold_run_dataset(self, subj, task, run, flavor=None, **kwargs):
+    def get_bold_run_dataset(self, subj, task, run, flavor=None, add_sa=None,
+            **kwargs):
         """Returns a dataset instance for the BOLD data of a particular
         subject/task/run combination.
 
@@ -197,6 +198,14 @@ class OpenFMRIDataset(object):
           Run ID.
         flavor : None or str
           BOLD data flavor to access (see dataset description)
+        add_sa: str or tuple(str)
+          Single or sequence of names of files in the respective BOLD
+          directory containing additional samples attributes. At this time
+          all formats supported by NumPy's loadtxt() are supported.
+          The number of lines in such a file needs to match the number of
+          BOLD volumes. Each column is converted into a separate dataset
+          sample attribute. The file name with a column index suffix is used
+          to determine the attribute name.
         **kwargs:
           All additional arguments are passed on to fmri_dataset()
 
@@ -213,6 +222,25 @@ class OpenFMRIDataset(object):
         # inject sample attributes
         for name, var in (('subj', subj), ('task', task), ('run', run)):
             ds.sa[name] = np.repeat(var, len(ds))
+
+        if add_sa is None:
+            return ds
+
+        if isinstance(add_sa , basestring):
+            add_sa = (add_sa,)
+        for sa in add_sa:
+            fname = _opj(self._basedir, _sub2id(subj),
+                         'BOLD', _taskrun(task, run),
+                         sa)
+            # TODO: come up with a fancy way of detecting what kind of thing
+            # we are accessing -- in any case: first axis needs to match
+            # nsamples
+            attrs = np.loadtxt(fname)
+            if len(attrs.shape) == 1:
+                ds.sa[sa] = attrs
+            else:
+                for col in xrange(attrs.shape[1]):
+                    ds.sa['%s_%i' % (sa, col)] = attrs[:, col]
         return ds
 
     def get_model_ids(self):
@@ -304,7 +332,7 @@ class OpenFMRIDataset(object):
     def get_model_bold_dataset(self, model_id, subj_id,
                           preprocfx=None, modelfx=None, stack=True,
                           flavor=None, mask=None, add_fa=None,
-                          **kwargs):
+                          add_sa=None, **kwargs):
         """Build a PyMVPA dataset for a model defined in the OpenFMRI dataset
 
         Parameters
@@ -334,7 +362,8 @@ class OpenFMRIDataset(object):
           See fmri_dataset() documentation.
         add_fa
           See fmri_dataset() documentation.
-          BOLD data flavor to access (see dataset description)
+        add_sa
+          See get_bold_run_dataset() documentation.
 
         Returns
         -------
@@ -366,7 +395,7 @@ class OpenFMRIDataset(object):
                         # XXX maybe a flag?
                         continue
                     d = self.get_bold_run_dataset(sub, task, run=run, flavor=flavor,
-                            chunks=run, mask=mask, add_fa=add_fa)
+                            chunks=run, mask=mask, add_fa=add_fa, add_sa=add_sa)
                     if not preprocfx is None:
                         d = preprocfx(d)
                     d = modelfx(d, events, **kwargs)
