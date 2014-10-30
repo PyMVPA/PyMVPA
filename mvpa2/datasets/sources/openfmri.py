@@ -301,7 +301,7 @@ class OpenFMRIDataset(object):
                 events.append(evdict)
         return events
 
-    def get_model_bold_dataset(self, model, subj,
+    def get_model_bold_dataset(self, model_id, subj_id,
                           preprocfx=None, modelfx=None, stack=True,
                           flavor=None, mask=None, add_fa=None,
                           **kwargs):
@@ -309,9 +309,9 @@ class OpenFMRIDataset(object):
 
         Parameters
         ----------
-        model : int
+        model_id : int
           Model ID.
-        subj : int or str or list
+        subj_id : int or str or list
           Integer, or string ID of the subject whose data shall be considered.
           Alternatively, a list of IDs can be given and data from all matching
           subjects will be loaded at once.
@@ -335,6 +335,7 @@ class OpenFMRIDataset(object):
         add_fa
           See fmri_dataset() documentation.
           BOLD data flavor to access (see dataset description)
+
         Returns
         -------
         Dataset or list
@@ -349,26 +350,30 @@ class OpenFMRIDataset(object):
             # probably makes little sense, so at least create an attribute
             from mvpa2.datasets.eventrelated import conditionlabeled_dataset
             modelfx=conditionlabeled_dataset
-        conds = self.get_model_conditions(model)
+        conds = self.get_model_conditions(model_id)
         # what tasks do we need to consider for this model
         tasks = np.unique([c['task'] for c in conds])
-        if isinstance(subj, int) or isinstance(subj, basestring):
-            subj = [subj]
+        if isinstance(subj_id, int) or isinstance(subj_id, basestring):
+            subj_id = [subj_id]
         dss = []
-        for sub in subj:
+        for sub in subj_id:
             for task in tasks:
                 for run in self.get_bold_run_ids(sub, task):
-                    events = self.get_bold_run_model(model, task, run)
+                    events = self.get_bold_run_model(model_id, task, run)
                     if not len(events):
                         # nothing in this run for the given model
                         # it could be argued whether we'd still want this data loaded
                         # XXX maybe a flag?
                         continue
                     d = self.get_bold_run_dataset(sub, task, run=run, flavor=flavor,
-                            chunks=run-1, mask=mask, add_fa=add_fa)
+                            chunks=run, mask=mask, add_fa=add_fa)
                     if not preprocfx is None:
                         d = preprocfx(d)
                     d = modelfx(d, events, **kwargs)
+                    # if the modelfx doesn't leave 'chunk' information, we put
+                    # something minimal in
+                    if not 'chunks' in d.sa:
+                        d.sa['chunks'] = [run] * len(d)
                     dss.append(d)
         if stack:
             dss = vstack(dss, a=0)
