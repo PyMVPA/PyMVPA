@@ -51,6 +51,18 @@ def _id2int(id_, strip=None):
         pass
     return id_
 
+
+def _subdirs2ids(path, prefix, **kwargs):
+    ids = []
+    if not os.path.exists(path):
+        return ids
+    for item in os.listdir(path):
+        if item.startswith(prefix) \
+           and os.path.isdir(_opj(path, item)):
+            ids.append(_id2int(item, **kwargs))
+    return sorted(ids)
+
+
 class OpenFMRIDataset(object):
     """Handler for datasets following the openfmri.org layout specifications
 
@@ -75,12 +87,7 @@ class OpenFMRIDataset(object):
         Standard numerical subject IDs a returned as integer values. All other
         types of IDs are returned as strings with the 'sub' prefix stripped.
         """
-        ids = []
-        for item in os.listdir(self._basedir):
-            if item.startswith('sub') \
-               and os.path.isdir(_opj(self._basedir, item)):
-                ids.append(_id2int(item))
-        return sorted(ids)
+        return _subdirs2ids(self._basedir, 'sub')
 
     def get_scan_properties(self):
         """Returns a dictionary with the scan properties listed in scan_key.txt
@@ -123,16 +130,10 @@ class OpenFMRIDataset(object):
         task : int or str
           Run ID
         """
-        ids = []
         task_prefix = _prefix('task', task)
-        bold_dir = _opj(self._basedir, _sub2id(subj), 'BOLD')
-        if not os.path.exists(bold_dir):
-            return ids
-        for item in os.listdir(bold_dir):
-            if item.startswith('%s_' % (task_prefix,)) \
-               and os.path.isdir(_opj(bold_dir, item)):
-                ids.append(_id2int(item, strip=len(task_prefix) + 4))
-        return sorted(ids)
+        return _subdirs2ids(_opj(self._basedir, _sub2id(subj), 'BOLD'),
+                            '%s_' % (task_prefix,),
+                            strip=len(task_prefix) + 4)
 
     def get_task_bold_run_ids(self, task):
         """Return a dictionary with run IDs by subjects for a given task
@@ -214,7 +215,30 @@ class OpenFMRIDataset(object):
             ds.sa[name] = np.repeat(var, len(ds))
         return ds
 
+    def get_model_ids(self):
+        """Returns a sorted list of integer IDs for all available models"""
+        return _subdirs2ids(_opj(self._basedir, 'models'), 'model')
+
     def get_model_conditions(self, model):
+        """Returns a description of all conditions for a given model
+
+        Parameters
+        ----------
+        model : int
+          Model identifier.
+
+        Returns
+        -------
+        list(dict)
+          A list of a model conditions is returned, where each item is a
+          dictionary with keys ``id`` (numerical condition ID), ``task``
+          (numerical task ID for the task containing this condition), and
+          ``name`` (the literal condition name). This information is
+          returned in a list (instead of a dictionary), because the openfmri
+          specification of model conditions contains no unique condition
+          identifier. Conditions are only uniquely described by the combination
+          of task and condition ID.
+        """
         def_fname = _opj(self._basedir, 'models', _model2id(model),
                          'condition_key.txt')
         def_data = np.recfromtxt(def_fname)
