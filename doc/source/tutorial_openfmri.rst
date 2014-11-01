@@ -164,14 +164,15 @@ dataset is a time point at that stage) into the desired type of sample (or
 observation). In this example, we have used
 :func:`~mvpa2.datasets.eventrelated.eventrelated_dataset` that is designed to
 perform modeling of each stimulation event contained in the OpenFMRI
-specification. PyMVPA ships with two principal transformation methods that can
-be used here: :func:`~mvpa2.datasets.eventrelated.eventrelated_dataset` and
-:func:`~mvpa2.datasets.eventrelated.conditionlabeled_dataset`. The difference
-between the two is that the latter simply assignes conditions labels to the
-time point samples of a time series dataset, whereas the former can do more
+specification. PyMVPA ships with three principal transformation methods that
+can be used here: :func:`~mvpa2.datasets.eventrelated.fit_event_hrf_model`,
+:func:`~mvpa2.datasets.eventrelated.extract_boxcar_event_samples` and
+:func:`~mvpa2.datasets.eventrelated.assign_conditionlabels`. The difference
+between the three is that the latter simply assignes conditions labels to the
+time point samples of a time series dataset, whereas the former two can do more
 complex transformations, such as temporal compression, or model fitting.  Note,
 that is is possible to implement custom transformation functions for
-``modelfx``, but all common use cases should be supported by the two functions
+``modelfx``, but all common use cases should be supported by the three functions
 that already come with PyMVPA.
 
 All subsequent argument are passed on to the ``modelfx``. In this example, we
