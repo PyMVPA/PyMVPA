@@ -351,7 +351,7 @@ class OpenFMRIDataset(object):
           This callable will be called with each run dataset and the respective
           event list for each run as arguments, In addition all additional
           **kwargs of this method will be passed on to this callable. The
-          callable must return a dataset. If None, ``conditionlabeled_dataset``
+          callable must return a dataset. If None, ``assign_conditionlabels``
           will be used as a default callable.
         stack : boolean
           Flag whether to stack all run datasets into a single dataset, or whether
@@ -377,8 +377,8 @@ class OpenFMRIDataset(object):
         if modelfx is None:
             # loading a model dataset without actually considering the model
             # probably makes little sense, so at least create an attribute
-            from mvpa2.datasets.eventrelated import conditionlabeled_dataset
-            modelfx=conditionlabeled_dataset
+            from mvpa2.datasets.eventrelated import assign_conditionlabels
+            modelfx=assign_conditionlabels
         conds = self.get_model_conditions(model_id)
         # what tasks do we need to consider for this model
         tasks = np.unique([c['task'] for c in conds])
