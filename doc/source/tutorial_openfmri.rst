@@ -94,6 +94,8 @@ you get the number and IDs of all contained model specifications:
 
 >>> of.get_model_ids()
 [1]
+>>> of.get_model_descriptions()
+{1: 'visual object categories'}
 
 This particular dataset contains a single model specification. With its
 numerical ID we can query more information about the model:
