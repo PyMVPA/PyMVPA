@@ -137,14 +137,13 @@ relevant information contained in the OpenFMRI specification and we only need
 to fill in the details of how exactly we want the PyMVPA dataset to be created.
 So here is a complete example:
 
->>> from mvpa2.datasets.eventrelated import eventrelated_dataset
+>>> from mvpa2.datasets.eventrelated import fit_event_hrf_model
 >>> ds = of.get_model_bold_dataset(
 ...          model_id=1,
 ...          subj_id=1,
 ...          flavor='25mm',
 ...          mask=opj(path, 'sub001', 'masks', '25mm', 'brain.nii.gz'),
-...          modelfx=eventrelated_dataset,
-...          model='hrf',
+...          modelfx=fit_event_hrf_model,
 ...          time_attr='time_coords',
 ...          condition_attr='condition')
 
@@ -164,7 +163,7 @@ Now for the important bits: The ``modelfx`` argument takes a, so-called,
 factory method that can transform a time series dataset (each sample in the
 dataset is a time point at that stage) into the desired type of sample (or
 observation). In this example, we have used
-:func:`~mvpa2.datasets.eventrelated.eventrelated_dataset` that is designed to
+:func:`~mvpa2.datasets.eventrelated.fit_event_hrf_model` that is designed to
 perform modeling of each stimulation event contained in the OpenFMRI
 specification. PyMVPA ships with three principal transformation methods that
 can be used here: :func:`~mvpa2.datasets.eventrelated.fit_event_hrf_model`,
