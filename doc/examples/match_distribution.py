@@ -77,11 +77,7 @@ report.figure()
 # Figure for fMRI data sample we have
 #
 verbose(1, "Load sample fMRI dataset")
-attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
-dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                        targets=attr.targets,
-                        chunks=attr.chunks,
-                        mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+dataset = load_example_fmri_dataset()
 # select random voxel
 dataset = dataset[:, int(np.random.uniform()*dataset.nfeatures)]
 

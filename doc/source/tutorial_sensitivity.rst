@@ -29,7 +29,6 @@ and perform volume averaging to get a single sample per stimulus category and
 original experiment session.
 
 >>> from mvpa2.tutorial_suite import *
->>> # alt: `ds = load_tutorial_results('ds_haxby2001_blkavg_brain')`
 >>> ds = get_raw_haxby2001_data(roi='brain')
 >>> print ds.shape
 (1452, 39912)
@@ -92,8 +91,8 @@ That was surprisingly quick, wasn't it? But was it any good?
 26.0
 >>> print cvte.ca.stats.matrix
 [[1 1 2 3 0 1 1 1]
- [1 2 2 0 2 2 3 1]
- [5 3 3 0 4 4 0 2]
+ [1 2 2 0 2 3 3 1]
+ [5 3 3 0 4 3 0 2]
  [3 2 0 5 0 0 0 1]
  [0 3 1 0 3 2 0 0]
  [0 0 0 0 0 0 1 0]
@@ -262,7 +261,7 @@ feature selection to retain more.
 ...                        enable_ca=['stats'])
 >>> results = cvte(ds)
 >>> print np.round(cvte.ca.stats.stats['ACC%'], 1)
-70.8
+69.8
 
 A drop of 8% in accuracy on about 4 times the number of features. This time
 we asked for the top 5% of F-scores.
@@ -281,7 +280,6 @@ As you can see, this even works for our meta-classifier. And again this
 analyzer is a :term:`processing object` that returns the desired sensitivity
 when called with a dataset.
 
->>> # alt: `sens = load_tutorial_results('res_haxby2001_sens_5pANOVA')`
 >>> sens = sensana(ds)
 >>> type(sens)
 <class 'mvpa2.datasets.base.Dataset'>
@@ -325,7 +323,6 @@ that takes a basic measure, adds a processing step to it and behaves like a
 measure itself. The meta-measure we want to use is
 :class:`~mvpa2.measures.base.RepeatedMeasure`.
 
->>> # alt: `sens = load_tutorial_results('res_haxby2001_splitsens_5pANOVA')`
 >>> sensana = fclf.get_sensitivity_analyzer(postproc=maxofabs_sample())
 >>> cv_sensana = RepeatedMeasure(sensana,
 ...                              ChainNode((NFoldPartitioner(),
@@ -373,14 +370,14 @@ processing pipeline a bit.
 >>> print sens.shape
 (336, 39912)
 >>> print cv_sensana.clf.ca.stats.matrix
-[[ 5  0  3  0  0  3  0  1]
+[[ 5  0  3  0  0  3  0  2]
  [ 0  9  0  0  0  0  0  0]
  [ 0  2  4  0  0  1  0  0]
  [ 2  1  0 12  0  0  0  0]
  [ 0  0  0  0 12  0  0  0]
  [ 3  0  4  0  0  6  2  1]
  [ 0  0  1  0  0  0 10  0]
- [ 2  0  0  0  0  2  0 10]]
+ [ 2  0  0  0  0  2  0  9]]
 
 I guess that deserves some explanation. We wrap our
 :class:`~mvpa2.clfs.meta.FeatureSelectionClassifier` with a new thing, a

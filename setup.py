@@ -189,7 +189,7 @@ def setup_package():
           data_files=[('mvpa2', ['mvpa2/COMMIT_HASH']),
                         get_full_dir('mvpa2/data'),
                         get_full_dir('mvpa2/data/bv'),
-                        get_full_dir('mvpa2/data/tutorial_data_25mm/data'),
+                        get_full_dir('mvpa2/data/openfmri'),
           ],
           scripts=glob(os.path.join('bin', '*')),
           ext_modules=ext_modules
