@@ -51,6 +51,16 @@ def _id2int(id_, strip=None):
         pass
     return id_
 
+def _get_description_dict(path, xfm_key=None):
+    props = {}
+    if os.path.exists(path):
+        for line in open(path, 'r'):
+            key = line.split()[0]
+            value = line[len(key):].strip()
+            if not xfm_key is None:
+                key = xfm_key(key)
+            props[key] = value
+    return props
 
 def _subdirs2ids(path, prefix, **kwargs):
     ids = []
@@ -92,14 +102,8 @@ class OpenFMRIDataset(object):
     def get_scan_properties(self):
         """Returns a dictionary with the scan properties listed in scan_key.txt
         """
-        props = {}
         fname = _opj(self._basedir, 'scan_key.txt')
-        if os.path.exists(fname):
-            for line in open(fname, 'r'):
-                key = line.split()[0]
-                value = line[len(key):].strip()
-                props[key] = value
-        return props
+        return _get_description_dict(fname)
 
     def get_task_descriptions(self):
         """Returns a dictionary with the tasks defined in the dataset
@@ -107,15 +111,21 @@ class OpenFMRIDataset(object):
         Dictionary keys are integer task IDs, values are task description
         strings.
         """
-        tasks = {}
         fname = _opj(self._basedir, 'task_key.txt')
-        if os.path.exists(fname):
-            for line in open(fname, 'r'):
-                key = line.split()[0]
-                value = line[len(key):].strip()
-                key = _id2int(key)
-                tasks[key] = value
-        return tasks
+        return _get_description_dict(fname, xfm_key=_id2int)
+
+    def get_model_descriptions(self):
+        """Returns a dictionary with the models described in the dataset
+
+        Dictionary keys are integer model IDs, values are description strings.
+
+        Note that the return dictionary is not necessarily comprehensive. It
+        only reflects the models described in ``model_key.txt``. If a dataset
+        is inconsistently described, ``get_model_ids()`` actually may discover
+        more or less models in comparison to the avauilable model descriptions.
+        """
+        fname = _opj(self._basedir, 'model_key.txt')
+        return _get_description_dict(fname, xfm_key=_id2int)
 
     def get_bold_run_ids(self, subj, task):
         """Returns (sorted) list of run IDs for a given subject and task
