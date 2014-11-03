@@ -338,16 +338,17 @@ In the simplest case, we now let `~mvpa2.datasets.mri.fmri_dataset` do its job,
 by just pointing it to the fMRI data file. The data is stored as a NIfTI file
 that has all runs of the experiment concatenated into a single file.
 
->>> ds = fmri_dataset(os.path.join(path, 'bold.nii.gz'))
+>>> bold_fname = os.path.join(path, 'sub001', 'BOLD', 'task001_run001', 'bold.nii.gz')
+>>> ds = fmri_dataset(bold_fname)
 >>> len(ds)
-1452
+121
 >>> ds.nfeatures
 163840
 >>> ds.shape
-(1452, 163840)
+(121, 163840)
 
 We can notice two things. First -- *it worked!* Second, we obtained a
-two-dimensional dataset with 1452 samples (these are volumes in the NIfTI
+two-dimensional dataset with 121 samples (these are volumes in the NIfTI
 file), and over 160k features (these are voxels in the volume). The voxels
 are represented as a one-dimensional vector, and it seems that they have
 lost their association with the 3D-voxel-space. However, this is not the
@@ -365,10 +366,10 @@ to use the original GLM-based localizer mask of ventral temporal cortex
 from Haxby et al. (2001).
 Let's reload the dataset:
 
->>> ds = fmri_dataset(os.path.join(path, 'bold.nii.gz'),
-...                   mask=os.path.join(path, 'mask_vt.nii.gz'))
+>>> mask_fname = os.path.join(path, 'sub001', 'masks', 'orig', 'vt.nii.gz')
+>>> ds = fmri_dataset(bold_fname, mask=mask_fname)
 >>> len(ds)
-1452
+121
 >>> ds.nfeatures
 577
 
@@ -423,7 +424,7 @@ all unwanted attributes. The Dataset class'
 
 >>> stripped = ds.copy(deep=False, sa=['time_coords'], fa=[], a=[])
 >>> print stripped
-<Dataset: 1452x577@int16, <sa: time_coords>>
+<Dataset: 121x577@int16, <sa: time_coords>>
 
 We can see that all attributes besides ``time_coords`` have been filtered out.
 Setting the ``deep`` arguments to ``False`` causes the copy function to reuse the

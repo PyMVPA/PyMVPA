@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 set -u
@@ -6,7 +6,7 @@ set -u
 # BOILERPLATE
 
 # where is the data; support standard env variable switch
-dataroot=${MVPA_DATA_ROOT:-"datadb/tutorial_data/tutorial_data/data"}
+dataroot=${MVPA_DATA_ROOT:-"mvpa2/data/openfmri"}
 
 # where to place output; into tmp by default
 outdir=${MVPA_EXAMPLE_WORKDIR:-}
@@ -40,13 +40,13 @@ fi
 #% is stored in a compressed HDF5 file.
 
 pymvpa2 mkds \
-   --mri-data "$dataroot"/bold.nii.gz \
-   --mask "$dataroot"/mask_brain.nii.gz \
-   --add-sa-attr "$dataroot"/attributes.txt  \
-   --add-vol-attr hoc "$dataroot"/mask_hoc.nii.gz \
-   --add-vol-attr gm "$dataroot"/mask_gray.nii.gz \
-   --add-vol-attr vt "$dataroot"/mask_vt.nii.gz \
-   --add-fsl-mcpar "$dataroot"/bold_mc.par \
+   --openfmri-modelbold "$dataroot" 1 1 '25mm' \
+   --mask "$dataroot"/sub001/masks/25mm/brain.nii.gz \
+   --add-sa-attr "$dataroot"/../attributes_literal.txt  \
+   --add-vol-attr hoc "$dataroot"/sub001/masks/25mm/hoc.nii.gz \
+   --add-vol-attr gm "$dataroot"/sub001/masks/25mm/gray.nii.gz \
+   --add-vol-attr vt "$dataroot"/sub001/masks/25mm/vt.nii.gz \
+   --add-fsl-mcpar bold_moest.txt \
    --hdf5-compression gzip \
    -o "$outdir"/bold.hdf5
 
@@ -71,7 +71,7 @@ pymvpa2 dump --fa hoc -f txt -i "$outdir"/bold.hdf5 | sort | uniq | wc -l
 #% file.
 
 pymvpa2 preproc --poly-detrend 0 \
-                --detrend-regrs mc_x mc_y mc_z mc_rot1 mc_rot2 mc_rot3 \
+                --detrend-regrs bold_moest.txt_0 bold_moest.txt_1 bold_moest.txt_2 bold_moest.txt_3 bold_moest.txt_4 bold_moest.txt_5 \
                 --filter-passband 0.005 0.067 \
                 --filter-stopband 0.0025 0.1 \
                 --sampling-rate 0.4 \

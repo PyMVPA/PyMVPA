@@ -328,28 +328,42 @@ def linear1d_gaussian_noise(size=100, slope=0.5, intercept=1.0,
 
 def load_example_fmri_dataset(name='1slice', literal=False):
     """Load minimal fMRI dataset that is shipped with PyMVPA."""
+    from mvpa2.datasets.eventrelated import events2sample_attr
+    from mvpa2.datasets.sources.openfmri import OpenFMRIDataset
     from mvpa2.datasets.mri import fmri_dataset
     from mvpa2.misc.io import SampleAttributes
 
-    dspath, mask = {
-        '1slice': (pymvpa_dataroot, 'mask.nii.gz'),
-        '25mm': (os.path.join(
-            pymvpa_dataroot,'tutorial_data_25mm', 'data'), 'mask_brain.nii.gz')
-    }[name]
+    basedir = os.path.join(pymvpa_dataroot, 'openfmri')
+    mask = {'1slice': os.path.join(pymvpa_dataroot, 'mask.nii.gz'),
+            '25mm': os.path.join(basedir, 'sub001', 'masks', '25mm',
+                    'brain.nii.gz')}[name]
 
     if literal:
-        attr = SampleAttributes(os.path.join(dspath, 'attributes_literal.txt'))
+        model = 1
+        subj = 1
+        openfmri = OpenFMRIDataset(basedir)
+        ds = openfmri.get_model_bold_dataset(model, subj, flavor=name,
+                                             mask=mask, noinfolabel='rest')
+        # re-imagine the global time_coords of a concatenated time series
+        # this is only for the purpose of keeping the example data in the
+        # exact same shape as it has always been. in absolute terms this makes no
+        # sense as there is no continuous time in this dataset
+        ds.sa['run_time_coords'] = ds.sa.time_coords
+        ds.sa['time_coords'] = np.arange(len(ds)) * 2.5
     else:
-        attr = SampleAttributes(os.path.join(dspath, 'attributes.txt'))
-    ds = fmri_dataset(samples=os.path.join(dspath, 'bold.nii.gz'),
-                      targets=attr.targets, chunks=attr.chunks,
-                      mask=os.path.join(dspath, mask))
+        if name == '25mm':
+            raise ValueError("The 25mm dataset is no longer available with "
+                             "numerical labels")
+        attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
+        ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+                          targets=attr.targets, chunks=attr.chunks,
+                          mask=mask)
 
     return ds
 
 def load_datadb_tutorial_data(path=os.path.join(
       pymvpa_datadbroot, 'tutorial_data', 'tutorial_data', 'data'),
-    roi='brain'):
+    roi='brain', add_fa=None):
     """Loads the block-design demo dataset from PyMVPA dataset DB.
 
     Parameters
@@ -364,21 +378,27 @@ def load_datadb_tutorial_data(path=os.path.join(
       provided it may contain int values that a processed as explained
       before, but the union of a ROIs is taken to produce the final mask.
       If None, no masking is performed.
+    add_fa : dict
+      Passed on to the dataset creator function (see fmri_dataset() for
+      more information).
     """
     import nibabel as nb
-    from mvpa2.datasets.mri import fmri_dataset
-    from mvpa2.misc.io import SampleAttributes
+    from mvpa2.datasets.sources.openfmri import OpenFMRIDataset
+    from mvpa2.datasets.eventrelated import events2sample_attr
+    task = model = subj = 1
+    dhandle = OpenFMRIDataset(path)
+    maskpath = os.path.join(path, 'sub001', 'masks', 'orig')
     if roi is None:
         mask = None
     elif isinstance(roi, str):
-        mask = os.path.join(path, 'mask_' + roi + '.nii.gz')
+        mask = os.path.join(maskpath, roi + '.nii.gz')
     elif isinstance(roi, int):
-        nimg = nb.load(os.path.join(path, 'mask_hoc.nii.gz'))
+        nimg = nb.load(os.path.join(maskpath, 'hoc.nii.gz'))
         tmpmask = nimg.get_data() == roi
         mask = nb.Nifti1Image(tmpmask.astype(int), nimg.get_affine(),
                               nimg.get_header())
     elif isinstance(roi, tuple) or isinstance(roi, list):
-        nimg = nb.load(os.path.join(path, 'mask_hoc.nii.gz'))
+        nimg = nb.load(os.path.join(maskpath, 'hoc.nii.gz'))
         if externals.versions['nibabel'] >= '1.2':
             img_shape = nimg.shape
         else:
@@ -388,12 +408,12 @@ def load_datadb_tutorial_data(path=os.path.join(
             tmpmask = np.logical_or(tmpmask, nimg.get_data() == r)
         mask = nb.Nifti1Image(tmpmask.astype(int), nimg.get_affine(),
                               nimg.get_header())
+    elif isinstance(roi, nb.Nifti1Image):
+        mask=roi
     else:
         raise ValueError("Got something as mask that I cannot handle.")
-    attr = SampleAttributes(os.path.join(path, 'attributes.txt'))
-    ds = fmri_dataset(samples=os.path.join(path, 'bold.nii.gz'),
-                      targets=attr.targets, chunks=attr.chunks,
-                      mask=mask)
+    ds = dhandle.get_model_dataset(model, subj, mask=mask, add_fa=add_fa,
+                                   noinfolabel='rest')
     return ds
 
 

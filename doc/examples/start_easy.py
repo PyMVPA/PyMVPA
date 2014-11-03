@@ -22,15 +22,13 @@ First, we import the PyMVPA suite to enable all PyMVPA building blocks
 from mvpa2.suite import *
 
 """
-Now we load an fMRI dataset with some attributes for each volume, only
-considering voxels that are non-zero in a mask image.
+Now we load an example fMRI dataset that comes with PyMVPA. It has some
+attributes associated with each volume, and is masked to exclude voxels
+outside of the brain.
 """
 
-attr = SampleAttributes(os.path.join(pymvpa_dataroot,
-                        'attributes_literal.txt'))
-dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                       targets=attr.targets, chunks=attr.chunks,
-                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+# load PyMVPA example dataset with literal labels
+dataset = load_example_fmri_dataset(literal=True)
 
 """
 Next we remove linear trends by polynomial regression for each voxel and

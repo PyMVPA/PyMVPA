@@ -243,8 +243,11 @@ def test_bin_prop_ci():
     cids = m95(ds)
     assert_equal(cids.shape, (2, 1))
     # accuracy is in the CI
-    assert_true(acc < cids.samples[1,0])
-    assert_true(acc > cids.samples[0,0])
+    maxdist = cids.samples[1,0] - acc
+    mindist = acc - cids.samples[1,0]
+    # but allow for numerical uncertainty proportional to the sample size
+    assert_true(maxdist > 0 or maxdist <= 1./n)
+    assert_true(mindist > 0 or mindist <= 1./n)
     # more than one feature
     ds = Dataset(np.transpose([bl, np.logical_not(bl)]))
     ci95 = m95(ds)
