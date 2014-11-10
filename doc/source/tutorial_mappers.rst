@@ -123,7 +123,7 @@ correct features have been chosen.
 
 
 Load real data
---------------
+==============
 
 We have pretty much all the pieces to start a first analysis.  We know how to
 load fMRI data from time series images, we know how to add and access
@@ -210,7 +210,7 @@ We got the dataset that we already know from the last part, but this time
 is also has information about chunks and targets.
 
 More structure, less duplication of work
-----------------------------------------
+========================================
 
 Although one could craft individual attribute files for each fMRI scan, doing
 so would be suboptimal. Typically, stimulation is not synchronous with
@@ -294,7 +294,7 @@ instead of giving a custom filename, BOLD data is identified by subject, task,
 and acquisition run IDs.
 
 Multi-session data
-~~~~~~~~~~~~~~~~~~
+------------------
 
 Many fMRI experiments involve multiple runs. Loading such data is best done
 in a loop. The following code snippet loads all available runs for the object
@@ -401,6 +401,10 @@ normalization, and so on. In this tutorial, we keep it simple. The data we
 have just loaded is already motion corrected. For every experiment that is
 longer than a few minutes, as in this case, temporal trend removal, or
 :term:`detrending`, is crucial.
+
+
+Basic preprocessing
+===================
 
 Detrending
 ----------
