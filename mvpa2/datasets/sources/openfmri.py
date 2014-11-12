@@ -188,6 +188,32 @@ class OpenFMRIDataset(object):
                      fname)
         return nb.load(fname)
 
+    def get_anatomy_image(self, subj, flavor=None):
+        """Returns a NiBabel image instance for the anatomy data of a
+        particular subject.
+
+        Parameters
+        ----------
+        subj : int
+          Subject identifier.
+        flavor : None or str
+          anatomy data flavor to access (see dataset description)
+
+        Returns
+        -------
+        NiBabel Nifti1Image
+        """
+        import nibabel as nb
+
+        if flavor is None:
+            flavor = ''
+        else:
+            flavor = '_' + flavor
+        fname = 'highres001%s.nii.gz' % flavor
+        fname = _opj(self._basedir, _sub2id(subj),
+                     'anatomy', fname)
+        return nb.load(fname)
+
     def get_bold_run_dataset(self, subj, task, run, flavor=None, add_sa=None,
             **kwargs):
         """Returns a dataset instance for the BOLD data of a particular
