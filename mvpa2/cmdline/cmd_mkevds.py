@@ -170,14 +170,6 @@ def run(args):
     if not len(events):
         raise ValueError("no events defined")
     verbose(2, 'Extracting %i events' % len(events))
-    if args.offset:
-        # shift events
-        for ev in events:
-            ev['onset'] += args.offset
-    if args.duration:
-        # overwrite duration
-        for ev in events:
-            ev['duration'] = args.duration
     if args.event_compression is None:
         evmap = None
     elif args.event_compression == 'mean':
@@ -191,6 +183,8 @@ def run(args):
     # convert to event-related ds
     evds = eventrelated_dataset(ds, events, time_attr=args.time_attr,
                                 match=args.match_strategy,
+                                event_offset=args.offset,
+                                event_duration=args.duration,
                                 event_mapper=evmap)
     # act on all attribute options
     evds = process_common_dsattr_opts(evds, args)
