@@ -398,7 +398,7 @@ class OpenFMRIDataset(object):
         for sub in subj_id:
             for task in tasks:
                 for run in self.get_bold_run_ids(sub, task):
-                    events = self.get_bold_run_model(model_id, task, run)
+                    events = self.get_bold_run_model(model_id, sub, run)
                     if not len(events):
                         # nothing in this run for the given model
                         # it could be argued whether we'd still want this data loaded
