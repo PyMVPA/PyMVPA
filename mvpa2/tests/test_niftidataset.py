@@ -138,6 +138,7 @@ def test_openfmri_dataset():
                                          noinfolabel='rest')
             assert_array_equal(
                 orig_attrs['targets'][(run - 1) * 121: run * len(ds)], targets)
+            assert_equal(ds.sa['subj'][0], subj)
 
 
 @with_tempfile(suffix='.img')
