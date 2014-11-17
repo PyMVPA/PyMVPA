@@ -428,8 +428,9 @@ class OpenFMRIDataset(object):
                     d = modelfx(d, events, **kwargs)
                     # if the modelfx doesn't leave 'chunk' information, we put
                     # something minimal in
-                    if not 'chunks' in d.sa:
-                        d.sa['chunks'] = [run] * len(d)
+                    for attr, info in (('chunks', run), ('subj', sub)):
+                        if not attr in d.sa:
+                            d.sa[attr] = [info] * len(d)
                     dss.append(d)
         if stack:
             dss = vstack(dss, a=0)
