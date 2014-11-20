@@ -304,11 +304,11 @@ class OpenFMRIDataset(object):
 
         Returns
         -------
-        dict
-          Nested dictionary for all tasks and conditions contained in a
-          particular model. First-level keys are task IDs. Second-level keys
-          are condition IDs. Second-level values are rec-arrays with fields
-          'onset', 'duration', 'intensity'.
+        list
+          One item per event in the run. All items are dictionaries with the
+          following keys: 'condition', 'onset', 'duration', 'intensity',
+          'run', 'task', where the first is a literal label, the last two are
+          integer IDs, and the rest are typically floating point values.
         """
 
         conditions = self.get_model_conditions(model)
@@ -333,7 +333,7 @@ class OpenFMRIDataset(object):
             for ev in evdata:
                 evdict = dict(zip(ev_fields,
                                   [ev[field] for field in ev_fields]))
-                evdict['task'] = task_descr
+                evdict['task'] = task_id
                 evdict['condition'] = cond['name']
                 evdict['run'] = run
                 events.append(evdict)
@@ -396,9 +396,26 @@ class OpenFMRIDataset(object):
             subj_id = [subj_id]
         dss = []
         for sub in subj_id:
+            # we need to loop over tasks first in order to be able to determine
+            # what runs exists: that means we have to load the model info
+            # repeatedly
             for task in tasks:
                 for run in self.get_bold_run_ids(sub, task):
-                    events = self.get_bold_run_model(model_id, task, run)
+                    events = self.get_bold_run_model(model_id, sub, run)
+                    # at this point our events should only contain those
+                    # matching the current task. If not, this model violates
+                    # the implicit assumption that one condition (label) can
+                    # only be present in a single task. The current OpenFMRI
+                    # spec does not allow for a more complex setup. I think
+                    # this is worth a runtime check
+                    check_events = [ev for ev in events if ev['task'] == task]
+                    if not len(check_events) == len(events):
+                        warning(
+                            "not all event specifications match the expected "
+                            "task ID -- something is wrong -- check that each "
+                            "model condition label is only associated with a "
+                            "single task")
+
                     if not len(events):
                         # nothing in this run for the given model
                         # it could be argued whether we'd still want this data loaded
@@ -411,8 +428,9 @@ class OpenFMRIDataset(object):
                     d = modelfx(d, events, **kwargs)
                     # if the modelfx doesn't leave 'chunk' information, we put
                     # something minimal in
-                    if not 'chunks' in d.sa:
-                        d.sa['chunks'] = [run] * len(d)
+                    for attr, info in (('chunks', run), ('subj', sub)):
+                        if not attr in d.sa:
+                            d.sa[attr] = [info] * len(d)
                     dss.append(d)
         if stack:
             dss = vstack(dss, a=0)
