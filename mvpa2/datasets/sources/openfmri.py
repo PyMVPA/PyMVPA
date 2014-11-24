@@ -214,6 +214,33 @@ class OpenFMRIDataset(object):
         fname = 'bold%s.nii.gz' % flavor
         return self._load_bold_task_run_data(subj, task, run, [fname], nb.load)
 
+
+    def get_bold_run_motion_estimates(self, subj, task, run,
+            fname='bold_moest.txt'):
+        """Returns the volume-wise motion estimates for a particular BOLD run
+
+        Parameters
+        ----------
+        subj : int
+          Subject identifier.
+        task : int
+          Task ID (see task_key.txt)
+        run : int
+          Run ID.
+        fname : str
+          Filename.
+
+        Returns
+        -------
+        array
+          Array of floats -- one row per fMRI volume, 6 columns (typically,
+          the first three are translation X, Y, Z in mm and the last three
+          rotation in deg)
+        """
+        return self._load_bold_task_run_data(
+                subj, task, run, [fname], np.loadtxt)
+
+
     def get_bold_run_dataset(self, subj, task, run, flavor=None, add_sa=None,
             **kwargs):
         """Returns a dataset instance for the BOLD data of a particular

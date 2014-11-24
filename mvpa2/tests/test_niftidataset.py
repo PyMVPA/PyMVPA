@@ -128,8 +128,11 @@ def test_openfmri_dataset():
             # functional mapper
             assert_equal(ds.O.shape, (121, 40, 20, 1))
             # additional attributes present
+            moest = of.get_bold_run_motion_estimates(subj, task, run)
             for i in range(6):
-                assert_true('bold_moest.txt_%i' % (i,) in ds.sa)
+                moest_attr = 'bold_moest.txt_%i' % (i,)
+                assert_true(moest_attr in ds.sa)
+                assert_array_equal(moest[:,i], ds.sa[moest_attr].value)
 
             # check conversion of model into sample attribute
             events = of.get_bold_run_model(subj, task, run)
