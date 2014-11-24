@@ -240,6 +240,74 @@ class OpenFMRIDataset(object):
         return self._load_bold_task_run_data(
                 subj, task, run, [fname], np.loadtxt)
 
+    def get_task_bold_attributes(self, task, fname, loadfx, exclude_subjs=None):
+        """Returns data attributes for all BOLD data from a specific task.
+
+        This function can load arbitrary data from the directories where the
+        relevant BOLD image files are stored. Data sources are describes by
+        specifying the file name containing the data in the BOLD directory,
+        and by providing a function that returns the file content in array
+        form. Optionally, data from specific subjects can be skipped.
+
+        For example, this function can be used to access motion estimates.
+
+        Parameters
+        ----------
+        task : int
+          Task ID (see task_key.txt)
+        fname : str
+          Filename.
+        loadfx : functor
+          Function that can open the relevant files and return their content
+          as an array. This function is called with the name of the data file
+          as its only argument.
+        exclude_subjs : list or None
+          Optional list of subject IDs whose data shall be skipped.
+
+        Returns
+        -------
+        list(array)
+          A list of arrays, one for each BOLD run. Each array is
+          (subjects x volumes x features).
+        """
+        if exclude_subjs is None:
+            exclude_subjs = []
+        # runs per task per subj
+        tbri = self.get_task_bold_run_ids(task)
+        nruns = max([max(tbri[s]) for s in tbri if not s in exclude_subjs])
+        nsubjs = len(tbri)
+        # structure to hold all data
+        data = [None] * nruns
+
+        # over all possible run ids
+        for run in xrange(nruns):
+            # for all actual subjects
+            # TODO add subject filter
+            for subj in sorted(tbri.keys()):
+                try:
+                    # run + 1 because openfmri is one-based
+                    d = self._load_bold_task_run_data(subj, task, run + 1,
+                            [fname], loadfx)
+                    if data[run] is None:
+                        data[run] = [d]
+                    else:
+                        data[run].append(d)
+                except IOError:
+                    # no data
+                    pass
+            # deal with missing values
+            max_vol = max([len(d) for d in data[run]])
+            for i, d in enumerate(data[run]):
+                if len(d) == max_vol:
+                    continue
+                fixed_run = np.empty((max_vol, 6), dtype=np.float)
+                fixed_run[:] = np.nan
+                if len(d):
+                    fixed_run[:len(d)] = d
+                data[run][i] = fixed_run
+
+        return [np.array(d) for d in data]
+
 
     def get_bold_run_dataset(self, subj, task, run, flavor=None, add_sa=None,
             **kwargs):

@@ -143,6 +143,12 @@ def test_openfmri_dataset():
                 orig_attrs['targets'][(run - 1) * 121: run * len(ds)], targets)
             assert_equal(ds.sa['subj'][0], subj)
 
+    # more basic access
+    motion = of.get_task_bold_attributes(1, 'bold_moest.txt', np.loadtxt)
+    assert_equal(len(motion), 12) # one per run
+    # one per subject, per volume, 6 estimates
+    assert_equal([m.shape for m in motion], [(1, 121, 6)] * 12)
+
 
 @with_tempfile(suffix='.img')
 def test_nifti_mapper(filename):
