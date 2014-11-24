@@ -690,3 +690,25 @@ def timeseries_boxplot(median, mean=None, std=None, n=None, min=None, max=None,
         for i, run in enumerate(segment_sizes[:-1]):
             pl.axvline(np.sum(segment_sizes[:i+1]), color='0.2', linestyle='--',
                        **kwargs)
+
+
+def concat_ts_boxplot_stats(run_stats):
+    """Helper to concatenate boxplot stats from ``compute_ts_boxpot_stats``
+
+    Parameters
+    ----------
+    run_stats : list
+      Series of return values from ``compute_ts_boxpot_stats``
+
+    Returns
+    -------
+    tuple
+      First item is a dictionary with the concatenated stats time series.
+      Second item is a list of masked arrays suitable for input to
+      ``timeseries_boxplot`` as ``outlierd``.
+    """
+    stats = {}
+    for stat in ('mean', 'median', 'std', 'p25', 'p75', 'n', 'min', 'max'):
+        stats[stat] = np.concatenate([r[0][stat] for r in run_stats])
+    outlierd = [r[1].T for r in run_stats]
+    return stats, outlierd
