@@ -308,33 +308,6 @@ class OpenFMRIDataset(object):
 
         return [np.array(d) for d in data]
 
-
-    def get_anatomy_image(self, subj, flavor=None):
-        """Returns a NiBabel image instance for the anatomy data of a
-        particular subject.
-
-        Parameters
-        ----------
-        subj : int
-          Subject identifier.
-        flavor : None or str
-          anatomy data flavor to access (see dataset description)
-
-        Returns
-        -------
-        NiBabel Nifti1Image
-        """
-        import nibabel as nb
-
-        if flavor is None:
-            flavor = ''
-        else:
-            flavor = '_' + flavor
-        fname = 'highres001%s.nii.gz' % flavor
-        fname = _opj(self._basedir, _sub2id(subj),
-                     'anatomy', fname)
-        return nb.load(fname)
-
     def get_bold_run_dataset(self, subj, task, run, flavor=None, add_sa=None,
             **kwargs):
         """Returns a dataset instance for the BOLD data of a particular
@@ -578,3 +551,27 @@ class OpenFMRIDataset(object):
         if stack:
             dss = vstack(dss, a=0)
         return dss
+
+    def get_anatomy_image(self, subj, path=None, fname='highres001.nii.gz'):
+        """Returns a NiBabel image instance for a structural image of a subject.
+
+        Parameters
+        ----------
+        subj : int
+          Subject identifier.
+        path : list or None
+          Path to the structural file within the anatomy/ tree.
+        fname : str
+          Acces a particular anatomy data flavor via its filename (see dataset
+          description). Defaults to the first T1-weighted image.
+
+        Returns
+        -------
+        NiBabel Nifti1Image
+        """
+        import nibabel as nb
+
+        if path is None:
+            path = []
+        return self._load_subj_data(
+                subj, ['anatomy'] + path + [fname], nb.load)
