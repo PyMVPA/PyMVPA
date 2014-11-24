@@ -331,7 +331,8 @@ def _mask_nan(x):
     return np.ma.masked_array(x, np.isnan(x))
 
 def compute_ts_boxplot_stats(data, outlier_abs_minthresh=None,
-                             outlier_thresh=3.0, aggfx=None, *args):
+                             outlier_thresh=3.0, greedy_outlier=False,
+                             aggfx=None, *args):
     """Compute boxplot-like statistics across a set of time series.
 
     This function can handle missing values and supports data aggregation.
@@ -347,6 +348,10 @@ def compute_ts_boxplot_stats(data, outlier_abs_minthresh=None,
       this this threshold will ever be considered as an outlier
     outlier_thresh : float or None
       Outlier classification threshold in units of standard deviation.
+    greedy_outlier : bool
+      If True, an entire time series is marked as an outlier, if any of its
+      observations matches the criterion. If False, only individual observations
+      are marked as outlier.
     aggfx : functor or None
       Aggregation function used to collapse multi-feature samples into a scalar
       value
@@ -364,29 +369,38 @@ def compute_ts_boxplot_stats(data, outlier_abs_minthresh=None,
       The outlier data points are returned a masked array of the same size as
       the input data. All data points classified as non-outliers are masked.
     """
+    if len(data) < 2:
+        raise ValueError("needs at least two time series")
     # data comes in as (subj x volume x parameter)
+    orig_input = data
     # reduce data to L2-norm
     if not aggfx is None:
         data = np.apply_along_axis(aggfx, 2, data, *args)
     # need to deal with missing data
-    data = _mask_nan(data)
+    data = _mask_nan(np.asanyarray(data))
+    if len(data.shape) < 2:
+        raise ValueError("needs at least two observation per time series")
     # outlier detection
     meand = np.ma.mean(data, axis=0)
     stdd = np.ma.std(data, axis=0)
-    outlier = np.ma.greater((np.absolute(data - meand)), outlier_thresh * stdd)
-    #print repr(list(data - meand))
-    if not outlier_abs_minthresh is None:
-        # apply absolute filter in addition
-        outlier = np.logical_and(outlier, np.ma.greater(data, outlier_abs_minthresh))
-    # get a separate data array with just outliers for simplicity of plotting
-    outlierd = data.copy()
-    # remove all data that is not outlier
-    outlierd[np.ma.sum(outlier, axis=1) == 0] = np.nan
-    outlierd = _mask_nan(outlierd)
-    # remove all outliers from the data
-    data[np.ma.greater(np.ma.sum(outlier, axis=1), 0)] = np.nan
-    data = _mask_nan(data)
-    # produce final summary stats on non-outliers
+    outlierd = None
+    if outlier_thresh > 0.0:
+        outlier = np.ma.greater((np.absolute(data - meand)), outlier_thresh * stdd)
+        if not outlier_abs_minthresh is None:
+            # apply absolute filter in addition
+            outlier = np.logical_and(outlier,
+                                     np.ma.greater(data,
+                                                   outlier_abs_minthresh))
+        if greedy_outlier:
+            # expect outlier mask to all elements in that series
+            outlier[np.sum(outlier, axis=1) > 0] = True
+        # apply outlier mask to original data, but merge with existing mask
+        # to keep NaNs out of the game
+        data = np.ma.masked_array(data.data,
+                                  mask=np.logical_or(data.mask, outlier))
+        outlierd = np.ma.masked_array(data.data,
+                                      mask=np.logical_not(outlier))
+
     res = {}
     res['mean'] = np.ma.mean(data, axis=0)
     res['median'] = np.ma.median(data, axis=0)
