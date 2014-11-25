@@ -157,6 +157,35 @@ class OpenFMRIDataset(object):
                 out[sub] = runs
         return out
 
+
+    def _load_data(self, path, loadfx):
+        # little helper to access stuff in datasets
+        path = _opj(self._basedir, *path)
+        return loadfx(path)
+
+    def _load_subj_data(self, subj, path, loadfx):
+        # little helper to access stuff in subjs of datasets
+        path = [_sub2id(subj)] + path
+        return self._load_data(path, loadfx)
+
+    def _load_bold_task_run_data(self, subj, task, run, path, loadfx):
+        # little helper for BOLD and associated data
+        return self._load_subj_data(
+                subj, ['BOLD', _taskrun(task, run)] + path, loadfx)
+
+    def _load_model_task_run_onsets(self, subj, model, task, run, cond):
+        # little helper for BOLD and associated data
+        ev_fields = ('onset', 'duration', 'intensity')
+
+        def _load_hlpr(fname):
+            return np.recfromtxt(fname, names=ev_fields)
+
+        return self._load_subj_data(
+                subj,
+                ['model', _model2id(model), 'onsets',
+                 _taskrun(task, run), '%s.txt' % _cond2id(cond)],
+                _load_hlpr)
+
     def get_bold_run_image(self, subj, task, run, flavor=None):
         """Returns a NiBabel image instance for the BOLD data of a 
         particular subject/task/run combination.
@@ -183,10 +212,101 @@ class OpenFMRIDataset(object):
         else:
             flavor = '_' + flavor
         fname = 'bold%s.nii.gz' % flavor
-        fname = _opj(self._basedir, _sub2id(subj),
-                     'BOLD', _taskrun(task, run),
-                     fname)
-        return nb.load(fname)
+        return self._load_bold_task_run_data(subj, task, run, [fname], nb.load)
+
+
+    def get_bold_run_motion_estimates(self, subj, task, run,
+            fname='bold_moest.txt'):
+        """Returns the volume-wise motion estimates for a particular BOLD run
+
+        Parameters
+        ----------
+        subj : int
+          Subject identifier.
+        task : int
+          Task ID (see task_key.txt)
+        run : int
+          Run ID.
+        fname : str
+          Filename.
+
+        Returns
+        -------
+        array
+          Array of floats -- one row per fMRI volume, 6 columns (typically,
+          the first three are translation X, Y, Z in mm and the last three
+          rotation in deg)
+        """
+        return self._load_bold_task_run_data(
+                subj, task, run, [fname], np.loadtxt)
+
+    def get_task_bold_attributes(self, task, fname, loadfx, exclude_subjs=None):
+        """Returns data attributes for all BOLD data from a specific task.
+
+        This function can load arbitrary data from the directories where the
+        relevant BOLD image files are stored. Data sources are describes by
+        specifying the file name containing the data in the BOLD directory,
+        and by providing a function that returns the file content in array
+        form. Optionally, data from specific subjects can be skipped.
+
+        For example, this function can be used to access motion estimates.
+
+        Parameters
+        ----------
+        task : int
+          Task ID (see task_key.txt)
+        fname : str
+          Filename.
+        loadfx : functor
+          Function that can open the relevant files and return their content
+          as an array. This function is called with the name of the data file
+          as its only argument.
+        exclude_subjs : list or None
+          Optional list of subject IDs whose data shall be skipped.
+
+        Returns
+        -------
+        list(array)
+          A list of arrays, one for each BOLD run. Each array is
+          (subjects x volumes x features).
+        """
+        if exclude_subjs is None:
+            exclude_subjs = []
+        # runs per task per subj
+        tbri = self.get_task_bold_run_ids(task)
+        nruns = max([max(tbri[s]) for s in tbri if not s in exclude_subjs])
+        nsubjs = len(tbri)
+        # structure to hold all data
+        data = [None] * nruns
+
+        # over all possible run ids
+        for run in xrange(nruns):
+            # for all actual subjects
+            # TODO add subject filter
+            for subj in sorted(tbri.keys()):
+                try:
+                    # run + 1 because openfmri is one-based
+                    d = self._load_bold_task_run_data(subj, task, run + 1,
+                            [fname], loadfx)
+                    if data[run] is None:
+                        data[run] = [d]
+                    else:
+                        data[run].append(d)
+                except IOError:
+                    # no data
+                    pass
+            # deal with missing values
+            max_vol = max([len(d) for d in data[run]])
+            for i, d in enumerate(data[run]):
+                if len(d) == max_vol:
+                    continue
+                fixed_run = np.empty((max_vol, 6), dtype=np.float)
+                fixed_run[:] = np.nan
+                if len(d):
+                    fixed_run[:len(d)] = d
+                data[run][i] = fixed_run
+
+        return [np.array(d) for d in data]
 
     def get_bold_run_dataset(self, subj, task, run, flavor=None, add_sa=None,
             **kwargs):
@@ -239,13 +359,11 @@ class OpenFMRIDataset(object):
         if isinstance(add_sa , basestring):
             add_sa = (add_sa,)
         for sa in add_sa:
-            fname = _opj(self._basedir, _sub2id(subj),
-                         'BOLD', _taskrun(task, run),
-                         sa)
             # TODO: come up with a fancy way of detecting what kind of thing
             # we are accessing -- in any case: first axis needs to match
             # nsamples
-            attrs = np.loadtxt(fname)
+            attrs = self._load_bold_task_run_data(
+                    subj, task, run, [sa], np.loadtxt)
             if len(attrs.shape) == 1:
                 ds.sa[sa] = attrs
             else:
@@ -277,9 +395,9 @@ class OpenFMRIDataset(object):
           identifier. Conditions are only uniquely described by the combination
           of task and condition ID.
         """
-        def_fname = _opj(self._basedir, 'models', _model2id(model),
-                         'condition_key.txt')
-        def_data = np.recfromtxt(def_fname)
+        def_data = self._load_data(
+                ['models', _model2id(model), 'condition_key.txt'],
+                np.recfromtxt)
         conds = []
         # load model meta data
         for dd in def_data:
@@ -314,21 +432,19 @@ class OpenFMRIDataset(object):
         conditions = self.get_model_conditions(model)
         events = []
         ev_fields = ('onset', 'duration', 'intensity')
+
         # get onset info for specific subject/task/run combo
         for cond in conditions:
             task_id = cond['task']
             task_descr = self.get_task_descriptions()[task_id]
-            stim_fname = _opj(self._basedir, _sub2id(subj), 'model',
-                              _model2id(model), 'onsets',
-                              _taskrun(task_id, run),
-                              '%s.txt' % _cond2id(cond['id']))
             try:
                 evdata = np.atleast_1d(
-                       np.recfromtxt(stim_fname, names=ev_fields))
+                       self._load_model_task_run_onsets(
+                           subj, model, task_id, run, cond['id']))
             except IOError:
-                warning("onset definition file '%s' not found; no information "
+                warning("onset definition file not found; no information "
                         "about condition '%s' for run %i"
-                        % (stim_fname, cond['name'], run))
+                        % (cond['name'], run))
                 continue
             for ev in evdata:
                 evdict = dict(zip(ev_fields,
@@ -435,3 +551,27 @@ class OpenFMRIDataset(object):
         if stack:
             dss = vstack(dss, a=0)
         return dss
+
+    def get_anatomy_image(self, subj, path=None, fname='highres001.nii.gz'):
+        """Returns a NiBabel image instance for a structural image of a subject.
+
+        Parameters
+        ----------
+        subj : int
+          Subject identifier.
+        path : list or None
+          Path to the structural file within the anatomy/ tree.
+        fname : str
+          Acces a particular anatomy data flavor via its filename (see dataset
+          description). Defaults to the first T1-weighted image.
+
+        Returns
+        -------
+        NiBabel Nifti1Image
+        """
+        import nibabel as nb
+
+        if path is None:
+            path = []
+        return self._load_subj_data(
+                subj, ['anatomy'] + path + [fname], nb.load)
