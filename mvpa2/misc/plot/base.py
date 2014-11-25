@@ -612,3 +612,103 @@ def plot_dataset_chunks(ds, clf_labels=None):
     pl.draw()
     pl.ion()
 
+
+def concat_ts_boxplot_stats(run_stats):
+    stats = {}
+    for stat in ('mean', 'median', 'std', 'p25', 'p75', 'n', 'min', 'max'):
+        stats[stat] = np.concatenate([r[0][stat] for r in run_stats])
+    outlierd = [r[1].T for r in run_stats]
+    return stats, outlierd
+
+def timeseries_boxplot(median, mean=None, std=None, n=None, min=None, max=None,
+        p25=None, p75=None, outlierd=None, segment_sizes=None, **kwargs):
+    """Produce a boxplot-like plot for time series data.
+
+    Most statistics that are normally found in a boxplot are supported, but at
+    the same time most of them are also optional. This function performs
+    plotting only. Actual statistics need to be computed elsewhere
+    (see ``compute_ts_boxplot_stats``).
+
+    Parameters
+    ----------
+    median : array
+      Median time series. Plotted as a black line.
+    mean : array or None
+      Mean time series. If provided in combination with ``std`` and ``n`` a
+      dark gray shaded area representing +-SEM will be plotted.
+    std : array or None
+      Standard deviation time series. If provided in combination with ``mean``
+      and ``n`` a dark gray shaded area representing +-SEM will be plotted.
+    n : array or None
+      Number of observations per time series sample. If provided in combination
+      with ``mean`` and ``std`` a dark gray shaded area representing +-SEM will
+      be plotted.
+    min : array or None
+      Minimum value time series. If provided in combination with ``max`` a
+      light gray shaded area representing the range will be plotted.
+    max : array or None
+      Maximum value time series. If provided in combination with ``min`` a
+      light gray shaded area representing the range will be plotted.
+    p25 : array or None
+      25% percentile time series. If provided in combination with ``p75`` a
+      medium gray shaded area representing the +-25% percentiles will be
+      plotted.
+    p75 : array or None
+      75% percentile time series. If provided in combination with ``p25`` a
+      medium gray shaded area representing the +-25% percentiles will be
+      plotted.
+    outlierd : list(masked array) or None
+      A list with items corresponding to each data segment. Each item is a
+      masked array (observations x series) with all non-outlier values
+      masked. Outliers are plotted in red color.
+    segment_sizes : list or None
+      If provided, each items indicates the size of one element in a
+      consecutive series of data segment. A marker will be be drawn at the
+      border between any two consecutive segments.
+    **kwargs
+      Additional keyword arguments that are uniformly passed on to any
+      utilized plotting function.
+    """
+    x = range(len(mean))
+    err = std / np.sqrt(n)
+    for run, ol in enumerate(outlierd):
+        pl.plot(range(
+                    sum([len(d) for d in outlierd[:run]]),
+                    sum([len(d) for d in outlierd[:run+1]])),
+                ol, color='red', zorder=1, **kwargs)
+    if not (min is None or max is None):
+        pl.fill_between(x, max, min, color='0.8', alpha=.5, lw=0, zorder=2,
+                        **kwargs)
+    if not (p25 is None or p75 is None):
+        pl.fill_between(x, p75, p25, color='0.3', alpha=.5, lw=0, zorder=3,
+                        **kwargs)
+    if not (std is None or n is None):
+        pl.fill_between(x, mean-err, mean+err, color='0.1',alpha=.5,  lw=0,
+                        zorder=4, **kwargs)
+    pl.plot(x, median, color='0.0', zorder=5, **kwargs)
+    if not segment_sizes is None:
+        for i, run in enumerate(segment_sizes[:-1]):
+            pl.axvline(np.sum(segment_sizes[:i+1]), color='0.2', linestyle='--',
+                       **kwargs)
+
+
+def concat_ts_boxplot_stats(run_stats):
+    """Helper to concatenate boxplot stats from ``compute_ts_boxpot_stats``
+
+    Parameters
+    ----------
+    run_stats : list
+      Series of return values from ``compute_ts_boxpot_stats``
+
+    Returns
+    -------
+    tuple
+      First item is a dictionary with the concatenated stats time series.
+      Second item is a list of masked arrays suitable for input to
+      ``timeseries_boxplot`` as ``outlierd``.
+    """
+    stats = {}
+    for stat in ('mean', 'median', 'std', 'p25', 'p75', 'n', 'min', 'max'):
+        stats[stat] = np.concatenate([r[0][stat] for r in run_stats])
+    outlierd = [r[1].T for r in run_stats]
+    return stats, outlierd

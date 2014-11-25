@@ -326,3 +326,88 @@ def binomial_proportion_ci_from_bool(arr, axis=0, *args, **kwargs):
     return binomial_proportion_ci(arr.shape[axis], np.sum(arr, axis=axis),
                                   *args, **kwargs)
 
+
+def _mask_nan(x):
+    return np.ma.masked_array(x, np.isnan(x))
+
+def compute_ts_boxplot_stats(data, outlier_abs_minthresh=None,
+                             outlier_thresh=3.0, greedy_outlier=False,
+                             aggfx=None, *args):
+    """Compute boxplot-like statistics across a set of time series.
+
+    This function can handle missing values and supports data aggregation.
+
+    Parameters
+    ----------
+    data : array
+      Typically a 2-dimensional array (series x samples). Multi-feature samples
+      are supported (series x samples x features), but they have to be
+      aggregated into a scalar. See ``aggfx``.
+    outlier_abs_minthresh : float or None
+      Absolute minimum threshold of outlier detection. Only value larger than
+      this this threshold will ever be considered as an outlier
+    outlier_thresh : float or None
+      Outlier classification threshold in units of standard deviation.
+    greedy_outlier : bool
+      If True, an entire time series is marked as an outlier, if any of its
+      observations matches the criterion. If False, only individual observations
+      are marked as outlier.
+    aggfx : functor or None
+      Aggregation function used to collapse multi-feature samples into a scalar
+      value
+    *args :
+      Additional arguments for ``aggfx``.
+
+    Returns
+    -------
+    tuple
+      This 2-item tuple contains all computed statistics in the first item and
+      all classified outliers in the second item. Statistics are computed for
+      each time series observation across time series. Available information:
+      mean value, median, standard deviation, minimum, maximum, 25% and 75%
+      percentile, as well as number of non-outlier data points for each sample.
+      The outlier data points are returned a masked array of the same size as
+      the input data. All data points classified as non-outliers are masked.
+    """
+    if len(data) < 2:
+        raise ValueError("needs at least two time series")
+    # data comes in as (subj x volume x parameter)
+    orig_input = data
+    # reduce data to L2-norm
+    if not aggfx is None:
+        data = np.apply_along_axis(aggfx, 2, data, *args)
+    # need to deal with missing data
+    data = _mask_nan(np.asanyarray(data))
+    if len(data.shape) < 2:
+        raise ValueError("needs at least two observation per time series")
+    # outlier detection
+    meand = np.ma.mean(data, axis=0)
+    stdd = np.ma.std(data, axis=0)
+    outlierd = None
+    if outlier_thresh > 0.0:
+        outlier = np.ma.greater((np.absolute(data - meand)), outlier_thresh * stdd)
+        if not outlier_abs_minthresh is None:
+            # apply absolute filter in addition
+            outlier = np.logical_and(outlier,
+                                     np.ma.greater(data,
+                                                   outlier_abs_minthresh))
+        if greedy_outlier:
+            # expect outlier mask to all elements in that series
+            outlier[np.sum(outlier, axis=1) > 0] = True
+        # apply outlier mask to original data, but merge with existing mask
+        # to keep NaNs out of the game
+        data = np.ma.masked_array(data.data,
+                                  mask=np.logical_or(data.mask, outlier))
+        outlierd = np.ma.masked_array(data.data,
+                                      mask=np.logical_not(outlier))
+
+    res = {}
+    res['mean'] = np.ma.mean(data, axis=0)
+    res['median'] = np.ma.median(data, axis=0)
+    res['std'] = np.ma.std(data, axis=0)
+    res['min'] = np.ma.min(data, axis=0)
+    res['max'] = np.ma.max(data, axis=0)
+    res['p75'] = np.percentile(data, 75, axis=0)
+    res['p25'] = np.percentile(data, 25, axis=0)
+    res['n'] = len(data) - data.mask.sum(axis=0)
+    return res, outlierd
