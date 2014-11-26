@@ -100,13 +100,13 @@ class OpenFMRIDataset(object):
         return _subdirs2ids(self._basedir, 'sub')
 
     def get_scan_properties(self):
-        """Returns a dictionary with the scan properties listed in scan_key.txt
+        """Return a dictionary with the scan properties listed in scan_key.txt
         """
         fname = _opj(self._basedir, 'scan_key.txt')
         return _get_description_dict(fname)
 
     def get_task_descriptions(self):
-        """Returns a dictionary with the tasks defined in the dataset
+        """Return a dictionary with the tasks defined in the dataset
 
         Dictionary keys are integer task IDs, values are task description
         strings.
@@ -115,7 +115,7 @@ class OpenFMRIDataset(object):
         return _get_description_dict(fname, xfm_key=_id2int)
 
     def get_model_descriptions(self):
-        """Returns a dictionary with the models described in the dataset
+        """Return a dictionary with the models described in the dataset
 
         Dictionary keys are integer model IDs, values are description strings.
 
@@ -128,7 +128,7 @@ class OpenFMRIDataset(object):
         return _get_description_dict(fname, xfm_key=_id2int)
 
     def get_bold_run_ids(self, subj, task):
-        """Returns (sorted) list of run IDs for a given subject and task
+        """Return (sorted) list of run IDs for a given subject and task
 
         Typically, run IDs are integer values, but string IDs are supported
         as well.
@@ -187,7 +187,7 @@ class OpenFMRIDataset(object):
                 _load_hlpr)
 
     def get_bold_run_image(self, subj, task, run, flavor=None):
-        """Returns a NiBabel image instance for the BOLD data of a 
+        """Return a NiBabel image instance for the BOLD data of a
         particular subject/task/run combination.
 
         Parameters
@@ -201,7 +201,7 @@ class OpenFMRIDataset(object):
         flavor : None or str
           BOLD data flavor to access (see dataset description)
 
-        Returns
+        Return
         -------
         NiBabel Nifti1Image
         """
@@ -217,7 +217,7 @@ class OpenFMRIDataset(object):
 
     def get_bold_run_motion_estimates(self, subj, task, run,
             fname='bold_moest.txt'):
-        """Returns the volume-wise motion estimates for a particular BOLD run
+        """Return the volume-wise motion estimates for a particular BOLD run
 
         Parameters
         ----------
@@ -241,10 +241,10 @@ class OpenFMRIDataset(object):
                 subj, task, run, [fname], np.loadtxt)
 
     def get_task_bold_attributes(self, task, fname, loadfx, exclude_subjs=None):
-        """Returns data attributes for all BOLD data from a specific task.
+        """Return data attributes for all BOLD data from a specific task.
 
         This function can load arbitrary data from the directories where the
-        relevant BOLD image files are stored. Data sources are describes by
+        relevant BOLD image files are stored. Data sources are described by
         specifying the file name containing the data in the BOLD directory,
         and by providing a function that returns the file content in array
         form. Optionally, data from specific subjects can be skipped.
@@ -310,12 +310,12 @@ class OpenFMRIDataset(object):
 
     def get_bold_run_dataset(self, subj, task, run, flavor=None, add_sa=None,
             **kwargs):
-        """Returns a dataset instance for the BOLD data of a particular
+        """Return a dataset instance for the BOLD data of a particular
         subject/task/run combination.
 
         This method support the same functionality as fmri_dataset(), while
         wrapping get_bold_run_image() to access the input fMRI data. Additional
-        attributes, such as subject ID, task ID. and run ID are automatically
+        attributes, such as subject ID, task ID, and run ID are automatically
         stored as dataset sample attributes.
 
         Parameters
@@ -372,11 +372,11 @@ class OpenFMRIDataset(object):
         return ds
 
     def get_model_ids(self):
-        """Returns a sorted list of integer IDs for all available models"""
+        """Return a sorted list of integer IDs for all available models"""
         return _subdirs2ids(_opj(self._basedir, 'models'), 'model')
 
     def get_model_conditions(self, model):
-        """Returns a description of all conditions for a given model
+        """Return a description of all conditions for a given model
 
         Parameters
         ----------
@@ -409,7 +409,7 @@ class OpenFMRIDataset(object):
         return conds
 
     def get_bold_run_model(self, model, subj, run):
-        """Returns the stimulation design for a particular subject/task/run.
+        """Return the stimulation design for a particular subject/task/run.
 
         Parameters
         ----------
@@ -553,7 +553,7 @@ class OpenFMRIDataset(object):
         return dss
 
     def get_anatomy_image(self, subj, path=None, fname='highres001.nii.gz'):
-        """Returns a NiBabel image instance for a structural image of a subject.
+        """Return a NiBabel image instance for a structural image of a subject.
 
         Parameters
         ----------
@@ -562,7 +562,7 @@ class OpenFMRIDataset(object):
         path : list or None
           Path to the structural file within the anatomy/ tree.
         fname : str
-          Acces a particular anatomy data flavor via its filename (see dataset
+          Access a particular anatomy data flavor via its filename (see dataset
           description). Defaults to the first T1-weighted image.
 
         Returns
