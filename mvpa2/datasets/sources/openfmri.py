@@ -327,7 +327,10 @@ class OpenFMRIDataset(object):
         run : int
           Run ID.
         flavor : None or str
-          BOLD data flavor to access (see dataset description)
+          BOLD data flavor to access (see dataset description). If ``flavor``
+          corresponds to an existing file in the respective task/run directory,
+          it is assumed to be a stored dataset in HDF5 format and loaded via
+          ``h5load()`` -- otherwise datasets are constructed from NIfTI images.
         add_sa: str or tuple(str)
           Single or sequence of names of files in the respective BOLD
           directory containing additional samples attributes. At this time
@@ -345,10 +348,17 @@ class OpenFMRIDataset(object):
         """
         from mvpa2.datasets.mri import fmri_dataset
 
-        bold_img = self.get_bold_run_image(subj, task, run, flavor=flavor)
+        # check whether flavor corresponds to a particular file
+        path = _opj(self._basedir, _sub2id(subj),
+                    'BOLD', _taskrun(task, run), flavor)
+        if os.path.exists(path):
+            from mvpa2.base.hdf5 import h5load
+            ds = h5load(path)
+        else:
+            bold_img = self.get_bold_run_image(subj, task, run, flavor=flavor)
+            # load (and mask) data
+            ds = fmri_dataset(bold_img, **kwargs)
 
-        # load and mask data
-        ds = fmri_dataset(bold_img, **kwargs)
         # inject sample attributes
         for name, var in (('subj', subj), ('task', task), ('run', run)):
             ds.sa[name] = np.repeat(var, len(ds))
