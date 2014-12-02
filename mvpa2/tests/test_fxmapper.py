@@ -261,3 +261,35 @@ def test_bin_prop_ci():
     assert_true(np.all(ci95.samples[1] > ci50.samples[1]))
     assert_equal(list(ci50.sa.ci_boundary), ['lower', 'upper'])
 
+
+def test_mean_removal():
+    test_array = np.array([[0, 0.5, 1, 1.5],
+                           [2, 2.5, 3, 3.5],
+                           [3, 3.5, 4, 4.5],
+                           [5, 5.5, 6, 6.5],
+                           [7, 7.5, 8, 8.5]])
+    test_dataset = Dataset(test_array)
+    desired_result = np.array([[-0.75, -0.25,  0.25,  0.75],
+                               [-0.75, -0.25,  0.25,  0.75],
+                               [-0.75, -0.25,  0.25,  0.75],
+                               [-0.75, -0.25,  0.25,  0.75],
+                               [-0.75, -0.25,  0.25,  0.75]])
+
+    mr = MeanRemovalMapper(in_place=False)
+    mr_inplace = MeanRemovalMapper(in_place=True)
+    mr_fx = subtract_mean_feature()
+
+    functions = (mr, mr_inplace, mr_fx)
+    for function in functions:
+        assert_true(np.array_equal(function(test_array.copy()),
+                             desired_result), function)
+
+    for function in functions:
+        assert_true(np.array_equal(function(test_dataset.copy()).samples,
+                             desired_result))
+
+    random_array = np.random.rand(50, 1000000)
+    assert_true(np.array_equal(mr_fx(random_array.copy()),
+                               mr(random_array.copy())))
+    assert_true(np.array_equal(mr_fx(random_array.copy()),
+                               mr_inplace(random_array.copy())))
