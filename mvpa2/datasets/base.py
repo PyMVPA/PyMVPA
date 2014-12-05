@@ -95,6 +95,16 @@ class Dataset(AttrDataset):
             args[1] = self.a.mapper.forward1(args[1])
             args = tuple(args)
 
+        # check if any of the args is a dict, which would require fancy selection
+        args_ = []
+        for i, arg in enumerate(args):
+            if isinstance(arg, dict):
+                col = (self.sa, self.fa)[i]
+                args_.append(col.get_selection(arg))
+            else:
+                args_.append(arg)
+        args = tuple(args_)
+
         # let the base do the work
         ds = super(Dataset, self).__getitem__(args)
 
@@ -123,7 +133,7 @@ class Dataset(AttrDataset):
     def find_collection(self, attr):
         """Lookup collection that contains an attribute of a given name.
 
-        Collections are search in the following order: sample attributes,
+        Collections are searched in the following order: sample attributes,
         feature attributes, dataset attributes. The first collection
         containing a matching attribute is returned.
 
