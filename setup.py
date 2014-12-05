@@ -230,7 +230,8 @@ def setup_package():
                    ],
           data_files=[('mvpa2', ['mvpa2/COMMIT_HASH'])]
                      + find_data_files('mvpa2/data',
-                                       '*.txt', '*.nii.gz', '*.rtc', 'README'),
+                                       '*.txt', '*.nii.gz', '*.rtc', 'README', '*.bin',
+                                       '*.dat', '*.dat.gz', '*.mat', '*.fsf', '*.par'),
           scripts=glob.glob(os.path.join('bin', '*')),
           ext_modules=ext_modules
           )
