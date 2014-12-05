@@ -32,7 +32,6 @@ from mvpa2.base.collections import \
      DatasetAttributesCollection, ArrayCollectable, SampleAttribute, \
      Collectable
 
-
 class myarray(np.ndarray):
     pass
 
@@ -1056,3 +1055,43 @@ def test_assign_sa():
     assert('targets' in ds1.sa.keys()) # issue reported in 149
     assert_equal(ds1.sa['task'].name, 'task')
     assert_equal(ds1.sa['targets'].name,'targets')
+
+def test_dataset_get_selection():
+    ds = Dataset(np.arange(15).reshape((5,-1)),
+                 sa=dict(targets=range(5),
+                         chunks=['a', 'b', 'a', 'b', 'a']),
+                 fa=dict(voxel_indices=[[1, 2], [2, 1], [0, 0]],
+                         roi=['x', 'x', 'z']))
+
+    ds_ = ds[{'targets': range(3),
+              'chunks': 'a'}]
+    assert(ds_.shape == (2, 3))
+    assert_array_equal(ds_.chunks, ['a', 'a'])
+
+    ds_ = ds[{'targets': range(3), 'chunks': 'a'}, {'roi': ['x']}]
+    assert(ds_.shape == (2, 2))
+    assert_array_equal(ds_.chunks, ['a', 'a'])
+    assert_array_equal(ds_.fa.roi, ['x', 'x'])
+
+    ds_ = ds[:, {'voxel_indices': [[1, 2]]}]
+    assert(ds_.shape == (5, 1))
+    assert_array_equal(ds_.fa.voxel_indices, [[1, 2]])
+
+    # select two voxels, but also swap "selection" values out of order.
+    # result should still be not reordered features
+    ds_ = ds[{'chunks': ['b']},
+             {'voxel_indices': [[0, 0], [1, 2]]}]
+    assert(ds_.shape == (2, 2))
+    assert_array_equal(ds_.chunks, ['b', 'b'])
+    assert_array_equal(ds_.fa.voxel_indices, [[1, 2], [0, 0]])
+
+    assert_raises(ValueError, ds.__getitem__, {'invalid': [1]})
+    # we are strict for now, to avoid human typos in specifying which items
+    # to pick up -- if none was matching -- error!
+    assert_raises(ValueError, ds.__getitem__, {'targets': ['nonexisting']})
+    assert_raises(ValueError, ds.__getitem__, {'targets': [0, 999]})
+
+    # Let's just test collection's function directly
+    col = FeatureAttributesCollection(
+        dict(voxel_indices=[[[1, 2, 3], [2, 1, 1]],
+                            [[2, 1, 1], [2, 1, 1]]]))
