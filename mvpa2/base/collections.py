@@ -540,7 +540,7 @@ class UniformLengthCollection(Collection):
 
     def __reduce__(self):
         return (self.__class__,
-                    (self.items(), self._uniform_length))
+                (self.items(), self._uniform_length))
 
     @borrowdoc(Collection)
     def copy(self, *args, **kwargs):
@@ -601,6 +601,50 @@ class UniformLengthCollection(Collection):
         value.set_length_check(ulength)
         Collection.__setitem__(self, key, value)
 
+    @staticmethod
+    def _compare_to_value(a, v, strict=True):
+        """Helper to find elements within attribute matching the value
+
+        value might be a multidimensional beast
+
+        Parameters
+        ----------
+        strict: bool, optional
+          If True, it would throw ValueError exception if provided value
+          is not present, or incompatible.  If False, it would allow to proceed
+          returning an empty mask (all values False)
+        """
+        r = a == v
+
+        if isinstance(r, bool):
+            # comparison collapsed to a single thing, must be False
+            assert(r is False)
+            raise ValueError("%r is not comparable to items among %s"
+                             % (v, a))
+
+        if a.ndim > 1:
+            # we are dealing with multi-dimensional attributes.
+            # then value we are looking for must be just 1 dimension less,
+            # otherwise numpy would broadcast the value and match which is not
+            # desired
+            vshape = np.asanyarray(v).shape
+            if vshape != a.shape[1:]:
+                raise ValueError("Value %r you are looking for is of %s "
+                                 "shape, whenever collection contains entries "
+                                 "of shape %s" % (v, vshape, a.shape[1:]))
+
+        # collapse all other dimensions.  numpy would have broadcasted
+        # the leading dimension
+        while r.ndim > 1:
+            r = np.all(r, axis=1)
+        if not np.any(r):
+            if strict:
+                raise ValueError("None of the items matched %r among %s"
+                                 % (v, a))
+            else:
+                return np.zeros(len(a), dtype=bool)
+        return r
+
     def get_selection(self, d):
         """Given a dictionary descriptor for selection, return boolean mask
 
@@ -608,35 +652,18 @@ class UniformLengthCollection(Collection):
         """
         mask = np.ones(self.attr_length, dtype=bool)
 
-        def _multidim_equality(a, v):
-            r = a == v
-            if isinstance(r, bool):
-                # comparison collapsed to a single thing, must be False
-                assert(r is False)
-                raise ValueError("%r is not comparable to items among %s"
-                                 % (v, a))
-                # TODO: provide an option to allow absent matches
-            # collapse all other dimensions.  numpy would have broadcasted
-            # the leading dimension
-            while r.ndim > 1:
-                r = np.all(r, axis=1)
-            if not np.any(r):
-                raise ValueError("None of the items matched %r among %s"
-                                 % (v, a))
-            return r
-
         for k, target_values in d.iteritems():
             if not k in self.keys():
                 raise ValueError("%s is not known to %s" % (k, self))
             value = self[k].value
             target_values_mask = reduce(np.logical_or,
-                                        [_multidim_equality(value, target_value)
+                                        [self._compare_to_value(value, target_value)
                                          for target_value in target_values])
             mask = np.logical_and(mask, target_values_mask)
         return mask
 
     attr_length = property(fget=lambda self:self._uniform_length,
-                    doc="Uniform length of all attributes in a collection")
+                           doc="Uniform length of all attributes in a collection")
 
 
 

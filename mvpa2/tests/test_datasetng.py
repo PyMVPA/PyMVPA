@@ -1091,7 +1091,23 @@ def test_dataset_get_selection():
     assert_raises(ValueError, ds.__getitem__, {'targets': ['nonexisting']})
     assert_raises(ValueError, ds.__getitem__, {'targets': [0, 999]})
 
-    # Let's just test collection's function directly
-    col = FeatureAttributesCollection(
-        dict(voxel_indices=[[[1, 2, 3], [2, 1, 1]],
-                            [[2, 1, 1], [2, 1, 1]]]))
+    # Let's just test collection's function directly regarding correct operation
+    # on difficult cases
+    voxel_indices = np.array([[[1, 2, 3], [2, 1, 1]],
+                              [[2, 1, 1], [2, 1, 1]],
+                              [[1, 2, 3], [1, 2, 3]],
+                              [[4, 4, 4], [4, 4, 4]],
+                              [[2, 1, 1], [2, 1, 1]],
+                              ])
+    cmp = FeatureAttributesCollection._compare_to_value
+    for strict in [True, False]:
+        assert_raises(ValueError, cmp, voxel_indices, [1, 2, 3], strict=strict)
+        assert_raises(ValueError, cmp, voxel_indices, 4, strict=strict)
+        assert_raises(ValueError, cmp, voxel_indices, [[1, 2, 3]], strict=strict)
+    assert_array_equal(cmp(voxel_indices, [[2, 1, 1], [2, 1, 1]]),
+                       [False, True, False, False, True])
+    # matching compatible elements should puke if not present, unless strict=False
+    assert_raises(ValueError, cmp, voxel_indices, [[2, 1, 1], [2, 1, 999]])
+    assert_array_equal(cmp(voxel_indices, [[2, 1, 1], [2, 1, 999]], strict=False),
+                       [False, False, False, False, False])
+
