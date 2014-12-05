@@ -85,7 +85,7 @@ class PolyDetrendMapper(Mapper):
     >>> np.sum(np.abs(mds)) < 0.00001
     True
     """
-    polyord = Parameter(1, doc=\
+    polyord = Parameter(1, doc=
           """Order of the Legendre polynomial to remove from the data.  This
           will remove every polynomial up to and including the provided
           value.  For example, 3 will remove 0th, 1st, 2nd, and 3rd order
@@ -97,7 +97,7 @@ class PolyDetrendMapper(Mapper):
           values with the length equal to the number of chunks.""",
           constraints=cts.AltConstraints(cts.EnsureInt()))
 
-    chunks_attr = Parameter(None, doc=\
+    chunks_attr = Parameter(None, doc=
           """If None, the whole dataset is detrended at once. Otherwise, the given
           samples attribute (given by its name) is used to define chunks of the
           dataset that are processed individually. In that case, all the samples
@@ -107,7 +107,7 @@ class PolyDetrendMapper(Mapper):
           should be spanned be the polynomials (see `space` argument).""",
           constraints=cts.AltConstraints(None, cts.EnsureStr()))
 
-    opt_regs = Parameter(None, doc=\
+    opt_regs = Parameter(None, doc=
           """List of sample attribute names that should be used as
           additional regressors.  An example use would be to regress out motion
           parameters.""",

@@ -182,13 +182,13 @@ def setup_package():
           license='MIT License',
           url='http://www.pymvpa.org',
           description='Multivariate pattern analysis',
-          long_description=\
-              "PyMVPA is a Python module intended to ease pattern classification " \
-              "analyses of large datasets. It provides high-level abstraction of " \
-              "typical processing steps and a number of implementations of some " \
-              "popular algorithms. While it is not limited to neuroimaging data " \
-              "it is eminently suited for such datasets.\n" \
-              "PyMVPA is truly free software (in every respect) and " \
+          long_description=
+              "PyMVPA is a Python module intended to ease pattern classification "
+              "analyses of large datasets. It provides high-level abstraction of "
+              "typical processing steps and a number of implementations of some "
+              "popular algorithms. While it is not limited to neuroimaging data "
+              "it is eminently suited for such datasets.\n"
+              "PyMVPA is truly free software (in every respect) and "
               "additionally requires nothing but free-software to run.",
           # please maintain alphanumeric order
           packages=[ 'mvpa2',
