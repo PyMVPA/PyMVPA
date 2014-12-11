@@ -100,7 +100,7 @@ def ttest_1samp(a, popmean=0, axis=0, mask=None, alternative='two-sided'):
     This is a refinement for the :func:`scipy.stats.ttest_1samp` for
     the null hypothesis testing that the expected value (mean) of a
     sample of independent observations is equal to the given
-    population mean, `popmean`.  It adds ability to test carry single
+    population mean, `popmean`.  It adds ability to carry single
     tailed test as well as operate on samples with varying number of
     active measurements, as specified by `mask` argument.
 
