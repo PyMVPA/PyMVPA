@@ -40,6 +40,7 @@ enabled_cmds = [
   'atlaslabeler',
   'exec',
   'ofmotionqc',
+  'ttest',
 ]
 
 # what version are we talking
