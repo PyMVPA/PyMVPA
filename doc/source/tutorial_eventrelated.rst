@@ -116,10 +116,10 @@ We can easily filter out all other events.
 24
 >>> for e in events[:4]:
 ...    print e
-{'chunks': 0.0, 'duration': 9, 'onset': 21, 'targets': 'face'}
-{'chunks': 0.0, 'duration': 9, 'onset': 63, 'targets': 'house'}
-{'chunks': 1.0, 'duration': 9, 'onset': 127, 'targets': 'face'}
-{'chunks': 1.0, 'duration': 9, 'onset': 213, 'targets': 'house'}
+{'chunks': 1, 'duration': 9, 'onset': 21, 'targets': 'face'}
+{'chunks': 1, 'duration': 9, 'onset': 63, 'targets': 'house'}
+{'chunks': 2, 'duration': 9, 'onset': 127, 'targets': 'face'}
+{'chunks': 2, 'duration': 9, 'onset': 213, 'targets': 'house'}
 
 Response Modeling
 -----------------
@@ -155,11 +155,10 @@ values of the attributes will be used as conditions. In the following example
 stimulation condition (``targets``) for each run of our example dataset
 (``chunks``).
 
->>> evds = eventrelated_dataset(ds,
-...                             events,
-...                             model='hrf',
-...                             time_attr='time_coords',
-...                             condition_attr=('targets', 'chunks'))
+>>> evds = fit_event_hrf_model(ds,
+...                            events,
+...                            time_attr='time_coords',
+...                            condition_attr=('targets', 'chunks'))
 >>> print len(evds)
 24
 
