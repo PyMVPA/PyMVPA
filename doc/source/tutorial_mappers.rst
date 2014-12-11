@@ -252,8 +252,8 @@ More importantly, it supports access to information on experiment design:
 >>> events = dhandle.get_bold_run_model(model, subj, run)
 >>> for ev in events[:2]:
 ...     print ev
-{'task': 'object viewing', 'run': 1, 'onset': 157.5, 'intensity': 1, 'duration': 22.5, 'condition': 'house'}
-{'task': 'object viewing', 'run': 1, 'onset': 195.0, 'intensity': 1, 'duration': 22.5, 'condition': 'scrambledpix'}
+{'task': 1, 'run': 1, 'onset': 157.5, 'intensity': 1, 'duration': 22.5, 'condition': 'house'}
+{'task': 1, 'run': 1, 'onset': 195.0, 'intensity': 1, 'duration': 22.5, 'condition': 'scrambledpix'}
 
 As you can see, the stimulus design information is available in a list of
 standard Python dictionaries for each event. This includes onset and duration

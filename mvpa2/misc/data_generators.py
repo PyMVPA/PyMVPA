@@ -384,7 +384,6 @@ def load_datadb_tutorial_data(path=os.path.join(
     """
     import nibabel as nb
     from mvpa2.datasets.sources.openfmri import OpenFMRIDataset
-    from mvpa2.datasets.eventrelated import events2sample_attr
     task = model = subj = 1
     dhandle = OpenFMRIDataset(path)
     maskpath = os.path.join(path, 'sub001', 'masks', 'orig')
@@ -412,8 +411,8 @@ def load_datadb_tutorial_data(path=os.path.join(
         mask=roi
     else:
         raise ValueError("Got something as mask that I cannot handle.")
-    ds = dhandle.get_model_dataset(model, subj, mask=mask, add_fa=add_fa,
-                                   noinfolabel='rest')
+    ds = dhandle.get_model_bold_dataset(model, subj, mask=mask, add_fa=add_fa,
+                                        noinfolabel='rest')
     return ds
 
 
