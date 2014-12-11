@@ -10,9 +10,11 @@
 """Python distutils setup for PyMVPA"""
 
 from numpy.distutils.core import setup, Extension
+import fnmatch
+import glob
 import os
 import sys
-from glob import glob
+
 
 if sys.version_info[:2] < (2, 6):
     raise RuntimeError("PyMVPA requires Python 2.6 or higher")
@@ -114,8 +116,48 @@ def get_full_dir(path):
     path_split = path.split('/') # so we could run setup.py on any platform
     path_proper = os.path.join(*path_split)
     return (path_proper,
-            [f for f in glob(os.path.join(path_proper, '*'))
+            [f for f in glob.glob(os.path.join(path_proper, '*'))
              if os.path.isfile(f)])
+
+# borrowed from https://wiki.python.org/moin/Distutils/Tutorial
+## Code borrowed from wxPython's setup and config files
+## Thanks to Robin Dunn for the suggestion.
+## I am not 100% sure what's going on, but it works!
+def opj(*args):
+    path = os.path.join(*args)
+    return os.path.normpath(path)
+
+def find_data_files(srcdir, *wildcards, **kw):
+    # get a list of all files under the srcdir matching wildcards,
+    # returned in a format to be used for install_data
+
+    path_split = srcdir.split('/') # so we could run setup.py on any platform
+    srcdir = os.path.join(*path_split)
+
+    def walk_helper(arg, dirname, files):
+        if '.svn' in dirname:
+            return
+        names = []
+        lst, wildcards = arg
+        for wc in wildcards:
+            wc_name = opj(dirname, wc)
+            for f in files:
+                filename = opj(dirname, f)
+
+                if fnmatch.fnmatch(filename, wc_name) and not os.path.isdir(filename):
+                    names.append(filename)
+        if names:
+            lst.append( (dirname, names ) )
+
+    file_list = []
+    recursive = kw.get('recursive', True)
+    if recursive:
+        os.path.walk(srcdir, walk_helper, (file_list, wildcards))
+    else:
+        walk_helper((file_list, wildcards),
+                    srcdir,
+                    [os.path.basename(f) for f in glob.glob(opj(srcdir, '*'))])
+    return file_list
 
 # define the setup
 def setup_package():
@@ -140,58 +182,57 @@ def setup_package():
           license='MIT License',
           url='http://www.pymvpa.org',
           description='Multivariate pattern analysis',
-          long_description=\
-              "PyMVPA is a Python module intended to ease pattern classification " \
-              "analyses of large datasets. It provides high-level abstraction of " \
-              "typical processing steps and a number of implementations of some " \
-              "popular algorithms. While it is not limited to neuroimaging data " \
-              "it is eminently suited for such datasets.\n" \
-              "PyMVPA is truly free software (in every respect) and " \
+          long_description=
+              "PyMVPA is a Python module intended to ease pattern classification "
+              "analyses of large datasets. It provides high-level abstraction of "
+              "typical processing steps and a number of implementations of some "
+              "popular algorithms. While it is not limited to neuroimaging data "
+              "it is eminently suited for such datasets.\n"
+              "PyMVPA is truly free software (in every respect) and "
               "additionally requires nothing but free-software to run.",
           # please maintain alphanumeric order
           packages=[ 'mvpa2',
-                           'mvpa2.algorithms',
-                           'mvpa2.atlases',
-                           'mvpa2.base',
-                           'mvpa2.clfs',
-                           'mvpa2.clfs.libsmlrc',
-                           'mvpa2.clfs.libsvmc',
-                           'mvpa2.clfs.skl',
-                           'mvpa2.clfs.sg',
-                           'mvpa2.cmdline',
-                           'mvpa2.datasets',
-                           'mvpa2.datasets.sources',
-                           'mvpa2.featsel',
-                           'mvpa2.kernels',
-                           'mvpa2.mappers',
-                           'mvpa2.mappers.glm',
-                           'mvpa2.generators',
-                           'mvpa2.measures',
-                           'mvpa2.misc',
-                           'mvpa2.misc.bv',
-                           'mvpa2.misc.fsl',
-                           'mvpa2.misc.io',
-                           'mvpa2.misc.plot',
-                           'mvpa2.misc.surfing',
-                           'mvpa2.sandbox',
-                           'mvpa2.support',
-                           'mvpa2.support.afni',
-                           'mvpa2.support.bayes',
-                           'mvpa2.support.nipy',
-                           'mvpa2.support.ipython',
-                           'mvpa2.support.nibabel',
-                           'mvpa2.support.scipy',
-                           'mvpa2.testing',
-                           'mvpa2.tests',
-                           'mvpa2.tests.badexternals',
-                           'mvpa2.viz',
-                           ],
-          data_files=[('mvpa2', ['mvpa2/COMMIT_HASH']),
-                        get_full_dir('mvpa2/data'),
-                        get_full_dir('mvpa2/data/bv'),
-                        get_full_dir('mvpa2/data/openfmri'),
-          ],
-          scripts=glob(os.path.join('bin', '*')),
+                     'mvpa2.algorithms',
+                     'mvpa2.atlases',
+                     'mvpa2.base',
+                     'mvpa2.clfs',
+                     'mvpa2.clfs.libsmlrc',
+                     'mvpa2.clfs.libsvmc',
+                     'mvpa2.clfs.skl',
+                     'mvpa2.clfs.sg',
+                     'mvpa2.cmdline',
+                     'mvpa2.datasets',
+                     'mvpa2.datasets.sources',
+                     'mvpa2.featsel',
+                     'mvpa2.kernels',
+                     'mvpa2.mappers',
+                     'mvpa2.mappers.glm',
+                     'mvpa2.generators',
+                     'mvpa2.measures',
+                     'mvpa2.misc',
+                     'mvpa2.misc.bv',
+                     'mvpa2.misc.fsl',
+                     'mvpa2.misc.io',
+                     'mvpa2.misc.plot',
+                     'mvpa2.misc.surfing',
+                     'mvpa2.sandbox',
+                     'mvpa2.support',
+                     'mvpa2.support.afni',
+                     'mvpa2.support.bayes',
+                     'mvpa2.support.nipy',
+                     'mvpa2.support.ipython',
+                     'mvpa2.support.nibabel',
+                     'mvpa2.support.scipy',
+                     'mvpa2.testing',
+                     'mvpa2.tests',
+                     'mvpa2.tests.badexternals',
+                     'mvpa2.viz',
+                   ],
+          data_files=[('mvpa2', ['mvpa2/COMMIT_HASH'])]
+                     + find_data_files('mvpa2/data',
+                                       '*.txt', '*.nii.gz', '*.rtc', 'README', '*.bin',
+                                       '*.dat', '*.dat.gz', '*.mat', '*.fsf', '*.par'),
+          scripts=glob.glob(os.path.join('bin', '*')),
           ext_modules=ext_modules
           )
 
