@@ -136,6 +136,15 @@ def test_openfmri_dataset():
 
             # check conversion of model into sample attribute
             events = of.get_bold_run_model(subj, task, run)
+            for i, ev in enumerate(events):
+                # we only have one trial per condition in the demo dataset
+                assert_equal(ev['conset_idx'], 0)
+                # proper enumeration and events sorted by time
+                assert_equal(ev['onset_idx'], i)
+            onsets = [e['onset'] for e in events]
+            sorted_onsets = sorted(onsets)
+            assert_array_equal(sorted_onsets, onsets)
+
             targets = events2sample_attr(events,
                                          ds.sa.time_coords,
                                          noinfolabel='rest')
