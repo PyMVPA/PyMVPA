@@ -435,8 +435,13 @@ class OpenFMRIDataset(object):
         list
           One item per event in the run. All items are dictionaries with the
           following keys: 'condition', 'onset', 'duration', 'intensity',
-          'run', 'task', where the first is a literal label, the last two are
-          integer IDs, and the rest are typically floating point values.
+          'run', 'task', 'trial_idx', 'ctrial_idx', where the first is a
+          literal label, the last four are integer IDs, and the rest are
+          typically floating point values. 'onset_idx' is the index of the
+          event specification sorted by time across the entire run (typically
+          corresponding to a trial index), 'conset_idx' is analog but contains
+          the onset index per condition, i.e. the nth trial of the respective
+          condition in a run.
         """
 
         conditions = self.get_model_conditions(model)
@@ -456,13 +461,17 @@ class OpenFMRIDataset(object):
                         "about condition '%s' for run %i"
                         % (cond['name'], run))
                 continue
-            for ev in evdata:
+            for i, ev in enumerate(evdata):
                 evdict = dict(zip(ev_fields,
                                   [ev[field] for field in ev_fields]))
                 evdict['task'] = task_id
                 evdict['condition'] = cond['name']
                 evdict['run'] = run
+                evdict['conset_idx'] = i
                 events.append(evdict)
+        events = sorted(events, key=lambda x: x['onset'])
+        for i, ev in enumerate(events):
+            ev['onset_idx'] = i
         return events
 
     def get_model_bold_dataset(self, model_id, subj_id,
