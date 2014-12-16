@@ -100,7 +100,7 @@ class Dataset(AttrDataset):
         for i, arg in enumerate(args):
             if isinstance(arg, dict):
                 col = (self.sa, self.fa)[i]
-                args_.append(col.get_selection(arg))
+                args_.append(col.match(arg))
             else:
                 args_.append(arg)
         args = tuple(args_)

@@ -645,10 +645,21 @@ class UniformLengthCollection(Collection):
                 return np.zeros(len(a), dtype=bool)
         return r
 
-    def get_selection(self, d):
-        """Given a dictionary descriptor for selection, return boolean mask
+    def match(self, d, strict=True):
+        """Given a dictionary describing selection, return mask for matching items
 
-        Given a dictionary with keys known to the collection
+        Given a dictionary with keys known to the collection, search for item
+        attributes which would satisfy the selection.  E.g.
+
+        Parameters
+        ----------
+        d: dict
+          Dict describing the selection.  Keys must be known to the collection
+        strict: bool, optional
+          If True, absent matching to any specified selection key/value pair
+          would result in ValueError exception.  If False, it would allow to
+          not have matches, but if only a single value for a key is given or none
+          of the values match -- you will end up with empty selection.
         """
         mask = np.ones(self.attr_length, dtype=bool)
 
@@ -657,7 +668,7 @@ class UniformLengthCollection(Collection):
                 raise ValueError("%s is not known to %s" % (k, self))
             value = self[k].value
             target_values_mask = reduce(np.logical_or,
-                                        [self._compare_to_value(value, target_value)
+                                        [self._compare_to_value(value, target_value, strict=strict)
                                          for target_value in target_values])
             mask = np.logical_and(mask, target_values_mask)
         return mask

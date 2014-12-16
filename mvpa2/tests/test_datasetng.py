@@ -1056,7 +1056,7 @@ def test_assign_sa():
     assert_equal(ds1.sa['task'].name, 'task')
     assert_equal(ds1.sa['targets'].name,'targets')
 
-def test_dataset_get_selection():
+def test_dataset_select():
     ds = Dataset(np.arange(15).reshape((5,-1)),
                  sa=dict(targets=range(5),
                          chunks=['a', 'b', 'a', 'b', 'a']),
@@ -1111,3 +1111,21 @@ def test_dataset_get_selection():
     assert_array_equal(cmp(voxel_indices, [[2, 1, 1], [2, 1, 999]], strict=False),
                        [False, False, False, False, False])
 
+
+def test_attributes_match():
+    col = FeatureAttributesCollection({'roi': ['a', 'b', 'c', 'a'],
+                                       'coord': [[0, 1], [0, 2], [0, 1], [0, 2]]})
+    assert_array_equal(col.match(dict(roi=['a', 'c'])), [True, False, True, True])
+    assert_array_equal(col.match(dict(roi=['a', 'c'], coord=[[0, 1]])),
+                       [True, False, True, False])
+    # by default we are strict
+    assert_raises(ValueError, col.match, dict(roi=['a', 'c', 'xxx']))
+    # but otherwise should just ignore absent items completely
+    # logic:  e.g. select all c1 and c2, if no c2 present -- select
+    #         at least all c1, if neither present -- nothing really to select
+    assert_array_equal(col.match(dict(roi=['a', 'c', 'xxx']), strict=False),
+                       [True, False, True, True])
+    assert_array_equal(col.match(dict(roi=['xxx']), strict=False), [False]*4)
+
+    # selection requested per list of items to match, not just an item
+    assert_raises(ValueError, col.match, dict(coord=[0, 1]))
