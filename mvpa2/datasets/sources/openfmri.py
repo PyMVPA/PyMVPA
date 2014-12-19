@@ -11,7 +11,7 @@
 
 __docformat__ = 'restructuredtext'
 
-__all__ = [ 'OpenFMRIDataset' ]
+__all__ = [ 'OpenFMRIDataset', 'mk_level1_fsf' ]
 
 import os
 from os.path import join as _opj
@@ -89,7 +89,7 @@ class OpenFMRIDataset(object):
           Path to the dataset (i.e. the directory with the 'sub*'
           subdirectories).
         """
-        self._basedir = basedir
+        self.basedir = os.path.expanduser(os.path.expandvars(basedir))
 
     def get_subj_ids(self):
         """Return a (sorted) list of IDs for all subjects in the dataset
@@ -97,12 +97,12 @@ class OpenFMRIDataset(object):
         Standard numerical subject IDs a returned as integer values. All other
         types of IDs are returned as strings with the 'sub' prefix stripped.
         """
-        return _subdirs2ids(self._basedir, 'sub')
+        return _subdirs2ids(self.basedir, 'sub')
 
     def get_scan_properties(self):
         """Return a dictionary with the scan properties listed in scan_key.txt
         """
-        fname = _opj(self._basedir, 'scan_key.txt')
+        fname = _opj(self.basedir, 'scan_key.txt')
         return _get_description_dict(fname)
 
     def get_task_descriptions(self):
@@ -111,7 +111,7 @@ class OpenFMRIDataset(object):
         Dictionary keys are integer task IDs, values are task description
         strings.
         """
-        fname = _opj(self._basedir, 'task_key.txt')
+        fname = _opj(self.basedir, 'task_key.txt')
         return _get_description_dict(fname, xfm_key=_id2int)
 
     def get_model_descriptions(self):
@@ -124,7 +124,7 @@ class OpenFMRIDataset(object):
         is inconsistently described, ``get_model_ids()`` actually may discover
         more or less models in comparison to the avauilable model descriptions.
         """
-        fname = _opj(self._basedir, 'model_key.txt')
+        fname = _opj(self.basedir, 'model_key.txt')
         return _get_description_dict(fname, xfm_key=_id2int)
 
     def get_bold_run_ids(self, subj, task):
@@ -141,7 +141,7 @@ class OpenFMRIDataset(object):
           Run ID
         """
         task_prefix = _prefix('task', task)
-        return _subdirs2ids(_opj(self._basedir, _sub2id(subj), 'BOLD'),
+        return _subdirs2ids(_opj(self.basedir, _sub2id(subj), 'BOLD'),
                             '%s_' % (task_prefix,),
                             strip=len(task_prefix) + 4)
 
@@ -160,7 +160,7 @@ class OpenFMRIDataset(object):
 
     def _load_data(self, path, loadfx):
         # little helper to access stuff in datasets
-        path = _opj(self._basedir, *path)
+        path = _opj(self.basedir, *path)
         return loadfx(path)
 
     def _load_subj_data(self, subj, path, loadfx):
@@ -349,7 +349,7 @@ class OpenFMRIDataset(object):
         from mvpa2.datasets.mri import fmri_dataset
 
         # check whether flavor corresponds to a particular file
-        path = _opj(self._basedir, _sub2id(subj),
+        path = _opj(self.basedir, _sub2id(subj),
                     'BOLD', _taskrun(task, run), flavor)
         if os.path.exists(path):
             from mvpa2.base.hdf5 import h5load
@@ -383,7 +383,7 @@ class OpenFMRIDataset(object):
 
     def get_model_ids(self):
         """Return a sorted list of integer IDs for all available models"""
-        return _subdirs2ids(_opj(self._basedir, 'models'), 'model')
+        return _subdirs2ids(_opj(self.basedir, 'models'), 'model')
 
     def get_model_conditions(self, model):
         """Return a description of all conditions for a given model
@@ -407,16 +407,49 @@ class OpenFMRIDataset(object):
         """
         def_data = self._load_data(
                 ['models', _model2id(model), 'condition_key.txt'],
-                np.recfromtxt)
+                open)
         conds = []
         # load model meta data
         for dd in def_data:
+            dd = dd.split()
             cond = {}
             cond['task'] = _id2int(dd[0])
             cond['id'] = _id2int(dd[1])
-            cond['name'] = dd[2]
+            cond['name'] = ' '.join(dd[2:])
             conds.append(cond)
         return conds
+
+    def get_model_contrasts(self, model):
+        """Return a defined contrasts for a model
+
+        Parameters
+        ----------
+        model : int
+          Model identifier.
+
+        Returns
+        -------
+        dict(dict)
+          A dictionary is returned, where each key is a (numerical) task ID
+          and each value is a dictionary with contrast labels (str) as keys and
+          contrast vectors as values.
+        """
+        props = {}
+        try:
+            def_data = self._load_data(
+                ['models', _model2id(model), 'task_contrasts.txt'],
+                open)
+        except IOError:
+            return props
+
+        for line in def_data:
+            line = line.split()
+            print line
+            task_id = _id2int(line[0])
+            task = props.get(task_id, {})
+            task[line[1]] = np.array(line[2:], dtype=float)
+            props[task_id] = task
+        return props
 
     def get_bold_run_model(self, model, subj, run):
         """Return the stimulation design for a particular subject/task/run.
@@ -594,3 +627,300 @@ class OpenFMRIDataset(object):
             path = []
         return self._load_subj_data(
                 subj, ['anatomy'] + path + [fname], nb.load)
+
+def mk_level1_fsf(
+        of,
+        model,
+        subj,
+        task,
+        run,
+        bold_fname=_opj('%(subdir)s', 'BOLD', 'task%(task)03d_run%(run)03d',
+                        'bold.nii.gz'),
+        # TODO more flexible output location
+        fsf_fname=_opj('%(modeldir)s', 'task%(task).3i_run%(run).3i_1stlvl.fsf'),
+        # TODO not per-subject images by force
+        brain_img_fname=_opj('%(subdir)s', 'anatomy', 'highres001_brain.nii.gz'),
+        brain_mask_fname=None,
+        example_func_fname=None,
+        # TODO if relative, relative to BOLD
+        confound_fname=_opj('%(subdir)s', 'BOLD', 'task%(task)03d_run%(run)03d',
+                            'qa', 'confound.txt'),
+        fsfstub_fname=None,
+        result_dir=None,
+        smoothing_kernelsize=0,
+        use_inplane=False,
+        nonlin_reg=False,
+        add_temporal_deriv=True,
+        skipvols=0,
+        tr=None,
+        overwrite_results=True,
+        slicetime_correction=None,
+        ):
+    """
+    TODO:
+
+      - orthogonalization is disabled
+
+      - add support for these:
+
+        # Initial structural space registration initialisation transform
+        set fmri(init_initial_highres) ""
+
+        # Structural space registration initialisation transform
+        set fmri(init_highres) ""
+
+        # Standard space registration initialisation transform
+        set fmri(init_standard) ""
+    """
+
+    import nibabel as nb
+
+    # few convenience shortcuts
+    subdir = _opj(of.basedir, 'sub%03d' % subj)
+    modelbasedir = _opj(subdir, 'model')
+    modeldir= _opj(modelbasedir, 'model%03d' % model)
+
+    # read the conditions_key file, throw away any condition that is not relevant for
+    # the current task
+    conditions = [c for c in of.get_model_conditions(model) if c['task'] == task]
+
+    expandvars = {
+        'subdir': subdir,
+        'modeldir': modeldir,
+        'task': task,
+        'run': run,
+    }
+
+    # check for orthogonalization file
+    orth={}
+    ##orthfile = _opj(of.basedir, 'models', 'model%03d' % model, 'orthogonalize.txt')
+    ##if os.path.exists(orthfile):
+    ##    f=open(orthfile)
+    ##    for l in f.readlines():
+    ##        orth_tasknum=int(l.split()[0].replace('task',''))
+    ##        if orth_tasknum==task:
+    ##            orth[int(l.split()[1])]=int(l.split()[2])
+    ##    f.close()
+
+    # check for QA dir
+    #qadir='%s/BOLD/task%03d_run%03d/QA'%(subdir,task,run)
+
+    contrasts_all = of.get_model_contrasts(model,)
+    contrasts=[]
+    if contrasts_all.has_key('task%(task)03d' % expandvars):
+        contrasts=contrasts_all['task%(task)03d' % expandvars]
+
+    scan_key = of.get_scan_properties()
+
+    # write to a file or into a string
+    if fsf_fname is None:
+        from cStringIO import StringIO
+        outfile = StringIO()
+    else:
+        outfilename = fsf_fname % expandvars
+        outfile = open(outfilename,'w')
+
+    outfile.write('# Automatically generated by mk_fsf.py\n')
+
+    # first get common lines from stub file
+    if not fsfstub_fname is None:
+        stubfile=open(fsfstub_fname,'r')
+        for l in stubfile:
+            outfile.write(l)
+        stubfile.close()
+
+    # figure out how many timepoints there are
+    bold_img_path = bold_fname % expandvars
+    bold_img = nb.load(bold_img_path)
+    # should be 4D
+    ntp = bold_img.shape[3]
+
+    if tr is None:
+        # try our luck with the image header
+        hdr = bold_img.get_header()
+        tinc = hdr.get_zooms()[3]
+        unit = hdr.get_xyzt_units()[1]
+        if unit == 'sec':
+            tr = tinc
+        elif unit == 'msec':
+            tr = tinc / 1000.
+        else:
+            raise ValueError("unkown time unit, cannot determine TR")
+
+    outfile.write('\n\n### AUTOMATICALLY GENERATED PART###\n\n')
+    # now add custom lines
+    outfile.write( 'set fmri(regstandard_nonlinear_yn) %d\n' % int(nonlin_reg))
+    # Delete volumes
+    outfile.write('set fmri(ndelete) %d\n' % skipvols)
+
+    if result_dir is None:
+        result_dir = _opj('%(modeldir)s', 'task%(task)03d_run%(run)03d.feat') \
+                          % expandvars
+    outfile.write('set fmri(outputdir) "%s"\n' % (result_dir,))
+    outfile.write('set feat_files(1) "%s"\n' % (bold_img_path,))
+    if use_inplane is True:
+        # XXX THIS IS TODO
+        outfile.write('set fmri(reginitial_highres_yn) 1\n')
+        outfile.write('set initial_highres_files(1) "%s/anatomy/inplane001_brain.nii.gz"\n'
+                      % subdir)
+    else:
+        outfile.write('set fmri(reginitial_highres_yn) 0\n')
+
+    outfile.write('set highres_files(1) "%s/%s"\n' \
+                  % (subdir, brain_img_fname % expandvars))
+    outfile.write('set fmri(npts) %d\n' % ntp)
+    outfile.write('set fmri(tr) %0.2f\n' % tr)
+    nevs=len(conditions)
+    outfile.write('set fmri(evs_orig) %d\n' % nevs)
+    # TODO support other convolution schemes
+    outfile.write('set fmri(evs_real) %d\n' % (2 * nevs))
+    outfile.write('set fmri(smooth) %d\n' % smoothing_kernelsize)
+    outfile.write('set fmri(ncon_orig) %d\n'
+                  % (len(conditions) + 1 + len(contrasts)))
+    outfile.write('set fmri(ncon_real) %d\n'
+                  % (len(conditions) + 1 + len(contrasts)))
+
+    # loop through EVs
+    convals_real = np.zeros(nevs * 2)
+    convals_orig = np.zeros(nevs)
+    # XXX what is this?
+    empty_evs=[]
+
+    for ev, cond in enumerate(conditions):
+        outfile.write('\n\nset fmri(evtitle%d) "%s"\n'
+                      % (ev + 1, cond['name']))
+        condfile = _opj('%(modeldir)s', 'onsets', 'task%(task)03d_run%(run)03d',
+                       'cond%03d.txt' % (ev + 1)) % expandvars
+        if os.path.exists(condfile):
+            outfile.write('set fmri(shape%d) 3\n'%(ev + 1))
+            outfile.write('set fmri(custom%d) "%s"\n'%(ev + 1, condfile))
+        else:
+             # shape 10 is "empty (all zeros)"
+             outfile.write('set fmri(shape%d) 10\n' % (ev + 1))
+             print '%s is missing, using empty EV' % condfile
+             empty_evs.append(ev + 1)
+
+        outfile.write('set fmri(convolve%d) 3\n' % (ev + 1))
+        outfile.write('set fmri(convolve_phase%d) 0\n' % (ev + 1))
+        outfile.write('set fmri(tempfilt_yn%d) 1\n' % (ev + 1))
+        outfile.write('set fmri(deriv_yn%d) %i\n'
+                      % (ev + 1, add_temporal_deriv))
+
+        # first write the orth flag for zero, which seems to be turned on whenever
+        # anything is orthogonalized
+        if orth.has_key(ev + 1):
+                outfile.write('set fmri(ortho%d.0) 1\n' % int(ev + 1))
+        else:
+                outfile.write('set fmri(ortho%d.0) 0\n' % int(ev + 1))
+        for evn in range(1, nevs + 1):
+            if orth.has_key(ev + 1):
+                if orth[ev + 1] == evn:
+                    outfile.write('set fmri(ortho%d.%d) 1\n' % (ev + 1, evn))
+                else:
+                    outfile.write('set fmri(ortho%d.%d) 0\n' % (ev + 1, evn))
+            else:
+                outfile.write('set fmri(ortho%d.%d) 0\n' % (ev + 1, evn))
+
+        # default contrast setup
+        # make a T contrast for each EV
+        outfile.write('set fmri(conpic_real.%d) 1\n' % (ev + 1))
+        outfile.write('set fmri(conpic_orig.%d) 1\n' % (ev + 1))
+        outfile.write('set fmri(conname_real.%d) "%s"\n'
+                      % (ev + 1, cond['name']))
+        outfile.write('set fmri(conname_orig.%d) "%s"\n'
+                      % (ev + 1, cond['name']))
+        for evt in range(nevs * 2):
+            outfile.write('set fmri(con_real%d.%d) %d\n'
+                          %(ev + 1, evt + 1, int(evt == (ev * 2))))
+            if (evt == (ev * 2)):
+                convals_real[evt] = 1
+        for evt in range(nevs):
+            outfile.write('set fmri(con_orig%d.%d) %d\n'
+                          % (ev + 1, evt + 1, int(evt == ev)))
+            if (evt == ev):
+                convals_orig[evt] = 1
+
+    if len(empty_evs) > 0:
+        empty_ev_file = open(
+                _opj('%(modeldir)s', 'onsets', 'task%(task)03d_run%(run)03d',
+                     'empty_evs.txt') % expandvars, 'w')
+        for eev in empty_evs:
+            empty_ev_file.write('%d\n' % eev)
+        empty_ev_file.close()
+
+    # make one additional contrast across all conditions
+    outfile.write('set fmri(conpic_real.%d) 1\n' % (ev + 2))
+    outfile.write('set fmri(conname_real.%d) "all"\n' % (ev + 2))
+    outfile.write('set fmri(conname_orig.%d) "all"\n' % (ev + 2))
+
+    for evt in range(nevs * 2):
+            outfile.write('set fmri(con_real%d.%d) %d\n'
+                          %(ev + 2, evt + 1, convals_real[evt]))
+    for evt in range(nevs):
+            outfile.write('set fmri(con_orig%d.%d) %d\n'
+                          % (ev + 2, evt + 1, convals_orig[evt]))
+
+   # add custom contrasts
+    if len(contrasts) > 0:
+        contrastctr = ev + 3
+        for c in contrasts.iterkeys():
+            outfile.write('set fmri(conpic_real.%d) 1\n' % contrastctr)
+            outfile.write('set fmri(conname_real.%d) "%s"\n' % (contrastctr, c))
+            outfile.write('set fmri(conname_orig.%d) "%s"\n' % (contrastctr, c))
+            cveclen=len(contrasts[c])
+            con_real_ctr=1
+            for evt in range(nevs):
+                if contrasts[c][evt] != 0:
+                    outfile.write('set fmri(con_real%d.%d) %s\n'
+                                  % (contrastctr,
+                                     con_real_ctr,
+                                     contrasts[c][evt]))
+                    outfile.write('set fmri(con_real%d.%d) 0\n'
+                                  % (contrastctr, con_real_ctr + 1))
+                    con_real_ctr+=2
+                else:
+                    outfile.write('set fmri(con_real%d.%d) 0\n'
+                                  % (contrastctr, evt + 1))
+            for evt in range(nevs):
+                if evt < cveclen:
+                    outfile.write('set fmri(con_orig%d.%d) %s\n'
+                                  % (contrastctr, evt + 1, contrasts[c][evt]))
+                else:
+                    outfile.write('set fmri(con_orig%d.%d) 0\n'
+                                  % (contrastctr, evt + 1))
+            contrastctr += 1
+
+    # Add confound EVs text file
+    if not confound_fname is None:
+        confoundfile = confound_fname % expandvars
+        if os.path.exists(confoundfile):
+            outfile.write('set fmri(confoundevs) 1\n')
+            outfile.write('set confoundev_files(1) "%s"\n' % confoundfile)
+        else:
+            outfile.write('set fmri(confoundevs) 0\n')
+    else:
+        outfile.write('set fmri(confoundevs) 0\n')
+
+    if overwrite_results:
+        outfile.write('set fmri(overwrite_yn) 1\n')
+
+    if not brain_mask_fname is None:
+        # don't rely on BET but use a specified mask
+        outfile.write('set fmri(alternative_mask) "%s"\n' % (brain_mask_fname,))
+
+    if not example_func_fname is None:
+        # don't rely on extracting a example image from the BOLD input,
+        # but use a specified image
+        outfile.write('set fmri(alternative_example_func) "%s"\n'
+                      % (example_func_fname,))
+
+    if fsf_fname is None:
+        # return the FSF file content as a string
+        outfile.seek(0)
+        fsf = outfile.read()
+        outfile.close()
+        return fsf
+    else:
+        # return the filename
+        outfile.close()
+        return outfilename
