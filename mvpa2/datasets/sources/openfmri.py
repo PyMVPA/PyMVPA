@@ -654,7 +654,7 @@ def mk_level1_fsf(
         skipvols=0,
         tr=None,
         overwrite_results=True,
-        slicetime_correction=None,
+        initxfm2std_fname=None,
         ):
     """
     TODO:
@@ -668,9 +668,6 @@ def mk_level1_fsf(
 
         # Structural space registration initialisation transform
         set fmri(init_highres) ""
-
-        # Standard space registration initialisation transform
-        set fmri(init_standard) ""
     """
 
     import nibabel as nb
@@ -766,8 +763,8 @@ def mk_level1_fsf(
     else:
         outfile.write('set fmri(reginitial_highres_yn) 0\n')
 
-    outfile.write('set highres_files(1) "%s/%s"\n' \
-                  % (subdir, brain_img_fname % expandvars))
+    outfile.write('set highres_files(1) "%s"\n'
+                  % (brain_img_fname % expandvars,))
     outfile.write('set fmri(npts) %d\n' % ntp)
     outfile.write('set fmri(tr) %0.2f\n' % tr)
     nevs=len(conditions)
@@ -850,6 +847,7 @@ def mk_level1_fsf(
 
     # make one additional contrast across all conditions
     outfile.write('set fmri(conpic_real.%d) 1\n' % (ev + 2))
+    outfile.write('set fmri(conpic_orig.%d) 1\n' % (ev + 2))
     outfile.write('set fmri(conname_real.%d) "all"\n' % (ev + 2))
     outfile.write('set fmri(conname_orig.%d) "all"\n' % (ev + 2))
 
@@ -906,14 +904,20 @@ def mk_level1_fsf(
 
     if not brain_mask_fname is None:
         # don't rely on BET but use a specified mask
-        outfile.write('set fmri(alternative_mask) "%s"\n' % (brain_mask_fname,))
+        outfile.write('set fmri(alternative_mask) "%s"\n'
+                      % (brain_mask_fname % expandvars,))
 
     if not example_func_fname is None:
         # don't rely on extracting a example image from the BOLD input,
         # but use a specified image
         outfile.write('set fmri(alternative_example_func) "%s"\n'
-                      % (example_func_fname,))
+                      % (example_func_fname % expandvars,))
 
+    if not initxfm2std_fname is None:
+        outfile.write('set fmri(init_standard) "%s"\n'
+                      % (initxfm2std_fname % expandvars,))
+
+        # Standard space registration initialisation transform
     if fsf_fname is None:
         # return the FSF file content as a string
         outfile.seek(0)
