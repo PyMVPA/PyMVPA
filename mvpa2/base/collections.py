@@ -651,6 +651,8 @@ class UniformLengthCollection(Collection):
         Given a dictionary with keys known to the collection, search for item
         attributes which would satisfy the selection.  E.g.
 
+        TODO
+
         Parameters
         ----------
         d: dict
