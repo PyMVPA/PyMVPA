@@ -1056,26 +1056,32 @@ def test_assign_sa():
     assert_equal(ds1.sa['task'].name, 'task')
     assert_equal(ds1.sa['targets'].name,'targets')
 
-def test_dataset_select():
+def test_dataset_select_getitem():
     ds = Dataset(np.arange(15).reshape((5,-1)),
                  sa=dict(targets=range(5),
                          chunks=['a', 'b', 'a', 'b', 'a']),
                  fa=dict(voxel_indices=[[1, 2], [2, 1], [0, 0]],
                          roi=['x', 'x', 'z']))
 
-    ds_ = ds[{'targets': range(3),
-              'chunks': 'a'}]
-    assert(ds_.shape == (2, 3))
-    assert_array_equal(ds_.chunks, ['a', 'a'])
+    # either sa or fa selection must be provided!
+    assert_raises(RuntimeError, ds.select)
+    assert_raises(RuntimeError, ds.select, strict=False)
 
-    ds_ = ds[{'targets': range(3), 'chunks': 'a'}, {'roi': ['x']}]
-    assert(ds_.shape == (2, 2))
-    assert_array_equal(ds_.chunks, ['a', 'a'])
-    assert_array_equal(ds_.fa.roi, ['x', 'x'])
+    sd = {'targets': range(3), 'chunks': 'a'}
+    for ds_ in (ds[sd], ds.select(sd), ds.select(sd, strict=False)):
+        assert(ds_.shape == (2, 3))
+        assert_array_equal(ds_.chunks, ['a', 'a'])
 
-    ds_ = ds[:, {'voxel_indices': [[1, 2]]}]
-    assert(ds_.shape == (5, 1))
-    assert_array_equal(ds_.fa.voxel_indices, [[1, 2]])
+    fd = {'roi': ['x']}
+    for ds_ in (ds[sd, fd ], ds.select(sd, fd), ds.select(sd, fd, strict=False)):
+        assert(ds_.shape == (2, 2))
+        assert_array_equal(ds_.chunks, ['a', 'a'])
+        assert_array_equal(ds_.fa.roi, ['x', 'x'])
+
+    fd = {'voxel_indices': [[1, 2]]}
+    for ds_ in (ds[:, fd], ds.select(None, fd), ds.select(fadict=fd), ds.select(fadict=fd, strict=False)):
+        assert(ds_.shape == (5, 1))
+        assert_array_equal(ds_.fa.voxel_indices, [[1, 2]])
 
     # select two voxels, but also swap "selection" values out of order.
     # result should still be not reordered features
@@ -1085,11 +1091,16 @@ def test_dataset_select():
     assert_array_equal(ds_.chunks, ['b', 'b'])
     assert_array_equal(ds_.fa.voxel_indices, [[1, 2], [0, 0]])
 
-    assert_raises(ValueError, ds.__getitem__, {'invalid': [1]})
+    for m in (ds.__getitem__, ds.select):
+        assert_raises(ValueError, m, {'invalid': [1]})
     # we are strict for now, to avoid human typos in specifying which items
     # to pick up -- if none was matching -- error!
     assert_raises(ValueError, ds.__getitem__, {'targets': ['nonexisting']})
     assert_raises(ValueError, ds.__getitem__, {'targets': [0, 999]})
+    # but allow loose matching with strict=False
+    ds_ = ds.select({'targets': [0, 999]}, strict=False)
+    assert_array_equal(ds[{'targets': [0]}].samples, ds_.samples)
+    assert_true(np.all(ds_.sa.targets == 0))
 
     # Let's just test collection's function directly regarding correct operation
     # on difficult cases
