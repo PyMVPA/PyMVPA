@@ -319,7 +319,31 @@ created:
 ['me' 'nobody']
 
 We see that both attributes are still there and, moreover, also the
-corresponding subsets have been selected.
+corresponding subsets have been selected.  It makes it convenient to select
+subsets of the dataset matching specific values of sample or feature attributes,
+or both:
+
+>>> subds = ds[ds.sa.some_attr == 1., ds.fa.responsible == 'me']
+>>> print subds.shape
+(2, 1)
+
+To simplify such selections based on the values of attributes, it is possible
+to specify desired selection as a dictionary for either samples of features
+dimensions, where each key corresponds to an attribute name, and value specifies
+a list of desired values.  Specifying multiple keys for either dimension leads
+to the intersection of matching elements:
+
+>>> subds = ds[{'some_attr': [1., 0.], 'literal': ['two']}, {'responsible': ['me', 'you']}]
+>>> print subds.sa.some_attr, subds.sa.literal, subds.fa.responsible
+[ 1.] ['two'] ['me' 'you']
+
+.. exercise::
+
+  Check documentation of `~mvpa2.datasets.base.Dataset.select()` method which
+  could be used to implement such selection as well, but providing also additional
+  argument ``strict``.  In above example try selecting non-existing elements via
+  ``__getitem__`` (i.e. via ``[]``), and then using ``select()`` method with
+  ``strict=False``.  Compare the results and behavior.
 
 
 Load fMRI data
