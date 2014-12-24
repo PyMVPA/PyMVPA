@@ -651,7 +651,19 @@ class UniformLengthCollection(Collection):
         Given a dictionary with keys known to the collection, search for item
         attributes which would satisfy the selection.  E.g.
 
-        TODO
+        >>> col = UniformLengthCollection({'roi': ['a', 'b', 'c', 'a']})
+        >>> print col.match({'roi': ['a']})
+        [ True False False  True]
+        >>> print col.match({'roi': ['c', 'a']})
+        [ True False  True  True]
+
+        Multiple keys could be specified with desired matching values.
+        Intersection of matchings is returned across different keys:
+
+        >>> col = UniformLengthCollection({'roi': ['a', 'b', 'c', 'a'],
+        ...                                'vox': [[1,0], [0,1], [1,0], [0, 1]]})
+        >>> print col.match({'roi': ['c', 'a'], 'vox': [[0,1]]})
+        [False False False  True]
 
         Parameters
         ----------
