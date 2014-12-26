@@ -508,7 +508,7 @@ class OpenFMRIDataset(object):
         return events
 
     def get_model_bold_dataset(self, model_id, subj_id,
-                          preprocfx=None, modelfx=None, stack=True,
+                          preproc_ds=None, modelfx=None, stack=True,
                           flavor=None, mask=None, add_fa=None,
                           add_sa=None, **kwargs):
         """Build a PyMVPA dataset for a model defined in the OpenFMRI dataset
@@ -521,7 +521,7 @@ class OpenFMRIDataset(object):
           Integer, or string ID of the subject whose data shall be considered.
           Alternatively, a list of IDs can be given and data from all matching
           subjects will be loaded at once.
-        preprocfx : callable or None
+        preproc_ds : callable or None
           If not None, this callable will be called with each run bold dataset
           as an argument before ``modelfx`` is executed. The callable must
           return a dataset.
@@ -591,8 +591,8 @@ class OpenFMRIDataset(object):
                         continue
                     d = self.get_bold_run_dataset(sub, task, run=run, flavor=flavor,
                             chunks=i, mask=mask, add_fa=add_fa, add_sa=add_sa)
-                    if not preprocfx is None:
-                        d = preprocfx(d)
+                    if not preproc_ds is None:
+                        d = preproc_ds(d)
                     d = modelfx(d, events, **kwargs)
                     # if the modelfx doesn't leave 'chunk' information, we put
                     # something minimal in
