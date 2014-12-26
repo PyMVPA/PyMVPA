@@ -216,7 +216,7 @@ information are available in the returned dataset.
 Depending on the type of preprocessing that was applied to this data flavor,
 the dataset ``ds`` may be ready for immediate analysis, for example in
 a cross-validated classification analysis. If further preprocessing steps
-are desired, the ``preprocfx`` argument of
+are desired, the ``preproc_ds`` argument of
 :meth:`~mvpa2.datasets.sources.openfmri.OpenFMRIDataset.get_model_bold_dataset`
 provides an interface for applying additional transformations, such as temporal
 filtering, to the time series data of each individual BOLD fMRI run.
