@@ -308,8 +308,8 @@ class OpenFMRIDataset(object):
 
         return [np.array(d) for d in data]
 
-    def get_bold_run_dataset(self, subj, task, run, flavor=None, add_sa=None,
-            **kwargs):
+    def get_bold_run_dataset(self, subj, task, run, flavor=None,
+            preproc_img=None,add_sa=None, **kwargs):
         """Return a dataset instance for the BOLD data of a particular
         subject/task/run combination.
 
@@ -331,6 +331,10 @@ class OpenFMRIDataset(object):
           corresponds to an existing file in the respective task/run directory,
           it is assumed to be a stored dataset in HDF5 format and loaded via
           ``h5load()`` -- otherwise datasets are constructed from NIfTI images.
+        preproc_img : callable or None
+          If not None, this callable will be called with the loaded source BOLD
+          image instance as an argument before fmri_dataset() is executed.
+          The callable must return an image instance.
         add_sa: str or tuple(str)
           Single or sequence of names of files in the respective BOLD
           directory containing additional samples attributes. At this time
@@ -356,6 +360,8 @@ class OpenFMRIDataset(object):
             ds = h5load(path)
         else:
             bold_img = self.get_bold_run_image(subj, task, run, flavor=flavor)
+            if not preproc_img is None:
+                bold_img = preproc_img(bold_img)
             # load (and mask) data
             ds = fmri_dataset(bold_img, **kwargs)
 
@@ -507,7 +513,7 @@ class OpenFMRIDataset(object):
             ev['onset_idx'] = i
         return events
 
-    def get_model_bold_dataset(self, model_id, subj_id,
+    def get_model_bold_dataset(self, model_id, subj_id, preproc_img=None,
                           preproc_ds=None, modelfx=None, stack=True,
                           flavor=None, mask=None, add_fa=None,
                           add_sa=None, **kwargs):
@@ -521,6 +527,8 @@ class OpenFMRIDataset(object):
           Integer, or string ID of the subject whose data shall be considered.
           Alternatively, a list of IDs can be given and data from all matching
           subjects will be loaded at once.
+        preproc_img : callable or None
+          See get_bold_run_dataset() documentation
         preproc_ds : callable or None
           If not None, this callable will be called with each run bold dataset
           as an argument before ``modelfx`` is executed. The callable must
@@ -589,8 +597,10 @@ class OpenFMRIDataset(object):
                         # it could be argued whether we'd still want this data loaded
                         # XXX maybe a flag?
                         continue
-                    d = self.get_bold_run_dataset(sub, task, run=run, flavor=flavor,
-                            chunks=i, mask=mask, add_fa=add_fa, add_sa=add_sa)
+                    d = self.get_bold_run_dataset(sub, task, run=run,
+                            flavor=flavor, preproc_img=preproc_img,
+                            chunks=run, mask=mask, add_fa=add_fa,
+                            add_sa=add_sa)
                     if not preproc_ds is None:
                         d = preproc_ds(d)
                     d = modelfx(d, events, **kwargs)
