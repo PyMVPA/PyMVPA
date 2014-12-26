@@ -21,7 +21,8 @@ from mvpa2.base.dataset import vstack
 from mvpa2 import pymvpa_dataroot
 from mvpa2.datasets.mri import fmri_dataset, _load_anyimg, map2nifti
 from mvpa2.datasets.sources.openfmri import OpenFMRIDataset
-from mvpa2.datasets.eventrelated import eventrelated_dataset, events2sample_attr
+from mvpa2.datasets.eventrelated import eventrelated_dataset, events2sample_attr, \
+        assign_conditionlabels
 from mvpa2.misc.fsl import FslEV3
 from mvpa2.misc.support import Event, value2idx
 from mvpa2.misc.io.base import SampleAttributes
@@ -151,7 +152,20 @@ def test_openfmri_dataset():
             assert_array_equal(
                 orig_attrs['targets'][(run - 1) * 121: run * len(ds)], targets)
             assert_equal(ds.sa['subj'][0], subj)
-
+            # check that we can get the same result from the model dataset
+            # (make it exercise the preproc interface too)
+            def preproc_img(img):
+                return img
+            modelds = of.get_model_bold_dataset(1, subj, flavor='1slice',
+                                         preproc_img=preproc_img,
+                                         modelfx=assign_conditionlabels,
+                                         mask=os.path.join(pymvpa_dataroot,
+                                                           'mask.nii.gz'),
+                                         add_sa='bold_moest.txt')
+            modelds = modelds[modelds.sa.run == run]
+            targets = np.array(targets, dtype='object')
+            targets[targets == 'rest'] = None
+            assert_array_equal(targets, modelds.sa.targets)
     # more basic access
     motion = of.get_task_bold_attributes(1, 'bold_moest.txt', np.loadtxt)
     assert_equal(len(motion), 12) # one per run
