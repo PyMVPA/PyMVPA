@@ -170,6 +170,7 @@ if externals.exists('mdp'):
 if externals.exists('mdp ge 2.4'):
     from mvpa2.mappers.lle import *
 from mvpa2.mappers.glm import *
+from mvpa2.mappers.skl_adaptor import *
 
 __sdebug('measures')
 from mvpa2 import measures
