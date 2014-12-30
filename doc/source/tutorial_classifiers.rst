@@ -113,7 +113,7 @@ now, hence lower values represent more accurate classification.
 >>> clf.train(ds_split2)
 >>> err = clf(ds_split1)
 >>> print np.asscalar(err)
-0.0
+0.125
 
 In this case, our choice of which half of the dataset is used for training and
 which half for testing was completely arbitrary, hence we could also estimate
@@ -122,7 +122,7 @@ the transfer error after swapping the roles:
 >>> clf.train(ds_split1)
 >>> err = clf(ds_split2)
 >>> print np.asscalar(err)
-0.125
+0.0
 
 We see that on average the classifier error is really low, and we achieve an
 accuracy level comparable to the results reported in the original study.
@@ -196,8 +196,8 @@ fold.
 >>> len(cv_results)
 2
 >>> cv_results.samples
-array([[ 0.125],
-       [ 0.   ]])
+array([[ 0.   ],
+       [ 0.125]])
 
 ..
   Disable for now as this doesn't work that way anymore. Look at RepeatedMeasure
