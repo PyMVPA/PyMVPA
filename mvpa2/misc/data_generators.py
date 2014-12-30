@@ -413,6 +413,10 @@ def load_datadb_tutorial_data(path=os.path.join(
         raise ValueError("Got something as mask that I cannot handle.")
     ds = dhandle.get_model_bold_dataset(model, subj, mask=mask, add_fa=add_fa,
                                         noinfolabel='rest')
+    # fixup time_coords to make the impression of a continuous time series
+    # this is only necessary until we have changed the tutorial to
+    # show/encourage run-wise processing
+    ds.sa['time_coords'] = np.linspace(0, (len(ds) * 2.5), len(ds) + 1)[:-1]
     return ds
 
 
