@@ -88,10 +88,10 @@ dataset, we have the stimulus conditions of each volume sample available in the
 204
 >>> for e in events[:4]:
 ...    print e
-{'chunks': 1, 'duration': 6, 'onset': 0, 'targets': 'rest'}
-{'chunks': 1, 'duration': 9, 'onset': 6, 'targets': 'scissors'}
-{'chunks': 1, 'duration': 6, 'onset': 15, 'targets': 'rest'}
-{'chunks': 1, 'duration': 9, 'onset': 21, 'targets': 'face'}
+{'chunks': 0, 'duration': 6, 'onset': 0, 'targets': 'rest'}
+{'chunks': 0, 'duration': 9, 'onset': 6, 'targets': 'scissors'}
+{'chunks': 0, 'duration': 6, 'onset': 15, 'targets': 'rest'}
+{'chunks': 0, 'duration': 9, 'onset': 21, 'targets': 'face'}
 
 We are feeding not only the ``targets`` to the function, but also the
 ``chunks`` attribute, since we do not want to have events spanning multiple
@@ -116,10 +116,10 @@ We can easily filter out all other events.
 24
 >>> for e in events[:4]:
 ...    print e
-{'chunks': 1, 'duration': 9, 'onset': 21, 'targets': 'face'}
-{'chunks': 1, 'duration': 9, 'onset': 63, 'targets': 'house'}
-{'chunks': 2, 'duration': 9, 'onset': 127, 'targets': 'face'}
-{'chunks': 2, 'duration': 9, 'onset': 213, 'targets': 'house'}
+{'chunks': 0, 'duration': 9, 'onset': 21, 'targets': 'face'}
+{'chunks': 0, 'duration': 9, 'onset': 63, 'targets': 'house'}
+{'chunks': 1, 'duration': 9, 'onset': 127, 'targets': 'face'}
+{'chunks': 1, 'duration': 9, 'onset': 213, 'targets': 'house'}
 
 Response Modeling
 -----------------

@@ -183,7 +183,7 @@ specification of a dataset attribute that encodes the timing of a time series
 samples; ``time_attr``).
 
 >>> print ds
-<Dataset: 96x129@float64, <sa: chunks,condition,regressors,subj>, <fa: voxel_indices>, <a: add_regs,imghdr,imgtype,mapper,model,voxel_dim,voxel_eldim>>
+<Dataset: 96x129@float64, <sa: chunks,condition,regressors,run,subj>, <fa: voxel_indices>, <a: add_regs,imghdr,imgtype,mapper,model,voxel_dim,voxel_eldim>>
 
 This all led to an output dataset with 96 samples, one sample per each of the
 eight condition in each of the 12 runs.
@@ -202,10 +202,11 @@ eight condition in each of the 12 runs.
  'bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe'
  'bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe']
 >>> print ds.sa.chunks
-[ 1  1  1  1  1  1  1  1  2  2  2  2  2  2  2  2  3  3  3  3  3  3  3  3  4
-  4  4  4  4  4  4  4  5  5  5  5  5  5  5  5  6  6  6  6  6  6  6  6  7  7
-  7  7  7  7  7  7  8  8  8  8  8  8  8  8  9  9  9  9  9  9  9  9 10 10 10
- 10 10 10 10 10 11 11 11 11 11 11 11 11 12 12 12 12 12 12 12 12]
+[ 0  0  0  0  0  0  0  0  1  1  1  1  1  1  1  1  2  2  2  2  2  2  2  2  3
+  3  3  3  3  3  3  3  4  4  4  4  4  4  4  4  5  5  5  5  5  5  5  5  6  6
+  6  6  6  6  6  6  7  7  7  7  7  7  7  7  8  8  8  8  8  8  8  8  9  9  9
+  9  9  9  9  9 10 10 10 10 10 10 10 10 11 11 11 11 11 11 11 11]
+
 
 Each value in the sample matrix corresponds to the estimated model parameter
 (or weight) for the associated voxel. Model fitting is performed individually
