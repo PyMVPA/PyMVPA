@@ -516,7 +516,7 @@ class OpenFMRIDataset(object):
             # what runs exists: that means we have to load the model info
             # repeatedly
             for task in tasks:
-                for run in self.get_bold_run_ids(sub, task):
+                for i, run in enumerate(self.get_bold_run_ids(sub, task)):
                     events = self.get_bold_run_model(model_id, sub, run)
                     # at this point our events should only contain those
                     # matching the current task. If not, this model violates
@@ -538,13 +538,13 @@ class OpenFMRIDataset(object):
                         # XXX maybe a flag?
                         continue
                     d = self.get_bold_run_dataset(sub, task, run=run, flavor=flavor,
-                            chunks=run, mask=mask, add_fa=add_fa, add_sa=add_sa)
+                            chunks=i, mask=mask, add_fa=add_fa, add_sa=add_sa)
                     if not preprocfx is None:
                         d = preprocfx(d)
                     d = modelfx(d, events, **kwargs)
                     # if the modelfx doesn't leave 'chunk' information, we put
                     # something minimal in
-                    for attr, info in (('chunks', run), ('subj', sub)):
+                    for attr, info in (('chunks', i), ('run', run), ('subj', sub)):
                         if not attr in d.sa:
                             d.sa[attr] = [info] * len(d)
                     dss.append(d)
