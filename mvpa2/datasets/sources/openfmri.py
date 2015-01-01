@@ -450,7 +450,6 @@ class OpenFMRIDataset(object):
 
         for line in def_data:
             line = line.split()
-            print line
             task_id = _id2int(line[0])
             task = props.get(task_id, {})
             task[line[1]] = np.array(line[2:], dtype=float)
@@ -714,8 +713,8 @@ def mk_level1_fsf(
 
     contrasts_all = of.get_model_contrasts(model,)
     contrasts=[]
-    if contrasts_all.has_key('task%(task)03d' % expandvars):
-        contrasts=contrasts_all['task%(task)03d' % expandvars]
+    if contrasts_all.has_key(task):
+        contrasts=contrasts_all[task]
 
     scan_key = of.get_scan_properties()
 
@@ -872,11 +871,12 @@ def mk_level1_fsf(
     if len(contrasts) > 0:
         contrastctr = ev + 3
         for c in contrasts.iterkeys():
+            outfile.write('set fmri(conpic_orig.%d) 1\n' % contrastctr)
             outfile.write('set fmri(conpic_real.%d) 1\n' % contrastctr)
             outfile.write('set fmri(conname_real.%d) "%s"\n' % (contrastctr, c))
             outfile.write('set fmri(conname_orig.%d) "%s"\n' % (contrastctr, c))
-            cveclen=len(contrasts[c])
-            con_real_ctr=1
+            cveclen = len(contrasts[c])
+            con_real_ctr = 1
             for evt in range(nevs):
                 if contrasts[c][evt] != 0:
                     outfile.write('set fmri(con_real%d.%d) %s\n'
