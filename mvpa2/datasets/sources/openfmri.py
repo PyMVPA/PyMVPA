@@ -417,6 +417,9 @@ class OpenFMRIDataset(object):
         conds = []
         # load model meta data
         for dd in def_data:
+            if not dd.strip():
+                # ignore empty lines
+                continue
             dd = dd.split()
             cond = {}
             cond['task'] = _id2int(dd[0])
