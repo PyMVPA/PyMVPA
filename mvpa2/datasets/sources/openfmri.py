@@ -645,6 +645,121 @@ class OpenFMRIDataset(object):
         return self._load_subj_data(
                 subj, ['anatomy'] + path + [fname], nb.load)
 
+
+
+def mk_level2_fsf(
+        of,
+        model,
+        subj,
+        task=None,
+        runs=None,
+        fsf_fname=_opj('%(modeldir)s', '%(task)03d_2ndlvl.fsf'),
+        feat_inputdir=_opj('%(modeldir)s', 'task%(task).3i_run%(run).3i.feat'),
+        fsfstub_fname=None,
+        result_dir=None,
+        overwrite_results=True,
+        ):
+    """
+    Based on mk_level2_fsf.py by Russell Poldrack (Simplified BSD license).
+
+    """
+    # try to determine the task automatically from the model
+    task = set([c['task'] for c in of.get_model_conditions(model)])
+    if not len(task) == 1:
+        raise ValueError("ambiguous task list for model %.3i, "
+                         "use `task` argument to disambiguate" % (model,))
+    task = list(task)[0]
+
+    if runs is None:
+        # process all runs in the absence of a selection
+        runs = of.get_task_bold_run_ids(task)[subj]
+
+    # few convenience shortcuts
+    subdir = _opj(of.basedir, 'sub%03d' % subj)
+    modelbasedir = _opj(subdir, 'model')
+    modeldir= _opj(modelbasedir, 'model%03d' % model)
+
+    # read the conditions_key file, throw away any condition that is not relevant for
+    # the current task
+    conditions = [c for c in of.get_model_conditions(model) if c['task'] == task]
+
+    expandvars = {
+        'subdir': subdir,
+        'modeldir': modeldir,
+        'task': task,
+    }
+
+    # load custom contrasts
+    contrasts = of.get_model_contrasts(model,).get(task, {})
+
+    # write to a file or into a string
+    if fsf_fname is None:
+        from cStringIO import StringIO
+        outfile = StringIO()
+    else:
+        outfilename = fsf_fname % expandvars
+        outfile = open(outfilename,'w')
+
+    outfile.write('# Automatically generated\n')
+
+    # first get common lines from stub file
+    if not fsfstub_fname is None:
+        stubfile=open(fsfstub_fname,'r')
+        for l in stubfile:
+            outfile.write(l)
+        stubfile.close()
+
+    # now add custom lines
+
+    # TODO
+    # first check for empty EV file
+    #empty_evs=[]
+    #for r in range(len(runs)):
+    #    if os.path.exists("%s/%s/sub%03d/model/model%03d/onsets/task%03d_run%03d/empty_evs.txt"%(basedir,taskid,subnum, modelnum,tasknum,runs[r])):
+    #        evfile=open("%s/%s/sub%03d/model/model%03d/onsets/task%03d_run%03d/empty_evs.txt"%(basedir,taskid,subnum,modelnum,tasknum,runs[r]),'r')
+    #        empty_evs=[int(x.strip()) for x in evfile.readlines()]
+    #        evfile.close()
+
+    outfile.write('\n\n### AUTOMATICALLY GENERATED PART###\n\n')
+
+    if result_dir is None:
+        result_dir = _opj('%(modeldir)s', '%(task)03d_2ndlvl.gfeat') % expandvars
+    outfile.write('set fmri(outputdir) "%s"\n' % (result_dir,))
+    outfile.write('set fmri(npts) %d\n' % len(runs)) # number of runs
+    outfile.write('set fmri(multiple) %d\n' % len(runs)) # number of runs
+    outfile.write('set fmri(ncopeinputs) %d\n'
+                  % int(len(conditions) + 1 + len(contrasts))) # nmbr of copes
+
+    for r in range(len(runs)):
+        rexpandvars = expandvars.copy()
+        rexpandvars['run'] = runs[r]
+        outfile.write('set feat_files(%d) "%s"\n'
+                      % (int(r+1), feat_inputdir % rexpandvars))
+        outfile.write('set fmri(evg%d.1) 1\n' % int(r + 1))
+        outfile.write('set fmri(groupmem.%d) 1\n' % int(r + 1))
+        # TODO: remove here when TODO below is dealt with
+
+    for c in range(len(conditions) + 1 + len(contrasts)): # nmbr of copes
+        outfile.write('set fmri(copeinput.%d) 1\n' % int(c + 1))
+    # TODO
+    # need to figure out if any runs have empty EVs and leave them out
+    #    if not c+1 in empty_evs:
+    #        outfile.write('set fmri(copeinput.%d) 1\n'%int(c+1))
+    #    else:
+    #         outfile.write('set fmri(copeinput.%d) 0\n'%int(c+1))
+
+    if fsf_fname is None:
+        # return the FSF file content as a string
+        outfile.seek(0)
+        fsf = outfile.read()
+        outfile.close()
+        return fsf
+    else:
+        # return the filename
+        outfile.close()
+        return outfilename
+
+
 def mk_level1_fsf(
         of,
         model,
@@ -674,6 +789,8 @@ def mk_level1_fsf(
         initxfm2std_fname=None,
         ):
     """
+    Based on mk_level1_fsf.py by Russell Poldrack (Simplified BSD license).
+
     TODO:
 
       - orthogonalization is disabled
@@ -931,11 +1048,11 @@ def mk_level1_fsf(
         outfile.write('set fmri(alternative_example_func) "%s"\n'
                       % (example_func_fname % expandvars,))
 
+    # Standard space registration initialisation transform
     if not initxfm2std_fname is None:
         outfile.write('set fmri(init_standard) "%s"\n'
                       % (initxfm2std_fname % expandvars,))
 
-        # Standard space registration initialisation transform
     if fsf_fname is None:
         # return the FSF file content as a string
         outfile.seek(0)
