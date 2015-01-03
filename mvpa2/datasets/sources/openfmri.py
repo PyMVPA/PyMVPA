@@ -72,6 +72,11 @@ def _subdirs2ids(path, prefix, **kwargs):
             ids.append(_id2int(item, **kwargs))
     return sorted(ids)
 
+def _stripext(path):
+    for ext in ('.nii', '.nii.gz', '.hdr', '.hdr.gz', '.img', '.img.gz'):
+        if path.endswith(ext):
+            return path[:-len(ext)]
+    return path
 
 class OpenFMRIDataset(object):
     """Handler for datasets following the openfmri.org layout specifications
@@ -766,7 +771,7 @@ def mk_level1_fsf(
         result_dir = _opj('%(modeldir)s', 'task%(task)03d_run%(run)03d.feat') \
                           % expandvars
     outfile.write('set fmri(outputdir) "%s"\n' % (result_dir,))
-    outfile.write('set feat_files(1) "%s"\n' % (bold_img_path,))
+    outfile.write('set feat_files(1) "%s"\n' % (_stripext(bold_img_path),))
     if use_inplane is True:
         # XXX THIS IS TODO
         outfile.write('set fmri(reginitial_highres_yn) 1\n')
@@ -776,7 +781,7 @@ def mk_level1_fsf(
         outfile.write('set fmri(reginitial_highres_yn) 0\n')
 
     outfile.write('set highres_files(1) "%s"\n'
-                  % (brain_img_fname % expandvars,))
+                  % (_stripext(brain_img_fname % expandvars),))
     outfile.write('set fmri(npts) %d\n' % ntp)
     outfile.write('set fmri(tr) %0.2f\n' % tr)
     nevs=len(conditions)
