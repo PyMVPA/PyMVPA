@@ -152,7 +152,7 @@ def find_data_files(srcdir, *wildcards, **kw):
     file_list = []
     recursive = kw.get('recursive', True)
     if recursive:
-        os.path.walk(srcdir, walk_helper, (file_list, wildcards))
+        os.walk(srcdir, walk_helper, (file_list, wildcards))
     else:
         walk_helper((file_list, wildcards),
                     srcdir,
