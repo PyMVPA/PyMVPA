@@ -457,6 +457,7 @@ te-%: build
 	&& logfile=temp-$@.log   \
 	|| { mkdir -p $$MVPA_TESTS_LOGDIR; logfile=$$MVPA_TESTS_LOGDIR/$@.log; }; \
 	MVPA_EXAMPLES_INTERACTIVE=no \
+	MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
 	 $(MPLPYTHONPATH) /usr/bin/time $(PYTHON) doc/examples/$*.py >| $$logfile 2>&1 \
 	 && { echo "passed";  ex=0; } \
 	 || { echo "failed:"; ex=1; cat $$logfile; }; \
