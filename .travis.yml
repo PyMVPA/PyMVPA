@@ -30,6 +30,7 @@ before_install:
     - travis_retry sudo apt-get install shogun-python-modular $PY-mdp $PY-psutil $PY-sklearn
     - travis_retry sudo apt-get install liblapack-dev $PY-statsmodels $PY-reportlab ipython
     - travis_retry sudo apt-get install $PY-pywt $PY-lxml $PY-pprocess $PY-nipy
+    - travis_retry sudo apt-get install python3-dev   # for rudimentary testing of conversion
     # Very optional R interfaces via rpy2
     - travis_retry sudo apt-get install $PY-rpy2
     - mkdir -p $PWD/R-libs
@@ -46,5 +47,6 @@ script:
     - export NOSETESTS=$(which nosetests)
     - eval   $COVERAGE $NOSETESTS -v mvpa2 $DOCTESTS -s
     - if [ ! -z "$COVERAGE" ]; then make coveragecmdline; fi
+    - make build PYTHON=python3
 after_success:
     - if [ ! -z "$COVERAGE" ]; then coveralls; fi
