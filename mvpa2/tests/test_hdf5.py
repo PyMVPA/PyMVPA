@@ -426,3 +426,23 @@ def test_versions(f):
     hdf = h5py.File(f, 'r')
     assert_equal(hdf.attrs.get('__pymvpa_hdf5_version__'), '2')
     assert_equal(hdf.attrs.get('__pymvpa_version__'), mvpa2.__version__)
+
+from glob import glob
+
+from mvpa2 import pymvpa_dataroot
+from mvpa2.testing import sweepargs
+from mvpa2.base.hdf5 import h5load
+
+from mvpa2.testing.regress import get_testing_fmri_dataset_filename
+def test_present_fmri_dataset():
+    # just a helper to signal if we have any of those available
+    f = get_testing_fmri_dataset_filename()
+    if not os.path.exists(f):
+        raise nose.SkipTest("Absent %s. Verify that you got submodule" % f)
+
+@sweepargs(f=glob(os.path.join(pymvpa_dataroot, 'testing', 'fmri_dataset', '*.hdf5')))
+def test_regress_fmri_dataset(f):
+    f = h5load(f) # load previously generated dataset
+    # rudimentary checks that data was loaded correctly
+    # verify that map2nifti works
+    # verify that we can store generated nifti to a file
