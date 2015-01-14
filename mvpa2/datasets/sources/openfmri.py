@@ -11,7 +11,7 @@
 
 __docformat__ = 'restructuredtext'
 
-__all__ = [ 'OpenFMRIDataset', 'mk_level1_fsf' ]
+__all__ = [ 'OpenFMRIDataset', 'mk_level1_fsf', 'mk_level2_fsf']
 
 import os
 from os.path import join as _opj
@@ -448,6 +448,7 @@ class OpenFMRIDataset(object):
           and each value is a dictionary with contrast labels (str) as keys and
           contrast vectors as values.
         """
+        from collections import OrderedDict
         props = {}
         try:
             def_data = self._load_data(
@@ -459,7 +460,7 @@ class OpenFMRIDataset(object):
         for line in def_data:
             line = line.split()
             task_id = _id2int(line[0])
-            task = props.get(task_id, {})
+            task = props.get(task_id, OrderedDict())
             task[line[1]] = np.array(line[2:], dtype=float)
             props[task_id] = task
         return props
@@ -653,7 +654,7 @@ def mk_level2_fsf(
         subj,
         task=None,
         runs=None,
-        fsf_fname=_opj('%(modeldir)s', '%(task)03d_2ndlvl.fsf'),
+        fsf_fname=_opj('%(modeldir)s', 'task%(task)03d_2ndlvl.fsf'),
         feat_inputdir=_opj('%(modeldir)s', 'task%(task).3i_run%(run).3i.feat'),
         fsfstub_fname=None,
         result_dir=None,
@@ -723,7 +724,7 @@ def mk_level2_fsf(
     outfile.write('\n\n### AUTOMATICALLY GENERATED PART###\n\n')
 
     if result_dir is None:
-        result_dir = _opj('%(modeldir)s', '%(task)03d_2ndlvl.gfeat') % expandvars
+        result_dir = _opj('%(modeldir)s', 'task%(task)03d_2ndlvl.gfeat') % expandvars
     outfile.write('set fmri(outputdir) "%s"\n' % (result_dir,))
     outfile.write('set fmri(npts) %d\n' % len(runs)) # number of runs
     outfile.write('set fmri(multiple) %d\n' % len(runs)) # number of runs
@@ -1003,17 +1004,13 @@ def mk_level1_fsf(
             cveclen = len(contrasts[c])
             con_real_ctr = 1
             for evt in range(nevs):
-                if contrasts[c][evt] != 0:
-                    outfile.write('set fmri(con_real%d.%d) %s\n'
-                                  % (contrastctr,
-                                     con_real_ctr,
-                                     contrasts[c][evt]))
-                    outfile.write('set fmri(con_real%d.%d) 0\n'
-                                  % (contrastctr, con_real_ctr + 1))
-                    con_real_ctr+=2
-                else:
-                    outfile.write('set fmri(con_real%d.%d) 0\n'
-                                  % (contrastctr, evt + 1))
+                outfile.write('set fmri(con_real%d.%d) %s\n'
+                              % (contrastctr,
+                                 con_real_ctr,
+                                 contrasts[c][evt]))
+                outfile.write('set fmri(con_real%d.%d) 0\n'
+                              % (contrastctr, con_real_ctr + 1))
+                con_real_ctr += 2
             for evt in range(nevs):
                 if evt < cveclen:
                     outfile.write('set fmri(con_orig%d.%d) %s\n'
