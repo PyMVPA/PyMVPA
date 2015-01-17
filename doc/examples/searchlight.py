@@ -27,7 +27,7 @@ As always, we first have to import PyMVPA.
 
 from mvpa2.suite import *
 
-"""As searchlight analyses are usually quite expensive in term of computational
+"""As searchlight analyses are usually quite expensive in terms of computational
 resources, we are going to enable some progress output to entertain us while
 we are waiting."""
 
@@ -179,7 +179,7 @@ for radius in [0, 1, 3]:
 
     """
     PyMVPA comes with a convenient plotting function to visualize the
-    searchlight amps. We are only looking at fMRI slices that are covered
+    searchlight maps. We are only looking at fMRI slices that are covered
     by the mask of ventral temproal cortex.
     """
 
