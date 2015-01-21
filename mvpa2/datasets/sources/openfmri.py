@@ -358,9 +358,10 @@ class OpenFMRIDataset(object):
         from mvpa2.datasets.mri import fmri_dataset
 
         # check whether flavor corresponds to a particular file
-        path = _opj(self.basedir, _sub2id(subj),
+        if not flavor is None:
+            path = _opj(self.basedir, _sub2id(subj),
                     'BOLD', _taskrun(task, run), flavor)
-        if os.path.exists(path):
+        if not flavor is None and os.path.exists(path):
             from mvpa2.base.hdf5 import h5load
             ds = h5load(path)
         else:
@@ -605,10 +606,9 @@ class OpenFMRIDataset(object):
                         # it could be argued whether we'd still want this data loaded
                         # XXX maybe a flag?
                         continue
-                    d = self.get_bold_run_dataset(sub, task, run=run,
-                            flavor=flavor, preproc_img=preproc_img,
-                            chunks=run, mask=mask, add_fa=add_fa,
-                            add_sa=add_sa)
+                    d = self.get_bold_run_dataset(sub, task, run=run, flavor=flavor,
+                            preproc_img=preproc_img, chunks=i, mask=mask,
+                            add_fa=add_fa, add_sa=add_sa)
                     if not preproc_ds is None:
                         d = preproc_ds(d)
                     d = modelfx(d, events, **kwargs)
