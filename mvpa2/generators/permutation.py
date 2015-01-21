@@ -39,7 +39,7 @@ class AttributePermutator(Node):
     dataset.
     """
     def __init__(self, attr, count=1, limit=None, assure=False,
-                 strategy='simple', rng=np.random, **kwargs):
+                 strategy='simple', chunk_attr=None, rng=np.random, **kwargs):
         """
         Parameters
         ----------
@@ -58,14 +58,16 @@ class AttributePermutator(Node):
           or sequence thereof) attribute value, where all key-value combinations
           across all given items define a "selection" of to-be-permuted samples
           or features.
-        strategy : 'simple', 'uattrs'
+        strategy : 'simple', 'uattrs', 'chunks'
           'simple' strategy is the straightfoward permutation of attributes (given
           the limit).  In some sense it assumes independence of those samples.
           'uattrs' strategy looks at unique values of attr (or their unique
           combinations in case of `attr` being a list), and "permutes" those
           unique combinations values thus breaking their assignment to the samples
           but preserving any dependencies between samples within the same unique
-          combination.
+          combination. The 'chunks' strategy swaps attribute values of entire chunks.
+          Naturally, this will only work if there is the same number of samples in
+          all chunks.
         assure : bool
           If set, by-chance non-permutations will be prevented, i.e. it is
           checked that at least two items change their position. Since this
@@ -80,7 +82,8 @@ class AttributePermutator(Node):
         self._assure_permute = assure
         self.strategy = strategy
         self.rng = rng
-
+        self.chunk_attr = chunk_attr
+        self.chunk_vals = None
 
     def _get_pcfg(self, ds):
         # determine to be permuted attribute to find the collection
@@ -92,6 +95,10 @@ class AttributePermutator(Node):
             pattr, collection = ds.get_attr(pattr[0])
 
         return get_limit_filter(self._limit, collection)
+
+
+    def get_chunk_attr(self, ds):
+        self.chunk_vals = ds.sa[self.chunk_attr].value
 
 
     def _call(self, ds):
@@ -108,6 +115,9 @@ class AttributePermutator(Node):
         if isinstance(pattr, str):
             # wrap single attr name into tuple to simplify the code
             pattr = (pattr,)
+
+        if self.chunk_attr is not None:
+            self.get_chunk_attr(ds)
 
         # get actual attributes
         in_pattrs = [ds.get_attr(pa)[0] for pa in pattr]
@@ -158,7 +168,7 @@ class AttributePermutator(Node):
             raise RuntimeError(
                 "Cannot assure permutation of %s with limit %r for "
                 "some reason (dataset %s). Should not happen"
-                % (pattr, self._limit, ds))            
+                % (pattr, self._limit, ds))
 
         return out
 
@@ -201,6 +211,20 @@ class AttributePermutator(Node):
             # now we need to assign them ot out_pattrs
             for pa, out_v in zip(out_pattrs, out_group):
                 pa.value[i] = out_v
+
+
+    def _permute_chunks(self, limit_idx, in_pattrs, out_pattrs):
+        # limit_idx is doing nothing
+
+        chunk_vals = self.chunk_vals
+        for in_pattr, out_pattr in zip(in_pattrs, out_pattrs):
+            uniques = np.unique(chunk_vals)
+            shuffled = uniques.copy()
+            self.rng.shuffle(shuffled)
+
+            for orig, new in zip(uniques, shuffled):
+                out_pattr.value[np.where(chunk_vals==orig)] = in_pattr.value[np.where(chunk_vals==new)]
+
 
 
     def generate(self, ds):
