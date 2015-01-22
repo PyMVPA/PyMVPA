@@ -256,6 +256,7 @@ class HollowSphere(Sphere):
                   "than the radius (got %g)" % (inner_radius, radius)
         Sphere.__init__(self, radius, **kwargs)
         self._inner_radius = inner_radius
+        self.include_center = include_center
 
     def __repr__(self, prefixes=[]):
         return super(HollowSphere, self).__repr__(

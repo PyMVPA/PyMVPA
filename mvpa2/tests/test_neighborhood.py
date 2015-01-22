@@ -151,6 +151,13 @@ def test_hollowsphere_degenerate_neighborhood():
     assert_equal(len(hs((1,1,1))), 0)
 
 
+def test_hollowsphere_include_center():
+    hs = ne.HollowSphere(1, 0, include_center=True)
+    assert_array_equal(hs((2, 1)),  [(2,1), (1, 1), (2, 0), (2, 2), (3, 1)])
+    assert_array_equal(hs((1, )),   [(1,), (0,), (2,)])
+    assert_equal(len(hs((1,1,1))), 7)
+
+
 def test_query_engine():
     data = np.arange(54)
     # indices in 3D
