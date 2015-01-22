@@ -260,7 +260,7 @@ class HollowSphere(Sphere):
 
     def __repr__(self, prefixes=[]):
         return super(HollowSphere, self).__repr__(
-            ['inner_radius=%r' % (self._inner_radius,)])
+            ['inner_radius=%r' % (self._inner_radius,),'include_center=%r' % (self.include_center,)])
 
     # Properties to assure R/O behavior for now
     @property
