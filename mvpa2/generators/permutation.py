@@ -83,7 +83,6 @@ class AttributePermutator(Node):
         self.strategy = strategy
         self.rng = rng
         self.chunk_attr = chunk_attr
-        self.chunk_vals = None
 
     def _get_pcfg(self, ds):
         # determine to be permuted attribute to find the collection
@@ -95,10 +94,6 @@ class AttributePermutator(Node):
             pattr, collection = ds.get_attr(pattr[0])
 
         return get_limit_filter(self._limit, collection)
-
-
-    def get_chunk_attr(self, ds):
-        self.chunk_vals = ds.sa[self.chunk_attr].value
 
 
     def _call(self, ds):
@@ -116,17 +111,18 @@ class AttributePermutator(Node):
             # wrap single attr name into tuple to simplify the code
             pattr = (pattr,)
 
-        if self.chunk_attr is not None:
-            self.get_chunk_attr(ds)
-
         # get actual attributes
         in_pattrs = [ds.get_attr(pa)[0] for pa in pattr]
 
         # Method to use for permutations
         try:
             permute_fx = getattr(self, "_permute_%s" % self.strategy)
+            permute_kwargs = {}
         except AttributeError:
             raise ValueError("Unknown permutation strategy %r" % self.strategy)
+
+        if self.chunk_attr is not None:
+            permute_kwargs['chunks'] = ds.sa[self.chunk_attr].value
 
         for i in xrange(10):  # for the case of assure_permute
             # shallow copy of the dataset for output
@@ -152,7 +148,7 @@ class AttributePermutator(Node):
                 # need list to index properly
                 limit_idx = list(limit_idx)
 
-                permute_fx(limit_idx, in_pattrs, out_pattrs)
+                permute_fx(limit_idx, in_pattrs, out_pattrs, **permute_kwargs)
 
             if not assure_permute:
                 break
@@ -213,18 +209,16 @@ class AttributePermutator(Node):
                 pa.value[i] = out_v
 
 
-    def _permute_chunks(self, limit_idx, in_pattrs, out_pattrs):
+    def _permute_chunks(self, limit_idx, in_pattrs, out_pattrs, chunks):
         # limit_idx is doing nothing
 
-        chunk_vals = self.chunk_vals
         for in_pattr, out_pattr in zip(in_pattrs, out_pattrs):
-            uniques = np.unique(chunk_vals)
+            uniques = np.unique(chunks)
             shuffled = uniques.copy()
             self.rng.shuffle(shuffled)
 
             for orig, new in zip(uniques, shuffled):
-                out_pattr.value[np.where(chunk_vals==orig)] = in_pattr.value[np.where(chunk_vals==new)]
-
+                out_pattr.value[np.where(chunks==orig)] = in_pattr.value[np.where(chunks==new)]
 
 
     def generate(self, ds):
