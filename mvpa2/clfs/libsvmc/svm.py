@@ -214,7 +214,7 @@ class SVM(_SVM):
                 # want to move out logic from libsvm over here to base
                 # predictions on obtined values, or adjust libsvm to
                 # spit out values from predict() as well
-                if nlabels == 2:
+                if nlabels == 2 and self._svm_impl != 'ONE_CLASS':
                     # Apperently libsvm reorders labels so we need to
                     # track (1,0) values instead of (0,1) thus just
                     # lets take negative reverse
