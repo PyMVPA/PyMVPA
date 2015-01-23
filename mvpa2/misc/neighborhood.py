@@ -232,7 +232,7 @@ class HollowSphere(Sphere):
 
     """
 
-    def __init__(self, radius, inner_radius, **kwargs):
+    def __init__(self, radius, inner_radius, include_center=False, **kwargs):
         """ Initialize the Sphere
 
         Parameters
@@ -245,6 +245,9 @@ class HollowSphere(Sphere):
           Inner radius of the 'sphere', describing where hollow
           part starts.  It is inclusive, so `inner_radius` of 0,
           would already remove the center element.
+        include_center : bool
+          Flag indicating whether to include the center element.
+          Center element is added as first feature. (Default: False)
         **kwargs
           See `Sphere` for additional keyword arguments
         """
@@ -253,10 +256,11 @@ class HollowSphere(Sphere):
                   "than the radius (got %g)" % (inner_radius, radius)
         Sphere.__init__(self, radius, **kwargs)
         self._inner_radius = inner_radius
+        self.include_center = include_center
 
     def __repr__(self, prefixes=[]):
         return super(HollowSphere, self).__repr__(
-            ['inner_radius=%r' % (self._inner_radius,)])
+            ['inner_radius=%r' % (self._inner_radius,),'include_center=%r' % (self.include_center,)])
 
     # Properties to assure R/O behavior for now
     @property
@@ -296,7 +300,7 @@ class HollowSphere(Sphere):
 
         if not len(res):
             warning("%s defines no neighbors" % self)
-        return res
+        return np.vstack([np.zeros(ndim,dtype='int'),res]) if self.include_center else res
 
 
 class QueryEngineInterface(object):
