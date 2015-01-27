@@ -136,6 +136,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
     def __init__(self, generator, queryengine, errorfx=mean_mismatch_error,
                  indexsum=None,
                  reuse_neighbors=False,
+                 splitter=None,
                  **kwargs):
         """Initialize the base class for "naive" searchlight classifiers
 
@@ -156,6 +157,8 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
           Compute neighbors information only once, thus allowing for
           efficient reuse on subsequent calls where dataset's feature
           attributes remain the same (e.g. during permutation testing)
+        splitter : Splitter, optional
+          splitter for train/test partitions, must return 2 partitions
         """
 
         # init base class first
@@ -163,6 +166,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
 
         self._errorfx = errorfx
         self._generator = generator
+        self._splitter = splitter
 
         # TODO: move into _call since resetting over default None
         #       obscures __repr__
@@ -346,7 +350,10 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         # indicies
         # XXX we could make it even more lightweight I guess...
         dataset_indicies = Dataset(np.arange(nsamples), sa=dataset.sa)
-        splitter = Splitter(attr=generator.get_space())
+        if self._splitter is None:
+            splitter = Splitter(attr=generator.get_space())
+        else:
+            splitter = self._splitter
         partitions = list(generator.generate(dataset_indicies))
         if __debug__:
             for p in partitions:
