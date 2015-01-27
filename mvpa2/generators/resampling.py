@@ -242,14 +242,14 @@ class NonContiguous(Node):
         Node.__init__(self, **kwargs)
         self.dist_attr = dist_attr
         self.dist = dist
-        self.splits_attr = splits_attr
+        self.split_attr = split_attr
         self.split_keep = split_keep
         self.split_trim = split_trim
         self.split_assign = split_assign
         
     def _call(self,ds):
         attr, collection = ds.get_attr(self.dist_attr)
-        orig_spliting = ds.sa[self.splits_attr].value
+        orig_spliting = ds.sa[self.split_attr].value
         
         keep_mask = reduce(lambda m,s:np.logical_or(m, orig_spliting==s),
                            self.split_keep,
@@ -266,9 +266,9 @@ class NonContiguous(Node):
 
         out = ds.copy(deep=False)
         if collection is ds.sa:
-            out.sa[self.splits_attr] = new_spliting
+            out.sa[self.split_attr] = new_spliting
         elif collection is ds.fa:
-            out.fa[self.splits_attr] = new_spliting
+            out.fa[self.split_attr] = new_spliting
         return out
          
 
