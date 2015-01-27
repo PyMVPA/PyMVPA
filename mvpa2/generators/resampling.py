@@ -209,10 +209,7 @@ class NonContiguous(Node):
     """Generator to remove samples too close as measured with a sample attribute
     eg.:
     >>> partitioner = ChainNode([NFoldPartitioner(),
-    NonContiguous(attr='time',
-    dist=60,
-    partition_keep=2,
-    partition_trim=1)])
+    NonContiguous(attr='time', dist=60, partition_keep=2, partition_trim=1)])
     if sa.time in sec then all the training samples in partition(_keep)=1
     that are less than 60 secs distant from partition(_trim)=2 
     will be assigned to partition 0 to be excluded from cross-validation fold
@@ -229,12 +226,18 @@ class NonContiguous(Node):
         """
         Parameters
         ----------
-        dist_attr : the attribute to measures distance
-        dist : the minimum distance between the samples to the 2 splits of data
-        split_attr : the attribute describing the split
-        split_keep : the list of splits that are to be kept : default [2] (testing)
-        split_trim : the list of splits to be trimmed : default [1] (training)
-        split_assign : the value to be assigned to trim samples
+        dist_attr : str
+          the attribute to measures distance
+        dist : all type of value that can be compared to dist_attr
+          the minimum distance between the samples to the 2 splits of data
+        split_attr : str
+          the attribute describing the split
+        split_keep : list
+          the list of splits that are to be kept : default [2] (testing)
+        split_trim : list
+          the list of splits to be trimmed : default [1] (training)
+        split_assign : value of type of split_attr
+          the value to be assigned to trim samples
         """
         Node.__init__(self, **kwargs)
         self.dist_attr = dist_attr
