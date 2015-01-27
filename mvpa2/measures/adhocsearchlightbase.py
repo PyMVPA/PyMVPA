@@ -346,11 +346,11 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         # indicies
         # XXX we could make it even more lightweight I guess...
         dataset_indicies = Dataset(np.arange(nsamples), sa=dataset.sa)
-        splitter = Splitter(attr=generator.get_space())
+        splitter = Splitter(attr=generator.get_space(),attr_values=[1,2])
         partitions = list(generator.generate(dataset_indicies))
         if __debug__:
             for p in partitions:
-                if not (np.all(p.sa[targets_sa_name].value == labels)):
+                if not (np.all(p.sa[targets_sa_name].value == labels[p.samples[:,0]])):
                     raise NotImplementedError(
                         "%s does not yet support partitioners altering the targets "
                         "(e.g. permutators)" % self.__class__)
