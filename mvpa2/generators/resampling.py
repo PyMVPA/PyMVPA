@@ -203,3 +203,61 @@ class Balancer(Node):
     def __str__(self):
         return _str(self, str(self._amount), n=self._attr, count=self.count,
                     apply_selection=self._apply_selection)
+
+
+class NonContiguous(Node):
+    """Generator to remove samples too close as measured with a sample attribute
+    eg.:
+    >>> partitioner = ChainNode([NFoldPartitioner(),
+    NonContiguous(attr='time',
+    dist=60,
+    partition_keep=2,
+    partition_trim=1)])
+    if sa.time in sec then all the training samples in partition(_keep)=1
+    that are less than 60 secs distant from partition(_trim)=2 
+    will be assigned to partition 0 to be excluded from cross-validation fold
+    with appropriate splitter
+    """
+    def __init__(self,
+                 attr='chunks',
+                 dist=1,
+                 partitions_attr='partitions',
+                  partition_keep=2,
+                 partition_trim=1,
+                 **kwargs):
+        """
+        Parameters
+        ----------
+        dist : the minimum distance between the samples to the 2 splits of data
+        partitions_attr : the attribute describing the split
+        partition_keep : the partition that is to be kept
+        partition_trim : the partition to be trimmed
+        """
+        Node.__init__(self, **kwargs)
+        self._attr = attr
+        self._dist = dist
+        self.partitions_attr = partitions_attr
+        self.partition_keep = partition_keep
+        self.partition_trim = partition_trim
+        
+    def _call(self,ds):
+        attr, collection = ds.get_attr(self._attr)
+        orig_partitioning = ds.sa[self.partitions_attr].value
+        
+        attr_keep = np.unique(attr[orig_partitioning==self.partition_keep])
+        trim_mask = orig_partitioning==self.partition_trim
+        new_partitioning = orig_partitioning.copy()
+        for a in attr_keep:
+            # remove samples which are too close
+            new_partitioning[np.logical_and(trim_mask,np.abs(attr-a)<=self._dist)] = 0
+
+        out = ds.copy(deep=False)
+        if collection is ds.sa:
+            out.sa[self.partitions_attr] = new_partitioning
+        elif collection is ds.fa:
+            out.fa[self.partitions_attr] = new_partitioning
+        return out
+         
+
+    def generate(self, ds):
+        yield self(ds)
