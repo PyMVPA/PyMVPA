@@ -221,7 +221,7 @@ class NonContiguous(Node):
                  split_attr='partitions',
                  split_keep=[2],
                  split_trim=[1],
-                 split_assign=[0],
+                 split_assign=[3],
                  **kwargs):
         """
         Parameters
