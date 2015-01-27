@@ -219,43 +219,53 @@ class NonContiguous(Node):
     with appropriate splitter
     """
     def __init__(self,
-                 attr='chunks',
+                 dist_attr='chunks',
                  dist=1,
-                 partitions_attr='partitions',
-                  partition_keep=2,
-                 partition_trim=1,
+                 split_attr='partitions',
+                 split_keep=[2],
+                 split_trim=[1],
+                 split_assign=[0],
                  **kwargs):
         """
         Parameters
         ----------
+        dist_attr : the attribute to measures distance
         dist : the minimum distance between the samples to the 2 splits of data
-        partitions_attr : the attribute describing the split
-        partition_keep : the partition that is to be kept
-        partition_trim : the partition to be trimmed
+        split_attr : the attribute describing the split
+        split_keep : the list of splits that are to be kept : default [2] (testing)
+        split_trim : the list of splits to be trimmed : default [1] (training)
+        split_assign : the value to be assigned to trim samples
         """
         Node.__init__(self, **kwargs)
-        self._attr = attr
-        self._dist = dist
-        self.partitions_attr = partitions_attr
-        self.partition_keep = partition_keep
-        self.partition_trim = partition_trim
+        self.dist_attr = dist_attr
+        self.dist = dist
+        self.splits_attr = splits_attr
+        self.split_keep = split_keep
+        self.split_trim = split_trim
+        self.split_assign = split_assign
         
     def _call(self,ds):
-        attr, collection = ds.get_attr(self._attr)
-        orig_partitioning = ds.sa[self.partitions_attr].value
+        attr, collection = ds.get_attr(self.dist_attr)
+        orig_spliting = ds.sa[self.splits_attr].value
         
-        attr_keep = np.unique(attr[orig_partitioning==self.partition_keep])
-        trim_mask = orig_partitioning==self.partition_trim
-        new_partitioning = orig_partitioning.copy()
+        keep_mask = reduce(lambda m,s:np.logical_or(m, orig_spliting==s),
+                           self.split_keep,
+                           np.zeros(orig_spliting.shape, dtype=np.bool))
+
+        trim_mask = reduce(lambda m,s:np.logical_or(m, orig_spliting==s),
+                           self.split_trim,
+                           np.zeros(orig_spliting.shape, dtype=np.bool))
+        new_spliting = orig_spliting.copy()
+        attr_keep = np.unique(attr[keep_mask])
         for a in attr_keep:
             # remove samples which are too close
-            new_partitioning[np.logical_and(trim_mask,np.abs(attr-a)<=self._dist)] = 0
+            new_spliting[np.logical_and(trim_mask,np.abs(attr-a)<=self.dist)] = self.split_assign
 
         out = ds.copy(deep=False)
         if collection is ds.sa:
-            out.sa[self.partitions_attr] = new_partitioning
+            out.sa[self.splits_attr] = new_spliting
         elif collection is ds.fa:
-            out.fa[self.partitions_attr] = new_partitioning
+            out.fa[self.splits_attr] = new_spliting
         return out
          
 
