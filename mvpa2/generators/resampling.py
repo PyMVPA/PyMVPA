@@ -207,12 +207,12 @@ class Balancer(Node):
 
 class NonContiguous(Node):
     """Generator to remove samples too close as measured with a sample attribute
-    eg.:
-    >>> partitioner = ChainNode([NFoldPartitioner(),
-    NonContiguous(attr='time', dist=60, partition_keep=2, partition_trim=1)])
+    ``` partitioner = ChainNode([NFoldPartitioner(),
+                                 NonContiguous(attr='time', dist=60, partition_keep=2, partition_trim=1)])
+    ```
     if sa.time in sec then all the training samples in partition(_keep)=1
     that are less than 60 secs distant from partition(_trim)=2 
-    will be assigned to partition 0 to be excluded from cross-validation fold
+    will be assigned to another partition to be excluded from cross-validation fold
     with appropriate splitter
     """
     def __init__(self,
