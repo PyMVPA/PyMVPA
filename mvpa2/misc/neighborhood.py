@@ -30,6 +30,7 @@ class IdentityNeighborhood(object):
     """
 
     def __init__(self):
+        """Initialize the neighborhood"""
         pass
 
     def __repr__(self):
