@@ -23,6 +23,38 @@ from mvpa2.misc.support import idhash as idhash_
 if __debug__:
     from mvpa2.base import debug
 
+class IdentityNeighborhood(object):
+    """Trivial neighborhood.
+
+    Use this if you want neighbors(i) == [i]
+    """
+
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return self.__class__.__name__
+
+    def train(self, dataset):
+        pass
+
+    def __call__(self, coordinate):
+        """Return coordinate in a list
+
+        Parameters
+        ----------
+        coordinate : sequence type of length 3 with integers
+
+        Returns
+        -------
+        [tuple(coordinate)]
+
+        """
+        # type checking
+        coordinate = np.asanyarray(coordinate)
+        return [tuple(coordinate)]
+
+
 class Sphere(object):
     """N-Dimensional hypersphere.
 
