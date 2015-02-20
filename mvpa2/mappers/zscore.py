@@ -132,6 +132,8 @@ class ZScoreMapper(Mapper):
                     params[c] = self._compute_params(ds.samples[slicer])
             else:
                 # global estimate
+                if isinstance(est_ids, set):
+                    est_ids = list(est_ids)
                 params = {'__all__': self._compute_params(ds.samples[est_ids])}
 
 

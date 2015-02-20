@@ -89,11 +89,15 @@ class ProcrusteanMapper(ProjectionMapper):
                 data = ds
             if assess_residuals:
                 odatas += (data,)
-            if i == 0:
-                mean = self._offset_in
+            if self._demean:
+                if i == 0:
+                    mean = self._offset_in
+                else:
+                    mean = data.mean(axis=0)
+                data = data - mean
             else:
-                mean = data.mean(axis=0)
-            data = data - mean
+                # no demeaning === zero means
+                mean = np.zeros(shape=data.shape[1:])
             means += (mean,)
             datas += (data,)
             shapes += (data.shape,)
