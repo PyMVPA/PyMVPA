@@ -116,9 +116,9 @@ def normal_feature_dataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
     if snr != 0:
         data /= np.sqrt(snr)
     if (means is None) and (not nonbogus_features is None):
-        if len(nonbogus_features) > nlabels:
-            raise ValueError, "Can't assign simply a feature to a " + \
-                  "class: more nonbogus_features than labels"
+        if len(nonbogus_features) != nlabels:
+            raise ValueError(
+                "Provide as many nonbogus features as many labels you have")
         means = np.zeros((len(nonbogus_features), nfeatures))
         # pure multivariate -- single bit per feature
         for i in xrange(len(nonbogus_features)):
