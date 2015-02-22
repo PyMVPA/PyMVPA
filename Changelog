@@ -57,6 +57,10 @@ Releases
 
   * Fixes
 
+    - :class:`~mvpa2.algorithms.hyperalignment.Hyperalignment` with regularization
+      (alpha != 1.0) was producing incorrect transformations because they were
+      driven by offsets of the last subject.  Fixed by not "auto_train"ing
+      regularization projection
     - :func:`~mvpa2.misc.plot.lightbox.plot_lightbox` should take a
       slice index from the last dimension, not the leading one if no
       `slices` argument was provided
