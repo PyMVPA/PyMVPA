@@ -29,6 +29,15 @@ def test_distances():
     assert_equal(absmin_distance(a, b), 4)
 
 
+def test_identity():
+    # IdentityNeighborhood() behaves like Sphere(0.5) without all of the
+    # computation. Test on a few different coordinates.
+    neighborhood = ne.IdentityNeighborhood()
+    sphere = ne.Sphere(0.5)
+    for center in ((0, 0, 0), (1, 1, 1), (0, 0), (0, )):
+        assert_array_equal(neighborhood(center), sphere(center))
+
+
 def test_sphere():
     # test sphere initialization
     s = ne.Sphere(1)
