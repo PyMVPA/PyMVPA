@@ -38,7 +38,7 @@ class StaticProjectionMapper(ProjectionMapper):
           All keyword arguments are passed to the ProjectionMapper
           constructor.
         """
-        ProjectionMapper.__init__(self, auto_train=True, **kwargs)
+        ProjectionMapper.__init__(self, auto_train=kwargs.pop('auto_train', True), **kwargs)
         self._proj = proj
         self._recon = recon
 
