@@ -72,7 +72,7 @@ class SMLR(Classifier):
 
     __tags__ = [ 'smlr', 'linear', 'has_sensitivity', 'binary',
                  'multiclass', 'does_feature_selection',
-                 'random_tie_breaking']
+                 'random_tie_breaking', 'one-class']
     # XXX: later 'kernel-based'?
 
     lm = Parameter(.1, constraints=EnsureFloat() & EnsureRange(min=1e-10),

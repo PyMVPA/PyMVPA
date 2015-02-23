@@ -335,7 +335,8 @@ class ClassifiersTests(unittest.TestCase):
 
 
     # TODO: sg - remove our limitations, meta, lda, qda and skl -- also
-    @sweepargs(clf=clfswh['!sg', '!plr', '!meta', '!skl', '!glmnet'])
+    @sweepargs(clf=clfswh['one-class', '!sg', '!plr', '!meta', '!glmnet'] + \
+                   clfswh['one-class-binary', '!sg', '!plr', '!meta', '!glmnet'])
     def test_single_class(self, clf):
         """Test if binary and multiclass can handle single class training/testing
         """
@@ -343,6 +344,7 @@ class ClassifiersTests(unittest.TestCase):
         ds = ds[ds.sa.targets == 'L0']  #  only 1 label
         assert(ds.sa['targets'].unique == ['L0'])
 
+        print clf
         ds_ = list(OddEvenPartitioner().generate(ds))[0]
         # Here is our "nice" 0.6 substitute for TransferError:
         trerr = TransferMeasure(clf, Splitter('train'),
