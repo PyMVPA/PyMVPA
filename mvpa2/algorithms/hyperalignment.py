@@ -324,7 +324,8 @@ class Hyperalignment(ClassWithCollections):
             S.resize(len(Vh))
             S = np.matrix(np.diag(S))
             W = np.matrix(Vh.T)*S*np.matrix(Vh)
-            wmapper = StaticProjectionMapper(proj=W)
+            wmapper = StaticProjectionMapper(proj=W, auto_train=False)
+            wmapper.train(datasets[ids])
             wmappers.append(wmapper)
             datasets[ids] = wmapper.forward(datasets[ids])
         return datasets, wmappers
