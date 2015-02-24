@@ -47,7 +47,7 @@ _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
         'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet',
         'gnb', 'plr', 'rpy2', 'swig', 'skl', 'lda', 'qda',
-        'random-forest', 'extra-trees', 'random', 'one-class', 'one-class-binary']
+        'random-forest', 'extra-trees', 'random', 'oneclass', 'oneclass-binary']
 
 class Warehouse(object):
     """Class to keep known instantiated classifiers
@@ -363,7 +363,7 @@ if externals.exists('skl'):
         clfswh += SKLLearnerAdapter(sklRandomForestClassifier(),
                                      tags=['random-forest', 'linear', 'non-linear',
                                            'binary', 'multiclass',
-                                           'one-class',
+                                           'oneclass',
                                            'non-deterministic', 'needs_population',],
                                      descr='skl.RandomForestClassifier()')
 
@@ -379,7 +379,7 @@ if externals.exists('skl'):
         clfswh += SKLLearnerAdapter(sklExtraTreesClassifier(),
                                      tags=['extra-trees', 'linear', 'non-linear',
                                            'binary', 'multiclass',
-                                           'one-class',
+                                           'oneclass',
                                            'non-deterministic', 'needs_population',],
                                      descr='skl.ExtraTreesClassifier()')
 
