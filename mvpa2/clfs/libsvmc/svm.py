@@ -60,15 +60,15 @@ class SVM(_SVM):
                             }
     _KNOWN_IMPLEMENTATIONS = {
         'C_SVC' : (_svm.svmc.C_SVC, ('C',),
-                   ('binary', 'multiclass'), 'C-SVM classification'),
+                   ('binary', 'multiclass', 'oneclass'), 'C-SVM classification'),
         'NU_SVC' : (_svm.svmc.NU_SVC, ('nu',),
-                    ('binary', 'multiclass'), 'nu-SVM classification'),
+                    ('binary', 'multiclass', 'oneclass'), 'nu-SVM classification'),
         'ONE_CLASS' : (_svm.svmc.ONE_CLASS, (),
-                       ('oneclass',), 'one-class-SVM'),
+                       ('oneclass-binary',), 'one-class-SVM'),
         'EPSILON_SVR' : (_svm.svmc.EPSILON_SVR, ('C', 'tube_epsilon'),
                          ('regression',), 'epsilon-SVM regression'),
         'NU_SVR' : (_svm.svmc.NU_SVR, ('nu', 'tube_epsilon'),
-                    ('regression',), 'nu-SVM regression')
+                    ('regression', 'oneclass'), 'nu-SVM regression')
         }
 
     __default_kernel_class__ = LinearLSKernel

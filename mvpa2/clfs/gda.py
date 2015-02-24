@@ -47,7 +47,7 @@ class GDA(Classifier):
 
     """
 
-    __tags__ = ['binary', 'multiclass', 'one-class']
+    __tags__ = ['binary', 'multiclass', 'oneclass']
 
 
     prior = Parameter('laplacian_smoothing',
