@@ -173,7 +173,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
     # TODO: XXX finally just make regression/clf separation cleaner
-    @sweepargs(clf=clfswh[:])
+    @sweepargs(clf=clfswh['!random', 'binary', 'multiclass'])
     def test_classifier_generalization(self, clf):
         """Simple test if classifiers can generalize ok on simple data
         """
