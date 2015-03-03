@@ -38,7 +38,7 @@ def timesegments_classification(
         overlapping_windows=True,
         distance='correlation',
         do_zscore=False,
-        clf_direction_correct_way=False):
+        clf_direction_correct_way=True):
     """Time-segment classification across subjects using Hyperalignment
     """
     # Generate outer-most partitioning ()
