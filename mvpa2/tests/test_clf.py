@@ -1093,7 +1093,40 @@ class ClassifiersTests(unittest.TestCase):
             xx = pl.hist(accs, bins=bins, align='left')
             pl.xlim((0. - step/2, 1.+step/2))
 
+    @sweepargs(clf=clfswh['multiclass'])
+    def test_diff_len_labels_str(self, clf):
+        # check if the classifier can handle a dataset with labels as string of
+        # variable length
+        # was failing on TreeClassifier due to np.str dtype being assumed from first
+        # returned value
+        ds = datasets['uni4small'].copy()
+        newlabels = dict([(l,l+'_'*li) for li,l in enumerate(ds.uniquetargets)])
+        ds.targets = [newlabels[l] for l in ds.targets]
 
+        clf2 = clf.clone()
+        clf2.train(ds)
+        predictions = clf2.predict(ds)
+        # predictions on the same ds as training should give same labels
+        assert(np.all(np.unique(predictions) == ds.uniquetargets))
+
+    def test_diff_len_labels_str_treeclassifier(self):
+        # check if the classifier can handle a dataset with labels as string of
+        # variable length
+        # was failing on TreeClassifier due to np.str dtype being assumed from first
+        # returned value
+        ds = datasets['uni4small'].copy()
+        newlabels = dict([(l,l+'_'*li) for li,l in enumerate(ds.uniquetargets)])
+        ds.targets = [newlabels[l] for l in ds.targets]
+
+        clf = TreeClassifier(mvpa2.testing.clfs.SVM(), {
+                'group1':(ds.uniquetargets[:2], mvpa2.testing.clfs.SVM()),
+                'group2':(ds.uniquetargets[2:], mvpa2.testing.clfs.SVM())})
+        clf.train(ds)
+        predictions = clf.predict(ds)
+        # predictions on the same ds as training should give same labels
+        assert(np.all(np.unique(predictions) == ds.uniquetargets))
+
+        
 def suite():  # pragma: no cover
     return unittest.makeSuite(ClassifiersTests)
 
