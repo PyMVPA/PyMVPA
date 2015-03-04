@@ -53,7 +53,18 @@ class StaticProjectionMapper(ProjectionMapper):
 
 
 class StaticProjectionMapperWithAttr(StaticProjectionMapper):
+    """
+    Extends StaticProjectionMapper with the ability to add
+    feature attributes during forward mapping.
 
+    Parameters
+    ----------
+    add_fa : Dictionary of features attributes to be added
+      when forwarding a dataset.
+    **kwargs:
+      All keyword arguments are passed to the StaticProjectionMapper
+      constructor.
+    """
     @borrowdoc(StaticProjectionMapper)
     def __init__(self, proj, recon=None, add_fa=None, **kwargs):
         StaticProjectionMapper.__init__(self, proj=proj, recon=recon, **kwargs)
