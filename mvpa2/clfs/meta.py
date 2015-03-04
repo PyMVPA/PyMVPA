@@ -926,7 +926,7 @@ class TreeClassifier(ProxyClassifier):
 
             if predictions is None:
                 predictions = np.zeros((len(dataset),),
-                                       dtype=np.asanyarray(p).dtype)
+                                       dtype=self.ca.trained_targets.dtype)
             predictions[group_indexes] = p
         return predictions
 
