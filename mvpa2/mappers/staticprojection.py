@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 from mvpa2.base.dochelpers import borrowdoc
 from mvpa2.mappers.projection import ProjectionMapper
+from mvpa2.base.types import is_datasetlike
 
 if __debug__:
     from mvpa2.base import debug
@@ -48,6 +49,30 @@ class StaticProjectionMapper(ProjectionMapper):
         if __debug__:
             debug("MAP_", "Mixing matrix has %s shape and norm=%f" %
                   (self._proj.shape, np.linalg.norm(self._proj)))
+
+
+
+class StaticProjectionMapperWithAttr(StaticProjectionMapper):
+
+    @borrowdoc(StaticProjectionMapper)
+    def __init__(self, proj, recon=None, add_fa=None, **kwargs):
+        StaticProjectionMapper.__init__(self, proj=proj, recon=recon, **kwargs)
+        self._add_fa = add_fa
+
+    def __train(self, dummyds):
+        if __debug__:
+            if self.add_fa is None:
+                 debug("MAP_", "Mixing matrix has no additional feature attributes")
+            else:
+                 debug("MAP_", "Mixing matrix has additional attributes to apply %s" %
+                      (self._add_fa.keys()))
+
+    def _forward_dataset(self, data):
+        res = StaticProjectionMapper._forward_dataset(self, data)
+        if is_datasetlike(res) and self._add_fa is not None:
+            for key in self._add_fa:
+                res.fa[key] = self._add_fa[key]
+        return res
 
 
 
