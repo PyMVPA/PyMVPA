@@ -12,6 +12,7 @@ import numpy as np
 from mvpa2.testing import *
 from mvpa2.testing.datasets import *
 from mvpa2.mappers.staticprojection import StaticProjectionMapper
+from mvpa2.mappers.staticprojection import StaticProjectionMapperWithAttr
 
 
 def test_staticprojection_reverse_fa():
@@ -31,3 +32,15 @@ def test_staticprojection_reverse_fa():
     assert_equal(dsfr.nfeatures, 6)
     assert_equal(dsfr.fa.attr_length, 6)   # .fa knows about them again
     dsfr.fa['new'] = np.arange(6)
+
+def test_staticprojectionwithattr_fa():
+    ds = datasets['uni2small']
+    proj = np.eye(ds.nfeatures)
+    spm = StaticProjectionMapperWithAttr(proj=proj[:,:3], recon=proj[:,:3].T,
+                add_fa={'magic':np.arange(3)})
+    ok_(len(ds.fa) > 0)                   # we have some fa
+    dsf = spm.forward(ds)
+    ok_(len(dsf.fa) > 0)                 # magic fa added as intended
+    assert_string_equal(dsf.fa.keys()[0], 'magic')
+    assert_array_equal(dsf.fa.magic, np.arange(3))
+
