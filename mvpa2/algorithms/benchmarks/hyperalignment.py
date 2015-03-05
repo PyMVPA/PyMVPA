@@ -12,7 +12,8 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as np
-
+from mvpa2.support import copy
+from mvpa2.mappers.zscore import zscore
 from mvpa2.generators.partition import NFoldPartitioner, HalfPartitioner
 from mvpa2.generators.splitters import Splitter
 
