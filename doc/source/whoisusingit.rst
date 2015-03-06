@@ -51,6 +51,8 @@ Institutions Where PyMVPA Is Known To Be Used
 Studies employing PyMVPA
 ========================
 
+.. 10.1523/JNEUROSCI.4677-14.2015
+
 2014
 ----
 
