@@ -12,10 +12,17 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as np
+from mvpa2.base import warning
 from mvpa2.support import copy
 from mvpa2.mappers.zscore import zscore
 from mvpa2.generators.partition import NFoldPartitioner, HalfPartitioner
 from mvpa2.generators.splitters import Splitter
+from mvpa2.mappers.boxcar import BoxcarMapper
+from mvpa2.datasets.base import FlattenMapper
+from mvpa2.measures.anova import vstack
+from mvpa2.mappers.fx import mean_group_sample
+if __debug__:
+    from mvpa2.base import debug
 
 def zero_out_offdiag(dist, window_size):
     for r in range(len(dist)):
@@ -38,7 +45,7 @@ def timesegments_classification(
         window_size=6,
         overlapping_windows=True,
         distance='correlation',
-        do_zscore=False,
+        do_zscore=True,
         clf_direction_correct_way=True):
     """Time-segment classification across subjects using Hyperalignment
     """
