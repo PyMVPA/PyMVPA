@@ -10,7 +10,7 @@
 
 Johannes Stelzer, Yi Chen and Turner (2013). Statistical inference and multiple
 testing correction in classification-based multi-voxel pattern analysis (MVPA):
-Random permutations and cluster size control. NeuroImage, 65, 69–82.
+Random permutations and cluster size control. NeuroImage, 65, 69--82.
 """
 
 __docformat__ = 'restructuredtext'
