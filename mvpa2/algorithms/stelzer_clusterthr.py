@@ -1,3 +1,23 @@
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Cluster thresholding algorithm for accuracy maps after Stelzer et al.
+
+Johannes Stelzer, Yi Chen and Turner (2013). Statistical inference and multiple
+testing correction in classification-based multi-voxel pattern analysis (MVPA):
+Random permutations and cluster size control. NeuroImage, 65, 69–82.
+"""
+
+__docformat__ = 'restructuredtext'
+
+
+
+
 import os
 import nibabel as nib
 import numpy as np
