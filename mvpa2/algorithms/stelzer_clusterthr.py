@@ -101,7 +101,7 @@ def get_threshold(array, p=0.001):
 
     p_index = len(array) * p  # TODO: double sided test?
     if p_index < 1:
-        raise AssertionError()
+        raise AssertionError("p value is too small for the given array length")
     p_index = int(p_index)  # maybe some intelligent rounding?
     # this can be faster by using bottleneck partial sort
     return array[array.argsort()[-int(p_index)]]
@@ -134,6 +134,8 @@ def unmask(vol_data, mask, shape):
 #    template = nib.load(template)
 #    shape = template.shape
 #    mask = np.load(mask)
+    if len(vol_data.shape) != 1:
+        raise AssertionError("vol_data need to be one dimensional array")
 
     full_3d = np.zeros(mask.shape)
     full_3d[mask == 1] = vol_data
@@ -187,7 +189,7 @@ def label_clusters(null_dist_clusters, thresholded_orig_map,
 
     alpha: rejection level
     method: method of multiple comparison correction of
-    statsmodels.stats.multitest
+    statsmodels.stats.multitest or "None" for no correction
 
     return_type: how will be clusters labeld in the returned 3d map
     return_type = 'binary_map': clusters that are over the threshold are
@@ -204,9 +206,14 @@ def label_clusters(null_dist_clusters, thresholded_orig_map,
     null_dist_clusters = np.hstack([null_dist_clusters, orig_clusters])
     null_dist_clusters = np.sort(null_dist_clusters)
 
-    pval_clusters = transform_to_pvals(orig_clusters, null_clusters)
-    rej, pval_corr = smm.multipletests(pval_clusters, alpha=alpha,
-                                       method=method)[:2]
+    pval_clusters = transform_to_pvals(orig_clusters, null_dist_clusters)
+
+    if method == "None":
+        pval_corr = np.array(pval_clusters)
+        rej = pval_corr < alpha
+    else:
+        rej, pval_corr = smm.multipletests(pval_clusters, alpha=alpha,
+                                           method=method)[:2]
     pval_corr = 1 - pval_corr  # 1 - p value for visualization purposes
     pval_corr = np.hstack([[0], pval_corr])  # will add cluster of size zero,
     rej = np.hstack([[0], rej])  # that was deleted in get_map_cluster_sizes
@@ -228,8 +235,7 @@ def label_clusters(null_dist_clusters, thresholded_orig_map,
     elif return_type == 'cluster_sizes':
         areaImg = np.hstack([[0], orig_clusters])[labels]
     else:
-        #some error?
-        pass
+        raise AssertionError("Unrecognized return_type")
     return areaImg
 
 
