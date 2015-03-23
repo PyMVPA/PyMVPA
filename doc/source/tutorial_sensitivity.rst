@@ -89,7 +89,7 @@ That was surprisingly quick, wasn't it? But was it any good?
 
 >>> print np.round(cvte.ca.stats.stats['ACC%'], 1)
 26.0
->>> print cvte.ca.stats.matrix
+>>> print cvte.ca.stats.matrix # doctest: +SKIP
 [[1 1 2 3 0 1 1 1]
  [1 2 2 0 2 3 3 1]
  [5 3 3 0 4 3 0 2]
@@ -260,7 +260,9 @@ feature selection to retain more.
 >>> cvte = CrossValidation(fclf, NFoldPartitioner(),
 ...                        enable_ca=['stats'])
 >>> results = cvte(ds)
->>> print np.round(cvte.ca.stats.stats['ACC%'], 1)
+>>> print cvte.ca.stats.stats['ACC%'] >= 78.1
+False
+>>> print np.round(cvte.ca.stats.stats['ACC%'], 1)  # doctest: +SKIP
 69.8
 
 A drop of 8% in accuracy on about 4 times the number of features. This time
@@ -369,7 +371,7 @@ processing pipeline a bit.
 >>> sens = cv_sensana(ds)
 >>> print sens.shape
 (336, 39912)
->>> print cv_sensana.clf.ca.stats.matrix
+>>> print cv_sensana.clf.ca.stats.matrix  # doctest: +SKIP
 [[ 5  0  3  0  0  3  0  2]
  [ 0  9  0  0  0  0  0  0]
  [ 0  2  4  0  0  1  0  0]
