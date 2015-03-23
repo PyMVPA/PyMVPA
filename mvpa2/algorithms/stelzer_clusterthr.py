@@ -106,8 +106,24 @@ def get_thresholding_map(matrix, p=0.001):
 
 
 def threshold(M, thresholding_map):
+    """Threshold map with a feature-wise map of thresholds.
+
+    Parameters
+    ----------
+    M : array
+      To be thresholded input.
+    thresholding_map : array
+      Array with threshold map. Needs to be of the same shape as ``M``.
+
+    Returns
+    -------
+    array
+      Binary map indicating the location of super-threshold value.
+    """
     thresholded_M = M > thresholding_map
-    thresholded_M = thresholded_M.astype(int)
+    # XXX: MH disabled this, because he did not understand why it was necessary
+    # the tests still pass. Please check and remove comment.
+    #thresholded_M = thresholded_M.astype(int)
     return(thresholded_M)
 
 
