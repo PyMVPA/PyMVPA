@@ -80,10 +80,7 @@ def create_bootstr_M(n, path, subj_names):
     """
     create matrix of n bootstrapped maps
     """
-    bootstr_M = []
-    for _ in range(n):
-        bootstr_array = get_bootstrapped_map(path, subj_names)
-        bootstr_M.append(bootstr_array)
+    bootstr_M = [get_bootstrapped_map(path, subj_names) for _ in range(n)]
     bootstr_M = np.vstack(bootstr_M)
     return bootstr_M
 
@@ -167,9 +164,7 @@ def transform_to_pvals(arr, null_dist):
     will get p value for every element in the array based on null distribution
     """
     null_dist = sorted(null_dist)
-    p_vals = []
-    for e in arr:
-        p_vals.append(get_pval(e, null_dist, False))
+    p_vals = [get_pval(e, null_dist, False) for e in arr]
     return p_vals
 
 
