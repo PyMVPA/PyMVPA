@@ -15,18 +15,12 @@ Random permutations and cluster size control. NeuroImage, 65, 69--82.
 
 __docformat__ = 'restructuredtext'
 
-
-
-
 import os
-import nibabel as nib
-import numpy as np
-from pylab import *
-from scipy.ndimage import measurements
 import random
 import bisect
+import numpy as np
+from scipy.ndimage import measurements
 import statsmodels.stats.multitest as smm
-import random
 
 def make_file_list(path, subj_names):
     """
@@ -122,7 +116,7 @@ def threshold(M, thresholding_map):
 
 def get_map_cluster_sizes(map_):
     labels, num = measurements.label(map_)
-    area = measurements.sum(map_, labels, index=arange(labels.max() + 1))
+    area = measurements.sum(map_, labels, index=np.arange(labels.max() + 1))
     return area.astype(int)[1:]  # delete cluster of size 0
 
 
