@@ -25,7 +25,7 @@ import statsmodels.stats.multitest as smm
 def make_file_list(path, subj_names):
     """
     randomly choose one file for every subject from subj_names and return it's
-    adresses as a list
+    addresses as a list
 
     all the files need to be in same folder in name format sub+subj_name*.npy
 
@@ -42,7 +42,7 @@ def make_file_list(path, subj_names):
 #        return files
 
     files = []
-#    path = './bootstraped/group_space/'
+#    path = './bootstrapped/group_space/'
     for subj in subj_names:
         if not isinstance(subj, basestring):
             raise AssertionError()
@@ -52,18 +52,18 @@ def make_file_list(path, subj_names):
     return files
 
 
-def get_bootstraped_map(path, subj_names):
+def get_bootstrapped_map(path, subj_names):
     """
-    create one bootstraped map by randomly taking one map for every subject
-    and average them voxelvise
+    create one bootstrapped map by randomly taking one map for every subject
+    and average them voxel-wise
 
     all the files need to be in same folder in name format sub+subj_name+*.npy
 
     path: path to the directory of the files
-    subj_names: names of the subjects to create bootstraped map from
+    subj_names: names of the subjects to create bootstrapped map from
     """
     def nonzero_mean(M):   # quick fix for the 'hole in the middle of the head'
-        def my_func(arr):  # problem we have, shold it stay here in the future?
+        def my_func(arr):  # problem we have, should it stay here in the future?
             if sum(arr != 0) == 0:
                 return 0
             else:
@@ -78,11 +78,11 @@ def get_bootstraped_map(path, subj_names):
 
 def create_bootstr_M(n, path, subj_names):
     """
-    create matrix of n bootstraped maps
+    create matrix of n bootstrapped maps
     """
     bootstr_M = []
     for _ in range(n):
-        bootstr_array = get_bootstraped_map(path, subj_names)
+        bootstr_array = get_bootstrapped_map(path, subj_names)
         bootstr_M.append(bootstr_array)
     bootstr_M = np.vstack(bootstr_M)
     return bootstr_M
@@ -121,8 +121,9 @@ def get_map_cluster_sizes(map_):
 
 
 def unmask(vol_data, mask, shape):
-    """ will reshape 1d masked data (subseted by mask), to 3d
+    """ will reshape 1d masked data, to 3d
     """
+    # TODO: this should be done by Flatten+StaticFeatureSelectionMapper
 #    mask = np.load('quick_fix_mask.npy')
 #    vol_data = np.load('sub001_perm000_gs.npy')
 #    template = nib.load(template)
@@ -176,7 +177,7 @@ def label_clusters(null_dist_clusters, thresholded_orig_map,
                    alpha=0.05, method='fdr_i', return_type='binary_map'):
 
     """
-    will label clusters in 3d threshodled map based on their corrected pvalue
+    will label clusters in 3d thresholded map based on their corrected pvalue
     computed against distribution of the clusters in maps created by
     permutation. It will add clusters from original map to the null
     distribution
@@ -185,11 +186,11 @@ def label_clusters(null_dist_clusters, thresholded_orig_map,
     method: method of multiple comparison correction of
     statsmodels.stats.multitest or "None" for no correction
 
-    return_type: how will be clusters labeld in the returned 3d map
+    return_type: how will be clusters labeled in the returned 3d map
     return_type = 'binary_map': clusters that are over the threshold are
     labeled as 1, everything else is 0
     return_type = 'p_vals': clusters are labeled 1-cluster p value
-    return_type = 'threhsolded_p_vals': clusters that are over the threshold
+    return_type = 'thresholded_p_vals': clusters that are over the threshold
     are labeled 1-cluster p value, everything else is 0
     return_type = 'unique_clusters': every cluster will be labeled by unique
     value
@@ -234,48 +235,48 @@ def label_clusters(null_dist_clusters, thresholded_orig_map,
 
 
 
-####Create bootstraped maps
+####Create bootstrapped maps
 ## to start we need to have our 'permuted maps' ready, Maps that were created
-## by permutiation of the targets. We should have 100 for every subject.
-## From those maps we will create 100000 'bootstraped maps' one bootstraped map
-## is mean of one randomly chosenpermuted map from every subject
+## by permuting the targets. We should have 100 for every subject.
+## From those maps we will create 100000 'bootstrapped maps' one bootstrapped map
+## is mean of one randomly chosen permuted map from every subject
 ## here I am temporarily saving permuted maps, but that step can be skipped
 ## and just thresholded binary maps can be saved, therefore it will eat less
 ## space on the disk. However, creating permuted maps is done for every map
-## with random element involved and thresholding is done voxelvise and it will
+## with random element involved and thresholding is done voxel-wise and it will
 ## not be possible to load whole dataset to threshold, but it can be done if
-## the permuted maps are allready splited, so it's not necessary to load all
-## the data, but only data from some voxels. Since bootstraped maps are created
-## randomly it will be necesarry to use random seed, so all splits belong to
+## the permuted maps are already split, so it's not necessary to load all
+## the data, but only data from some voxels. Since bootstrapped maps are created
+## randomly it will be necessary to use random seed, so all splits belong to
 ## same maps
 
 #perm = sys.argv[1]
 ##perm = 1
-#path = './bootstraped/group_space/'
+#path = './bootstrapped/group_space/'
 ## we will create matrix of 500 maps here. In the end we need 100000 maps.
 #M = create_bootstr_M(500, path, ['001', '002', '003', '004', '005', '006', '007',
 #                               '008', '009', '010', '011', '012', '013', '014',
 #                               '015', '016', '017', '018', '019', '020'])
 #
-## splitting for memory reasons, next steps will be done voxelvise, this one
+## splitting for memory reasons, next steps will be done voxel-wise, this one
 ## is done 'map vise.' We will later hstack and vstack those splits
 #M = np.split(M, (range(20000,600000,20000)), axis=1)
 
 
 #for i in range(len(M)):
-#    np.save("./bootstraped/bootstraped/M_perm"+str(perm)+"_split"+str(i), M[i])
+#    np.save("./bootstrapped/bootstrapped/M_perm"+str(perm)+"_split"+str(i), M[i])
 #print "Done: M_perm%s.npy" % i
 
 
 
 ####Create thresholding_map
 ## now we will find a threshold value, specified by p value for every voxel
-## this is done voxelvise, so we will verticaly stack matrices that we created
+## this is done voxel-wise, so we will vertically stack matrices that we created
 ## in previous step.
 
 #split = sys.argv[1]
 ##split = 1
-#M = np.vstack([np.load("./bootstraped/bootstraped/M_perm%s_split%s.npy" % (i,
+#M = np.vstack([np.load("./bootstrapped/bootstrapped/M_perm%s_split%s.npy" % (i,
 #               split)) for i in range(200)])
 #thresholding_map = get_thresholding_map(M, 0.0005)
 #np.save('thresholding_map_p0005split%s.npy' % split, thresholding_map)
@@ -288,14 +289,14 @@ def label_clusters(null_dist_clusters, thresholded_orig_map,
 #                              for i in range(0,30)])
 #subjects = range(1,20)
 #subjects = [('00' + str(x))[-3:] for x in subjects]
-#orig_map = np.mean([np.load('./bootstraped/group_space/sub%s_perm000_gs.npy' % subj)
+#orig_map = np.mean([np.load('./bootstrapped/group_space/sub%s_perm000_gs.npy' % subj)
 #                    for subj in subjects], axis=0)
 #thresholded_orig_map = threshold(orig_map, thresholding_map)
 #thresholded_orig_map = unmask(thresholded_orig_map,
-#                              np.load('./bootstraped/nonzero_mask.npy'),
-#                              nib.load('./bootstraped/temp001.nii.gz'))
+#                              np.load('./bootstrapped/nonzero_mask.npy'),
+#                              nib.load('./bootstrapped/temp001.nii.gz'))
 ###save as nifty
-##affine = nib.load('./bootstraped/temp001.nii.gz').get_affine()
+##affine = nib.load('./bootstrapped/temp001.nii.gz').get_affine()
 ##image_3d = nib.Nifti1Image(thresholded_orig_map, affine)
 ##nib.save(image_3d, 'thresholded_orig_map.nii.gz')
 
@@ -309,10 +310,10 @@ def label_clusters(null_dist_clusters, thresholded_orig_map,
 #null_dist_clusters = []
 ##for perm_n in range(y-20,y):
 #for perm_n in range(1):
-#    M = np.hstack([np.load('./bootstraped/bootstraped/M_perm%s_split%s.npy'
+#    M = np.hstack([np.load('./bootstrapped/bootstrapped/M_perm%s_split%s.npy'
 #                   % (perm_n, i)) for i in range(30)])
 #    null_dist_clusters.append(get_null_dist_clusters(M,
-#                                    np.load('./bootstraped/nonzero_mask.npy'),
+#                                    np.load('./bootstrapped/nonzero_mask.npy'),
 #                                    (132, 175, 48),
 #                                    thresholding_map))
 #null_dist_clusters = np.hstack(null_dist_clusters)
@@ -333,7 +334,7 @@ def label_clusters(null_dist_clusters, thresholded_orig_map,
 ##                            return_type='cluster_sizes'
 #                            )
 #
-#affine = nib.load('./bootstraped/temp001.nii.gz').get_affine()
+#affine = nib.load('./bootstrapped/temp001.nii.gz').get_affine()
 #image_3d = nib.Nifti1Image(p_val_map, affine)
 #nib.save(image_3d, 'pval_map.nii.gz')
 
