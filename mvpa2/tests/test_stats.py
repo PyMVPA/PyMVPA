@@ -138,6 +138,7 @@ class StatsTests(unittest.TestCase):
 
 def test_tsboxplot():
     skip_if_no_external('scipy')
+    skip_if_no_external('numpy', min_version='1.5') # for .percentile. approx version
     ts = range(5)
     assert_raises(ValueError, compute_ts_boxplot_stats, ts)
     assert_raises(ValueError, compute_ts_boxplot_stats, [ts])
