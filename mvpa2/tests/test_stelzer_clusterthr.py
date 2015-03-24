@@ -86,7 +86,7 @@ def test_unmask():
 
 
 def test_cluster_count():
-    for i in range(1):  # rerun tests for bool type of test_M
+    for i in range(2):  # rerun tests for bool type of test_M
         test_M = np.array([[1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0],
                            [0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1],
                            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1],
@@ -207,5 +207,3 @@ def test_cluster_count():
 
         # num_of_clusters +1 because there is also +1 cluster for 0 value
         assert_equal(num_of_clusters+1, len(np.unique(labeled)))
-
-test_cluster_count()

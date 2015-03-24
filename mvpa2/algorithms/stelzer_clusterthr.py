@@ -211,7 +211,6 @@ def label_clusters(null_dist_clusters, thresholded_orig_map,
     # add clusters from the original map to null dist, important for p val
     null_dist_clusters = np.hstack([null_dist_clusters, orig_clusters])
     null_dist_clusters = np.sort(null_dist_clusters)
-
     pval_clusters = transform_to_pvals(orig_clusters, null_dist_clusters)
 
     if method == "None":
