@@ -138,10 +138,7 @@ def test_cluster_count():
             np.bincount(sct.get_map_cluster_sizes(test_M_3d_big))[1:],
                         expected_result_3d_big)
 
-        M = []
-        for i in range(10):
-            M.append(test_M_3d.flatten())
-        M = np.vstack(M)
+        M = np.vstack([test_M_3d.flatten()]*10)
         expected_result = np.hstack([sct.get_map_cluster_sizes(test_M_3d)]*10)
         mask = np.ones(len(test_M_3d.flatten()))
         shape = test_M_3d.shape
@@ -149,6 +146,21 @@ def test_cluster_count():
                            sct.get_null_dist_clusters(M, mask,
                                                       shape,
                                                       thresholded=True))
+
+        labels, num = measurements.label(test_M_3d)
+        area = measurements.sum(test_M_3d, labels,
+                                index=np.arange(labels.max() + 1))
+        cluster_sizes = area[labels]  #.astype(int)
+        thresholded_cluster_sizes = cluster_sizes > 4
+        M = np.vstack([cluster_sizes.flatten()]*10)
+        expected_result = np.hstack([sct.get_map_cluster_sizes(
+                                         thresholded_cluster_sizes)]*10)
+        th_map = np.ones(cluster_sizes.flatten().shape)*4
+        assert_array_equal(expected_result,
+                           sct.get_null_dist_clusters(M, mask,
+                                                      shape,
+                                                      thresholded=False,
+                                                      thresholding_map=th_map))
 
         doesnt_matter = range(100)
         assert_array_equal(sct.label_clusters(doesnt_matter,
@@ -159,10 +171,6 @@ def test_cluster_count():
                                               alpha=1,
                                  return_type="binary_map"), test_M_3d)
 
-        labels, num = measurements.label(test_M_3d)
-        area = measurements.sum(test_M_3d, labels,
-                                index=np.arange(labels.max() + 1))
-        cluster_sizes = area[labels].astype(int)
         assert_array_equal(sct.label_clusters(doesnt_matter,
                                               test_M_3d,
                                               method="None",
@@ -175,6 +183,3 @@ def test_cluster_count():
                                          method="None",
                                          alpha=1,
                                          return_type="UNKNOWN")
-
-
-test_cluster_count()
