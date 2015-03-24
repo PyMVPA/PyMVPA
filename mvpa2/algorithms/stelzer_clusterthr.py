@@ -221,6 +221,7 @@ def label_clusters(null_dist_clusters, thresholded_orig_map,
         rej, pval_corr = smm.multipletests(pval_clusters, alpha=alpha,
                                            method=method)[:2]
     pval_corr = 1 - pval_corr  # 1 - p value for visualization purposes
+
     pval_corr = np.hstack([[0], pval_corr])  # will add cluster of size zero,
     rej = np.hstack([[0], rej])  # that was deleted in get_map_cluster_sizes
     rej = rej.astype(int)
