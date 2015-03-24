@@ -34,8 +34,6 @@ def test_thresholding():
                    expected_result)
 
 
-
-
 def test_pval():
     def not_inplace_shuffle(x):
         x = list(x)
@@ -84,88 +82,99 @@ def test_unmask():
     assert_array_equal(sct.unmask(arr, mask, (20, 5)),
                        desired_output.reshape(20, 5))
     assert_raises(AssertionError, sct.unmask, arr.reshape(2,5),
-                  mask, (20,5))
+                  mask, (20, 5))
 
 
 def test_cluster_count():
-    test_M = np.array([[1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0],
-                       [0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1],
-                       [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1],
-                       [0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
-                       [1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0],
-                       [0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0],
-                       [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0],
-                       [0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0],
-                       [1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0]])
-    expected_result = [5, 4, 3, 3, 2, 0, 2]  # 5 clusters of size 1,
-                                             # 4 clusters of size 2 ...
+    for i in range(2):  # rerun tests for bool type of test_M
+        test_M = np.array([[1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0],
+                           [0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1],
+                           [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1],
+                           [0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
+                           [1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0],
+                           [0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0],
+                           [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0],
+                           [0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0],
+                           [1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0]])
+        expected_result = [5, 4, 3, 3, 2, 0, 2]  # 5 clusters of size 1,
+                                                 # 4 clusters of size 2 ...
+        if i == 1:
+            test_M = test_M.astype(bool)
 
-    test_M_3d = np.hstack((test_M.flatten(),
-                           test_M.flatten())).reshape(2, 9, 16)
-    # expected_result^2
-    expected_result_3d = np.array([0, 5, 0, 4, 0, 3, 0, 3, 0, 2, 0, 0, 0, 2])
+        test_M_3d = np.hstack((test_M.flatten(),
+                               test_M.flatten())).reshape(2, 9, 16)
+        # expected_result^2
+        expected_result_3d = np.array([0, 5, 0, 4, 0, 3, 0,
+                                       3, 0, 2, 0, 0, 0, 2])
 
-    size = 10000  # how many times bigger than test_M_3d
-    test_M_3d_big = np.hstack((test_M_3d.flatten(), np.zeros(144)))
-    test_M_3d_big = np.hstack((test_M_3d_big for i in range(size))
-                           ).reshape(3 * size, 9, 16)
-    expected_result_3d_big = expected_result_3d * size
+        size = 10000  # how many times bigger than test_M_3d
+        test_M_3d_big = np.hstack((test_M_3d.flatten(), np.zeros(144)))
+        test_M_3d_big = np.hstack((test_M_3d_big for i in range(size))
+                               ).reshape(3 * size, 9, 16)
+        expected_result_3d_big = expected_result_3d * size
 
-    # visualize clusters in test_M,
-    # usefull if numbers to colors synesthesia not imported
-#    imshow(test_M, interpolation='nearest')
-#    show()
-#    labels, num = measurements.label(test_M)
-#    area = measurements.sum(test_M, labels, index=arange(labels.max() + 1))
-#    areaImg = area[labels]
-#    print areaImg.shape
-#    imshow(areaImg, origin='lower', interpolation='nearest')
-#    colorbar()
-#    show()
-#    area = area.astype(int)
-#    print np.bincount(area)
+#        # visualize clusters in test_M,
+#        # usefull if numbers to colors synesthesia not imported
+#        imshow(test_M, interpolation='nearest')
+#        show()
+#        labels, num = measurements.label(test_M)
+#        area = measurements.sum(test_M, labels,
+#                                 index=arange(labels.max() + 1))
+#        areaImg = area[labels]
+#        print areaImg.shape
+#        imshow(areaImg, origin='lower', interpolation='nearest')
+#        colorbar()
+#        show()
+#        area = area.astype(int)
+#        print np.bincount(area)
 
-    assert_array_equal(np.bincount(sct.get_map_cluster_sizes(test_M))[1:],
-                         expected_result)
-    assert_array_equal(np.bincount(sct.get_map_cluster_sizes(test_M_3d))[1:],
-                         expected_result_3d)
-    assert_array_equal(np.bincount(sct.get_map_cluster_sizes(test_M_3d_big))[1:],
-                         expected_result_3d_big)
+        assert_array_equal(
+            np.bincount(sct.get_map_cluster_sizes(test_M))[1:],
+                        expected_result)
+        assert_array_equal(
+            np.bincount(sct.get_map_cluster_sizes(test_M_3d))[1:],
+                        expected_result_3d)
+        assert_array_equal(
+            np.bincount(sct.get_map_cluster_sizes(test_M_3d_big))[1:],
+                        expected_result_3d_big)
 
-    M = []
-    for i in range(10):
-        M.append(test_M_3d.flatten())
-    M = np.vstack(M)
-    expected_result = np.hstack([sct.get_map_cluster_sizes(test_M_3d)]*10)
-    mask = np.ones(len(test_M_3d.flatten()))
-    shape = test_M_3d.shape
-    assert_array_equal(expected_result, sct.get_null_dist_clusters(M, mask,
-                                                            shape,
-                                                            thresholded=True))
+        M = []
+        for i in range(10):
+            M.append(test_M_3d.flatten())
+        M = np.vstack(M)
+        expected_result = np.hstack([sct.get_map_cluster_sizes(test_M_3d)]*10)
+        mask = np.ones(len(test_M_3d.flatten()))
+        shape = test_M_3d.shape
+        assert_array_equal(expected_result,
+                           sct.get_null_dist_clusters(M, mask,
+                                                      shape,
+                                                      thresholded=True))
 
-    doesnt_matter = range(100)
-    assert_array_equal(sct.label_clusters(doesnt_matter,
-                                          test_M_3d,
-                                          method="None", #not testing correction
-                                          alpha=1,  # not testing rejection
-                             return_type="binary_map"), test_M_3d)
+        doesnt_matter = range(100)
+        assert_array_equal(sct.label_clusters(doesnt_matter,
+                                              test_M_3d,
+                                               # not testing correction
+                                              method="None",
+                                               # not testing rejection
+                                              alpha=1,
+                                 return_type="binary_map"), test_M_3d)
 
-    labels, num = measurements.label(test_M_3d)
-    area = measurements.sum(test_M_3d, labels, index=np.arange(labels.max() + 1))
-    cluster_sizes = area[labels].astype(int)
-    assert_array_equal(sct.label_clusters(doesnt_matter,
-                                          test_M_3d,
-                                          method="None",
-                                          alpha=1,
-                                          return_type="cluster_sizes"),
-                                          cluster_sizes)
+        labels, num = measurements.label(test_M_3d)
+        area = measurements.sum(test_M_3d, labels,
+                                index=np.arange(labels.max() + 1))
+        cluster_sizes = area[labels].astype(int)
+        assert_array_equal(sct.label_clusters(doesnt_matter,
+                                              test_M_3d,
+                                              method="None",
+                                              alpha=1,
+                                              return_type="cluster_sizes"),
+                                              cluster_sizes)
 
-    assert_raises(AssertionError, sct.label_clusters, doesnt_matter,
-                                     test_M_3d,
-                                     method="None",
-                                     alpha=1,
-                                     return_type="UNKNOWN")
+        assert_raises(AssertionError, sct.label_clusters, doesnt_matter,
+                                         test_M_3d,
+                                         method="None",
+                                         alpha=1,
+                                         return_type="UNKNOWN")
 
 
 test_cluster_count()
-
