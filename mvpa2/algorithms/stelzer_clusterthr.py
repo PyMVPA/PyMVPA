@@ -21,6 +21,7 @@ import bisect
 import numpy as np
 from scipy.ndimage import measurements
 import statsmodels.stats.multitest as smm
+from mvpa2.mappers.base import IdentityMapper
 
 # TODO: remove
 def make_file_list(path, subj_names):
@@ -101,7 +102,7 @@ def get_thresholding_map(data, p=0.001):
       Values in each column are sorted and the value corresponding to the
       desired probability is returned.
     p : float [0,1]
-      The returned threshold has a probability of `p` or less.
+      Value greater or equal than the returned threshold have a probability `p` or less.
     """
     # we need NumPy indexing logic, even if a dataset comes in
     data = np.asanyarray(data)
@@ -135,46 +136,46 @@ def threshold(M, thresholding_map):
     return(thresholded_M)
 
 
-def get_map_cluster_sizes(map_):
+def _get_map_cluster_sizes(map_):
     labels, num = measurements.label(map_)
     area = measurements.sum(map_, labels, index=np.arange(labels.max() + 1))
     return area.astype(int)[1:]  # delete cluster of size 0
 
 
-def unmask(vol_data, mask, shape):
-    """ will reshape 1d masked data, to 3d
-    """
-    # TODO: this should be done by Flatten+StaticFeatureSelectionMapper
-#    mask = np.load('quick_fix_mask.npy')
-#    vol_data = np.load('sub001_perm000_gs.npy')
-#    template = nib.load(template)
-#    shape = template.shape
-#    mask = np.load(mask)
-    if len(vol_data.shape) != 1:
-        raise AssertionError("vol_data need to be one dimensional array")
+def get_cluster_sizes(ds, cluster_sizes=None):
+    """Computer cluster sizes from all samples in a boolean dataset.
 
-    full_3d = np.zeros(mask.shape)
-    full_3d[mask == 1] = vol_data
-    full_3d = full_3d.reshape(shape)
-    return full_3d
+    Individually for each sample, in the input dataset, clusters of non-zero
+    values will be determined after reverse-applying any transformation of the
+    dataset's mapper (if any).
 
+    Parameters
+    ----------
+    ds : dataset or array
+      Typically a dataset with boolean samples.
+    cluster_sizes : list or None
+      If not None, the given list is extended with the cluster sizes computed
+      from the present input dataset. Otherwise, a new list is generated.
 
-def get_null_dist_clusters(M, mask, shape, thresholded=False,
-                           thresholding_map=None):
+    Returns
+    -------
+    list
+      Unsorted list of cluster sizes from all samples in the input dataset
+      (optionally appended to any values passed via ``cluster_sizes``).
     """
-    will take matrix of flatten maps, reshape it and count clusters in each map
-    thresholded = False if maps are not allready thresholded, in that case
-    it's necessary to include thresholding map as vell
-    """
-    null_dist_clusters = []
-    for map_ in M:
-        if thresholded is False:
-            map_ = threshold(map_, thresholding_map)
-        map_ = unmask(map_, mask, shape)
-        m_clusters = get_map_cluster_sizes(map_)
-        null_dist_clusters.append(m_clusters)
-    null_dist_clusters = np.hstack(null_dist_clusters)
-    return null_dist_clusters
+    if cluster_sizes is None:
+        cluster_sizes = []
+
+    mapper = IdentityMapper()
+    data = np.asanyarray(ds)
+    if hasattr(ds, 'a') and 'mapper' in ds.a:
+        mapper = ds.a.mapper
+
+    for i in xrange(len(ds)):
+        osamp = mapper.reverse1(data[i])
+        m_clusters = _get_map_cluster_sizes(osamp)
+        cluster_sizes.extend(m_clusters)
+    return cluster_sizes
 
 
 def get_pval(x, null_dist, sort=True):
@@ -215,7 +216,7 @@ def label_clusters(null_dist_clusters, thresholded_orig_map,
     value
     return_type = 'cluster_sizes': clusters are labeled by their size
     """
-    orig_clusters = get_map_cluster_sizes(thresholded_orig_map)
+    orig_clusters = _get_map_cluster_sizes(thresholded_orig_map)
     # add clusters from the original map to null dist, important for p val
     null_dist_clusters = np.hstack([null_dist_clusters, orig_clusters])
     null_dist_clusters = np.sort(null_dist_clusters)

@@ -8,15 +8,20 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for Stelzer et al. cluster thresholding algorithm"""
 
+from mvpa2.base import externals
+from mvpa2.testing.tools import SkipTest
+if not externals.exists('scipy'):
+    raise SkipTest
+
 import numpy as np
 import random
-
-from mvpa2.testing import assert_array_equal, assert_raises, assert_equal
-from mvpa2.testing import assert_array_almost_equal, assert_almost_equal
+from mvpa2.testing import assert_array_equal, assert_raises, assert_equal, \
+    assert_array_almost_equal, assert_almost_equal, assert_true
 import mvpa2.algorithms.stelzer_clusterthr as sct
-from scipy.ndimage import measurements
-from mvpa2.datasets import Dataset
+from mvpa2.datasets import Dataset, dataset_wizard
+from mvpa2.mappers.base import IdentityMapper
 
+from scipy.ndimage import measurements
 
 def test_thresholding():
     M = np.array([[0, 1, 2, 3, 4, 5],
@@ -71,24 +76,6 @@ def test_pval():
     assert_almost_equal(y, desired_output)
 
 
-def test_unmask():
-
-    mask = np.zeros(100)
-    to_mask = np.array(range(0, 100, 10))
-    mask[to_mask] = 1
-    arr = np.array(range(1, 11))
-
-    unmasked = sct.unmask(arr, mask, (100,))
-    desired_output = mask.copy()
-    desired_output[mask == 1] = range(1, 11)
-
-    assert_array_equal(unmasked, desired_output)
-    assert_array_equal(sct.unmask(arr, mask, (20, 5)),
-                       desired_output.reshape(20, 5))
-    assert_raises(AssertionError, sct.unmask, arr.reshape(2,5),
-                  mask, (20, 5))
-
-
 def test_cluster_count():
     for i in range(2):  # rerun tests for bool type of test_M
         test_M = np.array([[1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0],
@@ -102,11 +89,14 @@ def test_cluster_count():
                            [1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0]])
         expected_result = [5, 4, 3, 3, 2, 0, 2]  # 5 clusters of size 1,
                                                  # 4 clusters of size 2 ...
+
+        test_ds = Dataset([test_M])
         if i == 1:
             test_M = test_M.astype(bool)
 
         test_M_3d = np.hstack((test_M.flatten(),
                                test_M.flatten())).reshape(2, 9, 16)
+        test_ds_3d = Dataset([test_M_3d])
         # expected_result^2
         expected_result_3d = np.array([0, 5, 0, 4, 0, 3, 0,
                                        3, 0, 2, 0, 0, 0, 2])
@@ -115,56 +105,47 @@ def test_cluster_count():
         test_M_3d_big = np.hstack((test_M_3d.flatten(), np.zeros(144)))
         test_M_3d_big = np.hstack((test_M_3d_big for i in range(size))
                                ).reshape(3 * size, 9, 16)
+        test_ds_3d_big = Dataset([test_M_3d_big])
         expected_result_3d_big = expected_result_3d * size
 
-#        # visualize clusters in test_M,
-#        # usefull if numbers to colors synesthesia not imported
-#        imshow(test_M, interpolation='nearest')
-#        show()
-#        labels, num = measurements.label(test_M)
-#        area = measurements.sum(test_M, labels,
-#                                 index=arange(labels.max() + 1))
-#        areaImg = area[labels]
-#        print areaImg.shape
-#        imshow(areaImg, origin='lower', interpolation='nearest')
-#        colorbar()
-#        show()
-#        area = area.astype(int)
-#        print np.bincount(area)
-
-        assert_array_equal(
-            np.bincount(sct.get_map_cluster_sizes(test_M))[1:],
-                        expected_result)
-        assert_array_equal(
-            np.bincount(sct.get_map_cluster_sizes(test_M_3d))[1:],
-                        expected_result_3d)
-        assert_array_equal(
-            np.bincount(sct.get_map_cluster_sizes(test_M_3d_big))[1:],
-                        expected_result_3d_big)
-
+        # check basic cluster size determination for plain arrays and datasets
+        # with a single sample
+        for t, e in ((test_M, expected_result),
+                  (test_ds, expected_result),
+                  (test_M_3d, expected_result_3d),
+                  (test_ds_3d, expected_result_3d),
+                  (test_M_3d_big, expected_result_3d_big),
+                  (test_ds_3d_big, expected_result_3d_big)):
+            assert_array_equal(np.bincount(sct._get_map_cluster_sizes(t))[1:],
+                               e)
+        # old
         M = np.vstack([test_M_3d.flatten()]*10)
-        expected_result = np.hstack([sct.get_map_cluster_sizes(test_M_3d)]*10)
-        mask = np.ones(len(test_M_3d.flatten()))
-        shape = test_M_3d.shape
+        # new
+        ds = dataset_wizard([test_M_3d] * 10)
+        assert_array_equal(M, ds)
+        expected_result = np.hstack([sct._get_map_cluster_sizes(test_M_3d)]*10)
         assert_array_equal(expected_result,
-                           sct.get_null_dist_clusters(M, mask,
-                                                      shape,
-                                                      thresholded=True))
+                           sct.get_cluster_sizes(ds))
 
+        # test the same with some arbitrary per-feature threshold
+        thr = 4
         labels, num = measurements.label(test_M_3d)
         area = measurements.sum(test_M_3d, labels,
                                 index=np.arange(labels.max() + 1))
         cluster_sizes_map = area[labels]  #.astype(int)
-        thresholded_cluster_sizes_map = cluster_sizes_map > 4
+        thresholded_cluster_sizes_map = cluster_sizes_map > thr
+        # old
         M = np.vstack([cluster_sizes_map.flatten()]*10)
-        expected_result = np.hstack([sct.get_map_cluster_sizes(
+        # new
+        ds = dataset_wizard([cluster_sizes_map] * 10)
+        assert_array_equal(M, ds)
+        expected_result = np.hstack([sct._get_map_cluster_sizes(
                                          thresholded_cluster_sizes_map)]*10)
-        th_map = np.ones(cluster_sizes_map.flatten().shape)*4
+        th_map = np.ones(cluster_sizes_map.flatten().shape) * thr
+        # threshold dataset by hand
+        ds.samples = ds.samples > th_map
         assert_array_equal(expected_result,
-                           sct.get_null_dist_clusters(M, mask,
-                                                      shape,
-                                                      thresholded=False,
-                                                      thresholding_map=th_map))
+                           sct.get_cluster_sizes(ds))
 
         dumm_null_dist = range(10)
         assert_array_equal(sct.label_clusters(dumm_null_dist,
@@ -188,7 +169,7 @@ def test_cluster_count():
                                          alpha=1,
                                          return_type="UNKNOWN")
 
-        clusters = sct.get_map_cluster_sizes(test_M_3d)
+        clusters = sct._get_map_cluster_sizes(test_M_3d)
         x = np.hstack([dumm_null_dist, clusters])
         pvals = np.array(sct.transform_to_pvals(clusters, x))
         pvals = 1-pvals
@@ -211,3 +192,27 @@ def test_cluster_count():
 
         # num_of_clusters +1 because there is also +1 cluster for 0 value
         assert_equal(num_of_clusters+1, len(np.unique(labeled)))
+
+def test_with_datasets():
+    from scipy.stats import norm
+    feprob = 0.01
+    # scale number of perms to match desired probability
+    nperms = 1 / feprob * 10
+    # make a nice 1D blob
+    blob = np.array([0,0,1,2,5,3,2,0,0,0]) / 5.0
+    blob = Dataset([blob])
+    # and some nice random permutations
+    perms = np.random.randn(nperms, len(blob))
+    perms = Dataset(perms)
+    # get the FE thresholds
+    thr = sct.get_thresholding_map(perms, 0.01)
+    # perms are normally distributed, hence the CDF should be close
+    assert_true(feprob - (1 - norm.cdf(thr.mean())) < 0.01)
+
+    # now we can threshold all permutations
+    perm_blobs = perms > thr
+    mapper = IdentityMapper()
+    if 'mapper' in blob.a:
+        mapper = blob.a.mapper
+    for i in xrange(len(perms)):
+        mapper.reverse1(perm_blobs[i])
