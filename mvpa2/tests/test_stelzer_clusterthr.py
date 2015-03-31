@@ -15,6 +15,7 @@ from mvpa2.testing import assert_array_equal, assert_raises, assert_equal
 from mvpa2.testing import assert_array_almost_equal, assert_almost_equal
 import mvpa2.algorithms.stelzer_clusterthr as sct
 from scipy.ndimage import measurements
+from mvpa2.datasets import Dataset
 
 
 def test_thresholding():
@@ -49,7 +50,10 @@ def test_pval():
 
     thresholds = sct.get_thresholding_map(x, p=0.001)
     assert_array_equal(thresholds, expected_result)
-    assert_raises(AssertionError,
+    # works with datasets too
+    dsthresholds = sct.get_thresholding_map(Dataset(x), p=0.001)
+    assert_almost_equal(thresholds, dsthresholds)
+    assert_raises(ValueError,
                   sct.get_thresholding_map, x, p=0.00000001)
 
     x = range(0,100,5)
