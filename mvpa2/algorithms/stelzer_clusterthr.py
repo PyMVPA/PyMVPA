@@ -22,6 +22,7 @@ import numpy as np
 from scipy.ndimage import measurements
 import statsmodels.stats.multitest as smm
 
+# TODO: remove
 def make_file_list(path, subj_names):
     """
     randomly choose one file for every subject from subj_names and return it's
@@ -52,6 +53,7 @@ def make_file_list(path, subj_names):
     return files
 
 
+# TODO: refactor to use non-file data source
 def get_bootstrapped_map(path, subj_names):
     """
     create one bootstrapped map by randomly taking one map for every subject
@@ -76,6 +78,7 @@ def get_bootstrapped_map(path, subj_names):
                     for file_ in file_list])
 
 
+# TODO: refactor to return a dataset
 def create_bootstr_M(n, path, subj_names):
     """
     create matrix of n bootstrapped maps
@@ -85,24 +88,29 @@ def create_bootstr_M(n, path, subj_names):
     return bootstr_M
 
 
-def get_threshold(array, p=0.001):
-    """
-    will return threshold value in based on specified p value
-    """
+def get_thresholding_map(data, p=0.001):
+    """Return array of thresholds corresponding to a probability of such value in the input
 
-    p_index = len(array) * p  # TODO: double sided test?
+    Thresholds are returned as an array with one value per column in the input
+    data.
+
+    Parameters
+    ----------
+    data : 2D-array
+      Array with data on which the cumulative distribution is based.
+      Values in each column are sorted and the value corresponding to the
+      desired probability is returned.
+    p : float [0,1]
+      The returned threshold has a probability of `p` or less.
+    """
+    # we need NumPy indexing logic, even if a dataset comes in
+    data = np.asanyarray(data)
+    p_index = int(len(data) * p)
     if p_index < 1:
-        raise AssertionError("p value is too small for the given array length")
-    p_index = int(p_index)  # maybe some intelligent rounding?
-    # this can be faster by using bottleneck partial sort
-    return array[array.argsort()[-int(p_index)]]
-
-
-def get_thresholding_map(matrix, p=0.001):
-    """
-    will return thresholding map, based on specified p value
-    """
-    return np.apply_along_axis(get_threshold, 0, matrix, p)
+        raise ValueError("requested probability is too low for the given number of samples")
+    # threshold indices are all in one row of the argsorted inputs
+    thridx = np.argsort(data, axis=0, kind='quicksort')[-p_index]
+    return data[thridx, np.arange(data.shape[1])]
 
 
 def threshold(M, thresholding_map):
