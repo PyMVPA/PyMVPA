@@ -265,6 +265,8 @@ def labile(niter=3, nfailures=1):
     reseed_rng.  Otherwise it is unlikely that result would change if
     algorithms are deterministic and operate on the same data
 
+    Similar in idea to  https://pypi.python.org/pypi/flaky .
+
     Parameters
     ----------
     niter: int, optional
