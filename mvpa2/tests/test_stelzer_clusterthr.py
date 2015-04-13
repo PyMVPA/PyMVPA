@@ -13,6 +13,7 @@ from mvpa2.testing.tools import SkipTest
 if not externals.exists('scipy'):
     raise SkipTest
 
+from collections import Counter
 import numpy as np
 import random
 from mvpa2.testing import assert_array_equal, assert_raises, assert_equal, \
@@ -22,23 +23,6 @@ from mvpa2.datasets import Dataset, dataset_wizard
 from mvpa2.mappers.base import IdentityMapper
 
 from scipy.ndimage import measurements
-
-def test_thresholding():
-    M = np.array([[0, 1, 2, 3, 4, 5],
-                  [1, 2, 3, 4, 5, 0],
-                  [2, 3, 4, 5, 0, 1],
-                  [3, 4, 5, 0, 1, 2],
-                  [4, 5, 0, 1, 2, 3]])
-    thresholding = [3, 2, 0, 1, 5, 7]
-    expected_result = np.array([[0, 0, 1, 1, 0, 0],
-                                [0, 0, 1, 1, 0, 0],
-                                [0, 1, 1, 1, 0, 0],
-                                [0, 1, 1, 0, 0, 0],
-                                [1, 1, 0, 0, 0, 0]])
-
-    np.array_equal(sct.threshold(M, thresholding),
-                   expected_result)
-
 
 def test_pval():
     def not_inplace_shuffle(x):
@@ -77,6 +61,13 @@ def test_pval():
 
 
 def test_cluster_count():
+    # we get a ZERO cluster count of one if there are no clusters at all
+    # this is needed to keept track of the number of bootstrap samples that yield
+    # no cluster at all (high treshold) in order to compute p-values when there is no
+    # actual cluster size histogram
+    assert_equal(sct._get_map_cluster_sizes([0,0,0,0]), [0])
+    # if there is at least one cluster: no ZERO count
+    assert_equal(sct._get_map_cluster_sizes([0,0,1,0]), [1])
     for i in range(2):  # rerun tests for bool type of test_M
         test_M = np.array([[1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0],
                            [0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1],
@@ -123,7 +114,7 @@ def test_cluster_count():
         # new
         ds = dataset_wizard([test_M_3d] * 10)
         assert_array_equal(M, ds)
-        expected_result = np.hstack([sct._get_map_cluster_sizes(test_M_3d)]*10)
+        expected_result = Counter(np.hstack([sct._get_map_cluster_sizes(test_M_3d)]*10))
         assert_array_equal(expected_result,
                            sct.get_cluster_sizes(ds))
 
@@ -139,8 +130,8 @@ def test_cluster_count():
         # new
         ds = dataset_wizard([cluster_sizes_map] * 10)
         assert_array_equal(M, ds)
-        expected_result = np.hstack([sct._get_map_cluster_sizes(
-                                         thresholded_cluster_sizes_map)]*10)
+        expected_result = Counter(np.hstack([sct._get_map_cluster_sizes(
+                                         thresholded_cluster_sizes_map)]*10))
         th_map = np.ones(cluster_sizes_map.flatten().shape) * thr
         # threshold dataset by hand
         ds.samples = ds.samples > th_map
@@ -193,26 +184,50 @@ def test_cluster_count():
         # num_of_clusters +1 because there is also +1 cluster for 0 value
         assert_equal(num_of_clusters+1, len(np.unique(labeled)))
 
-def test_with_datasets():
+def test_acccluster_threshold():
     from scipy.stats import norm
-    feprob = 0.01
-    # scale number of perms to match desired probability
-    nperms = 1 / feprob * 10
-    # make a nice 1D blob
-    blob = np.array([0,0,1,2,5,3,2,0,0,0]) / 5.0
+    feprob = 0.005
+    nsubj = 10
+    # make a nice 1D blob and a speck
+    blob = np.array([3,0,1,3,5,3,2,0,0,0])
     blob = Dataset([blob])
     # and some nice random permutations
-    perms = np.random.randn(nperms, len(blob))
-    perms = Dataset(perms)
+    nperms = 100 * nsubj
+    perms = np.random.randn(nperms, blob.nfeatures)
+    perms = Dataset(perms,
+                    sa=dict(chunks=np.repeat(range(nsubj), len(perms) / nsubj)),
+                    fa=dict(fid=range(perms.shape[1])))
+    # the algorithm instance
+    # scale number of bootstraps to match desired probability
+    clthr = sct.ACCClusterThreshold(n_bootstrap=int(1./feprob), feprob=feprob,
+            fwe_rate=0.05, n_blocks=3)
+    clthr.train(perms)
     # get the FE thresholds
-    thr = sct.get_thresholding_map(perms, 0.01)
-    # perms are normally distributed, hence the CDF should be close
-    assert_true(feprob - (1 - norm.cdf(thr.mean())) < 0.01)
+    thr = clthr._thrmap
+    # perms are normally distributed, hence the CDF should be close, std of the distribution
+    # will scale 1/sqrt(nsubj)
+    assert_true(np.abs(feprob - (1 - norm.cdf(thr.mean(), loc=0, scale=1./np.sqrt(nsubj)))) < 0.01)
 
-    # now we can threshold all permutations
-    perm_blobs = perms > thr
-    mapper = IdentityMapper()
-    if 'mapper' in blob.a:
-        mapper = blob.a.mapper
-    for i in xrange(len(perms)):
-        mapper.reverse1(perm_blobs[i])
+    clstr_sizes = clthr._null_cluster_sizes
+    # getting anything but a lonely one feature cluster is very unlikely
+    assert_true(max([c[0] for c in clstr_sizes.keys()]) <= 1)
+    # threshold orig map
+    res = clthr(blob)
+    #
+    # check output
+    #
+    # samples unchanged
+    assert_array_equal(blob.samples, res.samples)
+    # need to find the big cluster
+    assert_true(len(res.a.cluster_probs_uncorrected) > 0)
+    assert_equal(len(res.a.cluster_probs_uncorrected), res.fa.clusters_voxelwise_thresh.max())
+    # probs need to decrease with size
+    assert_true(res.a.cluster_probs_uncorrected[1] >= res.a.cluster_probs_uncorrected[2])
+    # corrected probs for every uncorrected cluster
+    assert_equal(len(res.a.cluster_probs_uncorrected), len(res.a.cluster_probs_fwe_corrected))
+    # fwe correction always increases the p-values (if anything)
+    assert_true(np.all(res.a.cluster_probs_uncorrected <= res.a.cluster_probs_fwe_corrected))
+    # fwe thresholding only ever removes clusters
+    assert_true(np.all(np.abs(res.fa.clusters_voxelwise_thresh - res.fa.clusters_fwe_thresh) >= 0))
+
+    # TODO continue with somewhat more real dataset

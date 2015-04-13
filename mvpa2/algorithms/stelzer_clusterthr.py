@@ -18,75 +18,193 @@ __docformat__ = 'restructuredtext'
 import os
 import random
 import bisect
+from collections import Counter
 import numpy as np
 from scipy.ndimage import measurements
+from scipy.sparse import dok_matrix
 import statsmodels.stats.multitest as smm
 from mvpa2.mappers.base import IdentityMapper
+from mvpa2.datasets import Dataset
+from mvpa2.base.learner import Learner
+from mvpa2.base.param import Parameter
+from mvpa2.base.constraints import \
+        EnsureInt, EnsureFloat, EnsureRange, EnsureChoice
 
-# TODO: remove
-def make_file_list(path, subj_names):
-    """
-    randomly choose one file for every subject from subj_names and return it's
-    addresses as a list
+class ACCClusterThreshold(Learner):
+    """ WAIT FOR ME """
 
-    all the files need to be in same folder in name format sub+subj_name*.npy
+    n_bootstrap = Parameter(100000, constraints=EnsureInt() & EnsureRange(min=1),
+            doc="")
 
-    """
+    feprob = Parameter(0.001,
+            constraints=EnsureFloat() & EnsureRange(min=0.0, max=1.0),
+            doc="")
 
-#        directories = [f for f in os.listdir('.') if os.path.isdir(f)
-#                     and f.startswith('sub')]
-#        files = []
-#        for directory in directories:
-#    #        print directory
-#    #        print random.choice(os.listdir(directory))
-#            files.append(os.path.join(directory,
-#                                      random.choice(os.listdir(directory))))
-#        return files
+    chunks_attr = Parameter('chunks',
+            doc="")
 
-    files = []
-#    path = './bootstrapped/group_space/'
-    for subj in subj_names:
-        if not isinstance(subj, basestring):
-            raise AssertionError()
+    fwe_rate = Parameter(0.05,
+            constraints=EnsureFloat() & EnsureRange(min=0.0, max=1.0),
+            doc="")
 
-        files.append(random.choice([path + f for f in os.listdir(path)
-                if f.startswith('sub%s' % subj) and f.endswith('.npy')]))
-    return files
+    multicomp_correction = Parameter('fdr_bh',
+             constraints=EnsureChoice('bonferroni', 'sidak', 'holm-sidak',
+                                      'holm', 'simes-hochberg', 'hommel',
+                                      'fdr_bh', 'fdr_by'),
+             doc="")
 
+    n_blocks = Parameter(1, constraints=EnsureInt() & EnsureRange(min=1),
+             doc="")
 
-# TODO: refactor to use non-file data source
-def get_bootstrapped_map(path, subj_names):
-    """
-    create one bootstrapped map by randomly taking one map for every subject
-    and average them voxel-wise
+    def __init__(self, **kwargs):
+        # force disable auto-train: would make no sense
+        Learner.__init__(self, auto_train=False, **kwargs)
+        self.untrain()
 
-    all the files need to be in same folder in name format sub+subj_name+*.npy
+    def _untrain(self):
+        self._thrmap = None
+        self._null_cluster_sizes = None
 
-    path: path to the directory of the files
-    subj_names: names of the subjects to create bootstrapped map from
-    """
-    def nonzero_mean(M):   # quick fix for the 'hole in the middle of the head'
-        def my_func(arr):  # problem we have, should it stay here in the future?
-            if sum(arr != 0) == 0:
-                return 0
-            else:
-                return np.mean(arr[arr != 0])
-        return np.apply_along_axis(my_func, 0, M)
+    def _train(self, ds):
+        # shortcuts
+        chunks_attr = self.params.chunks_attr
+        #
+        # Step 0: bootstrap maps by drawing one for each chunk and average them
+        # (do N iterations)
+        # this could take a lot of memory, hence instead of computing the maps
+        # we compute the source maps they can be computed from and then (re)build
+        # the matrix of bootstrapped maps either row-wise or column-wise (as
+        # needed) to save memory by a factor of (close to) `n_bootstrap`
+        # which samples belong to which chunk
+        chunk_samples = dict([(c, np.where(ds.sa[chunks_attr].value == c)[0])
+                                    for c in ds.sa[chunks_attr].unique])
+        # pre-built the bootstrap combinations
+        bcombos = [[random.sample(v, 1)[0] for v in chunk_samples.values()]
+                        for i in xrange(self.params.n_bootstrap)]
+        bcombos = np.array(bcombos, dtype=int)
+        # TODO implement
+        # TODO implement parallel procedure as the estimation is independent
+        # across features
+        #
+        # Step 1: find the per-voxel threshold that corresponds to some p
+        # in the NULL
+        thrsegs = []
+        segwidth = ds.nfeatures/self.params.n_blocks
+        ds_samples = ds.samples
+        #for segstart in xrange(0, ds.nfeatures, segwidth):
+            # get a view to a subset of the features -- should be efficient
+            #seg_samples = ds_samples[:, segstart:segstart + segwidth]
+            # compute average bootstrapped maps using the stored bcombos
+        thrmap = np.hstack( # merge across compute blocks
+                [get_thresholding_map(
+                    # one average map for every stored bcombo
+                    # this also slices the input data into feature subsets
+                    # for the compute blocks
+                    [np.mean(
+                        # get a view to a subset of the features
+                        # -- should be somewhat efficient as feature axis is
+                        # sliced
+                        ds_samples[sidx, segstart:segstart + segwidth],
+                        axis=0)
+                            for sidx in bcombos],
+                    self.params.feprob)
+                        # compute a partial threshold map for as mabny features
+                        # as fit into a compute block
+                        for segstart in xrange(0, ds.nfeatures, segwidth)])
+        # store for later thresholding of input data
+        self._thrmap = thrmap
+        #
+        # Step 2: threshold all NULL maps and build distribution of NULL cluster
+        #         sizes
+        #
+        cluster_sizes = Counter()
+        # recompute the bootstrap average maps to threshold them and determine
+        # cluster sizes
+        if 'mapper' in ds.a:
+            dsa = dict(mapper=ds.a.mapper)
+        else:
+            dsa = {}
+        # this step can be computed in parallel chunks to speeds things up
+        for sidx in bcombos:
+            avgmap = np.mean(ds_samples[sidx], axis=0)[None]
+            # apply threshold
+            clustermap = avgmap > thrmap
+            # wrap into a throw-away dataset to get the reverse mapping right
+            bds = Dataset(clustermap, a=dsa)
+            # this function reverse-maps every sample one-by-one, hence no need
+            # to collect chunks of bootstrapped maps
+            cluster_sizes = get_cluster_sizes(bds, cluster_sizes)
+        # store cluster size histogram for later p-value evaluation
+        # use a sparse matrix for easy consumption (max dim is the number of
+        # features, i.e. biggest possible cluster)
+        scl = dok_matrix((ds.nfeatures, 1), dtype=int)
+        for s in cluster_sizes:
+            scl[s,0] = cluster_sizes[s]
+        self._null_cluster_sizes = scl
 
-    file_list = make_file_list(path, subj_names)
-    # this takes forever, make smarter algorithm, maybe?
-    return nonzero_mean([np.load(file_).flatten()
-                    for file_ in file_list])
+    def _call(self, ds):
+        if len(ds) > 1:
+            raise ValueError("cannot handle more than one sample per dataset")
+        # threshold input
+        thrd = ds.samples > self._thrmap
+        # mapper default
+        mapper = IdentityMapper()
+        # overwrite if possible
+        if hasattr(ds, 'a') and 'mapper' in ds.a:
+            mapper = ds.a.mapper
+        # reverse-map input
+        osamp = mapper.reverse1(thrd[0])
+        # prep output dataset
+        outds = ds.copy(deep=False)
+        # determine clusters
+        labels, num = measurements.label(osamp)
+        outds.fa['clusters_voxelwise_thresh'] = labels
+        area = measurements.sum(thrd,
+                                labels,
+                                index=np.arange(1, num + 1)).astype(int)
+        # update cluster size histogram with the actual result to get a
+        # proper lower bound for p-values
+        # this will make a copy, because the original matrix is int
+        histogrm = self._null_cluster_sizes.astype('float')
+        for a in area:
+            histogrm[a,0] += 1
+        # normalize histogram
+        histogrm /= histogrm.sum()
+        # compute p-values for each cluster
+        cache = {}
+        cluster_prob_raw = {}
+        for cidx, csize in enumerate(area):
+            # try the cache
+            prob = cache.get(csize, None)
+            if prob is None:
+                # no cache
+                # probability is the sum of a relative frequencies for clusters
+                # larger OR EQUAL than the current one
+                prob = histogrm[csize:].sum()
+                cache[csize] = prob
+            # store for output
+            cluster_prob_raw[cidx + 1] = prob
+        outds.a['cluster_probs_uncorrected'] = cluster_prob_raw
 
-
-# TODO: refactor to return a dataset
-def create_bootstr_M(n, path, subj_names):
-    """
-    create matrix of n bootstrapped maps
-    """
-    bootstr_M = [get_bootstrapped_map(path, subj_names) for _ in range(n)]
-    bootstr_M = np.vstack(bootstr_M)
-    return bootstr_M
+        # convert pvals into a simple sequence to ensure order
+        probs = [cluster_prob_raw[i] for i in xrange(1, num + 1)]
+        if self.params.multicomp_correction is None:
+            probs_corr = np.array(pvals)
+            rej = probs_corr <= self.params.fwe_rate
+        else:
+            rej, probs_corr = smm.multipletests(
+                                probs,
+                                alpha=self.params.fwe_rate,
+                                method=self.params.multicomp_correction)[:2]
+        # store corrected per-cluster probabilities
+        outds.a['cluster_probs_fwe_corrected'] = \
+                dict([(i + 1, probs_corr[i]) for i in xrange(num)])
+        # remove cluster labels that did not pass the FWE threshold
+        for i, r in enumerate(rej):
+            if not r:
+                labels[labels == i + 1] = 0
+        outds.fa['clusters_fwe_thresh'] = labels
+        return outds
 
 
 def get_thresholding_map(data, p=0.001):
@@ -114,35 +232,16 @@ def get_thresholding_map(data, p=0.001):
     return data[thridx, np.arange(data.shape[1])]
 
 
-def threshold(M, thresholding_map):
-    """Threshold map with a feature-wise map of thresholds.
-
-    Parameters
-    ----------
-    M : array
-      To be thresholded input.
-    thresholding_map : array
-      Array with threshold map. Needs to be of the same shape as ``M``.
-
-    Returns
-    -------
-    array
-      Binary map indicating the location of super-threshold value.
-    """
-    thresholded_M = M > thresholding_map
-    # XXX: MH disabled this, because he did not understand why it was necessary
-    # the tests still pass. Please check and remove comment.
-    #thresholded_M = thresholded_M.astype(int)
-    return(thresholded_M)
-
-
 def _get_map_cluster_sizes(map_):
     labels, num = measurements.label(map_)
-    area = measurements.sum(map_, labels, index=np.arange(labels.max() + 1))
-    return area.astype(int)[1:]  # delete cluster of size 0
+    area = measurements.sum(map_, labels, index=np.arange(1, num + 1))
+    if not len(area):
+        return [0]
+    else:
+        return area.astype(int)
 
 
-def get_cluster_sizes(ds, cluster_sizes=None):
+def get_cluster_sizes(ds, cluster_counter=None):
     """Computer cluster sizes from all samples in a boolean dataset.
 
     Individually for each sample, in the input dataset, clusters of non-zero
@@ -152,8 +251,8 @@ def get_cluster_sizes(ds, cluster_sizes=None):
     Parameters
     ----------
     ds : dataset or array
-      Typically a dataset with boolean samples.
-    cluster_sizes : list or None
+      A dataset with boolean samples.
+    cluster_counter : list or None
       If not None, the given list is extended with the cluster sizes computed
       from the present input dataset. Otherwise, a new list is generated.
 
@@ -161,10 +260,11 @@ def get_cluster_sizes(ds, cluster_sizes=None):
     -------
     list
       Unsorted list of cluster sizes from all samples in the input dataset
-      (optionally appended to any values passed via ``cluster_sizes``).
+      (optionally appended to any values passed via ``cluster_counter``).
     """
-    if cluster_sizes is None:
-        cluster_sizes = []
+    # XXX input needs to be boolean for the cluster size calculation to work
+    if cluster_counter is None:
+        cluster_counter = Counter()
 
     mapper = IdentityMapper()
     data = np.asanyarray(ds)
@@ -174,8 +274,8 @@ def get_cluster_sizes(ds, cluster_sizes=None):
     for i in xrange(len(ds)):
         osamp = mapper.reverse1(data[i])
         m_clusters = _get_map_cluster_sizes(osamp)
-        cluster_sizes.extend(m_clusters)
-    return cluster_sizes
+        cluster_counter.update(m_clusters)
+    return cluster_counter
 
 
 def get_pval(x, null_dist, sort=True):
