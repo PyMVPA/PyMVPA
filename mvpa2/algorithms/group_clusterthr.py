@@ -10,6 +10,9 @@
 
 __docformat__ = 'restructuredtext'
 
+__all__ = ['GroupClusterThreshold',  'get_thresholding_map',
+           'get_cluster_sizes']
+
 import os
 import random
 import bisect
@@ -119,7 +122,7 @@ class GroupClusterThreshold(Learner):
 
     def _train(self, ds):
         # shortcuts
-        chunks_attr = self.params.chunks_attr
+        chunk_attr = self.params.chunk_attr
         #
         # Step 0: bootstrap maps by drawing one for each chunk and average them
         # (do N iterations)
@@ -128,8 +131,8 @@ class GroupClusterThreshold(Learner):
         # the matrix of bootstrapped maps either row-wise or column-wise (as
         # needed) to save memory by a factor of (close to) `n_bootstrap`
         # which samples belong to which chunk
-        chunk_samples = dict([(c, np.where(ds.sa[chunks_attr].value == c)[0])
-                                    for c in ds.sa[chunks_attr].unique])
+        chunk_samples = dict([(c, np.where(ds.sa[chunk_attr].value == c)[0])
+                                    for c in ds.sa[chunk_attr].unique])
         # pre-built the bootstrap combinations
         bcombos = [[random.sample(v, 1)[0] for v in chunk_samples.values()]
                         for i in xrange(self.params.n_bootstrap)]
