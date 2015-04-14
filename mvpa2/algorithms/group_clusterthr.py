@@ -6,12 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Cluster thresholding algorithm for accuracy maps after Stelzer et al.
-
-Johannes Stelzer, Yi Chen and Turner (2013). Statistical inference and multiple
-testing correction in classification-based multi-voxel pattern analysis (MVPA):
-Random permutations and cluster size control. NeuroImage, 65, 69--82.
-"""
+"""Cluster thresholding algorithm for a group-level searchlight analysis"""
 
 __docformat__ = 'restructuredtext'
 
@@ -32,8 +27,63 @@ from mvpa2.base.param import Parameter
 from mvpa2.base.constraints import \
         EnsureInt, EnsureFloat, EnsureRange, EnsureChoice
 
-class ACCClusterThreshold(Learner):
-    """ WAIT FOR ME """
+class GroupClusterThreshold(Learner):
+    """Statistical evaluation of group-level average accuracy maps
+
+    This algorithm can be used to perform cluster-thresholding of
+    searchlight-based group analyses. It implements a two-stage procedure that
+    combines a within-subject permutation analysis and a group-level bootstrap
+    to assess the distribution of accuracy cluster sizes under the NULL
+    hypothesis.
+
+    This class implements a modified version of the algorithm described in
+    [1]_.  The present implementation differs in at least three aspects from
+    the description in this paper.
+
+    1) Cluster p-values refer to the probability of observing a particular
+       cluster size or a larger one (original paper: probability to observe a
+       larger cluster only).  Consequently, probabilities reported by this
+       implementation will have a tendency to be higher in comparison.
+
+    2) Clusters found in the original (unpermuted) accuracy map are always
+       included in the NULL distribution estimate of cluster sizes. This
+       provides an explicit lower bound for probabilities, as there will
+       always be at least one observed cluster for every cluster size found
+       in the original accuracy map. Consequently, it is impossible to get a
+       probability of zero for clusters of any size.
+
+    3) Bootstrap accuracy maps that contain no clusters are counted in a
+       dedicated size-zero bin in the NULL distribution of cluster sizes.
+       This change yields reliable cluster-probabilities even for very low
+       voxelwise threshold probabilities, where (some portion) of the
+       bootstrap accuracy maps do not contain any clusters.
+
+    Instances of this class must be trained before than can be used the threshold
+    accuracy maps. The training dataset must match the following criteria:
+
+    1) For every subject in the group, it must contain multiple accuracy maps
+       that are the result of a within-subject classification analysis
+       based on permuted class labels. One map must corresponds to one fixed
+       permutation for all features in the map, as described in [1]_. The original
+       authors recommend 100 accuracy maps per subject for a typical searchlight
+       analysis.
+
+    2) It must contain a sample attribute indicating which sample is
+       associated with which subject, because bootstrapping average accuracy
+       maps is implemented by drawing one map from each subject. The name of
+       the attribute can be configured via the ``chunk_attr`` parameter.
+
+    This implementation minimizes the required memory demands and allows for
+    computing very large number of bootstrap samples without significant
+    increase in memory demand.
+
+    References
+    ----------
+    .. [1] Johannes Stelzer, Yi Chen and Turner (2013). Statistical inference
+       and multiple testing correction in classification-based multi-voxel
+       pattern analysis (MVPA): Random permutations and cluster size control.
+       NeuroImage, 65, 69--82.
+    """
 
     n_bootstrap = Parameter(100000, constraints=EnsureInt() & EnsureRange(min=1),
             doc="")
@@ -42,7 +92,7 @@ class ACCClusterThreshold(Learner):
             constraints=EnsureFloat() & EnsureRange(min=0.0, max=1.0),
             doc="")
 
-    chunks_attr = Parameter('chunks',
+    chunk_attr = Parameter('chunks',
             doc="")
 
     fwe_rate = Parameter(0.05,
