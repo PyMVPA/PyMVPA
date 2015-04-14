@@ -10,15 +10,18 @@
 
 from mvpa2.base import externals
 from mvpa2.testing.tools import SkipTest
+
+# TODO a tiny bit also needs statsmodels
 if not externals.exists('scipy'):
     raise SkipTest
 
 from collections import Counter
 import numpy as np
 import random
+
 from mvpa2.testing import assert_array_equal, assert_raises, assert_equal, \
     assert_array_almost_equal, assert_almost_equal, assert_true
-import mvpa2.algorithms.stelzer_clusterthr as sct
+import mvpa2.algorithms.group_clusterthr as gct
 from mvpa2.datasets import Dataset, dataset_wizard
 from mvpa2.mappers.base import IdentityMapper
 
@@ -37,17 +40,17 @@ def test_pval():
     x = np.apply_along_axis(not_inplace_shuffle, axis=0, arr=x)
     expected_result = [100000-100000*0.001]*20
 
-    thresholds = sct.get_thresholding_map(x, p=0.001)
+    thresholds = gct.get_thresholding_map(x, p=0.001)
     assert_array_equal(thresholds, expected_result)
     # works with datasets too
-    dsthresholds = sct.get_thresholding_map(Dataset(x), p=0.001)
+    dsthresholds = gct.get_thresholding_map(Dataset(x), p=0.001)
     assert_almost_equal(thresholds, dsthresholds)
     assert_raises(ValueError,
-                  sct.get_thresholding_map, x, p=0.00000001)
+                  gct.get_thresholding_map, x, p=0.00000001)
 
     x = range(0,100,5)
     null_dist = range(100)
-    pvals = sct.transform_to_pvals(x, null_dist)
+    pvals = gct.transform_to_pvals(x, null_dist)
     desired_output = np.array([1, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6,
                       0.55, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1,
                       0.05])
@@ -55,7 +58,7 @@ def test_pval():
 
     x = range(100)
     random.shuffle(x)
-    y = sct.get_pval(95, x)
+    y = gct.get_pval(95, x)
     desired_output = 0.05
     assert_almost_equal(y, desired_output)
 
@@ -65,9 +68,9 @@ def test_cluster_count():
     # this is needed to keept track of the number of bootstrap samples that yield
     # no cluster at all (high treshold) in order to compute p-values when there is no
     # actual cluster size histogram
-    assert_equal(sct._get_map_cluster_sizes([0,0,0,0]), [0])
+    assert_equal(gct._get_map_cluster_sizes([0,0,0,0]), [0])
     # if there is at least one cluster: no ZERO count
-    assert_equal(sct._get_map_cluster_sizes([0,0,1,0]), [1])
+    assert_equal(gct._get_map_cluster_sizes([0,0,1,0]), [1])
     for i in range(2):  # rerun tests for bool type of test_M
         test_M = np.array([[1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0],
                            [0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1],
@@ -107,16 +110,16 @@ def test_cluster_count():
                   (test_ds_3d, expected_result_3d),
                   (test_M_3d_big, expected_result_3d_big),
                   (test_ds_3d_big, expected_result_3d_big)):
-            assert_array_equal(np.bincount(sct._get_map_cluster_sizes(t))[1:],
+            assert_array_equal(np.bincount(gct._get_map_cluster_sizes(t))[1:],
                                e)
         # old
         M = np.vstack([test_M_3d.flatten()]*10)
         # new
         ds = dataset_wizard([test_M_3d] * 10)
         assert_array_equal(M, ds)
-        expected_result = Counter(np.hstack([sct._get_map_cluster_sizes(test_M_3d)]*10))
+        expected_result = Counter(np.hstack([gct._get_map_cluster_sizes(test_M_3d)]*10))
         assert_array_equal(expected_result,
-                           sct.get_cluster_sizes(ds))
+                           gct.get_cluster_sizes(ds))
 
         # test the same with some arbitrary per-feature threshold
         thr = 4
@@ -130,16 +133,16 @@ def test_cluster_count():
         # new
         ds = dataset_wizard([cluster_sizes_map] * 10)
         assert_array_equal(M, ds)
-        expected_result = Counter(np.hstack([sct._get_map_cluster_sizes(
+        expected_result = Counter(np.hstack([gct._get_map_cluster_sizes(
                                          thresholded_cluster_sizes_map)]*10))
         th_map = np.ones(cluster_sizes_map.flatten().shape) * thr
         # threshold dataset by hand
         ds.samples = ds.samples > th_map
         assert_array_equal(expected_result,
-                           sct.get_cluster_sizes(ds))
+                           gct.get_cluster_sizes(ds))
 
         dumm_null_dist = range(10)
-        assert_array_equal(sct.label_clusters(dumm_null_dist,
+        assert_array_equal(gct.label_clusters(dumm_null_dist,
                                               test_M_3d,
                                                # not testing correction
                                               method="None",
@@ -147,38 +150,38 @@ def test_cluster_count():
                                               alpha=1,
                                  return_type="binary_map"), test_M_3d)
 
-        assert_array_equal(sct.label_clusters(dumm_null_dist,
+        assert_array_equal(gct.label_clusters(dumm_null_dist,
                                               test_M_3d,
                                               method="None",
                                               alpha=1,
                                               return_type="cluster_sizes"),
                                               cluster_sizes_map)
 
-        assert_raises(AssertionError, sct.label_clusters, dumm_null_dist,
+        assert_raises(AssertionError, gct.label_clusters, dumm_null_dist,
                                          test_M_3d,
                                          method="None",
                                          alpha=1,
                                          return_type="UNKNOWN")
 
-        clusters = sct._get_map_cluster_sizes(test_M_3d)
+        clusters = gct._get_map_cluster_sizes(test_M_3d)
         x = np.hstack([dumm_null_dist, clusters])
-        pvals = np.array(sct.transform_to_pvals(clusters, x))
+        pvals = np.array(gct.transform_to_pvals(clusters, x))
         pvals = 1-pvals
         pval_map = cluster_sizes_map.copy()
         for clust_size, pval in set(zip(clusters, pvals)):
             pval_map[pval_map==clust_size] = pval
-        labeled = sct.label_clusters(dumm_null_dist, test_M_3d,
+        labeled = gct.label_clusters(dumm_null_dist, test_M_3d,
                   method="None", return_type='p_vals')
         assert_array_equal(labeled, pval_map)
 
         thresholded_pval_map = pval_map.copy()
         thresholded_pval_map[pval_map < 0.5] = 0
-        labeled = sct.label_clusters(dumm_null_dist, test_M_3d,
+        labeled = gct.label_clusters(dumm_null_dist, test_M_3d,
                   method="None", alpha=0.5, return_type='thresholded_p_vals')
         assert_array_equal(labeled, thresholded_pval_map)
 
         num_of_clusters = len(clusters)
-        labeled = sct.label_clusters(dumm_null_dist, test_M_3d,
+        labeled = gct.label_clusters(dumm_null_dist, test_M_3d,
                   method="None", return_type='unique_clusters')
 
         # num_of_clusters +1 because there is also +1 cluster for 0 value
@@ -199,7 +202,7 @@ def test_acccluster_threshold():
                     fa=dict(fid=range(perms.shape[1])))
     # the algorithm instance
     # scale number of bootstraps to match desired probability
-    clthr = sct.ACCClusterThreshold(n_bootstrap=int(1./feprob), feprob=feprob,
+    clthr = gct.ACCClusterThreshold(n_bootstrap=int(1./feprob), feprob=feprob,
             fwe_rate=0.05, n_blocks=3)
     clthr.train(perms)
     # get the FE thresholds

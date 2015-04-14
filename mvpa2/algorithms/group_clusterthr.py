@@ -19,10 +19,12 @@ import os
 import random
 import bisect
 from collections import Counter
+
 import numpy as np
+
 from scipy.ndimage import measurements
 from scipy.sparse import dok_matrix
-import statsmodels.stats.multitest as smm
+
 from mvpa2.mappers.base import IdentityMapper
 from mvpa2.datasets import Dataset
 from mvpa2.base.learner import Learner
@@ -192,6 +194,8 @@ class ACCClusterThreshold(Learner):
             probs_corr = np.array(pvals)
             rej = probs_corr <= self.params.fwe_rate
         else:
+            # do a local import as only this tiny portion needs statsmodels
+            import statsmodels.stats.multitest as smm
             rej, probs_corr = smm.multipletests(
                                 probs,
                                 alpha=self.params.fwe_rate,
