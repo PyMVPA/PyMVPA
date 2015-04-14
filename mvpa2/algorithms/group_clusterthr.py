@@ -35,13 +35,14 @@ class GroupClusterThreshold(Learner):
 
     This algorithm can be used to perform cluster-thresholding of
     searchlight-based group analyses. It implements a two-stage procedure that
-    combines a within-subject permutation analysis and a group-level bootstrap
-    to assess the distribution of accuracy cluster sizes under the NULL
-    hypothesis.
+    uses the results of within-subject permutation analyses, estimates a per
+    feature cluster forming threshold (via bootstrap), and uses the thresholded
+    bootstrap samples to estimate the distribution of cluster sizes in
+    group-average accuracy maps under the NULL hypothesis, as described in [1]_.
 
-    This class implements a modified version of the algorithm described in
-    [1]_.  The present implementation differs in at least three aspects from
-    the description in this paper.
+    Note: this class implements a modified version of that algorithm. The
+    present implementation differs in, at least, three aspects from the
+    description in that paper.
 
     1) Cluster p-values refer to the probability of observing a particular
        cluster size or a larger one (original paper: probability to observe a
@@ -58,58 +59,118 @@ class GroupClusterThreshold(Learner):
     3) Bootstrap accuracy maps that contain no clusters are counted in a
        dedicated size-zero bin in the NULL distribution of cluster sizes.
        This change yields reliable cluster-probabilities even for very low
-       voxelwise threshold probabilities, where (some portion) of the
+       featurewise threshold probabilities, where (some portion) of the
        bootstrap accuracy maps do not contain any clusters.
 
-    Instances of this class must be trained before than can be used the threshold
-    accuracy maps. The training dataset must match the following criteria:
+    Instances of this class must be trained before than can be used to
+    threshold accuracy maps. The training dataset must match the following
+    criteria:
 
     1) For every subject in the group, it must contain multiple accuracy maps
        that are the result of a within-subject classification analysis
        based on permuted class labels. One map must corresponds to one fixed
-       permutation for all features in the map, as described in [1]_. The original
-       authors recommend 100 accuracy maps per subject for a typical searchlight
-       analysis.
+       permutation for all features in the map, as described in [1]_. The
+       original authors recommend 100 accuracy maps per subject for a typical
+       searchlight analysis.
 
     2) It must contain a sample attribute indicating which sample is
        associated with which subject, because bootstrapping average accuracy
-       maps is implemented by drawing one map from each subject. The name of
-       the attribute can be configured via the ``chunk_attr`` parameter.
+       maps is implemented by randomly drawing one map from each subject.
+       The name of the attribute can be configured via the ``chunk_attr``
+       parameter.
 
     This implementation minimizes the required memory demands and allows for
-    computing very large number of bootstrap samples without significant
-    increase in memory demand.
+    computing very large numbers of bootstrap samples without significant
+    increase in memory demand (CPU time tradeoff).
+
+    Returns
+    -------
+    Dataset
+      This is a shallow copy of the input dataset, hence contains the same data
+      and attributes. In addition it includes the following attributes:
+
+      ``fa.featurewise_thresh``
+        Vector with feature-wise cluster-forming thresholds.
+
+      ``fa.clusters_featurewise_thresh``
+        Vector with labels for clusters after thresholding the input data
+        with the desired feature-wise probability. Each unique non-zero
+        element corresponds to an individual super-threshold cluster.
+
+      ``fa.clusters_fwe_thresh``
+        Vector with labels for super-threshold clusters after correction for
+        multiple comparisons. The attribute is derived from
+        ``fa.clusters_featurewise_thresh`` by removing all clusters that
+        do not pass the threshold when controlling for the family-wise error
+        rate.
+
+      ``a.cluster_probs_uncorrected``
+        Dictionary with probabilities of observing a cluster of a particular
+        size (or a larger one) under the NULL hypothesis. Dictionary keys
+        correspond to the labels in ``fa.clusters_featurewise_thresh``. No
+        correction for multiple comparisons.
+
+      ``a.cluster_probs_fwe_corrected``
+        If correction for multiple comparisons is performed, this dictionary
+        is available as well, and contains analog to
+        ``a.cluster_probs_uncorrected`` the corrected probabilities.
+
 
     References
     ----------
-    .. [1] Johannes Stelzer, Yi Chen and Turner (2013). Statistical inference
-       and multiple testing correction in classification-based multi-voxel
-       pattern analysis (MVPA): Random permutations and cluster size control.
-       NeuroImage, 65, 69--82.
+    .. [1] Johannes Stelzer, Yi Chen and Robert Turner (2013). Statistical
+       inference and multiple testing correction in classification-based
+       multi-voxel pattern analysis (MVPA): Random permutations and cluster
+       size control. NeuroImage, 65, 69--82.
     """
 
     n_bootstrap = Parameter(100000, constraints=EnsureInt() & EnsureRange(min=1),
-            doc="")
+            doc="""Number of bootstrap samples to be generated from the training
+            dataset. For each sample, an average map will be computed from a
+            set of randomly drawn samples (one from each chunk). Bootstrap
+            samples will be used to estimate a featurewise NULL distribution of
+            accuracy values for initial thresholding, and to estimate the NULL
+            distribution of cluster sizes under the NULL hypothesis. A larger
+            number of bootstrap samples reduces the lower bound of
+            probabilities, which may be beneficial for multiple comparison
+            correction.""")
 
-    feprob = Parameter(0.001,
+    feature_thresh_prob = Parameter(0.001,
             constraints=EnsureFloat() & EnsureRange(min=0.0, max=1.0),
-            doc="")
+            doc="""Feature-wise probability threshold. The value corresponding
+            to this probability in the NULL distribution of accuracies will
+            be used as threshold for cluster forming. Given that the NULL
+            distribution is estimated per feature, the actual threshold value
+            will vary across features yielding a threshold vector. The number
+            of bootstrap samples need to be adequate for a desired probability.
+            A ``ValueError`` is raised otherwise.""")
 
     chunk_attr = Parameter('chunks',
-            doc="")
+            doc="""Name of the attribute indicating the individual chunks from
+            which a single sample each is drawn for averaging into a bootstrap
+            sample.""")
 
     fwe_rate = Parameter(0.05,
             constraints=EnsureFloat() & EnsureRange(min=0.0, max=1.0),
-            doc="")
+            doc="""Family-wise error rate for multiple comparison correction
+            of cluster size probabilities.""")
 
     multicomp_correction = Parameter('fdr_bh',
              constraints=EnsureChoice('bonferroni', 'sidak', 'holm-sidak',
                                       'holm', 'simes-hochberg', 'hommel',
-                                      'fdr_bh', 'fdr_by'),
-             doc="")
+                                      'fdr_bh', 'fdr_by', None),
+             doc="""Strategy for multiple comparison correction of cluster
+             probailities. All methods supported by statsmodels' ``multitest``
+             are available. In addition, ``None`` can be specific to disable
+             correction.""")
 
     n_blocks = Parameter(1, constraints=EnsureInt() & EnsureRange(min=1),
-             doc="")
+             doc="""Number of segments used to compute the feature-wise NULL
+             distributions. This parameter determines the peak memory demand.
+             In case of a single segment a matrix of size
+             (n_bootstrap x nfeatures) will be allocated. Increasing the number
+             of segments reduces the peak memory demand by that roughly factor.
+             """)
 
     def __init__(self, **kwargs):
         # force disable auto-train: would make no sense
@@ -141,7 +202,7 @@ class GroupClusterThreshold(Learner):
         # TODO implement parallel procedure as the estimation is independent
         # across features
         #
-        # Step 1: find the per-voxel threshold that corresponds to some p
+        # Step 1: find the per-feature threshold that corresponds to some p
         # in the NULL
         thrsegs = []
         segwidth = ds.nfeatures/self.params.n_blocks
@@ -162,7 +223,7 @@ class GroupClusterThreshold(Learner):
                         ds_samples[sidx, segstart:segstart + segwidth],
                         axis=0)
                             for sidx in bcombos],
-                    self.params.feprob)
+                    self.params.feature_thresh_prob)
                         # compute a partial threshold map for as mabny features
                         # as fit into a compute block
                         for segstart in xrange(0, ds.nfeatures, segwidth)])
@@ -213,7 +274,8 @@ class GroupClusterThreshold(Learner):
         outds = ds.copy(deep=False)
         # determine clusters
         labels, num = measurements.label(osamp)
-        outds.fa['clusters_voxelwise_thresh'] = labels
+        outds.fa['featurewise_thresh'] = self._thrmap
+        outds.fa['clusters_featurewise_thresh'] = labels
         area = measurements.sum(thrd,
                                 labels,
                                 index=np.arange(1, num + 1)).astype(int)
@@ -253,9 +315,9 @@ class GroupClusterThreshold(Learner):
                                 probs,
                                 alpha=self.params.fwe_rate,
                                 method=self.params.multicomp_correction)[:2]
-        # store corrected per-cluster probabilities
-        outds.a['cluster_probs_fwe_corrected'] = \
-                dict([(i + 1, probs_corr[i]) for i in xrange(num)])
+            # store corrected per-cluster probabilities
+            outds.a['cluster_probs_fwe_corrected'] = \
+                    dict([(i + 1, probs_corr[i]) for i in xrange(num)])
         # remove cluster labels that did not pass the FWE threshold
         for i, r in enumerate(rej):
             if not r:
