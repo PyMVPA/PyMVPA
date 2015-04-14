@@ -26,6 +26,7 @@ from mvpa2.datasets import Dataset, dataset_wizard
 from mvpa2.mappers.base import IdentityMapper
 
 from scipy.ndimage import measurements
+from scipy.stats import norm
 
 def test_pval():
     def not_inplace_shuffle(x):
@@ -49,18 +50,12 @@ def test_pval():
                   gct.get_thresholding_map, x, p=0.00000001)
 
     x = range(0,100,5)
-    null_dist = range(100)
-    pvals = gct.transform_to_pvals(x, null_dist)
+    null_dist = np.repeat(1, 100).astype(float)[None]
+    pvals = gct._transform_to_pvals(x, null_dist)
     desired_output = np.array([1, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6,
                       0.55, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1,
                       0.05])
     assert_array_almost_equal(desired_output, pvals)
-
-    x = range(100)
-    random.shuffle(x)
-    y = gct.get_pval(95, x)
-    desired_output = 0.05
-    assert_almost_equal(y, desired_output)
 
 
 def test_cluster_count():
@@ -141,54 +136,53 @@ def test_cluster_count():
         assert_array_equal(expected_result,
                            gct.get_cluster_sizes(ds))
 
-        dumm_null_dist = range(10)
-        assert_array_equal(gct.label_clusters(dumm_null_dist,
-                                              test_M_3d,
-                                               # not testing correction
-                                              method="None",
-                                               # not testing rejection
-                                              alpha=1,
-                                 return_type="binary_map"), test_M_3d)
+        #dumm_null_dist = range(10)
+        #assert_array_equal(gct.label_clusters(dumm_null_dist,
+        #                                      test_M_3d,
+        #                                       # not testing correction
+        #                                      method="None",
+        #                                       # not testing rejection
+        #                                      alpha=1,
+        #                         return_type="binary_map"), test_M_3d)
 
-        assert_array_equal(gct.label_clusters(dumm_null_dist,
-                                              test_M_3d,
-                                              method="None",
-                                              alpha=1,
-                                              return_type="cluster_sizes"),
-                                              cluster_sizes_map)
+        #assert_array_equal(gct.label_clusters(dumm_null_dist,
+        #                                      test_M_3d,
+        #                                      method="None",
+        #                                      alpha=1,
+        #                                      return_type="cluster_sizes"),
+        #                                      cluster_sizes_map)
 
-        assert_raises(AssertionError, gct.label_clusters, dumm_null_dist,
-                                         test_M_3d,
-                                         method="None",
-                                         alpha=1,
-                                         return_type="UNKNOWN")
+        #assert_raises(AssertionError, gct.label_clusters, dumm_null_dist,
+        #                                 test_M_3d,
+        #                                 method="None",
+        #                                 alpha=1,
+        #                                 return_type="UNKNOWN")
 
-        clusters = gct._get_map_cluster_sizes(test_M_3d)
-        x = np.hstack([dumm_null_dist, clusters])
-        pvals = np.array(gct.transform_to_pvals(clusters, x))
-        pvals = 1-pvals
-        pval_map = cluster_sizes_map.copy()
-        for clust_size, pval in set(zip(clusters, pvals)):
-            pval_map[pval_map==clust_size] = pval
-        labeled = gct.label_clusters(dumm_null_dist, test_M_3d,
-                  method="None", return_type='p_vals')
-        assert_array_equal(labeled, pval_map)
+        #clusters = gct._get_map_cluster_sizes(test_M_3d)
+        #x = np.hstack([dumm_null_dist, clusters])
+        #pvals = np.array(gct.transform_to_pvals(clusters, x))
+        #pvals = 1-pvals
+        #pval_map = cluster_sizes_map.copy()
+        #for clust_size, pval in set(zip(clusters, pvals)):
+        #    pval_map[pval_map==clust_size] = pval
+        #labeled = gct.label_clusters(dumm_null_dist, test_M_3d,
+        #          method="None", return_type='p_vals')
+        #assert_array_equal(labeled, pval_map)
 
-        thresholded_pval_map = pval_map.copy()
-        thresholded_pval_map[pval_map < 0.5] = 0
-        labeled = gct.label_clusters(dumm_null_dist, test_M_3d,
-                  method="None", alpha=0.5, return_type='thresholded_p_vals')
-        assert_array_equal(labeled, thresholded_pval_map)
+        #thresholded_pval_map = pval_map.copy()
+        #thresholded_pval_map[pval_map < 0.5] = 0
+        #labeled = gct.label_clusters(dumm_null_dist, test_M_3d,
+        #          method="None", alpha=0.5, return_type='thresholded_p_vals')
+        #assert_array_equal(labeled, thresholded_pval_map)
 
-        num_of_clusters = len(clusters)
-        labeled = gct.label_clusters(dumm_null_dist, test_M_3d,
-                  method="None", return_type='unique_clusters')
+        #num_of_clusters = len(clusters)
+        #labeled = gct.label_clusters(dumm_null_dist, test_M_3d,
+        #          method="None", return_type='unique_clusters')
 
-        # num_of_clusters +1 because there is also +1 cluster for 0 value
-        assert_equal(num_of_clusters+1, len(np.unique(labeled)))
+        ## num_of_clusters +1 because there is also +1 cluster for 0 value
+        #assert_equal(num_of_clusters+1, len(np.unique(labeled)))
 
-def test_acccluster_threshold():
-    from scipy.stats import norm
+def test_group_clusterthreshold_simple():
     feature_thresh_prob = 0.005
     nsubj = 10
     # make a nice 1D blob and a speck
@@ -238,3 +232,7 @@ def test_acccluster_threshold():
     assert_true(np.all(np.abs(res.fa.clusters_featurewise_thresh - res.fa.clusters_fwe_thresh) >= 0))
 
     # TODO continue with somewhat more real dataset
+    # TODO test case were FWE removes a cluster
+    # TODO test case with no multiple comparison correction
+    # TODO test case with mapped dataset
+    # TODO test exceptions
