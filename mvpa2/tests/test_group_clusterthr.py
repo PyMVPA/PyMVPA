@@ -189,7 +189,7 @@ def test_cluster_count():
 
 def test_acccluster_threshold():
     from scipy.stats import norm
-    feprob = 0.005
+    feature_thresh_prob = 0.005
     nsubj = 10
     # make a nice 1D blob and a speck
     blob = np.array([3,0,1,3,5,3,2,0,0,0])
@@ -202,14 +202,18 @@ def test_acccluster_threshold():
                     fa=dict(fid=range(perms.shape[1])))
     # the algorithm instance
     # scale number of bootstraps to match desired probability
-    clthr = gct.GroupClusterThreshold(n_bootstrap=int(1./feprob), feprob=feprob,
-            fwe_rate=0.05, n_blocks=3)
+    clthr = gct.GroupClusterThreshold(n_bootstrap=int(1./feature_thresh_prob),
+                                      feature_thresh_prob=feature_thresh_prob,
+                                      fwe_rate=0.05, n_blocks=3)
     clthr.train(perms)
     # get the FE thresholds
     thr = clthr._thrmap
     # perms are normally distributed, hence the CDF should be close, std of the distribution
     # will scale 1/sqrt(nsubj)
-    assert_true(np.abs(feprob - (1 - norm.cdf(thr.mean(), loc=0, scale=1./np.sqrt(nsubj)))) < 0.01)
+    assert_true(np.abs(
+        feature_thresh_prob - (1 - norm.cdf(thr.mean(),
+                                          loc=0,
+                                          scale=1./np.sqrt(nsubj)))) < 0.01)
 
     clstr_sizes = clthr._null_cluster_sizes
     # getting anything but a lonely one feature cluster is very unlikely
@@ -223,7 +227,7 @@ def test_acccluster_threshold():
     assert_array_equal(blob.samples, res.samples)
     # need to find the big cluster
     assert_true(len(res.a.cluster_probs_uncorrected) > 0)
-    assert_equal(len(res.a.cluster_probs_uncorrected), res.fa.clusters_voxelwise_thresh.max())
+    assert_equal(len(res.a.cluster_probs_uncorrected), res.fa.clusters_featurewise_thresh.max())
     # probs need to decrease with size
     assert_true(res.a.cluster_probs_uncorrected[1] >= res.a.cluster_probs_uncorrected[2])
     # corrected probs for every uncorrected cluster
@@ -231,6 +235,6 @@ def test_acccluster_threshold():
     # fwe correction always increases the p-values (if anything)
     assert_true(np.all(res.a.cluster_probs_uncorrected <= res.a.cluster_probs_fwe_corrected))
     # fwe thresholding only ever removes clusters
-    assert_true(np.all(np.abs(res.fa.clusters_voxelwise_thresh - res.fa.clusters_fwe_thresh) >= 0))
+    assert_true(np.all(np.abs(res.fa.clusters_featurewise_thresh - res.fa.clusters_fwe_thresh) >= 0))
 
     # TODO continue with somewhat more real dataset
