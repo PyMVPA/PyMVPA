@@ -202,7 +202,7 @@ def test_acccluster_threshold():
                     fa=dict(fid=range(perms.shape[1])))
     # the algorithm instance
     # scale number of bootstraps to match desired probability
-    clthr = gct.ACCClusterThreshold(n_bootstrap=int(1./feprob), feprob=feprob,
+    clthr = gct.GroupClusterThreshold(n_bootstrap=int(1./feprob), feprob=feprob,
             fwe_rate=0.05, n_blocks=3)
     clthr.train(perms)
     # get the FE thresholds
