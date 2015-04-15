@@ -29,6 +29,7 @@ from mvpa2.base.learner import Learner
 from mvpa2.base.param import Parameter
 from mvpa2.base.constraints import \
         EnsureInt, EnsureFloat, EnsureRange, EnsureChoice
+from mvpa2.mappers.fx import mean_sample
 
 class GroupClusterThreshold(Learner):
     """Statistical evaluation of group-level average accuracy maps
@@ -62,6 +63,10 @@ class GroupClusterThreshold(Learner):
        featurewise threshold probabilities, where (some portion) of the
        bootstrap accuracy maps do not contain any clusters.
 
+    Moreover, this implementation minimizes the required memory demands and
+    allows for computing large numbers of bootstrap samples without
+    significant increase in memory demand (CPU time trade-off).
+
     Instances of this class must be trained before than can be used to
     threshold accuracy maps. The training dataset must match the following
     criteria:
@@ -79,15 +84,17 @@ class GroupClusterThreshold(Learner):
        The name of the attribute can be configured via the ``chunk_attr``
        parameter.
 
-    This implementation minimizes the required memory demands and allows for
-    computing very large numbers of bootstrap samples without significant
-    increase in memory demand (CPU time tradeoff).
+    After training, an instance can be called with a dataset to perform
+    threshold and statistical evaluation. Unless a single-sample dataset
+    is passed, all samples in the input dataset will be averaged prior
+    thresholding.
 
     Returns
     -------
     Dataset
-      This is a shallow copy of the input dataset, hence contains the same data
-      and attributes. In addition it includes the following attributes:
+      This is a shallow copy of the input dataset (after a potential
+      averaging), hence contains the same data and attributes. In addition it
+      includes the following attributes:
 
       ``fa.featurewise_thresh``
         Vector with feature-wise cluster-forming thresholds.
@@ -256,7 +263,10 @@ class GroupClusterThreshold(Learner):
 
     def _call(self, ds):
         if len(ds) > 1:
-            raise ValueError("cannot handle more than one sample per dataset")
+            # average all samples into one, assuming we got something like one
+            # sample per subject as input
+            avgr = mean_sample()
+            ds = mean_sample(ds)
         # threshold input
         thrd = ds.samples > self._thrmap
         # mapper default
