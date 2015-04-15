@@ -13,6 +13,9 @@ __docformat__ = 'restructuredtext'
 __all__ = ['GroupClusterThreshold',  'get_thresholding_map',
            'get_cluster_sizes']
 
+if __debug__:
+    from mvpa2.base import debug
+
 import os
 import random
 import bisect
@@ -219,6 +222,10 @@ class GroupClusterThreshold(Learner):
         segwidth = ds.nfeatures/self.params.n_blocks
         # speed things up by operating on an array not a dataset
         ds_samples = ds.samples
+        if __debug__:
+            debug('GCTHR',
+                  'Compute per-feature thresholds in %i blocks of %i features'
+                  % (self.params.n_blocks, segwidth))
         thrmap = np.hstack( # merge across compute blocks
                 [get_thresholding_map(
                     # one average map for every stored bcombo
@@ -248,6 +255,8 @@ class GroupClusterThreshold(Learner):
             dsa = dict(mapper=ds.a.mapper)
         else:
             dsa = {}
+        if __debug__:
+            debug('GCTHR', 'Estimate NULL distribution of cluster sizes')
         # this step can be computed in parallel chunks to speeds things up
         for sidx in bcombos:
             avgmap = np.mean(ds_samples[sidx], axis=0)[None]
@@ -283,13 +292,16 @@ class GroupClusterThreshold(Learner):
         osamp = mapper.reverse1(thrd[0])
         # prep output dataset
         outds = ds.copy(deep=False)
+        outds.fa['featurewise_thresh'] = self._thrmap
         # determine clusters
         labels, num = measurements.label(osamp)
-        outds.fa['featurewise_thresh'] = self._thrmap
-        outds.fa['clusters_featurewise_thresh'] = labels
-        area = measurements.sum(thrd,
+        area = measurements.sum(osamp,
                                 labels,
                                 index=np.arange(1, num + 1)).astype(int)
+        # for the rest we need the labels flattened
+        labels = mapper.forward1(labels)
+        # store cluster labels after forward-mapping
+        outds.fa['clusters_featurewise_thresh'] = labels
         # update cluster size histogram with the actual result to get a
         # proper lower bound for p-values
         # this will make a copy, because the original matrix is int
