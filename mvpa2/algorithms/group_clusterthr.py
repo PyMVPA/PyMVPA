@@ -55,7 +55,8 @@ class GroupClusterThreshold(Learner):
        provides an explicit lower bound for probabilities, as there will
        always be at least one observed cluster for every cluster size found
        in the original accuracy map. Consequently, it is impossible to get a
-       probability of zero for clusters of any size.
+       probability of zero for clusters of any size (see [2] for more
+       information).
 
     3) Bootstrap accuracy maps that contain no clusters are counted in a
        dedicated size-zero bin in the NULL distribution of cluster sizes.
@@ -129,6 +130,10 @@ class GroupClusterThreshold(Learner):
        inference and multiple testing correction in classification-based
        multi-voxel pattern analysis (MVPA): Random permutations and cluster
        size control. NeuroImage, 65, 69--82.
+    .. [2] Smyth, G. K., & Phipson, B. (2010). Permutation P-values Should
+       Never Be Zero: Calculating Exact P-values When Permutations Are
+       Randomly Drawn. Statistical Applications in Genetics and Molecular
+       Biology, 9, 1–12.
     """
 
     n_bootstrap = Parameter(100000, constraints=EnsureInt() & EnsureRange(min=1),
