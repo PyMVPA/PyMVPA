@@ -133,7 +133,7 @@ class GroupClusterThreshold(Learner):
     .. [2] Smyth, G. K., & Phipson, B. (2010). Permutation P-values Should
        Never Be Zero: Calculating Exact P-values When Permutations Are
        Randomly Drawn. Statistical Applications in Genetics and Molecular
-       Biology, 9, 1–12.
+       Biology, 9, 1--12.
     """
 
     n_bootstrap = Parameter(100000, constraints=EnsureInt() & EnsureRange(min=1),
@@ -271,7 +271,7 @@ class GroupClusterThreshold(Learner):
             # average all samples into one, assuming we got something like one
             # sample per subject as input
             avgr = mean_sample()
-            ds = mean_sample(ds)
+            ds = avgr(ds)
         # threshold input
         thrd = ds.samples > self._thrmap
         # mapper default
