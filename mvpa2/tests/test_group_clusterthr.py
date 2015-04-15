@@ -236,3 +236,6 @@ def test_group_clusterthreshold_simple():
     # TODO test case with no multiple comparison correction
     # TODO test case with mapped dataset
     # TODO test exceptions
+    # TODO test with a single training subject
+    # TODO test with a multi-sample input dataset for thresholding
+
