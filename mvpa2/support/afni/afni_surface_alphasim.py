@@ -545,8 +545,6 @@ def fix_options(config):
 
 def _extension_indicates_surface_file(fn):
     surface_extensions=['.gii','.niml.dset','.1D','.1D.dset']
-    print fn
-    print surface_extensions
 
     return any(fn.endswith(ext) for ext in surface_extensions)
 
