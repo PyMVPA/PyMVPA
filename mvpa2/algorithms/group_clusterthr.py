@@ -251,12 +251,9 @@ class GroupClusterThreshold(Learner):
         cluster_sizes = Counter()
         # recompute the bootstrap average maps to threshold them and determine
         # cluster sizes
-        if 'mapper' in ds.a:
-            dsa = dict(mapper=ds.a.mapper)
-        else:
-            dsa = {}
+        dsa = dict(mapper=ds.a.mapper) if 'mapper' in ds.a else {}
         if __debug__:
-            debug('GCTHR', 'Estimate NULL distribution of cluster sizes')
+            debug('GCTHR', 'Estimating NULL distribution of cluster sizes')
         # this step can be computed in parallel chunks to speeds things up
         for sidx in bcombos:
             avgmap = np.mean(ds_samples[sidx], axis=0)[None]
