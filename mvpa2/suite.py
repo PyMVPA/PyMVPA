@@ -59,6 +59,8 @@ else:
 
 __sdebug('algorithms')
 from mvpa2.algorithms.hyperalignment import *
+if externals.exists('scipy') :
+    from mvpa2.algorithms.group_clusterthr import *
 
 __sdebug('clfs')
 from mvpa2 import clfs
