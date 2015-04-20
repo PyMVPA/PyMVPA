@@ -24,6 +24,7 @@ from mvpa2.testing import assert_array_equal, assert_raises, assert_equal, \
 import mvpa2.algorithms.group_clusterthr as gct
 from mvpa2.datasets import Dataset, dataset_wizard
 from mvpa2.mappers.base import IdentityMapper
+from nose.tools import assert_greater_equal
 
 from scipy.ndimage import measurements
 from scipy.stats import norm
@@ -190,13 +191,14 @@ def test_group_clusterthreshold_simple():
     blob = Dataset([blob])
     # and some nice random permutations
     nperms = 100 * nsubj
-    perms = np.random.randn(nperms, blob.nfeatures)
-    perms = Dataset(perms,
-                    sa=dict(chunks=np.repeat(range(nsubj), len(perms) / nsubj)),
-                    fa=dict(fid=range(perms.shape[1])))
+    perm_samples = np.random.randn(nperms, blob.nfeatures)
+    perms = Dataset(perm_samples,
+                    sa=dict(chunks=np.repeat(range(nsubj), len(perm_samples) / nsubj)),
+                    fa=dict(fid=range(perm_samples.shape[1])))
     # the algorithm instance
     # scale number of bootstraps to match desired probability
-    clthr = gct.GroupClusterThreshold(n_bootstrap=int(1./feature_thresh_prob),
+    # plus a safety margin to mimimize bad luck in sampling
+    clthr = gct.GroupClusterThreshold(n_bootstrap=int(2./feature_thresh_prob),
                                       feature_thresh_prob=feature_thresh_prob,
                                       fwe_rate=0.05, n_blocks=3)
     clthr.train(perms)
@@ -220,22 +222,45 @@ def test_group_clusterthreshold_simple():
     # samples unchanged
     assert_array_equal(blob.samples, res.samples)
     # need to find the big cluster
-    assert_true(len(res.a.cluster_probs_uncorrected) > 0)
-    assert_equal(len(res.a.cluster_probs_uncorrected), res.fa.clusters_featurewise_thresh.max())
+    assert_true(len(res.a.clusterstats) > 0)
+    assert_equal(len(res.a.clusterstats), res.fa.clusters_featurewise_thresh.max())
     # probs need to decrease with size, clusters are sorted by size (decreasing)
-    assert_true(res.a.cluster_probs_uncorrected[1] <= res.a.cluster_probs_uncorrected[2])
+    assert_true(res.a.clusterstats['prob_raw'][0] <= res.a.clusterstats['prob_raw'][1])
     # corrected probs for every uncorrected cluster
-    assert_equal(len(res.a.cluster_probs_uncorrected), len(res.a.cluster_probs_fwe_corrected))
+    assert_true('prob_corrected' in res.a.clusterstats.dtype.names)
     # fwe correction always increases the p-values (if anything)
-    assert_true(np.all(res.a.cluster_probs_uncorrected <= res.a.cluster_probs_fwe_corrected))
+    assert_true(np.all(res.a.clusterstats['prob_raw'] <= res.a.clusterstats['prob_corrected']))
     # fwe thresholding only ever removes clusters
     assert_true(np.all(np.abs(res.fa.clusters_featurewise_thresh - res.fa.clusters_fwe_thresh) >= 0))
+    # check that the cluster results aren't depending in the actual location of
+    # the clusters
+    shifted_blob = Dataset([[1,3,5,3,2,0,0,0,3,0]])
+    shifted_res = clthr(shifted_blob)
+    assert_array_equal(res.a.clusterstats, shifted_res.a.clusterstats)
 
+    # check that it averages multi-sample datasets
+    # also checks that scenarios work where all features are part of one big
+    # cluster
+    multisamp = Dataset(np.arange(30).reshape(3,10) + 100)
+    avgres = clthr(multisamp)
+    assert_equal(len(avgres), 1)
+    assert_array_equal(avgres.samples[0], np.mean(multisamp.samples, axis=0))
+
+    # retrain, this time with data from only a single subject
+    perms = Dataset(perm_samples,
+                    sa=dict(chunks=np.repeat(1, len(perm_samples))),
+                    fa=dict(fid=range(perms.shape[1])))
+    clthr.train(perms)
+    # same blob -- 1st this should work without issues
+    sglres = clthr(blob)
+    # NULL estimation does no averaging
+    # -> more noise -> fewer clusters -> higher p
+    assert_greater_equal(len(res.a.clusterstats), len(sglres.a.clusterstats))
+    assert_array_equal(sglres.a.clusterstats[0]['prob_raw'],
+                       res.a.clusterstats[0]['prob_raw'])
     # TODO continue with somewhat more real dataset
     # TODO test case were FWE removes a cluster
     # TODO test case with no multiple comparison correction
     # TODO test case with mapped dataset
     # TODO test exceptions
-    # TODO test with a single training subject
-    # TODO test with a multi-sample input dataset for thresholding
 
