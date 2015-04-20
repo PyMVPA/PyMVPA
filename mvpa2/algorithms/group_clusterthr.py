@@ -45,7 +45,7 @@ class GroupClusterThreshold(Learner):
     group-average accuracy maps under the NULL hypothesis, as described in [1]_.
 
     Note: this class implements a modified version of that algorithm. The
-    present implementation differs in, at least, three aspects from the
+    present implementation differs in, at least, four aspects from the
     description in that paper.
 
     1) Cluster p-values refer to the probability of observing a particular
@@ -66,6 +66,10 @@ class GroupClusterThreshold(Learner):
        This change yields reliable cluster-probabilities even for very low
        featurewise threshold probabilities, where (some portion) of the
        bootstrap accuracy maps do not contain any clusters.
+
+    4) The method for FWE-correction used by the original authors is not
+       provided. Instead, a range of alternatives implemented by the
+       statsmodels package are available.
 
     Moreover, this implementation minimizes the required memory demands and
     allows for computing large numbers of bootstrap samples without
