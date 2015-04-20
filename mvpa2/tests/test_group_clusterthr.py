@@ -186,7 +186,7 @@ def test_group_clusterthreshold_simple():
     feature_thresh_prob = 0.005
     nsubj = 10
     # make a nice 1D blob and a speck
-    blob = np.array([3,0,1,3,5,3,2,0,0,0])
+    blob = np.array([0,0,1,3,5,3,2,0,3,0])
     blob = Dataset([blob])
     # and some nice random permutations
     nperms = 100 * nsubj
@@ -222,8 +222,8 @@ def test_group_clusterthreshold_simple():
     # need to find the big cluster
     assert_true(len(res.a.cluster_probs_uncorrected) > 0)
     assert_equal(len(res.a.cluster_probs_uncorrected), res.fa.clusters_featurewise_thresh.max())
-    # probs need to decrease with size
-    assert_true(res.a.cluster_probs_uncorrected[1] >= res.a.cluster_probs_uncorrected[2])
+    # probs need to decrease with size, clusters are sorted by size (decreasing)
+    assert_true(res.a.cluster_probs_uncorrected[1] <= res.a.cluster_probs_uncorrected[2])
     # corrected probs for every uncorrected cluster
     assert_equal(len(res.a.cluster_probs_uncorrected), len(res.a.cluster_probs_fwe_corrected))
     # fwe correction always increases the p-values (if anything)

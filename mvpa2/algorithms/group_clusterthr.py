@@ -297,6 +297,16 @@ class GroupClusterThreshold(Learner):
                                 index=np.arange(1, num + 1)).astype(int)
         # for the rest we need the labels flattened
         labels = mapper.forward1(labels)
+        # relabel clusters starting with the biggest and increase index with
+        # decreasing size
+        ordered_labels = np.zeros(labels.shape, dtype=int)
+        ordered_area = np.zeros(area.shape, dtype=int)
+        for i, idx in enumerate(np.argsort(area)):
+            ordered_labels[labels == idx + 1] = num - i
+            ordered_area[i] = area[idx]
+        area = ordered_area[::-1]
+        labels = ordered_labels
+        del ordered_labels # this one can be big
         # store cluster labels after forward-mapping
         outds.fa['clusters_featurewise_thresh'] = labels
         # update cluster size histogram with the actual result to get a
