@@ -106,7 +106,9 @@ class GroupClusterThreshold(Learner):
       ``fa.clusters_featurewise_thresh``
         Vector with labels for clusters after thresholding the input data
         with the desired feature-wise probability. Each unique non-zero
-        element corresponds to an individual super-threshold cluster.
+        element corresponds to an individual super-threshold cluster. Cluster
+        values are sorted by cluster size (number of features). The largest
+        cluster is always labeled with ``1``.
 
       ``fa.clusters_fwe_thresh``
         Vector with labels for super-threshold clusters after correction for
@@ -115,17 +117,15 @@ class GroupClusterThreshold(Learner):
         do not pass the threshold when controlling for the family-wise error
         rate.
 
-      ``a.cluster_probs_uncorrected``
-        Dictionary with probabilities of observing a cluster of a particular
-        size (or a larger one) under the NULL hypothesis. Dictionary keys
-        correspond to the labels in ``fa.clusters_featurewise_thresh``. No
-        correction for multiple comparisons.
-
-      ``a.cluster_probs_fwe_corrected``
-        If correction for multiple comparisons is performed, this dictionary
-        is available as well, and contains analog to
-        ``a.cluster_probs_uncorrected`` the corrected probabilities.
-
+      ``a.clusterstats``
+        Record array with information on all detected clusters. The array is
+        sorted according to cluster size, starting with the largest cluster
+        in terms of number of features. The array contains the fields ``size``
+        (number of features comprising the cluster), and ``prob_raw``
+        (probability of observing the cluster of a this size or larger under
+        the NULL hypothesis). If correction for multiple comparisons is
+        enabled an additional field ``prob_corrected`` (probability after
+        correction) is added.
 
     References
     ----------
@@ -267,7 +267,7 @@ class GroupClusterThreshold(Learner):
         # store cluster size histogram for later p-value evaluation
         # use a sparse matrix for easy consumption (max dim is the number of
         # features, i.e. biggest possible cluster)
-        scl = dok_matrix((1, ds.nfeatures), dtype=int)
+        scl = dok_matrix((1, ds.nfeatures + 1), dtype=int)
         for s in cluster_sizes:
             scl[0, s] = cluster_sizes[s]
         self._null_cluster_sizes = scl
@@ -315,12 +315,13 @@ class GroupClusterThreshold(Learner):
         cluster_probs_raw = _transform_to_pvals(
                                 area,
                                 self._null_cluster_sizes.astype('float'))
-        outds.a['cluster_probs_uncorrected'] = dict([(i + 1, cluster_probs_raw[i])
-                                                        for i in range(num)])
 
         if self.params.multicomp_correction is None:
             probs_corr = np.array(cluster_probs_raw)
             rej = probs_corr <= self.params.fwe_rate
+            outds.a['clusterstats'] = \
+                    np.rec.fromarrays([area, cluster_probs_raw],
+                                      names=('size', 'prob_raw'))
         else:
             # do a local import as only this tiny portion needs statsmodels
             import statsmodels.stats.multitest as smm
@@ -329,8 +330,10 @@ class GroupClusterThreshold(Learner):
                                 alpha=self.params.fwe_rate,
                                 method=self.params.multicomp_correction)[:2]
             # store corrected per-cluster probabilities
-            outds.a['cluster_probs_fwe_corrected'] = \
-                    dict([(i + 1, probs_corr[i]) for i in xrange(num)])
+            outds.a['clusterstats'] = \
+                    np.rec.fromarrays([area, cluster_probs_raw, probs_corr],
+                                      names=('size', 'prob_raw',
+                                             'prob_corrected'))
         # remove cluster labels that did not pass the FWE threshold
         for i, r in enumerate(rej):
             if not r:
