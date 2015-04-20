@@ -611,7 +611,11 @@ class OpenFMRIDataset(object):
                             add_fa=add_fa, add_sa=add_sa)
                     if not preproc_ds is None:
                         d = preproc_ds(d)
-                    d = modelfx(d, events, **kwargs)
+                    d = modelfx(d, events,
+                                **dict([(k ,v) for k, v in kwargs.iteritems()
+                                    if not k in ('preproc_img', 'preproc_ds',
+                                                 'modelfx', 'stack', 'flavor',
+                                                 'mask', 'add_fa', 'add_sa')]))
                     # if the modelfx doesn't leave 'chunk' information, we put
                     # something minimal in
                     for attr, info in (('chunks', i), ('run', run), ('subj', sub)):
