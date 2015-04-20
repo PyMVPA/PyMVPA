@@ -476,7 +476,8 @@ def fit_event_hrf_model(
     ...                   time_attr='time_coords',
     ...                   condition_attr='condition',
     ...                   design_kwargs=dict(drift_model='blank'),
-    ...                   glmfit_kwargs=dict(model='ols'))
+    ...                   glmfit_kwargs=dict(model='ols'),
+    ...                   return_model=True)
     >>> print hrf_estimates.sa.condition
     ['one' 'two']
     >>> print hrf_estimates.shape
