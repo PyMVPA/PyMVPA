@@ -385,7 +385,7 @@ def extract_boxcar_event_samples(
 
 def fit_event_hrf_model(
         ds, events, time_attr, condition_attr='targets', design_kwargs=None,
-        glmfit_kwargs=None, regr_attrs=None):
+        glmfit_kwargs=None, regr_attrs=None, return_model=False):
     """Fit a GLM with HRF regressor and yield a dataset with model parameters
 
     A univariate GLM is fitted for each feature and model parameters are
@@ -444,6 +444,11 @@ def fit_event_hrf_model(
     regr_attrs : list
       List of dataset sample attribute names that shall be extracted from the
       input dataset and used as additional regressors in the design matrix.
+    return_model : bool
+      Flag whether to included the fitted GLM model in the returned dataset.
+      For large input data this can be problematic, as the model may contain
+      the residuals (same size is input data), hence multiplies the memory
+      demand. Off by default.
 
     Returns
     -------
@@ -451,9 +456,9 @@ def fit_event_hrf_model(
       One sample for each regressor/condition in the design matrix is returned.
       The condition names are included as a sample attribute with the name
       specified by the ``condition_attr`` argument.  The actual design
-      regressors are included as ``regressors`` sample attribute. An instance
-      with the fitted NiPy GLM results is included as a dataset attribute
-      ``model``, and can be used for computing contrasts subsequently.
+      regressors are included as ``regressors`` sample attribute. If enabled,
+      an instance with the fitted NiPy GLM results is included as a dataset
+      attribute ``model``, and can be used for computing contrasts subsequently.
 
     Examples
     --------
@@ -565,7 +570,8 @@ def fit_event_hrf_model(
     # GLM
     glm = NiPyGLMMapper([], glmfit_kwargs=glmfit_kwargs,
             add_regs=glm_regs,
-            return_design=True, return_model=True, space=glm_condition_attr)
+            return_design=True, return_model=return_model,
+            space=glm_condition_attr)
 
     model_params = glm(ds)
 
