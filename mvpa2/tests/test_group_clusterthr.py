@@ -200,7 +200,48 @@ def test_group_clusterthreshold_simple():
     # plus a safety margin to mimimize bad luck in sampling
     clthr = gct.GroupClusterThreshold(n_bootstrap=int(2./feature_thresh_prob),
                                       feature_thresh_prob=feature_thresh_prob,
-                                      fwe_rate=0.05, n_blocks=3)
+                                      fwe_rate=0.05, n_blocks=3, n_proc=1)
+    clthr.train(perms)
+    # get the FE thresholds
+    thr = clthr._thrmap
+    # perms are normally distributed, hence the CDF should be close, std of the distribution
+    # will scale 1/sqrt(nsubj)
+    assert_true(np.abs(
+        feature_thresh_prob - (1 - norm.cdf(thr.mean(),
+                                          loc=0,
+                                          scale=1./np.sqrt(nsubj)))) < 0.01)
+
+    clstr_sizes = clthr._null_cluster_sizes
+    # getting anything but a lonely one feature cluster is very unlikely
+    assert_true(max([c[0] for c in clstr_sizes.keys()]) <= 1)
+    # threshold orig map
+    res = clthr(blob)
+    #
+    # check output
+    #
+    # samples unchanged
+    assert_array_equal(blob.samples, res.samples)
+    # need to find the big cluster
+    assert_true(len(res.a.clusterstats) > 0)
+    assert_equal(len(res.a.clusterstats), res.fa.clusters_featurewise_thresh.max())
+    # probs need to decrease with size, clusters are sorted by size (decreasing)
+    assert_true(res.a.clusterstats['prob_raw'][0] <= res.a.clusterstats['prob_raw'][1])
+    # corrected probs for every uncorrected cluster
+    assert_true('prob_corrected' in res.a.clusterstats.dtype.names)
+    # fwe correction always increases the p-values (if anything)
+    assert_true(np.all(res.a.clusterstats['prob_raw'] <= res.a.clusterstats['prob_corrected']))
+    # fwe thresholding only ever removes clusters
+    assert_true(np.all(np.abs(res.fa.clusters_featurewise_thresh - res.fa.clusters_fwe_thresh) >= 0))
+    # check that the cluster results aren't depending in the actual location of
+    # the clusters
+    shifted_blob = Dataset([[1,3,5,3,2,0,0,0,3,0]])
+    shifted_res = clthr(shifted_blob)
+    assert_array_equal(res.a.clusterstats, shifted_res.a.clusterstats)
+
+    # repeat previous test but this time train in parallel
+    clthr = gct.GroupClusterThreshold(n_bootstrap=int(2./feature_thresh_prob),
+                                      feature_thresh_prob=feature_thresh_prob,
+                                      fwe_rate=0.05, n_blocks=3, n_proc=4)
     clthr.train(perms)
     # get the FE thresholds
     thr = clthr._thrmap
