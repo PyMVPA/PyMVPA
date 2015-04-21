@@ -191,6 +191,10 @@ class GroupClusterThreshold(Learner):
              of segments reduces the peak memory demand by that roughly factor.
              """)
 
+    n_proc = Parameter(1, constraints=EnsureInt() & EnsureRange(min=1),
+             doc="""Number of parallel processes to use for computation.
+             Requires `joblib` external module.""")
+
     def __init__(self, **kwargs):
         # force disable auto-train: would make no sense
         Learner.__init__(self, auto_train=False, **kwargs)
@@ -217,8 +221,6 @@ class GroupClusterThreshold(Learner):
         bcombos = [[random.sample(v, 1)[0] for v in chunk_samples.values()]
                         for i in xrange(self.params.n_bootstrap)]
         bcombos = np.array(bcombos, dtype=int)
-        # TODO implement parallel procedure as the estimation is independent
-        # across features
         #
         # Step 1: find the per-feature threshold that corresponds to some p
         # in the NULL
@@ -230,22 +232,43 @@ class GroupClusterThreshold(Learner):
             debug('GCTHR',
                   'Compute per-feature thresholds in %i blocks of %i features'
                   % (self.params.n_blocks, segwidth))
-        thrmap = np.hstack( # merge across compute blocks
-                [get_thresholding_map(
-                    # one average map for every stored bcombo
-                    # this also slices the input data into feature subsets
-                    # for the compute blocks
-                    [np.mean(
-                        # get a view to a subset of the features
-                        # -- should be somewhat efficient as feature axis is
-                        # sliced
-                        ds_samples[sidx, segstart:segstart + segwidth],
-                        axis=0)
-                            for sidx in bcombos],
-                    self.params.feature_thresh_prob)
-                        # compute a partial threshold map for as mabny features
-                        # as fit into a compute block
-                        for segstart in xrange(0, ds.nfeatures, segwidth)])
+        # Execution can be done in parallel as the estimation is independent
+        # across features
+        if self.params.n_proc == 1:
+            # Serial execution
+            thrmap = np.hstack( # merge across compute blocks
+                    [get_thresholding_map(
+                        # one average map for every stored bcombo
+                        # this also slices the input data into feature subsets
+                        # for the compute blocks
+                        [np.mean(
+                            # get a view to a subset of the features
+                            # -- should be somewhat efficient as feature axis is
+                            # sliced
+                            ds_samples[sidx, segstart:segstart + segwidth],
+                            axis=0)
+                                for sidx in bcombos],
+                        self.params.feature_thresh_prob)
+                            # compute a partial threshold map for as mabny features
+                            # as fit into a compute block
+                            for segstart in xrange(0, ds.nfeatures, segwidth)])
+        else:
+            # Parallel execution
+            verbose_level_parallel=50 if 'GCTHR' in debug.active else 0
+            # local import as only parallel execution needs this
+            from joblib import Parallel, delayed
+            # same code as above, just in parallel with joblib's Parallel
+            thrmap = np.hstack(
+                    Parallel(n_jobs=self.params.n_proc,
+                             verbose=verbose_level_parallel,
+                             backend='threading')
+                    (delayed(get_thresholding_map)
+                        ([np.mean(
+                            ds_samples[sidx, segstart:segstart + segwidth],
+                            axis=0)
+                                for sidx in bcombos],
+                        self.params.feature_thresh_prob)
+                            for segstart in xrange(0, ds.nfeatures, segwidth)))
         # store for later thresholding of input data
         self._thrmap = thrmap
         #
@@ -259,15 +282,27 @@ class GroupClusterThreshold(Learner):
         if __debug__:
             debug('GCTHR', 'Estimating NULL distribution of cluster sizes')
         # this step can be computed in parallel chunks to speeds things up
-        for sidx in bcombos:
-            avgmap = np.mean(ds_samples[sidx], axis=0)[None]
-            # apply threshold
-            clustermap = avgmap > thrmap
-            # wrap into a throw-away dataset to get the reverse mapping right
-            bds = Dataset(clustermap, a=dsa)
-            # this function reverse-maps every sample one-by-one, hence no need
-            # to collect chunks of bootstrapped maps
-            cluster_sizes = get_cluster_sizes(bds, cluster_sizes)
+        if self.params.n_proc == 1:
+            # Serial execution
+            for sidx in bcombos:
+                avgmap = np.mean(ds_samples[sidx], axis=0)[None]
+                # apply threshold
+                clustermap = avgmap > thrmap
+                # wrap into a throw-away dataset to get the reverse mapping right
+                bds = Dataset(clustermap, a=dsa)
+                # this function reverse-maps every sample one-by-one, hence no need
+                # to collect chunks of bootstrapped maps
+                cluster_sizes = get_cluster_sizes(bds, cluster_sizes)
+        else:
+            # Parallel execution
+            # same code as above, just restructured for joblib's Parallel
+            _ = Parallel(n_jobs=self.params.n_proc,
+                         verbose=verbose_level_parallel,
+                         backend='threading')(delayed(get_cluster_sizes)
+                        (Dataset(np.mean(ds_samples[sidx],
+                                 axis=0)[None] > thrmap,
+                                 a=dsa), cluster_sizes)
+                        for sidx in bcombos)
         # store cluster size histogram for later p-value evaluation
         # use a sparse matrix for easy consumption (max dim is the number of
         # features, i.e. biggest possible cluster)
