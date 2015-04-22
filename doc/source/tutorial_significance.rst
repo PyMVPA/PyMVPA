@@ -20,12 +20,85 @@ WiP: The Earth Is Round -- Significance Testing
   <http://ipython.org/ipython-doc/dev/interactive/htmlnotebook.html>`_:
   [`ipynb <notebooks/tutorial_significance.ipynb>`_]
 
+After performing a classification analysis one is usually interested in
+an evaluation of the results with respect to its statistical uncertainty.
+In the following we will take at a few possible approaches to get this from
+PyMVPA.
+
+Let's look at a typical setup for a cross-validated classification.  We start
+by generating a dataset with 200 samples and 3 features of which only two carry
+some relevant signal. Afterwards we set up a standard leave-one-chunk-out
+cross-validation procedure for an SVM classifier. At this point we have seen
+this numerous times, and the code should be easy to read:
+
+>>> # lazy import
+>>> from mvpa2.suite import *
+>>> # some example data with signal
+>>> ds = normal_feature_dataset(perlabel=100, nlabels=2, nfeatures=3,
+...                             nonbogus_features=[0,1], snr=0.3, nchunks=2)
+>>> # classifier
+>>> clf = LinearCSVMC()
+>>> # data folding
+>>> partitioner = NFoldPartitioner()
+
+>>> # complete cross-validation setup
+>>> cv = CrossValidation(clf,
+...                      partitioner,
+...                      errorfx=mean_match_accuracy,
+...                      postproc=mean_sample())
+>>> acc = cv(ds)
+
+.. exercise::
+
+  Take a look at the performance statistics of the classifier. Explore how it
+  changes with different values of the signal-to-noise (``snr``) parameter
+  of the dataset generator function.
+
+The simplest way to get a quick assessment of the statistical uncertainty of
+the classification accuracy is to look at the standard deviation of the
+accuracies across cross-validation folds. This can be achieved by removing
+the ``postproc`` argument of ``CrossValidation``.
+
+Another, slightly more informative, approach is to compute confidence intervals
+for the classification accuracy. We can do this by treating each prediction
+of the classifier as a Bernoulli trial with some success probability.
+If we further assume statistical independence of these prediction outcomes
+we can compute `binomial proportion confidence intervals`_ using a variety
+of methods. To implement this calculation we only have to modify the
+error function and the post processing of our previous analysis setup.
+
+.. _binomial proportion confidence intervals: https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval
+
+>>> # complete cross-validation setup
+>>> cv = CrossValidation(
+...         clf,
+...         partitioner,
+...         errorfx=prediction_target_matches,
+...         postproc=BinomialProportionCI(width=.95, meth='jeffreys'))
+>>> ci_result = cv(ds)
+>>> ci = ci_result.samples[:, 0]
+>>> ci[0] < np.asscalar(acc) < ci[1]
+True
+
+Instead of computing accuracies we use an error function that returns a boolean
+vector of prediction success for each sample. In the post processing this
+information is then used to compute the confidence intervals. We can see that
+the previously computed accuracy lies within the confidence interval. If the
+assumption of statistical independence of the classifier prediction success
+holds we can be 95% certain that the true accuracy is within this interval.
+
+.. exercise::
+
+  Think about situations in which we cannot reasonably assume statistical
+  independence of classifier prediction outcomes. Hint: What if the data
+  in the testing dataset shows strong auto-correlation?
+
 *Null* hypothesis testing
 =========================
 
-It is often desirable to be able to make statements like *"Performance is
-significantly above chance-level"*. To help with that PyMVPA supports *Null*
-hypothesis (aka *H0*) testing for any :class:`~mvpa2.measures.base.Measure`.
+Another way of making statements like *"Performance is significantly above
+chance-level"* is *Null* hypothesis (aka *H0*) testing that PyMVPA supports for
+any :class:`~mvpa2.measures.base.Measure`.
 
 However, as with other applications of statistics in classifier-based analyses,
 there is the problem that we typically do not know the distribution of a
@@ -55,34 +128,13 @@ training dataset) under the *no signal* condition. This is simply the fraction
 of results from the permutation runs that is larger or smaller than the
 empirical (depending on whether one is looking at performances or errors).
 
-Here we take a look at how this is done for a simple cross-validated
-classification in PyMVPA.  We start by generating a dataset with 200 samples
-and 3 features of which only two carry some relevant signal. Afterwards we set
-up a standard leave-one-chunk-out cross-validation procedure for an SVM
-classifier. At this point we have seen this numerous times, and the code should
-be easy to read:
+Here is our previous cross-validation set up:
 
->>> # lazy import
->>> from mvpa2.suite import *
->>> # some example data with signal
->>> ds = normal_feature_dataset(perlabel=100, nlabels=2, nfeatures=3,
-...                             nonbogus_features=[0,1], snr=0.3, nchunks=2)
->>> # classifier
->>> clf = LinearCSVMC()
->>> # data folding
->>> partitioner = NFoldPartitioner()
->>> # complete cross-validation setup
 >>> cv = CrossValidation(clf,
 ...                      partitioner,
 ...                      postproc=mean_sample(),
 ...                      enable_ca=['stats'])
 >>> err = cv(ds)
-
-.. exercise::
-
-  Take a look at the performance statistics of the classifier. Explore how it
-  changes with different values of the signal-to-noise (``snr``) parameter
-  of the dataset generator function.
 
 Now we want to run this analysis again, repeatedly and with a fresh
 permutation of the targets for each run. We need two pieces for the Monte
@@ -683,17 +735,16 @@ To allow for easy inspection of dataset to prevent such obvious confounds,
 dataset:
 
 >>> from mvpa2.tutorial_suite import *
->>> # alt: `ds = load_tutorial_results('ds_haxby2001')`
 >>> ds = get_haxby2001_data(roi='vt')
 >>> print ds.summary()
-Dataset: 16x577@float64, <sa: chunks,runtype,targets,time_coords,time_indices>, <fa: voxel_indices>, <a: imghdr,imgtype,mapper,voxel_dim,voxel_eldim>
+Dataset: 16x577@float64, <sa: chunks,run,runtype,subj,targets,task,time_coords,time_indices>, <fa: voxel_indices>, <a: imghdr,imgtype,mapper,voxel_dim,voxel_eldim>
 stats: mean=11.5788 std=13.7772 var=189.811 min=-49.5554 max=97.292
 <BLANKLINE>
 Counts of targets in each chunk:
-      chunks\targets     bottle cat chair face house scissors scrambledpix shoe
-                           ---  ---  ---   ---  ---     ---        ---      ---
-0.0+2.0+4.0+6.0+8.0+10.0    1    1    1     1    1       1          1        1
-1.0+3.0+5.0+7.0+9.0+11.0    1    1    1     1    1       1          1        1
+  chunks\targets bottle cat chair face house scissors scrambledpix shoe
+                   ---  ---  ---   ---  ---     ---        ---      ---
+  0+2+4+6+8+10      1    1    1     1    1       1          1        1
+  1+3+5+7+9+11      1    1    1     1    1       1          1        1
 <BLANKLINE>
 Summary for targets across chunks
     targets  mean std min max #chunks
@@ -707,9 +758,9 @@ scrambledpix   1   0   1   1     2
     shoe       1   0   1   1     2
 <BLANKLINE>
 Summary for chunks across targets
-          chunks         mean std min max #targets
-0.0+2.0+4.0+6.0+8.0+10.0   1   0   1   1      8
-1.0+3.0+5.0+7.0+9.0+11.0   1   0   1   1      8
+    chunks   mean std min max #targets
+0+2+4+6+8+10   1   0   1   1      8
+1+3+5+7+9+11   1   0   1   1      8
 Sequence statistics for 16 entries from set ['bottle', 'cat', 'chair', 'face', 'house', 'scissors', 'scrambledpix', 'shoe']
 Counter-balance table for orders up to 2:
 Targets/Order O1                |  O2                |
@@ -734,7 +785,7 @@ informative to look at the original sequence.  To do so avoiding loading a
 complete dataset we would simply provide the stimuli sequence to
 :class:`~mvpa2.clfs.miscfx.SequenceStats` for the analysis:
 
->>> attributes_filename = os.path.join(tutorial_data_path, 'data', 'attributes.txt')
+>>> attributes_filename = os.path.join(pymvpa_dataroot, 'attributes_literal.txt')
 >>> attr = SampleAttributes(attributes_filename)
 >>> targets = np.array(attr.targets)
 >>> ss = SequenceStats(attr.targets)

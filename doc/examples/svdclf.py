@@ -26,11 +26,7 @@ if __debug__:
 #
 # load PyMVPA example dataset
 #
-attr = SampleAttributes(os.path.join(pymvpa_dataroot,
-                        'attributes_literal.txt'))
-dataset = fmri_dataset(os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                       targets=attr.targets, chunks=attr.chunks,
-                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+dataset = load_example_fmri_dataset(literal=True)
 
 #
 # preprocessing

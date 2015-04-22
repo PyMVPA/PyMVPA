@@ -10,10 +10,10 @@ dataroot=${MVPA_DATA_ROOT:-"mvpa2/data"}
 
 # where to place output; into tmp by default
 outdir=${MVPA_EXAMPLE_WORKDIR:-}
-have_tmpdir=0
 if [ -z "$outdir" ]; then
   outdir=$(mktemp -d)
-  have_tmpdir=1
+  # cleanup if working in tmpdir upon failure/exit
+  trap "rm -rf \"$outdir\"" TERM INT EXIT
 fi
 
 #% EXAMPLE START
@@ -69,5 +69,3 @@ pymvpa2 exec -i "$outdir"/crossval_results.hdf5 \
                -e 'assert ds.shape == (1,1)' \
                -e 'assert ds.samples[0,0] < 0.1'
 
-# cleanup if working in tmpdir
-[ $have_tmpdir = 1 ] && rm -rf $outdir || true

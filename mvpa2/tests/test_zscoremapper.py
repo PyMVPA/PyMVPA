@@ -115,6 +115,14 @@ def test_zscore():
     zscore(data, param_est=('targets', [0, 1]))
     assert_array_equal(samples, data.samples)
 
+    # verify that if param_est is set but chunks_attr is None
+    # performs zscoring across entire dataset correctly
+    data = data.copy()
+    data_01 = data.select({'targets': [0, 1]})
+    zscore(data_01, chunks_attr=None)
+    zscore(data, chunks_attr=None, param_est=('targets', [0, 1]))
+    assert_array_equal(data_01.samples, data.select({'targets': [0, 1]}))
+
     # these might be duplicating code above -- but twice is better than nothing
 
     # dataset: mean=2, std=1

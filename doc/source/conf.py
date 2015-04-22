@@ -299,8 +299,47 @@ latex_preamble = r"""
 intersphinx_mapping = {'http://docs.python.org/': None,
                        'http://nipy.sourceforge.net/nipype': None,
                        'http://nipy.sourceforge.net/nipy/stable': None,
-                       'http://h5py.alfven.org/docs': None,
+                       'http://docs.h5py.org/en/2.3/': None,
                        'http://docs.scipy.org/doc/scipy/reference': None,
                        'http://docs.scipy.org/doc/numpy/': None,
                        'http://matplotlib.sourceforge.net/': None,
                        }
+# check if we have a local copy
+intersphinx_dir = os.path.join(os.path.dirname(__file__), 'intersphinx')
+def get_intersphinx_file(url):
+    site = url.split('/')[2]
+    return os.path.join(intersphinx_dir, site + '_objects.inv')
+
+def test_get_intersphinx_file():
+    assert(get_intersphinx_file('http://docs.python.org/').endswith('docs.python.org_objects.inv'))
+
+def update_intersphinx_mapping(mapping):
+    """Updates mapping to use local files if available
+    """
+    for url in mapping:
+        f = get_intersphinx_file(url)
+        if os.path.exists(f):
+            intersphinx_mapping[url] = f
+
+def fetch_intersphinx_objects(mapping):
+    import urllib
+    if not os.path.exists(intersphinx_dir):
+        os.makedirs(intersphinx_dir)
+    for url in mapping:
+        objects_url = '%s/objects.inv' % url
+        try:
+            f = get_intersphinx_file(url)
+            urllib.urlretrieve(objects_url, f)
+            print("D: fetched %s" % f)
+        except Exception, e:
+            print("D: failed to retrieve from %s: %s" % (objects_url, e))
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        if sys.argv[1] == 'cache_intersphinx':
+            fetch_intersphinx_objects(intersphinx_mapping)
+
+if os.path.exists(intersphinx_dir):
+    update_intersphinx_mapping(intersphinx_mapping)
+
+print("D: interersphinx_mapping %s " % (str(intersphinx_mapping)))

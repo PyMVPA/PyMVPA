@@ -75,4 +75,5 @@ command, or use the provided `IPython notebooks`_ for each tutorial part.
    tutorial_sensitivity
    tutorial_eventrelated
    tutorial_eventrelated_searchlight
+   tutorial_openfmri
    tutorial_significance

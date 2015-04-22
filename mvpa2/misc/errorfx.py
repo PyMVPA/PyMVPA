@@ -72,6 +72,9 @@ def mismatch_error(predicted, target):
     """
     return np.sum( np.asanyarray(predicted) != target )
 
+def prediction_target_matches(predicted, target):
+    """Returns a boolean vector of correctness of predictions"""
+    return np.asanyarray(predicted) == target
 
 def match_accuracy(predicted, target):
     """Computes number of matches between some target and some
@@ -79,7 +82,7 @@ def match_accuracy(predicted, target):
     Both 'predicted' and 'target' can be either scalars or sequences,
     but have to be of the same length.
     """
-    return np.sum( np.asanyarray(predicted) == target )
+    return np.sum(prediction_target_matches(predicted, target))
 
 def mean_match_accuracy(predicted, target):
     """Computes mean of number of matches between some target and some
@@ -87,8 +90,7 @@ def mean_match_accuracy(predicted, target):
     Both 'predicted' and 'target' can be either scalars or sequences,
     but have to be of the same length.
     """
-    return np.mean( np.asanyarray(predicted) == target )
-
+    return np.mean(prediction_target_matches(predicted, target))
 
 def auc_error(predicted, target):
     """Computes the area under the ROC for the given the

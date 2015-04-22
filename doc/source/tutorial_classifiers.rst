@@ -298,10 +298,7 @@ following code snippet should be plausible:
 >>> # directory that contains the data files
 >>> datapath = os.path.join(tutorial_data_path, 'data')
 >>> # load the raw data
->>> attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
->>> ds = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
-...                   targets=attr.targets, chunks=attr.chunks,
-...                   mask=os.path.join(datapath, 'mask_vt.nii.gz'))
+>>> ds = load_datadb_tutorial_data(roi='vt')
 >>> # pre-process
 >>> poly_detrend(ds, polyord=1, chunks_attr='chunks')
 >>> zscore(ds, param_est=('targets', ['rest']))

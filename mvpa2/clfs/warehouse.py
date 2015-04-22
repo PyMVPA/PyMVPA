@@ -658,7 +658,7 @@ if len(clfswh['linear', 'svm']) > 0:
     #   FeatureSelectionClassifier(
     #    clf = LinearCSVMC(),
     #    feature_selection = RFE(             # on features selected via RFE
-    #        sensitivity_analyzer=\
+    #        sensitivity_analyzer=
     #            rfesvm.get_sensitivity_analyzer(postproc=absolute_features()),
     #        transfer_error=TransferError(rfesvm),
     #        stopping_criterion=FixedErrorThresholdStopCrit(0.05),
@@ -675,7 +675,7 @@ if len(clfswh['linear', 'svm']) > 0:
     #   FeatureSelectionClassifier(
     #    clf = LinearCSVMC(),
     #    feature_selection = RFE(             # on features selected via RFE
-    #        sensitivity_analyzer=\
+    #        sensitivity_analyzer=
     #            rfesvm.get_sensitivity_analyzer(postproc=absolute_features()),
     #        transfer_error=TransferError(rfesvm),
     #        stopping_criterion=FixedErrorThresholdStopCrit(0.05),

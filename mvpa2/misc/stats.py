@@ -100,7 +100,7 @@ def ttest_1samp(a, popmean=0, axis=0, mask=None, alternative='two-sided'):
     This is a refinement for the :func:`scipy.stats.ttest_1samp` for
     the null hypothesis testing that the expected value (mean) of a
     sample of independent observations is equal to the given
-    population mean, `popmean`.  It adds ability to test carry single
+    population mean, `popmean`.  It adds ability to carry single
     tailed test as well as operate on samples with varying number of
     active measurements, as specified by `mask` argument.
 
@@ -216,3 +216,198 @@ def _ttest_finish(df, t, alternative):
         t = np.asscalar(t)
 
     return t, prob
+
+
+def binomial_proportion_ci(n, X, alpha=.05, meth='jeffreys'):
+    """Compute the confidence interval for a set of Bernoulli trials
+
+    Most, if not all, implemented methods assume statistical independence
+    of the Bernoulli trial outcomes. Computed confidence intervals
+    may be invalid if this condition is violated.
+
+    This is a re-implementation of Matlab code originally written by
+    Anderson Winkler and Tom Nichols.
+
+    Parameters
+    ==========
+    n : int
+      Number of trials
+    X : int or array
+      Number of successful trials. This can be a 1D array.
+    alpha : float
+      Coverage of the confidence interval. For a 95% CI (default), use
+      alpha = 0.05.
+    meth : {'wald', 'wilson', 'agresti-coull', 'jeffreys', 'clopper-pearson', 'arc-sine', 'logit', 'anscombe'}
+      Interval estimation method.
+
+    Returns
+    =======
+    2-item array or 2D array
+      With the lower and upper bound for the confidence interval. If X was given
+      as a vector with p items a 2xp array is returned.
+
+    See also
+    ========
+    Brown LD, Cai TT, DasGupta AA. Interval estimation for a
+    binomial proportion. Statistical Science. 2001 16(2):101-133.
+
+    http://brainder.org/2012/04/21/confidence-intervals-for-bernoulli-trials/
+    """
+
+    from scipy import stats
+    from numpy import sqrt, sin, arcsin, log, exp
+
+    n = float(n)
+    X = np.asanyarray(X, dtype=float)
+    k  = stats.norm.ppf(1 - alpha / 2.)
+    p  = X / n          # Proportion of successes
+    q  = 1 - p          # Proportion of failures
+    Xt = X + (k**2) / 2 # Modified number of sucesses
+    nt = n + k**2       # Modified number of trials
+    pt = Xt / nt        # Modified proportion of successes
+    qt = 1 - pt         # Modified proportion of failures
+
+    # be tolerant
+    meth = meth.lower()
+    if meth == 'wald':
+        L = p - k * sqrt(p * q / n)
+        U = p + k * sqrt(p * q / n)
+    elif meth == 'wilson':
+        a = k * sqrt(n * p * q + (k**2) / 4) / nt
+        L = pt - a
+        U = pt + a
+    elif meth == 'agresti-coull':
+        a = k * sqrt(pt * qt / nt)
+        L = pt - a
+        U = pt + a
+    elif meth == 'jeffreys':
+        L = stats.beta.ppf(    alpha / 2, X + .5, n - X + .5)
+        U = stats.beta.ppf(1 - alpha / 2, X + .5, n - X + .5)
+    elif meth == 'clopper-pearson':
+        L = stats.beta.ppf(    alpha / 2, X,     n - X + 1)
+        U = stats.beta.ppf(1 - alpha / 2, X + 1, n - X)
+    elif meth == 'arc-sine':
+        pa = (X + 3 / 8) / (n + 3 / 4)
+        as_ = arcsin(sqrt(pa))
+        a = k / (2 * sqrt(n))
+        L  = sin(as_ - a)**2
+        U  = sin(as_ + a)**2
+    elif meth == 'logit':
+        lam  = log(X / (n - X))
+        sqVhat = sqrt(n / (X * (n - X)))
+        exlamL = exp(lam - k * sqVhat)
+        exlamU = exp(lam + k * sqVhat)
+        L    = exlamL / (1 + exlamL)
+        U    = exlamU / (1 + exlamU)
+    elif meth == 'anscombe':
+        lam  = log((X + .5) / (n - X + .5))
+        sqVhat = sqrt((n + 1) * (n + 2) / (n * (X + 1) * (n - X + 1)))
+        exlamL = exp(lam - k * sqVhat)
+        exlamU = exp(lam + k * sqVhat)
+        L    = exlamL / (1 + exlamL)
+        U    = exlamU / (1 + exlamU)
+    else:
+        raise ValueError('unknown confidence interval method')
+
+    return np.array((L, U))
+
+
+def binomial_proportion_ci_from_bool(arr, axis=0, *args, **kwargs):
+    """Convenience wrapper for ``binomial_proportion_ci()`` with boolean input
+
+    Parameters
+    ----------
+    arr : array
+      Boolean array
+    axis : int
+    *args, **kwargs
+      All other arguments are passed on to binomial_proportion_ci().
+    """
+    return binomial_proportion_ci(arr.shape[axis], np.sum(arr, axis=axis),
+                                  *args, **kwargs)
+
+
+def _mask_nan(x):
+    return np.ma.masked_array(x, np.isnan(x))
+
+def compute_ts_boxplot_stats(data, outlier_abs_minthresh=None,
+                             outlier_thresh=3.0, greedy_outlier=False,
+                             aggfx=None, *args):
+    """Compute boxplot-like statistics across a set of time series.
+
+    This function can handle missing values and supports data aggregation.
+
+    Parameters
+    ----------
+    data : array
+      Typically a 2-dimensional array (series x samples). Multi-feature samples
+      are supported (series x samples x features), but they have to be
+      aggregated into a scalar. See ``aggfx``.
+    outlier_abs_minthresh : float or None
+      Absolute minimum threshold of outlier detection. Only value larger than
+      this this threshold will ever be considered as an outlier
+    outlier_thresh : float or None
+      Outlier classification threshold in units of standard deviation.
+    greedy_outlier : bool
+      If True, an entire time series is marked as an outlier, if any of its
+      observations matches the criterion. If False, only individual observations
+      are marked as outlier.
+    aggfx : functor or None
+      Aggregation function used to collapse multi-feature samples into a scalar
+      value
+    *args :
+      Additional arguments for ``aggfx``.
+
+    Returns
+    -------
+    tuple
+      This 2-item tuple contains all computed statistics in the first item and
+      all classified outliers in the second item. Statistics are computed for
+      each time series observation across time series. Available information:
+      mean value, median, standard deviation, minimum, maximum, 25% and 75%
+      percentile, as well as number of non-outlier data points for each sample.
+      The outlier data points are returned a masked array of the same size as
+      the input data. All data points classified as non-outliers are masked.
+    """
+    if len(data) < 2:
+        raise ValueError("needs at least two time series")
+    # data comes in as (subj x volume x parameter)
+    orig_input = data
+    # reduce data to L2-norm
+    if not aggfx is None:
+        data = np.apply_along_axis(aggfx, 2, data, *args)
+    # need to deal with missing data
+    data = _mask_nan(np.asanyarray(data))
+    if len(data.shape) < 2:
+        raise ValueError("needs at least two observation per time series")
+    # outlier detection
+    meand = np.ma.mean(data, axis=0)
+    stdd = np.ma.std(data, axis=0)
+    outlierd = None
+    if outlier_thresh > 0.0:
+        outlier = np.ma.greater((np.absolute(data - meand)), outlier_thresh * stdd)
+        if not outlier_abs_minthresh is None:
+            # apply absolute filter in addition
+            outlier = np.logical_and(outlier,
+                                     np.ma.greater(data,
+                                                   outlier_abs_minthresh))
+        if greedy_outlier:
+            # expect outlier mask to all elements in that series
+            outlier[np.sum(outlier, axis=1) > 0] = True
+        # apply outlier mask to original data, but merge with existing mask
+        # to keep NaNs out of the game
+        data = np.ma.masked_array(data.data,
+                                  mask=np.logical_or(data.mask, outlier))
+        outlierd = np.ma.masked_array(data.data,
+                                      mask=np.logical_not(outlier))
+
+    res = {}
+    res['mean'] = np.ma.mean(data, axis=0)
+    res['median'] = np.ma.median(data, axis=0)
+    res['std'] = np.ma.std(data, axis=0)
+    res['min'] = np.ma.min(data, axis=0)
+    res['max'] = np.ma.max(data, axis=0)
+    res['p75'] = np.percentile(data, 75, axis=0)
+    res['p25'] = np.percentile(data, 25, axis=0)
+    res['n'] = len(data) - data.mask.sum(axis=0)
+    return res, outlierd

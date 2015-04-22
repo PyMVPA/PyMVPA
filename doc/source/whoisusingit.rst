@@ -51,9 +51,14 @@ Institutions Where PyMVPA Is Known To Be Used
 Studies employing PyMVPA
 ========================
 
+.. 10.1523/JNEUROSCI.4677-14.2015
+
 2014
 ----
 
+* :ref:`Rueschemeyer et al., Journal of Cognitive Neuroscience (in press)
+  <REA+14>`. Observing, Performing, and Understanding Actions: Revisiting
+  the Role of Cortical Motor Areas in Processing of Action Words.
 * :ref:`Hanke et al., Scientific Data (in press) <HBI+14>`. A high-resolution
   7-Tesla fMRI dataset from complex natural stimulation with an audio movie.
 * :ref:`Helfinstein et al. PNAS (2014) <HSC+14>`. Predicting risky choices from
