@@ -296,13 +296,16 @@ class GroupClusterThreshold(Learner):
         else:
             # Parallel execution
             # same code as above, just restructured for joblib's Parallel
-            _ = Parallel(n_jobs=self.params.n_proc,
-                         verbose=verbose_level_parallel,
-                         backend='threading')(delayed(get_cluster_sizes)
+            for jobres in Parallel(n_jobs=self.params.n_proc,
+                                   pre_dispatch=self.params.n_proc,
+                                   verbose=verbose_level_parallel) \
+                    (delayed(get_cluster_sizes)
                         (Dataset(np.mean(ds_samples[sidx],
                                  axis=0)[None] > thrmap,
-                                 a=dsa), cluster_sizes)
-                        for sidx in bcombos)
+                                 a=dsa))
+                        for sidx in bcombos):
+                # aggregate
+                cluster_sizes += jobres
         # store cluster size histogram for later p-value evaluation
         # use a sparse matrix for easy consumption (max dim is the number of
         # features, i.e. biggest possible cluster)
