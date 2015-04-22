@@ -261,8 +261,8 @@ def test_group_clusterthreshold_simple(n_proc):
     # NULL estimation does no averaging
     # -> more noise -> fewer clusters -> higher p
     assert_greater_equal(len(res.a.clusterstats), len(sglres.a.clusterstats))
-    assert_array_equal(sglres.a.clusterstats[0]['prob_raw'],
-                       res.a.clusterstats[0]['prob_raw'])
+    assert_greater_equal(sglres.a.clusterstats[0]['prob_raw'],
+                         res.a.clusterstats[0]['prob_raw'])
     # TODO continue with somewhat more real dataset
     # TODO test case were FWE removes a cluster
     # TODO test case with no multiple comparison correction
