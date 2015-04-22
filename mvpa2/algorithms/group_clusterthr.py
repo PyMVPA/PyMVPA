@@ -224,7 +224,6 @@ class GroupClusterThreshold(Learner):
         #
         # Step 1: find the per-feature threshold that corresponds to some p
         # in the NULL
-        thrsegs = []
         segwidth = ds.nfeatures/self.params.n_blocks
         # speed things up by operating on an array not a dataset
         ds_samples = ds.samples
@@ -234,24 +233,25 @@ class GroupClusterThreshold(Learner):
                   % (self.params.n_blocks, segwidth))
         # Execution can be done in parallel as the estimation is independent
         # across features
-        if self.params.n_proc == 1:
-            # Serial execution
-            thrmap = np.hstack( # merge across compute blocks
-                    [get_thresholding_map(
-                        # one average map for every stored bcombo
-                        # this also slices the input data into feature subsets
-                        # for the compute blocks
-                        [np.mean(
+        def featuresegment_producer(ncols):
+            for segstart in xrange(0, ds.nfeatures, ncols):
+                # one average map for every stored bcombo
+                # this also slices the input data into feature subsets
+                # for the compute blocks
+                yield [np.mean(
                             # get a view to a subset of the features
                             # -- should be somewhat efficient as feature axis is
                             # sliced
-                            ds_samples[sidx, segstart:segstart + segwidth],
+                            ds_samples[sidx, segstart:segstart + ncols],
                             axis=0)
-                                for sidx in bcombos],
-                        self.params.feature_thresh_prob)
-                            # compute a partial threshold map for as mabny features
-                            # as fit into a compute block
-                            for segstart in xrange(0, ds.nfeatures, segwidth)])
+                       for sidx in bcombos]
+        if self.params.n_proc == 1:
+            # Serial execution
+            thrmap = np.hstack( # merge across compute blocks
+                    [get_thresholding_map(d, self.params.feature_thresh_prob)
+                        # compute a partial threshold map for as many features
+                        # as fit into a compute block
+                        for d in featuresegment_producer(segwidth)])
         else:
             # Parallel execution
             verbose_level_parallel=50 if 'GCTHR' in debug.active else 0
@@ -260,15 +260,11 @@ class GroupClusterThreshold(Learner):
             # same code as above, just in parallel with joblib's Parallel
             thrmap = np.hstack(
                     Parallel(n_jobs=self.params.n_proc,
-                             verbose=verbose_level_parallel,
-                             backend='threading')
-                    (delayed(get_thresholding_map)
-                        ([np.mean(
-                            ds_samples[sidx, segstart:segstart + segwidth],
-                            axis=0)
-                                for sidx in bcombos],
-                        self.params.feature_thresh_prob)
-                            for segstart in xrange(0, ds.nfeatures, segwidth)))
+                             pre_dispatch=self.params.n_proc,
+                             verbose=verbose_level_parallel)(
+                        delayed(get_thresholding_map)
+                        (d, self.params.feature_thresh_prob)
+                            for d in featuresegment_producer(segwidth)))
         # store for later thresholding of input data
         self._thrmap = thrmap
         #
