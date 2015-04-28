@@ -205,7 +205,7 @@ def test_group_clusterthreshold_simple(n_proc):
     # plus a safety margin to mimimize bad luck in sampling
     clthr = gct.GroupClusterThreshold(n_bootstrap=int(2./feature_thresh_prob),
                                       feature_thresh_prob=feature_thresh_prob,
-                                      fwe_rate=0.05, n_blocks=3, n_proc=n_proc)
+                                      fwe_rate=0.01, n_blocks=3, n_proc=n_proc)
     clthr.train(perms)
     # get the FE thresholds
     thr = clthr._thrmap
@@ -237,6 +237,10 @@ def test_group_clusterthreshold_simple(n_proc):
     assert_true(np.all(res.a.clusterstats['prob_raw'] <= res.a.clusterstats['prob_corrected']))
     # fwe thresholding only ever removes clusters
     assert_true(np.all(np.abs(res.fa.clusters_featurewise_thresh - res.fa.clusters_fwe_thresh) >= 0))
+    # FWE should kill the small one
+    assert_greater(res.fa.clusters_featurewise_thresh.max(),
+                   res.fa.clusters_fwe_thresh.max())
+
     # check that the cluster results aren't depending in the actual location of
     # the clusters
     shifted_blob = Dataset([[1,3,5,3,2,0,0,0,2,0]])
@@ -263,10 +267,6 @@ def test_group_clusterthreshold_simple(n_proc):
     assert_greater_equal(len(res.a.clusterstats), len(sglres.a.clusterstats))
     assert_greater_equal(sglres.a.clusterstats[0]['prob_raw'],
                          res.a.clusterstats[0]['prob_raw'])
-    # more noise -> the small blob should not survive FWE correction
-    assert_greater(res.fa.clusters_fwe_thresh.max(),
-                   sglres.fa.clusters_fwe_thresh.max())
-
     # no again for real scientists: no FWE correction
     superclthr = gct.GroupClusterThreshold(
                     n_bootstrap=int(2./feature_thresh_prob),

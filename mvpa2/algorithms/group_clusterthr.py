@@ -349,7 +349,7 @@ class GroupClusterThreshold(Learner):
         labels = ordered_labels
         del ordered_labels # this one can be big
         # store cluster labels after forward-mapping
-        outds.fa['clusters_featurewise_thresh'] = labels
+        outds.fa['clusters_featurewise_thresh'] = labels.copy()
         # update cluster size histogram with the actual result to get a
         # proper lower bound for p-values
         # this will make a copy, because the original matrix is int
