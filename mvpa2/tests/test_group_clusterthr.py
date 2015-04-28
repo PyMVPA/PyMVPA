@@ -24,7 +24,7 @@ from mvpa2.testing import assert_array_equal, assert_raises, assert_equal, \
 import mvpa2.algorithms.group_clusterthr as gct
 from mvpa2.datasets import Dataset, dataset_wizard
 from mvpa2.mappers.base import IdentityMapper
-from nose.tools import assert_greater_equal
+from nose.tools import assert_greater_equal, assert_greater
 from mvpa2.testing.sweep import sweepargs
 
 from scipy.ndimage import measurements
@@ -192,7 +192,7 @@ def test_group_clusterthreshold_simple(n_proc):
     feature_thresh_prob = 0.005
     nsubj = 10
     # make a nice 1D blob and a speck
-    blob = np.array([0,0,1,3,5,3,2,0,3,0])
+    blob = np.array([0,0,1,3,5,3,2,0,2,0])
     blob = Dataset([blob])
     # and some nice random permutations
     nperms = 100 * nsubj
@@ -239,7 +239,7 @@ def test_group_clusterthreshold_simple(n_proc):
     assert_true(np.all(np.abs(res.fa.clusters_featurewise_thresh - res.fa.clusters_fwe_thresh) >= 0))
     # check that the cluster results aren't depending in the actual location of
     # the clusters
-    shifted_blob = Dataset([[1,3,5,3,2,0,0,0,3,0]])
+    shifted_blob = Dataset([[1,3,5,3,2,0,0,0,2,0]])
     shifted_res = clthr(shifted_blob)
     assert_array_equal(res.a.clusterstats, shifted_res.a.clusterstats)
 
@@ -263,8 +263,10 @@ def test_group_clusterthreshold_simple(n_proc):
     assert_greater_equal(len(res.a.clusterstats), len(sglres.a.clusterstats))
     assert_greater_equal(sglres.a.clusterstats[0]['prob_raw'],
                          res.a.clusterstats[0]['prob_raw'])
+    # more noise -> the small blob should not survive FWE correction
+    assert_greater(res.fa.clusters_fwe_thresh.max(),
+                   sglres.fa.clusters_fwe_thresh.max())
     # TODO continue with somewhat more real dataset
-    # TODO test case were FWE removes a cluster
     # TODO test case with no multiple comparison correction
     # TODO test case with mapped dataset
     # TODO test exceptions
