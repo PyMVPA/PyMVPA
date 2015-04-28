@@ -280,8 +280,24 @@ def test_group_clusterthreshold_simple(n_proc):
     assert_false('prob_corrected' in superres.a.clusterstats.dtype.names)
     assert_false('clusters_fwe_thresh' in superres.fa)
 
+    # check validity test
     assert_raises(ValueError, gct.GroupClusterThreshold,
                   n_bootstrap=10, feature_thresh_prob=.09, n_proc=n_proc)
+    # check mapped datasets
+    blob = np.array([[0,0,1,3,5,3,2,0,2,0],
+                     [0,0,0,0,0,0,0,0,0,0]])
+    blob = dataset_wizard([blob])
+    # and some nice random permutations
+    nperms = 100 * nsubj
+    perm_samples = np.random.randn(*((nperms,) + blob.shape))
+    perms = dataset_wizard(
+                perm_samples,
+                chunks=np.repeat(range(nsubj), len(perm_samples) / nsubj))
+    clthr.train(perms)
+    twodres = clthr(blob)
+    # finds two clusters of the same size
+    assert_array_equal(twodres.a.clusterstats['size'],
+                       res.a.clusterstats['size'])
+
     # TODO continue with somewhat more real dataset
-    # TODO test case with mapped dataset
 

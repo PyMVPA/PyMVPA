@@ -319,15 +319,15 @@ class GroupClusterThreshold(Learner):
             # sample per subject as input
             avgr = mean_sample()
             ds = avgr(ds)
-        # threshold input
-        thrd = ds.samples > self._thrmap
+        # threshold input; at this point we only have one sample left
+        thrd = ds.samples[0] > self._thrmap
         # mapper default
         mapper = IdentityMapper()
         # overwrite if possible
         if hasattr(ds, 'a') and 'mapper' in ds.a:
             mapper = ds.a.mapper
         # reverse-map input
-        osamp = mapper.reverse1(thrd[0])
+        osamp = mapper.reverse1(thrd)
         # prep output dataset
         outds = ds.copy(deep=False)
         outds.fa['featurewise_thresh'] = self._thrmap
