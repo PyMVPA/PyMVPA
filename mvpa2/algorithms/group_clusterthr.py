@@ -373,11 +373,11 @@ class GroupClusterThreshold(Learner):
                     np.rec.fromarrays([area, cluster_probs_raw, probs_corr],
                                       names=('size', 'prob_raw',
                                              'prob_corrected'))
-        # remove cluster labels that did not pass the FWE threshold
-        for i, r in enumerate(rej):
-            if not r:
-                labels[labels == i + 1] = 0
-        outds.fa['clusters_fwe_thresh'] = labels
+            # remove cluster labels that did not pass the FWE threshold
+            for i, r in enumerate(rej):
+                if not r:
+                    labels[labels == i + 1] = 0
+            outds.fa['clusters_fwe_thresh'] = labels
         return outds
 
 

@@ -20,7 +20,7 @@ import numpy as np
 import random
 
 from mvpa2.testing import assert_array_equal, assert_raises, assert_equal, \
-    assert_array_almost_equal, assert_almost_equal, assert_true
+    assert_array_almost_equal, assert_almost_equal, assert_true, assert_false
 import mvpa2.algorithms.group_clusterthr as gct
 from mvpa2.datasets import Dataset, dataset_wizard
 from mvpa2.mappers.base import IdentityMapper
@@ -266,8 +266,21 @@ def test_group_clusterthreshold_simple(n_proc):
     # more noise -> the small blob should not survive FWE correction
     assert_greater(res.fa.clusters_fwe_thresh.max(),
                    sglres.fa.clusters_fwe_thresh.max())
+
+    # no again for real scientists: no FWE correction
+    superclthr = gct.GroupClusterThreshold(
+                    n_bootstrap=int(2./feature_thresh_prob),
+                    feature_thresh_prob=feature_thresh_prob,
+                    multicomp_correction=None, n_blocks=3,
+                    n_proc=n_proc)
+    superclthr.train(perms)
+    superres = superclthr(blob)
+    assert_true('prob_corrected' in res.a.clusterstats.dtype.names)
+    assert_true('clusters_fwe_thresh' in res.fa)
+    assert_false('prob_corrected' in superres.a.clusterstats.dtype.names)
+    assert_false('clusters_fwe_thresh' in superres.fa)
+
     # TODO continue with somewhat more real dataset
-    # TODO test case with no multiple comparison correction
     # TODO test case with mapped dataset
     # TODO test exceptions
 
