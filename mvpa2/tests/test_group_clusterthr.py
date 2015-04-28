@@ -280,7 +280,8 @@ def test_group_clusterthreshold_simple(n_proc):
     assert_false('prob_corrected' in superres.a.clusterstats.dtype.names)
     assert_false('clusters_fwe_thresh' in superres.fa)
 
+    assert_raises(ValueError, gct.GroupClusterThreshold,
+                  n_bootstrap=10, feature_thresh_prob=.09, n_proc=n_proc)
     # TODO continue with somewhat more real dataset
     # TODO test case with mapped dataset
-    # TODO test exceptions
 

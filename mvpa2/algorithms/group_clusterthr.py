@@ -198,6 +198,9 @@ class GroupClusterThreshold(Learner):
     def __init__(self, **kwargs):
         # force disable auto-train: would make no sense
         Learner.__init__(self, auto_train=False, **kwargs)
+        if 1./(self.params.n_bootstrap + 1) > self.params.feature_thresh_prob:
+            raise ValueError('number of bootstrap samples is insufficient for'
+                             ' the desired threshold probability')
         self.untrain()
 
     def _untrain(self):
