@@ -12,17 +12,32 @@ import os
 import numpy as np
 
 from mvpa2.testing import *
-
-if not externals.exists('nibabel'):
-    raise SkipTest
+from mvpa2.testing.sweep import sweepargs
 
 from mvpa2 import pymvpa_dataroot
-from mvpa2.datasets.sources.openfmri import OpenFMRIDataset
+import mvpa2.datasets.sources.openfmri as ofm
 from mvpa2.misc.io.base import SampleAttributes
+from mvpa2.datasets.eventrelated import events2sample_attr, assign_conditionlabels
+
+
+@sweepargs(
+    fname=('something',
+           'something.nii',
+           'something.nii.gz',
+           'something.hdr',
+           'something.hdr.gz',
+           'something.img',
+           'something.img.gz'))
+def test_helpers(fname):
+    assert_equal('something', ofm._stripext(fname))
 
 
 def test_openfmri_dataset():
-    of = OpenFMRIDataset(os.path.join(pymvpa_dataroot, 'openfmri'))
+    if not externals.exists('nibabel'):
+        raise SkipTest
+
+    of = ofm.OpenFMRIDataset(os.path.join(pymvpa_dataroot, 'openfmri'))
+    assert_equal(of.get_model_descriptions(), {1: 'visual object categories'})
     sub_ids = of.get_subj_ids()
     assert_equal(sub_ids, [1, 'phantom'])
     assert_equal(of.get_scan_properties(), {'TR': '2.5'})
@@ -33,6 +48,9 @@ def test_openfmri_dataset():
     assert_equal(run_ids, range(1, 13))
     task_runs = of.get_task_bold_run_ids(task)
     assert_equal(task_runs, {1: range(1, 13)})
+
+    # try to get an image that isn't there
+    assert_raises(IOError, of.get_bold_run_image, 1, 1, 1)
 
     orig_attrs = SampleAttributes(os.path.join(pymvpa_dataroot,
                                                'attributes_literal.txt'))
