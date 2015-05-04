@@ -638,18 +638,19 @@ class BinaryFxNode(Node):
         return Dataset(err)
 
 
-class MeanRemovalMapper(Mapper):
-    """subtract sample mean from features"""
+class MeanRemoval(Mapper):
+    """Subtract sample mean from features."""
 
     is_trained = True
 
-    in_place = Parameter(False, doc=\
-    """if False: copy of the dataset will be made before demeaning.\n
-       if True: demeaning will be done on the same dataset, therefore changing
-       the original one in the process. Be carefull when using it.
-       This implementation is faster and need float array as input,
-       othervise rounding errors will happen""",
-    constraints=EnsureBool())
+    in_place = Parameter(
+        False,
+        doc="""If False: a copy of the dataset will be made before demeaning.
+        If True: demeaning will be performed in-place, i.e. input data is
+        modified. This is faster, but can have side-effects when the original
+        dataset is used elsewhere again, and implies that floating point data
+        types are required to prevent rounding errors in this case.""",
+        constraints=EnsureBool())
 
     def __init__(self, in_place=False, **kwargs):
         Mapper.__init__(self, **kwargs)
@@ -662,8 +663,8 @@ class MeanRemovalMapper(Mapper):
         if self.in_place:
             if mdata.dtype == np.int_:
                 warning("Integer dtype. Mean removal won't work correctly for "
-                         "this implementation. Rounding errors will occur. "
-                         "Use in_place=False instead")
+                        "this implementation. Rounding errors will occur. "
+                        "Use in_place=False instead")
             mdata -= mean[:, np.newaxis]
 
         else:
