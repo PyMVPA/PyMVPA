@@ -367,6 +367,10 @@ class SmartVersion(Version):
     So here is an ad-hoc and not as nice implementation
     """
 
+    def __reduce__(self):
+        """Rudimentary __reduce__ because Version is not derived from object"""
+        return self.__class__, (self.vstring,)
+
     def parse(self, vstring):
         self.vstring = vstring
         self.version = version_to_tuple(vstring)
