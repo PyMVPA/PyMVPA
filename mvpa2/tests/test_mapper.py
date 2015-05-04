@@ -14,10 +14,11 @@ from numpy import array
 
 from mvpa2.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true, assert_array_equal, nodebug
+from mvpa2.testing import sweepargs
 
 from mvpa2.testing.datasets import datasets
 from mvpa2.mappers.flatten import FlattenMapper
-from mvpa2.mappers.base import ChainMapper
+from mvpa2.mappers.base import ChainMapper, IdentityMapper
 from mvpa2.featsel.base import StaticFeatureSelection
 from mvpa2.mappers.slicing import SampleSliceMapper, StripBoundariesSamples
 from mvpa2.support.copy import copy
@@ -457,3 +458,15 @@ def test_addaxis():
     # add multiple axes
     ds4 = AddAxisMapper(pos=4)(ds)
     assert_array_equal(ds4.shape, ds.shape + (1, 1))
+
+@sweepargs(s=('i_am_the_test',
+              range(5),
+              np.arange(12).reshape(4,3),
+              Dataset(np.arange(12).reshape(4,3))))
+def test_identity_mapper(s):
+    idm = IdentityMapper()
+    # doesn't matter what you throw at it
+    assert_true(idm.forward(s) is s)
+    assert_true(idm.forward1(s) is s)
+    assert_true(idm.reverse(s) is s)
+    assert_true(idm.reverse1(s) is s)

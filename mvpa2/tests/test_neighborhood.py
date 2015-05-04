@@ -29,6 +29,15 @@ def test_distances():
     assert_equal(absmin_distance(a, b), 4)
 
 
+def test_identity():
+    # IdentityNeighborhood() behaves like Sphere(0.5) without all of the
+    # computation. Test on a few different coordinates.
+    neighborhood = ne.IdentityNeighborhood()
+    sphere = ne.Sphere(0.5)
+    for center in ((0, 0, 0), (1, 1, 1), (0, 0), (0, )):
+        assert_array_equal(neighborhood(center), sphere(center))
+
+
 def test_sphere():
     # test sphere initialization
     s = ne.Sphere(1)
@@ -149,6 +158,13 @@ def test_hollowsphere_degenerate_neighborhood():
     """
     hs = ne.HollowSphere(1, inner_radius=0, element_sizes=(3,3,3))
     assert_equal(len(hs((1,1,1))), 0)
+
+
+def test_hollowsphere_include_center():
+    hs = ne.HollowSphere(1, 0, include_center=True)
+    assert_array_equal(hs((2, 1)),  [(2,1), (1, 1), (2, 0), (2, 2), (3, 1)])
+    assert_array_equal(hs((1, )),   [(1,), (0,), (2,)])
+    assert_equal(len(hs((1,1,1))), 7)
 
 
 def test_query_engine():

@@ -87,7 +87,7 @@ else:
 # define the extension modules
 libsvmc_ext = Extension(
     'mvpa2.clfs.libsvmc._svmc',
-    sources=libsvmc_extra_sources + ['mvpa2/clfs/libsvmc/svmc.i'],
+    sources=libsvmc_extra_sources + [os.path.join('mvpa2', 'clfs', 'libsvmc', 'svmc.i')],
     include_dirs=libsvmc_include_dirs,
     library_dirs=libsvmc_library_dirs,
     libraries=libsvmc_libraries,
@@ -97,7 +97,7 @@ libsvmc_ext = Extension(
 
 smlrc_ext = Extension(
     'mvpa2.clfs.libsmlrc.smlrc',
-    sources=[ 'mvpa2/clfs/libsmlrc/smlr.c' ],
+    sources=[ os.path.join('mvpa2', 'clfs', 'libsmlrc', 'smlr.c') ],
     #library_dirs = library_dirs,
     libraries=['m'] if not sys.platform.startswith('win') else [],
     # extra_compile_args = ['-O0'],
@@ -113,7 +113,7 @@ if bind_libsvm:
 # Version scheme is: major.minor.patch<suffix>
 
 def get_full_dir(path):
-    path_split = path.split('/') # so we could run setup.py on any platform
+    path_split = path.split(os.path.sep) # so we could run setup.py on any platform
     path_proper = os.path.join(*path_split)
     return (path_proper,
             [f for f in glob.glob(os.path.join(path_proper, '*'))
@@ -130,33 +130,16 @@ def opj(*args):
 def find_data_files(srcdir, *wildcards, **kw):
     # get a list of all files under the srcdir matching wildcards,
     # returned in a format to be used for install_data
-
-    path_split = srcdir.split('/') # so we could run setup.py on any platform
-    srcdir = os.path.join(*path_split)
-
-    def walk_helper(arg, dirname, files):
-        if '.svn' in dirname:
-            return
-        names = []
-        lst, wildcards = arg
-        for wc in wildcards:
-            wc_name = opj(dirname, wc)
-            for f in files:
-                filename = opj(dirname, f)
-
-                if fnmatch.fnmatch(filename, wc_name) and not os.path.isdir(filename):
-                    names.append(filename)
-        if names:
-            lst.append( (dirname, names ) )
-
     file_list = []
     recursive = kw.get('recursive', True)
-    if recursive:
-        os.walk(srcdir, walk_helper, (file_list, wildcards))
-    else:
-        walk_helper((file_list, wildcards),
-                    srcdir,
-                    [os.path.basename(f) for f in glob.glob(opj(srcdir, '*'))])
+    for d, dirs, files in os.walk(srcdir, topdown=True):
+        for wc in wildcards:
+            files_ = [opj(d, x) for x in fnmatch.filter(files, wc)]
+            if files_:
+                file_list.append((d, files_))
+        if not recursive:
+            break # one would be enough ;)
+
     return file_list
 
 # define the setup
@@ -228,8 +211,8 @@ def setup_package():
                      'mvpa2.tests.badexternals',
                      'mvpa2.viz',
                    ],
-          data_files=[('mvpa2', ['mvpa2/COMMIT_HASH'])]
-                     + find_data_files('mvpa2/data',
+          data_files=[('mvpa2', [os.path.join('mvpa2', 'COMMIT_HASH')])]
+                     + find_data_files(os.path.join('mvpa2', 'data'),
                                        '*.txt', '*.nii.gz', '*.rtc', 'README', '*.bin',
                                        '*.dat', '*.dat.gz', '*.mat', '*.fsf', '*.par'),
           scripts=glob.glob(os.path.join('bin', '*')),

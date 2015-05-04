@@ -198,6 +198,7 @@ Additional Algorithms
    :toctree: generated
 
    algorithms.hyperalignment
+   algorithms.group_clusterthr
 
 
 Miscellaneous
