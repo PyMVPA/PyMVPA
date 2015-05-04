@@ -53,14 +53,14 @@ def load_example_fmri_dataset(name='1slice', literal=False):
 
 def load_datadb_tutorial_data(path=os.path.join(
     pymvpa_datadbroot, 'tutorial_data', 'tutorial_data', 'data'),
-        roi='brain', add_fa=None):
+        roi='brain', add_fa=None, flavor=None):
     """Loads the block-design demo dataset from PyMVPA dataset DB.
 
     Parameters
     ----------
-    path : str
+    path : str, optional
       Path of the directory containing the dataset files.
-    roi : str or int or tuple or None
+    roi : str or int or tuple or None, optional
       Region Of Interest to be used for masking the dataset. If a string is
       given a corresponding mask image from the demo dataset will be used
       (mask_<str>.nii.gz). If an int value is given, the corresponding ROI
@@ -68,15 +68,23 @@ def load_datadb_tutorial_data(path=os.path.join(
       provided it may contain int values that a processed as explained
       before, but the union of a ROIs is taken to produce the final mask.
       If None, no masking is performed.
-    add_fa : dict
+    add_fa : dict, optional
       Passed on to the dataset creator function (see fmri_dataset() for
       more information).
+    flavor: str, optional
+      Resolution flavor of the data to load. By default, the data is loaded in
+      its original resolution. The PyMVPA source distribution contains a '25mm'
+      flavor that has been downsampled to a very coarse resolution and can be
+      used for quick test execution.
     """
     import nibabel as nb
     from mvpa2.datasets.sources.openfmri import OpenFMRIDataset
     model = subj = 1
     dhandle = OpenFMRIDataset(path)
-    maskpath = os.path.join(path, 'sub001', 'masks', 'orig')
+    if flavor is None:
+        maskpath = os.path.join(path, 'sub001', 'masks', 'orig')
+    else:
+        maskpath = os.path.join(path, 'sub001', 'masks', flavor)
     if roi is None:
         mask = None
     elif isinstance(roi, str):
@@ -101,7 +109,8 @@ def load_datadb_tutorial_data(path=os.path.join(
         mask = roi
     else:
         raise ValueError("Got something as mask that I cannot handle.")
-    ds = dhandle.get_model_bold_dataset(model, subj, mask=mask, add_fa=add_fa,
+    ds = dhandle.get_model_bold_dataset(model, subj, flavor=flavor,
+                                        mask=mask, add_fa=add_fa,
                                         noinfolabel='rest')
     # fixup time_coords to make the impression of a continuous time series
     # this is only necessary until we have changed the tutorial to
