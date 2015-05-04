@@ -16,9 +16,7 @@ __all__ = ['GroupClusterThreshold',  'get_thresholding_map',
 if __debug__:
     from mvpa2.base import debug
 
-import os
 import random
-import bisect
 from collections import Counter
 
 import numpy as np
@@ -31,8 +29,9 @@ from mvpa2.datasets import Dataset
 from mvpa2.base.learner import Learner
 from mvpa2.base.param import Parameter
 from mvpa2.base.constraints import \
-        EnsureInt, EnsureFloat, EnsureRange, EnsureChoice
+    EnsureInt, EnsureFloat, EnsureRange, EnsureChoice
 from mvpa2.mappers.fx import mean_sample
+
 
 class GroupClusterThreshold(Learner):
     """Statistical evaluation of group-level average accuracy maps
@@ -143,8 +142,9 @@ class GroupClusterThreshold(Learner):
        Biology, 9, 1--12.
     """
 
-    n_bootstrap = Parameter(100000, constraints=EnsureInt() & EnsureRange(min=1),
-            doc="""Number of bootstrap samples to be generated from the training
+    n_bootstrap = Parameter(
+        100000, constraints=EnsureInt() & EnsureRange(min=1),
+        doc="""Number of bootstrap samples to be generated from the training
             dataset. For each sample, an average map will be computed from a
             set of randomly drawn samples (one from each chunk). Bootstrap
             samples will be used to estimate a featurewise NULL distribution of
@@ -154,9 +154,9 @@ class GroupClusterThreshold(Learner):
             probabilities, which may be beneficial for multiple comparison
             correction.""")
 
-    feature_thresh_prob = Parameter(0.001,
-            constraints=EnsureFloat() & EnsureRange(min=0.0, max=1.0),
-            doc="""Feature-wise probability threshold. The value corresponding
+    feature_thresh_prob = Parameter(
+        0.001, constraints=EnsureFloat() & EnsureRange(min=0.0, max=1.0),
+        doc="""Feature-wise probability threshold. The value corresponding
             to this probability in the NULL distribution of accuracies will
             be used as threshold for cluster forming. Given that the NULL
             distribution is estimated per feature, the actual threshold value
@@ -164,41 +164,44 @@ class GroupClusterThreshold(Learner):
             of bootstrap samples need to be adequate for a desired probability.
             A ``ValueError`` is raised otherwise.""")
 
-    chunk_attr = Parameter('chunks',
-            doc="""Name of the attribute indicating the individual chunks from
+    chunk_attr = Parameter(
+        'chunks',
+        doc="""Name of the attribute indicating the individual chunks from
             which a single sample each is drawn for averaging into a bootstrap
             sample.""")
 
-    fwe_rate = Parameter(0.05,
-            constraints=EnsureFloat() & EnsureRange(min=0.0, max=1.0),
-            doc="""Family-wise error rate for multiple comparison correction
+    fwe_rate = Parameter(
+        0.05, constraints=EnsureFloat() & EnsureRange(min=0.0, max=1.0),
+        doc="""Family-wise error rate for multiple comparison correction
             of cluster size probabilities.""")
 
-    multicomp_correction = Parameter('fdr_bh',
-             constraints=EnsureChoice('bonferroni', 'sidak', 'holm-sidak',
-                                      'holm', 'simes-hochberg', 'hommel',
-                                      'fdr_bh', 'fdr_by', None),
-             doc="""Strategy for multiple comparison correction of cluster
-             probailities. All methods supported by statsmodels' ``multitest``
-             are available. In addition, ``None`` can be specific to disable
-             correction.""")
+    multicomp_correction = Parameter(
+        'fdr_bh', constraints=EnsureChoice('bonferroni', 'sidak', 'holm-sidak',
+                                           'holm', 'simes-hochberg', 'hommel',
+                                           'fdr_bh', 'fdr_by', None),
+        doc="""Strategy for multiple comparison correction of cluster
+            probailities. All methods supported by statsmodels' ``multitest``
+            are available. In addition, ``None`` can be specific to disable
+            correction.""")
 
-    n_blocks = Parameter(1, constraints=EnsureInt() & EnsureRange(min=1),
-             doc="""Number of segments used to compute the feature-wise NULL
-             distributions. This parameter determines the peak memory demand.
-             In case of a single segment a matrix of size
-             (n_bootstrap x nfeatures) will be allocated. Increasing the number
-             of segments reduces the peak memory demand by that roughly factor.
-             """)
+    n_blocks = Parameter(
+        1, constraints=EnsureInt() & EnsureRange(min=1),
+        doc="""Number of segments used to compute the feature-wise NULL
+            distributions. This parameter determines the peak memory demand.
+            In case of a single segment a matrix of size
+            (n_bootstrap x nfeatures) will be allocated. Increasing the number
+            of segments reduces the peak memory demand by that roughly factor.
+            """)
 
-    n_proc = Parameter(1, constraints=EnsureInt() & EnsureRange(min=1),
-             doc="""Number of parallel processes to use for computation.
-             Requires `joblib` external module.""")
+    n_proc = Parameter(
+        1, constraints=EnsureInt() & EnsureRange(min=1),
+        doc="""Number of parallel processes to use for computation.
+            Requires `joblib` external module.""")
 
     def __init__(self, **kwargs):
         # force disable auto-train: would make no sense
         Learner.__init__(self, auto_train=False, **kwargs)
-        if 1./(self.params.n_bootstrap + 1) > self.params.feature_thresh_prob:
+        if 1. / (self.params.n_bootstrap + 1) > self.params.feature_thresh_prob:
             raise ValueError('number of bootstrap samples is insufficient for'
                              ' the desired threshold probability')
         self.untrain()
@@ -219,15 +222,15 @@ class GroupClusterThreshold(Learner):
         # needed) to save memory by a factor of (close to) `n_bootstrap`
         # which samples belong to which chunk
         chunk_samples = dict([(c, np.where(ds.sa[chunk_attr].value == c)[0])
-                                    for c in ds.sa[chunk_attr].unique])
+                              for c in ds.sa[chunk_attr].unique])
         # pre-built the bootstrap combinations
         bcombos = [[random.sample(v, 1)[0] for v in chunk_samples.values()]
-                        for i in xrange(self.params.n_bootstrap)]
+                   for i in xrange(self.params.n_bootstrap)]
         bcombos = np.array(bcombos, dtype=int)
         #
         # Step 1: find the per-feature threshold that corresponds to some p
         # in the NULL
-        segwidth = ds.nfeatures/self.params.n_blocks
+        segwidth = ds.nfeatures / self.params.n_blocks
         # speed things up by operating on an array not a dataset
         ds_samples = ds.samples
         if __debug__:
@@ -236,38 +239,39 @@ class GroupClusterThreshold(Learner):
                   % (self.params.n_blocks, segwidth))
         # Execution can be done in parallel as the estimation is independent
         # across features
+
         def featuresegment_producer(ncols):
             for segstart in xrange(0, ds.nfeatures, ncols):
                 # one average map for every stored bcombo
                 # this also slices the input data into feature subsets
                 # for the compute blocks
                 yield [np.mean(
-                            # get a view to a subset of the features
-                            # -- should be somewhat efficient as feature axis is
-                            # sliced
-                            ds_samples[sidx, segstart:segstart + ncols],
-                            axis=0)
+                       # get a view to a subset of the features
+                       # -- should be somewhat efficient as feature axis is
+                       # sliced
+                       ds_samples[sidx, segstart:segstart + ncols],
+                       axis=0)
                        for sidx in bcombos]
         if self.params.n_proc == 1:
             # Serial execution
-            thrmap = np.hstack( # merge across compute blocks
-                    [get_thresholding_map(d, self.params.feature_thresh_prob)
-                        # compute a partial threshold map for as many features
-                        # as fit into a compute block
-                        for d in featuresegment_producer(segwidth)])
+            thrmap = np.hstack(  # merge across compute blocks
+                [get_thresholding_map(d, self.params.feature_thresh_prob)
+                 # compute a partial threshold map for as many features
+                 # as fit into a compute block
+                 for d in featuresegment_producer(segwidth)])
         else:
             # Parallel execution
-            verbose_level_parallel=50 if 'GCTHR' in debug.active else 0
+            verbose_level_parallel = 50 if 'GCTHR' in debug.active else 0
             # local import as only parallel execution needs this
             from joblib import Parallel, delayed
             # same code as above, just in parallel with joblib's Parallel
             thrmap = np.hstack(
-                    Parallel(n_jobs=self.params.n_proc,
-                             pre_dispatch=self.params.n_proc,
-                             verbose=verbose_level_parallel)(
-                        delayed(get_thresholding_map)
+                Parallel(n_jobs=self.params.n_proc,
+                         pre_dispatch=self.params.n_proc,
+                         verbose=verbose_level_parallel)(
+                             delayed(get_thresholding_map)
                         (d, self.params.feature_thresh_prob)
-                            for d in featuresegment_producer(segwidth)))
+                             for d in featuresegment_producer(segwidth)))
         # store for later thresholding of input data
         self._thrmap = thrmap
         #
@@ -297,12 +301,12 @@ class GroupClusterThreshold(Learner):
             # same code as above, just restructured for joblib's Parallel
             for jobres in Parallel(n_jobs=self.params.n_proc,
                                    pre_dispatch=self.params.n_proc,
-                                   verbose=verbose_level_parallel) \
-                    (delayed(get_cluster_sizes)
-                        (Dataset(np.mean(ds_samples[sidx],
-                                 axis=0)[None] > thrmap,
-                                 a=dsa))
-                        for sidx in bcombos):
+                                   verbose=verbose_level_parallel)(
+                                       delayed(get_cluster_sizes)
+                                  (Dataset(np.mean(ds_samples[sidx],
+                                           axis=0)[None] > thrmap,
+                                           a=dsa))
+                                       for sidx in bcombos):
                 # aggregate
                 cluster_sizes += jobres
         # store cluster size histogram for later p-value evaluation
@@ -347,34 +351,33 @@ class GroupClusterThreshold(Learner):
             ordered_area[i] = area[idx]
         area = ordered_area[::-1]
         labels = ordered_labels
-        del ordered_labels # this one can be big
+        del ordered_labels  # this one can be big
         # store cluster labels after forward-mapping
         outds.fa['clusters_featurewise_thresh'] = labels.copy()
         # update cluster size histogram with the actual result to get a
         # proper lower bound for p-values
         # this will make a copy, because the original matrix is int
         cluster_probs_raw = _transform_to_pvals(
-                                area,
-                                self._null_cluster_sizes.astype('float'))
+            area, self._null_cluster_sizes.astype('float'))
 
         if self.params.multicomp_correction is None:
             probs_corr = np.array(cluster_probs_raw)
             rej = probs_corr <= self.params.fwe_rate
             outds.a['clusterstats'] = \
-                    np.rec.fromarrays([area, cluster_probs_raw],
-                                      names=('size', 'prob_raw'))
+                np.rec.fromarrays(
+                    [area, cluster_probs_raw], names=('size', 'prob_raw'))
         else:
             # do a local import as only this tiny portion needs statsmodels
             import statsmodels.stats.multitest as smm
             rej, probs_corr = smm.multipletests(
-                                cluster_probs_raw,
-                                alpha=self.params.fwe_rate,
-                                method=self.params.multicomp_correction)[:2]
+                cluster_probs_raw,
+                alpha=self.params.fwe_rate,
+                method=self.params.multicomp_correction)[:2]
             # store corrected per-cluster probabilities
             outds.a['clusterstats'] = \
-                    np.rec.fromarrays([area, cluster_probs_raw, probs_corr],
-                                      names=('size', 'prob_raw',
-                                             'prob_corrected'))
+                np.rec.fromarrays(
+                    [area, cluster_probs_raw, probs_corr],
+                    names=('size', 'prob_raw', 'prob_corrected'))
             # remove cluster labels that did not pass the FWE threshold
             for i, r in enumerate(rej):
                 if not r:
@@ -475,4 +478,3 @@ def _transform_to_pvals(sizes, null_sizes):
         # store for output
         probs.append(prob)
     return probs
- 
