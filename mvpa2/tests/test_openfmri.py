@@ -10,7 +10,7 @@
 
 import os
 import numpy as np
-from nose.tools import assert_greater_equal, assert_greater
+from nose.tools import assert_greater
 
 from mvpa2.testing import *
 from mvpa2.testing.sweep import sweepargs
@@ -133,6 +133,7 @@ def test_openfmri_dataset():
 def _get_built_in_datapath():
     return os.path.join(pymvpa_dataroot, 'openfmri')
 
+
 def test_tutorialdata_loader_masking():
     ds_brain = load_datadb_tutorial_data(path=_get_built_in_datapath(),
                                          flavor='25mm')
@@ -150,7 +151,7 @@ def test_tutorialdata_rois(roi):
 
 
 @sweepargs(roi=(1, 4, 6, 12, 17, 22, 28, 32, 33, 36, 42, 43, 44))
-def test_tutorialdata_rois(roi):
+def test_hoc_rois(roi):
     # just checking which harvard-oxford rois we can rely on in the downsampled
     # data
     ds = load_datadb_tutorial_data(path=_get_built_in_datapath(), roi=roi,
@@ -180,6 +181,7 @@ def test_example_data():
     # no 25mm dataset with numerical labels
     assert_raises(ValueError, load_example_fmri_dataset, name='25mm')
     # the 25mm example is the same as the coarse tutorial data
-    ds25tut = load_datadb_tutorial_data(flavor='25mm')
+    ds25tut = load_datadb_tutorial_data(path=_get_built_in_datapath(),
+                                        flavor='25mm')
     assert_array_equal(ds25.samples, ds25tut.samples)
 
