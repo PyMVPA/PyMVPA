@@ -25,6 +25,7 @@ from mvpa2.base.hdf5 import h5save, h5load, obj2hdf, HDF5ConversionError
 from mvpa2.misc.data_generators import load_example_fmri_dataset
 from mvpa2.mappers.fx import mean_sample
 from mvpa2.mappers.boxcar import BoxcarMapper
+from mvpa2.misc.support import SmartVersion
 
 class HDFDemo(object):
     pass
@@ -279,6 +280,8 @@ _python_objs = [
     (1, 2), tuple(),
     # pure Python sets
     set([1,2]), set(), set([None]), set([tuple()]),
+    # Our SmartVersion which was missing __reduce__
+    SmartVersion("0.1"),
     ]
 import collections
 _python_objs.append([collections.deque([1,2])])
