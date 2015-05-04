@@ -169,6 +169,27 @@ class HyperAlignmentTests(unittest.TestCase):
         rerrors = ha.ca.residual_errors.samples
         self.assertEqual(rerrors.shape, (1, n))
 
+    def test_hypal_michael_caused_problem(self):
+        from mvpa2.misc import data_generators
+        from mvpa2.mappers.zscore import zscore
+        # Fake data
+        ds = data_generators.normal_feature_dataset(nfeatures=20)
+        ds_all = [data_generators.random_affine_transformation(ds) for i in range(3)]
+        _ = [zscore(sd, chunks_attr=None) for sd in ds_all]
+        # Making random data per subject for testing with bias added to first subject
+        ds_test = [np.random.rand(1, ds.nfeatures) for i in range(len(ds_all))]
+        ds_test[0] += np.arange(1, ds.nfeatures+1)*100
+        assert(np.corrcoef(ds_test[2], ds_test[1])[0,1] < 0.99) # that would have been rudiculous if it was
+
+        # Test with varying alpha so we for sure to not have that issue now
+        for alpha in (0, 0.01, 0.5, 0.99, 1.0):
+            hyper09 = Hyperalignment(alpha=alpha)
+            mappers = hyper09([sd for sd in ds_all])
+            ds_test_a = [m.forward(sd) for m, sd in zip(mappers, ds_test)]
+            ds_test_a = [mappers[0].reverse(sd) for sd in ds_test_a]
+            corr = np.corrcoef(ds_test_a[2], ds_test_a[1])[0, 1]
+            assert(corr < 0.99)
+
 
     def _test_on_swaroop_data(self):  # pragma: no cover
         #

@@ -40,6 +40,7 @@ from regions on the ventral and occipital surface of the brain.
 
 # load dataset -- ventral and occipital ROIs
 from mvpa2.misc.data_generators import load_datadb_tutorial_data
+from mvpa2 import pymvpa_datadbroot
 ds = load_datadb_tutorial_data(roi=(15, 16, 23, 24, 36, 38, 39, 40, 48))
 
 """
@@ -203,7 +204,9 @@ it onto the brain anatomy.
 # plot the spatial distribution using NiPy
 vol = ds.a.mapper.reverse1(slres_tdsm.samples[0])
 import nibabel as nb
-anat = nb.load('datadb/tutorial_data/tutorial_data/data/anat.nii.gz')
+from os.path import join as pjoin
+anat = nb.load(pjoin(pymvpa_datadbroot, 'tutorial_data', 'tutorial_data',
+                     'data', 'sub001', 'anatomy', 'highres001.nii.gz'))
 
 from nipy.labs.viz_tools.activation_maps import plot_map
 pl.figure(figsize=(15,4))

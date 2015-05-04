@@ -11,15 +11,14 @@
 from mvpa2.testing import *
 skip_if_no_external('scipy')
 
-from mvpa2.testing.datasets import datasets
+from scipy.stats import f_oneway
 from mvpa2.tests.test_stats import *
 
-from scipy import signal
 from mvpa2.clfs.stats import match_distribution, rv_semifrozen
-from mvpa2.misc.stats import chisquare
+from mvpa2.misc.stats import chisquare, binomial_proportion_ci
 from mvpa2.misc.attrmap import AttributeMap
-from mvpa2.datasets.base import dataset_wizard
 from mvpa2.generators.permutation import AttributePermutator
+from mvpa2.misc.data_generators import simple_hrf_dataset
 
 class StatsTestsScipy(unittest.TestCase):
     """Unittests for various statistics which use scipy"""
@@ -322,38 +321,9 @@ class StatsTestsScipy(unittest.TestCase):
         """
         skip_if_no_external('statsmodels')
         from mvpa2.measures.statsmodels_adaptor import GLM
-        # play fmri
-        # full-blown HRF with initial dip and undershoot ;-)
-        hrf_x = np.linspace(0, 25, 250)
-        hrf = double_gamma_hrf(hrf_x) - single_gamma_hrf(hrf_x, 0.8, 1, 0.05)
-
-        # come up with an experimental design
-        samples = 1800
-        fast_er_onsets = np.array([10, 200, 250, 500, 600, 900, 920, 1400])
-        fast_er = np.zeros(samples)
-        fast_er[fast_er_onsets] = 1
-
-        # high resolution model of the convolved regressor
-        model_hr = np.convolve(fast_er, hrf)[:samples]
-
-        # downsample the regressor to fMRI resolution
-        tr = 2.0
-        model_lr = signal.resample(model_hr,
-                                   int(samples / tr / 10),
-                                   window='ham')
-
-        # generate artifical fMRI data: two voxels one is noise, one has
-        # something
-        baseline = 800.0
-        wsignal = baseline + 2 * model_lr + \
-                  np.random.randn(int(samples / tr / 10)) * 0.2
-        nsignal = baseline + np.random.randn(int(samples / tr / 10)) * 0.5
-
-        # build design matrix: bold-regressor and constant
-        X = np.array([model_lr, np.repeat(1, len(model_lr))]).T
-
-        # two 'voxel' dataset
-        data = dataset_wizard(samples=np.array((wsignal, nsignal, nsignal)).T, targets=1)
+        # high SNR dataset for such a short timeseries
+        data = simple_hrf_dataset(signal_level=2, noise_level=0.5)
+        X = data.sa.design
 
         # check GLM betas
         glm = GLM(X)
@@ -362,7 +332,7 @@ class StatsTestsScipy(unittest.TestCase):
         # betas for each feature and each regressor
         self.assertTrue(betas.shape == (X.shape[1], data.nfeatures))
 
-        self.assertTrue(np.absolute(betas.samples[1] - baseline < 10).all(),
+        self.assertTrue(np.absolute(betas.samples[1] - data.a.baseline < 10).all(),
             msg="baseline betas should be huge and around 800")
 
         self.assertTrue(betas.samples[0, 0] > betas[0, 1],
@@ -371,7 +341,6 @@ class StatsTestsScipy(unittest.TestCase):
         if cfg.getboolean('tests', 'labile', default='yes'):
             self.assertTrue(np.absolute(betas[0, 1]) < 0.5)
             self.assertTrue(np.absolute(betas[0, 0]) > 1.0)
-
 
         # check GLM t values
         glm = GLM(X, voi='tvalues')
@@ -422,6 +391,40 @@ class StatsTestsScipy(unittest.TestCase):
         #   test_transerror.py:ErrorsTests.test_confusionmatrix_nulldist
         pass
 
+def test_binomial_proportion_ci():
+    # compare to gold-standard values from the matlab implementation
+    from numpy import testing as npt
+    n = 100
+    X = 50
+    p = .05
+    matlab_truth = {
+        'wald': (.4020, .5980),
+        'wilson': (.4038, .5962),
+        'agresti-coull': (.4038, .5962),
+        'jeffreys': (.4032, .5968),
+        'clopper-pearson': (.3983, .6017),
+        'arc-sine': (.4026, .5974),
+        'logit': (.4032, .5968),
+        'anscombe': (.4037, .5963)
+    }
+    for m in matlab_truth.keys():
+        npt.assert_array_almost_equal(matlab_truth[m],
+                                      binomial_proportion_ci(n, X, p, m),
+                                      decimal=4,
+                                      err_msg=m)
+        # can deal with the extremes
+        # those two have numerical limits
+        if not m in ('clopper-pearson', 'logit'):
+            npt.assert_array_almost_equal(
+                    binomial_proportion_ci(1000, 1000, .05, m),
+                    [1, 1],
+                    decimal=2)
+            npt.assert_array_almost_equal(
+                    binomial_proportion_ci(1000, 0, .05, m),
+                    [0, 0],
+                    decimal=2)
+    vec = binomial_proportion_ci(1000, [600,100,900])
+    assert_equal(vec.shape, (2, 3))
 
 def suite():  # pragma: no cover
     """Create the suite"""

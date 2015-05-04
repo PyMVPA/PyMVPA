@@ -88,10 +88,10 @@ dataset, we have the stimulus conditions of each volume sample available in the
 204
 >>> for e in events[:4]:
 ...    print e
-{'chunks': 0.0, 'duration': 6, 'onset': 0, 'targets': 'rest'}
-{'chunks': 0.0, 'duration': 9, 'onset': 6, 'targets': 'scissors'}
-{'chunks': 0.0, 'duration': 6, 'onset': 15, 'targets': 'rest'}
-{'chunks': 0.0, 'duration': 9, 'onset': 21, 'targets': 'face'}
+{'chunks': 0, 'duration': 6, 'onset': 0, 'targets': 'rest'}
+{'chunks': 0, 'duration': 9, 'onset': 6, 'targets': 'scissors'}
+{'chunks': 0, 'duration': 6, 'onset': 15, 'targets': 'rest'}
+{'chunks': 0, 'duration': 9, 'onset': 21, 'targets': 'face'}
 
 We are feeding not only the ``targets`` to the function, but also the
 ``chunks`` attribute, since we do not want to have events spanning multiple
@@ -116,10 +116,10 @@ We can easily filter out all other events.
 24
 >>> for e in events[:4]:
 ...    print e
-{'chunks': 0.0, 'duration': 9, 'onset': 21, 'targets': 'face'}
-{'chunks': 0.0, 'duration': 9, 'onset': 63, 'targets': 'house'}
-{'chunks': 1.0, 'duration': 9, 'onset': 127, 'targets': 'face'}
-{'chunks': 1.0, 'duration': 9, 'onset': 213, 'targets': 'house'}
+{'chunks': 0, 'duration': 9, 'onset': 21, 'targets': 'face'}
+{'chunks': 0, 'duration': 9, 'onset': 63, 'targets': 'house'}
+{'chunks': 1, 'duration': 9, 'onset': 127, 'targets': 'face'}
+{'chunks': 1, 'duration': 9, 'onset': 213, 'targets': 'house'}
 
 Response Modeling
 -----------------
@@ -155,11 +155,10 @@ values of the attributes will be used as conditions. In the following example
 stimulation condition (``targets``) for each run of our example dataset
 (``chunks``).
 
->>> evds = eventrelated_dataset(ds,
-...                             events,
-...                             model='hrf',
-...                             time_attr='time_coords',
-...                             condition_attr=('targets', 'chunks'))
+>>> evds = fit_event_hrf_model(ds,
+...                            events,
+...                            time_attr='time_coords',
+...                            condition_attr=('targets', 'chunks'))
 >>> print len(evds)
 24
 
@@ -253,7 +252,6 @@ time series dataset into event-related samples. PyMVPA offers
 perform this conversion. Let's just do it, it only needs the original
 dataset and our list of events.
 
->>> # alt: `evds = load_tutorial_results('ds_haxby2001_blkev_facehouse')`
 >>> evds = eventrelated_dataset(ds, events=events)
 >>> len(evds) == len(events)
 True
@@ -346,9 +344,7 @@ plotting facilities, this shouldn't be hard to read.
 >>> # linestyles and colors for plotting
 >>> vx_lty = ['-', '--']
 >>> t_col = ['b', 'r']
-
->>> # whole figure will have three rows -- this is the first
->>> _ = pl.subplot(311)
+>>>
 >>> # for each of the example voxels
 >>> for i, v in enumerate(example_voxels):
 ...     # get a slicing array matching just to current example voxel
@@ -369,10 +365,9 @@ plotting facilities, this shouldn't be hard to read.
 >>> _ = pl.legend()
 >>> _ = pl.xlim((0,12))
 
-In the next figure row we do exactly the same again, but this time for the
+In the next figure we do exactly the same again, but this time for the
 normalized data.
 
->>> _ = pl.subplot(312)
 >>> for i, v in enumerate(example_voxels):
 ...     slicer = np.array([tuple(idx) == v for idx in ds.fa.voxel_indices])
 ...     evds_norm = eventrelated_dataset(ds[:, slicer], events=events)
@@ -391,12 +386,11 @@ dataset's chain mapper (look at ``evds.a.mapper`` for the whole chain).
 This will reshape the sensitivities into ``cross-validation fold x volume x
 voxel features``.
 
->>> _ = pl.subplot(313)
 >>> # L1 normalization of sensitivity maps per split to make them
 >>> # comparable
 >>> normed = sens.get_mapped(FxMapper(axis='features', fx=l1_normed))
 >>> smaps = evds.a.mapper[-1].reverse(normed)
-
+>>>
 >>> for i, v in enumerate(example_voxels):
 ...     slicer = np.array([tuple(idx) == v for idx in ds.fa.voxel_indices])
 ...     smap = smaps.samples[:,:,slicer].squeeze()

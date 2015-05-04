@@ -31,11 +31,62 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
-* 2.3.1 (???, ? ? ?)
+* 2.3.2 (???, ? ? ?)
 
-  * Don't wait to long listing the changes...
+  * Don't wait too long listing the changes...
+
+  * New functionality
+
+    - Support for CoSMoMVPA (http://cosmomvpa.org) in
+      :mod:`~mvpa2.datasets.cosmo` providing dataset input/output
+      (:meth:`~mvpa2.datasets.cosmo.cosmo_dataset` and
+      :meth:`~mvpa2.datasets.cosmo.map2cosmo`) and neighborhood input
+      (:class:`~mvpa2.datasets.cosmo.CosmoQueryEngine`). This allows for
+      for running searchlights (:class:`mvpa2.datasets.cosmo.CosmoSearchlight`)
+      on data from CoSMoMVPA (fMRI and MEEG).
+    - :func:`~mvpa2.datasets.miscfx.remove_nonfinite_features` removes
+      features with non-finite values, i.e. NaNs or Infs, for any sample.
+    - :func:`~mvpa2.misc.stats.binomial_proportion_ci` for computing
+      confidence intervals on proportions of Bernoulli trial outcomes.
+
+  * API changes
 
   * Enhancements (?? ENH, OPT, and NF commits)
+
+    - :class:`~mvpa2.mappers.flatten.ProductFlattenMapper` accepts explicit names of factors in the constructor.
+
+  * Fixes
+
+    - :class:`~mvpa2.algorithms.hyperalignment.Hyperalignment` with regularization
+      (alpha != 1.0) was producing incorrect transformations because they were
+      driven by offsets of the last subject.  Fixed by not "auto_train"ing
+      regularization projection
+    - :func:`~mvpa2.misc.plot.lightbox.plot_lightbox` should take a
+      slice index from the last dimension, not the leading one if no
+      `slices` argument was provided
+    - Improved Python3k compatibility in :mod:`~mvpa2.base.state`, :mod:`~mvpa2.tests.test_testing.py`, :mod:`~mvpa2.tests`, and :mod:`~mvpa2.clfs.stats` modules, and in libsvmlrc msvc building.
+    - Partial fix for compatibility with ancient scipy on SPARC using :mod:`~mvpa2.datasets.cosmo`.
+
+
+* 2.3.1 (Tue, 20 May 2014)
+
+  Primarily a bugfix release pushed out to avoid mvpa2.suite meltdown
+  if new scipy 1.4.0 is used.
+
+  * API changes
+
+    - Deprecation: :class:`~mvpa2.base.param.Parameter` now uses `constraints` argument
+      of type :class:`~mvpa2.base.constraints.Constraint` instead of string
+      `allowedtype`.  `allowedtype` argument will be removed completely in the
+      future 2.4 release.
+
+  * New changes
+
+    - :mod:`~mvpa2.clfs.dummies` now provides utterly useful
+      :class:`~mvpa2.clfs.dummies.RandomClassifier` and others for code testing
+      which could also be used to verify absent double-dipping etc.
+
+  * Enhancements
 
     - :class:`~mvpa2.mappers.fx.FxMapper` now will provide consistent order
       of groups of items.  It also got a new argument `order` with available
@@ -47,6 +98,9 @@ Releases
     - :class:`~mvpa2.mappers.corrstability.CorrStability` should be able to
       deal with other sample attributes (not only 'targets') and should divide
       by variance correctly to provide correlation coefficient as output.
+    - robustify check scipy's rdist which should avoid crash upon import of
+      mvpa2.suite because of stripped down scipy 1.4.0 API.
+    - various typos in docstrings (we do welcome contributions ;) ).
 
 * 2.3.0 (Thu, 5 March 2014)
 

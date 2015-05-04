@@ -23,6 +23,39 @@ from mvpa2.misc.support import idhash as idhash_
 if __debug__:
     from mvpa2.base import debug
 
+class IdentityNeighborhood(object):
+    """Trivial neighborhood.
+
+    Use this if you want neighbors(i) == [i]
+    """
+
+    def __init__(self):
+        """Initialize the neighborhood"""
+        pass
+
+    def __repr__(self):
+        return self.__class__.__name__
+
+    def train(self, dataset):
+        pass
+
+    def __call__(self, coordinate):
+        """Return coordinate in a list
+
+        Parameters
+        ----------
+        coordinate : sequence type of length 3 with integers
+
+        Returns
+        -------
+        [tuple(coordinate)]
+
+        """
+        # type checking
+        coordinate = np.asanyarray(coordinate)
+        return [tuple(coordinate)]
+
+
 class Sphere(object):
     """N-Dimensional hypersphere.
 
@@ -232,7 +265,7 @@ class HollowSphere(Sphere):
 
     """
 
-    def __init__(self, radius, inner_radius, **kwargs):
+    def __init__(self, radius, inner_radius, include_center=False, **kwargs):
         """ Initialize the Sphere
 
         Parameters
@@ -245,6 +278,9 @@ class HollowSphere(Sphere):
           Inner radius of the 'sphere', describing where hollow
           part starts.  It is inclusive, so `inner_radius` of 0,
           would already remove the center element.
+        include_center : bool
+          Flag indicating whether to include the center element.
+          Center element is added as first feature. (Default: False)
         **kwargs
           See `Sphere` for additional keyword arguments
         """
@@ -253,10 +289,12 @@ class HollowSphere(Sphere):
                   "than the radius (got %g)" % (inner_radius, radius)
         Sphere.__init__(self, radius, **kwargs)
         self._inner_radius = inner_radius
+        self.include_center = include_center
 
     def __repr__(self, prefixes=[]):
         return super(HollowSphere, self).__repr__(
-            ['inner_radius=%r' % (self._inner_radius,)])
+            ['inner_radius=%r' % (self._inner_radius,)]
+            + _repr_attrs(self, ['include_center'], default=False))
 
     # Properties to assure R/O behavior for now
     @property
@@ -296,7 +334,7 @@ class HollowSphere(Sphere):
 
         if not len(res):
             warning("%s defines no neighbors" % self)
-        return res
+        return np.vstack([np.zeros(ndim,dtype='int'),res]) if self.include_center else res
 
 
 class QueryEngineInterface(object):

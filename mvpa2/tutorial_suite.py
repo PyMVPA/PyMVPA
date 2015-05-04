@@ -20,19 +20,16 @@ def get_raw_haxby2001_data(path=os.path.join(tutorial_data_path, 'data'),
                            roi='vt'):
     if roi is 0:
         # this means something special in the searchlight tutorial
-        nimg = nb.load(os.path.join(path, 'mask_hoc.nii.gz'))
-        nimg_brain = nb.load(os.path.join(path, 'mask_brain.nii.gz'))
+        maskpath = os.path.join(path, 'sub001', 'masks', 'orig')
+        nimg = nb.load(os.path.join(maskpath, 'hoc.nii.gz'))
+        nimg_brain = nb.load(os.path.join(maskpath, 'brain.nii.gz'))
         tmpmask = nimg.get_data() == roi
         # trim it down to the lower anterior quadrant
         tmpmask[:, :, tmpmask.shape[-1]/2:] = False
         tmpmask[:, :tmpmask.shape[1]/2] = False
         tmpmask[nimg_brain.get_data() > 0] = False
         mask = nb.Nifti1Image(tmpmask.astype(int), None, nimg.get_header())
-        attr = SampleAttributes(os.path.join(path, 'attributes.txt'))
-        ds = fmri_dataset(samples=os.path.join(path, 'bold.nii.gz'),
-                          targets=attr.targets, chunks=attr.chunks,
-                          mask=mask)
-        return ds
+        return load_datadb_tutorial_data(path=path, roi=mask)
     else:
         return load_datadb_tutorial_data(path=path, roi=roi)
 
@@ -95,8 +92,3 @@ def get_haxby2001_data_alternative(path=None, roi='vt', grp_avg=True):
 def get_haxby2001_clf():
     clf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
     return clf
-
-
-def load_tutorial_results(name, path=os.path.join(tutorial_data_path,
-                                                  'results')):
-    return h5load(os.path.join(path, name + '.hdf5'))

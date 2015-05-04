@@ -53,7 +53,7 @@ class IFSTests(unittest.TestCase):
         ifs = IFS(fmeasure,
                   pmeasure,
                   Splitter('purpose', attr_values=['train', 'test']),
-                  fselector=\
+                  fselector=
                     # go for lower tail selection as data_measure will return
                     # errors -> low is good
                     FixedNElementTailSelector(1, tail='lower', mode='select'),

@@ -15,13 +15,15 @@ import inspect
 
 from mvpa2.base import warning
 from mvpa2.base.node import Node
+from mvpa2.base.param import Parameter
+from mvpa2.base.constraints import *
 from mvpa2.datasets import Dataset
 from mvpa2.base.dochelpers import _str, _repr_attrs
 from mvpa2.mappers.base import Mapper
 from mvpa2.misc.support import array_whereequal
 from mvpa2.base.dochelpers import borrowdoc
 
-from mvpa2.misc.transformers import sum_of_abs, max_of_abs
+from mvpa2.misc.transformers import sum_of_abs, max_of_abs, subtract_mean
 
 if __debug__:
     from mvpa2.base import debug
@@ -41,6 +43,7 @@ class FxMapper(Mapper):
         axis : {'samples', 'features'}
         fx : callable
         fxargs : tuple
+          Passed as *args to ``fx``
         uattrs : list
           List of attribute names to consider. All possible combinations
           of unique elements of these attributes are used to determine the
@@ -242,10 +245,9 @@ class FxMapper(Mapper):
             mdata.append(fxed_samples)
             if not self.__attrfx is None:
                 # and now all samples attributes
-                fxed_attrs = [self.__attrfx(col[attr].value[selector])
-                                    for attr in col]
                 for i, attr in enumerate(col):
-                    attrs[attr].append(fxed_attrs[i])
+                    fxed_attr = self.__attrfx(col[attr].value[selector])
+                    attrs[attr].append(fxed_attr)
             # possibly take care about collecting information to have groups ordered
             if order == 'uattrs':
                 # reverse order as per docstring -- most of the time we have
@@ -384,6 +386,13 @@ def mean_feature(attrfx='merge'):
     return FxMapper('features', np.mean, attrfx=attrfx)
 
 
+def subtract_mean_feature(attrfx='merge'):
+    """Subtract mean of features across samples.
+    Functionaly equivalent to MeanRemoval, but much slower.
+    """
+    return FxMapper('features', subtract_mean, attrfx=attrfx)
+
+
 def mean_group_feature(attrs, attrfx='merge', **kwargs):
     """Returns a mapper that computes the mean features of unique feature groups.
 
@@ -432,6 +441,51 @@ def maxofabs_sample():
     """Returns a mapper that finds max of absolute values of all samples.
     """
     return FxMapper('samples', max_of_abs)
+
+
+class BinomialProportionCI(Mapper):
+    """Compute binomial proportion confidence intervals
+
+    This is a convenience frontend for binomial_proportion_ci_from_bool()
+    and supports all methods implemented in this function.
+
+    The confidence interval is computed independently for each feature column.
+    The returned dataset contains two samples.  The first one contains the
+    lower CI boundary and the second sample the upper boundary.
+
+    Returns
+    -------
+    dataset
+    """
+
+    is_trained = True
+
+    width = Parameter(.95,
+                      constraints=EnsureFloat() & EnsureRange(min=0, max=1),
+                      doc="Confidence interval width")
+    meth = Parameter('jeffreys',
+                     constraints=EnsureChoice('wald', 'wilson', 'agresti-coull',
+                                              'jeffreys', 'clopper-pearson',
+                                              'arc-sine', 'logit', 'anscombe'),
+                     doc="Interval estimation method")
+
+    def __init__(self, **kwargs):
+        Mapper.__init__(self, **kwargs)
+
+    def _train(self, ds):
+        pass
+
+    def _forward_data(self, data):
+        from mvpa2.misc.stats import binomial_proportion_ci_from_bool
+        return binomial_proportion_ci_from_bool(data, axis=0,
+                                                alpha=1-self.params.width,
+                                                meth=self.params.meth)
+
+    def _forward_dataset(self, ds):
+        msamp = self._forward_data(ds.samples)
+        mds = Dataset(msamp, sa=dict(ci_boundary=['lower', 'upper']))
+        return mds
+
 #
 # Utility functions
 #
@@ -582,3 +636,37 @@ class BinaryFxNode(Node):
         if np.isscalar(err):
             err = np.array(err, ndmin=2)
         return Dataset(err)
+
+
+class MeanRemoval(Mapper):
+    """Subtract sample mean from features."""
+
+    is_trained = True
+
+    in_place = Parameter(
+        False,
+        doc="""If False: a copy of the dataset will be made before demeaning.
+        If True: demeaning will be performed in-place, i.e. input data is
+        modified. This is faster, but can have side-effects when the original
+        dataset is used elsewhere again, and implies that floating point data
+        types are required to prevent rounding errors in this case.""",
+        constraints=EnsureBool())
+
+    def __init__(self, in_place=False, **kwargs):
+        Mapper.__init__(self, **kwargs)
+        self.in_place = in_place
+
+    def _forward_data(self, data):
+        mdata = data
+        mean = np.mean(mdata, axis=1)
+
+        if self.in_place:
+            if not np.issubdtype(mdata.dtype, float):
+                warning("Integer dtype. Mean removal won't work correctly for "
+                        "this implementation. Rounding errors will occur. "
+                        "Use in_place=False instead")
+            mdata -= mean[:, np.newaxis]
+
+        else:
+            mdata = mdata - mean[:, np.newaxis]
+        return mdata

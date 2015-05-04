@@ -42,7 +42,6 @@ our preprocessed demo dataset. The code is very similar to that from
 dataset with one sample per category per run.
 
 >>> from mvpa2.tutorial_suite import *
->>> # alt: `ds = load_tutorial_results('ds_haxby2001')`
 >>> ds = get_haxby2001_data(roi='vt')
 >>> ds.shape
 (16, 577)
@@ -67,8 +66,8 @@ idea. We created an object instance ``aov`` being a
 This one differs little from a call to
 :class:`~mvpa2.measures.base.CrossValidation`.  Both are objects that get
 instantiated (potentially with some custom arguments) and yield the results in
-a dataset when called with an input dataset. This is called a :term:`processing
-object` and is a common concept in PyMVPA.
+a dataset when called with an input dataset. This is called a
+:term:`processing object` and is a common concept in PyMVPA.
 
 However, there is a difference between the two processing objects.
 :class:`~mvpa2.measures.base.CrossValidation` returns a dataset with a single
@@ -157,11 +156,9 @@ We will reuse the same searchlight setup and run it on this data as well.
 Due to the size of the data it might take a few minutes to compute the
 results, depending on the number of CPUs in the system.
 
->>> # alt: `ds = load_tutorial_results('ds_haxby2001_alt_roi0')`
 >>> ds = get_haxby2001_data_alternative(roi=0)
 >>> print ds.nfeatures
 34888
->>> # alt: `res = load_tutorial_results('res_haxby2001_sl_avgacc_roi0')`
 >>> res = sl(ds)
 
 .. h5save("results/ds_haxby2001_alt_roi0.hdf5", ds, compression=9)

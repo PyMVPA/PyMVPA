@@ -38,7 +38,9 @@ enabled_cmds = [
   'searchlight',
   'select',
   'atlaslabeler',
-  'exec'
+  'exec',
+  'ofmotionqc',
+  'ttest',
 ]
 
 # what version are we talking

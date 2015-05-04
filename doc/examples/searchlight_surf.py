@@ -59,7 +59,7 @@ surfpath = os.path.join(rootpath, 'suma_surfaces')
 
 """Define functional data volume filename:"""
 
-epi_fn = os.path.join(datapath, 'bold.nii.gz')
+epi_fn = os.path.join(datapath, 'sub001', 'BOLD', 'task001_run001', 'bold.nii.gz')
 
 """
 In this example we are concerned with the left hemisphere only.
@@ -229,18 +229,16 @@ functional data.
 mask = qe.voxsel.get_mask()
 
 """
-Load the functional data. Note that we use the
+Load the functional data for subject 1 and the condition model 1 in the
+dataset (object viewing with 8 object categories). Note that we use the
 mask that came from the voxel selection.
 """
 
-attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
-
-dataset = fmri_dataset(
-                samples=epi_fn,
-                targets=attr.targets,
-                chunks=attr.chunks,
-                mask=mask)
-
+model = 1
+subject = 1
+of = OpenFMRIDataset(datapath)
+dataset = of.get_model_bold_dataset(model, subject,
+                                    noinfolabel='rest', mask=mask)
 
 """
 Apply some typical preprocessing steps

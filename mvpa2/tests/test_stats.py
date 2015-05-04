@@ -28,7 +28,7 @@ nulldist_sweep = [ MCNullDist(permutator, tail='any'),
 
 if externals.exists('scipy'):
     from mvpa2.support.scipy.stats import scipy
-    from scipy.stats import f_oneway
+    from mvpa2.misc.stats import compute_ts_boxplot_stats
     from mvpa2.clfs.stats import rv_semifrozen
     nulldist_sweep += [ MCNullDist(permutator, scipy.stats.norm,
                                    tail='any'),
@@ -136,6 +136,44 @@ class StatsTests(unittest.TestCase):
 
         assert_array_almost_equal(c, c_np)
 
+def test_tsboxplot():
+    skip_if_no_external('scipy')
+    skip_if_no_external('numpy', min_version='1.5') # for .percentile. approx version
+    ts = range(5)
+    assert_raises(ValueError, compute_ts_boxplot_stats, ts)
+    assert_raises(ValueError, compute_ts_boxplot_stats, [ts])
+    stats, outlier = compute_ts_boxplot_stats(([ts, ts]))
+    assert_true(len(stats) > 5) # we have some stats
+    # the are all the same length and match the input timeseries
+    for k in stats:
+        assert_equal(len(stats[k]), len(ts))
+    # outlier array matches the shape and actually contains no
+    # outliers
+    assert_equal(outlier.shape, (2, len(ts)))
+    assert_true(np.all(outlier.mask))
+    assert_array_equal(stats['mean'], stats['median'])
+    assert_array_equal(stats['std'], [0] * len(ts))
+    # now get an outlier
+    stats, outlier = compute_ts_boxplot_stats(([ts, ts, ts, [0,1,2,3,30]]),
+            outlier_thresh=1.0, greedy_outlier=True)
+    # the std should still be all-zero, because the outlier removal kills
+    # all variance across time series
+    assert_array_equal(stats['std'], [0] * len(ts))
+    # the entire last time series should be marked as an outlier
+    assert_array_equal(np.sum(outlier.mask, axis=1),
+                       [len(ts), len(ts), len(ts), 0])
+    # now for non-greedy outlier marking
+    stats, outlier = compute_ts_boxplot_stats(([ts, ts, ts, [0,1,2,3,30]]),
+            outlier_thresh=1.0, greedy_outlier=False)
+    # only one element is an outlier
+    assert_equal(outlier.mask.sum(), np.prod(outlier.shape) - 1)
+    assert_true(outlier.mask[3,-1] == False)
+    # make sure it can deal with NaN in the orginal data
+    stats, outlier = compute_ts_boxplot_stats(([ts, ts, [0,np.nan,2,3,30], ts]),
+            outlier_thresh=1.0, greedy_outlier=False)
+    # NaN must not show up as an outlier
+    assert_equal(outlier.mask.sum(), np.prod(outlier.shape) - 1)
+    assert_true(outlier.mask[2,-1] == False)
 
 def suite():  # pragma: no cover
     """Create the suite"""
