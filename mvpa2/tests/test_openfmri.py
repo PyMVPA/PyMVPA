@@ -60,10 +60,10 @@ def test_openfmri_dataset():
     assert_equal(len(contrast_spec), 1)
     assert_true(1 in contrast_spec)
     # six defined contrasts
-    assert_equal(len(contrast_spec[1]), 6)
-    # check arbitrary one
-    assert_array_equal(contrast_spec[1]['pumps_demean_minus_ctrl_demean'],
-                       [0, 1, 0, 0, 0, 0, 0, 0, 0, -1, 0])
+    assert_equal(len(contrast_spec[1]), 1)
+    # check one
+    assert_array_equal(contrast_spec[1]['face_v_house'],
+                       [-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0])
 
     orig_attrs = SampleAttributes(os.path.join(pymvpa_dataroot,
                                                'attributes_literal.txt'))
