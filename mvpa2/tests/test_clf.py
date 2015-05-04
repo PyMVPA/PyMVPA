@@ -1107,7 +1107,7 @@ class ClassifiersTests(unittest.TestCase):
         clf2.train(ds)
         predictions = clf2.predict(ds)
         # predictions on the same ds as training should give same labels
-        assert(np.all(np.unique(predictions) == ds.uniquetargets))
+        assert(set(ds.uniquetargets).issuperset(predictions))
 
     def test_diff_len_labels_str_treeclassifier(self):
         # check if the classifier can handle a dataset with labels as string of
