@@ -16,6 +16,7 @@ from mvpa2.testing.datasets import datasets, saveload_warehouse
 skip_if_no_external('h5py')
 import h5py
 
+from glob import glob
 import os
 from os.path import join as opj, exists, realpath
 import sys
@@ -27,6 +28,10 @@ from mvpa2.misc.data_generators import load_example_fmri_dataset
 from mvpa2.mappers.fx import mean_sample
 from mvpa2.mappers.boxcar import BoxcarMapper
 from mvpa2.misc.support import SmartVersion
+
+from mvpa2 import pymvpa_dataroot
+from mvpa2.testing import sweepargs
+from mvpa2.testing.regress import get_testing_fmri_dataset_filename
 
 class HDFDemo(object):
     pass
@@ -431,20 +436,16 @@ def test_versions(f):
     assert_equal(hdf.attrs.get('__pymvpa_hdf5_version__'), '2')
     assert_equal(hdf.attrs.get('__pymvpa_version__'), mvpa2.__version__)
 
-from glob import glob
 
-from mvpa2 import pymvpa_dataroot
-from mvpa2.testing import sweepargs
-from mvpa2.base.hdf5 import h5load
-
-from mvpa2.testing.regress import get_testing_fmri_dataset_filename
 def test_present_fmri_dataset():
     # just a helper to signal if we have any of those available
     f = get_testing_fmri_dataset_filename()
     if not os.path.exists(f):
-        raise nose.SkipTest("Absent %s. Verify that you got submodule" % f)
+        raise SkipTest("Absent %s. Verify that you got submodule" % f)
+
 
 test_files = glob(opj(pymvpa_dataroot, 'testing', 'fmri_dataset', '*.hdf5'))
+
 
 @sweepargs(testfile=test_files)
 @with_tempfile(suffix=".nii.gz")
