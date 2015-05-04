@@ -471,6 +471,6 @@ def test_assumptions_on_nibabel_behavior(filename):
             assert_not_equal(slope, 1.0)
             assert_not_equal(inter, 0)
         else:
-            assert_equal(slope, 1.0)
-            assert_equal(inter, 0)
+            assert_true(slope in (1.0, None))
+            assert_true(inter in (0, None))
 
