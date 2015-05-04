@@ -909,8 +909,8 @@ class TreeClassifier(ProxyClassifier):
 
         # now for predictions pointing to specific groups go into
         # corresponding one
-        # defer initialization since dtype would depend on predictions
-        predictions = None
+        predictions = np.zeros((len(dataset),),
+                               dtype=self.ca.trained_targets.dtype)
         for pred_group in set(clf_predictions):
             gk = index2group[pred_group]
             clf_ = clfs[gk]
@@ -920,14 +920,10 @@ class TreeClassifier(ProxyClassifier):
                       'Predicting for group %s using %s on %d samples',
                       (gk, clf_, np.sum(group_indexes)))
             if clf_ is None:
-                p = groups[gk][0] # our only label
+                predictions[group_indexes] = groups[gk][0] # our only label
             else:
-                p = clf_.predict(dataset[group_indexes])
-
-            if predictions is None:
-                predictions = np.zeros((len(dataset),),
-                                       dtype=np.asanyarray(p).dtype)
-            predictions[group_indexes] = p
+                predictions[group_indexes] = clf_.predict(dataset[group_indexes])
+                
         return predictions
 
 
