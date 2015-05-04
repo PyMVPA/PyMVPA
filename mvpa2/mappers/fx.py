@@ -23,7 +23,7 @@ from mvpa2.mappers.base import Mapper
 from mvpa2.misc.support import array_whereequal
 from mvpa2.base.dochelpers import borrowdoc
 
-from mvpa2.misc.transformers import sum_of_abs, max_of_abs
+from mvpa2.misc.transformers import sum_of_abs, max_of_abs, subtract_mean
 
 if __debug__:
     from mvpa2.base import debug
@@ -386,6 +386,13 @@ def mean_feature(attrfx='merge'):
     return FxMapper('features', np.mean, attrfx=attrfx)
 
 
+def subtract_mean_feature(attrfx='merge'):
+    """Subtract mean of features across samples.
+    Functionaly equivalent to MeanRemovalMapper, but much slower.
+    """
+    return FxMapper('features', subtract_mean, attrfx=attrfx)
+
+
 def mean_group_feature(attrs, attrfx='merge', **kwargs):
     """Returns a mapper that computes the mean features of unique feature groups.
 
@@ -629,3 +636,36 @@ class BinaryFxNode(Node):
         if np.isscalar(err):
             err = np.array(err, ndmin=2)
         return Dataset(err)
+
+
+class MeanRemovalMapper(Mapper):
+    """subtract sample mean from features"""
+
+    is_trained = True
+
+    in_place = Parameter(False, doc=\
+    """if False: copy of the dataset will be made before demeaning.\n
+       if True: demeaning will be done on the same dataset, therefore changing
+       the original one in the process. Be carefull when using it.
+       This implementation is faster and need float array as input,
+       othervise rounding errors will happen""",
+    constraints=EnsureBool())
+
+    def __init__(self, in_place=False, **kwargs):
+        Mapper.__init__(self, **kwargs)
+        self.in_place = in_place
+
+    def _forward_data(self, data):
+        mdata = data
+        mean = np.mean(mdata, axis=1)
+
+        if self.in_place:
+            if mdata.dtype == np.int_:
+                warning("Integer dtype. Mean removal won't work correctly for "
+                         "this implementation. Rounding errors will occur. "
+                         "Use in_place=False instead")
+            mdata -= mean[:, np.newaxis]
+
+        else:
+            mdata = mdata - mean[:, np.newaxis]
+        return mdata
