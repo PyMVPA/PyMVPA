@@ -79,6 +79,39 @@ class Dataset(AttrDataset):
         else:
             self.a.mapper.append(mapper)
 
+    def select(self, sadict=None, fadict=None, strict=True):
+        """Helper to select samples/features given dictionaries describing selection
+
+        Generally __getitem__ (i.e. []) should be used, but this function
+        might be useful whenever non-strict selection (strict=False) is
+        required.
+
+        See :meth:`~mvpa2.base.collections.UniformLengthCollection.match()`
+        for more information about specification of selection dictionaries.
+
+        Parameters
+        ----------
+        sa, fa : dict, optional
+          Dictionaries describing selection for samples/features
+          correspondingly.
+        strict : bool, optional
+          If True, absent matching to any specified selection key/value pair
+          would result in ValueError exception.  If False, it would allow to
+          not have matches, but if only a single value for a key is given or none
+          of the values match -- you will end up with empty selection.
+        """
+        if sadict is None and fadict is None:
+            raise RuntimeError("Specify selection at least for samples or features")
+        assert(isinstance(strict, bool))
+
+        # Let's be simple/obvious at cost of minimal duplication
+        if fadict is None:
+            return self[self.sa.match(sadict, strict=strict)]
+        elif sadict is None:
+            return self[:, self.fa.match(fadict, strict=strict)]
+        else:
+            return self[self.sa.match(sadict, strict=strict),
+                        self.fa.match(fadict, strict=strict)]
 
     def __getitem__(self, args):
         # uniformize for checks below; it is not a tuple if just single slicing
@@ -93,7 +126,16 @@ class Dataset(AttrDataset):
            and self.a.has_key('mapper'):
             args = list(args)
             args[1] = self.a.mapper.forward1(args[1])
-            args = tuple(args)
+
+        # check if any of the args is a dict, which would require fancy selection
+        args_ = []
+        for i, arg in enumerate(args):
+            if isinstance(arg, dict):
+                col = (self.sa, self.fa)[i]
+                args_.append(col.match(arg))
+            else:
+                args_.append(arg)
+        args = tuple(args_)
 
         # let the base do the work
         ds = super(Dataset, self).__getitem__(args)
@@ -123,7 +165,7 @@ class Dataset(AttrDataset):
     def find_collection(self, attr):
         """Lookup collection that contains an attribute of a given name.
 
-        Collections are search in the following order: sample attributes,
+        Collections are searched in the following order: sample attributes,
         feature attributes, dataset attributes. The first collection
         containing a matching attribute is returned.
 

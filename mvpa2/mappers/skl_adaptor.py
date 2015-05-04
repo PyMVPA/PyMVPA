@@ -18,6 +18,8 @@ from mvpa2.support.copy import deepcopy
 from mvpa2.base.learner import Learner
 from mvpa2.mappers.base import Mapper
 
+__all__ = ['SKLTransformer']
+
 class SKLTransformer(Mapper):
     """Adaptor to use arbitrary sklearn transformer as a mapper.
 
@@ -88,5 +90,11 @@ class SKLTransformer(Mapper):
             out = tf.fit_transform(ds.samples, self._get_y(ds))
             self._set_trained()
         else:
-            out = tf.transform(ds.samples, self._get_y(ds))
+            # some SKL classes do not swallow a superfluous `y` argument
+            # we could be clever and use 'inspect' to query the function
+            # signature, but we'll use a sledge hammer instead
+            try:
+                out = tf.transform(ds.samples, self._get_y(ds))
+            except TypeError:
+                out = tf.transform(ds.samples)
         return out

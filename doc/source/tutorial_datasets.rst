@@ -319,7 +319,31 @@ created:
 ['me' 'nobody']
 
 We see that both attributes are still there and, moreover, also the
-corresponding subsets have been selected.
+corresponding subsets have been selected.  It makes it convenient to select
+subsets of the dataset matching specific values of sample or feature attributes,
+or both:
+
+>>> subds = ds[ds.sa.some_attr == 1., ds.fa.responsible == 'me']
+>>> print subds.shape
+(2, 1)
+
+To simplify such selections based on the values of attributes, it is possible
+to specify desired selection as a dictionary for either samples of features
+dimensions, where each key corresponds to an attribute name, and value specifies
+a list of desired values.  Specifying multiple keys for either dimension leads
+to the intersection of matching elements:
+
+>>> subds = ds[{'some_attr': [1., 0.], 'literal': ['two']}, {'responsible': ['me', 'you']}]
+>>> print subds.sa.some_attr, subds.sa.literal, subds.fa.responsible
+[ 1.] ['two'] ['me' 'you']
+
+.. exercise::
+
+  Check documentation of `~mvpa2.datasets.base.Dataset.select()` method which
+  could be used to implement such selection as well, but providing also additional
+  argument ``strict``.  In above example try selecting non-existing elements via
+  ``__getitem__`` (i.e. via ``[]``), and then using ``select()`` method with
+  ``strict=False``.  Compare the results and behavior.
 
 
 Load fMRI data
@@ -332,22 +356,23 @@ example dataset we are going to look at is a single subject from Haxby et al.
 (2001).  For more convenience and less typing, we first specify the path of the
 directory with the fMRI data.
 
->>> path=os.path.join(tutorial_data_path, 'data')
+>>> path = os.path.join(tutorial_data_path, 'data')
 
 In the simplest case, we now let `~mvpa2.datasets.mri.fmri_dataset` do its job,
 by just pointing it to the fMRI data file. The data is stored as a NIfTI file
 that has all runs of the experiment concatenated into a single file.
 
->>> ds = fmri_dataset(os.path.join(path, 'bold.nii.gz'))
+>>> bold_fname = os.path.join(path, 'sub001', 'BOLD', 'task001_run001', 'bold.nii.gz')
+>>> ds = fmri_dataset(bold_fname)
 >>> len(ds)
-1452
+121
 >>> ds.nfeatures
 163840
 >>> ds.shape
-(1452, 163840)
+(121, 163840)
 
 We can notice two things. First -- *it worked!* Second, we obtained a
-two-dimensional dataset with 1452 samples (these are volumes in the NIfTI
+two-dimensional dataset with 121 samples (these are volumes in the NIfTI
 file), and over 160k features (these are voxels in the volume). The voxels
 are represented as a one-dimensional vector, and it seems that they have
 lost their association with the 3D-voxel-space. However, this is not the
@@ -365,10 +390,10 @@ to use the original GLM-based localizer mask of ventral temporal cortex
 from Haxby et al. (2001).
 Let's reload the dataset:
 
->>> ds = fmri_dataset(os.path.join(path, 'bold.nii.gz'),
-...                   mask=os.path.join(path, 'mask_vt.nii.gz'))
+>>> mask_fname = os.path.join(path, 'sub001', 'masks', 'orig', 'vt.nii.gz')
+>>> ds = fmri_dataset(bold_fname, mask=mask_fname)
 >>> len(ds)
-1452
+121
 >>> ds.nfeatures
 577
 
@@ -423,7 +448,7 @@ all unwanted attributes. The Dataset class'
 
 >>> stripped = ds.copy(deep=False, sa=['time_coords'], fa=[], a=[])
 >>> print stripped
-<Dataset: 1452x577@int16, <sa: time_coords>>
+<Dataset: 121x577@int16, <sa: time_coords>>
 
 We can see that all attributes besides ``time_coords`` have been filtered out.
 Setting the ``deep`` arguments to ``False`` causes the copy function to reuse the

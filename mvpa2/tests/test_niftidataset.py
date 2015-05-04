@@ -20,7 +20,8 @@ if not externals.exists('nibabel'):
 from mvpa2.base.dataset import vstack
 from mvpa2 import pymvpa_dataroot
 from mvpa2.datasets.mri import fmri_dataset, _load_anyimg, map2nifti
-from mvpa2.datasets.eventrelated import eventrelated_dataset
+from mvpa2.datasets.eventrelated import eventrelated_dataset, events2sample_attr, \
+        assign_conditionlabels
 from mvpa2.misc.fsl import FslEV3
 from mvpa2.misc.support import Event, value2idx
 from mvpa2.misc.io.base import SampleAttributes
@@ -77,9 +78,7 @@ def test_fmridataset():
     data = maskimg.get_data().copy()
     data[data>0] = np.arange(1, np.sum(data) + 1)
     maskimg = nibabel.Nifti1Image(data, None, maskimg.get_header())
-    attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
     ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'bold.nii.gz'),
-                      targets=attr.targets, chunks=attr.chunks,
                       mask=maskimg,
                       sprefix='subj1',
                       add_fa={'myintmask': maskimg})
@@ -87,7 +86,7 @@ def test_fmridataset():
     assert_equal(len(ds), 1452)
     assert_true(ds.nfeatures, 530)
     assert_array_equal(sorted(ds.sa.keys()),
-            ['chunks', 'targets', 'time_coords', 'time_indices'])
+            ['time_coords', 'time_indices'])
     assert_array_equal(sorted(ds.fa.keys()),
             ['myintmask', 'subj1_indices'])
     assert_array_equal(sorted(ds.a.keys()),
@@ -100,6 +99,7 @@ def test_fmridataset():
     assert_array_equal(ds.fa.myintmask, np.arange(1, ds.nfeatures + 1))
     # we know that imgtype must be:
     ok_(ds.a.imgtype is nibabel.Nifti1Image)
+
 
 @with_tempfile(suffix='.img')
 def test_nifti_mapper(filename):
@@ -422,6 +422,6 @@ def test_assumptions_on_nibabel_behavior(filename):
             assert_not_equal(slope, 1.0)
             assert_not_equal(inter, 0)
         else:
-            assert_equal(slope, 1.0)
-            assert_equal(inter, 0)
+            assert_true(slope in (1.0, None))
+            assert_true(inter in (0, None))
 

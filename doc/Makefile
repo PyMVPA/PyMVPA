@@ -31,14 +31,14 @@ help:
 	@echo "  doctest   to run all doctests embedded in the documentation (if enabled)"
 
 clean:
-	-rm -rf $(BUILDDIR) source/generated
+	-rm -rf $(BUILDDIR) source/generated source/intersphinx
 	-rm generate-stamp
 
-SPHINXEXT_PATH=$(shell python -c 'import sphinx; from distutils.version import LooseVersion; print LooseVersion(sphinx.__version__) < "1.1.2" and "sphinxext" or "/usr/share/pyshared/sphinx/ext"')
+SPHINXEXT_PATH=$(shell python -c 'import sphinx.ext; from distutils.version import LooseVersion; print LooseVersion(sphinx.__version__) < "1.1.2" and "sphinxext" or sphinx.ext.__path__[0]')
 #SPHINXEXT_PATH=sphinxext
 
 generate: generate-stamp
-generate-stamp:
+generate-stamp: cache_intersphinx
 	mkdir -p $(BUILDDIR)
 	@MVPA_EXTERNALS_RAISE_EXCEPTION=off \
 		PYTHONPATH=$(CURDIR)/sphinxext:$(CURDIR)/..:$(PYTHONPATH) \
@@ -55,6 +55,12 @@ generate-stamp:
 		underline="*****************$$(echo $${cmd} | tr A-Za-z0-9 \*)" ; \
 		echo ".. index:: command line, $${cmd}\n.. _chap_cmdline_$${cmd}\n\n$${underline}\nMan page for \`\`$${cmd}\`\`\n$${underline}\n\n.. raw:: html\n   :file: $${manfile}.html\n" > source/generated/cmd_$${cmd}.rst ; \
 	done
+	@touch $@
+
+cache_intersphinx: cache_intersphinx-stamp
+cache_intersphinx-stamp:
+	# fetch intersphinx objects for explicit intersphinxing
+	python source/conf.py cache_intersphinx
 	@touch $@
 
 html: generate

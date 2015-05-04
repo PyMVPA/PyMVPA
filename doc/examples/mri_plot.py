@@ -37,13 +37,8 @@ elsewhere, hence we only provide the code here for the sake of completeness.
 from mvpa2.suite import *
 
 # load PyMVPA example dataset
-datapath = os.path.join(pymvpa_datadbroot,
-                        'tutorial_data', 'tutorial_data', 'data')
-attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
-dataset = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
-                       targets=attr.targets,
-                       chunks=attr.chunks,
-                       mask=os.path.join(datapath, 'mask_gray.nii.gz'))
+datapath = os.path.join(mvpa2.cfg.get('location', 'tutorial data'), 'data')
+dataset = load_datadb_tutorial_data(roi='gray')
 
 # do chunkswise linear detrending on dataset
 poly_detrend(dataset, chunks_attr='chunks')
@@ -71,9 +66,9 @@ interactive plotting.
 """
 
 mri_args = {
-    'background' : os.path.join(datapath, 'anat.nii.gz'),
-    'background_mask' : os.path.join(datapath, 'mask_brain.nii.gz'),
-    'overlay_mask' : os.path.join(datapath, 'mask_gray.nii.gz'),
+    'background' : os.path.join(datapath, 'sub001', 'anatomy', 'highres001.nii.gz'),
+    'background_mask' : os.path.join(datapath, 'sub001', 'masks', 'orig', 'brain.nii.gz'),
+    'overlay_mask' : os.path.join(datapath, 'sub001', 'masks', 'orig', 'gray.nii.gz'),
     'cmap_bg' : 'gray',
     'cmap_overlay' : 'autumn', # YlOrRd_r # pl.cm.autumn
     'interactive' : cfg.getboolean('examples', 'interactive', True),

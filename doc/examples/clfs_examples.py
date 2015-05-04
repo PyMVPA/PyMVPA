@@ -26,13 +26,7 @@ def main():
 
 
     # Load Haxby dataset example
-    attrs = SampleAttributes(os.path.join(pymvpa_dataroot,
-                                          'attributes_literal.txt'))
-    haxby8 = fmri_dataset(samples=os.path.join(pymvpa_dataroot,
-                                               'bold.nii.gz'),
-                          targets=attrs.targets,
-                          chunks=attrs.chunks,
-                          mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+    haxby8 = load_example_fmri_dataset(literal=True)
     haxby8.samples = haxby8.samples.astype(np.float32)
 
     # preprocess slightly

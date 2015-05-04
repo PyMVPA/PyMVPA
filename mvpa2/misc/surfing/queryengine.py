@@ -242,6 +242,7 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
         return self.voxsel.keys()
 
     def train(self, dataset):
+        '''Train the query engine on a dataset'''
         vg = self.voxsel.volgeom
         # We are creating a map from big unmasked indices of voxels
         # known to voxsel into the dataset's feature indexes.
@@ -330,17 +331,30 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
     def query(self, **kwargs):
         raise NotImplementedError
 
-    def get_masked_nifti_image(self):
-        '''Returns a nifti image indicating which voxels are included
-        in one or more searchlights.
+
+    def get_masked_nifti_image(self, center_ids=None):
+        '''Return a NIfTI image binary mask with voxels covered by searchlights
+
+        Parameters
+        ----------
+        center_ids: list or None
+            Indices of center ids for which the associated masks must be
+            used. If None, all center_ids are used.
 
         Returns
         -------
         img: nibabel.Nifti1Image
             Nifti image with value zero for voxels that we not selected, and
             non-zero values for selected voxels.
+
+        Notes
+        -----
+        When using surface-based searchlights, a use case of this function is
+        to get the voxels that were associated with the searchlights in a
+        subset of all nodes on a cortical surface.
+
         '''
-        msk = self.voxsel.get_mask()
+        msk = self.voxsel.get_mask(keys=center_ids)
         import nibabel as nb
         img = nb.Nifti1Image(msk, self.voxsel.volgeom.affine)
         return img
@@ -360,7 +374,7 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
 
     def feature_id2nearest_vertex_id(self, feature_id,
                                      fallback_euclidean_distance=False):
-        '''Computes the index of the vertex nearest to a given voxel.
+        '''Compute the index of the vertex nearest to a given voxel.
 
         Parameters
         ----------
@@ -389,7 +403,7 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
                       fallback_euclidean_distance=fallback_euclidean_distance)
 
     def vertex_id2nearest_feature_id(self, vertex_id):
-        '''Computes the index of the voxel nearest to a given vertex.
+        '''Compute the index of the voxel nearest to a given vertex.
 
         Parameters
         ----------
@@ -431,7 +445,10 @@ class SurfaceVoxelsQueryEngine(SurfaceVerticesQueryEngine):
 
     In a typical use case such an instance is generated using
     the function 'disc_surface_queryengine' with the output_space='voxels'
-    argument
+    argument.
+
+    For a mapping from center nodes (on a surface) to voxels,
+    consider SurfaceVerticesQueryEngine.
     '''
     def __init__(self, voxsel, space='voxel_indices', add_fa=None,
                  fallback_euclidean_distance=True):
@@ -484,10 +501,13 @@ class SurfaceVoxelsQueryEngine(SurfaceVerticesQueryEngine):
         return self._feature_id2vertex_id.keys()
 
     def query_byid(self, feature_id):
+        '''Query the engine using a feature id'''
         vertex_id = self._feature_id2vertex_id[feature_id]
         return super(SurfaceVoxelsQueryEngine, self).query_byid(vertex_id)
 
     def train(self, ds):
+        '''Train the query engine on a dataset'''
+
         super(SurfaceVoxelsQueryEngine, self).train(ds)
 
         # Compute the mapping from voxel (feature) ids to node ids
@@ -516,6 +536,39 @@ class SurfaceVoxelsQueryEngine(SurfaceVerticesQueryEngine):
     def untrain(self):
         super(SurfaceVoxelsQueryEngine, self).untrain(ds)
         self._feature_id2vertex_id = None
+
+    def get_masked_nifti_image(self, center_ids=None):
+        '''
+        Returns a nifti image indicating which voxels are included
+        in one or more searchlights.
+
+        Parameters
+        ----------
+        center_ids: list or None
+            Indices of center ids for which the associated masks must be
+            used. If None, all center_ids are used.
+
+        Returns
+        -------
+        img: nibabel.Nifti1Image
+            Nifti image with value zero for voxels that we not selected, and
+            non-zero values for selected voxels.
+
+        Notes
+        -----
+        When using surface-based searchlights, a use case of this function is
+        to get the voxels that were associated with the searchlights in a
+        subset of all nodes on a cortical surface.
+        '''
+        if center_ids is None:
+            center_ids = self.ids
+
+        vertex_ids = [self._feature_id2vertex_id[center_id]
+                                for center_id in center_ids]
+        parent = super(SurfaceVoxelsQueryEngine, self)
+        return parent.get_masked_nifti_image(center_ids=vertex_ids)
+
+
 
 
 def disc_surface_queryengine(radius, volume, white_surf, pial_surf,

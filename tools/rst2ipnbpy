@@ -28,14 +28,17 @@ def prep_rest(rest):
     # which lacks flags keyword argument for re.subn
     # We will first replace all newlines with a unique %%%
     # which we will use as a new line symbol in our expressions
-    assert(not '%%%' in rest)           # at least some checking
-    doc = rest.replace('\n', '%%%')
-    doc, _ = re.subn(r'%%%.. index.*?%%%', '', doc)
+
+    # Replace \n with some unique line which is unlikely to appear at the endof the line
+    NL = "<TEMPNEWLINE>"
+    assert(not NL in rest)           # at least some checking
+    doc = rest.replace('\n', NL)
+    doc, _ = re.subn(r'%s.. index.*?%s' % (NL, NL), '', doc)
     # fold text roles inside to turn them into a ref
     subns = 1
     while not subns == 0:
         doc, subns = re.subn(r':([a-z]+):`(.*)`', '`:\\1:\\2`', doc)
-    doc = doc.replace('%%%', '\n')      # replace %%% back
+    doc = doc.replace(NL, '\n')      # NL back
     return doc
 
 
@@ -258,6 +261,7 @@ class ReST2IPyNB(object):
                     self._parse(item.children[1])
                     self._buffer = '\n%s: %s' % (term, self._buffer)
             elif tag in ['enumerated_list', 'bullet_list']:
+                # TODO: has problems with nested lists formatting
                 self._add_markdowncell()
                 for i, item in enumerate(child.children):
                     if tag == 'enumerated_list':
@@ -279,14 +283,14 @@ class ReST2IPyNB(object):
                 self._parse(child.children[0])
             elif tag in ['figure', 'image'] :
                 # this can't be expressed in markdown
-                self._flush_buffer()
+                self._add_markdowncell()
                 file_url = '%s/%s.html' % (self._baseurl,
                                            os.path.splitext(os.path.basename(self._filename))[0])
                 self._add2buffer('\[Visit [%s](%s) to view this figure\]' % (file_url, file_url),
                                  newline=True, paragraph=True)
             elif tag == 'block_quote':
                 self._flush_buffer()
-                first_line = len(self._currcell['source'])
+                first_line = len(self._currcell['source']) - 1
                 # skip the wrapping paragraph
                 self._parse(child.children[0])
                 self._flush_buffer()
@@ -307,12 +311,11 @@ class ReST2IPyNB(object):
                     self._flush_buffer()
                     self._currcell['source'].insert(0, '- - -\n**Exercise**')
                     self._add_codecell()
-                    self._add2buffer('# you can use this cell to for this exercise\n')
+                    self._add2buffer('# you can use this cell for this exercise\n')
                     self._add_markdowncell()
                     self._currcell['source'].append('- - -\n')
-                elif child.children[0].astext() == 'Unknown directive type "seealso".':
-                    pass
-                elif child.children[0].astext() == 'Unknown directive type "todo".':
+                elif re.match('Unknown directive type "(seealso|style|todo|layout)".',
+                              child.children[0].astext()):
                     pass
                 else:
                     raise RuntimeError("cannot handle system message '%s'"
