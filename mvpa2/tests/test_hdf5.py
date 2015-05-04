@@ -17,7 +17,7 @@ skip_if_no_external('h5py')
 import h5py
 
 import os
-from os.path import join as opj
+from os.path import join as opj, exists, realpath
 import sys
 import tempfile
 
@@ -450,7 +450,17 @@ test_files = glob(opj(pymvpa_dataroot, 'testing', 'fmri_dataset', '*.hdf5'))
 @with_tempfile(suffix=".nii.gz")
 def test_regress_fmri_dataset(tempfile=None, testfile=None):
     if not externals.exists('nibabel'):
-        raise SkipTest
+        raise SkipTest("can't test without nibabel")
+
+    # verify that we have actual load
+    if not (exists(testfile) and exists(realpath(testfile))):
+        raise SkipTest("File %s seems to be missing -- 'git annex get .' "
+                       "to fetch all test files first" % testfile)
+    # Still might be a direct mode, or windows -- so lets check the size
+    if os.stat(testfile).st_size < 1000:
+        raise SkipTest("File %s seems to be small/empty -- 'git annex get .' "
+                       "to fetch all test files first" % testfile)
+
     from mvpa2.datasets.mri import map2nifti
 
     ds = h5load(testfile)  # load previously generated dataset
