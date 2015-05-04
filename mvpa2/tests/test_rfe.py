@@ -34,7 +34,7 @@ from mvpa2.misc.attrmap import AttributeMap
 from mvpa2.clfs.stats import MCNullDist
 from mvpa2.measures.base import ProxyMeasure, CrossValidation
 from mvpa2.measures.anova import OneWayAnova
-from mvpa2.measures.fx import targets_mutualinfo_kde, targets_dcorrcoef
+from mvpa2.measures.fx import targets_dcorrcoef
 
 from mvpa2.base.state import UnknownStateError
 
