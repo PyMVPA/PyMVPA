@@ -463,6 +463,10 @@ def test_regress_fmri_dataset(tempfile=None, testfile=None):
     # verify that map2nifti works whenever version of nibabel on the system
     # greater or equal that one it was saved with:
     if externals.versions['nibabel'] >= ds.a.versions['nibabel']:
+        # test that we can get str of the niftihdr:
+        # to avoid such issues as https://github.com/PyMVPA/PyMVPA/issues/278
+        hdr_str = str(ds.a.imghdr)
+        assert(hdr_str != "")
         ds_ni = map2nifti(ds)
         # verify that we can store generated nifti to a file
         ds_ni.to_filename(tempfile)
