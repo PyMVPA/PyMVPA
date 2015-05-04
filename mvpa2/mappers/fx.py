@@ -388,7 +388,7 @@ def mean_feature(attrfx='merge'):
 
 def subtract_mean_feature(attrfx='merge'):
     """Subtract mean of features across samples.
-    Functionaly equivalent to MeanRemovalMapper, but much slower.
+    Functionaly equivalent to MeanRemoval, but much slower.
     """
     return FxMapper('features', subtract_mean, attrfx=attrfx)
 
@@ -661,7 +661,7 @@ class MeanRemoval(Mapper):
         mean = np.mean(mdata, axis=1)
 
         if self.in_place:
-            if mdata.dtype == np.int_:
+            if not np.issubdtype(mdata.dtype, float):
                 warning("Integer dtype. Mean removal won't work correctly for "
                         "this implementation. Rounding errors will occur. "
                         "Use in_place=False instead")

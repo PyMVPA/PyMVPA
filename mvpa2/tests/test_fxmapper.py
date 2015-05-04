@@ -293,3 +293,19 @@ def test_mean_removal():
                                mr(random_array.copy())))
     assert_true(np.array_equal(mr_fx(random_array.copy()),
                                mr_inplace(random_array.copy())))
+
+    # corner cases
+    int_arr = np.array([1, 2, 3, 4, 5])
+    desired = int_arr.astype(float) - int_arr.mean()
+    assert_array_equal(mr.forward1(int_arr), desired)
+    # or list
+    assert_array_equal(mr.forward1(list(int_arr)), desired)
+    # missing value -> NaN just like mean() would do
+    nan_arr = np.array([1, 2, np.nan, 4, 5])
+    assert_array_equal(mr.forward1(nan_arr), [np.nan] * len(int_arr))
+    # but with a masked array it works as intended, i.e. just like mean()
+    nan_arr = np.ma.array(nan_arr, mask=np.isnan(nan_arr))
+    nan_arr_dm = desired.copy()
+    nan_arr_dm[2] = np.nan
+    assert_array_equal(mr.forward1(nan_arr), nan_arr_dm)
+    # same handling applies to np.inf
