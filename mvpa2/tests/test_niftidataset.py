@@ -20,8 +20,8 @@ if not externals.exists('nibabel'):
 from mvpa2.base.dataset import vstack
 from mvpa2 import pymvpa_dataroot
 from mvpa2.datasets.mri import fmri_dataset, _load_anyimg, map2nifti
-from mvpa2.datasets.sources.openfmri import OpenFMRIDataset
-from mvpa2.datasets.eventrelated import eventrelated_dataset, events2sample_attr
+from mvpa2.datasets.eventrelated import eventrelated_dataset, events2sample_attr, \
+        assign_conditionlabels
 from mvpa2.misc.fsl import FslEV3
 from mvpa2.misc.support import Event, value2idx
 from mvpa2.misc.io.base import SampleAttributes
@@ -99,55 +99,6 @@ def test_fmridataset():
     assert_array_equal(ds.fa.myintmask, np.arange(1, ds.nfeatures + 1))
     # we know that imgtype must be:
     ok_(ds.a.imgtype is nibabel.Nifti1Image)
-
-def test_openfmri_dataset():
-    of = OpenFMRIDataset(os.path.join(pymvpa_dataroot, 'openfmri'))
-    sub_ids = of.get_subj_ids()
-    assert_equal(sub_ids, [1, 'phantom'])
-    assert_equal(of.get_scan_properties(), {'TR': '2.5'})
-    tasks = of.get_task_descriptions()
-    assert_equal(tasks, {1: 'object viewing'})
-    task = tasks.keys()[0]
-    run_ids = of.get_bold_run_ids(sub_ids[0], task)
-    assert_equal(run_ids, range(1, 13))
-    task_runs = of.get_task_bold_run_ids(task)
-    assert_equal(task_runs, {1: range(1, 13)})
-
-    orig_attrs = SampleAttributes(os.path.join(pymvpa_dataroot,
-                                               'attributes_literal.txt'))
-    for subj, runs in task_runs.iteritems():
-        for run in runs:
-            # load single run
-            ds = of.get_bold_run_dataset(subj, task, run, flavor='1slice',
-                                         mask=os.path.join(pymvpa_dataroot,
-                                                           'mask.nii.gz'),
-                                         add_sa='bold_moest.txt')
-            # basic shape
-            assert_equal(len(ds), 121)
-            assert_equal(ds.nfeatures, 530)
-            # functional mapper
-            assert_equal(ds.O.shape, (121, 40, 20, 1))
-            # additional attributes present
-            moest = of.get_bold_run_motion_estimates(subj, task, run)
-            for i in range(6):
-                moest_attr = 'bold_moest.txt_%i' % (i,)
-                assert_true(moest_attr in ds.sa)
-                assert_array_equal(moest[:,i], ds.sa[moest_attr].value)
-
-            # check conversion of model into sample attribute
-            events = of.get_bold_run_model(subj, task, run)
-            targets = events2sample_attr(events,
-                                         ds.sa.time_coords,
-                                         noinfolabel='rest')
-            assert_array_equal(
-                orig_attrs['targets'][(run - 1) * 121: run * len(ds)], targets)
-            assert_equal(ds.sa['subj'][0], subj)
-
-    # more basic access
-    motion = of.get_task_bold_attributes(1, 'bold_moest.txt', np.loadtxt)
-    assert_equal(len(motion), 12) # one per run
-    # one per subject, per volume, 6 estimates
-    assert_equal([m.shape for m in motion], [(1, 121, 6)] * 12)
 
 
 @with_tempfile(suffix='.img')
