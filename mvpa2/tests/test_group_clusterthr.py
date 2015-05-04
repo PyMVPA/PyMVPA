@@ -149,7 +149,7 @@ def test_group_clusterthreshold_simple(n_proc):
     feature_thresh_prob = 0.005
     nsubj = 10
     # make a nice 1D blob and a speck
-    blob = np.array([0, 0, 1, 3, 5, 3, 2, 0, 2, 0])
+    blob = np.array([0, 0, .5, 3, 5, 3, 3, 0, 2, 0])
     blob = Dataset([blob])
     # and some nice random permutations
     nperms = 100 * nsubj
@@ -160,7 +160,7 @@ def test_group_clusterthreshold_simple(n_proc):
     # the algorithm instance
     # scale number of bootstraps to match desired probability
     # plus a safety margin to mimimize bad luck in sampling
-    clthr = gct.GroupClusterThreshold(n_bootstrap=int(2. / feature_thresh_prob),
+    clthr = gct.GroupClusterThreshold(n_bootstrap=int(3. / feature_thresh_prob),
                                       feature_thresh_prob=feature_thresh_prob,
                                       fwe_rate=0.01, n_blocks=3, n_proc=n_proc)
     clthr.train(perms)
@@ -200,7 +200,7 @@ def test_group_clusterthreshold_simple(n_proc):
 
     # check that the cluster results aren't depending in the actual location of
     # the clusters
-    shifted_blob = Dataset([[1, 3, 5, 3, 2, 0, 0, 0, 2, 0]])
+    shifted_blob = Dataset([[.5, 3, 5, 3, 3, 0, 0, 0, 2, 0]])
     shifted_res = clthr(shifted_blob)
     assert_array_equal(res.a.clusterstats, shifted_res.a.clusterstats)
 
@@ -222,11 +222,11 @@ def test_group_clusterthreshold_simple(n_proc):
     # NULL estimation does no averaging
     # -> more noise -> fewer clusters -> higher p
     assert_greater_equal(len(res.a.clusterstats), len(sglres.a.clusterstats))
-    assert_greater_equal(sglres.a.clusterstats[0]['prob_raw'],
-                         res.a.clusterstats[0]['prob_raw'])
+    assert_greater_equal(np.round(sglres.a.clusterstats[0]['prob_raw'], 4),
+                         np.round(res.a.clusterstats[0]['prob_raw'], 4))
     # no again for real scientists: no FWE correction
     superclthr = gct.GroupClusterThreshold(
-        n_bootstrap=int(2. / feature_thresh_prob),
+        n_bootstrap=int(3. / feature_thresh_prob),
         feature_thresh_prob=feature_thresh_prob,
         multicomp_correction=None, n_blocks=3,
         n_proc=n_proc)
@@ -241,8 +241,8 @@ def test_group_clusterthreshold_simple(n_proc):
     assert_raises(ValueError, gct.GroupClusterThreshold,
                   n_bootstrap=10, feature_thresh_prob=.09, n_proc=n_proc)
     # check mapped datasets
-    blob = np.array([[0, 0, 1, 3, 5, 3, 2, 0, 2, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+    blob = np.array([[0, 0, .5, 3, 5, 3, 3, 0, 2, 0],
+                     [0, 0,  0, 0, 0, 0, 0, 0, 0, 0]])
     blob = dataset_wizard([blob])
     # and some nice random permutations
     nperms = 100 * nsubj
