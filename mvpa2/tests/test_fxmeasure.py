@@ -14,7 +14,9 @@ from mvpa2.base import externals
 
 from mvpa2.datasets import dataset_wizard
 from mvpa2.measures.fx import BinaryFxFeaturewiseMeasure
-from mvpa2.measures.fx import targets_mutualinfo_kde, targets_dcorrcoef
+from mvpa2.measures.fx import targets_dcorrcoef
+if externals.exists('statsmodels'):
+    from mvpa2.measures.fx import targets_mutualinfo_kde
 
 from mvpa2.testing import sweepargs
 from mvpa2.testing.datasets import datasets as tdatasets
@@ -55,12 +57,12 @@ _nonlin_tests = [(dataset_wizard([0, 1-0.01, 0, 1],
                  (dataset_wizard([[0, 1], [1-0.01, 0], [0, 0], [1, 1]],
                                  targets=['a', 'b', 'a', 'b']),
                                 ([0.99, -1e-10], [1.+1e-10, 0.01])),
-                   ]
+                 ]
 
 _nonlin_tests_fx = [targets_dcorrcoef()]
 if externals.exists('statsmodels'):
-    # -0.01 because current implementation would run into a singular matrix if y is exactly
-    # the x. TODO: report/fix
+    # -0.01 because current implementation would run into a singular matrix
+    # if y is exactly the x. TODO: report/fix
     _nonlin_tests_fx.append(targets_mutualinfo_kde())
 
 
@@ -68,9 +70,6 @@ if externals.exists('statsmodels'):
 @sweepargs(fx=_nonlin_tests_fx)
 def test_BinaryFxFeatureMeasure_mi(fx, ds_mi):
     ds, (mi_min, mi_max) = ds_mi
-    #fx = BinaryFxFeaturewiseMeasure(mutualinfo_kde, numeric=True)
-    #print 'dcor:', targets_dcorrcoef()(ds).samples
-    #print 'mi b:', targets_mutualinfo_binned()(ds).samples
     res = fx(ds)
     assert_equal(res.shape, (1, ds.nfeatures))
     mi = res.samples[0]
