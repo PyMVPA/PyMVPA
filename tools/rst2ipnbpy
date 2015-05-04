@@ -283,7 +283,7 @@ class ReST2IPyNB(object):
                 self._parse(child.children[0])
             elif tag in ['figure', 'image'] :
                 # this can't be expressed in markdown
-                self._flush_buffer()
+                self._add_markdowncell()
                 file_url = '%s/%s.html' % (self._baseurl,
                                            os.path.splitext(os.path.basename(self._filename))[0])
                 self._add2buffer('\[Visit [%s](%s) to view this figure\]' % (file_url, file_url),

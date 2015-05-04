@@ -259,7 +259,7 @@ notebooks: notebooks-stamp
 notebooks-stamp: examples2rst
 	mkdir -p $(NOTEBOOKBUILD_DIR)
 	tools/rst2ipnbpy \
-		--baseurl http://pymvpa.org \
+		--baseurl http://pymvpa.org/examples \
 		--apiref_baseurl http://pymvpa.org/generated \
 		--glossary_baseurl http://pymvpa.org/glossary.html \
 		--outdir $(NOTEBOOKBUILD_DIR) \
