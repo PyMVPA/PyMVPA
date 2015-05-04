@@ -459,8 +459,17 @@ def test_regress_fmri_dataset(tempfile=None, testfile=None):
     assert_equal(sorted(ds.sa.keys()),
                  ['chunks', 'targets', 'time_coords', 'time_indices'])
     assert_equal(sorted(ds.fa.keys()), ['voxel_indices'])
-    # verify that map2nifti works
-    ds_ni = map2nifti(ds)
-    # verify that we can store generated nifti to a file
-    ds_ni.to_filename(tempfile)
-    assert(os.path.exists(tempfile))
+
+    # verify that map2nifti works whenever version of nibabel on the system
+    # greater or equal that one it was saved with:
+    if externals.versions['nibabel'] >= ds.a.versions['nibabel']:
+        ds_ni = map2nifti(ds)
+        # verify that we can store generated nifti to a file
+        ds_ni.to_filename(tempfile)
+        assert(os.path.exists(tempfile))
+    else:
+        raise SkipTest(
+            "Our version of nibabel %s is older than the one file %s was saved "
+            "with: %s" % (externals.versions['nibabel'],
+                          testfile,
+                          ds.a.versions['nibabel']))
