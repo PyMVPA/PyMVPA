@@ -17,6 +17,7 @@ skip_if_no_external('h5py')
 import h5py
 
 import os
+from os.path import join as opj
 import sys
 import tempfile
 
@@ -443,9 +444,23 @@ def test_present_fmri_dataset():
     if not os.path.exists(f):
         raise nose.SkipTest("Absent %s. Verify that you got submodule" % f)
 
-@sweepargs(f=glob(os.path.join(pymvpa_dataroot, 'testing', 'fmri_dataset', '*.hdf5')))
-def test_regress_fmri_dataset(f):
-    f = h5load(f) # load previously generated dataset
+test_files = glob(opj(pymvpa_dataroot, 'testing', 'fmri_dataset', '*.hdf5'))
+
+@sweepargs(testfile=test_files)
+@with_tempfile(suffix=".nii.gz")
+def test_regress_fmri_dataset(tempfile=None, testfile=None):
+    if not externals.exists('nibabel'):
+        raise SkipTest
+    from mvpa2.datasets.mri import map2nifti
+
+    ds = h5load(testfile)  # load previously generated dataset
     # rudimentary checks that data was loaded correctly
+    assert_equal(np.sum(ds), 11444)
+    assert_equal(sorted(ds.sa.keys()),
+                 ['chunks', 'targets', 'time_coords', 'time_indices'])
+    assert_equal(sorted(ds.fa.keys()), ['voxel_indices'])
     # verify that map2nifti works
+    ds_ni = map2nifti(ds)
     # verify that we can store generated nifti to a file
+    ds_ni.to_filename(tempfile)
+    assert(os.path.exists(tempfile))

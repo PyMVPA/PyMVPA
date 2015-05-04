@@ -13,7 +13,7 @@
 __docformat__ = 'restructuredtext'
 
 import os
-
+import hashlib
 import mvpa2
 
 from mvpa2 import pymvpa_dataroot, externals
@@ -21,7 +21,17 @@ from mvpa2 import pymvpa_dataroot, externals
 def get_testing_fmri_dataset_filename():
     """Generate path to the testing filename based on mvpa2/nibabel versions
     """
-    filename = 'mvpa-%s_nibabel-%s.hdf5' % (mvpa2.__version__, externals.versions['nibabel'])
+    # explicitly so we do not anyhow depend on dict ordering
+    versions_hash = hashlib.md5(
+        "_".join(["%s:%s" % (k, externals.versions[k])
+                  for k in sorted(externals.versions)])
+    ).hexdigest()[:6]
+
+    filename = 'mvpa-%s_nibabel-%s-%s.hdf5' % (
+        mvpa2.__version__,
+        externals.versions['nibabel'],
+        versions_hash)
+
     return os.path.join(pymvpa_dataroot, 'testing', 'fmri_dataset', filename)
 
 def generate_testing_fmri_dataset():
@@ -40,12 +50,13 @@ def generate_testing_fmri_dataset():
     # Subselect a small "ROI"
     ds = ds_full[20:23, 10:14]
     # collect all versions/dependencies for possible need to troubleshoot later
-    # but only via WTF string, due to https://github.com/PyMVPA/PyMVPA/issues/266
     ds.a['wtf'] = mvpa2.wtf()
-    # save to a file identified by version of PyMVPA and nibabel
+    ds.a['versions'] = mvpa2.externals.versions
+    # save to a file identified by version of PyMVPA and nibabel and hash of
+    # all other versions
     filename = get_testing_fmri_dataset_filename()
     h5save(filename, ds, compression=9)
-    # ATM it produces 680kB .hdf5 which is this large because of
+    # ATM it produces >700kB .hdf5 which is this large because of
     # the ds.a.mapper with both Flatten and StaticFeatureSelection occupying
     # more than 190kB each, with ds.a.mapper as a whole generating 570kB file
     # Among those .ca seems to occupy notable size, e.g. 130KB for the FlattenMapper
