@@ -49,8 +49,21 @@ def test_openfmri_dataset():
     task_runs = of.get_task_bold_run_ids(task)
     assert_equal(task_runs, {1: range(1, 13)})
 
+    # test access anatomy image
+    assert_equal(of.get_anatomy_image(1, fname='lowres001.nii.gz').get_shape(),
+                 (6, 10, 10))
     # try to get an image that isn't there
     assert_raises(IOError, of.get_bold_run_image, 1, 1, 1)
+    # defined model contrasts
+    contrast_spec = of.get_model_contrasts(1)
+    # one dict per task
+    assert_equal(len(contrast_spec), 1)
+    assert_true(1 in contrast_spec)
+    # six defined contrasts
+    assert_equal(len(contrast_spec[1]), 6)
+    # check arbitrary one
+    assert_array_equal(contrast_spec[1]['pumps_demean_minus_ctrl_demean'],
+                       [0, 1, 0, 0, 0, 0, 0, 0, 0, -1, 0])
 
     orig_attrs = SampleAttributes(os.path.join(pymvpa_dataroot,
                                                'attributes_literal.txt'))
