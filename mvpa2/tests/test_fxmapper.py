@@ -275,8 +275,8 @@ def test_mean_removal():
                                [-0.75, -0.25,  0.25,  0.75],
                                [-0.75, -0.25,  0.25,  0.75]])
 
-    mr = MeanRemovalMapper(in_place=False)
-    mr_inplace = MeanRemovalMapper(in_place=True)
+    mr = MeanRemoval(in_place=False)
+    mr_inplace = MeanRemoval(in_place=True)
     mr_fx = subtract_mean_feature()
 
     functions = (mr, mr_inplace, mr_fx)
