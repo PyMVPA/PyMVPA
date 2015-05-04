@@ -61,6 +61,8 @@ def test_pval():
 
 
 def test_cluster_count():
+    if externals.versions['scipy'] < '0.10':
+        raise SkipTest
     # we get a ZERO cluster count of one if there are no clusters at all
     # this is needed to keept track of the number of bootstrap samples that yield
     # no cluster at all (high treshold) in order to compute p-values when there is no
