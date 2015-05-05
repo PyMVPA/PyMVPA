@@ -90,7 +90,7 @@ def test_fmridataset():
     assert_array_equal(sorted(ds.fa.keys()),
             ['myintmask', 'subj1_indices'])
     assert_array_equal(sorted(ds.a.keys()),
-            ['imghdr', 'imgtype', 'mapper', 'subj1_dim', 'subj1_eldim'])
+            ['imgaffine', 'imghdr', 'imgtype', 'mapper', 'subj1_dim', 'subj1_eldim'])
     # vol extent
     assert_equal(ds.a.subj1_dim, (40, 20, 1))
     # check time
@@ -98,7 +98,7 @@ def test_fmridataset():
     # non-zero mask values
     assert_array_equal(ds.fa.myintmask, np.arange(1, ds.nfeatures + 1))
     # we know that imgtype must be:
-    ok_(ds.a.imgtype is nibabel.Nifti1Image)
+    ok_(getattr(nibabel, ds.a.imgtype) is nibabel.Nifti1Image)
 
 
 @with_tempfile(suffix='.img')
@@ -126,7 +126,7 @@ def test_nifti_mapper(filename):
     else:
         vol_shape = vol.get_shape()
     assert_equal(vol_shape, (128, 96, 24, 2))
-    ok_(isinstance(vol, data.a.imgtype))
+    ok_(isinstance(vol, getattr(nibabel, data.a.imgtype)))
 
     # test providing custom imgtypes
     vol = map2nifti(data, imgtype=nibabel.Nifti1Pair)
@@ -143,8 +143,8 @@ def test_nifti_mapper(filename):
                                 vol.get_header())
     ok_(isinstance(volminc, nibabel.MincImage))
     dsminc = fmri_dataset(volminc, targets=1)
-    ok_(dsminc.a.imgtype is nibabel.MincImage)
-    ok_(isinstance(dsminc.a.imghdr, nibabel.minc.MincImage.header_class))
+    ok_(getattr(nibabel, dsminc.a.imgtype) is nibabel.MincImage)
+    assert_equal(dsminc.a.imgtype, nibabel.minc.MincImage.__name__)
 
     # Lets test if we could save/load now into Analyze volume/dataset
     if externals.versions['nibabel'] < '1.1.0':
@@ -155,9 +155,8 @@ def test_nifti_mapper(filename):
     dsanal = fmri_dataset(filename, targets=1)
     # this one is tricky since it might become Spm2AnalyzeImage
     ok_('AnalyzeImage' in str(dsanal.a.imgtype))
-    ok_('AnalyzeHeader' in str(dsanal.a.imghdr.__class__))
     volanal_ = map2nifti(dsanal)
-    ok_(isinstance(volanal_, dsanal.a.imgtype)) # type got preserved
+    ok_(isinstance(volanal_, getattr(nibabel, dsanal.a.imgtype))) # type got preserved
 
 
 def test_multiple_calls():
