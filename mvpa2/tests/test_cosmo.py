@@ -71,6 +71,21 @@ def _create_small_mat_dataset_dict():
     # dictionary with these value
     return dict(samples=samples, sa=sa, fa=fa, a=a)
 
+def _build_cell(elems):
+    '''
+    Put elements in a an array compatible
+    with scipy's matlab cell structure.
+
+    Necessary for recent versions of numpy
+    '''
+    n=len(elems)
+    c=np.zeros((1,n),dtype=object)
+    for i, elem in enumerate(elems):
+        c[0,i]=elem
+
+    return c
+
+
 def _create_small_mat_nbrhood_dict():
     '''
     Generate small neighborhood as represented in matlab.
@@ -87,9 +102,10 @@ def _create_small_mat_nbrhood_dict():
          nbrhood=loadmat('simple_nbrhood.mat')
     '''
 
-
-    neighbors = arr([[arr([[1]]), arr([[1, 3]]),
-                  arr([[1, 2, 3]]), arr([[2, 2]])]], dtype='O')
+    elems=[arr([[1]]), arr([[1, 3]]),arr([[1, 2, 3]]), arr([[2, 2]])]
+    neighbors = _build_cell(elems)
+    #neighbors = arr([[arr([[1]]), arr([[1, 3]]),
+    #              arr([[1, 2, 3]]), arr([[2, 2]])]], dtype='O')
     fa = _tup2obj([('k', arr([[4., 3., 2., 1.]]))])
     a = _tup2obj([('name', arr(arr(['output'], dtype='O')))])
 
@@ -251,9 +267,9 @@ def test_cosmo_exceptions():
 
     neighbors = _create_small_mat_nbrhood_dict()['neighbors']
     qe = cosmo.CosmoQueryEngine.from_mat(neighbors) # should be fine
-    neighbors[0, 0][0][0] = -1
+    neighbors[0, 0][0] = -1
     assert_raises(ValueError, cosmo.CosmoQueryEngine.from_mat, neighbors)
-    neighbors[0, 0][0] = arr(1.5)
+    neighbors[0, 0] = arr(1.5)
     assert_raises(ValueError, cosmo.CosmoQueryEngine.from_mat, neighbors)
 
     for illegal_nbrhood in (['fail'], cosmo.QueryEngineInterface):
