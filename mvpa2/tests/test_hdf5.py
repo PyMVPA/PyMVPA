@@ -22,7 +22,7 @@ import tempfile
 
 from mvpa2.base.dataset import AttrDataset, save
 from mvpa2.base.hdf5 import h5save, h5load, obj2hdf, HDF5ConversionError
-from mvpa2.misc.data_generators import load_example_fmri_dataset
+from mvpa2.datasets.sources import load_example_fmri_dataset
 from mvpa2.mappers.fx import mean_sample
 from mvpa2.mappers.boxcar import BoxcarMapper
 
