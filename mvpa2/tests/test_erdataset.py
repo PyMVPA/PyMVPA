@@ -15,7 +15,7 @@ from mvpa2.mappers.boxcar import BoxcarMapper
 from mvpa2.mappers.fx import FxMapper
 from mvpa2.datasets.eventrelated import find_events, eventrelated_dataset, \
         extract_boxcar_event_samples
-from mvpa2.misc.data_generators import load_example_fmri_dataset
+from mvpa2.datasets.sources import load_example_fmri_dataset
 from mvpa2.mappers.zscore import zscore
 
 
