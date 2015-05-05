@@ -10,13 +10,9 @@
 
 __docformat__ = 'restructuredtext'
 
-import os
 import numpy as np
 
-from mvpa2.base import externals
-
 from mvpa2.datasets.base import dataset_wizard, Dataset
-from mvpa2 import pymvpa_dataroot, pymvpa_datadbroot
 from mvpa2.misc.fx import get_random_rotation
 from mvpa2.base.dataset import vstack
 
@@ -26,7 +22,13 @@ from mvpa2.misc.support import Event
 if __debug__:
     from mvpa2.base import debug
 
-##REF: Name was automagically refactored
+from mvpa2.datasets.sources.native import load_datadb_tutorial_data
+load_datadb_demo_blockfmri = load_datadb_tutorial_data
+"""For backward compatibility with tutorial_lib which people might be
+   "using" already.  Deprecate entirely whenever tutorial_data gets updated.
+"""
+
+
 def multiple_chunks(func, n_chunks, *args, **kwargs):
     """Replicate datasets multiple times raising different chunks
 
@@ -42,7 +44,7 @@ def multiple_chunks(func, n_chunks, *args, **kwargs):
     for chunk in xrange(n_chunks):
         ds_ = func(*args, **kwargs)
         # might not have chunks at all
-        if not ds_.sa.has_key('chunks'):
+        if not 'chunks' in ds_.sa:
             ds_.sa['chunks'] = np.repeat(chunk + 1, ds_.nsamples)
         else:
             ds_.sa.chunks[:] = chunk + 1
@@ -51,7 +53,6 @@ def multiple_chunks(func, n_chunks, *args, **kwargs):
     return vstack(dss)
 
 
-##REF: Name was automagically refactored
 def dumb_feature_dataset():
     """Create a very simple dataset with 2 features and 3 labels
     """
@@ -64,7 +65,6 @@ def dumb_feature_dataset():
     return dataset_wizard(samples=np.array(data), targets=regs, chunks=range(len(regs)))
 
 
-##REF: Name was automagically refactored
 def dumb_feature_binary_dataset():
     """Very simple binary (2 labels) dataset
     """
@@ -77,10 +77,9 @@ def dumb_feature_binary_dataset():
     return dataset_wizard(samples=np.array(data), targets=regs, chunks=range(len(regs)))
 
 
-
 def normal_feature_dataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
-                         means=None, nonbogus_features=None, snr=3.0,
-                         normalize=True):
+                           means=None, nonbogus_features=None, snr=3.0,
+                           normalize=True):
     """Generate a univariate dataset with normal noise and specified means.
 
     Could be considered to be a generalization of
@@ -112,7 +111,7 @@ def normal_feature_dataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
       Divide by max(abs()) value to bring data into [-1, 1] range.
     """
 
-    data = np.random.standard_normal((perlabel*nlabels, nfeatures))
+    data = np.random.standard_normal((perlabel * nlabels, nfeatures))
     if snr != 0:
         data /= np.sqrt(snr)
     if (means is None) and (not nonbogus_features is None):
@@ -129,28 +128,29 @@ def normal_feature_dataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
     if normalize:
         # bring it 'under 1', since otherwise some classifiers have difficulties
         # during optimization
-        data = 1.0/(np.max(np.abs(data))) * data
+        data = 1.0 / (np.max(np.abs(data))) * data
     labels = np.concatenate([np.repeat('L%d' % i, perlabel)
-                                for i in range(nlabels)])
+                             for i in range(nlabels)])
     chunks = np.concatenate([np.repeat(range(nchunks),
-                                     perlabel//nchunks) for i in range(nlabels)])
+                                       perlabel // nchunks)
+                             for i in range(nlabels)])
     ds = dataset_wizard(data, targets=labels, chunks=chunks)
 
     # If nonbogus was provided -- assign .a and .fa accordingly
     if nonbogus_features is not None:
-        ds.fa['nonbogus_targets'] = np.array([None]*nfeatures)
+        ds.fa['nonbogus_targets'] = np.array([None] * nfeatures)
         ds.fa.nonbogus_targets[nonbogus_features] = ['L%d' % i for i in range(nlabels)]
         ds.a['nonbogus_features'] = nonbogus_features
         ds.a['bogus_features'] = [x for x in range(nfeatures)
                                   if not x in nonbogus_features]
-
-
     return ds
 
-##REF: Name was automagically refactored
-def pure_multivariate_signal(patterns, signal2noise = 1.5, chunks=None, targets=[0, 1]):
-    """ Create a 2d dataset with a clear multivariate signal, but no
-    univariate information.
+
+def pure_multivariate_signal(patterns, signal2noise=1.5, chunks=None,
+                             targets=None):
+    """ Create a 2d dataset with a clear purely multivariate signal.
+
+    This is known is the XOR problem.
 
     ::
 
@@ -159,19 +159,33 @@ def pure_multivariate_signal(patterns, signal2noise = 1.5, chunks=None, targets=
       %%%%%%%%%
       % X % O %
       %%%%%%%%%
+
+    Parameters
+    ----------
+    patterns: int
+      Number of data points in each of the four dot clouds
+    signal2noise: float, optional
+      Univariate signal pedestal.
+    chunks: array, optional
+      Vector for chunk labels for all generated samples.
+    targets: list, optional
+      Length-2 sequence of target values for both classes. If None,
+      [0, 1] is used.
     """
+    if targets is None:
+        targets = [0, 1]
 
     # start with noise
-    data = np.random.normal(size=(4*patterns, 2))
+    data = np.random.normal(size=(4 * patterns, 2))
 
     # add signal
-    data[:2*patterns, 1] += signal2noise
+    data[:2 * patterns, 1] += signal2noise
 
-    data[2*patterns:4*patterns, 1] -= signal2noise
+    data[2 * patterns:4 * patterns, 1] -= signal2noise
     data[:patterns, 0] -= signal2noise
-    data[2*patterns:3*patterns, 0] -= signal2noise
-    data[patterns:2*patterns, 0] += signal2noise
-    data[3*patterns:4*patterns, 0] += signal2noise
+    data[2 * patterns:3 * patterns, 0] -= signal2noise
+    data[patterns:2 * patterns, 0] += signal2noise
+    data[3 * patterns:4 * patterns, 0] += signal2noise
 
     # two conditions
     regs = np.array((targets[0:1] * patterns) + (targets[1:2] * 2 * patterns) + (targets[0:1] * patterns))
@@ -181,11 +195,9 @@ def pure_multivariate_signal(patterns, signal2noise = 1.5, chunks=None, targets=
     return dataset_wizard(samples=data, targets=regs, chunks=chunks)
 
 
-##REF: Name was automagically refactored
 def get_mv_pattern(s2n):
     """Simple multivariate dataset"""
-    return multiple_chunks(pure_multivariate_signal, 6,
-                          5, s2n, 1)
+    return multiple_chunks(pure_multivariate_signal, 6, 5, s2n, 1)
 
 
 def wr1996(size=200):
@@ -215,22 +227,21 @@ def wr1996(size=200):
     intervals = np.array([[-1.932, -0.453], [0.534, 3.142]])
     r = np.array([2.0, 1.3])
     x = np.random.rand(size, 2)
-    x *= np.array(intervals[:, 1]-intervals[:, 0])
+    x *= np.array(intervals[:, 1] - intervals[:, 0])
     x += np.array(intervals[:, 0])
     if __debug__:
         for i in xrange(2):
             debug('DG', '%d columnt Min: %g Max: %g' %
                   (i, x[:, i].min(), x[:, i].max()))
-    y = r[0]*np.cos(x[:, 0] + r[1]*np.cos(x.sum(1))) + \
-        np.random.randn(size)*np.sqrt(0.0025)
+    y = r[0] * np.cos(x[:, 0] + r[1] * np.cos(x.sum(1))) + \
+        np.random.randn(size) * np.sqrt(0.0025)
     y -= y.mean()
-    x34 = x + np.random.randn(size, 2)*0.02
+    x34 = x + np.random.randn(size, 2) * 0.02
     x56 = np.random.randn(size, 2)
     x = np.hstack([x, x34, x56])
     return dataset_wizard(samples=x, targets=y)
 
 
-##REF: Name was automagically refactored
 def sin_modulated(n_instances, n_features,
                   flat=False, noise=0.4):
     """ Generate a (quite) complex multidimensional non-linear dataset
@@ -239,17 +250,17 @@ def sin_modulated(n_instances, n_features,
     uniform noise
     """
     if flat:
-        data = (np.arange(0.0, 1.0, 1.0/n_instances)*np.pi)
+        data = (np.arange(0.0, 1.0, 1.0 / n_instances) * np.pi)
         data.resize(n_instances, n_features)
     else:
-        data = np.random.rand(n_instances, n_features)*np.pi
-    label = np.sin((data**2).sum(1)).round()
-    label += np.random.rand(label.size)*noise
+        data = np.random.rand(n_instances, n_features) * np.pi
+    label = np.sin((data ** 2).sum(1)).round()
+    label += np.random.rand(label.size) * noise
     return dataset_wizard(samples=data, targets=label)
 
-##REF: Name was automagically refactored
+
 def chirp_linear(n_instances, n_features=4, n_nonbogus_features=2,
-                data_noise=0.4, noise=0.1):
+                 data_noise=0.4, noise=0.1):
     """ Generates simple dataset for linear regressions
 
     Generates chirp signal, populates n_nonbogus_features out of
@@ -257,13 +268,13 @@ def chirp_linear(n_instances, n_features=4, n_nonbogus_features=2,
     signal itself with additional noise as labels
     """
     x = np.linspace(0, 1, n_instances)
-    y = np.sin((10 * np.pi * x **2))
+    y = np.sin((10 * np.pi * x ** 2))
 
-    data = np.random.normal(size=(n_instances, n_features ))*data_noise
+    data = np.random.normal(size=(n_instances, n_features)) * data_noise
     for i in xrange(n_nonbogus_features):
         data[:, i] += y[:]
 
-    labels = y + np.random.normal(size=(n_instances,))*noise
+    labels = y + np.random.normal(size=(n_instances,)) * noise
 
     return dataset_wizard(samples=data, targets=labels)
 
@@ -321,109 +332,10 @@ def linear1d_gaussian_noise(size=100, slope=0.5, intercept=1.0,
     """A straight line with some Gaussian noise.
     """
     x = np.linspace(start=x_min, stop=x_max, num=size)
-    noise = np.random.randn(size)*sigma
+    noise = np.random.randn(size) * sigma
     y = x * slope + intercept + noise
     return dataset_wizard(samples=x[:, None], targets=y)
 
-
-def load_example_fmri_dataset(name='1slice', literal=False):
-    """Load minimal fMRI dataset that is shipped with PyMVPA."""
-    from mvpa2.datasets.eventrelated import events2sample_attr
-    from mvpa2.datasets.sources.openfmri import OpenFMRIDataset
-    from mvpa2.datasets.mri import fmri_dataset
-    from mvpa2.misc.io import SampleAttributes
-
-    basedir = os.path.join(pymvpa_dataroot, 'openfmri')
-    mask = {'1slice': os.path.join(pymvpa_dataroot, 'mask.nii.gz'),
-            '25mm': os.path.join(basedir, 'sub001', 'masks', '25mm',
-                    'brain.nii.gz')}[name]
-
-    if literal:
-        model = 1
-        subj = 1
-        openfmri = OpenFMRIDataset(basedir)
-        ds = openfmri.get_model_bold_dataset(model, subj, flavor=name,
-                                             mask=mask, noinfolabel='rest')
-        # re-imagine the global time_coords of a concatenated time series
-        # this is only for the purpose of keeping the example data in the
-        # exact same shape as it has always been. in absolute terms this makes no
-        # sense as there is no continuous time in this dataset
-        ds.sa['run_time_coords'] = ds.sa.time_coords
-        ds.sa['time_coords'] = np.arange(len(ds)) * 2.5
-    else:
-        if name == '25mm':
-            raise ValueError("The 25mm dataset is no longer available with "
-                             "numerical labels")
-        attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
-        ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                          targets=attr.targets, chunks=attr.chunks,
-                          mask=mask)
-
-    return ds
-
-def load_datadb_tutorial_data(path=os.path.join(
-      pymvpa_datadbroot, 'tutorial_data', 'tutorial_data', 'data'),
-    roi='brain', add_fa=None):
-    """Loads the block-design demo dataset from PyMVPA dataset DB.
-
-    Parameters
-    ----------
-    path : str
-      Path of the directory containing the dataset files.
-    roi : str or int or tuple or None
-      Region Of Interest to be used for masking the dataset. If a string is
-      given a corresponding mask image from the demo dataset will be used
-      (mask_<str>.nii.gz). If an int value is given, the corresponding ROI
-      is determined from the atlas image (mask_hoc.nii.gz). If a tuple is
-      provided it may contain int values that a processed as explained
-      before, but the union of a ROIs is taken to produce the final mask.
-      If None, no masking is performed.
-    add_fa : dict
-      Passed on to the dataset creator function (see fmri_dataset() for
-      more information).
-    """
-    import nibabel as nb
-    from mvpa2.datasets.sources.openfmri import OpenFMRIDataset
-    task = model = subj = 1
-    dhandle = OpenFMRIDataset(path)
-    maskpath = os.path.join(path, 'sub001', 'masks', 'orig')
-    if roi is None:
-        mask = None
-    elif isinstance(roi, str):
-        mask = os.path.join(maskpath, roi + '.nii.gz')
-    elif isinstance(roi, int):
-        nimg = nb.load(os.path.join(maskpath, 'hoc.nii.gz'))
-        tmpmask = nimg.get_data() == roi
-        mask = nb.Nifti1Image(tmpmask.astype(int), nimg.get_affine(),
-                              nimg.get_header())
-    elif isinstance(roi, tuple) or isinstance(roi, list):
-        nimg = nb.load(os.path.join(maskpath, 'hoc.nii.gz'))
-        if externals.versions['nibabel'] >= '1.2':
-            img_shape = nimg.shape
-        else:
-            img_shape = nimg.get_shape()
-        tmpmask = np.zeros(img_shape, dtype='bool')
-        for r in roi:
-            tmpmask = np.logical_or(tmpmask, nimg.get_data() == r)
-        mask = nb.Nifti1Image(tmpmask.astype(int), nimg.get_affine(),
-                              nimg.get_header())
-    elif isinstance(roi, nb.Nifti1Image):
-        mask=roi
-    else:
-        raise ValueError("Got something as mask that I cannot handle.")
-    ds = dhandle.get_model_bold_dataset(model, subj, mask=mask, add_fa=add_fa,
-                                        noinfolabel='rest')
-    # fixup time_coords to make the impression of a continuous time series
-    # this is only necessary until we have changed the tutorial to
-    # show/encourage run-wise processing
-    ds.sa['time_coords'] = np.linspace(0, (len(ds) * 2.5), len(ds) + 1)[:-1]
-    return ds
-
-
-load_datadb_demo_blockfmri = load_datadb_tutorial_data
-"""For backward compatibility with tutorial_lib which people might be
-   "using" already.  Deprecate entirely whenever tutorial_data gets updated.
-"""
 
 def autocorrelated_noise(ds, sr, cutoff, lfnl=3.0, bord=10, hfnl=None, add_baseline=True):
     """Generate a dataset with samples being temporally autocorrelated noise.
@@ -510,26 +422,25 @@ def random_affine_transformation(ds, scale_fac=100., shift_fac=10.):
     # reusing random data from dataset itself
     random_scale = samples[rndidx(len(ds)), rndidx(ds.nfeatures)] * scale_fac
     random_shift = samples[rndidx(len(ds))] * shift_fac
-    samples = np.dot(samples, R) * random_scale \
-              + random_shift
+    samples = np.dot(samples, R) * random_scale + random_shift
     return Dataset(samples, sa=ds.sa, fa=ds.fa,
                    a={'random_rotation': R,
                       'random_scale': random_scale,
                       'random_shift': random_shift})
 
 
-def simple_hrf_dataset(events=[1, 20, 25, 50, 60, 90, 92, 140],
-                       hrf_gen=lambda t:double_gamma_hrf(t) - single_gamma_hrf(t, 0.8, 1, 0.05),
-                       fir_length=15,
-                       nsamples=None,
-                       tr=2.0,
-                       tres=1,
-                       baseline=800.0,
-                       signal_level=1,
-                       noise='normal',
-                       noise_level=1,
-                       resampling='scipy',
-                       ):
+def simple_hrf_dataset(
+        events=[1, 20, 25, 50, 60, 90, 92, 140],
+        hrf_gen=lambda t: double_gamma_hrf(t) - single_gamma_hrf(t, 0.8, 1, 0.05),
+        fir_length=15,
+        nsamples=None,
+        tr=2.0,
+        tres=1,
+        baseline=800.0,
+        signal_level=1,
+        noise='normal',
+        noise_level=1,
+        resampling='scipy'):
     """
     events: list of Events or ndarray of onsets for simple(r) designs
     """
@@ -542,7 +453,7 @@ def simple_hrf_dataset(events=[1, 20, 25, 50, 60, 90, 92, 140],
 
     # play fmri
     # full-blown HRF with initial dip and undershoot ;-)
-    hrf_x = np.arange(0, float(fir_length)*tres, tres)
+    hrf_x = np.arange(0, float(fir_length) * tres, tres)
     if isinstance(hrf_gen, np.ndarray):
         # just accept provided HRF and only verify size match
         assert(len(hrf_x) == len(hrf_gen))
@@ -553,7 +464,7 @@ def simple_hrf_dataset(events=[1, 20, 25, 50, 60, 90, 92, 140],
     if not nsamples:
         # estimate number of samples needed if not provided
         max_onset = max([e['onset'] for e in events])
-        nsamples = int(max_onset/tres + len(hrf_x)*1.5)
+        nsamples = int(max_onset / tres + len(hrf_x) * 1.5)
 
     # come up with an experimental design
     fast_er = np.zeros(nsamples)
@@ -588,7 +499,7 @@ def simple_hrf_dataset(events=[1, 20, 25, 50, 60, 90, 92, 140],
 
     # generate artifical fMRI data: two voxels one is noise, one has
     # something
-    wsignal = baseline + model_lr*signal_level
+    wsignal = baseline + model_lr * signal_level
     nsignal = np.ones(wsignal.shape) * baseline
 
     # build design matrix: bold-regressor and constant
@@ -605,7 +516,7 @@ def simple_hrf_dataset(events=[1, 20, 25, 50, 60, 90, 92, 140],
     if noise == 'autocorrelated':
         # this one seems to be quite unstable and can provide really
         # funky noise at times
-        noise = autocorrelated_noise(ds, 1/tr, 1/(2*tr),
+        noise = autocorrelated_noise(ds, 1 / tr, 1 / (2 * tr),
                                      lfnl=noise_level, hfnl=noise_level,
                                      add_baseline=False)
     elif noise == 'normal':
