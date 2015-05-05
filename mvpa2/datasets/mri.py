@@ -20,27 +20,23 @@ __docformat__ = 'restructuredtext'
 from mvpa2.base import externals
 externals.exists('nibabel', raise_=True)
 
-import sys
 import numpy as np
-from mvpa2.support.copy import deepcopy
-from mvpa2.misc.support import Event
-from mvpa2.base.collections import DatasetAttribute
 from mvpa2.base.dataset import _expand_attribute
 
 if __debug__:
     from mvpa2.base import debug
 
 from mvpa2.datasets.base import Dataset
-from mvpa2.mappers.fx import _uniquemerge2literal
 from mvpa2.mappers.flatten import FlattenMapper
-from mvpa2.mappers.boxcar import BoxcarMapper
 from mvpa2.base import warning
+
 
 def _hdr2dict(hdr):
     """Helper to convert a NiBabel image header to a dict of arrays"""
     kv = dict(hdr)
     kv['hdrtype'] = hdr.__class__.__name__
     return kv
+
 
 def _dict2hdr(kv):
     """Counterpart of ``_hdr2dict()``"""
@@ -159,7 +155,7 @@ def map2nifti(dataset, data=None, imghdr=None, imgtype=None):
     # with imghdr.get_data_dtype()
 
     if issubclass(imgtype, nibabel.spatialimages.SpatialImage) \
-       and (imghdr is None or hasattr(imghdr, 'get_data_dtype')):
+            and (imghdr is None or hasattr(imghdr, 'get_data_dtype')):
         # we can handle the desired image type and hdr with nibabel
         # use of `None` for the affine should cause to pull it from
         # the header
@@ -287,7 +283,8 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
         ds.a['imghdr'] = _hdr2dict(imghdr)
     except:
         if __debug__:
-            debug('DS_NIFTI', 'Failed to store header info as attribute (src: %s)' \
+            debug('DS_NIFTI',
+                  'Failed to store header info as attribute (src: %s)'
                   % (imghdr.__class__,))
     # If there is a space assigned , store the extent of that space
     if sprefix is not None:
@@ -297,8 +294,8 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
         # TODO extend with the unit
     if tprefix is not None:
         ds.sa[tprefix + '_indices'] = np.arange(len(ds), dtype='int')
-        ds.sa[tprefix + '_coords'] = np.arange(len(ds), dtype='float') \
-                                     * _get_dt(imghdr)
+        ds.sa[tprefix + '_coords'] = \
+            np.arange(len(ds), dtype='float') * _get_dt(imghdr)
         # TODO extend with the unit
 
     return ds
@@ -355,7 +352,7 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
       If there is a problem with data (variable dimensionality) or
       failed to load data and ensure=True.
     """
-    imgdata = imghdr = imgtype = None
+    imgdata = imghdr = None
 
     # figure out whether we have a list of things to load and handle that
     # first
@@ -370,7 +367,7 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
             shapes = [s[0].shape[1:] for s in srcs]
             if not np.all([s == shapes[0] for s in shapes]):
                 raise ValueError(
-                      "Input volumes vary in their shapes: %s" % (shapes,))
+                    "Input volumes vary in their shapes: %s" % (shapes,))
         # Combine them all into a single beast
         # will be t,x,y,z
         imgdata = np.vstack([s[0] for s in srcs])
@@ -394,9 +391,8 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
             # if there are bogus dimensions at the beginning
             bogus_dims = lshape - enforce_dim
             if shape[:bogus_dims] != (1,) * bogus_dims:
-                raise ValueError, \
-                      "Cannot enforce %dD on data with shape %s" \
-                      % (enforce_dim, shape)
+                raise ValueError("Cannot enforce %dD on data with shape %s"
+                                 % (enforce_dim, shape))
             new_shape = shape[bogus_dims:]
 
         # tune up shape if needed
