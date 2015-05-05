@@ -9,8 +9,8 @@
 
 """Unit tests for CoSMoMVPA dataset (http://cosmomvpa.org)"""
 
-from mvpa2.testing.tools import assert_raises, ok_, assert_true, assert_equal, \
-     assert_array_equal, with_tempfile
+from mvpa2.testing.tools import assert_raises, ok_, assert_true, \
+        assert_equal, assert_array_equal, with_tempfile
 from mvpa2.testing import skip_if_no_external
 
 skip_if_no_external('scipy')
@@ -27,6 +27,8 @@ arr = np.asarray
 
 #########################
 # helper functions
+
+
 def _tup2obj(tuples):
     # tup is a list of (key, value) tuples
     # returns a numpy object array with the same data
@@ -38,6 +40,7 @@ def _tup2obj(tuples):
         values.append(v)
 
     return np.array([[tuple(values)]], dtype=np.dtype(dtypes))
+
 
 def _create_small_mat_dataset_dict():
     '''
@@ -71,6 +74,7 @@ def _create_small_mat_dataset_dict():
     # dictionary with these value
     return dict(samples=samples, sa=sa, fa=fa, a=a)
 
+
 def _build_cell(elems):
     '''
     Put elements in a an array compatible
@@ -78,10 +82,10 @@ def _build_cell(elems):
 
     Necessary for recent versions of numpy
     '''
-    n=len(elems)
-    c=np.zeros((1,n),dtype=object)
+    n = len(elems)
+    c = np.zeros((1, n), dtype=object)
     for i, elem in enumerate(elems):
-        c[0,i]=elem
+        c[0, i] = elem
 
     return c
 
@@ -102,14 +106,13 @@ def _create_small_mat_nbrhood_dict():
          nbrhood=loadmat('simple_nbrhood.mat')
     '''
 
-    elems=[arr([[1]]), arr([[1, 3]]),arr([[1, 2, 3]]), arr([[2, 2]])]
+    elems = [arr([[1]]), arr([[1, 3]]), arr([[1, 2, 3]]), arr([[2, 2]])]
     neighbors = _build_cell(elems)
-    #neighbors = arr([[arr([[1]]), arr([[1, 3]]),
-    #              arr([[1, 2, 3]]), arr([[2, 2]])]], dtype='O')
     fa = _tup2obj([('k', arr([[4., 3., 2., 1.]]))])
     a = _tup2obj([('name', arr(arr(['output'], dtype='O')))])
 
     return dict(neighbors=neighbors, fa=fa, a=a)
+
 
 def _assert_ds_mat_attributes_equal(ds, m, attr_keys=('a', 'sa', 'fa')):
     # ds is a Dataset object, m a matlab-like dictionary
@@ -120,6 +123,7 @@ def _assert_ds_mat_attributes_equal(ds, m, attr_keys=('a', 'sa', 'fa')):
             v = attr_v[k].value
             assert_array_equal(m[attr_k][k][0, 0].ravel(), v)
 
+
 def _assert_ds_less_or_equal(x, y):
     # x and y are a Dataset; x should contain a subset of
     # elements in .sa, fa, a and have the same samples as y
@@ -129,6 +133,7 @@ def _assert_ds_less_or_equal(x, y):
         vx = getattr(x, label)
         vy = getattr(y, label)
         _assert_array_collectable_less_or_equal(vx, vy)
+
 
 def _assert_ds_equal(x, y):
     # test for two Dataset objects to be equal
@@ -144,19 +149,21 @@ def _assert_array_collectable_less_or_equal(x, y):
     for k in x.keys():
         assert_array_equal(x[k].value, y[k].value)
 
+
 def _assert_array_collectable_equal(x, y):
     # test for keys and values equal in x and y
     _assert_array_collectable_less_or_equal(x, y)
     _assert_array_collectable_less_or_equal(y, x)
+
 
 def _assert_set_equal(x, y):
     # test for two sets being equal
     assert_equal(set(x), set(y))
 
 
-
 #########################
 # testing functions
+
 
 @with_tempfile('.mat', 'matlab_file')
 def test_cosmo_dataset(fn):
@@ -192,6 +199,7 @@ def test_cosmo_dataset(fn):
             assert_array_equal(ds_mat.samples, m['samples'])
             _assert_ds_mat_attributes_equal(ds_mat, m)
 
+
 @with_tempfile('.mat', 'matlab_file')
 def test_cosmo_queryengine(fn):
     skip_if_no_external('scipy', min_version='0.8')
@@ -210,6 +218,7 @@ def test_cosmo_queryengine(fn):
 
         _assert_ds_mat_attributes_equal(qe, nbrhood_mat, ('fa', 'a'))
 
+
 def test_cosmo_searchlight():
     ds = cosmo.from_any(_create_small_mat_dataset_dict())
     sl = cosmo.CosmoSearchlight(mean_feature(),
@@ -222,6 +231,7 @@ def test_cosmo_searchlight():
                          a=dict(name=['output']))
 
     _assert_ds_less_or_equal(dict_count, ds_count)
+
 
 @with_tempfile('.h5py', 'pymvpa_file')
 def test_cosmo_io_h5py(fn):
@@ -252,8 +262,8 @@ def test_cosmo_exceptions():
     assert_raises(ValueError, cosmo.from_any, m)
     assert_raises(ValueError, cosmo.from_any, ['illegal input'])
 
-    mapping = {1:arr([1, 2]), 2:arr([2, 0, 0])}
-    qe = cosmo.CosmoQueryEngine(mapping) # should be fine
+    mapping = {1: arr([1, 2]), 2: arr([2, 0, 0])}
+    qe = cosmo.CosmoQueryEngine(mapping)  # should be fine
 
     assert_raises(TypeError, cosmo.CosmoQueryEngine, [])
     mapping[1] = 1.5
@@ -266,7 +276,7 @@ def test_cosmo_exceptions():
     assert_raises(ValueError, cosmo.CosmoQueryEngine, mapping)
 
     neighbors = _create_small_mat_nbrhood_dict()['neighbors']
-    qe = cosmo.CosmoQueryEngine.from_mat(neighbors) # should be fine
+    qe = cosmo.CosmoQueryEngine.from_mat(neighbors)  # should be fine
     neighbors[0, 0][0] = -1
     assert_raises(ValueError, cosmo.CosmoQueryEngine.from_mat, neighbors)
     neighbors[0, 0] = arr(1.5)
@@ -274,7 +284,8 @@ def test_cosmo_exceptions():
 
     for illegal_nbrhood in (['fail'], cosmo.QueryEngineInterface):
         assert_raises((TypeError, ValueError),
-                  lambda x:cosmo.CosmoSearchlight([], x), illegal_nbrhood)
+                      lambda x: cosmo.CosmoSearchlight([], x),
+                      illegal_nbrhood)
 
 
 def test_cosmo_repr_and_str():
