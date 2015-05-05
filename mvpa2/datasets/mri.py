@@ -36,16 +36,22 @@ from mvpa2.mappers.flatten import FlattenMapper
 from mvpa2.mappers.boxcar import BoxcarMapper
 from mvpa2.base import warning
 
+def _hdr2dict(hdr):
+    """Helper to convert a NiBabel image header to a dict of arrays"""
+    kv = dict(hdr)
+    kv['hdrtype'] = hdr.__class__.__name__
+    return kv
 
-def _data2img(data, hdr=None, imgtype=None):
-    # input data is t,x,y,z
-    # let's try whether we can get it done with nibabel
+def _dict2hdr(kv):
+    """Counterpart of ``_hdr2dict()``"""
     import nibabel
-    if imgtype is None:
-        # default is NIfTI1
-        imgtype = nibabel.Nifti1Image
-    else:
-        itype = imgtype
+    hdr = getattr(nibabel, kv['hdrtype'])()
+    for k in kv:
+        if k == 'hdrtype':
+            continue
+        hdr[k] = kv[k]
+    return hdr
+
 
 def _img2data(src):
     # break early of nothing has been given
@@ -79,7 +85,7 @@ def _img2data(src):
             data = np.reshape(data, newshape)
 
         # nibabel image, dissect and return pieces
-        return _get_txyz_shaped(data), header, img.__class__
+        return _get_txyz_shaped(data), header, img
     else:
         # no clue what it is
         return None
@@ -126,10 +132,12 @@ def map2nifti(dataset, data=None, imghdr=None, imgtype=None):
             imghdr = dataset.a.imghdr
         elif __debug__:
             debug('DS_NIFTI', 'No image header found. Using defaults.')
+    if not imghdr is None:
+        imghdr = _dict2hdr(imghdr)
 
     if imgtype is None:
         if 'imgtype' in dataset.a:
-            imgtype = dataset.a.imgtype
+            imgtype = getattr(nibabel, dataset.a.imgtype)
         else:
             imgtype = nibabel.Nifti1Image
             if __debug__:
@@ -228,7 +236,7 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
     Dataset
     """
     # load the samples
-    imgdata, imghdr, imgtype = _load_anyimg(samples, ensure=True, enforce_dim=4)
+    imgdata, imghdr, img = _load_anyimg(samples, ensure=True, enforce_dim=4)
 
     # figure out what the mask is, but only handle known cases, the rest
     # goes directly into the mapper which maybe knows more
@@ -270,8 +278,17 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
             ds.fa[fattr] = ds.a.mapper.forward1(value)
 
     # store interesting props in the dataset
-    ds.a['imghdr'] = imghdr
-    ds.a['imgtype'] = imgtype
+    ds.a['imgaffine'] = img.get_affine()
+    ds.a['imgtype'] = img.__class__.__name__
+    try:
+        # make an attempt to store more of the image header in a simple
+        # dict(array), but no moaning if that fails -- some image types
+        # don't support that, e.g. MINC
+        ds.a['imghdr'] = _hdr2dict(imghdr)
+    except:
+        if __debug__:
+            debug('DS_NIFTI', 'Failed to store header info as attribute (src: %s)' \
+                  % (imghdr.__class__,))
     # If there is a space assigned , store the extent of that space
     if sprefix is not None:
         ds.a[sprefix + '_dim'] = imgdata.shape[1:]
@@ -330,7 +347,7 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
     -------
     tuple or None
       If the source is not supported None is returned.  Otherwise a
-      tuple of (imgdata, imghdr, imgtype)
+      tuple of (imgdata, imghdr, img)
 
     Raises
     ------
@@ -357,13 +374,13 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
         # Combine them all into a single beast
         # will be t,x,y,z
         imgdata = np.vstack([s[0] for s in srcs])
-        imghdr, imgtype = srcs[0][1:3]
+        imghdr, img = srcs[0][1:3]
     else:
         # try opening the beast; this might yield none in case of an unsupported
         # argument and is handled accordingly below
         data = _img2data(src)
         if not data is None:
-            imgdata, imghdr, imgtype = data
+            imgdata, imghdr, img = data
 
     if imgdata is not None and enforce_dim is not None:
         shape, new_shape = imgdata.shape, None
@@ -392,4 +409,4 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
     if imgdata is None:
         return None
     else:
-        return imgdata, imghdr, imgtype
+        return imgdata, imghdr, img
