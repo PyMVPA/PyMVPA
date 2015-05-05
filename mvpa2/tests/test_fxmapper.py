@@ -217,10 +217,10 @@ def test_fx_native_calls(f):
             m1 = FxMapper(axis, f_, **kwargs)
             dsm1 = ds.get_mapped(m1)
 
-            assert_objectarray_equal(dsm1.samples, dsm2.samples)
-            assert_objectarray_equal(dsm1.targets, dsm2.targets)
-            assert_objectarray_equal(dsm1.chunks, dsm2.chunks)
-            assert_objectarray_equal(dsm1.fa.nonbogus_targets, dsm2.fa.nonbogus_targets)
+            assert_array_almost_equal(dsm1.samples, dsm2.samples)
+            assert_array_equal(dsm1.targets, dsm2.targets)
+            assert_array_equal(dsm1.chunks, dsm2.chunks)
+            assert_array_equal(dsm1.fa.nonbogus_targets, dsm2.fa.nonbogus_targets)
 
 def test_uniquemerge2literal():
     from mvpa2.mappers.fx import _uniquemerge2literal
