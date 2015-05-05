@@ -135,6 +135,9 @@ def _get_built_in_datapath():
 
 
 def test_tutorialdata_loader_masking():
+    if not externals.exists('nibabel'):
+        raise SkipTest
+
     ds_brain = load_datadb_tutorial_data(path=_get_built_in_datapath(),
                                          flavor='25mm')
     ds_nomask = load_datadb_tutorial_data(path=_get_built_in_datapath(),
@@ -144,6 +147,9 @@ def test_tutorialdata_loader_masking():
 
 @sweepargs(roi=('brain', 'gray', 'hoc', 'vt', 'white'))
 def test_tutorialdata_rois(roi):
+    if not externals.exists('nibabel'):
+        raise SkipTest
+
     # just checking that we have the files
     ds = load_datadb_tutorial_data(path=_get_built_in_datapath(), roi=roi,
                                    flavor='25mm')
@@ -152,6 +158,9 @@ def test_tutorialdata_rois(roi):
 
 @sweepargs(roi=(1, 4, 6, 12, 17, 22, 28, 32, 33, 36, 42, 43, 44))
 def test_hoc_rois(roi):
+    if not externals.exists('nibabel'):
+        raise SkipTest
+
     # just checking which harvard-oxford rois we can rely on in the downsampled
     # data
     ds = load_datadb_tutorial_data(path=_get_built_in_datapath(), roi=roi,
@@ -160,6 +169,9 @@ def test_hoc_rois(roi):
 
 
 def test_roi_combo():
+    if not externals.exists('nibabel'):
+        raise SkipTest
+
     ds1 = load_datadb_tutorial_data(path=_get_built_in_datapath(), roi=1,
                                     flavor='25mm')
     ds4 = load_datadb_tutorial_data(path=_get_built_in_datapath(), roi=4,
@@ -170,18 +182,24 @@ def test_roi_combo():
 
 
 def test_corner_cases():
+    if not externals.exists('nibabel'):
+        raise SkipTest
+
     assert_raises(ValueError, load_datadb_tutorial_data,
                   path=_get_built_in_datapath(), roi=range, flavor='25mm')
 
 
 def test_example_data():
+    if not externals.exists('nibabel'):
+        raise SkipTest
+
     # both expected flavor are present
     ds1 = load_example_fmri_dataset()
     ds25 = load_example_fmri_dataset(name='25mm', literal=True)
+    assert_equal(len(ds1), len(ds25))
     # no 25mm dataset with numerical labels
     assert_raises(ValueError, load_example_fmri_dataset, name='25mm')
     # the 25mm example is the same as the coarse tutorial data
     ds25tut = load_datadb_tutorial_data(path=_get_built_in_datapath(),
                                         flavor='25mm')
     assert_array_equal(ds25.samples, ds25tut.samples)
-
