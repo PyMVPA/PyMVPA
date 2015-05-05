@@ -1017,7 +1017,10 @@ def test_all_equal():
     for ii, v in enumerate(values):
         for jj, w in enumerate(values):
             # make deepcopy so == operator cannot cheat by checking id()
-            assert_equal(all_equal(copy.deepcopy(v), copy.deepcopy(w)), ii == jj)
+            assert_equal(all_equal(copy.deepcopy(v),
+                                   copy.deepcopy(w)),
+                         ii == jj,
+                         msg='cmp(%s, %s)' % (type(v), type(w)))
 
     # ensure that this function behaves like the 
     # standard python '==' comparator for singulars
