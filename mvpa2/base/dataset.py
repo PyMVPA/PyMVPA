@@ -800,8 +800,9 @@ def all_equal(x, y):
         try:
             if not set(x.keys()) == set(y.keys()):
                 return False
-            x = [x[k] for k in x]
-            y = [y[k] for k in y]
+            keys = list(x.keys())
+            x = [x[k] for k in keys]
+            y = [y[k] for k in keys]
             # this is just for fooling the next test
             eq = [0, 1]
         except:
