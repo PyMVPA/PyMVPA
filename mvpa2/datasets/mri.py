@@ -129,11 +129,20 @@ def map2nifti(dataset, data=None, imghdr=None, imgtype=None):
         elif __debug__:
             debug('DS_NIFTI', 'No image header found. Using defaults.')
     if not imghdr is None:
-        imghdr = _dict2hdr(imghdr)
+        if 'hdrtype' in imghdr:
+            imghdr = _dict2hdr(imghdr)
+        else:
+            # fall back on previous logic and expect a header instance
+            # we can fail in glorious ways further down
+            pass
 
     if imgtype is None:
         if 'imgtype' in dataset.a:
-            imgtype = getattr(nibabel, dataset.a.imgtype)
+            try:
+                imgtype = getattr(nibabel, dataset.a.imgtype)
+            except TypeError:
+                # fall back on previous logic and expect an actual type
+                imgtype = dataset.a.imgtype
         else:
             imgtype = nibabel.Nifti1Image
             if __debug__:
