@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
+from mvpa2.base import warning
 from mvpa2.base.dochelpers import _repr_attrs
 
 from mvpa2.base.node import Node
@@ -157,8 +158,10 @@ class AttributePermutator(Node):
             differ = False
             for in_pattr, out_pattr in zip(in_pattrs, out_pattrs):
                 differ = differ or np.any(in_pattr.value != out_pattr.value)
-                if differ: break                 # leave check loop if differ
-            if differ: break                     # leave 10 loop, otherwise go to the next round
+                if differ:
+                    break                 # leave check loop if differ
+            if differ:
+                break                     # leave 10 loop, otherwise go to the next round
 
         if assure_permute and not differ:
             raise RuntimeError(
@@ -208,17 +211,41 @@ class AttributePermutator(Node):
             for pa, out_v in zip(out_pattrs, out_group):
                 pa.value[i] = out_v
 
+    @staticmethod
+    def _permute_chunks_sanity_check(in_pattrs, chunks, uniques):
+        #  Verify that we are not dealing with some degenerate scenario
 
-    def _permute_chunks(self, limit_idx, in_pattrs, out_pattrs, chunks):
+        for in_pattr in in_pattrs:
+            sample_targets = in_pattr.value[np.where(chunks == uniques[0])]
+
+            for orig in uniques[1:]:
+                chunk_targets = in_pattr.value[np.where(chunks == orig)]
+                # must be of the same length
+                if np.any(chunk_targets != sample_targets):
+                    # Escape as early as possible
+                    return
+
+        warning("Permutation via strategy='chunk' makes no sense --"
+                " all chunks have the same order of targets: %s"
+                % (sample_targets,))
+
+    def _permute_chunks(self, limit_idx, in_pattrs, out_pattrs, chunks=None):
         # limit_idx is doing nothing
 
+        uniques = np.unique(chunks)
+
+        if __debug__ and len(uniques):
+            # Somewhat a duplication, since could be checked within the loop,
+            # but IMHO makes it cleaner and shouldn't be that big of an impact
+            self._permute_chunks_sanity_check(in_pattrs, chunks, uniques)
+
         for in_pattr, out_pattr in zip(in_pattrs, out_pattrs):
-            uniques = np.unique(chunks)
             shuffled = uniques.copy()
             self.rng.shuffle(shuffled)
 
             for orig, new in zip(uniques, shuffled):
-                out_pattr.value[np.where(chunks==orig)] = in_pattr.value[np.where(chunks==new)]
+                out_pattr.value[np.where(chunks == orig)] = \
+                    in_pattr.value[np.where(chunks == new)]
 
 
     def generate(self, ds):
@@ -246,7 +273,7 @@ class AttributePermutator(Node):
             + _repr_attrs(self, ['count'], default=1)
             + _repr_attrs(self, ['limit'])
             + _repr_attrs(self, ['assure'], default=False)
-            + _repr_attrs(self, ['strategy'], default='permute')
+            + _repr_attrs(self, ['strategy'], default='simple')
             + _repr_attrs(self, ['rng'], default=np.random)
             )
 
