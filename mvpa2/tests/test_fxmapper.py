@@ -217,7 +217,17 @@ def test_fx_native_calls(f):
             m1 = FxMapper(axis, f_, **kwargs)
             dsm1 = ds.get_mapped(m1)
 
-            assert_array_almost_equal(dsm1.samples, dsm2.samples)
+            if dsm2.samples.dtype==object:
+                # assert_array_almost_equal does not always work
+                # for object arrays
+                assert_samples_equal=assert_objectarray_equal
+            else:
+                # deal with potential rounding errors
+                assert_samples_equal=assert_array_almost_equal
+
+            assert_samples_equal(dsm1.samples, dsm2.samples)
+
+            # test other attributes
             assert_array_equal(dsm1.targets, dsm2.targets)
             assert_array_equal(dsm1.chunks, dsm2.chunks)
             assert_array_equal(dsm1.fa.nonbogus_targets, dsm2.fa.nonbogus_targets)
