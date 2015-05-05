@@ -31,7 +31,7 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
-* 2.3.2 (???, ? ? ?)
+* 2.4.0 (???, ? ? ?)
 
   * Don't wait too long listing the changes...
 
@@ -48,12 +48,27 @@ Releases
       features with non-finite values, i.e. NaNs or Infs, for any sample.
     - :func:`~mvpa2.misc.stats.binomial_proportion_ci` for computing
       confidence intervals on proportions of Bernoulli trial outcomes.
+    - New mapper for removing sample means from features.
+    - New algorithm for statistical evaluation of clusters in accuracy maps
+      of group-based searchlight classification analyses. This is essentially
+      an improved implementation of Stelzer et al., NeuroImage, 2013.
+    - New identity mapper. Does nothing, but goes were only mappers can go.
+    - Simplified selection of samples/feature in a dataset. One can now
+      specify sets of attribute values to define sample/feature subsets.
+    - IO adaptor for OpenFMRI-formated datasets. Load arbitrary bits from such
+      a dataset, or automatically build event-related dataset (optionally with
+      NiPy-based HRF-modelling).
+    - New command line command to generate a motion plot for an
+      OpenFMRI-formated dataset.
+    - New convenience functions for boxplots and outlier detection.
+    - Helper to remove feature that a NaN of Inf in at least one sample.
 
   * API changes
 
   * Enhancements (?? ENH, OPT, and NF commits)
 
     - :class:`~mvpa2.mappers.flatten.ProductFlattenMapper` accepts explicit names of factors in the constructor.
+    - HollowSphere() can now, optionally, include the center feature.
 
   * Fixes
 
