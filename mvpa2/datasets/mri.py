@@ -20,32 +20,34 @@ __docformat__ = 'restructuredtext'
 from mvpa2.base import externals
 externals.exists('nibabel', raise_=True)
 
-import sys
 import numpy as np
-from mvpa2.support.copy import deepcopy
-from mvpa2.misc.support import Event
-from mvpa2.base.collections import DatasetAttribute
 from mvpa2.base.dataset import _expand_attribute
 
 if __debug__:
     from mvpa2.base import debug
 
 from mvpa2.datasets.base import Dataset
-from mvpa2.mappers.fx import _uniquemerge2literal
 from mvpa2.mappers.flatten import FlattenMapper
-from mvpa2.mappers.boxcar import BoxcarMapper
 from mvpa2.base import warning
 
 
-def _data2img(data, hdr=None, imgtype=None):
-    # input data is t,x,y,z
-    # let's try whether we can get it done with nibabel
+def _hdr2dict(hdr):
+    """Helper to convert a NiBabel image header to a dict of arrays"""
+    kv = dict(hdr)
+    kv['hdrtype'] = hdr.__class__.__name__
+    return kv
+
+
+def _dict2hdr(kv):
+    """Counterpart of ``_hdr2dict()``"""
     import nibabel
-    if imgtype is None:
-        # default is NIfTI1
-        imgtype = nibabel.Nifti1Image
-    else:
-        itype = imgtype
+    hdr = getattr(nibabel, kv['hdrtype'])()
+    for k in kv:
+        if k == 'hdrtype':
+            continue
+        hdr[k] = kv[k]
+    return hdr
+
 
 def _img2data(src):
     # break early of nothing has been given
@@ -79,7 +81,7 @@ def _img2data(src):
             data = np.reshape(data, newshape)
 
         # nibabel image, dissect and return pieces
-        return _get_txyz_shaped(data), header, img.__class__
+        return _get_txyz_shaped(data), header, img
     else:
         # no clue what it is
         return None
@@ -126,10 +128,21 @@ def map2nifti(dataset, data=None, imghdr=None, imgtype=None):
             imghdr = dataset.a.imghdr
         elif __debug__:
             debug('DS_NIFTI', 'No image header found. Using defaults.')
+    if not imghdr is None:
+        if 'hdrtype' in imghdr:
+            imghdr = _dict2hdr(imghdr)
+        else:
+            # fall back on previous logic and expect a header instance
+            # we can fail in glorious ways further down
+            pass
 
     if imgtype is None:
         if 'imgtype' in dataset.a:
-            imgtype = dataset.a.imgtype
+            try:
+                imgtype = getattr(nibabel, dataset.a.imgtype)
+            except TypeError:
+                # fall back on previous logic and expect an actual type
+                imgtype = dataset.a.imgtype
         else:
             imgtype = nibabel.Nifti1Image
             if __debug__:
@@ -151,7 +164,7 @@ def map2nifti(dataset, data=None, imghdr=None, imgtype=None):
     # with imghdr.get_data_dtype()
 
     if issubclass(imgtype, nibabel.spatialimages.SpatialImage) \
-       and (imghdr is None or hasattr(imghdr, 'get_data_dtype')):
+            and (imghdr is None or hasattr(imghdr, 'get_data_dtype')):
         # we can handle the desired image type and hdr with nibabel
         # use of `None` for the affine should cause to pull it from
         # the header
@@ -228,7 +241,7 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
     Dataset
     """
     # load the samples
-    imgdata, imghdr, imgtype = _load_anyimg(samples, ensure=True, enforce_dim=4)
+    imgdata, imghdr, img = _load_anyimg(samples, ensure=True, enforce_dim=4)
 
     # figure out what the mask is, but only handle known cases, the rest
     # goes directly into the mapper which maybe knows more
@@ -270,8 +283,18 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
             ds.fa[fattr] = ds.a.mapper.forward1(value)
 
     # store interesting props in the dataset
-    ds.a['imghdr'] = imghdr
-    ds.a['imgtype'] = imgtype
+    ds.a['imgaffine'] = img.get_affine()
+    ds.a['imgtype'] = img.__class__.__name__
+    try:
+        # make an attempt to store more of the image header in a simple
+        # dict(array), but no moaning if that fails -- some image types
+        # don't support that, e.g. MINC
+        ds.a['imghdr'] = _hdr2dict(imghdr)
+    except:
+        if __debug__:
+            debug('DS_NIFTI',
+                  'Failed to store header info as attribute (src: %s)'
+                  % (imghdr.__class__,))
     # If there is a space assigned , store the extent of that space
     if sprefix is not None:
         ds.a[sprefix + '_dim'] = imgdata.shape[1:]
@@ -280,8 +303,8 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
         # TODO extend with the unit
     if tprefix is not None:
         ds.sa[tprefix + '_indices'] = np.arange(len(ds), dtype='int')
-        ds.sa[tprefix + '_coords'] = np.arange(len(ds), dtype='float') \
-                                     * _get_dt(imghdr)
+        ds.sa[tprefix + '_coords'] = \
+            np.arange(len(ds), dtype='float') * _get_dt(imghdr)
         # TODO extend with the unit
 
     return ds
@@ -330,7 +353,7 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
     -------
     tuple or None
       If the source is not supported None is returned.  Otherwise a
-      tuple of (imgdata, imghdr, imgtype)
+      tuple of (imgdata, imghdr, img)
 
     Raises
     ------
@@ -338,7 +361,7 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
       If there is a problem with data (variable dimensionality) or
       failed to load data and ensure=True.
     """
-    imgdata = imghdr = imgtype = None
+    imgdata = imghdr = None
 
     # figure out whether we have a list of things to load and handle that
     # first
@@ -353,17 +376,17 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
             shapes = [s[0].shape[1:] for s in srcs]
             if not np.all([s == shapes[0] for s in shapes]):
                 raise ValueError(
-                      "Input volumes vary in their shapes: %s" % (shapes,))
+                    "Input volumes vary in their shapes: %s" % (shapes,))
         # Combine them all into a single beast
         # will be t,x,y,z
         imgdata = np.vstack([s[0] for s in srcs])
-        imghdr, imgtype = srcs[0][1:3]
+        imghdr, img = srcs[0][1:3]
     else:
         # try opening the beast; this might yield none in case of an unsupported
         # argument and is handled accordingly below
         data = _img2data(src)
         if not data is None:
-            imgdata, imghdr, imgtype = data
+            imgdata, imghdr, img = data
 
     if imgdata is not None and enforce_dim is not None:
         shape, new_shape = imgdata.shape, None
@@ -377,9 +400,8 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
             # if there are bogus dimensions at the beginning
             bogus_dims = lshape - enforce_dim
             if shape[:bogus_dims] != (1,) * bogus_dims:
-                raise ValueError, \
-                      "Cannot enforce %dD on data with shape %s" \
-                      % (enforce_dim, shape)
+                raise ValueError("Cannot enforce %dD on data with shape %s"
+                                 % (enforce_dim, shape))
             new_shape = shape[bogus_dims:]
 
         # tune up shape if needed
@@ -392,4 +414,4 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
     if imgdata is None:
         return None
     else:
-        return imgdata, imghdr, imgtype
+        return imgdata, imghdr, img

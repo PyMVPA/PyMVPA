@@ -32,6 +32,7 @@ if externals.exists('nibabel'):
     import nibabel as nb
 
 from mvpa2.misc.neighborhood import Sphere
+from mvpa2.mappers.base import ChainMapper
 
 class VolGeom(object):
     '''Defines a mapping between sub and linear indices and world coordinate
@@ -795,20 +796,14 @@ def from_any(s, mask_volume=None):
     except:
         try:
             # see if s behaves like a Dataset with image header
-            hdr = s.a.imghdr
-            try:
-                shape = hdr.get_data_shape()
-                affine = hdr.get_best_affine()
-            except AttributeError:
-                # maybe there are shape and voxel dimensions
-                shape = s.a.voxel_dim
-
-                # set the affine matrix with origin (0,0,0)
-                affine = np.zeros((4, 4))
-                affine[0, 0], affine[1, 1], affine[2, 2] = s.a.voxel_eldim
-                affine[:2, -1] = -.5 * np.diag(affine)[:2]
-                affine[3, 3] = 1
-
+            # there is always an affine, if it comes from nibabel
+            affine = s.a.imgaffine
+            # if this comes from fmri_dataset() the first mapper is
+            # a FlattenMapper that knows the original data shape
+            if isinstance(s.a.mapper, ChainMapper):
+                shape = s.a.mapper[0].shape
+            else:
+                shape = s.a.mapper.shape
             mask = None
             if isinstance(mask_volume, int):
                 mask = np.asarray(s.samples[mask_volume, :])
@@ -823,15 +818,16 @@ def from_any(s, mask_volume=None):
                     mask_volume_indices = s.fa[mask_volume]
 
                 if mask_volume_indices:
-                    sh = shape[:3]
-                    mask = np.zeros(sh)
+                    mask = np.zeros(shape)
 
                     for idx in mask_volume_indices.value:
                         mask[tuple(idx)] = 1
-        except:
+        except Exception, e:
             #no idea what type of beast this is.
-            raise ValueError('Unrecognized input %r - not a VolGeom, '
-                             '(filename of) Nifti image, or (mri-)Dataset' % s)
+            raise ValueError(
+                'Unrecognized input %r - not a VolGeom, '
+                '(filename of) Nifti image, or (mri-)Dataset: %s'
+                % (s, e))
 
     return VolGeom(shape=shape, affine=affine, mask=mask)
 
