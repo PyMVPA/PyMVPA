@@ -44,7 +44,7 @@ def generate_testing_fmri_dataset():
     """
     import mvpa2
     from mvpa2.base.hdf5 import h5save
-    from mvpa2.misc.data_generators import load_example_fmri_dataset
+    from mvpa2.datasets.sources import load_example_fmri_dataset
     # Load our sample dataset
     ds_full = load_example_fmri_dataset(name='1slice', literal=False)
     # Subselect a small "ROI"

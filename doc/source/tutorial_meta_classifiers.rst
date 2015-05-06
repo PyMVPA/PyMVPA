@@ -48,7 +48,7 @@ Before we get into that, let's reproduce the dataset from
 >>> # directory that contains the data files
 >>> datapath = os.path.join(tutorial_data_path, 'data')
 >>> # load the raw data
->>> ds = load_datadb_tutorial_data(roi='vt')
+>>> ds = load_tutorial_data(roi='vt')
 >>> # pre-process
 >>> poly_detrend(ds, polyord=1, chunks_attr='chunks')
 >>> zscore(ds, param_est=('targets', ['rest']))

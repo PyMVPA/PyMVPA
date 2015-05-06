@@ -183,7 +183,7 @@ specification of a dataset attribute that encodes the timing of a time series
 samples; ``time_attr``).
 
 >>> print ds
-<Dataset: 96x129@float64, <sa: chunks,condition,regressors,run,subj>, <fa: voxel_indices>, <a: add_regs,imghdr,imgtype,mapper,model,voxel_dim,voxel_eldim>>
+<Dataset: 96x129@float64, <sa: chunks,condition,regressors,run,subj>, <fa: voxel_indices>, <a: add_regs,imgaffine,imghdr,imgtype,mapper,voxel_dim,voxel_eldim>>
 
 This all led to an output dataset with 96 samples, one sample per each of the
 eight condition in each of the 12 runs.

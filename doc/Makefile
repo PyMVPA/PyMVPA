@@ -40,21 +40,21 @@ SPHINXEXT_PATH=$(shell python -c 'import sphinx.ext; from distutils.version impo
 generate: generate-stamp
 generate-stamp: cache_intersphinx
 	mkdir -p $(BUILDDIR)
-	@MVPA_EXTERNALS_RAISE_EXCEPTION=off \
-		PYTHONPATH=$(CURDIR)/sphinxext:$(CURDIR)/..:$(PYTHONPATH) \
-		$(PYTHON) $(SPHINXEXT_PATH)/autosummary/generate.py \
-		-t $(CURDIR)/templates -o source/generated source/*.rst
+	#@MVPA_EXTERNALS_RAISE_EXCEPTION=off \
+	#	PYTHONPATH=$(CURDIR)/sphinxext:$(CURDIR)/..:$(PYTHONPATH) \
+	#	$(PYTHON) $(SPHINXEXT_PATH)/autosummary/generate.py \
+	#	-t $(CURDIR)/templates -o source/generated source/*.rst
 	# wipe everything that is not pymvpa to prevent suffering from the bugs
 	# of other in subsequent stages
-	find source/generated -type f ! -name 'mvpa*' -delete
-	set -e; set -o pipefail; for man in $(BUILDDIR)/man/pymvpa*; do \
-		manfile=$$(basename $${man}) ; \
-		cmd=$${manfile#pymvpa2-*} ; \
-		cmd=$${cmd%*.1} ; \
-		man2html $${man} | sed -n '/<HR>/{:a;n;/<HR>/b;p;ba}' | sed -n '/<A NAME/{:a;n;/This document was created by/b;p;ba}' > source/generated/$${manfile}.html ; \
-		underline="*****************$$(echo $${cmd} | tr A-Za-z0-9 \*)" ; \
-		echo ".. index:: command line, $${cmd}\n.. _chap_cmdline_$${cmd}\n\n$${underline}\nMan page for \`\`$${cmd}\`\`\n$${underline}\n\n.. raw:: html\n   :file: $${manfile}.html\n" > source/generated/cmd_$${cmd}.rst ; \
-	done
+	#-find source/generated -type f ! -name 'mvpa*' -delete
+	#set -e; set -o pipefail; for man in $(BUILDDIR)/man/pymvpa*; do \
+	#	manfile=$$(basename $${man}) ; \
+	#	cmd=$${manfile#pymvpa2-*} ; \
+	#	cmd=$${cmd%*.1} ; \
+	#	man2html $${man} | sed -n '/<HR>/{:a;n;/<HR>/b;p;ba}' | sed -n '/<A NAME/{:a;n;/This document was created by/b;p;ba}' > source/generated/$${manfile}.html ; \
+	#	underline="*****************$$(echo $${cmd} | tr A-Za-z0-9 \*)" ; \
+	#	echo ".. index:: command line, $${cmd}\n.. _chap_cmdline_$${cmd}\n\n$${underline}\nMan page for \`\`$${cmd}\`\`\n$${underline}\n\n.. raw:: html\n   :file: $${manfile}.html\n" > source/generated/cmd_$${cmd}.rst ; \
+	#done
 	@touch $@
 
 cache_intersphinx: cache_intersphinx-stamp
