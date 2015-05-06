@@ -356,16 +356,14 @@ Enough theoretical foreplay -- let's look at a concrete example of loading an
 fMRI dataset. PyMVPA has several helper functions to load data from specialized
 formats, and the one for fMRI data is `~mvpa2.datasets.mri.fmri_dataset()`. The
 example dataset we are going to look at is a single subject from Haxby et al.
-(2001).  For more convenience and less typing, we first specify the path of the
-directory with the fMRI data.
-
->>> path = os.path.join(tutorial_data_path, 'data')
+(2001).  For more convenience and less typing, we have a short cut for the
+path of the directory with the fMRI data: `tutorial_data_path``.
 
 In the simplest case, we now let `~mvpa2.datasets.mri.fmri_dataset` do its job,
 by just pointing it to the fMRI data file. The data is stored as a NIfTI file
 that has all runs of the experiment concatenated into a single file.
 
->>> bold_fname = os.path.join(path, 'sub001', 'BOLD', 'task001_run001', 'bold.nii.gz')
+>>> bold_fname = os.path.join(tutorial_data_path, 'sub001', 'BOLD', 'task001_run001', 'bold.nii.gz')
 >>> ds = fmri_dataset(bold_fname)
 >>> len(ds)
 121
@@ -393,7 +391,7 @@ to use the original GLM-based localizer mask of ventral temporal cortex
 from Haxby et al. (2001).
 Let's reload the dataset:
 
->>> mask_fname = os.path.join(path, 'sub001', 'masks', 'orig', 'vt.nii.gz')
+>>> mask_fname = os.path.join(tutorial_data_path, 'sub001', 'masks', 'orig', 'vt.nii.gz')
 >>> ds = fmri_dataset(bold_fname, mask=mask_fname)
 >>> len(ds)
 121

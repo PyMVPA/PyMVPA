@@ -17,7 +17,7 @@ from mvpa2.testing.sweep import sweepargs
 
 from mvpa2 import pymvpa_dataroot
 import mvpa2.datasets.sources.openfmri as ofm
-from mvpa2.datasets.sources.native import load_datadb_tutorial_data, \
+from mvpa2.datasets.sources.native import load_tutorial_data, \
     load_example_fmri_dataset
 from mvpa2.misc.io.base import SampleAttributes
 from mvpa2.datasets.eventrelated import events2sample_attr, assign_conditionlabels
@@ -130,18 +130,12 @@ def test_openfmri_dataset():
     assert_equal([m.shape for m in motion], [(1, 121, 6)] * 12)
 
 
-def _get_built_in_datapath():
-    return os.path.join(pymvpa_dataroot, 'openfmri')
-
-
 def test_tutorialdata_loader_masking():
     if not externals.exists('nibabel'):
         raise SkipTest
 
-    ds_brain = load_datadb_tutorial_data(path=_get_built_in_datapath(),
-                                         flavor='25mm')
-    ds_nomask = load_datadb_tutorial_data(path=_get_built_in_datapath(),
-                                          roi=None, flavor='25mm')
+    ds_brain = load_tutorial_data(flavor='25mm')
+    ds_nomask = load_tutorial_data(roi=None, flavor='25mm')
     assert_greater(ds_nomask.nfeatures, ds_brain.nfeatures)
 
 
@@ -151,8 +145,7 @@ def test_tutorialdata_rois(roi):
         raise SkipTest
 
     # just checking that we have the files
-    ds = load_datadb_tutorial_data(path=_get_built_in_datapath(), roi=roi,
-                                   flavor='25mm')
+    ds = load_tutorial_data(roi=roi, flavor='25mm')
     assert_equal(len(ds), 1452)
 
 
@@ -163,8 +156,7 @@ def test_hoc_rois(roi):
 
     # just checking which harvard-oxford rois we can rely on in the downsampled
     # data
-    ds = load_datadb_tutorial_data(path=_get_built_in_datapath(), roi=roi,
-                                   flavor='25mm')
+    ds = load_tutorial_data(roi=roi, flavor='25mm')
     assert_equal(len(ds), 1452)
 
 
@@ -172,12 +164,9 @@ def test_roi_combo():
     if not externals.exists('nibabel'):
         raise SkipTest
 
-    ds1 = load_datadb_tutorial_data(path=_get_built_in_datapath(), roi=1,
-                                    flavor='25mm')
-    ds4 = load_datadb_tutorial_data(path=_get_built_in_datapath(), roi=4,
-                                    flavor='25mm')
-    ds_combo = load_datadb_tutorial_data(path=_get_built_in_datapath(),
-                                         roi=(1, 4), flavor='25mm')
+    ds1 = load_tutorial_data(roi=1, flavor='25mm')
+    ds4 = load_tutorial_data(roi=4, flavor='25mm')
+    ds_combo = load_tutorial_data(roi=(1, 4), flavor='25mm')
     assert_equal(ds1.nfeatures + ds4.nfeatures, ds_combo.nfeatures)
 
 
@@ -185,8 +174,8 @@ def test_corner_cases():
     if not externals.exists('nibabel'):
         raise SkipTest
 
-    assert_raises(ValueError, load_datadb_tutorial_data,
-                  path=_get_built_in_datapath(), roi=range, flavor='25mm')
+    assert_raises(ValueError, load_tutorial_data,
+                  roi=range, flavor='25mm')
 
 
 def test_example_data():
@@ -200,6 +189,5 @@ def test_example_data():
     # no 25mm dataset with numerical labels
     assert_raises(ValueError, load_example_fmri_dataset, name='25mm')
     # the 25mm example is the same as the coarse tutorial data
-    ds25tut = load_datadb_tutorial_data(path=_get_built_in_datapath(),
-                                        flavor='25mm')
+    ds25tut = load_tutorial_data(flavor='25mm')
     assert_array_equal(ds25.samples, ds25tut.samples)

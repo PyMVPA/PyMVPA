@@ -22,13 +22,6 @@ from mvpa2.misc.support import Event
 if __debug__:
     from mvpa2.base import debug
 
-from mvpa2.datasets.sources.native import load_datadb_tutorial_data
-load_datadb_demo_blockfmri = load_datadb_tutorial_data
-"""For backward compatibility with tutorial_lib which people might be
-   "using" already.  Deprecate entirely whenever tutorial_data gets updated.
-"""
-
-
 def multiple_chunks(func, n_chunks, *args, **kwargs):
     """Replicate datasets multiple times raising different chunks
 

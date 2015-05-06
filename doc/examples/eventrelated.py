@@ -21,7 +21,7 @@ the fMRI dataset.
 
 from mvpa2.suite import *
 
-ds = load_datadb_tutorial_data(roi=(36,38,39,40))
+ds = load_tutorial_data(roi=(36,38,39,40))
 
 """
 
