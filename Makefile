@@ -4,7 +4,7 @@ BUILDDIR=$(CURDIR)/build
 BUILD3DIR=$(CURDIR)/build/py3k
 HTML_DIR=$(BUILDDIR)/html
 DOC_DIR=$(CURDIR)/doc
-TUT_DIR=$(CURDIR)/datadb/tutorial_data/tutorial_data
+TUT_DIR=$(CURDIR)/datadb/tutorial_data/tutorial_data/data
 DOCSRC_DIR=$(DOC_DIR)/source
 DOCBUILD_DIR=$(BUILDDIR)/doc
 NOTEBOOKBUILD_DIR=$(HTML_DIR)/notebooks
@@ -469,7 +469,7 @@ testexamples: te-svdclf te-smlr te-sensanas te-pylab_2d \
               te-erp_plot te-match_distribution te-permutation_test \
               te-searchlight_minimal te-smlr te-start_easy te-topo_plot \
               te-gpr te-gpr_model_selection0 te-mri_plot te-searchlight \
-              te-clfs_examples
+              te-eventrelated te-clfs_examples
 
 testdocstrings: dt-mvpa
 
