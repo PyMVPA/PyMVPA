@@ -12,8 +12,9 @@ __docformat__ = 'restructuredtext'
 
 import os
 import numpy as np
+import mvpa2
 from mvpa2.base import externals
-from mvpa2 import pymvpa_dataroot, pymvpa_datadbroot
+from mvpa2 import pymvpa_dataroot
 
 
 def load_example_fmri_dataset(name='1slice', literal=False):
@@ -51,15 +52,18 @@ def load_example_fmri_dataset(name='1slice', literal=False):
     return ds
 
 
-def load_datadb_tutorial_data(path=os.path.join(
-    pymvpa_datadbroot, 'tutorial_data', 'tutorial_data', 'data'),
-        roi='brain', add_fa=None, flavor=None):
+def load_tutorial_data(path=None, roi='brain', add_fa=None, flavor=None):
     """Loads the block-design demo dataset from PyMVPA dataset DB.
 
     Parameters
     ----------
     path : str, optional
-      Path of the directory containing the dataset files.
+      Path to the ``data`` directory in the extracted content of the tutorial
+      data package. This is only necessary for accessing the full resolution
+      data. The ``1slice``, and ``25mm`` flavors are shipped with PyMVPA
+      itself, and the path argument is ignored for them. This function also
+      honors the MVPA_LOCATION_TUTORIAL_DATA environment variable, and the
+      respective configuration setting.
     roi : str or int or tuple or None, optional
       Region Of Interest to be used for masking the dataset. If a string is
       given a corresponding mask image from the demo dataset will be used
@@ -75,8 +79,19 @@ def load_datadb_tutorial_data(path=os.path.join(
       Resolution flavor of the data to load. By default, the data is loaded in
       its original resolution. The PyMVPA source distribution contains a '25mm'
       flavor that has been downsampled to a very coarse resolution and can be
-      used for quick test execution.
+      used for quick test execution. Likewise a ``1slice`` flavor is available
+      that contents a full-resultion single-slice subset of the dataset.
     """
+    if path is None:
+        if flavor in ('1slice', '25mm'):
+            # we know that this part is there
+            path = os.path.join(pymvpa_dataroot, 'openfmri')
+        else:
+            # check config for info, pretend it is in the working dir otherwise
+            path = mvpa2.cfg.get('location',
+                                 'tutorial data',
+                                 default=os.path.curdir)
+
     import nibabel as nb
     from mvpa2.datasets.sources.openfmri import OpenFMRIDataset
     model = subj = 1
