@@ -59,6 +59,8 @@ else:
 
 __sdebug('algorithms')
 from mvpa2.algorithms.hyperalignment import *
+if externals.exists('scipy') :
+    from mvpa2.algorithms.group_clusterthr import *
 
 __sdebug('clfs')
 from mvpa2 import clfs
@@ -120,10 +122,15 @@ from mvpa2.datasets.eventrelated import *
 if externals.exists('nibabel') :
     from mvpa2.datasets.mri import *
 from mvpa2.datasets.sources import *
+from mvpa2.datasets.sources.openfmri import *
 from mvpa2.datasets import niml
 from mvpa2.datasets.niml import from_niml, to_niml
 from mvpa2.datasets import eeglab
 from mvpa2.datasets.eeglab import eeglab_dataset
+if externals.exists('scipy') :
+    from mvpa2.datasets import cosmo
+    from mvpa2.datasets.cosmo import map2cosmo, cosmo_dataset, \
+                                     CosmoQueryEngine, CosmoSearchlight
 
 
 __sdebug('generators')
@@ -165,6 +172,7 @@ if externals.exists('mdp'):
 if externals.exists('mdp ge 2.4'):
     from mvpa2.mappers.lle import *
 from mvpa2.mappers.glm import *
+from mvpa2.mappers.skl_adaptor import *
 
 __sdebug('measures')
 from mvpa2 import measures

@@ -457,3 +457,41 @@ class CombinedMapper(Mapper):
 
     mappers = property(fget=lambda self:self._mappers)
 
+
+class IdentityMapper(Mapper):
+    """A mapper that performs an identity transformation (i.e. none)
+
+    Passed data is returned as is for any requested operation. This is a helper
+    that can be useful if a transformation with a mapper is optional, but code
+    needs to be written that is capable of handling arbitrary mappers.
+    """
+    def __init__(self, **kwargs):
+        # by default auto train
+        kwargs['auto_train'] = kwargs.get('auto_train', True)
+        Mapper.__init__(self, **kwargs)
+
+    def _train(self, samples):
+        pass
+
+    def _forward_data(self, data):
+        return data
+
+    def _forward_dataset(self, dataset):
+        return dataset
+
+    def forward1(self, data):
+        if __debug__:
+            debug('MAP', "Forward-map sample through '%s'.", (self,))
+        return data
+
+    def _reverse_data(self, data):
+        return data
+
+    def _reverse_dataset(self, dataset):
+        return dataset
+
+    def reverse1(self, data):
+        if __debug__:
+            debug('MAP', "Reverse-map sample through '%s'.", (self,))
+        return data
+

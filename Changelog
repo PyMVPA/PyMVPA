@@ -31,6 +31,63 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
+* 2.4.0 (???, ? ? ?)
+
+  * Don't wait too long listing the changes...
+
+  * New functionality
+
+    - Support for CoSMoMVPA (http://cosmomvpa.org) in
+      :mod:`~mvpa2.datasets.cosmo` providing dataset input/output
+      (:meth:`~mvpa2.datasets.cosmo.cosmo_dataset` and
+      :meth:`~mvpa2.datasets.cosmo.map2cosmo`) and neighborhood input
+      (:class:`~mvpa2.datasets.cosmo.CosmoQueryEngine`). This allows for
+      for running searchlights (:class:`mvpa2.datasets.cosmo.CosmoSearchlight`)
+      on data from CoSMoMVPA (fMRI and MEEG).
+    - :func:`~mvpa2.datasets.miscfx.remove_nonfinite_features` removes
+      features with non-finite values, i.e. NaNs or Infs, for any sample.
+    - :func:`~mvpa2.misc.stats.binomial_proportion_ci` for computing
+      confidence intervals on proportions of Bernoulli trial outcomes.
+    - New mapper for removing sample means from features.
+    - New algorithm for statistical evaluation of clusters in accuracy maps
+      of group-based searchlight classification analyses. This is essentially
+      an improved implementation of Stelzer et al., NeuroImage, 2013.
+    - New identity mapper. Does nothing, but goes were only mappers can go.
+    - Simplified selection of samples/feature in a dataset. One can now
+      specify sets of attribute values to define sample/feature subsets.
+    - IO adaptor for OpenFMRI-formated datasets. Load arbitrary bits from such
+      a dataset, or automatically build event-related dataset (optionally with
+      NiPy-based HRF-modeling).  `tutorial_data_25mm` was converted to
+	  OpenFMRI layout and extended also with `1slice` flavor.
+    - New command line command to generate a motion plot for an
+      OpenFMRI-formated dataset.
+    - New convenience functions for boxplots and outlier detection.
+
+  * API changes
+
+  * Enhancements (?? ENH, OPT, and NF commits)
+
+    - :class:`~mvpa2.mappers.flatten.ProductFlattenMapper` accepts
+      explicit names of factors in the constructor.
+    - HollowSphere() can now, optionally, include the center feature.
+
+  * Fixes
+
+    - :class:`~mvpa2.algorithms.hyperalignment.Hyperalignment` with regularization
+      (alpha != 1.0) was producing incorrect transformations because they were
+      driven by offsets of the last subject.  Fixed by not "auto_train"ing
+      regularization projection.
+    - :func:`~mvpa2.misc.plot.lightbox.plot_lightbox` should take a
+      slice index from the last dimension, not the leading one if no
+      `slices` argument was provided.
+    - Improved Python3k compatibility in :mod:`~mvpa2.base.state`,
+      :mod:`~mvpa2.tests.test_testing.py`, :mod:`~mvpa2.tests`, and
+      :mod:`~mvpa2.clfs.stats` modules, and in libsvmlrc msvc
+      building.
+    - Partial fix for compatibility with ancient scipy on SPARC using
+      :mod:`~mvpa2.datasets.cosmo`.
+
+
 * 2.3.1 (Tue, 20 May 2014)
 
   Primarily a bugfix release pushed out to avoid mvpa2.suite meltdown

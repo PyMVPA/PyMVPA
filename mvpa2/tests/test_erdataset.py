@@ -13,8 +13,9 @@ from mvpa2.datasets import dataset_wizard
 from mvpa2.mappers.flatten import FlattenMapper
 from mvpa2.mappers.boxcar import BoxcarMapper
 from mvpa2.mappers.fx import FxMapper
-from mvpa2.datasets.eventrelated import find_events, eventrelated_dataset
-from mvpa2.misc.data_generators import load_example_fmri_dataset
+from mvpa2.datasets.eventrelated import find_events, eventrelated_dataset, \
+        extract_boxcar_event_samples
+from mvpa2.datasets.sources import load_example_fmri_dataset
 from mvpa2.mappers.zscore import zscore
 
 
@@ -99,11 +100,28 @@ def test_erdataset():
                                                nfeatures))
     assert_array_equal(rds.sa.myattr, np.repeat(results.sa.myattr,
                                                expected_nsamples))
+    evs = [dict(onset=12, duration=2), dict(onset=70, duration=3)]
+    evds = extract_boxcar_event_samples(ds, evs)
+    # it goes for the max of all durations
+    assert_equal(evds.shape, (len(evs), 3 * ds.nfeatures))
+    # overide duration
+    evds = extract_boxcar_event_samples(ds, evs, event_duration=1)
+    assert_equal(evds.shape, (len(evs), 1 * ds.nfeatures))
+    assert_equal(np.unique(evds.samples[1]), 70)
+    # overide onset
+    evds = extract_boxcar_event_samples(ds, evs, event_offset=2)
+    assert_equal(evds.shape, (len(evs), 3 * ds.nfeatures))
+    assert_equal(np.unique(evds.samples[1,:10]), 72)
+    # overide both
+    evds = extract_boxcar_event_samples(ds, evs, event_offset=-2,
+                                        event_duration=1)
+    assert_equal(evds.shape, (len(evs), 1 * ds.nfeatures))
+    assert_equal(np.unique(evds.samples[1]), 68)
 
 def test_hrf_modeling():
     skip_if_no_external('nibabel')
     skip_if_no_external('nipy') # ATM relies on NiPy's GLM implementation
-    ds = load_example_fmri_dataset('25mm') #literal=True)
+    ds = load_example_fmri_dataset('25mm', literal=True)
     # TODO: simulate short dataset with known properties and use it
     # for testing
     events = find_events(targets=ds.sa.targets, chunks=ds.sa.chunks)

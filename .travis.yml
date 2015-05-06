@@ -6,6 +6,8 @@
 # travis-ci; it uses virtualenvs, they do not have numpy, scipy, matplotlib,
 # and it is impractical to build them
 language: erlang
+cache:
+  - apt
 env:
  global:
     - PY=python PYSUF=''
@@ -19,6 +21,8 @@ env:
     # not be redirected or they augment output in the doctests
     - COVERAGE="coverage run --rcfile=.travis_coveragerc" MVPA_DEBUG=ENFORCE_CA_ENABLED  DOCTESTS=--with-doctest
 before_install:
+    # to prevent IPv6 being used for APT
+    - sudo bash -c "echo 'Acquire::ForceIPv4 \"true\";' > /etc/apt/apt.conf.d/99force-ipv4"
     # The ultimate one-liner setup for NeuroDebian repository
     - bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
     # - sudo apt-get install $PYTHON-dev
@@ -28,6 +32,7 @@ before_install:
     - travis_retry sudo apt-get install shogun-python-modular $PY-mdp $PY-psutil $PY-sklearn
     - travis_retry sudo apt-get install liblapack-dev $PY-statsmodels $PY-reportlab ipython
     - travis_retry sudo apt-get install $PY-pywt $PY-lxml $PY-pprocess $PY-nipy
+    - travis_retry sudo apt-get install python3-dev   # for rudimentary testing of conversion
     # Very optional R interfaces via rpy2
     - travis_retry sudo apt-get install $PY-rpy2
     - mkdir -p $PWD/R-libs
@@ -44,5 +49,6 @@ script:
     - export NOSETESTS=$(which nosetests)
     - eval   $COVERAGE $NOSETESTS -v mvpa2 $DOCTESTS -s
     - if [ ! -z "$COVERAGE" ]; then make coveragecmdline; fi
+    - make build PYTHON=python3
 after_success:
     - if [ ! -z "$COVERAGE" ]; then coveralls; fi

@@ -33,7 +33,7 @@ from mvpa2.measures.nnsearchlight import sphere_m1nnsearchlight, \
      M1NNSearchlight
 from mvpa2.clfs.knn import kNN
 
-from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
+from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere, HollowSphere
 from mvpa2.misc.errorfx import corr_error
 from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner
 from mvpa2.generators.permutation import AttributePermutator
@@ -264,11 +264,11 @@ class SearchlightTests(unittest.TestCase):
             result2 = sl(ds)                # must be faster
             assert_array_equal(result1, result2)
 
+    @reseed_rng()
     def test_adhocsearchlight_perm_testing(self):
         # just a smoke test pretty much
         ds = datasets['3dmedium'].copy()
         #ds.samples += np.random.normal(size=ds.samples.shape)*10
-        mvpa2.seed()
         ds.fa['voxel_indices'] = ds.fa.myspace
         from mvpa2.mappers.fx import mean_sample
         from mvpa2.clfs.stats import MCNullDist
@@ -348,6 +348,29 @@ class SearchlightTests(unittest.TestCase):
         res = sl(ds)
         assert_array_equal(res.samples[1:, res.samples[0].astype('bool')].squeeze(),
                            ds.samples[:, 12])
+
+
+    def test_add_center_fa(self):
+        # just a smoke test pretty much
+        ds = datasets['3dsmall'].copy()
+
+        # check that we do not mark anything as center whenever there is none
+        def check_no_center(ds):
+            assert(not np.any(ds.fa.center))
+            return 1.0
+        # or just a single center in our case
+        def check_center(ds):
+            assert(np.sum(ds.fa.center) == 1)
+            return 1.0
+        for n, check in [(HollowSphere(1,0), check_no_center),
+                         (Sphere(0), check_center),
+                         (Sphere(1), check_center)]:
+            Searchlight(check,
+                    IndexQueryEngine(myspace=n),
+                    add_center_fa='center')(ds)
+            # and no changes to original ds data, etc
+            assert_array_equal(datasets['3dsmall'].fa.keys(), ds.fa.keys())
+            assert_array_equal(datasets['3dsmall'].samples, ds.samples)
 
 
     def test_partial_searchlight_with_confusion_matrix(self):

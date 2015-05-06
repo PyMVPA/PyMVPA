@@ -582,7 +582,7 @@ Things to implement for the next release (Release goals)
         mvpa2.featsel.rfe
         mvpa2.featsel.ifs
 
-  * several base classes with framework infrastructure (Harvester,
+  * several base classes with framework infrastructure (
     ClassWithCollections, virtual properties, ...)
 
   * Transfer error calculation

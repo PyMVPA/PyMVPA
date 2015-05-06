@@ -71,6 +71,12 @@ def second_axis_mean(x):
     return np.mean(x, axis=1)
 
 
+def subtract_mean(x):
+    """Subtract mean across first axis
+    """
+    return x - np.mean(x, axis=0)
+
+
 def sum_of_abs(x):
     """Sum of absolute values along the 2nd axis
 

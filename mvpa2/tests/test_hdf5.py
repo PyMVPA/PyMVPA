@@ -17,11 +17,12 @@ skip_if_no_external('h5py')
 import h5py
 
 import os
+import sys
 import tempfile
 
 from mvpa2.base.dataset import AttrDataset, save
 from mvpa2.base.hdf5 import h5save, h5load, obj2hdf, HDF5ConversionError
-from mvpa2.misc.data_generators import load_example_fmri_dataset
+from mvpa2.datasets.sources import load_example_fmri_dataset
 from mvpa2.mappers.fx import mean_sample
 from mvpa2.mappers.boxcar import BoxcarMapper
 
@@ -286,6 +287,17 @@ if hasattr(collections, 'OrderedDict'):
                          collections.OrderedDict(a9=1, a0=2)])
 if hasattr(collections, 'Counter'):
     _python_objs.append([collections.Counter({'red': 4, 'blue': 2})])
+if hasattr(collections, 'namedtuple') and sys.version_info > (2, 7, 4):
+    # only test this on >2.7.4, because of this:
+    # http://bugs.python.org/issue15535
+    _NamedTuple = collections.namedtuple('_NamedTuple', ['red', 'blue'])
+    # And the one with non-matching name
+    _NamedTuple_ = collections.namedtuple('NamedTuple', ['red', 'blue'])
+    _python_objs.extend([_NamedTuple(4, 2),
+                         _NamedTuple_(4, 2),])
+if hasattr(collections, 'OrderedDict'):
+    _python_objs.extend([collections.OrderedDict(a=1, b=2)])
+
 
 @sweepargs(obj=_python_objs)
 def test_save_load_python_objs(obj):
@@ -295,9 +307,14 @@ def test_save_load_python_objs(obj):
     f = tempfile.NamedTemporaryFile()
 
     # save/reload
-    h5save(f.name, obj)
-    obj_ = h5load(f.name)
-
+    try:
+        h5save(f.name, obj)
+    except Exception, e:
+        raise AssertionError("Failed to h5save %s: %s" % (obj, e))
+    try:
+        obj_ = h5load(f.name)
+    except Exception, e:
+        raise AssertionError("Failed to h5load %s: %s" % (obj, e))
     assert_equal(type(obj), type(obj_))
     assert_equal(obj, obj_)
 

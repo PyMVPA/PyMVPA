@@ -795,7 +795,19 @@ def all_equal(x, y):
     try:
         eq = x == y
     except:
-        return False
+        # we can get here, in case of dictionaries with non-simple values
+        # (e.g. arrays)
+        try:
+            if not set(x.keys()) == set(y.keys()):
+                return False
+            keys = list(x.keys())
+            x = [x[k] for k in keys]
+            y = [y[k] for k in keys]
+            # this is just for fooling the next test
+            eq = [0, 1]
+        except:
+            # cannot do more than try
+            return False
 
     # eq could be a numpy array or similar. See if it has a length
     try:

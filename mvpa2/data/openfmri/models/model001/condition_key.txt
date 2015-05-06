@@ -1,0 +1,8 @@
+task001 cond001 house
+task001 cond002 scrambledpix
+task001 cond003 cat
+task001 cond004 shoe
+task001 cond005 bottle
+task001 cond006 scissors
+task001 cond007 chair
+task001 cond008 face
