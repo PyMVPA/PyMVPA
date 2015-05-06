@@ -82,6 +82,7 @@ def test_samplesgroup_mapper():
     assert_array_equal(mappedr.targets, cchunks)
     assert_array_equal(mappedr.chunks, clabels)
 
+
 def test_samplesgroup_mapper_test_order_occurrence():
     data = np.arange(8)[:, None]
     ds = dataset_wizard(samples=data,
@@ -105,6 +106,7 @@ def test_samplesgroup_mapper_test_order_occurrence():
     assert_array_equal(mds.sa.targets, [0, 1] * 2)
     assert_array_equal(mds.sa.chunks, [0]*2 + [1]*2)
     assert_array_equal(mds.samples[:, 0], [2, 1, 6, 5])
+
 
 def test_featuregroup_mapper():
     ds = Dataset(np.arange(24).reshape(3,8))
@@ -217,13 +219,13 @@ def test_fx_native_calls(f):
             m1 = FxMapper(axis, f_, **kwargs)
             dsm1 = ds.get_mapped(m1)
 
-            if dsm2.samples.dtype==object:
+            if dsm2.samples.dtype == object:
                 # assert_array_almost_equal does not always work
                 # for object arrays
-                assert_samples_equal=assert_objectarray_equal
+                assert_samples_equal = assert_objectarray_equal
             else:
                 # deal with potential rounding errors
-                assert_samples_equal=assert_array_almost_equal
+                assert_samples_equal = assert_array_almost_equal
 
             assert_samples_equal(dsm1.samples, dsm2.samples)
 
@@ -232,14 +234,17 @@ def test_fx_native_calls(f):
             assert_array_equal(dsm1.chunks, dsm2.chunks)
             assert_array_equal(dsm1.fa.nonbogus_targets, dsm2.fa.nonbogus_targets)
 
+
 def test_uniquemerge2literal():
     from mvpa2.mappers.fx import _uniquemerge2literal
     assert_equal(_uniquemerge2literal(range(3)), ['0+1+2'])
-    assert_equal(_uniquemerge2literal(np.arange(6).reshape(2,3)), ['[0 1 2]+[3 4 5]'])
-    assert_array_equal(_uniquemerge2literal([[2,3,4]]), [[2, 3, 4]])
-    assert_array_equal(_uniquemerge2literal([[2,3,4],[2,3,4]]), [[2, 3, 4]])
-    assert_equal(_uniquemerge2literal([2,2,2]), [2])
+    assert_equal(_uniquemerge2literal(
+        np.arange(6).reshape(2, 3)), ['[0 1 2]+[3 4 5]'])
+    assert_array_equal(_uniquemerge2literal([[2, 3, 4]]), [[2, 3, 4]])
+    assert_array_equal(_uniquemerge2literal([[2, 3, 4], [2, 3, 4]]), [[2, 3, 4]])
+    assert_equal(_uniquemerge2literal([2, 2, 2]), [2])
     assert_array_equal(_uniquemerge2literal(['L1', 'L1']), ['L1'])
+
 
 def test_bin_prop_ci():
     skip_if_no_external('scipy')
@@ -253,8 +258,8 @@ def test_bin_prop_ci():
     cids = m95(ds)
     assert_equal(cids.shape, (2, 1))
     # accuracy is in the CI
-    maxdist = cids.samples[1,0] - acc
-    mindist = acc - cids.samples[1,0]
+    maxdist = cids.samples[1, 0] - acc
+    mindist = acc - cids.samples[1, 0]
     # but allow for numerical uncertainty proportional to the sample size
     assert_true(maxdist > 0 or maxdist <= 1./n)
     assert_true(mindist > 0 or mindist <= 1./n)
@@ -263,9 +268,9 @@ def test_bin_prop_ci():
     ci95 = m95(ds)
     assert_equal(ci95.shape, (2, 2))
     # CIs should be inverse
-    assert_array_almost_equal(1-ci95.samples[0,::-1], ci95.samples[1])
+    assert_array_almost_equal(1-ci95.samples[0, ::-1], ci95.samples[1])
     ci50 = m50(ds)
-    assert_array_almost_equal(1-ci50.samples[0,::-1], ci50.samples[1])
+    assert_array_almost_equal(1-ci50.samples[0, ::-1], ci50.samples[1])
     # 50% interval is smaller than 95%
     assert_true(np.all(ci95.samples[0] < ci50.samples[0]))
     assert_true(np.all(ci95.samples[1] > ci50.samples[1]))
