@@ -11,7 +11,7 @@
 .. _chap_tutorial_datasets:
 
 *****************************
- Dataset Basics and Concepts
+ Dataset basics and concepts
 *****************************
 
 .. note::
@@ -21,9 +21,9 @@
   [`ipynb <notebooks/tutorial_datasets.ipynb>`_]
 
 A `~mvpa2.datasets.base.Dataset` is the basic data container in PyMVPA. It
-serves as the primary form of input data storage, but also as a container for
-more complex results returned by some algorithm. In this tutorial part we will
-take a look at what a dataset consists of, and how it works.
+serves as the primary form of data storage, but also as a common container for
+results returned by most algorithms. In this tutorial part we will take a look
+at what a dataset consists of, and how it works.
 
 Most datasets in PyMVPA are represented as a two-dimensional array, where the
 first axis is the :term:`sample`\s axis, and the second axis represents the
@@ -51,7 +51,7 @@ array([[ 1,  1, -1],
 In the above example, every row vector in the ``data`` matrix becomes an
 observation, a :term:`sample`, in the dataset, and every column vector
 represents an individual variable, a :term:`feature`. The concepts of samples
-and features are essential for a dataset, hence we take a further, closer look.
+and features are essential for a dataset, hence we take a closer look.
 
 The dataset assumes that the first axis of the data is to be used to define
 individual samples. If the dataset is created using a one-dimensional vector it will
@@ -82,23 +82,24 @@ Attributes
 ==========
 
 What we have seen so far does not really warrant the use of a dataset over a
-plain array or a matrix with samples. However, in the MVPA context we often need
-to know more about each sample than just the value of its features.  In the
-previous tutorial part we have already seen that per-sample :term:`target`
-values are required for supervised-learning algorithms, and that a dataset
-often has to be split based on the origin of specific groups of samples.  For
-this type of auxiliary information a dataset can also contain collections of
-three types of :term:`attribute`\ s: :term:`sample attribute`, :term:`feature attribute`, and
-:term:`dataset attribute`.
+plain array or a matrix with samples. However, in the MVPA context we often
+need to know more about each sample than just the value of its features.  For
+example, in order to train a supervised-learning algorithm to discriminate two
+classes of samples we need per-sample :term:`target` values to label each
+sample with its respective class.  Such information can then be used in order
+to, for example, split a dataset into specific groups of samples.  For this
+type of auxiliary information a dataset can also contain collections of three
+types of :term:`attribute`\ s: a :term:`sample attribute`, a :term:`feature
+attribute`, and a :term:`dataset attribute`.
 
-For Samples
+For samples
 -----------
 
 Each :term:`sample` in a dataset can have an arbitrary number of additional
-attributes. They are stored as vectors of the same length as the number of samples
-in a collection, and are accessible via the ``sa`` attribute. A collection is
-derived from a standard Python `dict`, and hence adding sample attributes
-works identically to adding elements to a dictionary:
+attributes. They are stored as vectors of the same length as the number of
+samples in a collection, and are accessible via the ``sa`` attribute. A
+collection is similar to a standard Python `dict`, and hence adding sample
+attributes works just like adding elements to a dictionary:
 
 >>> ds.sa['some_attr'] = [ 0., 1, 1, 3 ]
 >>> ds.sa.keys()
@@ -123,8 +124,8 @@ accessed directly without repeated and expensive searches:
 array([ 0.,  1.,  3.])
 
 However, for most interactive uses of PyMVPA this type of access to attributes'
-``.value`` is relatively cumbersome (too much typing), therefore collections offer direct
-access by name:
+``.value`` is relatively cumbersome (too much typing), therefore collections
+support direct access by name:
 
 >>> ds.sa.some_attr
 array([ 0.,  1.,  1.,  3.])
@@ -157,10 +158,13 @@ ValueError: Collectable 'invalid' with length [6] does not match the required le
 But other than basic plausibility checks, no further constraints on values of
 samples attributes exist. As long as the length of the attribute vector matches
 the number of samples in the dataset, and the attributes values can be stored
-in a NumPy array, any value is allowed. For example, it is perfectly possible
-and supported to store literal attributes. It should also be noted that each
-attribute may have its own individual data type, hence it is possible to have
-literal and numeric attributes in the same dataset.
+in a NumPy array, any value is allowed. Consequently, it is even possible to
+have n-dimensional arrays, not just vectors, as attributes -- as long as their
+first axis matched the number of samples in a dataset. Moreover, it is
+perfectly possible and supported to store literal (non-numerical) attributes.
+It should also be noted that each attribute may have its own individual data
+type, hence it is possible to have literal and numeric attributes in the same
+dataset.
 
 >>> ds.sa['literal'] = ['one', 'two', 'three', 'four']
 >>> sorted(ds.sa.keys())
@@ -172,7 +176,7 @@ some_attr: float64
 
 
 
-For Features
+For features
 ------------
 
 :term:`Feature attribute`\ s are almost identical to :term:`sample attribute`\
@@ -189,18 +193,17 @@ called ``fa``:
 ['my_fav', 'responsible']
 
 
-For The Dataset
----------------
+For the entire dataset
+----------------------
 
-Finally, there can be also attributes, not per each sample, or each
-feature, but for the dataset as a whole: so called :term:`dataset attribute`\s.
-Both assigning such attributes and accessing them later on work in
-exactly the same way as for the other two types of attributes, except that dataset
-attributes are stored in their own collection which is accessible via the
-``a`` property of the dataset.  However, in contrast to sample and feature
-attribute, no constraints on the type or size are imposed -- anything can be
-stored. Let's store a list with all files in the current directory, just
-because we can:
+Lastly, there can be also attributes, not per-sample, or per-feature, but for
+the dataset as a whole: so called :term:`dataset attribute`\s.  Both assigning
+such attributes and accessing them later on work in exactly the same way as for
+the other two types of attributes, except that dataset attributes are stored in
+their own collection which is accessible via the ``a`` property of the dataset.
+However, in contrast to sample and feature attribute, no constraints on the
+type or size are imposed -- anything can be stored. Let's store a list with the
+names of all files in the current directory, just because we can:
 
 >>> from glob import glob
 >>> ds.a['pointless'] = glob("*")
@@ -328,10 +331,10 @@ or both:
 (2, 1)
 
 To simplify such selections based on the values of attributes, it is possible
-to specify desired selection as a dictionary for either samples of features
-dimensions, where each key corresponds to an attribute name, and value specifies
-a list of desired values.  Specifying multiple keys for either dimension leads
-to the intersection of matching elements:
+to specify the desired selection as a dictionary for either samples of features
+dimensions, where each key corresponds to an attribute name, and each value
+specifies a list of desired attribute values.  Specifying multiple keys for
+either dimension can be used to obtain the intersection of matching elements:
 
 >>> subds = ds[{'some_attr': [1., 0.], 'literal': ['two']}, {'responsible': ['me', 'you']}]
 >>> print subds.sa.some_attr, subds.sa.literal, subds.fa.responsible
@@ -339,18 +342,18 @@ to the intersection of matching elements:
 
 .. exercise::
 
-  Check documentation of `~mvpa2.datasets.base.Dataset.select()` method which
-  could be used to implement such selection as well, but providing also additional
-  argument ``strict``.  In above example try selecting non-existing elements via
-  ``__getitem__`` (i.e. via ``[]``), and then using ``select()`` method with
-  ``strict=False``.  Compare the results and behavior.
+  Check the documentation of the `~mvpa2.datasets.base.Dataset.select()` method
+  that can also be used to implement such a selection, but provides an
+  additional argument ``strict``.  Modify the example above to select
+  non-existing elements via ``[]``, and compare to the result to the output
+  of ``select()`` with ``strict=False``.
 
 
 Load fMRI data
 ==============
 
-Enough theoretical foreplay -- let's look at a concrete example with an fMRI
-dataset. PyMVPA has several helper functions to load data from specialized
+Enough theoretical foreplay -- let's look at a concrete example of loading an
+fMRI dataset. PyMVPA has several helper functions to load data from specialized
 formats, and the one for fMRI data is `~mvpa2.datasets.mri.fmri_dataset()`. The
 example dataset we are going to look at is a single subject from Haxby et al.
 (2001).  For more convenience and less typing, we first specify the path of the
@@ -457,7 +460,7 @@ duplicating all data in memory -- meaning both datasets now share the sample
 data and any change done to ``ds`` will also affect ``stripped``.
 
 
-Intermediate Storage
+Intermediate storage
 ====================
 
 Some data preprocessing can take a long time.  One would rather prevent
