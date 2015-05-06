@@ -252,8 +252,8 @@ More importantly, it supports access to information on experiment design:
 >>> events = dhandle.get_bold_run_model(model, subj, run)
 >>> for ev in events[:2]:
 ...     print ev
-{'task': 1, 'run': 1, 'onset': 157.5, 'intensity': 1, 'duration': 22.5, 'condition': 'house'}
-{'task': 1, 'run': 1, 'onset': 195.0, 'intensity': 1, 'duration': 22.5, 'condition': 'scrambledpix'}
+{'task': 1, 'run': 1, 'onset_idx': 0, 'conset_idx': 0, 'onset': 15.0, 'intensity': 1, 'duration': 22.5, 'condition': 'scissors'}
+{'task': 1, 'run': 1, 'onset_idx': 1, 'conset_idx': 0, 'onset': 52.5, 'intensity': 1, 'duration': 22.5, 'condition': 'face'}
 
 As you can see, the stimulus design information is available in a list of
 standard Python dictionaries for each event. This includes onset and duration
@@ -286,7 +286,7 @@ convenient access to the actual BOLD fMRI data:
 >>> task = 1
 >>> fds = dhandle.get_bold_run_dataset(subj, task, run, mask=mask_fname)
 >>> print fds
-<Dataset: 121x577@int16, <sa: run,subj,task,time_coords,time_indices>, <fa: voxel_indices>, <a: imghdr,imgtype,mapper,voxel_dim,voxel_eldim>>
+<Dataset: 121x577@int16, <sa: run,subj,task,time_coords,time_indices>, <fa: voxel_indices>, <a: imgaffine,imghdr,imgtype,mapper,voxel_dim,voxel_eldim>>
 
 The method ``get_bold_run_dataset()`` works the same way as ``fmri_dataset()``,
 which we have seen before, and also supports the same arguments. However,
@@ -326,7 +326,7 @@ of the dataset: basic statistics, balance in number of samples among targets
 per chunk, etc.:
 
 >>> print fds.summary()
-Dataset: 1452x577@int16, <sa: chunks,run,subj,targets,task,time_coords,time_indices>, <fa: voxel_indices>, <a: imghdr,imgtype,mapper,voxel_dim,voxel_eldim>
+Dataset: 1452x577@int16, <sa: chunks,run,subj,targets,task,time_coords,time_indices>, <fa: voxel_indices>, <a: imgaffine,imghdr,imgtype,mapper,voxel_dim,voxel_eldim>
 stats: mean=1656.47 std=342.034 var=116988 min=352 max=2805
 <BLANKLINE>
 Counts of targets in each chunk:
