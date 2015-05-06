@@ -73,7 +73,7 @@ extensions += [sphinx_version < '1.1.2'
 
 # the following doesn't work with sphinx < 1.0, but will make a separate
 # sphinx-autogen run obsolete in the future
-#autosummary_generate = True
+autosummary_generate = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
