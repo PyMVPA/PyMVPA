@@ -109,5 +109,6 @@ override_dh_compress:
 cache_intersphinx:
 	rm -rf debian/intersphinx
 	-rm doc/cache_intersphinx-stamp
-	make -C doc cache_intersphinx
+	make
+	PYTHONPATH=$(CURDIR) make -C doc cache_intersphinx
 	mv doc/source/intersphinx debian/
