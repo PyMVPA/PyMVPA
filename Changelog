@@ -62,6 +62,11 @@ Releases
     - New command line command to generate a motion plot for an
       OpenFMRI-formated dataset.
     - New convenience functions for boxplots and outlier detection.
+    - Reincarnated (similar functionality was removed for 2.0 release)
+      convenience methods (
+      :meth:`~mvpa2.base.collections.UniformLengthCollection.match` and
+      :meth:`~mvpa2.datasets.base.Dataset.select`)
+      to ease selecting parts of a dataset
 
   * API changes
 
