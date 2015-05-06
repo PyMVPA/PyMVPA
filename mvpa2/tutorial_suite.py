@@ -16,8 +16,7 @@ from mvpa2.suite import *
 
 tutorial_data_path = mvpa2.cfg.get('location', 'tutorial data', default=os.path.curdir)
 
-def get_raw_haxby2001_data(path=os.path.join(tutorial_data_path, 'data'),
-                           roi='vt'):
+def get_raw_haxby2001_data(path=tutorial_data_path, roi='vt'):
     if roi is 0:
         # this means something special in the searchlight tutorial
         maskpath = os.path.join(path, 'sub001', 'masks', 'orig')
@@ -29,9 +28,9 @@ def get_raw_haxby2001_data(path=os.path.join(tutorial_data_path, 'data'),
         tmpmask[:, :tmpmask.shape[1]/2] = False
         tmpmask[nimg_brain.get_data() > 0] = False
         mask = nb.Nifti1Image(tmpmask.astype(int), None, nimg.get_header())
-        return load_datadb_tutorial_data(path=path, roi=mask)
+        return load_tutorial_data(path=path, roi=mask)
     else:
-        return load_datadb_tutorial_data(path=path, roi=roi)
+        return load_tutorial_data(path=path, roi=roi)
 
 
 def get_haxby2001_data(path=None, roi='vt'):
