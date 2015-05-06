@@ -92,6 +92,7 @@ def test_with_tempfile(suffix, prefix): #, mkdir):
 def test_generate_testing_fmri_dataset(tempfile):
     skip_if_no_external('nibabel')
     skip_if_no_external('h5py')
+
     from mvpa2.base.hdf5 import h5load
     from mvpa2.testing.regress import generate_testing_fmri_dataset
 
