@@ -385,7 +385,12 @@ def compute_ts_boxplot_stats(data, outlier_abs_minthresh=None,
     stdd = np.ma.std(data, axis=0)
     outlierd = None
     if outlier_thresh > 0.0:
-        outlier = np.ma.greater((np.absolute(data - meand)), outlier_thresh * stdd)
+        # deal properly with NaNs so that they are not considered outliers
+        outlier = np.logical_and(np.logical_not(np.isnan(data)),
+                                 np.ma.greater(
+                                        (np.absolute(data - meand)),
+                                        outlier_thresh * stdd))
+
         if not outlier_abs_minthresh is None:
             # apply absolute filter in addition
             outlier = np.logical_and(outlier,
