@@ -18,7 +18,9 @@ if not externals.exists('nibabel'):
 
 from mvpa2.base.dataset import vstack
 from mvpa2 import pymvpa_dataroot
-from mvpa2.datasets.mri import fmri_dataset, _load_anyimg, map2nifti
+from mvpa2.datasets import Dataset
+from mvpa2.datasets.mri import fmri_dataset, _load_anyimg, map2nifti, \
+    strip_nibabel
 from mvpa2.datasets.eventrelated import eventrelated_dataset
 from mvpa2.misc.fsl import FslEV3
 from mvpa2.misc.support import Event, value2idx
@@ -423,3 +425,20 @@ def test_assumptions_on_nibabel_behavior(filename):
         else:
             assert_true(slope in (1.0, None))
             assert_true(inter in (0, None))
+
+
+def test_strip_nibabel():
+    # lots of implicit test already, just make sure it doesn't ruin other
+    # datasets
+    ds = Dataset([range(5)])
+    strip_nibabel(ds)
+    assert_true('imgtype' not in ds.a)
+    # can run multiple times: idempotent
+    ds = fmri_dataset(os.path.join(
+        pymvpa_dataroot, 'openfmri', 'sub001', 'BOLD', 'task001_run001',
+        'bold_25mm.nii.gz'))
+    strip_nibabel(ds)  # this is real
+    strip_nibabel(ds)  # this is not a copy&paste error!
+    assert_true('imgtype' in ds.a)
+    assert_true('imgaffine' in ds.a)
+    assert_equal(type(ds.a.imghdr), dict)
