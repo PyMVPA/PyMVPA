@@ -16,11 +16,11 @@ Build-Depends: debhelper (>= 7.0.50~),
                python-sphinx, python-numpydoc,
                graphviz, inkscape, imagemagick, bc,
                python-matplotlib,
-Standards-Version: 3.9.5
+Standards-Version: 3.9.6
 Homepage: http://www.pymvpa.org
 Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/pymvpa.git
 Vcs-Git: git://git.debian.org/git/pkg-exppsy/pymvpa.git -b dist2/debian/proper/sid
-X-Python-Version: >= 2.6
+X-Python-Version: >= 2.7
 
 
 Package: python-mvpa2
@@ -41,7 +41,7 @@ Recommends:
          python-reportlab,
          python-scipy,
          python-sklearn,
-         shogun-python-modular,
+         python-shogun,
          liblapack-dev,
          python-pprocess,
 Suggests:
