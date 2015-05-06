@@ -282,19 +282,15 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
             value = _load_anyimg(add_fa[fattr], ensure=True)[0]
             ds.fa[fattr] = ds.a.mapper.forward1(value)
 
-    # store interesting props in the dataset
+    # store interesting NIfTI props in the dataset in a more portable way
     ds.a['imgaffine'] = img.get_affine()
     ds.a['imgtype'] = img.__class__.__name__
-    try:
-        # make an attempt to store more of the image header in a simple
-        # dict(array), but no moaning if that fails -- some image types
-        # don't support that, e.g. MINC
-        ds.a['imghdr'] = _hdr2dict(imghdr)
-    except:
-        if __debug__:
-            debug('DS_NIFTI',
-                  'Failed to store header info as attribute (src: %s)'
-                  % (imghdr.__class__,))
+    # stick the header instance in as is, and ...
+    ds.a['imghdr'] = imghdr
+    # ... let strip_nibabel() be the central place to take care of any header
+    # conversion into non-NiBabel dtypes
+    strip_nibabel(ds)
+
     # If there is a space assigned , store the extent of that space
     if sprefix is not None:
         ds.a[sprefix + '_dim'] = imgdata.shape[1:]
@@ -415,3 +411,63 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
         return None
     else:
         return imgdata, imghdr, img
+
+
+def strip_nibabel(ds):
+    """Strip NiBabel objects from a dataset (in-place modification).
+
+    Prior PyMVPA version 2.4, datasets created from MRI data used to contain
+    NiBabel objects, such as image header instances. As a consequence,
+    re-loading such datasets from a serialized form (e.g. form HDF5 files) can
+    suffer from NiBabel API changes, and sometimes prevent loading completely.
+
+    This function converts these NiBabel internals into a simpler form that
+    helps to process such datasets with a much wider range of NiBabel
+    versions, and removes the need to have NiBabel installed for simply
+    loading such a dataset.
+
+    Run this function on a dataset to modify it in-place and make it more
+    robust for storage in HDF5 format or other forms of serialization.
+
+    It is safe to run this function on already converted datasets. The
+    resulting datasets require PyMVPA v2.4 or later for exporting into the
+    NIfTI format, but are otherwise compatible with any 2.x version as well.
+
+    Parameters
+    ----------
+    ds : Dataset
+      To be converted dataset
+
+    Returns
+    -------
+    None
+      Modification is done in-place.
+    """
+    # only str class name is stored
+    if 'imgtype' in ds.a and isinstance(ds.a.imgtype, type):
+        ds.a['imgtype'] = ds.a.imgtype.__name__
+    if 'imghdr' not in ds.a:
+        return
+    if hasattr(ds.a.imghdr, 'get_best_affine'):
+        # new dataset store the affine directly
+        # it may already have one, but the header might have a better idea
+        ds.a['imgaffine'] = ds.a.imghdr.get_best_affine()
+    if isinstance(ds.a.imghdr, dict):
+        # nothing to do
+        # this test may be incomplete but it is cheap. All NiBabel header
+        # instances should not pass it
+        return
+    # we still have a header that is something complicated
+    try:
+        # make an attempt to store more of the image header in a simple
+        # dict(array), but no moaning if that fails -- some image types
+        # don't support that, e.g. MINC
+        ds.a['imghdr'] = _hdr2dict(ds.a.imghdr)
+    except:
+        if __debug__:
+            debug('DS_NIFTI',
+                  'Failed to store header info as attribute (src: %s)'
+                  % (ds.a.imghdr.__class__,))
+        # when conversion fails, we need to kill the remains
+        del ds.a['imghdr']
+    return ds
