@@ -250,13 +250,13 @@ array([[ 1,  1, -1],
 
 .. exercise::
 
-  Search the `NumPy documentation <http://docs.scipy.org/doc/>`__ for the difference between "basic slicing"
-  and "advanced indexing". The aspect of memory consumption, especially,
-  applies to dataset slicing as well, and being aware of this fact might
-  help to write more efficient analysis scripts. Which of the three slicing
-  approaches above is the most memory-efficient?  Which of the three slicing
-  approaches above might lead to unexpected side-effects if the output dataset
-  gets modified?
+  Search the `NumPy documentation <http://docs.scipy.org/doc/>`__ for the
+  difference between "basic slicing" and "advanced indexing". The aspect of
+  memory consumption, especially, applies to dataset slicing as well, and being
+  aware of this fact might help to write more efficient analysis scripts. Which
+  of the three slicing approaches above is the most memory-efficient?  Which of
+  the three slicing approaches above might lead to unexpected side-effects if
+  the output dataset gets modified?
 
 
 All three slicing-styles are equally applicable to the selection of feature
@@ -361,7 +361,7 @@ path of the directory with the fMRI data: `tutorial_data_path``.
 
 In the simplest case, we now let `~mvpa2.datasets.mri.fmri_dataset` do its job,
 by just pointing it to the fMRI data file. The data is stored as a NIfTI file
-that has all runs of the experiment concatenated into a single file.
+that has all volumes of one experiment concatenated into a single file.
 
 >>> bold_fname = os.path.join(tutorial_data_path, 'sub001', 'BOLD', 'task001_run001', 'bold.nii.gz')
 >>> ds = fmri_dataset(bold_fname)
@@ -373,23 +373,21 @@ that has all runs of the experiment concatenated into a single file.
 (121, 163840)
 
 We can notice two things. First -- *it worked!* Second, we obtained a
-two-dimensional dataset with 121 samples (these are volumes in the NIfTI
-file), and over 160k features (these are voxels in the volume). The voxels
-are represented as a one-dimensional vector, and it seems that they have
-lost their association with the 3D-voxel-space. However, this is not the
-case, as we will see later.  PyMVPA represents
-data in this simple format to make it compatible with a vast range of generic
-algorithms that expect data to be a simple matrix.
+two-dimensional dataset with 121 samples (these are volumes in the NIfTI file),
+and over 160k features (these are voxels in the volume). The voxels are
+represented as a one-dimensional vector, and it seems that they have lost their
+association with the 3D-voxel-space. However, this is not the case, as we will
+see later.  PyMVPA represents data in this simple format to make it compatible
+with a vast range of generic algorithms that expect data to be a simple matrix.
 
-We loaded all data from that NIfTI file, but usually we would be
-interested in a subset only, i.e. "brain voxels".
-`~mvpa2.datasets.mri.fmri_dataset` is capable of performing data masking. We just need to
-specify a mask image. Such a mask image is generated in pretty much any fMRI
-analysis pipeline -- may it be a full-brain mask computed during
-skull-stripping, or an activation map from a functional localizer. We are going
-to use the original GLM-based localizer mask of ventral temporal cortex
-from Haxby et al. (2001).
-Let's reload the dataset:
+We loaded all data from that NIfTI file, but usually we would be interested in
+a subset only, i.e. "brain voxels".  `~mvpa2.datasets.mri.fmri_dataset` is
+capable of performing data masking. We just need to specify a mask image. Such
+a mask image is generated in pretty much any fMRI analysis pipeline -- may it
+be a full-brain mask computed during skull-stripping, or an activation map from
+a functional localizer. We are going to use the original GLM-based localizer
+mask of ventral temporal cortex from Haxby et al. (2001).  Let's reload the
+dataset:
 
 >>> mask_fname = os.path.join(tutorial_data_path, 'sub001', 'masks', 'orig', 'vt.nii.gz')
 >>> ds = fmri_dataset(bold_fname, mask=mask_fname)
@@ -434,26 +432,26 @@ array([[ 6, 23, 24],
 True
 
 In addition to all this information, the dataset also carries a key additional
-attribute: the *mapper*. A mapper is an important concept in PyMVPA, and
-hence has its own :ref:`tutorial chapter <chap_tutorial_mappers>`.
+attribute: the *mapper*. A mapper is an important concept in PyMVPA, and hence
+has its own :ref:`tutorial chapter <chap_tutorial_mappers>`.
 
 >>> print ds.a.mapper
 <Chain: <Flatten>-<StaticFeatureSelection>>
 
-Having all these attributes being part of a dataset is often a useful thing
-to have, but in some cases (e.g. when it comes to efficiency, and/or very
-large datasets) one might want to have a leaner dataset with just the
-information that is really necessary. One way to achieve this, is to strip
-all unwanted attributes. The Dataset class'
-:meth:`~mvpa2.base.dataset.AttrDataset.copy()` method can help with that.
+Having all these attributes being part of a dataset is often a useful thing to
+have, but in some cases (e.g. when it comes to efficiency, and/or very large
+datasets) one might want to have a leaner dataset with just the information
+that is really necessary. One way to achieve this, is to strip all unwanted
+attributes. The Dataset class' :meth:`~mvpa2.base.dataset.AttrDataset.copy()`
+method can help with that.
 
 >>> stripped = ds.copy(deep=False, sa=['time_coords'], fa=[], a=[])
 >>> print stripped
 <Dataset: 121x577@int16, <sa: time_coords>>
 
 We can see that all attributes besides ``time_coords`` have been filtered out.
-Setting the ``deep`` arguments to ``False`` causes the copy function to reuse the
-data from the source dataset to generate the new stripped one, without
+Setting the ``deep`` arguments to ``False`` causes the copy function to reuse
+the data from the source dataset to generate the new stripped one, without
 duplicating all data in memory -- meaning both datasets now share the sample
 data and any change done to ``ds`` will also affect ``stripped``.
 
@@ -461,17 +459,17 @@ data and any change done to ``ds`` will also affect ``stripped``.
 Intermediate storage
 ====================
 
-Some data preprocessing can take a long time.  One would rather prevent
-having to do it over and over again, and instead just store the preprocessed data
-into a file for subsequent analyses. PyMVPA offers functionality to store a
-large variety of objects, including datasets, into HDF5_ files. A variant
-of this format is also used by recent versions of Matlab to store data.
+Some data preprocessing can take a long time.  One would rather prevent having
+to do it over and over again, and instead just store the preprocessed data into
+a file for subsequent analyses. PyMVPA offers functionality to store a large
+variety of objects, including datasets, into HDF5_ files. A variant of this
+format is also used by recent versions of Matlab to store data.
 
 .. _HDF5: http://en.wikipedia.org/wiki/Hierarchical_Data_Format
 .. _h5py: http://h5py.alfven.org
 
-For HDF5 support, PyMVPA depends on the h5py_ package. If it is available,
-any dataset can be saved to a file by simply calling
+For HDF5 support, PyMVPA depends on the h5py_ package. If it is available, any
+dataset can be saved to a file by simply calling
 :meth:`~mvpa2.base.dataset.AttrDataset.save()` with the desired filename.
 
 >>> import tempfile, shutil
@@ -479,20 +477,20 @@ any dataset can be saved to a file by simply calling
 >>> tempdir = tempfile.mkdtemp()
 >>> ds.save(os.path.join(tempdir, 'mydataset.hdf5'))
 
-HDF5 is a flexible format that also supports, for example, data
-compression. To enable it, you can pass additional arguments to
-:meth:`~mvpa2.base.dataset.AttrDataset.save()` that are supported by
-h5py's `Group.create_dataset()`. Instead of using
-:meth:`~mvpa2.base.dataset.AttrDataset.save()` one can also use the `~mvpa2.base.hdf5.h5save()`
-function in a similar way. Saving the same dataset with maximum
-gzip-compression looks like this:
+HDF5 is a flexible format that also supports, for example, data compression. To
+enable it, you can pass additional arguments to
+:meth:`~mvpa2.base.dataset.AttrDataset.save()` that are supported by h5py's
+`Group.create_dataset()`. Instead of using
+:meth:`~mvpa2.base.dataset.AttrDataset.save()` one can also use the
+`~mvpa2.base.hdf5.h5save()` function in a similar way. Saving the same dataset
+with maximum gzip-compression looks like this:
 
 >>> ds.save(os.path.join(tempdir, 'mydataset.gzipped.hdf5'), compression=9)
 >>> h5save(os.path.join(tempdir, 'mydataset.gzipped.hdf5'), ds, compression=9)
 
-Loading datasets from a file is easy too. `~mvpa2.base.hdf5.h5load()` takes a filename as
-an argument and returns the stored dataset. Compressed data will be handled
-transparently.
+Loading datasets from a file is easy too. `~mvpa2.base.hdf5.h5load()` takes a
+filename as an argument and returns the stored dataset. Compressed data will be
+handled transparently.
 
 >>> loaded = h5load(os.path.join(tempdir, 'mydataset.hdf5'))
 >>> np.all(ds.samples == loaded.samples)
@@ -500,7 +498,7 @@ True
 >>> # cleanup the temporary directory, and everything it includes
 >>> shutil.rmtree(tempdir, ignore_errors=True)
 
-Note that this type of dataset storage is not appropriate from long-term archival
-of data, as it relies on a stable software environment. For long-term storage,
-use other formats.
+Note that this type of dataset storage is not appropriate from long-term
+archival of data, as it relies on a stable software environment. For long-term
+storage, use other formats.
 
