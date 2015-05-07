@@ -41,13 +41,6 @@ generate: generate-stamp
 generate-stamp: cache_intersphinx
 	mkdir -p $(BUILDDIR)
 	mkdir -p source/generated
-	#@MVPA_EXTERNALS_RAISE_EXCEPTION=off \
-	#	PYTHONPATH=$(CURDIR)/sphinxext:$(CURDIR)/..:$(PYTHONPATH) \
-	#	$(PYTHON) $(SPHINXEXT_PATH)/autosummary/generate.py \
-	#	-t $(CURDIR)/templates -o source/generated source/*.rst
-	# wipe everything that is not pymvpa to prevent suffering from the bugs
-	# of other in subsequent stages
-	#-find source/generated -type f ! -name 'mvpa*' -delete
 	set -e; set -o pipefail; for man in $(BUILDDIR)/man/pymvpa*; do \
 		manfile=$$(basename $${man}) ; \
 		cmd=$${manfile#pymvpa2-*} ; \
