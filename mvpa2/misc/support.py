@@ -321,7 +321,7 @@ def version_to_tuple(v):
     of numerics and alpha numbers
     """
     if isinstance(v, basestring):
-        v = v.split('.')
+        v = map(str, v.split('.'))
     elif isinstance(v, tuple) or isinstance(v, list):
         # assure tuple
         pass
@@ -372,6 +372,9 @@ class SmartVersion(Version):
         return self.__class__, (self.vstring,)
 
     def parse(self, vstring):
+        # Unicode gives grief on older releases and anyway arguably comparable
+        if isinstance(vstring, unicode):
+            vstring = str(vstring)
         self.vstring = vstring
         self.version = version_to_tuple(vstring)
 
@@ -385,7 +388,7 @@ class SmartVersion(Version):
             return ""
 
     def __cmp__(self, other):
-        if isinstance(other, (str, tuple, list)):
+        if isinstance(other, (str, unicode, tuple, list)):
             other = SmartVersion(other)
         elif isinstance(other, SmartVersion):
             pass

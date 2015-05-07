@@ -59,8 +59,22 @@ from numpy.testing import (
     assert_array_almost_equal, assert_array_equal, assert_array_less,
     assert_string_equal)
 
+
 def assert_array_lequal(x, y):
     assert_array_less(-y, -x)
+
+
+def assert_dict_keys_equal(x, y):
+    assert_equal(set(x.keys()), set(y.keys()))
+
+
+def assert_datasets_equal(x, y):
+    # wait for https://github.com/PyMVPA/PyMVPA/issues/167
+    assert_equal(type(x), type(y))
+    assert_dict_keys_equal(x.a, y.a)
+    assert_dict_keys_equal(x.sa, y.sa)
+    assert_dict_keys_equal(x.fa, y.fa)
+    assert_array_equal(x.samples, y.samples)
 
 if sys.version_info < (2, 7):
     # compatibility helpers for testing functions introduced in more recent versions
