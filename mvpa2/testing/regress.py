@@ -34,8 +34,15 @@ def get_testing_fmri_dataset_filename():
 
     return os.path.join(pymvpa_dataroot, 'testing', 'fmri_dataset', filename)
 
-def generate_testing_fmri_dataset():
+
+def generate_testing_fmri_dataset(filename=None):
     """Helper to generate a dataset for regression testing of mvpa2/nibabel
+
+    Parameters
+    ----------
+    filename : str
+       Filename of a dataset file to store.  If not provided, it is composed
+       using :func:`get_testing_fmri_dataset_filename`
 
     Returns
     -------
@@ -44,7 +51,7 @@ def generate_testing_fmri_dataset():
     """
     import mvpa2
     from mvpa2.base.hdf5 import h5save
-    from mvpa2.misc.data_generators import load_example_fmri_dataset
+    from mvpa2.datasets.sources import load_example_fmri_dataset
     # Load our sample dataset
     ds_full = load_example_fmri_dataset(name='1slice', literal=False)
     # Subselect a small "ROI"
@@ -54,15 +61,17 @@ def generate_testing_fmri_dataset():
     ds.a['versions'] = mvpa2.externals.versions
     # save to a file identified by version of PyMVPA and nibabel and hash of
     # all other versions
-    filename = get_testing_fmri_dataset_filename()
-    h5save(filename, ds, compression=9)
+    out_filename = filename or get_testing_fmri_dataset_filename()
+    h5save(out_filename, ds, compression=9)
     # ATM it produces >700kB .hdf5 which is this large because of
     # the ds.a.mapper with both Flatten and StaticFeatureSelection occupying
     # more than 190kB each, with ds.a.mapper as a whole generating 570kB file
     # Among those .ca seems to occupy notable size, e.g. 130KB for the FlattenMapper
     # even though no heavy storage is really needed for any available value --
     # primarily all is meta-information embedded into hdf5 to describe our things
-    return ds, filename
+    return ds, out_filename
+
+generate_testing_fmri_dataset.__test__ = False
 
 if __name__ == '__main__':
     generate_testing_fmri_dataset()

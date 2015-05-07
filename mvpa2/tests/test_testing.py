@@ -10,6 +10,8 @@
 
 import numpy as np
 
+from os.path import exists
+
 from mvpa2.base.externals import versions
 from mvpa2.testing.tools import *
 from mvpa2.testing.sweep import *
@@ -85,3 +87,17 @@ def test_with_tempfile(suffix, prefix): #, mkdir):
     assert_equal(len(files), 2)
     assert_false(os.path.exists(files[0]))
     assert_false(os.path.exists(files[1]))
+
+@with_tempfile('.hdf5')
+def test_generate_testing_fmri_dataset(tempfile):
+    skip_if_no_external('nibabel')
+    skip_if_no_external('h5py')
+
+    from mvpa2.base.hdf5 import h5load
+    from mvpa2.testing.regress import generate_testing_fmri_dataset
+
+    ds, filename = generate_testing_fmri_dataset(tempfile)
+    assert_equal(tempfile, filename)
+    assert_true(exists(tempfile))
+    ds_reloaded = h5load(tempfile)
+    assert_datasets_equal(ds, ds_reloaded)
