@@ -93,6 +93,7 @@
 
 .. Not so python imaging projects
 .. _Caret: http://brainvis.wustl.edu/wiki/index.php/Caret:About
+.. _CoSMoMVPA: http://www.github.com/CoSMoMVPA
 .. _matlab: http://www.mathworks.com
 .. _spm: http://www.fil.ion.ucl.ac.uk/spm
 .. _spm8: http://www.fil.ion.ucl.ac.uk/spm/software/spm8
@@ -116,7 +117,7 @@
 .. _PyML: http://pyml.sourceforge.net
 .. _MVPA Toolbox: http://www.csbmb.princeton.edu/mvpa/
 .. _scikit-learn: http://scikit-learn.org
-
+.. _nilearn: http://nilearn.github.io
 
 .. File formats
 .. _DICOM: http://medical.nema.org/
@@ -142,6 +143,7 @@
 .. _Debian: http://www.debian.org
 .. _`Debian project`: http://www.debian.org
 .. _Ubuntu: http://www.ubuntu.com
+.. _Xubuntu: http://www.xubuntu.org
 .. _exppsy: http://alioth.debian.org/projects/pkg-exppsy
 .. _`Debian Med`: http://debian-med.alioth.debian.org
 .. _`Debian Science`: http://wiki.debian.org/DebianScience
@@ -150,6 +152,18 @@
 .. |RTAI| replace:: :abbr:`RTAI (Real Time Application Interface)`
 .. _Lin4Neuro: http://www.nemotos.net/lin4neuro
 .. _fail2ban: http://www.fail2ban.org
+
+.. Debian releases
+.. _Debian 6.0 (squeeze): http://www.debian.org/releases/squeeze
+.. _Debian 7.0 (wheezy): http://www.debian.org/releases/wheezy
+.. _Debian 7.8 (wheezy): http://www.debian.org/releases/wheezy
+.. _Debian 8.0 (jessie): http://www.debian.org/releases/jessie
+
+.. Desktop environments
+.. _GNOME: http://www.gnome.org/
+.. _GNOME3: http://www.gnome.org/gnome-3/
+.. _XFCE: http://www.xfce.org/
+.. _XFCE4: http://www.xfce.org/
 
 .. Functional imaging labs
 .. _`functional imaging laboratory`: http://www.fil.ion.ucl.ac.uk
@@ -199,6 +213,7 @@
 .. |ITP| replace:: :abbr:`ITP (Intent to Package)`
 .. |RFP| replace:: :abbr:`RFP (Request for packaging)`
 .. |DBTS| replace:: :abbr:`DBTS (Debian Bug Tracking System)`
+.. _debian-installer: http://www.debian.org/devel/debian-installer/
 
 .. mailing lists
 .. _neurodebian-users: http://lists.alioth.debian.org/mailman/listinfo/neurodebian-users
