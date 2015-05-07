@@ -69,6 +69,8 @@ Datasets: Input, Output, Storage and Preprocessing
    datasets.cosmo
    datasets.eeglab
    datasets.miscfx
+   datasets.sources.native
+   datasets.sources.openfmri
    datasets.sources.skl_data
 
 
