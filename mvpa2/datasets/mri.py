@@ -34,6 +34,16 @@ from mvpa2.base import warning
 def _hdr2dict(hdr):
     """Helper to convert a NiBabel image header to a dict of arrays"""
     kv = dict(hdr)
+
+    # checking/mitigating the problem on Windows with nibabel 2.0.0
+    # see https://github.com/PyMVPA/PyMVPA/issues/302#issuecomment-99882488
+    scl_slope = str(kv.get('scl_slope', ''))
+    scl_inter = str(kv.get('scl_inter', ''))
+    if scl_slope == scl_inter == 'nan':
+        warning("Detected incorrect (nan) scl_ fields. Resetting to "
+                "scl_slope=1.0 and scl_inter=0.0")
+        kv['scl_slope'] = 1.0
+        kv['scl_inter'] = 0.0
     kv['hdrtype'] = hdr.__class__.__name__
     return kv
 
