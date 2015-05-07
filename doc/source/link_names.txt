@@ -117,7 +117,7 @@
 .. _PyML: http://pyml.sourceforge.net
 .. _MVPA Toolbox: http://www.csbmb.princeton.edu/mvpa/
 .. _scikit-learn: http://scikit-learn.org
-
+.. _nilearn: http://nilearn.github.io
 
 .. File formats
 .. _DICOM: http://medical.nema.org/
