@@ -22,7 +22,7 @@ from mvpa2.misc.support import SmartVersion
 
 def getandkillopt(opt):
     for i, arg in enumerate(sys.argv[1:]):
-        if arg.startswith(opt):
+        if arg.startswith(opt[:-1]):
             if opt.endswith('='):
                 val = '='.join(sys.argv[i + 1].split('=')[1:])
             else:
@@ -53,9 +53,10 @@ Options:
   --clean-workdir       delete tutorial session data on exit
   --overwrite-notebook  overwrite existing notebook files in the tutorial
                         session directory
-  --tutorial-data-path  path to the tutorial data (need to contain the
+  --tutorial-data-path=<path>
+                        path to the tutorial data (need to contain the
                         'data' directory)
-  --tutorial-notebooks-path
+  --tutorial-notebooks-path=<path>
                         path to the tutorial notebooks
 """ % sys.argv[0]
 

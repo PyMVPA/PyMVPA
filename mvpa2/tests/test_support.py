@@ -217,7 +217,7 @@ class SupportFxTests(unittest.TestCase):
         """
         SV = SmartVersion
 
-        for v1, v2 in (
+        for v1_, v2_ in (
             ('0.0.1', '0.0.2'),
             ('0.0.1', '0.1'),
             ('0.0.1', '0.1.0'),
@@ -232,6 +232,9 @@ class SupportFxTests(unittest.TestCase):
             ('0.0.1~p', '0.0.1'),
             ('0.0.1~prior.1.2', '0.0.1'),
             ):
+          for v1, v2 in itertools.product(
+                  (v1_, unicode(v1_)),
+                  (v2_, unicode(v2_))):
             self.assertTrue(SV(v1) < SV(v2),
                             msg="Failed to compare %s to %s" % (v1, v2))
             self.assertTrue(SV(v2) > SV(v1),
