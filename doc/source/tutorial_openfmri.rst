@@ -57,7 +57,7 @@ dataset in this demo which already comes with PyMVPA.
 
 .. _Haxby et al, (2001) data: https://openfmri.org/dataset/ds000105
 
->>> path = opj(mvpa2.pymvpa_dataroot , 'openfmri')
+>>> path = opj(mvpa2.pymvpa_dataroot , 'haxby2001')
 >>> of = OpenFMRIDataset(path)
 
 Through this handler we can access lots of information about this dataset.

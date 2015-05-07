@@ -6,7 +6,7 @@ set -u
 # BOILERPLATE
 
 # where is the data; support standard env variable switch
-dataroot=${MVPA_DATA_ROOT:-"mvpa2/data/openfmri"}
+dataroot=${MVPA_DATA_ROOT:-"mvpa2/data/haxby2001"}
 
 # where to place output; into tmp by default
 outdir=${MVPA_EXAMPLE_WORKDIR:-}

@@ -173,8 +173,9 @@ first column, and the chunk identifier in the second, with one line per
 volume in the NIfTI image.
 
 >>> # directory that contains the data files
->>> attr_fname = os.path.join(tutorial_data_path, 'sub001', 'BOLD', 'task001_run001',
-...                           'attributes.txt')
+>>> data_path = os.path.join(tutorial_data_path, 'haxby2001')
+>>> attr_fname = os.path.join(data_path, 'sub001',
+...                           'BOLD', 'task001_run001', 'attributes.txt')
 >>> attr = SampleAttributes(attr_fname)
 >>> len(attr.targets)
 121
@@ -197,9 +198,9 @@ corresponding to a mask of ventral temporal cortex, and assign the samples
 attributes to the dataset. `~mvpa2.datasets.mri.fmri_dataset()` allows us to
 pass them directly:
 
->>> bold_fname = os.path.join(tutorial_data_path,
+>>> bold_fname = os.path.join(data_path,
 ...                           'sub001', 'BOLD', 'task001_run001', 'bold.nii.gz')
->>> mask_fname = os.path.join(tutorial_data_path,
+>>> mask_fname = os.path.join(tutorial_data_path, 'haxby2001',
 ...                           'sub001', 'masks', 'orig', 'vt.nii.gz')
 >>> fds = fmri_dataset(samples=bold_fname,
 ...                    targets=attr.targets, chunks=attr.chunks,
@@ -241,7 +242,7 @@ where the dataset is stored on disk. This handler offers convenient access
 to basic information, such as the number of subjects, task descriptions,
 and other properties.
 
->>> dhandle = OpenFMRIDataset(tutorial_data_path)
+>>> dhandle = OpenFMRIDataset(data_path)
 >>> dhandle.get_subj_ids()
 [1]
 >>> dhandle.get_task_descriptions()
