@@ -435,7 +435,7 @@ def test_strip_nibabel():
     assert_true('imgtype' not in ds.a)
     # can run multiple times: idempotent
     ds = fmri_dataset(os.path.join(
-        pymvpa_dataroot, 'openfmri', 'sub001', 'BOLD', 'task001_run001',
+        pymvpa_dataroot, 'haxby2001', 'sub001', 'BOLD', 'task001_run001',
         'bold_25mm.nii.gz'))
     strip_nibabel(ds)  # this is real
     strip_nibabel(ds)  # this is not a copy&paste error!

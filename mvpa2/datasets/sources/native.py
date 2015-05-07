@@ -23,7 +23,7 @@ def load_example_fmri_dataset(name='1slice', literal=False):
     from mvpa2.datasets.mri import fmri_dataset
     from mvpa2.misc.io import SampleAttributes
 
-    basedir = os.path.join(pymvpa_dataroot, 'openfmri')
+    basedir = os.path.join(pymvpa_dataroot, 'haxby2001')
     mask = {'1slice': os.path.join(pymvpa_dataroot, 'mask.nii.gz'),
             '25mm': os.path.join(basedir, 'sub001', 'masks', '25mm',
                                  'brain.nii.gz')}[name]
@@ -58,7 +58,7 @@ def load_tutorial_data(path=None, roi='brain', add_fa=None, flavor=None):
     Parameters
     ----------
     path : str, optional
-      Path to the ``data`` directory in the extracted content of the tutorial
+      Path to the directory with the extracted content of the tutorial
       data package. This is only necessary for accessing the full resolution
       data. The ``1slice``, and ``25mm`` flavors are shipped with PyMVPA
       itself, and the path argument is ignored for them. This function also
@@ -85,12 +85,14 @@ def load_tutorial_data(path=None, roi='brain', add_fa=None, flavor=None):
     if path is None:
         if flavor in ('1slice', '25mm'):
             # we know that this part is there
-            path = os.path.join(pymvpa_dataroot, 'openfmri')
+            path = os.path.join(pymvpa_dataroot)
         else:
             # check config for info, pretend it is in the working dir otherwise
             path = mvpa2.cfg.get('location',
                                  'tutorial data',
                                  default=os.path.curdir)
+    # we need the haxby2001 portion of the tutorial data
+    path = os.path.join(path, 'haxby2001')
 
     import nibabel as nb
     from mvpa2.datasets.sources.openfmri import OpenFMRIDataset

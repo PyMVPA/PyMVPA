@@ -296,7 +296,7 @@ have learned from the :ref:`last tutorial part <chap_tutorial_mappers>` the
 following code snippet should be plausible:
 
 >>> # directory that contains the data files
->>> datapath = os.path.join(tutorial_data_path, 'data')
+>>> datapath = os.path.join(tutorial_data_path, 'haxby2001')
 >>> # load the raw data
 >>> ds = load_tutorial_data(roi='vt')
 >>> # pre-process

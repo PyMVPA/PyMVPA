@@ -37,7 +37,7 @@ elsewhere, hence we only provide the code here for the sake of completeness.
 from mvpa2.suite import *
 
 # load PyMVPA example dataset
-datapath = mvpa2.cfg.get('location', 'tutorial data')
+datapath = os.path.join(mvpa2.cfg.get('location', 'tutorial data'), 'haxby2001')
 dataset = load_tutorial_data(roi='gray')
 
 # do chunkswise linear detrending on dataset

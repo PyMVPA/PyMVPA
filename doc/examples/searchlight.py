@@ -44,7 +44,7 @@ arguments. In this case we are loading a thresholded zstat-map of a category
 selectivity contrast for voxels ventral temporal cortex."""
 
 # data path
-datapath = os.path.join(mvpa2.cfg.get('location', 'tutorial data'))
+datapath = os.path.join(mvpa2.cfg.get('location', 'tutorial data'), 'haxby2001')
 dataset = load_tutorial_data(
         roi='brain',
         add_fa={'vt_thr_glm': os.path.join(datapath, 'sub001', 'masks',

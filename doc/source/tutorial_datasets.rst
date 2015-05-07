@@ -363,7 +363,8 @@ In the simplest case, we now let `~mvpa2.datasets.mri.fmri_dataset` do its job,
 by just pointing it to the fMRI data file. The data is stored as a NIfTI file
 that has all volumes of one experiment concatenated into a single file.
 
->>> bold_fname = os.path.join(tutorial_data_path, 'sub001', 'BOLD', 'task001_run001', 'bold.nii.gz')
+>>> bold_fname = os.path.join(tutorial_data_path, 'haxby2001', 'sub001',
+...                           'BOLD', 'task001_run001', 'bold.nii.gz')
 >>> ds = fmri_dataset(bold_fname)
 >>> len(ds)
 121
@@ -389,7 +390,8 @@ a functional localizer. We are going to use the original GLM-based localizer
 mask of ventral temporal cortex from Haxby et al. (2001).  Let's reload the
 dataset:
 
->>> mask_fname = os.path.join(tutorial_data_path, 'sub001', 'masks', 'orig', 'vt.nii.gz')
+>>> mask_fname = os.path.join(tutorial_data_path, 'haxby2001', 'sub001',
+...                           'masks', 'orig', 'vt.nii.gz')
 >>> ds = fmri_dataset(bold_fname, mask=mask_fname)
 >>> len(ds)
 121

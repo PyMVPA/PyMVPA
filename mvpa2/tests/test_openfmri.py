@@ -39,7 +39,7 @@ def test_openfmri_dataset():
     if not externals.exists('nibabel'):
         raise SkipTest
 
-    of = ofm.OpenFMRIDataset(os.path.join(pymvpa_dataroot, 'openfmri'))
+    of = ofm.OpenFMRIDataset(os.path.join(pymvpa_dataroot, 'haxby2001'))
     assert_equal(of.get_model_descriptions(), {1: 'visual object categories'})
     sub_ids = of.get_subj_ids()
     assert_equal(sub_ids, [1, 'phantom'])
