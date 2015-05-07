@@ -6,7 +6,7 @@ PyMVPA is a Python_ package intended to ease statistical learning analyses of
 large datasets. It offers an extensible framework with a high-level interface
 to a broad range of algorithms for classification, regression, feature
 selection, data import and export. It is designed to integrate well with
-related software packages, such as scikit-learn_, and MDP_. While it is not
+related software packages, such as scikit-learn_, shogun_, MDP_, etc. While it is not
 limited to the neuroimaging domain, it is eminently suited for such datasets.
 PyMVPA is free software and requires nothing but free-software to run.
 
@@ -111,6 +111,9 @@ here.
 
 * 3dsvm_: AFNI_ plugin to apply support vector machine classifiers to fMRI data.
 
+* CoSMoMVPA_: Matlab/Octave toolbox designed after PyMVPA and with good
+  interoperability with PyMVPA.
+
 * Elefant_: Efficient Learning, Large-scale Inference, and Optimization
   Toolkit.  Multi-purpose open source library for machine learning.
 
@@ -120,6 +123,9 @@ here.
 
 * `MVPA Toolbox`_: Matlab-based toolbox to facilitate multi-voxel pattern
   analysis of fMRI neuroimaging data.
+
+* nilearn_: `scikit-learn`_ based Python module for fast and easy statistical
+  learning on NeuroImaging data.
 
 * NiPy_: Project with growing functionality to analyze brain imaging data. NiPy_
   is heavily connected to SciPy and lots of functionality developed within
