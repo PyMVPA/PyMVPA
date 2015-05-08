@@ -41,7 +41,7 @@ from regions on the ventral and occipital surface of the brain.
 
 # load dataset -- ventral and occipital ROIs
 from mvpa2.datasets.sources.native import load_tutorial_data
-datapath = pjoin(cfg.get('location', 'tutorial data'))
+datapath = pjoin(cfg.get('location', 'tutorial data'), 'haxby2001')
 ds = load_tutorial_data(roi=(15, 16, 23, 24, 36, 38, 39, 40, 48))
 
 """
