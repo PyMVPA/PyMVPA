@@ -543,6 +543,17 @@ if len(clfswh['linear', 'svm']) > 0:
              descr="LinSVM with nested-CV RFE")
 
     clfswh += \
+         FeatureSelectionClassifier(
+             linearSVMC.clone(),
+             SplitRFE(
+                 linearSVMC.clone(),
+                 OddEvenPartitioner(),
+                 fselector=FractionTailSelector(
+                     0.2, mode='discard', tail='lower'),
+                 fmeasure=OneWayAnova()),
+             descr="LinSVM with nested-CV Anova RFE")
+
+    clfswh += \
         FeatureSelectionClassifier(
             linearSVMC.clone(),
             SensitivityBasedFeatureSelection(

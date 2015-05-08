@@ -378,6 +378,42 @@ class SplitRFE(RFE):
     splits.  After deducing optimal number of features, SplitRFE
     applies regular RFE again on the full training dataset stopping at
     the estimated optimal number of features.
+
+    Examples
+    --------
+
+    Resting on an example giving for the :class:`~mvpa2.featself.rfe.RFE` here
+    is an implementation using SplitRFE helper:
+
+    >>> # Lazy import
+    >>> from mvpa2.suite import *
+    >>> # design an RFE feature selection to be used with a classifier
+    >>> rfe = SplitRFE(
+    ...           LinearCSVMC(),
+    ...           OddEvenPartitioner(),
+    ...           # take sensitivities per each split, L2 norm, mean, abs them
+    ...           fmeasure_postproc=ChainMapper([
+    ...               FxMapper('features', l2_normed),
+    ...               FxMapper('samples', np.mean),
+    ...               FxMapper('samples', np.abs)]),
+    ...           # use the error stored in the confusion matrix of split classifier
+    ...           errorfx=ConfusionBasedError(rfesvm_split, confusion_state='stats'),
+    ...           # select 50% of the best on each step
+    ...           fselector=FractionTailSelector(
+    ...               0.50,
+    ...               mode='select', tail='upper'),
+    ...           # but we do want to update sensitivities on each step
+    ...           update_sensitivity=True)
+    >>> clf = FeatureSelectionClassifier(
+    ...           LinearCSVMC(),
+    ...           # on features selected via RFE
+    ...           rfe,
+    ...           # custom description
+    ...           descr='LinSVM+RFE(splits_avg)' )
+
+
+    But not only classifiers and their sensitivites could be used for RFE. It
+    could be used even with univariate measures (e.g. OnewayAnova).
     """
 
     # exclude those since we are really an adapter here
@@ -396,7 +432,7 @@ class SplitRFE(RFE):
     def __init__(self, lrn, partitioner,
                  fselector,
                  errorfx=mean_mismatch_error,
-                 analyzer_postproc=None,
+                 fmeasure_postproc=None,
                  fmeasure=None,
                  nproc=1,
                  # callback?
@@ -415,7 +451,7 @@ class SplitRFE(RFE):
           features that should be kept.
         errorfx : func, optional
           Functor to use for estimation of cross-validation error
-        analyzer_postproc : func, optional
+        fmeasure_postproc : func, optional
           Function to provide to the sensitivity analyzer as postproc.  If no
           fmeasure is provided and classifier sensitivity is used, then
           maxofabs_sample() would be used for this postproc, unless other
@@ -435,12 +471,12 @@ class SplitRFE(RFE):
                 debug('RFE', 'fmeasure was not provided, will be using the '
                              'sensitivity analyzer for %s' % lrn)
             fmeasure = lrn.get_sensitivity_analyzer(
-                postproc=analyzer_postproc if analyzer_postproc is not None
+                postproc=fmeasure_postproc if fmeasure_postproc is not None
                                            else maxofabs_sample())
             train_pmeasure = False
         else:
-            assert analyzer_postproc is None, "There should be no explicit " \
-                    "analyzer_postproc when fmeasure is specified"
+            assert fmeasure_postproc is None, "There should be no explicit " \
+                    "fmeasure_postproc when fmeasure is specified"
             # if user provided explicit value -- use it! otherwise, we do want
             # to train an arbitrary fmeasure
             train_pmeasure = kwargs.pop('train_pmeasure', True)
@@ -457,7 +493,7 @@ class SplitRFE(RFE):
         self._lrn = lrn                   # should not be modified, thus _
         self.partitioner = partitioner
         self.errorfx = errorfx
-        self.analyzer_postproc = analyzer_postproc
+        self.fmeasure_postproc = fmeasure_postproc
         self.nproc = nproc
 
     def __repr__(self, prefixes=[]):
@@ -465,7 +501,7 @@ class SplitRFE(RFE):
             prefixes=prefixes
             + _repr_attrs(self, ['lrn', 'partitioner'])
             + _repr_attrs(self, ['errorfx'], default=mean_mismatch_error)
-            + _repr_attrs(self, ['analyzer_postproc'], default=None)
+            + _repr_attrs(self, ['fmeasure_postproc'], default=None)
             + _repr_attrs(self, ['nproc'], default=1)
             )
 
