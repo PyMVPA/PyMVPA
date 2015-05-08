@@ -1,4 +1,4 @@
-pymvpa2 (2.3.1+git387-g18196d1-1) experimental; urgency=medium
+pymvpa2 (2.3.1+git388-gb1bdb97-1) experimental; urgency=medium
 
   * New upstream snapshot
     - drop support of Python 2.6
