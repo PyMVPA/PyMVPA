@@ -47,7 +47,11 @@ _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
         'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet',
         'gnb', 'plr', 'rpy2', 'swig', 'skl', 'lda', 'qda',
-        'random-forest', 'extra-trees', 'random', 'oneclass', 'oneclass-binary']
+        'random-forest', 'extra-trees', 'random',
+        # oneclass-binary can provide binary output for the labels
+        # oneclass would always output a single label but with
+        #  estimates/probabilities of interest
+        'oneclass', 'oneclass-binary']
 
 class Warehouse(object):
     """Class to keep known instantiated classifiers
