@@ -58,7 +58,7 @@ Releases
     - IO adaptor for OpenFMRI-formated datasets. Load arbitrary bits from such
       a dataset, or automatically build event-related dataset (optionally with
       NiPy-based HRF-modeling).  `tutorial_data_25mm` was converted to
-	  OpenFMRI layout and extended also with `1slice` flavor.
+      OpenFMRI layout and extended also with `1slice` flavor.
     - New command line command to generate a motion plot for an
       OpenFMRI-formated dataset.
     - New convenience functions for boxplots and outlier detection.
@@ -86,9 +86,8 @@ Releases
       slice index from the last dimension, not the leading one if no
       `slices` argument was provided.
     - Improved Python3k compatibility in :mod:`~mvpa2.base.state`,
-      :mod:`~mvpa2.tests.test_testing.py`, :mod:`~mvpa2.tests`, and
-      :mod:`~mvpa2.clfs.stats` modules, and in libsvmlrc msvc
-      building.
+      :mod:`~mvpa2.tests`, and :mod:`~mvpa2.clfs.stats` modules, and in
+      libsvmlrc msvc building.
     - Partial fix for compatibility with ancient scipy on SPARC using
       :mod:`~mvpa2.datasets.cosmo`.
 
