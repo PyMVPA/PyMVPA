@@ -69,6 +69,7 @@ Create, modify and convert datasets
    generated/cmd_select
    generated/cmd_preproc
    generated/cmd_dump
+   generated/cmd_describe
 
 Perform analyses
 ----------------
@@ -86,6 +87,8 @@ Auxilliary command
    generated/cmd_info
    generated/cmd_exec
    generated/cmd_atlaslabeler
+   generated/cmd_ofmotionqc
+   generated/cmd_ttest
 
 .. _cmdline_example_scripts:
 
