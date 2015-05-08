@@ -18,6 +18,7 @@ from mvpa2.datasets.base import dataset_wizard, Dataset
 
 from mvpa2.testing.tools import *
 
+
 def test_samplesgroup_mapper():
     data = np.arange(24).reshape(8, 3)
     labels = [0, 1] * 4
@@ -82,11 +83,12 @@ def test_samplesgroup_mapper():
     assert_array_equal(mappedr.targets, cchunks)
     assert_array_equal(mappedr.chunks, clabels)
 
+
 def test_samplesgroup_mapper_test_order_occurrence():
     data = np.arange(8)[:, None]
     ds = dataset_wizard(samples=data,
-                        targets=[1, 0]*4,
-                        chunks=[0]*4 + [1]*4)
+                        targets=[1, 0] * 4,
+                        chunks=[0] * 4 + [1] * 4)
 
     m = mean_group_sample(['targets', 'chunks'], order='occurrence')
     assert_true('order=' in repr(m))
@@ -94,7 +96,7 @@ def test_samplesgroup_mapper_test_order_occurrence():
     mds = ds.get_mapped(m)
 
     assert_array_equal(mds.sa.targets, [1, 0] * 2)
-    assert_array_equal(mds.sa.chunks, [0]*2 + [1]*2)
+    assert_array_equal(mds.sa.chunks, [0] * 2 + [1] * 2)
     assert_array_equal(mds.samples[:, 0], [1, 2, 5, 6])
 
     # and if we ordered as 'uattrs' (default)
@@ -103,19 +105,18 @@ def test_samplesgroup_mapper_test_order_occurrence():
     mds = ds.get_mapped(m)
 
     assert_array_equal(mds.sa.targets, [0, 1] * 2)
-    assert_array_equal(mds.sa.chunks, [0]*2 + [1]*2)
+    assert_array_equal(mds.sa.chunks, [0] * 2 + [1] * 2)
     assert_array_equal(mds.samples[:, 0], [2, 1, 6, 5])
 
+
 def test_featuregroup_mapper():
-    ds = Dataset(np.arange(24).reshape(3,8))
+    ds = Dataset(np.arange(24).reshape(3, 8))
     ds.fa['roi'] = [0, 1] * 4
     # just to check
     ds.sa['chunks'] = np.arange(3)
 
     # correct results
     csamples = [[3, 4], [11, 12], [19, 20]]
-    croi = [0, 1]
-    cchunks = np.arange(3)
 
     m = mean_group_feature(['roi'])
     mds = m.forward(ds)
@@ -133,7 +134,7 @@ def test_featuregroup_mapper():
 
     # And when operating on a dataset with >1D samples, then operate
     # only across "features", i.e. 1st dimension
-    ds = Dataset(np.arange(24).reshape(3,2,2,2))
+    ds = Dataset(np.arange(24).reshape(3, 2, 2, 2))
     mapped = ds.get_mapped(m)
     assert_array_equal(m.forward(ds.samples),
                        mapped.samples)
@@ -143,13 +144,13 @@ def test_featuregroup_mapper():
     assert_raises(NotImplementedError,
                   mapped.a.mapper.reverse, mapped.samples)
     # but it should also work with standard 2d sample arrays
-    ds = Dataset(np.arange(24).reshape(3,8))
+    ds = Dataset(np.arange(24).reshape(3, 8))
     mapped = ds.get_mapped(m)
     assert_array_equal(mapped.samples.shape, (3, 1))
 
 
 def test_fxmapper():
-    origdata = np.arange(24).reshape(3,8)
+    origdata = np.arange(24).reshape(3, 8)
     ds = Dataset(origdata.copy())
     ds.samples *= -1
 
@@ -174,6 +175,7 @@ def test_features01():
     ok_((f.samples != 1.0).any())
     ok_(f.samples.max() == 1.0)
 
+
 @sweepargs(f=dir(np))
 def test_fx_native_calls(f):
     import inspect
@@ -191,9 +193,9 @@ def test_fx_native_calls(f):
         return
 
     # so we got a function which has 'axis' arugment
-    for naxis in (0, 1): # check on both axes
-        for do_group in (False, True): # test with
-                                       # groupping and without
+    for naxis in (0, 1):  # check on both axes
+        for do_group in (False, True):  # test with
+                                        # groupping and without
             kwargs = dict(attrfx='merge')
             if do_group:
                 if naxis == 0:
@@ -202,6 +204,7 @@ def test_fx_native_calls(f):
                     kwargs['uattrs'] = ('nonbogus_targets',)
 
             axis = ('samples', 'features')[naxis]
+
             def custom(data):
                 """So we could enforce apply_along_axis
                 """
@@ -210,26 +213,39 @@ def test_fx_native_calls(f):
             try:
                 m2 = FxMapper(axis, custom, **kwargs)
                 dsm2 = ds.get_mapped(m2)
-            except Exception, e:
+            except:
                 # We assume that our previous implementation should work ;-)
                 continue
 
             m1 = FxMapper(axis, f_, **kwargs)
             dsm1 = ds.get_mapped(m1)
 
-            assert_objectarray_equal(dsm1.samples, dsm2.samples)
-            assert_objectarray_equal(dsm1.targets, dsm2.targets)
-            assert_objectarray_equal(dsm1.chunks, dsm2.chunks)
-            assert_objectarray_equal(dsm1.fa.nonbogus_targets, dsm2.fa.nonbogus_targets)
+            if dsm2.samples.dtype == object:
+                # assert_array_almost_equal does not always work
+                # for object arrays
+                assert_samples_equal = assert_objectarray_equal
+            else:
+                # deal with potential rounding errors
+                assert_samples_equal = assert_array_almost_equal
+
+            assert_samples_equal(dsm1.samples, dsm2.samples)
+
+            # test other attributes
+            assert_array_equal(dsm1.targets, dsm2.targets)
+            assert_array_equal(dsm1.chunks, dsm2.chunks)
+            assert_array_equal(dsm1.fa.nonbogus_targets, dsm2.fa.nonbogus_targets)
+
 
 def test_uniquemerge2literal():
     from mvpa2.mappers.fx import _uniquemerge2literal
     assert_equal(_uniquemerge2literal(range(3)), ['0+1+2'])
-    assert_equal(_uniquemerge2literal(np.arange(6).reshape(2,3)), ['[0 1 2]+[3 4 5]'])
-    assert_array_equal(_uniquemerge2literal([[2,3,4]]), [[2, 3, 4]])
-    assert_array_equal(_uniquemerge2literal([[2,3,4],[2,3,4]]), [[2, 3, 4]])
-    assert_equal(_uniquemerge2literal([2,2,2]), [2])
+    assert_equal(_uniquemerge2literal(
+        np.arange(6).reshape(2, 3)), ['[0 1 2]+[3 4 5]'])
+    assert_array_equal(_uniquemerge2literal([[2, 3, 4]]), [[2, 3, 4]])
+    assert_array_equal(_uniquemerge2literal([[2, 3, 4], [2, 3, 4]]), [[2, 3, 4]])
+    assert_equal(_uniquemerge2literal([2, 2, 2]), [2])
     assert_array_equal(_uniquemerge2literal(['L1', 'L1']), ['L1'])
+
 
 def test_bin_prop_ci():
     skip_if_no_external('scipy')
@@ -243,19 +259,19 @@ def test_bin_prop_ci():
     cids = m95(ds)
     assert_equal(cids.shape, (2, 1))
     # accuracy is in the CI
-    maxdist = cids.samples[1,0] - acc
-    mindist = acc - cids.samples[1,0]
+    maxdist = cids.samples[1, 0] - acc
+    mindist = acc - cids.samples[1, 0]
     # but allow for numerical uncertainty proportional to the sample size
-    assert_true(maxdist > 0 or maxdist <= 1./n)
-    assert_true(mindist > 0 or mindist <= 1./n)
+    assert_true(maxdist > 0 or maxdist <= 1. / n)
+    assert_true(mindist > 0 or mindist <= 1. / n)
     # more than one feature
     ds = Dataset(np.transpose([bl, np.logical_not(bl)]))
     ci95 = m95(ds)
     assert_equal(ci95.shape, (2, 2))
     # CIs should be inverse
-    assert_array_almost_equal(1-ci95.samples[0,::-1], ci95.samples[1])
+    assert_array_almost_equal(1 - ci95.samples[0, ::-1], ci95.samples[1])
     ci50 = m50(ds)
-    assert_array_almost_equal(1-ci50.samples[0,::-1], ci50.samples[1])
+    assert_array_almost_equal(1 - ci50.samples[0, ::-1], ci50.samples[1])
     # 50% interval is smaller than 95%
     assert_true(np.all(ci95.samples[0] < ci50.samples[0]))
     assert_true(np.all(ci95.samples[1] > ci50.samples[1]))
@@ -282,13 +298,13 @@ def test_mean_removal():
     functions = (mr, mr_inplace, mr_fx)
     for function in functions:
         assert_true(np.array_equal(function(test_array.copy()),
-                             desired_result), function)
+                                   desired_result), function)
 
     for function in functions:
         assert_true(np.array_equal(function(test_dataset.copy()).samples,
-                             desired_result))
+                                   desired_result))
 
-    random_array = np.random.rand(50, 1000000)
+    random_array = np.random.rand(50, 1000)
     assert_true(np.array_equal(mr_fx(random_array.copy()),
                                mr(random_array.copy())))
     assert_true(np.array_equal(mr_fx(random_array.copy()),

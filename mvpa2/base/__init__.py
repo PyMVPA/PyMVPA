@@ -297,6 +297,8 @@ if __debug__:
 
     debug.register('GNB', "GNB - Gaussian Naive Bayes")
 
+    debug.register('GDA', "GDA - Gaussian Discriminant Analyses")
+
     debug.register('GPR', "GPR")
     debug.register('GPR_WEIGHTS', "Track progress of GPRWeights computation")
     debug.register('KRN', "Kernels module (mvpa2.kernels)")
