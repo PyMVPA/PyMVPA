@@ -69,6 +69,8 @@ Datasets: Input, Output, Storage and Preprocessing
    datasets.cosmo
    datasets.eeglab
    datasets.miscfx
+   datasets.sources.native
+   datasets.sources.openfmri
    datasets.sources.skl_data
 
 
@@ -287,4 +289,6 @@ Basic Plotting Utilities
    support.nibabel.surf_caret
    support.nibabel.surf_gifti
    support.nibabel.surf
-   
+
+
+.. include:: link_names.txt

@@ -16,25 +16,25 @@ Tutorial Introduction to PyMVPA
 
 In this tutorial we are going to take a look at all major parts of PyMVPA,
 introduce the most important concepts, and explore particular functionality in
-real-life analysis examples. This tutorial also serves as basic course
-material for workshops on introductions to MVPA. Please contact us, if you are
+real-life analysis examples. This tutorial also serves as basic course material
+for workshops on introductions to MVPA. Please contact us, if you are
 interested in hosting a PyMVPA workshop at your institution.
 
 Please note that this tutorial is only concerned with aspects directly related
 to PyMVPA.  It does **not** teach basic Python_ programming. If you are new to
-Python, it is recommend that you take a look at the
+Python, we recommend that you take a look at the
 :ref:`chap_tutorial_prerequisites` for information about what you should know
 and how to obtain that knowledge.
 
-Throughout the tutorial there will be little exercises with tasks that are
-meant to deepen the understanding of a particular problem or to train
-important skills. However, even without a dedicated exercise the reader is
-advised to run the tutorial code interactively and explore code snippets
-beyond what is touched by the tutorial. Typically, only the most important
-aspects will be mentioned and each building block in PyMVPA can be used in
-more flexible ways than what is shown. Enjoy the ride.
+Throughout the tutorial there will be little exercises with tasks that aim to
+deepen your understanding of a particular problem or to train important skills.
+However, even without a dedicated exercise you are advised to run the tutorial
+code interactively and explore code snippets beyond what is touched by the
+tutorial. Typically, only the most important aspects will be mentioned and each
+building block in PyMVPA can be used in more flexible ways than what is shown.
+Enjoy the ride.
 
-Through the course of the tutorial we will analyze :ref:`real BOLD fMRI data
+Throughout the tutorial we will analyze :ref:`real BOLD fMRI data
 <datadb_tutorial_data>`. Therefore, to be able to run the code in this
 tutorial, you need to download the :ref:`corresponding data from the PyMVPA
 website <datadb_tutorial_data>`. Once downloaded, extract the tarball.  On a
@@ -48,7 +48,7 @@ downloaded manually it may be necessary to specify the appropriate
 information).
 
 Virtually every Python script starts with some ``import`` statements that load
-functionality provided elsewhere. Likewise a tutorial session need to import
+functionality provided elsewhere. Likewise a tutorial session needs to import
 the PyMVPA packages and some little helpers we are going to use in the
 tutorial::
 
@@ -57,8 +57,8 @@ tutorial::
 If this command succeeds without error, everything is ready to go.
 
 If you want to prevent yourself from re-typing all code snippets into the
-terminal window, you might want to investigate IPython's ``%cpaste``
-command, or use the provided `IPython notebooks`_ for each tutorial part.
+terminal window, you might want to investigate IPython's ``%cpaste`` command,
+or use the `IPython notebooks`_ provided for each tutorial part.
 
 .. _Python: http://www.python.org
 .. _IPython notebook: http://ipython.org/notebook

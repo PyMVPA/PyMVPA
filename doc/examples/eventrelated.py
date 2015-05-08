@@ -21,7 +21,7 @@ the fMRI dataset.
 
 from mvpa2.suite import *
 
-ds = load_datadb_tutorial_data(roi=(36,38,39,40))
+ds = load_tutorial_data(roi=(36,38,39,40))
 
 """
 
@@ -137,7 +137,7 @@ inspecting, as otherwise the assigned weights are meaningless.
 """
 
 clf = LinearCSVMC()
-sclf = SplitClassifier(clf, enable_ca=['confusion'])
+sclf = SplitClassifier(clf, enable_ca=['stats'])
 
 # Compute sensitivity, which internally trains the classifier
 analyzer = sclf.get_sensitivity_analyzer()
@@ -150,7 +150,7 @@ performs excellent.
 
 """
 
-print sclf.ca.confusion
+print sclf.ca.stats
 
 """
 
