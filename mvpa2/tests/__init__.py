@@ -161,7 +161,7 @@ def collect_test_suites(verbosity=1, instantiate=True):
     for t in tests:
         # TODO: exclude tests which fail to import: e.g. on Windows
         # could get WindowsError due to missing msvcr90.dll
-        exec 'import mvpa2.tests.' + t
+        exec('import mvpa2.tests.%s' % t)
     if instantiate:
         # instantiate all tests suites and return dict of them (with ID as key)
         return dict([(t[5:], eval('mvpa2.tests.' + t + '.suite()')) for t in tests ])
