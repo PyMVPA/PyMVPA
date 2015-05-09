@@ -78,7 +78,7 @@ class GNB(Classifier):
     #     since it depends actually on the data -- no clear way,
     #     so set both linear and non-linear
     __tags__ = [ 'gnb', 'linear', 'non-linear',
-                       'binary', 'multiclass' ]
+                       'binary', 'multiclass', 'oneclass' ]
 
     common_variance = Parameter(False, constraints='bool',
              doc="""Use the same variance across all classes.""")
