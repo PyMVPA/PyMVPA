@@ -170,13 +170,15 @@ def collect_test_suites(verbosity=1, instantiate=True):
 
 
 def collect_nose_tests(verbosity=1):
-    """Return list of tests which are pure nose-based
+    """Return tests which are purely nose-based (now it is actually a mix)
     """
+
     tests = [
         # Basic data structures/manipulators
         'test_base',
         'test_collections',
         'test_attrmap',
+        'test_constraints',
 
         # Datasets
         'test_datasetng',
@@ -212,28 +214,35 @@ def collect_nose_tests(verbosity=1):
         'test_staticprojection',
 
         # Learners
+        'test_compound',
         'test_enet',
-        'test_spam',
+        'test_glmmapper',
+        'test_gpr',
         'test_lars',
         'test_glmnet',
         'test_kernel',
         'test_svmkernels',
+        'test_ridge',
         'test_senses',
 
         # Algorithms
         'test_emp_null',
         'test_clfcrossval',
+        'test_group_clusterthr'
 
         # IO
         'test_iohelpers',
         'test_hdf5',
         'test_hdf5_clf',
+        'test_hamster',
+        'test_openfmri',
 
         # Measures
         'test_transerror',
         'test_datameasure',
         'test_dcov',
         'test_corrstability',
+        'test_rsa',
 
         # Misc
         'test_misc',
@@ -248,6 +257,8 @@ def collect_nose_tests(verbosity=1):
         'test_winner',
         'test_viz',
         ]
+    """Return list of tests which are pure nose-based
+    """
 
     if not cfg.getboolean('tests', 'lowmem', default='no'):
         tests += ['test_atlases']
