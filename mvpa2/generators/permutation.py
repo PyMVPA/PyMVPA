@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
+from mvpa2.base import warning
 from mvpa2.base.dochelpers import _repr_attrs
 
 from mvpa2.base.node import Node
@@ -39,7 +40,7 @@ class AttributePermutator(Node):
     dataset.
     """
     def __init__(self, attr, count=1, limit=None, assure=False,
-                 strategy='simple', rng=np.random, **kwargs):
+                 strategy='simple', chunk_attr=None, rng=np.random, **kwargs):
         """
         Parameters
         ----------
@@ -58,14 +59,16 @@ class AttributePermutator(Node):
           or sequence thereof) attribute value, where all key-value combinations
           across all given items define a "selection" of to-be-permuted samples
           or features.
-        strategy : 'simple', 'uattrs'
+        strategy : 'simple', 'uattrs', 'chunks'
           'simple' strategy is the straightfoward permutation of attributes (given
           the limit).  In some sense it assumes independence of those samples.
           'uattrs' strategy looks at unique values of attr (or their unique
           combinations in case of `attr` being a list), and "permutes" those
           unique combinations values thus breaking their assignment to the samples
           but preserving any dependencies between samples within the same unique
-          combination.
+          combination. The 'chunks' strategy swaps attribute values of entire chunks.
+          Naturally, this will only work if there is the same number of samples in
+          all chunks.
         assure : bool
           If set, by-chance non-permutations will be prevented, i.e. it is
           checked that at least two items change their position. Since this
@@ -80,7 +83,7 @@ class AttributePermutator(Node):
         self._assure_permute = assure
         self.strategy = strategy
         self.rng = rng
-
+        self.chunk_attr = chunk_attr
 
     def _get_pcfg(self, ds):
         # determine to be permuted attribute to find the collection
@@ -115,8 +118,12 @@ class AttributePermutator(Node):
         # Method to use for permutations
         try:
             permute_fx = getattr(self, "_permute_%s" % self.strategy)
+            permute_kwargs = {}
         except AttributeError:
             raise ValueError("Unknown permutation strategy %r" % self.strategy)
+
+        if self.chunk_attr is not None:
+            permute_kwargs['chunks'] = ds.sa[self.chunk_attr].value
 
         for i in xrange(10):  # for the case of assure_permute
             # shallow copy of the dataset for output
@@ -142,7 +149,7 @@ class AttributePermutator(Node):
                 # need list to index properly
                 limit_idx = list(limit_idx)
 
-                permute_fx(limit_idx, in_pattrs, out_pattrs)
+                permute_fx(limit_idx, in_pattrs, out_pattrs, **permute_kwargs)
 
             if not assure_permute:
                 break
@@ -151,14 +158,16 @@ class AttributePermutator(Node):
             differ = False
             for in_pattr, out_pattr in zip(in_pattrs, out_pattrs):
                 differ = differ or np.any(in_pattr.value != out_pattr.value)
-                if differ: break                 # leave check loop if differ
-            if differ: break                     # leave 10 loop, otherwise go to the next round
+                if differ:
+                    break                 # leave check loop if differ
+            if differ:
+                break                     # leave 10 loop, otherwise go to the next round
 
         if assure_permute and not differ:
             raise RuntimeError(
                 "Cannot assure permutation of %s with limit %r for "
                 "some reason (dataset %s). Should not happen"
-                % (pattr, self._limit, ds))            
+                % (pattr, self._limit, ds))
 
         return out
 
@@ -202,6 +211,42 @@ class AttributePermutator(Node):
             for pa, out_v in zip(out_pattrs, out_group):
                 pa.value[i] = out_v
 
+    @staticmethod
+    def _permute_chunks_sanity_check(in_pattrs, chunks, uniques):
+        #  Verify that we are not dealing with some degenerate scenario
+
+        for in_pattr in in_pattrs:
+            sample_targets = in_pattr.value[np.where(chunks == uniques[0])]
+
+            for orig in uniques[1:]:
+                chunk_targets = in_pattr.value[np.where(chunks == orig)]
+                # must be of the same length
+                if np.any(chunk_targets != sample_targets):
+                    # Escape as early as possible
+                    return
+
+        warning("Permutation via strategy='chunk' makes no sense --"
+                " all chunks have the same order of targets: %s"
+                % (sample_targets,))
+
+    def _permute_chunks(self, limit_idx, in_pattrs, out_pattrs, chunks=None):
+        # limit_idx is doing nothing
+
+        uniques = np.unique(chunks)
+
+        if __debug__ and len(uniques):
+            # Somewhat a duplication, since could be checked within the loop,
+            # but IMHO makes it cleaner and shouldn't be that big of an impact
+            self._permute_chunks_sanity_check(in_pattrs, chunks, uniques)
+
+        for in_pattr, out_pattr in zip(in_pattrs, out_pattrs):
+            shuffled = uniques.copy()
+            self.rng.shuffle(shuffled)
+
+            for orig, new in zip(uniques, shuffled):
+                out_pattr.value[np.where(chunks == orig)] = \
+                    in_pattr.value[np.where(chunks == new)]
+
 
     def generate(self, ds):
         """Generate the desired number of permuted datasets."""
@@ -228,7 +273,7 @@ class AttributePermutator(Node):
             + _repr_attrs(self, ['count'], default=1)
             + _repr_attrs(self, ['limit'])
             + _repr_attrs(self, ['assure'], default=False)
-            + _repr_attrs(self, ['strategy'], default='permute')
+            + _repr_attrs(self, ['strategy'], default='simple')
             + _repr_attrs(self, ['rng'], default=np.random)
             )
 

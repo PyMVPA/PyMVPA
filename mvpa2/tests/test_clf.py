@@ -335,7 +335,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
     # TODO: sg - remove our limitations, meta, lda, qda and skl -- also
-    @sweepargs(clf=clfswh['!sg', '!plr', '!meta', '!lda', '!qda', '!glmnet'])
+    @sweepargs(clf=clfswh['oneclass', 'oneclass-binary'])
     def test_single_class(self, clf):
         """Test if binary and multiclass can handle single class training/testing
         """

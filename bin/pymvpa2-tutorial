@@ -22,7 +22,7 @@ from mvpa2.misc.support import SmartVersion
 
 def getandkillopt(opt):
     for i, arg in enumerate(sys.argv[1:]):
-        if arg.startswith(opt):
+        if arg.startswith(opt[:-1]):
             if opt.endswith('='):
                 val = '='.join(sys.argv[i + 1].split('=')[1:])
             else:
@@ -53,9 +53,10 @@ Options:
   --clean-workdir       delete tutorial session data on exit
   --overwrite-notebook  overwrite existing notebook files in the tutorial
                         session directory
-  --tutorial-data-path  path to the tutorial data (need to contain the
+  --tutorial-data-path=<path>
+                        path to the tutorial data (need to contain the
                         'data' directory)
-  --tutorial-notebooks-path
+  --tutorial-notebooks-path=<path>
                         path to the tutorial notebooks
 """ % sys.argv[0]
 
@@ -106,24 +107,22 @@ def main():
     if notebook_srcdir is False:
         notebook_srcdir = '/usr/share/doc/python-mvpa2/notebooks'
     # assemble session dir
-    for dir in ('data', 'results'):
-        src = os.path.join(os.path.abspath(tutorial_datadir), dir)
-        dst = os.path.join(os.path.abspath(workdir), dir)
-        if os.path.lexists(dst):
-            print "Use existing tutorial '%s' path at '%s'." \
-                  % (dir, dst)
-            continue
+    dst = os.path.join(os.path.abspath(workdir), 'data')
+    src = os.path.abspath(tutorial_datadir)
+    if os.path.lexists(dst):
+        print "Use existing tutorial data path at '%s'." % (dst,)
+    else:
         if not os.path.exists(src):
-            # only the data dir is absolutely critical
-            if dir == 'data':
-                print "Cannot find tutorial data at '%s'" % src
-                sys.exit(1)
-            else:
-                continue
-        if hasattr(os, 'symlink'):
-            os.symlink(src, dst)
+            print "Cannot find tutorial data at '%s'" % (src,)
+            sys.exit(1)
         else:
-            shutil.copytree(src, dst)
+            if hasattr(os, 'symlink'):
+                os.symlink(src, dst)
+            else:
+                shutil.copytree(src, dst)
+    # point pymvpa to the personalized folder
+    os.environ['MVPA_LOCATION_TUTORIAL_DATA'] = dst
+    # prep IPython call
     ipy_args = sys.argv[1:]
     ipy_args.append('--quiet')
     if not sum([arg.startswith('--pylab') for arg in ipy_args]):

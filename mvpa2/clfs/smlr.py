@@ -71,7 +71,7 @@ class SMLR(Classifier):
     """
 
     __tags__ = [ 'smlr', 'linear', 'has_sensitivity', 'binary',
-                 'multiclass', 'does_feature_selection',
+                 'multiclass', 'oneclass', 'does_feature_selection',
                  'random_tie_breaking']
     # XXX: later 'kernel-based'?
 

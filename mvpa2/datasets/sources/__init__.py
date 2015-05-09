@@ -16,7 +16,7 @@ __docformat__ = 'restructuredtext'
 
 from mvpa2.base import externals
 from .openfmri import *
+from .native import *
 
 if externals.exists('skl'):
     from .skl_data import *
-
