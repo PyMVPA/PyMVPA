@@ -548,7 +548,7 @@ if len(clfswh['linear', 'svm']) > 0:
                      0.2, mode='discard', tail='lower')),
              descr="LinSVM with nested-CV RFE")
 
-    clfswh += \
+    _clfs_splitrfe_svm_anova = \
          FeatureSelectionClassifier(
              linearSVMC.clone(),
              SplitRFE(
@@ -558,6 +558,13 @@ if len(clfswh['linear', 'svm']) > 0:
                      0.2, mode='discard', tail='lower'),
                  fmeasure=OneWayAnova()),
              descr="LinSVM with nested-CV Anova RFE")
+    # There was a problem of deepcopying this classifier on travis (only)
+    # so let's not add it to the warehouse if it fails to clone
+    try:
+        _clfs_splitrfe_svm_anova.clone()
+        clfswh += _clfs_splitrfe_svm_anova
+    except TypeError:
+        pass
 
     clfswh += \
         FeatureSelectionClassifier(
