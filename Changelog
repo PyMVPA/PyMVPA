@@ -31,9 +31,7 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
-* 2.4.0 (???, ? ? ?)
-
-  * Don't wait too long listing the changes...
+* 2.4.0 (Mon, 11 May 2015)
 
   * New functionality
 
@@ -68,13 +66,15 @@ Releases
       :meth:`~mvpa2.datasets.base.Dataset.select`)
       to ease selecting parts of a dataset
 
-  * API changes
-
-  * Enhancements (?? ENH, OPT, and NF commits)
+  * Enhancements
 
     - :class:`~mvpa2.mappers.flatten.ProductFlattenMapper` accepts
       explicit names of factors in the constructor.
     - HollowSphere() can now, optionally, include the center feature.
+    - :func:`~mvpa2.datasets.mri.fmri_dataset` no longer stores original copy
+      of the NIfTI file header -- it converts it to `dict` representation to
+      remain portable. Use :func:`~mvpa2.datasets.mri.strip_nibabel` to convert
+      old datasets to new format if/when necessary.
 
   * Fixes
 
@@ -195,7 +195,7 @@ Releases
 
     - Makefile fetch-data retrieves the data correctly.
     - HDF5 backend fixes to deal with nested/recursive structures and higher
-      tollerance in loading HDF5 from older version
+      tolerance in loading HDF5 from older version.
 
 
 * 2.2.0 (Sun, Sep 16 2012)
