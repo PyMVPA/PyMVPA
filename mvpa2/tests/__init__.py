@@ -228,7 +228,7 @@ def collect_nose_tests(verbosity=1):
         # Algorithms
         'test_emp_null',
         'test_clfcrossval',
-        'test_group_clusterthr'
+        'test_group_clusterthr',
 
         # IO
         'test_iohelpers',
