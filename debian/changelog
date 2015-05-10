@@ -1,12 +1,12 @@
-pymvpa2 (2.3.1+git388-gb1bdb97-1) experimental; urgency=medium
+pymvpa2 (2.4.0-1) unstable; urgency=medium
 
-  * New upstream snapshot
+  * New upstream yet to be released release
     - drop support of Python 2.6
   * debian/control
     - boosted policy to 3.9.6
     - Recommend python-shogun instead of dated shogun-python-modular
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 07 May 2015 21:39:17 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 10 May 2015 22:06:33 +0100
 
 pymvpa2 (2.3.1-2) unstable; urgency=medium
 
