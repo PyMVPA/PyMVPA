@@ -31,9 +31,7 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
-* 2.4.0 (???, ? ? ?)
-
-  * Don't wait too long listing the changes...
+* 2.4.0 (Mon, 11 May 2015)
 
   * New functionality
 
@@ -58,7 +56,7 @@ Releases
     - IO adaptor for OpenFMRI-formated datasets. Load arbitrary bits from such
       a dataset, or automatically build event-related dataset (optionally with
       NiPy-based HRF-modeling).  `tutorial_data_25mm` was converted to
-	  OpenFMRI layout and extended also with `1slice` flavor.
+      OpenFMRI layout and extended also with `1slice` flavor.
     - New command line command to generate a motion plot for an
       OpenFMRI-formated dataset.
     - New convenience functions for boxplots and outlier detection.
@@ -68,13 +66,15 @@ Releases
       :meth:`~mvpa2.datasets.base.Dataset.select`)
       to ease selecting parts of a dataset
 
-  * API changes
-
-  * Enhancements (?? ENH, OPT, and NF commits)
+  * Enhancements
 
     - :class:`~mvpa2.mappers.flatten.ProductFlattenMapper` accepts
       explicit names of factors in the constructor.
     - HollowSphere() can now, optionally, include the center feature.
+    - :func:`~mvpa2.datasets.mri.fmri_dataset` no longer stores original copy
+      of the NIfTI file header -- it converts it to `dict` representation to
+      remain portable. Use :func:`~mvpa2.datasets.mri.strip_nibabel` to convert
+      old datasets to new format if/when necessary.
 
   * Fixes
 
@@ -86,9 +86,8 @@ Releases
       slice index from the last dimension, not the leading one if no
       `slices` argument was provided.
     - Improved Python3k compatibility in :mod:`~mvpa2.base.state`,
-      :mod:`~mvpa2.tests.test_testing.py`, :mod:`~mvpa2.tests`, and
-      :mod:`~mvpa2.clfs.stats` modules, and in libsvmlrc msvc
-      building.
+      :mod:`~mvpa2.tests`, and :mod:`~mvpa2.clfs.stats` modules, and in
+      libsvmlrc msvc building.
     - Partial fix for compatibility with ancient scipy on SPARC using
       :mod:`~mvpa2.datasets.cosmo`.
 
@@ -196,7 +195,7 @@ Releases
 
     - Makefile fetch-data retrieves the data correctly.
     - HDF5 backend fixes to deal with nested/recursive structures and higher
-      tollerance in loading HDF5 from older version
+      tolerance in loading HDF5 from older version.
 
 
 * 2.2.0 (Sun, Sep 16 2012)
