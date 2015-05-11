@@ -90,7 +90,11 @@ def sync_2to3(src, dst, clean=False):
                 pass
 
             # copy file
-            shutil.copyfile(src_fn, dst_fn)
+            if not os.path.islink(src_fn):
+                shutil.copyfile(src_fn, dst_fn)
+            elif not os.path.islink(dst_fn):
+                # replicate ths symlink at the destination if doesn't exist yet
+                os.symlink(os.readlink(src_fn), dst_fn)
 
             # add .py files to 2to3 list
             if dst_fn.endswith('.py'):

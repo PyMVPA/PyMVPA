@@ -369,7 +369,8 @@ class SmartVersion(Version):
 
     def __reduce__(self):
         """Rudimentary __reduce__ because Version is not derived from object"""
-        return self.__class__, (self.vstring,)
+        # parent class Version might not even assign any vstring when empty
+        return self.__class__, (getattr(self, 'vstring', ''),)
 
     def parse(self, vstring):
         # Unicode gives grief on older releases and anyway arguably comparable
