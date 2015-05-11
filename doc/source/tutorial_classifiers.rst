@@ -398,13 +398,13 @@ analysis procedures can be applied here as well.
 .. _cross tabulation: http://en.wikipedia.org/wiki/Cross_tabulation
 .. _signal detection theory: http://en.wikipedia.org/wiki/Detection_theory
 
-PyMVPA provides convenient access to :term:`confusion matrices <confusion
-matrix>`, i.e.  contingency tables of targets vs. actual predictions.  However,
-to prevent wasting CPU-time and memory they are not computed by default, but
-instead have to be enabled explicitly. Optional analysis results like this are
-available in a dedicated collection of :term:`conditional attribute`\ s --
-analogous to ``sa`` and ``fa`` in datasets, it is named ``ca``. Let's see how
-it works:
+PyMVPA provides convenient access to
+:term:`confusion matrices <confusion matrix>`, i.e.  contingency tables of
+targets vs. actual predictions.  However, to prevent wasting CPU-time and
+memory they are not computed by default, but instead have to be enabled
+explicitly. Optional analysis results like this are available in a dedicated
+collection of :term:`conditional attribute`\ s -- analogous to ``sa`` and
+``fa`` in datasets, it is named ``ca``. Let's see how it works:
 
 >>> cvte = CrossValidation(clf, NFoldPartitioner(),
 ...                        errorfx=lambda p, t: np.mean(p == t),
