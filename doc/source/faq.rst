@@ -205,8 +205,8 @@ The `mvpa2.datasets.miscfx` module provides a convenience function
 
 .. index:: Block-averaging
 
-How can I do :term:`block-averaging` of my block-design fMRI dataset?
----------------------------------------------------------------------
+How can I do block-averaging of my block-design fMRI dataset?
+-------------------------------------------------------------
 
 The easiest way is to use a mapper to transform/average the respective
 samples. Suppose you have a dataset:
