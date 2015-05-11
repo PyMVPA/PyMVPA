@@ -261,7 +261,8 @@ class GroupClusterThreshold(Learner):
                  for d in featuresegment_producer(segwidth)])
         else:
             # Parallel execution
-            verbose_level_parallel = 50 if 'GCTHR' in debug.active else 0
+            verbose_level_parallel = 50 \
+                if (__debug__ and 'GCTHR' in debug.active) else 0
             # local import as only parallel execution needs this
             from joblib import Parallel, delayed
             # same code as above, just in parallel with joblib's Parallel
