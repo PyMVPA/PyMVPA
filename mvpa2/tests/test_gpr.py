@@ -12,6 +12,8 @@ from mvpa2.base import externals
 from mvpa2.misc import data_generators
 from mvpa2.misc.attrmap import AttributeMap
 from mvpa2.kernels.np import GeneralizedLinearKernel
+
+skip_if_no_external('scipy') # needed by GPR code
 from mvpa2.clfs.gpr import GPR
 
 from mvpa2.testing import *
@@ -25,7 +27,6 @@ if __debug__:
 class GPRTests(unittest.TestCase):
 
     def test_basic(self):
-        skip_if_no_external('scipy') # needed by GPR code
         dataset = data_generators.linear1d_gaussian_noise()
         k = GeneralizedLinearKernel()
         clf = GPR(k)
