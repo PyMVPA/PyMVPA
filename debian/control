@@ -16,6 +16,7 @@ Build-Depends: debhelper (>= 7.0.50~),
                python-sphinx, python-numpydoc,
                graphviz, inkscape, imagemagick, bc,
                python-matplotlib,
+               python-statsmodels,
 Standards-Version: 3.9.6
 Homepage: http://www.pymvpa.org
 Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/pymvpa.git
@@ -44,6 +45,8 @@ Recommends:
          python-shogun,
          liblapack-dev,
          python-pprocess,
+         python-statsmodels,
+         python-joblib,
 Suggests:
          fslview, fsl,
          python-mvpa2-doc,

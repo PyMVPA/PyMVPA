@@ -4,7 +4,8 @@ pymvpa2 (2.4.0-1) unstable; urgency=medium
     - drop support of Python 2.6
   * debian/control
     - boosted policy to 3.9.6
-    - Recommend python-shogun instead of dated shogun-python-modular
+    - added statsmodels to build-depends and recommends, joblib to recommends
+    - recommend python-shogun instead of dated shogun-python-modular
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 10 May 2015 22:06:33 +0100
 
