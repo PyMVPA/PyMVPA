@@ -41,7 +41,7 @@ on the original, continuous timeseries.
 In its current shape our dataset consists of 1452 samples that represent
 contiguous fMRI volumes. At this stage we can easily perform linear
 detrending. We are going to do it per each experiment run (the dataset has
-to runs encoded in the ``chunk`` sample attribute), since we do not assume a
+to have runs encoded in the ``chunk`` sample attribute), since we do not assume a
 contiguous linear trend throughout the whole recording session.
 
 """
