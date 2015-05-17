@@ -46,6 +46,16 @@ experiments.
   DOI: http://dx.doi.org/10.1016/j.clinph.2013.05.009
 
 
+.. _ALR+14:
+
+**Avants, B. B., Libon, D. J., Rascovsky, K., Boller, A., McMillan, C. T., Massimo, L., Coslett, H. B., Chatterjee, A., Gross, R. G. & Grossman, M.** (2014). Sparse canonical correlation analysis relates network-level atrophy to multivariate cognitive measures in a neurodegenerative population. *NeuroImage*, *84*, 698-711.
+  Keywords: :keyword:`pymvpa-reference`
+
+  DOI: http://dx.doi.org/10.1016/j.neuroimage.2013.09.048
+
+  URL: http://dx.doi.org/10.1016/j.neuroimage.2013.09.048
+
+
 .. _Ban09:
 
 **Bandettini, P. A.** (2009). Seven topics in functional magnetic resonance imaging. *Journal of Integrative Neuroscience*, *8*, 371–403.
@@ -130,6 +140,16 @@ experiments.
   DOI: http://dx.doi.org/10.3389/fnhum.2011.00142
 
 
+.. _CIB15:
+
+**Cole, M. W., Ito, T. & Braver, T. S.** (2015). The Behavioral Relevance of Task Information in Human Prefrontal Cortex. *Cerebral Cortex*.
+  Keywords: :keyword:`pymvpa`
+
+  DOI: http://dx.doi.org/10.1093/cercor/bhv072
+
+  URL: http://dx.doi.org/10.1093/cercor/bhv072
+
+
 .. _CGG+12:
 
 **Connolly, A. C., Guntupalli, J. S., Gors, J., Hanke, M., Halchenko, Y. O., Wu, Y., Abdi, H. & Haxby, J. V.** (2012). The Representation of Biological Classes in the Human Brain. *Journal of Neuroscience*, *32*, 2608-2618.
@@ -183,6 +203,16 @@ experiments.
   URL: http://psychclassics.yorku.ca/Fisher/Methods/
 
 
+.. _FKM+14:
+
+**Fogelson, S. V., Kohler, P. J., Miller, K. J., Granger, R. & Tse, P. U.** (2014). Unconscious neural processing differs with method used to render stimuli invisible. *Frontiers in Psychology*, *5*.
+  Keywords: :keyword:`pymvpa`
+
+  DOI: http://dx.doi.org/10.3389/fpsyg.2014.00601
+
+  URL: http://dx.doi.org/10.3389/fpsyg.2014.00601
+
+
 .. _GF09:
 
 **Garcia, S. & Fourcaud-Trocmé, N.** (2009). OpenElectrophy: An Electrophysiological Data- and Analysis-Sharing Framework. *Front Neuroinformatics*, *3*, 14.
@@ -205,6 +235,24 @@ experiments.
   DOI: http://dx.doi.org/10.1073/pnas.1111224109
 
   URL: http://www.pnas.org/content/109/20/7935.abstract
+
+
+.. _GSD+15:
+
+**Greisel, N., Seitz, S., Drory, N., Bender, R., Saglia, R. & Snigula, J.** (2015). Photometric Redshifts and Model Spectral Energy Distributions of Galaxies From the SDSS-III BOSS DR10 Data. *arXiv preprint arXiv:1505.01157*.
+  Keywords: :keyword:`pymvpa`
+
+  URL: http://arxiv.org/abs/1505.01157
+
+
+.. _GM15:
+
+**Guo, B. & Meng, M.** (2015). The encoding of category-specific versus nonspecific information in human inferior temporal cortex. *NeuroImage*.
+  Keywords: :keyword:`pymvpa`
+
+  DOI: http://dx.doi.org/10.1016/j.neuroimage.2015.04.006
+
+  URL: http://dx.doi.org/10.1016/j.neuroimage.2015.04.006
 
 
 .. _GE03:
@@ -298,6 +346,12 @@ experiments.
   URL: http://www-stat.stanford.edu/%7Etibs/ElemStatLearn/
 
 
+.. _HCG14:
+
+**Haxby, J. V., Connolly, A. C. & Guntupalli, J. S.** (2014). Decoding neural representational spaces using multivariate pattern analysis. *Annual review of neuroscience*, *37*, 435-456.
+  Keywords: :keyword:`pymvpa-reference`
+
+
 .. _HGF+01:
 
 **Haxby, J. V., Gobbini, M. I., Furey, M. L., Ishai, A., Schouten, J. L. & Pietrini, P.** (2001). Distributed and overlapping representations of faces and objects in ventral temporal cortex. *Science*, *293*, 2425–2430.
@@ -321,6 +375,16 @@ experiments.
   concerning the privacy of personal thought.*
 
   DOI: http://dx.doi.org/10.1038/nrn1931
+
+
+.. _HPL+14:
+
+**Heitmeyer, C. L., Pickett, M., Leonard, E. I., Archer, M. M., Ray, I., Aha, D. W. & Trafton, J. G.** (2014). Building high assurance human-centric decision systems. *Autom Softw Eng*, *22*, 159-197.
+  Keywords: :keyword:`pymvpa`
+
+  DOI: http://dx.doi.org/10.1007/s10515-014-0157-z
+
+  URL: http://dx.doi.org/10.1007/s10515-014-0157-z
 
 
 .. _HSC+14:
@@ -351,6 +415,16 @@ experiments.
   DOI: http://dx.doi.org/10.1371/journal.pone.0025304
 
 
+.. _HS14:
+
+**Huffman, D. J. & Stark, C. E.** (2014). Multivariate pattern analysis of the human medial temporal lobe revealed representationally categorical cortex and representationally agnostic hippocampus. *Hippocampus*, *24*, 1394-1403.
+  Keywords: :keyword:`pymvpa`
+
+  DOI: http://dx.doi.org/10.1002/hipo.22321
+
+  URL: http://dx.doi.org/10.1002/hipo.22321
+
+
 .. _Ioa05:
 
 **Ioannidis, J. P. A.** (2005). Why most published research findings are false. *PLoS Med*, *2*, e124.
@@ -376,6 +450,16 @@ experiments.
 
 **Jimura, K. & Poldrack, R.** (2011). Analyses of regional-average activation and multivoxel pattern information tell complementary stories. *Neuropsychologia*.
   DOI: http://dx.doi.org/10.1016/j.neuropsychologia.2011.11.007
+
+
+.. _JCS+14:
+
+**Jimura, K., Cazalis, F., Stover, E. R. S. & Poldrack, R. A.** (2014). The neural basis of task switching changes with skill acquisition. *Front. Hum. Neurosci.*, *8*.
+  Keywords: :keyword:`pymvpa`
+
+  DOI: http://dx.doi.org/10.3389/fnhum.2014.00339
+
+  URL: http://dx.doi.org/10.3389/fnhum.2014.00339
 
 
 .. _JL09:
@@ -412,6 +496,14 @@ experiments.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2011.12.059
 
 
+.. _Kas14:
+
+**Kasabov, N. K.** (2014). NeuCube: A spiking neural network architecture for mapping, learning and understanding of spatio-temporal brain data. *Neural Networks*, *52*, 62-76.
+  DOI: http://dx.doi.org/10.1016/j.neunet.2014.01.006
+
+  URL: http://dx.doi.org/10.1016/j.neunet.2014.01.006
+
+
 .. _KKO+11:
 
 **Kaunitz, L. N., Kamienkowski, J. E., Olivetti, E., Murphy, B., Avesani, P. & Melcher, D. P.** (2011). Intercepting the first pass: rapid categorization is suppressed for unseen stimuli. *Frontiers in Perception Science*, *2*, 198.
@@ -427,6 +519,26 @@ experiments.
 **Kienzle, W., Franz, M. O., Schölkopf, B. & Wichmann, F. A.** (In press). Center-surround patterns emerge as optimal predictors for human saccade targets. *Journal of Vision*.
   *This paper offers an approach to make sense out of feature sensitivities of
   non-linear classifiers.*
+
+
+.. _KLE+14:
+
+**Kim, N. Y., Lee, S. M., Erlendsdottir, M. C. & McCarthy, G.** (2014). Discriminable spatial patterns of activation for faces and bodies in the fusiform gyrus. *Front. Hum. Neurosci.*, *8*.
+  Keywords: :keyword:`pymvpa`
+
+  DOI: http://dx.doi.org/10.3389/fnhum.2014.00632
+
+  URL: http://dx.doi.org/10.3389/fnhum.2014.00632
+
+
+.. _KZ14:
+
+**Klein, M. E. & Zatorre, R. J.** (2014). Representations of Invariant Musical Categories Are Decodable by Pattern Analysis of Locally Distributed BOLD Responses in Superior Temporal and Intraparietal Sulci. *Cerebral Cortex*.
+  Keywords: :keyword:`pymvpa`
+
+  DOI: http://dx.doi.org/10.1093/cercor/bhu003
+
+  URL: http://dx.doi.org/10.1093/cercor/bhu003
 
 
 .. _KFR+13:
@@ -471,6 +583,16 @@ experiments.
   DOI: http://dx.doi.org/10.1177/0956797611417000
 
 
+.. _KWO14:
+
+**Kubilius, J., Wagemans, J. & Beeck, H. P. O. d.** (2014). Encoding of configural regularity in the human visual system. *Journal of Vision*, *14*, 11-11.
+  Keywords: :keyword:`pymvpa`
+
+  DOI: http://dx.doi.org/10.1167/14.9.11
+
+  URL: http://dx.doi.org/10.1167/14.9.11
+
+
 .. _LSC+05:
 
 **LaConte, S., Strother, S., Cherkassky, V., Anderson, J. & Hu, X.** (2005). Support vector machines for temporal classification of block design fMRI data. *NeuroImage*, *26*, 317–329.
@@ -501,6 +623,16 @@ experiments.
   Keywords: :keyword:`handwritten character recognition`, :keyword:`multilayer neural networks`, :keyword:`MNIST`, :keyword:`statistical learning`
 
   DOI: http://dx.doi.org/10.1109/5.726791
+
+
+.. _LMcC14:
+
+**Lee, S. M. & McCarthy, G.** (2014). Functional Heterogeneity and Convergence in the Right Temporoparietal Junction. *Cerebral Cortex*.
+  Keywords: :keyword:`pymvpa`
+
+  DOI: http://dx.doi.org/10.1093/cercor/bhu292
+
+  URL: http://dx.doi.org/10.1093/cercor/bhu292
 
 
 .. _LB10:
@@ -567,6 +699,14 @@ experiments.
   URL: http://www.ncbi.nlm.nih.gov/pubmed/20972883
 
 
+.. _McMLZ+15:
+
+**McNamee, D., Liljeholm, M., Zika, O. & O'Doherty, J. P.** (2015). Characterizing the Associative Content of Brain Structures Involved in Habitual and Goal-Directed Actions in Humans: A Multivariate fMRI Study. *The Journal of Neuroscience*, *35*, 3764-3771.
+  Keywords: :keyword:`pymvpa`
+
+  DOI: http://dx.doi.org/10.1523/JNEUROSCI.4677-14.2015
+
+
 .. _MRO13:
 
 **McNamee, D., Rangel, A. & O'Doherty, J. P.** (2013). Category-dependent and category-independent goal-value codes in human ventromedial prefrontal cortex. *Nature neuroscience*, *16*, 479-485.
@@ -607,6 +747,16 @@ experiments.
 
 **Mitchell, T., Hutchinson, R., Niculescu, R. S., Pereira, F., Wang, X., Just, M. & Newman, S.** (2004). Learning to Decode Cognitive States from Brain Images. *Machine Learning*, *57*, 145–175.
   DOI: http://dx.doi.org/10.1023/B:MACH.0000035475.85309.1b
+
+
+.. _MBT+14:
+
+**Mittner, M., Boekel, W., Tucker, A. M., Turner, B. M., Heathcote, A. & Forstmann, B. U.** (2014). When the Brain Takes a Break: A Model-Based Analysis of Mind Wandering. *Journal of Neuroscience*, *34*, 16286-16295.
+  Keywords: :keyword:`pymvpa`
+
+  DOI: http://dx.doi.org/10.1523/jneurosci.2062-14.2014
+
+  URL: http://dx.doi.org/10.1523/JNEUROSCI.2062-14.2014
 
 
 .. _MBK09:
@@ -658,6 +808,16 @@ experiments.
 
 **Oosterhof, N. N., Wiestler, T., Downing, P. E. & Diedrichsen, J.** (2011). A comparison of volume-based and surface-based multi-voxel pattern analysis. *NeuroImage*, *56*, 593-600.
 
+.. _PLW14:
+
+**Parkinson, C., Liu, S. & Wheatley, T.** (2014). A Common Cortical Metric for Spatial, Temporal, and Social Distance. *Journal of Neuroscience*, *34*, 1979-1987.
+  Keywords: :keyword:`pymvpa`
+
+  DOI: http://dx.doi.org/10.1523/jneurosci.2159-13.2014
+
+  URL: http://dx.doi.org/10.1523/JNEUROSCI.2159-13.2014
+
+
 .. _PVG+11:
 
 **Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., Blondel, M., Prettenhofer, P., Weiss, R., Dubourg, V., Vanderplas, J., Passos, A., Cournapeau, D., Brucher, M., Perrot, M. & Duchesnay, E.** (2011). Scikit-learn: Machine Learning in Python. *Journal of Machine Learning Research*, *12*, 2825-2830.
@@ -700,6 +860,26 @@ experiments.
   DOI: http://dx.doi.org/10.1093/cercor/bhk020
 
 
+.. _PSE14:
+
+**Plitt, M., Savjani, R. R. & Eagleman, D. M.** (2014). Are corporations people too? The neural correlates of moral judgments about companies and individuals. *Social Neuroscience*, *10*, 113-125.
+  Keywords: :keyword:`pymvpa`
+
+  DOI: http://dx.doi.org/10.1080/17470919.2014.978026
+
+  URL: http://dx.doi.org/10.1080/17470919.2014.978026
+
+
+.. _PZB+14:
+
+**Pollmann, S., Zinke, W., Baumgartner, F., Geringswald, F. & Hanke, M.** (2014). The right temporo-parietal junction contributes to visual feature binding. *NeuroImage*, *101*, 289-297.
+  Keywords: :keyword:`pymvpa`
+
+  DOI: http://dx.doi.org/10.1016/j.neuroimage.2014.07.021
+
+  URL: http://dx.doi.org/10.1016/j.neuroimage.2014.07.021
+
+
 .. _RC12:
 
 **Raizada, R. D. & Connolly, A. C.** (2012). What makes different people's representations alike: neural similarity-space solves the problem of across-subject fMRI decoding. *Journal of Cognitive Neuroscience*, *24*, 868-877.
@@ -727,6 +907,26 @@ experiments.
   DOI: http://dx.doi.org/10.1016/j.jneumeth.2008.04.008
 
 
+.. _SAF+15:
+
+**Schlegel, A., Alexander, P., Fogelson, S. V., Li, X., Lu, Z., Kohler, P. J., Riley, E., Tse, P. U. & Meng, M.** (2015). The artist emerges: Visual art learning alters neural structure and function. *NeuroImage*, *105*, 440-451.
+  Keywords: :keyword:`pymvpa`
+
+  DOI: http://dx.doi.org/10.1016/j.neuroimage.2014.11.014
+
+  URL: http://dx.doi.org/10.1016/j.neuroimage.2014.11.014
+
+
+.. _SP14:
+
+**Schlichting, M. L. & Preston, A. R.** (2014). Memory reactivation during rest supports upcoming learning of related content. *Proceedings of the National Academy of Sciences*, *111*, 15845-15850.
+  Keywords: :keyword:`pymvpa`
+
+  DOI: http://dx.doi.org/10.1073/pnas.1404396111
+
+  URL: http://dx.doi.org/10.1073/pnas.1404396111
+
+
 .. _SS01:
 
 **Scholkopf, B. & Smola, A.** (2001). Learning with Kernels: Support Vector Machines, Regularization. MIT Press: Cambridge, MA.
@@ -742,6 +942,24 @@ experiments.
   Keywords: :keyword:`pymvpa-reference`
 
   DOI: http://dx.doi.org/10.1007/s12021-013-9178-1
+
+
+.. _SDV+14:
+
+**Schönwiesner, M., Dechent, P., Voit, D., Petkov, C. I. & Krumbholz, K.** (2014). Parcellation of Human and Monkey Core Auditory Cortex with fMRI Pattern Classification and Objective Detection of Tonotopic Gradient Reversals. *Cerebral Cortex*.
+  Keywords: :keyword:`pymvpa`
+
+  DOI: http://dx.doi.org/10.1093/cercor/bhu124
+
+  URL: http://dx.doi.org/10.1093/cercor/bhu124
+
+
+.. _SHA+14:
+
+**Sha, L., Haxby, J. V., Abdi, H., Guntupalli, J. S., Oosterhof, N. N., Halchenko, Y. O. & Connolly, A. C.** (2014). The Animacy Continuum in the Human Ventral Vision Pathway. *Journal of Cognitive Neuroscience*.
+  Keywords: :keyword:`pymvpa`
+
+  DOI: http://dx.doi.org/10.1162/jocn_a_00733
 
 
 .. _SSS+11:
@@ -856,12 +1074,32 @@ experiments.
 
 **Viswanathan, S., Cieslak, M. & Grafton, S. T.** (2012). On the geometric structure of fMRI searchlight-based information maps. *arXiv preprint arXiv:1210.6317*.
 
+.. _WLM+14:
+
+**Wang, Q., Luo, S., Monterosso, J., Zhang, J., Fang, X., Dong, Q. & Xue, G.** (2014). Distributed Value Representation in the Medial Prefrontal Cortex during Intertemporal Choices. *Journal of Neuroscience*, *34*, 7522-7530.
+  Keywords: :keyword:`pymvpa`
+
+  DOI: http://dx.doi.org/10.1523/jneurosci.0351-14.2014
+
+  URL: http://dx.doi.org/10.1523/JNEUROSCI.0351-14.2014
+
+
 .. _WCW+07:
 
 **Wang, Z., Childress, A. R., Wang, J. & Detre, J. A.** (2007). Support vector machine learning-based fMRI data group analysis. *NeuroImage*, *36*, 1139–51.
   Keywords: :keyword:`support vector machine`, :keyword:`SVM`, :keyword:`group analysis`
 
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2007.03.072
+
+
+.. _WHA14:
+
+**Watson, D. M., Hartley, T. & Andrews, T. J.** (2014). Patterns of response to visual scenes are linked to the low-level properties of the image. *NeuroImage*, *99*, 402-410.
+  Keywords: :keyword:`pymvpa`
+
+  DOI: http://dx.doi.org/10.1016/j.neuroimage.2014.05.045
+
+  URL: http://dx.doi.org/10.1016/j.neuroimage.2014.05.045
 
 
 .. _WTB+10:
