@@ -27,28 +27,38 @@ experiments.
 .. _AHL+13:
 
 **Adluru, N., Hanlon, B. M., Lutz, A., Lainhart, J. E., Alexander, A. L. & Davidson, R. J.** (2013). Penalized Likelihood Phenotyping: Unifying Voxelwise Analyses and Multi-Voxel Pattern Analyses in Neuroimaging. *Neuroinformatics*, 1-21.
+  Keywords: :keyword:`pymvpa-reference`
+
   DOI: http://dx.doi.org/10.1007/s12021-012-9175-9
 
 
 .. _AVM+12:
 
 **Albanese, D., Visintainer, R., Merler, S., Riccadonna, S., Jurman, G. & Furlanello, C.** (2012). mlpy: machine learning Python. *arXiv preprint arXiv:1202.6548*.
+  Keywords: :keyword:`pymvpa-reference`
+
 
 .. _ARV+13:
 
 **Andersson, P., Ramsey, N. F., Viergever, M. A. & Pluim, J. P.** (2013). 7T fMRI reveals feasibility of covert visual attention-based brain–computer interfacing with signals obtained solely from cortical grey matter accessible by subdural surface electrodes. *Clinical neurophysiology*, *124*, 2191-2197.
+  Keywords: :keyword:`pymvpa`
+
   DOI: http://dx.doi.org/10.1016/j.clinph.2013.05.009
 
 
 .. _Ban09:
 
 **Bandettini, P. A.** (2009). Seven topics in functional magnetic resonance imaging. *Journal of Integrative Neuroscience*, *8*, 371–403.
+  Keywords: :keyword:`pymvpa-reference`
+
   URL: http://www.ncbi.nlm.nih.gov/pubmed/19938211
 
 
 .. _BHG+13:
 
 **Baumgartner, F., Hanke, M., Geringswald, F., Zinke, W., Speck, O. & Pollmann, S.** (2013). Evidence for feature binding in the superior parietal lobule. *NeuroImage*, *68*, 173-180.
+  Keywords: :keyword:`pymvpa`
+
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2012.12.002
 
 
@@ -176,6 +186,8 @@ experiments.
 .. _GF09:
 
 **Garcia, S. & Fourcaud-Trocmé, N.** (2009). OpenElectrophy: An Electrophysiological Data- and Analysis-Sharing Framework. *Front Neuroinformatics*, *3*, 14.
+  Keywords: :keyword:`pymvpa-reference`
+
   DOI: http://dx.doi.org/10.3389/neuro.11.014.2009
 
   URL: http://www.ncbi.nlm.nih.gov/pubmed/19521545
@@ -204,6 +216,8 @@ experiments.
 .. _HBI+14:
 
 **Hanke, M., Baumgartner, F. J., Ibe, P., Kaule, F. R., Pollmann, S., Speck, O., Zinke, W. & Stadler, J.** (in press). A high-resolution 7-Tesla fMRI dataset from complex natural stimulation with an audio movie. *Scientific Data*.
+  Keywords: :keyword:`pymvpa`
+
   URL: http://www.studyforrest.org
 
 
@@ -253,6 +267,8 @@ experiments.
 .. _HS11:
 
 **Hanson, S. J. & Schmidt, A.** (2011). High-resolution imaging of the fusiform face area (FFA) using multivariate non-linear classifiers shows diagnosticity for non-face categories. *NeuroImage*, *54*, 1715-1734.
+  Keywords: :keyword:`pymvpa-reference`
+
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2010.08.02
 
 
@@ -265,6 +281,8 @@ experiments.
 .. _HSN+13:
 
 **Hassabis, D., Spreng, R. N., Rusu, A. A., Robbins, C. A., Mar, R. A. & Schacter, D. L.** (2013). Imagine all the people: How the brain creates and uses personality models to predict behavior. *Cerebral Cortex*.
+  Keywords: :keyword:`pymvpa`
+
   DOI: http://dx.doi.org/10.1093/cercor/bht042
 
 
@@ -308,6 +326,8 @@ experiments.
 .. _HSC+14:
 
 **Helfinstein, S. M., Schonberg, T., Congdon, E., Karlsgodt, K. H., Mumford, J. A., Sabb, F. W., Cannon, T. D., London, E. D., Bilder, R. M. & Poldrack, R. A.** (2014). Predicting risky choices from brain activity patterns. *Proceedings of the National Academy of Sciences*, *111*, 2470-2475.
+  Keywords: :keyword:`pymvpa`
+
   DOI: http://dx.doi.org/10.1073/pnas.1321728111
 
   URL: http://www.pnas.org/content/111/7/2470.abstract
@@ -326,6 +346,8 @@ experiments.
 .. _HRB+11:
 
 **Hollmann, M., Rieger, J. W., Baecke, S., Lützkendorf, R., Müller, C., Adolf, D. & Bernarding, J.** (2011). Predicting decisions in human social interactions using real-time fMRI and pattern classification. *PloS one*, *6*, e25304.
+  Keywords: :keyword:`pymvpa-reference`
+
   DOI: http://dx.doi.org/10.1371/journal.pone.0025304
 
 
@@ -410,6 +432,8 @@ experiments.
 .. _KFR+13:
 
 **Kohler, P. J., Fogelson, S. V., Reavis, E. A., Meng, M., Guntupalli, J. S., Hanke, M., Halchenko, Y. O., Connolly, A. C., Haxby, J. V. & Tse, P. U.** (2013). Pattern classification precedes region-average hemodynamic response in early visual cortex. *NeuroImage*, *78*, 249-260.
+  Keywords: :keyword:`pymvpa`
+
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2013.04.019
 
 
@@ -461,6 +485,8 @@ experiments.
 .. _LaC10:
 
 **Laconte, S. M.** (2010). Decoding fMRI brain states in real-time. *NeuroImage*.
+  Keywords: :keyword:`pymvpa-reference`
+
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2010.06.052
 
   URL: http://www.ncbi.nlm.nih.gov/pubmed/20600972
@@ -480,16 +506,22 @@ experiments.
 .. _LB10:
 
 **Legge, D. & Badii, A.** (2010). An Application of Pattern Matching for the Adjustment of Quality of Service Metrics. The International Conference on Emerging Network Intelligence.
+  Keywords: :keyword:`pymvpa-reference`
+
 
 .. _LB13:
 
 **Lescroart, M. D. & Biederman, I.** (2013). Cortical representation of medial axis structure. *Cerebral Cortex*, *23*, 629-637.
+  Keywords: :keyword:`pymvpa`
+
   DOI: http://dx.doi.org/10.1093/cercor/bhs046
 
 
 .. _LMH+13:
 
 **Liang, M., Mouraux, A., Hu, L. & Iannetti, G.** (2013). Primary sensory cortices contain distinguishable spatial patterns of activity for each sense. *Nature communications*, *4*.
+  Keywords: :keyword:`pymvpa`
+
   DOI: http://dx.doi.org/10.1038/ncomms2979
 
 
@@ -502,6 +534,8 @@ experiments.
 .. _MR13:
 
 **Manelis, A. & Reder, L. M.** (2013). He Who Is Well Prepared Has Half Won The Battle: An fMRI Study of Task Preparation. *Cerebral Cortex*.
+  Keywords: :keyword:`pymvpa`
+
   DOI: http://dx.doi.org/10.1093/cercor/bht262
 
   URL: http://cercor.oxfordjournals.org/content/early/2013/10/02/cercor.bht262.abstract
@@ -510,7 +544,7 @@ experiments.
 .. _MHH10:
 
 **Manelis, A., Hanson, C. & Hanson, S. J.** (2010). Implicit memory for object locations depends on reactivation of encoding-related brain regions. *Human Brain Mapping*.
-  Keywords: :keyword:`PyMVPA`, :keyword:`implicit memory`, :keyword:`fMRI`
+  Keywords: :keyword:`pymvpa`, :keyword:`implicit memory`, :keyword:`fMRI`
 
   DOI: http://dx.doi.org/10.1002/hbm.20992
 
@@ -526,6 +560,8 @@ experiments.
 .. _MBL+10:
 
 **Margulies, D. S., Böttger, J., Long, X., Lv, Y., Kelly, C., Schäfer, A., Goldhahn, D., Abbushi, A., Milham, M. P., Lohmann, G. & Villringer, A.** (2010). Resting developments: a review of fMRI post-processing methodologies for spontaneous brain activity. *Magnetic Resonance Materials in Physics, Biology and Medicine*, *23*, 289–307.
+  Keywords: :keyword:`pymvpa-reference`
+
   DOI: http://dx.doi.org/10.1007/s10334-010-0228-5
 
   URL: http://www.ncbi.nlm.nih.gov/pubmed/20972883
@@ -534,6 +570,8 @@ experiments.
 .. _MRO13:
 
 **McNamee, D., Rangel, A. & O'Doherty, J. P.** (2013). Category-dependent and category-independent goal-value codes in human ventromedial prefrontal cortex. *Nature neuroscience*, *16*, 479-485.
+  Keywords: :keyword:`pymvpa`
+
   DOI: http://dx.doi.org/10.1038/nn.3337
 
 
@@ -546,6 +584,8 @@ experiments.
 .. _MK11:
 
 **Meyer, K. & Kaplan, J. T.** (2011). Cross-Modal Multivariate Pattern Analysis. *Journal of visualized experiments: JoVE*.
+  Keywords: :keyword:`pymvpa-reference`
+
   DOI: http://dx.doi.org/10.3791/3307
 
 
@@ -572,6 +612,8 @@ experiments.
 .. _MBK09:
 
 **Mur, M., Bandettini, P. A. & Kriegeskorte, N.** (2009). Revealing representational content with pattern-information fMRI–an introductory guide. *Social Cognitive and Affective Neuroscience*.
+  Keywords: :keyword:`pymvpa-reference`
+
   DOI: http://dx.doi.org/10.1093/scan/nsn044
 
 
@@ -619,18 +661,24 @@ experiments.
 .. _PVG+11:
 
 **Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., Blondel, M., Prettenhofer, P., Weiss, R., Dubourg, V., Vanderplas, J., Passos, A., Cournapeau, D., Brucher, M., Perrot, M. & Duchesnay, E.** (2011). Scikit-learn: Machine Learning in Python. *Journal of Machine Learning Research*, *12*, 2825-2830.
+  Keywords: :keyword:`pymvpa-reference`
+
   URL: http://dl.acm.org/citation.cfm?id=1953048.2078195
 
 
 .. _PB11:
 
 **Pereira, F. & Botvinick, M.** (2011). Information mapping with pattern classifiers: a comparative study. *Neuroimage*, *56*, 476-496.
+  Keywords: :keyword:`pymvpa-reference`
+
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2010.05.026
 
 
 .. _PMB09:
 
 **Pereira, F., Mitchell, T. & Botvinick, M.** (2009). Machine learning classifiers and fMRI: A tutorial overview. *NeuroImage*, *45*, 199–209.
+  Keywords: :keyword:`pymvpa-reference`
+
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2008.11.007
 
   URL: http://www.ncbi.nlm.nih.gov/pmc/articles/PMC2892746/
@@ -639,6 +687,8 @@ experiments.
 .. _PSR11:
 
 **Pernet, C. R., Sajda, P. & Rousselet, G. A.** (2011). Single-trial analyses: why bother?. *Front Psychol*, *2*, 322.
+  Keywords: :keyword:`pymvpa-reference`
+
   DOI: http://dx.doi.org/10.3389/fpsyg.2011.00322
 
 
@@ -659,6 +709,8 @@ experiments.
 .. _REA+14:
 
 **Rueschemeyer, S., Ekman, M., van Ackeren, M. & Kilner, J.** (2014). Observing, Performing, and Understanding Actions: Revisiting the Role of Cortical Motor Areas in Processing of Action Words. *Journal of Cognitive Neuroscience*.
+  Keywords: :keyword:`pymvpa`
+
   DOI: http://dx.doi.org/10.1162/jocn_a_00576
 
 
@@ -687,12 +739,16 @@ experiments.
 .. _SRR+13:
 
 **Schrouff, J., Rosa, M. J., Rondina, J., Marquand, A., Chu, C., Ashburner, J., Phillips, C., Richiardi, J. & Mourão-Miranda, J.** (2013). PRoNTo: Pattern Recognition for Neuroimaging Toolbox. *Neuroinformatics*, 1-19.
+  Keywords: :keyword:`pymvpa-reference`
+
   DOI: http://dx.doi.org/10.1007/s12021-013-9178-1
 
 
 .. _SSS+11:
 
 **Shackman, A. J., Salomons, T. V., Slagter, H. A., Fox, A. S., Winter, J. J. & Davidson, R. J.** (2011). The integration of negative affect, pain and cognitive control in the cingulate cortex. *Nature Reviews Neuroscience*, *12*, 154–167.
+  Keywords: :keyword:`pymvpa-reference`
+
   DOI: http://dx.doi.org/10.1038/nrn2994
 
   URL: http://www.ncbi.nlm.nih.gov/pubmed/21331082
@@ -701,12 +757,16 @@ experiments.
 .. _Shi10:
 
 **Shiffrin, R.** (2010). Perspectives on Modeling in Cognitive Science. *Topics in Cognitive Science*, *2*, 736–750.
+  Keywords: :keyword:`pymvpa-reference`
+
   DOI: http://dx.doi.org/10.1111/j.1756-8765.2010.01092.x
 
 
 .. _SCR+13:
 
 **Smith, D. V., Clithero, J. A., Rorden, C. & Karnath, H.** (2013). Decoding the anatomical network of spatial attention. *Proceedings of the National Academy of Sciences*, *110*, 1518-1523.
+  Keywords: :keyword:`pymvpa`
+
   DOI: http://dx.doi.org/10.1073/pnas.1210126110
 
 
@@ -719,18 +779,24 @@ experiments.
 .. _SS09:
 
 **Spacek, M. & Swindale, N.** (2009). Python in Neuroscience. *The Neuromorphic Engineer*.
+  Keywords: :keyword:`pymvpa-reference`
+
   DOI: http://dx.doi.org/10.2417/1200907.1682
 
 
 .. _ST12:
 
 **Stelzer, J., Chen, Y. & Turner, R.** (2012). Statistical inference and multiple testing correction in classification-based multi-voxel pattern analysis (MVPA): Random permutations and cluster size control. *NeuroImage*, *65*, 69-82.
+  Keywords: :keyword:`pymvpa-reference`
+
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2012.09.063
 
 
 .. _SPB+13:
 
 **Strnad, L., Peelen, M. V., Bedny, M. & Caramazza, A.** (2013). Multivoxel Pattern Analysis Reveals Auditory Motion Information in MT+ of Both Congenitally Blind and Sighted Individuals. *PloS one*, *8*, e63198.
+  Keywords: :keyword:`pymvpa`
+
   DOI: http://dx.doi.org/10.1371/journal.pone.0063198
 
 
@@ -739,7 +805,7 @@ experiments.
 **Sun, D., van Erp, T. G., Thompson, P. M., Bearden, C. E., Daley, M., Kushan, L., Hardt, M. E., Nuechterlein, K. H., Toga, A. W. & Cannon, T. D.** (2009). Elucidating an MRI-Based Neuroanatomic Biomarker for Psychosis: Classification Analysis Using Probabilistic Brain Atlas and Machine Learning Algorithms. *Biological Psychiatry*, *66*, 1055–1060.
   *First published study employing PyMVPA for MRI-based analysis of Psychosis.*
 
-  Keywords: :keyword:`PyMVPA`, :keyword:`psychosis`, :keyword:`MRI`
+  Keywords: :keyword:`pymvpa`, :keyword:`psychosis`, :keyword:`MRI`
 
   DOI: http://dx.doi.org/10.1016/j.biopsych.2009.07.019
 
