@@ -212,6 +212,6 @@ class ProcrusteanMapper(ProjectionMapper):
 
     def _compute_recon(self):
         """For Procrustean mapper, inverse is transpose.
-        So, let's save on computation time and not introduce new erros(?)
+        So, let's skip computing inverse in the super class.
         """
         return np.transpose(self._proj)
