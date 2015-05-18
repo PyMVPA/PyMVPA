@@ -195,9 +195,13 @@ class AttrDataset(object):
         Parameters
         ----------
         samples : ndarray
-          Data samples.  This has to be a two-dimensional (samples x features)
-          array. If the samples are not in that format, please consider one of
-          the `AttrDataset.from_*` classmethods.
+          Data samples.  This has to be at least two-dimensional
+          (samples x features) array, or need to be convertible to such an
+          array of such shape. If the samples are not in that format, please
+          consider one of the `AttrDataset.from_*` classmethods.
+          There is one special case: if a list or tuple of Datasets are
+          provided a Datasets of Datasets will be the result that carries
+          all Datasets in samples array of type ``object``.
         sa : SampleAttributesCollection
           Samples attributes collection.
         fa : FeatureAttributesCollection
@@ -207,8 +211,17 @@ class AttrDataset(object):
 
         """
         # conversions
-        if isinstance(samples, list):
-            samples = np.array(samples)
+        if isinstance(samples, list) or isinstance(samples, tuple):
+            if np.all([is_datasetlike(e) for e in samples]):
+                # special case dataset of datasets
+                temp = np.empty((len(samples),), dtype=np.object)
+                for i, s in enumerate(samples):
+                    temp[i] = s
+                samples = temp
+                del temp
+            else:
+                # let numpy do the magic in all other cases
+                samples = np.array(samples)
         # Check all conditions we need to have for `samples` dtypes
         if not hasattr(samples, 'dtype'):
             raise ValueError(

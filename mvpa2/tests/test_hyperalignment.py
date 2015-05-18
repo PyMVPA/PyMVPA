@@ -11,6 +11,7 @@
 import unittest
 import numpy as np
 
+from mvpa2.testing.tools import *
 from mvpa2.base import cfg
 from mvpa2.datasets.base import Dataset
 
@@ -297,6 +298,39 @@ class HyperAlignmentTests(unittest.TestCase):
         mkdg_all.sa['chunks'] = np.repeat(range(10), 56)
         bsc_orig = cvterr(mkdg_all)
         print 1 - np.mean(bsc_orig)
+
+
+# once with datasets of different shape
+# once with datasets of with same number of samples
+# once with datasets of with same number of features
+# once with datasets of same shape
+@sweepargs(pair=((Dataset(np.arange(24).reshape(6, 4)),
+                  Dataset(np.arange(24).reshape(8, 3))),
+                 (Dataset(np.arange(24).reshape(6, 4)),
+                  Dataset(np.arange(18).reshape(6, 3))),
+                 (Dataset(np.arange(24).reshape(4, 6)),
+                  Dataset(np.arange(18).reshape(3, 6))),
+                 (Dataset(np.arange(12).reshape(3, 4)),
+                  Dataset(np.arange(12).reshape(3, 4)))))
+def test_ds_of_ds(pair):
+    ds1, ds2 = pair
+    # stuff into a single dataset, where each sample is a whole dataset
+    ds = Dataset([ds1, ds2])
+    assert_equal(ds.shape, (2, 1))
+    assert_equal(ds.samples.dtype, np.object)
+    # nothing stupid happened, the sample arrays are still views of the common
+    # ancestor
+    assert_equal(id(ds1.samples.base), id(ds.samples[0, 0].samples.base))
+    assert_equal(id(ds2.samples.base), id(ds.samples[1, 0].samples.base))
+
+
+def test_mapper():
+    ds_orig = datasets['uni4large']
+    nds = 2
+    dss = [random_affine_transformation(ds_orig, scale_fac=100, shift_fac=10)
+           for i in range(nds)]
+    ds = Dataset(dss)
+    assert_equal(len(ds), nds)
 
 
 def suite():  # pragma: no cover
