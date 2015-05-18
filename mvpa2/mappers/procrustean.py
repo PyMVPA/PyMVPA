@@ -208,3 +208,10 @@ class ProcrusteanMapper(ProjectionMapper):
             d_r = np.linalg.norm(odatas[0] - res_r)/np.linalg.norm(odatas[0])
             debug('MAP_', "%s, residuals are forward: %g,"
                   " reverse: %g" % (repr(self), d_f, d_r))
+
+
+    def _compute_recon(self):
+        """For Procrustean mapper, inverse is transpose.
+        So, let's save on computation time and not introduce new erros(?)
+        """
+        return np.transpose(self._proj)
