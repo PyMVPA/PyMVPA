@@ -127,7 +127,7 @@ def test_openfmri_dataset():
     motion = of.get_task_bold_attributes(1, 'bold_moest.txt', np.loadtxt)
     assert_equal(len(motion), 12)  # one per run
     # one per subject, per volume, 6 estimates
-    assert_equal([m.shape for m in motion], [(1, 121, 6)] * 12)
+    assert_equal([(len(m),) + m[1].shape for m in motion], [(1, 121, 6)] * 12)
 
 
 def test_tutorialdata_loader_masking():
