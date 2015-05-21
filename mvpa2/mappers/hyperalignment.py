@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-from ..base import Mapper
+from ..mappers.base import Mapper
 
 
 class Hyperalign(Mapper):

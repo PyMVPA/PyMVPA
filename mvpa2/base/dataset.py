@@ -199,9 +199,9 @@ class AttrDataset(object):
           (samples x features) array, or need to be convertible to such an
           array of such shape. If the samples are not in that format, please
           consider one of the `AttrDataset.from_*` classmethods.
-          There is one special case: if a list or tuple of Datasets are
-          provided a Datasets of Datasets will be the result that carries
-          all Datasets in samples array of type ``object``.
+          There is a special case: if a list (or a tuple) of Datasets is
+          provided, the Dataset will contain those Datasets in the samples array
+          of ``object`` dtype.
         sa : SampleAttributesCollection
           Samples attributes collection.
         fa : FeatureAttributesCollection
@@ -212,7 +212,7 @@ class AttrDataset(object):
         """
         # conversions
         if isinstance(samples, list) or isinstance(samples, tuple):
-            if np.all([is_datasetlike(e) for e in samples]):
+            if all(is_datasetlike(e) for e in samples):
                 # special case dataset of datasets
                 temp = np.empty((len(samples),), dtype=np.object)
                 for i, s in enumerate(samples):
@@ -695,7 +695,7 @@ def vstack(datasets, a=None):
 
     if __debug__:
         target = sorted(datasets[0].sa.keys())
-        if not np.all([sorted(ds.sa.keys()) == target for ds in datasets]):
+        if not all(sorted(ds.sa.keys()) == target for ds in datasets):
             raise ValueError("Sample attributes collections of to be stacked "
                              "datasets have varying attributes.")
     # will puke if not equal number of features
@@ -764,7 +764,7 @@ def hstack(datasets, a=None):
 
     if __debug__:
         target = sorted(datasets[0].fa.keys())
-        if not np.all([sorted(ds.fa.keys()) == target for ds in datasets]):
+        if not all(sorted(ds.fa.keys()) == target for ds in datasets):
             raise ValueError("Feature attributes collections of to be stacked "
                              "datasets have varying attributes.")
     # will puke if not equal number of samples
