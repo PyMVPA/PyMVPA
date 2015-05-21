@@ -214,4 +214,9 @@ class ProcrusteanMapper(ProjectionMapper):
         """For Procrustean mapper, inverse is transpose.
         So, let's skip computing inverse in the super class.
         """
-        return np.transpose(self._proj)
+        # XXX Change pinv to superclass compute_recon?
+        if self.params.oblique:
+            #return ProjectionMapper._compute_recon(self)
+            return np.linalg.pinv(self._proj)
+        else:
+            return np.transpose(self._proj/self._scale**2) if self.params.scaling else np.transpose(self._proj)
