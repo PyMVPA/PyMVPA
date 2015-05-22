@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA MEG stuff"""
 
+from os.path import join as pathjoin
 
 from mvpa2.testing import *
 from mvpa2 import pymvpa_dataroot
