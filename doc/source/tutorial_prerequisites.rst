@@ -164,13 +164,6 @@ Interactive Python Shell
 To make interactive use of Python more enjoyable and productive, we suggest
 to explore an enhanced interactive environment for Python -- IPython_.
 
-.. _IPython: http://ipython.org
-
-http://fperez.org/papers/ipython07_pe-gr_cise.pdf
-
-  An article from one of the authors of IPython in the *Computing in Science and
-  Engineering* journal, describing goals and basic features of IPython.
-
 http://showmedo.com/videotutorials/series?name=CnluURUTV
 
   Video tutorials from Jeff Rush walking you through basic and advanced
@@ -182,6 +175,14 @@ http://ipython.org/documentation.html
 
   IPython documentation page which references additional materials, such as
   the main IPython documentation which extensively covers features of IPython.
+
+http://ipython.org/notebook.html
+
+  IPython notebook provides an interactive programming environment right in
+  your browser.  Our tutorial is available not only as static web-pages but
+  also as IPython notebooks, thus making learning and tinkering with code
+  convenient and fun.  Familiarizing with principles of ipython notebooks and
+  keyboard shortcuts would be beneficial.
 
 
 Multivariate Analysis of Neuroimaging Data
