@@ -107,8 +107,8 @@ class ProcrusteanMapperTests(unittest.TestCase):
                 d_s_f_r = pm.reverse(d_s_f)
                 # Test if recon proj is true inverse except for high->low projection
                 if nf_s <= nf_t:
-                    self.assertTrue(norm(np.dot(pm._proj, pm._recon) - np.eye(pm._proj.shape[0])) < 1e-10,
-                                msg="Deviation from identity matrix is too large")
+                    assert_almost_equal(np.dot(pm._proj, pm._recon),np.eye(pm._proj.shape[0]),
+                                             err_msg="Deviation from identity matrix is too large")
                 dsfr = d_s_f_r - d_s
                 ndsfr = norm(dsfr)/norm(d_s)
                 if full_test:
