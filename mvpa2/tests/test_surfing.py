@@ -880,7 +880,7 @@ class SurfTests(unittest.TestCase):
         assert_array_equal(r.samples, m.samples)
 
 
-    @with_tempfile('.h5py', 'qe')
+    @with_tempfile('.h5py', '_qe')
     def test_surf_queryengine(self, qefn):
         s = surf.generate_plane((0, 0, 0), (0, 1, 0), (0, 0, 1), 4, 5)
 
@@ -908,10 +908,8 @@ class SurfTests(unittest.TestCase):
 
             # test i/o and ensure that the untrained instance is not trained
             if externals.exists('h5py'):
-                fd, qefn = tempfile.mkstemp('qe.hdf5', 'test'); os.close(fd)
                 h5save(qefn, qe)
                 qe = h5load(qefn)
-                os.remove(qefn)
 
 
             # untrained qe should give errors
