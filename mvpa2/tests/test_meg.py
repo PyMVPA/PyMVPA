@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA MEG stuff"""
 
-import os.path
 
 from mvpa2.testing import *
 from mvpa2 import pymvpa_dataroot
@@ -22,7 +21,7 @@ class MEGTests(unittest.TestCase):
         if not externals.exists('gzip'):
             return
 
-        meg = TuebingenMEG(os.path.join(pymvpa_dataroot, 'tueb_meg.dat.gz'))
+        meg = TuebingenMEG(pathjoin(pymvpa_dataroot, 'tueb_meg.dat.gz'))
 
         # check basics
         self.assertTrue(meg.channelids == ['BG1', 'MLC11', 'EEG02'])

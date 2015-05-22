@@ -13,6 +13,7 @@ handling AFNI datasets"""
 import numpy as np
 
 import os
+from os.path import join as pathjoin
 import tempfile
 
 from mvpa2.testing import *
@@ -470,7 +471,7 @@ class SurfTests(unittest.TestCase):
         white_surf = inflated_surf + 1.
 
         # helper function
-        _tmp = lambda x:os.path.join(temp_dir, x)
+        _tmp = lambda x:pathjoin(temp_dir, x)
 
 
         # filenames for surfaces and spec file

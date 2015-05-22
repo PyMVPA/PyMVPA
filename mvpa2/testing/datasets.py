@@ -16,7 +16,6 @@ __docformat__ = 'restructuredtext'
 
 import tempfile
 import shutil
-import os
 import traceback as tbm
 import sys
 import numpy as np
@@ -127,12 +126,12 @@ def saveload_warehouse():
     tempdir = tempfile.mkdtemp()
 
     # store the whole datasets warehouse in one hdf5 file
-    hdf = h5py.File(os.path.join(tempdir, 'myhdf5.hdf5'), 'w')
+    hdf = h5py.File(pathjoin(tempdir, 'myhdf5.hdf5'), 'w')
     for d in datasets:
         obj2hdf(hdf, datasets[d], d)
     hdf.close()
 
-    hdf = h5py.File(os.path.join(tempdir, 'myhdf5.hdf5'), 'r')
+    hdf = h5py.File(pathjoin(tempdir, 'myhdf5.hdf5'), 'r')
     rc_ds = {}
     for d in hdf:
         rc_ds[d] = hdf2obj(hdf[d])
