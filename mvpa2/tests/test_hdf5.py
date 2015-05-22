@@ -19,7 +19,7 @@ import h5py
 from glob import glob
 import os
 from os.path import join as pathjoin
-from os.path import join as opj, exists, realpath
+from os.path import exists, realpath
 import sys
 import tempfile
 
@@ -445,7 +445,7 @@ def test_present_fmri_dataset():
         raise SkipTest("Absent %s. Verify that you got submodule" % f)
 
 
-test_files = glob(opj(pymvpa_dataroot, 'testing', 'fmri_dataset', '*.hdf5'))
+test_files = glob(pathjoin(pymvpa_dataroot, 'testing', 'fmri_dataset', '*.hdf5'))
 
 
 @sweepargs(testfile=test_files)

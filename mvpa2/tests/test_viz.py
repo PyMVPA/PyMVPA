@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Tests for visualizations'''
 
+from os.path import join as pathjoin
 
 from mvpa2 import pymvpa_dataroot
 from mvpa2.testing import *

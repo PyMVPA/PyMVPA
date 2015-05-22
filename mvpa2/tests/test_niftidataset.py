@@ -9,6 +9,7 @@
 """Unit tests for PyMVPA nifti dataset"""
 
 import numpy as np
+from os.path import join as pathjoin
 
 from mvpa2.testing import *
 

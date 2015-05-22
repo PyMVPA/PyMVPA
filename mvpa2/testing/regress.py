@@ -12,6 +12,8 @@
 
 __docformat__ = 'restructuredtext'
 
+from os.path import join as pathjoin
+
 import hashlib
 import mvpa2
 

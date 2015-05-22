@@ -9,6 +9,8 @@
 """Unit tests for PyMVPA's OpenFMRI data source adaptor"""
 
 import numpy as np
+from os.path import join as pathjoin
+
 from nose.tools import assert_greater
 
 from mvpa2.testing import *
