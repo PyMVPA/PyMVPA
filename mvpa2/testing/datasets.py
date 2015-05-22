@@ -19,6 +19,7 @@ import shutil
 import traceback as tbm
 import sys
 import numpy as np
+from os.path import join as pathjoin
 
 from mvpa2 import cfg, externals
 from mvpa2.datasets.base import Dataset, HollowSamples
