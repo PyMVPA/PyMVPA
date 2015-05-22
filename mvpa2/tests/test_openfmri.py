@@ -8,8 +8,9 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA's OpenFMRI data source adaptor"""
 
-import os
 import numpy as np
+from os.path import join as pathjoin
+
 from nose.tools import assert_greater
 
 from mvpa2.testing import *
@@ -39,7 +40,7 @@ def test_openfmri_dataset():
     if not externals.exists('nibabel'):
         raise SkipTest
 
-    of = ofm.OpenFMRIDataset(os.path.join(pymvpa_dataroot, 'haxby2001'))
+    of = ofm.OpenFMRIDataset(pathjoin(pymvpa_dataroot, 'haxby2001'))
     assert_equal(of.get_model_descriptions(), {1: 'visual object categories'})
     sub_ids = of.get_subj_ids()
     assert_equal(sub_ids, [1, 'phantom'])
@@ -68,13 +69,13 @@ def test_openfmri_dataset():
     assert_array_equal(contrast_spec[1]['face_v_house'],
                        [-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0])
 
-    orig_attrs = SampleAttributes(os.path.join(pymvpa_dataroot,
+    orig_attrs = SampleAttributes(pathjoin(pymvpa_dataroot,
                                                'attributes_literal.txt'))
     for subj, runs in task_runs.iteritems():
         for run in runs:
             # load single run
             ds = of.get_bold_run_dataset(subj, task, run, flavor='1slice',
-                                         mask=os.path.join(pymvpa_dataroot,
+                                         mask=pathjoin(pymvpa_dataroot,
                                                            'mask.nii.gz'),
                                          add_sa='bold_moest.txt')
             # basic shape
@@ -116,7 +117,7 @@ def test_openfmri_dataset():
                 1, subj, flavor='1slice',
                 preproc_img=preproc_img,
                 modelfx=assign_conditionlabels,
-                mask=os.path.join(pymvpa_dataroot,
+                mask=pathjoin(pymvpa_dataroot,
                                   'mask.nii.gz'),
                 add_sa='bold_moest.txt')
             modelds = modelds[modelds.sa.run == run]

@@ -22,6 +22,7 @@ NNO May 2012
 
 import numpy as np
 import os
+from os.path import join as pathjoin
 import re
 import argparse
 
@@ -133,7 +134,7 @@ def afni_niml_zscore_makefull_wizard(cfg):
     for fn in fns:
         [pth, nm] = os.path.split(fn)
 
-        fnout = os.path.join(pth, prefix + nm)
+        fnout = pathjoin(pth, prefix + nm)
 
         if os.path.exists(fnout) and not overwrite:
             print("Output file %s already exists, skipping (use '--overwrite' to override)" % fnout)
@@ -151,7 +152,7 @@ def afni_niml_zscore_makefull_wizard(cfg):
         ext = ext[:(len(nm) - len(ext))]
 
     fullprefix = nm if group_postfix is None else '%s%s' % (nm, group_postfix)
-    fullname = os.path.join(pth, fullprefix)
+    fullname = pathjoin(pth, fullprefix)
 
 
 

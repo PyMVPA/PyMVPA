@@ -12,7 +12,10 @@ Caret binary file support
 @author: nick
 '''
 
-import numpy as np, os, datetime
+import numpy as np
+import os
+from os.path import join as pathjoin
+import datetime
 
 from mvpa2.support.nibabel import surf
 
@@ -88,7 +91,7 @@ def read(fn, topology_fn=None):
             if line.startswith('topo_file'):
                 topo_file = line[10:]
 
-                topo_fn = os.path.join(os.path.split(fn)[0], topo_file)
+                topo_fn = pathjoin(os.path.split(fn)[0], topo_file)
                 if os.path.exists(topo_fn):
                     faces = read_topology(topo_fn)
                     break
