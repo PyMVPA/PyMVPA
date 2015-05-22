@@ -9,6 +9,7 @@
 """Unit tests for PyMVPA EEP dataset"""
 
 import numpy as np
+from os.path import join as pathjoin
 
 from mvpa2 import pymvpa_dataroot
 from mvpa2.base import externals
