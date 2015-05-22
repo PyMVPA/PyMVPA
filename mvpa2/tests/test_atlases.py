@@ -19,7 +19,6 @@ skip_if_no_external('lxml')
 from mvpa2.base import externals
 from mvpa2.atlases import *
 
-import os
 from mvpa2 import pymvpa_dataroot
 
 """Basic tests for support of atlases such as the ones
@@ -138,7 +137,7 @@ def test_fsl_hox_queries():
 
     # Lets falsify and feed some crammy file as the atlas
     atl2 = Atlas(name='HarvardOxford-Cortical',
-                 image_file=os.path.join(pymvpa_dataroot, 'example4d.nii.gz'))
+                 image_file=pathjoin(pymvpa_dataroot, 'example4d.nii.gz'))
 
     # we should get not even comparable maps now ;)
     ok_(atl.get_map('Frontal Pole').shape != atl2.get_map('Frontal Pole').shape)

@@ -46,6 +46,7 @@ __docformat__ = 'restructuredtext'
 __version__ = '2.4.0'
 
 import os
+from os.path import join as pathjoin
 import random
 import numpy as np
 from mvpa2.base import cfg
@@ -53,7 +54,7 @@ from mvpa2.base import externals
 from mvpa2.base.info import wtf
 
 # commit hash to be filled in by Git upon export/archive
-hashfilename = os.path.join(os.path.dirname(__file__), 'COMMIT_HASH')
+hashfilename = pathjoin(os.path.dirname(__file__), 'COMMIT_HASH')
 __hash__ = ''
 if os.path.exists(hashfilename):
     hashfile = open(hashfilename, 'r')
@@ -68,12 +69,12 @@ if os.path.exists(hashfilename):
 # this location
 pymvpa_dataroot = \
         cfg.get('data', 'root',
-                default=os.path.join(os.path.dirname(__file__), 'data'))
+                default=pathjoin(os.path.dirname(__file__), 'data'))
 # locate PyMVPA data database root -- also might not be installed, but if it is,
 # it should be at this location
 pymvpa_datadbroot = \
         cfg.get('datadb', 'root',
-                default=os.path.join(os.getcwd(), 'datadb'))
+                default=pathjoin(os.getcwd(), 'datadb'))
 
 
 #
