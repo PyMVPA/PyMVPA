@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA EEP dataset"""
 
-import os.path
 import numpy as np
 
 from mvpa2 import pymvpa_dataroot
@@ -19,10 +18,10 @@ from mvpa2.testing.tools import assert_equal, assert_true, \
      assert_array_almost_equal
 
 def test_eep_load():
-    eb = EEPBin(os.path.join(pymvpa_dataroot, 'eep.bin'))
+    eb = EEPBin(pathjoin(pymvpa_dataroot, 'eep.bin'))
 
     ds = [ eep_dataset(source, targets=[1, 2]) for source in
-            (eb, os.path.join(pymvpa_dataroot, 'eep.bin')) ]
+            (eb, pathjoin(pymvpa_dataroot, 'eep.bin')) ]
 
     for d in ds:
         assert_equal(d.nsamples, 2)
@@ -33,7 +32,7 @@ def test_eep_load():
 
 
 def test_eep_bin():
-    eb = EEPBin(os.path.join(pymvpa_dataroot, 'eep.bin'))
+    eb = EEPBin(pathjoin(pymvpa_dataroot, 'eep.bin'))
 
     assert_equal(eb.nchannels, 32)
     assert_equal(eb.nsamples, 2)
@@ -45,7 +44,7 @@ def test_eep_bin():
 
     # XXX put me back whenever there is a proper resamples()
 #     def test_resampling(self):
-#         ds = eep_dataset(os.path.join(pymvpa_dataroot, 'eep.bin'),
+#         ds = eep_dataset(pathjoin(pymvpa_dataroot, 'eep.bin'),
 #                          targets=[1, 2])
 #         channelids = np.array(ds.a.channelids).copy()
 #         self.assertTrue(np.round(ds.samplingrate) == 500.0)

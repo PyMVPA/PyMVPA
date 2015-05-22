@@ -18,6 +18,7 @@ import h5py
 
 from glob import glob
 import os
+from os.path import join as pathjoin
 from os.path import join as opj, exists, realpath
 import sys
 import tempfile
@@ -98,7 +99,7 @@ def test_h5py_dataset_typecheck():
 
 
 def test_matfile_v73_compat():
-    mat = h5load(os.path.join(pymvpa_dataroot, 'v73.mat'))
+    mat = h5load(pathjoin(pymvpa_dataroot, 'v73.mat'))
     assert_equal(len(mat), 2)
     assert_equal(sorted(mat.keys()), ['x', 'y'])
     assert_array_equal(mat['x'], np.arange(6)[None].T)
@@ -186,7 +187,7 @@ def test_recursion():
 @with_tempfile()
 def test_h5save_mkdir(dirname):
     # create deeper directory name
-    filename = os.path.join(dirname, 'a', 'b', 'c', 'test_file.hdf5')
+    filename = pathjoin(dirname, 'a', 'b', 'c', 'test_file.hdf5')
     assert_raises(IOError, h5save, filename, {}, mkdir=False)
 
     # And create by default
@@ -402,7 +403,7 @@ def test_ca_col(f, backend):
 
 def test_reg_load_hyperalignment_example_hdf5():
     from mvpa2 import pymvpa_datadbroot
-    filepath = os.path.join(pymvpa_datadbroot,
+    filepath = pathjoin(pymvpa_datadbroot,
                         'hyperalignment_tutorial_data',
                         'hyperalignment_tutorial_data.hdf5.gz')
     if not os.path.exists(filepath):
