@@ -191,6 +191,15 @@ def test_group_clusterthreshold_simple(n_proc):
     assert_true('prob_corrected' in res.a.clusterstats.dtype.names)
     # fwe correction always increases the p-values (if anything)
     assert_true(np.all(res.a.clusterstats['prob_raw'] <= res.a.clusterstats['prob_corrected']))
+    # check expected cluster sizes, ordered large -> small
+    assert_array_equal(res.a.clusterstats['size'], [4, 1])
+    # check max position
+    assert_array_equal(res.a.clusterlocations['max'], [[4], [8]])
+    # center of mass: eyeballed
+    assert_array_almost_equal(res.a.clusterlocations['center_of_mass'],
+                              [[4.429], [8]],
+                              3)
+
     # fwe thresholding only ever removes clusters
     assert_true(np.all(np.abs(res.fa.clusters_featurewise_thresh - res.fa.clusters_fwe_thresh) >= 0))
     # FWE should kill the small one
