@@ -13,6 +13,7 @@ Primarily the ones from nose.tools
 __docformat__ = 'restructuredtext'
 
 import glob, os, sys, shutil
+from os.path import join as pathjoin
 import tempfile
 import unittest
 from contextlib import contextmanager
