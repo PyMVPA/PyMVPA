@@ -199,6 +199,13 @@ def test_group_clusterthreshold_simple(n_proc):
     assert_array_almost_equal(res.a.clusterlocations['center_of_mass'],
                               [[4.429], [8]],
                               3)
+    # other simple stats
+    #[0, 0, .5, 3, 5, 3, 3, 0, 2, 0]
+    assert_array_equal(res.a.clusterstats['mean'], [3.5, 2])
+    assert_array_equal(res.a.clusterstats['min'], [3, 2])
+    assert_array_equal(res.a.clusterstats['max'], [5, 2])
+    assert_array_equal(res.a.clusterstats['median'], [3, 2])
+    assert_array_almost_equal(res.a.clusterstats['std'], [0.866, 0], 3)
 
     # fwe thresholding only ever removes clusters
     assert_true(np.all(np.abs(res.fa.clusters_featurewise_thresh - res.fa.clusters_fwe_thresh) >= 0))
