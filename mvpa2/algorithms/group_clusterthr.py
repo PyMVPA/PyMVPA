@@ -130,6 +130,14 @@ class GroupClusterThreshold(Learner):
         enabled an additional field ``prob_corrected`` (probability after
         correction) is added.
 
+      ``a.clusterlocations``
+        Record array with information on the location of all detected clusters.
+        The array is sorted according to cluster size (same order as
+        ``a.clusterstats``. The array contains the fields ``max``
+        (feature coordinate of the maximum score within the cluster, and
+        ``center_of_mass`` (coordinate of the center of mass; weighted by
+        the feature values within the cluster.
+
     References
     ----------
     .. [1] Johannes Stelzer, Yi Chen and Robert Turner (2013). Statistical
@@ -332,42 +340,57 @@ class GroupClusterThreshold(Learner):
         if hasattr(ds, 'a') and 'mapper' in ds.a:
             mapper = ds.a.mapper
         # reverse-map input
-        osamp = mapper.reverse1(thrd)
+        othrd = mapper.reverse1(thrd)
+        osamp = mapper.reverse1(ds.samples[0])
         # prep output dataset
         outds = ds.copy(deep=False)
         outds.fa['featurewise_thresh'] = self._thrmap
         # determine clusters
-        labels, num = measurements.label(osamp)
-        area = measurements.sum(osamp,
+        labels, num = measurements.label(othrd)
+        area = measurements.sum(othrd,
                                 labels,
                                 index=np.arange(1, num + 1)).astype(int)
+        com = measurements.center_of_mass(
+            osamp, labels=labels, index=np.arange(1, num + 1))
+        maxpos = measurements.maximum_position(
+            osamp, labels=labels, index=np.arange(1, num + 1))
         # for the rest we need the labels flattened
         labels = mapper.forward1(labels)
         # relabel clusters starting with the biggest and increase index with
         # decreasing size
         ordered_labels = np.zeros(labels.shape, dtype=int)
         ordered_area = np.zeros(area.shape, dtype=int)
+        ordered_com = np.zeros((num, len(osamp.shape)), dtype=float)
+        ordered_maxpos = np.zeros((num, len(osamp.shape)), dtype=float)
         for i, idx in enumerate(np.argsort(area)):
             ordered_labels[labels == idx + 1] = num - i
+            # kinda ugly, but we are looping anyway
             ordered_area[i] = area[idx]
-        area = ordered_area[::-1]
+            ordered_com[i] = com[idx]
+            ordered_maxpos[i] = maxpos[idx]
         labels = ordered_labels
+        area = ordered_area[::-1]
+        com = ordered_com[::-1]
+        maxpos = ordered_maxpos[::-1]
         del ordered_labels  # this one can be big
         # store cluster labels after forward-mapping
         outds.fa['clusters_featurewise_thresh'] = labels.copy()
+        # location info
+        outds.a['clusterlocations'] = \
+            np.rec.fromarrays(
+                [com, maxpos], names=('center_of_mass', 'max'))
+
         # update cluster size histogram with the actual result to get a
         # proper lower bound for p-values
         # this will make a copy, because the original matrix is int
         cluster_probs_raw = _transform_to_pvals(
             area, self._null_cluster_sizes.astype('float'))
 
-        if self.params.multicomp_correction is None:
-            probs_corr = np.array(cluster_probs_raw)
-            rej = probs_corr <= self.params.fwe_rate
-            outds.a['clusterstats'] = \
-                np.rec.fromarrays(
-                    [area, cluster_probs_raw], names=('size', 'prob_raw'))
-        else:
+        clusterstats = (
+            [area, cluster_probs_raw],
+            ['size', 'prob_raw']
+        )
+        if not self.params.multicomp_correction is None:
             # do a local import as only this tiny portion needs statsmodels
             import statsmodels.stats.multitest as smm
             rej, probs_corr = smm.multipletests(
@@ -375,15 +398,15 @@ class GroupClusterThreshold(Learner):
                 alpha=self.params.fwe_rate,
                 method=self.params.multicomp_correction)[:2]
             # store corrected per-cluster probabilities
-            outds.a['clusterstats'] = \
-                np.rec.fromarrays(
-                    [area, cluster_probs_raw, probs_corr],
-                    names=('size', 'prob_raw', 'prob_corrected'))
+            clusterstats[0].append(probs_corr)
+            clusterstats[1].append('prob_corrected')
             # remove cluster labels that did not pass the FWE threshold
             for i, r in enumerate(rej):
                 if not r:
                     labels[labels == i + 1] = 0
             outds.fa['clusters_fwe_thresh'] = labels
+        outds.a['clusterstats'] = \
+            np.rec.fromarrays(clusterstats[0], names=clusterstats[1])
         return outds
 
 
