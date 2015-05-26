@@ -124,11 +124,12 @@ class GroupClusterThreshold(Learner):
         Record array with information on all detected clusters. The array is
         sorted according to cluster size, starting with the largest cluster
         in terms of number of features. The array contains the fields ``size``
-        (number of features comprising the cluster), and ``prob_raw``
-        (probability of observing the cluster of a this size or larger under
-        the NULL hypothesis). If correction for multiple comparisons is
-        enabled an additional field ``prob_corrected`` (probability after
-        correction) is added.
+        (number of features comprising the cluster), ``mean``, ``median``,
+        min``, ``max``, ``std`` (respective descriptive statistics for all
+        clusters), and ``prob_raw`` (probability of observing the cluster of a
+        this size or larger under the NULL hypothesis). If correction for
+        multiple comparisons is enabled an additional field ``prob_corrected``
+        (probability after correction) is added.
 
       ``a.clusterlocations``
         Record array with information on the location of all detected clusters.
@@ -390,6 +391,23 @@ class GroupClusterThreshold(Learner):
             [area, cluster_probs_raw],
             ['size', 'prob_raw']
         )
+        # evaluate a bunch of stats for all clusters
+        morestats = {}
+        for cid in xrange(len(area)):
+            # keep clusters on outer loop, because selection is more expensive
+            clvals = ds.samples[0, labels == cid + 1]
+            for id_, fx in (
+                    ('mean', np.mean),
+                    ('median', np.median),
+                    ('min', np.min),
+                    ('max', np.max),
+                    ('std', np.std)):
+                stats = morestats.get(id_, [])
+                stats.append(fx(clvals))
+                morestats[id_] = stats
+        for k, v in morestats.items():
+            clusterstats[0].append(v)
+            clusterstats[1].append(k)
         if not self.params.multicomp_correction is None:
             # do a local import as only this tiny portion needs statsmodels
             import statsmodels.stats.multitest as smm
