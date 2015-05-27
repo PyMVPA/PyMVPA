@@ -73,10 +73,10 @@ extensions += [sphinx_version < '1.1.2'
 
 # the following doesn't work with sphinx < 1.0, but will make a separate
 # sphinx-autogen run obsolete in the future
-#autosummary_generate = True
+autosummary_generate = True
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ['../templates']
 
 # The suffix of source filenames.
 source_suffix = '.rst'
@@ -89,7 +89,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'PyMVPA'
-copyright = '2006-2013, PyMVPA Authors'
+copyright = '2006-2015, PyMVPA Authors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

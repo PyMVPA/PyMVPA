@@ -229,7 +229,7 @@ def binomial_proportion_ci(n, X, alpha=.05, meth='jeffreys'):
     Anderson Winkler and Tom Nichols.
 
     Parameters
-    ==========
+    ----------
     n : int
       Number of trials
     X : int or array
@@ -241,17 +241,16 @@ def binomial_proportion_ci(n, X, alpha=.05, meth='jeffreys'):
       Interval estimation method.
 
     Returns
-    =======
+    -------
     2-item array or 2D array
       With the lower and upper bound for the confidence interval. If X was given
       as a vector with p items a 2xp array is returned.
 
-    See also
-    ========
-    Brown LD, Cai TT, DasGupta AA. Interval estimation for a
-    binomial proportion. Statistical Science. 2001 16(2):101-133.
-
-    http://brainder.org/2012/04/21/confidence-intervals-for-bernoulli-trials/
+    References
+    ----------
+    .. [1] Brown LD, Cai TT, DasGupta AA. Interval estimation for a
+       binomial proportion. Statistical Science. 2001 16(2):101-133.
+       http://brainder.org/2012/04/21/confidence-intervals-for-bernoulli-trials
     """
 
     from scipy import stats
@@ -385,7 +384,12 @@ def compute_ts_boxplot_stats(data, outlier_abs_minthresh=None,
     stdd = np.ma.std(data, axis=0)
     outlierd = None
     if outlier_thresh > 0.0:
-        outlier = np.ma.greater((np.absolute(data - meand)), outlier_thresh * stdd)
+        # deal properly with NaNs so that they are not considered outliers
+        outlier = np.logical_and(np.logical_not(np.isnan(data)),
+                                 np.ma.greater(
+                                        (np.absolute(data - meand)),
+                                        outlier_thresh * stdd))
+
         if not outlier_abs_minthresh is None:
             # apply absolute filter in addition
             outlier = np.logical_and(outlier,

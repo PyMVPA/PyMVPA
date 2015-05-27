@@ -54,7 +54,7 @@ if __debug__:
 rootpath = os.path.join(pymvpa_datadbroot,
                         'tutorial_data', 'tutorial_data')
 
-datapath = os.path.join(rootpath, 'data')
+datapath = os.path.join(rootpath, 'haxby2001')
 surfpath = os.path.join(rootpath, 'suma_surfaces')
 
 """Define functional data volume filename:"""

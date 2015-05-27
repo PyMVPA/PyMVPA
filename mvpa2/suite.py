@@ -59,6 +59,8 @@ else:
 
 __sdebug('algorithms')
 from mvpa2.algorithms.hyperalignment import *
+if externals.exists('scipy') :
+    from mvpa2.algorithms.group_clusterthr import *
 
 __sdebug('clfs')
 from mvpa2 import clfs
@@ -120,6 +122,7 @@ from mvpa2.datasets.eventrelated import *
 if externals.exists('nibabel') :
     from mvpa2.datasets.mri import *
 from mvpa2.datasets.sources import *
+from mvpa2.datasets.sources.native import *
 from mvpa2.datasets.sources.openfmri import *
 from mvpa2.datasets import niml
 from mvpa2.datasets.niml import from_niml, to_niml

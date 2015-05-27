@@ -19,7 +19,6 @@ from mvpa2.datasets import Dataset
 from mvpa2.measures.anova import OneWayAnova, CompoundOneWayAnova
 from mvpa2.misc.fx import double_gamma_hrf, single_gamma_hrf
 from mvpa2.measures.corrcoef import pearson_correlation
-from mvpa2.misc.stats import compute_ts_boxplot_stats
 
 # Prepare few distributions to test
 #kwargs = {'permutations':10, 'tail':'any'}
@@ -29,7 +28,7 @@ nulldist_sweep = [ MCNullDist(permutator, tail='any'),
 
 if externals.exists('scipy'):
     from mvpa2.support.scipy.stats import scipy
-    from scipy.stats import f_oneway
+    from mvpa2.misc.stats import compute_ts_boxplot_stats
     from mvpa2.clfs.stats import rv_semifrozen
     nulldist_sweep += [ MCNullDist(permutator, scipy.stats.norm,
                                    tail='any'),
@@ -138,6 +137,8 @@ class StatsTests(unittest.TestCase):
         assert_array_almost_equal(c, c_np)
 
 def test_tsboxplot():
+    skip_if_no_external('scipy')
+    skip_if_no_external('numpy', min_version='1.5') # for .percentile. approx version
     ts = range(5)
     assert_raises(ValueError, compute_ts_boxplot_stats, ts)
     assert_raises(ValueError, compute_ts_boxplot_stats, [ts])

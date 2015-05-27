@@ -12,11 +12,12 @@
     Example Makefile rule::
 
        generate:
-               sphinx-autogen source/*.rst source/generated
+               sphinx-autogen -o source/generated source/*.rst
 
-    :copyright: Copyright 2007-2010 by the Sphinx team, see AUTHORS.
+    :copyright: Copyright 2007-2014 by the Sphinx team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 """
+
 import os
 import re
 import sys
@@ -26,9 +27,26 @@ import optparse
 from jinja2 import FileSystemLoader, TemplateNotFound
 from jinja2.sandbox import SandboxedEnvironment
 
+from sphinx import package_dir
 from sphinx.ext.autosummary import import_by_name, get_documenter
 from sphinx.jinja2glue import BuiltinTemplateLoader
 from sphinx.util.osutil import ensuredir
+from sphinx.util.inspect import safe_getattr
+
+# Add documenters to AutoDirective registry
+from sphinx.ext.autodoc import add_documenter, \
+    ModuleDocumenter, ClassDocumenter, ExceptionDocumenter, DataDocumenter, \
+    FunctionDocumenter, MethodDocumenter, AttributeDocumenter, \
+    InstanceAttributeDocumenter
+add_documenter(ModuleDocumenter)
+add_documenter(ClassDocumenter)
+add_documenter(ExceptionDocumenter)
+add_documenter(DataDocumenter)
+add_documenter(FunctionDocumenter)
+add_documenter(MethodDocumenter)
+add_documenter(AttributeDocumenter)
+add_documenter(InstanceAttributeDocumenter)
+
 
 def main(argv=sys.argv):
     usage = """%prog [OPTIONS] SOURCEFILE ..."""
@@ -76,7 +94,8 @@ def generate_autosummary_docs(sources, output_dir=None, suffix='.rst',
         sources = [os.path.join(base_path, filename) for filename in sources]
 
     # create our own templating environment
-    template_dirs = [os.path.join(os.path.dirname(__file__), 'templates')]
+    template_dirs = [os.path.join(package_dir, 'ext',
+                                  'autosummary', 'templates')]
     if builder is not None:
         # allow the user to override the templates
         template_loader = BuiltinTemplateLoader()
@@ -97,7 +116,7 @@ def generate_autosummary_docs(sources, output_dir=None, suffix='.rst',
     new_files = []
 
     # write
-    for name, path, template_name in sorted(items):
+    for name, path, template_name in sorted(items, key=str):
         if path is None:
             # The corresponding autosummary:: directive did not have
             # a :toctree: option
@@ -107,7 +126,7 @@ def generate_autosummary_docs(sources, output_dir=None, suffix='.rst',
         ensuredir(path)
 
         try:
-            obj, name = import_by_name(name)
+            name, obj, parent, mod_name = import_by_name(name)
         except ImportError, e:
             warn('[autosummary] failed to import %r: %s' % (name, e))
             continue
@@ -123,7 +142,7 @@ def generate_autosummary_docs(sources, output_dir=None, suffix='.rst',
         f = open(fn, 'w')
 
         try:
-            doc = get_documenter(obj)
+            doc = get_documenter(obj, parent)
 
             if template_name is not None:
                 template = template_env.get_template(template_name)
@@ -138,11 +157,12 @@ def generate_autosummary_docs(sources, output_dir=None, suffix='.rst',
                 items = []
                 for name in dir(obj):
                     try:
-                        if get_documenter(getattr(obj, name)).objtype == typ:
-                            items.append(name)
+                        documenter = get_documenter(safe_getattr(obj, name),
+                                                    obj)
                     except AttributeError:
-                        warn("[autosummary] problem accessing attribute "
-                             "'%s' in '%s'." % (name, obj))
+                        continue
+                    if documenter.objtype == typ:
+                        items.append(name)
                 public = [x for x in items
                           if x in include_public or not x.startswith('_')]
                 return public, items
@@ -197,8 +217,8 @@ def generate_autosummary_docs(sources, output_dir=None, suffix='.rst',
 # -- Finding documented entries in files ---------------------------------------
 
 def find_autosummary_in_files(filenames):
-    """
-    Find out what items are documented in source/*.rst.
+    """Find out what items are documented in source/*.rst.
+
     See `find_autosummary_in_lines`.
     """
     documented = []
@@ -210,23 +230,26 @@ def find_autosummary_in_files(filenames):
     return documented
 
 def find_autosummary_in_docstring(name, module=None, filename=None):
-    """
-    Find out what items are documented in the given object's docstring.
+    """Find out what items are documented in the given object's docstring.
+
     See `find_autosummary_in_lines`.
     """
     try:
-        obj, real_name = import_by_name(name)
+        real_name, obj, parent, modname = import_by_name(name)
         lines = pydoc.getdoc(obj).splitlines()
         return find_autosummary_in_lines(lines, module=name, filename=filename)
     except AttributeError:
         pass
     except ImportError, e:
         print "Failed to import '%s': %s" % (name, e)
+    except SystemExit, e:
+        print("Failed to import '%s'; the module executes module level "
+              "statement and it might call sys.exit()." % name)
     return []
 
 def find_autosummary_in_lines(lines, module=None, filename=None):
-    """
-    Find out what items appear in autosummary:: directives in the given lines.
+    """Find out what items appear in autosummary:: directives in the
+    given lines.
 
     Returns a list of (name, toctree, template) where *name* is a name
     of an object and *toctree* the :toctree: path of the corresponding
@@ -235,7 +258,7 @@ def find_autosummary_in_lines(lines, module=None, filename=None):
     *template* ``None`` if the directive does not have the
     corresponding options set.
     """
-    autosummary_re = re.compile(r'^\s*\.\.\s+autosummary::\s*')
+    autosummary_re = re.compile(r'^(\s*)\.\.\s+autosummary::\s*')
     automodule_re = re.compile(
         r'^\s*\.\.\s+automodule::\s*([A-Za-z0-9_.]+)\s*$')
     module_re = re.compile(
@@ -250,6 +273,7 @@ def find_autosummary_in_lines(lines, module=None, filename=None):
     template = None
     current_module = module
     in_autosummary = False
+    base_indent = ""
 
     for line in lines:
         if in_autosummary:
@@ -280,7 +304,7 @@ def find_autosummary_in_lines(lines, module=None, filename=None):
                 documented.append((name, toctree, template))
                 continue
 
-            if not line.strip():
+            if not line.strip() or line.startswith(base_indent + " "):
                 continue
 
             in_autosummary = False
@@ -288,6 +312,7 @@ def find_autosummary_in_lines(lines, module=None, filename=None):
         m = autosummary_re.match(line)
         if m:
             in_autosummary = True
+            base_indent = m.group(1)
             toctree = None
             template = None
             continue
