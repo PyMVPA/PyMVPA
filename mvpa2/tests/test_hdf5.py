@@ -16,15 +16,22 @@ from mvpa2.testing.datasets import datasets, saveload_warehouse
 skip_if_no_external('h5py')
 import h5py
 
+from glob import glob
 import os
+from os.path import join as opj, exists, realpath
 import sys
 import tempfile
 
 from mvpa2.base.dataset import AttrDataset, save
 from mvpa2.base.hdf5 import h5save, h5load, obj2hdf, HDF5ConversionError
-from mvpa2.misc.data_generators import load_example_fmri_dataset
+from mvpa2.datasets.sources import load_example_fmri_dataset
 from mvpa2.mappers.fx import mean_sample
 from mvpa2.mappers.boxcar import BoxcarMapper
+from mvpa2.misc.support import SmartVersion
+
+from mvpa2 import pymvpa_dataroot
+from mvpa2.testing import sweepargs
+from mvpa2.testing.regress import get_testing_fmri_dataset_filename
 
 class HDFDemo(object):
     pass
@@ -279,6 +286,8 @@ _python_objs = [
     (1, 2), tuple(),
     # pure Python sets
     set([1,2]), set(), set([None]), set([tuple()]),
+    # Our SmartVersion which was missing __reduce__
+    SmartVersion("0.1"),
     ]
 import collections
 _python_objs.append([collections.deque([1,2])])
@@ -426,3 +435,56 @@ def test_versions(f):
     hdf = h5py.File(f, 'r')
     assert_equal(hdf.attrs.get('__pymvpa_hdf5_version__'), '2')
     assert_equal(hdf.attrs.get('__pymvpa_version__'), mvpa2.__version__)
+
+
+def test_present_fmri_dataset():
+    # just a helper to signal if we have any of those available
+    f = get_testing_fmri_dataset_filename()
+    if not os.path.exists(f):
+        raise SkipTest("Absent %s. Verify that you got submodule" % f)
+
+
+test_files = glob(opj(pymvpa_dataroot, 'testing', 'fmri_dataset', '*.hdf5'))
+
+
+@sweepargs(testfile=test_files)
+@with_tempfile(suffix=".nii.gz")
+def test_regress_fmri_dataset(tempfile=None, testfile=None):
+    if not externals.exists('nibabel'):
+        raise SkipTest("can't test without nibabel")
+
+    # verify that we have actual load
+    if not (exists(testfile) and exists(realpath(testfile))):
+        raise SkipTest("File %s seems to be missing -- 'git annex get .' "
+                       "to fetch all test files first" % testfile)
+    # Still might be a direct mode, or windows -- so lets check the size
+    if os.stat(testfile).st_size < 1000:
+        raise SkipTest("File %s seems to be small/empty -- 'git annex get .' "
+                       "to fetch all test files first" % testfile)
+
+    from mvpa2.datasets.mri import map2nifti
+
+    ds = h5load(testfile)  # load previously generated dataset
+    # rudimentary checks that data was loaded correctly
+    assert_equal(np.sum(ds), 11444)
+    assert_equal(sorted(ds.sa.keys()),
+                 ['chunks', 'targets', 'time_coords', 'time_indices'])
+    assert_equal(sorted(ds.fa.keys()), ['voxel_indices'])
+
+    # verify that map2nifti works whenever version of nibabel on the system
+    # greater or equal that one it was saved with:
+    if externals.versions['nibabel'] >= ds.a.versions['nibabel']:
+        # test that we can get str of the niftihdr:
+        # to avoid such issues as https://github.com/PyMVPA/PyMVPA/issues/278
+        hdr_str = str(ds.a.imghdr)
+        assert(hdr_str != "")
+        ds_ni = map2nifti(ds)
+        # verify that we can store generated nifti to a file
+        ds_ni.to_filename(tempfile)
+        assert(os.path.exists(tempfile))
+    else:
+        raise SkipTest(
+            "Our version of nibabel %s is older than the one file %s was saved "
+            "with: %s" % (externals.versions['nibabel'],
+                          testfile,
+                          ds.a.versions['nibabel']))

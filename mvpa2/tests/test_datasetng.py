@@ -1011,11 +1011,16 @@ def test_all_equal():
     g = True
     h = ''
     i = 'a'
+    j = dict(bummer=np.arange(5))
 
-    values = [a, b, c, d, e, f, g, h, i]
+    values = [a, b, c, d, e, f, g, h, i, j]
     for ii, v in enumerate(values):
         for jj, w in enumerate(values):
-            assert_equal(all_equal(v, w), ii == jj)
+            # make deepcopy so == operator cannot cheat by checking id()
+            assert_equal(all_equal(copy.deepcopy(v),
+                                   copy.deepcopy(w)),
+                         ii == jj,
+                         msg='cmp(%s, %s)' % (type(v), type(w)))
 
     # ensure that this function behaves like the 
     # standard python '==' comparator for singulars

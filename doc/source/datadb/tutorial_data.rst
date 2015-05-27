@@ -62,7 +62,7 @@ Tarballs are available at:
 Tarball Content
 ===============
 
-data/
+haxby2001/
   Contains data files:
 
   bold.nii.gz
@@ -169,7 +169,7 @@ Instructions
 
   >>> from mvpa2.suite import *
   >>> datapath = os.path.join(pymvpa_datadbroot, 'tutorial_data',
-  ...                         'tutorial_data', 'data')
+  ...                         'tutorial_data', 'haxby2001')
   >>> attrs = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
   >>> ds = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
   ...                   targets=attrs.targets, chunks=attrs.chunks,

@@ -46,8 +46,7 @@ been aligned anatomically using a 12 dof linear transformation.
 """
 
 verbose(1, "Loading data...")
-filepath = os.path.join(pymvpa_datadbroot,
-                        'hyperalignment_tutorial_data',
+filepath = os.path.join(cfg.get('location', 'tutorial data'),
                         'hyperalignment_tutorial_data.hdf5.gz')
 ds_all = h5load(filepath)
 # zscore all datasets individually

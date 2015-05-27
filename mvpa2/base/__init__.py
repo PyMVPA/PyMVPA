@@ -297,6 +297,8 @@ if __debug__:
 
     debug.register('GNB', "GNB - Gaussian Naive Bayes")
 
+    debug.register('GDA', "GDA - Gaussian Discriminant Analyses")
+
     debug.register('GPR', "GPR")
     debug.register('GPR_WEIGHTS', "Track progress of GPRWeights computation")
     debug.register('KRN', "Kernels module (mvpa2.kernels)")
@@ -329,6 +331,7 @@ if __debug__:
 
     debug.register('HPAL', "Hyperalignment")
     debug.register('HPAL_', "Hyperalignment (verbose)")
+    debug.register('GCTHR', "Group cluster threshold")
     debug.register('ATL', "Atlases")
     debug.register('ATL_', "Atlases (verbose)")
     debug.register('ATL__', "Atlases (very verbose)")

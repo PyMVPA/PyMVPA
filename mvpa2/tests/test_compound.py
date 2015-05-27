@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Unit tests for PyMVPA sparse multinomial logistic regression classifier"""
+"""Unit tests for some Fx and Compound learners"""
 
 import numpy as np
 

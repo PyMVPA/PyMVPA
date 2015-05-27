@@ -49,6 +49,11 @@ hyperalignment_tutorial_data.hdf5.gz
     The list of datasets for 10 subjects stored as a compressed hdf5 file.
     Each dataset contains category & run labels.
 
+hyperalignment_tutorial_data_2.4.hdf5.gz
+    This file contains the same data as the first one, but it can be opened
+    on systems that have no NiBabel installed. Loading this file requires
+    PyMVPA version 2.4 or later.
+
 
 Instructions
 ============

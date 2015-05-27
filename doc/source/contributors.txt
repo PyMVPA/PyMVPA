@@ -8,7 +8,7 @@ The PyMVPA developers team currently consists of:
 
 * `Michael Hanke`_, University of Magdeburg, Germany
 * `Yaroslav O. Halchenko`_, Dartmouth College, USA
-* `Nikolaas N. Oosterhof`_, Dartmouth College, USA
+* `Nikolaas N. Oosterhof`_, University of Trento, Italy
 
 We are very grateful to the following people, who have contributed
 valuable advice, code or documentation to PyMVPA:
@@ -51,7 +51,7 @@ valuable advice, code or documentation to PyMVPA:
 .. _James M. Hughes: http://www.cs.dartmouth.edu/~hughes/index.html
 .. _James Kyle: http://www.ccn.ucla.edu/users/jkyle
 .. _Emanuele Olivetti: http://sra.fbk.eu/people/olivetti/
-.. _Nikolaas N. Oosterhof: http://haxbylab.dartmouth.edu/ppl/nno.html 
+.. _Nikolaas N. Oosterhof: http://www5.unitn.it/People/it/Web/Persona/PER0120101
 .. _Russell Poldrack: http://www.poldracklab.org
 .. _Stefan Pollmann: http://apsy.gse.uni-magdeburg.de/pollmann
 .. _Rajeev Raizada: http://www.dartmouth.edu/~raj

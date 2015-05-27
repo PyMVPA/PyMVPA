@@ -11,7 +11,7 @@
 from mvpa2.testing import *
 skip_if_no_external('scipy')
 
-from mvpa2.testing.datasets import datasets
+from scipy.stats import f_oneway
 from mvpa2.tests.test_stats import *
 
 from mvpa2.clfs.stats import match_distribution, rv_semifrozen

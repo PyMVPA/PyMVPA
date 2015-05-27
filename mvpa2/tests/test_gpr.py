@@ -12,11 +12,13 @@ from mvpa2.base import externals
 from mvpa2.misc import data_generators
 from mvpa2.misc.attrmap import AttributeMap
 from mvpa2.kernels.np import GeneralizedLinearKernel
-from mvpa2.clfs.gpr import GPR
 
 from mvpa2.testing import *
 from mvpa2.testing.datasets import datasets
 from mvpa2.testing.tools import assert_array_equal, assert_array_almost_equal
+
+skip_if_no_external('scipy') # needed by GPR code
+from mvpa2.clfs.gpr import GPR
 
 if __debug__:
     from mvpa2.base import debug
@@ -25,7 +27,6 @@ if __debug__:
 class GPRTests(unittest.TestCase):
 
     def test_basic(self):
-        skip_if_no_external('scipy') # needed by GPR code
         dataset = data_generators.linear1d_gaussian_noise()
         k = GeneralizedLinearKernel()
         clf = GPR(k)
