@@ -3,8 +3,8 @@ PyMVPA -- Multivariate Pattern Analysis in Python |build-status| |coverage-statu
 ========================================================================================
 
 .. |doi|
-   image:: https://img.shields.io/badge/doi-10.1007%2Fs12021--008--9041--y-green.svg
-   :target: http://dx.doi.org/10.1007/s12021-008-9041-y
+   image:: https://img.shields.io/badge/doi-10.3389%2Fneuro.11.003.2009-green.svg
+   :target: http://dx.doi.org/10.3389/neuro.11.003.2009
    :alt: Original PyMVPA publication
 
 .. |build-status|

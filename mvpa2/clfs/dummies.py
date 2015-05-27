@@ -28,7 +28,7 @@ class SameSignClassifier(Classifier):
     """Dummy classifier which reports +1 class if both features have
     the same sign, -1 otherwise"""
 
-    __tags__ = ['notrain2predict']
+    __tags__ = ['notrain2predict', 'oneclass-binary']
     def __init__(self, **kwargs):
         Classifier.__init__(self, **kwargs)
 
@@ -52,7 +52,7 @@ class RandomClassifier(Classifier):
     """Dummy classifier deciding on labels absolutely randomly
     """
 
-    __tags__ = ['random', 'non-deterministic']
+    __tags__ = ['random', 'non-deterministic', 'oneclass-binary']
 
     same = Parameter(
         False, constraints='bool',

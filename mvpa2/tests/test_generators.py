@@ -368,3 +368,27 @@ def test_exclude_targets_combinations_subjectchunks():
     # yoh: equivalent to set(itertools.product(range(3), range(3))))
     #      but .product is N/A for python2.5
     assert_equal(testing_pairs, set(zip(*np.where(np.ones((3,3))))))
+
+
+def test_permute_chunks():
+
+    def is_sorted(x):
+        return np.array_equal(np.sort(x), x)
+
+    ds = give_data()
+    # change targets labels
+    # there is no target labels permuting within chunks,
+    # assure = True would be error
+    ds.sa['targets'] = range(len(ds.sa.targets))
+    permutation = AttributePermutator(attr='targets',
+                                      chunk_attr='chunks',
+                                      strategy='chunks',
+                                      assure=True)
+
+    pds = permutation(ds)
+
+    assert_false(is_sorted(pds.sa.targets))
+    assert_true(np.array_equal(pds.samples, ds.samples))
+    for chunk_id in np.unique(pds.sa.chunks):
+        chunk_ds = pds[pds.sa.chunks == chunk_id]
+        assert_true(is_sorted(chunk_ds.sa.targets))

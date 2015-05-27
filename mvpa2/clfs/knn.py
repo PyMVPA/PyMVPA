@@ -63,7 +63,7 @@ class kNN(Classifier):
         doc="Distances computed for each sample")
 
 
-    __tags__ = ['knn', 'non-linear', 'binary', 'multiclass']
+    __tags__ = ['knn', 'non-linear', 'binary', 'multiclass', 'oneclass']
 
     def __init__(self, k=2, dfx=squared_euclidean_distance,
                  voting='weighted', **kwargs):

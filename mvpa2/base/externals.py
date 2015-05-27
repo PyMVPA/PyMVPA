@@ -575,6 +575,7 @@ _KNOWN = {'libsvm':'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'nipy.neurospin': "__check_nipy_neurospin()",
           'statsmodels': 'import statsmodels.api as __',
           'mock': "__check('mock')",
+          'joblib': "import joblib as __",
           }
 
 

@@ -31,9 +31,7 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
-* 2.3.2 (???, ? ? ?)
-
-  * Don't wait too long listing the changes...
+* 2.4.0 (Mon, 11 May 2015)
 
   * New functionality
 
@@ -48,20 +46,50 @@ Releases
       features with non-finite values, i.e. NaNs or Infs, for any sample.
     - :func:`~mvpa2.misc.stats.binomial_proportion_ci` for computing
       confidence intervals on proportions of Bernoulli trial outcomes.
+    - New mapper for removing sample means from features.
+    - New algorithm for statistical evaluation of clusters in accuracy maps
+      of group-based searchlight classification analyses. This is essentially
+      an improved implementation of Stelzer et al., NeuroImage, 2013.
+    - New identity mapper. Does nothing, but goes were only mappers can go.
+    - Simplified selection of samples/feature in a dataset. One can now
+      specify sets of attribute values to define sample/feature subsets.
+    - IO adaptor for OpenFMRI-formated datasets. Load arbitrary bits from such
+      a dataset, or automatically build event-related dataset (optionally with
+      NiPy-based HRF-modeling).  `tutorial_data_25mm` was converted to
+      OpenFMRI layout and extended also with `1slice` flavor.
+    - New command line command to generate a motion plot for an
+      OpenFMRI-formated dataset.
+    - New convenience functions for boxplots and outlier detection.
+    - Reincarnated (similar functionality was removed for 2.0 release)
+      convenience methods (
+      :meth:`~mvpa2.base.collections.UniformLengthCollection.match` and
+      :meth:`~mvpa2.datasets.base.Dataset.select`)
+      to ease selecting parts of a dataset
 
-  * API changes
+  * Enhancements
 
-  * Enhancements (?? ENH, OPT, and NF commits)
-
-    - :class:`~mvpa2.mappers.flatten.ProductFlattenMapper` accepts explicit names of factors in the constructor.
+    - :class:`~mvpa2.mappers.flatten.ProductFlattenMapper` accepts
+      explicit names of factors in the constructor.
+    - HollowSphere() can now, optionally, include the center feature.
+    - :func:`~mvpa2.datasets.mri.fmri_dataset` no longer stores original copy
+      of the NIfTI file header -- it converts it to `dict` representation to
+      remain portable. Use :func:`~mvpa2.datasets.mri.strip_nibabel` to convert
+      old datasets to new format if/when necessary.
 
   * Fixes
 
+    - :class:`~mvpa2.algorithms.hyperalignment.Hyperalignment` with regularization
+      (alpha != 1.0) was producing incorrect transformations because they were
+      driven by offsets of the last subject.  Fixed by not "auto_train"ing
+      regularization projection.
     - :func:`~mvpa2.misc.plot.lightbox.plot_lightbox` should take a
       slice index from the last dimension, not the leading one if no
-      `slices` argument was provided
-    - Improved Python3k compatibility in :mod:`~mvpa2.base.state`, :mod:`~mvpa2.tests.test_testing.py`, :mod:`~mvpa2.tests`, and :mod:`~mvpa2.clfs.stats` modules, and in libsvmlrc msvc building.
-    - Partial fix for compatibility with ancient scipy on SPARC using :mod:`~mvpa2.datasets.cosmo`.
+      `slices` argument was provided.
+    - Improved Python3k compatibility in :mod:`~mvpa2.base.state`,
+      :mod:`~mvpa2.tests`, and :mod:`~mvpa2.clfs.stats` modules, and in
+      libsvmlrc msvc building.
+    - Partial fix for compatibility with ancient scipy on SPARC using
+      :mod:`~mvpa2.datasets.cosmo`.
 
 
 * 2.3.1 (Tue, 20 May 2014)
@@ -167,7 +195,7 @@ Releases
 
     - Makefile fetch-data retrieves the data correctly.
     - HDF5 backend fixes to deal with nested/recursive structures and higher
-      tollerance in loading HDF5 from older version
+      tolerance in loading HDF5 from older version.
 
 
 * 2.2.0 (Sun, Sep 16 2012)
