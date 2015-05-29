@@ -237,6 +237,7 @@ mask that came from the voxel selection.
 model = 1
 subject = 1
 of = OpenFMRIDataset(datapath)
+
 dataset = of.get_model_bold_dataset(model, subject,
                                     noinfolabel='rest', mask=mask)
 
