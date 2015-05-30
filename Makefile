@@ -264,7 +264,6 @@ notebooks-stamp: examples2rst
 		--glossary_baseurl http://pymvpa.org/glossary.html \
 		--outdir $(NOTEBOOKBUILD_DIR) \
 		--exclude doc/source/tutorial_prerequisites.rst \
-		--exclude doc/source/examples/searchlight_surf.rst \
 		--verbose \
 		doc/source/tutorial_*.rst doc/source/examples/*.rst
 	touch $@
