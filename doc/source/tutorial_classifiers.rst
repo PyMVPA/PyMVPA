@@ -175,7 +175,7 @@ step.
 .. exercise::
 
   Try calling the ``hpart`` object with our dataset. What happens? Now try
-  passing the dataset to its ``generate()`` methods. What happens now?
+  passing the dataset to its ``generate()`` method. What happens now?
   Make yourself familiar with the concept of a Python generator. Investigate
   what the code snippet ``list(xrange(5))`` does, and try to adapt it to the
   ``HalfPartitioner``.
@@ -243,8 +243,8 @@ Our previous choice of the classifier was guided by the intention to replicate
 algorithm? In this case another nice feature of PyMVPA comes into play. All
 classifiers implement a common interface that makes them easily interchangeable
 without the need to adapt any other part of the analysis code.  If, for
-example, we want to try the popular :mod:`support vector machine
-<mvpa2.clfs.svm>` (SVM) on our example dataset it looks like this:
+example, we want to try the popular :mod:`~mvpa2.clfs.svm` (Support Vector
+Machines) on our example dataset it looks like this:
 
 >>> clf = LinearCSVMC()
 >>> cvte = CrossValidation(clf, HalfPartitioner(attr='runtype'))
@@ -263,7 +263,7 @@ We already know that `~mvpa2.measures.base.CrossValidation` can be used to
 compute errors. So far we have only used the mean number of mismatches between
 actual targets and classifier predictions as the error function (which is the
 default).  However, PyMVPA offers a number of alternative functions in the
-:mod:`mvpa2.misc.errorfx` module, but it is also trivial to specify custom
+:mod:`~mvpa2.misc.errorfx` module, but it is also trivial to specify custom
 ones.  For example, if we do not want to have error reported, but instead
 accuracy, we can do that:
 
