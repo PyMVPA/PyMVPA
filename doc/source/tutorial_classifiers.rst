@@ -127,8 +127,10 @@ the transfer error after swapping the roles:
 We see that on average the classifier error is really low, and we achieve an
 accuracy level comparable to the results reported in the original study.
 
+
 .. index:: cross-validation
-.. _sec_tutorial_crossvalidation:
+.. _chap_tutorial_crossvalidation:
+
 
 Cross-validation
 ================
