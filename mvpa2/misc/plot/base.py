@@ -613,13 +613,6 @@ def plot_dataset_chunks(ds, clf_labels=None):
     pl.ion()
 
 
-def concat_ts_boxplot_stats(run_stats):
-    stats = {}
-    for stat in ('mean', 'median', 'std', 'p25', 'p75', 'n', 'min', 'max'):
-        stats[stat] = np.concatenate([r[0][stat] for r in run_stats])
-    outlierd = [r[1].T for r in run_stats]
-    return stats, outlierd
-
 def timeseries_boxplot(median, mean=None, std=None, n=None, min=None, max=None,
         p25=None, p75=None, outlierd=None, segment_sizes=None, **kwargs):
     """Produce a boxplot-like plot for time series data.
@@ -672,6 +665,8 @@ def timeseries_boxplot(median, mean=None, std=None, n=None, min=None, max=None,
     x = range(len(mean))
     err = std / np.sqrt(n)
     for run, ol in enumerate(outlierd):
+        if ol is None:
+            continue
         pl.plot(range(
                     sum([len(d) for d in outlierd[:run]]),
                     sum([len(d) for d in outlierd[:run+1]])),
@@ -710,5 +705,5 @@ def concat_ts_boxplot_stats(run_stats):
     stats = {}
     for stat in ('mean', 'median', 'std', 'p25', 'p75', 'n', 'min', 'max'):
         stats[stat] = np.concatenate([r[0][stat] for r in run_stats])
-    outlierd = [r[1].T for r in run_stats]
+    outlierd = [r[1].T if not r[1] is None else None for r in run_stats]
     return stats, outlierd
