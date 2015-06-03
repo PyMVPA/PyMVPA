@@ -24,7 +24,7 @@ from mvpa2.datasets import vstack
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
-    import parser_add_common_opt, ds2hdf5, hdf2ds, \
+    import parser_add_common_opt, ds2hdf5, arg2ds, \
            get_crossvalidation_instance, crossvalidation_opts_grp, \
            arg2neighbor, script2obj
 
@@ -68,6 +68,9 @@ searchlight_opts_grp = ('options for searchlight setup', [
     (('--aggregate-fx',), dict(type=script2obj,
         help="""use a custom result aggregation function for the searchlight
              """)),
+    (('--ds-preproc-fx',), dict(type=script2obj,
+        help="""custom preprocessing function to be applied immediately after
+        loading the data""")),
 ])
 
 searchlight_constraints_opts_grp = ('options for constraining the searchlight', [
@@ -157,10 +160,9 @@ def run(args):
                     args.cv_avg_datafold_results, args.cv_prob_tail)
     else:
         raise RuntimeError("this should not happen")
-    dss = hdf2ds(args.data)
-    verbose(3, 'Loaded %i dataset(s)' % len(dss))
-    ds = vstack(dss)
-    verbose(3, 'Concatenation yielded %i samples with %i features' % ds.shape)
+    ds = arg2ds(args.data)
+    if not args.ds_preproc_fx is None:
+        ds = args.ds_preproc_fx(ds)
     # setup neighborhood
     # XXX add big switch to allow for setting up surface-based neighborhoods
     from mvpa2.misc.neighborhood import IndexQueryEngine
