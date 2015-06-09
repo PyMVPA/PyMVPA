@@ -100,4 +100,4 @@ def test_generate_testing_fmri_dataset(tempfile):
     assert_equal(tempfile, filename)
     assert_true(exists(tempfile))
     ds_reloaded = h5load(tempfile)
-    assert_datasets_equal(ds, ds_reloaded)
+    assert_datasets_equal(ds, ds_reloaded, ignore_a={'wtf'})
