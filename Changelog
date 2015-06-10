@@ -31,6 +31,21 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
+* 2.4.1 (???)
+
+  * New functionality
+
+  * Enhancements
+
+    - Unified use of os.path.join as pathjoin
+    - :class:`~mvpa.mappers.procrustean.ProcrusteanMapper` computes reconstruction
+      now more efficiently (just a transpose with proper scaling) in case of
+      non-oblique transformations
+
+  * Fixes
+
+    - 2.4.0 was released with incorrect `__version__` (as 2.3.1)
+
 * 2.4.0 (Mon, 11 May 2015)
 
   * New functionality
