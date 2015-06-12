@@ -198,7 +198,7 @@ class Hyperalignment(ClassWithCollections):
             ref_ds = np.argmax(nfeatures)
         else:
             ref_ds = params.ref_ds
-            if ref_ds < 0 and ref_ds >= ndatasets:
+            if ref_ds < 0 or ref_ds >= ndatasets:
                 raise ValueError, "Requested reference dataset %i is out of " \
                       "bounds. We have only %i datasets provided" \
                       % (ref_ds, ndatasets)
