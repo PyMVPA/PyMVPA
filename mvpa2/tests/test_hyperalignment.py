@@ -189,11 +189,19 @@ class HyperAlignmentTests(unittest.TestCase):
             ds_test_a = [mappers[0].reverse(sd) for sd in ds_test_a]
             corr = np.corrcoef(ds_test_a[2], ds_test_a[1])[0, 1]
             assert(corr < 0.99)
-    
+
     def test_hyper_ref_ds_range_checks(self):
+        # If supplied ref_ds can't be fit into non-negative int
+        # it should thrown an exception
+        with self.assertRaises(ValueError):
+            ha = Hyperalignment(ref_ds=-1.5)
+        # But work if it can fit, int(-0.5)=0
+        ha = Hyperalignment(ref_ds=-0.5)
+        # or int(3.5)=3
+        ha = Hyperalignment(ref_ds=3.5)
+        # if ref_ds is out of range...
         ds_all = [datasets['uni4small'] for i in range(3)]
         # Making sure it raises error if ref_ds is out of range
-        ha = Hyperalignment(ref_ds=3)
         self.assertRaises(ValueError, ha, ds_all)
 
     def _test_on_swaroop_data(self):  # pragma: no cover
