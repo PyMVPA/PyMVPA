@@ -254,20 +254,21 @@ class SurfTests(unittest.TestCase):
         b = niml.to_niml(a)
 
         afni_niml_dset.write(fn, b)
-        bb = afni_niml_dset.read(fn)
-        cc = niml.from_niml(bb)
 
-        os.remove(fn)
+        readers=(niml.from_any,
+                lambda x:niml.from_niml(afni_niml_dset.read(x)))
 
-        for dset in (a, cc):
-            assert_equal(list(dset.sa['labels']), d['labels'])
-            assert_equal(list(dset.sa['stats']), d['stats'])
-            assert_array_equal(np.asarray(dset.fa['node_indices']).ravel(),
-                               d['node_indices'])
+        for reader in readers:
+            cc = reader(fn)
+            for dset in (a, cc):
+                assert_equal(list(dset.sa['labels']), d['labels'])
+                assert_equal(list(dset.sa['stats']), d['stats'])
+                assert_array_equal(np.asarray(dset.fa['node_indices']).ravel(),
+                                   d['node_indices'])
 
-            eps_dec = 4
-            assert_array_almost_equal(dset.samples, d['data'].transpose(),
-                                                                    eps_dec)
+                eps_dec = 4
+                assert_array_almost_equal(dset.samples, d['data'].transpose(),
+                                                                        eps_dec)
 
         # some more tests to ensure that the order of elements is ok
         # (row first or column first)
