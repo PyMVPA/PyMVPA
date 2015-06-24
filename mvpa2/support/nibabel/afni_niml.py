@@ -32,6 +32,8 @@ from io import BytesIO
 from mvpa2.support.nibabel import afni_niml_types as types
 _RE_FLAGS = re.DOTALL # regular expression matching spans across new lines
 
+from mvpa2.base import warning
+
 from mvpa2.base import debug
 if __debug__:
     if not "NIML" in debug.registered:
@@ -267,10 +269,11 @@ def rawniml2string(p, form='text'):
 
     q = p.copy() # make a shallow copy
 
+    has_body=True
 
     if 'nodes' in q:
         s_body = rawniml2string(q.pop('nodes'), form) # recursion
-    else:
+    elif 'data' in q:
         data = q.pop('data')
         data = types.nimldataassupporteddtype(data) # ensure the data format is supported by NIML
         s_body = _data2string(data, form)
@@ -285,12 +288,33 @@ def rawniml2string(p, form='text'):
         # remove some unncessary fields
         for f in ['vec_typ', 'vec_len', 'vec_num']:
             q.pop(f, None)
+    else:
+        has_body=False
 
     s_name = q.pop('name', None).encode()
     s_header = _header2string(q)
 
-    d = map(lambda x:x.encode(), ['<', '\n', ' >', '</', '>'])
-    return b''.join((d[0], s_name, d[1], s_header, d[2], s_body, d[3], s_name, d[4]))
+    if has_body:
+        delim = ['<', '\n', ' >', '</', '>']
+        values = [s_name, s_header, s_body, s_name]
+    else:
+        delim = ['<', '\n', '/>']
+        values = [s_name, s_header]
+
+    delim_enc=map(lambda x:x.encode(), delim)
+
+    n_delim=len(delim_enc)
+    assert(n_delim==len(values)+1)
+
+    # zip with unequal length
+    elems=[]
+    for i in xrange(n_delim):
+        elems.append(delim_enc[i])
+        if i+1<n_delim:
+            # one element less than the number of delimeters
+            elems.append(values[i])
+
+    return b''.join(elems)
 
 def _data2string(data, form):
     '''Converts a data element to binary, text or base64 representation'''
@@ -516,6 +540,12 @@ def string2rawniml(s, i=None):
                 debug("NIML", "Starting a group %s >>>" , niml['name'])
                 i, niml['nodes'] = string2rawniml(s, i)
                 debug("NIML", "<<< ending a group %s", niml['name'])
+
+            elif not 'ni_type' in niml.keys():
+                warning('Empty NIML element %s found, skipping' % name)
+                debug('NIML', 'Empty element, skipping')
+                continue
+
             else:
                 # it's a normal element with data
                 debug('NIML', 'Parsing element %s from position %d, total '
