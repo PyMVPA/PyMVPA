@@ -24,7 +24,7 @@ def test_erdataset():
     nchunks = 3
     ntargets = 5
     blocklength = 5
-    nfeatures = 10
+    nfeatures = 2
     targets = np.tile(np.repeat(range(ntargets), blocklength), nchunks)
     chunks = np.repeat(np.arange(nchunks), ntargets * blocklength)
     samples = np.repeat(
@@ -79,7 +79,7 @@ def test_erdataset():
     expected_nsamples = 3
     assert_equal(len(erds), 1)
     assert_array_equal(erds.samples[0],
-                       np.repeat(np.arange(2,2+expected_nsamples),
+                       np.repeat(np.arange(2, 2+expected_nsamples),
                                 nfeatures))
     assert_array_equal(erds.sa.orig_onset, [evs[0]['onset']])
     assert_array_equal(erds.sa.orig_duration, [evs[0]['duration']])
@@ -111,7 +111,7 @@ def test_erdataset():
     # overide onset
     evds = extract_boxcar_event_samples(ds, evs, event_offset=2)
     assert_equal(evds.shape, (len(evs), 3 * ds.nfeatures))
-    assert_equal(np.unique(evds.samples[1,:10]), 72)
+    assert_equal(np.unique(evds.samples[1, :nfeatures]), 72)
     # overide both
     evds = extract_boxcar_event_samples(ds, evs, event_offset=-2,
                                         event_duration=1)
@@ -121,7 +121,8 @@ def test_erdataset():
 def test_hrf_modeling():
     skip_if_no_external('nibabel')
     skip_if_no_external('nipy') # ATM relies on NiPy's GLM implementation
-    ds = load_example_fmri_dataset('25mm', literal=True)
+    # taking subset of the dataset to speed testing up
+    ds = load_example_fmri_dataset('25mm', literal=True)[{'chunks': [0, 1]}, :3]
     # TODO: simulate short dataset with known properties and use it
     # for testing
     events = find_events(targets=ds.sa.targets, chunks=ds.sa.chunks)
