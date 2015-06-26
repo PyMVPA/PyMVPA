@@ -195,9 +195,13 @@ class AttrDataset(object):
         Parameters
         ----------
         samples : ndarray
-          Data samples.  This has to be a two-dimensional (samples x features)
-          array. If the samples are not in that format, please consider one of
-          the `AttrDataset.from_*` classmethods.
+          Data samples.  This has to be at least two-dimensional
+          (samples x features) array, or need to be convertible to such an
+          array of such shape. If the samples are not in that format, please
+          consider one of the `AttrDataset.from_*` classmethods.
+          There is a special case: if a list (or a tuple) of Datasets is
+          provided, the Dataset will contain those Datasets in the samples array
+          of ``object`` dtype.
         sa : SampleAttributesCollection
           Samples attributes collection.
         fa : FeatureAttributesCollection
@@ -207,8 +211,17 @@ class AttrDataset(object):
 
         """
         # conversions
-        if isinstance(samples, list):
-            samples = np.array(samples)
+        if isinstance(samples, list) or isinstance(samples, tuple):
+            if all(is_datasetlike(e) for e in samples):
+                # special case dataset of datasets
+                temp = np.empty((len(samples),), dtype=np.object)
+                for i, s in enumerate(samples):
+                    temp[i] = s
+                samples = temp
+                del temp
+            else:
+                # let numpy do the magic in all other cases
+                samples = np.array(samples)
         # Check all conditions we need to have for `samples` dtypes
         if not hasattr(samples, 'dtype'):
             raise ValueError(
@@ -682,7 +695,7 @@ def vstack(datasets, a=None):
 
     if __debug__:
         target = sorted(datasets[0].sa.keys())
-        if not np.all([sorted(ds.sa.keys()) == target for ds in datasets]):
+        if not all(sorted(ds.sa.keys()) == target for ds in datasets):
             raise ValueError("Sample attributes collections of to be stacked "
                              "datasets have varying attributes.")
     # will puke if not equal number of features
@@ -751,7 +764,7 @@ def hstack(datasets, a=None):
 
     if __debug__:
         target = sorted(datasets[0].fa.keys())
-        if not np.all([sorted(ds.fa.keys()) == target for ds in datasets]):
+        if not all(sorted(ds.fa.keys()) == target for ds in datasets):
             raise ValueError("Feature attributes collections of to be stacked "
                              "datasets have varying attributes.")
     # will puke if not equal number of samples
