@@ -11,9 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as np
-from mvpa2.base.dochelpers import borrowdoc
 from mvpa2.mappers.projection import ProjectionMapper
-from mvpa2.base.types import is_datasetlike
 
 if __debug__:
     from mvpa2.base import debug
@@ -49,5 +47,6 @@ class StaticProjectionMapper(ProjectionMapper):
         if __debug__:
             debug("MAP_", "Mixing matrix has %s shape and norm=%f" %
                   (self._proj.shape, np.linalg.norm(self._proj)))
+
 
 
