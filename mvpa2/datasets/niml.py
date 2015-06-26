@@ -408,21 +408,40 @@ def read(fn):
         Filename
     '''
 
-    readers_converters = [(niml_dset.read, from_niml)]
+    readers_converters = {('.dset',): (niml_dset.read, from_niml)}
+
     if externals.exists('h5py'):
-        readers_converters.append((h5load, None))
+        readers_converters[('.h5py','.hdf')]=(h5load,None)
 
-    for reader, converter in readers_converters:
-        try:
-            r = reader(fn)
-            if converter:
-                r = converter(r)
-            return r
+    keys=[exts for exts in readers_converters.iterkeys()
+            if any(fn.endswith(ext) for ext in exts)]
 
-        except:
-            pass
+    n_keys=len(keys)
 
-    raise ValueError("Unable to read %s" % fn)
+    if n_keys==1:
+        # single extension matches
+        key=keys[0]
+        reader, converter = readers_converters[key]
+
+        r=reader(fn)
+        if converter is not None:
+            r=converter(r)
+        return r
+
+    else:
+        # unclear extension, try all readers and throw less informative
+        # error message
+        for reader, converter in readers_converters.itervalues():
+            try:
+                r = reader(fn)
+                if converter:
+                    r = converter(r)
+                return r
+
+            except:
+                pass
+
+        raise ValueError("Unable to read %s with unclear extension" % fn)
 
 
 def from_any(x):
