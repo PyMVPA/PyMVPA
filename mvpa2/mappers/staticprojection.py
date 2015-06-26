@@ -51,39 +51,3 @@ class StaticProjectionMapper(ProjectionMapper):
                   (self._proj.shape, np.linalg.norm(self._proj)))
 
 
-
-class StaticProjectionMapperWithAttr(StaticProjectionMapper):
-    """
-    Extends StaticProjectionMapper with the ability to add
-    feature attributes during forward mapping.
-
-    Parameters
-    ----------
-    add_fa : Dictionary of features attributes to be added
-      when forwarding a dataset.
-    **kwargs:
-      All keyword arguments are passed to the StaticProjectionMapper
-      constructor.
-    """
-    @borrowdoc(StaticProjectionMapper)
-    def __init__(self, proj, recon=None, add_fa=None, **kwargs):
-        StaticProjectionMapper.__init__(self, proj=proj, recon=recon, **kwargs)
-        self._add_fa = add_fa
-
-    def __train(self, dummyds):
-        if __debug__:
-            if self.add_fa is None:
-                 debug("MAP_", "Mixing matrix has no additional feature attributes")
-            else:
-                 debug("MAP_", "Mixing matrix has additional attributes to apply %s" %
-                      (self._add_fa.keys()))
-
-    def _forward_dataset(self, data):
-        res = StaticProjectionMapper._forward_dataset(self, data)
-        if is_datasetlike(res) and self._add_fa is not None:
-            for key in self._add_fa:
-                res.fa[key] = self._add_fa[key]
-        return res
-
-
-
