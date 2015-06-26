@@ -177,6 +177,49 @@ def test_hrf_modeling():
     # order of main regressors is unchanged
     assert_array_equal(evds.sa.targets, evds_regrs.sa.targets)
 
+    # custom multiple regressors
+    ds.sa['time_indices_squared'] = ds.sa.time_indices ** 2
+    # custom regressors
+    evds_regrs = eventrelated_dataset(ds, events, time_attr='time_coords',
+                                condition_attr='targets',
+                                regr_attrs=['time_indices', 'time_indices_squared'],
+                                design_kwargs=dict(drift_model='blank'),
+                                glmfit_kwargs=dict(model='ols'),
+                                model='hrf')
+    # verify that nothing screwed up time_coords
+    assert_equal(ds.sa.time_coords[0], 0)
+    assert_equal(len(evds_regrs), len(evds))
+    # two more output samples in .a.add_regs
+    assert_equal(len(evds_regrs.a.add_regs) - 2, len(evds.a.add_regs))
+    # come last before constant
+    assert_array_equal(
+        ['time_indices', 'time_indices_squared'],
+        evds_regrs.a.add_regs.sa.regressor_names[-3:-1])
+    # order of main regressors is unchanged
+    assert_array_equal(evds.sa.targets, evds_regrs.sa.targets)
+
+    # custom multiple regressors with multidimensional one
+    ds.sa['time_indices_powers'] = np.vstack([ds.sa.time_indices ** 2,
+                                              ds.sa.time_indices ** 3]).T
+    # custom regressors
+    evds_regrs = eventrelated_dataset(ds, events, time_attr='time_coords',
+                                condition_attr='targets',
+                                regr_attrs=['time_indices', 'time_indices_powers'],
+                                design_kwargs=dict(drift_model='blank'),
+                                glmfit_kwargs=dict(model='ols'),
+                                model='hrf')
+    # verify that nothing screwed up time_coords
+    assert_equal(ds.sa.time_coords[0], 0)
+    assert_equal(len(evds_regrs), len(evds))
+    # three more output samples in .a.add_regs
+    assert_equal(len(evds_regrs.a.add_regs) - 3, len(evds.a.add_regs))
+    # come last before constant
+    assert_array_equal(
+        ['time_indices', 'time_indices_powers.0', 'time_indices_powers.1'],
+        evds_regrs.a.add_regs.sa.regressor_names[-4:-1])
+    # order of main regressors is unchanged
+    assert_array_equal(evds.sa.targets, evds_regrs.sa.targets)
+
     # custom regressors from external sources
     evds_regrs = eventrelated_dataset(ds, events, time_attr='time_coords',
                                 condition_attr='targets',
