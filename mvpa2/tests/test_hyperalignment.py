@@ -196,7 +196,7 @@ class HyperAlignmentTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             ha = Hyperalignment(ref_ds=-1.5)
         # But work if it can fit, int(-0.5)=0
-        ha = Hyperalignment(ref_ds=-0.5)
+        ha = Hyperalignment(ref_ds=0.5)
         # or int(3.5)=3
         ha = Hyperalignment(ref_ds=3.5)
         # if ref_ds is out of range...

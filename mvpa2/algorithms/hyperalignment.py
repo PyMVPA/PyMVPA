@@ -124,7 +124,7 @@ class Hyperalignment(ClassWithCollections):
     level2_niter = Parameter(1, constraints=EnsureInt() & EnsureRange(min=0),
             doc="Number of 2nd-level iterations.")
 
-    ref_ds = Parameter(None, constraints=(EnsureInt() & EnsureRange(min=0) 
+    ref_ds = Parameter(None, constraints=(EnsureRange(min=0) & EnsureInt() 
                                           | EnsureNone()),
             doc="""Index of a dataset to use as 1st-level common space
                 reference.  If `None`, then the dataset with the maximum
