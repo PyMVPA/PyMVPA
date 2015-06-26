@@ -1229,7 +1229,7 @@ class BayesConfusionHypothesis(Node):
       [[0, 1], [2], [3, 4, 5]]
 
     This hypothesis represent the state where class 0 and 1 cannot be
-    distinguish from each other, but both 0 and 1 together can be distinguished
+    distinguished from each other, but both 0 and 1 together can be distinguished
     from class 2 and the group of 3, 4, and 5 -- where classes from the later
     group cannot be distinguished from one another.
 
@@ -1259,7 +1259,7 @@ class BayesConfusionHypothesis(Node):
           Name of the sample attribute in the output dataset where the
           hypothesis partition configurations will be stored.
         prior_Hs : array
-          Vector of priors for each hypotheses. Typically used in conjuction
+          Vector of priors for each hypotheses. Typically used in conjunction
           with an explicit set of possible hypotheses (see ``hypotheses``).
           If ``None`` a flat prior is assumed.
         log : bool

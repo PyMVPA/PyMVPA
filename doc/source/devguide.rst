@@ -163,7 +163,7 @@ Docstrings
 
 All documentation should be written using NumPy_ documentation conventions:
 
-  http://projects.scipy.org/numpy/wiki/CodingStyleGuidelines#docstring-standard
+  https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
 
 
 Classes
@@ -294,7 +294,7 @@ Furthermore we encourage detailed docstrings for the classes, including
 *Examples* section with the demonstration of most typical use cases and aspects
 of the classes.  Those snippets are also part of the tests battery
 
-.. _`nose testing framework`: http://somethingaboutorange.com/mrl/projects/nose
+.. _`nose testing framework`: https://nose.readthedocs.org
 
 
 
