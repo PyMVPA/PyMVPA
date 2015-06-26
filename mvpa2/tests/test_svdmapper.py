@@ -13,9 +13,9 @@ import unittest
 import numpy as np
 
 from mvpa2.mappers.svd import SVDMapper
-from mvpa2.testing import reseed_rng
+from mvpa2.testing import *
 from mvpa2.support.copy import deepcopy
-
+from mvpa2.testing.datasets import datasets
 
 class SVDMapperTests(unittest.TestCase):
 
@@ -98,6 +98,18 @@ class SVDMapperTests(unittest.TestCase):
         data_r = pm.reverse(data_f)
         self.assertEqual(data_r.shape, (98,40))
 
+    def test_svd_pass_attr(self):
+        ds = datasets['uni2small']
+        spm = SVDMapper(enable_ca=['pass_fa'],pass_attr=[('ca.pass_fa','fa',1,'magic')])
+        spm.ca.pass_fa = np.arange(ds.nfeatures)
+        spm.train(ds)
+        ok_(len(ds.fa) > 0)
+        dsf_fwd = spm.forward(ds)
+        dsf = spm(ds)
+        ok_(len(dsf.fa) > 0)
+        assert_array_equal(dsf.samples, dsf_fwd.samples)
+        assert_string_equal(dsf.fa.keys()[0], 'magic')
+        assert_array_equal(dsf.fa.magic, np.arange(ds.nfeatures))
 
 
 def suite():  # pragma: no cover
