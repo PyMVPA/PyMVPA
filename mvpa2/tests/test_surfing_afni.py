@@ -15,6 +15,7 @@ import numpy as np
 import os
 from os.path import join as pathjoin
 import tempfile
+import copy
 
 from mvpa2.testing import *
 
@@ -119,12 +120,36 @@ class SurfTests(unittest.TestCase):
 
             for k in important_keys:
                 s_bad = s.replace(k.encode(), b'foo')
-                assert_raises((KeyError, ValueError), afni_niml.string2rawniml, s_bad)
+                #assert_raises((KeyError, ValueError), afni_niml.string2rawniml, s_bad)
 
             # adding garbage at the beginning or end should fail the parse
             garbage = "GARBAGE".encode()
             assert_raises((KeyError, ValueError), afni_niml.string2rawniml, s + garbage)
             assert_raises((KeyError, ValueError), afni_niml.string2rawniml, garbage + s)
+
+            # allow entries with no data, such as lacking node indices
+            # in case AFNI's 3dVol2Surf was run without node index output
+            niml_struct_empty_nodes=copy.deepcopy(minimal_niml_struct)
+            niml_struct_empty_nodes[0]['nodes'].append({'name': 'INDEX_LIST'})
+
+            s_empty_nodes=afni_niml.rawniml2string(niml_struct_empty_nodes, fmt)
+            d_empty_nodes=afni_niml.string2rawniml(s_empty_nodes)
+            assert_array_equal(d[0]['nodes'][0]['data'],
+                                d_empty_nodes[0]['nodes'][0]['data'])
+            assert_equal(d[0]['nodes'][0].keys(),
+                                d_empty_nodes[0]['nodes'][0].keys())
+            assert_array_equal(d[0]['nodes'][1]['data'],
+                                d_empty_nodes[0]['nodes'][1]['data'])
+            assert_equal(d[0]['nodes'][1].keys(),
+                                d_empty_nodes[0]['nodes'][1].keys())
+
+
+
+
+
+
+
+
 
 
     @with_tempfile('.niml.dset', 'dset')
@@ -254,20 +279,21 @@ class SurfTests(unittest.TestCase):
         b = niml.to_niml(a)
 
         afni_niml_dset.write(fn, b)
-        bb = afni_niml_dset.read(fn)
-        cc = niml.from_niml(bb)
 
-        os.remove(fn)
+        readers=(niml.from_any,
+                lambda x:niml.from_niml(afni_niml_dset.read(x)))
 
-        for dset in (a, cc):
-            assert_equal(list(dset.sa['labels']), d['labels'])
-            assert_equal(list(dset.sa['stats']), d['stats'])
-            assert_array_equal(np.asarray(dset.fa['node_indices']).ravel(),
-                               d['node_indices'])
+        for reader in readers:
+            cc = reader(fn)
+            for dset in (a, cc):
+                assert_equal(list(dset.sa['labels']), d['labels'])
+                assert_equal(list(dset.sa['stats']), d['stats'])
+                assert_array_equal(np.asarray(dset.fa['node_indices']).ravel(),
+                                   d['node_indices'])
 
-            eps_dec = 4
-            assert_array_almost_equal(dset.samples, d['data'].transpose(),
-                                                                    eps_dec)
+                eps_dec = 4
+                assert_array_almost_equal(dset.samples, d['data'].transpose(),
+                                                                        eps_dec)
 
         # some more tests to ensure that the order of elements is ok
         # (row first or column first)
