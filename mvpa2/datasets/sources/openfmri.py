@@ -315,6 +315,7 @@ class OpenFMRIDataset(object):
                 d = run_data[subj]
                 if len(d) == max_vol:
                     continue
+                # XXX WTF 6? determine shape of an attribute from other subjs
                 fixed_run = np.empty((max_vol, 6), dtype=np.float)
                 fixed_run[:] = np.nan
                 if len(d):
