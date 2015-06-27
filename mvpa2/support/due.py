@@ -14,7 +14,7 @@ installed duecredit.
 
 Then use in your code as
 
-    from .due import due
+    from .due import due, Doi, BibTeX
 
 
 Examples
@@ -27,13 +27,16 @@ License:
 Originally a part of the duecredit, which is distributed under BSD-2 license.
 """
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 class InactiveDueCreditCollector(object):
+    """Just a stub at the Collector which would not do anything"""
     def _donothing(self, *args, **kwargs):
+        """Perform no good and no bad"""
         pass
 
     def dcite(self, *args, **kwargs):
+        """If I could cite I would"""
         def nondecorating_decorator(func):
              return func
         return nondecorating_decorator
@@ -44,18 +47,16 @@ class InactiveDueCreditCollector(object):
         return self.__class__.__name__ + '()'
 
 def _donothing_func(*args, **kwargs):
+    """Perform no good and no bad"""
     pass
 
 try:
     from duecredit import *
-except ImportError:
-    # Initiate due stub
-    due = InactiveDueCreditCollector()
-    BibTeX = Doi = Donate = _donothing_func
 except Exception as e:
-    import logging
-    logging.getLogger("duecredit").error(
-        "Failed to import duecredit due to %s" % str(e))
-    # TODO: remove duplication
+    if type(e).__name__ != 'ImportError':
+        import logging
+        logging.getLogger("duecredit").error(
+            "Failed to import duecredit due to %s" % str(e))
+    # Initiate due stub
     due = InactiveDueCreditCollector()
     BibTeX = Doi = Donate = _donothing_func
