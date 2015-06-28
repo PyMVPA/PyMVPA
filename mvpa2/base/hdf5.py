@@ -522,9 +522,12 @@ def _hdf_to_ndarray(hdf):
         hdf.read_direct(obj)
 
     if 'is_a_view' in hdf.attrs:
-        assert ('shape' in hdf.attrs)
         assert ('c_order' in hdf.attrs)
-        shape = hdf.attrs['shape']
+        if externals.versions['hdf5'] < '1.8.7' and not 'shape' in hdf.attrs:
+            shape = tuple()
+        else:
+            assert ('shape' in hdf.attrs)
+            shape = hdf.attrs['shape']
         if 'dtype_names' in hdf.attrs:
             assert('dtype' not in hdf.attrs)
             names = hdf.attrs['dtype_names']
@@ -653,7 +656,8 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
             hdf.create_dataset(name, None, None, obj, **kwargs)
         except TypeError as exc:
             exc_str = str(exc)
-            if ("No conversion path for dtype" in exc_str):
+            if ("No conversion path for dtype" in exc_str or
+                "has no native HDF5 equivalent" in exc_str):
                 is_a_view = True
             else:
                 # we know no better
@@ -672,7 +676,8 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
             else:
                 obj_ = obj
             assert(obj_.flags.c_contiguous or obj_.flags.f_contiguous)
-            hdf.create_dataset(name, None, None, obj_.data, **kwargs)
+            obj_data = np.frombuffer(obj_.data, dtype=np.int8)
+            hdf.create_dataset(name, None, None, obj_data, **kwargs)
             hdf[name].attrs.create('is_a_view', True)
             hdf[name].attrs.create('c_order', obj_.flags.c_contiguous)
             if obj_.dtype.names:
