@@ -646,10 +646,16 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
         if is_a_view:
             # do conversion to pure byte array, by using array's buffer
             if is_ndarray:
-                hdf.create_dataset(name, None, None, obj.data, **kwargs)
+                if not (obj.flags.c_contiguous or obj.flags.f_contiguous):
+                    # we need a copy to operate on
+                    obj_ = obj.copy()
+                else:
+                    obj_ = obj
+                assert(obj_.flags.c_contiguous or obj_.flags.f_contiguous)
+                hdf.create_dataset(name, None, None, obj_.data, **kwargs)
                 hdf[name].attrs.create('is_a_view', True)
-                hdf[name].attrs.create('dtype', obj.dtype.str)
-                hdf[name].attrs.create('c_order', obj.flags.c_contiguous)
+                hdf[name].attrs.create('dtype', obj_.dtype.str)
+                hdf[name].attrs.create('c_order', obj_.flags.c_contiguous)
                 # shape is handled later
             else:
                 raise ValueError("We should have got here only with ndarray")
