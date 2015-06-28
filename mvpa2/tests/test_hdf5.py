@@ -239,18 +239,18 @@ def test_state_setter_getter():
 
 @sweepargs(obj=(
     # simple 1d -- would have worked before as well
-    np.array([{'d': np.empty(shape=(2,3))}], dtype=object),
+    np.array([{'d': np.empty(shape=(2, 3))}], dtype=object),
     # 2d -- before fix would be reconstructed incorrectly
-    np.array([[{'d': np.empty(shape=(2,3))}]], dtype=object),
+    np.array([[{'d': np.empty(shape=(2, 3))}]], dtype=object),
     # a bit more elaborate storage
-    np.array([[{'d': np.empty(shape=(2,3)),
+    np.array([[{'d': np.empty(shape=(2, 3)),
                 'k': 33}]*2]*3, dtype=object),
     # Swaroop's use-case
-    AttrDataset(np.array([{'d': np.empty(shape=(2,3))}], dtype=object)),
+    AttrDataset(np.array([{'d': np.empty(shape=(2, 3))}], dtype=object)),
     # as it would be reconstructed before the fix -- obj array of obj arrays
-    np.array([np.array([{'d': np.empty(shape=(2,3))}], dtype=object)],
+    np.array([np.array([{'d': np.empty(shape=(2, 3))}], dtype=object)],
              dtype=object),
-    np.array([],dtype='int64'),
+    np.array([], dtype='int64'),
     ))
 def test_save_load_object_dtype_ds(obj=None):
     """Test saving of custom object ndarray (GH #84)
@@ -286,12 +286,12 @@ _python_objs = [
     # tuples
     (1, 2), tuple(),
     # pure Python sets
-    set([1,2]), set(), set([None]), set([tuple()]),
+    set([1, 2]), set(), set([None]), set([tuple()]),
     # Our SmartVersion which was missing __reduce__
     SmartVersion("0.1"),
     ]
 import collections
-_python_objs.append([collections.deque([1,2])])
+_python_objs.append([collections.deque([1, 2])])
 if hasattr(collections, 'OrderedDict'):
     _python_objs.append([collections.OrderedDict(),
                          collections.OrderedDict(a9=1, a0=2)])
@@ -304,7 +304,7 @@ if hasattr(collections, 'namedtuple') and sys.version_info > (2, 7, 4):
     # And the one with non-matching name
     _NamedTuple_ = collections.namedtuple('NamedTuple', ['red', 'blue'])
     _python_objs.extend([_NamedTuple(4, 2),
-                         _NamedTuple_(4, 2),])
+                         _NamedTuple_(4, 2), ])
 if hasattr(collections, 'OrderedDict'):
     _python_objs.extend([collections.OrderedDict(a=1, b=2)])
 
@@ -319,11 +319,11 @@ def test_save_load_python_objs(obj):
     # save/reload
     try:
         h5save(f.name, obj)
-    except Exception, e:
+    except Exception as e:
         raise AssertionError("Failed to h5save %s: %s" % (obj, e))
     try:
         obj_ = h5load(f.name)
-    except Exception, e:
+    except Exception as e:
         raise AssertionError("Failed to h5load %s: %s" % (obj, e))
     assert_equal(type(obj), type(obj_))
     assert_equal(obj, obj_)
@@ -381,7 +381,7 @@ def test_nested_obj_arrays(f, backend, a):
     # import pydb; pydb.debugger()
     ok_(a_[1][2] is a_)
 
-@sweepargs(backend=['hdf5','pickle'])
+@sweepargs(backend=['hdf5', 'pickle'])
 @with_tempfile()
 def test_ca_col(f, backend):
     from mvpa2.base.state import ConditionalAttributesCollection, ConditionalAttribute
