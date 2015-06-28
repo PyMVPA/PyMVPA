@@ -60,6 +60,7 @@ class HDF5ConversionError(Exception):
     """
     pass
 
+
 def hdf2obj(hdf, memo=None):
     """Convert an HDF5 group definition into an object instance.
 
@@ -121,10 +122,8 @@ def hdf2obj(hdf, memo=None):
             # extract the scalar from the 0D array as is
             obj = hdf[()]
         else:
-            # read array-dataset into an array
-            obj = np.empty(hdf.shape, hdf.dtype)
-            if obj.size:
-                hdf.read_direct(obj)
+            obj = _hdf_to_ndarray(hdf)
+
     else:
         # check if we have a class instance definition here
         if not ('class' in hdf.attrs or 'recon' in hdf.attrs):
@@ -294,7 +293,7 @@ def _import_from_thin_air(mod_name, importee, cls_name=None):
         cls_name = importee
     try:
         mod = __import__(mod_name, fromlist=[importee])
-    except ImportError, e:
+    except ImportError as e:
         if mod_name.startswith('mvpa') and not mod_name.startswith('mvpa2'):
             # try to be gentle on data that got stored with PyMVPA 0.5 or 0.6
             mod_name = mod_name.replace('mvpa', 'mvpa2', 1)
@@ -339,7 +338,7 @@ def _recon_customobj_defaultrecon(hdf, memo):
             if __debug__:
                 debug('HDF5', "Populating %s object." % pcls)
             getattr(obj, umeth)(cfunc(hdf, memo))
-        except NotImplementedError, e:
+        except NotImplementedError as e:
             if issubclass(cls, tuple) \
                 and hasattr(obj, '_asdict') and hasattr(obj, '_make'):
                 # this is an ugly hack to support NamedTuples -- which
@@ -515,6 +514,22 @@ def _hdf_tupleitems_to_obj(hdf, memo):
     return tuple(_hdf_list_to_obj(hdf, memo))
 
 
+def _hdf_to_ndarray(hdf):
+    # read array-dataset into an array
+    obj = np.empty(hdf.shape, hdf.dtype)
+    if obj.size:
+        hdf.read_direct(obj)
+    if 'is_a_view' in hdf.attrs:
+        assert ('dtype' in hdf.attrs)
+        assert ('shape' in hdf.attrs)
+        assert ('c_order' in hdf.attrs)
+        shape = hdf.attrs['shape']
+        dtype = hdf.attrs['dtype']
+        obj = np.frombuffer(obj.data, dtype=dtype, count=int(np.prod(shape)))
+        obj = obj.reshape(shape, order=['F', 'C'][int(hdf.attrs['c_order'])])
+    return obj
+
+
 def _seqitems_to_hdf(obj, hdf, memo, noid=False, **kwargs):
     """Store a sequence as HDF item list"""
     hdf.attrs.create('length', len(obj))
@@ -583,8 +598,8 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
     is_objarray = False                # assume the bright side ;-)
     is_ndarray = isinstance(obj, np.ndarray)
     if is_ndarray:
+        shape = obj.shape
         if obj.dtype == np.object:
-            shape = obj.shape
             if not len(obj.shape):
                 # even worse: 0d array
                 # we store 0d object arrays just by content
@@ -610,6 +625,10 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
     is_scalar = np.isscalar(obj)
     if is_scalar or is_ndarray:
         is_numpy_scalar = issubclass(type(obj), np.generic)
+        # some numpy dtypes can't be represented in the hdf5, so
+        # we would need to save a view of the bytes and other
+        # parameters (shape, dtype, order) to reconstruct later
+        is_a_view = is_ndarray and obj.dtype.kind in ('U',)
         if name is None:
             # HDF5 cannot handle datasets without a name
             name = '__unnamed__'
@@ -624,7 +643,19 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
             # shape==() ... TODO: check about is_objarrays ;-)
             kwargs = dict([(k, v) for (k, v) in kwargs.iteritems()
                            if k != 'compression'])
-        hdf.create_dataset(name, None, None, obj, **kwargs)
+        if is_a_view:
+            # do conversion to pure byte array, by using array's buffer
+            if is_ndarray:
+                hdf.create_dataset(name, None, None, obj.data, **kwargs)
+                hdf[name].attrs.create('is_a_view', True)
+                hdf[name].attrs.create('dtype', obj.dtype.str)
+                hdf[name].attrs.create('c_order', obj.flags.c_contiguous)
+                # shape is handled later
+            else:
+                raise ValueError("We should have got here only with ndarray")
+        else:
+            hdf.create_dataset(name, None, None, obj, **kwargs)
+
         if not noid and not is_scalar:
             # objref for scalar items would be overkill
             hdf[name].attrs.create('objref', obj_id)
@@ -639,6 +670,8 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
         if is_objarray:
             # we need to confess the true origin
             hdf[name].attrs.create('is_objarray', True)
+
+        if is_objarray or is_a_view:
             # it was of more than 1 dimension or it was a scalar
             if not len(shape) and externals.versions['hdf5'] < '1.8.7':
                 if __debug__:
@@ -682,6 +715,8 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
         # we need to confess the true origin
         grp.attrs.create('is_objarray', True)
         grp.attrs.create('shape', shape)
+
+    # TODO: should we confess about a n is_a_view again here similarly to how was done for is_objarray?
 
     # standard containers need special treatment
     if not hasattr(obj, '__reduce__'):

@@ -305,16 +305,22 @@ if hasattr(collections, 'namedtuple') and sys.version_info > (2, 7, 4):
     # And the one with non-matching name
     _NamedTuple_ = collections.namedtuple('NamedTuple', ['red', 'blue'])
     _python_objs.extend([_NamedTuple(4, 2),
-                         _NamedTuple_(4, 2), ])
+                         _NamedTuple_(4, 3), ])
 if hasattr(collections, 'OrderedDict'):
     _python_objs.extend([collections.OrderedDict(a=1, b=2)])
+
+_unicode_arrays = [np.array([['a', 'b', 'x'],
+                             [u"ы", 'a', 'z']], order=o)
+                   for o in 'CF']
 
 # numpy arrays
 _python_objs += [
     np.arange(3),  # simple one
     np.array("string"),
-    np.array(u"ы")
-]
+    np.array(u"ы"),
+  ] \
+  + _unicode_arrays \
+  #+ [a[:, ::2] for a in _unicode_arrays]
 
 @sweepargs(obj=_python_objs)
 def test_save_load_python_objs(obj):
