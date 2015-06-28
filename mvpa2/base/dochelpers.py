@@ -560,6 +560,15 @@ def _str(obj, *args, **kwargs):
     return '<' + s + '>'
 
 
+def safe_str(obj):
+    """Return string of an object even if str() call fails
+    """
+    try:
+        return str(obj)
+    except Exception as exc:
+        return "%s(FAILED str due to %s)" % (type(obj), str(exc))
+
+
 def borrowdoc(cls, methodname=None):
     """Return a decorator to borrow docstring from another `cls`.`methodname`
 
