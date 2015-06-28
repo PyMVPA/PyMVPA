@@ -314,7 +314,7 @@ _unicode_arrays = [np.array([['a', u'мама', 'x'],
                    for o in 'CF']
 
 # non-record (simple) numpy arrays
-_python_objs += [
+_numpy_objs = [
     np.arange(3),
     np.arange(6).reshape((2, 3), order='C'),
     np.arange(6).reshape((2, 3), order='F'),
@@ -325,8 +325,14 @@ _python_objs += [
   + _unicode_arrays \
   + [a[:, ::2] for a in _unicode_arrays]
 
+# record arrays
+_numpy_objs += [
+    np.array([(1.0, 2), (3.0, 4)], dtype=[('x', float), ('y', int)]),
+    np.array([(1.0, 'a'), (3.0, 'b')], dtype=[('x', float), ('y', 'S1')]),
+    np.array([(1.0, u'ы'), (3.0, 'b')], dtype=[('x', float), ('y', '<U1')]),
+]
 
-@sweepargs(obj=_python_objs)
+@sweepargs(obj=_python_objs + _numpy_objs)
 def test_save_load_python_objs(obj):
     """Test saving objects of various types
     """
@@ -346,6 +352,7 @@ def test_save_load_python_objs(obj):
     assert_equal(type(obj), type(obj_))
 
     if isinstance(obj, np.ndarray):
+        assert_equal(obj.dtype, obj_.dtype)
         assert_array_equal(obj, obj_)
     else:
         assert_equal(obj, obj_)

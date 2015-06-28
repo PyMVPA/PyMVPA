@@ -517,14 +517,22 @@ def _hdf_tupleitems_to_obj(hdf, memo):
 def _hdf_to_ndarray(hdf):
     # read array-dataset into an array
     obj = np.empty(hdf.shape, hdf.dtype)
+
     if obj.size:
         hdf.read_direct(obj)
+
     if 'is_a_view' in hdf.attrs:
-        assert ('dtype' in hdf.attrs)
         assert ('shape' in hdf.attrs)
         assert ('c_order' in hdf.attrs)
         shape = hdf.attrs['shape']
-        dtype = hdf.attrs['dtype']
+        if 'dtype_names' in hdf.attrs:
+            assert('dtype' not in hdf.attrs)
+            names = hdf.attrs['dtype_names']
+            dtypes = hdf.attrs['dtype_types']
+            dtype = zip(names, dtypes)
+        else:
+            assert('dtype' in hdf.attrs)
+            dtype = hdf.attrs['dtype']
         obj = np.frombuffer(obj.data, dtype=dtype, count=int(np.prod(shape)))
         obj = obj.reshape(shape, order=['F', 'C'][int(hdf.attrs['c_order'])])
     return obj
@@ -625,42 +633,57 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
     is_scalar = np.isscalar(obj)
     if is_scalar or is_ndarray:
         is_numpy_scalar = issubclass(type(obj), np.generic)
-        # some numpy dtypes can't be represented in the hdf5, so
-        # we would need to save a view of the bytes and other
-        # parameters (shape, dtype, order) to reconstruct later
-        is_a_view = is_ndarray and obj.dtype.kind in ('U',)
         if name is None:
             # HDF5 cannot handle datasets without a name
             name = '__unnamed__'
         if __debug__:
             debug('HDF5', "Store '%s' (ref: %i) in [%s/%s]"
-                          % (type(obj), obj_id, hdf.name, name))
+                  % (type(obj), obj_id, hdf.name, name))
         # the real action is here
         if 'compression' in kwargs \
-               and (is_scalar or (is_ndarray and not len(obj.shape))):
+                and (is_scalar or (is_ndarray and not len(obj.shape))):
             # recent (>= 2.0.0) h5py is strict not allowing
             # compression to be set for scalar types or anything with
             # shape==() ... TODO: check about is_objarrays ;-)
             kwargs = dict([(k, v) for (k, v) in kwargs.iteritems()
                            if k != 'compression'])
-        if is_a_view:
-            # do conversion to pure byte array, by using array's buffer
-            if is_ndarray:
-                if not (obj.flags.c_contiguous or obj.flags.f_contiguous):
-                    # we need a copy to operate on
-                    obj_ = obj.copy()
-                else:
-                    obj_ = obj
-                assert(obj_.flags.c_contiguous or obj_.flags.f_contiguous)
-                hdf.create_dataset(name, None, None, obj_.data, **kwargs)
-                hdf[name].attrs.create('is_a_view', True)
-                hdf[name].attrs.create('dtype', obj_.dtype.str)
-                hdf[name].attrs.create('c_order', obj_.flags.c_contiguous)
-                # shape is handled later
-            else:
-                raise ValueError("We should have got here only with ndarray")
-        else:
+
+        is_a_view = False
+        try:
             hdf.create_dataset(name, None, None, obj, **kwargs)
+        except TypeError as exc:
+            exc_str = str(exc)
+            if ("No conversion path for dtype" in exc_str):
+                is_a_view = True
+            else:
+                # we know no better
+                raise
+
+        # some numpy dtypes can't be represented in the hdf5, so
+        # we would need to save a view of the bytes and other
+        # parameters (shape, dtype, order) to reconstruct later
+        if is_a_view:
+            assert(is_ndarray)
+            # do conversion to pure byte array, by using array's buffer
+            if not ((obj.flags.c_contiguous or obj.flags.f_contiguous)
+                    and obj.flags.aligned):
+                # we need a copy to operate on
+                obj_ = obj.copy()
+            else:
+                obj_ = obj
+            assert(obj_.flags.c_contiguous or obj_.flags.f_contiguous)
+            hdf.create_dataset(name, None, None, obj_.data, **kwargs)
+            hdf[name].attrs.create('is_a_view', True)
+            hdf[name].attrs.create('c_order', obj_.flags.c_contiguous)
+            if obj_.dtype.names:
+                # record array
+                dtype = obj_.dtype
+                hdf[name].attrs.create('dtype_names', dtype.names)
+                hdf[name].attrs.create('dtype_types',
+                                       [dtype[i].str for i, _ in enumerate(dtype.names)])
+            else:
+                hdf[name].attrs.create('dtype', obj_.dtype.str)
+                # shape is handled later
 
         if not noid and not is_scalar:
             # objref for scalar items would be overkill
