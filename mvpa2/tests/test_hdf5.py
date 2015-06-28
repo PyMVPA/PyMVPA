@@ -1,4 +1,4 @@
-# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# emacs: -*- coding: utf-8; mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -25,6 +25,7 @@ import tempfile
 
 from mvpa2.base.dataset import AttrDataset, save
 from mvpa2.base.hdf5 import h5save, h5load, obj2hdf, HDF5ConversionError
+from mvpa2.base.dochelpers import safe_str
 from mvpa2.datasets.sources import load_example_fmri_dataset
 from mvpa2.mappers.fx import mean_sample
 from mvpa2.mappers.boxcar import BoxcarMapper
@@ -308,6 +309,12 @@ if hasattr(collections, 'namedtuple') and sys.version_info > (2, 7, 4):
 if hasattr(collections, 'OrderedDict'):
     _python_objs.extend([collections.OrderedDict(a=1, b=2)])
 
+# numpy arrays
+_python_objs += [
+    np.arange(3),  # simple one
+    np.array("string"),
+    np.array(u"ы")
+]
 
 @sweepargs(obj=_python_objs)
 def test_save_load_python_objs(obj):
@@ -320,13 +327,16 @@ def test_save_load_python_objs(obj):
     try:
         h5save(f.name, obj)
     except Exception as e:
-        raise AssertionError("Failed to h5save %s: %s" % (obj, e))
+        raise AssertionError("Failed to h5save %s: %s" % (safe_str(obj), e))
     try:
         obj_ = h5load(f.name)
     except Exception as e:
-        raise AssertionError("Failed to h5load %s: %s" % (obj, e))
+        raise AssertionError("Failed to h5load %s: %s" % (safe_str(obj), e))
     assert_equal(type(obj), type(obj_))
-    assert_equal(obj, obj_)
+    if isinstance(obj, np.ndarray):
+        assert_array_equal(obj, obj_)
+    else:
+        assert_equal(obj, obj_)
 
 def saveload(obj, f, backend='hdf5'):
     """Helper to save/load using some of tested backends
