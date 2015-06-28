@@ -309,18 +309,22 @@ if hasattr(collections, 'namedtuple') and sys.version_info > (2, 7, 4):
 if hasattr(collections, 'OrderedDict'):
     _python_objs.extend([collections.OrderedDict(a=1, b=2)])
 
-_unicode_arrays = [np.array([['a', 'b', 'x'],
+_unicode_arrays = [np.array([['a', u'мама', 'x'],
                              [u"ы", 'a', 'z']], order=o)
                    for o in 'CF']
 
-# numpy arrays
+# non-record (simple) numpy arrays
 _python_objs += [
-    np.arange(3),  # simple one
+    np.arange(3),
+    np.arange(6).reshape((2, 3), order='C'),
+    np.arange(6).reshape((2, 3), order='F'),
+    np.array(list('abcdef')),
     np.array("string"),
     np.array(u"ы"),
   ] \
   + _unicode_arrays \
-  #+ [a[:, ::2] for a in _unicode_arrays]
+  + [a[:, ::2] for a in _unicode_arrays]
+
 
 @sweepargs(obj=_python_objs)
 def test_save_load_python_objs(obj):
@@ -338,11 +342,14 @@ def test_save_load_python_objs(obj):
         obj_ = h5load(f.name)
     except Exception as e:
         raise AssertionError("Failed to h5load %s: %s" % (safe_str(obj), e))
+
     assert_equal(type(obj), type(obj_))
+
     if isinstance(obj, np.ndarray):
         assert_array_equal(obj, obj_)
     else:
         assert_equal(obj, obj_)
+
 
 def saveload(obj, f, backend='hdf5'):
     """Helper to save/load using some of tested backends
