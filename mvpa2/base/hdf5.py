@@ -656,8 +656,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
             hdf.create_dataset(name, None, None, obj, **kwargs)
         except TypeError as exc:
             exc_str = str(exc)
-            if ("No conversion path for dtype" in exc_str or
-                "has no native HDF5 equivalent" in exc_str):
+            if ("No conversion path for dtype" in exc_str):
                 is_a_view = True
             else:
                 # we know no better
