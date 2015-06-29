@@ -130,27 +130,76 @@ class SurfTests(unittest.TestCase):
 
             # allow entries with no data, such as lacking node indices
             # in case AFNI's 3dVol2Surf was run without node index output
-            niml_struct_empty_nodes=copy.deepcopy(minimal_niml_struct)
+            niml_struct_empty_nodes = copy.deepcopy(minimal_niml_struct)
             niml_struct_empty_nodes[0]['nodes'].append({'name': 'INDEX_LIST'})
 
-            s_empty_nodes=afni_niml.rawniml2string(niml_struct_empty_nodes, fmt)
-            d_empty_nodes=afni_niml.string2rawniml(s_empty_nodes)
+            s_empty_nodes = afni_niml.rawniml2string(niml_struct_empty_nodes, fmt)
+            d_empty_nodes = afni_niml.string2rawniml(s_empty_nodes)
             assert_array_equal(d[0]['nodes'][0]['data'],
-                                d_empty_nodes[0]['nodes'][0]['data'])
+                               d_empty_nodes[0]['nodes'][0]['data'])
             assert_equal(d[0]['nodes'][0].keys(),
-                                d_empty_nodes[0]['nodes'][0].keys())
+                         d_empty_nodes[0]['nodes'][0].keys())
             assert_array_equal(d[0]['nodes'][1]['data'],
-                                d_empty_nodes[0]['nodes'][1]['data'])
+                               d_empty_nodes[0]['nodes'][1]['data'])
             assert_equal(d[0]['nodes'][1].keys(),
-                                d_empty_nodes[0]['nodes'][1].keys())
+                         d_empty_nodes[0]['nodes'][1].keys())
 
 
+    @with_tempfile('.niml.dset', 'dset')
+    def test_surface_dset_niml_io_with_unicode(self, fn):
+        ds = dataset_wizard(np.arange(20).reshape((4, 5)), targets=1, chunks=1)
+        ds.sa['unicode'] = [u'u1', u'uu2', u'uuu3', u'uuuu4']
+        ds.sa['str'] = ['s1', 'ss2', 'sss3', 'ssss4']
+        ds.fa['node_indices'] = np.arange(5)
+
+        # ensure sample attributes are of String type (not array)
+        niml_dict = afni_niml_dset.dset2rawniml(niml.to_niml(ds))
+        expected_dtypes = dict(PYMVPA_SA_unicode='String',
+                               PYMVPA_SA_str='String',
+                               PYMVPA_SA_targets='1*int32')
 
 
+        def assert_has_expected_datatype(name, expected_dtype, niml):
+            """helper function"""
+            nodes = niml_dict['nodes']
+
+            for node in nodes:
+                if node['name'] == name:
+                    assert_equal(node['ni_type'], expected_dtype)
+                    return
+
+            raise ValueError('not found: %s', name)
 
 
+        for name, expected_dtype in expected_dtypes.iteritems():
+            assert_has_expected_datatype(name, expected_dtype, niml)
 
 
+        # test NIML I/O
+        fn = 'tmp.niml.dset'
+        niml.write(fn, ds)
+        ds2 = niml.from_any(fn)
+        ds2.a.pop('history')
+        ds2.a.pop('filename')
+        ds2.sa.pop('labels')
+        ds2.sa.pop('stats')
+        assert_datasets_equal(ds, ds2)
+
+
+    @with_tempfile('.h5py', 'h5py')
+    def test_surface_dset_h5py_io_with_unicode(self, fn):
+        skip_if_no_external('h5py')
+        from mvpa2.base.hdf5 import h5save, h5load
+
+        ds = dataset_wizard(np.arange(20).reshape((4, 5)), targets=1, chunks=1)
+        ds.sa['unicode'] = [u'u1', u'uu2', u'uuu3', u'uuuu4']
+        ds.sa['str'] = ['s1', 'ss2', 'sss3', 'ssss4']
+        ds.fa['node_indices'] = np.arange(5)
+
+        # test h5py I/O
+        h5save(fn, ds)
+        ds2 = h5load(fn)
+        assert_datasets_equal(ds, ds2)
 
 
     @with_tempfile('.niml.dset', 'dset')
