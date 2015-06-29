@@ -334,7 +334,7 @@ def _data2string(data, form):
         return ('"%s"' % encode_escape(data)).encode()
 
     elif type(data) is np.ndarray:
-        if form == 'text' or numpy_data_isstring(data):
+        if form == 'text' or types.numpy_data_isstring(data):
             f = types.numpy_data2printer(data)
             nrows, ncols = data.shape
             return _TEXT_ROWSEP.join([_TEXT_COLSEP.join([f(data[row, col])
