@@ -9,7 +9,6 @@
 """Unit tests for PyMVPA surface searchlight functions specific for
 handling AFNI datasets"""
 
-
 import numpy as np
 
 import os
@@ -20,9 +19,10 @@ import copy
 from mvpa2.testing import *
 
 from mvpa2.support.nibabel import afni_niml, afni_niml_dset, afni_niml_roi, \
-                                                surf, afni_suma_spec
+    surf, afni_suma_spec
 from mvpa2.datasets import niml
-from mvpa2.datasets.base import Dataset
+from mvpa2.datasets.base import Dataset, dataset_wizard
+
 
 
 class SurfTests(unittest.TestCase):
@@ -33,13 +33,15 @@ class SurfTests(unittest.TestCase):
     'Ground truth' is whatever output is returned by the implementation
     as of mid-Aug 2012"""
 
+
     def _get_rng(self):
         keys = [(17 * i ** 5 + 78234745 * i + 8934) % (2 ** 32 - 1)
-                        for i in xrange(624)]
+                for i in xrange(624)]
         keys = np.asanyarray(keys, dtype=np.uint32)
         rng = np.random.RandomState()
         rng.set_state(('MT19937', keys, 0))
         return rng
+
 
     def test_afni_niml(self):
         # just a bunch of tests
@@ -65,34 +67,33 @@ class SurfTests(unittest.TestCase):
         assert_equal(ps("ab", 2, 100), "")
         assert_equal(ps("abcdefghij", 2, 100), "cdefghij")
 
-
-
         data = np.asarray([[1347506771, 1347506772],
-                       [1347506773, 1347506774]],
-                      dtype=np.int32)
+                           [1347506773, 1347506774]],
+                          dtype=np.int32)
 
         fmt_data_reprs = dict(text='1347506771 1347506772\n1347506773 1347506774',
-                         binary='SRQPTRQPURQPVRQP',
-                         base64='U1JRUFRSUVBVUlFQVlJRUA==')
+                              binary='SRQPTRQPURQPVRQP',
+                              base64='U1JRUFRSUVBVUlFQVlJRUA==')
 
         minimal_niml_struct = [{'dset_type': 'Node_Bucket',
-                               'name': 'AFNI_dataset',
-                               'ni_form': 'ni_group',
-                               'nodes': [{'data': data,
-                                          'data_type': 'Node_Bucket_data',
-                                          'name': 'SPARSE_DATA',
-                                          'ni_dimen': '2',
-                                          'ni_type': '2*int32'},
-                                         {'atr_name': 'COLMS_LABS',
-                                          'data': 'col_0;col_1',
-                                          'name': 'AFNI_atr',
-                                          'ni_dimen': '1',
-                                          'ni_type': 'String'}]}]
+                                'name': 'AFNI_dataset',
+                                'ni_form': 'ni_group',
+                                'nodes': [{'data': data,
+                                           'data_type': 'Node_Bucket_data',
+                                           'name': 'SPARSE_DATA',
+                                           'ni_dimen': '2',
+                                           'ni_type': '2*int32'},
+                                          {'atr_name': 'COLMS_LABS',
+                                           'data': 'col_0;col_1',
+                                           'name': 'AFNI_atr',
+                                           'ni_dimen': '1',
+                                           'ni_type': 'String'}]}]
 
 
         def _eq(p, q):
             # helper function: equality for both arrays and other things
             return np.all(p == q) if type(p) is np.ndarray else p == q
+
 
         for fmt, data_repr in fmt_data_reprs.iteritems():
             s = afni_niml.rawniml2string(minimal_niml_struct, fmt)
@@ -120,7 +121,7 @@ class SurfTests(unittest.TestCase):
 
             for k in important_keys:
                 s_bad = s.replace(k.encode(), b'foo')
-                #assert_raises((KeyError, ValueError), afni_niml.string2rawniml, s_bad)
+                # assert_raises((KeyError, ValueError), afni_niml.string2rawniml, s_bad)
 
             # adding garbage at the beginning or end should fail the parse
             garbage = "GARBAGE".encode()
@@ -178,12 +179,12 @@ class SurfTests(unittest.TestCase):
 
     @with_tempfile('.niml.dset', 'dset')
     def test_afni_niml_dset(self, fn):
-        sz = (100, 45) # dataset size
-        rng = self._get_rng() # generate random data
+        sz = (100, 45)  # dataset size
+        rng = self._get_rng()  # generate random data
 
-        expected_vals = {(0, 0):-2.13856 , (sz[0] - 1, sz[1] - 1):-1.92434,
-                         (sz[0], sz[1] - 1):None, (sz[0] - 1, sz[1]):None,
-                         sz:None}
+        expected_vals = {(0, 0): -2.13856, (sz[0] - 1, sz[1] - 1): -1.92434,
+                         (sz[0], sz[1] - 1): None, (sz[0] - 1, sz[1]): None,
+                         sz: None}
 
         # test for different formats in which the data is stored
         fmts = ['text', 'binary', 'base64']
@@ -196,10 +197,9 @@ class SurfTests(unittest.TestCase):
 
         # set labels for samples, and set node indices
         labels = ['lab_%d' % round(rng.uniform() * 1000)
-                        for _ in xrange(sz[1])]
+                  for _ in xrange(sz[1])]
         node_indices = np.argsort(rng.uniform(size=(sz[0],)))
         node_indices = np.reshape(node_indices, (sz[0], 1))
-
 
         eps = .00001
 
@@ -244,7 +244,7 @@ class SurfTests(unittest.TestCase):
                                 nfull = 2 * sz[0]
 
                                 dset3 = afni_niml_dset.sparse2full(dset2,
-                                                            pad_to_node=nfull)
+                                                                   pad_to_node=nfull)
 
                                 assert_equal(dset3['data'].shape[0], nfull)
 
@@ -258,7 +258,7 @@ class SurfTests(unittest.TestCase):
                                 # check that data is as expected
                                 for pos, val in expected_vals.iteritems():
                                     if val is None:
-                                        assert_raises(IndexError, lambda x:x[pos], v2)
+                                        assert_raises(IndexError, lambda x: x[pos], v2)
                                     else:
                                         val2 = np.asarray(val, tp)
                                         assert_true(abs(v2[pos] - val2) < eps)
@@ -269,19 +269,20 @@ class SurfTests(unittest.TestCase):
                             if mode != 'sparse2full' or k == 'data':
                                 assert_array_almost_equal(v, v2, eps_dec)
 
+
     @with_tempfile('.niml.dset', 'dset')
     def test_niml(self, fn):
         d = dict(data=np.random.normal(size=(10, 2)),
-              node_indices=np.arange(10),
-              stats=['none', 'Tstat(2)'],
-              labels=['foo', 'bar'])
+                 node_indices=np.arange(10),
+                 stats=['none', 'Tstat(2)'],
+                 labels=['foo', 'bar'])
         a = niml.from_niml(d)
         b = niml.to_niml(a)
 
         afni_niml_dset.write(fn, b)
 
-        readers=(niml.from_any,
-                lambda x:niml.from_niml(afni_niml_dset.read(x)))
+        readers = (niml.from_any,
+                   lambda x: niml.from_niml(afni_niml_dset.read(x)))
 
         for reader in readers:
             cc = reader(fn)
@@ -293,7 +294,7 @@ class SurfTests(unittest.TestCase):
 
                 eps_dec = 4
                 assert_array_almost_equal(dset.samples, d['data'].transpose(),
-                                                                        eps_dec)
+                                          eps_dec)
 
         # some more tests to ensure that the order of elements is ok
         # (row first or column first)
@@ -332,9 +333,12 @@ class SurfTests(unittest.TestCase):
         class _Voxel_Count_Measure(Measure):
             # used to check voxel selection results
             is_trained = True
+
+
             def __init__(self, dtype, **kwargs):
                 Measure.__init__(self, **kwargs)
                 self.dtype = dtype
+
 
             def _call(self, dset):
                 return self.dtype(dset.nfeatures)
@@ -370,7 +374,7 @@ class SurfTests(unittest.TestCase):
 
 
     def test_niml_dset_stack(self):
-        values = map(lambda x:np.random.normal(size=x), [(10, 3), (10, 4), (10, 5)])
+        values = map(lambda x: np.random.normal(size=x), [(10, 3), (10, 4), (10, 5)])
         indices = [[0, 1, 2], [3, 2, 1, 0], None]
 
         dsets = []
@@ -380,15 +384,14 @@ class SurfTests(unittest.TestCase):
                 dset.fa['node_indices'] = i
             dsets.append(dset)
 
-
         dset = niml.hstack(dsets)
         assert_equal(dset.nfeatures, 12)
         assert_equal(dset.nsamples, 10)
-        indices = np.asarray([ 0, 1, 2, 6, 5, 4, 3, 7, 8, 9, 10, 11])
+        indices = np.asarray([0, 1, 2, 6, 5, 4, 3, 7, 8, 9, 10, 11])
         assert_array_equal(dset.fa['node_indices'], indices)
 
         dset = niml.hstack(dsets, 10)
-        dset = niml.hstack(dsets, 10) # twice to ensure not overwriting
+        dset = niml.hstack(dsets, 10)  # twice to ensure not overwriting
         assert_equal(dset.nfeatures, 30)
         indices = np.asarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
                               13, 12, 11, 10, 14, 15, 16, 17, 18, 19,
@@ -409,6 +412,7 @@ class SurfTests(unittest.TestCase):
         # Using an illegal node index should raise an error
         dsets[1].fa.node_indices[0] = 666
         assert_raises(ValueError, stacker, 10)
+
 
     @with_tempfile('.niml.roi', 'dset')
     def test_afni_niml_roi(self, fn):
@@ -442,9 +446,9 @@ class SurfTests(unittest.TestCase):
         roi = rois[0]
 
         expected_keys = ['ni_type', 'ColPlaneName', 'iLabel', 'Parent_side',
-                       'EdgeColor', 'Label', 'edges', 'ni_dimen',
-                       'self_idcode', 'EdgeThickness', 'Type', 'areas',
-                       'domain_parent_idcode', 'FillColor']
+                         'EdgeColor', 'Label', 'edges', 'ni_dimen',
+                         'self_idcode', 'EdgeThickness', 'Type', 'areas',
+                         'domain_parent_idcode', 'FillColor']
 
         assert_equal(set(roi.keys()), set(expected_keys))
 
@@ -466,7 +470,7 @@ class SurfTests(unittest.TestCase):
 
         # check nodes
         expected_nodes = [arr([43063, 43064, 43065, 43066, 43067, 43177, 43178,
-                            43179, 43180, 43290, 43291, 43292, 43402, 43403])]
+                               43179, 43180, 43290, 43291, 43292, 43402, 43403])]
 
         assert_equal(len(roi['areas']), 1)
         assert_array_equal(roi['areas'][0], expected_nodes[0])
@@ -493,11 +497,11 @@ class SurfTests(unittest.TestCase):
 
         # generate surfaces
         inflated_surf = surf.generate_plane((0, 0, 0), (0, 1, 0), (0, 0, 1),
-                                                    10, 10)
+                                            10, 10)
         white_surf = inflated_surf + 1.
 
         # helper function
-        _tmp = lambda x:pathjoin(temp_dir, x)
+        _tmp = lambda x: pathjoin(temp_dir, x)
 
 
         # filenames for surfaces and spec file
@@ -509,22 +513,22 @@ class SurfTests(unittest.TestCase):
 
         # generate SUMA-like spec dictionary
         white = dict(SurfaceFormat='ASCII',
-            EmbedDimension='3',
-            SurfaceType='FreeSurfer',
-            SurfaceName=white_fn,
-            Anatomical='Y',
-            LocalCurvatureParent='SAME',
-            LocalDomainParent='SAME',
-            SurfaceState='smoothwm')
+                     EmbedDimension='3',
+                     SurfaceType='FreeSurfer',
+                     SurfaceName=white_fn,
+                     Anatomical='Y',
+                     LocalCurvatureParent='SAME',
+                     LocalDomainParent='SAME',
+                     SurfaceState='smoothwm')
 
         inflated = dict(SurfaceFormat='ASCII',
-            EmbedDimension='3',
-            SurfaceType='FreeSurfer',
-            SurfaceName=inflated_fn,
-            Anatomical='N',
-            LocalCurvatureParent=white_fn,
-            LocalDomainParent=white_fn,
-            SurfaceState='inflated')
+                        EmbedDimension='3',
+                        SurfaceType='FreeSurfer',
+                        SurfaceName=inflated_fn,
+                        Anatomical='N',
+                        LocalCurvatureParent=white_fn,
+                        LocalDomainParent=white_fn,
+                        SurfaceState='inflated')
 
         # make SurfaceSpec object
         spec = afni_suma_spec.SurfaceSpec([white], directory=spec_dir)
@@ -532,7 +536,7 @@ class SurfTests(unittest.TestCase):
 
         # test __str__ and __repr__
         assert_true('SurfaceSpec instance with 2 surfaces'
-                        ', 2 states ' in '%s' % spec)
+                    ', 2 states ' in '%s' % spec)
         assert_true(('%r' % spec).startswith('SurfaceSpec'))
 
         # test finding surfaces
@@ -544,7 +548,7 @@ class SurfTests(unittest.TestCase):
 
         # test .same_states
         minimal = afni_suma_spec.SurfaceSpec([dict(SurfaceState=s)
-                                            for s in ('smoothwm', 'inflated')])
+                                              for s in ('smoothwm', 'inflated')])
         assert_true(spec.same_states(minimal))
         assert_false(spec.same_states(afni_suma_spec.SurfaceSpec(dict())))
 
@@ -568,22 +572,22 @@ class SurfTests(unittest.TestCase):
         rh_spec_fn = _tmp('rh.spec')
 
         rh_white = dict(SurfaceFormat='ASCII',
-            EmbedDimension='3',
-            SurfaceType='FreeSurfer',
-            SurfaceName=rh_white_fn,
-            Anatomical='Y',
-            LocalCurvatureParent='SAME',
-            LocalDomainParent='SAME',
-            SurfaceState='smoothwm')
+                        EmbedDimension='3',
+                        SurfaceType='FreeSurfer',
+                        SurfaceName=rh_white_fn,
+                        Anatomical='Y',
+                        LocalCurvatureParent='SAME',
+                        LocalDomainParent='SAME',
+                        SurfaceState='smoothwm')
 
         rh_inflated = dict(SurfaceFormat='ASCII',
-            EmbedDimension='3',
-            SurfaceType='FreeSurfer',
-            SurfaceName=rh_inflated_fn,
-            Anatomical='N',
-            LocalCurvatureParent=rh_white_fn,
-            LocalDomainParent=rh_white_fn,
-            SurfaceState='inflated')
+                           EmbedDimension='3',
+                           SurfaceType='FreeSurfer',
+                           SurfaceName=rh_inflated_fn,
+                           Anatomical='N',
+                           LocalCurvatureParent=rh_white_fn,
+                           LocalDomainParent=rh_white_fn,
+                           SurfaceState='inflated')
 
         rh_spec = afni_suma_spec.SurfaceSpec([rh_white], directory=spec_dir)
         rh_spec.add_surface(rh_inflated)
@@ -603,7 +607,7 @@ class SurfTests(unittest.TestCase):
 
         for hemi, added_spec in zip(('l', 'r'), added_specs):
             states = ['smoothwm', 'inflated'] + ['CoM%sinflated' % i
-                                                    for i in 'msiap']
+                                                 for i in 'msiap']
             assert_equal(states, [s['SurfaceState']
                                   for s in added_specs[0].surfaces])
             all_temp_fns.extend([s['SurfaceName']
@@ -616,8 +620,7 @@ class SurfTests(unittest.TestCase):
         mh_spec, mh_surfs = afni_suma_spec.merge_left_right(bh_spec)
 
         assert_equal([s['SurfaceState'] for s in mh_spec.surfaces],
-                    ['smoothwm'] + ['CoM%sinflated' % i for i in 'msiap'])
-
+                     ['smoothwm'] + ['CoM%sinflated' % i for i in 'msiap'])
 
 
 
@@ -625,6 +628,9 @@ def suite():  # pragma: no cover
     """Create the suite"""
     return unittest.makeSuite(SurfTests)
 
+
+
 if __name__ == '__main__':  # pragma: no cover
     import runner
+
     runner.run()
