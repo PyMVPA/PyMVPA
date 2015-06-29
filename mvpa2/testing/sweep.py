@@ -14,6 +14,7 @@ import sys
 import traceback as tbm
 
 from mvpa2 import cfg
+from mvpa2.base.dochelpers import safe_str
 from mvpa2.testing.tools import SkipTest
 
 if __debug__:
@@ -87,7 +88,7 @@ def sweepargs(**kwargs):
                         if not eidstr in failed_tests:
                             failed_tests[eidstr] = []
 
-                        sargvalue = str(argvalue)
+                        sargvalue = safe_str(argvalue)
                         if not (__debug__ and 'TEST' in debug.active):
                             # by default lets make it of sane length
                             if len(sargvalue) > 100:
@@ -97,7 +98,7 @@ def sweepargs(**kwargs):
                             (argname, sargvalue, tb.tb_next, estr))
 
                         if __debug__:
-                            msg = "%s on %s=%s" % (estr, argname, argvalue)
+                            msg = "%s on %s=%s" % (estr, argname, safe_str(argvalue))
                             debug('TEST', 'Failed unittest: %s\n%s'
                                   % (eidstr, msg))
                     if report_progress:
