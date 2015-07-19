@@ -34,8 +34,9 @@ def single_gamma_hrf(t, A=5.4, W=5.2, K=1.0):
     A = float(A)
     W = float(W)
     K = float(K)
-    return K * (t / A) ** ((A ** 2) / (W ** 2) * 8.0 * np.log(2.0)) \
-           * np.e ** ((t - A) / -((W ** 2) / A / 8.0 / np.log(2.0)))
+    return \
+        K * (t / A) ** ((A ** 2) / (W ** 2) * 8.0 * np.log(2.0)) \
+        * np.e ** ((t - A) / -((W ** 2) / A / 8.0 / np.log(2.0)))
 
 
 ##REF: Name was automagically refactored
@@ -67,8 +68,9 @@ def double_gamma_hrf(t, A1=5.4, W1=5.2, K1=1.0, A2=10.8, W2=7.35, K2=0.35):
     return single_gamma_hrf(t, A1, W1, K1) - single_gamma_hrf(t, A2, W2, K2)
 
 
-def dual_gaussian(x, amp1=1.0, mean1=0.0, std1=1.0,
-                     amp2=1.0, mean2=0.0, std2=1.0):
+def dual_gaussian(x,
+                  amp1=1.0, mean1=0.0, std1=1.0,
+                  amp2=1.0, mean2=0.0, std2=1.0):
     """Sum of two Gaussians.
 
     Parameters
@@ -93,7 +95,9 @@ def dual_gaussian(x, amp1=1.0, mean1=0.0, std1=1.0,
         return np.nan
     return (amp1 * norm.pdf(x, mean1, std1)) + (amp2 * norm.pdf(x, mean2, std2))
 
-def dual_positive_gaussian(x, amp1=1.0, mean1=0.0, std1=1.0,
+
+def dual_positive_gaussian(x,
+                           amp1=1.0, mean1=0.0, std1=1.0,
                            amp2=1.0, mean2=0.0, std2=1.0):
     """Sum of two non-negative Gaussians
 
@@ -119,7 +123,6 @@ def dual_positive_gaussian(x, amp1=1.0, mean1=0.0, std1=1.0,
     return dual_gaussian(x, amp1, mean1, std1, amp2, mean2, std2)
 
 
-##REF: Name was automagically refactored
 def least_sq_fit(fx, params, y, x=None, **kwargs):
     """Simple convenience wrapper around SciPy's optimize.leastsq.
 
@@ -191,12 +194,6 @@ def fit2histogram(X, fx, params, nbins=20, x_range=None):
     First histogram is computed for each data row vector individually.
     Afterwards a custom function is fitted to the binned data.
 
-    TODO
-    ----
-
-    - ATM requires multiple "samples" although it would be as useful with 1, and it pukes if we add that
-      single rudimentary dimension
-
     Parameters
     ----------
     X : array-like
@@ -222,9 +219,8 @@ def fit2histogram(X, fx, params, nbins=20, x_range=None):
     """
     if x_range is None:
         # use global min max to ensure consistent bins across observations
-        xrange = (X.min(), X.max())
+        x_range = (X.min(), X.max())
 
-    nobsrv = len(X)
     # histograms per observation
     H = []
     bin_centers = None
@@ -234,15 +230,19 @@ def fit2histogram(X, fx, params, nbins=20, x_range=None):
         if bin_centers is None:
             bin_left = hi[1][:-1]
             # round to take care of numerical instabilities
-            bin_width = np.abs(
-                            np.asscalar(
-                                np.unique(
-                                    np.round(bin_left - hi[1][1:],
-                                             decimals=6))))
+            bin_width = \
+                np.abs(
+                    np.asscalar(
+                        np.unique(
+                            np.round(bin_left - hi[1][1:],
+                                     decimals=6))))
             bin_centers = bin_left + bin_width / 2
         H.append(hi[0])
 
-    H = np.asarray(H)
+    if len(H) == 1:
+        H = np.asarray(H[0])
+    else:
+        H = np.asarray(H)
 
     return (H,
             bin_left,
@@ -268,7 +268,7 @@ def get_random_rotation(ns, nt=None, data=None):
     # figure out some "random" rotation
     d = max(ns, nt)
     if data is None:
-        data = np.random.normal(size=(d*10, d))
+        data = np.random.normal(size=(d * 10, d))
     _u, _s, _vh = np.linalg.svd(data[:, :d])
     R = _vh[:ns, :nt]
     if ns == nt:
@@ -277,5 +277,3 @@ def get_random_rotation(ns, nt=None, data=None):
         if np.linalg.det(R) < 0:
             R[:, 0] *= -1.0
     return R
-
-
