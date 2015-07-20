@@ -149,8 +149,10 @@ class ConfigManager(SafeConfigParser):
         class file2str(object):
             def __init__(self):
                 self.__s = ''
+
             def write(self, val):
                 self.__s += val
+
             def str(self):
                 return self.__s
 
@@ -180,11 +182,11 @@ class ConfigManager(SafeConfigParser):
 
         try:
             return SafeConfigParser.get(self, section, option, **kwargs)
-        except ValueError, e:
+        except ValueError as e:
             # provide somewhat descriptive error
-            raise ValueError, \
-                  "Failed to obtain value from configuration for %s.%s. " \
-                  "Original exception was: %s" % (section, option, e)
+            raise ValueError(
+                "Failed to obtain value from configuration for %s.%s. "
+                "Original exception was: %s" % (section, option, e))
 
 
     def getboolean(self, section, option, default=None):
@@ -204,13 +206,12 @@ class ConfigManager(SafeConfigParser):
                 else:
                     boolean_states = self.BOOLEAN_STATES
                 if default.lower() not in boolean_states:
-                    raise ValueError, 'Not a boolean: %s' % default
+                    raise ValueError('Not a boolean: %s' % default)
                 return boolean_states[default.lower()]
 
         return SafeConfigParser.getboolean(self, section, option)
 
 
-    ##REF: Name was automagically refactored
     def get_as_dtype(self, section, option, dtype, default=None):
         """Convenience method to query options with a custom default and type
 
