@@ -176,7 +176,6 @@ class SurfTests(unittest.TestCase):
 
 
         # test NIML I/O
-        fn = 'tmp.niml.dset'
         niml.write(fn, ds)
         ds2 = niml.from_any(fn)
         ds2.a.pop('history')
