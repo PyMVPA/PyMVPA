@@ -43,6 +43,17 @@ _PYMVPA_PREFIX = 'PYMVPA'
 _PYMVPA_SEP = '_'
 
 
+
+def _as_vector_if_matrix_with_single_column(x):
+    '''Helper function'''
+    if isinstance(x, np.ndarray) and \
+                    len(x.shape) == 2 and x.shape[1] == 1:
+        return x.ravel()
+    else:
+        return x
+
+
+
 def from_niml(dset, fa_labels=[], sa_labels=[], a_labels=[]):
     '''Convert a NIML dataset to a Dataset
 
@@ -129,10 +140,14 @@ def from_niml(dset, fa_labels=[], sa_labels=[], a_labels=[]):
                             raise ValueError("Unexpected length: %d != %d" %
                                              (expected_length, len(v)))
 
+                        v = _as_vector_if_matrix_with_single_column(v)
+
                         v = ArrayCollectable(v, length=expected_length)
 
                     collection[short_k] = v
                     continue
+
+        v = _as_vector_if_matrix_with_single_column(v)
 
         found_label = False
 
@@ -144,6 +159,7 @@ def from_niml(dset, fa_labels=[], sa_labels=[], a_labels=[]):
 
         if found_label:
             continue
+
 
         # try to be smart and deduce this from dimensions.
         # this only works if nfeatures!=nsamples otherwise it would be
@@ -167,6 +183,7 @@ def from_niml(dset, fa_labels=[], sa_labels=[], a_labels=[]):
     ds = Dataset(np.transpose(data), sa=sa, fa=fa, a=a)
 
     return ds
+
 
 
 def to_niml(ds):
@@ -223,6 +240,7 @@ def to_niml(ds):
             dset[long_key] = v
 
     return dset
+
 
 
 def hstack(dsets, pad_to_feature_index=None, hstack_method='drop_nonunique',
@@ -323,6 +341,7 @@ def hstack(dsets, pad_to_feature_index=None, hstack_method='drop_nonunique',
     return hstack_dset
 
 
+
 def _find_sample_labels(dset, sample_labels):
     '''Helper function to find labels in this dataset.
     Looks for any in sample_labels and returns the first one
@@ -350,6 +369,7 @@ def _find_sample_labels(dset, sample_labels):
             break
 
     return None if use_label is None else sample_label_list
+
 
 
 def _find_node_indices(dset, node_indices_labels):
@@ -387,6 +407,7 @@ def _find_node_indices(dset, node_indices_labels):
     return None if use_label is None else node_indices_int
 
 
+
 def write(fn, ds, form='binary'):
     '''Write a Dataset to a file in NIML format
 
@@ -401,6 +422,7 @@ def write(fn, ds, form='binary'):
     '''
     niml_ds = to_niml(ds)
     niml_dset.write(fn, niml_ds, form=form)
+
 
 
 def read(fn):
@@ -446,6 +468,7 @@ def read(fn):
                 pass
 
         raise ValueError("Unable to read %s with unclear extension" % fn)
+
 
 
 def from_any(x):
