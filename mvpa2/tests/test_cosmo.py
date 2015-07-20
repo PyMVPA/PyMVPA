@@ -10,7 +10,7 @@
 """Unit tests for CoSMoMVPA dataset (http://cosmomvpa.org)"""
 
 from mvpa2.testing.tools import assert_raises, ok_, assert_true, \
-        assert_equal, assert_array_equal, with_tempfile
+    assert_equal, assert_array_equal, with_tempfile
 from mvpa2.testing import skip_if_no_external
 
 skip_if_no_external('scipy')
@@ -42,6 +42,7 @@ def _tup2obj(tuples):
     return np.array([[tuple(values)]], dtype=np.dtype(dtypes))
 
 
+
 def _create_small_mat_dataset_dict():
     '''
     Generate small dataset as represented in matlab.
@@ -65,16 +66,17 @@ def _create_small_mat_dataset_dict():
 
     samples = arr([[1, 2, 3], [4, 5, 6]])
     sa = _tup2obj([('chunks', arr([[2], [2]])),
-                  ('targets', arr([[1], [2]])),
-                  ('labels', arr([arr(['yin'], dtype='O'),
-                                 arr(['yan'], dtype='O')]))])
+                   ('targets', arr([[1], [2]])),
+                   ('labels', arr([arr(['yin'], dtype='O'),
+                                   arr(['yan'], dtype='O')]))])
     fa = _tup2obj([('i', arr([[3., 2., 1.]])),
-                  ('j', arr([[1., 2., 2.]]))])
+                   ('j', arr([[1., 2., 2.]]))])
     a = _tup2obj([('name', arr(arr(['input'], dtype='O'))),
-                  ('size', arr([[3.],[2.],[1.]]))])
+                  ('size', arr([[3.], [2.], [1.]]))])
 
     # dictionary with these value
     return dict(samples=samples, sa=sa, fa=fa, a=a)
+
 
 
 def _build_cell(elems):
@@ -90,6 +92,7 @@ def _build_cell(elems):
         c[0, i] = elem
 
     return c
+
 
 
 def _create_small_mat_nbrhood_dict():
@@ -116,6 +119,7 @@ def _create_small_mat_nbrhood_dict():
     return dict(neighbors=neighbors, fa=fa, a=a)
 
 
+
 def _assert_ds_mat_attributes_equal(ds, m, attr_keys=('a', 'sa', 'fa')):
     # ds is a Dataset object, m a matlab-like dictionary
     for attr_k in attr_keys:
@@ -124,6 +128,7 @@ def _assert_ds_mat_attributes_equal(ds, m, attr_keys=('a', 'sa', 'fa')):
         for k in attr_v.keys():
             v = attr_v[k].value
             assert_array_equal(m[attr_k][k][0, 0].ravel(), v)
+
 
 
 def _assert_ds_less_or_equal(x, y):
@@ -137,11 +142,13 @@ def _assert_ds_less_or_equal(x, y):
         _assert_array_collectable_less_or_equal(vx, vy)
 
 
+
 def _assert_ds_equal(x, y):
     # test for two Dataset objects to be equal
     # Note: no support for fancy objects such as mappers
     _assert_ds_less_or_equal(x, y)
     _assert_ds_less_or_equal(y, x)
+
 
 
 def _assert_array_collectable_less_or_equal(x, y):
@@ -152,15 +159,18 @@ def _assert_array_collectable_less_or_equal(x, y):
         assert_array_equal(x[k].value, y[k].value)
 
 
+
 def _assert_array_collectable_equal(x, y):
     # test for keys and values equal in x and y
     _assert_array_collectable_less_or_equal(x, y)
     _assert_array_collectable_less_or_equal(y, x)
 
 
+
 def _assert_set_equal(x, y):
     # test for two sets being equal
     assert_equal(set(x), set(y))
+
 
 
 #########################
@@ -185,10 +195,10 @@ def test_cosmo_dataset(fn):
 
         _assert_set_equal(ds.sa.keys(), ['chunks', 'labels', 'targets'])
         _assert_set_equal(ds.sa.keys(), ['chunks', 'labels', 'targets'])
-        _assert_set_equal(ds.a.keys(), ['name','size'])
+        _assert_set_equal(ds.a.keys(), ['name', 'size'])
 
         assert_array_equal(ds.a.name, 'input')
-        assert_array_equal(ds.a.size, [3,2,1])
+        assert_array_equal(ds.a.size, [3, 2, 1])
         assert_array_equal(ds.sa.chunks, [2, 2])
         assert_array_equal(ds.sa.targets, [1, 2])
         assert_array_equal(ds.sa.labels, ['yin', 'yan'])
@@ -196,11 +206,11 @@ def test_cosmo_dataset(fn):
         assert_array_equal(ds.fa.j, [1, 2, 2])
 
         for convert_tuples in (True, False):
-            ds_copy=ds.copy(deep=True)
+            ds_copy = ds.copy(deep=True)
 
             if convert_tuples:
                 # use dataset with tuple data
-                ds_copy.a.size=tuple(ds_copy.a.size)
+                ds_copy.a.size = tuple(ds_copy.a.size)
 
             # check mapping to matlab format
             mat_mapped = cosmo.map2cosmo(ds_copy)
@@ -208,6 +218,7 @@ def test_cosmo_dataset(fn):
             for m in (mat, mat_mapped):
                 assert_array_equal(ds_mat.samples, m['samples'])
                 _assert_ds_mat_attributes_equal(ds_mat, m)
+
 
 
 @with_tempfile('.mat', 'matlab_file')
@@ -229,6 +240,7 @@ def test_cosmo_queryengine(fn):
         _assert_ds_mat_attributes_equal(qe, nbrhood_mat, ('fa', 'a'))
 
 
+
 def test_cosmo_searchlight():
     ds = cosmo.from_any(_create_small_mat_dataset_dict())
     sl = cosmo.CosmoSearchlight(mean_feature(),
@@ -241,6 +253,7 @@ def test_cosmo_searchlight():
                          a=dict(name=['output']))
 
     _assert_ds_less_or_equal(dict_count, ds_count)
+
 
 
 @with_tempfile('.h5py', 'pymvpa_file')
@@ -263,6 +276,7 @@ def test_cosmo_io_h5py(fn):
     assert_array_equal(qe.ids, qe_loaded.ids)
     _assert_array_collectable_equal(qe.a, qe_loaded.a)
     _assert_array_collectable_equal(qe.fa, qe_loaded.fa)
+
 
 
 def test_cosmo_exceptions():
@@ -296,6 +310,7 @@ def test_cosmo_exceptions():
         assert_raises((TypeError, ValueError),
                       lambda x: cosmo.CosmoSearchlight([], x),
                       illegal_nbrhood)
+
 
 
 def test_cosmo_repr_and_str():
