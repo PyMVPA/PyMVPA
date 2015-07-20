@@ -323,15 +323,22 @@ def _attributes_dict2cosmo(ds):
             for k in attr_collection:
                 value = attr_collection[k].value
 
-                if len(value.shape) == 1:
-                    # transform vectors (shape=(P,)) to vectors in matrix
-                    # form (shape=(1,P))
-                    value = np.reshape(value, (-1, 1))
+                if isinstance(value,tuple):
+                    value=np.asarray(value)
 
-                if do_transpose:
-                    # feature attribute case, to match dimensionality
-                    # in second dimension
-                    value = value.T
+                try:
+                    if len(value.shape) == 1:
+                        # transform vectors (shape=(P,)) to vectors in matrix
+                        # form (shape=(1,P))
+                        value = np.reshape(value, (-1, 1))
+
+                    if do_transpose:
+                        # feature attribute case, to match dimensionality
+                        # in second dimension
+                        value = value.T
+                except AttributeError:
+                    # not supported data element, skip
+                    continue
 
                 dtypes.append((k, 'O'))
                 values.append(value)

@@ -50,6 +50,7 @@ def _create_small_mat_dataset_dict():
         ds=struct();
         ds.samples=[1 2 3; 4 5 6];
         ds.a.name='input';
+        ds.a.size=[3 2 1];
         ds.fa.i=[3 2 1];
         ds.fa.j=[1 2 2];
         ds.sa.chunks=[2 2]';
@@ -69,7 +70,8 @@ def _create_small_mat_dataset_dict():
                                  arr(['yan'], dtype='O')]))])
     fa = _tup2obj([('i', arr([[3., 2., 1.]])),
                   ('j', arr([[1., 2., 2.]]))])
-    a = _tup2obj([('name', arr(arr(['input'], dtype='O')))])
+    a = _tup2obj([('name', arr(arr(['input'], dtype='O'))),
+                  ('size', arr([[3.],[2.],[1.]]))])
 
     # dictionary with these value
     return dict(samples=samples, sa=sa, fa=fa, a=a)
@@ -183,21 +185,29 @@ def test_cosmo_dataset(fn):
 
         _assert_set_equal(ds.sa.keys(), ['chunks', 'labels', 'targets'])
         _assert_set_equal(ds.sa.keys(), ['chunks', 'labels', 'targets'])
-        _assert_set_equal(ds.a.keys(), ['name'])
+        _assert_set_equal(ds.a.keys(), ['name','size'])
 
         assert_array_equal(ds.a.name, 'input')
+        assert_array_equal(ds.a.size, [3,2,1])
         assert_array_equal(ds.sa.chunks, [2, 2])
         assert_array_equal(ds.sa.targets, [1, 2])
         assert_array_equal(ds.sa.labels, ['yin', 'yan'])
         assert_array_equal(ds.fa.i, [3, 2, 1])
         assert_array_equal(ds.fa.j, [1, 2, 2])
 
-        # check mapping to matlab format
-        mat_mapped = cosmo.map2cosmo(ds)
+        for convert_tuples in (True, False):
+            ds_copy=ds.copy(deep=True)
 
-        for m in (mat, mat_mapped):
-            assert_array_equal(ds_mat.samples, m['samples'])
-            _assert_ds_mat_attributes_equal(ds_mat, m)
+            if convert_tuples:
+                # use dataset with tuple data
+                ds_copy.a.size=tuple(ds_copy.a.size)
+
+            # check mapping to matlab format
+            mat_mapped = cosmo.map2cosmo(ds_copy)
+
+            for m in (mat, mat_mapped):
+                assert_array_equal(ds_mat.samples, m['samples'])
+                _assert_ds_mat_attributes_equal(ds_mat, m)
 
 
 @with_tempfile('.mat', 'matlab_file')
