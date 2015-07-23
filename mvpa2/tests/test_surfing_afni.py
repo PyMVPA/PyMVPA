@@ -176,13 +176,16 @@ class SurfTests(unittest.TestCase):
 
 
         # test NIML I/O
-        fn = 'tmp.niml.dset'
         niml.write(fn, ds)
         ds2 = niml.from_any(fn)
         ds2.a.pop('history')
         ds2.a.pop('filename')
         ds2.sa.pop('labels')
         ds2.sa.pop('stats')
+
+        # NIML does not support int64, only int32;
+        # stop this from making the test fail
+        ds2.samples = np.asarray(ds2.samples, dtype=np.int64)
         assert_datasets_equal(ds, ds2)
 
 
