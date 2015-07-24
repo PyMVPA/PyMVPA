@@ -12,7 +12,8 @@
 
 __docformat__ = 'restructuredtext'
 
-import os
+from os.path import join as pathjoin
+
 import hashlib
 import mvpa2
 
@@ -32,7 +33,7 @@ def get_testing_fmri_dataset_filename():
         externals.versions['nibabel'],
         versions_hash)
 
-    return os.path.join(pymvpa_dataroot, 'testing', 'fmri_dataset', filename)
+    return pathjoin(pymvpa_dataroot, 'testing', 'fmri_dataset', filename)
 
 
 def generate_testing_fmri_dataset(filename=None):

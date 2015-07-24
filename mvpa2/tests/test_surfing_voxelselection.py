@@ -18,6 +18,7 @@ from numpy.testing.utils import assert_array_almost_equal, \
 import nibabel as nb
 
 import os
+from os.path import join as pathjoin
 import tempfile
 
 from mvpa2.testing import  reseed_rng
@@ -71,8 +72,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         radius = 10.
 
         '''Define input filenames'''
-        epi_fn = os.path.join(pymvpa_dataroot, 'bold.nii.gz')
-        maskfn = os.path.join(pymvpa_dataroot, 'mask.nii.gz')
+        epi_fn = pathjoin(pymvpa_dataroot, 'bold.nii.gz')
+        maskfn = pathjoin(pymvpa_dataroot, 'mask.nii.gz')
 
         '''
         Use the EPI datafile to define a surface.
@@ -157,12 +158,12 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
 
         '''The following steps are similar to start_easy.py'''
-        attr = SampleAttributes(os.path.join(pymvpa_dataroot,
+        attr = SampleAttributes(pathjoin(pymvpa_dataroot,
                                 'attributes_literal.txt'))
 
         mask = surf_voxsel.get_mask()
 
-        dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot,
+        dataset = fmri_dataset(samples=pathjoin(pymvpa_dataroot,
                                                     'bold.nii.gz'),
                                targets=attr.targets,
                                chunks=attr.chunks,

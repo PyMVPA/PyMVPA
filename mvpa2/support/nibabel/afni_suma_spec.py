@@ -11,9 +11,13 @@
 Includes I/O support and generating spec files that combine both hemispheres'''
 
 
-import re, datetime, os, copy, glob
-#from mvpa2.misc.surfing import utils, surf_fs_asc, surf
-#import mvpa2.support.nibabel.afni_utils as utils
+import re
+import datetime
+import os
+from os.path import join as pathjoin
+import copy
+import glob
+
 from mvpa2.support.nibabel import surf_fs_asc, surf
 
 _COMPREFIX = 'CoM' #  for surfaces that were rotated around center of mass
@@ -177,7 +181,7 @@ class SurfaceSpec(object):
                     if not surfs_filter:
                         continue
                     elif len(surfs_filter) == 1:
-                        return os.path.join(self.directory,
+                        return pathjoin(self.directory,
                                             surfs_filter[0]['SurfaceName'])
                     # reduce list of candidates
                     surfs = surfs_filter
@@ -230,7 +234,7 @@ def hemi_pairs_add_views(spec_both, state, ext, directory=None, overwrite=False)
                     break
             #surfname = utils.foldr(surfdef.get, None, surfnamelabels)
 
-            fn = os.path.join(directory, surfname)
+            fn = pathjoin(directory, surfname)
             if not os.path.exists(fn):
                 raise ValueError("File not found: %s" % fn)
 
@@ -240,7 +244,7 @@ def hemi_pairs_add_views(spec_both, state, ext, directory=None, overwrite=False)
 
             shortfn = surfname[:-(len(ext))]
             newsurfname = '%s%s%s%s' % (shortfn, _COMPREFIX, longname, ext)
-            newfn = os.path.join(directory, newsurfname)
+            newfn = pathjoin(directory, newsurfname)
 
             newsurfdef = copy.deepcopy(surfdef)
 
@@ -406,12 +410,12 @@ def canonical_filename(icold=None, hemi=None, suffix=None):
     return '%sh_ico%d%s.spec' % (hemi, icold, suffix)
 
 def find_file(directory, icold=None, hemi=None, suffix=None):
-    fn = os.path.join(directory, canonical_filename(icold=icold,
+    fn = pathjoin(directory, canonical_filename(icold=icold,
                                                     hemi=hemi,
                                                     suffix=suffix))
     if not os.path.exists(fn):
         suffix = '*'
-        pat = os.path.join(directory, canonical_filename(icold=icold,
+        pat = pathjoin(directory, canonical_filename(icold=icold,
                                                          hemi=hemi,
                                                          suffix=suffix))
         fn = glob.glob(pat)

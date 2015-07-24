@@ -11,7 +11,8 @@
 __docformat__ = 'restructuredtext'
 
 from ConfigParser import SafeConfigParser
-import os.path
+import os
+from os.path import join as pathjoin
 
 
 class ConfigManager(SafeConfigParser):
@@ -98,8 +99,8 @@ class ConfigManager(SafeConfigParser):
         """
         # listof filenames to parse (custom plus some standard ones)
         homedir = os.path.expanduser('~')
-        user_configfile = os.path.join(homedir, '.pymvpa2.cfg')
-        user_configfile_old = os.path.join(homedir, '.pymvpa.cfg')
+        user_configfile = pathjoin(homedir, '.pymvpa2.cfg')
+        user_configfile_old = pathjoin(homedir, '.pymvpa.cfg')
         # first load user config and then overwrite by local and custom config
         # files.
         filenames = [user_configfile, 'pymvpa2.cfg'] + self.__cfg_filenames

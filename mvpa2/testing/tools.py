@@ -13,6 +13,7 @@ Primarily the ones from nose.tools
 __docformat__ = 'restructuredtext'
 
 import glob, os, sys, shutil
+from os.path import join as pathjoin
 import tempfile
 import unittest
 from contextlib import contextmanager
@@ -68,13 +69,53 @@ def assert_dict_keys_equal(x, y):
     assert_equal(set(x.keys()), set(y.keys()))
 
 
-def assert_datasets_equal(x, y):
-    # wait for https://github.com/PyMVPA/PyMVPA/issues/167
+def assert_reprstr_equal(x, y):
+    """Whenever comparison fails otherwise, we migth revert to compare those"""
+    assert_equal(repr(x), repr(y))
+    assert_equal(str(x), str(y))
+
+
+def assert_collections_equal(x, y, ignore={}):
+    # Seems to cause a circular import leading to problems
+    from mvpa2.base.node import Node
+    assert_dict_keys_equal(x, y)
+    for k in x.keys():
+        v1, v2 = x[k].value, y[k].value
+        assert_equal(type(v1), type(v2),
+                     msg="Values for key %s have different types: %s and %s"
+                         % (k, type(v1), type(v2)))
+        if k in ignore:
+            continue
+        if isinstance(v1, np.ndarray):
+            assert_array_equal(v1, v2)
+        elif isinstance(v1, Node) and not (hasattr(v1, '__cmp__') or hasattr(v1, '__eq__')):
+            # we don't have comparators inplace for all of them yet, so test
+            # based on repr and str
+            assert_reprstr_equal(v1, v2)
+        else:
+            try:
+                assert_equal(v1, v2, msg="Values for key %s have different values: %s and %s"
+                             % (k, v1, v2))
+            except ValueError as e:
+                ## we must be hitting some comparison issue inside (e.g. "Use a.any ..."
+                ## but we do not to dive into providing comparators all around for now
+                assert_reprstr_equal(v1, v2)
+
+
+def assert_datasets_equal(x, y, ignore_a={}, ignore_sa={}, ignore_fa={}):
+    """
+    Parameters
+    ----------
+    ignore_a, ignore_sa, ignore_fa: iterable
+      Differences in values of which attributes to ignore
+    """
     assert_equal(type(x), type(y))
-    assert_dict_keys_equal(x.a, y.a)
-    assert_dict_keys_equal(x.sa, y.sa)
-    assert_dict_keys_equal(x.fa, y.fa)
+    assert_collections_equal(x.a, y.a, ignore=ignore_a)
+    assert_collections_equal(x.sa, y.sa, ignore=ignore_sa)
+    assert_collections_equal(x.fa, y.fa, ignore=ignore_fa)
     assert_array_equal(x.samples, y.samples)
+    assert_equal(x.samples.dtype, y.samples.dtype)
+
 
 if sys.version_info < (2, 7):
     # compatibility helpers for testing functions introduced in more recent versions

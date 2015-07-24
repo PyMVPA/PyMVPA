@@ -50,7 +50,7 @@
 .. _`nipy mailing list`: http://projects.scipy.org/mailman/listinfo/nipy-devel
 .. _`nipy bugs`: https://bugs.launchpad.net/nipy
 .. _pep8: http://www.python.org/dev/peps/pep-0008/
-.. _`numpy coding style`: http://scipy.org/scipy/numpy/wiki/CodingStyleGuidelines
+.. _`numpy coding style`: https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
 
 .. Code support stuff
 .. _pychecker: http://pychecker.sourceforge.net/
@@ -64,7 +64,7 @@
 .. _ECB: http://ecb.sourceforge.net/
 .. _emacs_python_mode: http://www.emacswiki.org/cgi-bin/wiki/PythonMode
 .. _doctest-mode: http://www.cis.upenn.edu/~edloper/projects/doctestmode/
-.. _nose: http://somethingaboutorange.com/mrl/projects/nose
+.. _nose: https://nose.readthedocs.org
 .. _`python coverage tester`: http://nedbatchelder.com/code/modules/coverage.html
 .. _screen: http://www.gnu.org/software/screen/
 .. _ccache: http://ccache.samba.org/
@@ -115,7 +115,7 @@
 .. _Shogun: http://www.shogun-toolbox.org
 .. _Orange: http://magix.fri.uni-lj.si/orange
 .. _PyML: http://pyml.sourceforge.net
-.. _MVPA Toolbox: http://www.csbmb.princeton.edu/mvpa/
+.. _MVPA Toolbox: https://code.google.com/p/princeton-mvpa-toolbox/
 .. _scikit-learn: http://scikit-learn.org
 .. _nilearn: http://nilearn.github.io
 

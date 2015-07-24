@@ -751,7 +751,7 @@ def test_bayes_confusion_hyp():
     skip_if_no_external('scipy')        # uses factorial from scipy.misc
     hyptest = bayes(conf)
     # by default comes with all hypothesis and posterior probs
-    assert_equal(hyptest.shape, (15,2))
+    assert_equal(hyptest.shape, (15, 2))
     assert_array_equal(hyptest.fa.stat, ['log(p(C|H))', 'log(p(H|C))'])
     # check order of hypothesis (coarse)
     assert_array_equal(hyptest.sa.hypothesis[0], [['A', 'B', 'C', 'D']])
@@ -760,12 +760,12 @@ def test_bayes_confusion_hyp():
     # non-log scale
     bayes = BayesConfusionHypothesis(labels_attr='labels', log=False,
                 hypotheses=[[['A', 'B', 'C', 'D']],
-                            [['A', 'C',], ['B', 'D']],
-                            [['A', 'D',], ['B', 'C']],
+                            [['A', 'C'], ['B', 'D']],
+                            [['A', 'D'], ['B', 'C']],
                             [['A'], ['B'], ['C'], ['D']]])
     hyptest = bayes(conf)
     # also with custom hyp the post-probs must add up to 1
-    post_prob = hyptest.samples[:,1]
+    post_prob = hyptest.samples[:, 1]
     assert_almost_equal(np.sum(post_prob), 1)
     # in this particular case ...
     assert(post_prob[3] - np.sum(post_prob[1:3]) < 0.02)
