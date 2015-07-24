@@ -912,7 +912,11 @@ class TreeClassifier(ProxyClassifier):
         predictions = np.zeros((len(dataset),),
                                dtype=self.ca.trained_targets.dtype)
         for pred_group in set(clf_predictions):
-            gk = index2group[pred_group]
+            try:
+                gk = index2group[pred_group]
+            except IndexError:
+                raise IndexError("%s: Cannot obtain value for index %r among %r"
+                                 % (self, pred_group, index2group))
             clf_ = clfs[gk]
             group_indexes = (clf_predictions == pred_group)
             if __debug__:

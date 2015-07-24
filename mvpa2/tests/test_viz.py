@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Tests for visualizations'''
 
+from os.path import join as pathjoin
 
 from mvpa2 import pymvpa_dataroot
 from mvpa2.testing import *
@@ -65,10 +66,10 @@ def test_lightbox(slices):
     from mvpa2.misc.plot.lightbox import plot_lightbox
     fig = plot_lightbox(
         #background = NiftiImage('%s/anat.nii.gz' % impath),
-        background = os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+        background = pathjoin(pymvpa_dataroot, 'bold.nii.gz'),
         background_mask = None,
-        overlay = os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-        overlay_mask = os.path.join(pymvpa_dataroot, 'mask.nii.gz'),
+        overlay = pathjoin(pymvpa_dataroot, 'bold.nii.gz'),
+        overlay_mask = pathjoin(pymvpa_dataroot, 'mask.nii.gz'),
         #
         do_stretch_colors = False,
         add_colorbar = True,

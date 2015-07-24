@@ -11,6 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 import os
+from os.path import join as pathjoin
 import tempfile
 import shutil
 import numpy as np
@@ -103,7 +104,7 @@ def make_flobs(pre=0, rise=5, fall=5, undershoot=5, undershootamp=0.3,
                    + ' --hf=' + pfilename
                    + ' --nbfs=' + str(nbasisfns)
                    + ' --ns=' + str(nsecs)
-                   + ' --logdir=' + os.path.join(wdir, 'out')
+                   + ' --logdir=' + pathjoin(wdir, 'out')
                    + ' --nhs=' + str(rnsamples)
                    + ' --res=' + str(resolution) )
     err = childerror.readlines()
@@ -112,7 +113,7 @@ def make_flobs(pre=0, rise=5, fall=5, undershoot=5, undershootamp=0.3,
         raise RuntimeError, "Problem while running halfcosbasis."
 
     # read samples from file into an array
-    hrfs = np.fromfile( os.path.join( wdir, 'out', 'hrfsamps.txt' ),
+    hrfs = np.fromfile( pathjoin( wdir, 'out', 'hrfsamps.txt' ),
                        sep = ' ' )
 
     # reshape array to get one sample per row and 1d array only

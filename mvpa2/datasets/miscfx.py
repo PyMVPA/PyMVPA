@@ -420,7 +420,7 @@ class SequenceStats(dict):
     """Simple helper to provide representation of sequence statistics
 
     Matlab analog:
-    http://cfn.upenn.edu/aguirre/code/matlablib/mseq/mtest.m
+    https://cfn.upenn.edu/aguirre/wiki/public:m_sequences_code:mtest.m
 
     WARNING: Experimental -- API might change without warning!
     Current implementation is ugly!

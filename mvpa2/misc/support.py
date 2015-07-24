@@ -13,7 +13,10 @@ __docformat__ = 'restructuredtext'
 import itertools
 import math
 import random
-import re, os, sys
+import re
+import os
+from os.path import join as pathjoin
+import sys
 
 # for SmartVersion
 from distutils.version import Version
@@ -41,7 +44,7 @@ def reuse_absolute_path(file1, file2, force=False):
     """
     if not file2.startswith(os.path.sep) or force:
         # lets reuse path to file1
-        return os.path.join(os.path.dirname(file1), file2.lstrip(os.path.sep))
+        return pathjoin(os.path.dirname(file1), file2.lstrip(os.path.sep))
     else:
         return file2
 
