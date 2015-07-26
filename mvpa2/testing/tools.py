@@ -101,11 +101,39 @@ def assert_collections_equal(x, y, ignore={}):
         else:
             try:
                 assert_equal(v1, v2, msg="Values for key %s have different values: %s and %s"
-                             % (k, v1, v2))
+                                         % (k, v1, v2))
             except ValueError as e:
                 ## we must be hitting some comparison issue inside (e.g. "Use a.any ..."
                 ## but we do not to dive into providing comparators all around for now
                 assert_reprstr_equal(v1, v2)
+
+
+
+def assert_datasets_almost_equal(x, y, ignore_a={}, ignore_sa={},
+                                 ignore_fa={}, decimal=6):
+    """
+    Parameters
+    ----------
+    x, y: Dataset
+      Two datasets that are asserted to be almost equal.
+    ignore_a, ignore_sa, ignore_fa: iterable
+      Differences in values of which attributes to ignore
+    decimal: int or None (default: 6)
+      Number of decimal up to which equality of samples is considered.
+      If None, it is required that x.samples and y.samples have the same
+      dtype
+    """
+    assert_equal(type(x), type(y))
+    assert_collections_equal(x.a, y.a, ignore=ignore_a)
+    assert_collections_equal(x.sa, y.sa, ignore=ignore_sa)
+    assert_collections_equal(x.fa, y.fa, ignore=ignore_fa)
+
+    if decimal is None:
+        assert_array_equal(x.samples, y.samples)
+        assert_equal(x.samples.dtype, y.samples.dtype)
+    else:
+        assert_array_almost_equal(x.samples, y.samples, decimal=decimal)
+
 
 
 def assert_datasets_equal(x, y, ignore_a={}, ignore_sa={}, ignore_fa={}):
@@ -115,12 +143,9 @@ def assert_datasets_equal(x, y, ignore_a={}, ignore_sa={}, ignore_fa={}):
     ignore_a, ignore_sa, ignore_fa: iterable
       Differences in values of which attributes to ignore
     """
-    assert_equal(type(x), type(y))
-    assert_collections_equal(x.a, y.a, ignore=ignore_a)
-    assert_collections_equal(x.sa, y.sa, ignore=ignore_sa)
-    assert_collections_equal(x.fa, y.fa, ignore=ignore_fa)
-    assert_array_equal(x.samples, y.samples)
-    assert_equal(x.samples.dtype, y.samples.dtype)
+    assert_datasets_almost_equal(ignore_a=ignore_a, ignore_sa=ignore_sa,
+                                 ignore_fa=ignore_fa, decimal=None)
+
 
 
 if sys.version_info < (2, 7):
