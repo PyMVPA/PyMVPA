@@ -6,15 +6,15 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Support for magnetic resonance imaging (MRI) data IO.
+"""Support for surface-based GIFTI data IO.
 
 This module offers functions to import into PyMVPA surface-based GIFTI
-data using NiBabel_ (e.g. NIfTI, MINC, Analyze), and export PyMVPA
-surface-based datasets back into GIFTI.
+data using NiBabel_, and export PyMVPA surface-based datasets back into
+GIFTI.
 
 The current implementation supports data associated with nodes, and
 node indices for such data. There is no support for meta-data,
-non-identity affine transformations, or intent fields.
+or non-identity affine transformations.
 
 This module supports node data, i.e. each node on the surface has N
 values associated with it (with N>=1). Typical examples include
