@@ -185,3 +185,20 @@ def test_gifti_dataset(fn, format_, include_nodes):
 
     assert_raises(TypeError, gifti_dataset, ds3_sa)
     assert_raises(TypeError, map2gifti, img, fn)
+
+
+
+@sweepargs(include_nodes=(False, True))
+@with_tempfile(suffix='.hdf5')
+def test_gifti_dataset_h5py(fn, include_nodes):
+    if not externals.exists('h5py'):
+        raise SkipTest
+
+    from mvpa2.base.hdf5 import h5save, h5load
+
+    ds = _get_test_dataset(include_nodes)
+
+    h5save(fn, ds)
+    ds2 = h5load(fn)
+
+    assert_datasets_almost_equal(ds, ds2)
