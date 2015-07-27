@@ -34,6 +34,7 @@ from mvpa2.base.collections import FeatureAttributesCollection, \
     SampleAttributesCollection
 from mvpa2.base.dataset import AttrDataset
 from mvpa2.datasets.base import Dataset
+from mvpa2.base import warning
 import numpy as np
 
 
@@ -153,10 +154,12 @@ def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ'):
         samples = ds
     elif isinstance(ds, AttrDataset):
         samples = ds.samples
+        _warn_if_fmri_dataset(ds)
     else:
         raise TypeError('first argument must be AttrDataset or numpy.ndarray')
 
     [nsamples, nfeatures] = samples.shape
+
 
     def _get_attribute_value(ds, attr_name, keys_):
         if isinstance(ds, np.ndarray):
@@ -198,3 +201,19 @@ def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ'):
         giftiio.write(image, filename)
 
     return image
+
+
+
+def _warn_if_fmri_dataset(ds):
+    assert (isinstance(ds, AttrDataset))
+
+    fmri_fields = set(('imgaffine', 'imgtype', 'imghdr'))
+
+    ds_fmri_fields = set.intersection(set(ds.a.keys()), fmri_fields)
+
+    if len(ds_fmri_fields) > 0:
+        warning('dataset attribute .a has fields %s, which suggest it is an '
+                'volumetric dataset. Converting this dataset to GIFTI '
+                'format will most likely result in unvisualiable '
+                '(and potentially, un-analysable) data. Consider using '
+                'map2nifti instead' % (', '.join(ds_fmri_fields)))
