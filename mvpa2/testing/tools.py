@@ -143,7 +143,7 @@ def assert_datasets_equal(x, y, ignore_a={}, ignore_sa={}, ignore_fa={}):
     ignore_a, ignore_sa, ignore_fa: iterable
       Differences in values of which attributes to ignore
     """
-    assert_datasets_almost_equal(ignore_a=ignore_a, ignore_sa=ignore_sa,
+    assert_datasets_almost_equal(x, y, ignore_a=ignore_a, ignore_sa=ignore_sa,
                                  ignore_fa=ignore_fa, decimal=None)
 
 
