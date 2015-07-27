@@ -162,7 +162,7 @@ if externals.exists('mock'):
     def assert_warnings(messages):
         with mock.patch("warnings.warn") as mock_warnings:
             yield
-            # import pydb; pydb.debugger()
+
             if externals.versions['mock'] >= '0.8.0':
                 mock_calls = mock_warnings.mock_calls
             else:
