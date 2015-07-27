@@ -22,6 +22,7 @@ import numpy as np
 
 from mvpa2.testing.tools import assert_datasets_almost_equal, assert_raises, \
     with_tempfile
+from mvpa2.testing import sweepargs
 
 
 
@@ -129,57 +130,58 @@ def _build_gifti_string(format_, include_nodes=True):
 
 
 
+@sweepargs(include_nodes=(False, True))
+@sweepargs(format_=("ASCII", "Base64Binary", "GZipBase64Binary"))
 @with_tempfile(suffix='.func.gii')
-def test_gifti_dataset(fn):
-    for include_nodes in (False, True):
-        expected_ds = _get_test_dataset(include_nodes)
+def test_gifti_dataset(fn, format_, include_nodes):
+    expected_ds = _get_test_dataset(include_nodes)
 
-        expected_ds_sa = expected_ds.copy(deep=True)
-        expected_ds_sa.sa['chunks'] = [4, 3, 2, 1, 3, 2]
-        expected_ds_sa.sa['targets'] = ['t%d' % i for i in xrange(6)]
+    expected_ds_sa = expected_ds.copy(deep=True)
+    expected_ds_sa.sa['chunks'] = [4, 3, 2, 1, 3, 2]
+    expected_ds_sa.sa['targets'] = ['t%d' % i for i in xrange(6)]
 
-        for format_ in ("ASCII", "Base64Binary", "GZipBase64Binary"):
-            # build GIFTI file from scratch
-            gifti_string = _build_gifti_string(format_, include_nodes)
-            with open(fn, 'w') as f:
-                f.write(gifti_string)
 
-            # reading GIFTI file
-            ds = gifti_dataset(fn)
-            assert_datasets_almost_equal(ds, expected_ds)
+    # build GIFTI file from scratch
+    gifti_string = _build_gifti_string(format_, include_nodes)
+    with open(fn, 'w') as f:
+        f.write(gifti_string)
 
-            # test GiftiImage input
-            img = nb_giftiio.read(fn)
-            ds2 = gifti_dataset(img)
-            assert_datasets_almost_equal(ds2, expected_ds)
+    # reading GIFTI file
+    ds = gifti_dataset(fn)
+    assert_datasets_almost_equal(ds, expected_ds)
 
-            # test using Nibabel's output from write
-            nb_giftiio.write(img, fn)
-            ds3 = gifti_dataset(fn)
-            assert_datasets_almost_equal(ds3, expected_ds)
+    # test GiftiImage input
+    img = nb_giftiio.read(fn)
+    ds2 = gifti_dataset(img)
+    assert_datasets_almost_equal(ds2, expected_ds)
 
-            # test targets and chunks arguments
-            ds3_sa = gifti_dataset(fn, targets=expected_ds_sa.targets,
-                                   chunks=expected_ds_sa.chunks)
-            assert_datasets_almost_equal(ds3_sa, expected_ds_sa)
+    # test using Nibabel's output from write
+    nb_giftiio.write(img, fn)
+    ds3 = gifti_dataset(fn)
+    assert_datasets_almost_equal(ds3, expected_ds)
 
-            # test map2gifti
-            img2 = map2gifti(ds)
-            ds4 = gifti_dataset(img2)
-            assert_datasets_almost_equal(ds4, expected_ds)
+    # test targets and chunks arguments
+    ds3_sa = gifti_dataset(fn, targets=expected_ds_sa.targets,
+                           chunks=expected_ds_sa.chunks)
+    assert_datasets_almost_equal(ds3_sa, expected_ds_sa)
 
-            map2gifti(ds, fn, encoding=format_)
-            ds5 = gifti_dataset(fn)
-            assert_datasets_almost_equal(ds5, expected_ds)
+    # test map2gifti
+    img2 = map2gifti(ds)
+    ds4 = gifti_dataset(img2)
+    assert_datasets_almost_equal(ds4, expected_ds)
 
-            # test map2gifti with array input; nodes are not stored
-            map2gifti(ds.samples, fn)
-            ds6 = gifti_dataset(fn)
-            if include_nodes:
-                assert_raises(AssertionError, assert_datasets_almost_equal,
-                              ds6, expected_ds)
-            else:
-                assert_datasets_almost_equal(ds6, expected_ds)
+    map2gifti(ds, fn, encoding=format_)
+    ds5 = gifti_dataset(fn)
+    assert_datasets_almost_equal(ds5, expected_ds)
 
-            assert_raises(TypeError, gifti_dataset, ds3_sa)
-            assert_raises(TypeError, map2gifti, img, fn)
+    # test map2gifti with array input; nodes are not stored
+    map2gifti(ds.samples, fn)
+    ds6 = gifti_dataset(fn)
+    if include_nodes:
+        assert_raises(AssertionError, assert_datasets_almost_equal,
+                      ds6, expected_ds)
+    else:
+        assert_datasets_almost_equal(ds6, expected_ds)
+
+    assert_raises(TypeError, gifti_dataset, ds3_sa)
+    assert_raises(TypeError, map2gifti, img, fn)
