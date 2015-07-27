@@ -24,50 +24,59 @@ label data or anatomical surfaces, are not supported.
 .. _NiBabel: http://nipy.sourceforge.net/nibabel
 """
 
-
 from mvpa2.base import externals
+
 externals.exists('nibabel', raise_=True)
 
 from nibabel.gifti import gifti, giftiio
 
 from mvpa2.base.collections import FeatureAttributesCollection, \
-        SampleAttributesCollection
-from mvpa2.base.dataset import vstack
+    SampleAttributesCollection
+from mvpa2.base.dataset import AttrDataset
 from mvpa2.datasets.base import Dataset
 import numpy as np
+
+
 
 def _gifti_intent_niistring(intent_code):
     return gifti.intent_codes.niistring[intent_code]
 
+
+
 def _gifti_intent_is_data(intent_string):
     # exclude a set of intents
-    not_data_intent_strings=('NIFTI_INTENT_GENMATRIX',
-                             'NIFTI_INTENT_SYMMATRIX',
-                             'NIFTI_INTENT_DISPVECT',
-                             'NIFTI_INTENT_VECTOR',
-                             'NIFTI_INTENT_POINTSET',
-                             'NIFTI_INTENT_TRIANGLE',
-                             'NIFTI_INTENT_QUATERNION',
-                             'NIFTI_INTENT_DIMLESS',
-                             'NIFTI_INTENT_NODE_INDEX',
-                             'NIFTI_INTENT_SHAPE')
+    not_data_intent_strings = ('NIFTI_INTENT_GENMATRIX',
+                               'NIFTI_INTENT_SYMMATRIX',
+                               'NIFTI_INTENT_DISPVECT',
+                               'NIFTI_INTENT_VECTOR',
+                               'NIFTI_INTENT_POINTSET',
+                               'NIFTI_INTENT_TRIANGLE',
+                               'NIFTI_INTENT_QUATERNION',
+                               'NIFTI_INTENT_DIMLESS',
+                               'NIFTI_INTENT_NODE_INDEX',
+                               'NIFTI_INTENT_SHAPE')
 
     return intent_string not in not_data_intent_strings
 
+
+
 def _gifti_intent_is_node_indices(intent_string):
     return intent_string == 'NIFTI_INTENT_NODE_INDEX'
+
 
 
 def _get_gifti_image(samples):
     if isinstance(samples, basestring):
         samples = giftiio.read(samples)
 
-    required_class=gifti.GiftiImage
+    required_class = gifti.GiftiImage
     if not isinstance(samples, required_class):
         raise TypeError('Input of type %s must be a %s' %
-                                    (samples, required_class))
+                        (samples, required_class))
 
     return samples
+
+
 
 def gifti_dataset(samples, targets=None, chunks=None):
     """
@@ -87,16 +96,14 @@ def gifti_dataset(samples, targets=None, chunks=None):
     image = _get_gifti_image(samples)
 
     for darray in image.darrays:
-        intent_string=_gifti_intent_niistring(darray.intent)
+        intent_string = _gifti_intent_niistring(darray.intent)
 
         if _gifti_intent_is_data(intent_string):
             data_vectors.append(darray.data)
             intents.append(intent_string)
 
         elif _gifti_intent_is_node_indices(intent_string):
-            node_indices=darray.data
-
-
+            node_indices = darray.data
 
     samples = np.asarray(data_vectors)
     nsamples, nfeatures = samples.shape
@@ -121,12 +128,13 @@ def gifti_dataset(samples, targets=None, chunks=None):
     return Dataset(samples=samples, sa=sa, fa=fa)
 
 
+
 def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ'):
     """Maps data(sets) into a GiftiImage, and optionally saves it to disc.
 
     Parameters
     ----------
-    ds : Dataset or numpy.ndarray
+    ds : AttrDataset or numpy.ndarray
       The data to be mapepd
     filename : basestring or None, optional
       Filename to which the GiftiImage is stored
@@ -139,22 +147,23 @@ def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ'):
       dataset contents represented in GiftiImage
     """
 
-    darrays=[]
+    darrays = []
 
     if isinstance(ds, np.ndarray):
-        samples=ds
-    elif isinstance(ds, Dataset):
-        samples=ds.samples
+        samples = ds
+    elif isinstance(ds, AttrDataset):
+        samples = ds.samples
     else:
-        raise TypeError('first argument must be Dataset or numpy.ndarray')
+        raise TypeError('first argument must be AttrDataset or numpy.ndarray')
 
-    [nsamples,nfeatures]=samples.shape
+    [nsamples, nfeatures] = samples.shape
 
     def _get_attribute_value(ds, attr_name, keys_):
-        try:
-            attr_collection=ds.__dict__.get(attr_name)
-        except:
+        if isinstance(ds, np.ndarray):
+            # no attributes
             return None
+
+        attr_collection = ds.__dict__.get(attr_name)
 
         if isinstance(keys_, basestring):
             keys_ = (keys_,)
@@ -164,22 +173,23 @@ def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ'):
                 return attr_collection[key].value
         return None
 
+
     def _build_array(data, intent, encoding=encoding):
         return gifti.GiftiDataArray.from_array(data, intent,
-                                                encoding=encoding)
+                                               encoding=encoding)
+
 
     node_indices_labels = ('node_indices', 'center_ids', 'ids', 'roi_ids')
     node_indices = _get_attribute_value(ds, 'fa', node_indices_labels)
 
     if node_indices is not None:
-        darray = _build_array(node_indices,'NIFTI_INTENT_NODE_INDEX')
+        darray = _build_array(node_indices, 'NIFTI_INTENT_NODE_INDEX')
         darrays.append(darray)
 
-
-    intents=_get_attribute_value(ds, 'sa', 'intents')
+    intents = _get_attribute_value(ds, 'sa', 'intents')
     for i, sample in enumerate(samples):
         intent = 'NIFTI_INTENT_NONE' if intents is None else intents[i]
-        darray = _build_array(sample,intent)
+        darray = _build_array(sample, intent)
         darrays.append(darray)
 
     image = gifti.GiftiImage(darrays=darrays)
