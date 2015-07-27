@@ -57,6 +57,8 @@ def test_assert_objectarray_equal():
         else:
             assert_raises(AssertionError, assert_objectarray_equal, a, b, strict=False)
 
+
+
 # Set of basic smoke tests for tests collectors/runners
 def test_tests_run():
     ok_(len(mvtests.collect_unit_tests()) > 10)
@@ -64,35 +66,41 @@ def test_tests_run():
     ok_(len(mvtests.collect_test_suites(instantiate=False)) > 10)
     mvtests.run(limit=[])
 
+
+
 @sweepargs(suffix=['', 'customsuffix'])
 @sweepargs(prefix=['', 'customprefix'])
-#@sweepargs(mkdir=(True, False))
-def test_with_tempfile(suffix, prefix): #, mkdir):
+# @sweepargs(mkdir=(True, False))
+def test_with_tempfile(suffix, prefix):  # , mkdir):
     files = []
 
-    @with_tempfile(suffix, prefix) #, mkdir=mkdir)
+
+    @with_tempfile(suffix, prefix)  # , mkdir=mkdir)
     def testf(f):
-        assert_false(os.path.exists(f)) # not yet
+        assert_false(os.path.exists(f))  # not yet
         if suffix:
             assert_true(f.endswith(suffix))
         if prefix:
             assert_true(os.path.basename(f).startswith(prefix))
-        #assert_true(os.path.isdir(f) == dir_)
+        # assert_true(os.path.isdir(f) == dir_)
         # make sure it is writable
         with open(f, 'w') as f_:
             f_.write('load')
             files.append(f)
-        assert_true(os.path.exists(f)) # should be there
+        assert_true(os.path.exists(f))  # should be there
         # and we should be able to create a bunch of those with other suffixes
         with open(f + '1', 'w') as f_:
             f_.write('load')
             files.append(f + '1')
+
 
     testf()
     # now we need to figure out what file was actually
     assert_equal(len(files), 2)
     assert_false(os.path.exists(files[0]))
     assert_false(os.path.exists(files[1]))
+
+
 
 @with_tempfile('.hdf5')
 def test_generate_testing_fmri_dataset(tempfile):
