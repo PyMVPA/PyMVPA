@@ -9,16 +9,19 @@
 """Unit tests for PyMVPA's GIFTI dataset"""
 
 from mvpa2.base import externals
+from mvpa2.testing import SkipTest
 
-externals.exists('nibabel', raise_=True)
+if not externals.exists('nibabel'):
+    raise SkipTest
 
-from nibabel.gifti import gifti as nb_gifti, giftiio as nb_giftiio
+from nibabel.gifti import giftiio as nb_giftiio
 from mvpa2.datasets.base import Dataset
 from mvpa2.datasets.gifti import gifti_dataset, map2gifti
 
 import numpy as np
 
-from mvpa2.testing.tools import assert_datasets_almost_equal, assert_raises, with_tempfile
+from mvpa2.testing.tools import assert_datasets_almost_equal, assert_raises, \
+    with_tempfile
 
 
 
