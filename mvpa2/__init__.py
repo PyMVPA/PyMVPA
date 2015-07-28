@@ -177,4 +177,11 @@ if __debug__:
 
 # Setup duecredit entry for the entire PyMVPA
 from .support.due import due, Doi
-due.cite(Doi("10.1007/s12021-008-9041-y"), level="module mvpa2")
+due.cite(Doi("10.1007/s12021-008-9041-y"),
+         description="Multivariate pattern analysis of neural data",
+         tags=["reference"],
+         path="mvpa2")
+due.cite(Doi("10.3389/neuro.11.003.2009"),
+         description="Demonstration of PyMVPA capabilities concerning multi-modal or modality-agnostic data analysis",
+         tags=["edu"],
+         path="mvpa2")
