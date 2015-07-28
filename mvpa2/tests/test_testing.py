@@ -74,7 +74,6 @@ def test_tests_run():
 def test_with_tempfile(suffix, prefix):  # , mkdir):
     files = []
 
-
     @with_tempfile(suffix, prefix)  # , mkdir=mkdir)
     def testf(f):
         assert_false(os.path.exists(f))  # not yet
@@ -92,7 +91,6 @@ def test_with_tempfile(suffix, prefix):  # , mkdir):
         with open(f + '1', 'w') as f_:
             f_.write('load')
             files.append(f + '1')
-
 
     testf()
     # now we need to figure out what file was actually
@@ -128,18 +126,14 @@ def test_assert_datasets_almost_equal(digits, attribute):
 
     ds = Dataset(samples=samples, **args)
 
-
     def negate_assert(f):
         def raiser(*args, **kwargs):
             assert_raises(AssertionError, f, *args, **kwargs)
 
-
         return raiser
-
 
     assert_datasets_not_almost_equal = negate_assert(assert_datasets_almost_equal)
     assert_datasets_not_equal = negate_assert(assert_datasets_equal)
-
 
     def change_attribute(name, how_much):
         # change a single attribute in samples, a, fa, or sa.
@@ -148,14 +142,14 @@ def test_assert_datasets_almost_equal(digits, attribute):
         if name == 'samples':
             value = attr
         else:
-            for key in attr.keys():
+            for key in attr:
                 break
+
             value = attr[key].value
 
         value[0] += how_much
 
         return ds2
-
 
     def remove_attribute(name):
         ds2 = ds.copy(deep=True)
@@ -163,7 +157,6 @@ def test_assert_datasets_almost_equal(digits, attribute):
         for key in attr.keys():
             attr.pop(key)
         return ds2
-
 
     if digits is None:
         ds2 = change_attribute(attribute, 0)

@@ -160,7 +160,6 @@ def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ'):
 
     [nsamples, nfeatures] = samples.shape
 
-
     def _get_attribute_value(ds, attr_name, keys_):
         if isinstance(ds, np.ndarray):
             # no attributes
@@ -176,11 +175,9 @@ def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ'):
                 return attr_collection[key].value
         return None
 
-
     def _build_array(data, intent, encoding=encoding):
         return gifti.GiftiDataArray.from_array(data, intent,
                                                encoding=encoding)
-
 
     node_indices_labels = ('node_indices', 'center_ids', 'ids', 'roi_ids')
     node_indices = _get_attribute_value(ds, 'fa', node_indices_labels)
