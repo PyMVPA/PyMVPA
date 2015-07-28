@@ -95,7 +95,6 @@ def _build_gifti_string(format_, include_nodes=True):
 <!DOCTYPE GIFTI SYSTEM "http://www.nitrc.org/frs/download.php/115/gifti.dtd">
 <GIFTI Version="1.0"  NumberOfDataArrays="%d">""" % (ndata_arrays)
 
-
     def _build_data_array(data, intent, encoding=format_, dim=nfeatures):
         datatype = "INT32" if intent == "NODE_INDEX" else "FLOAT32"
 
@@ -115,7 +114,6 @@ def _build_gifti_string(format_, include_nodes=True):
                       <Data>%s</Data>
                     </DataArray>
                 """ % (datatype, dim, encoding, intent, data)
-
 
     body_elements = []
     if include_nodes:
