@@ -20,8 +20,8 @@ from mvpa2.datasets.gifti import gifti_dataset, map2gifti
 
 import numpy as np
 
-from mvpa2.testing.tools import assert_datasets_almost_equal, assert_raises, \
-    with_tempfile
+from mvpa2.testing.tools import assert_datasets_almost_equal, \
+    assert_datasets_equal, assert_raises, with_tempfile
 from mvpa2.testing import sweepargs
 
 
@@ -199,4 +199,4 @@ def test_gifti_dataset_h5py(fn, include_nodes):
     h5save(fn, ds)
     ds2 = h5load(fn)
 
-    assert_datasets_almost_equal(ds, ds2)
+    assert_datasets_equal(ds, ds2)
