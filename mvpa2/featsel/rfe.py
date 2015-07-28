@@ -175,9 +175,11 @@ class RFE(IterativeFeatureSelection):
     address = "Hingham, MA, USA",
     journal = "Machine Learning"
 }
-"""), use="Recursive feature elemination procedure")
+"""), description="Recursive feature elimination procedure",
+               tags=["implementation"])
     @due.dcite(Doi("10.1162/neco.2007.09-06-340"),
-               use="Full-brain fMRI decoding using SVM RFE", kind="use")
+               description="Full-brain fMRI decoding using SVM RFE",
+               tags=["use"])
     def _train(self, ds):
         """Proceed and select the features recursively eliminating less
         important ones.
