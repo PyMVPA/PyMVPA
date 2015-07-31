@@ -1,4 +1,4 @@
-# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# emacs: -*- coding: utf-8; mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -25,6 +25,9 @@ from mvpa2.clfs._svmbase import _SVM
 from mvpa2.clfs.libsvmc import _svm
 from mvpa2.kernels.libsvm import LinearLSKernel
 from mvpa2.clfs.libsvmc.sens import LinearSVMWeights
+
+from mvpa2.support.due import due, Doi, BibTeX
+
 
 if __debug__:
     from mvpa2.base import debug
@@ -120,10 +123,18 @@ class SVM(_SVM):
         """Holds the trained SVM."""
 
 
-
+    @due.dcite(
+        Doi('10.1145/1961189.1961199'),
+        description="LIBSVM: A library for support vector machines",
+        path="libsvm",
+        tags=["implementation", "cite-on-use"])
+    # TODO: conditioned citations for nu-SVM and one-class
+    #    B. Schölkopf, A. Smola, R. Williamson, and P. L. Bartlett. New support vector algorithms. Neural Computation, 12, 2000, 1207-1245.
+    #    B. Schölkopf, J. Platt, J. Shawe-Taylor, A. J. Smola, and R. C. Williamson. Estimating the support of a high-dimensional distribution. Neural Computation, 13, 2001, 1443-1471.
     def _train(self, dataset):
         """Train SVM
         """
+        super(SVM, self)._train(dataset)
         targets_sa_name = self.get_space()    # name of targets sa
         targets_sa = dataset.sa[targets_sa_name] # actual targets sa
 
