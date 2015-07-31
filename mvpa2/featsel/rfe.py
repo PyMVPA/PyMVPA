@@ -164,7 +164,8 @@ class RFE(IterativeFeatureSelection):
             prefixes=prefixes
             + _repr_attrs(self, ['update_sensitivity'], default=True))
 
-    @due.dcite(BibTeX("""
+    @due.dcite(
+        BibTeX("""
 @Article{ GWB+02,
     author = "I. Guyon and J. Weston and S. Barnhill and V. Vapnik",
     title = "Gene Selection for Cancer Classification using Support Vector Machines",
@@ -174,12 +175,13 @@ class RFE(IterativeFeatureSelection):
     publisher = "Kluwer",
     address = "Hingham, MA, USA",
     journal = "Machine Learning"
-}
-"""), description="Recursive feature elimination procedure",
-               tags=["implementation"])
-    @due.dcite(Doi("10.1162/neco.2007.09-06-340"),
-               description="Full-brain fMRI decoding using SVM RFE",
-               tags=["use"])
+}"""),
+        description="Recursive feature elimination procedure",
+        tags=["implementation"])
+    @due.dcite(
+        Doi("10.1162/neco.2007.09-06-340"),
+        description="Full-brain fMRI decoding using SVM RFE",
+        tags=["use"])
     def _train(self, ds):
         """Proceed and select the features recursively eliminating less
         important ones.

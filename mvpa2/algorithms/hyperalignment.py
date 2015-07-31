@@ -33,6 +33,8 @@ from mvpa2.mappers.base import ChainMapper
 from mvpa2.mappers.zscore import zscore, ZScoreMapper
 from mvpa2.mappers.staticprojection import StaticProjectionMapper
 
+from mvpa2.support.due import due, Doi
+
 if __debug__:
     from mvpa2.base import debug
 
@@ -164,6 +166,10 @@ class Hyperalignment(ClassWithCollections):
         self.commonspace = None
 
 
+    @due.dcite(
+        Doi('10.1016/j.neuron.2011.08.026'),
+        description="Hyperalignment of data to a common space",
+        tags=["implementation"])
     def train(self, datasets):
         """Derive a common feature space from a series of datasets.
 
