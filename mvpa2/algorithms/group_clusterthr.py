@@ -221,9 +221,10 @@ class GroupClusterThreshold(Learner):
         self._thrmap = None
         self._null_cluster_sizes = None
 
-    @due.dcite(Doi("10.1016/j.neuroimage.2012.09.063"),
-               description="Statistical assessment of (searchlight) MVPA results",
-               tags=['implementation'])
+    @due.dcite(
+        Doi("10.1016/j.neuroimage.2012.09.063"),
+        description="Statistical assessment of (searchlight) MVPA results",
+        tags=['implementation'])
     def _train(self, ds):
         # shortcuts
         chunk_attr = self.params.chunk_attr
