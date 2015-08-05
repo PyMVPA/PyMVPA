@@ -127,7 +127,7 @@ class SVM(_SVM):
         Doi('10.1145/1961189.1961199'),
         description="LIBSVM: A library for support vector machines",
         path="libsvm",
-        tags=["implementation", "cite-module"])
+        tags=["implementation"])
     # TODO: conditioned citations for nu-SVM and one-class
     #    B. Schölkopf, A. Smola, R. Williamson, and P. L. Bartlett. New support vector algorithms. Neural Computation, 12, 2000, 1207-1245.
     #    B. Schölkopf, J. Platt, J. Shawe-Taylor, A. J. Smola, and R. C. Williamson. Estimating the support of a high-dimensional distribution. Neural Computation, 13, 2001, 1443-1471.
