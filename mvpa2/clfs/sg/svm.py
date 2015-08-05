@@ -311,7 +311,7 @@ class SVM(_SVM):
         description="Shogun: Machine learning toolbox. SVM implementations",
         path="shogun",
         version=externals.versions['shogun'],
-        tags=["implementation", "cite-module"])
+        tags=["implementation"])
     def _train(self, dataset):
         """Train SVM
         """
