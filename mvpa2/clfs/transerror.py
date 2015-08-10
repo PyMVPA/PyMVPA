@@ -1286,7 +1286,7 @@ class BayesConfusionHypothesis(Node):
     @due.dcite(
         Doi("10.1016/j.patcog.2011.04.025"),
         description="Bayesian hypothesis testing",
-        tags=["reference"])
+        tags=["reference-implementation"])
     def _call(self, ds):
         from mvpa2.support.bayes.partitioner import Partition
         from mvpa2.support.bayes.partial_independence import compute_logp_H
