@@ -180,7 +180,7 @@ from .support.due import due, Doi
 due.cite(
     Doi("10.1007/s12021-008-9041-y"),
     description="Multivariate pattern analysis of neural data",
-    tags=["reference"],
+    tags=["reference-implementation"],
     path="mvpa2")
 due.cite(
     Doi("10.3389/neuro.11.003.2009"),
