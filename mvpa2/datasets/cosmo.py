@@ -731,7 +731,7 @@ class CosmoQueryEngine(QueryEngineInterface):
 
 
     @classmethod
-    def from_mat(cls, neighbors, a=None, fa=None):
+    def from_mat(cls, neighbors, a=None, fa=None, origin=None):
         '''
         Create CosmoQueryEngine from mat struct
 
@@ -745,10 +745,15 @@ class CosmoQueryEngine(QueryEngineInterface):
             dataset attributes to be used for the output of a Searchlight
         fa: None or dict or ArrayCollectable
             dataset attributes to be used for the output of a Searchlight
+        origin:
+            Optional contents of .a and .fa of dataset indexed by neighbors;
+            its content is ignored
 
         Notes
         -----
-        Empty elements are ignored
+        Empty elements are ignored.
+        Future implementations may store the origin element, and check that
+        its contents agrees with a dataset when this instances trains on it.
         '''
 
         neighbors_vec = neighbors.ravel()
