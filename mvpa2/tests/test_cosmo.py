@@ -116,7 +116,11 @@ def _create_small_mat_nbrhood_dict():
     fa = _tup2obj([('k', arr([[4., 3., 2., 1.]]))])
     a = _tup2obj([('name', arr(arr(['output'], dtype='O')))])
 
-    return dict(neighbors=neighbors, fa=fa, a=a)
+    # XXX in the future we may want to use a real origin with
+    # contents of .a and .fa taken from the dataset
+    origin = ('unused',0)
+
+    return dict(neighbors=neighbors, fa=fa, a=a, origin=origin)
 
 
 
