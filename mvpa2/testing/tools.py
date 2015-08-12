@@ -74,7 +74,7 @@ def assert_dict_keys_equal(x, y):
 
 
 def assert_reprstr_equal(x, y):
-    """Whenever comparison fails otherwise, we migth revert to compare those"""
+    """Whenever comparison fails otherwise, we might revert to compare those"""
     assert_equal(repr(x), repr(y))
     assert_equal(str(x), str(y))
 

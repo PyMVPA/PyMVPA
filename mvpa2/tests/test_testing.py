@@ -100,6 +100,7 @@ def test_with_tempfile(suffix, prefix):  # , mkdir):
 
 
 
+@nodebug(['ID_IN_REPR', 'DS_ID'])
 @with_tempfile('.hdf5')
 def test_generate_testing_fmri_dataset(tempfile):
     skip_if_no_external('nibabel')
