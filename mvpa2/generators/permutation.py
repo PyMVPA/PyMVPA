@@ -225,15 +225,15 @@ class AttributePermutator(Node):
                     # Escape as early as possible
                     return
 
-        warning("Permutation via strategy='chunk' makes no sense --"
+        raise Warning("Permutation via strategy='chunk' makes no sense --"
                 " all chunks have the same order of targets: %s"
                 % (sample_targets,))
 
     def _permute_chunks(self, limit_idx, in_pattrs, out_pattrs, chunks=None):
         # limit_idx is doing nothing
         
-        if chunks == None:
-            raise RuntimeError("Missing 'chunk_attr' for strategy='chunk'")
+        if chunks is None:
+            raise ValueError("Missing 'chunk_attr' for strategy='chunk'")
 
         uniques = np.unique(chunks)
 
