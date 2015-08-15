@@ -231,6 +231,9 @@ class AttributePermutator(Node):
 
     def _permute_chunks(self, limit_idx, in_pattrs, out_pattrs, chunks=None):
         # limit_idx is doing nothing
+        
+        if chunks == None:
+            raise RuntimeError("Missing 'chunk_attr' for strategy='chunk'")
 
         uniques = np.unique(chunks)
 
