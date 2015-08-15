@@ -380,8 +380,7 @@ def test_permute_chunks():
     permutation = AttributePermutator(attr='targets',
                                       chunk_attr='chunks',
                                       strategy='chunks',
-                                      assure=True
-                                      )
+                                      assure=True)
     # same targets for every chunk                                 
     ds.sa.targets = range(len(ds[ds.sa.chunks==0]))*len(np.unique(ds.sa.chunks))
     assert_raises(RuntimeError, permutation, ds)
