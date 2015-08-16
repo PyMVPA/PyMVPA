@@ -395,4 +395,4 @@ def test_permute_chunks():
         
     permutation = AttributePermutator(attr='targets',
                                       strategy='chunks')
-    assert_raises(RuntimeError, permutation, ds)                    
+    assert_raises(ValueError, permutation, ds)
