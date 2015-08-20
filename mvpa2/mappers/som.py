@@ -209,7 +209,7 @@ class SimpleSOMMapper(Mapper):
         curr_lrate = self.lrate * np.exp(-1.0 * iter / self.iter_scale)
 
         # compute Gaussian influence kernel
-        infl = np.exp((-1.0 * np.power(dqd,2) ) / (2 * curr_max_radius**2))
+        infl = np.exp((-1.0 * dqd ) / (2 * curr_max_radius * iter))
         infl *= curr_lrate
 
         # hard-limit kernel to max radius
