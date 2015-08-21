@@ -18,6 +18,8 @@ import random
 
 import numpy as np
 
+from tabulate import tabulate
+
 from mvpa2.base.dataset import datasetmethod
 from mvpa2.datasets.base import Dataset
 from mvpa2.base.dochelpers import table2string
@@ -414,6 +416,59 @@ def summary_targets(dataset, targets_attr='targets', chunks_attr='chunks',
     if len(uc) < maxc:
         s += cl_stats(1, uc, chunks_attr, targets_attr)
     return s
+
+
+@datasetmethod
+def to_table(ds, sa=[], fa=[], height=100, width=10, n_digits=6):
+    height = min(ds.shape[0], height)
+    width = min(ds.shape[1], width)
+    
+    def create_attr_panel(ds_attr, keys, length):
+        panel = []
+        panel.append(keys) # add header       
+        for i in range(length):
+            panel.append([ds_attr[key][i] for key in keys])      
+        return panel
+
+    # create empty panel if there are no attributes
+    if len(ds.sa.keys()) == 0:
+        ds.sa[None] = [None]*height
+    if len(ds.fa.keys()) == 0:
+        ds.fa[None] = [None]*width
+
+    if sa == []:
+        sa = ds.sa.keys()
+    else:
+        sa = [sa]
+    if fa == []:
+        fa = ds.fa.keys()
+    else:
+        fa = [fa]
+
+
+    sa_panel = create_attr_panel(ds.sa, sa, height)
+    fa_panel = np.array(create_attr_panel(ds.fa, fa, width)).transpose()
+    vals_panel = np.vstack([ds[i].samples[0][0:width] for i in range(height)])
+    void = np.vstack([['  ']*max(len(sa), 1)] * max(len(fa), 1))
+
+    # add empty row and column, to align it with headers
+    vals_panel = np.hstack((np.array([" "*n_digits]*height).reshape(-1, 1), 
+                            vals_panel))
+    vals_panel = np.vstack(([""]*(width+1), vals_panel))
+    
+
+    return np.vstack((np.hstack((void, fa_panel)),
+                              np.hstack((sa_panel, vals_panel))))
+
+@datasetmethod
+def prt(ds, sa=[], fa=[], height=50, width=12, n_digits=5):
+    print
+    print tabulate(to_table(ds, sa, fa, height, width, n_digits))
+    
+    height = min(ds.shape[0], height)
+    width = min(ds.shape[1], width)
+
+    print "Ommitted %s rows and %s columns" %(ds.shape[0]-height, ds.shape[1]-width)
 
 
 class SequenceStats(dict):

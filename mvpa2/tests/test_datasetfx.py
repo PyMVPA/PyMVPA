@@ -9,9 +9,12 @@
 """Unit tests for PyMVPA miscelaneouse functions operating on datasets"""
 
 import unittest
-from mvpa2.testing.tools import ok_, assert_equal, assert_array_equal, reseed_rng
+from mvpa2.testing.tools import ok_, assert_equal, assert_array_equal, \
+        reseed_rng, assert_true, assert_false
 
 import numpy as np
+
+from tabulate import tabulate
 
 from mvpa2.base import externals
 from mvpa2.datasets.base import dataset_wizard
@@ -139,6 +142,75 @@ class MiscDatasetFxTests(unittest.TestCase):
             # TODO: check the content
 
 
+def test_prt():
+    def give_data():
+        y_axis = np.hstack([[i]*10 for i in range(15)])/100. 
+        x_axis =  np.array(range(10)*15)
+        vals = (x_axis+y_axis).reshape(15,10)
+        ds = dataset_wizard(vals, targets=range(15))
+        ds.fa['features'] = range(10)
+        return ds    
+    
+    
+    def starts_with_digit(x):
+        if len(x) > 0:
+            if x[0] in "0123456789":
+                return True
+        return False
+
+
+    def correct_alignment(table, func):
+        for row in table:
+                if starts_with_digit(row):               
+                    row = row[np.array([True if starts_with_digit(e)
+                              else False for e in row])]
+                    if row[0] == '10':                     
+                        assert_true(np.all([func(e, '1') or func(e, '10') for e in row]))
+                    else: 
+                        assert_true(np.all([func(e, row[0]) for e in row]))
+                        
+                            
+    ds = give_data()
+    old_ds = ds.copy()
+    table = ds.to_table()
+   
+    correct_alignment(table, str.endswith)
+    correct_alignment(table.transpose(), str.startswith)
+    
+    # Test sa selection
+    ds.sa['some_other_sa'] = range(10, 25)
+    assert_false(np.all(ds.to_table(sa='targets')[:,0] != ds.to_table(
+                        sa='some_other_sa')[:,0]))
+    assert_array_equal(ds.to_table(sa='targets')[:,1:], 
+                       ds.to_table(sa='some_other_sa')[:,1:])
+    
+    # Test alignment again, with more sa keys    
+    ds.sa['some_other_sa'] = range(15)
+    table = ds.to_table()
+    correct_alignment(table, str.endswith)    
+    correct_alignment(table.transpose(), str.startswith)  
+    
+    # Test fa selection
+    ds.fa['some_other_fa'] = range(10, 20)
+    assert_false(np.all(ds.to_table(fa='features')[0,:] != ds.to_table(
+                        fa='some_other_fa')[0,:]))
+    assert_array_equal(ds.to_table(fa='features')[1:,:],
+                       ds.to_table(fa='some_other_fa')[1:,:])
+    
+    # Test alignment with more fa keys
+    ds.fa['some_other_fa'] = range(10)
+    table = ds.to_table(fa='some_other_fa')
+    correct_alignment(table, str.endswith)    
+    correct_alignment(table.transpose(), str.startswith)      
+    
+    # more fa + sa keys
+    table = ds.to_table()
+    correct_alignment(table, str.endswith)    
+    correct_alignment(table.transpose(), str.startswith)  
+    
+    # Check if ds stays intact
+    table = ds.to_table(n_digits=1)  
+    assert_array_equal(ds.samples, old_ds.samples)
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(MiscDatasetFxTests)
@@ -147,4 +219,3 @@ def suite():  # pragma: no cover
 if __name__ == '__main__':  # pragma: no cover
     import runner
     runner.run()
-
