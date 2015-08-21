@@ -445,7 +445,6 @@ def to_table(ds, sa=[], fa=[], height=100, width=10, n_digits=6):
     else:
         fa = [fa]
 
-
     sa_panel = create_attr_panel(ds.sa, sa, height)
     fa_panel = np.array(create_attr_panel(ds.fa, fa, width)).transpose()
     vals_panel = np.vstack([ds[i].samples[0][0:width] for i in range(height)])
@@ -454,20 +453,17 @@ def to_table(ds, sa=[], fa=[], height=100, width=10, n_digits=6):
     # add empty row and column, to align it with headers
     vals_panel = np.hstack((np.array([" "*n_digits]*height).reshape(-1, 1), 
                             vals_panel))
-    vals_panel = np.vstack(([""]*(width+1), vals_panel))
-    
+    vals_panel = np.vstack(([""]*(width+1), vals_panel))  
 
     return np.vstack((np.hstack((void, fa_panel)),
                               np.hstack((sa_panel, vals_panel))))
 
 @datasetmethod
 def prt(ds, sa=[], fa=[], height=50, width=12, n_digits=5):
-    print
-    print tabulate(to_table(ds, sa, fa, height, width, n_digits))
-    
     height = min(ds.shape[0], height)
     width = min(ds.shape[1], width)
-
+    print
+    print tabulate(to_table(ds, sa, fa, height, width, n_digits))
     print "Ommitted %s rows and %s columns" %(ds.shape[0]-height, ds.shape[1]-width)
 
 
