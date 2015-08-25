@@ -176,8 +176,14 @@ def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ'):
         return None
 
     def _build_array(data, intent, encoding=encoding):
-        return gifti.GiftiDataArray.from_array(data, intent,
-                                               encoding=encoding)
+        arr = gifti.GiftiDataArray.from_array(data, intent,
+                                              encoding=encoding)
+        # Setting the coordsys argument the constructor would set the matrix
+        # to the 4x4 identity matrix, which is not desired. Instead the
+        # coordsys is explicitly set to None afterwards
+        arr.coordsys = None
+
+        return arr
 
     node_indices_labels = ('node_indices', 'center_ids', 'ids', 'roi_ids')
     node_indices = _get_attribute_value(ds, 'fa', node_indices_labels)
@@ -190,7 +196,6 @@ def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ'):
     for i, sample in enumerate(samples):
         intent = 'NIFTI_INTENT_NONE' if intents is None else intents[i]
         darray = _build_array(sample, intent)
-        darray.coordsys = None
         darrays.append(darray)
 
     image = gifti.GiftiImage(darrays=darrays)
