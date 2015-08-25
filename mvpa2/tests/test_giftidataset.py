@@ -311,3 +311,7 @@ def test_gifti_dataset_with_anatomical_surface(fn, format_, include_nodes):
     assert_almost_equal(face_arr.data, faces)
     assert_equal(face_arr.data.dtype, np.int32)
     assert_equal(face_arr.datatype, data_type_codes['int32'])
+
+    # getting the functional data should ignore faces and vertices
+    ds_again = gifti_dataset(img)
+    assert_datasets_almost_equal(ds, ds_again)
