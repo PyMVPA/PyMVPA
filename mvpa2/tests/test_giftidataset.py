@@ -18,6 +18,8 @@ from nibabel.gifti import giftiio as nb_giftiio
 from nibabel.gifti import gifti as nb_gifti
 from nibabel.nifti1 import intent_codes, data_type_codes
 
+from mvpa2.support.nibabel.surf import Surface
+
 from mvpa2.datasets.base import Dataset
 from mvpa2.datasets.gifti import gifti_dataset, map2gifti
 
@@ -257,3 +259,55 @@ def test_gifti_dataset_h5py(fn, include_nodes):
     ds2 = h5load(fn)
 
     assert_datasets_equal(ds, ds2)
+
+
+
+@sweepargs(include_nodes=(False, True))
+@sweepargs(format_=("ASCII", "Base64Binary", "GZipBase64Binary"))
+@with_tempfile(suffix='.func.gii')
+def test_gifti_dataset_with_anatomical_surface(fn, format_, include_nodes):
+    ds = _get_test_dataset(include_nodes)
+
+    nsamples, nfeatures = ds.shape
+    vertices = np.random.normal(size=(nfeatures, 3))
+    faces = np.asarray([i + np.arange(3) for i in xrange(2 * nfeatures)]) % nfeatures
+    surf = Surface(vertices, faces)
+
+    img = map2gifti(ds, surface=surf)
+
+    arr_index = 0
+
+    if include_nodes:
+        # check node indices
+        node_arr = img.darrays[arr_index]
+        assert_equal(node_arr.intent,
+                     intent_codes.code['NIFTI_INTENT_NODE_INDEX'])
+        assert_equal(node_arr.coordsys, None)
+        assert_equal(node_arr.data.dtype, np.int32)
+        assert_equal(node_arr.datatype, data_type_codes['int32'])
+
+        arr_index += 1
+
+    for sample in ds.samples:
+        # check sample content
+        arr = img.darrays[arr_index]
+        data = arr.data
+        assert_almost_equal(data, sample)
+        assert_equal(arr.coordsys, None)
+        assert_equal(arr.data.dtype, np.float32)
+        assert_equal(arr.datatype, data_type_codes['float32'])
+
+        arr_index += 1
+
+    # check vertices
+    vertex_arr = img.darrays[arr_index]
+    assert_almost_equal(vertex_arr.data, vertices)
+    assert_equal(vertex_arr.data.dtype, np.float32)
+    assert_equal(vertex_arr.datatype, data_type_codes['float32'])
+
+    # check faces
+    arr_index += 1
+    face_arr = img.darrays[arr_index]
+    assert_almost_equal(face_arr.data, faces)
+    assert_equal(face_arr.data.dtype, np.int32)
+    assert_equal(face_arr.datatype, data_type_codes['int32'])

@@ -35,6 +35,10 @@ from mvpa2.base.collections import FeatureAttributesCollection, \
 from mvpa2.base.dataset import AttrDataset
 from mvpa2.datasets.base import Dataset
 from mvpa2.base import warning
+from mvpa2.support.nibabel.surf import from_any as surf_from_any
+from mvpa2.support.nibabel.surf_gifti import to_gifti_image as \
+    anat_surf_to_gifti_image
+
 import numpy as np
 
 
@@ -130,7 +134,7 @@ def gifti_dataset(samples, targets=None, chunks=None):
 
 
 
-def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ'):
+def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ', surface=None):
     """Maps data(sets) into a GiftiImage, and optionally saves it to disc.
 
     Parameters
@@ -141,6 +145,10 @@ def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ'):
       Filename to which the GiftiImage is stored
     encoding : "ASCII" or "Base64Binary" or "GZipBase64Binary", optional
       Encoding format of data
+    surface : mvpa2.surf.nibabel.surf.Surface or str, optional
+      Optional anatomical Surface object, or filename of anatomical surface
+      file, to be stored together with the data. This should allow
+      FreeSurfer's mris_convert to read files written by this function
 
     Returns
     -------
@@ -199,6 +207,14 @@ def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ'):
         intent = 'NIFTI_INTENT_NONE' if intents is None else intents[i]
         darray = _build_array(sample, intent)
         darrays.append(darray)
+
+    # if there is a surface, add it
+    if surface is not None:
+        surface_object = surf_from_any(surface, )
+        anat_image = anat_surf_to_gifti_image(surface_object, add_indices=False)
+
+        for darray in anat_image.darrays:
+            darrays.append(darray)
 
     image = gifti.GiftiImage(darrays=darrays)
 
