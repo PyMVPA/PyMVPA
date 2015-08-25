@@ -18,8 +18,10 @@ or non-identity affine transformations.
 
 This module supports node data, i.e. each node on the surface has N
 values associated with it (with N>=1). Typical examples include
-time series data and statistical maps. Other types of data, including
-label data or anatomical surfaces, are not supported.
+time series data and statistical maps.
+
+Optionally, anatomical information (vertices and faces) can be stored,
+so that FreeSurfer's mris_convert can read data written by map2gifti.
 
 .. _NiBabel: http://nipy.sourceforge.net/nibabel
 """
