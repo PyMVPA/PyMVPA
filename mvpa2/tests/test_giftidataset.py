@@ -141,7 +141,6 @@ def test_gifti_dataset(fn, format_, include_nodes):
     expected_ds_sa.sa['chunks'] = [4, 3, 2, 1, 3, 2]
     expected_ds_sa.sa['targets'] = ['t%d' % i for i in xrange(6)]
 
-
     # build GIFTI file from scratch
     gifti_string = _build_gifti_string(format_, include_nodes)
     with open(fn, 'w') as f:
@@ -171,6 +170,18 @@ def test_gifti_dataset(fn, format_, include_nodes):
     ds4 = gifti_dataset(img2)
     assert_datasets_almost_equal(ds4, expected_ds)
 
+    # test float64 and int64, which must be converted to float32 and int32
+    fa = dict()
+    if include_nodes:
+        fa['node_indices'] = ds.fa.node_indices.astype(np.int64)
+
+    ds_float64 = Dataset(samples=ds.samples.astype(np.float64), fa=fa)
+    ds_float64_again = gifti_dataset(map2gifti(ds_float64))
+    assert_equal(ds_float64_again.samples.dtype, np.float32)
+    if include_nodes:
+        assert_equal(ds_float64_again.fa.node_indices.dtype, np.int32)
+
+
     # test contents of GIFTI image
     assert (isinstance(img2, nb_gifti.GiftiImage))
     nsamples = ds.samples.shape[0]
@@ -179,6 +190,8 @@ def test_gifti_dataset(fn, format_, include_nodes):
         assert_equal(node_arr.intent,
                      intent_codes.code['NIFTI_INTENT_NODE_INDEX'])
         assert_equal(node_arr.coordsys, None)
+        assert_equal(node_arr.data.dtype, np.int32)
+
         first_data_array_pos = 1
         narrays = nsamples + 1
     else:
@@ -204,6 +217,8 @@ def test_gifti_dataset(fn, format_, include_nodes):
         # it's not there.
 
         assert_equal(arr.coordsys, None)
+        assert_equal(arr.data.dtype, np.float32)
+
 
 
     # another test for map2gifti, setting the encoding explicitly
