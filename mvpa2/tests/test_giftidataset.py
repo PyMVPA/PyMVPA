@@ -175,8 +175,10 @@ def test_gifti_dataset(fn, format_, include_nodes):
     assert (isinstance(img2, nb_gifti.GiftiImage))
     nsamples = ds.samples.shape[0]
     if include_nodes:
-        assert_equal(img2.darrays[0].intent,
+        node_arr = img2.darrays[0]
+        assert_equal(node_arr.intent,
                      intent_codes.code['NIFTI_INTENT_NODE_INDEX'])
+        assert_equal(node_arr.coordsys, None)
         first_data_array_pos = 1
         narrays = nsamples + 1
     else:
