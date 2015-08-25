@@ -190,6 +190,7 @@ def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ'):
     for i, sample in enumerate(samples):
         intent = 'NIFTI_INTENT_NONE' if intents is None else intents[i]
         darray = _build_array(sample, intent)
+        darray.coordsys = None
         darrays.append(darray)
 
     image = gifti.GiftiImage(darrays=darrays)

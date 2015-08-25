@@ -15,13 +15,16 @@ if not externals.exists('nibabel'):
     raise SkipTest
 
 from nibabel.gifti import giftiio as nb_giftiio
+from nibabel.gifti import gifti as nb_gifti
+from nibabel.nifti1 import intent_codes
+
 from mvpa2.datasets.base import Dataset
 from mvpa2.datasets.gifti import gifti_dataset, map2gifti
 
 import numpy as np
 
 from mvpa2.testing.tools import assert_datasets_almost_equal, \
-    assert_datasets_equal, assert_raises, with_tempfile
+    assert_datasets_equal, assert_equal, assert_raises, with_tempfile
 from mvpa2.testing import sweepargs
 
 
@@ -168,6 +171,40 @@ def test_gifti_dataset(fn, format_, include_nodes):
     ds4 = gifti_dataset(img2)
     assert_datasets_almost_equal(ds4, expected_ds)
 
+    # test contents of GIFTI image
+    assert (isinstance(img2, nb_gifti.GiftiImage))
+    nsamples = ds.samples.shape[0]
+    if include_nodes:
+        assert_equal(img2.darrays[0].intent,
+                     intent_codes.code['NIFTI_INTENT_NODE_INDEX'])
+        first_data_array_pos = 1
+        narrays = nsamples + 1
+    else:
+        first_data_array_pos = 0
+        narrays = nsamples
+
+    assert_equal(len(img.darrays), narrays)
+    for i in xrange(nsamples):
+        arr = img2.darrays[i + first_data_array_pos]
+
+        # check intent code
+        illegal_intents = ['NIFTI_INTENT_NODE_INDEX',
+                           'NIFTI_INTENT_GENMATRIX',
+                           'NIFTI_INTENT_POINTSET',
+                           'NIFTI_INTENT_TRIANGLE']
+        assert (arr.intent not in [intent_codes.code[s]
+                                   for s in illegal_intents])
+
+        # although the GIFTI standard is not very clear about whether
+        # arrays with other intent than NODE_INDEX can have a
+        # GiftiCoordSystem, FreeSurfer's mris_convert
+        # does not seem to like its presence. Thus we make sure that
+        # it's not there.
+
+        assert_equal(arr.coordsys, None)
+
+
+    # another test for map2gifti, setting the encoding explicitly
     map2gifti(ds, fn, encoding=format_)
     ds5 = gifti_dataset(fn)
     assert_datasets_almost_equal(ds5, expected_ds)
