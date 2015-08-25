@@ -16,7 +16,7 @@ if not externals.exists('nibabel'):
 
 from nibabel.gifti import giftiio as nb_giftiio
 from nibabel.gifti import gifti as nb_gifti
-from nibabel.nifti1 import intent_codes
+from nibabel.nifti1 import intent_codes, data_type_codes
 
 from mvpa2.datasets.base import Dataset
 from mvpa2.datasets.gifti import gifti_dataset, map2gifti
@@ -24,7 +24,8 @@ from mvpa2.datasets.gifti import gifti_dataset, map2gifti
 import numpy as np
 
 from mvpa2.testing.tools import assert_datasets_almost_equal, \
-    assert_datasets_equal, assert_equal, assert_raises, with_tempfile
+    assert_datasets_equal, assert_equal, assert_almost_equal, \
+    assert_raises, with_tempfile
 from mvpa2.testing import sweepargs
 
 
@@ -191,6 +192,7 @@ def test_gifti_dataset(fn, format_, include_nodes):
                      intent_codes.code['NIFTI_INTENT_NODE_INDEX'])
         assert_equal(node_arr.coordsys, None)
         assert_equal(node_arr.data.dtype, np.int32)
+        assert_equal(node_arr.datatype, data_type_codes['int32'])
 
         first_data_array_pos = 1
         narrays = nsamples + 1
@@ -218,6 +220,7 @@ def test_gifti_dataset(fn, format_, include_nodes):
 
         assert_equal(arr.coordsys, None)
         assert_equal(arr.data.dtype, np.float32)
+        assert_equal(arr.datatype, data_type_codes['float32'])
 
 
 
