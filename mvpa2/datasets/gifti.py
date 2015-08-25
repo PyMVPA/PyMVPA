@@ -136,7 +136,8 @@ def gifti_dataset(samples, targets=None, chunks=None):
 
 
 
-def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ', surface=None):
+def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ',
+              surface=None):
     """Maps data(sets) into a GiftiImage, and optionally saves it to disc.
 
     Parameters
@@ -186,7 +187,8 @@ def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ', surface=None):
         return None
 
     def _build_array(data, intent, encoding=encoding):
-        dtype = np.int32 if intent == 'NIFTI_INTENT_NODE_INDEX' else np.float32
+        is_integer = intent == 'NIFTI_INTENT_NODE_INDEX'
+        dtype = np.int32 if is_integer else np.float32
 
         arr = gifti.GiftiDataArray.from_array(data.astype(dtype), intent,
                                               encoding=encoding)
