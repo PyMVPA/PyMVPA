@@ -30,6 +30,7 @@ if __debug__:
 
 due.cite(
     Doi('10.1007/b94608'),
+    path="mvpa2.clfs",
     description="Thorough textbook on statistical learning (available online)",
     tags=["edu"])
 
