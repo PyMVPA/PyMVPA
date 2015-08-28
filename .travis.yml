@@ -20,6 +20,9 @@ env:
     # Some DEBUG targets are excluded since either their output could
     # not be redirected or they augment output in the doctests
     - COVERAGE="coverage run --rcfile=.travis_coveragerc" MVPA_DEBUG=ENFORCE_CA_ENABLED  DOCTESTS=--with-doctest
+    # So we get duecredit report printed out, and identical to original run so we could compare
+    # time impact
+    - PYTHON=$PY DOCTESTS=--with-doctest DUECREDIT_ENABLE=yes
 before_install:
     # to prevent IPv6 being used for APT
     - sudo bash -c "echo 'Acquire::ForceIPv4 \"true\";' > /etc/apt/apt.conf.d/99force-ipv4"
@@ -40,6 +43,7 @@ before_install:
 install:
     - make
     - if [ ! -z "$COVERAGE" ]; then pip install --user -v coveralls; fi
+    - if [ ! -z "$DUECREDIT_ENABLE"]; then pip install --user -v duecredit; fi
 script:
     # Run only nonlabile tests
     - export MVPA_EXTERNALS_RAISE_EXCEPTION=off  MVPA_MATPLOTLIB_BACKEND=agg
