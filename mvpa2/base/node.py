@@ -84,6 +84,8 @@ class Node(ClassWithCollections):
           'pvalues', while swapping the first and second axes. Simplified
           instructions can be given by leaving out consecutive tuple elements
           starting from the end.
+          Note: For Projection-derived mappers, this only passes attributes when
+          calling the object but not when `forward` is used to make output dataset.
         postproc : Node instance, optional
           Node to perform post-processing of results. This node is applied
           in `__call__()` to perform a final processing step on the to be
