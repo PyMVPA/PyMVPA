@@ -183,7 +183,7 @@ class PCAMapper(MDPNodeMapper):
                      doc="Backprojection matrix (as an array)")
     var = property(fget=lambda self: self.node.d, doc="Variances per component")
     centroid = property(fget=lambda self: self.node.avg,
-                        doc="Mean of the traiing data")
+                        doc="Mean of the training data")
 
 
 class ICAMapper(MDPNodeMapper):
