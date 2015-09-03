@@ -27,7 +27,7 @@ if __debug__:
     from mvpa2.base import debug
 
 def wipe_out_offdiag(a, window_size, value=np.inf):
-    """Zero-out (or fill with np.inf, as default) off-diagonal elements
+    """Zero-out (or fill with np.inf, as default) close-to-diagonal elements
 
     Parameters
     ----------
@@ -55,7 +55,7 @@ def timesegments_classification(
         part1=HalfPartitioner(),  # partitioner to split data for hyperalignment
         part2=NFoldPartitioner(attr='subjects'), # partitioner for CV in the test split
         window_size=6,
-        overlapping_windows=False,
+        overlapping_windows=True,
         distance='correlation',
         do_zscore=True,
         clf_direction_correct_way=True):
