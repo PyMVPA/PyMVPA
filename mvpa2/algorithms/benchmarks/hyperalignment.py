@@ -25,18 +25,28 @@ from mvpa2.mappers.fx import mean_group_sample
 if __debug__:
     from mvpa2.base import debug
 
-def zero_out_offdiag(dist, window_size):
-    for r in range(len(dist)):
-        dist[r, max(0, r-window_size):r] = np.inf
-        dist[r, r+1:min(len(dist), r+window_size)] = np.inf
-    return dist
+def wipe_out_offdiag(a, window_size, value=np.inf):
+    """Zero-out (or fill with np.inf, as default) off-diagonal elements
 
-def _zero_out_offdiag(dist, window_size):
-    for i in xrange(len(dist)):
-        for j in xrange(len(dist)):
-            if abs(i-j) < window_size and i!=j:
-                dist[i, j] = np.inf
-    return dist
+    Parameters
+    ----------
+    a : array
+    window_size : int
+      How many "off-diagonal" elements to preserve
+    value : optional
+      Value to fill in with
+    """
+    for r in range(len(a)):
+        a[r, max(0, r - window_size):r] = value
+        a[r, r + 1:min(len(a), r + window_size)] = value
+    return a
+
+def _wipe_out_offdiag(a, window_size, value=np.inf):
+    for i in xrange(len(a)):
+        for j in xrange(len(a)):
+            if abs(i - j) < window_size and i != j:
+                a[i, j] = value
+    return a
 
 def timesegments_classification(
         dss,
@@ -126,7 +136,7 @@ def timesegments_classification(
                 raise NotImplementedError
 
             if overlapping_windows:
-                dist = zero_out_offdiag(dist, window_size)
+                dist = wipe_out_offdiag(dist, window_size)
 
             # For Yarik it feels that we need axis=1 here!! TODO
             winners = np.argmin(dist, axis=int(clf_direction_correct_way))
