@@ -106,7 +106,7 @@ def timesegments_classification(
         dss_test_bc = []
         for ds in dss_test_aligned:
             if overlapping_windows:
-                startpoints = range(len(ds) - window_size)
+                startpoints = range(len(ds) - window_size + 1)
             else:
                 startpoints = _get_nonoverlapping_startpoints(len(ds), window_size)
             bm = BoxcarMapper(startpoints, window_size)
