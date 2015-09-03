@@ -13,13 +13,19 @@ from mvpa2.algorithms.hyperalignment import Hyperalignment
 from mvpa2.misc.data_generators import random_affine_transformation
 
 from mvpa2.algorithms.benchmarks.hyperalignment import *
-from mvpa2.algorithms.benchmarks.hyperalignment import _wipe_out_offdiag
 from mvpa2.algorithms.benchmarks.hyperalignment import _get_nonoverlapping_startpoints
 
 from mvpa2.mappers.base import IdentityMapper
 
 from mvpa2.testing import *
 from mvpa2.testing.datasets import datasets
+
+def _wipe_out_offdiag(a, window_size, value=np.inf):
+    for i in xrange(len(a)):
+        for j in xrange(len(a)):
+            if abs(i - j) < window_size and i != j:
+                a[i, j] = value
+    return a
 
 def test_zero_out_offdiag():
     a = np.random.normal(size=(100, 100))
