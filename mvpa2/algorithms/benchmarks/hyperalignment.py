@@ -153,12 +153,11 @@ def timesegments_classification(
 
             # For Yarik it feels that we need axis=1 here!! TODO
             winners = np.argmin(dist, axis=int(clf_direction_correct_way))
-            #print winners
             error = np.mean(winners != np.arange(len(winners)))
-            #print error
             errors_across_subjects.append(error)
         errors.append(errors_across_subjects)
         iter += 1
+
     errors = np.array(errors)
     if __debug__:
         debug("BM", "Finished with %s array of errors. Mean error %.2f"
