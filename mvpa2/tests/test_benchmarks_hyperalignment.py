@@ -13,7 +13,7 @@ from mvpa2.algorithms.hyperalignment import Hyperalignment
 from mvpa2.misc.data_generators import random_affine_transformation
 
 from mvpa2.algorithms.benchmarks.hyperalignment import *
-from mvpa2.algorithms.benchmarks.hyperalignment import _zero_out_offdiag
+from mvpa2.algorithms.benchmarks.hyperalignment import _wipe_out_offdiag
 from mvpa2.algorithms.benchmarks.hyperalignment import _get_nonoverlapping_startpoints
 
 from mvpa2.mappers.base import IdentityMapper
@@ -24,7 +24,7 @@ from mvpa2.testing.datasets import datasets
 def test_zero_out_offdiag():
     a = np.random.normal(size=(100, 100))
     for ws in (0, 1, 2, 88, 99, 101):
-        assert(np.all(zero_out_offdiag(a, ws) == _zero_out_offdiag(a, ws)))
+        assert(np.all(wipe_out_offdiag(a, ws) == _wipe_out_offdiag(a, ws)))
 
 def test_timesegments_classification():
     # TODO: RF our construction of fake datasets for testing hyperalignment
