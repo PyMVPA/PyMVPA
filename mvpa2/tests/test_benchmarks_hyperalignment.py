@@ -36,8 +36,8 @@ def test_timesegments_classification():
     def nohyper(dss):
         return [IdentityMapper() for ds in dss]
 
-    # clean case
-    errors = timesegments_classification(dss, nohyper)
+    # clean case, assume "nohyper" which would be by default
+    errors = timesegments_classification(dss)
     for ds in dss:
         # must not add any attribute, such as subjects
         assert('subjects' not in ds.sa)
