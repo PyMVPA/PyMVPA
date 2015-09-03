@@ -14,6 +14,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 from mvpa2.base import warning
 from mvpa2.support import copy
+from mvpa2.mappers.base import IdentityMapper
 from mvpa2.mappers.zscore import zscore
 from mvpa2.generators.partition import NFoldPartitioner, HalfPartitioner
 from mvpa2.generators.splitters import Splitter
@@ -50,7 +51,7 @@ def _wipe_out_offdiag(a, window_size, value=np.inf):
 
 def timesegments_classification(
         dss,
-        hyper,
+        hyper=None,
         part1=HalfPartitioner(),  # partitioner to split data for hyperalignment
         part2=NFoldPartitioner(attr='subjects'), # partitioner for CV in the test split
         window_size=6,
@@ -59,6 +60,15 @@ def timesegments_classification(
         do_zscore=True,
         clf_direction_correct_way=True):
     """Time-segment classification across subjects using Hyperalignment
+
+    Parameters
+    ----------
+    dss : list of datasets
+       Datasets to benchmark on.  Usually a single dataset per subject.
+    hyper : Hyperalignment-like, optional
+       Beast which if called on a list of datasets should spit out trained
+       mappers.  If not specified, `IdentityMapper`s will be used
+    ...
     """
     # Generate outer-most partitioning ()
     parts = [copy.deepcopy(part1).generate(ds) for ds in dss]
@@ -80,14 +90,17 @@ def timesegments_classification(
 
         # TODO:  allow for doing feature selection
 
-        # Now let's do hyperalignment but on a copy in each loop iteration
-        # since otherwise it would remember previous loop dataset as the "commonspace"
-        hyper_ = copy.deepcopy(hyper)
-        if do_zscore:
-            for ds in dss_train + dss_test:
-                zscore(ds, chunks_attr=None)
+        if hyper is not None:
+            # Now let's do hyperalignment but on a copy in each loop iteration
+            # since otherwise it would remember previous loop dataset as the "commonspace"
+            hyper_ = copy.deepcopy(hyper)
+            if do_zscore:
+                for ds in dss_train + dss_test:
+                    zscore(ds, chunks_attr=None)
 
-        mappers = hyper_(dss_train)
+            mappers = hyper_(dss_train)
+        else:
+            mappers = [IdentityMapper() for ds in dss_train]
 
         # dss_train_aligned = [mapper.forward(ds) for mapper, ds in zip(mappers, dss_train)]
         dss_test_aligned = [mapper.forward(ds) for mapper, ds in zip(mappers, dss_test)]
