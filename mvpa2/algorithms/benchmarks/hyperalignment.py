@@ -21,6 +21,7 @@ from mvpa2.mappers.boxcar import BoxcarMapper
 from mvpa2.datasets.base import FlattenMapper
 from mvpa2.measures.anova import vstack
 from mvpa2.mappers.fx import mean_group_sample
+
 if __debug__:
     from mvpa2.base import debug
 
@@ -54,13 +55,16 @@ def timesegments_classification(
 
     iter = 1
     errors = []
+
     while True:
         try:
             dss_partitioned = [p.next() for p in parts]
         except StopIteration:
             # we are done -- no more partitions
             break
-        print "iteration ", iter
+        if __debug__:
+            debug("BM", "Iteration %d", iter)
+
         dss_train, dss_test = zip(*[list(Splitter("partitions").generate(ds))
                                     for ds in dss_partitioned])
 
