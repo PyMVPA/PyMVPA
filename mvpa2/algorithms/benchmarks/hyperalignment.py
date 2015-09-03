@@ -44,7 +44,7 @@ def timesegments_classification(
         part1=HalfPartitioner(),  # partitioner to split data for hyperalignment
         part2=NFoldPartitioner(attr='subjects'), # partitioner for CV in the test split
         window_size=6,
-        overlapping_windows=True,
+        overlapping_windows=False,
         distance='correlation',
         do_zscore=True,
         clf_direction_correct_way=True):
@@ -69,35 +69,41 @@ def timesegments_classification(
                                     for ds in dss_partitioned])
 
         # TODO:  allow for doing feature selection
-        # Now let's do hyperalignment
-        hyper = copy.deepcopy(hyper)
+
+        # Now let's do hyperalignment but on a copy in each loop iteration
+        # since otherwise it would remember previous loop dataset as the "commonspace"
+        hyper_ = copy.deepcopy(hyper)
         if do_zscore:
             for ds in dss_train + dss_test:
                 zscore(ds, chunks_attr=None)
 
-        mappers = hyper(dss_train)
+        mappers = hyper_(dss_train)
 
         # dss_train_aligned = [mapper.forward(ds) for mapper, ds in zip(mappers, dss_train)]
         dss_test_aligned = [mapper.forward(ds) for mapper, ds in zip(mappers, dss_test)]
 
         # assign .sa.subjects to those datasets
-        for i, ds in enumerate(dss_test_aligned):  ds.sa["subjects"] = [i]
+        for i, ds in enumerate(dss_test_aligned):
+            # part2.attr is by default "subjects"
+            ds.sa[part2.attr] = [i]
 
         dss_test_bc = []
         for ds in dss_test_aligned:
             if overlapping_windows:
                 startpoints = range(len(ds) - window_size)
             else:
-                raise NotImplementedError
-            ds_ = BoxcarMapper(startpoints, window_size).forward(ds)
+                startpoints = _get_nonoverlapping_startpoints(len(ds), window_size)
+            bm = BoxcarMapper(startpoints, window_size)
+            bm.train(ds)
+            ds_ = bm.forward(ds)
             ds_.sa['startpoints'] = startpoints
             # reassign subjects so they are not arrays
             def assign_unique(ds, sa):
                 ds.sa[sa] = [np.asscalar(np.unique(x)) for x in ds.sa[sa].value]
-            for saname in ['subjects']:
-                assign_unique(ds_, saname)
+            assign_unique(ds_, part2.attr)
 
-            fm = FlattenMapper(); fm.train(ds_)
+            fm = FlattenMapper()
+            fm.train(ds_)
             dss_test_bc.append(ds_.get_mapped(fm))
 
         ds_test = vstack(dss_test_bc)
@@ -106,11 +112,15 @@ def timesegments_classification(
         errors_across_subjects = []
         for ds_test_part in part2.generate(ds_test):
             ds_train_, ds_test_ = list(Splitter("partitions").generate(ds_test_part))
+            # average across subjects to get a representative pattern per timepoint
             ds_train_ = mean_group_sample(['startpoints'])(ds_train_)
             assert(ds_train_.shape == ds_test_.shape)
 
             if distance == 'correlation':
-                # TODO: redo
+                # TODO: redo more efficiently since now we are creating full
+                # corrcoef matrix.  Also we might better just take a name for
+                # the pdist measure but then implement them efficiently
+                # (i.e. without hstacking both pieces together first)
                 dist = 1 - np.corrcoef(ds_train_, ds_test_)[len(ds_test_):, :len(ds_test_)]
             else:
                 raise NotImplementedError
@@ -131,3 +141,7 @@ def timesegments_classification(
         debug("BM", "Finished with %s array of errors. Mean error %.2f"
               % (errors.shape, np.mean(errors)))
     return errors
+
+
+def _get_nonoverlapping_startpoints(n, window_size):
+    return range(0, n - window_size + 1, window_size)
