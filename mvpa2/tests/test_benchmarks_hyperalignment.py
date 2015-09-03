@@ -53,12 +53,12 @@ def test_timesegments_classification():
     dss_noisy = [ds.copy() for ds in dss]
     for ds in dss_noisy:
         ds.samples = np.random.normal(size=ds.samples.shape)
-    errors_nonoverlapping = timesegments_classification(dss_noisy, nohyper)
+    errors_nonoverlapping = timesegments_classification(dss_noisy, nohyper,
+                                                        overlapping_windows=False)
     assert(np.all(errors_nonoverlapping <= 1.))
     assert(np.all(0.85 <= errors_nonoverlapping))
 
-    errors_overlapping = timesegments_classification(dss_noisy, nohyper,
-                                                     overlapping_windows=True)
+    errors_overlapping = timesegments_classification(dss_noisy, nohyper)
     # nononverlapping error should be less for random result
     assert_array_lequal(np.mean(errors_nonoverlapping), np.mean(errors_overlapping))
 
