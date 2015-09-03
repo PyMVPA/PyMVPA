@@ -42,12 +42,6 @@ def wipe_out_offdiag(a, window_size, value=np.inf):
         a[r, r + 1:min(len(a), r + window_size)] = value
     return a
 
-def _wipe_out_offdiag(a, window_size, value=np.inf):
-    for i in xrange(len(a)):
-        for j in xrange(len(a)):
-            if abs(i - j) < window_size and i != j:
-                a[i, j] = value
-    return a
 
 def timesegments_classification(
         dss,
