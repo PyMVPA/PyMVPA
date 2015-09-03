@@ -27,7 +27,7 @@ if __debug__:
     from mvpa2.base import debug
 
 def wipe_out_offdiag(a, window_size, value=np.inf):
-    """Zero-out (or fill with np.inf, as default) close-to-diagonal elements
+    """Wipe-out (fill with np.inf, as default) close-to-diagonal elements
 
     Parameters
     ----------
@@ -46,8 +46,8 @@ def wipe_out_offdiag(a, window_size, value=np.inf):
 def timesegments_classification(
         dss,
         hyper=None,
-        part1=HalfPartitioner(),  # partitioner to split data for hyperalignment
-        part2=NFoldPartitioner(attr='subjects'), # partitioner for CV in the test split
+        part1=HalfPartitioner(),
+        part2=NFoldPartitioner(attr='subjects'),
         window_size=6,
         overlapping_windows=True,
         distance='correlation',
@@ -61,6 +61,22 @@ def timesegments_classification(
     hyper : Hyperalignment-like, optional
        Beast which if called on a list of datasets should spit out trained
        mappers.  If not specified, `IdentityMapper`s will be used
+    part1 : Partitioner, optional
+       Partitioner to split data for hyperalignment "cross-validation"
+    part2 : Partitioner, optional
+       Partitioner for CV within the hyperalignment test split
+    window_size : int, optional
+       How many temporal points to consider for a classification sample
+    overlapping_windows : bool, optional
+       Strategy to how create and classify "samples" for classification.  If
+       True -- `window_size` samples from each time point (but trailing ones)
+       constitute a sample, and upon "predict" `window_size` of samples around
+       each test point is not considered.  If False -- samples are just taken
+       (with training and testing splits) at `window_size` step from one to
+       another.
+    do_zscore : bool, optional
+       Perform zscoring (overall, not per-chunk) for each dataset upon
+       partitioning with part1
     ...
     """
     # Generate outer-most partitioning ()
@@ -83,19 +99,18 @@ def timesegments_classification(
 
         # TODO:  allow for doing feature selection
 
-        if hyper is not None:
-            # Now let's do hyperalignment but on a copy in each loop iteration
-            # since otherwise it would remember previous loop dataset as the "commonspace"
-            hyper_ = copy.deepcopy(hyper)
-            if do_zscore:
-                for ds in dss_train + dss_test:
-                    zscore(ds, chunks_attr=None)
+        if do_zscore:
+            for ds in dss_train + dss_test:
+                zscore(ds, chunks_attr=None)
 
+        if hyper is not None:
+            # since otherwise it would remember previous loop dataset as the "commonspace"
+            # Now let's do hyperalignment but on a copy in each loop iteration
+            hyper_ = copy.deepcopy(hyper)
             mappers = hyper_(dss_train)
         else:
             mappers = [IdentityMapper() for ds in dss_train]
 
-        # dss_train_aligned = [mapper.forward(ds) for mapper, ds in zip(mappers, dss_train)]
         dss_test_aligned = [mapper.forward(ds) for mapper, ds in zip(mappers, dss_test)]
 
         # assign .sa.subjects to those datasets
