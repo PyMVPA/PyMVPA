@@ -57,8 +57,7 @@ def timesegments_classification(
         window_size=6,
         overlapping_windows=True,
         distance='correlation',
-        do_zscore=True,
-        clf_direction_correct_way=True):
+        do_zscore=True):
     """Time-segment classification across subjects using Hyperalignment
 
     Parameters
@@ -151,8 +150,7 @@ def timesegments_classification(
             if overlapping_windows:
                 dist = wipe_out_offdiag(dist, window_size)
 
-            # For Yarik it feels that we need axis=1 here!! TODO
-            winners = np.argmin(dist, axis=int(clf_direction_correct_way))
+            winners = np.argmin(dist, axis=1)
             error = np.mean(winners != np.arange(len(winners)))
             errors_across_subjects.append(error)
         errors.append(errors_across_subjects)
