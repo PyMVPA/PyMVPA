@@ -425,7 +425,7 @@ def to_table(ds, sa=[], fa=[], height=100, width=10, n_digits=6):
 
     def create_attr_panel(ds_attr, keys, length):
         panel = []
-        panel.append(keys) # add header
+        panel.append(keys) #  add header
         for i in range(length):
             panel.append([ds_attr[key][i] for key in keys])
         return panel
@@ -461,6 +461,21 @@ def to_table(ds, sa=[], fa=[], height=100, width=10, n_digits=6):
 
 @datasetmethod
 def prt(ds, sa=[], fa=[], height=50, width=12, n_digits=5):
+    """Prints dataset object in table form
+
+    Parameters
+    ----------
+    sa : list or string, optional
+      Names of sample attributes to be displayed. Empty list will display all
+    fa : list or string, optional
+      Names of feature attributes to be displayed, Empty list will display all
+    height : int, optional
+      Number of rows printed
+    width : int, optional
+      Number of columns printed
+    ndigits : int, optional
+      Number of digits displayed in one cell
+    """
     height = min(ds.shape[0], height)
     width = min(ds.shape[1], width)
     print
