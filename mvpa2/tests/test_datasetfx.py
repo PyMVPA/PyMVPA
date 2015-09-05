@@ -206,7 +206,7 @@ class MiscDatasetFxTests(unittest.TestCase):
         ds.fa['fa3'] = range(10)
         assert_not_equal(ds.to_table(sa=['sa2', 'sa3'], fa=['fa2','fa3']).shape,
                          ds.to_table().shape)
-        ds.prt()
+
         # more fa + sa keys
         table = ds.to_table()
         correct_alignment(table, str.endswith)
