@@ -346,6 +346,8 @@ if __debug__:
     debug.register('ATTRREFER', "Debugging of top-level attribute referencing, "
                    "needed for current refactoring carried out in tent/flexds")
 
+    debug.register('BM', "Benchmark")
+
     # Lets check if environment can tell us smth
     if cfg.has_option('general', 'debug'):
         debug.set_active_from_string(cfg.get('general', 'debug'))
