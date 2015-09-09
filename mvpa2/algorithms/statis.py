@@ -60,19 +60,33 @@ def get_eig(h):
     evals, evecs = np.linalg.eigh(h)
     # To deal with numerical errors
     evals[evals<0] = 0
-    evecs = evecs[:, np.argsort(evals)[-1::-1]]
-    evals = np.sort(evals)[-1::-1]
+    eval_desc_order = np.argsort(evals)[-1::-1]
+    evecs = evecs[:, eval_desc_order]
+    evals = evals[eval_desc_order]
     # Fix signs
     evecs = evecs*np.sign(evecs[0, 0])
     return evals, evecs
 
 
 class Statis(ClassWithCollections):
-    """Implementation of STATIS as presented in:
+    """
+    Implementation of alignment of subjects or tables using STATIS as presented in:
     Abdi, H., Williams, L.J., Valentin, D., & Bennani-Dosse, M. (2012). STATIS
     and DISTATIS: Optimum multi-table principal component analysis and three way
     metric multidimensional scaling. Wiley Interdisciplinary Reviews:
     Computational Statistics, 4, 124-167.
+
+    This algorithm takes a list of datasets with matching samples
+    or a single dataset with `fa.tables_attr` separating subjects/tables.
+    Returns a list of `StaticProjectionMapper`s that project these feature spaces
+    of input datasets into STATIS compromise space.
+
+    Note that when provided a single dataset as input, returned mappers as in the order
+    of np.unique(fa.tables_attr).
+
+    Statis also stores subject/table factor scores as `G_t`,
+    each subject's contribution to compromise as `alpha`,
+    and sample factor scores as `G_s`.
     """
     tables_attr = 'chunks'
     bootstrap_iter = 0
@@ -96,13 +110,15 @@ class Statis(ClassWithCollections):
         :return:
         """
         if type(dss) == list:
-            print("Processing each of %d list items as tables"%(len(dss)))
+            if __debug__:
+                print("Processing each of %d list items as tables"%(len(dss)))
             nss = [sd.nsamples for sd in dss]
             if not nss.count(nss[0]) == len(nss):
                 raise ValueError, "All the datasets in the list should have matching" \
                                 "sample size. Input samples sizes are: %s" %nss
         elif is_datasetlike(dss):
-            print("Processing each unique %s as table"%(self.tables_attr))
+            if __debug__:
+                print("Processing each unique %s as table"%(self.tables_attr))
             dss = [dss[:, dss.fa[self.tables_attr] == attr] for attr in
                                     np.unique(dss.fa[self.tables_attr])]
         else:
@@ -119,6 +135,10 @@ class Statis(ClassWithCollections):
         # XXX We can repeat the above two steps with permuted samples per column in each dataset
         # to get a null distr of eigen values to evaluate how many are significant.
         # First one should be, if second one is also, then there are two clusters.
+
+        # Chekcing if all weights are positive
+        # otherwise thrown a warning or error
+
 
         # Factor scores for subjects/tables
         self.G_t = np.dot(ev_t, np.diag(np.sqrt(e_t)))
