@@ -21,6 +21,7 @@ from mvpa2.base.types import is_datasetlike
 from mvpa2.base.state import ClassWithCollections
 from mvpa2.mappers.zscore import ZScoreMapper
 from mvpa2.mappers.staticprojection import StaticProjectionMapper
+from mvpa2.base.dataset import hstack
 
 def normalize_ds(ds):
     """
@@ -112,6 +113,8 @@ class Statis(ClassWithCollections):
         if type(dss) == list:
             if __debug__:
                 print("Processing each of %d list items as tables"%(len(dss)))
+            if len(dss) < 2:
+                raise ValueError, "You need more than one dataset for alignment. Duh!"
             nss = [sd.nsamples for sd in dss]
             if not nss.count(nss[0]) == len(nss):
                 raise ValueError, "All the datasets in the list should have matching" \
@@ -119,6 +122,8 @@ class Statis(ClassWithCollections):
         elif is_datasetlike(dss):
             if __debug__:
                 print("Processing each unique %s as table"%(self.tables_attr))
+            if len(np.unique(dss.fa[self.tables_attr])) < 2:
+                raise ValueError, "You need more than one dataset for alignment. Duh!"
             dss = [dss[:, dss.fa[self.tables_attr] == attr] for attr in
                                     np.unique(dss.fa[self.tables_attr])]
         else:
@@ -135,16 +140,35 @@ class Statis(ClassWithCollections):
         # XXX We can repeat the above two steps with permuted samples per column in each dataset
         # to get a null distr of eigen values to evaluate how many are significant.
         # First one should be, if second one is also, then there are two clusters.
-
-        # Chekcing if all weights are positive
-        # otherwise thrown a warning or error
-
-
+        nperms = 1000
+        e_t_perms = []
+        for iperm in xrange(nperms):
+            # Permute each column independently
+            dss_perm = [hstack([sd[np.random.permutation(nsamples), icol]
+                                for icol in xrange(sd.nfeatures)]) for sd in dss]
+            e_t_perms.append(get_eig(get_Rv(dss_perm)[1])[0])
+        e_t_perms = np.vstack(e_t_perms).T
+        e_t_perms /= np.sum(e_t_perms, axis=0)
+        # Check the significance of first and second eigen values
+        # after normalizing by sum() This is a bit different from the paper
+        if e_t[0]/np.sum(e_t) < np.percentile(e_t_perms[0, :], 90):
+            raise ValueError, "First eigenvalue of subject COV is not significantly different " \
+                              "from permutation distribution."
+        if e_t[1]/np.sum(e_t) >= np.percentile(e_t_perms[1, :], 90):
+            print "Second eigenvalue of subject factors is significant" \
+                    "There might be multiple clusters."
         # Factor scores for subjects/tables
         self.G_t = np.dot(ev_t, np.diag(np.sqrt(e_t)))
         # Subject weights for compromise cross-product matrix
         self.alpha = ev_t[:, 0]/np.sum(ev_t[:, 0])
-
+        # Chekcing if all weights are positive, otherwise thrown a warning or error
+        # This is true in almost all cases, even random datasets due to correlation whole
+        # RSMs and not just lower triangle without diagonal
+        if not np.all(self.alpha > 0.0):
+            print "Subject weights for compromise matrix:", self.alpha
+            raise ValueError, "Input data similarity structures are not similar " \
+                " enough for alignment (i.e. not positively-correlated)."\
+                " Remove inconsistent subjects/tables and try again."
         # Compromise cross-product matrix
         compromise = np.dot(self.alpha, cpms)
         compromise = compromise.reshape((int(np.sqrt(len(compromise))), -1))

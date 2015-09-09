@@ -18,8 +18,11 @@ from mvpa2.misc.data_generators import random_affine_transformation
 from mvpa2.base.dataset import hstack
 from mvpa2.testing.datasets import datasets
 from mvpa2.mappers.fx import mean_group_sample
+from mvpa2.datasets.base import Dataset
 from mvpa2.testing import sweepargs
 from mvpa2.testing.tools import assert_almost_equal
+
+
 class StatisTests(unittest.TestCase):
     """
     Adapted test from Hyperalignment testing as they both aim to
@@ -27,25 +30,20 @@ class StatisTests(unittest.TestCase):
     """
     @sweepargs(hstacked=(True, False))
     def test_basic_alignment(self, hstacked):
-        statis = Statis(tables_attr='subject')
         # get a dataset with some prominent trends in it
         ds4l = datasets['uni4large']
         ds4l = ds4l.get_mapped(mean_group_sample(['targets']))
         # lets select for now only meaningful features
         ds_orig = ds4l[:, ds4l.a.nonbogus_features]
         n = 4 # number of datasets to generate
-        Rs, dss_rotated, dss_rotated_clean, random_shifts, random_scales \
-            = [], [], [], [], []
+        dss_rotated, dss_rotated_clean = [], []
 
         # now lets compose derived datasets by using some random
         # rotation(s)
         for i in xrange(n):
-            ds_ = random_affine_transformation(ds_orig, scale_fac=100, shift_fac=10)
-            Rs.append(ds_.a.random_rotation)
+            ds_ = random_affine_transformation(ds_orig, scale_fac=10, shift_fac=10)
             # reusing random data from dataset itself
-            random_scales += [ds_.a.random_scale]
-            random_shifts += [ds_.a.random_shift]
-            random_noise = ds4l[:, ds4l.a.bogus_features[i:i+1]]
+            random_noise = ds4l[:, ds4l.a.bogus_features[i*4:i*4+3]]
             dss_rotated_clean.append(ds_)
             ds_ = ds_.copy()
             #ds_.samples = ds_.samples + 0.1 * random_noise
@@ -57,6 +55,10 @@ class StatisTests(unittest.TestCase):
                                                         dss_rotated[isub].nfeatures)
             dss_rotated_clean[isub].fa['subject'] = np.repeat(isub,
                                                         dss_rotated_clean[isub].nfeatures)
+        # Error checks
+        statis = Statis(tables_attr='subject')
+        self.assertRaises(ValueError, statis, [dss_rotated[0]])
+        self.assertRaises(ValueError, statis, dss_rotated[0])
         for noisy, dss in ((False, dss_rotated_clean),
                            (True, dss_rotated)):
             snoisy = ('clean', 'noisy')[int(noisy)]
@@ -91,10 +93,23 @@ class StatisTests(unittest.TestCase):
                                            dss_mapped[j].samples.T)[statis.outdim:, :statis.outdim], k=0)
                 ndcss += [ndcs]
             # Compare correlations
-            self.assertTrue(np.all(np.array(ndcss) >= 0.9),
+            self.assertTrue(np.all(np.array(ndcss) >= (0.9, 0.7)[int(noisy)]),
                     msg="Should have reconstructed original dataset more or"
                     " less. Got correlations %s for %s case"
                     % (ndcss, snoisy))
+
+    def test_incosistent_dataset(self):
+        # get junk datasets
+        # number of subjects
+        n = 4
+        dss = []
+        for i in range(2):
+            dss.append(Dataset(samples=np.random.randn(10, 5)))
+        dss.append(dss[0][-1::-1, ])
+        dss.append(dss[1][-1::-1, ])
+        # Run statis
+        statis = Statis()
+        self.assertRaises(ValueError, statis, dss)
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(StatisTests)
