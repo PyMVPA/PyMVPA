@@ -149,7 +149,7 @@ class Statis(ClassWithCollections):
             e_t_perms.append(get_eig(get_Rv(dss_perm)[1])[0])
         e_t_perms = np.vstack(e_t_perms).T
         e_t_perms /= np.sum(e_t_perms, axis=0)
-        # Check the significance of first and second eigen values
+        # Check the significance of first and second eigenvalues
         # after normalizing by sum() This is a bit different from the paper
         if e_t[0]/np.sum(e_t) < np.percentile(e_t_perms[0, :], 90):
             raise ValueError, "First eigenvalue of subject COV is not significantly different " \

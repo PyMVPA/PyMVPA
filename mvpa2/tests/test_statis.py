@@ -41,12 +41,11 @@ class StatisTests(unittest.TestCase):
         # now lets compose derived datasets by using some random
         # rotation(s)
         for i in xrange(n):
-            ds_ = random_affine_transformation(ds_orig, scale_fac=10, shift_fac=10)
+            ds_ = random_affine_transformation(ds_orig, scale_fac=100, shift_fac=10)
             # reusing random data from dataset itself
-            random_noise = ds4l[:, ds4l.a.bogus_features[i*4:i*4+3]]
+            random_noise = ds4l[:, ds4l.a.bogus_features[i*4:i*4+i]]
             dss_rotated_clean.append(ds_)
             ds_ = ds_.copy()
-            #ds_.samples = ds_.samples + 0.1 * random_noise
             ds_ = hstack([ds_, random_noise])
             dss_rotated.append(ds_)
         # Add tables_attr
@@ -93,7 +92,7 @@ class StatisTests(unittest.TestCase):
                                            dss_mapped[j].samples.T)[statis.outdim:, :statis.outdim], k=0)
                 ndcss += [ndcs]
             # Compare correlations
-            self.assertTrue(np.all(np.array(ndcss) >= (0.9, 0.7)[int(noisy)]),
+            self.assertTrue(np.all(np.array(ndcss) >= (0.9, 0.6)[int(noisy)]),
                     msg="Should have reconstructed original dataset more or"
                     " less. Got correlations %s for %s case"
                     % (ndcss, snoisy))
@@ -104,7 +103,7 @@ class StatisTests(unittest.TestCase):
         n = 4
         dss = []
         for i in range(2):
-            dss.append(Dataset(samples=np.random.randn(10, 5)))
+            dss.append(Dataset(samples=np.random.randn(4, 5)))
         dss.append(dss[0][-1::-1, ])
         dss.append(dss[1][-1::-1, ])
         # Run statis
