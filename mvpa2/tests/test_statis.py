@@ -37,16 +37,15 @@ class StatisTests(unittest.TestCase):
         ds_orig = ds4l[:, ds4l.a.nonbogus_features]
         n = 4 # number of datasets to generate
         dss_rotated, dss_rotated_clean = [], []
-
         # now lets compose derived datasets by using some random
         # rotation(s)
         for i in xrange(n):
             ds_ = random_affine_transformation(ds_orig, scale_fac=100, shift_fac=10)
-            # reusing random data from dataset itself
-            random_noise = ds4l[:, ds4l.a.bogus_features[i*4:i*4+i]]
+            # Adding bogus features to add noise
+            random_noise = ds4l.samples[:, ds4l.a.bogus_features[:4]]
             dss_rotated_clean.append(ds_)
             ds_ = ds_.copy()
-            ds_ = hstack([ds_, random_noise])
+            ds_.samples = ds_.samples + 0.1 * random_noise
             dss_rotated.append(ds_)
         # Add tables_attr
         for isub in xrange(n):
@@ -92,7 +91,7 @@ class StatisTests(unittest.TestCase):
                                            dss_mapped[j].samples.T)[statis.outdim:, :statis.outdim], k=0)
                 ndcss += [ndcs]
             # Compare correlations
-            self.assertTrue(np.all(np.array(ndcss) >= (0.9, 0.6)[int(noisy)]),
+            self.assertTrue(np.all(np.array(ndcss) >= (0.9, 0.8)[int(noisy)]),
                     msg="Should have reconstructed original dataset more or"
                     " less. Got correlations %s for %s case"
                     % (ndcss, snoisy))
@@ -102,8 +101,16 @@ class StatisTests(unittest.TestCase):
         # number of subjects
         n = 4
         dss = []
-        for i in range(2):
-            dss.append(Dataset(samples=np.random.randn(4, 5)))
+        sd1 = np.array([[0.82837332, -1.31207478, 0.20680048, -0.92781934, -1.48708833],
+                        [1.86458424,  1.58921191, -0.58955433,  1.35853813,  2.42359395],
+                        [0.31173653,  0.12312635, -0.77036145,  0.71019102,  0.04628723],
+                        [0.61282598,  1.44781075, -0.38713405,  0.29666927, -0.457511]])
+        sd2 = np.array([[-0.7291719, -0.38959699, -0.03135596,  0.47759488, 1.51243061],
+                        [1.78771665,  1.34693937,  0.99910877, -0.94568046,  0.64237753],
+                        [-0.31194378,  0.41717979,  0.53045546,  0.42134607,  0.01411688],
+                        [-1.45456248, -0.22523912, -1.57036828, -0.09491975,  0.03767009]])
+        dss.append(Dataset(samples=sd1))
+        dss.append(Dataset(samples=sd2))
         dss.append(dss[0][-1::-1, ])
         dss.append(dss[1][-1::-1, ])
         # Run statis

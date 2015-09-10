@@ -161,7 +161,7 @@ class Statis(ClassWithCollections):
         self.G_t = np.dot(ev_t, np.diag(np.sqrt(e_t)))
         # Subject weights for compromise cross-product matrix
         self.alpha = ev_t[:, 0]/np.sum(ev_t[:, 0])
-        # Chekcing if all weights are positive, otherwise thrown a warning or error
+        # Checking if all weights are positive, otherwise thrown a warning or error
         # This is true in almost all cases, even random datasets due to correlation whole
         # RSMs and not just lower triangle without diagonal
         if not np.all(self.alpha > 0.0):
