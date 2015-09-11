@@ -47,14 +47,14 @@ class StatisTests(unittest.TestCase):
             ds_ = ds_.copy()
             ds_.samples = ds_.samples + 0.1 * random_noise
             dss_rotated.append(ds_)
-        # Add tables_attr
+        # Add chunks_attr
         for isub in xrange(n):
             dss_rotated[isub].fa['subject'] = np.repeat(isub,
                                                         dss_rotated[isub].nfeatures)
             dss_rotated_clean[isub].fa['subject'] = np.repeat(isub,
                                                         dss_rotated_clean[isub].nfeatures)
         # Error checks
-        statis = Statis(tables_attr='subject')
+        statis = Statis(chunks_attr='subject')
         self.assertRaises(ValueError, statis, [dss_rotated[0]])
         self.assertRaises(ValueError, statis, dss_rotated[0])
         for noisy, dss in ((False, dss_rotated_clean),
@@ -76,7 +76,7 @@ class StatisTests(unittest.TestCase):
             self.assertEqual(idhashes_targets, idhashes_targets_,
                 msg="Statis must not change original data targets.")
             # Compare subject factor scores
-            assert_almost_equal(statis.alpha, 1./n, decimal=1,
+            assert_almost_equal(statis.alpha, 1. / n, decimal=1,
                                    err_msg="Datasets weights differ too much.")
             # forward with returned mappers
             dss_mapped = [m.forward(ds_)
