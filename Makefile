@@ -544,6 +544,7 @@ testsuite:
 	 grep -v -e 'mvpa.\.base\.dochelpers' \
 			 -e 'mvpa.\.\(tests\|testing\|sandbox\|support\)' \
 			 -e 'mvpa.\.misc\.args' \
+			 -e 'mvpa.\.algorithms\.benchmarks' \
 			 -e 'mvpa.\.clfs\.\(libsvmc\|sg\|spam\)' \
 	| while read i; do \
 	 grep -q "^ *$$i" mvpa2/suite.py || \

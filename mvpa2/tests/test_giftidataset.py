@@ -15,13 +15,19 @@ if not externals.exists('nibabel'):
     raise SkipTest
 
 from nibabel.gifti import giftiio as nb_giftiio
+from nibabel.gifti import gifti as nb_gifti
+from nibabel.nifti1 import intent_codes, data_type_codes
+
+from mvpa2.support.nibabel.surf import Surface
+
 from mvpa2.datasets.base import Dataset
 from mvpa2.datasets.gifti import gifti_dataset, map2gifti
 
 import numpy as np
 
 from mvpa2.testing.tools import assert_datasets_almost_equal, \
-    assert_datasets_equal, assert_raises, with_tempfile
+    assert_datasets_equal, assert_equal, assert_almost_equal, \
+    assert_raises, with_tempfile
 from mvpa2.testing import sweepargs
 
 
@@ -138,7 +144,6 @@ def test_gifti_dataset(fn, format_, include_nodes):
     expected_ds_sa.sa['chunks'] = [4, 3, 2, 1, 3, 2]
     expected_ds_sa.sa['targets'] = ['t%d' % i for i in xrange(6)]
 
-
     # build GIFTI file from scratch
     gifti_string = _build_gifti_string(format_, include_nodes)
     with open(fn, 'w') as f:
@@ -168,6 +173,60 @@ def test_gifti_dataset(fn, format_, include_nodes):
     ds4 = gifti_dataset(img2)
     assert_datasets_almost_equal(ds4, expected_ds)
 
+    # test float64 and int64, which must be converted to float32 and int32
+    fa = dict()
+    if include_nodes:
+        fa['node_indices'] = ds.fa.node_indices.astype(np.int64)
+
+    ds_float64 = Dataset(samples=ds.samples.astype(np.float64), fa=fa)
+    ds_float64_again = gifti_dataset(map2gifti(ds_float64))
+    assert_equal(ds_float64_again.samples.dtype, np.float32)
+    if include_nodes:
+        assert_equal(ds_float64_again.fa.node_indices.dtype, np.int32)
+
+
+    # test contents of GIFTI image
+    assert (isinstance(img2, nb_gifti.GiftiImage))
+    nsamples = ds.samples.shape[0]
+    if include_nodes:
+        node_arr = img2.darrays[0]
+        assert_equal(node_arr.intent,
+                     intent_codes.code['NIFTI_INTENT_NODE_INDEX'])
+        assert_equal(node_arr.coordsys, None)
+        assert_equal(node_arr.data.dtype, np.int32)
+        assert_equal(node_arr.datatype, data_type_codes['int32'])
+
+        first_data_array_pos = 1
+        narrays = nsamples + 1
+    else:
+        first_data_array_pos = 0
+        narrays = nsamples
+
+    assert_equal(len(img.darrays), narrays)
+    for i in xrange(nsamples):
+        arr = img2.darrays[i + first_data_array_pos]
+
+        # check intent code
+        illegal_intents = ['NIFTI_INTENT_NODE_INDEX',
+                           'NIFTI_INTENT_GENMATRIX',
+                           'NIFTI_INTENT_POINTSET',
+                           'NIFTI_INTENT_TRIANGLE']
+        assert (arr.intent not in [intent_codes.code[s]
+                                   for s in illegal_intents])
+
+        # although the GIFTI standard is not very clear about whether
+        # arrays with other intent than NODE_INDEX can have a
+        # GiftiCoordSystem, FreeSurfer's mris_convert
+        # does not seem to like its presence. Thus we make sure that
+        # it's not there.
+
+        assert_equal(arr.coordsys, None)
+        assert_equal(arr.data.dtype, np.float32)
+        assert_equal(arr.datatype, data_type_codes['float32'])
+
+
+
+    # another test for map2gifti, setting the encoding explicitly
     map2gifti(ds, fn, encoding=format_)
     ds5 = gifti_dataset(fn)
     assert_datasets_almost_equal(ds5, expected_ds)
@@ -200,3 +259,59 @@ def test_gifti_dataset_h5py(fn, include_nodes):
     ds2 = h5load(fn)
 
     assert_datasets_equal(ds, ds2)
+
+
+
+@sweepargs(include_nodes=(False, True))
+@sweepargs(format_=("ASCII", "Base64Binary", "GZipBase64Binary"))
+@with_tempfile(suffix='.func.gii')
+def test_gifti_dataset_with_anatomical_surface(fn, format_, include_nodes):
+    ds = _get_test_dataset(include_nodes)
+
+    nsamples, nfeatures = ds.shape
+    vertices = np.random.normal(size=(nfeatures, 3))
+    faces = np.asarray([i + np.arange(3) for i in xrange(2 * nfeatures)]) % nfeatures
+    surf = Surface(vertices, faces)
+
+    img = map2gifti(ds, surface=surf)
+
+    arr_index = 0
+
+    if include_nodes:
+        # check node indices
+        node_arr = img.darrays[arr_index]
+        assert_equal(node_arr.intent,
+                     intent_codes.code['NIFTI_INTENT_NODE_INDEX'])
+        assert_equal(node_arr.coordsys, None)
+        assert_equal(node_arr.data.dtype, np.int32)
+        assert_equal(node_arr.datatype, data_type_codes['int32'])
+
+        arr_index += 1
+
+    for sample in ds.samples:
+        # check sample content
+        arr = img.darrays[arr_index]
+        data = arr.data
+        assert_almost_equal(data, sample)
+        assert_equal(arr.coordsys, None)
+        assert_equal(arr.data.dtype, np.float32)
+        assert_equal(arr.datatype, data_type_codes['float32'])
+
+        arr_index += 1
+
+    # check vertices
+    vertex_arr = img.darrays[arr_index]
+    assert_almost_equal(vertex_arr.data, vertices)
+    assert_equal(vertex_arr.data.dtype, np.float32)
+    assert_equal(vertex_arr.datatype, data_type_codes['float32'])
+
+    # check faces
+    arr_index += 1
+    face_arr = img.darrays[arr_index]
+    assert_almost_equal(face_arr.data, faces)
+    assert_equal(face_arr.data.dtype, np.int32)
+    assert_equal(face_arr.datatype, data_type_codes['int32'])
+
+    # getting the functional data should ignore faces and vertices
+    ds_again = gifti_dataset(img)
+    assert_datasets_almost_equal(ds, ds_again)
