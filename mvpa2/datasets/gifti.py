@@ -18,8 +18,10 @@ or non-identity affine transformations.
 
 This module supports node data, i.e. each node on the surface has N
 values associated with it (with N>=1). Typical examples include
-time series data and statistical maps. Other types of data, including
-label data or anatomical surfaces, are not supported.
+time series data and statistical maps.
+
+Optionally, anatomical information (vertices and faces) can be stored,
+so that FreeSurfer's mris_convert can read data written by map2gifti.
 
 .. _NiBabel: http://nipy.sourceforge.net/nibabel
 """
@@ -35,6 +37,10 @@ from mvpa2.base.collections import FeatureAttributesCollection, \
 from mvpa2.base.dataset import AttrDataset
 from mvpa2.datasets.base import Dataset
 from mvpa2.base import warning
+from mvpa2.support.nibabel.surf import from_any as surf_from_any
+from mvpa2.support.nibabel.surf_gifti import to_gifti_image as \
+    anat_surf_to_gifti_image
+
 import numpy as np
 
 
@@ -130,7 +136,8 @@ def gifti_dataset(samples, targets=None, chunks=None):
 
 
 
-def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ'):
+def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ',
+              surface=None):
     """Maps data(sets) into a GiftiImage, and optionally saves it to disc.
 
     Parameters
@@ -141,6 +148,10 @@ def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ'):
       Filename to which the GiftiImage is stored
     encoding : "ASCII" or "Base64Binary" or "GZipBase64Binary", optional
       Encoding format of data
+    surface : mvpa2.surf.nibabel.surf.Surface or str, optional
+      Optional anatomical Surface object, or filename of anatomical surface
+      file, to be stored together with the data. This should allow
+      FreeSurfer's mris_convert to read files written by this function
 
     Returns
     -------
@@ -176,8 +187,17 @@ def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ'):
         return None
 
     def _build_array(data, intent, encoding=encoding):
-        return gifti.GiftiDataArray.from_array(data, intent,
-                                               encoding=encoding)
+        is_integer = intent == 'NIFTI_INTENT_NODE_INDEX'
+        dtype = np.int32 if is_integer else np.float32
+
+        arr = gifti.GiftiDataArray.from_array(data.astype(dtype), intent,
+                                              encoding=encoding)
+        # Setting the coordsys argument the constructor would set the matrix
+        # to the 4x4 identity matrix, which is not desired. Instead the
+        # coordsys is explicitly set to None afterwards
+        arr.coordsys = None
+
+        return arr
 
     node_indices_labels = ('node_indices', 'center_ids', 'ids', 'roi_ids')
     node_indices = _get_attribute_value(ds, 'fa', node_indices_labels)
@@ -191,6 +211,14 @@ def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ'):
         intent = 'NIFTI_INTENT_NONE' if intents is None else intents[i]
         darray = _build_array(sample, intent)
         darrays.append(darray)
+
+    # if there is a surface, add it
+    if surface is not None:
+        surface_object = surf_from_any(surface, )
+        anat_image = anat_surf_to_gifti_image(surface_object, add_indices=False)
+
+        for darray in anat_image.darrays:
+            darrays.append(darray)
 
     image = gifti.GiftiImage(darrays=darrays)
 
