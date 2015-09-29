@@ -626,7 +626,7 @@ class CachedQueryEngine(QueryEngineInterface):
             + _repr_attrs(self, ['queryengine']))
 
 
-    def train(self, dataset):
+    def _train(self, dataset):
         """'Train' `CachedQueryEngine`.
 
         Raises
