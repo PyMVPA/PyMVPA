@@ -644,7 +644,7 @@ class CachedQueryEngine(QueryEngineInterface):
             self._queryengine.train(dataset)     # train the queryengine
             self._lookup_ids = [None] * dataset.nfeatures # lookup for query_byid
             self._lookup = {}           # generic lookup
-            self._ids = self.queryengine.ids # used in GNBSearchlight??
+            self.ids = self.queryengine.ids # used in GNBSearchlight??
         elif self._trained_ds_fa_hash != ds_fa_hash:
             raise ValueError, \
                   "Feature attributes of %s (idhash=%r) were changed from " \
