@@ -71,6 +71,10 @@ def setup_parser(parser):
             translation first, followed by rotation. `rottrans` refers to the
             oposite order. Default: 'transrot'""")
     parser.add_argument(
+            '--rad2deg', action='store_true',
+            help="""If specified, rotation estimates are assumed to be in radian
+            and will be converted to degrees.""")
+    parser.add_argument(
             '--outlier-minthresh', type=float, default=None,
             help="""absolute minimum threshold of outlier detection. Only value
             larger than this this threshold will ever be considered as an
@@ -121,7 +125,9 @@ def run(args):
     }
     def bxplot(stats, label):
         stats = concat_ts_boxplot_stats(stats)
-        verbose(0, "List of outlier time series follows (if any)")
+        # XXX need some way to expose whether there were missing subjects and
+        # report proper IDs -- for now resort to whining
+        verbose(0, "List of outlier time series follows (if any) [note, subject IDs are enumarations and may differ from dataset subject IDs in case of missing subjects]")
         for i, run in enumerate([np.where(np.sum(np.logical_not(o.mask), axis=0))
                               for o in stats[1]]):
             sids = run[0]
@@ -139,9 +145,13 @@ def run(args):
         pl.xlim((0, len(stats[0]['n'])))
         pl.ylabel(plt_props[label])
 
+    if args.rad2deg and args.estimate_order == 'rottrans':
+        convfunc = np.rad2deg
+    else:
+        convfunc = lambda x: x
     # first three columns
     run_stats = [compute_ts_boxplot_stats(
-        d[...,:3],
+        convfunc(d[...,:3]),
         outlier_abs_minthresh=args.outlier_minthresh,
         outlier_thresh=args.outlier_stdthresh,
         aggfx=np.linalg.norm,
@@ -154,8 +164,12 @@ def run(args):
         bxplot(run_stats, 'rotation')
 
     # last three columns
+    if args.rad2deg and args.estimate_order == 'transrot':
+        convfunc = np.rad2deg
+    else:
+        convfunc = lambda x: x
     run_stats = [compute_ts_boxplot_stats(
-        d[...,3:],
+        convfunc(d[...,3:]),
         outlier_abs_minthresh=args.outlier_minthresh,
         outlier_thresh=args.outlier_stdthresh,
         aggfx=np.linalg.norm,
