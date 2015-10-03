@@ -121,6 +121,7 @@ from mvpa2.datasets.eep import *
 from mvpa2.datasets.eventrelated import *
 if externals.exists('nibabel') :
     from mvpa2.datasets.mri import *
+    from mvpa2.datasets.gifti import map2gifti, gifti_dataset
 from mvpa2.datasets.sources import *
 from mvpa2.datasets.sources.native import *
 from mvpa2.datasets.sources.openfmri import *

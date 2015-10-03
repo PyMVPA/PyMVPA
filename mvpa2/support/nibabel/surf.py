@@ -2235,8 +2235,8 @@ def from_any(s):
         return s
     elif isinstance(s, basestring):
         return read(s)
-    elif type(s) is tuple and len(ts) == 2:
-        return Surface(ts[0], ts[1])
+    elif type(s) is tuple and len(s) == 2:
+        return Surface(s[0], s[1])
     else:
         raise ValueError("Not understood: %r" % s)
 
