@@ -19,7 +19,6 @@ from mvpa2.algorithms.hyperalignment import Hyperalignment
 from mvpa2.mappers.zscore import zscore
 from mvpa2.misc.support import idhash
 from mvpa2.misc.data_generators import random_affine_transformation
-from mvpa2.misc.fx import get_random_rotation
 
 # Somewhat slow but provides all needed ;)
 from mvpa2.testing import sweepargs, reseed_rng
@@ -30,8 +29,8 @@ from mvpa2.generators.partition import NFoldPartitioner
 # if you need some classifiers
 #from mvpa2.testing.clfs import *
 
-class HyperAlignmentTests(unittest.TestCase):
 
+class HyperAlignmentTests(unittest.TestCase):
 
     @sweepargs(zscore_all=(False, True))
     @sweepargs(zscore_common=(False, True))
@@ -49,7 +48,7 @@ class HyperAlignmentTests(unittest.TestCase):
         # lets select for now only meaningful features
         ds_orig = ds4l[:, ds4l.a.nonbogus_features]
         nf = ds_orig.nfeatures
-        n = 4 # # of datasets to generate
+        n = 4  # # of datasets to generate
         Rs, dss_rotated, dss_rotated_clean, random_shifts, random_scales \
             = [], [], [], [], []
 
@@ -91,9 +90,11 @@ class HyperAlignmentTests(unittest.TestCase):
 
             idhashes_ = [idhash(ds.samples) for ds in dss]
             idhashes_targets_ = [idhash(ds.targets) for ds in dss]
-            self.assertEqual(idhashes, idhashes_,
+            self.assertEqual(
+                idhashes, idhashes_,
                 msg="Hyperalignment must not change original data.")
-            self.assertEqual(idhashes_targets, idhashes_targets_,
+            self.assertEqual(
+                idhashes_targets, idhashes_targets_,
                 msg="Hyperalignment must not change original data targets.")
 
             self.assertEqual(ref_ds, ha.ca.chosen_ref_ds)
@@ -107,8 +108,8 @@ class HyperAlignmentTests(unittest.TestCase):
             nddss = []
             ndcss = []
             ds_orig_Rref = np.dot(ds_orig.samples, Rs[ref_ds]) \
-                           * random_scales[ref_ds] \
-                           + random_shifts[ref_ds]
+                * random_scales[ref_ds] \
+                + random_shifts[ref_ds]
             if zscore_common or zscore_all:
                 zscore(Dataset(ds_orig_Rref), chunks_attr=None)
             for ds_back in dss_clean_back:
@@ -125,32 +126,34 @@ class HyperAlignmentTests(unittest.TestCase):
             do_labile = cfg.getboolean('tests', 'labile', default='yes')
             if not noisy or do_labile:
                 # First compare correlations
-                self.assertTrue(np.all(np.array(ndcss)
-                                       >= (0.9, 0.85)[int(noisy)]),
-                        msg="Should have reconstructed original dataset more or"
-                        " less. Got correlations %s in %s case."
-                        % (ndcss, snoisy))
+                self.assertTrue(
+                    np.all(np.array(ndcss) >= (0.9, 0.85)[int(noisy)]),
+                    msg="Should have reconstructed original dataset more or"
+                    " less. Got correlations %s in %s case."
+                    % (ndcss, snoisy))
                 if not (zscore_all or zscore_common):
                     # if we didn't zscore -- all of them should be really close
-                    self.assertTrue(np.all(np.array(nddss)
-                                       <= (1e-10, 1e-1)[int(noisy)]),
+                    self.assertTrue(
+                        np.all(np.array(nddss) <= (1e-10, 1e-1)[int(noisy)]),
                         msg="Should have reconstructed original dataset well "
                         "without zscoring. Got normed differences %s in %s case."
                         % (nddss, snoisy))
                 elif do_labile:
                     # otherwise they all should be somewhat close
-                    self.assertTrue(np.all(np.array(nddss)
-                                           <= (.2, 3)[int(noisy)]),
+                    self.assertTrue(
+                        np.all(np.array(nddss) <= (.2, 3)[int(noisy)]),
                         msg="Should have reconstructed original dataset more or"
                         " less for all. Got normed differences %s in %s case."
                         % (nddss, snoisy))
-                    self.assertTrue(np.all(nddss[ref_ds] <= .09),
+                    self.assertTrue(
+                        np.all(nddss[ref_ds] <= .09),
                         msg="Should have reconstructed original dataset quite "
                         "well even with zscoring. Got normed differences %s "
                         "in %s case." % (nddss, snoisy))
                     # yoh: and leave 5% of difference for a chance and numerical
                     #      fluctuations ;)
-                    self.assertTrue(np.all(np.array(nddss) >= 0.95*nddss[ref_ds]),
+                    self.assertTrue(
+                        np.all(np.array(nddss) >= 0.95 * nddss[ref_ds]),
                         msg="Should have reconstructed orig_ds best of all. "
                         "Got normed differences %s in %s case with ref_ds=%d."
                         % (nddss, snoisy, ref_ds))
@@ -160,8 +163,8 @@ class HyperAlignmentTests(unittest.TestCase):
                             enable_ca=['training_residual_errors',
                                        'residual_errors'])
         mappers = ha(dss_rotated_clean)
-        self.assertTrue(np.all(ha.ca.training_residual_errors.sa.levels ==
-                              ['1', '2:0', '2:1']))
+        self.assertTrue(
+            np.all(ha.ca.training_residual_errors.sa.levels == ['1', '2:0', '2:1']))
         rterrors = ha.ca.training_residual_errors.samples
         # just basic tests:
         self.assertEqual(rterrors[0, ref_ds], 0)
@@ -178,8 +181,8 @@ class HyperAlignmentTests(unittest.TestCase):
         _ = [zscore(sd, chunks_attr=None) for sd in ds_all]
         # Making random data per subject for testing with bias added to first subject
         ds_test = [np.random.rand(1, ds.nfeatures) for i in range(len(ds_all))]
-        ds_test[0] += np.arange(1, ds.nfeatures+1)*100
-        assert(np.corrcoef(ds_test[2], ds_test[1])[0,1] < 0.99) # that would have been rudiculous if it was
+        ds_test[0] += np.arange(1, ds.nfeatures + 1) * 100
+        assert(np.corrcoef(ds_test[2], ds_test[1])[0, 1] < 0.99)  # that would have been rudiculous if it was
 
         # Test with varying alpha so we for sure to not have that issue now
         for alpha in (0, 0.01, 0.5, 0.99, 1.0):
@@ -214,8 +217,9 @@ class HyperAlignmentTests(unittest.TestCase):
         subj = ['cb', 'dm', 'hj', 'kd', 'kl', 'mh', 'ph', 'rb', 'se', 'sm']
         ds = []
         for sub in subj:
-            ds.append(fmri_dataset(samples=sub+'_movie.nii.gz',
-                                   mask=sub+'_mask_vt.nii.gz'))
+            ds.append(
+                fmri_dataset(samples=sub + '_movie.nii.gz',
+                             mask=sub + '_mask_vt.nii.gz'))
 
         '''
         Compute feature ranks in each dataset
@@ -311,7 +315,6 @@ class HyperAlignmentTests(unittest.TestCase):
         pass
 
 
-
 def suite():  # pragma: no cover
     return unittest.makeSuite(HyperAlignmentTests)
 
@@ -319,4 +322,3 @@ def suite():  # pragma: no cover
 if __name__ == '__main__':  # pragma: no cover
     import runner
     runner.run()
-
