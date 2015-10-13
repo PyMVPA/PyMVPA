@@ -9,11 +9,12 @@
 """Unit tests for PyMVPA surface searchlight voxel selection"""
 
 from mvpa2.testing import *
+
 skip_if_no_external('nibabel')
 
 import numpy as np
 from numpy.testing.utils import assert_array_almost_equal, \
-        assert_array_equal, assert_raises
+    assert_array_equal, assert_raises
 
 import nibabel as nb
 
@@ -32,17 +33,19 @@ from mvpa2.datasets.mri import fmri_dataset
 
 from mvpa2.support.nibabel import surf
 from mvpa2.misc.surfing import surf_voxel_selection, queryengine, volgeom, \
-                                volsurf
-from mvpa2.misc.surfing.volume_mask_dict import VolumeMaskDictionary
+    volsurf
+from mvpa2.misc.surfing.volume_mask_dict import VolumeMaskDictionary, \
+    _dict_with_arrays2array_tuple
 from mvpa2.misc.surfing import volume_mask_dict
+from mvpa2.misc.surfing.volgeom import VolGeom
 
 from mvpa2.measures.searchlight import Searchlight
 from mvpa2.misc.surfing.queryengine import SurfaceVerticesQueryEngine, \
-                                           SurfaceVoxelsQueryEngine, \
-                                           disc_surface_queryengine
+    SurfaceVoxelsQueryEngine, \
+    disc_surface_queryengine
 
 from mvpa2.measures.base import Measure, \
-        TransferMeasure, RepeatedMeasure, CrossValidation
+    TransferMeasure, RepeatedMeasure, CrossValidation
 from mvpa2.clfs.smlr import SMLR
 from mvpa2.generators.partition import OddEvenPartitioner
 from mvpa2.mappers.fx import mean_sample
@@ -844,6 +847,30 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                             tups_mask[tup] += 1
                         assert_array_equal(expected_mask != 0, tups_mask != 0)
 
+    def test_volume_mask_dictionary_different_value_types(self):
+        # build tiny VolumeMaskDictionary
+        vg = VolGeom((2, 2, 2), np.zeros((4, 4)))
+
+        d = VolumeMaskDictionary(vg, None)
+        d.add(0, [3, 4], dict(foo=np.asarray([1.1, 2])))
+        d.add(1, [5, 6], dict(foo=np.asarray([1.3, 2])))
+
+        # set the values to different varieties of float
+        d._src2aux['foo'][0] = d._src2aux['foo'][0].astype(np.float32)
+        d._src2aux['foo'][1] = d._src2aux['foo'][1].astype(np.float64)
+
+        # float elements must be converted properly
+        at = _dict_with_arrays2array_tuple(d._src2aux)
+        at_expected = dict(foo=(np.asarray([0, 1]),
+                                np.asarray([2, 2]),
+                                np.asarray([1.1, 2., 1.3, 2.])))
+        for i, (at_elem, at_expected_elem) in enumerate(zip(at['foo'], at_expected['foo'])):
+            assert_array_almost_equal(at_elem, at_expected_elem)
+
+        # set auxilary attribute so that _src2aux has no common
+        # datatype; this should raise an error
+        d._src2aux['foo'][1] = np.asarray('bar')
+        assert_raises(TypeError, _dict_with_arrays2array_tuple, d._src2aux)
 
 
 
