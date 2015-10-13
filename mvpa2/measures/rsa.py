@@ -22,6 +22,9 @@ if externals.exists('scipy', raise_=True):
     from scipy.spatial.distance import pdist, squareform
     from scipy.stats import rankdata, pearsonr
 
+if externals.exists('statsmodels', raise_=True):
+    from statsmodels.api import add_constant, OLS
+
 class PDist(Measure):
     """Compute dissimiliarity matrix for samples in a dataset
 
@@ -199,12 +202,15 @@ class PDistTargetSimilarity(Measure):
           If True, return only the correlation coefficient (rho), otherwise
           return rho and probability, p.""")
 
-    def __init__(self, target_dsm, **kwargs):
+    def __init__(self, target_dsm, control_dsms = None, **kwargs):
         """
         Parameters
         ----------
         target_dsm : array (length N*(N-1)/2)
           Target dissimilarity matrix
+        control_dsms : list of arrays (each length N*(N-1)/2)
+          Dissimilarity matrices to control for in multiple regression; flexible number allowed
+          *Optional. Returns r/rho coefficients for target_dsm, controlling for these dsms
 
         Returns
         -------
@@ -215,8 +221,10 @@ class PDistTargetSimilarity(Measure):
         # init base classes first
         Measure.__init__(self, **kwargs)
         self.target_dsm = target_dsm
+        self.control_dsms = control_dsms
         if self.params.comparison_metric == 'spearman':
             self.target_dsm = rankdata(target_dsm)
+            if control_dsms != None: self.control_dsms = [rankdata(dm) for dm in control_dsms]
 
     def _call(self,dataset):
         data = dataset.samples
@@ -225,8 +233,19 @@ class PDistTargetSimilarity(Measure):
         dsm = pdist(data,self.params.pairwise_metric)
         if self.params.comparison_metric=='spearman':
             dsm = rankdata(dsm)
-        rho, p = pearsonr(dsm,self.target_dsm)
-        if self.params.corrcoef_only:
-            return Dataset([rho], fa={'metrics': ['rho']})
-        else:
-            return Dataset([[rho,p]], fa={'metrics': ['rho', 'p']})
+        if self.control_dsms == None:
+            rho, p = pearsonr(dsm,self.target_dsm)
+            if self.params.corrcoef_only:
+                return Dataset([rho], fa={'metrics': ['rho']})
+            else:
+                return Dataset([[rho,p]], fa={'metrics': ['rho', 'p']})
+        elif self.control_dsms != None:
+            X = np.column_stack([np.array([1. for i in self.target_dsm])]+[self.target_dsm]+self.control_dsms)
+            res = OLS(endog=dsm,exog=X).fit()
+            rho = res.params[1]*(np.std(X[:,1])/np.std(dsm))
+            p = res.pvalues[1]
+            if self.params.corrcoef_only:
+                return Dataset([rho], fa={'metrics': ['rho']})
+            else: 
+                return Dataset([[rho,p]], fa={'metrics': ['rho','p']})
+
