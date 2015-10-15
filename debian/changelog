@@ -1,3 +1,10 @@
+pymvpa2 (2.4.0.1-1) unstable; urgency=medium
+
+  * Upstream snapshot release
+    - addresses compatibility issue with recent scipy
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 15 Oct 2015 13:07:03 -0400
+
 pymvpa2 (2.4.0-1) unstable; urgency=medium
 
   * New upstream yet to be released release
