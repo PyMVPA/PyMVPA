@@ -6,13 +6,22 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Helper for simple storage facility via cPickle and optionally zlib"""
+"""Helper for simple storage facility via pickle and optionally zlib"""
 
 __docformat__ = 'restructuredtext'
 
-import os
-
+import sys
 from mvpa2.base import externals
+
+if (sys.version_info[0] < 3) and (externals.exists('cPickle', raise_=True)):
+    import cPickle as pickle
+else:
+    import pickle
+
+import gzip
+
+if __debug__:
+    from mvpa2.base import debug
 
 _d_geti_ = dict.__getitem__
 _d_seti_ = dict.__setitem__
@@ -20,18 +29,12 @@ _d_seti_ = dict.__setitem__
 _o_geta_ = dict.__getattribute__
 _o_seta_ = dict.__setattr__
 
-if externals.exists('cPickle', raise_=True) and \
-   externals.exists('gzip', raise_=True):
-    import cPickle, gzip
-
-if __debug__:
-    from mvpa2.base import debug
 
 class Hamster(object):
     """Simple container class with basic IO capabilities.
 
     It is capable of storing itself in a file, or loading from a file using
-    cPickle (optionally via zlib from compressed files). Any serializable
+    pickle (optionally via zlib from compressed files). Any serializable
     object can be bound to a hamster to be stored.
 
     To undig burried hamster use Hamster(filename). Here is an example:
@@ -57,11 +60,11 @@ class Hamster(object):
     def __new__(cls, *args, **kwargs):
         if len(args) > 0:
             if len(kwargs) > 0:
-                raise ValueError, \
-                      "Do not mix positional and keyword arguments. " \
-                      "Use a single positional argument -- filename, " \
-                      "or any number of keyword arguments, without having " \
-                      "filename specified"
+                raise ValueError(
+                      "Do not mix positional and keyword arguments. "
+                      "Use a single positional argument -- filename, "
+                      "or any number of keyword arguments, without having "
+                      "filename specified")
             if len(args) == 1 and isinstance(args[0], basestring):
                 filename = args[0]
                 args = args[1:]
@@ -72,14 +75,15 @@ class Hamster(object):
                     f = gzip.open(filename)
                 else:
                     f = open(filename)
-                result = cPickle.load(f)
+                result = pickle.load(f)
                 if not isinstance(result, Hamster):
                     warning("Loaded other than Hamster class from %s" % filename)
                 return result
             else:
-                raise ValueError, "Hamster accepts only a single positional " \
-                      "argument and it must be a filename. Got %d " \
-                      "arguments" % (len(args),)
+                raise ValueError(
+                        "Hamster accepts only a single positional " \
+                        "argument and it must be a filename. Got %d " \
+                        "arguments" % (len(args),))
         else:
             return object.__new__(cls)
 
@@ -132,7 +136,7 @@ class Hamster(object):
             f = open(filename, 'w')
         else:
             f = gzip.open(filename, 'w', compresslevel)
-        cPickle.dump(self, f)
+        pickle.dump(self, f)
         f.close()
 
 
@@ -164,8 +168,9 @@ class Hamster(object):
         """Just to prevent resetting read-only attributes, such as methods
         """
         if k in self.__ro_attr:
-            raise ValueError, "'%s' object attribute '%s' is read-only" \
-                  % (self.__class__.__name__, k)
+            raise ValueError(
+                "'%s' object attribute '%s' is read-only"
+                % (self.__class__.__name__, k))
         object.__setattr__(self, k, v)
 
 

@@ -217,12 +217,10 @@ def collect_nose_tests(verbosity=1):
         'test_compound',
         'test_enet',
         'test_glmmapper',
-        'test_gpr',
         'test_lars',
         'test_glmnet',
         'test_kernel',
         'test_svmkernels',
-        'test_ridge',
         'test_senses',
 
         # Algorithms
@@ -234,7 +232,6 @@ def collect_nose_tests(verbosity=1):
         'test_iohelpers',
         'test_hdf5',
         'test_hdf5_clf',
-        'test_hamster',
         'test_openfmri',
 
         # Measures

@@ -144,7 +144,7 @@ all data into a single sample per stimulation conditions, per ``chunk``. A
 chunk in this context indicates a complete fMRI recording run.
 """
 
-# more interesting: let's look at the stability of similarity sturctures
+# more interesting: let's look at the stability of similarity structures
 # across experiment runs
 # mean condition samples, as before, but now individually for each run
 mtcgs = mean_group_sample(['targets', 'chunks'])
@@ -163,7 +163,7 @@ sl_cons = sphere_searchlight(dscm, 2)
 slres_cons = sl_cons(mtcds)
 
 """
-Now we can determine the most brain location with the most stable
+Now we can determine the brain location with the most stable
 dissimilarity matrix.
 """
 

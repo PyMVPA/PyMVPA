@@ -194,7 +194,7 @@ References
 P.  (2001) <HGF+01>`. Distributed and overlapping representations of faces and
 objects in ventral temporal cortex. Science 293, 2425–2430.
 
-.. _AFNI: http://http://afni.nimh.nih.gov
+.. _AFNI: http://afni.nimh.nih.gov
 
 .. _FSL: http://www.fmrib.ox.ac.uk/fsl
 
