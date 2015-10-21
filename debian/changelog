@@ -2,8 +2,10 @@ pymvpa2 (2.4.0.1-1) unstable; urgency=medium
 
   * Upstream snapshot release
     - addresses compatibility issue with recent scipy
+  * debian/patches/0001-BF-allow-to-compare-SmartVersion-None.patch
+    - CPed from PR to resolve failing test whenever IPython is N/A
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 15 Oct 2015 13:07:03 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 21 Oct 2015 11:46:49 -0500
 
 pymvpa2 (2.4.0-1) unstable; urgency=medium
 
