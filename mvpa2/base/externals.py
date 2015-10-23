@@ -346,10 +346,10 @@ def __check_in_ipython():
 
 def __assign_ipython_version():
     ipy_version = None
+    import IPython
     try:
         # Development post 0.11 version finally carries
         # conventional one
-        import IPython
         ipy_version = IPython.__version__
     except:
         try:
