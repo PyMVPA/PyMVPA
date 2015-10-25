@@ -1,2 +1,3 @@
 deb_no_twitter_privacy_breach
 0001-BF-allow-to-compare-SmartVersion-None.patch
+0001-BF-TST-support-testing-NIML-I-O-on-32-bit-platforms.patch
