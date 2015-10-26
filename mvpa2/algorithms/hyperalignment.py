@@ -124,7 +124,7 @@ class Hyperalignment(ClassWithCollections):
     level2_niter = Parameter(1, constraints=EnsureInt() & EnsureRange(min=0),
             doc="Number of 2nd-level iterations.")
 
-    ref_ds = Parameter(None, constraints=(EnsureInt() & EnsureRange(min=0) 
+    ref_ds = Parameter(None, constraints=(EnsureRange(min=0) & EnsureInt() 
                                           | EnsureNone()),
             doc="""Index of a dataset to use as 1st-level common space
                 reference.  If `None`, then the dataset with the maximum
@@ -198,7 +198,9 @@ class Hyperalignment(ClassWithCollections):
             ref_ds = np.argmax(nfeatures)
         else:
             ref_ds = params.ref_ds
-            if ref_ds < 0 and ref_ds >= ndatasets:
+            # Making sure that ref_ds is within range. 
+            #Parameter() already checks for it being a non-negative integer
+            if ref_ds >= ndatasets:
                 raise ValueError, "Requested reference dataset %i is out of " \
                       "bounds. We have only %i datasets provided" \
                       % (ref_ds, ndatasets)

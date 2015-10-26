@@ -17,7 +17,13 @@ Note: this method has not been validated properly yet.
 NNO Oct 2012
 '''
 
-import os, fnmatch, datetime, re, argparse, math
+import os
+from os.path import join as pathjoin
+import fnmatch
+import datetime
+import re
+import argparse
+import math
 
 from mvpa2.support.afni import afni_utils as utils
 
@@ -103,7 +109,7 @@ def compute_fwhm(config):
 
     # compute residuals, and estimate FWHM for each of them
     # store FWHM output in fwhm_fn
-    fwhm_fn = os.path.join(output_dir, _fn(config, 'fwhm', '.1D'))
+    fwhm_fn = pathjoin(output_dir, _fn(config, 'fwhm', '.1D'))
     cmds.append('; echo > "%s"' % fwhm_fn)
 
     resid_fns = []
@@ -136,7 +142,7 @@ def compute_fwhm(config):
     config['buck_fn'] = buck_fn
     config['buck_fn_1D'] = buck_fn_1D
 
-    mean_fwhm_fn = os.path.join(output_dir, _fn(config, 'mean_fwhm', '.1D'))
+    mean_fwhm_fn = pathjoin(output_dir, _fn(config, 'mean_fwhm', '.1D'))
     with open(mean_fwhm_fn, 'w') as f:
         f.write('%.3f\n' % config['fwhm'])
 
@@ -220,7 +226,7 @@ def null_clustersize(config):
 
     # read maximum cluster size form size_fn
     sz_str = None
-    with open(os.path.join(output_dir, size_fn)) as f:
+    with open(pathjoin(output_dir, size_fn)) as f:
         sz_str = f.read()
 
     try:
@@ -231,7 +237,7 @@ def null_clustersize(config):
     print "Null data: maximum size %f" % sz
 
     if is_surf:
-        smoothing_fn_rec = os.path.join(output_dir, _fn(config, 'rand_buck_smooth', '.1D.dset.1D.smrec'))
+        smoothing_fn_rec = pathjoin(output_dir, _fn(config, 'rand_buck_smooth', '.1D.dset.1D.smrec'))
         if not os.path.exists(smoothing_fn_rec):
             raise ValueError("Smoothing did not succeed. Please check the error"
                              " messaged. You may have to set sigma manually")
@@ -268,7 +274,7 @@ def _remove_files(config, list_of_files):
                 exts = ['']
 
             for ext in exts:
-                full_fn = os.path.join(config['output_dir'], fn + ext)
+                full_fn = pathjoin(config['output_dir'], fn + ext)
                 if os.path.exists(full_fn):
                     os.remove(full_fn)
 
@@ -293,7 +299,7 @@ def critical_clustersize(config):
 
     # store the results in a file
     clsize_fn = _fn(config, 'critical_cluster_size', '.1D')
-    with open(os.path.join(config['output_dir'], clsize_fn), 'w') as f:
+    with open(pathjoin(config['output_dir'], clsize_fn), 'w') as f:
         f.write('# Critical sizes for tthr=%.3f, fwhm=%.3f, %d files\n' % (
                     config['tthr'], config['fwhm'], len(config['data_files'])))
         for s in sz:

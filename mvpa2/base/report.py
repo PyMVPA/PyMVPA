@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 
 
 import os
+from os.path import join as pathjoin
 from datetime import datetime
 
 import mvpa2
@@ -123,7 +124,7 @@ class Report(object):
         if path is None:
             self._filename = name
         else:
-            self._filename = os.path.join(path, name)
+            self._filename = pathjoin(path, name)
 
         self.__nfigures = 0
 
@@ -224,7 +225,7 @@ class Report(object):
             name = name.replace('#', str(self.__nfigures))
 
             # Save image
-            fig_filename = os.path.join(self._filename,
+            fig_filename = pathjoin(self._filename,
                                         '%s.%s' % (name, self.fig_ext))
             if __debug__ and not self in debug.handlers:
                 debug("REP_", "Saving figure '%s' into %s"

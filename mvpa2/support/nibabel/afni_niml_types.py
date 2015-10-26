@@ -26,17 +26,18 @@ np_types = [np.byte, np.int16, np.int32,
 np_bytecounts = [1, 2, 4, 4, 8, 16, None, None, None]
 
 python_types = [int, int, int,
-              float, float, complex,
-              None, None, str]
+                float, float, complex,
+                None, None, str]
 
-type_names = ['byte'  , 'short'  , 'int'     ,
-          'float' , 'double' , 'complex' ,
-          'rgb'   , 'rgba'   , 'String' ]
+type_names = ['byte', 'short', 'int',
+              'float', 'double', 'complex',
+              'rgb', 'rgba', 'String']
 
-type_alias = [ 'uint8'   , 'int16'   , 'int32'     ,
-            'float32' , 'float64' , 'complex64' ,
-            'rgb8'    , 'rgba8'   , 'CString' ]
+type_alias = ['uint8', 'int16', 'int32',
+              'float32', 'float64', 'complex64',
+              'rgb8', 'rgba8', 'CString']
 type_sep = ","
+
 
 def code2python_convertor(i):
     if i in [0, 1, 2]:
@@ -44,8 +45,9 @@ def code2python_convertor(i):
     if i in [3, 4, 5]:
         return float
     if i in [8]:
-        return lambda x:x.strip('"') # remove quotes
+        return lambda x: x.strip('"')  # remove quotes
     return None
+
 
 def numpy_type2bytecount(tp):
     for i, t in enumerate(np_types):
@@ -53,38 +55,44 @@ def numpy_type2bytecount(tp):
             return np_bytecounts[i]
     return None
 
+
 def numpy_type2name(tp):
     code = numpy_type2code(tp)
     return _one_code2str(code)
 
+
 def numpy_data_isint(data):
     return type(data) is np.ndarray and np.issubdtype(data.dtype, int)
+
 
 def numpy_data_isfloat(data):
     return type(data) is np.ndarray and np.issubdtype(data.dtype, float)
 
+
 def numpy_data_isdouble(data):
     return type(data) is np.ndarray and np.issubdtype(data.dtype, np.double)
 
+
 def numpy_data_isstring(data):
-    return type(data) is np.ndarray and np.issubdtype(data.dtype, np.str)
+    return type(data) is np.ndarray and \
+           (np.issubdtype(data.dtype, np.str) or data.dtype.kind in 'US')
+
 
 def numpy_data2printer(data):
     tp = type(data)
     if tp is list:
         return map(numpy_data2printer, data)
     elif tp is str:
-        return lambda x : '"%s"' % x
+        return lambda x: '"%s"' % x
     elif tp == np.ndarray:
         if numpy_data_isint(data):
-            return lambda x : '%d' % x
+            return lambda x: '%d' % x
         elif numpy_data_isdouble(data):
             return str
         elif numpy_data_isfloat(data):
-            return lambda x : '%f' % x
+            return lambda x: '%f' % x
         elif numpy_data_isstring(data):
-            return lambda x : '"%s"' % x
-
+            return lambda x: '"%s"' % x
 
     raise ValueError("Not understood type %r in %r" % (tp, data))
 
@@ -94,6 +102,7 @@ def code2python_type(i):
         return map(code2python_type, i)
     else:
         return python_types[i]
+
 
 def nimldataassupporteddtype(data):
     tp = type(data)
@@ -140,8 +149,10 @@ def code2numpy_type(i):
     else:
         return np_types[i]
 
+
 def num_codes():
     return len(type_names)
+
 
 def _one_str2code(name):
     lname = name.lower()
@@ -151,11 +162,13 @@ def _one_str2code(name):
                 return i
     return None
 
+
 def _one_code2str(code):
     return type_alias[code]
 
+
 def sametype(p, q):
-    ascode = lambda x:_one_str2code(x) if type(x) is str else x
+    ascode = lambda x: _one_str2code(x) if type(x) is str else x
     pc, qc = ascode(p), ascode(q)
 
     if pc is None or qc is None:
@@ -170,6 +183,7 @@ def codes2str(codes):
     names = [_one_code2str(code) for code in codes]
     return type_sep.join(names)
 
+
 def byteorder_from_niform(niform, dtype):
     if not (niform and type(niform) is str):
         return None
@@ -180,7 +194,7 @@ def byteorder_from_niform(niform, dtype):
     ns = len(split)
     if ns == 1:
         prefix = niform
-        byteorder = 'msbfirst' # the default
+        byteorder = 'msbfirst'  # the default
     elif ns == 2:
         prefix, byteorder = split
     else:
@@ -195,6 +209,7 @@ def byteorder_from_niform(niform, dtype):
 
     raise ValueError('Not understood niform')
 
+
 def data2ni_form(data, form):
     if (type(data) is np.ndarray and
             (numpy_data_isint(data) or numpy_data_isfloat(data))):
@@ -203,7 +218,7 @@ def data2ni_form(data, form):
         if not form in ['binary', 'base64']:
             raise ValueError('illegal form %s' % form)
 
-        if byteorder == '=': # native order
+        if byteorder == '=':  # native order
             byteorder = '<' if sys.byteorder == 'little' else '>'
 
         if byteorder in '<>':
@@ -223,17 +238,17 @@ def str2codes(names):
         np = len(p)
 
         if np == 1:
-            fac = 1 # how many 
+            fac = 1  # how many
         elif np == 2:
             fac = int(p[0])
         else:
             raise ValueError("Not understood: %s" % part)
 
-        code = _one_str2code(p[-1]) # last element for type
+        code = _one_str2code(p[-1])  # last element for type
         codes.extend([code] * fac)
 
-
     return codes
+
 
 def findonetype(tps):
     '''tps is a list of vec_typ'''
@@ -245,5 +260,3 @@ def findonetype(tps):
             return tp
 
     return None
-
-

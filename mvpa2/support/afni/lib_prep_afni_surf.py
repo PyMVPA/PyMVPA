@@ -76,6 +76,7 @@ from mvpa2.support.afni import afni_utils as utils
 
 
 import os
+from os.path import join as pathjoin
 import fnmatch
 import datetime
 import re
@@ -140,7 +141,7 @@ def augmentconfig(c):
         parent, nm = os.path.split(surfdir)
 
         if nm != 'surf':
-            jn = os.path.join(surfdir, 'surf')
+            jn = pathjoin(surfdir, 'surf')
             if os.path.exists(jn):
                 surfdir = jn
         elif nm == 'SUMA':
@@ -233,7 +234,7 @@ def augmentconfig(c):
     c['fs_sid'] = None
     surfdir = c.get('surfdir', None)
     if not surfdir is None and os.path.exists(surfdir):
-        fs_log_fn = os.path.join(surfdir, '..', 'scripts', 'recon-all.done')
+        fs_log_fn = pathjoin(surfdir, '..', 'scripts', 'recon-all.done')
         print "Looking in %s" % fs_log_fn
         if os.path.exists(fs_log_fn):
             with open(fs_log_fn) as f:
@@ -358,7 +359,7 @@ def run_mapico(config, env):
             spheres = map(surf.read, spherefns)
 
             mapfn = (config['mi_icopat'] % icold) + config['hemimappingsuffix']
-            mappathfn = os.path.join(sumadir, mapfn)
+            mappathfn = pathjoin(sumadir, mapfn)
 
 
             if config['overwrite'] or not os.path.exists(mappathfn):
@@ -666,8 +667,8 @@ def run_alignment(config, env):
 
         addedge_fns_pat = ['%s.%s' % (fn, e) for fn in addedge_rootfns for e in exts]
 
-        addegde_pathfns_orig = map(lambda x:os.path.join(refdir, x % '+orig'), addedge_fns_pat) + addedge_fns
-        addegde_pathfns_ext = map(lambda x:os.path.join(refdir, x % ext), addedge_fns_pat)
+        addegde_pathfns_orig = map(lambda x:pathjoin(refdir, x % '+orig'), addedge_fns_pat) + addedge_fns
+        addegde_pathfns_ext = map(lambda x:pathjoin(refdir, x % ext), addedge_fns_pat)
         addegde_exists = map(os.path.exists, addegde_pathfns_ext)
         if overwrite or not all(addegde_exists):
             ae_ns = (ae_e_n, ae_s_n)
@@ -769,10 +770,10 @@ def run_alignment(config, env):
 
 
         mapfn = (config['mi_icopat'] % icold) + config['hemimappingsuffix']
-        srcpathfn = os.path.join(sumadir, mapfn)
+        srcpathfn = pathjoin(sumadir, mapfn)
 
         if os.path.exists(srcpathfn):
-            trgpathfn = os.path.join(refdir, mapfn)
+            trgpathfn = pathjoin(refdir, mapfn)
             if not os.path.exists(trgpathfn) or config['overwrite']:
                 cmds.append('cp %s %s' % (srcpathfn, trgpathfn))
 
@@ -805,7 +806,7 @@ def run_makespec(config, env):
             surfprefix = '%s%sh' % (config['mi_icopat'] % icold, hemi)
             specfn = afni_suma_spec.canonical_filename(icold, hemi,
                                                        config['alsuffix'])
-            specpathfn = os.path.join(refdir, specfn)
+            specpathfn = pathjoin(refdir, specfn)
 
             if config['overwrite'] or not os.path.exists(specpathfn):
                 suma_makespec(refdir, surfprefix, config['surfformat'], specpathfn, removepostfix=config['alsuffix'])
@@ -835,7 +836,7 @@ def run_makespec_bothhemis(config, env):
             #surfprefix = '%s%sh' % (config['mi_icopat'] % icold, hemi)
             specfn = afni_suma_spec.canonical_filename(icold, hemi,
                                                        config['alsuffix'])
-            specpathfn = os.path.join(refdir, specfn)
+            specpathfn = pathjoin(refdir, specfn)
             s = afni_suma_spec.read(specpathfn)
 
             specs.append(afni_suma_spec.read(specpathfn))
@@ -864,20 +865,20 @@ def run_makespec_bothhemis(config, env):
         # generate spec files for both hemispheres
         hemiboth = 'b'
         specfn = afni_suma_spec.canonical_filename(icold, hemiboth, config['alsuffix'])
-        specpathfn = os.path.join(refdir, specfn)
+        specpathfn = pathjoin(refdir, specfn)
         spec_both.write(specpathfn, overwrite=overwrite)
 
         # merge left and right into one surface
         # and generate the spec files as well
         hemimerged = 'm'
         specfn = afni_suma_spec.canonical_filename(icold, hemimerged, config['alsuffix'])
-        specpathfn = os.path.join(refdir, specfn)
+        specpathfn = pathjoin(refdir, specfn)
 
         if config['overwrite'] or not os.path.exists(specpathfn):
             spec_merged, surfs_to_join = afni_suma_spec.merge_left_right(spec_both)
             spec_merged.write(specpathfn, overwrite=overwrite)
 
-            full_path = lambda x:os.path.join(refdir, x)
+            full_path = lambda x:pathjoin(refdir, x)
             for fn_out, fns_in in surfs_to_join.iteritems():
                 surfs_in = [surf.read(full_path(fn)) for fn in fns_in]
 
