@@ -17,25 +17,25 @@ from mvpa2.datasets.base import dataset_wizard
 
 class SOMMapperTests(unittest.TestCase):
     def test_periodic_boundaries(self):
-    
-        som = SimpleSOMMapper((10, 5), 200, learning_rate=0.05) 
-        
+
+        som = SimpleSOMMapper((10, 5), 200, learning_rate=0.05)
+
         test_dqdshape = np.array([5,2,5,3])
 
         # som._dqdshape only defined in newer version
         # this is not explicitly linked to the periodic boundary conditions,
         # but had trouble coming up with a simple test for them
         self.assertTrue((som._dqdshape == test_dqdshape).all())
-    
+
     def test_kohonen_update(self):
-        # before update error occured when learning_rate*number of samples > 1
-        # here use extreme learning_rate to force bad behaviour  
+        # before update error occurred when learning_rate*number of samples > 1
+        # here use extreme learning_rate to force bad behavior
         som = SimpleSOMMapper((10, 5), 200, learning_rate=1.0)
-        
+
         trainer = np.ones([8,3])
-        
+
         som.train(trainer)
-        
+
         # use 10 instead of 4 to allow for some randomness in the training
         # fail values tend to be closer to 10^30
         self.assertTrue((np.abs(som.K) <= 10).all())
@@ -51,7 +51,7 @@ class SOMMapperTests(unittest.TestCase):
             # only small SOM for speed reasons
             som = SimpleSOMMapper((10, 5), 200, learning_rate=0.05)
 
-            # no acces when nothing is there
+            # no access when nothing is there
             self.assertRaises(RuntimeError, som._access_kohonen)
 
             som.train(colors)
@@ -64,7 +64,7 @@ class SOMMapperTests(unittest.TestCase):
 
             if cfg.getboolean('tests', 'labile', default='yes'):
                 # should approximately restore the input, but could fail
-                # with bad initialisation
+                # with bad initialization
                 self.assertTrue((np.round(rmapped) == colors).all())
 
 
@@ -75,4 +75,3 @@ def suite():  # pragma: no cover
 if __name__ == '__main__':  # pragma: no cover
     import runner
     runner.run()
-
