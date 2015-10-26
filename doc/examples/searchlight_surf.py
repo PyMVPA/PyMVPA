@@ -292,10 +292,17 @@ visualization. Finally print an informative message on how the
 generated data can be visualized using SUMA.
 """
 
+# save as NIML dataset
 fn = 'ico%d-%d_%sh_%dvx.niml.dset' % (lowres_ld, highres_ld, hemi, radius)
 path_fn = os.path.join(surfpath, fn)
-
 niml.write(path_fn, sl_dset)
+
+# save as GIFTI
+if externals.exists('nibabel'):
+    fn = 'ico%d-%d_%sh_%dvx.func.gii' % (lowres_ld, highres_ld, hemi, radius)
+    path_fn = os.path.join(surfpath, fn)
+    map2gifti(sl_dset, path_fn)
+
 
 print ("To view results in SUMA, cd to '%s', run 'suma -spec "
       "%sh_ico%d_al.spec', press ctrl+s, "

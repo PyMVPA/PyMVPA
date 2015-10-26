@@ -438,9 +438,8 @@ motion-aware data detrending:
   >>>
   >>> # detrend some dataset with mc params as additonal regressors
   >>> from mvpa2.mappers.detrend import poly_detrend
-  >>> res = poly_detrend(ds, opt_regs=['mc_x', 'mc_y', 'mc_z',
-  ...                                  'mc_rot1', 'mc_rot2', 'mc_rot3'])
-  >>> # 'res' contains all regressors and their associated weights
+  >>> poly_detrend(ds, opt_regs=['mc_x', 'mc_y', 'mc_z',
+  ...                            'mc_rot1', 'mc_rot2', 'mc_rot3'])
 
 All FSL bindings are located in the `mvpa2.misc.fsl`_ module.
 
