@@ -13,7 +13,7 @@ import numpy as np
 
 from mvpa2.testing.tools import ok_, assert_array_equal, assert_true, \
         assert_false, assert_equal, assert_not_equal, reseed_rng, assert_raises, \
-        assert_array_almost_equal, SkipTest
+        assert_array_almost_equal, SkipTest, assert_datasets_equal
 
 @reseed_rng()
 def _test_mcasey20120222():  # pragma: no cover
@@ -436,3 +436,62 @@ def test_remove_invariant_as_a_mapper():
 
     assert_equal(ds_out.fa.index[1], 2)
     assert_equal(ds_out.fa.index[8], 10)
+
+
+def test_searchlight_errors_per_trial():
+    # To make sure that searchlight can return error/accuracy per trial
+    from mvpa2.clfs.gnb import GNB
+    from mvpa2.generators.partition import OddEvenPartitioner
+    from mvpa2.measures.base import CrossValidation
+    from mvpa2.measures.searchlight import sphere_searchlight
+    from mvpa2.measures.gnbsearchlight import sphere_gnbsearchlight
+    from mvpa2.testing.datasets import datasets
+    from mvpa2.misc.errorfx import prediction_target_matches
+
+    dataset = datasets['3dsmall'].copy()
+    # randomly permute samples so we break any random correspondence
+    # to strengthen tests below
+    sample_idx = np.arange(len(dataset))
+    dataset = dataset[np.random.permutation(sample_idx)]
+
+    dataset.sa.targets = ['L%d' % l for l in dataset.sa.targets]
+    dataset.fa['voxel_indices'] = dataset.fa.myspace
+    sample_clf = GNB()              # fast and deterministic
+
+    part = OddEvenPartitioner()
+    # only do partial to save time
+    cv = CrossValidation(sample_clf, part, errorfx=None) #prediction_target_matches)
+    # Just to compare error
+    cv_error = CrossValidation(sample_clf, part)
+
+    # Large searchlight radius so we get entire ROI, 2 centers just to make sure
+    # that all stacking works correctly
+    sl = sphere_searchlight(cv, radius=10, center_ids=[0, 1])
+    results = sl(dataset)
+
+    sl_gnb = sphere_gnbsearchlight(sample_clf, part, radius=10, errorfx=None,
+                                   center_ids=[0, 1])
+    results_gnbsl = sl_gnb(dataset)
+
+    # inspect both results
+    # verify that partitioning was done correctly
+    partitions = list(part.generate(dataset))
+    for res in (results, results_gnbsl):
+        assert('targets' in res.sa.keys())  # should carry targets
+        assert('cvfolds' in res.sa.keys())  # should carry cvfolds
+        for ipart in xrange(len(partitions)):
+            assert_array_equal(dataset[partitions[ipart].sa.partitions == 2].targets,
+                               res.sa.targets[res.sa.cvfolds == ipart])
+
+    assert_datasets_equal(results, results_gnbsl)
+
+    # one "accuracy" per each trial
+    assert_equal(results.shape, (len(dataset), 2))
+    # with accuracies the same in both searchlights since the same
+    # features were to be selected in both cases due too large radii
+    errors_dataset = cv(dataset)
+    assert_array_equal(errors_dataset.samples[:, 0], results.samples[:, 0])
+    assert_array_equal(errors_dataset.samples[:, 0], results.samples[:, 1])
+    # and error matching (up to precision) the one if we run with default error function
+    assert_array_almost_equal(np.mean(results.targets[:, None] != results.samples, axis=0)[0],
+                              np.mean(cv_error(dataset)))

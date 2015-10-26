@@ -16,6 +16,29 @@ from mvpa2.mappers.som import SimpleSOMMapper
 from mvpa2.datasets.base import dataset_wizard
 
 class SOMMapperTests(unittest.TestCase):
+    def test_periodic_boundaries(self):
+    
+        som = SimpleSOMMapper((10, 5), 200, learning_rate=0.05) 
+        
+        test_dqdshape = np.array([5,2,5,3])
+
+        # som._dqdshape only defined in newer version
+        # this is not explicitly linked to the periodic boundary conditions,
+        # but had trouble coming up with a simple test for them
+        self.assertTrue((som._dqdshape == test_dqdshape).all())
+    
+    def test_kohonen_update(self):
+        # before update error occured when learning_rate*number of samples > 1
+        # here use extreme learning_rate to force bad behaviour  
+        som = SimpleSOMMapper((10, 5), 200, learning_rate=1.0)
+        
+        trainer = np.ones([8,3])
+        
+        som.train(trainer)
+        
+        # use 10 instead of 4 to allow for some randomness in the training
+        # fail values tend to be closer to 10^30
+        self.assertTrue((np.abs(som.K) <= 10).all())
 
     def test_simple_som(self):
         colors = np.array([[0., 0., 0.], [0., 0., 1.], [0., 1., 0.],

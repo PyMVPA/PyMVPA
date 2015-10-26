@@ -541,15 +541,24 @@ def fit_event_hrf_model(
     # auto-generated
     if design_kwargs is None:
         design_kwargs = {}
+
     if not regr_attrs is None:
         names = []
         regrs = []
         for attr in regr_attrs:
-            names.append(attr)
-            regrs.append(ds.sa[attr].value)
-        if len(regrs) < 2:
-            regrs = [regrs]
-        regrs = np.hstack(regrs).T
+            regr = ds.sa[attr].value
+            # add rudimentary dimension for easy hstacking later on
+            if regr.ndim < 2:
+                regr = regr[:, np.newaxis]
+            if regr.shape[1] == 1:
+                names.append(attr)
+            else:
+                #  add one per each column of the regressor
+                for i in xrange(regr.shape[1]):
+                    names.append("%s.%d" % (attr, i))
+            regrs.append(regr)
+        regrs = np.hstack(regrs)
+
         if 'add_regs' in design_kwargs:
             design_kwargs['add_regs'] = np.hstack((design_kwargs['add_regs'],
                                                    regrs))
@@ -559,6 +568,7 @@ def fit_event_hrf_model(
             design_kwargs['add_reg_names'].extend(names)
         else:
             design_kwargs['add_reg_names'] = names
+
     design_matrix = make_dmtx(ds.sa[time_attr].value,
                               paradigm,
                               **design_kwargs)

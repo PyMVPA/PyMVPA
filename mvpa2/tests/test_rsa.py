@@ -125,15 +125,44 @@ def test_PDistTargetSimilarity():
     a2 = tdcm2(ds)
     a3 = tdcm3(ds)
     a4 = tdcm4(ds)
-    assert_array_almost_equal(a1.samples.squeeze(),ans1)
+    assert_array_almost_equal(a1.samples.squeeze(), ans1)
     assert_array_equal(a1.fa.metrics, ['rho', 'p'])
-    assert_array_almost_equal(a2.samples.squeeze(),ans2)
+    assert_array_almost_equal(a2.samples.squeeze(), ans2)
     assert_array_equal(a2.fa.metrics, ['rho', 'p'])
-    assert_array_almost_equal(a3.samples.squeeze(),ans3)
+    assert_array_almost_equal(a3.samples.squeeze(), ans3)
     assert_array_equal(a3.fa.metrics, ['rho', 'p'])
-    assert_array_almost_equal(a4.samples.squeeze(),ans1[0])
+    assert_array_almost_equal(a4.samples.squeeze(), ans1[0])
     assert_array_equal(a4.fa.metrics, ['rho'])
 
+def test_PDistTargetSimilaritySearchlight():
+    # Test ability to use PDistTargetSimilarity in a searchlight
+    from mvpa2.testing.datasets import datasets
+    from mvpa2.mappers.fx import mean_group_sample
+    from mvpa2.mappers.shape import TransposeMapper
+    from mvpa2.measures.searchlight import sphere_searchlight
+    ds = datasets['3dsmall'][:, :3]
+    ds.fa['voxel_indices'] = ds.fa.myspace
+    # use chunks values (4 of them) for targets
+    ds.sa['targets'] = ds.sa.chunks
+    ds = mean_group_sample(['chunks'])(ds)
+    tdsm = np.arange(6)
+    # We can run on full dataset
+    tdcm1 = PDistTargetSimilarity(tdsm)
+    a1 = tdcm1(ds)
+    assert_array_equal(a1.fa.metrics, ['rho', 'p'])
 
+    tdcm1_rho = PDistTargetSimilarity(tdsm, corrcoef_only=True)
+    sl_rho = sphere_searchlight(tdcm1_rho)(ds)
+    assert_array_equal(sl_rho.shape, (1, ds.nfeatures))
 
-
+    # now with both but we need to transpose datasets
+    tdcm1_both = PDistTargetSimilarity(tdsm, postproc=TransposeMapper())
+    sl_both = sphere_searchlight(tdcm1_both)(ds)
+    assert_array_equal(sl_both.shape, (2, ds.nfeatures))
+    assert_array_equal(sl_both.sa.metrics, ['rho', 'p'])
+    # rho must be exactly the same
+    assert_array_equal(sl_both.samples[0], sl_rho.samples[0])
+    # just because we are here and we can
+    # Actually here for some reason assert_array_lequal gave me a trouble
+    assert_true(np.all(sl_both.samples[1] <= 1.0))
+    assert_true(np.all(0 <= sl_both.samples[1]))
