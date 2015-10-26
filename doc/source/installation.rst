@@ -341,22 +341,21 @@ these changes to take effect.
 Once MacPorts is installed and your environment is properly configured, PyMVPA is
 installed using a single command::
 
-  > $ sudo port install py25-pymvpa +scipy +nibabel +hcluster +libsvm
+  > $ sudo port install py27-pymvpa +scipy +nibabel +hcluster +libsvm
   > +matplotlib +pywavelet
 
 The `+foo` arguments add support within PyMVPA for these packages. For a full
 list of available 3rd party packages please see::
 
-  > $ port variants py25-pymvpa
+  > $ port variants py27-pymvpa
 
-If this is your first time using MacPorts Python 2.5 will be automatically
-installed for you. However, an additional step is needed::
+If this is your first time using MacPorts Python 2.7 will be automatically
+installed for you. However, an additional step might be needed::
 
-  $ sudo port install python_select
-  $ sudo python_select python25
+  $ sudo port select python python27-apple
 
 MacPorts has the ability of installing several Python versions at a time, the
-`python_select` utility ensures that the default Python (located at
+`port select python` command ensures that the default Python (located at
 `/opt/local/bin/python`) points to your preferred version.
 
 Upon success, open a terminal window and start Python by typing `python` and
