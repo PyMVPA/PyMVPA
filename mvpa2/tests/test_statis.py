@@ -12,7 +12,7 @@ import unittest
 import numpy as np
 from itertools import combinations
 
-from mvpa2.algorithms.statis import Statis
+from mvpa2.algorithms.statis import Statis, get_normalized_ds
 from mvpa2.misc.support import idhash
 from mvpa2.misc.data_generators import random_affine_transformation
 from mvpa2.base.dataset import hstack
@@ -116,6 +116,21 @@ class StatisTests(unittest.TestCase):
         # Run statis
         statis = Statis()
         self.assertRaises(ValueError, statis, dss)
+
+    def test_get_normalied_ds(self):
+        ds = np.random.randn(3, 5)
+        init_hash = idhash(ds)
+        ds_normed = get_normalized_ds(ds)
+        # Check to make sure input is not modified
+        after_hash = idhash(ds)
+        self.assertEqual(init_hash, after_hash,
+                         msg="Function shouldn't modify input dataset")
+        # Sum of squares = 1
+        self.assertAlmostEqual((ds_normed**2).sum(), 1.0,
+                               msg="Sum of squares should be 1 after normalization")
+        # Columns should be demeaned
+        self.assertAlmostEqual((ds_normed.sum(axis=0)**2).sum(), 0.0,
+                               msg="Columns should be demeaned after normalization")
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(StatisTests)

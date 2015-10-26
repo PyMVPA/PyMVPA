@@ -20,7 +20,7 @@ from mvpa2.mappers.zscore import ZScoreMapper
 from mvpa2.mappers.staticprojection import StaticProjectionMapper
 from mvpa2.base.dataset import hstack
 from mvpa2.base.param import Parameter
-
+from mvpa2.datasets.base import Dataset
 from mvpa2.base import warning
 if __debug__:
     from mvpa2.base import debug
@@ -29,18 +29,29 @@ if __debug__:
 
 __all__ = ['Statis']
 
-def normalize_ds(ds):
-    """Normalize input dataset for Statis
 
+def get_normalized_ds(ds):
+    """Returns normalized version of dataset for Statis
     1) zscore each column
     2) make sum of squares to one (Frobenius norm = 1)
+
+    Parameters
+    ----------
+    ds : dataset
+
+    Returns
+    -------
+    Normalized input dataset
     """
-    if ds.samples.dtype == int:
-        ds.samples = ds.samples.astype('float')
-    zmapper = ZScoreMapper(chunks_attr=None)
-    zmapper.train(ds)
-    ds = zmapper.forward(ds)
-    ds.samples /= np.sqrt(((ds.samples**2).sum()))
+    ds = ds.copy()
+    if isinstance(ds, Dataset):
+        ds.samples = ds.samples - ds.samples.mean(axis=0)
+        ds.samples = ds.samples / ds.samples.std(axis=0)
+        ds.samples /= np.sqrt((ds.samples**2).sum())
+    else:
+        ds = ds - ds.mean(axis=0)
+        ds = ds / ds.std(axis=0)
+        ds /= np.sqrt((ds**2).sum())
     return ds
 
 
@@ -88,7 +99,7 @@ class Statis(ClassWithCollections):
     of input datasets into STATIS compromise space.
 
     Note that when provided a single dataset as input, returned mappers are in
-    the order fa.chunks_attr).
+    the order fa.chunks_attr.
 
     Statis also stores subject/table factor scores as `G_t`,
     each subject's contribution to compromise as `alpha`,
@@ -123,10 +134,14 @@ class Statis(ClassWithCollections):
         self.alpha = None
 
     def __call__(self, dss):
-        """
-        Derive compromise matrix and aligned space.
-        :param dss: a list of datasets
-        :return:
+        """Derive compromise matrix and aligned space.
+        Parameters
+        ----------
+        dss: a list of datasets
+
+        Returns
+        -------
+        A list of StaticProjectionMappers matching the number of input datasets.
         """
         chunks_attr = self.params.chunks_attr
         if type(dss) == list:
@@ -153,7 +168,7 @@ class Statis(ClassWithCollections):
                              " or a dataset")
 
         # Normalizing data tables
-        dss = [normalize_ds(sd) for sd in dss]
+        dss = [get_normalized_ds(sd) for sd in dss]
         nsamples = dss[0].nsamples
         nfs = [sd.nfeatures for sd in dss]
         self.outdim = min(nsamples - 1, min(nfs))
