@@ -15,7 +15,7 @@ if externals.exists('liblapack.so'):
 __all__ = ['svd']
 
 def svd(a, full_matrices=True, algo='svd', **kwargs):
-    """ ctypes warpepr for LAPACK SVD (DGESVD)
+    """ ctypes wrapper for LAPACK SVD (DGESVD)
     Factorizes the matrix a into two unitary matrices U and Vh and
     an 1d-array s of singular values (real, non-negative) such that
     a == U S Vh  if S is an suitably shaped matrix of zeros whose

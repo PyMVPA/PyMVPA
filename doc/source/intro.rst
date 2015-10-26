@@ -95,7 +95,7 @@ analyzing it, providing a common interface to functions drawn from a variety
 of libraries.
 
 .. _Princeton University: http://www.princeton.edu
-.. _MVPA toolbox: http://www.csbmb.princeton.edu/mvpa/
+.. _MVPA toolbox: https://code.google.com/p/princeton-mvpa-toolbox/
 
 However, there are some disadvantages when writing a toolbox in Matlab. While
 users in general benefit from the powers of Matlab, they are at the same time

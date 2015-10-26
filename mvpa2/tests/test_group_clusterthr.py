@@ -9,11 +9,11 @@
 """Unit tests for Stelzer et al. cluster thresholding algorithm"""
 
 from mvpa2.base import externals
-from mvpa2.testing.tools import SkipTest
+from mvpa2.testing.tools import skip_if_no_external
 
 # TODO a tiny bit also needs statsmodels
-if not externals.exists('scipy'):
-    raise SkipTest
+skip_if_no_external('statsmodels')
+skip_if_no_external('scipy')
 
 from collections import Counter
 import numpy as np
@@ -61,8 +61,7 @@ def test_pval():
 
 
 def test_cluster_count():
-    if externals.versions['scipy'] < '0.10':
-        raise SkipTest
+    skip_if_no_external('scipy', min_version='0.10')
     # we get a ZERO cluster count of one if there are no clusters at all
     # this is needed to keept track of the number of bootstrap samples that yield
     # no cluster at all (high treshold) in order to compute p-values when there is no
@@ -144,8 +143,8 @@ def test_cluster_count():
 # run same test with parallel and serial execution
 @sweepargs(n_proc=[1, 2])
 def test_group_clusterthreshold_simple(n_proc):
-    if n_proc > 1 and not externals.exists('joblib'):
-        raise SkipTest
+    if n_proc > 1:
+        skip_if_no_external('joblib')
     feature_thresh_prob = 0.005
     nsubj = 10
     # make a nice 1D blob and a speck
@@ -192,6 +191,22 @@ def test_group_clusterthreshold_simple(n_proc):
     assert_true('prob_corrected' in res.a.clusterstats.dtype.names)
     # fwe correction always increases the p-values (if anything)
     assert_true(np.all(res.a.clusterstats['prob_raw'] <= res.a.clusterstats['prob_corrected']))
+    # check expected cluster sizes, ordered large -> small
+    assert_array_equal(res.a.clusterstats['size'], [4, 1])
+    # check max position
+    assert_array_equal(res.a.clusterlocations['max'], [[4], [8]])
+    # center of mass: eyeballed
+    assert_array_almost_equal(res.a.clusterlocations['center_of_mass'],
+                              [[4.429], [8]],
+                              3)
+    # other simple stats
+    #[0, 0, .5, 3, 5, 3, 3, 0, 2, 0]
+    assert_array_equal(res.a.clusterstats['mean'], [3.5, 2])
+    assert_array_equal(res.a.clusterstats['min'], [3, 2])
+    assert_array_equal(res.a.clusterstats['max'], [5, 2])
+    assert_array_equal(res.a.clusterstats['median'], [3, 2])
+    assert_array_almost_equal(res.a.clusterstats['std'], [0.866, 0], 3)
+
     # fwe thresholding only ever removes clusters
     assert_true(np.all(np.abs(res.fa.clusters_featurewise_thresh - res.fa.clusters_fwe_thresh) >= 0))
     # FWE should kill the small one

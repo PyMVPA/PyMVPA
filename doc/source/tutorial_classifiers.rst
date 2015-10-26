@@ -127,8 +127,10 @@ the transfer error after swapping the roles:
 We see that on average the classifier error is really low, and we achieve an
 accuracy level comparable to the results reported in the original study.
 
+
 .. index:: cross-validation
-.. _sec_tutorial_crossvalidation:
+.. _chap_tutorial_crossvalidation:
+
 
 Cross-validation
 ================
@@ -173,7 +175,7 @@ step.
 .. exercise::
 
   Try calling the ``hpart`` object with our dataset. What happens? Now try
-  passing the dataset to its ``generate()`` methods. What happens now?
+  passing the dataset to its ``generate()`` method. What happens now?
   Make yourself familiar with the concept of a Python generator. Investigate
   what the code snippet ``list(xrange(5))`` does, and try to adapt it to the
   ``HalfPartitioner``.
@@ -241,8 +243,8 @@ Our previous choice of the classifier was guided by the intention to replicate
 algorithm? In this case another nice feature of PyMVPA comes into play. All
 classifiers implement a common interface that makes them easily interchangeable
 without the need to adapt any other part of the analysis code.  If, for
-example, we want to try the popular :mod:`support vector machine
-<mvpa2.clfs.svm>` (SVM) on our example dataset it looks like this:
+example, we want to try the popular :mod:`~mvpa2.clfs.svm` (Support Vector
+Machines) on our example dataset it looks like this:
 
 >>> clf = LinearCSVMC()
 >>> cvte = CrossValidation(clf, HalfPartitioner(attr='runtype'))
@@ -261,7 +263,7 @@ We already know that `~mvpa2.measures.base.CrossValidation` can be used to
 compute errors. So far we have only used the mean number of mismatches between
 actual targets and classifier predictions as the error function (which is the
 default).  However, PyMVPA offers a number of alternative functions in the
-:mod:`mvpa2.misc.errorfx` module, but it is also trivial to specify custom
+:mod:`~mvpa2.misc.errorfx` module, but it is also trivial to specify custom
 ones.  For example, if we do not want to have error reported, but instead
 accuracy, we can do that:
 
@@ -398,13 +400,13 @@ analysis procedures can be applied here as well.
 .. _cross tabulation: http://en.wikipedia.org/wiki/Cross_tabulation
 .. _signal detection theory: http://en.wikipedia.org/wiki/Detection_theory
 
-PyMVPA provides convenient access to :term:`confusion matrices <confusion
-matrix>`, i.e.  contingency tables of targets vs. actual predictions.  However,
-to prevent wasting CPU-time and memory they are not computed by default, but
-instead have to be enabled explicitly. Optional analysis results like this are
-available in a dedicated collection of :term:`conditional attribute`\ s --
-analogous to ``sa`` and ``fa`` in datasets, it is named ``ca``. Let's see how
-it works:
+PyMVPA provides convenient access to
+:term:`confusion matrices <confusion matrix>`, i.e.  contingency tables of
+targets vs. actual predictions.  However, to prevent wasting CPU-time and
+memory they are not computed by default, but instead have to be enabled
+explicitly. Optional analysis results like this are available in a dedicated
+collection of :term:`conditional attribute`\ s -- analogous to ``sa`` and
+``fa`` in datasets, it is named ``ca``. Let's see how it works:
 
 >>> cvte = CrossValidation(clf, NFoldPartitioner(),
 ...                        errorfx=lambda p, t: np.mean(p == t),

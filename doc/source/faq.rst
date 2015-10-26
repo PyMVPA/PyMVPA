@@ -37,7 +37,7 @@ are already familiar with the `Matlab MVPA toolbox`_. If you are using both
 packages and could compile a few tips, your contribution would be most
 welcome.
 
-.. _Matlab MVPA toolbox: http://www.csbmb.princeton.edu/mvpa/
+.. _Matlab MVPA toolbox: https://code.google.com/p/princeton-mvpa-toolbox/
 
 A recent paper by :ref:`Jurica and van Leeuwen (2009) <JL09>` describes an
 open-source MATLAB®-to-Python compiler which might be a very useful tool to
@@ -205,8 +205,8 @@ The `mvpa2.datasets.miscfx` module provides a convenience function
 
 .. index:: Block-averaging
 
-How can I do :term:`block-averaging` of my block-design fMRI dataset?
----------------------------------------------------------------------
+How can I do block-averaging of my block-design fMRI dataset?
+-------------------------------------------------------------
 
 The easiest way is to use a mapper to transform/average the respective
 samples. Suppose you have a dataset:

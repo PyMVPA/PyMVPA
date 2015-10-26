@@ -208,3 +208,15 @@ class ProcrusteanMapper(ProjectionMapper):
             d_r = np.linalg.norm(odatas[0] - res_r)/np.linalg.norm(odatas[0])
             debug('MAP_', "%s, residuals are forward: %g,"
                   " reverse: %g" % (repr(self), d_f, d_r))
+
+
+    def _compute_recon(self):
+        """For Procrustean mapper, inverse is transpose.
+        So, let's skip computing inverse in the super class.
+        """
+        # XXX Change pinv to superclass compute_recon?
+        if self.params.oblique:
+            #return ProjectionMapper._compute_recon(self)
+            return np.linalg.pinv(self._proj)
+        else:
+            return np.transpose(self._proj/self._scale**2) if self.params.scaling else np.transpose(self._proj)

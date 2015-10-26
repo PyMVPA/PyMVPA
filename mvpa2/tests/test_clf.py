@@ -587,22 +587,22 @@ class ClassifiersTests(unittest.TestCase):
 
         # Test conflicting definition
         tclf = TreeClassifier(clfs[0], {
-            'L0+2' : (('L0', 'L2'), clfs[1]),
-            'L2+3' : (('L2', 'L3'), clfs[2])})
+            'L0+2': (('L0', 'L2'), clfs[1]),
+            'L2+3': (('L2', 'L3'), clfs[2])})
         self.assertRaises(ValueError, tclf.train, ds)
         """Should raise exception since label 2 is in both"""
 
         # Test insufficient definition
         tclf = TreeClassifier(clfs[0], {
-            'L0+5' : (('L0', 'L5'), clfs[1]),
-            'L2+3' : (('L2', 'L3'),       clfs[2])})
+            'L0+5': (('L0', 'L5'), clfs[1]),
+            'L2+3': (('L2', 'L3'),       clfs[2])})
         self.assertRaises(ValueError, tclf.train, ds)
         """Should raise exception since no group for L1"""
 
         # proper definition now
         tclf = TreeClassifier(clfs[0], {
-            'L0+1' : (('L0', 'L1'), clfs[1]),
-            'L2+3' : (('L2', 'L3'), clfs[2])})
+            'L0+1': (('L0', 'L1'), clfs[1]),
+            'L2+3': (('L2', 'L3'), clfs[2])})
 
         # Lets test train/test cycle using CVTE
         cv = CrossValidation(tclf, OddEvenPartitioner(), postproc=mean_sample(),
@@ -637,8 +637,8 @@ class ClassifiersTests(unittest.TestCase):
         clfs_mc = [clf.clone() for clf in clfs_mc[:4]] # and clones again
 
         tclf = TreeClassifier(clfs_mc[0], {
-            'L0' : (('L0',), None),
-            'L1+2+3' : (('L1', 'L2', 'L3'), clfs_mc[1])})
+            'L0': (('L0',), None),
+            'L1+2+3': (('L1', 'L2', 'L3'), clfs_mc[1])})
 
         cv = CrossValidation(tclf,
                              OddEvenPartitioner(),

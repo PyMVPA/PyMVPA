@@ -110,3 +110,7 @@ cortex.  Journal of Cognitive Neuroscience, 17, 580–590.
 Rieger, J.W., Herrmann, C.S., Haxby, J.V., Hanson, S. and Pollmann, S (2009)
 <HHS+09b>`. PyMVPA: a unifying approach to the analysis of neuroscientific
 data. Frontiers in Neuroinformatics, 3:3.
+
+:ref:`Hebart, M. N., Görgen, K., & Haynes, J.-D. (2015) <HGH2015>`. The
+Decoding Toolbox (TDT): a versatile software package for multivariate analyses
+of functional imaging data. Frontiers in +Neuroinformatics, 8, 88.
