@@ -35,6 +35,9 @@ Releases
 
   * New functionality
 
+    - New alignment algorithm based on STATIS:
+      :class:`~mvpa2.algorithms.statis`
+
   * Enhancements
 
     - Unified use of os.path.join as pathjoin.
