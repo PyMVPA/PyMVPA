@@ -37,6 +37,8 @@ Releases
 
   * Enhancements
 
+    - "Native" use of :mod:`~duecredit` to provide citations for PyMVPA itself
+      and functionality/methods it implements
     - Unified use of os.path.join as pathjoin
     - :class:`~mvpa.mappers.procrustean.ProcrusteanMapper` computes reconstruction
       now more efficiently (just a transpose with proper scaling) in case of
