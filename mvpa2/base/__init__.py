@@ -347,7 +347,7 @@ if __debug__:
                    "needed for current refactoring carried out in tent/flexds")
 
     debug.register('BM', "Benchmark")
-    debug.register('STATIS', "Static algorithm")
+    debug.register('STATIS', "Statis algorithm")
 
     # Lets check if environment can tell us smth
     if cfg.has_option('general', 'debug'):
