@@ -29,6 +29,7 @@ from mvpa2.mappers.fx import maxofabs_sample, BinaryFxNode
 from mvpa2.base.dochelpers import _str
 from mvpa2.generators.base import Repeater
 
+from mvpa2.support.due import due, Doi, BibTeX
 
 import numpy as np
 from mvpa2.base.state import ConditionalAttribute
@@ -167,7 +168,24 @@ class RFE(IterativeFeatureSelection):
             prefixes=prefixes
             + _repr_attrs(self, ['update_sensitivity'], default=True))
 
-
+    @due.dcite(
+        BibTeX("""
+@Article{ GWB+02,
+    author = "I. Guyon and J. Weston and S. Barnhill and V. Vapnik",
+    title = "Gene Selection for Cancer Classification using Support Vector Machines",
+    volume = "46",
+    year = "2002",
+    pages = "389--422",
+    publisher = "Kluwer",
+    address = "Hingham, MA, USA",
+    journal = "Machine Learning"
+}"""),
+        description="Recursive feature elimination procedure",
+        tags=["implementation"])
+    @due.dcite(
+        Doi("10.1162/neco.2007.09-06-340"),
+        description="Full-brain fMRI decoding using SVM RFE",
+        tags=["use"])
     def _train(self, ds):
         """Proceed and select the features recursively eliminating less
         important ones.
@@ -177,7 +195,6 @@ class RFE(IterativeFeatureSelection):
         ds : Dataset
           used to compute sensitivity maps and train a classifier
           to determine the transfer error
-
         """
         # get the initial split into train and test
         dataset, testdataset = self._get_traintest_ds(ds)

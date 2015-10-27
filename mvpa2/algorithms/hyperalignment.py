@@ -33,6 +33,8 @@ from mvpa2.mappers.base import ChainMapper
 from mvpa2.mappers.zscore import zscore, ZScoreMapper
 from mvpa2.mappers.staticprojection import StaticProjectionMapper
 
+from mvpa2.support.due import due, Doi
+
 if __debug__:
     from mvpa2.base import debug
 
@@ -107,8 +109,9 @@ class Hyperalignment(ClassWithCollections):
     # constructor should accept
     # the ``space`` of the mapper determines where the algorithm places the
     # common space definition in the datasets
-    alignment = Parameter(ProcrusteanMapper(space='commonspace'), # might provide allowedtype
-	    # XXX Currently, there's no way to handle this with connstraints  
+    alignment = Parameter(ProcrusteanMapper(space='commonspace'),
+            # might provide allowedtype
+            # XXX Currently, there's no way to handle this with constraints
             doc="""The multidimensional transformation mapper. If
             `None` (default) an instance of
             :class:`~mvpa2.mappers.procrustean.ProcrusteanMapper` is
@@ -124,7 +127,7 @@ class Hyperalignment(ClassWithCollections):
     level2_niter = Parameter(1, constraints=EnsureInt() & EnsureRange(min=0),
             doc="Number of 2nd-level iterations.")
 
-    ref_ds = Parameter(None, constraints=(EnsureRange(min=0) & EnsureInt() 
+    ref_ds = Parameter(None, constraints=(EnsureRange(min=0) & EnsureInt()
                                           | EnsureNone()),
             doc="""Index of a dataset to use as 1st-level common space
                 reference.  If `None`, then the dataset with the maximum
@@ -164,6 +167,10 @@ class Hyperalignment(ClassWithCollections):
         self.commonspace = None
 
 
+    @due.dcite(
+        Doi('10.1016/j.neuron.2011.08.026'),
+        description="Hyperalignment of data to a common space",
+        tags=["implementation"])
     def train(self, datasets):
         """Derive a common feature space from a series of datasets.
 
@@ -180,7 +187,7 @@ class Hyperalignment(ClassWithCollections):
         ndatasets = len(datasets)
         nfeatures = [ds.nfeatures for ds in datasets]
         alpha = params.alpha
-        
+
         residuals = None
         if ca['training_residual_errors'].enabled:
             residuals = np.zeros((1 + params.level2_niter, ndatasets))
@@ -198,7 +205,7 @@ class Hyperalignment(ClassWithCollections):
             ref_ds = np.argmax(nfeatures)
         else:
             ref_ds = params.ref_ds
-            # Making sure that ref_ds is within range. 
+            # Making sure that ref_ds is within range.
             #Parameter() already checks for it being a non-negative integer
             if ref_ds >= ndatasets:
                 raise ValueError, "Requested reference dataset %i is out of " \
@@ -458,4 +465,3 @@ class Hyperalignment(ClassWithCollections):
                 residuals[0, i] = np.linalg.norm(data_mapped - self.commonspace)
 
         return mappers
-
