@@ -348,6 +348,13 @@ class RFE(IterativeFeatureSelection):
         # call super to set _Xshape etc
         super(RFE, self)._train(dataset)
 
+    def _untrain(self):
+        super(RFE, self)._untrain()
+        if self._pmeasure:
+            self._pmeasure.untrain()
+        if self._fmeasure:
+            self._fmeasure.untrain()
+
     def _get_nfeatures_min(self):
         return self._nfeatures_min
 
@@ -579,5 +586,6 @@ class SplitRFE(RFE):
 
     def _untrain(self):
         super(SplitRFE, self)._untrain()
+        self.lrn.untrain()
         self.nfeatures_min = 0            # reset the knowledge
 
