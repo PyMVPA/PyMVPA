@@ -29,6 +29,7 @@ from mvpa2.base.state import ConditionalAttribute, ClassWithCollections, \
      UnknownStateError
 from mvpa2.base.dochelpers import enhanced_doc_string, table2string
 from mvpa2.clfs.stats import auto_null_dist
+from mvpa2.support.due import due, Doi
 
 if __debug__:
     from mvpa2.base import debug
@@ -1282,6 +1283,10 @@ class BayesConfusionHypothesis(Node):
         self._postprob = postprob
         self._hypotheses = hypotheses
 
+    @due.dcite(
+        Doi("10.1016/j.patcog.2011.04.025"),
+        description="Bayesian hypothesis testing",
+        tags=["reference-implementation"])
     def _call(self, ds):
         from mvpa2.support.bayes.partitioner import Partition
         from mvpa2.support.bayes.partial_independence import compute_logp_H
