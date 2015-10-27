@@ -14,6 +14,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 import mvpa2.base.externals as externals
+from mvpa2.support.due import due, Doi, BibTeX
 
 # do conditional to be able to build module reference
 if externals.exists('lars', raise_=True):
@@ -141,7 +142,11 @@ class LARS(Classifier):
                 self.__use_Gram,
                 str(self.ca.enabled))
 
-
+    @due.dcite(
+        Doi('10.1214/009053604000000067'),
+        path="mvpa2.clfs.lars:LARS",
+        description="Least angle regression",
+        tags=["implementation"])
     def _train(self, data):
         """Train the classifier using `data` (`Dataset`).
         """
