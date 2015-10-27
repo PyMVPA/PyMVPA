@@ -117,10 +117,8 @@ def test_directaccess():
     assert_array_equal(h5load(f.name).samples,
                        datasets['uni4medium'].samples)
 
-
 def test_function_ptrs():
-    if not externals.exists('nibabel'):
-        raise SkipTest
+    skip_if_no_external('nibabel')
     ds = load_example_fmri_dataset()
     # add a mapper with a function ptr inside
     ds = ds.get_mapped(mean_sample())
@@ -131,7 +129,7 @@ def test_function_ptrs():
     # check that the reconstruction function pointer in the FxMapper points
     # to the right one
     assert_array_equal(ds_loaded.a.mapper.forward(fresh),
-                        ds.samples)
+                       ds.samples)
 
 def test_various_special_cases():
     # 0d object ndarray
@@ -432,6 +430,7 @@ def test_ca_col(f, backend):
 # regression tests for datasets which have been previously saved
 
 def test_reg_load_hyperalignment_example_hdf5():
+    skip_if_no_external('nibabel')
     from mvpa2 import pymvpa_datadbroot
     filepath = pathjoin(pymvpa_datadbroot,
                         'hyperalignment_tutorial_data',
@@ -467,8 +466,8 @@ def test_versions(f):
     assert_equal(hdf.attrs.get('__pymvpa_hdf5_version__'), '2')
     assert_equal(hdf.attrs.get('__pymvpa_version__'), mvpa2.__version__)
 
-
 def test_present_fmri_dataset():
+    skip_if_no_external('nibabel')
     # just a helper to signal if we have any of those available
     f = get_testing_fmri_dataset_filename()
     if not os.path.exists(f):
@@ -481,8 +480,7 @@ test_files = glob(pathjoin(pymvpa_dataroot, 'testing', 'fmri_dataset', '*.hdf5')
 @sweepargs(testfile=test_files)
 @with_tempfile(suffix=".nii.gz")
 def test_regress_fmri_dataset(tempfile=None, testfile=None):
-    if not externals.exists('nibabel'):
-        raise SkipTest("can't test without nibabel")
+    skip_if_no_external('nibabel')
 
     # verify that we have actual load
     if not (exists(testfile) and exists(realpath(testfile))):
