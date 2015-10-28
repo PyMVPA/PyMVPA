@@ -33,7 +33,11 @@ class _VersionsChecker(dict):
         if key not in self:
             if key in self._KNOWN:
                 # run registered procedure to obtain versions
-                self._KNOWN[key]()
+                try:
+                    self._KNOWN[key]()
+                except ImportError:
+                    # known but not present
+                    return None
             else:
                 # just check for presence -- that function might set
                 # the version information
