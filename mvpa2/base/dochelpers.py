@@ -507,6 +507,11 @@ def _strid(obj):
     """
     return "#%d" % (id(obj))
 
+def strip_strid(s):
+    """Strip off strids (#NUMBER) within a string
+    """
+    return re.sub("#[0-9]{7,100}", "", s)
+
 def _str(obj, *args, **kwargs):
     """Helper to get a structured __str__ for all objects.
 
