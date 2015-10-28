@@ -729,20 +729,22 @@ class SVM(_SVM):
 
 # Conditionally make some of the implementations available if they are
 # present in the present shogun
-for name, item, params, descr in \
-        [('mpd', "shogun.Classifier.MPDSVM", "('C',), ('binary',)",
-          "MPD classifier from shogun"),
-         ('lightsvm', "shogun.Classifier.SVMLight", "('C',), ('binary',)",
-          "SVMLight classification http://svmlight.joachims.org/"),
-         ('svrlight', "shogun.Regression.SVRLight", "('C','tube_epsilon',), ('regression',)",
-          "SVMLight regression http://svmlight.joachims.org/"),
-         ('krr', "shogun.Regression.KRR", "('tau',), ('regression',)",
-          "Kernel Ridge Regression"),
-         ('svmocas', "shogun.Classifier.SVMOcas", "('C',), ('binary', 'linear')",
-          "SVM with OCAS (Optimized Cutting Plane Algorithm) solver"),
-         ]:
-    if externals.exists('shogun.%s' % name):
-        exec "SVM._KNOWN_IMPLEMENTATIONS[\"%s\"] = (%s, %s, \"%s\")" % (name, item, params, descr)
+if externals.exists('shogun'):
+    for name, item, params, descr in \
+            [('mpd', "shogun.Classifier.MPDSVM", "('C',), ('binary',)",
+              "MPD classifier from shogun"),
+             ('lightsvm', "shogun.Classifier.SVMLight", "('C',), ('binary',)",
+              "SVMLight classification http://svmlight.joachims.org/"),
+             ('svrlight', "shogun.Regression.SVRLight", "('C','tube_epsilon',), ('regression',)",
+              "SVMLight regression http://svmlight.joachims.org/"),
+             ('krr', "shogun.Regression.KRR", "('tau',), ('regression',)",
+              "Kernel Ridge Regression"),
+             ('svmocas', "shogun.Classifier.SVMOcas", "('C',), ('binary', 'linear')",
+              "SVM with OCAS (Optimized Cutting Plane Algorithm) solver"),
+             ]:
+        if externals.exists('shogun.%s' % name):
+            exec "SVM._KNOWN_IMPLEMENTATIONS[\"%s\"] = (%s, %s, \"%s\")" \
+                 % (name, item, params, descr)
 
 # Assign SVM class to limited set of LinearSVMWeights
 LinearSVMWeights._LEGAL_CLFS = [SVM]
