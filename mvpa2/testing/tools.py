@@ -100,7 +100,9 @@ def assert_collections_equal(x, y, ignore={}):
             continue
         if isinstance(v1, np.ndarray):
             assert_array_equal(v1, v2)
-        elif isinstance(v1, Node) and not (hasattr(v1, '__cmp__') or hasattr(v1, '__eq__')):
+        elif isinstance(v1, Node) and not (
+                hasattr(v1, '__cmp__')
+                or (hasattr(v1, '__eq__') and v1.__class__.__eq__ is not object.__eq__)):
             # we don't have comparators inplace for all of them yet, so test
             # based on repr and str
             assert_reprstr_equal(v1, v2)
