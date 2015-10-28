@@ -91,8 +91,8 @@ class SimpleSOMMapper(Mapper):
 
         # precompute necessary sizes for dqd (and later infl)
         self._dqdshape = np.array(
-                             [self.kshape[0]/2,
-                              self.kshape[1]/2,
+                             [self.kshape[0]//2,
+                              self.kshape[1]//2,
                               np.ceil(self.kshape[0]/2.).astype('int'),
                               np.ceil(self.kshape[1]/2.).astype('int')])
 
@@ -174,8 +174,8 @@ class SimpleSOMMapper(Mapper):
                 b = self._get_bmu(s)
 
                 # roll the kernel so that peak is at this coordinate
-                sample_infl = np.roll(infl,self._dqdshape[2]+b[0],axis=0)
-                sample_infl = np.roll(sample_infl,self._dqdshape[3]+b[1],axis=1)
+                sample_infl = np.roll(infl, self._dqdshape[2]+b[0], axis=0)
+                sample_infl = np.roll(sample_infl, self._dqdshape[3]+b[1], axis=1)
 
                 # get the adjustment to be made to the Kohonen layer by multiplying
                 # by the difference
