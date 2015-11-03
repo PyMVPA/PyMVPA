@@ -75,7 +75,7 @@ def test_fmridataset():
     maskimg = nibabel.load(pathjoin(pymvpa_dataroot, 'mask.nii.gz'))
     data = maskimg.get_data().copy()
     data[data > 0] = np.arange(1, np.sum(data) + 1)
-    maskimg = nibabel.Nifti1Image(data, None, maskimg.get_header())
+    maskimg = nibabel.Nifti1Image(data, None, maskimg.header)
     ds = fmri_dataset(samples=pathjoin(pymvpa_dataroot, 'bold.nii.gz'),
                       mask=maskimg,
                       sprefix='subj1',
@@ -113,34 +113,20 @@ def test_nifti_mapper(filename):
 
     # test mapping of ndarray
     vol = map2nifti(data, np.ones((294912,), dtype='int16'))
-    if externals.versions['nibabel'] >= '1.2':
-        vol_shape = vol.shape
-    else:
-        vol_shape = vol.get_shape()
-    assert_equal(vol_shape, (128, 96, 24))
+    assert_equal(vol.shape, (128, 96, 24))
     assert_true((vol.get_data() == 1).all())
     # test mapping of the dataset
     vol = map2nifti(data)
-    if externals.versions['nibabel'] >= '1.2':
-        vol_shape = vol.shape
-    else:
-        vol_shape = vol.get_shape()
-    assert_equal(vol_shape, (128, 96, 24, 2))
+    assert_equal(vol.shape, (128, 96, 24, 2))
     ok_(isinstance(vol, getattr(nibabel, data.a.imgtype)))
 
     # test providing custom imgtypes
     vol = map2nifti(data, imgtype=nibabel.Nifti1Pair)
-    if externals.versions['nibabel'] >= '1.2':
-        vol_shape = vol.shape
-    else:
-        vol_shape = vol.get_shape()
     ok_(isinstance(vol, nibabel.Nifti1Pair))
 
     # Lets generate a dataset using an alternative format (MINC)
     # and see if type persists
-    volminc = nibabel.MincImage(vol.get_data(),
-                                vol.get_affine(),
-                                vol.get_header())
+    volminc = nibabel.MincImage(vol.get_data(), vol.affine, vol.header)
     ok_(isinstance(volminc, nibabel.MincImage))
     dsminc = fmri_dataset(volminc, targets=1)
     ok_(getattr(nibabel, dsminc.a.imgtype) is nibabel.MincImage)
@@ -218,19 +204,11 @@ def test_er_nifti_dataset():
     # map back into voxel space, should ignore addtional features
     nim = map2nifti(ds)
     # origsamples has t,x,y,z
-    if externals.versions['nibabel'] >= '1.2':
-        vol_shape = nim.shape
-    else:
-        vol_shape = nim.get_shape()
-    assert_equal(vol_shape, origsamples.shape[1:] + (len(ds) * 4,))
+    assert_equal(nim.shape, origsamples.shape[1:] + (len(ds) * 4,))
     # check shape of a single sample
     nim = map2nifti(ds, ds.samples[0])
-    if externals.versions['nibabel'] >= '1.2':
-        vol_shape = nim.shape
-    else:
-        vol_shape = nim.get_shape()
     # pynifti image has [t,]z,y,x
-    assert_equal(vol_shape, (40, 20, 1, 4))
+    assert_equal(nim.shape, (40, 20, 1, 4))
 
     # and now with masking
     ds = fmri_dataset(tssrc, mask=masrc)
@@ -378,7 +356,7 @@ def test_assumptions_on_nibabel_behavior(filename):
     import nibabel as nb
     masrc = pathjoin(pymvpa_dataroot, 'mask.nii.gz')
     ni = nb.load(masrc)
-    hdr = ni.get_header()
+    hdr = ni.header
     data = ni.get_data()
     # operate in the native endianness so that symbolic type names (e.g. 'int16')
     # remain the same across platforms
@@ -403,7 +381,7 @@ def test_assumptions_on_nibabel_behavior(filename):
         # formats match
         nif = nb.Nifti1Image(dataf, None, h)
         # Header takes over and instructs to keep it int despite dtype
-        assert_equal(nif.get_header().get_data_dtype(), t)
+        assert_equal(nif.header.get_data_dtype(), t)
         # but does not cast the data (yet?) into int16 (in case of t==int16)
         assert_equal(nif.get_data().dtype, dataf_dtype)
         # nor changes somehow within dataf
@@ -413,11 +391,11 @@ def test_assumptions_on_nibabel_behavior(filename):
         nif.to_filename(filename)
         nif_ = nb.load(filename)
         dataf_ = nif_.get_data()
-        assert_equal(nif_.get_header().get_data_dtype(), t)
+        assert_equal(nif_.header.get_data_dtype(), t)
         assert_equal(dataf_.dtype, dataf_dtype)
         assert_array_almost_equal(dataf_, dataf, decimal=d)
         # TEST scale/intercept to be changed
-        slope, inter = nif_.get_header().get_slope_inter()
+        slope, inter = nif_.header.get_slope_inter()
         if t == 'int16':
             # it should have rescaled the data
             assert_not_equal(slope, 1.0)
