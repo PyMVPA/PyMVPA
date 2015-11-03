@@ -779,7 +779,7 @@ def from_any(s, mask_volume=None):
     try:
         # see if s behaves like a spatial image (nifti image)
         shape = s.shape
-        affine = s.get_affine()
+        affine = s.affine
 
         if isinstance(mask_volume, int):
             data = s.get_data()
