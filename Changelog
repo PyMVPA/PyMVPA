@@ -35,6 +35,9 @@ Releases
 
   * New functionality
 
+    - New alignment algorithm based on STATIS:
+      :class:`~mvpa2.algorithms.statis`
+
   * Enhancements
 
     - "Native" use of :mod:`~duecredit` to provide citations for PyMVPA itself

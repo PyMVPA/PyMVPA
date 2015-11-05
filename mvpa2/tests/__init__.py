@@ -132,6 +132,7 @@ def collect_unit_tests(verbosity=1):
         'test_ifs',
         'test_perturbsensana',
         'test_winner',
+        'test_statis',
         # And the suite (all-in-1)
         'test_suite',
         ]
