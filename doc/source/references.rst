@@ -377,6 +377,12 @@ experiments.
   DOI: http://dx.doi.org/10.1038/nrn1931
 
 
+.. _HGH2015:
+
+**Hebart, M. N., Görgen, K. & Haynes, J.** The Decoding Toolbox (TDT): a versatile software package for multivariate analyses of functional imaging data. *Frontiers in Neuroinformatics*, *8*.
+  DOI: http://dx.doi.org/10.3389/fninf.2014.00088
+
+
 .. _HPL+14:
 
 **Heitmeyer, C. L., Pickett, M., Leonard, E. I., Archer, M. M., Ray, I., Aha, D. W. & Trafton, J. G.** (2014). Building high assurance human-centric decision systems. *Autom Softw Eng*, *22*, 159-197.

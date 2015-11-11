@@ -36,6 +36,8 @@ from mvpa2.base.state import ConditionalAttribute
 from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
 from mvpa2.mappers.base import ChainMapper
 
+from mvpa2.support.due import due, Doi
+
 class BaseSearchlight(Measure):
     """Base class for searchlights.
 
@@ -104,6 +106,14 @@ class BaseSearchlight(Measure):
             + _repr_attrs(self, ['queryengine', 'roi_ids', 'nproc']))
 
 
+    @due.dcite(
+        Doi('10.1073/pnas.0600244103'),
+        description="Searchlight analysis approach",
+        tags=["implementation"])
+    @due.dcite(
+        Doi('10.1038/nrn1931'),
+        description="Application of the searchlight approach to decoding using classifiers",
+        tags=["use"])
     def _call(self, dataset):
         """Perform the ROI search.
         """

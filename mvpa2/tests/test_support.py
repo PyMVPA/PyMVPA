@@ -217,6 +217,10 @@ class SupportFxTests(unittest.TestCase):
         """
         SV = SmartVersion
 
+        self.assertEqual(SmartVersion(None), SmartVersion(None))
+        self.assertRaises(ValueError, SmartVersion(None).__cmp__, SmartVersion('0'))
+        self.assertRaises(ValueError, SmartVersion('0').__cmp__, SmartVersion(None))
+
         for v1_, v2_ in (
             ('0.0.1', '0.0.2'),
             ('0.0.1', '0.1'),

@@ -13,6 +13,7 @@ import unittest
 from mvpa2 import cfg
 from mvpa2.base import externals
 from mvpa2.support import copy
+from mvpa2.testing import SkipTest
 
 class TestExternals(unittest.TestCase):
 
@@ -84,6 +85,11 @@ class TestExternals(unittest.TestCase):
 
         externals._KNOWN.pop('checker2')
 
+    def test_absent_external_version(self):
+        # should not blow, just return None
+        if externals.exists('shogun'):
+            raise SkipTest("shogun is present, can't test")
+        self.assertEqual(externals.versions['shogun'], None)
 
 
 def suite():  # pragma: no cover

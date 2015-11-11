@@ -26,6 +26,9 @@ from mvpa2.clfs.base import Classifier
 from mvpa2.base.param import Parameter
 from mvpa2.base.constraints import EnsureListOf
 
+from mvpa2.support.due import due, BibTeX
+
+
 if __debug__:
     from mvpa2.base import debug
 
@@ -301,6 +304,23 @@ class _SVM(Classifier):
 
         return value
 
+    @due.dcite(
+        BibTeX("""
+@Book{Vapnik95:SVM,
+ title = "The Nature of Statistical Learning Theory",
+ author = "Vladimir Vapnik",
+ publisher = "Springer",
+ address = "New York",
+ isbn = "0-387-94559-8",
+ year = "1995",
+ pymvpa-keywords = "support vector machine, SVM"
+}"""),
+        path="mvpa2.clfs.SVM",
+        description="Support Vector Machines (SVM)",
+        tags=["implementation"])
+    def _train(self, dataset):
+        # exists primarily for dcite, and no parent has it defined
+        pass
 
     # TODO: make part of kernel object
     #def _getDefaultGamma(self, dataset):
