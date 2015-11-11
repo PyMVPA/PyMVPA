@@ -33,7 +33,11 @@ class _VersionsChecker(dict):
         if key not in self:
             if key in self._KNOWN:
                 # run registered procedure to obtain versions
-                self._KNOWN[key]()
+                try:
+                    self._KNOWN[key]()
+                except ImportError:
+                    # known but not present
+                    return None
             else:
                 # just check for presence -- that function might set
                 # the version information
@@ -346,10 +350,10 @@ def __check_in_ipython():
 
 def __assign_ipython_version():
     ipy_version = None
+    import IPython
     try:
         # Development post 0.11 version finally carries
         # conventional one
-        import IPython
         ipy_version = IPython.__version__
     except:
         try:

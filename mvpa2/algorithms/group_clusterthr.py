@@ -32,6 +32,8 @@ from mvpa2.base.constraints import \
     EnsureInt, EnsureFloat, EnsureRange, EnsureChoice
 from mvpa2.mappers.fx import mean_sample
 
+from mvpa2.support.due import due, Doi
+
 
 class GroupClusterThreshold(Learner):
     """Statistical evaluation of group-level average accuracy maps
@@ -219,6 +221,10 @@ class GroupClusterThreshold(Learner):
         self._thrmap = None
         self._null_cluster_sizes = None
 
+    @due.dcite(
+        Doi("10.1016/j.neuroimage.2012.09.063"),
+        description="Statistical assessment of (searchlight) MVPA results",
+        tags=['implementation'])
     def _train(self, ds):
         # shortcuts
         chunk_attr = self.params.chunk_attr

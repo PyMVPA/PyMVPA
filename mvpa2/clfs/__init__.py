@@ -22,10 +22,17 @@ mvpa2.clfs module contains various classifiers
 
 __docformat__ = 'restructuredtext'
 
+from mvpa2.support.due import due, Doi
 
 if __debug__:
     from mvpa2.base import debug
     debug('INIT', 'mvpa2.clfs')
+
+due.cite(
+    Doi('10.1007/b94608'),
+    path="mvpa2.clfs",
+    description="Thorough textbook on statistical learning (available online)",
+    tags=["edu"])
 
 if __debug__:
     debug('INIT', 'mvpa2.clfs end')
