@@ -121,6 +121,7 @@ from mvpa2.datasets.eep import *
 from mvpa2.datasets.eventrelated import *
 if externals.exists('nibabel') :
     from mvpa2.datasets.mri import *
+    from mvpa2.datasets.gifti import map2gifti, gifti_dataset
 from mvpa2.datasets.sources import *
 from mvpa2.datasets.sources.native import *
 from mvpa2.datasets.sources.openfmri import *
@@ -253,7 +254,8 @@ if externals.exists("lxml") and externals.exists("nibabel"):
 __sdebug("surface searchlight")
 from mvpa2.misc.surfing.queryengine import SurfaceVerticesQueryEngine, \
                                            SurfaceVoxelsQueryEngine, \
-                                            disc_surface_queryengine
+                                           SurfaceQueryEngine, \
+                                           disc_surface_queryengine
 
 from mvpa2.misc.surfing import surf_voxel_selection, volgeom, \
                                 volsurf, volume_mask_dict

@@ -119,8 +119,8 @@ class OneWayAnova(FeaturewiseMeasure):
         f[np.isnan(f)] = 0
 
         if externals.exists('scipy'):
-            from scipy.stats import fprob
-            return Dataset(f[np.newaxis], fa={'fprob': fprob(dfbn, dfwn, f)})
+            from scipy.stats.stats import special
+            return Dataset(f[np.newaxis], fa={'fprob': special.fdtrc(dfbn, dfwn, f)})
         else:
             return Dataset(f[np.newaxis])
 

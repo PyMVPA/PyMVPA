@@ -34,7 +34,7 @@ from mvpa2.measures.nnsearchlight import sphere_m1nnsearchlight, \
 from mvpa2.clfs.knn import kNN
 
 from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere, HollowSphere
-from mvpa2.misc.errorfx import corr_error
+from mvpa2.misc.errorfx import corr_error, mean_match_accuracy
 from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner
 from mvpa2.generators.permutation import AttributePermutator
 from mvpa2.measures.base import CrossValidation
@@ -307,6 +307,17 @@ class SearchlightTests(unittest.TestCase):
                            (1, ds.nfeatures, 8))
         assert_array_equal(sl.ca.null_t.samples.shape,
                            (1, ds.nfeatures))
+
+    def test_gnbsearchlight_matchaccuracy(self):
+        # was not able to deal with custom errorfx collapsing samples
+        # after 55e147e0bd30fbf4edede3faef3a15c6c65b33ea
+        ds = datasets['3dmedium'].copy()
+        ds.fa['voxel_indices'] = ds.fa.myspace
+        sl_err = sphere_gnbsearchlight(GNB(), NFoldPartitioner(cvtype=1),
+                                         radius=0)
+        sl_acc = sphere_gnbsearchlight(GNB(), NFoldPartitioner(cvtype=1),
+                                         radius=0, errorfx=mean_match_accuracy)
+        assert_array_almost_equal(sl_err(ds), 1.0 - sl_acc(ds).samples)
 
     def test_partial_searchlight_with_full_report(self):
         ds = self.dataset.copy()

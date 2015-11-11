@@ -404,3 +404,7 @@ def test_permute_chunks():
     for chunk_id in np.unique(pds.sa.chunks):
         chunk_ds = pds[pds.sa.chunks == chunk_id]
         assert_true(is_sorted(chunk_ds.sa.targets))
+
+    permutation = AttributePermutator(attr='targets',
+                                      strategy='chunks')
+    assert_raises(ValueError, permutation, ds)

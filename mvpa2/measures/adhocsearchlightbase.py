@@ -322,6 +322,17 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         # The shape of results
         r_shape = (nrois,) + X.shape[2:]
 
+
+        def assign_ulabels(a):
+            out = np.empty(shape=a.shape, dtype=ulabels.dtype)
+            it = np.nditer([a, out],
+                    flags = ['external_loop', 'buffered'],
+                    op_flags = [['readonly'],
+                                ['writeonly', 'allocate', 'no_broadcast']])
+            for x, y in it:
+                y[...] = ulabels[x]
+            return it.operands[1]
+
         #
         # Everything toward optimization ;)
         #
@@ -407,7 +418,14 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         self._reserve_pl_stats_space((nlabels, ) + s_shape)
 
         # results
-        results = np.zeros((nsplits,) + r_shape)
+        if errorfx is mean_mismatch_error:
+            # if we know how it would look like, prepare the storage
+            results = np.zeros((nsplits,) + r_shape)
+        else:
+            # Otherwise delay assembling the results
+            results = []
+
+        all_targets, all_cvfolds = [], []
 
         # 4. Lets deduce all neighbors... might need to be RF into the
         #    parallel part later on
@@ -508,18 +526,40 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
                 results[isplit, :] = \
                     (predictions != targets[:, None]).sum(axis=0) \
                     / float(len(targets))
-            else:
+                all_cvfolds += [isplit]
+            elif errorfx:
                 # somewhat silly but a way which allows to use pre-crafted
                 # error functions without a chance to screw up
-                for i, fpredictions in enumerate(predictions.T):
-                    results[isplit, i] = errorfx(fpredictions, targets)
+                result = np.atleast_2d(
+                    np.array([errorfx(fpredictions, targets)
+                              for fpredictions in predictions.T]))
+                results.append(result)
+                all_cvfolds += [isplit] * result.shape[0]
 
+            else:
+                # and if no errorfx -- we just need to assign original
+                # labels to the predictions BUT keep in mind that it is a matrix
+                results.append(assign_ulabels(predictions))
+                all_targets += [ulabels[i] for i in targets]
+                all_cvfolds += [isplit] * len(targets)
+
+            pass  # end of the split loop
+
+        if isinstance(results, list):
+            # we have just collected them, now they need to be vstacked
+            results = np.vstack(results)
+            assert(results.ndim >= 2)
 
         if __debug__:
             debug('SLC', "%s._call() is done in %.3g sec" %
                   (self.__class__.__name__, time.time() - time_start))
 
-        return Dataset(results)
+        out = Dataset(results)
+        if all_targets:
+            out.sa['targets'] = all_targets
+        out.sa['cvfolds'] = all_cvfolds
+        out.fa['center_ids'] = roi_ids
+        return out
 
     generator = property(fget=lambda self: self._generator)
     errorfx = property(fget=lambda self: self._errorfx)

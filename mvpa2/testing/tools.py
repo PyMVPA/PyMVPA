@@ -13,6 +13,7 @@ Primarily the ones from nose.tools
 __docformat__ = 'restructuredtext'
 
 import glob, os, sys, shutil
+from os.path import join as pathjoin
 import tempfile
 import unittest
 from contextlib import contextmanager
@@ -21,6 +22,7 @@ import numpy as np
 
 import mvpa2
 from mvpa2.base import externals, warning
+from mvpa2.base.dochelpers import strip_strid
 
 if __debug__:
     from mvpa2.base import debug
@@ -34,7 +36,7 @@ if externals.exists('nose'):
         assert_true, assert_false, assert_raises,
         assert_equal, assert_equals, assert_not_equal, assert_not_equals,
         # Decorators
-        timed, with_setup, raises, istest, nottest, make_decorator )
+        timed, with_setup, raises, istest, nottest, make_decorator)
 else:
     # Lets make it possible to import testing.tools even if nose is
     # NA, and run unittests which do not require nose yet
@@ -44,9 +46,10 @@ else:
         raise unittest.TestCase.failureException(
             "Unittest requires nose testing framework")
 
+
     ok_ = eq_ = assert_true = assert_false = assert_raises = \
-    assert_equal = assert_equals = assert_not_equal = asserte_not_equals = \
-    timed = with_setup = raises = istest = nottest = make_decorator = _need_nose
+        assert_equal = assert_equals = assert_not_equal = asserte_not_equals = \
+        timed = with_setup = raises = istest = nottest = make_decorator = _need_nose
 
     class SkipTest(Exception):
         """Raise this exception to mark a test as skipped.
@@ -60,21 +63,98 @@ from numpy.testing import (
     assert_string_equal)
 
 
+
 def assert_array_lequal(x, y):
     assert_array_less(-y, -x)
+
 
 
 def assert_dict_keys_equal(x, y):
     assert_equal(set(x.keys()), set(y.keys()))
 
 
-def assert_datasets_equal(x, y):
-    # wait for https://github.com/PyMVPA/PyMVPA/issues/167
+
+def assert_reprstr_equal(x, y):
+    """Whenever comparison fails otherwise, we might revert to compare those"""
+    if __debug__ and ("ID_IN_REPR" in debug.active or "DS_ID" in debug.active):
+        repr_ = lambda x: strip_strid(repr(x))
+        str_ = lambda x: strip_strid(str(x))
+    else:
+        repr_, str_ = repr, str
+    assert_equal(repr_(x), repr_(y))
+    assert_equal(str_(x), str_(y))
+
+
+
+def assert_collections_equal(x, y, ignore={}):
+    # Seems to cause a circular import leading to problems
+    from mvpa2.base.node import Node
+
+    assert_dict_keys_equal(x, y)
+    for k in x.keys():
+        v1, v2 = x[k].value, y[k].value
+        assert_equal(type(v1), type(v2),
+                     msg="Values for key %s have different types: %s and %s"
+                         % (k, type(v1), type(v2)))
+        if k in ignore:
+            continue
+        if isinstance(v1, np.ndarray):
+            assert_array_equal(v1, v2)
+        elif isinstance(v1, Node) and not (
+                hasattr(v1, '__cmp__')
+                or (hasattr(v1, '__eq__') and v1.__class__.__eq__ is not object.__eq__)):
+            # we don't have comparators inplace for all of them yet, so test
+            # based on repr and str
+            assert_reprstr_equal(v1, v2)
+        else:
+            try:
+                assert_equal(v1, v2, msg="Values for key %s have different values: %s and %s"
+                                         % (k, v1, v2))
+            except ValueError as e:
+                ## we must be hitting some comparison issue inside (e.g. "Use a.any ..."
+                ## but we do not to dive into providing comparators all around for now
+                assert_reprstr_equal(v1, v2)
+
+
+
+def assert_datasets_almost_equal(x, y, ignore_a={}, ignore_sa={},
+                                 ignore_fa={}, decimal=6):
+    """
+    Parameters
+    ----------
+    x, y: Dataset
+      Two datasets that are asserted to be almost equal.
+    ignore_a, ignore_sa, ignore_fa: iterable
+      Differences in values of which attributes to ignore
+    decimal: int or None (default: 6)
+      Number of decimal up to which equality of samples is considered.
+      If None, it is required that x.samples and y.samples have the same
+      dtype
+    """
     assert_equal(type(x), type(y))
-    assert_dict_keys_equal(x.a, y.a)
-    assert_dict_keys_equal(x.sa, y.sa)
-    assert_dict_keys_equal(x.fa, y.fa)
-    assert_array_equal(x.samples, y.samples)
+    assert_collections_equal(x.a, y.a, ignore=ignore_a)
+    assert_collections_equal(x.sa, y.sa, ignore=ignore_sa)
+    assert_collections_equal(x.fa, y.fa, ignore=ignore_fa)
+
+    if decimal is None:
+        assert_array_equal(x.samples, y.samples)
+        assert_equal(x.samples.dtype, y.samples.dtype)
+    else:
+        assert_array_almost_equal(x.samples, y.samples, decimal=decimal)
+
+
+
+def assert_datasets_equal(x, y, ignore_a={}, ignore_sa={}, ignore_fa={}):
+    """
+    Parameters
+    ----------
+    ignore_a, ignore_sa, ignore_fa: iterable
+      Differences in values of which attributes to ignore
+    """
+    assert_datasets_almost_equal(x, y, ignore_a=ignore_a, ignore_sa=ignore_sa,
+                                 ignore_fa=ignore_fa, decimal=None)
+
+
 
 if sys.version_info < (2, 7):
     # compatibility helpers for testing functions introduced in more recent versions
@@ -90,7 +170,7 @@ if externals.exists('mock'):
     def assert_warnings(messages):
         with mock.patch("warnings.warn") as mock_warnings:
             yield
-            #import pydb; pydb.debugger()
+
             if externals.versions['mock'] >= '0.8.0':
                 mock_calls = mock_warnings.mock_calls
             else:
@@ -108,6 +188,8 @@ else:
     def assert_warnings(messages):
         yield
         raise SkipTest, "install python-mock for testing either warnings were issued"
+
+
 
 def skip_if_no_external(dep, ver_dep=None, min_version=None, max_version=None):
     """Raise SkipTest if external is missing
@@ -127,22 +209,23 @@ def skip_if_no_external(dep, ver_dep=None, min_version=None, max_version=None):
 
     if not externals.exists(dep):
         raise SkipTest, \
-              "External %s is not present thus tests battery skipped" % dep
+            "External %s is not present thus tests battery skipped" % dep
 
     if ver_dep is None:
         ver_dep = dep
 
     if min_version is not None and externals.versions[ver_dep] < min_version:
         raise SkipTest, \
-              "Minimal version %s of %s is required. Present version is %s" \
-              ". Test was skipped." \
-              % (min_version, ver_dep, externals.versions[ver_dep])
+            "Minimal version %s of %s is required. Present version is %s" \
+            ". Test was skipped." \
+            % (min_version, ver_dep, externals.versions[ver_dep])
 
     if max_version is not None and externals.versions[ver_dep] > max_version:
         raise SkipTest, \
-              "Maximal version %s of %s is required. Present version is %s" \
-              ". Test was skipped." \
-              % (min_version, ver_dep, externals.versions[ver_dep])
+            "Maximal version %s of %s is required. Present version is %s" \
+            ". Test was skipped." \
+            % (min_version, ver_dep, externals.versions[ver_dep])
+
 
 
 def with_tempfile(*targs, **tkwargs):
@@ -161,9 +244,10 @@ def with_tempfile(*targs, **tkwargs):
             open(tfile, 'w').write('silly test')
     """
 
+
     def decorate(func):
         def newfunc(*arg, **kw):
-            if len(targs)<2 and not 'prefix' in tkwargs:
+            if len(targs) < 2 and not 'prefix' in tkwargs:
                 try:
                     tkwargs['prefix'] = 'tempfile_%s.%s' \
                                         % (func.__module__, func.func_name)
@@ -198,10 +282,14 @@ def with_tempfile(*targs, **tkwargs):
                             os.unlink(f)
                     except OSError:
                         pass
+
+
         newfunc = make_decorator(func)(newfunc)
         return newfunc
 
+
     return decorate
+
 
 
 def reseed_rng():
@@ -221,14 +309,19 @@ def reseed_rng():
 
     """
 
+
     def decorate(func):
         def newfunc(*arg, **kwargs):
             mvpa2.seed(mvpa2._random_seed)
             return func(*arg, **kwargs)
+
+
         newfunc = make_decorator(func)(newfunc)
         return newfunc
 
+
     return decorate
+
 
 
 def nodebug(entries=None):
@@ -240,6 +333,7 @@ def nodebug(entries=None):
       If None, all debug entries get turned off.  Otherwise only provided
       ones
     """
+
 
     def decorate(func):
         def newfunc(*arg, **kwargs):
@@ -264,10 +358,13 @@ def nodebug(entries=None):
                     # turn debug targets back on
                     debug.active = old_active
 
+
         newfunc = make_decorator(func)(newfunc)
         return newfunc
 
+
     return decorate
+
 
 
 def labile(niter=3, nfailures=1):
@@ -289,13 +386,15 @@ def labile(niter=3, nfailures=1):
       How many failures to allow
 
     """
+
+
     def decorate(func):
         def newfunc(*arg, **kwargs):
-            nfailed, i = 0, 0           # define i just in case
+            nfailed, i = 0, 0  # define i just in case
             for i in xrange(niter):
                 try:
                     ret = func(*arg, **kwargs)
-                    if i + 1 - nfailed  >= niter - nfailures:
+                    if i + 1 - nfailed >= niter - nfailures:
                         # so we know already that we wouldn't go over
                         # nfailures
                         break
@@ -308,19 +407,24 @@ def labile(niter=3, nfailures=1):
                     if nfailed > nfailures:
                         if __debug__:
                             debug('TEST', "Ran %s %i times. Got %d failures, "
-                                  "while was allowed %d "
-                                  "-- re-throwing the last failure %s",
-                                  (func.__name__, i+1, nfailed, nfailures, e))
+                                          "while was allowed %d "
+                                          "-- re-throwing the last failure %s",
+                                  (func.__name__, i + 1, nfailed, nfailures, e))
                         exc_info = sys.exc_info()
                         raise exc_info[1], None, exc_info[2]
             if __debug__:
                 debug('TEST', "Ran %s %i times. Got %d failures.",
-                      (func.__name__, i+1, nfailed))
+                      (func.__name__, i + 1, nfailed))
             return ret
+
+
         newfunc = make_decorator(func)(newfunc)
         return newfunc
-    assert(niter > nfailures)
+
+
+    assert (niter > nfailures)
     return decorate
+
 
 
 def assert_objectarray_equal(x, y, xorig=None, yorig=None, strict=True):
@@ -351,7 +455,7 @@ def assert_objectarray_equal(x, y, xorig=None, yorig=None, strict=True):
             # we will try harder comparing each element the same way
             # and also enforcing equal dtype
             for x_, y_ in zip(x, y):
-                assert(type(x_) == type(y_))
+                assert (type(x_) == type(y_))
                 if strict and isinstance(x_, np.ndarray) and not (x_.dtype == y_.dtype):
                     raise AssertionError("dtypes %r and %r do not match" %
                                          (x_.dtype, y_.dtype))

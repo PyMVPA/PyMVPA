@@ -507,6 +507,11 @@ def _strid(obj):
     """
     return "#%d" % (id(obj))
 
+def strip_strid(s):
+    """Strip off strids (#NUMBER) within a string
+    """
+    return re.sub("#[0-9]{7,100}", "", s)
+
 def _str(obj, *args, **kwargs):
     """Helper to get a structured __str__ for all objects.
 
@@ -558,6 +563,15 @@ def _str(obj, *args, **kwargs):
     # finally wrap in <> and return
     # + instead of '%s' for bits of speedup
     return '<' + s + '>'
+
+
+def safe_str(obj):
+    """Return string of an object even if str() call fails
+    """
+    try:
+        return str(obj)
+    except Exception as exc:
+        return "%s(FAILED str due to %s)" % (type(obj), str(exc))
 
 
 def borrowdoc(cls, methodname=None):

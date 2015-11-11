@@ -9,6 +9,7 @@
 """Unit tests for PyMVPA dochelpers"""
 
 from mvpa2.base.dochelpers import single_or_plural, borrowdoc, borrowkwargs
+from mvpa2.base.dochelpers import strip_strid
 
 import unittest
 
@@ -172,6 +173,11 @@ class DochelpersTests(unittest.TestCase):
 
         self.assertEqual(
             repr(c2), '%(mod)sC2(p=%(mod)sC1(f=<bound %(mod)sC2%(c2id)s.trouble>)%(c1id)s)%(c2id)s' % locals())
+
+    def test_strip_strid(self):
+        self.assertEqual(strip_strid("#1"), "#1")  # very short ones left alone -- unlikely to be id
+        self.assertEqual(strip_strid("#140136298269872"), "") # long ones replaced
+        self.assertEqual(strip_strid("a#140136298269872 b#140136298269872"), "a b") # multiple
 
 # TODO: more unittests
 def suite():  # pragma: no cover

@@ -264,7 +264,6 @@ notebooks-stamp: examples2rst
 		--glossary_baseurl http://pymvpa.org/glossary.html \
 		--outdir $(NOTEBOOKBUILD_DIR) \
 		--exclude doc/source/tutorial_prerequisites.rst \
-		--exclude doc/source/examples/searchlight_surf.rst \
 		--verbose \
 		doc/source/tutorial_*.rst doc/source/examples/*.rst
 	touch $@
@@ -545,6 +544,8 @@ testsuite:
 	 grep -v -e 'mvpa.\.base\.dochelpers' \
 			 -e 'mvpa.\.\(tests\|testing\|sandbox\|support\)' \
 			 -e 'mvpa.\.misc\.args' \
+			 -e 'mvpa.\.algorithms\.benchmarks' \
+			 -e 'mvpa.\.misc\.surfing\.volgeom' \
 			 -e 'mvpa.\.clfs\.\(libsvmc\|sg\|spam\)' \
 	| while read i; do \
 	 grep -q "^ *$$i" mvpa2/suite.py || \

@@ -8,8 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA nifti dataset"""
 
-import os
 import numpy as np
+from os.path import join as pathjoin
 
 from mvpa2.testing import *
 
@@ -29,7 +29,7 @@ from mvpa2.misc.support import Event, value2idx
 def test_nifti_dataset():
     """Basic testing of NiftiDataset
     """
-    ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'example4d.nii.gz'),
+    ds = fmri_dataset(samples=pathjoin(pymvpa_dataroot, 'example4d.nii.gz'),
                       targets=[1, 2], sprefix='voxel')
     assert_equal(ds.nfeatures, 294912)
     assert_equal(ds.nsamples, 2)
@@ -59,7 +59,7 @@ def test_nifti_dataset():
     mask = np.zeros((128, 96, 24), dtype='bool')
     mask[40, 20, 12] = True
     nddata = fmri_dataset(
-        samples=os.path.join(pymvpa_dataroot, 'example4d.nii.gz'),
+        samples=pathjoin(pymvpa_dataroot, 'example4d.nii.gz'),
         targets=[1, 2],
         mask=mask)
     assert_equal(nddata.nfeatures, 1)
@@ -72,11 +72,11 @@ def test_nifti_dataset():
 def test_fmridataset():
     # full-blown fmri dataset testing
     import nibabel
-    maskimg = nibabel.load(os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+    maskimg = nibabel.load(pathjoin(pymvpa_dataroot, 'mask.nii.gz'))
     data = maskimg.get_data().copy()
     data[data > 0] = np.arange(1, np.sum(data) + 1)
     maskimg = nibabel.Nifti1Image(data, None, maskimg.get_header())
-    ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+    ds = fmri_dataset(samples=pathjoin(pymvpa_dataroot, 'bold.nii.gz'),
                       mask=maskimg,
                       sprefix='subj1',
                       add_fa={'myintmask': maskimg})
@@ -108,7 +108,7 @@ def test_nifti_mapper(filename):
 
     import nibabel
     data = fmri_dataset(
-        samples=os.path.join(pymvpa_dataroot, 'example4d.nii.gz'),
+        samples=pathjoin(pymvpa_dataroot, 'example4d.nii.gz'),
         targets=[1, 2])
 
     # test mapping of ndarray
@@ -165,19 +165,19 @@ def test_multiple_calls():
     """Test if doing exactly the same operation twice yields the same result
     """
     data = fmri_dataset(
-        samples=os.path.join(pymvpa_dataroot, 'example4d.nii.gz'),
+        samples=pathjoin(pymvpa_dataroot, 'example4d.nii.gz'),
         targets=1, sprefix='abc')
     data2 = fmri_dataset(
-        samples=os.path.join(pymvpa_dataroot, 'example4d.nii.gz'),
+        samples=pathjoin(pymvpa_dataroot, 'example4d.nii.gz'),
         targets=1, sprefix='abc')
     assert_array_equal(data.a.abc_eldim, data2.a.abc_eldim)
 
 
 def test_er_nifti_dataset():
     # setup data sources
-    tssrc = os.path.join(pymvpa_dataroot, u'bold.nii.gz')
-    evsrc = os.path.join(pymvpa_dataroot, 'fslev3.txt')
-    masrc = os.path.join(pymvpa_dataroot, 'mask.nii.gz')
+    tssrc = pathjoin(pymvpa_dataroot, u'bold.nii.gz')
+    evsrc = pathjoin(pymvpa_dataroot, 'fslev3.txt')
+    masrc = pathjoin(pymvpa_dataroot, 'mask.nii.gz')
     evs = FslEV3(evsrc).to_events()
     # load timeseries
     ds_orig = fmri_dataset(tssrc)
@@ -296,8 +296,8 @@ def test_er_nifti_dataset_mapping():
 def test_nifti_dataset_from3_d():
     """Test NiftiDataset based on 3D volume(s)
     """
-    tssrc = os.path.join(pymvpa_dataroot, 'bold.nii.gz')
-    masrc = os.path.join(pymvpa_dataroot, 'mask.nii.gz')
+    tssrc = pathjoin(pymvpa_dataroot, 'bold.nii.gz')
+    masrc = pathjoin(pymvpa_dataroot, 'mask.nii.gz')
 
     # Test loading of 3D volumes
     # by default we are enforcing 4D, testing here with the demo 3d mask
@@ -346,9 +346,9 @@ def test_nifti_dataset_from3_d():
 #    mask_roi = np.zeros((24, 96, 128), dtype='bool')
 #    mask_roi[12, 20, 38:42] = True
 #    mask_roi[23, 20, 38:42] = True  # far away
-#    ds_full = nifti_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
+#    ds_full = nifti_dataset(samples=pathjoin(pymvpa_dataroot,'example4d'),
 #                           targets=[1,2])
-#    ds_roi = nifti_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
+#    ds_roi = nifti_dataset(samples=pathjoin(pymvpa_dataroot,'example4d'),
 #                           targets=[1,2], mask=mask_roi)
 #    # Should just work since we are in the mask
 #    ids_roi = ds_roi.a.mapper.getNeighbors(
@@ -376,7 +376,7 @@ def test_assumptions_on_nibabel_behavior(filename):
         raise SkipTest('No nibabel available')
 
     import nibabel as nb
-    masrc = os.path.join(pymvpa_dataroot, 'mask.nii.gz')
+    masrc = pathjoin(pymvpa_dataroot, 'mask.nii.gz')
     ni = nb.load(masrc)
     hdr = ni.get_header()
     data = ni.get_data()
@@ -434,7 +434,7 @@ def test_strip_nibabel():
     strip_nibabel(ds)
     assert_true('imgtype' not in ds.a)
     # can run multiple times: idempotent
-    ds = fmri_dataset(os.path.join(
+    ds = fmri_dataset(pathjoin(
         pymvpa_dataroot, 'haxby2001', 'sub001', 'BOLD', 'task001_run001',
         'bold_25mm.nii.gz'))
     strip_nibabel(ds)  # this is real

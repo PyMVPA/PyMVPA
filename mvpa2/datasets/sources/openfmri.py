@@ -278,9 +278,10 @@ class OpenFMRIDataset(object):
 
         Returns
         -------
-        list(array)
-          A list of arrays, one for each BOLD run. Each array is
-          (subjects x volumes x features).
+        list(dict(array))
+          A list (one item per run) of dictionaries (one item per subject,
+          key is subject ID) of arrays. Each array carries the information
+          loaded from the respective files.
         """
         if exclude_subjs is None:
             exclude_subjs = []
@@ -293,31 +294,37 @@ class OpenFMRIDataset(object):
         # over all possible run ids
         for run in xrange(nruns):
             # for all actual subjects
-            # TODO add subject filter
             for subj in sorted(tbri.keys()):
+                if subj in exclude_subjs:
+                    continue
                 try:
                     # run + 1 because openfmri is one-based
                     d = self._load_bold_task_run_data(subj, task, run + 1,
                                                       [fname], loadfx)
                     if data[run] is None:
-                        data[run] = [d]
+                        data[run] = {subj: d}
                     else:
-                        data[run].append(d)
+                        data[run][subj] = d
                 except IOError:
                     # no data
                     pass
+            run_data = data[run]
             # deal with missing values
-            max_vol = max([len(d) for d in data[run]])
-            for i, d in enumerate(data[run]):
+            max_vol = max([len(run_data[d]) for d in run_data])
+            for subj in run_data:
+                d = run_data[subj]
                 if len(d) == max_vol:
                     continue
+                # XXX WTF 6? determine shape of an attribute from other subjs
                 fixed_run = np.empty((max_vol, 6), dtype=np.float)
                 fixed_run[:] = np.nan
                 if len(d):
                     fixed_run[:len(d)] = d
-                data[run][i] = fixed_run
+                run_data[subj] = fixed_run
+                # make sure we have arrays
+                run_data[subj] = np.array(run_data[subj])
 
-        return [np.array(d) for d in data]
+        return data
 
     def get_bold_run_dataset(self, subj, task, run, flavor=None,
                              preproc_img=None, add_sa=None, **kwargs):

@@ -60,7 +60,7 @@ class AttributePermutator(Node):
           across all given items define a "selection" of to-be-permuted samples
           or features.
         strategy : 'simple', 'uattrs', 'chunks'
-          'simple' strategy is the straightfoward permutation of attributes (given
+          'simple' strategy is the straightforward permutation of attributes (given
           the limit).  In some sense it assumes independence of those samples.
           'uattrs' strategy looks at unique values of attr (or their unique
           combinations in case of `attr` being a list), and "permutes" those
@@ -231,6 +231,9 @@ class AttributePermutator(Node):
 
     def _permute_chunks(self, limit_idx, in_pattrs, out_pattrs, chunks=None):
         # limit_idx is doing nothing
+
+        if chunks is None:
+            raise ValueError("Missing 'chunk_attr' for strategy='chunk'")
 
         uniques = np.unique(chunks)
 

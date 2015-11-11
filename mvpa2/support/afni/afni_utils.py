@@ -14,7 +14,12 @@ Created on Feb 19, 2012
 @author: Nikolaas. N. Oosterhof (nikolaas.oosterhof@unitn.it)
 '''
 
-import os, subprocess, time, datetime, collections
+import os
+from os.path import join as pathjoin
+import subprocess
+import time
+import datetime
+import collections
 import os.path as op
 
 def as_list(v):
@@ -150,7 +155,7 @@ def which(f, env=None):
         return f
     else:
         for path in env['PATH'].split(os.pathsep):
-            fullfn = os.path.join(path, n)
+            fullfn = pathjoin(path, n)
             if is_executable(fullfn):
                 return fullfn
         return None
@@ -163,7 +168,7 @@ def _package_afni_nibabel_for_standalone(outputdir, rootname='python'):
     directory (outputdir) where it can function as a stand-alone package
     '''
 
-    outputdir_files = os.path.join(outputdir, rootname)
+    outputdir_files = pathjoin(outputdir, rootname)
     for d in (outputdir, outputdir_files):
         if not os.path.exists(d):
             os.mkdir(d)
@@ -177,13 +182,13 @@ def _package_afni_nibabel_for_standalone(outputdir, rootname='python'):
 
     replacements = {'from mvpa2.base import warning':'def warning(x): print x'}
 
-    rootdir = os.path.join(op.split(fullpath)[0], '..')
+    rootdir = pathjoin(op.split(fullpath)[0], '..')
     parent_pkg = 'mvpa2.support'
     pkgs = ['afni', 'nibabel']
-    srcdirs = [os.path.join(rootdir, pkg) for pkg in pkgs]
+    srcdirs = [pathjoin(rootdir, pkg) for pkg in pkgs]
 
 
-    input_path_fns = [os.path.join(d, f) for d in srcdirs
+    input_path_fns = [pathjoin(d, f) for d in srcdirs
                                          for f in os.listdir(d)
                                          ]
 
@@ -250,7 +255,7 @@ def _package_afni_nibabel_for_standalone(outputdir, rootname='python'):
             for src, trg in repls:
                 srcbinfn = srcbinfn.replace(src, trg)
 
-            parentfn = os.path.join(rootdir, '..', '..', 'bin', srcbinfn)
+            parentfn = pathjoin(rootdir, '..', '..', 'bin', srcbinfn)
             print parentfn
             if os.path.exists(parentfn):
                 with open(parentfn) as pf:
@@ -265,7 +270,7 @@ def _package_afni_nibabel_for_standalone(outputdir, rootname='python'):
             else:
                 raise ValueError("not found: %s" % parentfn)
 
-            trgfn = os.path.join(outputdir_files, fn.replace('lib_', ''))
+            trgfn = pathjoin(outputdir_files, fn.replace('lib_', ''))
         else:
             trgfn = op.join(outputdir_files, fn)
 

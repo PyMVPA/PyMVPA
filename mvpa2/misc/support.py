@@ -13,7 +13,10 @@ __docformat__ = 'restructuredtext'
 import itertools
 import math
 import random
-import re, os, sys
+import re
+import os
+from os.path import join as pathjoin
+import sys
 
 # for SmartVersion
 from distutils.version import Version
@@ -41,7 +44,7 @@ def reuse_absolute_path(file1, file2, force=False):
     """
     if not file2.startswith(os.path.sep) or force:
         # lets reuse path to file1
-        return os.path.join(os.path.dirname(file1), file2.lstrip(os.path.sep))
+        return pathjoin(os.path.dirname(file1), file2.lstrip(os.path.sep))
     else:
         return file2
 
@@ -412,6 +415,17 @@ class SmartVersion(Version):
 
         # Do ad-hoc comparison of strings
         i = 0
+
+        # if any of the versions was not parsed (e.g. if None was provided),
+        # comparison can't be performed really unless both have no version
+        # assigned
+        if (not hasattr(self, 'version')) and (not hasattr(other, 'version')):
+            return 0
+
+        for v in (self, other):
+            if not (hasattr(v, 'version')):
+                raise ValueError('%s has no version information' % v)
+
         s, o = self.version, other.version
         regex_prerelease = re.compile('~|-?dev|-?rc|-?svn|-?pre|-?beta|-?alpha', re.I)
         for i in xrange(max(len(s), len(o))):

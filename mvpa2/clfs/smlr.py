@@ -22,6 +22,8 @@ from mvpa2.base.constraints import *
 from mvpa2.base.state import ConditionalAttribute
 from mvpa2.datasets.base import Dataset
 
+from mvpa2.support.due import due, Doi
+
 __all__ = [ "SMLR", "SMLRWeights" ]
 
 
@@ -310,6 +312,11 @@ class SMLR(Classifier):
         return cycles
 
 
+    @due.dcite(
+        Doi('10.1109/TPAMI.2005.127'),
+        path="mvpa2.clfs.smlr:SMLR",
+        description="Sparse multinomial-logistic regression classifier",
+        tags=["implementation"])
     def _train(self, dataset):
         """Train the classifier using `dataset` (`Dataset`).
         """

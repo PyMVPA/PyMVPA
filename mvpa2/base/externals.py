@@ -10,6 +10,7 @@
 """
 
 __docformat__ = 'restructuredtext'
+
 import os
 import numpy as np                      # NumPy is required anyways
 
@@ -32,7 +33,11 @@ class _VersionsChecker(dict):
         if key not in self:
             if key in self._KNOWN:
                 # run registered procedure to obtain versions
-                self._KNOWN[key]()
+                try:
+                    self._KNOWN[key]()
+                except ImportError:
+                    # known but not present
+                    return None
             else:
                 # just check for presence -- that function might set
                 # the version information
@@ -143,26 +148,27 @@ def __check_pywt(features=None):
     """
     import pywt
     import numpy as np
-    data = np.array([ 0.57316901,  0.65292526,  0.75266733,  0.67020084,  0.46505364,
-                     0.76478331,  0.33034164,  0.49165547,  0.32979941,  0.09696717,
-                     0.72552711,  0.4138999 ,  0.54460628,  0.786351  ,  0.50096306,
-                     0.72436454, 0.2193098 , -0.0135051 ,  0.34283984,  0.65596245,
-                     0.49598417,  0.39935064,  0.26370727,  0.05572373,  0.40194438,
-                     0.47004551,  0.60327258,  0.25628266,  0.32964893,  0.24009889,])
+    data = np.array(
+        [0.57316901,  0.65292526,  0.75266733,  0.67020084,  0.46505364,
+         0.76478331,  0.33034164,  0.49165547,  0.32979941,  0.09696717,
+         0.72552711,  0.4138999,   0.54460628,  0.786351,    0.50096306,
+         0.72436454,  0.2193098,  -0.0135051,   0.34283984,  0.65596245,
+         0.49598417,  0.39935064,  0.26370727,  0.05572373,  0.40194438,
+         0.47004551,  0.60327258,  0.25628266,  0.32964893,  0.24009889])
     mode = 'per'
     wp = pywt.WaveletPacket(data, 'sym2', mode)
     wp2 = pywt.WaveletPacket(data=None, wavelet='sym2', mode=mode)
     try:
         for node in wp.get_level(2): wp2[node.path] = node.data
     except:
-        raise ImportError, \
-               "Failed to reconstruct WP by specifying data in the layer"
+        raise ImportError(
+            "Failed to reconstruct WP by specifying data in the layer")
 
     if 'wp reconstruct fixed' in features:
         rec = wp2.reconstruct()
         if np.linalg.norm(rec[:len(data)] - data) > 1e-3:
-            raise ImportError, \
-                  "Failed to reconstruct WP correctly"
+            raise ImportError(
+                "Failed to reconstruct WP correctly")
     return True
 
 
@@ -173,8 +179,9 @@ def __check_libsvm_verbosity_control():
     try:
         _svmc.svm_set_verbosity(0)
     except:
-        raise ImportError, "Provided version of libsvm has no way to control " \
-              "its level of verbosity"
+        raise ImportError(
+            "Provided version of libsvm has no way to control "
+            "its level of verbosity")
 
 def __assign_shogun_version():
     """Assign shogun versions
@@ -208,8 +215,9 @@ def __check_shogun(bottom_version, custom_versions=[]):
     if (ver in custom_versions) or (ver >= bottom_version):
         return True
     else:
-        raise ImportError, 'Version %s is smaller than needed %s' % \
-              (ver, bottom_version)
+        raise ImportError(
+            'Version %s is smaller than needed %s'
+            % (ver, bottom_version))
 
 def __check_nipy_neurospin():
     from nipy.neurospin.utils import emp_nul
@@ -221,8 +229,8 @@ def __assign_skl_version():
         # Let's try older space
         import scikits.learn as skl
         if skl.__doc__ is None or skl.__doc__.strip() == "":
-            raise ImportError("Verify your installation of scikits.learn. "
-                              "Its docstring is empty -- could be that only -lib "
+            raise ImportError("Verify your installation of scikits.learn. Its "
+                              "docstring is empty -- could be that only -lib "
                               "was installed without the native Python modules")
     versions['skl'] = SmartVersion(skl.__version__)
 
@@ -250,33 +258,33 @@ def __check_weave():
     # restore_sys_argv() is apparently is insufficient
     oargv = sys.argv[:]
     ostdout = sys.stdout
-    if not( __debug__ and 'EXT_' in debug.active):
+    if not(__debug__ and 'EXT_' in debug.active):
         from StringIO import StringIO
         sys.stdout = StringIO()
         # *nix specific solution to shut weave up.
         # Some users must complain and someone
         # needs to fix this to become more generic.
-        cargs = [">/dev/null", "2>&1"]
+        compile_args = [">/dev/null", "2>&1"]
     else:
-        cargs = []
+        compile_args = []
     fmsg = None
     try:
-        data = np.array([1,2,3])
+        data = np.array([1, 2, 3])
         counter = weave.inline("data[0]=fabs(-1);", ['data'],
                                type_converters=converters.blitz,
                                verbose=0,
-                               extra_compile_args=cargs,
-                               compiler = 'gcc')
+                               extra_compile_args=compile_args,
+                               compiler='gcc')
     except Exception, e:
         fmsg = "Failed to build simple weave sample." \
                " Exception was %s" % str(e)
 
     sys.stdout = ostdout
-    # needed to fix sweave which might "forget" to restore sysv
+    # needed to fix sweave which might "forget" to restore sys.argv
     # build_tools.restore_sys_argv()
     sys.argv = oargv
     if fmsg is not None:
-        raise ImportError, fmsg
+        raise ImportError(fmsg)
     else:
         return "Everything is cool"
 
@@ -284,19 +292,20 @@ def __check_weave():
 def __check_atlas_family(family):
     # XXX I guess pylint will dislike it a lot
     from mvpa2.atlases.warehouse import KNOWN_ATLAS_FAMILIES
-    names, pathpattern = KNOWN_ATLAS_FAMILIES[family]
-    filename = pathpattern % {'name':names[0]}
+    names, path_pattern = KNOWN_ATLAS_FAMILIES[family]
+    filename = path_pattern % {'name':names[0]}
     if not os.path.exists(filename):
-        raise ImportError, "Cannot find file %s for atlas family %s" \
-              % (filename, family)
+        raise ImportError(
+            "Cannot find file %s for atlas family %s"
+            % (filename, family))
     pass
 
 
 def __check_stablerdist():
     import scipy.stats
     import numpy as np
-    ## Unfortunately 0.7.0 hasn't fixed the issue so no chance but to do
-    ## a proper numerical test here
+    #  Unfortunately 0.7.0 hasn't fixed the issue so no chance but to do
+    #  a proper numerical test here
     try:
         scipy.stats.rdist(1.32, 0, 1).cdf(-1.0 + np.finfo(float).eps)
         # Actually previous test is insufficient for 0.6, so enabling
@@ -306,10 +315,11 @@ def __check_stablerdist():
         distributions = scipy.stats.distributions
         if 'rdist_gen' in dir(distributions) \
             and ('_cdf' in distributions.rdist_gen.__dict__.keys()):
-            raise ImportError, \
-                  "scipy.stats carries misbehaving rdist distribution"
+            raise ImportError(
+                "scipy.stats carries misbehaving rdist distribution")
     except ZeroDivisionError:
-        raise RuntimeError, "RDist in scipy is still unstable on the boundaries"
+        raise RuntimeError(
+            "RDist in scipy is still unstable on the boundaries")
 
 
 def __check_rv_discrete_ppf():
@@ -320,7 +330,7 @@ def __check_rv_discrete_ppf():
         bdist = scipy.stats.binom(100, 0.5)
         bdist.ppf(0.9)
     except TypeError:
-        raise RuntimeError, "pmf is broken in discrete dists of scipy.stats"
+        raise RuntimeError("pmf is broken in discrete dists of scipy.stats")
 
 def __check_rv_continuous_reduce_func():
     """Unfortunately scipy 0.10.1 pukes when fitting with two params fixed
@@ -328,21 +338,22 @@ def __check_rv_continuous_reduce_func():
     import scipy.stats as ss
     try:
         ss.t.fit(np.arange(6), floc=0.0, fscale=1.)
-    except IndexError, e:
-        raise RuntimeError("rv_continuous.fit can't candle 2 fixed params")
+    except IndexError as e:
+        raise RuntimeError("rv_continuous.fit can't candle 2 fixed params: %s"
+                           % str(e))
 
 def __check_in_ipython():
     # figure out if ran within IPython
     if '__IPYTHON__' in globals()['__builtins__']:
         return
-    raise RuntimeError, "Not running in IPython session"
+    raise RuntimeError("Not running in IPython session")
 
 def __assign_ipython_version():
     ipy_version = None
+    import IPython
     try:
         # Development post 0.11 version finally carries
         # conventional one
-        import IPython
         ipy_version = IPython.__version__
     except:
         try:
@@ -406,10 +417,10 @@ def __check_pylab_plottable():
         exists('pylab', raise_='always')
         import pylab as pl
         fig = pl.figure()
-        pl.plot([1,2], [1,2])
+        pl.plot([1, 2], [1, 2])
         pl.close(fig)
     except:
-        raise RuntimeError, "Cannot plot in pylab"
+        raise RuntimeError("Cannot plot in pylab")
     return True
 
 
@@ -438,7 +449,7 @@ def __check(name, a='__version__'):
         exec "v = %s.%s" % (name, a)
         # it might be lxml.etree, so take only first module
         versions[name.split('.')[0]] = SmartVersion(v)
-    except Exception, e:
+    except Exception as e:
         # we can't assign version but it is there
         if __debug__:
             debug('EXT', 'Failed to acquire a version of %(name)s: %(e)s'
@@ -454,21 +465,15 @@ def __check_h5py():
 def __check_rpy():
     """Check either rpy is available and also set it for the sane execution
     """
-    #import rpy_options
-    #rpy_options.set_options(VERBOSE=False, SETUP_READ_CONSOLE=False) # SETUP_WRITE_CONSOLE=False)
-    #rpy_options.set_options(VERBOSE=False, SETUP_WRITE_CONSOLE=False) # SETUP_WRITE_CONSOLE=False)
-    #    if not cfg.get('rpy', 'read_console', default=False):
-    #        print "no read"
-    #        rpy_options.set_options(SETUP_READ_CONSOLE=False)
-    #    if not cfg.get('rpy', 'write_console', default=False):
-    #        print "no write"
-    #        rpy_options.set_options(SETUP_WRITE_CONSOLE=False)
     import rpy
     if not cfg.getboolean('rpy', 'interactive', default=True) \
            and (rpy.get_rpy_input() is rpy.rpy_io.rpy_input):
         if __debug__:
-            debug('EXT_', "RPy: providing dummy callback for input to return '1'")
-        def input1(*args): return "1"      # which is "1: abort (with core dump, if enabled)"
+            debug('EXT_',
+                  "RPy: providing dummy callback for input to return '1'")
+
+        def input1(*args):
+            return "1"      # which is "1: abort (with core dump, if enabled)"
         rpy.set_rpy_input(input1)
 
 def _R_library(libname):
@@ -476,8 +481,8 @@ def _R_library(libname):
 
     try:
         if not tuple(ro.r(
-            "suppressMessages(suppressWarnings(require(%r, quiet=TRUE)))"
-            % libname))[0]:
+                "suppressMessages(suppressWarnings(require(%r, quiet=TRUE)))"
+                % libname))[0]:
             raise ImportError("It seems that R cannot load library %r"
                               % libname)
     except Exception, e:
@@ -503,18 +508,18 @@ def __check_liblapack_so():
     """
     from ctypes import cdll
     try:
-        lapacklib = cdll.LoadLibrary('liblapack.so')
+        _ = cdll.LoadLibrary('liblapack.so')
     except OSError, e:
         # reraise with exception type we catch/handle while testing externals
         raise RuntimeError("Failed to import liblapack.so: %s" % e)
 
 # contains list of available (optional) external classifier extensions
-_KNOWN = {'libsvm':'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
-          'libsvm verbosity control':'__check_libsvm_verbosity_control();',
-          'nibabel':'__assign_nibabel_version()',
-          'ctypes':'__check("ctypes")',
+_KNOWN = {'libsvm': 'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
+          'libsvm verbosity control': '__check_libsvm_verbosity_control();',
+          'nibabel': '__assign_nibabel_version()',
+          'ctypes': '__check("ctypes")',
           'liblapack.so': "__check_liblapack_so()",
-          'shogun':'__assign_shogun_version()',
+          'shogun': '__assign_shogun_version()',
           'shogun.krr': '__assign_shogun_version(); import shogun.Regression as __; x=__.KRR',
           'shogun.mpd': '__assign_shogun_version(); import shogun.Classifier as __; x=__.MPDSVM',
           'shogun.lightsvm': '__assign_shogun_version(); import shogun.Classifier as __; x=__.SVMLight',
@@ -531,17 +536,17 @@ _KNOWN = {'libsvm':'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'pywt': "import pywt as __",
           'pywt wp reconstruct': "__check_pywt(['wp reconstruct'])",
           'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",
-          #'rpy': "__check_rpy()",
+          #  'rpy': "__check_rpy()",
           'rpy2': "__check_rpy2()",
-          'lars': "exists('rpy2', raise_='always');" \
+          'lars': "exists('rpy2', raise_='always');"
                   "import rpy2.robjects; rpy2.robjects.r.library('lars')",
-          'mass': "exists('rpy2', raise_='always');" \
+          'mass': "exists('rpy2', raise_='always');"
                   "import rpy2.robjects; rpy2.robjects.r.library('MASS')",
-          'elasticnet': "exists('rpy2', raise_='always'); "\
+          'elasticnet': "exists('rpy2', raise_='always'); "
                   "import rpy2.robjects; rpy2.robjects.r.library('elasticnet')",
-          'glmnet': "exists('rpy2', raise_='always'); " \
+          'glmnet': "exists('rpy2', raise_='always'); "
                   "import rpy2.robjects; rpy2.robjects.r.library('glmnet')",
-          'cran-energy': "exists('rpy2', raise_='always'); " \
+          'cran-energy': "exists('rpy2', raise_='always'); "
                   "import rpy2.robjects; rpy2.robjects.r.library('energy')",
           'matplotlib': "__assign_matplotlib_version()",
           'pylab': "__check_pylab()",
@@ -551,9 +556,9 @@ _KNOWN = {'libsvm':'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'mdp': "__assign_mdp_version()",
           'mdp ge 2.4': "from mdp.nodes import LLENode as __",
           'sg_fixedcachesize': "__check_shogun(3043, [2456])",
-           # 3318 corresponds to release 0.6.4
+          #  3318 corresponds to release 0.6.4
           'sg ge 0.6.4': "__check_shogun(3318)",
-           # 3377 corresponds to release 0.6.5
+          #  3377 corresponds to release 0.6.5
           'sg ge 0.6.5': "__check_shogun(3377)",
           'hcluster': "import hcluster as __",
           'griddata': "__check_griddata()",
@@ -610,7 +615,7 @@ def exists(dep, force=False, raise_=False, issueWarning=None,
     # if we are provided with a list of deps - go through all of them
     if isinstance(dep, list) or isinstance(dep, tuple):
         results = [ exists(dep_, force, raise_) for dep_ in dep ]
-        return bool(reduce(lambda x,y: x and y, results, True))
+        return bool(reduce(lambda x, y: x and y, results, True))
 
     # where to look in cfg
     cfgid = 'have ' + dep
@@ -623,10 +628,10 @@ def exists(dep, force=False, raise_=False, issueWarning=None,
             raise ValueError("Unknown value of raise_=%s. "
                              "Must be bool or 'always'" % raise_)
     else: # must be bool conditioned on the global settings
-        raise_ = raise_ \
-                and cfg.getboolean('externals', 'raise exception', True)
+        raise_ = (raise_
+                  and cfg.getboolean('externals', 'raise exception', True))
 
-    # prevent unnecessarry testing
+    # prevent unnecessary testing
     if cfg.has_option('externals', cfgid) \
        and not cfg.getboolean('externals', 'retest', default='no') \
        and not force:
@@ -636,9 +641,8 @@ def exists(dep, force=False, raise_=False, issueWarning=None,
         # check whether an exception should be raised, even though the external
         # was already tested previously
         if not cfg.getboolean('externals', cfgid) and raise_:
-            raise exception, "Required external '%s' was not found" % dep
+            raise exception("Required external '%s' was not found" % dep)
         return cfg.getboolean('externals', cfgid)
-
 
     # determine availability of external (non-cached)
 
@@ -646,7 +650,7 @@ def exists(dep, force=False, raise_=False, issueWarning=None,
     result = False
 
     if dep not in _KNOWN:
-        raise ValueError, "%r is not a known dependency key." % (dep,)
+        raise ValueError("%r is not a known dependency key." % (dep,))
     else:
         # try and load the specific dependency
         if __debug__:
@@ -657,41 +661,40 @@ def exists(dep, force=False, raise_=False, issueWarning=None,
 
         try:
             # Suppress NumPy warnings while testing for externals
-            olderr = np.seterr(all="ignore")
+            old_handling = np.seterr(all="ignore")
 
-            estr = ''
+            error_str = ''
             try:
                 exec _KNOWN[dep]
                 result = True
             except tuple(_caught_exceptions), e:
-                estr = ". Caught exception was: " + str(e)
+                error_str = ". Caught exception was: " + str(e)
             except Exception, e:
                 # Add known ones by their names so we don't need to
                 # actually import anything manually to get those classes
                 if e.__class__.__name__ in ['RPy_Exception', 'RRuntimeError',
                                             'RPy_RException']:
                     _caught_exceptions += [e.__class__]
-                    estr = ". Caught exception was: " + str(e)
+                    error_str = ". Caught exception was: " + str(e)
                 else:
                     raise
         finally:
             # And restore warnings
-            np.seterr(**olderr)
+            np.seterr(**old_handling)
 
         if __debug__:
             debug('EXT', "Presence of %s is%s verified%s" %
-                  (dep, {True:'', False:' NOT'}[result], estr))
+                  (dep, {True:'', False:' NOT'}[result], error_str))
 
     if not result:
         if raise_:
-            raise exception, "Required external '%s' was not found" % dep
+            raise exception("Required external '%s' was not found" % dep)
         if issueWarning is not None \
                and cfg.getboolean('externals', 'issue warning', True):
             if issueWarning is True:
                 warning("Required external '%s' was not found" % dep)
             else:
                 warning(issueWarning)
-
 
     # store result in config manager
     if not cfg.has_section('externals'):
@@ -703,15 +706,14 @@ def exists(dep, force=False, raise_=False, issueWarning=None,
 
     return result
 
-# Bind functions for some versions checkings
+# Bind functions for some versions checks
 versions._KNOWN.update({
-    'shogun' : __assign_shogun_version,
-    'shogun:rev' : __assign_shogun_version,
-    'shogun:full' : __assign_shogun_version,
+    'shogun': __assign_shogun_version,
+    'shogun:rev': __assign_shogun_version,
+    'shogun:full': __assign_shogun_version,
     })
 
 
-##REF: Name was automagically refactored
 def check_all_dependencies(force=False, verbosity=1):
     """
     Test for all known dependencies.
@@ -730,7 +732,7 @@ def check_all_dependencies(force=False, verbosity=1):
                 warning("%s is not available." % dep)
 
     if __debug__:
-        debug('EXT', 'The following optional externals are present: %s' \
-                     % [ k[5:] for k in cfg.options('externals')
-                            if k.startswith('have') \
-                            and cfg.getboolean('externals', k) == True ])
+        debug('EXT', 'The following optional externals are present: %s'
+                     % [k[5:] for k in cfg.options('externals')
+                        if k.startswith('have')
+                        and cfg.getboolean('externals', k)])
