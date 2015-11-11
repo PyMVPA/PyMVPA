@@ -415,6 +415,17 @@ class SmartVersion(Version):
 
         # Do ad-hoc comparison of strings
         i = 0
+
+        # if any of the versions was not parsed (e.g. if None was provided),
+        # comparison can't be performed really unless both have no version
+        # assigned
+        if (not hasattr(self, 'version')) and (not hasattr(other, 'version')):
+            return 0
+
+        for v in (self, other):
+            if not (hasattr(v, 'version')):
+                raise ValueError('%s has no version information' % v)
+
         s, o = self.version, other.version
         regex_prerelease = re.compile('~|-?dev|-?rc|-?svn|-?pre|-?beta|-?alpha', re.I)
         for i in xrange(max(len(s), len(o))):
