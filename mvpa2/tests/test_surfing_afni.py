@@ -177,6 +177,8 @@ class SurfTests(unittest.TestCase):
 
         # test NIML I/O
         niml.write(fn, ds)
+
+        # remove extra fields added when reading the file
         ds2 = niml.from_any(fn)
         ds2.a.pop('history')
         ds2.a.pop('filename')
@@ -184,8 +186,10 @@ class SurfTests(unittest.TestCase):
         ds2.sa.pop('stats')
 
         # NIML does not support int64, only int32;
-        # stop this from making the test fail
-        ds2.samples = np.asarray(ds2.samples, dtype=np.int64)
+        # compare equality of values in samples by setting the
+        # datatype the same as in the input (int32 or int64 depending
+        # on the platform)
+        ds2.samples = np.asarray(ds2.samples, dtype=ds.samples.dtype)
         assert_datasets_equal(ds, ds2)
 
 

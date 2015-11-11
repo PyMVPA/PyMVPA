@@ -110,6 +110,12 @@ def test_generate_testing_fmri_dataset(tempfile):
     from mvpa2.testing.regress import generate_testing_fmri_dataset
 
     ds, filename = generate_testing_fmri_dataset(tempfile)
+    try:
+        import IPython
+        assert_true(externals.exists('ipython'))
+    except:
+        assert_false(externals.exists('ipython'))
+        assert('ipython' not in ds.a.versions)
     assert_equal(tempfile, filename)
     assert_true(exists(tempfile))
     ds_reloaded = h5load(tempfile)
