@@ -91,6 +91,21 @@ class CrossValidationTests(unittest.TestCase):
         # need to fail, because it can't be split into training and testing
         assert_raises(ValueError, cv, data)
 
+    def test_pass_sa_cv_raw(self):
+        # dataset with indices
+        data = get_mv_pattern(10)
+        data.sa['attr2bepassed'] = np.arange(data.nsamples)
+        # partitioner for cv on part of the data with raw
+        cv = CrossValidation(
+            sample_clf_nl,
+            NFoldPartitioner(count=2),
+            errorfx=None,
+            pass_attr=['attr2bepassed'])
+        res = cv(data)
+        
+        
+        
+
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(CrossValidationTests)
