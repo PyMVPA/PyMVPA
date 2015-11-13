@@ -33,7 +33,7 @@ from mvpa2.measures.nnsearchlight import sphere_m1nnsearchlight, \
      M1NNSearchlight
 from mvpa2.clfs.knn import kNN
 
-from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere, HollowSphere
+from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere, HollowSphere, CachedQueryEngine
 from mvpa2.misc.errorfx import corr_error, mean_match_accuracy
 from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner
 from mvpa2.generators.permutation import AttributePermutator
@@ -761,6 +761,13 @@ class SearchlightTests(unittest.TestCase):
             # remove those generated left-over files
             for f in glob.glob(tfile + '*'):
                 os.unlink(f)
+
+    def test_cached_qe_gnbsearchlight(self):
+        ds1 = datasets['3dsmall'].copy(deep=True)
+        qe = IndexQueryEngine(myspace=Sphere(2))
+        cached_qe = CachedQueryEngine(qe)
+        gnb_sl = GNBSearchlight(GNB(), NFoldPartitioner(), qe=cached_qe)
+        res = gnb_sl(ds1)
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(SearchlightTests)
