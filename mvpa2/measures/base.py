@@ -619,7 +619,7 @@ class TransferMeasure(Measure):
             # will broadcast to desired length
             res.set_attr(space, ("%s->%s" % (train_chunks, test_chunks),))
         # cleanup to free memory
-        self._postcall(dstest, res)
+        self._pass_attr(dstest, res)
         del dstest
 
         # compute measure stats
