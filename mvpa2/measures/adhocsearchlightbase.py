@@ -14,7 +14,7 @@ import numpy as np
 
 #from numpy import ones, zeros, sum, abs, isfinite, dot
 #from mvpa2.base import warning, externals
-from mvpa2.datasets.base import Dataset
+from mvpa2.datasets import Dataset, vstack
 from mvpa2.misc.errorfx import mean_mismatch_error
 from mvpa2.measures.searchlight import BaseSearchlight
 from mvpa2.base import externals, warning
@@ -425,7 +425,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
             # Otherwise delay assembling the results
             results = []
 
-        all_targets, all_cvfolds = [], []
+        all_testing_sa, all_cvfolds = [], []
 
         # 4. Lets deduce all neighbors... might need to be RF into the
         #    parallel part later on
@@ -540,7 +540,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
                 # and if no errorfx -- we just need to assign original
                 # labels to the predictions BUT keep in mind that it is a matrix
                 results.append(assign_ulabels(predictions))
-                all_targets += [ulabels[i] for i in targets]
+                all_testing_sa.append(split[1])
                 all_cvfolds += [isplit] * len(targets)
 
             pass  # end of the split loop
@@ -555,11 +555,18 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
                   (self.__class__.__name__, time.time() - time_start))
 
         out = Dataset(results)
-        if all_targets:
-            out.sa['targets'] = all_targets
+        if all_testing_sa:
+            all_testing_sa = vstack(all_testing_sa)
+            self._pass_attr(all_testing_sa, out)
         out.sa['cvfolds'] = all_cvfolds
         out.fa['center_ids'] = roi_ids
         return out
+
+    def _pass_attr(self, ds, res):
+        # skip global pass_attr because sizes mismatch
+        if ds.nsamples == res.nsamples:
+            super(SimpleStatBaseSearchlight, self)._pass_attr(ds, res)
+        return res
 
     generator = property(fget=lambda self: self._generator)
     errorfx = property(fget=lambda self: self._errorfx)

@@ -762,6 +762,20 @@ class SearchlightTests(unittest.TestCase):
             for f in glob.glob(tfile + '*'):
                 os.unlink(f)
 
+    def test_adhoc_searchlight_pass_attr(test):
+        ds1 = datasets['3dsmall'].copy(deep=True)
+        # GNB searchlight with raw predictions
+        gnb_sl = GNBSearchlight(
+            GNB(),
+            generator=NFoldPartitioner(count=2),
+            qe=IndexQueryEngine(myspace=Sphere(2)),
+            errorfx=None,
+            pass_attr=ds1.sa.keys())
+        res = gnb_sl(ds1)
+        for k in ds1.sa.keys():
+            assert_in(k, res.sa.keys())
+
+
 def suite():  # pragma: no cover
     return unittest.makeSuite(SearchlightTests)
 
