@@ -19,10 +19,11 @@ from mvpa2.datasets import dataset_wizard, Dataset
 from mvpa2.generators.splitters import Splitter
 from mvpa2.base.node import ChainNode
 from mvpa2.generators.partition import OddEvenPartitioner, NFoldPartitioner, \
-     ExcludeTargetsCombinationsPartitioner
+     ExcludeTargetsCombinationsPartitioner, FactorialPartitioner
 from mvpa2.generators.permutation import AttributePermutator
 from mvpa2.generators.base import  Repeater, Sifter
 from mvpa2.generators.resampling import Balancer
+from mvpa2.misc.data_generators import normal_feature_dataset
 from mvpa2.misc.support import get_nelements_per_value
 
 
@@ -396,3 +397,46 @@ def test_permute_chunks():
     permutation = AttributePermutator(attr='targets',
                                       strategy='chunks')
     assert_raises(ValueError, permutation, ds)
+
+
+def test_factorialpartitioner():
+    # Test against sifter and chainmap implemented in test_usecases
+    # -- code below copied from test_usecases --
+    # Let's simulate the beast -- 6 categories total groupped into 3
+    # super-ordinate, and actually without any 'superordinate' effect
+    # since subordinate categories independent
+    ds = normal_feature_dataset(nlabels=6,
+                                snr=100,   # pure signal! ;)
+                                perlabel=30,
+                                nfeatures=6,
+                                nonbogus_features=range(6),
+                                nchunks=5)
+    ds.sa['subord'] = ds.sa.targets.copy()
+    ds.sa['superord'] = ['super%d' % (int(i[1])%3,)
+                         for i in ds.targets]   # 3 superord categories
+    # let's override original targets just to be sure that we aren't relying on them
+    ds.targets[:] = 0
+
+    npart = ChainNode([
+        ## so we split based on superord
+        NFoldPartitioner(len(ds.sa['superord'].unique),
+                         attr='subord'),
+        ## so it should select only those splits where we took 1 from
+        ## each of the superord categories leaving things in balance
+        Sifter([('partitions', 2),
+                ('superord',
+                 { 'uvalues': ds.sa['superord'].unique,
+                   'balanced': True})
+                ]),
+    ], space='partitions')
+
+    # now the new implementation
+    factpart = FactorialPartitioner(
+        NFoldPartitioner(attr='subord'),
+        attr='superord'
+    )
+
+    partitions_npart = [p.sa.partitions for p in npart.generate(ds)]
+    partitions_factpart = [p.sa.partitions for p in factpart.generate(ds)]
+
+    assert_array_equal(np.sort(partitions_npart), np.sort(partitions_factpart))
