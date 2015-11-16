@@ -19,6 +19,8 @@ from mvpa2.base.node import Node
 from mvpa2.datasets.miscfx import coarsen_chunks
 import mvpa2.misc.support as support
 
+from itertools import product as iterprod
+
 if __debug__:
     from mvpa2.base import debug
 
@@ -489,6 +491,54 @@ class NFoldPartitioner(Partitioner):
             # right away
             return [(None, i) for ind, i in enumerate(combs)
                     if ind < self.count]
+
+
+class FactorialPartitioner(Partitioner):
+    """
+    Given another partitioner on a dataset with two hierarchically organized
+    attributes, generates the combinations of all possible folds of the
+    superordinate attribute with the balanced combinations of the subordinate
+    attribute. For example, splitting familiar and unfamiliar faces while
+    balancing identities in the training/test set.
+
+    ADD EXAMPLE HERE
+    """
+    def __init__(self, partitioner, **kwargs):
+        Partitioner.__init__(self, **kwargs)
+        # store the subordinate partitioner
+        self.partitioner = partitioner
+
+    def generate(self, ds):
+        class FakeDataset(object):
+            def __init__(self, ds):
+                self.sa = ds.sa
+
+            def copy(self, deep=False):
+                assert(not deep)  # dunno how
+                ds = FakeDataset(self)
+                ds.sa = ds.sa.copy(deep=False)
+                return ds
+
+            def __getitem__(self, item):
+                return FakeDataset(self[item])
+
+        #fakeds = FakeDataset(ds)
+        fakeds = ds[:, 0] # alternative
+
+        if self.selection_strategy != 'equidistant':
+            raise NotImplementedError("This strategy is not yet implemented")
+
+        attr_value = ds.sa[self.attr].value
+        uattr = ds.sa[self.attr].unique
+        uattr_masks = [attr_value == u for u in uattr]
+
+        for partitionings in iterprod(*[self.partitioner.generate(fakeds[uattr_mask]) for uattr_mask in uattr_masks]):
+            pds = ds.copy(deep=False)
+            target_partitioning = np.zeros(len(pds), dtype=int)
+            for uattr_mask, partitioning in zip(uattr_masks, partitionings):
+                target_partitioning[uattr_mask] = partitioning.sa[self.partitioner.space].value
+            pds.sa[self.space] = target_partitioning
+            yield pds
 
 
 class ExcludeTargetsCombinationsPartitioner(Node):
