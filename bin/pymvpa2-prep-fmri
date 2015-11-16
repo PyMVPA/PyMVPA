@@ -123,7 +123,7 @@ def main():
 
     verbose(2, "Load image file from '%s'" % func_fname)
     func_nim = nb.load(func_fname)
-    func_nim_hdr = func_nim.get_header()
+    func_nim_hdr = func_nim.header
     func_nim_data = func_nim.get_data()
     func_nim_shape = func_nim_data.shape
 
@@ -216,7 +216,7 @@ def main():
     func_nim_data[mask_nim_data == 0] = 0
     # yoh: NO I don't like (or just don't know how) nibabel API ;)
     nb.Nifti1Image(
-        func_nim_data, None, func_nim.get_header()).to_filename(func_nim_filename)
+        func_nim_data, None, func_nim.header).to_filename(func_nim_filename)
 
 
 if __name__ == '__main__':
