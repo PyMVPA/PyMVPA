@@ -38,10 +38,7 @@ class MelodicResults( object ):
         else:
             self._rpath = rpath
         self._ic = nb.load(pathjoin(rpath, 'melodic_IC' + fext))
-        if externals.versions['nibabel'] >= '1.2':
-            self._icshape = self._ic.shape
-        else:
-            self._icshape = self._ic.get_shape()
+        self._icshape = self._ic.shape
         self._mask = nb.load(pathjoin(rpath, 'mask' + fext))
         self._tmodes = np.loadtxt(pathjoin(rpath, 'melodic_Tmodes' ))
         self._smodes = np.loadtxt(pathjoin(rpath, 'melodic_Smodes'))
