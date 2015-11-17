@@ -76,11 +76,11 @@ class FSLAtlas(XMLBasedAtlas):
             except RuntimeError, e:
                 raise RuntimeError, " Cannot open file " + imagefilename
 
-            resolution_ = ni_image_.get_header().get_zooms()[0]
+            resolution_ = ni_image_.header.get_zooms()[0]
             if resolution is None:
                 # select this one if the best
                 if ni_image is None or \
-                       resolution_ < ni_image.get_header().get_zooms()[0]:
+                       resolution_ < ni_image.header.get_zooms()[0]:
                     ni_image = ni_image_
                     self._image_file = imagefilename
             else:
@@ -102,8 +102,8 @@ class FSLAtlas(XMLBasedAtlas):
         if __debug__:
             debug('ATL__', "Loading atlas data from %s" % self._image_file)
         self._image = ni_image
-        self._resolution = ni_image.get_header().get_zooms()[0]
-        self._origin = np.abs(ni_image.get_header().get_qform()[:3,3])  # XXX
+        self._resolution = ni_image.header.get_zooms()[0]
+        self._origin = np.abs(ni_image.header.get_qform()[:3,3])  # XXX
 
         self._data   = self._image.get_data()
         if len(self._data.shape) == 4:

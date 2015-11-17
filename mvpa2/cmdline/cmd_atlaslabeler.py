@@ -72,7 +72,7 @@ def select_from_volume_iterator(volFileName, lt=None, ut=None):
         raise IOError("Cannot open image file %s" % volFileName)
 
     volData = volFile.get_data()
-    voxdim = volFile.get_header().get_zooms()[:3]
+    voxdim = volFile.header.get_zooms()[:3]
     if lt is None and ut is None:
         mask = volData != 0.0
     elif lt is None and ut is not None:
@@ -470,7 +470,7 @@ def run(args):
             coordsIterator = select_from_volume_iterator(
                 infile, args.lowerThreshold, args.upperThreshold)
             assert(coordT is None)
-            coordT = Linear(niftiInput.get_header().get_qform())
+            coordT = Linear(niftiInput.header.get_qform())
             # lets store volumeQForm for possible conversion of voxels into coordinates
             volQForm = coordT
             # previous iterator returns space coordinates
@@ -494,7 +494,7 @@ def run(args):
 
     if not args.forbidDirectMapping \
            and niftiInput is not None and not args.transformationFile:
-        akwargs = {'resolution': niftiInput.get_header().get_zooms()[0]}
+        akwargs = {'resolution': niftiInput.header.get_zooms()[0]}
         query_voxel = True   # if we can query directly by voxel, do so
 
         akwargs.update(akwargs_common)
@@ -511,13 +511,13 @@ def run(args):
                 " it misspecified, or use -T to provide transformation. Trying"
                 " to proceed" %(args.inputSpace, atlas.space))
             query_voxel = False
-        elif not (niftiInput.get_header().get_qform() == atlas._image.get_header().get_qform()).all():
+        elif not (niftiInput.header.get_qform() == atlas._image.header.get_qform()).all():
             if args.atlasImageFile is None:
                 warning(
                     "Cannot do direct mapping between files with different qforms."
                     " Please provide original transformation (-T)."
                     "\n Input qform:\n%s\n Atlas qform: \n%s"
-                    %(niftiInput.get_header().get_qform(), atlas._image.get_header().get_qform), 1)
+                    %(niftiInput.header.get_qform(), atlas._image.header.get_qform), 1)
                 # reset ability to query by voxels
                 query_voxel = False
             else:
@@ -525,8 +525,8 @@ def run(args):
                     "QForms are different between input image and "
                     "provided atlas image."
                     "\n Input qform of %s:\n%s\n Atlas qform of %s:\n%s"
-                    %(infile, niftiInput.get_header().get_qform(),
-                      args.atlasImageFile, atlas._image.get_header().get_qform()), 1)
+                    %(infile, niftiInput.header.get_qform(),
+                      args.atlasImageFile, atlas._image.header.get_qform()), 1)
         else:
             coordT = None
     else:
@@ -673,7 +673,7 @@ def run(args):
                   "but input wasn't a volume"
             sys.exit(1)
         ni_dump = nb.load(infile)
-        ni_dump_data = np.zeros(ni_dump.get_header().get_data_shape()[:3] + (len(args.levels),))
+        ni_dump_data = np.zeros(ni_dump.header.get_data_shape()[:3] + (len(args.levels),))
 
     # Also check if we have provided voxels but not querying by voxels
     if args.input_voxels:
@@ -788,7 +788,7 @@ def run(args):
         fileIn.close()
 
     if args.dumpmapFile:
-        ni_dump = nb.Nifti1Image(ni_dump_data, None, ni_dump.get_header())
+        ni_dump = nb.Nifti1Image(ni_dump_data, None, ni_dump.header)
         ni_dump.to_filename(args.dumpmapFile)
 
     if args.createSummary:
