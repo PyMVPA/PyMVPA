@@ -54,7 +54,7 @@ def test_openfmri_dataset():
     assert_equal(task_runs, {1: range(1, 13)})
 
     # test access anatomy image
-    assert_equal(of.get_anatomy_image(1, fname='lowres001.nii.gz').get_shape(),
+    assert_equal(of.get_anatomy_image(1, fname='lowres001.nii.gz').shape,
                  (6, 10, 10))
     # try to get an image that isn't there
     assert_raises(IOError, of.get_bold_run_image, 1, 1, 1)

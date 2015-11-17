@@ -28,7 +28,7 @@ def get_raw_haxby2001_data(path=tutorial_data_path, roi='vt'):
         tmpmask[:, :, tmpmask.shape[-1]/2:] = False
         tmpmask[:, :tmpmask.shape[1]/2] = False
         tmpmask[nimg_brain.get_data() > 0] = False
-        mask = nb.Nifti1Image(tmpmask.astype(int), None, nimg.get_header())
+        mask = nb.Nifti1Image(tmpmask.astype(int), None, nimg.header)
         return load_tutorial_data(path=path, roi=mask)
     else:
         return load_tutorial_data(path=path, roi=roi)
