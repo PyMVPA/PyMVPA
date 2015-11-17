@@ -768,6 +768,7 @@ class SearchlightTests(unittest.TestCase):
         cached_qe = CachedQueryEngine(qe)
         gnb_sl = GNBSearchlight(GNB(), NFoldPartitioner(), qe=cached_qe)
         res = gnb_sl(ds1)
+        assert_false(cached_qe.ids is None)
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(SearchlightTests)
