@@ -73,7 +73,7 @@ if len(files):
         verbose(2, "Loading %s" % f)
         try:
             vol = nib.load(f)
-            h = vol.get_header()
+            h = vol.header
         except Exception, e:
             row += ['failed']
             t.append(row)
