@@ -91,5 +91,5 @@ def run(args):
     s[out_of_mask] = 0
 
     verbose(1, "Saving to %s" % args.output)
-    nib.Nifti1Image(s, None, header=nis[0].get_header()).to_filename(args.output)
+    nib.Nifti1Image(s, None, header=nis[0].header).to_filename(args.output)
     return s

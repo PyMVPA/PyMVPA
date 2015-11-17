@@ -221,7 +221,7 @@ slices = plot_map(
             vmax=1.,
             axes=sp,
             anat=anat.get_data(),
-            anat_affine=anat.get_affine(),
+            anat_affine=anat.affine,
          )
 img = pl.gca().get_images()[1]
 cax = pl.axes([.05, .05, .05, .9])
