@@ -105,13 +105,12 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             return arg
         if isinstance(arg, basestring):
             arg = nb.load(arg)
-            argshape = arg.get_shape()
+            argshape = arg.shape
             # Assure that we have 3D (at least)
             if len(argshape)<3:
                 arg = nb.Nifti1Image(
                         arg.get_data().reshape(argshape + (1,)*(3-len(argshape))),
-                        arg.get_affine(),
-                        arg.get_header())
+                        arg.affine, arg.header)
         else:
             argshape = arg.shape
 
@@ -120,7 +119,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                 warning("For now plot_lightbox can handle only 3d, 4d data was provided."
                         " Plotting only the first volume")
             if isinstance(arg, SpatialImage):
-                arg = nb.Nifti1Image(arg.get_data()[..., 0], arg.get_affine(), arg.get_header())
+                arg = nb.Nifti1Image(arg.get_data()[..., 0], arg.affine, arg.header)
             else:
                 arg = arg[..., 0]
         elif len(argshape) != 3:
@@ -133,7 +132,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
         # fov = (np.array(bg.header['pixdim']) * bg.header['dim'])[3:0:-1]
         # aspect = fov[1]/fov[2]
         # just scale by voxel-size ratio (extent is disabled)
-        bg_hdr = bg.get_header()
+        bg_hdr = bg.header
         aspect = bg_hdr.get_zooms()[2] / bg_hdr.get_zooms()[1]
 
         bg = bg.get_data()
