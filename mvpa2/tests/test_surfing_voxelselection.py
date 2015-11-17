@@ -812,8 +812,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                             expected_mask, x)
                         check_image_func = lambda x: check_mask_func(
                             x.get_data()) and \
-                                                     assert_array_equal(x.get_affine(),
-                                                                        expected_image.get_affine())
+                                assert_array_equal(x.affine,
+                                                   expected_image.affine)
 
                         check_mask_func(sel.get_mask(ids_list))
                         check_image_func(sel.get_nifti_image_mask(ids_list))
