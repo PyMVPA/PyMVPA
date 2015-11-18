@@ -110,19 +110,13 @@ def load_tutorial_data(path=None, roi='brain', add_fa=None, flavor=None):
     elif isinstance(roi, int):
         nimg = nb.load(pathjoin(maskpath, 'hoc.nii.gz'))
         tmpmask = nimg.get_data() == roi
-        mask = nb.Nifti1Image(tmpmask.astype(int), nimg.get_affine(),
-                              nimg.get_header())
+        mask = nb.Nifti1Image(tmpmask.astype(int), nimg.affine, nimg.header)
     elif isinstance(roi, tuple) or isinstance(roi, list):
         nimg = nb.load(pathjoin(maskpath, 'hoc.nii.gz'))
-        if externals.versions['nibabel'] >= '1.2':
-            img_shape = nimg.shape
-        else:
-            img_shape = nimg.get_shape()
-        tmpmask = np.zeros(img_shape, dtype='bool')
+        tmpmask = np.zeros(nimg.shape, dtype='bool')
         for r in roi:
             tmpmask = np.logical_or(tmpmask, nimg.get_data() == r)
-        mask = nb.Nifti1Image(tmpmask.astype(int), nimg.get_affine(),
-                              nimg.get_header())
+        mask = nb.Nifti1Image(tmpmask.astype(int), nimg.affine, nimg.header)
     elif isinstance(roi, nb.Nifti1Image):
         mask = roi
     else:

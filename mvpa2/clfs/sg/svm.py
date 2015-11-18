@@ -1,4 +1,4 @@
-# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# emacs: -*- coding: utf-8; mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -77,6 +77,8 @@ from mvpa2.base.state import ConditionalAttribute
 from mvpa2.measures.base import Sensitivity
 
 from sens import *
+
+from mvpa2.support.due import due, BibTeX
 
 if __debug__:
     from mvpa2.base import debug
@@ -286,10 +288,34 @@ class SVM(_SVM):
                           #% (self, e))
 
 
+    @due.dcite(
+        BibTeX("""
+@article{Sonnenburg+2010:Shogun,
+ author = {Sonnenburg, Sören and Rätsch, Gunnar and Henschel, Sebastian
+           and Widmer, Christian and Behr, Jonas and Zien, Alexander
+           and Bona, Fabio de and Binder, Alexander and Gehl, Christian
+           and Franc, Vojtěch},
+ title = {The SHOGUN Machine Learning Toolbox},
+ journal = {J. Mach. Learn. Res.},
+ issue_date = {3/1/2010},
+ volume = {11},
+ month = aug,
+ year = {2010},
+ issn = {1532-4435},
+ pages = {1799--1802},
+ numpages = {4},
+ url = {http://dl.acm.org/citation.cfm?id=1756006.1859911},
+ acmid = {1859911},
+ publisher = {JMLR.org},
+}"""),
+        description="Shogun: Machine learning toolbox. SVM implementations",
+        path="shogun",
+        version=externals.versions['shogun'],
+        tags=["implementation"])
     def _train(self, dataset):
         """Train SVM
         """
-
+        super(SVM, self)._train(dataset)
         # XXX watchout
         # self.untrain()
         newkernel, newsvm = False, False
@@ -703,20 +729,22 @@ class SVM(_SVM):
 
 # Conditionally make some of the implementations available if they are
 # present in the present shogun
-for name, item, params, descr in \
-        [('mpd', "shogun.Classifier.MPDSVM", "('C',), ('binary',)",
-          "MPD classifier from shogun"),
-         ('lightsvm', "shogun.Classifier.SVMLight", "('C',), ('binary',)",
-          "SVMLight classification http://svmlight.joachims.org/"),
-         ('svrlight', "shogun.Regression.SVRLight", "('C','tube_epsilon',), ('regression',)",
-          "SVMLight regression http://svmlight.joachims.org/"),
-         ('krr', "shogun.Regression.KRR", "('tau',), ('regression',)",
-          "Kernel Ridge Regression"),
-         ('svmocas', "shogun.Classifier.SVMOcas", "('C',), ('binary', 'linear')",
-          "SVM with OCAS (Optimized Cutting Plane Algorithm) solver"),
-         ]:
-    if externals.exists('shogun.%s' % name):
-        exec "SVM._KNOWN_IMPLEMENTATIONS[\"%s\"] = (%s, %s, \"%s\")" % (name, item, params, descr)
+if externals.exists('shogun'):
+    for name, item, params, descr in \
+            [('mpd', "shogun.Classifier.MPDSVM", "('C',), ('binary',)",
+              "MPD classifier from shogun"),
+             ('lightsvm', "shogun.Classifier.SVMLight", "('C',), ('binary',)",
+              "SVMLight classification http://svmlight.joachims.org/"),
+             ('svrlight', "shogun.Regression.SVRLight", "('C','tube_epsilon',), ('regression',)",
+              "SVMLight regression http://svmlight.joachims.org/"),
+             ('krr', "shogun.Regression.KRR", "('tau',), ('regression',)",
+              "Kernel Ridge Regression"),
+             ('svmocas', "shogun.Classifier.SVMOcas", "('C',), ('binary', 'linear')",
+              "SVM with OCAS (Optimized Cutting Plane Algorithm) solver"),
+             ]:
+        if externals.exists('shogun.%s' % name):
+            exec "SVM._KNOWN_IMPLEMENTATIONS[\"%s\"] = (%s, %s, \"%s\")" \
+                 % (name, item, params, descr)
 
 # Assign SVM class to limited set of LinearSVMWeights
 LinearSVMWeights._LEGAL_CLFS = [SVM]

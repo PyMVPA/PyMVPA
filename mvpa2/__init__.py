@@ -28,14 +28,14 @@ The mvpa2 package contains the following subpackages and modules:
          `Per B. Sederberg <persed@princeton.edu>`__
          `Nikolaas N. Oosterhof <n.n.oosterhof@googlemail.com>`__
 :requires: Python 2.6+
-:version: 2.4.0
+:version: 2.4.1
 :see: `The PyMVPA webpage <http://www.pymvpa.org>`__
 :see: `GIT Repository Browser <http://github.com/PyMVPA/PyMVPA>`__
 
 :license: The MIT License <http://www.opensource.org/licenses/mit-license.php>
-:copyright: |copy| 2006-2014 Michael Hanke <michael.hanke@gmail.com>
-:copyright: |copy| 2007-2014 Yaroslav O. Halchenko <debian@onerussian.com>
-:copyright: |copy| 2012-2014 Nikolaas N. Oosterhof <n.n.oosterhof@googlemail.com>
+:copyright: |copy| 2006-2015 Michael Hanke <michael.hanke@gmail.com>
+:copyright: |copy| 2007-2015 Yaroslav O. Halchenko <debian@onerussian.com>
+:copyright: |copy| 2012-2015 Nikolaas N. Oosterhof <n.n.oosterhof@googlemail.com>
 
 .. |copy| unicode:: 0xA9 .. copyright sign
 """
@@ -43,7 +43,7 @@ The mvpa2 package contains the following subpackages and modules:
 __docformat__ = 'restructuredtext'
 
 # canonical PyMVPA version string
-__version__ = '2.4.0'
+__version__ = '2.4.1'
 
 import os
 from os.path import join as pathjoin
@@ -174,3 +174,16 @@ if cfg.getboolean('debug', 'pdb', default=False):
 
 if __debug__:
     debug('INIT', 'mvpa end')
+
+# Setup duecredit entry for the entire PyMVPA
+from .support.due import due, Doi
+due.cite(
+    Doi("10.1007/s12021-008-9041-y"),
+    description="Multivariate pattern analysis of neural data",
+    tags=["reference-implementation"],
+    path="mvpa2")
+due.cite(
+    Doi("10.3389/neuro.11.003.2009"),
+    description="Demonstration of PyMVPA capabilities concerning multi-modal or modality-agnostic data analysis",
+    tags=["edu,use"],
+    path="mvpa2")

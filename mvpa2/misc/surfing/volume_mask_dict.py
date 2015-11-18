@@ -955,16 +955,20 @@ def _dict_with_arrays2array_tuple(d):
         return pt == qt or np.issubdtype(pt, qt)
 
 
+
     for i, (key, length) in enumerate(zip(keys, lengths)):
         v = d[key]
 
         if i == 0:
+            value_dtypes=[d[key].dtype for key in keys]
+            common_dtype=np.find_common_type(value_dtypes,[])
+
+            if common_dtype==np.dtype('O'):
+                raise TypeError('Elements for auxilery attribute "%s" '
+                                    'have different types' % key)
+
             # allocate space for all data in d
-            data = np.zeros((ntotal,), dtype=v.dtype)
-        elif v.dtype != data.dtype:
-            # ensure all values in the dict have the same datatype
-            raise ValueError('Type mismatch for keys %s and %s: %s != %s' %
-                                (keys[0], key, data.dtype, v.dtype))
+            data = np.zeros((ntotal,), dtype=common_dtype)
 
         idxs = np.arange(length) + pos
         data[idxs] = v

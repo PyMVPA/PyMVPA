@@ -31,24 +31,41 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
-* 2.4.1 (???)
+* 2.4.1 (Wed, 18 Nov 2015)
 
   * New functionality
 
-  * Enhancements
-
-    - Unified use of os.path.join as pathjoin.
-    - :class:`~mvpa.mappers.procrustean.ProcrusteanMapper` computes reconstruction
-      now more efficiently (just a transpose with proper scaling) in case of
-      non-oblique transformations.
     - :class:`~mvpa.datasets.gifti` can write GIFTI files that contain both
       dataset samples and surface anatomy (vertices and faces). Such GIFTI
       files can be read by FreeSurfer.
 
+  * Deprecations/removal
+
+    - :file:`tools/niils` -- tool removed, since the functionality was moved into
+      :mod:`nibabel` under the name `nib-ls`
+    - Drop support for nibabel < 2.0.0
+
+  * Enhancements
+
+    - "Native" use of :mod:`~duecredit` to provide citations for PyMVPA itself
+      and functionality/methods it implements.
+    - Unified use of os.path.join as pathjoin.
+    - :class:`~mvpa.mappers.procrustean.ProcrusteanMapper` computes reconstruction
+      now more efficiently (just a transpose with proper scaling) in case of
+      non-oblique transformations.
+
+  * Refactorings/misc changes
+
+    - :class:`~mvpa.mappers.procrustean.ProcrusteanMapper` now just returns transpose
+      in reverse if transformation is non-oblique (instead of an explicit inverse).
 
   * Fixes
 
     - 2.4.0 was released with incorrect `__version__` (as 2.3.1)
+    - Fixes to `ofmotionqc` command implementation
+    - Variety of fixes for compatibility with recent matplotlib, python3
+    - Fixes to SVDMapper in reverse when projection is not a matrix
+
 
 * 2.4.0 (Mon, 11 May 2015)
 

@@ -1,4 +1,4 @@
-include AUTHOR COPYING MANIFEST.in setup.*
+include AUTHOR COPYING MANIFEST.in setup.* py3tool.py
 include Changelog TODO Makefile*
 recursive-include doc *
 recursive-include tools *

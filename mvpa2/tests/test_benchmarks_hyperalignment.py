@@ -56,7 +56,7 @@ def test_timesegments_classification():
     errors_nonoverlapping = timesegments_classification(dss_noisy, nohyper,
                                                         overlapping_windows=False)
     assert(np.all(errors_nonoverlapping <= 1.))
-    assert(np.all(0.85 <= errors_nonoverlapping))
+    assert(np.all(0.75 <= errors_nonoverlapping))
 
     errors_overlapping = timesegments_classification(dss_noisy, nohyper)
     # nononverlapping error should be less for random result
@@ -80,3 +80,4 @@ def test_get_nonoverlapping_startpoints():
     assert_equal(_get_nonoverlapping_startpoints(4, 3), [0])
     assert_equal(_get_nonoverlapping_startpoints(5, 3), [0])
     assert_equal(_get_nonoverlapping_startpoints(6, 3), [0, 3])
+

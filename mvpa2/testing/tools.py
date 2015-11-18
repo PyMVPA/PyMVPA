@@ -22,6 +22,7 @@ import numpy as np
 
 import mvpa2
 from mvpa2.base import externals, warning
+from mvpa2.base.dochelpers import strip_strid
 
 if __debug__:
     from mvpa2.base import debug
@@ -75,8 +76,13 @@ def assert_dict_keys_equal(x, y):
 
 def assert_reprstr_equal(x, y):
     """Whenever comparison fails otherwise, we might revert to compare those"""
-    assert_equal(repr(x), repr(y))
-    assert_equal(str(x), str(y))
+    if __debug__ and ("ID_IN_REPR" in debug.active or "DS_ID" in debug.active):
+        repr_ = lambda x: strip_strid(repr(x))
+        str_ = lambda x: strip_strid(str(x))
+    else:
+        repr_, str_ = repr, str
+    assert_equal(repr_(x), repr_(y))
+    assert_equal(str_(x), str_(y))
 
 
 
@@ -94,7 +100,9 @@ def assert_collections_equal(x, y, ignore={}):
             continue
         if isinstance(v1, np.ndarray):
             assert_array_equal(v1, v2)
-        elif isinstance(v1, Node) and not (hasattr(v1, '__cmp__') or hasattr(v1, '__eq__')):
+        elif isinstance(v1, Node) and not (
+                hasattr(v1, '__cmp__')
+                or (hasattr(v1, '__eq__') and v1.__class__.__eq__ is not object.__eq__)):
             # we don't have comparators inplace for all of them yet, so test
             # based on repr and str
             assert_reprstr_equal(v1, v2)
