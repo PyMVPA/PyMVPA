@@ -10,10 +10,10 @@ cache:
   - apt
 env:
  global:
-    - PY=python PYSUF=''
+    - PY=python PYSUF='' PYPI=0
     # - PYTHON=python3 PYSUF=3 : python3-numpy not currently available
  matrix:
-    - PYTHON=$PY DOCTESTS=--with-doctest
+    - PYTHON=$PY DOCTESTS=--with-doctest PYPI=1
     - PYTHON="$PY -O" DOCTESTS=--with-doctest
     # Doctests are unguarded against absent externals, so no --with-doctest for them
     - PYTHONPATH=mvpa2/tests/badexternals
@@ -57,3 +57,14 @@ script:
     - make build PYTHON=python3
 after_success:
     - if [ ! -z "$COVERAGE" ]; then coveralls; fi
+deploy:
+  provider: pypi
+  distributions: sdist
+  user: yarikoptic
+  password:
+    secure: mTxbioGS+sdfxnJRbAGZCxjWlaGJx+KqXPfYGESKcg6IVaSUM9D4CUhxgHHW88FYSnkmCvwuu57w7AAot9FyG6Q/1q656gluCbEJzfDJerSH1S06HqAEmjSPJvIEG/zwvPIUm3RPc+8j9XtedztM3aVWkqBHAzvUzEnsX1jJpic=
+  on:
+    tags: true
+    branch: master
+    repo: PyMVPA/PyMVPA
+    condition: "$PYPI == 1 && $TRAVIS_TAG =~ ^upstream/.*"
