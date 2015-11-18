@@ -35,6 +35,11 @@ Releases
 
   * New functionality
 
+  * Deprecations/removal
+
+    - :file:`tools/niils` -- tool removed, since the functionality was moved into
+      :mod:`nibabel` under the name `nib-ls`
+
   * Enhancements
 
     - "Native" use of :mod:`~duecredit` to provide citations for PyMVPA itself
