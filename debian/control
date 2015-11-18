@@ -5,7 +5,7 @@ Maintainer: NeuroDebian team <team@neuro.debian.net>
 Uploaders: Michael Hanke <mih@debian.org>, Yaroslav Halchenko <debian@onerussian.com>
 Build-Depends: debhelper (>= 7.0.50~),
                python-all-dev (>= 2.6.6-3~),
-               swig,
+               swig2.0 | swig (< 3.0.5),
                python-numpy, python-scipy,
                python-nibabel,
                python-nose,
@@ -17,6 +17,7 @@ Build-Depends: debhelper (>= 7.0.50~),
                graphviz, inkscape, imagemagick, bc,
                python-matplotlib,
                python-statsmodels,
+Build-Conflicts: swig3.0 (>= 3.0.5),
 Standards-Version: 3.9.6
 Homepage: http://www.pymvpa.org
 Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/pymvpa.git

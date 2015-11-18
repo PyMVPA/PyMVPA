@@ -1,8 +1,11 @@
 pymvpa2 (2.4.1-1) unstable; urgency=medium
 
   * Fresh upstream release
+  * debian/control
+    - Use swig2.0 (or swig3.0 < 3.0.5).
+      See https://github.com/swig/swig/issues/563
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 17 Nov 2015 21:32:16 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 18 Nov 2015 13:24:34 -0500
 
 pymvpa2 (2.4.0.1-1) unstable; urgency=medium
 
