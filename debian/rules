@@ -12,6 +12,8 @@ upstreamver = $(shell echo $(debver) | sed -e 's/-[^-]*$$//' )
 gitver = $(shell [ -x /usr/bin/git ] && git describe --tags --match 'upstream/*' $$(git merge-base -a HEAD master) | sed -e 's,^upstream/,,' -e 's/\.dev/~dev/' -e 's/\.rc/~rc/')
 
 export HOME=$(CURDIR)/build
+# so we could use custom symlinked swig2.0
+export PATH:=$(PATH):$(HOME)
 
 # one ring to rule them all ...
 %:
@@ -22,6 +24,7 @@ override_dh_auto_configure:
 	dh_auto_configure
 	mkdir -p $(CURDIR)/build
 	cp -rp debian/intersphinx doc/source/
+	which swig >/dev/null || ln -s /usr/bin/swig2.0 $(CURDIR)/build/swig
 
 override_dh_auto_build:
 	dh_auto_build -- --with-libsvm
