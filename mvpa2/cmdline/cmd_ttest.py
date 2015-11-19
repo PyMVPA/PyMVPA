@@ -116,9 +116,12 @@ def run(args):
 
     verbose(1, "Saving to %s" % args.output)
     filetype_out = check_filetype(args.output)
-    if filetype_out == 'nifti':
+    if filetype_out == 'nifti' and filetype_in == 'nifti':
         nib.Nifti1Image(s, None, header=nis[0].header).to_filename(args.output)
     else:
+        if filetype_out == 'nifti':
+            warning('Coercing output to hdf5 because input was hdf5')
+            args.output += '.hdf5'
         s = Dataset(s, sa=dss[0].sa, fa=dss[0].fa, a=dss[0].a)
         h5save(args.output, s)
     return s
