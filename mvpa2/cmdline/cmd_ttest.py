@@ -23,7 +23,10 @@ import copy
 import sys
 import argparse
 from mvpa2.base import verbose, warning, error
+from mvpa2.base.hdf5 import h5load, h5save
 from mvpa2.datasets import vstack
+from mvpa2.datasets.base import Dataset
+
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers \
@@ -58,14 +61,35 @@ def setup_parser(parser):
                         belong to.  E.g. if values are accuracies, it would be the
                         'greater', if errors -- the 'less'""")
 
+def check_filetype(fn):
+    if '.nii' in fn:
+        filetype = 'nifti'
+    elif '.hdf5' in fn or '.h5' in fn:
+        filetype = 'hdf5'
+    else:
+        raise TypeError('Unrecognized file format')
+
+    return filetype
+
+
 def run(args):
     verbose(1, "Loading %d result files" % len(args.data))
-    # TODO: support hdf5 datasets
-    nis = [nib.load(f) for f in args.data]
-    data = np.asarray([ni.get_data() for ni in nis])
+
+    filetype = check_filetype(args.data[0])
+
+    if filetype == 'nifti':
+        nis = [nib.load(f) for f in args.data]
+        data = np.asarray([ni.get_data() for ni in nis])
+    elif filetype == 'hdf5':
+        dss = [h5load(f) for f in args.data]
+        data = np.asarray([d.samples for d in dss])
 
     if args.mask:
-        mask = nib.load(args.mask).get_data()
+        filetype_mask = check_filetype(args.mask)
+        if filetye_mask == 'nifti':
+            mask = nib.load(args.mask).get_data()
+        elif filetype_mask == 'hdf5':
+            mask = h5load(args.mask)
         out_of_mask = mask == 0
     else:
         # just take where no voxel had a value
@@ -91,5 +115,10 @@ def run(args):
     s[out_of_mask] = 0
 
     verbose(1, "Saving to %s" % args.output)
-    nib.Nifti1Image(s, None, header=nis[0].header).to_filename(args.output)
+    filetype_out = check_filetype(args.output)
+    if filetype_out == 'nifti':
+        nib.Nifti1Image(s, None, header=nis[0].header).to_filename(args.output)
+    else:
+        s = Dataset(s, sa=dss[0].sa, fa=dss[0].fa, a=dss[0].a)
+        h5save(args.output, s)
     return s
