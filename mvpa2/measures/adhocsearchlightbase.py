@@ -15,7 +15,7 @@ import numpy as np
 #from numpy import ones, zeros, sum, abs, isfinite, dot
 #from mvpa2.base import warning, externals
 from mvpa2.datasets import Dataset, vstack
-from mvpa2.base.dataset import SampleAttributesCollection
+from mvpa2.base.dataset import SampleAttributesCollection, FeatureAttributesCollection
 from mvpa2.misc.errorfx import mean_mismatch_error
 from mvpa2.measures.searchlight import BaseSearchlight
 from mvpa2.base import externals, warning
@@ -426,7 +426,13 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
             # Otherwise delay assembling the results
             results = []
 
-        all_testing_sa, all_cvfolds = [], []
+        mocked_res = Dataset([0],fa=FeatureAttributesCollection(length=dataset.nfeatures))
+        mocked_res = super(SimpleStatBaseSearchlight, self)._pass_attr(dataset[:1], mocked_res)
+        pass_sa_names = mocked_res.sa.keys()
+        'targets' in pass_sa_names or pass_sa_names.append('targets')
+        del mocked_res
+        all_testing_sa = dict([(sa_name,[]) for sa_name in pass_sa_names])
+        all_cvfolds = []
 
         # 4. Lets deduce all neighbors... might need to be RF into the
         #    parallel part later on
@@ -541,7 +547,8 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
                 # and if no errorfx -- we just need to assign original
                 # labels to the predictions BUT keep in mind that it is a matrix
                 results.append(assign_ulabels(predictions))
-                all_testing_sa.append(split[1].sa)
+                for sa_name in pass_sa_names:
+                    all_testing_sa[sa_name].append(split[1].sa[sa_name].value)
                 all_cvfolds += [isplit] * len(targets)
 
             pass  # end of the split loop
@@ -562,17 +569,16 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         return out
 
     def _pass_attr(self, ds, result):
-        if self._all_testing_sa:
+        if self._all_testing_sa['targets']:
             all_testing_sa = self._all_testing_sa
             new_sas = {}
-            for attr in all_testing_sa[0].keys():
-                new_sas[attr] = np.concatenate([tsa[attr].value for tsa in all_testing_sa], 0)
-            result.sa['targets'] = new_sas['targets']
-            mock_attr_ds = Dataset(np.zeros((1,1)))
-            mock_attr_ds.sa = SampleAttributesCollection(new_sas)
+            for attr, values in all_testing_sa.items():
+                new_sas[attr] = np.concatenate(values, 0)
+            mock_attr_ds = Dataset([], a=ds.a,)
             mock_attr_ds.fa = ds.fa
-            mock_attr_ds.a  = ds.a
+            mock_attr_ds.sa = SampleAttributesCollection(new_sas)
             ds = mock_attr_ds
+            del self._all_testing_sa
         return super(SimpleStatBaseSearchlight, self)._pass_attr(ds, result)
 
     generator = property(fget=lambda self: self._generator)
