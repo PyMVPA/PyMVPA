@@ -256,9 +256,9 @@ def test_noncontiguous():
     ds.sa['partitions'] = (ds.chunks==chunk)+1
     res = nc(ds)
     trim_mask = np.logical_and(ds.sa.partitions==1, np.abs(ds.chunks-chunk)<=dist)
-    assert_array_equal( res.sa.partitions[trim_mask], 3)
-    assert_array_equal( res.sa.partitions[np.logical_not(trim_mask)],
-                        ds.sa.partitions[np.logical_not(trim_mask)])
+    assert_array_equal(res.sa.partitions[trim_mask], 3)
+    assert_array_equal(res.sa.partitions[np.logical_not(trim_mask)], 
+                       ds.sa.partitions[np.logical_not(trim_mask)])
 
 def test_repeater():
     reps = 4
