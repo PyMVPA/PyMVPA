@@ -361,10 +361,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         # indicies
         # XXX we could make it even more lightweight I guess...
         dataset_indicies = Dataset(np.arange(nsamples), sa=dataset.sa)
-        if self._splitter is None:
-            splitter = Splitter(attr=generator.get_space())
-        else:
-            splitter = self._splitter
+        splitter = self._splitter or Splitter(attr=generator.get_space())
         partitions = list(generator.generate(dataset_indicies))
         if __debug__:
             for p in partitions:
