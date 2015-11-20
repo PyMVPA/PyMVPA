@@ -397,11 +397,15 @@ class IterativeFeatureSelection(FeatureSelection):
         self._bestdetector = bestdetector
         self._train_pmeasure = train_pmeasure
 
+    # TODO!
+    #def __repr__(self):
+    #    raise NotImplementedError
 
     def _untrain(self):
         if __debug__:
             debug("FS_", "Untraining Iterative FS: %s" % self)
-        self._fmeasure.untrain()
+        if self._fmeasure is not None:
+            self._fmeasure.untrain()
         if self._pmeasure is not None:
             self._pmeasure.untrain()
         # ask base class to do its untrain
