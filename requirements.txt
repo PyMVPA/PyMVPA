@@ -1,0 +1,8 @@
+# should be present but installing via pip might be too lengthy
+# numpy
+# scipy
+# sklearn
+duecredit
+nibabel
+# not compatible ATM with python3
+# pprocess
