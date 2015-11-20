@@ -98,14 +98,11 @@ class CrossValidationTests(unittest.TestCase):
         # partitioner for cv on part of the data with raw
         cv = CrossValidation(
             sample_clf_nl,
-            NFoldPartitioner(count=2),
+            NFoldPartitioner(count=2, selection_strategy='first'),
             errorfx=None,
             pass_attr=['attr2bepassed'])
         res = cv(data)
-        
-        
-        
-
+        assert_array_equal(res.sa.attr2bepassed,data.sa.attr2bepassed[data.sa.chunks<=2])
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(CrossValidationTests)
