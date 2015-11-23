@@ -61,6 +61,9 @@ def setup_parser(parser):
         metavar="y_jitter", default=0.,
         help="Half-width of the uniform jitter to add to y-coords. Useful"
              " for quantized (thus overlapping) data")
+    parser.add_argument("-o", "--output-img",
+                        help="Where to output png of the scatterplot. If selected,"
+                             "no figure will be shown")
 ##
 ## #    parser.usage = "%s [OPTIONS] FILE1 FILE2 [FILE...] \n\n" % sys.argv[0] + __doc__
 ## #    parser.option_groups = [opts.common]
