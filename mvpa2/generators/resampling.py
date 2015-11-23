@@ -231,7 +231,7 @@ class NonContiguous(Node):
         dist : all type of value that can be compared to dist_attr
           the minimum distance between the samples to the 2 splits of data
         split_attr : str
-          the attribute describing the split
+          the attribute describing the split, default "partitions"
         split_keep : list
           the list of splits that are to be kept : default [2] (testing)
         split_trim : list
