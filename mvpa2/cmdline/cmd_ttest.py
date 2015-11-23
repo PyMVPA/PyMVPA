@@ -61,13 +61,16 @@ def setup_parser(parser):
                         belong to.  E.g. if values are accuracies, it would be the
                         'greater', if errors -- the 'less'""")
 
-def check_filetype(fn):
-    if '.nii' in fn:
+def guess_backend(fn):
+    if fn.endswith('.gz'):
+        fn = fn.strip('.gz')
+    if fn.endswith('.nii'):
         filetype = 'nifti'
-    elif '.hdf5' in fn or '.h5' in fn:
+    elif fn.endswith('.hdf5') or fn.endswith('.h5') in fn:
         filetype = 'hdf5'
     else:
-        raise TypeError('Unrecognized file format')
+        # assume default
+        filetype ='nifti'
 
     return filetype
 
@@ -75,7 +78,7 @@ def check_filetype(fn):
 def run(args):
     verbose(1, "Loading %d result files" % len(args.data))
 
-    filetype = check_filetype(args.data[0])
+    filetype = guess_backend(args.data[0])
 
     if filetype == 'nifti':
         nis = [nib.load(f) for f in args.data]
@@ -85,8 +88,8 @@ def run(args):
         data = np.asarray([d.samples for d in dss])
 
     if args.mask:
-        filetype_mask = check_filetype(args.mask)
-        if filetye_mask == 'nifti':
+        filetype_mask = guess_backend(args.mask)
+        if filetype_mask == 'nifti':
             mask = nib.load(args.mask).get_data()
         elif filetype_mask == 'hdf5':
             mask = h5load(args.mask)
@@ -115,8 +118,8 @@ def run(args):
     s[out_of_mask] = 0
 
     verbose(1, "Saving to %s" % args.output)
-    filetype_out = check_filetype(args.output)
-    if filetype_out == 'nifti' and filetype_in == 'nifti':
+    filetype_out = guess_backend(args.output)
+    if filetype_out == 'nifti' and filetype == 'nifti':
         nib.Nifti1Image(s, None, header=nis[0].header).to_filename(args.output)
     else:
         if filetype_out == 'nifti':
