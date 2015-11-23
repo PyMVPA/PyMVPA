@@ -66,7 +66,7 @@ def guess_backend(fn):
         fn = fn.strip('.gz')
     if fn.endswith('.nii'):
         filetype = 'nifti'
-    elif fn.endswith('.hdf5') or fn.endswith('.h5') in fn:
+    elif fn.endswith('.hdf5') or fn.endswith('.h5'):
         filetype = 'hdf5'
     else:
         # assume default
