@@ -35,7 +35,8 @@ from mvpa2.clfs.knn import kNN
 
 from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere, HollowSphere
 from mvpa2.misc.errorfx import corr_error, mean_match_accuracy
-from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner
+from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner, CustomPartitioner
+from mvpa2.generators.splitters import Splitter
 from mvpa2.generators.permutation import AttributePermutator
 from mvpa2.measures.base import CrossValidation
 
@@ -761,6 +762,30 @@ class SearchlightTests(unittest.TestCase):
             # remove those generated left-over files
             for f in glob.glob(tfile + '*'):
                 os.unlink(f)
+
+    @raises(ValueError)
+    def test_gnbsearghlight_exclude_partition(self):
+        ds1 = datasets['3dsmall'].copy(deep=True)
+        
+        gnb_sl = GNBSearchlight(
+            GNB(),
+            generator=CustomPartitioner([([0],[1])]),
+            qe=IndexQueryEngine(myspace=Sphere(2)),
+            errorfx=None)
+        res = gnb_sl(ds1)
+
+    def test_splitter_gnbsearghlight(self):
+        ds1 = datasets['3dsmall'].copy(deep=True)
+        
+        gnb_sl = GNBSearchlight(
+            GNB(),
+            generator=CustomPartitioner([([0],[1])]),
+            qe=IndexQueryEngine(myspace=Sphere(2)),
+            splitter=Splitter(attr='partitions', attr_values=[1,2]),
+            errorfx=None)
+        res = gnb_sl(ds1)
+        assert_equal(res.nsamples, (ds1.chunks==1).sum())        
+        
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(SearchlightTests)
