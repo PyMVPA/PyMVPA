@@ -35,6 +35,8 @@ def get_testing_fmri_dataset_filename():
 
     return pathjoin(pymvpa_dataroot, 'testing', 'fmri_dataset', filename)
 
+get_testing_fmri_dataset_filename.__test__ = False
+
 
 def generate_testing_fmri_dataset(filename=None):
     """Helper to generate a dataset for regression testing of mvpa2/nibabel
