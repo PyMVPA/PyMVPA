@@ -1936,16 +1936,23 @@ def normalized(v):
     Parameters
     ==========
     v: np.ndarray
-        PxQ matrix for P vectors that are all Q-dimensional
+        PxQ matrix for P vectors that are all Q-dimensional,
+        or vector with Q elements
 
     Returns
     =======
     n: np.ndarray
-        P-valued vector with the norm for each vector
+        P-valued vector with the norm for each row in the input (if the input
+        is a matrix), or a scalar value of the norm of the input (if the input
+        is a vector)
+
+
     '''
 
-    v_norm = np.sqrt(np.sum(v ** 2, 1))
-    return v / np.reshape(v_norm, (-1, 1))
+    axis=len(v.shape)-1
+    v_norm = np.sqrt(np.sum(v ** 2, axis))
+    print v, v_norm
+    return v / v_norm
 
 
 

@@ -188,6 +188,32 @@ class SurfTests(unittest.TestCase):
 
         assert_true(s.nodes_on_border(0))
 
+
+    def test_surf_normalized(self):
+        def assert_is_unit_norm(v):
+            assert_almost_equal(1., np.sum(v*v))
+            assert_equal(v.shape, (len(v),))
+
+        def assert_same_direction(v,w):
+            assert_almost_equal(v.dot(w),(v.dot(v)*w.dot(w))**.5)
+
+        def helper_test_vec_normalized(v):
+            v_norm=surf.normalized(v)
+            assert_is_unit_norm(v_norm)
+            assert_same_direction(v,v_norm)
+
+        sizes=[(8,),(3,4)]
+
+        for size in sizes:
+            v=np.random.normal(size=size)
+            if len(size)==1:
+                helper_test_vec_normalized(v)
+            else:
+                for i in xrange(v.shape[1]):
+                    helper_test_vec_normalized(v[:,i])
+
+
+
     @with_tempfile('.asc', 'test_surf')
     def test_surf_fs_asc(self, temp_fn):
         s = surf.generate_sphere(5) * 100
