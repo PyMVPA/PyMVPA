@@ -190,6 +190,7 @@ class SurfTests(unittest.TestCase):
 
 
     def test_surf_normalized(self):
+
         def assert_is_unit_norm(v):
             assert_almost_equal(1., np.sum(v*v))
             assert_equal(v.shape, (len(v),))
@@ -202,15 +203,25 @@ class SurfTests(unittest.TestCase):
             assert_is_unit_norm(v_norm)
             assert_same_direction(v,v_norm)
 
-        sizes=[(8,),(3,4)]
+            return v_norm
+
+        sizes=[(8,),(7,4)]
 
         for size in sizes:
             v=np.random.normal(size=size)
             if len(size)==1:
                 helper_test_vec_normalized(v)
             else:
-                for i in xrange(v.shape[1]):
-                    helper_test_vec_normalized(v[:,i])
+                # test for vectors and for matrix
+                v_n = surf.normalized(v)
+
+                n_vecs=v.shape[1]
+                for i in xrange(n_vecs):
+                    v_n_i=helper_test_vec_normalized(v[i,:])
+                    assert_array_almost_equal(v_n_i, v_n[i,:])
+
+
+
 
 
 

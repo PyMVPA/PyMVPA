@@ -1921,9 +1921,11 @@ def normalized(v):
 
     '''
 
-    axis=len(v.shape)-1
+    axis = len(v.shape) - 1
     v_norm = np.sqrt(np.sum(v ** 2, axis))
-    print v, v_norm
+
+    v_norm = v_norm.reshape(v_norm.shape + (1,))
+
     return v / v_norm
 
 
