@@ -18,8 +18,8 @@ import os, collections, datetime, time, heapq, math
 
 import numpy as np
 
-_COORD_EPS = 1e-14 # maximum allowed difference between coordinates
-                   # in order to be considered equal
+_COORD_EPS = 1e-14  # maximum allowed difference between coordinates
+# in order to be considered equal
 
 class Surface(object):
     '''Cortical surface mesh
@@ -46,6 +46,7 @@ class Surface(object):
     s : Surface
         a surface specified by vertices and faces
     '''
+
     def __init__(self, v, f=None, check=True):
         # set vertices
         v = np.asarray(v)
@@ -86,13 +87,14 @@ class Surface(object):
         unqf = np.unique(self._f)
         if unqf.size != self._nv:
             from mvpa2.base import warning
-            warning("Count mismatch for face range (%d!=%d), "
-                            "faces without node: %r" % (unqf.size, self._nv,
-                                    len(set(range(self._nv)) - set(unqf))))
 
+            warning("Count mismatch for face range (%d!=%d), "
+                    "faces without node: %r" % (unqf.size, self._nv,
+                                                len(set(range(self._nv)) - set(unqf))))
 
         if np.any(unqf != np.arange(self._nv)):
             from mvpa2.base import warning
+
             warning("Missing values in faces")
 
     @property
@@ -138,12 +140,12 @@ class Surface(object):
             n, f, v = self.nfaces, self.faces, self.vertices
 
             f2el = np.zeros((n, 3))
-            p = v[f[:, 0]] # first coordinate
+            p = v[f[:, 0]]  # first coordinate
             for i in xrange(3):
-                q = v[f[:, (i + 1) % 3]] # second coordinate
-                d = p - q # difference vector
+                q = v[f[:, (i + 1) % 3]]  # second coordinate
+                d = p - q  # difference vector
 
-                f2el[:, i] = np.sum(d * d, 1) ** .5 # length
+                f2el[:, i] = np.sum(d * d, 1) ** .5  # length
                 p = q
 
             v = f2el.view()
@@ -193,7 +195,6 @@ class Surface(object):
 
         return self._v2ael
 
-
     @property
     def edge2face(self):
         '''A mapping from edges to the face that contains that edge
@@ -212,7 +213,6 @@ class Surface(object):
         if not hasattr(self, '_e2f'):
             faces = self.faces
 
-
             e2f = dict()
             for i in xrange(self.nfaces):
                 for j in xrange(3):
@@ -223,9 +223,7 @@ class Surface(object):
                     e2f[e] = i
             self._e2f = e2f
 
-        return dict(self._e2f) # make a copy
-
-
+        return dict(self._e2f)  # make a copy
 
     @property
     def neighbors(self):
@@ -245,7 +243,6 @@ class Surface(object):
         This function computes nbrs if called for the first time, otherwise
         it caches the results and returns these immediately on the next call'''
 
-
         if not hasattr(self, '_nbrs'):
             nbrs = dict()
             for i in xrange(self._nf):
@@ -263,8 +260,8 @@ class Surface(object):
 
                     # writing this out seems a bit quicker - but have to test
                     sqdist = ((pv[0] - qv[0]) * (pv[0] - qv[0])
-                           + (pv[1] - qv[1]) * (pv[1] - qv[1])
-                           + (pv[2] - qv[2]) * (pv[2] - qv[2]))
+                              + (pv[1] - qv[1]) * (pv[1] - qv[1])
+                              + (pv[2] - qv[2]) * (pv[2] - qv[2]))
 
                     dist = math.sqrt(sqdist)
                     if not p in nbrs:
@@ -277,7 +274,7 @@ class Surface(object):
 
             self._nbrs = nbrs
 
-        return dict(self._nbrs) # make a copy
+        return dict(self._nbrs)  # make a copy
 
     def circlearound_n2d(self, src, radius, metric='euclidean'):
         '''Finds the distances from a center node to surrounding nodes.
@@ -300,12 +297,12 @@ class Surface(object):
             "src" to node "j".
         '''
 
-        shortmetric = metric.lower()[0] # only take first letter - for now
+        shortmetric = metric.lower()[0]  # only take first letter - for now
 
         if shortmetric == 'e':
             ds = self.euclidean_distance(src)
             c = dict((nd, d) for (nd, d) in zip(xrange(self._nv), ds)
-                                            if d <= radius)
+                     if d <= radius)
 
         elif shortmetric == 'd':
             c = self.dijkstra_distance(src, maxdistance=radius)
@@ -314,7 +311,6 @@ class Surface(object):
             raise Exception("Unknown metric %s" % metric)
 
         return c
-
 
     def dijkstra_distance(self, src, maxdistance=None):
         '''Computes Dijkstra distance from one node to surrounding nodes
@@ -340,8 +336,7 @@ class Surface(object):
         results to geodesic distances (unpublished results, NNO)
         '''
 
-
-        tdist = {src:0} # tentative distances
+        tdist = {src: 0}  # tentative distances
         fdist = dict()  # final distances
         candidates = []
 
@@ -357,22 +352,22 @@ class Surface(object):
             d, i = heapq.heappop(candidates)
 
             if i in fdist:
-                continue # we already have a final distance for this node
+                continue  # we already have a final distance for this node
 
-            nbr = nbrs[i] # neighbours of current candidate
+            nbr = nbrs[i]  # neighbours of current candidate
 
             for nbr_i, nbr_d in nbr.items():
                 dnew = d + nbr_d
 
                 if not maxdistance is None and dnew > maxdistance:
-                    continue # skip if too far away
+                    continue  # skip if too far away
 
                 if nbr_i not in tdist or dnew < tdist[nbr_i]:
                     # set distance and append to queue
                     tdist[nbr_i] = dnew
                     heapq.heappush(candidates, (tdist[nbr_i], nbr_i))
 
-            fdist[i] = tdist[i] # set final distance
+            fdist[i] = tdist[i]  # set final distance
 
         return fdist
 
@@ -401,8 +396,7 @@ class Surface(object):
         results to geodesic distances (unpublished results, NNO)
         '''
 
-
-        tdist = {src:(0, [src])} # tentative distances and path
+        tdist = {src: (0, [src])}  # tentative distances and path
         fdist = dict()  # final distances
         candidates = []
 
@@ -412,29 +406,29 @@ class Surface(object):
         nbrs = self.neighbors
 
         # algorithm from wikipedia
-        #(http://en.wikipedia.org/wiki/Dijkstra's_algorithm)
+        # (http://en.wikipedia.org/wiki/Dijkstra's_algorithm)
         while candidates:
             # distance and index of current candidate
             d, i = heapq.heappop(candidates)
 
             if i in fdist:
-                continue # we already have a final distance for this node
+                continue  # we already have a final distance for this node
 
-            nbr = nbrs[i] # neighbours of current candidate
+            nbr = nbrs[i]  # neighbours of current candidate
 
             for nbr_i, nbr_d in nbr.items():
                 dnew = d + nbr_d
 
                 if not maxdistance is None and dnew > maxdistance:
-                    continue # skip if too far away
+                    continue  # skip if too far away
 
                 if nbr_i not in tdist or dnew < tdist[nbr_i][0]:
                     # set distance and append to queue
-                    pnew = tdist[i][1] + [nbr_i] # append current node to path
+                    pnew = tdist[i][1] + [nbr_i]  # append current node to path
                     tdist[nbr_i] = (dnew, pnew)
                     heapq.heappush(candidates, (tdist[nbr_i][0], nbr_i))
 
-            fdist[i] = tdist[i] # set final distance
+            fdist[i] = tdist[i]  # set final distance
         return fdist
 
     def dijkstra_shortest_path_visiting(self, to_visit):
@@ -466,7 +460,7 @@ class Surface(object):
         if not trg in np.arange(self.nvertices):
             raise ValueError("%d is not a valid node index" % trg)
 
-        tdist = {src:(0, [src])} # tentative distances and path
+        tdist = {src: (0, [src])}  # tentative distances and path
         fdist = dict()  # final distances
         candidates = []
 
@@ -476,7 +470,7 @@ class Surface(object):
         nbrs = self.neighbors
 
         # algorithm from wikipedia
-        #(http://en.wikipedia.org/wiki/Dijkstra's_algorithm)
+        # (http://en.wikipedia.org/wiki/Dijkstra's_algorithm)
         while candidates:
             # distance and index of current candidate
             d, i = heapq.heappop(candidates)
@@ -485,34 +479,32 @@ class Surface(object):
                 if i == trg:
                     break
                 else:
-                    continue # we already have a final distance for this node
+                    continue  # we already have a final distance for this node
 
-            nbr = nbrs[i] # neighbours of current candidate
+            nbr = nbrs[i]  # neighbours of current candidate
 
             for nbr_i, nbr_d in nbr.items():
                 dnew = d + nbr_d
 
                 if nbr_i not in tdist or dnew < tdist[nbr_i][0]:
                     # set distance and append to queue
-                    pnew = tdist[i][1] + [nbr_i] # append current node to path
+                    pnew = tdist[i][1] + [nbr_i]  # append current node to path
                     tdist[nbr_i] = (dnew, pnew)
                     heapq.heappush(candidates, (tdist[nbr_i][0], nbr_i))
 
-            fdist[i] = tdist[i] # set final distance
+            fdist[i] = tdist[i]  # set final distance
             if i == trg:
                 break
 
         if i != trg:
             raise ValueError('Node %d could not be reached from %d' %
-                                                        (trg, src))
+                             (trg, src))
 
         pth = [fdist[i]]
 
         # recursion to find remaining paths (if any)
         pth.extend(self.dijkstra_shortest_path_visiting(to_visit[1:]))
         return pth
-
-
 
     def euclidean_distance(self, src, trg=None):
         '''Computes Euclidean distance from one node to other nodes
@@ -543,7 +535,6 @@ class Surface(object):
             src_coord = src if src.shape == (1, 3) else np.reshape(src, (1, 3))
         else:
             src_coord = self._v[src]
-
 
         if trg is None:
             delta = self._v - src_coord
@@ -628,13 +619,13 @@ class Surface(object):
             raise ValueError("Only supported for vectors")
 
         n = len(node_indices)
-        on_border = np.zeros((n,), dtype=np.bool_) # allocate space for output
+        on_border = np.zeros((n,), dtype=np.bool_)  # allocate space for output
 
         n2f = self.node2faces
         f = self.faces
 
         def except_(vs, x):
-            return filter(lambda y:y != x, vs)
+            return filter(lambda y: y != x, vs)
 
         for i, node_index in enumerate(node_indices):
             face_indices = n2f[node_index]
@@ -658,7 +649,7 @@ class Surface(object):
                 # it to another face
                 jpos_ = (jpos + 1) % 2
                 target = a[ipos, jpos_]
-                a[ipos, jpos_] = -1 # is visited
+                a[ipos, jpos_] = -1  # is visited
 
                 ijpos = np.nonzero(a == target)
                 if len(ijpos[0]) != 1:
@@ -670,7 +661,6 @@ class Surface(object):
             on_border[i] = on_border[i] or target != a_init
 
         return on_border
-
 
     def nodes_on_border_paths(self):
         '''Find paths of nodes on the border
@@ -707,9 +697,9 @@ class Surface(object):
         # mapping from edge to face
         e2f = self.edge2face
 
-        pths = [] # space for output
+        pths = []  # space for output
         while border_nodes:
-            b0 = border_nodes.pop() # select a random node on the border
+            b0 = border_nodes.pop()  # select a random node on the border
             ns = [b for b in nbrs[b0] if b in border_nodes]
             if not ns:
                 # not a proper node - no neighbors - so skip
@@ -738,7 +728,7 @@ class Surface(object):
                 else:
                     # on the border, so swap
                     edge = (p, q)
-                    pth.append(p) # p is on the border
+                    pth.append(p)  # p is on the border
                     if p in border_nodes:
                         border_nodes.remove(p)
                     else:
@@ -746,9 +736,6 @@ class Surface(object):
                         break
 
         return pths
-
-
-
 
     def pairwise_near_nodes(self, max_distance=None, src=None, trg=None):
         '''Finds the distances between pairs of nodes
@@ -802,22 +789,21 @@ class Surface(object):
                 keep_idxs = np.arange(len(s))
                 for sign in (-1, 1):
                     far_idxs = np.nonzero(sign * ps[keep_idxs] + \
-                                            max_distance < min(sign * pt))[0]
+                                          max_distance < min(sign * pt))[0]
 
                     keep_idxs = np.setdiff1d(keep_idxs, far_idxs)
 
                 return s[keep_idxs]
 
             src, trg = remove_far(src, trg, ps, pt), \
-                                remove_far(trg, src, pt, ps)
+                       remove_far(trg, src, pt, ps)
 
-        st2d = dict() # source-target pair to distance
+        st2d = dict()  # source-target pair to distance
         for s in src:
             ds = self.euclidean_distance(s, trg)
             for t, d in zip(trg, ds):
                 if max_distance is None or d <= max_distance:
                     st2d[(s, t)] = d
-
 
         return st2d
 
@@ -900,10 +886,10 @@ class Surface(object):
         nsel = np.array(nsel, dtype=int)
         fsel = np.array(fsel, dtype=int)
 
-        sv = self._v[nsel, :] # sub_surface from selected nodes
-        sf = np.reshape(q, (-1, 3)) # corresponding faces
+        sv = self._v[nsel, :]  # sub_surface from selected nodes
+        sf = np.reshape(q, (-1, 3))  # corresponding faces
 
-        ss = Surface(v=sv, f=sf, check=False) # make a new sub_surface
+        ss = Surface(v=sv, f=sf, check=False)  # make a new sub_surface
 
         # find the src node corresponding to the sub_surface
         for ss_src, sel in enumerate(nsel):
@@ -922,15 +908,14 @@ class Surface(object):
     def __str__(self):
         # helper function to print coordinates. f should be np.min or np.max
         func_coord2str = lambda f: '%.3f %.3f %.3f' % tuple(
-                                                        f(self.vertices, 0))
+            f(self.vertices, 0))
 
         return '%s(%d vertices (range %s ... %s), %d faces)' % (
-                        self.__class__.__name__,
-                        self.nvertices,
-                        func_coord2str(np.min),
-                        func_coord2str(np.max),
-                        self.nfaces)
-
+            self.__class__.__name__,
+            self.nvertices,
+            func_coord2str(np.min),
+            func_coord2str(np.max),
+            self.nfaces)
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
@@ -967,7 +952,7 @@ class Surface(object):
         #       
         # For now this this functionaltiy is switched off,
         # because pickling it (also with hdf5) takes a long time
-        #for lazy_key in lazy_keys:
+        # for lazy_key in lazy_keys:
         #    if lazy_key in self.__dict__:
         #        lazy_dict[lazy_key] = self.__dict__[lazy_key]
 
@@ -1012,7 +997,7 @@ class Surface(object):
 
     def __sub__(self, other):
         '''coordiante-wise subtraction'''
-        return self +(-other)
+        return self + (-other)
 
     def rotate(self, theta, center=None, unit='rad'):
         '''Rotates the surface
@@ -1040,8 +1025,7 @@ class Surface(object):
         else:
             raise ValueError('Illegal unit for rotation: %r' % unit)
 
-        theta = map(lambda x:x * fac, theta)
-
+        theta = map(lambda x: x * fac, theta)
 
         cx, cy, cz = np.cos(theta)
         sx, sy, sz = np.sin(theta)
@@ -1049,9 +1033,9 @@ class Surface(object):
         # rotation matrix *in row-first order*
         # in other words, we compute vertices*R'
         m = np.asarray(
-                [[cy * cz, -cy * sz, sy],
-                 [cx * sz + sx * sy * cz, cx * cz - sx * sy * sz, -sx * cy],
-                 [sx * sz - cx * sy * cz, sx * cz + cx * sy * sz, cx * cy]])
+            [[cy * cz, -cy * sz, sy],
+             [cx * sz + sx * sy * cz, cx * cz - sx * sy * sz, -sx * cy],
+             [sx * sz - cx * sy * cz, sx * cz + cx * sy * sz, cx * cy]])
 
         if center is None:
             center = 0
@@ -1107,21 +1091,19 @@ class Surface(object):
                 positions.append(positions[i] + fxs[i])
 
             zeros_arr = np.zeros((positions[-1], xs[0].vertices.shape[1]),
-                                        dtype=dt)
+                                 dtype=dt)
             return positions, zeros_arr
 
-
-        pos_v, all_v = border_positions(all, lambda x:x.nvertices,
-                                                self.vertices.dtype)
-        pos_f, all_f = border_positions(all, lambda x:x.nfaces,
-                                                self.faces.dtype)
+        pos_v, all_v = border_positions(all, lambda x: x.nvertices,
+                                        self.vertices.dtype)
+        pos_f, all_f = border_positions(all, lambda x: x.nfaces,
+                                        self.faces.dtype)
 
         for i in xrange(n):
             all_v[pos_v[i]:pos_v[i + 1], :] = all[i].vertices
             all_f[pos_f[i]:pos_f[i + 1], :] = all[i].faces + pos_v[i]
 
         return Surface(v=all_v, f=all_f)
-
 
     def split_by_connected_components(self):
         '''Splits a surface by its connected components
@@ -1160,10 +1142,8 @@ class Surface(object):
             s = Surface(nodes, faces)
             splits.append(s)
 
-        splits.sort(key=lambda x:x.nvertices)
+        splits.sort(key=lambda x: x.nvertices)
         return splits
-
-
 
     @property
     def vertices(self):
@@ -1212,8 +1192,6 @@ class Surface(object):
         '''
         return self._nf
 
-
-
     def map_to_high_resolution_surf_slow(self, highres, epsilon=.001,
                                          accept_only_icosahedron=False):
         '''
@@ -1259,7 +1237,7 @@ class Surface(object):
                 return int(ld)
 
             ldx, ldy = map(getld, (nx, ny))
-            r = ldy / ldx # ratio
+            r = ldy / ldx  # ratio
 
             if int(r) != r:
                 raise ValueError("ico linear divisions for high res surface (%d)"
@@ -1298,7 +1276,7 @@ class Surface(object):
         return mapping
 
     def coordinates_to_box_indices(self, box_size, min_coord=None,
-                                                   master=None):
+                                   master=None):
         ''''Boxes' coordinates into triples
 
         Parameters
@@ -1336,7 +1314,6 @@ class Surface(object):
             min_coord = np.asarray(min_coord).ravel()
 
         return (self.vertices - min_coord) / box_sizes
-
 
     def map_to_high_resolution_surf(self, highres, epsilon=.001,
                                     accept_only_icosahedron=False):
@@ -1385,7 +1362,7 @@ class Surface(object):
                 return int(ld)
 
             ldx, ldy = map(getld, (nx, ny))
-            r = ldy / ldx # ratio
+            r = ldy / ldx  # ratio
 
             if int(r) != r:
                 raise ValueError("ico linear divisions for high res surface (%d)"
@@ -1423,9 +1400,9 @@ class Surface(object):
 
         # get indices of nodes that are very near a box boundary
         delta = epsilon / box_size
-        on_borders = np.nonzero(np.logical_or(\
-                        np.floor(y_boxed + delta) - np.floor(y_boxed) > 0,
-                        np.floor(y_boxed) - np.floor(y_boxed - delta) > 0))[0]
+        on_borders = np.nonzero(np.logical_or( \
+            np.floor(y_boxed + delta) - np.floor(y_boxed) > 0,
+            np.floor(y_boxed) - np.floor(y_boxed - delta) > 0))[0]
 
         # on_borders may have duplicates - so get rid of those.
         msk = np.zeros((ny,), dtype=np.int)
@@ -1451,7 +1428,7 @@ class Surface(object):
         # a single box
         for i, y_tuple in enumerate(y_tuples):
             if i in on_borders:
-                continue # because it was added above
+                continue  # because it was added above
 
             if not y_tuple in x_tuple2near_indices:
                 x_tuple2near_indices[y_tuple] = list()
@@ -1481,15 +1458,15 @@ class Surface(object):
 
             if not epsilon is None and not (mind < epsilon):
                 raise ValueError("Not found for node %i: %s > %s" %
-                                        (i, mind, epsilon))
+                                 (i, mind, epsilon))
 
             mapping[i] = idxs[minpos]
 
         return mapping
 
     def vonoroi_map_to_high_resolution_surf(self, highres_surf,
-                                highres_indices=None, epsilon=.001,
-                                    accept_only_icosahedron=False):
+                                            highres_indices=None, epsilon=.001,
+                                            accept_only_icosahedron=False):
         '''
         Computes a Vonoroi mapping for the current (low-res) surface
 
@@ -1522,16 +1499,15 @@ class Surface(object):
             highres_indices = np.arange(highres_surf.nvertices)
         highres_indices = set(highres_indices)
 
-
         low2high = self.map_to_high_resolution_surf(highres_surf, epsilon,
-                                                  accept_only_icosahedron)
+                                                    accept_only_icosahedron)
 
 
 
         # reverse mapping, only containing nodes that are both in
         # highres_indices and have a partner in self (lowres)
         high2low = dict((v, k) for k, v in low2high.iteritems()
-                                if v in highres_indices)
+                        if v in highres_indices)
 
         # node indices in high-res surface that have a mapping
         # and thus are acceptable
@@ -1578,9 +1554,7 @@ class Surface(object):
                 # safety mechanism to avoid endless loop
                 raise RuntimeError("Radius increased to %d - too big" % radius)
 
-
         return high2high_in_low
-
 
     @property
     def face_areas(self):
@@ -1629,7 +1603,7 @@ class Surface(object):
             f = self.faces
             v = self.vertices
 
-             # consider three sides of each triangle
+            # consider three sides of each triangle
             a = v[f[:, 0]]
             b = v[f[:, 1]]
             c = v[f[:, 2]]
@@ -1779,12 +1753,13 @@ class Surface(object):
 
         return components
 
-
     def write(self, fn):
         write(fn, self)
 
+
+
 def reposition_hemisphere_pairs(surf_left, surf_right, facing_side,
-                          min_distance=10.):
+                                min_distance=10.):
     '''moves and rotates pairs of hemispheres so that they are facing each
     other on one side, good for visualization. It is assumed that the input
     surfaces were generated by FreeSurfer's recon-all.
@@ -1804,14 +1779,14 @@ def reposition_hemisphere_pairs(surf_left, surf_right, facing_side,
     facing_side = facing_side[0].lower()
 
     mn, mx = np.min, np.max
-    #min=-1, max=1
+    # min=-1, max=1
     side2dimsigns = dict(m=(0, -1), i=(1, 1), s=(1, -1), a=(2, 1), p=(2, -1))
 
     dim, rotatesign = side2dimsigns[facing_side]
     if dim == 0:
         rotate_axis = None
     else:
-        rotate_axis = dim #1+((dim+1) % 2)
+        rotate_axis = dim  # 1+((dim+1) % 2)
         rotate_angle = 90
 
     surfs = [surf_left, surf_right]
@@ -1823,7 +1798,6 @@ def reposition_hemisphere_pairs(surf_left, surf_right, facing_side,
         for i in xrange(nsurfs):
             theta[rotate_axis] = rotate_angle * hemisigns[i] * rotatesign
             surfs[i] = surfs[i].rotate(theta, unit='deg')
-
 
     for i in xrange(nsurfs):
         hemisign = hemisigns[i]
@@ -1837,10 +1811,9 @@ def reposition_hemisphere_pairs(surf_left, surf_right, facing_side,
 
         delta = -np.reshape(surfs[i].center_of_mass, (1, 3))
         delta[0, 0] = hemisign * (xtreme - min_distance * .5)
-        surfs[i] = surfs[i] + delta # make an implicit copy
+        surfs[i] = surfs[i] + delta  # make an implicit copy
 
     return tuple(surfs)
-
 
 
 
@@ -1863,7 +1836,7 @@ def get_sphere_left_right_mapping(surf_left, surf_right, eps=.001):
 
 
     # flip along x-axis
-    #vR = vR * np.asarray([[-1., 1., 1.]])
+    # vR = vR * np.asarray([[-1., 1., 1.]])
 
     def find_nearest(src_coords, trgs_coords, eps=eps):
         # finds the index of the nearest node in trgs_coords to src_coords.
@@ -1879,7 +1852,7 @@ def get_sphere_left_right_mapping(surf_left, surf_right, eps=.001):
     pivotR = find_nearest(vL[pivotL, :], vR)
 
     # mapping from left to right
-    l2r = {pivotL:pivotR}
+    l2r = {pivotL: pivotR}
     to_visit = nL[pivotL].keys()
 
     # for each node (in the left hemispehre) still to visit, keep track of its
@@ -1929,7 +1902,6 @@ def get_sphere_left_right_mapping(surf_left, surf_right, eps=.001):
 
 
 
-
 def normalized(v):
     '''Normalizes vectors
 
@@ -1962,6 +1934,8 @@ def merge(*surfs):
     s0 = surfs[0]
     return s0.merge(*surfs[1:])
 
+
+
 def generate_cube():
     '''
     Generates a cube with sides 2 centered at the origin.
@@ -1974,7 +1948,7 @@ def generate_cube():
     '''
 
     # map (0,1) to (-1.,1.)
-    f = lambda x:float(x) * 2 - 1
+    f = lambda x: float(x) * 2 - 1
 
     # compute coordinates
     cs = [[f(i / (2 ** j) % 2) for j in xrange(3)] for i in xrange(8)]
@@ -1982,13 +1956,13 @@ def generate_cube():
 
     # manually set topology
     trias = [(0, 1, 3), (0, 3, 2), (1, 0, 5), (5, 0, 4),
-           (3, 1, 5), (3, 5, 7), (3, 7, 6), (3, 6, 2),
-           (2, 6, 0), (0, 6, 4), (5, 4, 6), (5, 6, 7)]
-
+             (3, 1, 5), (3, 5, 7), (3, 7, 6), (3, 6, 2),
+             (2, 6, 0), (0, 6, 4), (5, 4, 6), (5, 6, 7)]
 
     fs = np.asarray(trias, dtype=np.int)
 
     return Surface(vs, fs)
+
 
 
 def generate_sphere(density=10):
@@ -2009,11 +1983,11 @@ def generate_sphere(density=10):
         d vertices in them.
     '''
 
-    hsteps = density # 'horizontal' steps (in each circle of latitude)
-    vsteps = density # 'vertical' steps (number of circles of latitude,
-                     #                   excluding north and south poles)
+    hsteps = density  # 'horizontal' steps (in each circle of latitude)
+    vsteps = density  # 'vertical' steps (number of circles of latitude,
+    #                   excluding north and south poles)
 
-    vs = [(0., 0., 1.), (0., 0., -1)] # top and bottom nodes
+    vs = [(0., 0., 1.), (0., 0., -1)]  # top and bottom nodes
     fs = []
 
     # z values for each ring (excluding top and bottom), equally spaced
@@ -2025,15 +1999,15 @@ def generate_sphere(density=10):
 
     # generate coordinates, one ring at a time
     for vi in xrange(vsteps):
-        z = math.sin(zs[vi] * math.pi * .5) # z coordinate
-        scz = (1 - z * z) ** .5 # scaling for z
+        z = math.sin(zs[vi] * math.pi * .5)  # z coordinate
+        scz = (1 - z * z) ** .5  # scaling for z
 
-        alphaplus = vi * alphastep * .5 # each next ring is offset by half
-                                        # of the length of a triangle
+        alphaplus = vi * alphastep * .5  # each next ring is offset by half
+        # of the length of a triangle
 
         # x and y coordinates
-        xs = map(lambda x:scz * math.cos(x + alphaplus), alphas)
-        ys = map(lambda x:scz * math.sin(x + alphaplus), alphas)
+        xs = map(lambda x: scz * math.cos(x + alphaplus), alphas)
+        ys = map(lambda x: scz * math.sin(x + alphaplus), alphas)
 
         vs.extend((xs[i], ys[i], z) for i in xrange(hsteps))
 
@@ -2043,7 +2017,7 @@ def generate_sphere(density=10):
 
     for vi in xrange(vsteps):
         bot = ([0] * hsteps if vi == vsteps - 1
-                            else map(lambda x:x + hsteps, cur))
+               else map(lambda x: x + hsteps, cur))
 
         for hi in xrange(hsteps):
             left = cur[hi]
@@ -2055,6 +2029,8 @@ def generate_sphere(density=10):
         top, cur = cur, [bot[-1]] + bot[:-1]
 
     return Surface(np.array(vs), np.array(fs))
+
+
 
 def generate_plane(x00, x01, x10, n01, n10):
     '''
@@ -2080,6 +2056,7 @@ def generate_plane(x00, x01, x10, n01, n10):
         The (i,j)-th point is at coordinate x01+i*x01+j*x10 and
         is stored as the (i*n10+j)-th vertex.
     '''
+
     def as_three_vec(v):
         a = np.reshape(np.asarray(v, dtype=np.float), (-1,))
         if len(a) != 3:
@@ -2095,7 +2072,7 @@ def generate_plane(x00, x01, x10, n01, n10):
         for j in xrange(n10):
             vpos = i * n10 + j
             vs[vpos, :] = x00 + i * x01 + j * x10
-            if i < n01 - 1 and j < n10 - 1: # not at upper borders
+            if i < n01 - 1 and j < n10 - 1:  # not at upper borders
                 # make a square pqrs from two triangles
                 p = vpos
                 q = vpos + 1
@@ -2107,6 +2084,8 @@ def generate_plane(x00, x01, x10, n01, n10):
                 fs[fpos + 1, :] = [s, r, q]
 
     return Surface(vs, fs)
+
+
 
 def generate_bar(start, stop, radius, poly=10):
     '''Generates a bar-like surface
@@ -2149,17 +2128,17 @@ def generate_bar(start, stop, radius, poly=10):
     vec_y = np.cross(delta_n, vec_x)
 
     coords = np.zeros((nv, 3))
-    sc = 2 * np.pi / poly # angle scaling
-    alpha = np.arange(poly) * sc # for top art
+    sc = 2 * np.pi / poly  # angle scaling
+    alpha = np.arange(poly) * sc  # for top art
     beta = alpha + sc / 2
 
     # first and last node are top and bottom.
     # nodes in between are the edges at top and bottom
     coords[0, :] = start
     dtop = np.cos(alpha)[np.newaxis].T * vec_x[np.newaxis] + \
-                        np.sin(alpha)[np.newaxis].T * vec_y[np.newaxis]
+           np.sin(alpha)[np.newaxis].T * vec_y[np.newaxis]
     dbot = np.cos(beta)[np.newaxis].T * vec_x[np.newaxis] + \
-                        np.sin(beta)[np.newaxis].T * vec_y[np.newaxis]
+           np.sin(beta)[np.newaxis].T * vec_y[np.newaxis]
 
     coords[1:-1:2, :] = dtop * radius + start
     coords[2::2, :] = dbot * radius + stop
@@ -2170,10 +2149,10 @@ def generate_bar(start, stop, radius, poly=10):
     faces = np.zeros((nf, 3), dtype=np.int_)
     for i in xrange(poly):
         j = i * 2
-        faces[j + 0, :] = (j + 1, j + 2, j + 3) # top part
-        faces[j + 1, :] = (j + 2, j + 4, j + 3) # side with top
-        faces[j + 2 * poly, :] = (j + 3, 0, j + 1) # side with bottom
-        faces[j + 2 * poly + 1, :] = (j + 2, nv - 1, j + 4) # bottom part
+        faces[j + 0, :] = (j + 1, j + 2, j + 3)  # top part
+        faces[j + 1, :] = (j + 2, j + 4, j + 3)  # side with top
+        faces[j + 2 * poly, :] = (j + 3, 0, j + 1)  # side with bottom
+        faces[j + 2 * poly + 1, :] = (j + 2, nv - 1, j + 4)  # bottom part
 
     nrm = lambda x: (x - 1) % (2 * poly) + 1
     faces[:2 * poly, :] = nrm(faces[:2 * poly, :])
@@ -2203,18 +2182,24 @@ def read(fn):
     '''
     if fn.endswith('.asc'):
         from mvpa2.support.nibabel import surf_fs_asc
+
         return surf_fs_asc.read(fn)
     elif fn.endswith('.coord'):
         from mvpa2.support.nibabel import surf_caret
+
         return surf_caret.read(fn)
     elif fn.endswith('.gii'):
         # XXX require .surf.gii? Not for now - but may want to change
         from mvpa2.support.nibabel import surf_gifti
+
         return surf_gifti.read(fn)
     else:
         import nibabel.freesurfer.io as fsio
+
         coords, faces = fsio.read_geometry(fn)
         return Surface(coords, faces)
+
+
 
 def write(fn, s, overwrite=True):
     '''General write function for surfaces
@@ -2228,14 +2213,18 @@ def write(fn, s, overwrite=True):
     '''
     if fn.endswith('.asc'):
         from mvpa2.support.nibabel import surf_fs_asc
+
         surf_fs_asc.write(fn, s, overwrite=overwrite)
     elif fn.endswith('.gii'):
         if not fn.endswith('.surf.gii'):
             raise ValueError("GIFTI output requires extension .surf.gii")
         from mvpa2.support.nibabel import surf_gifti
+
         surf_gifti.write(fn, s, overwrite=overwrite)
     else:
         raise ValueError("Not implemented (based on extension): %r" % fn)
+
+
 
 def from_any(s):
     if s is None or isinstance(s, Surface):
@@ -2246,4 +2235,3 @@ def from_any(s):
         return Surface(s[0], s[1])
     else:
         raise ValueError("Not understood: %r" % s)
-
