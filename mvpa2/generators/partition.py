@@ -494,37 +494,28 @@ class NFoldPartitioner(Partitioner):
 
 
 class FactorialPartitioner(Partitioner):
-    """
+    """Partitioner for two-level factorial designs
+
     Given another partitioner on a dataset with two hierarchically organized
     attributes, generates the combinations of all possible folds of the
     superordinate attribute with the balanced combinations of the subordinate
     attribute. For example, splitting familiar and unfamiliar faces while
-    balancing identities in the training/test set.
+    balancing identities in the training/test sets.
 
-    ADD EXAMPLE HERE
+    For example:
+
+    >>> partitioner = FactorialPartitioner(NFoldPartitioner(attr='identity'),
+    ...                                    attr='familiarity')
+
     """
     def __init__(self, partitioner, **kwargs):
-        Partitioner.__init__(self, **kwargs)
+        super(FactorialPartitioner, self).__init__(**kwargs)
         # store the subordinate partitioner
         self.partitioner = partitioner
 
     def generate(self, ds):
-        class FakeDataset(object):
-            def __init__(self, ds):
-                self.sa = ds.sa
-
-            def copy(self, deep=False):
-                assert(not deep)  # dunno how
-                ds = FakeDataset(self)
-                ds.sa = ds.sa.copy(deep=False)
-                return ds
-
-            def __getitem__(self, item):
-                return FakeDataset(self[item])
-
-        #fakeds = FakeDataset(ds)
-        fakeds = ds[:, 0] # alternative
-
+        # make a fake ds from the first feature to use the attributes
+        fakeds = ds[:, 0]
         if self.selection_strategy != 'equidistant':
             raise NotImplementedError("This strategy is not yet implemented")
 
