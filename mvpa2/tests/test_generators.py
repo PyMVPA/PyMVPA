@@ -417,6 +417,19 @@ def test_factorialpartitioner():
     # let's override original targets just to be sure that we aren't relying on them
     ds.targets[:] = 0
 
+    # let's make two other datasets to test later
+    # one superordinate category only
+    ds_1super = ds.copy()
+    ds_1super.sa['superord'] = ['super1' for i in ds_1super.targets]
+
+    # one superordinate category has only one subordinate
+    ds_unbalanced = ds.copy()
+    nsuper1 = np.sum(ds_unbalanced.sa.superord == 'super1')
+    mask_superord = ds_unbalanced.sa.superord == 'super1'
+    uniq_subord = np.unique(ds_unbalanced.sa.subord[mask_superord])
+    ds_unbalanced.sa.subord[mask_superord] = [uniq_subord[0] for i in range(nsuper1)]
+
+
     npart = ChainNode([
         ## so we split based on superord
         NFoldPartitioner(len(ds.sa['superord'].unique),
@@ -440,3 +453,26 @@ def test_factorialpartitioner():
     partitions_factpart = [p.sa.partitions for p in factpart.generate(ds)]
 
     assert_array_equal(np.sort(partitions_npart), np.sort(partitions_factpart))
+
+    # now let's check it behaves correctly if we have only one superord class
+    nfold = NFoldPartitioner(attr='subord')
+    partitions_nfold = [p.sa.partitions for p in nfold.generate(ds_1super)]
+    partitions_factpart = [p.sa.partitions for p in factpart.generate(ds_1super)]
+    assert_array_equal(np.sort(partitions_nfold), np.sort(partitions_factpart))
+
+
+    # now let's test on a dummy dataset
+    ds_dummy = normal_feature_dataset(nlabels=4,
+                                snr=100,
+                                perlabel=1,
+                                nfeatures=4,
+                                nonbogus_features=range(4),
+                                nchunks=1)
+    ds_dummy.sa['subord'] = ds_dummy.sa.targets.copy()
+    ds_dummy.sa['superord'] = ['super%d' % (int(i[1])%2,)
+                               for i in ds_dummy.targets]
+    partitions_factpart = [p.sa.partitions for p in factpart.generate(ds_dummy)]
+    for partition in partitions_factpart:
+        for i in [1, 2]:
+            assert(len(np.unique(ds_dummy.sa.superord[partition == i])) == 2)
+            assert(len(np.unique(ds_dummy.sa.subord[partition == i])) == 2)
