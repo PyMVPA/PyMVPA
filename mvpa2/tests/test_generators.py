@@ -462,17 +462,11 @@ def test_factorialpartitioner():
 
 
     # now let's test on a dummy dataset
-    ds_dummy = normal_feature_dataset(nlabels=4,
-                                snr=100,
-                                perlabel=1,
-                                nfeatures=4,
-                                nonbogus_features=range(4),
-                                nchunks=1)
-    ds_dummy.sa['subord'] = ds_dummy.sa.targets.copy()
-    ds_dummy.sa['superord'] = ['super%d' % (int(i[1])%2,)
-                               for i in ds_dummy.targets]
+    ds_dummy = Dataset(range(4), sa={'subord': range(4),
+                                     'superord': [1,2]*2})
     partitions_factpart = [p.sa.partitions for p in factpart.generate(ds_dummy)]
-    for partition in partitions_factpart:
-        for i in [1, 2]:
-            assert(len(np.unique(ds_dummy.sa.superord[partition == i])) == 2)
-            assert(len(np.unique(ds_dummy.sa.subord[partition == i])) == 2)
+    assert_array_equal(partitions_factpart,
+                       [[2, 2, 1, 1],
+                        [2, 1, 1, 2],
+                        [1, 2, 2, 1],
+                        [1, 1, 2, 2]])
