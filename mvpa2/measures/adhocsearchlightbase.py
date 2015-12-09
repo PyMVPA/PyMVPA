@@ -426,11 +426,9 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
             # Otherwise delay assembling the results
             results = []
 
-        mocked_res = Dataset([0],fa=FeatureAttributesCollection(length=dataset.nfeatures))
-        mocked_res = super(SimpleStatBaseSearchlight, self)._pass_attr(dataset[:1], mocked_res)
-        pass_sa_names = mocked_res.sa.keys()
+        pass_sa_names = [pa for pa in self._Node__pass_attr if \
+                         (isinstance(pa,tuple) and pa[0] in dataset.sa.keys() or pa in dataset.sa.keys())]
         'targets' in pass_sa_names or pass_sa_names.append('targets')
-        del mocked_res
         all_testing_sa = dict([(sa_name,[]) for sa_name in pass_sa_names])
         all_cvfolds = []
 
