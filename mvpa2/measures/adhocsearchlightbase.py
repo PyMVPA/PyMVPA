@@ -426,8 +426,10 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
             # Otherwise delay assembling the results
             results = []
 
-        pass_sa_names = [pa for pa in self._Node__pass_attr if \
-                         (isinstance(pa,tuple) and pa[0] in dataset.sa.keys() or pa in dataset.sa.keys())]
+        pass_sa_names = []
+        if self._Node__pass_attr:
+            pass_sa_names = [pa for pa in self._Node__pass_attr if \
+                             (isinstance(pa,tuple) and pa[0] in dataset.sa.keys() or pa in dataset.sa.keys())]
         'targets' in pass_sa_names or pass_sa_names.append('targets')
         all_testing_sa = dict([(sa_name,[]) for sa_name in pass_sa_names])
         all_cvfolds = []
