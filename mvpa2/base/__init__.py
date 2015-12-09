@@ -212,6 +212,7 @@ if __debug__:
     debug.register('IRELIEF', "Various I-RELIEFs")
     debug.register('SA_', "Sensitivity analyzers (verbose)")
     debug.register('PSA', "Perturbation analyzer call")
+    debug.register('RFE', "Recursive Feature Elimination")
     debug.register('RFEC', "Recursive Feature Elimination call")
     debug.register('RFEC_', "Recursive Feature Elimination call (verbose)")
     debug.register('IFSC', "Incremental Feature Search call")
