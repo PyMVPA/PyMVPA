@@ -31,6 +31,13 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
+* 2.4.2 (???)
+
+  * Enhancements
+
+    - Bundled version of libsvm updated to 3.12.  Now includes maxiter
+      setting which prevents infinite looping which can happen in some rare cases
+
 * 2.4.1 (Wed, 18 Nov 2015)
 
   * New functionality
