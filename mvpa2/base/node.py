@@ -284,8 +284,8 @@ class Node(ClassWithCollections):
         self.__postproc = node
 
 
-    def __str__(self):
-        return _str(self)
+    def __str__(self, *args, **kwargs):
+        return _str(self, *args, **kwargs)
 
 
     def __repr__(self, prefixes=[]):
