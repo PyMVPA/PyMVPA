@@ -388,6 +388,9 @@ if __debug__:
             def flush(self):
                 self.stdout.flush()
 
+            def isatty(self):
+                return False
+
         _out = _pymvpa_stdout_debug(sys)
 
 else: # if not __debug__
