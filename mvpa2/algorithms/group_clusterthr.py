@@ -462,6 +462,12 @@ def get_thresholding_map(data, p=0.001):
 def _get_map_cluster_sizes(map_):
     labels, num = measurements.label(map_)
     area = measurements.sum(map_, labels, index=np.arange(1, num + 1))
+    # TODO: So here if a given map didn't have any super-thresholded features,
+    # we get 0 into our histogram.  BUT for the other maps, where at least 1 voxel
+    # passed the threshold we might get multiple clusters recorded within our
+    # distribution.  Which doesn't quite cut it for being called a FW cluster level.
+    # MAY BE it should count only the maximal cluster size (a single number)
+    # per given permutation (not all of them)
     if not len(area):
         return [0]
     else:
@@ -469,7 +475,7 @@ def _get_map_cluster_sizes(map_):
 
 
 def get_cluster_sizes(ds, cluster_counter=None):
-    """Computer cluster sizes from all samples in a boolean dataset.
+    """Compute cluster sizes from all samples in a boolean dataset.
 
     Individually for each sample, in the input dataset, clusters of non-zero
     values will be determined after reverse-applying any transformation of the
@@ -480,7 +486,7 @@ def get_cluster_sizes(ds, cluster_counter=None):
     ds : dataset or array
       A dataset with boolean samples.
     cluster_counter : list or None
-      If not None, the given list is extended with the cluster sizes computed
+      If not None, given list is extended with the cluster sizes computed
       from the present input dataset. Otherwise, a new list is generated.
 
     Returns
