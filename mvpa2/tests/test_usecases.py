@@ -531,7 +531,7 @@ def test_simple_cluster_level_thresholding():
     # Now we need to do our fancy cluster level madness
     from mvpa2.algorithms.group_clusterthr import \
         get_cluster_sizes, _transform_to_pvals, get_cluster_pvals, \
-        get_thresholding_map
+        get_thresholding_map, repeat_cluster_vals
 
     rand_acc_p_thr = rand_acc_p < pthr_feature
     acc_p_thr = acc_p < pthr_feature
@@ -561,14 +561,7 @@ def test_simple_cluster_level_thresholding():
     for s in rand_cluster_sizes:
         scl[0, s] = rand_cluster_sizes[s]
 
-    n_clusters = np.sum(acc_cluster_sizes.values())
-    test_count_sizes = np.zeros(n_clusters, dtype=int)
-    i = 0
-    for csize, cnumber in acc_cluster_sizes.items():
-        for k in range(cnumber):
-            test_count_sizes[i] = csize
-            i += 1
-
+    test_count_sizes = repeat_cluster_vals(acc_cluster_sizes)
     test_pvals = _transform_to_pvals(test_count_sizes, scl.astype('float'))
     # needs conversion to array for comparisons
     test_pvals = np.asanyarray(test_pvals)

@@ -552,6 +552,27 @@ def get_cluster_pvals(sizes, null_sizes):
     return pvals
 
 
+def repeat_cluster_vals(cluster_counts, vals=None):
+    """Repeat vals for each count of a cluster size as given in cluster_counts
+
+    Parameters
+    ----------
+    cluster_counts: dict or Counter
+      Contains counts per each cluster size
+    vals : dict or Counter, optional
+
+    Returns
+    -------
+    ndarray
+      Values are ordered according to ascending order of cluster sizes
+    """
+    sizes = sorted(cluster_counts.keys())
+    if vals is None:
+        return np.repeat(sizes, [cluster_counts[s] for s in sizes])
+    else:
+        return np.repeat([vals[s] for s in sizes], [cluster_counts[s] for s in sizes])
+
+
 def _transform_to_pvals(sizes, null_sizes):
     # null_sizes will be modified in-place
     for size in sizes:

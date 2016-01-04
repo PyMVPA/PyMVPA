@@ -271,3 +271,13 @@ def test_group_clusterthreshold_simple(n_proc):
                        res.a.clusterstats['size'])
 
     # TODO continue with somewhat more real dataset
+
+def test_repeat_cluster_vals():
+    assert_array_equal(gct.repeat_cluster_vals({1: 2, 3: 1}), [1, 1, 3])
+    assert_array_equal(gct.repeat_cluster_vals({1: 2, 3: 2, 2: 1}),
+                       [1, 1, 2, 3, 3])
+
+    assert_array_equal(gct.repeat_cluster_vals({1: 2, 3: 1}, {1: 0.2, 3: 0.5}),
+                       [0.2, 0.2, 0.5])
+    assert_array_equal(gct.repeat_cluster_vals({1: 2, 3: 2, 2: 1}, {1: 'a', 2: 'b', 3: 'c'}),
+                       ['a', 'a', 'b', 'c', 'c'])
