@@ -529,7 +529,8 @@ def test_simple_cluster_level_thresholding():
     assert(np.all(acc_p > 0))
 
     # Now we need to do our fancy cluster level madness
-    from mvpa2.algorithms.group_clusterthr import get_cluster_sizes, _transform_to_pvals
+    from mvpa2.algorithms.group_clusterthr import \
+        get_cluster_sizes, _transform_to_pvals, get_cluster_pvals
     rand_cluster_sizes = get_cluster_sizes(rand_acc_p <= pthr_feature)
     acc_cluster_sizes = get_cluster_sizes(acc_p <= pthr_feature)
 
@@ -569,31 +570,8 @@ def test_simple_cluster_level_thresholding():
     #print test_count_sizes, test_pvals
 
 
-    all_cluster_sizes = rand_cluster_sizes + acc_cluster_sizes
-    minimum_cluster_size = None
-    all_clusters_count = np.sum(all_cluster_sizes.values())
-    # now we need to normalize them counting all to the "right", i.e larger than
-    # current one
-    right_tail = 0
-    all_cluster_sizes_sf = {}
-    for cluster_size in sorted(all_cluster_sizes)[::-1]:
-        right_tail += all_cluster_sizes[cluster_size]
-        all_cluster_sizes_sf[cluster_size] = float(right_tail)/all_clusters_count
+    acc_cluster_ps = get_cluster_pvals(acc_cluster_sizes, rand_cluster_sizes)
 
-    # now figure out p values for our cluster sizes in real acc (not the P0 distribution),
-    # since some of them might be missing
-    all_cluster_sizes_sorted = sorted(all_cluster_sizes)
-    acc_cluster_ps = {}
-    for cluster_size in acc_cluster_sizes:
-        if cluster_size in all_cluster_sizes:
-            acc_cluster_ps[cluster_size] = all_cluster_sizes_sf[cluster_size]
-        else:
-            # find the largest smaller than current size
-            clusters = all_cluster_sizes_sorted[all_cluster_sizes_sorted < cluster_size]
-            acc_cluster_ps[cluster_size] = all_cluster_sizes_sf[clusters[-1]]
-
-
-    #print acc_cluster_ps
     for test_pval, test_count_size in zip(test_pvals, test_count_sizes):
         assert_almost_equal(acc_cluster_ps[test_count_size], test_pval)
 
