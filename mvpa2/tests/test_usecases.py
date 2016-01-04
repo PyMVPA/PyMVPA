@@ -11,6 +11,7 @@
 import unittest
 import numpy as np
 
+from mvpa2.testing import skip_if_no_external
 from mvpa2.testing.tools import ok_, assert_array_equal, assert_true, \
         assert_false, assert_equal, assert_not_equal, reseed_rng, assert_raises, \
         assert_array_almost_equal, SkipTest, assert_datasets_equal, assert_almost_equal
@@ -528,6 +529,7 @@ def test_simple_cluster_level_thresholding():
     assert(np.all(acc_p <= 1))
     assert(np.all(acc_p > 0))
 
+    skip_if_no_external('scipy')
     # Now we need to do our fancy cluster level madness
     from mvpa2.algorithms.group_clusterthr import \
         get_cluster_sizes, _transform_to_pvals, get_cluster_pvals, \
