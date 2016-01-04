@@ -499,7 +499,7 @@ def test_searchlight_errors_per_trial():
 
 @reseed_rng()
 def test_simple_cluster_level_thresholding():
-    nf = 10
+    nf = 13
     nperms = 100
     pthr_feature = 0.5  # just for testing
     pthr_cluster = 0.5
@@ -530,9 +530,24 @@ def test_simple_cluster_level_thresholding():
 
     # Now we need to do our fancy cluster level madness
     from mvpa2.algorithms.group_clusterthr import \
-        get_cluster_sizes, _transform_to_pvals, get_cluster_pvals
-    rand_cluster_sizes = get_cluster_sizes(rand_acc_p <= pthr_feature)
-    acc_cluster_sizes = get_cluster_sizes(acc_p <= pthr_feature)
+        get_cluster_sizes, _transform_to_pvals, get_cluster_pvals, \
+        get_thresholding_map
+
+    rand_acc_p_thr = rand_acc_p < pthr_feature
+    acc_p_thr = acc_p < pthr_feature
+
+    rand_cluster_sizes = get_cluster_sizes(rand_acc_p_thr)
+    acc_cluster_sizes = get_cluster_sizes(acc_p_thr)
+
+    # This is how we can compute it within present implementation.
+    # It will be a bit different (since it doesn't account for target value if
+    # I got it right), and would work only for accuracies
+    thr_map = get_thresholding_map(rand_acc, pthr_feature)
+    rand_cluster_sizes_ = get_cluster_sizes(rand_acc > thr_map)
+    acc_cluster_sizes_ = get_cluster_sizes(acc > thr_map)
+
+    assert_equal(rand_cluster_sizes, rand_cluster_sizes_)
+    assert_equal(acc_cluster_sizes, acc_cluster_sizes_)
 
     #print rand_cluster_sizes
     #print acc_cluster_sizes
