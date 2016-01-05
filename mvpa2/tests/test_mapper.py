@@ -499,8 +499,12 @@ def test_static_reverse_doesnt_work_after_feature_selection_tuneup_2():
     # would have gone all the way to 3d
     assert_equal(ds_orig_rev0.ndim, 3)
 
-    ds = ds_orig[:, [0, 2]]
-    ds_rev0 = ds.a.mapper.reverse1(ds.samples[0])
-    # blow test fails since chain mapper thrown exception upon _oshape mismatch
-    # but chain mapper silently proceeded forward doing nothing
-    assert_equal(ds_rev0.ndim, 3)
+    bool_mask = np.ones((ds_orig.nfeatures,), dtype=bool)
+    bool_mask[0] = False
+
+    for idx in (bool_mask, [0, 2]):
+        ds = ds_orig[:, idx]
+        ds_rev0 = ds.a.mapper.reverse1(ds.samples[0])
+        # blow test fails since chain mapper thrown exception upon _oshape mismatch
+        # but chain mapper silently proceeded forward doing nothing
+        yield assert_equal, ds_rev0.ndim, 3
