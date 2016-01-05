@@ -191,8 +191,8 @@ class GroupClusterThreshold(Learner):
                                            'holm', 'simes-hochberg', 'hommel',
                                            'fdr_bh', 'fdr_by', None),
         doc="""Strategy for multiple comparison correction of cluster
-            probailities. All methods supported by statsmodels' ``multitest``
-            are available. In addition, ``None`` can be specific to disable
+            probabilities. All methods supported by statsmodels' ``multitest``
+            are available. In addition, ``None`` can be specified to disable
             correction.""")
 
     n_blocks = Parameter(
@@ -411,9 +411,11 @@ class GroupClusterThreshold(Learner):
                 stats = morestats.get(id_, [])
                 stats.append(fx(clvals))
                 morestats[id_] = stats
+
         for k, v in morestats.items():
             clusterstats[0].append(v)
             clusterstats[1].append(k)
+
         if not self.params.multicomp_correction is None:
             # do a local import as only this tiny portion needs statsmodels
             import statsmodels.stats.multitest as smm
@@ -523,7 +525,7 @@ def get_cluster_pvals(sizes, null_sizes):
     # TODO: dedicated unit-test for this function
     """
     Development note:
-     Functionality here somewhat dupliactes functionality in _transform_to_pvals
+     Functionality here somewhat duplicates functionality in _transform_to_pvals
      which does not operate on raw "Counters" and requires different input format.
      Altogether with such data preparation _transform_to_pvals was slower than
      this more naive implementation.
