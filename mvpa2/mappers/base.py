@@ -57,7 +57,7 @@ def _verified_reverse1(mapper, onesample):
     dummy_axis_sample = np.asanyarray(onesample)[None]
     rsample = mapper.reverse(dummy_axis_sample)
     if not len(rsample) == 1:
-        warning("Reverse mapping single sample yielded multiple -- can lead to uninteded behavior!")
+        warning("Reverse mapping single sample yielded multiple -- can lead to unintended behavior!")
     return rsample[0]
 
 
