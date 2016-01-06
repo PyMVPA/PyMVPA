@@ -10,8 +10,8 @@
 
 __docformat__ = 'restructuredtext'
 
-__all__ = ['GroupClusterThreshold',  'get_thresholding_map',
-           'get_cluster_sizes']
+__all__ = ['GroupClusterThreshold', 'get_thresholding_map',
+           'get_cluster_sizes', 'get_cluster_pvals']
 
 if __debug__:
     from mvpa2.base import debug
@@ -462,6 +462,12 @@ def get_thresholding_map(data, p=0.001):
 def _get_map_cluster_sizes(map_):
     labels, num = measurements.label(map_)
     area = measurements.sum(map_, labels, index=np.arange(1, num + 1))
+    # TODO: So here if a given map didn't have any super-thresholded features,
+    # we get 0 into our histogram.  BUT for the other maps, where at least 1 voxel
+    # passed the threshold we might get multiple clusters recorded within our
+    # distribution.  Which doesn't quite cut it for being called a FW cluster level.
+    # MAY BE it should count only the maximal cluster size (a single number)
+    # per given permutation (not all of them)
     if not len(area):
         return [0]
     else:
@@ -469,7 +475,7 @@ def _get_map_cluster_sizes(map_):
 
 
 def get_cluster_sizes(ds, cluster_counter=None):
-    """Computer cluster sizes from all samples in a boolean dataset.
+    """Compute cluster sizes from all samples in a boolean dataset.
 
     Individually for each sample, in the input dataset, clusters of non-zero
     values will be determined after reverse-applying any transformation of the
@@ -480,7 +486,7 @@ def get_cluster_sizes(ds, cluster_counter=None):
     ds : dataset or array
       A dataset with boolean samples.
     cluster_counter : list or None
-      If not None, the given list is extended with the cluster sizes computed
+      If not None, given list is extended with the cluster sizes computed
       from the present input dataset. Otherwise, a new list is generated.
 
     Returns
@@ -503,6 +509,68 @@ def get_cluster_sizes(ds, cluster_counter=None):
         m_clusters = _get_map_cluster_sizes(osamp)
         cluster_counter.update(m_clusters)
     return cluster_counter
+
+
+def get_cluster_pvals(sizes, null_sizes):
+    """Get p-value per each cluster size given cluster sizes for null-distribution
+
+    Parameters
+    ----------
+    sizes, null_sizes : Counter
+      Counters of cluster sizes (as returned by get_cluster_sizes) for target
+      dataset and null distribution
+    """
+    # TODO: dedicated unit-test for this function
+    """
+    Development note:
+     Functionality here somewhat dupliactes functionality in _transform_to_pvals
+     which does not operate on raw "Counters" and requires different input format.
+     Altogether with such data preparation _transform_to_pvals was slower than
+     this more naive implementation.
+    """
+    all_sizes = null_sizes + sizes
+    total_count = float(np.sum(all_sizes.values()))
+    # now we need to normalize them counting all to the "right", i.e larger than
+    # current one
+    right_tail = 0
+    all_sizes_sf = {}
+    for cluster_size in sorted(all_sizes)[::-1]:
+        right_tail += all_sizes[cluster_size]
+        all_sizes_sf[cluster_size] = right_tail/total_count
+
+    # now figure out p values for our cluster sizes in real acc (not the P0 distribution),
+    # since some of them might be missing
+    all_sizes_sorted = sorted(all_sizes)
+    pvals = {}
+    for cluster_size in sizes:
+        if cluster_size in all_sizes:
+            pvals[cluster_size] = all_sizes_sf[cluster_size]
+        else:
+            # find the largest smaller than current size
+            clusters = all_sizes_sorted[all_sizes_sorted < cluster_size]
+            pvals[cluster_size] = all_sizes_sf[clusters[-1]]
+    return pvals
+
+
+def repeat_cluster_vals(cluster_counts, vals=None):
+    """Repeat vals for each count of a cluster size as given in cluster_counts
+
+    Parameters
+    ----------
+    cluster_counts: dict or Counter
+      Contains counts per each cluster size
+    vals : dict or Counter, optional
+
+    Returns
+    -------
+    ndarray
+      Values are ordered according to ascending order of cluster sizes
+    """
+    sizes = sorted(cluster_counts.keys())
+    if vals is None:
+        return np.repeat(sizes, [cluster_counts[s] for s in sizes])
+    else:
+        return np.repeat([vals[s] for s in sizes], [cluster_counts[s] for s in sizes])
 
 
 def _transform_to_pvals(sizes, null_sizes):
