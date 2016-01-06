@@ -20,7 +20,7 @@ from mvpa2.base.dochelpers import _str, _repr_attrs
 from mvpa2.base.dochelpers import borrowdoc
 
 if __debug__:
-    from mvpa2.base import debug
+    from mvpa2.base import debug, warning
 
 def _assure_consistent_a(ds, oshape):
     """If ds.shape differs from oshape, invoke set_length_check
@@ -31,6 +31,34 @@ def _assure_consistent_a(ds, oshape):
         ds.sa.set_length_check(shape[0])
     if oshape[1] != shape[1]:
         ds.fa.set_length_check(shape[1])
+
+def _verified_reverse1(mapper, onesample):
+    """Replacement of Mapper.reverse1 with safety net
+
+    This function can be called instead of a direct call to a mapper's
+    ``reverse1()``. It wraps a single sample into a dummy axis and calls
+    ``reverse()``. Afterwards it verifies that the first axis of the
+    returned array has one item only, otherwise it will issue a warning.
+    This function is useful in any context where it is critical to ensure
+    that reverse mapping a single sample, yields exactly one sample -- which
+    isn't guaranteed due to the flexible nature of mappers.
+
+    Parameters
+    ----------
+    mapper : Mapper instance
+    onesample : array-like
+      Single sample (in terms of the supplied mapper).
+
+    Returns
+    -------
+    array
+      Shape matches a single sample in terms of the mappers input space.
+    """
+    dummy_axis_sample = np.asanyarray(onesample)[None]
+    rsample = mapper.reverse(dummy_axis_sample)
+    if not len(rsample) == 1:
+        warning("Reverse mapping single sample yielded multiple -- can lead to uninteded behavior!")
+    return rsample[0]
 
 
 class Mapper(Learner):

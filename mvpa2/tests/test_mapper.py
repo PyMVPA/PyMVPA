@@ -18,7 +18,7 @@ from mvpa2.testing import sweepargs
 
 from mvpa2.testing.datasets import datasets
 from mvpa2.mappers.flatten import FlattenMapper
-from mvpa2.mappers.base import ChainMapper, IdentityMapper
+from mvpa2.mappers.base import ChainMapper, IdentityMapper, _verified_reverse1
 from mvpa2.featsel.base import StaticFeatureSelection
 from mvpa2.mappers.slicing import SampleSliceMapper, StripBoundariesSamples
 from mvpa2.support.copy import copy
@@ -86,6 +86,8 @@ def test_flatten():
         ok_(isinstance(fm.reverse(target[1:2]), myarray))
         assert_array_equal(fm.reverse(target), data)
         assert_array_equal(fm.reverse1(target[0]), data[0])
+        assert_array_equal(fm.reverse1(target[0]),
+                           _verified_reverse1(fm, target[0]))
         assert_array_equal(fm.reverse(target[1:2]), data[1:2])
         assert_raises(ValueError, fm.reverse, np.arange(14))
 
@@ -470,3 +472,6 @@ def test_identity_mapper(s):
     assert_true(idm.forward1(s) is s)
     assert_true(idm.reverse(s) is s)
     assert_true(idm.reverse1(s) is s)
+    # even like this it should work, but type conversion
+    # can happen
+    assert_array_equal(_verified_reverse1(idm, s), s)
