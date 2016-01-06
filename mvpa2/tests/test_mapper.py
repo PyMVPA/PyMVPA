@@ -480,15 +480,20 @@ def test_identity_mapper(s):
 def test_static_reverse_doesnt_work_after_feature_selection_tuneup_1():
     ds_orig = datasets['uni2small'].copy()  # doesn't matter which
 
-    ds = ds_orig.get_mapped(StaticFeatureSelection(np.arange(4)))
+    m = StaticFeatureSelection(np.arange(4))
+    m.train(ds_orig)
+    ds = ds_orig.get_mapped(m)
     ds0_rev = ds.a.mapper.reverse1(ds.samples[0])  # should work
-    assert_equal(ds0_rev.shape, (1, ds_orig.nfeatures))
+    assert_equal(ds0_rev.shape, (ds_orig.nfeatures,))
 
     # direct feature selection
     ds_ = ds[:, [0, 2]]
     # should work but doesn't due to
     # RuntimeError: Cannot reverse-map data since the original data shape is unknown. Either set `dshape` in the constructor, or call train().
-    ds0_rev_ = ds_.a.mapper.reverse1(ds_.samples[0])
+    #ds0_rev_ = ds_.a.mapper.reverse1(ds_.samples[0])
+    ds0_rev_ = _verified_reverse1(ds_.a.mapper, ds_.samples[0])
+    assert_equal(ds0_rev_.shape, (ds_orig.nfeatures,))
+
 
 def test_static_reverse_doesnt_work_after_feature_selection_tuneup_2():
     from mvpa2.testing.tools import skip_if_no_external
@@ -509,7 +514,7 @@ def test_static_reverse_doesnt_work_after_feature_selection_tuneup_2():
 
     for idx in (bool_mask, [0, 2]):
         ds = ds_orig[:, idx]
-        ds_rev0 = ds.a.mapper.reverse1(ds.samples[0])
+        ds_rev0 = _verified_reverse1(ds.a.mapper, ds.samples[0])
         # blow test fails since chain mapper thrown exception upon _oshape mismatch
         # but chain mapper silently proceeded forward doing nothing
         yield assert_equal, ds_rev0.ndim, 3
