@@ -29,7 +29,7 @@ from mvpa2.datasets import Dataset
 from mvpa2.base.learner import Learner
 from mvpa2.base.param import Parameter
 from mvpa2.base.constraints import \
-    EnsureInt, EnsureFloat, EnsureRange, EnsureChoice
+    EnsureInt, EnsureFloat, EnsureRange, EnsureChoice, EnsureNone, EnsureStr
 from mvpa2.mappers.fx import mean_sample
 
 from mvpa2.support.due import due, Doi
@@ -174,17 +174,39 @@ class GroupClusterThreshold(Learner):
             will vary across features yielding a threshold vector. The number
             of bootstrap samples need to be adequate for a desired probability.
             A ``ValueError`` is raised otherwise.""")
+    # Note that  feature_thresh_prob  is relevant only for "cluster forming" so
+    # will be irrelevant for e.g. metric="max_value"
+    # TODO: address in documentation or some RF to make "Cluster*" implementation
+    # specific (e.g. a subclass?)
 
     chunk_attr = Parameter(
-        'chunks',
+        'chunks', constraints=EnsureStr() | EnsureNone(),
         doc="""Name of the attribute indicating the individual chunks from
             which a single sample each is drawn for averaging into a bootstrap
-            sample.""")
+            sample.  If None, no bootstrapping will be performed, and each
+            sample will be used as a NULL result sample, thus there should be
+            a sufficient number of them""")
+    # TODO: note that n_bootstrap will not be relevant if chunks_attr=None
+    #       Address either in documentation or by subclassing...
 
     fwe_rate = Parameter(
         0.05, constraints=EnsureFloat() & EnsureRange(min=0.0, max=1.0),
         doc="""Family-wise error rate for multiple comparison correction
             of cluster size probabilities.""")
+
+    metric = Parameter(
+        'cluster_sizes',
+        constraints=EnsureChoice('max_cluster_size', 'cluster_sizes', 'cluster_sizes_non0',
+                                 'max_value'),
+        doc="""What metric is measured per each value to be aggregated into
+            H0 distribution.  'max_cluster_size' collects a distribution of
+            maximal cluster size detected in a sample (or 0), 'cluster_sizes'
+            collects a distribution of all cluster sizes encountered while providing
+            a single 0 value per map if no clusters in that map were detected.
+            'cluster_sizes_non0' does not count 0s. 'max_value' collects a distribution
+            of maximal values.
+            Some metrics ('max_cluster_size', 'max_value') estimate family-wise
+            metric so no post-hoc correction is strictly necessary.""")
 
     multicomp_correction = Parameter(
         'fdr_bh', constraints=EnsureChoice('bonferroni', 'sidak', 'holm-sidak',
@@ -194,6 +216,18 @@ class GroupClusterThreshold(Learner):
             probabilities. All methods supported by statsmodels' ``multitest``
             are available. In addition, ``None`` can be specified to disable
             correction.""")
+    # If default metric would be changed from 'cluster_sizes' to some fw metric
+    # make multicomp_correction default to None
+
+    qe = Parameter(
+        None,  #  constraints=  NOT SURE TODO
+        doc="""``QueryEngine`` (as used by searchlights) to determine feature's
+        immediate neighborhood.  If None provided, `ds.a.mapper` will be used to
+        reverse data into original possibly multi-dimensional shape.  If `ds`
+        does not have a mapper, 1D neighborhood along the features vector will
+        be used
+        """)
+    # TODO: relevant only for cluster-based analyses.
 
     n_blocks = Parameter(
         1, constraints=EnsureInt() & EnsureRange(min=1),
@@ -212,9 +246,6 @@ class GroupClusterThreshold(Learner):
     def __init__(self, **kwargs):
         # force disable auto-train: would make no sense
         Learner.__init__(self, auto_train=False, **kwargs)
-        if 1. / (self.params.n_bootstrap + 1) > self.params.feature_thresh_prob:
-            raise ValueError('number of bootstrap samples is insufficient for'
-                             ' the desired threshold probability')
         self.untrain()
 
     def _untrain(self):
@@ -228,6 +259,35 @@ class GroupClusterThreshold(Learner):
     def _train(self, ds):
         # shortcuts
         chunk_attr = self.params.chunk_attr
+        feature_thresh_prob = self.params.feature_thresh_prob
+        n_bootstrap = self.params.n_bootstrap
+
+        if self.params.metric != 'cluster_sizes':
+            raise NotImplementedError(
+                    "Support for metric %r is not yet implemented"
+                    % self.params.metric)
+
+        if self.params.qe is not None:
+            raise NotImplementedError(
+                    "Support for neighborhood estimation using QueryEngines is "
+                    "not yet implemented" % self.params.metric)
+
+        if chunk_attr is not None:
+            # we need to bootstrap
+            if 1. / (n_bootstrap + 1) > feature_thresh_prob:
+                raise ValueError(
+                    'number of bootstrap samples (%d) is insufficient for'
+                    ' the desired threshold probability %g'
+                    % (n_bootstrap, feature_thresh_prob))
+        else:
+            if 1. / (len(ds) + 1) > feature_thresh_prob:
+                raise ValueError(
+                        'number of the NULL samples (%d) is insufficient for'
+                        ' the desired threshold probability %g'
+                        % (len(ds), feature_thresh_prob))
+            raise NotImplementedError("Dealing with chunk_attr=None is not yet")
+
+
         #
         # Step 0: bootstrap maps by drawing one for each chunk and average them
         # (do N iterations)
@@ -238,9 +298,10 @@ class GroupClusterThreshold(Learner):
         # which samples belong to which chunk
         chunk_samples = dict([(c, np.where(ds.sa[chunk_attr].value == c)[0])
                               for c in ds.sa[chunk_attr].unique])
+
         # pre-built the bootstrap combinations
         bcombos = [[random.sample(v, 1)[0] for v in chunk_samples.values()]
-                   for i in xrange(self.params.n_bootstrap)]
+                   for i in xrange(n_bootstrap)]
         bcombos = np.array(bcombos, dtype=int)
         #
         # Step 1: find the per-feature threshold that corresponds to some p
@@ -270,7 +331,7 @@ class GroupClusterThreshold(Learner):
         if self.params.n_proc == 1:
             # Serial execution
             thrmap = np.hstack(  # merge across compute blocks
-                [get_thresholding_map(d, self.params.feature_thresh_prob)
+                [get_thresholding_map(d, feature_thresh_prob)
                  # compute a partial threshold map for as many features
                  # as fit into a compute block
                  for d in featuresegment_producer(segwidth)])
@@ -286,7 +347,7 @@ class GroupClusterThreshold(Learner):
                          pre_dispatch=self.params.n_proc,
                          verbose=verbose_level_parallel)(
                              delayed(get_thresholding_map)
-                        (d, self.params.feature_thresh_prob)
+                        (d, feature_thresh_prob)
                              for d in featuresegment_producer(segwidth)))
         # store for later thresholding of input data
         self._thrmap = thrmap
@@ -294,6 +355,11 @@ class GroupClusterThreshold(Learner):
         # Step 2: threshold all NULL maps and build distribution of NULL cluster
         #         sizes
         #
+        # TODO: yoh: note that the same bcombos which were used to estimate thrmap
+        #       will now be used to estimate cluster sizes/metric.
+        #       Not sure if such double treatment of the same data doesn't provide
+        #       any bias.  We could  a) split chunks pool into two  b) create new
+        #       pool of bcombos for metric estimation
         cluster_sizes = Counter()
         # recompute the bootstrap average maps to threshold them and determine
         # cluster sizes

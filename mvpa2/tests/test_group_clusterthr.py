@@ -252,8 +252,9 @@ def test_group_clusterthreshold_simple(n_proc):
     assert_false('prob_corrected' in superres.a.clusterstats.dtype.names)
     assert_false('clusters_fwe_thresh' in superres.fa)
 
-    # check validity test
-    assert_raises(ValueError, gct.GroupClusterThreshold,
+    # too low n_bootstrap.  Should be checked in .train since .param values
+    # could be changed at "run-time"
+    clthr_lownboot = gct.GroupClusterThreshold(
                   n_bootstrap=10, feature_thresh_prob=.09, n_proc=n_proc)
     # check mapped datasets
     blob = np.array([[0, 0, .5, 3, 5, 3, 3, 0, 2, 0],
@@ -264,6 +265,8 @@ def test_group_clusterthreshold_simple(n_proc):
     perm_samples = np.random.randn(*((nperms,) + blob.shape))
     perms = dataset_wizard(
         perm_samples, chunks=np.repeat(range(nsubj), len(perm_samples) / nsubj))
+    # check validity test on clthr_lownboot
+    assert_raises(ValueError, clthr_lownboot.train, perms)
     clthr.train(perms)
     twodres = clthr(blob)
     # finds two clusters of the same size
