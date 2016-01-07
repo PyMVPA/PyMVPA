@@ -33,6 +33,16 @@ Releases
 
 * 2.4.2 (???)
 
+  * Fixes
+
+    - *Important:*
+      Reverse mapping of some chained Flatten/StaticSelection mappers did not
+      work correctly e.g. if you selected some features from already masked
+      fmri_dataset. This could have resulted in incorrect cluster counts by
+      :class:`~mvpa2.algorithms.group_clusterthr.GroupClusterThreshold`.  Please
+      recreate your datasets and re-estimate GroupClusterThreshold if that was
+      the case for you
+
   * Enhancements
 
     - Bundled version of libsvm updated to 3.12.  Now includes maxiter
