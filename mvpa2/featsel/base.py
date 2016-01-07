@@ -69,12 +69,28 @@ class FeatureSelection(SliceMapper):
         self._oshape = None
         self.filler = filler
 
-
     def __repr__(self, prefixes=[]):
         return super(FeatureSelection, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['filler'], default=0))
 
+    def __iadd__(self, other):
+        out = super(FeatureSelection, self).__iadd__(other)
+        if out is self:
+            # adjust our own attributes
+            # if one of them was not trained, we can't say we are trained
+            if self.is_trained != other.is_trained:
+                self.untrain()
+            elif hasattr(other, '_oshape'):
+                self._oshape = other._oshape
+            else:
+                # we can't know now
+                self._oshape = None
+        elif out is NotImplemented:
+            pass  # for paranoid
+        else:
+            raise RuntimeError("Must have not reached here")
+        return out
 
     def _forward_data(self, data):
         """Map data from the original dataspace into featurespace.
