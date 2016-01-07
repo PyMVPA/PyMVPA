@@ -14,12 +14,12 @@ import numpy as np
 
 from mvpa2.base.dochelpers import _str, _repr_attrs
 from mvpa2.mappers.base import Mapper, accepts_dataset_as_samples, \
-        ChainMapper
+        ChainMapper, _verified_reverse1
 from mvpa2.featsel.base import StaticFeatureSelection
 from mvpa2.misc.support import is_in_volume
 
 if __debug__:
-    from mvpa2.base import debug
+    from mvpa2.base import debug, warning
 
 class FlattenMapper(Mapper):
     """Reshaping mapper that flattens multidimensional arrays into 1D vectors.
@@ -177,7 +177,7 @@ class FlattenMapper(Mapper):
             # reverse map all attributes, but not the inspace indices, since the
             # did not come through this mapper and make not sense in inspace
             if k != inspace:
-                mds.fa[k] = self.reverse1(mds.fa[k].value)
+                mds.fa[k] = _verified_reverse1(self, mds.fa[k].value)
         # wipe out the inspace attribute -- needs to be done after the loop to
         # not change the size of the dict
         if inspace and inspace in mds.fa:

@@ -24,7 +24,7 @@ import numpy as np
 from scipy.ndimage import measurements
 from scipy.sparse import dok_matrix
 
-from mvpa2.mappers.base import IdentityMapper
+from mvpa2.mappers.base import IdentityMapper, _verified_reverse1
 from mvpa2.datasets import Dataset
 from mvpa2.base.learner import Learner
 from mvpa2.base.param import Parameter
@@ -347,8 +347,8 @@ class GroupClusterThreshold(Learner):
         if hasattr(ds, 'a') and 'mapper' in ds.a:
             mapper = ds.a.mapper
         # reverse-map input
-        othrd = mapper.reverse1(thrd)
-        osamp = mapper.reverse1(ds.samples[0])
+        othrd = _verified_reverse1(mapper, thrd)
+        osamp = _verified_reverse1(mapper, ds.samples[0])
         # prep output dataset
         outds = ds.copy(deep=False)
         outds.fa['featurewise_thresh'] = self._thrmap
@@ -507,7 +507,7 @@ def get_cluster_sizes(ds, cluster_counter=None):
         mapper = ds.a.mapper
 
     for i in xrange(len(ds)):
-        osamp = mapper.reverse1(data[i])
+        osamp = _verified_reverse1(mapper, data[i])
         m_clusters = _get_map_cluster_sizes(osamp)
         cluster_counter.update(m_clusters)
     return cluster_counter
