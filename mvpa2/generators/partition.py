@@ -16,6 +16,7 @@ from mvpa2.base.dochelpers import _repr_attrs
 from mvpa2.support.utils import deprecated
 
 from mvpa2.base.node import Node
+from mvpa2.base import warning
 from mvpa2.datasets.miscfx import coarsen_chunks
 import mvpa2.misc.support as support
 
@@ -499,10 +500,12 @@ class FactorialPartitioner(Partitioner):
     Given another partitioner on a dataset with two hierarchically organized
     attributes, generates the combinations of all possible folds of the
     superordinate attribute with the balanced combinations of the subordinate
-    attribute. For example, splitting familiar and unfamiliar faces while
-    balancing identities in the training/test sets.
+    attribute.
 
-    For example:
+    Examples
+    --------
+    We can classify familiar and unfamiliar faces while cross-validating
+    across identities.
 
     >>> partitioner = FactorialPartitioner(NFoldPartitioner(attr='identity'),
     ...                                    attr='familiarity')
@@ -514,6 +517,20 @@ class FactorialPartitioner(Partitioner):
         self.partitioner = partitioner
 
     def generate(self, ds):
+        # check whether the ds is balanced
+        unique_super = ds.sa[self.attr].unique
+        unique_subor = ds.sa[self.partitioner.attr].unique
+        table = np.zeros((len(unique_super), len(unique_subor)))
+        for i, usup in enumerate(unique_super):
+            for k, usub in enumerate(unique_subor):
+                table[i, k] = np.sum(np.logical_and(ds.sa[self.attr].value == usup,
+                                                    ds.sa[self.partitioner.attr].value == usub))
+        # XXX: more info than this?
+        if len(np.unique(np.sum(table != 0, axis=1))):
+            warning('One or more superordinate attributes do not have the same '
+                    'number of subordinate attributes. This could yield to '
+                    'unbalanced partitions.')
+
         # make a fake ds from the first feature to use the attributes
         fakeds = ds[:, 0]
         if self.selection_strategy != 'equidistant':
