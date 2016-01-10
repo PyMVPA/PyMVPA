@@ -302,7 +302,6 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             volume_mask_ = combi['volume_mask_']
             call_method_ = combi['call_method_']
 
-
             # keep track of which values were used -
             # so that this unit test tests itself
 
@@ -392,6 +391,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         vs = volsurf.VolSurfMaximalMapping(vg, white, pial, nsteps=2)
         n2vs = vs.get_node2voxels_mapping()
         assert_equal(n2vs, dict((i, {i: 0., i + 100: 1.}) for i in xrange(100)))
+
 
         nd = 17
         ds_mm_expected = np.sum((above.vertices - pial.vertices[nd, :]) ** 2,

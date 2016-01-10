@@ -848,6 +848,9 @@ class VolumeBasedSurface(surf.Surface):
         # call the parent's class constructor
         super(VolumeBasedSurface, self).__init__(vertices, faces, check=False)
 
+    def __reduce__(self):
+        return (self.__class__, (self._vg,))
+
     def __repr__(self, prefixes=[]):
         prefixes_ = ['vg=%r' % self._vg] + prefixes
         return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))

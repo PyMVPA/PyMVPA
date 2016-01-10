@@ -251,6 +251,7 @@ def collect_nose_tests(verbosity=1):
         'test_surfing_afni',
         'test_surfing_voxelselection',
         'test_eeglab',
+        'test_parallelization',
         'test_progress',
         'test_winner',
         'test_viz',

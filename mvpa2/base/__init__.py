@@ -207,6 +207,7 @@ if __debug__:
     debug.register('SLC', "Searchlight call")
     debug.register('SLC_', "Searchlight call (verbose)")
     debug.register('SVS', "Surface-based voxel selection (a.k.a. 'surfing')")
+    debug.register('SVS_', "Surface-based voxel selection (a.k.a. 'surfing') (verbose)")
     debug.register('SA', "Sensitivity analyzers")
     debug.register('SOM', "Self-organizing-maps (SOM)")
     debug.register('IRELIEF', "Various I-RELIEFs")
@@ -341,6 +342,9 @@ if __debug__:
 
     debug.register('REP', "Reports")
     debug.register('REP_', "Reports (verbose)")
+    debug.register('PAR', "Parallelization")
+    debug.register('PAR_', "Parallelization (verbose)")
+
 
     debug.register('SUITE', "Import of mvpa2.suite")
 

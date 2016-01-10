@@ -14,4 +14,3 @@ if __debug__:
     from mvpa2.base import debug
     debug('INIT', 'mvpa2.misc start')
     debug('INIT', 'mvpa2.misc end')
-

@@ -677,6 +677,7 @@ class VolumeMaskDictionary(Mapping):
 
         return True
 
+
     @property
     def meta(self):
         '''Return meta information such as number of node indices
@@ -706,9 +707,24 @@ class VolumeMaskDictionary(Mapping):
             and source as the current instance
         '''
         if not isinstance(other, self.__class__):
+            if raise_:
+                raise ValueError("%s not instance of %s" %
+                                        (type(other), type(self)))
+            else:
+                return False
+
+        if self.volgeom != other.volgeom:
+            if raise_:
+                raise ValueError("Different volgeom: %s != %s" %
+                                        (self.volgeom, other.volgeom))
             return False
 
-        return self.volgeom == other.volgeom and self.source == other.source
+        if self.source != other.source:
+            if raise_:
+                raise ValueError("Different source: %s != %s" %
+                                        (self.source, other.source))
+
+        return True
 
     # XXX:  shouldn't it be 'update'  mimicing dict.update?
     # YYY:  'update' does not raise an error if the key to be added is

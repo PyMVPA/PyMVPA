@@ -22,6 +22,8 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 import mvpa2.support.copy as copy
 
+import tempfile
+
 from mvpa2.base.node import Node
 from mvpa2.base.learner import Learner
 from mvpa2.base.state import ConditionalAttribute
@@ -37,6 +39,8 @@ from mvpa2.base.dataset import AttrDataset, vstack
 from mvpa2.datasets import Dataset, vstack, hstack
 from mvpa2.mappers.fx import BinaryFxNode
 from mvpa2.generators.splitters import Splitter
+
+from mvpa2.misc import parallelization
 
 if __debug__:
     from mvpa2.base import debug
@@ -298,57 +302,114 @@ class RepeatedMeasure(Measure):
 
 
     def _call(self, ds):
-        # local binding
-        generator = self._generator
         node = self._node
-        ca = self.ca
-        space = self.get_space()
-        concat_as = self._concat_as
-
         if self.ca.is_enabled("stats") and (not node.ca.has_key("stats") or
                                             not node.ca.is_enabled("stats")):
             warning("'stats' conditional attribute was enabled, but "
                     "the assigned node '%s' either doesn't support it, "
                     "or it is disabled" % node)
-        # precharge conditional attributes
-        ca.datasets = []
 
+        generator = self._generator
         # run the node an all generated datasets
-        results = []
-        for i, sds in enumerate(generator.generate(ds)):
+
+        # XXX Use a single thread only
+        Parallelizer = parallelization.get_best_parallelizer(1)
+        results_backend = Parallelizer.get_best_results_backend()
+
+        proc_func = lambda proc_id, data:self._call_single_item(proc_id, data, results_backend)
+        merge_func = self._merge_result_items
+
+        f = Parallelizer(proc_func=proc_func, merge_func=merge_func,
+                         results_backend=results_backend)
+
+        # pack with process id for each element
+        def indexed_generator(gs, start=0):
+            for g in gs:
+                yield ((0, g),)
+                start += 1
+        results = f(enumerate(generator.generate(ds)))
+
+
+        return results
+
+    def _call_single_item(self, proc_id, sds, backend=None):
+        '''Helper function for _call
+        Returns a triple with the result, dataset (the input), and stats'''
+
+        ca_dataset = None
+        ca_stats = None
+
+        node = self._node
+        ca = self.ca
+
+        if __debug__:
+            debug('REPM', "iteration of %s on %s",
+                      (self, sds))
+
+        if ca.is_enabled("datasets"):
+            # store dataset in ca
+            ca_dataset = sds
+
+        # run the beast
+        result = node(sds)
+
+        # callback
+        if not self._callback is None:
+            self._callback(data=sds, node=node, result=result)
+
+        # subclass postprocessing
+        result = self._repetition_postcall(sds, node, result)
+
+        # harvest summary stats
+        if ca.is_enabled("stats") and node.ca.has_key("stats") and \
+                             node.ca.is_enabled("stats"):
+            ca_stats = node.ca['stats'].value
+
+        if backend == 'hdf5':
+            # 'almost' ensure a unique file name
+            suffix = '%s-%s' % (int(hash(result) % 1e12), proc_id)
+            results_file = tempfile.mktemp(prefix='__tmp_repeated_measures',
+                                           suffix='-%s.hdf5' % suffix)
             if __debug__:
-                debug('REPM', "%d-th iteration of %s on %s",
-                      (i, self, sds))
-            if ca.is_enabled("datasets"):
-                # store dataset in ca
-                ca.datasets.append(sds)
-            # run the beast
-            result = node(sds)
-            # callback
-            if not self._callback is None:
-                self._callback(data=sds, node=node, result=result)
-            # subclass postprocessing
-            result = self._repetition_postcall(sds, node, result)
-            if space:
-                # XXX maybe try to get something more informative from the
-                # processing node (e.g. in 0.5 it used to be 'chunks'->'chunks'
-                # to indicate what was trained and what was tested. Now it is
-                # more tricky, because `node` could be anything
+                debug('SLC', "Storing results into %s" % results_file)
+            from mvpa2.base.hdf5 import h5save
+            h5save(results_file, (result, ca_dataset, ca_stats))
+            return results_file
+
+        return result, ca_dataset, ca_stats
+
+    def _merge_result_items(self, sds_dataset_stats):
+        '''merges an iterator with triples from _call_single_item'''
+        results, ca_datasets, ca_stats = zip(*sds_dataset_stats)
+
+        # set the space, if necessary
+        space = self.get_space()
+        if space:
+            for i, result in enumerate(results):
                 result.set_attr(space, (i,))
-            # store
-            results.append(result)
 
-            if ca.is_enabled("stats") and node.ca.has_key("stats") \
-               and node.ca.is_enabled("stats"):
-                if not ca.is_set('stats'):
-                    # create empty stats container of matching type
-                    ca.stats = node.ca['stats'].value.__class__()
-                # harvest summary stats
-                ca['stats'].value.__iadd__(node.ca['stats'].value)
+        # if stats set those as well
+        ca = self.ca
+        node = self._node
+        if len(ca_stats) and all(ca_stats):
+            if not ca.is_set('stats') and node.ca.has_key("stats") and \
+                             node.ca.is_enabled("stats"):
+                # create empty stats container of matching type
+                ca.stats = ca_stats[0].__class__()
 
-        # charge condition attribute
+            for ca_stat in ca_stats:
+                ca['stats'].value.__iadd__(ca_stat)
+
+        # set conditional attributes
+        if ca.is_enabled("datasets"):
+            ca.datasets = list(ca_datasets)
+        else:
+            ca.datasets = []
+
+        # set repetition results
         self.ca.repetition_results = results
 
+        concat_as = self._concat_as
         # stack all results into a single Dataset
         if concat_as == 'samples':
             results = vstack(results, True)
