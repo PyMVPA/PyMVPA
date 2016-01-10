@@ -481,3 +481,77 @@ def strip_nibabel(ds):
         # when conversion fails, we need to kill the remains
         del ds.a['imghdr']
     return ds
+
+
+def preprocessed_fmri_dataset(
+        fmri_fname, preproc_img=None, preproc_ds=None, add_sa=None,
+        **kwargs):
+    """
+    Convenience function to load and preprocess an fMRI dataset.
+
+    This function wraps ``fmri_dataset()`` and supports all its arguments.
+    However, there are a few limitations (see below). Specifically, this
+    function does three things.
+
+    1. Provide an interface for pre-processing in volumetric image space.
+    2. Provide an interface for time-series pre-processing.
+    3. Convenience functionality to add sample attributes to the dataset.
+
+    First the input image is loaded with NiBabel and any desired volumetric
+    pre-processing is performed. This can be used to apply, for example,
+    spatial smoothing. Next a PyMVPA dataset is created via a call to
+    ``fmri_dataset()``. Afterwards, additional sample attributes are assigned.
+    Lastly, the resulting (flattened and masked) dataset is subjected to
+    another pre-processing step that can be used to , for example, apply
+    temporal filtering.
+
+    Limitations with respect to ``fmri_dataset()`` exist insofar as this
+    function expects a single (4D) image to be specified, while calling
+    ``fmri_dataset()`` directly allows for specifying lists of individual
+    image (file names).
+
+    Parameters
+    ----------
+    fmri_fname : str
+      File name of a 4D fMRI image
+    preproc_img : callable or None
+      If not None, this callable is used to perform preprocessing in
+      volumetric space. The callable must take a NiBabel image
+      instance as argument and return a NiBabel image instance.
+    preproc_ds : callable or None
+      If not None, this callable will be called with each run bold dataset
+      as an argument before ``modelfx`` is executed. The callable must
+      return a dataset.
+    add_sa : dict or recarray or None
+      Additional sample attributes to assign to the dataset. In case of
+      a NumPy record array, all values for each sub-dtype are assigned
+      as an attribute under their respective field name.
+
+    Returns
+    -------
+    Dataset
+    """
+    import nibabel as nb
+    # open the BOLD image
+    fmri_img = nb.load(fmri_fname)
+
+    if not preproc_img is None:
+        fmri_img = preproc_img(fmri_img)
+    # load (and mask) data
+    ds = fmri_dataset(fmri_img, **kwargs)
+
+    if not add_sa is None:
+        if hasattr(add_sa, 'dtype') and not add_sa.dtype.names is None:
+            # this is a recarray
+            iter_ = add_sa.dtype.names
+        else:
+            # assume dict
+            iter_ = add_sa
+        for sa in iter_:
+            ds.sa[sa] = add_sa[sa]
+
+    if not preproc_ds is None:
+        ds = preproc_ds(ds)
+    return ds
+
+
