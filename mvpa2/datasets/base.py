@@ -612,7 +612,7 @@ def preprocessed_dataset(
     >>> from mvpa2.mappers.detrend import PolyDetrendMapper
     >>> ds = preprocessed_dataset(
     ...         'mvpa2/data/bold.nii.gz', nb.load, fmri_dataset,
-    ...         mask='mvpa2/data/mask.nii.gz'
+    ...         mask='mvpa2/data/mask.nii.gz',
     ...         preproc_ds=PolyDetrendMapper(polyord=2))
     """
     raw = raw_loader(src)
