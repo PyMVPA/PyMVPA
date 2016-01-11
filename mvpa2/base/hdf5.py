@@ -35,7 +35,6 @@ help with disassembling are also handled.
 
 __docformat__ = 'restructuredtext'
 
-import types
 import numpy as np
 import h5py
 
@@ -51,9 +50,11 @@ if __debug__:
 
 # don't ask -- makes history re-education a breeze
 universal_classname_remapper = {
-    ('mvpa2.mappers.base', 'FeatureSliceMapper'):
-        ('mvpa2.featsel.base', 'StaticFeatureSelection'),
+    ('mvpa2.mappers.base', 'FeatureSliceMapper'): ('mvpa2.featsel.base',
+                                                   'StaticFeatureSelection'),
 }
+
+
 # Comment: H5Py defines H5Error
 class HDF5ConversionError(Exception):
     """Generic exception to be thrown while doing conversions to/from HDF5
@@ -127,10 +128,11 @@ def hdf2obj(hdf, memo=None):
     else:
         # check if we have a class instance definition here
         if not ('class' in hdf.attrs or 'recon' in hdf.attrs):
-            raise LookupError("Found hdf group without class instance "
-                    "information (group: %s). Cannot convert it into an "
-                    "object (content: '%s', attributes: '%s')."
-                    % (hdf.name, hdf.keys(), hdf.attrs.keys()))
+            raise LookupError(
+                "Found hdf group without class instance "
+                "information (group: %s). Cannot convert it into an "
+                "object (content: '%s', attributes: '%s')."
+                % (hdf.name, hdf.keys(), hdf.attrs.keys()))
 
         mod_name = hdf.attrs['module']
 
@@ -177,12 +179,13 @@ def hdf2obj(hdf, memo=None):
                 obj = eval(hdf.attrs['name'])
             elif cls_name == 'function':
                 raise RuntimeError("Unhandled reconstruction of built-in "
-                        "function (at '%s')." % hdf.name)
+                                   "function (at '%s')." % hdf.name)
             else:
-                raise RuntimeError("Found hdf group with a builtin type "
-                        "that is not handled by the parser (group: %s). This "
-                        "is a conceptual bug in the parser. Please report."
-                        % hdf.name)
+                raise RuntimeError(
+                    "Found hdf group with a builtin type "
+                    "that is not handled by the parser (group: %s). This "
+                    "is a conceptual bug in the parser. Please report."
+                    % hdf.name)
     #
     # Final post-processing
     #
@@ -209,6 +212,7 @@ def _recon_functype(hdf):
     mod, obj = _import_from_thin_air(mod_name, ft_name, cls_name=cls_name)
     return obj
 
+
 def _get_subclass_entry(cls, clss, exc_msg="", exc=NotImplementedError):
     """In a list of tuples (cls, ...) return the entry for the first
     occurrence of the class of which `cls` is a subclass of.
@@ -218,6 +222,7 @@ def _get_subclass_entry(cls, clss, exc_msg="", exc=NotImplementedError):
         if issubclass(cls, clstuple[0]):
             return clstuple
     raise exc(exc_msg % locals())
+
 
 def _update_obj_state_from_hdf(obj, hdf, memo):
     if 'state' in hdf:
@@ -233,6 +238,7 @@ def _update_obj_state_from_hdf(obj, hdf, memo):
                 obj.__dict__.update(state)
         if __debug__:
             debug('HDF5', "Updated %i state items." % len(state))
+
 
 def _recon_customobj_customrecon(hdf, memo):
     """Reconstruct a custom object from HDF using a custom recontructor"""
@@ -340,7 +346,7 @@ def _recon_customobj_defaultrecon(hdf, memo):
             getattr(obj, umeth)(cfunc(hdf, memo))
         except NotImplementedError as e:
             if issubclass(cls, tuple) \
-                and hasattr(obj, '_asdict') and hasattr(obj, '_make'):
+                    and hasattr(obj, '_asdict') and hasattr(obj, '_make'):
                 # this is an ugly hack to support NamedTuples -- which
                 # for some fucked-up reason needs this items as args
                 # instead of a sequence like tuple itself
@@ -385,13 +391,15 @@ def _hdf_dict_to_obj(hdf, memo, skip=None):
     else:
         # legacy files had keys as group names
         return dict([(item, hdf2obj(items_container[item], memo=memo))
-                        for item in items_container
-                            if not item in skip])
+                     for item in items_container
+                     if not item in skip])
+
 
 def _hdf_list_to_objarray(hdf, memo):
     if not ('shape' in hdf.attrs):
         if __debug__:
-            debug('HDF5', "Enountered objarray stored without shape (due to a bug "
+            debug(
+                'HDF5', "Enountered objarray stored without shape (due to a bug "
                 "in post 2.1 release).  Some nested structures etc might not be "
                 "loaded incorrectly")
         # yoh: we have possibly a problematic case due to my fix earlier
@@ -419,6 +427,7 @@ def _hdf_list_to_objarray(hdf, memo):
         if len(shape) and shape != obj.shape:
             obj = obj.reshape(shape)
     return obj
+
 
 def _hdf_list_to_obj(hdf, memo, target_container=None):
     """Convert an HDF item sequence into a list
@@ -765,8 +774,9 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
         # needs special treatment
         pieces = None
         if __debug__:
-            debug('HDF5', "Failed to reduce '%s' (ref: %i) in [%s]: %s" # (%s)"
-                          % (type(obj), obj_id, hdf.name, te)) #, obj))
+            debug('HDF5',
+                  "Failed to reduce '%s' (ref: %i) in [%s]: %s"  # (%s)"
+                  % (type(obj), obj_id, hdf.name, te))  # , obj))
 
     # common container handling, either __reduce__ was not possible
     # or it was the default implementation
@@ -802,7 +812,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
                     for stuff in mod_content:
                         stuffobj = _import_from_thin_air(src_module, stuff)[1]
                         if isinstance(stuffobj, type) \
-                           and stuffobj.__name__ == cls_name:
+                                and stuffobj.__name__ == cls_name:
                             cls_name = stuff
                             found = True
                     if not found:
@@ -929,7 +939,7 @@ def h5load(filename, name=None):
             else:
                 # stored objects can only by special groups or datasets
                 if isinstance(hdf, h5py.Dataset) \
-                   or ('class' in hdf.attrs or 'recon' in hdf.attrs):
+                        or ('class' in hdf.attrs or 'recon' in hdf.attrs):
                     # this is an object stored at the toplevel
                     obj = hdf2obj(hdf)
                 else:
