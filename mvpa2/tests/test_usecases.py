@@ -15,6 +15,7 @@ from mvpa2.testing import skip_if_no_external
 from mvpa2.testing.tools import ok_, assert_array_equal, assert_true, \
         assert_false, assert_equal, assert_not_equal, reseed_rng, assert_raises, \
         assert_array_almost_equal, SkipTest, assert_datasets_equal, assert_almost_equal
+from mvpa2.misc.data_generators import normal_feature_dataset
 
 @reseed_rng()
 def _test_mcasey20120222():  # pragma: no cover
@@ -58,20 +59,7 @@ def test_sifter_superord_usecase():
     from mvpa2.generators.partition import NFoldPartitioner
     from mvpa2.generators.base import  Sifter
 
-    # Let's simulate the beast -- 6 categories total groupped into 3
-    # super-ordinate, and actually without any 'superordinate' effect
-    # since subordinate categories independent
-    ds = normal_feature_dataset(nlabels=6,
-                                snr=100,   # pure signal! ;)
-                                perlabel=30,
-                                nfeatures=6,
-                                nonbogus_features=range(6),
-                                nchunks=5)
-    ds.sa['subord'] = ds.sa.targets.copy()
-    ds.sa['superord'] = ['super%d' % (int(i[1])%3,)
-                         for i in ds.targets]   # 3 superord categories
-    # let's override original targets just to be sure that we aren't relying on them
-    ds.targets[:] = 0
+    ds = _get_superord_dataset()
 
     npart = ChainNode([
     ## so we split based on superord
@@ -100,6 +88,27 @@ def test_sifter_superord_usecase():
     # I don't think that this would ever fail, so not marking it labile
     assert(np.mean(accs_regular) > .8)
     assert(np.mean(accs_super)   < .6)
+
+
+def _get_superord_dataset():
+    """A little helper to simulate a dataset with super/subord targets structure
+    """
+    # Let's simulate the beast -- 6 categories total groupped into 3
+    # super-ordinate, and actually without any 'superordinate' effect
+    # since subordinate categories independent
+    ds = normal_feature_dataset(nlabels=6,
+                                snr=100,  # pure signal! ;)
+                                perlabel=30,
+                                nfeatures=6,
+                                nonbogus_features=range(6),
+                                nchunks=5)
+    ds.sa['subord'] = ds.sa.targets.copy()
+    ds.sa['superord'] = ['super%d' % (int(i[1]) % 3,)
+                         for i in ds.targets]  # 3 superord categories
+    # let's override original targets just to be sure that we aren't relying on them
+    ds.targets[:] = 0
+    return ds
+
 
 def _test_edmund_chong_20120907():  # pragma: no cover
     # commented out to avoid syntax warnings while compiling
@@ -585,3 +594,30 @@ def test_simple_cluster_level_thresholding():
     for test_pval, test_count_size in zip(test_pvals, test_count_sizes):
         assert_almost_equal(acc_cluster_ps[test_count_size], test_pval)
 
+
+@reseed_rng()
+def test_permute_superord():
+    from mvpa2.base.node import ChainNode
+    from mvpa2.generators.partition import NFoldPartitioner
+    from mvpa2.generators.base import  Sifter
+    from mvpa2.generators.permutation import AttributePermutator
+
+    ds = _get_superord_dataset()
+    # mvpa2.seed(1)
+    part = ChainNode([
+    ## so we split based on superord
+        NFoldPartitioner(len(ds.sa['superord'].unique),
+                         attr='subord'),
+        ## so it should select only those splits where we took 1 from
+        ## each of the superord categories leaving things in balance
+        Sifter([('partitions', 2),
+                ('superord',
+                 { 'uvalues': ds.sa['superord'].unique,
+                   'balanced': True})]),
+        AttributePermutator(['superord'], limit=['partitions',
+                                                 'chunks']),
+    ], space='partitions')
+
+    for ds_perm in part.generate(ds):
+        # it does permutation
+        assert(np.sum(ds_perm.sa.superord != ds.sa.superord) != 0)
