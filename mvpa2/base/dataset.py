@@ -805,10 +805,10 @@ def all_equal(x, y):
     except TypeError:
         # if it's just a bool (or boolean-like, such as numpy.bool_)
         # then see if it is True or not
-        if eq is True or eq is False:
+        if eq == True or eq == False:
             # also consider the case that eq is a numpy boolean array
             # with just a single element - so compare to True
-            return eq is True
+            return eq == True
         else:
             # no idea what to do
             raise
