@@ -14,9 +14,6 @@ import numpy as np
 import copy
 
 from mvpa2.base import warning
-from mvpa2.base.collections import SampleAttributesCollection, \
-        FeatureAttributesCollection, DatasetAttributesCollection, \
-        SampleAttribute, FeatureAttribute, DatasetAttribute
 from mvpa2.base.dataset import AttrDataset
 from mvpa2.base.dataset import _expand_attribute
 from mvpa2.misc.support import idhash as idhash_
@@ -54,7 +51,6 @@ class Dataset(AttrDataset):
         mds = mapper.forward(self)
         mds._append_mapper(mapper)
         return mds
-
 
     def _append_mapper(self, mapper):
         if not 'mapper' in self.a:
@@ -122,8 +118,7 @@ class Dataset(AttrDataset):
         # if we get an slicing array for feature selection and it is *not* 1D
         # try feeding it through the mapper (if there is any)
         if len(args) > 1 and isinstance(args[1], np.ndarray) \
-           and len(args[1].shape) > 1 \
-           and self.a.has_key('mapper'):
+                and len(args[1].shape) > 1 and 'mapper' in self.a:
             args = list(args)
             args[1] = self.a.mapper.forward1(args[1])
 
@@ -150,8 +145,9 @@ class Dataset(AttrDataset):
             # slice samples and feature axis at the same time. Moreover, the
             # mvpa2.base.dataset.Dataset has no clue about mappers and should
             # be fully functional without them.
-            subsetmapper = StaticFeatureSelection(args[1],
-                                              dshape=self.samples.shape[1:])
+            subsetmapper = StaticFeatureSelection(
+                args[1],
+                dshape=self.samples.shape[1:])
             # do not-act forward mapping to charge the output shape of the
             # slice mapper without having it to train on a full dataset (which
             # is most likely more expensive)
@@ -160,7 +156,6 @@ class Dataset(AttrDataset):
             ds._append_mapper(subsetmapper)
 
         return ds
-
 
     def find_collection(self, attr):
         """Lookup collection that contains an attribute of a given name.
@@ -201,7 +196,6 @@ class Dataset(AttrDataset):
                               "collection." % attr)
         return col
 
-
     def _collection_id2obj(self, col):
         if col == 'sa':
             col = self.sa
@@ -213,7 +207,6 @@ class Dataset(AttrDataset):
             raise LookupError("Unknown collection '%s'. Possible values "
                               "are: 'sa', 'fa', 'a'." % col)
         return col
-
 
     def set_attr(self, name, value):
         """Set an attribute in a collection.
@@ -235,7 +228,6 @@ class Dataset(AttrDataset):
             col = self.find_collection(name)
 
         col[name] = value
-
 
     def get_attr(self, name):
         """Return an attribute from a collection.
@@ -267,7 +259,6 @@ class Dataset(AttrDataset):
 
         return (col[name], col)
 
-
     def item(self):
         """Provide the first element of samples array.
 
@@ -277,7 +268,6 @@ class Dataset(AttrDataset):
         See `numpy.ndarray.item` for more information.
         """
         return self.samples.item()
-
 
     @property
     def idhash(self):
@@ -297,7 +287,6 @@ class Dataset(AttrDataset):
             for k in keys:
                 res += ' %s@%s' % (k, idhash_(col[k].value))
         return res
-
 
     @classmethod
     def from_wizard(cls, samples, targets=None, chunks=None, mask=None,
@@ -352,8 +341,8 @@ class Dataset(AttrDataset):
 
         if not targets is None:
             sa_items['targets'] = _expand_attribute(targets,
-                                                   samples.shape[0],
-                                                  'targets')
+                                                    samples.shape[0],
+                                                    'targets')
 
         if not chunks is None:
             # unlike previous implementation, we do not do magic to do chunks
@@ -368,8 +357,8 @@ class Dataset(AttrDataset):
         if mask is None:
             # if we have multi-dim data
             if len(samples.shape) > 2 and \
-                   ((flatten is None and mapper is None) # auto case
-                    or flatten):                         # bool case
+                    ((flatten is None and mapper is None)  # auto case
+                     or flatten):                           # bool case
                 fm = FlattenMapper(shape=samples.shape[1:], space=space)
                 ds = ds.get_mapped(fm)
         else:
@@ -381,7 +370,6 @@ class Dataset(AttrDataset):
         if not mapper is None:
             ds = ds.get_mapped(mapper)
         return ds
-
 
     @classmethod
     def from_channeltimeseries(cls, samples, targets=None, chunks=None,
@@ -439,22 +427,21 @@ class Dataset(AttrDataset):
 
         return ds
 
-
     # shortcut properties
-    S = property(fget=lambda self:self.samples)
-    targets = property(fget=lambda self:self.sa.targets,
-                      fset=lambda self, v:self.sa.__setattr__('targets', v))
-    uniquetargets = property(fget=lambda self:self.sa['targets'].unique)
+    S = property(fget=lambda self: self.samples)
+    targets = property(fget=lambda self: self.sa.targets,
+                       fset=lambda self, v: self.sa.__setattr__('targets', v))
+    uniquetargets = property(fget=lambda self: self.sa['targets'].unique)
 
     T = targets
-    UT = property(fget=lambda self:self.sa['targets'].unique)
-    chunks = property(fget=lambda self:self.sa.chunks,
-                      fset=lambda self, v:self.sa.__setattr__('chunks', v))
-    uniquechunks = property(fget=lambda self:self.sa['chunks'].unique)
+    UT = property(fget=lambda self: self.sa['targets'].unique)
+    chunks = property(fget=lambda self: self.sa.chunks,
+                      fset=lambda self, v: self.sa.__setattr__('chunks', v))
+    uniquechunks = property(fget=lambda self: self.sa['chunks'].unique)
     C = chunks
-    UC = property(fget=lambda self:self.sa['chunks'].unique)
-    mapper = property(fget=lambda self:self.a.mapper)
-    O = property(fget=lambda self:self.a.mapper.reverse(self.samples))
+    UC = property(fget=lambda self: self.sa['chunks'].unique)
+    mapper = property(fget=lambda self: self.a.mapper)
+    O = property(fget=lambda self: self.a.mapper.reverse(self.samples))
 
 
 # convenience alias
@@ -507,7 +494,6 @@ class HollowSamples(object):
                 and not len(self.fid) == shape[1]:
             raise ValueError("Provided ID vectors do not match given `shape`")
 
-
     def __reduce__(self):
         return (self.__class__,
                 ((len(self.sid), len(self.fid)),
@@ -522,16 +508,13 @@ class HollowSamples(object):
     def shape(self):
         return (len(self.sid), len(self.fid))
 
-
     @property
     def samples(self):
         return np.zeros((len(self.sid), len(self.fid)), dtype=self.dtype)
 
-
     def __array__(self, dtype=None):
         # come up with a fake array of proper dtype
         return np.zeros((len(self.sid), len(self.fid)), dtype=self.dtype)
-
 
     def __getitem__(self, args):
         if not isinstance(args, tuple):
@@ -561,3 +544,94 @@ class HollowSamples(object):
     def view(self):
         """Return itself"""
         return self
+
+
+def preprocessed_dataset(
+        src, raw_loader, ds_converter, preproc_raw=None,
+        preproc_ds=None, add_sa=None, **kwargs):
+    """
+    Convenience function to load and preprocess data into a dataset.
+
+    It wraps any given callable that converts data in some format into
+    a PyMVPA dataset. Specifically, this function does three things.
+
+    1. Provide an interface for pre-processing in raw data space.
+    2. Convenience functionality to add sample attributes to the dataset.
+    3. Provide an interface for sample pre-processing after initial
+       conversion into a dataset
+
+    First, data is loaded with the specific ``raw_loader``, and any desired
+    raw data pre-processing is performed by calling `` preproc_raw`` with the
+    output of the loader function. Next, ``ds_converter`` is called to yield
+    an initial dataset. The user is responsible for passing callabled that
+    are input/output compatible with each other.
+
+    Afterwards, any additional sample attributes are assigned to the dataset.
+    Lastly, the resulting dataset is subjected to another pre-processing step
+    by passing it to ``preproc_ds``. This is another callable that can be
+    any of PyMVPA's mapper implementations (or another functions that takes
+    a dataset as argument and returns a dataset).
+
+    Parameters
+    ----------
+    src : any
+      Specification of the data source in any format that is understood by
+      ``raw_loader``.
+    raw_loader : callable
+      Callable that takes ``src`` as argument, and returned data in a form
+      that is understood by ``ds_converter`` (and any given ``preproc_raw``
+      callable).
+    ds_converter : callable
+      Callable that takes the output of ``raw_loader`` or ``preproc_raw``
+      as argument and returns a PyMVPA dataset.
+    preproc_raw : callable or None
+      If not None, this callable is used to perform initial preprocessing
+      after loading the data from its source. Must return data in a form
+      that is understood by ``ds_converter``.
+    preproc_ds : callable or None
+      If not None, this callable will be called with the created dataset
+      to perform any additional pre-processing. The callable must
+      return a dataset.
+    add_sa : dict or recarray or None
+      Additional sample attributes to assign to the dataset. In case of
+      a NumPy record array, all values for each sub-dtype are assigned
+      as an attribute under their respective field name.
+    **kwargs
+      Any additional arguments are passed on to ``ds_converter``.
+
+    Returns
+    -------
+    Dataset
+
+    Examples
+    --------
+    Load 4D BOLD fMRI data
+
+    >>> import nibabel as nb
+    >>> from mvpa2.datasets.mri import fmri_dataset
+    >>> from mvpa2.mappers.detrend import PolyDetrendMapper
+    >>> ds = preprocessed_dataset(
+    ...         'mvpa2/data/bold.nii.gz', nb.load, fmri_dataset,
+    ...         mask='mvpa2/data/mask.nii.gz',
+    ...         preproc_ds=PolyDetrendMapper(polyord=2, auto_train=True))
+    """
+    raw = raw_loader(src)
+
+    if not preproc_raw is None:
+        raw = preproc_raw(raw)
+
+    ds = ds_converter(raw, **kwargs)
+
+    if not add_sa is None:
+        if hasattr(add_sa, 'dtype') and not add_sa.dtype.names is None:
+            # this is a recarray
+            iter_ = add_sa.dtype.names
+        else:
+            # assume dict
+            iter_ = add_sa
+        for sa in iter_:
+            ds.sa[sa] = add_sa[sa]
+
+    if not preproc_ds is None:
+        ds = preproc_ds(ds)
+    return ds
