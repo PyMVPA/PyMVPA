@@ -14,9 +14,6 @@ import numpy as np
 import copy
 
 from mvpa2.base import warning
-from mvpa2.base.collections import SampleAttributesCollection, \
-        FeatureAttributesCollection, DatasetAttributesCollection, \
-        SampleAttribute, FeatureAttribute, DatasetAttribute
 from mvpa2.base.dataset import AttrDataset
 from mvpa2.base.dataset import _expand_attribute
 from mvpa2.misc.support import idhash as idhash_
@@ -54,7 +51,6 @@ class Dataset(AttrDataset):
         mds = mapper.forward(self)
         mds._append_mapper(mapper)
         return mds
-
 
     def _append_mapper(self, mapper):
         if not 'mapper' in self.a:
@@ -122,8 +118,7 @@ class Dataset(AttrDataset):
         # if we get an slicing array for feature selection and it is *not* 1D
         # try feeding it through the mapper (if there is any)
         if len(args) > 1 and isinstance(args[1], np.ndarray) \
-           and len(args[1].shape) > 1 \
-           and self.a.has_key('mapper'):
+                and len(args[1].shape) > 1 and 'mapper' in self.a:
             args = list(args)
             args[1] = self.a.mapper.forward1(args[1])
 
@@ -150,8 +145,9 @@ class Dataset(AttrDataset):
             # slice samples and feature axis at the same time. Moreover, the
             # mvpa2.base.dataset.Dataset has no clue about mappers and should
             # be fully functional without them.
-            subsetmapper = StaticFeatureSelection(args[1],
-                                              dshape=self.samples.shape[1:])
+            subsetmapper = StaticFeatureSelection(
+                args[1],
+                dshape=self.samples.shape[1:])
             # do not-act forward mapping to charge the output shape of the
             # slice mapper without having it to train on a full dataset (which
             # is most likely more expensive)
@@ -160,7 +156,6 @@ class Dataset(AttrDataset):
             ds._append_mapper(subsetmapper)
 
         return ds
-
 
     def find_collection(self, attr):
         """Lookup collection that contains an attribute of a given name.
@@ -201,7 +196,6 @@ class Dataset(AttrDataset):
                               "collection." % attr)
         return col
 
-
     def _collection_id2obj(self, col):
         if col == 'sa':
             col = self.sa
@@ -213,7 +207,6 @@ class Dataset(AttrDataset):
             raise LookupError("Unknown collection '%s'. Possible values "
                               "are: 'sa', 'fa', 'a'." % col)
         return col
-
 
     def set_attr(self, name, value):
         """Set an attribute in a collection.
@@ -235,7 +228,6 @@ class Dataset(AttrDataset):
             col = self.find_collection(name)
 
         col[name] = value
-
 
     def get_attr(self, name):
         """Return an attribute from a collection.
@@ -267,7 +259,6 @@ class Dataset(AttrDataset):
 
         return (col[name], col)
 
-
     def item(self):
         """Provide the first element of samples array.
 
@@ -277,7 +268,6 @@ class Dataset(AttrDataset):
         See `numpy.ndarray.item` for more information.
         """
         return self.samples.item()
-
 
     @property
     def idhash(self):
@@ -297,7 +287,6 @@ class Dataset(AttrDataset):
             for k in keys:
                 res += ' %s@%s' % (k, idhash_(col[k].value))
         return res
-
 
     @classmethod
     def from_wizard(cls, samples, targets=None, chunks=None, mask=None,
@@ -352,8 +341,8 @@ class Dataset(AttrDataset):
 
         if not targets is None:
             sa_items['targets'] = _expand_attribute(targets,
-                                                   samples.shape[0],
-                                                  'targets')
+                                                    samples.shape[0],
+                                                    'targets')
 
         if not chunks is None:
             # unlike previous implementation, we do not do magic to do chunks
@@ -368,8 +357,8 @@ class Dataset(AttrDataset):
         if mask is None:
             # if we have multi-dim data
             if len(samples.shape) > 2 and \
-                   ((flatten is None and mapper is None) # auto case
-                    or flatten):                         # bool case
+                    ((flatten is None and mapper is None)  # auto case
+                     or flatten):                           # bool case
                 fm = FlattenMapper(shape=samples.shape[1:], space=space)
                 ds = ds.get_mapped(fm)
         else:
@@ -381,7 +370,6 @@ class Dataset(AttrDataset):
         if not mapper is None:
             ds = ds.get_mapped(mapper)
         return ds
-
 
     @classmethod
     def from_channeltimeseries(cls, samples, targets=None, chunks=None,
@@ -439,22 +427,21 @@ class Dataset(AttrDataset):
 
         return ds
 
-
     # shortcut properties
-    S = property(fget=lambda self:self.samples)
-    targets = property(fget=lambda self:self.sa.targets,
-                      fset=lambda self, v:self.sa.__setattr__('targets', v))
-    uniquetargets = property(fget=lambda self:self.sa['targets'].unique)
+    S = property(fget=lambda self: self.samples)
+    targets = property(fget=lambda self: self.sa.targets,
+                       fset=lambda self, v: self.sa.__setattr__('targets', v))
+    uniquetargets = property(fget=lambda self: self.sa['targets'].unique)
 
     T = targets
-    UT = property(fget=lambda self:self.sa['targets'].unique)
-    chunks = property(fget=lambda self:self.sa.chunks,
-                      fset=lambda self, v:self.sa.__setattr__('chunks', v))
-    uniquechunks = property(fget=lambda self:self.sa['chunks'].unique)
+    UT = property(fget=lambda self: self.sa['targets'].unique)
+    chunks = property(fget=lambda self: self.sa.chunks,
+                      fset=lambda self, v: self.sa.__setattr__('chunks', v))
+    uniquechunks = property(fget=lambda self: self.sa['chunks'].unique)
     C = chunks
-    UC = property(fget=lambda self:self.sa['chunks'].unique)
-    mapper = property(fget=lambda self:self.a.mapper)
-    O = property(fget=lambda self:self.a.mapper.reverse(self.samples))
+    UC = property(fget=lambda self: self.sa['chunks'].unique)
+    mapper = property(fget=lambda self: self.a.mapper)
+    O = property(fget=lambda self: self.a.mapper.reverse(self.samples))
 
 
 # convenience alias
@@ -507,7 +494,6 @@ class HollowSamples(object):
                 and not len(self.fid) == shape[1]:
             raise ValueError("Provided ID vectors do not match given `shape`")
 
-
     def __reduce__(self):
         return (self.__class__,
                 ((len(self.sid), len(self.fid)),
@@ -522,16 +508,13 @@ class HollowSamples(object):
     def shape(self):
         return (len(self.sid), len(self.fid))
 
-
     @property
     def samples(self):
         return np.zeros((len(self.sid), len(self.fid)), dtype=self.dtype)
 
-
     def __array__(self, dtype=None):
         # come up with a fake array of proper dtype
         return np.zeros((len(self.sid), len(self.fid)), dtype=self.dtype)
-
 
     def __getitem__(self, args):
         if not isinstance(args, tuple):
@@ -564,9 +547,8 @@ class HollowSamples(object):
 
 
 def preprocessed_dataset(
-        src, raw_loader, ds_converter,
-        preproc_raw=None, preproc_ds=None, add_sa=None,
-        **kwargs):,
+        src, raw_loader, ds_converter, preproc_raw=None,
+        preproc_ds=None, add_sa=None, **kwargs):
     """
     Convenience function to load and preprocess data into a dataset.
 
