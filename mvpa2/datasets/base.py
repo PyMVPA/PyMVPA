@@ -613,7 +613,7 @@ def preprocessed_dataset(
     >>> ds = preprocessed_dataset(
     ...         'mvpa2/data/bold.nii.gz', nb.load, fmri_dataset,
     ...         mask='mvpa2/data/mask.nii.gz',
-    ...         preproc_ds=PolyDetrendMapper(polyord=2))
+    ...         preproc_ds=PolyDetrendMapper(polyord=2, auto_train=True))
     """
     raw = raw_loader(src)
 
