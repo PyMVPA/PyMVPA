@@ -348,6 +348,7 @@ class GroupClusterThreshold(Learner):
             mapper = ds.a.mapper
         # reverse-map input
         othrd = _verified_reverse1(mapper, thrd)
+        # TODO: what is your purpose in life osamp? ;-)
         osamp = _verified_reverse1(mapper, ds.samples[0])
         # prep output dataset
         outds = ds.copy(deep=False)
