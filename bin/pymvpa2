@@ -41,6 +41,7 @@ enabled_cmds = [
   'exec',
   'ofmotionqc',
   'ttest',
+  'rendersurf',
 ]
 
 # what version are we talking
