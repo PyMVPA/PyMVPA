@@ -17,10 +17,10 @@ from mvpa2.base.node import Node, ChainNode
 from mvpa2.base.state import ConditionalAttribute
 from mvpa2.base.types import is_datasetlike
 from mvpa2.base.dochelpers import _repr_attrs
-from mvpa2.base.node import CompoundNode, CombinedNode, ChainNode
+from mvpa2.base.node import CompoundNode, CombinedNode
 
 if __debug__:
-    from mvpa2.base import debug
+    from mvpa2.base import debug, warning
 
 
 class LearnerError(Exception):
@@ -51,7 +51,6 @@ class FailedToPredictError(LearnerError):
     pass
 
 
-
 class Learner(Node):
     """Common trainable processing object.
 
@@ -59,19 +58,22 @@ class Learner(Node):
     before it can perform its function.
     """
 
-    training_time = ConditionalAttribute(enabled=True,
+    training_time = ConditionalAttribute(
+        enabled=True,
         doc="Time (in seconds) it took to train the learner")
 
-    trained_targets = ConditionalAttribute(enabled=True,
+    trained_targets = ConditionalAttribute(
+        enabled=True,
         doc="Set of unique targets (or any other space) it has"
             " been trained on (if present in the dataset trained on)")
 
-    trained_nsamples = ConditionalAttribute(enabled=True,
+    trained_nsamples = ConditionalAttribute(
+        enabled=True,
         doc="Number of samples it has been trained on")
 
-    trained_dataset = ConditionalAttribute(enabled=False,
+    trained_dataset = ConditionalAttribute(
+        enabled=False,
         doc="The dataset it has been trained on")
-
 
     def __init__(self, auto_train=False, force_train=False, **kwargs):
         """
@@ -90,7 +92,6 @@ class Learner(Node):
         self.__is_trained = False
         self.__auto_train = auto_train
         self.__force_train = force_train
-
 
     def __repr__(self, prefixes=[]):
         return super(Learner, self).__repr__(
@@ -116,10 +117,12 @@ class Learner(Node):
         # TODO remove first condition if all Learners get only datasets
         if got_ds and (ds.nfeatures == 0 or len(ds) == 0):
             raise DegenerateInputError(
-                    "Cannot train learner on degenerate data %s" % ds)
+                "Cannot train learner on degenerate data %s" % ds)
         if __debug__:
-            debug("LRN", "Training learner %(lrn)s on dataset %(dataset)s",
-                  msgargs={'lrn':self, 'dataset': ds})
+            debug(
+                "LRN",
+                "Training learner %(lrn)s on dataset %(dataset)s",
+                msgargs={'lrn': self, 'dataset': ds})
 
         self._pretrain(ds)
 
@@ -129,31 +132,31 @@ class Learner(Node):
         if got_ds:
             # things might have happened during pretraining
             if ds.nfeatures > 0:
-                result = self._train(ds)
+                self._train(ds)
             else:
                 warning("Trying to train on dataset with no features present")
                 if __debug__:
                     debug("LRN",
-                          "No features present for training, no actual training " \
+                          "No features present for training, no actual training "
                           "is called")
-                result = None
         else:
             # in this case we claim to have no idea and simply try to train
-            result = self._train(ds)
+            self._train(ds)
 
         # store timing
         self.ca.training_time = time.time() - t0
 
         # and post-proc
-        result = self._posttrain(ds)
+        self._posttrain(ds)
 
         # finally flag as trained
         self._set_trained()
 
         if __debug__:
-            debug("LRN", "Finished training learner %(lrn)s on dataset %(dataset)s",
-                  msgargs={'lrn':self, 'dataset': ds})
-
+            debug(
+                "LRN",
+                "Finished training learner %(lrn)s on dataset %(dataset)s",
+                msgargs={'lrn': self, 'dataset': ds})
 
     def untrain(self):
         """Reverts changes in the state of this node caused by previous training
@@ -168,11 +171,9 @@ class Learner(Node):
         # whether that should be done by a more general reset() method
         self.reset()
 
-
     def _untrain(self):
         # nothing by default
         pass
-
 
     def _pretrain(self, ds):
         """Preparations prior training.
@@ -190,11 +191,9 @@ class Learner(Node):
         """
         pass
 
-
     def _train(self, ds):
         # nothing by default
         pass
-
 
     def _posttrain(self, ds):
         """Finalizing the training.
@@ -219,7 +218,6 @@ class Learner(Node):
         ca.trained_dataset = ds
         ca.trained_nsamples = len(ds)
 
-
     def _set_trained(self, status=True):
         """Set the Learner's training status
 
@@ -227,7 +225,6 @@ class Learner(Node):
         untrained (False).
         """
         self.__is_trained = status
-
 
     def __call__(self, ds):
         # overwrite __call__ to perform a rigorous check whether the learner was
@@ -258,20 +255,18 @@ class Learner(Node):
                                    % str(self))
         return super(Learner, self).__call__(ds)
 
-
-    is_trained = property(fget=lambda x:x.__is_trained, fset=_set_trained,
+    is_trained = property(fget=lambda x: x.__is_trained, fset=_set_trained,
                           doc="Whether the Learner is currently trained.")
-    auto_train = property(fget=lambda x:x.__auto_train,
+    auto_train = property(fget=lambda x: x.__auto_train,
                           doc="Whether the Learner performs automatic training"
                               "when called untrained.")
-    force_train = property(fget=lambda x:x.__force_train,
-                          doc="Whether the Learner enforces training upon every"
-                              "called.")
+    force_train = property(
+        fget=lambda x: x.__force_train,
+        doc="Whether the Learner enforces training upon every call.")
 
 
 class CompoundLearner(Learner, CompoundNode):
-    def __init__(self, learners, auto_train=False,
-                    force_train=False, **kwargs):
+    def __init__(self, learners, auto_train=False, force_train=False, **kwargs):
         '''Initializes with measures
 
         Parameters
@@ -283,10 +278,10 @@ class CompoundLearner(Learner, CompoundNode):
                          force_train=force_train, **kwargs)
         CompoundNode.__init__(self, learners, **kwargs)
 
-    is_trained = property(fget=lambda x:all(y.is_trained
-                                            for y in x),
-                          fset=lambda x:map(y._set_trained()
-                                            for y in x),
+    is_trained = property(fget=lambda x: all(y.is_trained
+                                             for y in x),
+                          fset=lambda x: map(y._set_trained()
+                                             for y in x),
                           doc="Whether the Learner is currently trained.")
 
     def train(self, ds):
@@ -303,8 +298,7 @@ class CompoundLearner(Learner, CompoundNode):
 
 class ChainLearner(ChainNode, CompoundLearner):
     '''Combines different learners into one in a chained fashion'''
-    def __init__(self, learners, auto_train=False,
-                    force_train=False, **kwargs):
+    def __init__(self, learners, auto_train=False, force_train=False, **kwargs):
         '''Initializes with measures
 
         Parameters
@@ -312,11 +306,13 @@ class ChainLearner(ChainNode, CompoundLearner):
         learners: list or tuple
             a list of Learner instances
         '''
-        CompoundLearner.__init__(self, learners, auto_train=auto_train,
-                         force_train=force_train, **kwargs)
+        CompoundLearner.__init__(
+            self, learners, auto_train=auto_train,
+            force_train=force_train, **kwargs)
 
     def _call(self, ds):
-       return ChainNode._call(self, ds)
+        return ChainNode._call(self, ds)
+
 
 class CombinedLearner(CompoundLearner, CombinedNode):
     def __init__(self, learners, combine_axis, a=None, **kwargs):
@@ -345,5 +341,3 @@ class CombinedLearner(CompoundLearner, CombinedNode):
 
     def _call(self, ds):
         return CombinedNode._call(self, ds)
-
-
