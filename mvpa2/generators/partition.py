@@ -16,11 +16,12 @@ from mvpa2.base.dochelpers import _repr_attrs
 from mvpa2.support.utils import deprecated
 
 from mvpa2.base.node import Node
-from mvpa2.base import warning
 from mvpa2.datasets.miscfx import coarsen_chunks
 import mvpa2.misc.support as support
 
 from itertools import product as iterprod
+
+import warnings
 
 if __debug__:
     from mvpa2.base import debug
@@ -532,11 +533,10 @@ class FactorialPartitioner(Partitioner):
         for usuper in unique_super:
             mask = ds.sa[self.attr].value == usuper
             nunique_subord.append(len(np.unique(ds[mask].sa[self.partitioner.attr].value)))
-        # XXX: more info than this?
         if len(np.unique(nunique_subord)) != 1:
-            warning('One or more superordinate attributes do not have the same '
+            warnings.warn('One or more superordinate attributes do not have the same '
                     'number of subordinate attributes. This could yield to '
-                    'unbalanced partitions.')
+                    'unbalanced partitions.', category=RuntimeWarning)
 
         # make a fake ds from the first feature to use the attributes
         fakeds = ds[:, 0]

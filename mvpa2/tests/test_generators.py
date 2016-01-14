@@ -13,7 +13,7 @@ import numpy as np
 
 from mvpa2.testing.tools import ok_, assert_array_equal, assert_true, \
         assert_false, assert_equal, assert_raises, assert_almost_equal, \
-        reseed_rng, assert_not_equal
+        reseed_rng, assert_not_equal, assert_warnings
 
 from mvpa2.datasets import dataset_wizard, Dataset
 from mvpa2.generators.splitters import Splitter
@@ -461,8 +461,12 @@ def test_factorialpartitioner():
     assert_array_equal(np.sort(partitions_nfold), np.sort(partitions_factpart))
 
     # smoke test for unbalanced subord classes
-    partitions_factpart = [p.sa.partitions
-                           for p in factpart.generate(ds_unbalanced)]
+    warning_msg = 'One or more superordinate attributes do not have the same '\
+                  'number of subordinate attributes. This could yield to '\
+                  'unbalanced partitions.'
+    with assert_warnings([(RuntimeWarning, warning_msg)]):
+        partitions_factpart = [p.sa.partitions
+                               for p in factpart.generate(ds_unbalanced)]
 
     # now let's test on a dummy dataset
     ds_dummy = Dataset(range(4), sa={'subord': range(4),
