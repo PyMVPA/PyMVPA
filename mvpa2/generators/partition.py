@@ -497,15 +497,18 @@ class NFoldPartitioner(Partitioner):
 class FactorialPartitioner(Partitioner):
     """Partitioner for two-level factorial designs
 
-    Given another partitioner on a dataset with two hierarchically organized
-    attributes, generates the combinations of all possible folds of the
-    superordinate attribute with the balanced combinations of the subordinate
-    attribute.
+    Given another partitioner on a dataset containing two attributes that are
+    organized in a hierarchy, it generates balanced folds of the super-ordinate
+    category that are also balanced according to the sub-ordinate category.
 
-    Examples
+    Example
     --------
-    We can classify familiar and unfamiliar faces while cross-validating
-    across identities.
+    We show images of faces to the subjects. Subjects are familiar to some
+    identities, and unfamiliar to others. Thus, we have one super-ordinate
+    attribute "familiarity", and one sub-ordinate attribute "identity". We want
+    to cross-validate familiarity across identities, that is, we train on the
+    same number of familiar and unfamiliar identities, and we test on the
+    left-over identities.
 
     >>> partitioner = FactorialPartitioner(NFoldPartitioner(attr='identity'),
     ...                                    attr='familiarity')
@@ -516,17 +519,21 @@ class FactorialPartitioner(Partitioner):
         # store the subordinate partitioner
         self.partitioner = partitioner
 
+    def __repr__(self, prefixes=[]):
+        return super(FactorialPartitioner, self).__repr__(
+                prefixes=prefixes +
+                         _repr_attrs(self, ['partitioner'], default=1))
+
+
     def generate(self, ds):
         # check whether the ds is balanced
         unique_super = ds.sa[self.attr].unique
-        unique_subor = ds.sa[self.partitioner.attr].unique
-        table = np.zeros((len(unique_super), len(unique_subor)))
-        for i, usup in enumerate(unique_super):
-            for k, usub in enumerate(unique_subor):
-                table[i, k] = np.sum(np.logical_and(ds.sa[self.attr].value == usup,
-                                                    ds.sa[self.partitioner.attr].value == usub))
+        nunique_subord = []
+        for usuper in unique_super:
+            mask = ds.sa[self.attr].value == usuper
+            nunique_subord.append(len(np.unique(ds[mask].sa[self.partitioner.attr].value)))
         # XXX: more info than this?
-        if len(np.unique(np.sum(table != 0, axis=1))):
+        if len(np.unique(nunique_subord)) != 1:
             warning('One or more superordinate attributes do not have the same '
                     'number of subordinate attributes. This could yield to '
                     'unbalanced partitions.')

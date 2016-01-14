@@ -461,7 +461,8 @@ def test_factorialpartitioner():
     assert_array_equal(np.sort(partitions_nfold), np.sort(partitions_factpart))
 
     # smoke test for unbalanced subord classes
-    partitions_factpart = [p.sa.partitions for p in factpart.generate(ds_unbalanced)]
+    partitions_factpart = [p.sa.partitions
+                           for p in factpart.generate(ds_unbalanced)]
 
     # now let's test on a dummy dataset
     ds_dummy = Dataset(range(4), sa={'subord': range(4),
