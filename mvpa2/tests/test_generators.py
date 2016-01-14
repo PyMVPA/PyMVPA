@@ -423,12 +423,13 @@ def test_factorialpartitioner():
     ds_1super.sa['superord'] = ['super1' for i in ds_1super.targets]
 
     # one superordinate category has only one subordinate
-    ds_unbalanced = ds.copy()
-    nsuper1 = np.sum(ds_unbalanced.sa.superord == 'super1')
-    mask_superord = ds_unbalanced.sa.superord == 'super1'
-    uniq_subord = np.unique(ds_unbalanced.sa.subord[mask_superord])
-    ds_unbalanced.sa.subord[mask_superord] = [uniq_subord[0] for i in range(nsuper1)]
-
+    #ds_unbalanced = ds.copy()
+    #nsuper1 = np.sum(ds_unbalanced.sa.superord == 'super1')
+    #mask_superord = ds_unbalanced.sa.superord == 'super1'
+    #uniq_subord = np.unique(ds_unbalanced.sa.subord[mask_superord])
+    #ds_unbalanced.sa.subord[mask_superord] = [uniq_subord[0] for i in range(nsuper1)]
+    ds_unbalanced = Dataset(range(4), sa={'subord': [0, 0, 1, 2],
+                                          'superord': [1, 1, 2, 2]})
 
     npart = ChainNode([
         ## so we split based on superord
@@ -467,6 +468,21 @@ def test_factorialpartitioner():
     with assert_warnings([(RuntimeWarning, warning_msg)]):
         partitions_factpart = [p.sa.partitions
                                for p in factpart.generate(ds_unbalanced)]
+
+    partitions_unbalanced = [np.array([2, 2, 2, 1]), np.array([2, 2, 1, 2])]
+    superord_unbalanced = [([2], [1, 1, 2]), ([2], [1, 1, 2])]
+    subord_unbalanced = [([2], [0, 0, 1]), ([1], [0, 0, 2])]
+
+    for out_part, true_part, super_out, sub_out in \
+            zip(partitions_factpart, partitions_unbalanced,
+                superord_unbalanced, subord_unbalanced):
+        assert_array_equal(out_part, true_part)
+        assert_array_equal((ds_unbalanced[out_part == 1].sa.superord.tolist(),
+                            ds_unbalanced[out_part == 2].sa.superord.tolist()),
+                           super_out)
+        assert_array_equal((ds_unbalanced[out_part == 1].sa.subord.tolist(),
+                            ds_unbalanced[out_part == 2].sa.subord.tolist()),
+                           sub_out)
 
     # now let's test on a dummy dataset
     ds_dummy = Dataset(range(4), sa={'subord': range(4),
