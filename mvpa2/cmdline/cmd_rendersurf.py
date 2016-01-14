@@ -81,7 +81,7 @@ def setup_parser(parser):
         help="""""")
     parser.add_argument(
         '-r', '--overlay-range',
-        nargs=2, default=('min', 'max'),
+        nargs=2, default=('min', 'max'), type=float,
         help="""""")
     parser.add_argument(
         '-c', '--overlay-colormap', default='afmhot',
