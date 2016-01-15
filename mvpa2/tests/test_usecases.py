@@ -366,7 +366,7 @@ def test_rfe_sensmap():
 
     from mvpa2.misc.data_generators import normal_feature_dataset
 
-    # Let's simulate the beast -- 6 categories total groupped into 3
+    # Let's simulate the beast -- 6 categories total grouped into 3
     # super-ordinate, and actually without any 'superordinate' effect
     # since subordinate categories independent
     fds = normal_feature_dataset(nlabels=3,

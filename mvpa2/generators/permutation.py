@@ -55,7 +55,7 @@ class AttributePermutator(Node):
           attribute name is given, its unique values will be used to define
           chunks of data that are permuted individually (i.e. no attributed
           values will be replaced across chunks). If a list given, then combination
-          of those attributes is used as a pair. Finally, if a dictionary is
+          of those attributes per each sample is used together. Finally, if a dictionary is
           provided, its keys define attribute names and its values (single value
           or sequence thereof) attribute value, where all key-value combinations
           across all given items define a "selection" of to-be-permuted samples
