@@ -48,6 +48,13 @@ Releases
     - Bundled version of libsvm updated to 3.12.  Now includes maxiter
       setting which prevents infinite looping which can happen in some rare cases
 
+  * New functionality
+
+    - :class:`~mvpa2.generators.partition.FactorialPartitioner` for factorial designs
+      to cross-validate across sub-ordinate category samples (more efficient/avoids
+      previously recommend ChainMapper of NFoldPartitioner and Sifter)
+
+
 * 2.4.1 (Wed, 18 Nov 2015)
 
   * New functionality
