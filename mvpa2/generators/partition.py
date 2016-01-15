@@ -19,6 +19,10 @@ from mvpa2.base.node import Node
 from mvpa2.datasets.miscfx import coarsen_chunks
 import mvpa2.misc.support as support
 
+from itertools import product as iterprod
+
+import warnings
+
 if __debug__:
     from mvpa2.base import debug
 
@@ -489,6 +493,67 @@ class NFoldPartitioner(Partitioner):
             # right away
             return [(None, i) for ind, i in enumerate(combs)
                     if ind < self.count]
+
+
+class FactorialPartitioner(Partitioner):
+    """Partitioner for two-level factorial designs
+
+    Given another partitioner on a dataset containing two attributes that are
+    organized in a hierarchy, it generates balanced folds of the super-ordinate
+    category that are also balanced according to the sub-ordinate category.
+
+    Example
+    --------
+    We show images of faces to the subjects. Subjects are familiar to some
+    identities, and unfamiliar to others. Thus, we have one super-ordinate
+    attribute "familiarity", and one sub-ordinate attribute "identity". We want
+    to cross-validate familiarity across identities, that is, we train on the
+    same number of familiar and unfamiliar identities, and we test on the
+    left-over identities.
+
+    >>> partitioner = FactorialPartitioner(NFoldPartitioner(attr='identity'),
+    ...                                    attr='familiarity')
+
+    """
+    def __init__(self, partitioner, **kwargs):
+        super(FactorialPartitioner, self).__init__(**kwargs)
+        # store the subordinate partitioner
+        self.partitioner = partitioner
+
+    def __repr__(self, prefixes=[]):
+        return super(FactorialPartitioner, self).__repr__(
+                prefixes=prefixes +
+                         _repr_attrs(self, ['partitioner'], default=1))
+
+
+    def generate(self, ds):
+        # check whether the ds is balanced
+        unique_super = ds.sa[self.attr].unique
+        nunique_subord = []
+        for usuper in unique_super:
+            mask = ds.sa[self.attr].value == usuper
+            nunique_subord.append(len(np.unique(ds[mask].sa[self.partitioner.attr].value)))
+        if len(np.unique(nunique_subord)) != 1:
+            warnings.warn('One or more superordinate attributes do not have the same '
+                    'number of subordinate attributes. This could yield to '
+                    'unbalanced partitions.', category=RuntimeWarning)
+
+        # make a fake ds from the first feature to use the attributes
+        fakeds = ds[:, 0]
+        if self.selection_strategy != 'equidistant':
+            raise NotImplementedError("This strategy is not yet implemented")
+
+        attr_value = ds.sa[self.attr].value
+        uattr = ds.sa[self.attr].unique
+        uattr_masks = [attr_value == u for u in uattr]
+
+        for partitionings in iterprod(*[self.partitioner.generate(fakeds[uattr_mask]) for uattr_mask in uattr_masks]):
+            pds = ds.copy(deep=False)
+            target_partitioning = np.zeros(len(pds), dtype=int)
+            for uattr_mask, partitioning in zip(uattr_masks, partitionings):
+                target_partitioning[uattr_mask] = partitioning.sa[self.partitioner.space].value
+            pds.sa[self.space] = target_partitioning
+            yield pds
 
 
 class ExcludeTargetsCombinationsPartitioner(Node):
