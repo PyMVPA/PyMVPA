@@ -31,6 +31,30 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
+* 2.4.2 (???)
+
+  * Fixes
+
+    - *Important:*
+      Reverse mapping of some chained Flatten/StaticSelection mappers did not
+      work correctly e.g. if you selected some features from already masked
+      fmri_dataset. This could have resulted in incorrect cluster counts by
+      :class:`~mvpa2.algorithms.group_clusterthr.GroupClusterThreshold`.  Please
+      recreate your datasets and re-estimate GroupClusterThreshold if that was
+      the case for you
+
+  * Enhancements
+
+    - Bundled version of libsvm updated to 3.12.  Now includes maxiter
+      setting which prevents infinite looping which can happen in some rare cases
+
+  * New functionality
+
+    - :class:`~mvpa2.generators.partition.FactorialPartitioner` for factorial designs
+      to cross-validate across sub-ordinate category samples (more efficient/avoids
+      previously recommend ChainMapper of NFoldPartitioner and Sifter)
+
+
 * 2.4.1 (Wed, 18 Nov 2015)
 
   * New functionality

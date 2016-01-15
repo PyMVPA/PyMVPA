@@ -183,6 +183,7 @@ if externals.exists('statsmodels'):
     from mvpa2.measures.statsmodels_adaptor import *
 from mvpa2.measures.irelief import *
 from mvpa2.measures.base import *
+from mvpa2.measures.fx import *
 from mvpa2.measures.noiseperturbation import *
 from mvpa2.misc.neighborhood import *
 from mvpa2.measures.searchlight import *

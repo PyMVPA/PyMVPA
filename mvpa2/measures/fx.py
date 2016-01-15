@@ -81,9 +81,11 @@ if externals.exists('statsmodels'):
 
     # TODO move under .support somewhere and submit a PR with fix to statsmodels
     def mutualinfo_kde(x, y):
+        """A lean adapter for statsmodels mutualinfo_kde which retuns 0 for nan results
+        """
         res = mv_measures.mutualinfo_kde(x, y)
         if np.isnan(res):
-            return 0 # could get out of bounds
+            return 0  # could get out of bounds
         return res
 
     def targets_mutualinfo_kde(attr='targets'):

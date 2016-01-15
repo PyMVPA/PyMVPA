@@ -20,7 +20,10 @@ if externals.exists('statsmodels'):
 
 from mvpa2.testing import sweepargs
 from mvpa2.testing.datasets import datasets as tdatasets
-from mvpa2.testing import assert_array_equal, assert_array_less, assert_equal, ok_
+from mvpa2.testing import assert_array_almost_equal, assert_array_less, assert_equal, ok_
+
+if __debug__:
+    from mvpa2.base import debug
 
 @sweepargs(ds=tdatasets.itervalues())
 def test_BinaryFxFeatureMeasure(ds):
@@ -33,7 +36,7 @@ def test_BinaryFxFeatureMeasure(ds):
     out = fx(ds)
     out_uni = fx_uni(ds)
     assert(len(out) == 1)
-    assert_array_equal(out.samples, out_uni)
+    assert_array_almost_equal(out.samples, out_uni)
     assert_equal(out.fa, out_uni.fa)
     ok_(str(fx).startswith("<BinaryFxFeaturewiseMeasure: lambda x, y:"))
 
@@ -76,5 +79,6 @@ def test_BinaryFxFeatureMeasure_mi(fx, ds_mi):
     assert_array_less(mi_min, mi)
     assert_array_less(mi, mi_max)
     fx_str = str(fx)
-    assert_equal(fx_str, "<BinaryFxFeaturewiseMeasure: %s>" % fx.fx.__name__)
+    if not (__debug__ and 'ID_IN_REPR' in debug.active):
+        assert_equal(fx_str, "<BinaryFxFeaturewiseMeasure: %s>" % fx.fx.__name__)
 

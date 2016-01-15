@@ -13,16 +13,17 @@ import numpy as np
 
 from mvpa2.testing.tools import ok_, assert_array_equal, assert_true, \
         assert_false, assert_equal, assert_raises, assert_almost_equal, \
-        reseed_rng, assert_not_equal
+        reseed_rng, assert_not_equal, assert_warnings
 
 from mvpa2.datasets import dataset_wizard, Dataset
 from mvpa2.generators.splitters import Splitter
 from mvpa2.base.node import ChainNode
 from mvpa2.generators.partition import OddEvenPartitioner, NFoldPartitioner, \
-     ExcludeTargetsCombinationsPartitioner
+     ExcludeTargetsCombinationsPartitioner, FactorialPartitioner
 from mvpa2.generators.permutation import AttributePermutator
 from mvpa2.generators.base import  Repeater, Sifter
 from mvpa2.generators.resampling import Balancer
+from mvpa2.misc.data_generators import normal_feature_dataset
 from mvpa2.misc.support import get_nelements_per_value
 
 
@@ -396,3 +397,99 @@ def test_permute_chunks():
     permutation = AttributePermutator(attr='targets',
                                       strategy='chunks')
     assert_raises(ValueError, permutation, ds)
+
+
+def test_factorialpartitioner():
+    # Test against sifter and chainmap implemented in test_usecases
+    # -- code below copied from test_usecases --
+    # Let's simulate the beast -- 6 categories total groupped into 3
+    # super-ordinate, and actually without any 'superordinate' effect
+    # since subordinate categories independent
+    ds = normal_feature_dataset(nlabels=6,
+                                snr=100,   # pure signal! ;)
+                                perlabel=30,
+                                nfeatures=6,
+                                nonbogus_features=range(6),
+                                nchunks=5)
+    ds.sa['subord'] = ds.sa.targets.copy()
+    ds.sa['superord'] = ['super%d' % (int(i[1])%3,)
+                         for i in ds.targets]   # 3 superord categories
+    # let's override original targets just to be sure that we aren't relying on them
+    ds.targets[:] = 0
+
+    # let's make two other datasets to test later
+    # one superordinate category only
+    ds_1super = ds.copy()
+    ds_1super.sa['superord'] = ['super1' for i in ds_1super.targets]
+
+    # one superordinate category has only one subordinate
+    #ds_unbalanced = ds.copy()
+    #nsuper1 = np.sum(ds_unbalanced.sa.superord == 'super1')
+    #mask_superord = ds_unbalanced.sa.superord == 'super1'
+    #uniq_subord = np.unique(ds_unbalanced.sa.subord[mask_superord])
+    #ds_unbalanced.sa.subord[mask_superord] = [uniq_subord[0] for i in range(nsuper1)]
+    ds_unbalanced = Dataset(range(4), sa={'subord': [0, 0, 1, 2],
+                                          'superord': [1, 1, 2, 2]})
+
+    npart = ChainNode([
+        ## so we split based on superord
+        NFoldPartitioner(len(ds.sa['superord'].unique),
+                         attr='subord'),
+        ## so it should select only those splits where we took 1 from
+        ## each of the superord categories leaving things in balance
+        Sifter([('partitions', 2),
+                ('superord',
+                 { 'uvalues': ds.sa['superord'].unique,
+                   'balanced': True})
+                ]),
+    ], space='partitions')
+
+    # now the new implementation
+    factpart = FactorialPartitioner(
+        NFoldPartitioner(attr='subord'),
+        attr='superord'
+    )
+
+    partitions_npart = [p.sa.partitions for p in npart.generate(ds)]
+    partitions_factpart = [p.sa.partitions for p in factpart.generate(ds)]
+
+    assert_array_equal(np.sort(partitions_npart), np.sort(partitions_factpart))
+
+    # now let's check it behaves correctly if we have only one superord class
+    nfold = NFoldPartitioner(attr='subord')
+    partitions_nfold = [p.sa.partitions for p in nfold.generate(ds_1super)]
+    partitions_factpart = [p.sa.partitions for p in factpart.generate(ds_1super)]
+    assert_array_equal(np.sort(partitions_nfold), np.sort(partitions_factpart))
+
+    # smoke test for unbalanced subord classes
+    warning_msg = 'One or more superordinate attributes do not have the same '\
+                  'number of subordinate attributes. This could yield to '\
+                  'unbalanced partitions.'
+    with assert_warnings([(RuntimeWarning, warning_msg)]):
+        partitions_factpart = [p.sa.partitions
+                               for p in factpart.generate(ds_unbalanced)]
+
+    partitions_unbalanced = [np.array([2, 2, 2, 1]), np.array([2, 2, 1, 2])]
+    superord_unbalanced = [([2], [1, 1, 2]), ([2], [1, 1, 2])]
+    subord_unbalanced = [([2], [0, 0, 1]), ([1], [0, 0, 2])]
+
+    for out_part, true_part, super_out, sub_out in \
+            zip(partitions_factpart, partitions_unbalanced,
+                superord_unbalanced, subord_unbalanced):
+        assert_array_equal(out_part, true_part)
+        assert_array_equal((ds_unbalanced[out_part == 1].sa.superord.tolist(),
+                            ds_unbalanced[out_part == 2].sa.superord.tolist()),
+                           super_out)
+        assert_array_equal((ds_unbalanced[out_part == 1].sa.subord.tolist(),
+                            ds_unbalanced[out_part == 2].sa.subord.tolist()),
+                           sub_out)
+
+    # now let's test on a dummy dataset
+    ds_dummy = Dataset(range(4), sa={'subord': range(4),
+                                     'superord': [1,2]*2})
+    partitions_factpart = [p.sa.partitions for p in factpart.generate(ds_dummy)]
+    assert_array_equal(partitions_factpart,
+                       [[2, 2, 1, 1],
+                        [2, 1, 1, 2],
+                        [1, 2, 2, 1],
+                        [1, 1, 2, 2]])

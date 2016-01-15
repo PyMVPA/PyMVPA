@@ -355,7 +355,7 @@ class RepeatedMeasure(Measure):
         elif concat_as == 'features':
             results = hstack(results, True)
         else:
-            raise ValueError("Unkown concatenation mode '%s'" % concat_as)
+            raise ValueError("Unknown concatenation mode '%s'" % concat_as)
         # no need to store the raw results, since the Measure class will
         # automatically store them in a CA
         return results
