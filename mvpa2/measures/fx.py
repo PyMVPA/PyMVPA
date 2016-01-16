@@ -41,7 +41,9 @@ class BinaryFxFeaturewiseMeasure(FeaturewiseMeasure):
         self.uni = uni
         self.numeric = numeric
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(BinaryFxFeaturewiseMeasure, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['fx'])

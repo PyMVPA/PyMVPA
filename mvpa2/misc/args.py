@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-def split_kwargs(kwargs, prefixes=[]):
+def split_kwargs(kwargs, prefixes=None):
     """Helper to separate kwargs into multiple groups
 
     Parameters
@@ -23,6 +23,8 @@ def split_kwargs(kwargs, prefixes=[]):
     :Output:
       dictionary with keys == `prefixes`
     """
+    if prefixes is None:
+        prefixes = []
     if not ('' in prefixes):
         prefixes = prefixes + ['']
     result = [ [] for i in prefixes ]

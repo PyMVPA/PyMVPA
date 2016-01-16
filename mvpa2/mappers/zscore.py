@@ -86,7 +86,9 @@ class ZScoreMapper(Mapper):
         self._secret_inplace_zscore = False
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(ZScoreMapper, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['params', 'param_est', 'chunks_attr'])

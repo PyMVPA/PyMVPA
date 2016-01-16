@@ -95,11 +95,13 @@ class BaseSearchlight(Measure):
         self.nproc = nproc
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
         """String representation of a `Measure`
 
         Includes only arguments which differ from default ones
         """
+        if prefixes is None:
+            prefixes = []
         return super(BaseSearchlight, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['queryengine', 'roi_ids', 'nproc']))
@@ -326,7 +328,9 @@ class Searchlight(BaseSearchlight):
         else:
             self.__add_center_fa = False
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(Searchlight, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['datameasure'])

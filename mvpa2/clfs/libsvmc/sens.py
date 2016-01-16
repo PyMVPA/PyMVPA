@@ -46,8 +46,10 @@ class LinearSVMWeights(Sensitivity):
         Sensitivity.__init__(self, clf, **kwargs)
 
 
-    def _call(self, dataset, callables=[]):
+    def _call(self, dataset, callables=None):
         # local bindings
+        if callables is None:
+            callables = []
         clf = self.clf
         model = clf.model
 

@@ -132,7 +132,7 @@ class CustomSGKernel(_BasicSGKernel):
     """Class which can wrap any Shogun kernel and it's kernel parameters
     """
     # TODO: rename args here for convenience?
-    def __init__(self, kernel_cls, kernel_params=[], **kwargs):
+    def __init__(self, kernel_cls, kernel_params=None, **kwargs):
         """Initialize CustomSGKernel.
 
         Parameters
@@ -143,6 +143,8 @@ class CustomSGKernel(_BasicSGKernel):
           Each item in this list should be a tuple of (kernelparamname, value),
           and the order is the explicit order required by the Shogun constructor
         """
+        if kernel_params is None:
+            kernel_params = []
         self.__kernel_cls__ = kernel_cls # These are normally static
 
         _BasicSGKernel.__init__(self, **kwargs)

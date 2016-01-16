@@ -508,7 +508,9 @@ class LabelsLevel(Level):
 
 	XXX extend
     """
-    def __init__ (self, description, index=None, labels=[]):
+    def __init__ (self, description, index=None, labels=None):
+        if labels is None:
+            labels = []
         Level.__init__(self, description)
         self.__index = index
         self.__labels = labels
@@ -520,10 +522,12 @@ class LabelsLevel(Level):
 
     @staticmethod
     ##REF: Name was automagically refactored
-    def from_xml(Elevel, levelIndex=[0]):
+    def from_xml(Elevel, levelIndex=None):
         # XXX this is just for label type of level. For distance we need to ...
         # we need to assure the right indexing
 
+        if levelIndex is None:
+                levelIndex = [0]
         index = 0
         if 'index' in Elevel.attrib:
             index = int(Elevel.get("index"))
@@ -578,7 +582,9 @@ class LabelsLevel(Level):
 class ReferencesLevel(Level):
     """Level which carries reference points
     """
-    def __init__ (self, description, indexes=[]):
+    def __init__ (self, description, indexes=None):
+        if indexes is None:
+            indexes = []
         Level.__init__(self, description)
         self.__indexes = indexes
         self._type = "References"

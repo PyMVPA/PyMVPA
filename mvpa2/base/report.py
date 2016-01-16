@@ -190,7 +190,7 @@ class Report(object):
     # TODO: workaround -- either passing symbolic names or assign
     #       post-class creation
     #@borrowkwargs(reportlab.platypus.Image, '__init__')
-    def figure(self, fig=None, name=None, savefig_kwargs={}, **kwargs):
+    def figure(self, fig=None, name=None, savefig_kwargs=None, **kwargs):
         """Add a figure to the report
 
         Parameters
@@ -204,6 +204,8 @@ class Report(object):
         **kwargs
           Passed to :class:`reportlab.platypus.Image` constructor
         """
+        if savefig_kwargs is None:
+            savefig_kwargs = {}
 
         if externals.exists('pylab', raise_=True):
             import pylab as pl
