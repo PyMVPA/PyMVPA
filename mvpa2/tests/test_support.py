@@ -282,6 +282,19 @@ def test_limit_filter():
                        np.logical_or(ds.sa.chunks == 3,
                                      ds.sa.chunks == 1))
 
+    # if a list
+    assert_array_equal(get_limit_filter('chunks', ds.sa),
+                       get_limit_filter(['chunks'], ds.sa))
+    assert_array_equal(get_limit_filter('chunks', ds.sa),
+                       get_limit_filter(['chunks']*2, ds.sa))
+    lf = get_limit_filter(['chunks', 'targets'], ds.sa)
+    assert_array_equal(len(np.unique(lf)), len(ds.UC) * len(ds.UT))
+    for uv in np.unique(lf):
+        for a in ['chunks', 'targets']:
+            # within each 'block' values will be unique
+            assert_equal(len(np.unique(ds.sa[a].value[lf == uv])), 1)
+
+
 def test_mask2slice():
     slc = np.repeat(False, 5)
     assert_equal(mask2slice(slc), slice(None, 0, None))

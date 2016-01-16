@@ -13,7 +13,8 @@ import numpy as np
 
 from mvpa2.testing.tools import ok_, assert_array_equal, assert_true, \
         assert_false, assert_equal, assert_raises, assert_almost_equal, \
-        reseed_rng, assert_not_equal, assert_warnings
+        reseed_rng, assert_not_equal, assert_in, assert_not_in
+from mvpa2.testing.tools import assert_warnings
 
 from mvpa2.datasets import dataset_wizard, Dataset
 from mvpa2.generators.splitters import Splitter
@@ -98,6 +99,12 @@ def test_partitionmapper():
 
 @reseed_rng()
 def test_attrpermute():
+
+    # Was about to use borrowkwargs but didn't work out . Test doesn't hurt
+    doc = AttributePermutator.__init__.__doc__
+    assert_in('limit : ', doc)
+    assert_not_in('collection : ', doc)
+
     ds = give_data()
     ds.sa['ids'] = range(len(ds))
     pristine_data = ds.samples.copy()
