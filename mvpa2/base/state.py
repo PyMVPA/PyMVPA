@@ -457,7 +457,7 @@ class ConditionalAttributesCollection(Collection):
 
     def is_active(self, key):
         """Returns `True` if state `key` is known and is enabled"""
-        return self.has_key(key) and self.is_enabled(key)
+        return key in self and self.is_enabled(key)
 
 
     def enable(self, key, value=True, missingok=False):

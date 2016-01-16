@@ -92,7 +92,7 @@ def test_from_wizard():
     ok_(cds.a.keys() == ['random'])
 
     # there is not necessarily a mapper present
-    ok_(not ds.a.has_key('mapper'))
+    ok_(not 'mapper' in ds.a)
 
     # has to complain about misshaped samples attributes
     assert_raises(ValueError, Dataset.from_wizard, samples, labels + labels)
@@ -258,7 +258,7 @@ def test_basic_datamapping():
     ok_(isinstance(ds.samples, myarray))
 
     # mapper should end up in the dataset
-    ok_(ds.a.has_key('mapper'))
+    ok_('mapper' in ds.a)
 
     # check correct mapping
     ok_(ds.nsamples == 4)

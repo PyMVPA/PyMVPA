@@ -253,7 +253,7 @@ def enhanced_doc_string(item, *args, **kwargs):
         item._customize_doc()
 
     initdoc = ""
-    if lcl.has_key('__init__'):
+    if '__init__' in lcl:
         func = lcl['__init__']
         initdoc = func.__doc__
 
@@ -280,7 +280,7 @@ def enhanced_doc_string(item, *args, **kwargs):
         known_params = set([i[0] for i in params_list])
 
         # If there are additional ones:
-        if lcl.has_key('_paramsdoc'):
+        if '_paramsdoc' in lcl:
             params_list += [i for i in lcl['_paramsdoc']
                             if not (i[0] in known_params)]
             known_params = set([i[0] for i in params_list])
@@ -342,7 +342,7 @@ def enhanced_doc_string(item, *args, **kwargs):
                   initdoc ]
 
     # Add information about the ca if available
-    if lcl.has_key('_cadoc') and len(item._cadoc):
+    if '_cadoc' in lcl and len(item._cadoc):
         # to don't conflict with Notes section if such was already
         # present
         lcldoc = lcl['__doc__'] or ''

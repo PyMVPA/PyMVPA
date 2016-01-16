@@ -94,7 +94,7 @@ class SVMTests(unittest.TestCase):
     @sweepargs(clf=clfswh['svm', 'linear', '!regression', '!gnpp', '!meta'])
     @reseed_rng()
     def test_cper_class(self, clf):
-        if not (clf.params.has_key('C')):
+        if not ('C' in clf.params):
             # skip those without C
             return
 
