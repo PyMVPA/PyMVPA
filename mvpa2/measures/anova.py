@@ -79,12 +79,12 @@ class OneWayAnova(FeaturewiseMeasure):
         ul = targets_sa.unique
 
         na = len(ul)
-        bign = float(dataset.nsamples)
         alldata = dataset.samples
 
         # total squares of sums
         sostot = np.sum(alldata, axis=0)
         sostot *= sostot
+        bign = sostot.dtype.type(dataset.nsamples)
         sostot /= bign
 
         # total sum of squares
