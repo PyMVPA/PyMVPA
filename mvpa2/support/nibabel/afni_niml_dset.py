@@ -140,7 +140,7 @@ def _dset2rawniml_nodeidxs(s):
 
     node_idxs = s.get('node_indices') if 'node_indices' in s else np.arange(nrows, dtype=np.int32)
 
-    if not node_idxs is None:
+    if node_idxs is not None:
         if not type(node_idxs) is np.ndarray:
             node_idxs = np.asarray(node_idxs, dtype=np.int32)
 
@@ -309,7 +309,7 @@ def _dset2rawniml_complete(r):
         r['ni_dimen'] = str(nrows)
         tpstr = types.numpy_type2name(data.dtype)
         r['ni_type'] = '%d*%s' % (ncols, tpstr) if nrows > 1 else tpstr
-    elif not data is None:
+    elif data is not None:
         raise TypeError('Illegal type %r in %r' % (tp, data))
 
     if not 'name' in r:
@@ -353,7 +353,7 @@ def dset2rawniml(s):
     nodes = [_dset2rawniml_complete(build(s)) for build in builders]
     _remove_empty_nodes(nodes)
 
-    more_nodes = filter(lambda x:not x is None, _dset2rawniml_anything_else(s))
+    more_nodes = filter(lambda x: x is not None, _dset2rawniml_anything_else(s))
 
     r['nodes'] = nodes + more_nodes
     return r
@@ -400,7 +400,7 @@ def sparse2full(dset, pad_to_ico_ld=None, pad_to_node=None,
         'node_indices'.
     '''
 
-    if not pad_to_ico_ld is None:
+    if pad_to_ico_ld is not None:
         if pad_to_node:
             raise ValueError("Cannot have both ico_ld and pad_to_node")
         pad_to_node = ico_ld_surface_count * (pad_to_ico_ld ** 2 * 10 + 2)
@@ -571,7 +571,7 @@ def ttest(dsets, sa_labels=None, return_values='mt',
     labs = sum([['%s_%s' % (p, lab) for p in pf] for lab in dset_labels], [])
     stats = stats * nc
 
-    if not set_NaN_to is None:
+    if set_NaN_to is not None:
         r[np.logical_not(np.isfinite(r))] = set_NaN_to
 
 

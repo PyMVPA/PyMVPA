@@ -375,7 +375,7 @@ class MCNullDist(NullDist):
         # the function.
         # XXX that is a bit awkward but is necessary to keep the code changes
         # in the rest of PyMVPA minimal till this behavior become mandatory
-        if not self._measure is None:
+        if self._measure is not None:
             measure = self._measure
             measure.untrain()
 

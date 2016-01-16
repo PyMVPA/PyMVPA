@@ -159,7 +159,7 @@ def run(args):
     from mvpa2.base.hdf5 import h5save
     ds = None
     vol_attr = dict()
-    if not args.add_vol_attr is None:
+    if args.add_vol_attr is not None:
         # XXX add a way to use the mapper of an existing dataset to
         # add a volume attribute without having to load the entire
         # mri data again
@@ -168,19 +168,19 @@ def run(args):
             warning("--vol-attr option with duplicate attribute name: "
                     "check arguments!")
         verbose(2, "Prepare to add volumetric feature attributes: %s" % vol_attr)
-    if not args.txt_data is None:
+    if args.txt_data is not None:
         verbose(1, "Load data from TXT file '%s'" % args.txt_data)
         samples = _load_from_txt(args.txt_data)
         ds = Dataset(samples)
-    elif not args.npy_data is None:
+    elif args.npy_data is not None:
         verbose(1, "Load data from NPY file '%s'" % args.npy_data)
         samples = _load_from_npy(args.npy_data)
         ds = Dataset(samples)
-    elif not args.mri_data is None:
+    elif args.mri_data is not None:
         verbose(1, "Load data from MRI image(s) %s" % args.mri_data)
         from mvpa2.datasets.mri import fmri_dataset
         ds = fmri_dataset(args.mri_data, mask=args.mask, add_fa=vol_attr)
-    elif not args.openfmri_modelbold is None:
+    elif args.openfmri_modelbold is not None:
         verbose(1, "Load data from OpenFMRI model specification %s" % args.openfmri_modelbold)
         if not len(args.openfmri_modelbold[3]):
             args.openfmri_modelbold[3] = None
@@ -206,7 +206,7 @@ def run(args):
     # act on all attribute options
     ds = process_common_dsattr_opts(ds, args)
 
-    if args.openfmri_modelbold is None and not args.add_fsl_mcpar is None:
+    if args.openfmri_modelbold is None and args.add_fsl_mcpar is not None:
         from mvpa2.misc.fsl.base import McFlirtParams
         mc_par = McFlirtParams(args.add_fsl_mcpar)
         for param in mc_par:

@@ -305,7 +305,7 @@ class ProxyClassifier(Classifier):
     def _untrain(self):
         """Untrain ProxyClassifier
         """
-        if not self.__clf is None:
+        if self.__clf is not None:
             self.__clf.untrain()
         super(ProxyClassifier, self)._untrain()
 

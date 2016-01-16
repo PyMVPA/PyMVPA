@@ -144,7 +144,7 @@ class SVMParameter(object):
         return out
 
     def _clear_svmc_params(self):
-        if not self.__svmc_params is None:
+        if self.__svmc_params is not None:
             del self.__svmc_params
         self.__svmc_params = None
 

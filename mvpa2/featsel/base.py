@@ -110,7 +110,7 @@ class FeatureSelection(SliceMapper):
     def _forward_dataset(self, dataset):
         # XXX this should probably not affect the source dataset, but right now
         # init_origid is not flexible enough
-        if not self.get_space() is None:
+        if self.get_space() is not None:
             # TODO need to do a copy first!!!
             dataset.init_origids('features', attr=self.get_space())
         # invoke super class _forward_dataset, this calls, _forward_dataset

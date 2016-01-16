@@ -212,7 +212,7 @@ def run(args):
     for attrarg, col, descr in ((args.strip_sa, ds.sa, 'sample '),
                                 (args.strip_fa, ds.fa, 'feature '),
                                 (args.strip_da, ds.a, '')):
-        if not attrarg is None:
+        if attrarg is not None:
             for attr in attrarg:
                 try:
                     del col[attr]

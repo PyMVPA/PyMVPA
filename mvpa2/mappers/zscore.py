@@ -105,7 +105,7 @@ class ZScoreMapper(Mapper):
 
         # populate a dictionary with tuples of (mean,std) for all chunks, or
         # a global value that is is used for the whole data
-        if not params is None:
+        if params is not None:
             # we got mean and std already
             if not isinstance(params, dict):
                 # turn into dict, otherwise assume that we have parameters per
@@ -113,7 +113,7 @@ class ZScoreMapper(Mapper):
                 params = {'__all__': params}
         else:
             # no parameters given, need to estimate
-            if not param_est is None:
+            if param_est is not None:
                 est_attr, est_attr_values = param_est
                 # which samples to use for estimation
                 est_ids = set(get_samples_by_attr(ds, est_attr,
@@ -122,7 +122,7 @@ class ZScoreMapper(Mapper):
                 est_ids = slice(None)
 
             # now we can either do it one for all, or per chunk
-            if not chunks_attr is None:
+            if chunks_attr is not None:
                 # per chunk estimate
                 params = {}
                 for c in ds.sa[chunks_attr].unique:
@@ -145,7 +145,7 @@ class ZScoreMapper(Mapper):
         chunks_attr = self.__chunks_attr
         dtype = self.__dtype
 
-        if __debug__ and not chunks_attr is None:
+        if __debug__ and chunks_attr is not None:
             nsamples_per_chunk = get_nsamples_per_attr(ds, chunks_attr)
             min_nsamples_per_chunk = np.min(nsamples_per_chunk.values())
             if min_nsamples_per_chunk in range(3, 6):

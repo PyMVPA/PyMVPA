@@ -546,7 +546,7 @@ if __debug__:
         def __call__(self):
             dt = 0.0
             ct = time.time()
-            if not self.__prev is None:
+            if self.__prev is not None:
                 dt = ct - self.__prev
             self.__prev = ct
             return self.__format % dt

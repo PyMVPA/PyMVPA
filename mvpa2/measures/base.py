@@ -105,7 +105,7 @@ class Measure(Learner):
 
     def _precall(self, ds):
         # estimate the NULL distribution when functor is given
-        if not self.__null_dist is None:
+        if self.__null_dist is not None:
             if __debug__:
                 debug("STAT", "Estimating NULL distribution using %s"
                       % self.__null_dist)
@@ -325,7 +325,7 @@ class RepeatedMeasure(Measure):
             # run the beast
             result = node(sds)
             # callback
-            if not self._callback is None:
+            if self._callback is not None:
                 self._callback(data=sds, node=node, result=result)
             # subclass postprocessing
             result = self._repetition_postcall(sds, node, result)
@@ -443,7 +443,7 @@ class CrossValidation(RepeatedMeasure):
         """
         # compile the appropriate repeated measure to do cross-validation from
         # pieces
-        if not errorfx is None:
+        if errorfx is not None:
             # error node -- postproc of transfer measure
             if isinstance(errorfx, Node):
                 enode = errorfx

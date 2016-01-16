@@ -63,7 +63,7 @@ class Collectable(object):
         self.__doc__ = doc
         self.__name = name
         self._value = None
-        if not value is None:
+        if value is not None:
             self._set(value)
         if __debug__ and __mvpadebug__:
             debug("COL", "Initialized %r", (self,))
@@ -178,7 +178,7 @@ class SequenceCollectable(Collectable):
         # first configure the value checking, to enable it for the base class
         # init
         # XXX should we disallow empty Collectables??
-        if not value is None and not hasattr(value, '__len__'):
+        if value is not None and not hasattr(value, '__len__'):
             raise ValueError("%s only takes sequences as value."
                              % self.__class__.__name__)
         self._target_length = length
@@ -212,7 +212,7 @@ class SequenceCollectable(Collectable):
     def _set(self, val):
         # check if the new value has the desired length -- if length checking is
         # desired at all
-        if not self._target_length is None \
+        if self._target_length is not None \
            and len(val) != self._target_length:
             raise ValueError("Value length [%i] does not match the required "
                              "length [%i] of attribute '%s'."
@@ -327,7 +327,7 @@ class Collection(dict):
         items : all types accepted by update()
         """
         dict.__init__(self)
-        if not items is None:
+        if items is not None:
             self.update(items)
 
     def copy(self, deep=True, a=None, memo=None):
@@ -583,7 +583,7 @@ class UniformLengthCollection(Collection):
         if not isinstance(value, ArrayCollectable):
             # if it is only a single element iterable, attempt broadcasting
             if is_sequence_type(value) and len(value) == 1 \
-                    and not ulength is None:
+                    and ulength is not None:
                 if ulength > 1:
                     # cannot use np.repeat, because it destroys dimensionality
                     value = [value[0]] * ulength

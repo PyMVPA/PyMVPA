@@ -494,7 +494,7 @@ def _repr(obj, *args, **kwargs):
                    + ["%s=%s" % (k, v) for k, v in kwargs.iteritems()])
 
 
-    if not truncate is None and len(auto_repr) > max_length:
+    if truncate is not None and len(auto_repr) > max_length:
         auto_repr = auto_repr[:max_length] + '...'
 
     # finally wrap in <> and return
@@ -548,7 +548,7 @@ def _str(obj, *args, **kwargs):
         if len(auto_descr):
             s = s + ': ' + auto_descr
 
-    if not truncate is None and len(s) > truncate - 5:
+    if truncate is not None and len(s) > truncate - 5:
         # -5 to take <...> into account
         s = s[:truncate-5] + '...'
 

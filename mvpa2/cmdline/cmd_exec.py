@@ -87,9 +87,9 @@ def setup_parser(parser):
     parser_add_optgroup_from_def(parser, hdf5output)
 
 def run(args):
-    if not args.store is None and args.output is None:
+    if args.store is not None and args.output is None:
         raise ValueError("--output is require for result storage")
-    if not args.data is None:
+    if args.data is not None:
         dss = [arg2ds(d) for d in args.data]
         if len(dss):
             # convenience short-cut
@@ -105,7 +105,7 @@ def run(args):
             execfile(expr, globals(), locals())
         else:
             exec expr
-    if not args.store is None:
+    if args.store is not None:
         out = {}
         for var in args.store:
             try:
