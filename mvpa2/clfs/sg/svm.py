@@ -66,7 +66,6 @@ import operator
 
 from mvpa2.base.param import Parameter
 from mvpa2.misc.attrmap import AttributeMap
-from mvpa2.base import warning
 
 from mvpa2.clfs.base import accepts_dataset_as_samples, \
      accepts_samples_as_dataset
