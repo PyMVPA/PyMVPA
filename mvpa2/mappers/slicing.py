@@ -42,7 +42,9 @@ class SliceMapper(Mapper):
         if not slicearg is None:
             self._set_trained()
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(SliceMapper, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['slicearg']))

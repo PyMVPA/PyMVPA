@@ -98,7 +98,9 @@ class VolumeMaskDictionary(Mapping):
         # it is generated.
         self._lazy_nbr2src = None
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         prefixes_ = ['vg=%r' % self._volgeom,
                     'source=%r' % self._source] + prefixes
 

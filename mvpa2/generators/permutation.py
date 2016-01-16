@@ -270,7 +270,9 @@ class AttributePermutator(Node):
         return _str(self, self._pattr, n=self.count, limit=self._limit,
                     assure=self._assure_permute)
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(AttributePermutator, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['attr'])

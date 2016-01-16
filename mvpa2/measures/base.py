@@ -93,11 +93,13 @@ class Measure(Learner):
     __doc__ = enhanced_doc_string('Measure', locals(),
                                   Learner)
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
         """String representation of a `Measure`
 
         Includes only arguments which differ from default ones
         """
+        if prefixes is None:
+            prefixes = []
         return super(Measure, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['null_dist']))
@@ -208,9 +210,11 @@ class ProxyMeasure(Measure):
         self.__measure = measure
         self.skip_train = skip_train
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
         """String representation of a `ProxyMeasure`
         """
+        if prefixes is None:
+            prefixes = []
         return super(ProxyMeasure, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['measure'])
@@ -288,7 +292,11 @@ class RepeatedMeasure(Measure):
         self._callback = callback
         self._concat_as = concat_as
 
-    def __repr__(self, prefixes=[], exclude=[]):
+    def __repr__(self, prefixes=None, exclude=None):
+        if prefixes is None:
+            prefixes = []
+        if exclude is None:
+            exclude = []
         return super(RepeatedMeasure, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, [x for x in ['node', 'generator', 'callback']
@@ -478,7 +486,9 @@ class CrossValidation(RepeatedMeasure):
             # also enable training stats in the learner
             learner.ca.enable('training_stats')
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(CrossValidation, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['learner', 'splitter'])
@@ -564,7 +574,9 @@ class TransferMeasure(Measure):
         self.__splitter = splitter
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(TransferMeasure, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['measure', 'splitter'])
@@ -693,7 +705,9 @@ class StaticMeasure(Measure):
         self.__measure = measure
         self.__bias = bias
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(StaticMeasure, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['measure', 'bias'])
@@ -710,9 +724,11 @@ class StaticMeasure(Measure):
 
 
 
-def _dont_force_slaves(slave_kwargs={}):
+def _dont_force_slaves(slave_kwargs=None):
     """Helper to reset force_train in sensitivities with slaves
     """
+    if slave_kwargs is None:
+        slave_kwargs = {}
     # We should not (or even must not in case of SplitCLF) force
     # training of slave analyzers since they would be trained
     # anyways by the Boosted analyzer's train
@@ -768,7 +784,9 @@ class Sensitivity(FeaturewiseMeasure):
         """Classifier used to computed sensitivity"""
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(Sensitivity, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['clf'])
@@ -866,7 +884,9 @@ class CombinedFeaturewiseMeasure(FeaturewiseMeasure):
         """List of analyzers to use"""
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(CombinedFeaturewiseMeasure, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['analyzers'])

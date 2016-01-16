@@ -256,7 +256,7 @@ def plot_samples_distance(dataset, sortbyattr=None):
 
 def plot_decision_boundary_2d(dataset, clf=None,
                               targets=None, regions=None, maps=None,
-                              maps_res=50, vals=[-1, 0, 1],
+                              maps_res=50, vals=None,
                               data_callback=None):
     """Plot a scatter of a classifier's decision boundary and data points
 
@@ -292,6 +292,8 @@ def plot_decision_boundary_2d(dataset, clf=None,
       I.e. this can be a function to normalize them, or cache them
       before they are classified.
     """
+    if vals is None:
+        vals = [-1, 0, 1]
 
     if False:
         ## from mvpa2.misc.data_generators import *

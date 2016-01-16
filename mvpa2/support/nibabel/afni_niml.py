@@ -377,8 +377,12 @@ def _data2string(data, form):
         raise TypeError("Unknown type %r" % type(data))
 
 
-def _header2string(p, keyfirst=['dset_type', 'self_idcode', 'filename', 'data_type'], keylast=['ni_form']):
+def _header2string(p, keyfirst=None, keylast=None):
     '''Converts a header element to a string'''
+    if keyfirst is None:
+        keyfirst = ['dset_type', 'self_idcode', 'filename', 'data_type']
+    if keylast is None:
+        keylast = ['ni_form']
     otherkeys = list(set(p.keys()) - (set(keyfirst) | set(keylast)))
 
     added = set()

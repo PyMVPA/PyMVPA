@@ -280,9 +280,11 @@ if externals.exists("running ipython env"):
     except Exception, e:
         warning("Failed to activate custom IPython completions due to %s" % e)
 
-def suite_stats(scope_dict={}):
+def suite_stats(scope_dict=None):
     """Return cruel dict of things which evil suite provides
     """
+    if scope_dict is None:
+        scope_dict = {}
 
     scope_dict = scope_dict or globals()
     import types

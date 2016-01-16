@@ -915,7 +915,9 @@ class Surface(object):
 
         return ss, nsel, fsel, ss_src
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         prefixes_ = ['v=%r' % self._v, 'f=%r' % self._f] + prefixes
         return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
 
