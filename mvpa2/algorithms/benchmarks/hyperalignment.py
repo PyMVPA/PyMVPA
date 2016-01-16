@@ -37,7 +37,7 @@ def wipe_out_offdiag(a, window_size, value=np.inf):
     value : optional
       Value to fill in with
     """
-    for r in range(len(a)):
+    for r, _ in enumerate(a):
         a[r, max(0, r - window_size):r] = value
         a[r, r + 1:min(len(a), r + window_size)] = value
     return a

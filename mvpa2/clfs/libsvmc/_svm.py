@@ -352,10 +352,10 @@ class SVMModel:
         else: #self.svm_type == C_SVC or self.svm_type == NU_SVC
             count = 0
             d = {}
-            for i in range(len(self.labels)):
-                for j in range(i+1, len(self.labels)):
-                    d[self.labels[i], self.labels[j]] = v[count]
-                    d[self.labels[j], self.labels[i]] = -v[count]
+            for i, li in enumerate(self.labels):
+                for lj in self.labels[i+1:]:
+                    d[li, lj] = v[count]
+                    d[lj, li] = -v[count]
                     count += 1
             return  d
 
@@ -381,8 +381,8 @@ class SVMModel:
         svmc.delete_double(dblarr)
         svmc.svm_node_array_destroy(data)
         p = {}
-        for i in range(len(self.labels)):
-            p[self.labels[i]] = pv[i]
+        for i, l in enumerate(self.labels):
+            p[l] = pv[i]
         return pred, p
 
 

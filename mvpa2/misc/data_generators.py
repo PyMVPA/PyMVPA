@@ -113,8 +113,8 @@ def normal_feature_dataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
                 "Provide as many nonbogus features as many labels you have")
         means = np.zeros((len(nonbogus_features), nfeatures))
         # pure multivariate -- single bit per feature
-        for i in xrange(len(nonbogus_features)):
-            means[i, nonbogus_features[i]] = 1.0
+        for i, nbf in enumerate(nonbogus_features):
+            means[i, nbf] = 1.0
     if not means is None and snr != 0:
         # add mean
         data += np.repeat(np.array(means, ndmin=2), perlabel, axis=0)

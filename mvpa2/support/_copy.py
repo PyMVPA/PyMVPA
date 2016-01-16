@@ -238,8 +238,8 @@ def _deepcopy_tuple(x, memo):
         return memo[d]
     except KeyError:
         pass
-    for i in range(len(x)):
-        if x[i] is not y[i]:
+    for i, xi in enumerate(x):
+        if xi is not y[i]:
             y = tuple(y)
             break
     else:
