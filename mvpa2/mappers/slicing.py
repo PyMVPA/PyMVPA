@@ -39,7 +39,7 @@ class SliceMapper(Mapper):
             slicearg = [slicearg]
         self._slicearg = slicearg
         # if we got some sort of slicearg we assume that we are ready to go
-        if not slicearg is None:
+        if slicearg is not None:
             self._set_trained()
 
     def __repr__(self, prefixes=[]):

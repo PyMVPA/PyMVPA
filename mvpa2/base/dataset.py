@@ -237,13 +237,13 @@ class AttrDataset(object):
         # collections
         # Number of samples is .shape[0] for sparse matrix support
         self.sa = SampleAttributesCollection(length=len(self))
-        if not sa is None:
+        if sa is not None:
             self.sa.update(sa)
         self.fa = FeatureAttributesCollection(length=self.nfeatures)
-        if not fa is None:
+        if fa is not None:
             self.fa.update(fa)
         self.a = DatasetAttributesCollection()
-        if not a is None:
+        if a is not None:
             self.a.update(a)
 
     def init_origids(self, which, attr='origids', mode='new'):
@@ -576,7 +576,7 @@ class AttrDataset(object):
             own_file = True
             hdf = h5py.File(source, 'r')
 
-        if not name is None:
+        if name is not None:
             # some HDF5 subset is requested
             if not name in hdf:
                 raise ValueError("Cannot find '%s' group in HDF file %s.  "

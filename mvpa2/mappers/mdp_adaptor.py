@@ -95,7 +95,7 @@ class MDPNodeMapper(Mapper):
     def _expand_args(self, phase, ds=None):
         args = []
         kwargs = {}
-        if not self.nodeargs is None and phase in self.nodeargs:
+        if self.nodeargs is not None and phase in self.nodeargs:
             sargs, skwargs = self.nodeargs[phase]
             for a in sargs:
                 if isinstance(a, DatasetAttributeExtractor):
@@ -260,7 +260,7 @@ class MDPFlowMapper(Mapper):
           can be provided instead. Keyword arguments are currently not
           supported by mdp.Flow.
         """
-        if not node_arguments is None and len(node_arguments) != len(flow):
+        if node_arguments is not None and len(node_arguments) != len(flow):
             raise ValueError("Length of node_arguments (%i) does not match the "
                              "number of nodes in the flow (%i)."
                              % (len(node_arguments), len(flow)))

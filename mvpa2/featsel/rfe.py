@@ -335,7 +335,7 @@ class RFE(IterativeFeatureSelection):
             #      in lightsvm. Or for god's sake leave-one-out
             #      on a wdataset
             # TODO: document these cases in this class
-            if not testdataset is None:
+            if testdataset is not None:
                 wtestdataset = wtestdataset[:, selected_ids]
 
             step += 1

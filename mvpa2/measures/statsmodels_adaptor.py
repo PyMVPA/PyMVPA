@@ -203,7 +203,7 @@ class UnivariateStatsModels(FeaturewiseMeasure):
                 sa = ['fvalue', 'pvalue', 'df_num', 'df_denom']
         elif isinstance(res, str):
             sa = [res] * len(results)
-        if not sa is None:
+        if sa is not None:
             sa = {'descr': sa}
         # reassign the input feature attributes to the results
         return Dataset(results, sa=sa, fa=dataset.fa)

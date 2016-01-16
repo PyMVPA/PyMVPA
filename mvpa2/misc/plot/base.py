@@ -187,7 +187,7 @@ def plot_err_line_missing(data, x=None, errtype='ste', curves=None,
         for c in curves:
             xc, yc = c
             # scales line array to same range as datapoints
-            if not linestyle is None:
+            if linestyle is not None:
                 lines.append(pl.plot(xc, yc, linestyle))
             else:
                 lines.append(pl.plot(xc, yc))
@@ -681,7 +681,7 @@ def timeseries_boxplot(median, mean=None, std=None, n=None, min=None, max=None,
         pl.fill_between(x, mean-err, mean+err, color='0.1',alpha=.5,  lw=0,
                         zorder=4, **kwargs)
     pl.plot(x, median, color='0.0', zorder=5, **kwargs)
-    if not segment_sizes is None:
+    if segment_sizes is not None:
         for i, run in enumerate(segment_sizes[:-1]):
             pl.axvline(np.sum(segment_sizes[:i+1]), color='0.2', linestyle='--',
                        **kwargs)
@@ -705,5 +705,5 @@ def concat_ts_boxplot_stats(run_stats):
     stats = {}
     for stat in ('mean', 'median', 'std', 'p25', 'p75', 'n', 'min', 'max'):
         stats[stat] = np.concatenate([r[0][stat] for r in run_stats])
-    outlierd = [r[1].T if not r[1] is None else None for r in run_stats]
+    outlierd = [r[1].T if r[1] is not None else None for r in run_stats]
     return stats, outlierd
