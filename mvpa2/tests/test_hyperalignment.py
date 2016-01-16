@@ -225,7 +225,7 @@ class HyperAlignmentTests(unittest.TestCase):
         Compute feature ranks in each dataset
         based on correlation with other datasets
         '''
-        feature_scores = [ np.zeros(ds[i].nfeatures) for i in range(len(subj)) ]
+        feature_scores = [ np.zeros(d.nfeatures) for d in ds ]
         '''
         for i in range(len(subj)):
             ds_temp = ds[i].samples - np.mean(ds[i].samples, axis=0)

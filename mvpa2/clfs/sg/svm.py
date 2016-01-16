@@ -354,7 +354,7 @@ class SVM(_SVM):
                       "We do not have 1-class SVM brought into SG yet"
             else:
                 # can't use plain enumerate since we need them swapped
-                _labels_dict = dict([ (ul[i], i) for i in range(len(ul))])
+                _labels_dict = dict([ (u, i) for i, u in enumerate(ul)])
 
             # Create SG-customized attrmap to assure -1 / +1 if necessary
             self._attrmap = AttributeMap(_labels_dict, mapnumeric=True)

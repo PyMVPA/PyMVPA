@@ -213,13 +213,13 @@ def plot_cv_results(cv, err, title):
     colors = ['green', 'blue']
     # null distribution samples
     dist_samples = np.asarray(cv.null_dist.ca.dist_samples)
-    for i in range(len(err)):
+    for i, e in enumerate(err):
         # histogram of all computed errors from permuted data per CV-fold
         pl.hist(np.ravel(dist_samples[i]), bins=20, color=colors[i],
                 label='CV-fold %i' %i, alpha=0.5,
                 range=(dist_samples.min(), dist_samples.max()))
         # empirical error
-        pl.axvline(np.asscalar(err[i]), color=colors[i])
+        pl.axvline(np.asscalar(e), color=colors[i])
 
     # chance-level for a binary classification with balanced samples
     pl.axvline(0.5, color='black', ls='--')
