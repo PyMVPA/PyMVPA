@@ -573,7 +573,6 @@ _KNOWN = {'libsvm': 'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node'
           'reportlab': "__check('reportlab', 'Version')",
           'nose': "import nose as __",
           'pprocess': "__check('pprocess')",
-          'joblib': "__check('joblib')",
           'h5py': "__check_h5py()",
           'hdf5': "__check_h5py()",
           'nipy': "__check('nipy')",
