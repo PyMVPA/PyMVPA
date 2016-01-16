@@ -177,12 +177,10 @@ Please see the :ref:`data_formats` section.
 What if there is no special file format for some particular datatype?
 ---------------------------------------------------------------------
 
-With the :class:`~mvpa2.misc.io.hamster.Hamster` class, PyMVPA
-supports storing *any* kind of serializable data into a
-(compressed) file (see the class documentation for a trivial
-usage example). The facility is particularly useful for storing
-any number of intermediate analysis results, e.g. for
-post-processing.
+With the :func:`~mvpa2.base.hdf5.h5save` function, PyMVPA supports storing
+*any* kind of serializable data into a (compressed) HDF5 file. The facility is
+particularly useful for storing any number of intermediate analysis results,
+e.g. for post-processing.
 
 
 Data preprocessing
