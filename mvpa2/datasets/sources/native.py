@@ -111,7 +111,7 @@ def load_tutorial_data(path=None, roi='brain', add_fa=None, flavor=None):
         nimg = nb.load(pathjoin(maskpath, 'hoc.nii.gz'))
         tmpmask = nimg.get_data() == roi
         mask = nb.Nifti1Image(tmpmask.astype(int), nimg.affine, nimg.header)
-    elif isinstance(roi, tuple) or isinstance(roi, list):
+    elif isinstance(roi, (tuple, list)):
         nimg = nb.load(pathjoin(maskpath, 'hoc.nii.gz'))
         tmpmask = np.zeros(nimg.shape, dtype='bool')
         for r in roi:
