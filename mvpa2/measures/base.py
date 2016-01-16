@@ -33,8 +33,8 @@ from mvpa2.base.types import asobjarray
 from mvpa2.base.dochelpers import enhanced_doc_string, _str, _repr_attrs
 from mvpa2.base import externals, warning
 from mvpa2.clfs.stats import auto_null_dist
-from mvpa2.base.dataset import AttrDataset, vstack
-from mvpa2.datasets import Dataset, vstack, hstack
+from mvpa2.base.dataset import AttrDataset, vstack, hstack
+from mvpa2.datasets import Dataset
 from mvpa2.mappers.fx import BinaryFxNode
 from mvpa2.generators.splitters import Splitter
 
