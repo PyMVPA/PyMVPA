@@ -69,7 +69,9 @@ class FeatureSelection(SliceMapper):
         self._oshape = None
         self.filler = filler
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(FeatureSelection, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['filler'], default=0))
@@ -230,7 +232,9 @@ class StaticFeatureSelection(FeatureSelection):
         self.__orig_slicearg = slicearg
         self._safe_assign_slicearg(slicearg)
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(FeatureSelection, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['dshape', 'oshape']))

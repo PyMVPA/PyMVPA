@@ -55,7 +55,9 @@ class FlattenMapper(Mapper):
         if not shape is None:
             self._train_with_shape(shape)
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(FlattenMapper, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['shape', 'maxdims']))
@@ -238,7 +240,9 @@ class ProductFlattenMapper(FlattenMapper):
                                                len(factor_names)))
         self._factor_values = factor_values
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(ProductFlattenMapper, self).__repr__(
                         prefixes=prefixes
                         + _repr_attrs(self, ['factor_names',

@@ -891,7 +891,7 @@ class ConfusionMatrix(SummaryStatistics):
 
 
     def plot(self, labels=None, numbers=False, origin='upper',
-             numbers_alpha=None, xlabels_vertical=True, numbers_kwargs={},
+             numbers_alpha=None, xlabels_vertical=True, numbers_kwargs=None,
              **kwargs):
         """Provide presentation of confusion matrix in image
 
@@ -923,6 +923,8 @@ class ConfusionMatrix(SummaryStatistics):
         -------
          (fig, im, cb) -- figure, imshow, colorbar
         """
+        if numbers_kwargs is None:
+            numbers_kwargs = {}
 
         externals.exists("pylab", raise_=True)
         import pylab as pl

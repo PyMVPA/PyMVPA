@@ -163,7 +163,9 @@ class RFE(IterativeFeatureSelection):
         self._nfeatures_min = nfeatures_min
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(RFE, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['update_sensitivity'], default=True))
@@ -520,7 +522,9 @@ class SplitRFE(RFE):
         self.fmeasure_postproc = fmeasure_postproc
         self.nproc = nproc
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(SplitRFE, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['lrn', 'partitioner'])

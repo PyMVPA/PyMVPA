@@ -55,7 +55,9 @@ class M1NNSearchlight(SimpleStatBaseSearchlight):
         self._knn = knn
         self.__pl_train = self.__pl_test = None
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(M1NNSearchlight, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['knn'])

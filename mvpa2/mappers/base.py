@@ -459,7 +459,9 @@ class CombinedMapper(Mapper):
         self._a = a
 
     @borrowdoc(Mapper)
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+                prefixes = []
         return super(CombinedMapper, self).__repr__(
                 prefixes=prefixes
                     + _repr_attrs(self, ['mappers', 'combine_axis', 'a']))

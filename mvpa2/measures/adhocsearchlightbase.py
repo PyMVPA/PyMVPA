@@ -188,7 +188,9 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         # Storage to be used for neighborhood information
         self.__roi_fids = None
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(SimpleStatBaseSearchlight, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['generator'])

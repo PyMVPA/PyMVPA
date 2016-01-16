@@ -60,7 +60,9 @@ class GNBSearchlight(SimpleStatBaseSearchlight):
         self.__pl_train = None
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(GNBSearchlight, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['gnb'])

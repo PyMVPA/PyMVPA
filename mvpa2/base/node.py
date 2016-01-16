@@ -281,7 +281,9 @@ class Node(ClassWithCollections):
     def __str__(self, *args, **kwargs):
         return _str(self, *args, **kwargs)
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(Node, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['space', 'pass_attr', 'postproc']))
@@ -382,7 +384,9 @@ class CompoundNode(Node):
             sliced._nodes = self._nodes[key]
             return sliced
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(CompoundNode, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['nodes']))
@@ -469,7 +473,9 @@ class CombinedNode(CompoundNode):
         stacked = stacker[self._combine_axis](out, self._a)
         return stacked
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(CombinedNode, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['combine_axis', 'a']))

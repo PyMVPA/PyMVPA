@@ -63,7 +63,9 @@ class VolSurf(object):
         self._intermediate = surf.from_any(intermediate)
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         prefixes_ = ['vg=%r' % self._volgeom,
                      'white=%r' % self._white,
                      'pial=%r' % self._pial] + prefixes
@@ -848,7 +850,9 @@ class VolumeBasedSurface(surf.Surface):
         # call the parent's class constructor
         super(VolumeBasedSurface, self).__init__(vertices, faces, check=False)
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         prefixes_ = ['vg=%r' % self._vg] + prefixes
         return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
 
