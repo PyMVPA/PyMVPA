@@ -150,7 +150,7 @@ if externals.versions['scipy'] >= '0.8.0' and \
         names = ['f%d' % n for n in range(Nargs - 2)] + ['floc', 'fscale']
         x0 = []
         for n, key in zip(index, names):
-            if kwds.has_key(key):
+            if key in kwds:
                 fixedn.append(n)
                 args[n] = kwds[key]
             else:

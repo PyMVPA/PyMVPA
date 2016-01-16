@@ -410,7 +410,7 @@ class SVM(_SVM):
         Cs = None
         if not retrainable or self.__svm is None or _changedData['params']:
             # SVM
-            if self.params.has_key('C'):
+            if 'C' in self.params:
                 Cs = self._get_cvec(dataset)
 
                 # XXX do not jump over the head and leave it up to the user
@@ -474,7 +474,7 @@ class SVM(_SVM):
             newsvm = True
             _setdebug(self.__svm, 'SVM')
             # Set optimization parameters
-            if self.params.has_key('tube_epsilon') and \
+            if 'tube_epsilon' in self.params and \
                    hasattr(self.__svm, 'set_tube_epsilon'):
                 self.__svm.set_tube_epsilon(self.params.tube_epsilon)
             self.__svm.parallel.set_num_threads(self.params.num_threads)

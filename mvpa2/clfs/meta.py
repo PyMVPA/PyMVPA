@@ -418,7 +418,7 @@ class MaximalVote(PredictionsCombiner):
                 for label in prediction: # for every label
                     # XXX we might have multiple labels assigned
                     # but might not -- don't remember now
-                    if not all_label_counts[i].has_key(label):
+                    if not label in all_label_counts[i]:
                         all_label_counts[i][label] = 0
                     all_label_counts[i][label] += 1
 

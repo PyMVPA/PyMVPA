@@ -135,7 +135,7 @@ class EEPBin(DataReader):
                 hdr[key] = value
 
         # post process channel name info -> list
-        if hdr.has_key('channels'):
+        if 'channels' in hdr:
             self._props['channels'] = hdr['channels'].split()
 
         self._data = \

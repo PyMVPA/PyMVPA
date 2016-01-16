@@ -305,7 +305,7 @@ class RepeatedMeasure(Measure):
         space = self.get_space()
         concat_as = self._concat_as
 
-        if self.ca.is_enabled("stats") and (not node.ca.has_key("stats") or
+        if self.ca.is_enabled("stats") and (not 'stats' in node.ca or
                                             not node.ca.is_enabled("stats")):
             warning("'stats' conditional attribute was enabled, but "
                     "the assigned node '%s' either doesn't support it, "
@@ -338,7 +338,7 @@ class RepeatedMeasure(Measure):
             # store
             results.append(result)
 
-            if ca.is_enabled("stats") and node.ca.has_key("stats") \
+            if ca.is_enabled("stats") and 'stats' in node.ca \
                and node.ca.is_enabled("stats"):
                 if not ca.is_set('stats'):
                     # create empty stats container of matching type
@@ -635,7 +635,7 @@ class TransferMeasure(Measure):
                     estimates=measure.ca.get('estimates', None))
                 ca.stats = stats
         if ca.is_enabled('training_stats'):
-            if measure.ca.has_key("training_stats") \
+            if 'training_stats' in measure.ca \
                and measure.ca.is_enabled("training_stats"):
                 ca.training_stats = measure.ca.training_stats
             else:
