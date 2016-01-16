@@ -21,7 +21,6 @@ import mvpa2
 from mvpa2.base import externals, warning
 from mvpa2.base.types import is_datasetlike
 from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
-from mvpa2.base.types import is_datasetlike
 from mvpa2.base.progress import ProgressBar
 if externals.exists('h5py'):
     # Is optionally required for passing searchlight

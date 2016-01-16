@@ -83,7 +83,7 @@ class SliceMapper(Mapper):
                 # see comment above
                 return NotImplemented
         # list or tuple are alike
-        if isinstance(this, list) or isinstance(this, tuple):
+        if isinstance(this, (list, tuple)):
             # simply convert it into an array and proceed from there
             this = np.asanyarray(this)
         if this.dtype.type is np.bool_:

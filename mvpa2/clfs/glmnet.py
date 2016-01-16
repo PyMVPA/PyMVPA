@@ -213,8 +213,8 @@ class _GLMNET(Classifier):
         # set the weights to the last step
         weights = r.coef(trained_model, s=last_lambda)
         if self.params.family == 'multinomial':
-            self.__weights = np.hstack([np.array(r['as.matrix'](weights[i]))[1:]
-                                       for i in range(len(weights))])
+            self.__weights = np.hstack([np.array(r['as.matrix'](weight))[1:]
+                                        for weight in weights])
         elif self.params.family == 'gaussian':
             self.__weights = np.array(r['as.matrix'](weights))[1:, 0]
         else:

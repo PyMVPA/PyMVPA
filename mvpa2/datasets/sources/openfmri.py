@@ -589,7 +589,7 @@ class OpenFMRIDataset(object):
         conds = self.get_model_conditions(model_id)
         # what tasks do we need to consider for this model
         tasks = np.unique([c['task'] for c in conds])
-        if isinstance(subj_id, int) or isinstance(subj_id, basestring):
+        if isinstance(subj_id, (int, basestring)):
             subj_id = [subj_id]
         dss = []
         for sub in subj_id:

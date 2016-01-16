@@ -533,7 +533,7 @@ _KNOWN = {'libsvm': 'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node'
           'good scipy.stats.rv_discrete.ppf': "__check_rv_discrete_ppf()",
           'good scipy.stats.rv_continuous._reduce_func(floc,fscale)': "__check_rv_continuous_reduce_func()",
           'weave': "__check_weave()",
-          'pywt': "import pywt as __",
+          'pywt': "__check('pywt')",
           'pywt wp reconstruct': "__check_pywt(['wp reconstruct'])",
           'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",
           #  'rpy': "__check_rpy()",
@@ -574,7 +574,6 @@ _KNOWN = {'libsvm': 'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node'
           'nose': "import nose as __",
           'pprocess': "__check('pprocess')",
           'joblib': "__check('joblib')",
-          'pywt': "__check('pywt')",
           'h5py': "__check_h5py()",
           'hdf5': "__check_h5py()",
           'nipy': "__check('nipy')",
@@ -614,7 +613,7 @@ def exists(dep, force=False, raise_=False, issueWarning=None,
       What exception to raise.  Defaults to RuntimeError
     """
     # if we are provided with a list of deps - go through all of them
-    if isinstance(dep, list) or isinstance(dep, tuple):
+    if isinstance(dep, (list, tuple)):
         results = [ exists(dep_, force, raise_) for dep_ in dep ]
         return bool(reduce(lambda x, y: x and y, results, True))
 

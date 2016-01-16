@@ -66,7 +66,7 @@ class OptionGroups(object):
     def __getattribute__(self, index):
         if index[0] == '_':
             return object.__getattribute__(self, index)
-        if self._d.has_key(index):
+        if index in self._d:
             return self._get_group(index)
         return object.__getattribute__(self, index)
 
