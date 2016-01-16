@@ -138,7 +138,6 @@ def collect_unit_tests(verbosity=1):
 
     __optional_tests = [ ('scipy', 'ridge'),
                          ('scipy', 'gpr'),
-                         (['cPickle', 'gzip'], 'hamster'),
                        ]
 
     # and now for the optional tests

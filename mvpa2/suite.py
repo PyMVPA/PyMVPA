@@ -204,8 +204,6 @@ from mvpa2.misc import *
 from mvpa2.misc.io import *
 from mvpa2.misc.io.base import *
 from mvpa2.misc.io.meg import *
-if externals.exists('cPickle') and externals.exists('gzip'):
-    from mvpa2.misc.io.hamster import *
 from mvpa2.misc.fsl import *
 from mvpa2.misc.bv import *
 from mvpa2.misc.bv.base import *
