@@ -325,7 +325,7 @@ def version_to_tuple(v):
     """
     if isinstance(v, basestring):
         v = map(str, v.split('.'))
-    elif isinstance(v, tuple) or isinstance(v, list):
+    elif isinstance(v, (tuple, list)):
         # assure tuple
         pass
     else:

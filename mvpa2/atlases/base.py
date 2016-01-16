@@ -293,7 +293,7 @@ class XMLBasedAtlas(BaseAtlas):
 
             levels = [ i for i in xrange(start, stop, step) ]
 
-        elif isinstance(levels, list) or isinstance(levels, tuple):
+        elif isinstance(levels, (list, tuple)):
             # levels given as list
             levels = list(levels)
 
@@ -352,7 +352,7 @@ class XMLBasedAtlas(BaseAtlas):
 
         elif len(index) in [1, 2]:
             coord = index[0]
-            if isinstance(coord, list) or isinstance(coord, tuple):
+            if isinstance(coord, (list, tuple)):
                 if len(coord) != 3:
                     raise TypeError("Given coordinates must be in 3D")
             else:

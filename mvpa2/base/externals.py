@@ -613,7 +613,7 @@ def exists(dep, force=False, raise_=False, issueWarning=None,
       What exception to raise.  Defaults to RuntimeError
     """
     # if we are provided with a list of deps - go through all of them
-    if isinstance(dep, list) or isinstance(dep, tuple):
+    if isinstance(dep, (list, tuple)):
         results = [ exists(dep_, force, raise_) for dep_ in dep ]
         return bool(reduce(lambda x, y: x and y, results, True))
 
