@@ -156,7 +156,7 @@ class UnivariateStatsModels(FeaturewiseMeasure):
         if add_constant:
             self._exog = sm.add_constant(exog)
         self._res = res
-        if isinstance(res, np.ndarray) or isinstance(res, (list, tuple)):
+        if isinstance(res, (np.ndarray, list, tuple)):
             self._res = np.atleast_1d(res)
         self._model_gen = model_gen
 

@@ -157,7 +157,7 @@ class Splitter(Node):
             else:
                 lastsplit = (isplit == count - 1)
 
-            if not split_ds.a.has_key('lastsplit'):
+            if not 'lastsplit' in split_ds.a:
                 # if not yet known -- add one
                 split_ds.a['lastsplit'] = lastsplit
             else:

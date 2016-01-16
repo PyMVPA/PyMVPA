@@ -832,7 +832,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
                 raise HDF5ConversionError(
                     "Can't obj2hdf lambda functions. Got %r" % (obj,))
             grp.attrs.create('name', oname)
-        if isinstance(obj, list) or isinstance(obj, tuple):
+        if isinstance(obj, (list, tuple)):
             _seqitems_to_hdf(obj, grp, memo, **kwargs)
         elif isinstance(obj, dict):
             if __debug__:

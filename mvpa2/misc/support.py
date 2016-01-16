@@ -325,7 +325,7 @@ def version_to_tuple(v):
     """
     if isinstance(v, basestring):
         v = map(str, v.split('.'))
-    elif isinstance(v, tuple) or isinstance(v, list):
+    elif isinstance(v, (tuple, list)):
         # assure tuple
         pass
     else:
@@ -608,7 +608,7 @@ class Event(dict):
 
         # basic checks
         for k in Event._MUSTHAVE:
-            if not self.has_key(k):
+            if not k in self:
                 raise ValueError, "Event must have '%s' defined." % k
 
 
@@ -652,7 +652,7 @@ class Event(dict):
             offset = onset - (out['onset'] * dt)
             out[offsetattr] = offset
 
-        if out.has_key('duration'):
+        if 'duration' in out:
             # how many timepoint cover the event (from computed onset
             # to the one timepoint just after the end of the event
             out['duration'] = int(np.ceil((onset + out['duration']) / dt) \

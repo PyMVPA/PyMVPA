@@ -67,7 +67,7 @@ class SupportFxTests(unittest.TestCase):
         # conversion
         self.assertTrue(ev.as_descrete_time(dt=2).items() == [('onset', 1)])
         evc = ev.as_descrete_time(dt=2, storeoffset=True)
-        self.assertTrue(evc.has_key('offset'))
+        self.assertTrue('offset' in evc)
         self.assertTrue(evc['offset'] == 0.5)
 
         # same with duration included

@@ -418,7 +418,7 @@ class MaximalVote(PredictionsCombiner):
                 for label in prediction: # for every label
                     # XXX we might have multiple labels assigned
                     # but might not -- don't remember now
-                    if not all_label_counts[i].has_key(label):
+                    if not label in all_label_counts[i]:
                         all_label_counts[i][label] = 0
                     all_label_counts[i][label] += 1
 
@@ -1490,11 +1490,9 @@ class RegressionAsClassifier(ProxyClassifier):
 
     def __repr__(self, prefixes=[]):
         if self.centroids is not None:
-            prefixes = prefixes + ['centroids=%r'
-                                   % self.centroids]
+            prefixes += ['centroids=%r' % self.centroids]
         if self.distance_measure is not None:
-            prefixes = prefixes + ['distance_measure=%r'
-                                   % self.distance_measure]
+            prefixes += ['distance_measure=%r' % self.distance_measure]
         return super(RegressionAsClassifier, self).__repr__(prefixes)
 
 

@@ -566,8 +566,8 @@ def inverse_cmap(cmap_name):
         cmap_data = eval('_cm._%s_data' % cmap_name)
     except:
         raise ValueError, "Cannot obtain data for the colormap %s" % cmap_name
-    new_data = dict( [(k, [(v[i][0], v[-(i+1)][1], v[-(i+1)][2])
-                           for i in xrange(len(v))])
+    new_data = dict( [(k, [(vi[0], v[-(i+1)][1], v[-(i+1)][2])
+                           for i, vi in enumerate(v)])
                       for k,v in cmap_data.iteritems()] )
     return mpl.colors.LinearSegmentedColormap('%s_rev' % cmap_name,
                                               new_data, _cm.LUTSIZE)

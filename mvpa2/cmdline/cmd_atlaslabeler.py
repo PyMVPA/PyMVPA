@@ -108,9 +108,9 @@ def parsed_coordinates_iterator(
                       % (line, parseString))
         else:
             r = match.groupdict()
-            if r.has_key('v'): v = dtype(r['v'])
+            if 'v' in r: v = dtype(r['v'])
             else:              v = 0.0
-            if r.has_key('t'): t = dtype(r['t'])
+            if 't' in r: t = dtype(r['t'])
             else:              t = 0.0
             yield (v, ctype(r['x']), ctype(r['y']), ctype(r['z']), t)
 
@@ -124,7 +124,7 @@ def present_labels(args, labels):
             # XXX warning -- some inconsistencies in atlas.py
             #     need refactoring
             s = label['label'] #.text
-            if label.has_key('prob') and not args.createSummary:
+            if 'prob' in label and not args.createSummary:
                 s += "(%d%%%%)" % label['prob']
             res += [s]
         if res == []:
@@ -197,7 +197,7 @@ def get_summary(args, summary, output):
                 coord = volQForm[summary_['maxcoord']]
                 output.write(" %r" % (tuple(coord),))
 
-        if args.createSummary>3 and summary_.has_key('distances'):
+        if args.createSummary>3 and 'distances' in summary_:
             # if we got statistics over referenced voxels
             Nr, mean, std, minv, maxv, ssummary = \
                 statistics(summary_['distances'])
@@ -645,7 +645,7 @@ def run(args):
             try:
                 int_level = int(level)
             except:
-                if atlas.levels.has_key(level):
+                if level in atlas.levels:
                     int_level = atlas.levels[level].index
                 else:
                     raise RuntimeError(
@@ -728,17 +728,17 @@ def run(args):
                 #if len(voxel_label):
                 #   assert(voxel_label['index'] == ind)
                 summaryIndex += text + " / "
-            if not summary.has_key(summaryIndex):
+            if not summaryIndex in summary:
                 summary[summaryIndex] = {'values':[], 'max':value,
                                          'maxcoord':coord_orig}
-                if voxel.has_key('voxel_referenced'):
+                if 'voxel_referenced' in voxel:
                     summary[summaryIndex]['distances'] = []
             summary_ = summary[summaryIndex]
             summary_['values'].append(value)
             if summary_['max'] < value:
                 summary_['max'] = value
                 summary_['maxcoord'] = coord_orig
-            if voxel.has_key('voxel_referenced'):
+            if 'voxel_referenced' in voxel:
                 if voxel['voxel_referenced'] and voxel['distance']>=1e-3:
                     verbose(5, 'Appending distance %e for voxel at %s'
                             % (voxel['distance'], voxel['coord_orig']))
