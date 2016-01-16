@@ -193,21 +193,23 @@ class Collection(BaseCollection):
                      repr(self.values()),
                      repr(self.name))
 
-        items_s = ""
-        sep = ""
-        for item in self:
-            try:
-                itemvalue = "%r" % (self[item].value,)
-                if len(itemvalue)>50:
-                    itemvalue = itemvalue[:10] + '...' + itemvalue[-10:]
-                items_s += "%s'%s':%s" % (sep, item, itemvalue)
-                sep = ', '
-            except:
-                pass
-        if items_s != "":
-            s += "items={%s}" % items_s
-        s += ")"
-        return s
+        # MIH: explicitly comment out the rest, as it is unreachable and
+        #      remained around for a while
+        # items_s = ""
+        # sep = ""
+        # for item in self:
+        #     try:
+        #         itemvalue = "%r" % (self[item].value,)
+        #         if len(itemvalue)>50:
+        #             itemvalue = itemvalue[:10] + '...' + itemvalue[-10:]
+        #         items_s += "%s'%s':%s" % (sep, item, itemvalue)
+        #         sep = ', '
+        #     except:
+        #         pass
+        # if items_s != "":
+        #     s += "items={%s}" % items_s
+        # s += ")"
+        # return s
 
 
     def is_set(self, key=None):
