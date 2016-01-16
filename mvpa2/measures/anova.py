@@ -61,7 +61,7 @@ class OneWayAnova(FeaturewiseMeasure):
         if prefixes is None:
             prefixes = []
         if self.get_space() != 'targets':
-            prefixes = prefixes + ['targets_attr=%r' % (self.get_space())]
+            prefixes += ['targets_attr=%r' % (self.get_space())]
         return \
             super(FeaturewiseMeasure, self).__repr__(prefixes=prefixes)
 

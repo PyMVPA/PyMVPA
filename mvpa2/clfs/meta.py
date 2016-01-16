@@ -1490,11 +1490,9 @@ class RegressionAsClassifier(ProxyClassifier):
 
     def __repr__(self, prefixes=[]):
         if self.centroids is not None:
-            prefixes = prefixes + ['centroids=%r'
-                                   % self.centroids]
+            prefixes += ['centroids=%r' % self.centroids]
         if self.distance_measure is not None:
-            prefixes = prefixes + ['distance_measure=%r'
-                                   % self.distance_measure]
+            prefixes += ['distance_measure=%r' % self.distance_measure]
         return super(RegressionAsClassifier, self).__repr__(prefixes)
 
 
