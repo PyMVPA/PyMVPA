@@ -228,7 +228,9 @@ class NullDist(ClassWithCollections):
 
         self._set_tail(tail)
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(NullDist, self).__repr__(
             prefixes=["tail=%s" % `self.__tail`] + prefixes)
 
@@ -348,7 +350,9 @@ class MCNullDist(NullDist):
 
         self.__permutator = permutator
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         prefixes_ = ["%s" % self.__permutator]
         if self._dist_class != Nonparametric:
             prefixes_.insert(0, 'dist_class=%r' % (self._dist_class,))
@@ -555,7 +559,9 @@ class FixedNullDist(NullDist):
         return self._dist.cdf(x)
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         prefixes_ = ["dist=%s" % `self._dist`]
         return super(FixedNullDist, self).__repr__(
             prefixes=prefixes_ + prefixes)

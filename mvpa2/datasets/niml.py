@@ -54,7 +54,7 @@ def _as_vector_if_matrix_with_single_column(x):
 
 
 
-def from_niml(dset, fa_labels=[], sa_labels=[], a_labels=[]):
+def from_niml(dset, fa_labels=None, sa_labels=None, a_labels=None):
     '''Convert a NIML dataset to a Dataset
 
     Parameters
@@ -74,6 +74,12 @@ def from_niml(dset, fa_labels=[], sa_labels=[], a_labels=[]):
     dataset: mvpa2.base.Dataset
         a PyMVPA Dataset
     '''
+    if fa_labels is None:
+        fa_labels = []
+    if sa_labels is None:
+        sa_labels = []
+    if a_labels is None:
+        a_labels = []
 
     # check for singleton element
     if type(dset) is list and len(dset) == 1:

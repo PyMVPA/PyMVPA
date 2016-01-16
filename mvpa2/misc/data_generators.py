@@ -423,7 +423,7 @@ def random_affine_transformation(ds, scale_fac=100., shift_fac=10.):
 
 
 def simple_hrf_dataset(
-        events=[1, 20, 25, 50, 60, 90, 92, 140],
+        events=None,
         hrf_gen=lambda t: double_gamma_hrf(t) - single_gamma_hrf(t, 0.8, 1, 0.05),
         fir_length=15,
         nsamples=None,
@@ -437,6 +437,8 @@ def simple_hrf_dataset(
     """
     events: list of Events or ndarray of onsets for simple(r) designs
     """
+    if events is None:
+        events = [1, 20, 25, 50, 60, 90, 92, 140]
     if isinstance(events, np.ndarray) or not isinstance(events[0], dict):
         events = [Event(onset=o) for o in events]
     else:
