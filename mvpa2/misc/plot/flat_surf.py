@@ -22,8 +22,6 @@ import re
 
 from mvpa2.base import externals
 
-if externals.exists("pylab", raise_=True):
-    import pylab as pl
 
 if externals.exists("matplotlib", raise_=True):
     import matplotlib.pyplot as plt
@@ -32,7 +30,7 @@ if externals.exists("matplotlib", raise_=True):
 if externals.exists("griddata", raise_=True):
     from mvpa2.support.griddata import griddata
 
-
+from mvpa2.support.nibabel.surf import vector_alignment_find_rotation
 
 def unstructured_xy2grid_xy_vectors(x, y, min_nsteps):
     '''From unstructured x and y values, return lists of x and y coordinates
@@ -70,13 +68,21 @@ def unstructured_xy2grid_xy_vectors(x, y, min_nsteps):
 
     return xi, yi
 
-def flat_surface2xy(surface):
+def flat_surface2xy(surface, max_deformation):
     '''Returns a tuple with x and y coordinates of a flat surface
     
     Parameters
     ----------
     surface: Surface
         flat surface
+    max_deformation: float
+        maximum deformation to make a non-flat surface flat.
+        The normals of each face must have a dot product with the average
+        face normal that is not less than (1-max_deformation); otherwise
+        an exception is raised. The rationale for this option is that certain
+        surfaces may be almost flat, and those can be made flat without
+        problem; but surfaces that are not flat, such as inflated surfaces,
+        should not be flattable.
     
     Returns
     -------
@@ -92,17 +98,34 @@ def flat_surface2xy(surface):
     '''
 
     s = surf.from_any(surface)
-    v = s.vertices
-    if any(v[:, 2] != 0):
-        raise ValueError("Expected a flat surface with z=0 for all nodes")
+    face_normals=s.face_normals
 
-    x = v[:, 0]
-    y = v[:, 1]
+    msk=np.all(np.logical_not(np.isnan(face_normals)),1)
+
+    avg_face_normal=s.nanmean_face_normal
+    deformations=abs(1-abs(np.dot(avg_face_normal[np.newaxis],face_normals[msk].T)))
+    too_deformed=np.nonzero(deformations>max_deformation)[0]
+    if len(too_deformed)>0:
+        raise ValueError('Surface is not sufficiently flat with '
+                            'max_deformation=%.3f' % max_deformation)
+
+    # find rotation so that surface is more or less orthogonal to
+    # the unit vector (0,0,1)
+    v = s.vertices
+    z_axis=np.asarray([0,0,1.])
+    r=vector_alignment_find_rotation(avg_face_normal,z_axis)
+
+    # apply rotation
+    v_rotated=r.dot(v.T)
+
+    # discard z-coordinate
+    x = v_rotated[0]
+    y = v_rotated[1]
 
     return x, y
 
 
-def flat_surface2grid_mask(surface, min_nsteps):
+def flat_surface2grid_mask(surface, min_nsteps, max_deformation):
     '''Computes a mask and corresponding coordinates from a flat surface 
     
     Parameters
@@ -111,6 +134,16 @@ def flat_surface2grid_mask(surface, min_nsteps):
         flat surface
     min_nsteps: int
         minimum number of pixels in x and y direction
+    max_deformation: float
+        maximum deformation to make a non-flat surface flat.
+        The normals of each face must have a dot product with the average
+        face normal that is not less than (1-max_deformation); otherwise
+        an exception is raised. The rationale for this option is that
+        certain surfaces may be almost flat, and projecting the vertices
+        on a truly flat surface should be fine. On the other hand, surfaces
+        that are definitly not flat (such as full cortical surface models)
+        should cause an error to be raised when it is attempted to flatten
+        them
         
     Returns
     -------
@@ -132,7 +165,7 @@ def flat_surface2grid_mask(surface, min_nsteps):
     '''
 
     surface = surf.from_any(surface)
-    x, y = flat_surface2xy(surface)
+    x, y = flat_surface2xy(surface, max_deformation)
     xmin = np.min(x)
 
     xi, yi = unstructured_xy2grid_xy_vectors(x, y , min_nsteps)
@@ -273,7 +306,8 @@ def _range2min_max(range_, xs):
 
 
 
-def flat_surface_data2rgba(data, range_='2_98%', threshold=None, color_map=None):
+def flat_surface_data2rgba(data, range_='2_98%', threshold=None,
+                                        color_map=None):
     '''Computes an RGBA colormap for surface data'''
 
     if isinstance(data, Dataset):
@@ -312,7 +346,8 @@ def curvature_from_any(c):
 class FlatSurfacePlotter(object):
     '''Plots data on a flat surface'''
     def __init__(self, surface, curvature=None, min_nsteps=500,
-                        range_='2_98%', threshold=None, color_map=None):
+                        range_='2_98%', threshold=None, color_map=None,
+                        max_deformation=.5):
         '''
         Parameters
         ----------
@@ -335,6 +370,16 @@ class FlatSurfacePlotter(object):
             Indicates which values will be shown. Syntax as in range_
         color_map: str
             colormap to use
+        max_deformation: float
+            maximum deformation to make a non-flat surface flat.
+            The normals of each face must have a dot product with the average
+            face normal that is not less than (1-max_deformation); otherwise
+            an exception is raised. The rationale for this option is that
+            certain surfaces may be almost flat, and projecting the vertices
+            on a truly flat surface should be fine. On the other hand, surfaces
+            that are definitly not flat (such as full cortical surface models)
+            should cause an error to be raised when it is attempted to flatten
+            them
         '''
 
         self._surface = surf.from_any(surface)
@@ -343,17 +388,21 @@ class FlatSurfacePlotter(object):
             self._curvature = None
         else:
             self._curvature = curvature_from_any(curvature)
-            if self._surface.nvertices != self._curvature.size:
-                raise ValueError("Surface has %d vertices, but curvature %d" %
-                                  (self._surface.nvertices, self._curvature.size))
+            if self._surface.nvertices != len(self._curvature):
+                raise ValueError("Surface has %d vertices, but curvature "
+                                 "has %d values" %
+                              (self._surface.nvertices, self._curvature.size))
 
         self._min_nsteps = min_nsteps
         self._range_ = range_
         self._threshold = threshold
         self._color_map = color_map
+        self._max_deformation=max_deformation
 
         self._grid_def = None
         self._underlay = None
+
+
 
     def set_underlay(self, u):
         '''Sets the underlay'''
@@ -369,7 +418,7 @@ class FlatSurfacePlotter(object):
 
         x, y, msk, xi, yi = self._grid_def
 
-        ulay = griddata(x, y, self._curvature, xi, yi)
+        ulay = griddata(x, y, self._curvature, xi, yi, interp='linear')
         ulay[-msk] = np.nan
 
         rgba = flat_surface_curvature2rgba(ulay)
@@ -377,8 +426,9 @@ class FlatSurfacePlotter(object):
 
     def _pre_setup(self):
         if self._grid_def is None:
-            self._grid_def = flat_surface2grid_mask(self._surface, \
-                                                    self._min_nsteps)
+            self._grid_def = flat_surface2grid_mask(self._surface,
+                                                    self._min_nsteps,
+                                                    self._max_deformation)
 
         if self._underlay is None and not self._curvature is None:
             self._set_underlay_from_curvature()
@@ -399,18 +449,19 @@ class FlatSurfacePlotter(object):
         '''
         self._pre_setup()
         x, y, msk, xi, yi = self._grid_def
-        olay = griddata(x, y, data, xi, yi)
-        olay[-msk] = np.nan
+        olay = griddata(x, y, data, xi, yi, interp='linear')
+        nan_msk=np.logical_not(msk)
+        olay[nan_msk] = np.nan
 
         o_rgba = flat_surface_data2rgba(olay, self._range_ , self._threshold,
                                                 self._color_map)
-        o_rgba[-msk] = np.nan # apply the mask again, to be sure
+        o_rgba[nan_msk] = np.nan # apply the mask again, to be sure
 
         if not self._underlay is None:
-            o_msk = -np.isnan(np.sum(o_rgba, 2))
+            o_msk = np.logical_not(np.isnan(np.sum(o_rgba, 2)))
 
             u_rgba = self._underlay
-            u_msk = np.logical_and(-o_msk, msk)
+            u_msk = np.logical_and(np.logical_not(o_msk), msk)
 
             o_rgba[u_msk] = u_rgba[u_msk]
 
