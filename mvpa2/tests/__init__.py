@@ -193,6 +193,7 @@ def collect_nose_tests(verbosity=1):
 
         # Classifiers
         'test_multiclf',
+        'test_smlr',
 
         # Misc supporting
         'test_neighborhood',
