@@ -127,7 +127,9 @@ class SurfingSurfaceTests(unittest.TestCase):
     @staticmethod
     def add_noise_to_surface(s, noise_level=.05):
         vertices = s.vertices
-        vertices_noisy = vertices + np.random.normal(size=vertices.shape) * \
+        noise = np.random.uniform(size=vertices.shape, low=-.5 * noise_level,
+                                  high=-.5 * noise_level, )
+        vertices_noisy = vertices + np.random.uniform(size=vertices.shape) * \
                                     noise_level
 
         return Surface(vertices_noisy, s.faces, check=False)
@@ -139,7 +141,7 @@ class SurfingSurfaceTests(unittest.TestCase):
         nan_vertices_ids = np.random.random_integers(s.nvertices,
                                                      size=(nan_count,)) - 1
         vertices_noisy = s.vertices + 0.
-        vertices_noisy[nan_vertices_ids, 1] = np.nan
+        vertices_noisy[nan_vertices_ids, :] = np.nan
 
         return Surface(vertices_noisy, s.faces, check=False)
 
@@ -221,7 +223,7 @@ class SurfingSurfaceTests(unittest.TestCase):
 
         # find average normal
 
-        non_nan_f_normal=np.logical_not(np.any(np.isnan(f_normal),axis=1))
+        non_nan_f_normal = np.logical_not(np.any(np.isnan(f_normal), axis=1))
         f_normal_avg = np.mean(f_normal[non_nan_f_normal], axis=0)
 
         # test average normal
