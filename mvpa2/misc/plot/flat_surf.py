@@ -32,6 +32,20 @@ if externals.exists("griddata", raise_=True):
 
 from mvpa2.support.nibabel.surf import vector_alignment_find_rotation
 
+# older versions of Numpy do not support nanmin/nanmax, so provide that here
+def _get_nan_vector_operator(func):
+    def f(xs):
+        if not len(xs.shape)==1:
+            raise ValueError('Only vector input is supported')
+        msk=np.logical_not(np.isnan(xs))
+        return func(xs[msk])
+
+    return f
+
+nanmin_wrapper=_get_nan_vector_operator(np.min)
+nanmax_wrapper=_get_nan_vector_operator(np.max)
+
+
 def unstructured_xy2grid_xy_vectors(x, y, min_nsteps):
     '''From unstructured x and y values, return lists of x and y coordinates
     to form a grid
@@ -225,10 +239,8 @@ def flat_surface2grid_mask(surface, min_nsteps, max_deformation):
 
 def _scale(xs, target_min=0., target_max=1., source_min=None, source_max=None):
     '''Scales from [smin,smax] to [tmin,tmax]'''
-    mn = np.nanmin(xs, axis= -1)[np.newaxis].T if source_min is None\
-                                                             else source_min
-    mx = np.nanmax(xs, axis= -1)[np.newaxis].T if source_max is None\
-                                                             else source_max
+    mn = nanmin_wrapper(xs.ravel()) if source_min is None else source_min
+    mx = nanmax_wrapper(xs.ravel()) if source_max is None else source_max
 
     scaled = (xs - mn) / (mx - mn)
     return scaled * (target_max - target_min) + target_min
@@ -287,8 +299,8 @@ def _range2min_max(range_, xs):
 
             percentage = p == '%'
             if percentage:
-                xmn = np.nanmin(xs)
-                xmx = np.nanmax(xs)
+                xmn = nanmin_wrapper(xs.ravel())
+                xmx = nanmax_wrapper(xs.ravel())
 
                 mx = 100 - mn if mx != 0 and not mx else float(mx)
 
