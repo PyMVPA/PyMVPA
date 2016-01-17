@@ -17,62 +17,50 @@ from mvpa2.clfs.smlr import SMLR
 from mvpa2.misc.data_generators import normal_feature_dataset
 
 
-class SMLRTests(unittest.TestCase):
+@sweepargs(clf=(SMLR(), SMLR(implementation='Python')))
+def test_smlr(clf):
+    data = datasets['dumb']
 
-    def test_smlr(self):
-        data = datasets['dumb']
+    clf.train(data)
 
-        clf = SMLR()
-
-        clf.train(data)
-
-        # prediction has to be perfect
-        #
-        # XXX yoh: whos said that?? ;-)
-        #
-        # There is always a tradeoff between learning and
-        # generalization errors so...  but in this case the problem is
-        # more interesting: absent bias disallows to learn data you
-        # have here -- there is no solution which would pass through
-        # (0,0)
-        predictions = clf.predict(data.samples)
-        self.assertTrue((predictions == data.targets).all())
+    # prediction has to be perfect
+    #
+    # XXX yoh: whos said that?? ;-)
+    #
+    # There is always a tradeoff between learning and
+    # generalization errors so...  but in this case the problem is
+    # more interesting: absent bias disallows to learn data you
+    # have here -- there is no solution which would pass through
+    # (0,0)
+    predictions = clf.predict(data.samples)
+    assert_array_equal(predictions, data.targets)
 
 
-    def test_smlr_state(self):
-        data = datasets['dumb']
+def test_smlr_state():
+    data = datasets['dumb']
 
-        clf = SMLR()
+    clf = SMLR()
 
-        clf.train(data)
+    clf.train(data)
 
-        clf.ca.enable('estimates')
-        clf.ca.enable('predictions')
+    clf.ca.enable('estimates')
+    clf.ca.enable('predictions')
 
-        p = np.asarray(clf.predict(data.samples))
+    p = np.asarray(clf.predict(data.samples))
 
-        self.assertTrue((p == clf.ca.predictions).all())
-        self.assertTrue(np.array(clf.ca.estimates).shape[0] == np.array(p).shape[0])
-
-
-    def test_smlr_sensitivities(self):
-        data = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
-
-        # use SMLR on binary problem, but not fitting all weights
-        clf = SMLR(fit_all_weights=False)
-        clf.train(data)
-
-        # now ask for the sensitivities WITHOUT having to pass the dataset
-        # again
-        sens = clf.get_sensitivity_analyzer(force_train=False)(None)
-        self.assertTrue(sens.shape == (len(data.UT) - 1, data.nfeatures))
+    assert_array_equal(p, clf.ca.predictions)
+    assert_equal(np.array(clf.ca.estimates).shape[0], np.array(p).shape[0])
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(SMLRTests)
+@sweepargs(clf=(SMLR(fit_all_weights=False),
+                SMLR(fit_all_weights=False, unsparsify=True)))
+def test_smlr_sensitivities(clf):
+    data = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
 
+    # use SMLR on binary problem, but not fitting all weights
+    clf.train(data)
 
-if __name__ == '__main__':  # pragma: no cover
-    import runner
-    runner.run()
-
+    # now ask for the sensitivities WITHOUT having to pass the dataset
+    # again
+    sens = clf.get_sensitivity_analyzer(force_train=False)(None)
+    assert_equal(sens.shape, (len(data.UT) - 1, data.nfeatures))
