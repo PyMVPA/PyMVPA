@@ -220,7 +220,9 @@ class SurfingSurfaceTests(unittest.TestCase):
         f_normal = plane_noisy.face_normals
 
         # find average normal
-        f_normal_avg = np.nanmean(f_normal, axis=0)
+
+        non_nan_f_normal=np.logical_not(np.any(np.isnan(f_normal),axis=1))
+        f_normal_avg = np.mean(f_normal[non_nan_f_normal], axis=0)
 
         # test average normal
         assert_array_almost_equal(plane.nanmean_face_normal, f_normal_avg,
@@ -230,7 +232,7 @@ class SurfingSurfaceTests(unittest.TestCase):
         # to zero, the coordinates must be at similar pairwise distances
         max_deformation = .1
         x, y = flat_surface2xy(plane_noisy, max_deformation)
-        n_vertices = len(x)
+        n_vertices = plane.nvertices
         z = np.zeros((n_vertices,))
         flat_xyz = np.asarray((x, y, z))
 

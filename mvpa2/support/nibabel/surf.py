@@ -1637,7 +1637,9 @@ class Surface(object):
 
     @property
     def nanmean_face_normal(self):
-        return np.nanmean(self.face_normals,axis=0)
+        face_normals=self.face_normals
+        nan_msk=np.any(np.isnan(face_normals),axis=1)
+        return np.mean(face_normals[np.logical_not(nan_msk),:],axis=0)
 
     def connected_components(self):
         nv = self.nvertices
