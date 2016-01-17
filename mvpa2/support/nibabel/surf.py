@@ -613,6 +613,10 @@ class Surface(object):
             return filter(lambda y: y != x, vs)
 
         for i, node_index in enumerate(node_indices):
+            if node_index not in n2f:
+                # no neighbors, so not on border
+                continue
+
             face_indices = n2f[node_index]
             nf = len(face_indices)
 
@@ -643,7 +647,8 @@ class Surface(object):
                     break
                 ipos, jpos = ijpos[0], ijpos[1]
 
-            on_border[i] = on_border[i] or target != a_init
+            if target != a_init:
+                on_border[i] = True
 
         return on_border
 
@@ -1630,6 +1635,10 @@ class Surface(object):
 
         return self._node_normals
 
+    @property
+    def nanmean_face_normal(self):
+        return np.nanmean(self.face_normals,axis=0)
+
     def connected_components(self):
         nv = self.nvertices
 
@@ -2149,6 +2158,44 @@ def generate_bar(start, stop, radius, poly=10):
     s = Surface(coords, faces)
 
     return s
+
+
+
+def vector_alignment_find_rotation(x, y):
+    '''Find rotation matrix to align one vector with another
+
+    Parameters
+    ----------
+    x: np.ndarray
+        vector with 3 elements that is to be aligned
+    y: np.ndarray
+        vector with 3 elements to which y is to be aligned
+
+    Returns
+    r: np.ndarray
+        array of shape (3,3) so that the vector np.dot(r,x) points
+        in the same direction as y, and has the same L2 norm as x
+    '''
+
+
+    x = normalized(x)
+    y = normalized(y)
+
+    v = np.cross(x, y)
+
+    if np.all(v == 0):
+        r = np.eye(3)
+    else:
+        s = np.linalg.norm(v)
+        c = np.dot(x, y.T)
+
+        v_x = np.asarray([[0, -v[2], v[1]],
+                          [v[2], 0, -v[0]],
+                          [-v[1], v[0], 0]])
+        r = np.eye(3) + v_x + (np.dot(v_x, v_x)) * (1 - c) / s ** 2
+
+    return r
+
 
 
 def read(fn):
