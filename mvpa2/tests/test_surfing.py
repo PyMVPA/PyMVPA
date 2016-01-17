@@ -188,6 +188,22 @@ class SurfTests(unittest.TestCase):
 
         assert_true(s.nodes_on_border(0))
 
+    def test_surf_border_nonconnected_nodes(self):
+        s = surf.generate_cube()
+
+        # add empty node
+        v = np.vstack((s.vertices, [2, 2, 2]))
+
+        # remove two faces
+        s2 = surf.Surface(v, s.faces[:-2])
+
+        is_on_border = [False, False, False, False,
+                        True, True, True, True,
+                        False]
+        assert_array_equal(s2.nodes_on_border(),
+                           np.asarray(is_on_border))
+
+
 
     def test_surf_normalized(self):
 
