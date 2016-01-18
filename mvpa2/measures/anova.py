@@ -28,6 +28,7 @@ from mvpa2.datasets.base import Dataset
 #
 # and may be some others
 
+
 class OneWayAnova(FeaturewiseMeasure):
     """`FeaturewiseMeasure` that performs a univariate ANOVA.
 
@@ -56,7 +57,6 @@ class OneWayAnova(FeaturewiseMeasure):
         kwargs['auto_train'] = kwargs.get('auto_train', True)
         FeaturewiseMeasure.__init__(self, space=space, **kwargs)
 
-
     def __repr__(self, prefixes=None):
         if prefixes is None:
             prefixes = []
@@ -64,7 +64,6 @@ class OneWayAnova(FeaturewiseMeasure):
             prefixes += ['targets_attr=%r' % (self.get_space())]
         return \
             super(FeaturewiseMeasure, self).__repr__(prefixes=prefixes)
-
 
     def _call(self, dataset):
         # This code is based on SciPy's stats.f_oneway()
@@ -153,7 +152,7 @@ class CompoundOneWayAnova(OneWayAnova):
         # Lets create a very shallow copy of a dataset with just
         # samples and targets_attr
         dataset_mod = Dataset(dataset.samples,
-                              sa={self.get_space() : labels})
+                              sa={self.get_space(): labels})
         results = []
         for ul in targets_sa.unique:
             labels[orig_labels == ul] = 1
