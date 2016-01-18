@@ -82,29 +82,34 @@ class OneWayAnova(FeaturewiseMeasure):
         alldata = dataset.samples
 
         # total squares of sums
-        sostot = np.sum(alldata, axis=0)
+        # determine data-dtype for derived "sum of" measurements, which we need
+        # to have as float for proper divisions
+        so_dtype = np.float if np.issubdtype(alldata.dtype, np.integer) else alldata.dtype
+        bign = dataset.nsamples
+
+        sostot = np.sum(alldata, axis=0, dtype=so_dtype)
         sostot *= sostot
-        bign = sostot.dtype.type(dataset.nsamples)
         sostot /= bign
 
         # total sum of squares
-        sstot = np.sum(alldata * alldata, axis=0) - sostot
+        sstot = np.sum(alldata * alldata, axis=0, dtype=so_dtype) - sostot
 
         # between group sum of squares
-        ssbn = 0
+        ssbn = np.zeros(dataset.nfeatures, dtype=so_dtype)
         for l in ul:
             # all samples for the respective label
             d = alldata[labels == l]
-            sos = np.sum(d, axis=0)
+            sos = np.sum(d, axis=0, dtype=so_dtype)
             sos *= sos
-            ssbn += sos / float(len(d))
+            sos /= len(d)  # inplace so we don't demand new temp storage
+            ssbn += sos
 
         ssbn -= sostot
         # within
         sswn = sstot - ssbn
 
         # degrees of freedom
-        dfbn = na-1
+        dfbn = na - 1
         dfwn = bign - na
 
         # mean sums of squares
