@@ -22,10 +22,8 @@ import re
 
 from mvpa2.base import externals
 
-
 if externals.exists("matplotlib", raise_=True):
     import matplotlib.pyplot as plt
-
 
 if externals.exists("griddata", raise_=True):
     from mvpa2.support.griddata import griddata
@@ -35,15 +33,18 @@ from mvpa2.support.nibabel.surf import vector_alignment_find_rotation
 # older versions of Numpy do not support nanmin/nanmax, so provide that here
 def _get_nan_vector_operator(func):
     def f(xs):
-        if not len(xs.shape)==1:
+        if not len(xs.shape) == 1:
             raise ValueError('Only vector input is supported')
-        msk=np.logical_not(np.isnan(xs))
+        msk = np.logical_not(np.isnan(xs))
         return func(xs[msk])
 
     return f
 
-nanmin_wrapper=_get_nan_vector_operator(np.min)
-nanmax_wrapper=_get_nan_vector_operator(np.max)
+
+
+nanmin_wrapper = _get_nan_vector_operator(np.min)
+nanmax_wrapper = _get_nan_vector_operator(np.max)
+
 
 
 def unstructured_xy2grid_xy_vectors(x, y, min_nsteps):
@@ -82,6 +83,8 @@ def unstructured_xy2grid_xy_vectors(x, y, min_nsteps):
 
     return xi, yi
 
+
+
 def flat_surface2xy(surface, max_deformation):
     '''Returns a tuple with x and y coordinates of a flat surface
     
@@ -112,31 +115,33 @@ def flat_surface2xy(surface, max_deformation):
     '''
 
     s = surf.from_any(surface)
-    face_normals=s.face_normals
+    face_normals = s.face_normals
 
-    msk=np.all(np.logical_not(np.isnan(face_normals)),1)
+    msk = np.all(np.logical_not(np.isnan(face_normals)), 1)
 
-    avg_face_normal=s.nanmean_face_normal
-    deformations=abs(1-abs(np.dot(avg_face_normal[np.newaxis],face_normals[msk].T)))
-    too_deformed=np.nonzero(deformations>max_deformation)[0]
-    if len(too_deformed)>0:
+    avg_face_normal = s.nanmean_face_normal
+    deformations = abs(
+        1 - abs(np.dot(avg_face_normal[np.newaxis], face_normals[msk].T)))
+    too_deformed = np.nonzero(deformations > max_deformation)[0]
+    if len(too_deformed) > 0:
         raise ValueError('Surface is not sufficiently flat with '
-                            'max_deformation=%.3f' % max_deformation)
+                         'max_deformation=%.3f' % max_deformation)
 
     # find rotation so that surface is more or less orthogonal to
     # the unit vector (0,0,1)
     v = s.vertices
-    z_axis=np.asarray([0,0,1.])
-    r=vector_alignment_find_rotation(avg_face_normal,z_axis)
+    z_axis = np.asarray([0, 0, 1.])
+    r = vector_alignment_find_rotation(avg_face_normal, z_axis)
 
     # apply rotation
-    v_rotated=r.dot(v.T)
+    v_rotated = r.dot(v.T)
 
     # discard z-coordinate
     x = v_rotated[0]
     y = v_rotated[1]
 
     return x, y
+
 
 
 def flat_surface2grid_mask(surface, min_nsteps, max_deformation):
@@ -182,7 +187,7 @@ def flat_surface2grid_mask(surface, min_nsteps, max_deformation):
     x, y = flat_surface2xy(surface, max_deformation)
     xmin = np.min(x)
 
-    xi, yi = unstructured_xy2grid_xy_vectors(x, y , min_nsteps)
+    xi, yi = unstructured_xy2grid_xy_vectors(x, y, min_nsteps)
     delta = xi[1] - xi[0]
     vi2xi = (x - xmin) / delta
 
@@ -237,6 +242,8 @@ def flat_surface2grid_mask(surface, min_nsteps, max_deformation):
 
     return x, y, msk, xi, yi
 
+
+
 def _scale(xs, target_min=0., target_max=1., source_min=None, source_max=None):
     '''Scales from [smin,smax] to [tmin,tmax]'''
     mn = nanmin_wrapper(xs.ravel()) if source_min is None else source_min
@@ -244,6 +251,7 @@ def _scale(xs, target_min=0., target_max=1., source_min=None, source_max=None):
 
     scaled = (xs - mn) / (mx - mn)
     return scaled * (target_max - target_min) + target_min
+
 
 
 def flat_surface_curvature2rgba(curvature):
@@ -256,6 +264,8 @@ def flat_surface_curvature2rgba(curvature):
     c = _scale(-curvature)
 
     return cmap(c)
+
+
 
 def _range2min_max(range_, xs):
     '''Converts a range description to a minimum and maximum value
@@ -317,9 +327,8 @@ def _range2min_max(range_, xs):
 
 
 
-
 def flat_surface_data2rgba(data, range_='2_98%', threshold=None,
-                                        color_map=None):
+                           color_map=None):
     '''Computes an RGBA colormap for surface data'''
 
     if isinstance(data, Dataset):
@@ -337,16 +346,19 @@ def flat_surface_data2rgba(data, range_='2_98%', threshold=None,
 
     return rgba
 
+
+
 def curvature_from_any(c):
     '''Reads curvature'''
     if isinstance(c, basestring):
         from mvpa2.support.nibabel import afni_suma_1d
+
         c = afni_suma_1d.from_any(c)
 
         # typical SUMA use case: first column has node indices,
         # second column 
         if len(c.shape) > 1 and c.shape[1] == 2 and \
-                set(c[:, 0]) == set(range(1 + int(max(c[:, 0])))):
+                        set(c[:, 0]) == set(range(1 + int(max(c[:, 0])))):
             cc = c
             n = cc.shape[0]
             c = np.zeros((n,))
@@ -355,11 +367,14 @@ def curvature_from_any(c):
 
     return np.asarray(c)
 
+
+
 class FlatSurfacePlotter(object):
     '''Plots data on a flat surface'''
+
     def __init__(self, surface, curvature=None, min_nsteps=500,
-                        range_='2_98%', threshold=None, color_map=None,
-                        max_deformation=.5):
+                 range_='2_98%', threshold=None, color_map=None,
+                 max_deformation=.5):
         '''
         Parameters
         ----------
@@ -403,23 +418,21 @@ class FlatSurfacePlotter(object):
             if self._surface.nvertices != len(self._curvature):
                 raise ValueError("Surface has %d vertices, but curvature "
                                  "has %d values" %
-                              (self._surface.nvertices, self._curvature.size))
+                                 (self._surface.nvertices,
+                                  self._curvature.size))
 
         self._min_nsteps = min_nsteps
         self._range_ = range_
         self._threshold = threshold
         self._color_map = color_map
-        self._max_deformation=max_deformation
+        self._max_deformation = max_deformation
 
         self._grid_def = None
         self._underlay = None
 
-
-
     def set_underlay(self, u):
         '''Sets the underlay'''
         self._underlay = u.copy()
-
 
     def _set_underlay_from_curvature(self):
         if self._curvature is None:
@@ -445,7 +458,6 @@ class FlatSurfacePlotter(object):
         if self._underlay is None and not self._curvature is None:
             self._set_underlay_from_curvature()
 
-
     def __call__(self, data):
         '''
         Parameters
@@ -462,12 +474,12 @@ class FlatSurfacePlotter(object):
         self._pre_setup()
         x, y, msk, xi, yi = self._grid_def
         olay = griddata(x, y, data, xi, yi, interp='linear')
-        nan_msk=np.logical_not(msk)
+        nan_msk = np.logical_not(msk)
         olay[nan_msk] = np.nan
 
-        o_rgba = flat_surface_data2rgba(olay, self._range_ , self._threshold,
-                                                self._color_map)
-        o_rgba[nan_msk] = np.nan # apply the mask again, to be sure
+        o_rgba = flat_surface_data2rgba(olay, self._range_, self._threshold,
+                                        self._color_map)
+        o_rgba[nan_msk] = np.nan  # apply the mask again, to be sure
 
         if not self._underlay is None:
             o_msk = np.logical_not(np.isnan(np.sum(o_rgba, 2)))
@@ -478,4 +490,3 @@ class FlatSurfacePlotter(object):
             o_rgba[u_msk] = u_rgba[u_msk]
 
         return o_rgba
-
