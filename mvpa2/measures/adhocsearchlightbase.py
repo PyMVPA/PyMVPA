@@ -359,7 +359,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         # indicies
         # XXX we could make it even more lightweight I guess...
         dataset_indicies = Dataset(np.arange(nsamples), sa=dataset.sa)
-        splitter = Splitter(attr=generator.get_space())
+        splitter = Splitter(attr=generator.get_space(), attr_values=[1, 2])
         partitions = list(generator.generate(dataset_indicies))
         if __debug__:
             for p in partitions:
@@ -371,7 +371,8 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         nsplits = len(partitions)
         # ATM we need to keep the splits instead since they are used
         # in two places in the code: step 2 and 5
-        splits = list(tuple(splitter.generate(ds_)) for ds_ in partitions)
+        # We care only about training and testing partitions (i.e. first two)
+        splits = list(tuple(splitter.generate(ds_))[:2] for ds_ in partitions)
         del partitions                    # not used any longer
 
         # 2. Figure out the new 'chunks x labels' blocks of combinations
