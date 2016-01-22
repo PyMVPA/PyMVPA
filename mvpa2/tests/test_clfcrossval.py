@@ -14,6 +14,8 @@ from mvpa2.base.node import ChainNode
 from mvpa2.generators.partition import NFoldPartitioner
 from mvpa2.generators.permutation import AttributePermutator
 from mvpa2.measures.base import CrossValidation
+from mvpa2.generators.splitters import Splitter
+from mvpa2.datasets.base import Dataset
 
 from mvpa2.testing import *
 from mvpa2.testing.datasets import pure_multivariate_signal, get_mv_pattern
@@ -90,6 +92,64 @@ class CrossValidationTests(unittest.TestCase):
         cv = CrossValidation(sample_clf_nl, NFoldPartitioner())
         # need to fail, because it can't be split into training and testing
         assert_raises(ValueError, cv, data)
+
+    def test_cv_no_generator(self):
+        ds = Dataset(np.arange(4), sa={'partitions': [1, 1, 2, 2],
+                                       'targets': ['a', 'b', 'c', 'd']})
+
+        class Measure(object):
+            def __init__(self):
+                self.ncalls = 0
+
+            def get_space(self):
+                return 'targets'
+
+            def train(self, ds_):
+                assert_array_equal(ds_.samples, ds.samples[:2])
+                assert_array_equal(ds_.sa.partitions, [1] * len(ds_))
+
+            def __call__(self, ds_):
+                self.ncalls += 1
+                assert(ds_ is not ds)  # we pass a shallow copy
+                assert_array_equal(ds_.samples, ds.samples[2:])
+                assert_array_equal(ds_.sa.partitions, [2] * len(ds_))
+
+                return Dataset(['c', 'd'], sa=ds_.sa.copy())
+
+        measure = Measure()
+        cv = CrossValidation(measure)
+        res = cv(ds)
+        assert_equal(measure.ncalls, 1)
+        assert_array_equal(res, [[0]])  # we did perfect here ;)
+
+    def test_cv_no_generator_custom_splitter(self):
+        ds = Dataset(np.arange(4), sa={'category': ['to', 'to', 'from', 'from'],
+                                       'targets': ['a', 'b', 'c', 'd']})
+
+        class Measure(object):
+            def __init__(self):
+                self.ncalls = 0
+
+            def get_space(self):
+                return 'targets'
+
+            def train(self, ds_):
+                assert_array_equal(ds_.samples, ds.samples[2:])
+                assert_array_equal(ds_.sa.category, ['from'] * len(ds_))
+
+            def __call__(self, ds_):
+                self.ncalls += 1
+                assert(ds_ is not ds)  # we pass a shallow copy
+                assert_array_equal(ds_.samples, ds.samples[:2])
+                assert_array_equal(ds_.sa.category, ['to'] * len(ds_))
+
+                return Dataset(['c', 'd'], sa=ds_.sa.copy())
+
+        measure = Measure()
+        cv = CrossValidation(measure, splitter=Splitter('category', ['from', 'to']))
+        res = cv(ds)
+        assert_equal(measure.ncalls, 1)
+        assert_array_equal(res, [[1]])  # failed perfectly ;-)
 
 
 def suite():  # pragma: no cover
