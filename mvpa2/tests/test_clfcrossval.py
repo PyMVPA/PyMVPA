@@ -16,6 +16,8 @@ from mvpa2.generators.permutation import AttributePermutator
 from mvpa2.measures.base import CrossValidation
 from mvpa2.generators.splitters import Splitter
 from mvpa2.datasets.base import Dataset
+from mvpa2.clfs.base import Classifier
+from mvpa2.base.state import ConditionalAttribute
 
 from mvpa2.testing import *
 from mvpa2.testing.datasets import pure_multivariate_signal, get_mv_pattern
@@ -97,58 +99,49 @@ class CrossValidationTests(unittest.TestCase):
         ds = Dataset(np.arange(4), sa={'partitions': [1, 1, 2, 2],
                                        'targets': ['a', 'b', 'c', 'd']})
 
-        class Measure(object):
-            def __init__(self):
-                self.ncalls = 0
+        class Measure(Classifier):
 
-            def get_space(self):
-                return 'targets'
-
-            def train(self, ds_):
+            def _train(self, ds_):
                 assert_array_equal(ds_.samples, ds.samples[:2])
                 assert_array_equal(ds_.sa.partitions, [1] * len(ds_))
 
-            def __call__(self, ds_):
-                self.ncalls += 1
+            def _predict(self, ds_):
+                # also called for estimating training error
                 assert(ds_ is not ds)  # we pass a shallow copy
-                assert_array_equal(ds_.samples, ds.samples[2:])
-                assert_array_equal(ds_.sa.partitions, [2] * len(ds_))
+                assert(len(ds_) < len(ds))
+                assert_equal(len(ds_.sa['partitions'].unique), 1)
 
-                return Dataset(['c', 'd'], sa=ds_.sa.copy())
+                return ['c', 'd']
 
         measure = Measure()
         cv = CrossValidation(measure)
         res = cv(ds)
-        assert_equal(measure.ncalls, 1)
         assert_array_equal(res, [[0]])  # we did perfect here ;)
 
     def test_cv_no_generator_custom_splitter(self):
         ds = Dataset(np.arange(4), sa={'category': ['to', 'to', 'from', 'from'],
                                        'targets': ['a', 'b', 'c', 'd']})
 
-        class Measure(object):
-            def __init__(self):
-                self.ncalls = 0
+        class Measure(Classifier):
 
-            def get_space(self):
-                return 'targets'
-
-            def train(self, ds_):
+            def _train(self, ds_):
                 assert_array_equal(ds_.samples, ds.samples[2:])
                 assert_array_equal(ds_.sa.category, ['from'] * len(ds_))
 
-            def __call__(self, ds_):
-                self.ncalls += 1
+            def _predict(self, ds_):
                 assert(ds_ is not ds)  # we pass a shallow copy
-                assert_array_equal(ds_.samples, ds.samples[:2])
-                assert_array_equal(ds_.sa.category, ['to'] * len(ds_))
+                # could be called to predit training or testing data
+                if np.all(ds_.sa.targets != ['c', 'd']):
+                    assert_array_equal(ds_.samples, ds.samples[:2])
+                    assert_array_equal(ds_.sa.category, ['to'] * len(ds_))
+                else:
+                    assert_array_equal(ds_.sa.category, ['from'] * len(ds_))
 
-                return Dataset(['c', 'd'], sa=ds_.sa.copy())
+                return ['c', 'd']
 
         measure = Measure()
         cv = CrossValidation(measure, splitter=Splitter('category', ['from', 'to']))
         res = cv(ds)
-        assert_equal(measure.ncalls, 1)
         assert_array_equal(res, [[1]])  # failed perfectly ;-)
 
 
