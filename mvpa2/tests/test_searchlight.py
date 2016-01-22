@@ -35,7 +35,7 @@ from mvpa2.clfs.knn import kNN
 
 from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere, HollowSphere, CachedQueryEngine
 from mvpa2.misc.errorfx import corr_error, mean_match_accuracy
-from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner
+from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner, CustomPartitioner
 from mvpa2.generators.permutation import AttributePermutator
 from mvpa2.measures.base import CrossValidation
 
@@ -769,6 +769,19 @@ class SearchlightTests(unittest.TestCase):
         gnb_sl = GNBSearchlight(GNB(), NFoldPartitioner(), qe=cached_qe)
         res = gnb_sl(ds1)
         assert_false(cached_qe.ids is None)
+
+    def test_gnbsearchlight_3partitions(self):
+        ds = self.dataset
+        # custom partitioner which provides 3 partitions
+        part = CustomPartitioner([([0], [1], [2])])
+        gnb_sl = sphere_gnbsearchlight(GNB(), part)
+        res_gnb_sl = gnb_sl(ds)
+
+        # compare results to full blown searchlight
+        sl = sphere_searchlight(CrossValidation(GNB(), part))
+        res_sl = sl(ds)
+
+        assert_datasets_equal(res_gnb_sl, res_sl)
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(SearchlightTests)

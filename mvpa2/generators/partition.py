@@ -130,7 +130,7 @@ class Partitioner(Node):
 
 
     def get_partitions_attr(self, ds, specs):
-        """Create a partition attribute array for a particular partion spec.
+        """Create a partition attribute array for a particular partition spec.
 
         Parameters
         ----------
