@@ -260,7 +260,7 @@ class RepeatedMeasure(Measure):
 
     def __init__(self,
                  node,
-                 generator,
+                 generator=None,
                  callback=None,
                  concat_as='samples',
                  **kwargs):
@@ -270,16 +270,17 @@ class RepeatedMeasure(Measure):
         node : Node
           Node or Measure implementing the procedure that is supposed to be run
           multiple times.
-        generator : Node
+        generator : Node, optional
           Generator to yield a dataset for each measure run. The number of
-          datasets returned by the node determines the number of runs.
-        callback : functor
+          datasets returned by the node determines the number of runs.  If no
+          generator provided, a single input dataset is passed into the node.
+        callback : functor, optional
           Optional callback to extract information from inside the main loop of
           the measure. The callback is called with the input 'data', the 'node'
           instance that is evaluated repeatedly and the 'result' of a single
           evaluation -- passed as named arguments (see labels in quotes) for
           every iteration, directly after evaluating the node.
-        concat_as : {'samples', 'features'}
+        concat_as : {'samples', 'features'}, optional
           Along which axis to concatenate result dataset from all iterations.
           By default, results are 'vstacked' as multiple samples in the output
           dataset. Setting this argument to 'features' will change this to
@@ -323,7 +324,9 @@ class RepeatedMeasure(Measure):
 
         # run the node an all generated datasets
         results = []
-        for i, sds in enumerate(generator.generate(ds)):
+        for i, sds in enumerate(generator.generate(ds)
+                                if generator
+                                else [ds]):
             if __debug__:
                 debug('REPM', "%d-th iteration of %s on %s",
                       (i, self, sds))
@@ -333,7 +336,7 @@ class RepeatedMeasure(Measure):
             # run the beast
             result = node(sds)
             # callback
-            if not self._callback is None:
+            if self._callback is not None:
                 self._callback(data=sds, node=node, result=result)
             # subclass postprocessing
             result = self._repetition_postcall(sds, node, result)
@@ -410,7 +413,7 @@ class CrossValidation(RepeatedMeasure):
     sets of dataset partitions for leave-one-out folding). For each dataset
     instance a transfer measure is computed by splitting the dataset into
     two parts (defined by the dataset generators output space) and train a
-    custom learner on the first part and run it on the next. An arbitray error
+    custom learner on the first part and run it on the next. An arbitrary error
     function can by used to determine the learner's error when prediction the
     dataset part that has been unseen during training.
     """
@@ -420,20 +423,21 @@ class CrossValidation(RepeatedMeasure):
        across all cross-validation fold.""")
 
     # TODO move conditional attributes from CVTE into this guy
-    def __init__(self, learner, generator, errorfx=mean_mismatch_error,
+    def __init__(self, learner, generator=None, errorfx=mean_mismatch_error,
                  splitter=None, **kwargs):
         """
         Parameters
         ----------
         learner : Learner
           Any trainable node that shall be run on the dataset folds.
-        generator : Node
+        generator : Node, optional
           Generator used to resample the input dataset into multiple instances
           (i.e. partitioning it). The number of datasets yielded by this
           generator determines the number of cross-validation folds.
           IMPORTANT: The ``space`` of this generator determines the attribute
           that will be used to split all generated datasets into training and
-          testing sets.
+          testing sets. If None provided, a single original dataset will be
+          passed to the ``splitter`` as is
         errorfx : Node or callable
           Custom implementation of an error function. The callable needs to
           accept two arguments (1. predicted values, 2. target values).  If not
@@ -443,7 +447,8 @@ class CrossValidation(RepeatedMeasure):
           part. The first split will be used for training and the second for
           testing -- all other splits will be ignored. If None, a default
           splitter is auto-generated using the ``space`` setting of the
-          ``generator``. The default splitter is configured to return the
+          ``generator``.  If no ``generator`` provided, splitter uses 'partitions'
+          sample attribute. The default splitter is configured to return the
           ``1``-labeled partition of the input dataset at first, and the
           ``2``-labeled partition second. This behavior corresponds to most
           Partitioners that label the taken-out portion ``2`` and the remainder
@@ -468,14 +473,16 @@ class CrossValidation(RepeatedMeasure):
             # because it is guaranteed to yield two splits) and is more likely
             # to fail in visible ways if the attribute does not have 0,1,2
             # values at all (i.e. a literal train/test/spareforlater attribute)
-            splitter = Splitter(generator.get_space(), attr_values=(1, 2))
+            splitter = Splitter(
+                    generator.get_space() if generator else 'partitions',
+                    attr_values=(1, 2))
         # transfer measure to wrap the learner
         # splitter used the output space of the generator to know what to split
         tm = TransferMeasure(learner, splitter, postproc=enode)
 
         space = kwargs.pop('space', 'sa.cvfolds')
         # and finally the repeated measure to perform the x-val
-        RepeatedMeasure.__init__(self, tm, generator, space=space,
+        RepeatedMeasure.__init__(self, tm, generator=generator, space=space,
                                  **kwargs)
 
         for ca in ['stats', 'training_stats']:
