@@ -118,7 +118,9 @@ class Sphere(object):
         self._increments_ndim = None
         """Dimensionality of increments"""
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         prefixes_ = ['radius=%r' % (self._radius,)] + prefixes
         if self._element_sizes:
             prefixes_.append('element_sizes=%r' % (self._element_sizes,))
@@ -291,7 +293,9 @@ class HollowSphere(Sphere):
         self._inner_radius = inner_radius
         self.include_center = include_center
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(HollowSphere, self).__repr__(
             ['inner_radius=%r' % (self._inner_radius,)]
             + _repr_attrs(self, ['include_center'], default=False))
@@ -344,7 +348,9 @@ class QueryEngineInterface(object):
     working with QueryEngine instances
     """
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return _repr(self, *prefixes)
 
     def train(self, dataset):
@@ -398,7 +404,9 @@ class QueryEngine(QueryEngineInterface):
         self._ids = None
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(QueryEngine, self).__repr__(
             prefixes=prefixes
             + ['%s=%r' % v for v in self._queryobjs.iteritems()])
@@ -467,7 +475,9 @@ class IndexQueryEngine(QueryEngine):
         """Either to sort the query results"""
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(IndexQueryEngine, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['sorted'], default=True))
@@ -620,7 +630,9 @@ class CachedQueryEngine(QueryEngineInterface):
         self._lookup_ids = None
         self._lookup = None
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(CachedQueryEngine, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['queryengine']))
@@ -644,6 +656,7 @@ class CachedQueryEngine(QueryEngineInterface):
             self._queryengine.train(dataset)     # train the queryengine
             self._lookup_ids = [None] * dataset.nfeatures # lookup for query_byid
             self._lookup = {}           # generic lookup
+            self.ids = self.queryengine.ids # used in GNBSearchlight??
         elif self._trained_ds_fa_hash != ds_fa_hash:
             raise ValueError, \
                   "Feature attributes of %s (idhash=%r) were changed from " \

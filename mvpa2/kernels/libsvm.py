@@ -52,11 +52,13 @@ class LSKernel(Kernel):
 
 # Conversion methods
 def _as_ls(kernel):
-    raise NotImplemented, 'LibSVM calculates kernels internally; they ' +\
-          'cannot be converted from Numpy'
+    raise NotImplementedError(
+        'LibSVM calculates kernels internally; '
+        'they cannot be converted from Numpy')
 def _as_raw_ls(kernel):
-    raise NotImplemented, 'LibSVM calculates kernels internally; they ' +\
-          'cannot be converted from Numpy'
+    raise NotImplementedError(
+        'LibSVM calculates kernels internally; they '
+        'cannot be converted from Numpy')
 Kernel.add_conversion('ls', _as_ls, _as_raw_ls)
 
 class LinearLSKernel(LSKernel):

@@ -63,7 +63,9 @@ class VolSurf(object):
         self._intermediate = surf.from_any(intermediate)
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         prefixes_ = ['vg=%r' % self._volgeom,
                      'white=%r' % self._white,
                      'pial=%r' % self._pial] + prefixes
@@ -795,7 +797,7 @@ class VolSurfMinimalLowresMapping(VolSurfMinimalMapping):
             else:
                 # is there - see if it is none
                 cur = n_in_low2v[n_in_low]
-                if cur is None and not v2pos is None:
+                if cur is None and v2pos is not None:
                     # also overwrite (v2pos can also be None, that's fine)
                     n_in_low2v[n_in_low] = v2pos
                 elif v2pos is not None:
@@ -848,7 +850,9 @@ class VolumeBasedSurface(surf.Surface):
         # call the parent's class constructor
         super(VolumeBasedSurface, self).__init__(vertices, faces, check=False)
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         prefixes_ = ['vg=%r' % self._vg] + prefixes
         return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
 

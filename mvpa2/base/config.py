@@ -79,7 +79,7 @@ class ConfigManager(SafeConfigParser):
         SafeConfigParser.__init__(self)
 
         # store additional config file names
-        if not filenames is None:
+        if filenames is not None:
             self.__cfg_filenames = filenames
         else:
             self.__cfg_filenames = []

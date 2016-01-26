@@ -16,8 +16,8 @@ def compare_bib_by_date(a, b):
     x = a[1][1]
     y = b[1][1]
 
-    if x.has_key('year'):
-        if y.has_key('year'):
+    if 'year' in x:
+        if 'year' in y:
             if x['year'].isdigit():
                 if y['year'].isdigit():
                     # x and y have dates
@@ -42,7 +42,7 @@ def compare_bib_by_date(a, b):
             # only x has date
             return 1
     else:
-        if y.has_key('year'):
+        if 'year' in y:
             return -1
         else:
             # neither nor y have dates
@@ -55,14 +55,14 @@ def compare_bib_by_author(a,b):
     x = a[1][1]
     y = b[1][1]
 
-    if x.has_key('author'):
-        if y.has_key('author'):
+    if 'author' in x:
+        if 'author' in y:
             return cmp(join_author_list(x['author']), join_author_list(y['author']))
         else:
             # only x has author
             return 1
     else:
-        if y.has_key('author'):
+        if 'author' in y:
             return -1
         else:
             # neither nor y have authors
@@ -303,11 +303,11 @@ def bib2rst_references(bib):
         # compose the citation as the list item label
         cit = u''
         # initial details equal for all item types
-        if prop.has_key('author'):
+        if 'author' in prop:
             cit += u'**' + join_author_list(prop['author']) + u'**'
-        if prop.has_key('year'):
+        if 'year' in prop:
             cit += ' (' + prop['year'] + ').'
-        if prop.has_key('title'):
+        if 'title' in prop:
             cit += ' ' + smooth_rst(prop['title'])
             if not prop['title'].endswith('.'):
                 cit += '.'
@@ -316,9 +316,9 @@ def bib2rst_references(bib):
         if cat.lower() == 'article':
             # needs to have journal, volume, pages
             cit += ' *' + prop['journal'] + '*'
-            if prop.has_key('volume'):
+            if 'volume' in prop:
                 cit += ', *' + prop['volume'] + '*'
-            if prop.has_key('pages'):
+            if 'pages' in prop:
                 cit += ', ' + '-'.join(prop['pages'])
         elif cat.lower() == 'book':
             # needs to have publisher, address
@@ -328,7 +328,7 @@ def bib2rst_references(bib):
             cit += ' ' + prop['address']
         elif cat.lower() == 'inproceedings':
             cit += ' ' + prop['booktitle']
-            if prop.has_key('pages'):
+            if 'pages' in prop:
                 cit += ', ' + '-'.join(prop['pages'])
         else:
             print "WARNING: Cannot handle bibtex item type:", cat
@@ -341,25 +341,25 @@ def bib2rst_references(bib):
         rst += cit
 
         # place optional paper summary
-        if prop.has_key('pymvpa-summary'):
+        if 'pymvpa-summary' in prop:
             rst += '\n  *' + format_property(prop['pymvpa-summary'], 2) + '*\n'
 
         # make keywords visible
-        if prop.has_key('pymvpa-keywords'):
+        if 'pymvpa-keywords' in prop:
             rst += '\n  Keywords: ' \
                    + ', '.join([':keyword:`' + kw.strip() + '`' 
                                 for kw in prop['pymvpa-keywords'].split(',')]) \
                    + '\n'
 
         # place DOI link
-        if prop.has_key('doi'):
+        if 'doi' in prop:
             rst += '\n  DOI: '
             if not prop['doi'].startswith('http://dx.doi.org/'):
                 rst += 'http://dx.doi.org/'
             rst += prop['doi']
             rst += '\n'
         # use URL (even if DOI is available -- might lead to a copy outside of the paywall)
-        if prop.has_key('url'):
+        if 'url' in prop:
             rst += '\n  URL: ' + prop['url'] + '\n'
 
         rst += '\n\n'

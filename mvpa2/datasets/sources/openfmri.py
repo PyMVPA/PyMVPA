@@ -64,7 +64,7 @@ def _get_description_dict(path, xfm_key=None):
         for line in open(path, 'r'):
             key = line.split()[0]
             value = line[len(key):].strip()
-            if not xfm_key is None:
+            if xfm_key is not None:
                 key = xfm_key(key)
             props[key] = value
     return props
@@ -371,15 +371,15 @@ class OpenFMRIDataset(object):
         from mvpa2.datasets.mri import fmri_dataset
 
         # check whether flavor corresponds to a particular file
-        if not flavor is None:
+        if flavor is not None:
             path = _opj(self.basedir, _sub2id(subj),
                         'BOLD', _taskrun(task, run), flavor)
-        if not flavor is None and os.path.exists(path):
+        if flavor is not None and os.path.exists(path):
             from mvpa2.base.hdf5 import h5load
             ds = h5load(path)
         else:
             bold_img = self.get_bold_run_image(subj, task, run, flavor=flavor)
-            if not preproc_img is None:
+            if preproc_img is not None:
                 bold_img = preproc_img(bold_img)
             # load (and mask) data
             ds = fmri_dataset(bold_img, **kwargs)
@@ -589,7 +589,7 @@ class OpenFMRIDataset(object):
         conds = self.get_model_conditions(model_id)
         # what tasks do we need to consider for this model
         tasks = np.unique([c['task'] for c in conds])
-        if isinstance(subj_id, int) or isinstance(subj_id, basestring):
+        if isinstance(subj_id, (int, basestring)):
             subj_id = [subj_id]
         dss = []
         for sub in subj_id:
@@ -622,7 +622,7 @@ class OpenFMRIDataset(object):
                         sub, task, run=run, flavor=flavor,
                         preproc_img=preproc_img, chunks=i, mask=mask,
                         add_fa=add_fa, add_sa=add_sa)
-                    if not preproc_ds is None:
+                    if preproc_ds is not None:
                         d = preproc_ds(d)
                     d = modelfx(
                         d, events, **dict([(k, v) for k, v in kwargs.iteritems()

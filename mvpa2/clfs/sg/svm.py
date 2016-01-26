@@ -66,7 +66,6 @@ import operator
 
 from mvpa2.base.param import Parameter
 from mvpa2.misc.attrmap import AttributeMap
-from mvpa2.base import warning
 
 from mvpa2.clfs.base import accepts_dataset_as_samples, \
      accepts_samples_as_dataset
@@ -355,7 +354,7 @@ class SVM(_SVM):
                       "We do not have 1-class SVM brought into SG yet"
             else:
                 # can't use plain enumerate since we need them swapped
-                _labels_dict = dict([ (ul[i], i) for i in range(len(ul))])
+                _labels_dict = dict([ (u, i) for i, u in enumerate(ul)])
 
             # Create SG-customized attrmap to assure -1 / +1 if necessary
             self._attrmap = AttributeMap(_labels_dict, mapnumeric=True)
@@ -411,7 +410,7 @@ class SVM(_SVM):
         Cs = None
         if not retrainable or self.__svm is None or _changedData['params']:
             # SVM
-            if self.params.has_key('C'):
+            if 'C' in self.params:
                 Cs = self._get_cvec(dataset)
 
                 # XXX do not jump over the head and leave it up to the user
@@ -475,7 +474,7 @@ class SVM(_SVM):
             newsvm = True
             _setdebug(self.__svm, 'SVM')
             # Set optimization parameters
-            if self.params.has_key('tube_epsilon') and \
+            if 'tube_epsilon' in self.params and \
                    hasattr(self.__svm, 'set_tube_epsilon'):
                 self.__svm.set_tube_epsilon(self.params.tube_epsilon)
             self.__svm.parallel.set_num_threads(self.params.num_threads)

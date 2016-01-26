@@ -158,15 +158,15 @@ def setup_parser(parser):
 
 
 def run(args):
-    if not args.chunks is None:
+    if args.chunks is not None:
         # apply global "chunks" setting
         for cattr in ('detrend_chunks', 'zscore_chunks'):
             if getattr(args, cattr) is None:
                 # only overwrite if individual option is not given
                 args.__setattr__(cattr, args.chunks)
     ds = arg2ds(args.data)
-    if not args.poly_detrend is None:
-        if not args.detrend_chunks is None \
+    if args.poly_detrend is not None:
+        if args.detrend_chunks is not None \
            and not args.detrend_chunks in ds.sa:
             raise ValueError(
                 "--detrend-chunks attribute '%s' not found in dataset"
@@ -223,7 +223,7 @@ def run(args):
                params=args.zscore_params)
         verbose(3, "Dataset summary %s" % (ds.summary()))
     # invariants?
-    if not args.strip_invariant_features is None:
+    if args.strip_invariant_features is not None:
         from mvpa2.datasets.miscfx import remove_invariant_features
         ds = remove_invariant_features(ds)
     # and store
