@@ -11,20 +11,30 @@
 import numpy as np
 
 from ..base.param import Parameter
+from ..base.constraints import EnsureBool
 from ..datasets.base import Dataset
+from ..misc.neighborhood import CachedQueryEngine
 
 from .base import Measure
 
 if __debug__:
     from ..base import debug
 
+
 class Labeler(Measure):
     """Sensitivities of features for a given Classifier.
 
     """
     qe = Parameter(
-            None,
-            doc="QueryEngine to determine neighbors of any given feature")
+        None,
+        doc="QueryEngine to determine neighbors of any given feature")
+
+    cache = Parameter(
+        True,
+        constraints=EnsureBool(),
+        doc="Wrap provided QueryEngine with CachedQueryEngine to speed up "
+            "subsequent queries"
+    )
 
     def __init__(self, qe, space='maxlabels', **kwargs):
         """Initialize labeler with a query engine
@@ -34,6 +44,8 @@ class Labeler(Measure):
         qe : `QueryEngine`
           Query engine to use.
         """
+        if kwargs.get('cache', True) and not isinstance(qe, CachedQueryEngine):
+            qe = CachedQueryEngine(qe)
         super(Labeler, self).__init__(qe=qe, space=space, **kwargs)
         self._untrain()
 
@@ -48,53 +60,46 @@ class Labeler(Measure):
     def _untrain(self):
         """Untrain QE
         """
-        # they don't untrain apparently!! TODO
-        # self.params.qe.untrain()
+        self.params.qe.untrain()
         self._nfeatures_trained = None
         super(Labeler, self)._untrain()
 
+
     def _call(self, ds):
         # few assertions so we don't support something what we don't support
-        assert(ds.samples.ndim == 2)
-        assert(ds.nfeatures == self._nfeatures_trained)
-
+        if ds.samples.ndim != 2:
+            raise ValueError("Can deal only with flattened datasets ATM")
+        if ds.nfeatures != self._nfeatures_trained:
+            raise ValueError("We were trained on a dataset with %d features."
+                             " Got %d features now"
+                             % (self._nfeatures_trained, ds.nfeatures))
         need_64bits = ds.samples.size >= (2**31 - 2)
         lmaps = np.zeros(ds.shape, dtype=np.intp if need_64bits else np.int32)
         qe = self.params.qe
-        qe_ids = set(qe.ids)
         maxlabels = []
         # we will support having multiple samples labeled independently
         for d, lmap in zip(ds.samples, lmaps):
             nonzero = np.nonzero(d)
             assert(len(nonzero) == 1)  # only 1 coordinate
 
-            # Possibly a silly and slow implementation.  Will benchmark against scipy on 3d
-            nonzero = set(nonzero[0])
-            # we have indices of non-0 elements which constitute our initial seed points
-
-            if __debug__:
-                # for paranoid
-                assert not nonzero.difference(qe_ids), "all of them must also be known to QE"
-
             idx = 0
-            while nonzero:
-                seed = nonzero.pop()
+
+            for seed in nonzero[0]:
                 if lmap[seed]:  # already labeled
                     continue
                 idx += 1
-                candidates = {seed}
+                candidates = [seed]
                 lmap[seed] = idx
                 while candidates:
                     candidate = candidates.pop()
                     # process its neighbors
                     for neighbor in qe.query_byid(candidate):
-                        if neighbor not in nonzero or lmap[neighbor]:
+                        if (not d[neighbor]) or lmap[neighbor]:
                             continue  # already labeled, so was considered etc
                             # or simply was 0 to start with
-                        else:
-                            # immediately label
-                            lmap[neighbor] = idx
-                            candidates.add(neighbor)
+                        # immediately label
+                        lmap[neighbor] = idx
+                        candidates.append(neighbor)
             maxlabels.append(idx)
 
         out = Dataset(lmaps, a=ds.a, sa=ds.sa, fa=ds.fa)
