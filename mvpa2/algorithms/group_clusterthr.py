@@ -24,10 +24,15 @@ import numpy as np
 from scipy.ndimage import measurements
 from scipy.sparse import dok_matrix
 
-from mvpa2.mappers.base import IdentityMapper, _verified_reverse1
+
+from mvpa2.measures.label import Labeler
+from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
 from mvpa2.datasets import Dataset
+from mvpa2.mappers.base import ChainMapper
+from mvpa2.mappers.flatten import FlattenMapper
 from mvpa2.base.learner import Learner
 from mvpa2.base.param import Parameter
+from mvpa2.base import warning
 from mvpa2.base.constraints import \
     EnsureInt, EnsureFloat, EnsureRange, EnsureChoice, EnsureNone, EnsureStr
 from mvpa2.mappers.fx import mean_sample
@@ -219,14 +224,13 @@ class GroupClusterThreshold(Learner):
     # If default metric would be changed from 'cluster_sizes' to some fw metric
     # make multicomp_correction default to None
 
-    qe = Parameter(
+    labeler = Parameter(
         None,  #  constraints=  NOT SURE TODO
-        doc="""``QueryEngine`` (as used by searchlights) to determine feature's
-        immediate neighborhood.  If None provided, `ds.a.mapper` will be used to
-        reverse data into original possibly multi-dimensional shape.  If `ds`
-        does not have a mapper, 1D neighborhood along the features vector will
-        be used
-        """)
+        doc="""``Labeler`` - some learner which if trained on the training
+        dataset to group neighboring "spatially" features.
+        If None provided, a `Labeler` with IndexQueryEngine operating on
+        feature attribute of the first FlattenMapper in the ds.a.mapper
+        will be used.""")
 
     map_postproc = Parameter(
         None,
@@ -255,6 +259,7 @@ class GroupClusterThreshold(Learner):
         self.untrain()
 
     def _untrain(self):
+        self._labeler = None
         self._thrmap = None
         self._null_cluster_sizes = None
 
@@ -276,11 +281,6 @@ class GroupClusterThreshold(Learner):
             raise NotImplementedError(
                     "Support for metric %r is not yet implemented"
                     % self.params.metric)
-
-        if self.params.qe is not None:
-            raise NotImplementedError(
-                    "Support for neighborhood estimation using QueryEngines is "
-                    "not yet implemented" % self.params.metric)
 
         if chunk_attr is not None:
             # we need to bootstrap
@@ -361,6 +361,7 @@ class GroupClusterThreshold(Learner):
                              for d in featuresegment_producer(segwidth)))
         # store for later thresholding of input data
         self._thrmap = thrmap
+
         #
         # Step 2: threshold all NULL maps and build distribution of NULL cluster
         #         sizes
@@ -371,8 +372,18 @@ class GroupClusterThreshold(Learner):
         #       any bias.  We could  a) split chunks pool into two  b) create new
         #       pool of bcombos for metric estimation
         cluster_sizes = Counter()
+
+        # Labeler is needed to determine "clusters"
+        labeler = self.params.labeler
+        if labeler is None:
+            labeler = _get_default_labeler(ds)
+            warning("Labeler was not provided, deduced %s" % labeler)
+        labeler.train(ds)
+        self._labeler = labeler
+
         # recompute the bootstrap average maps to threshold them and determine
         # cluster sizes
+
         dsa = dict(mapper=ds.a.mapper) if 'mapper' in ds.a else {}
         if __debug__:
             debug('GCTHR', 'Estimating NULL distribution of cluster sizes')
@@ -387,7 +398,7 @@ class GroupClusterThreshold(Learner):
                 bds = Dataset(clustermap, a=dsa)
                 # this function reverse-maps every sample one-by-one, hence no need
                 # to collect chunks of bootstrapped maps
-                cluster_sizes = get_cluster_sizes(bds, cluster_sizes)
+                cluster_sizes = get_cluster_sizes(bds, cluster_sizes, labeler=labeler)
         else:
             # Parallel execution
             # same code as above, just restructured for joblib's Parallel
@@ -397,7 +408,7 @@ class GroupClusterThreshold(Learner):
                                        delayed(get_cluster_sizes)
                                   (Dataset(np.mean(ds_samples[sidx],
                                            axis=0)[None] > thrmap,
-                                           a=dsa))
+                                           a=dsa), None, labeler)
                                        for sidx in bcombos):
                 # aggregate
                 cluster_sizes += jobres
@@ -417,52 +428,71 @@ class GroupClusterThreshold(Learner):
             ds = avgr(ds)
         # threshold input; at this point we only have one sample left
         thrd = ds.samples[0] > self._thrmap
-        # mapper default
-        mapper = IdentityMapper()
-        # overwrite if possible
-        if hasattr(ds, 'a') and 'mapper' in ds.a:
-            mapper = ds.a.mapper
-        # reverse-map input
-        othrd = _verified_reverse1(mapper, thrd)
-        # TODO: what is your purpose in life osamp? ;-)
-        osamp = _verified_reverse1(mapper, ds.samples[0])
+
+        # # mapper default
+        # mapper = IdentityMapper()
+        # # overwrite if possible
+        # if hasattr(ds, 'a') and 'mapper' in ds.a:
+        #     mapper = ds.a.mapper
+        # # reverse-map input
+        # othrd = _verified_reverse1(mapper, thrd)
+        # # TODO: what is your purpose in life osamp? ;-)
+        # osamp = _verified_reverse1(mapper, ds.samples[0])
+        # osamp_ndim = osamp.ndim
+
         # prep output dataset
         outds = ds.copy(deep=False)
         outds.fa['featurewise_thresh'] = self._thrmap
+
         # determine clusters
-        labels, num = measurements.label(othrd)
-        area = measurements.sum(othrd,
+        labeler = self._labeler
+        thrd_labeled = labeler(Dataset(thrd[None, :]))
+        assert(len(thrd_labeled) == 1)  # just a single map at a time
+        labels = thrd_labeled.samples[0]
+        labeler_space = labeler.get_space()
+        if labeler_space in thrd_labeled.sa:
+            num = thrd_labeled.sa[labeler_space].value[0]
+        else:
+            # just compute from the result
+            num = np.max(labels)
+
+        area = measurements.sum(thrd,
                                 labels,
                                 index=np.arange(1, num + 1)).astype(int)
-        com = measurements.center_of_mass(
-            osamp, labels=labels, index=np.arange(1, num + 1))
-        maxpos = measurements.maximum_position(
-            osamp, labels=labels, index=np.arange(1, num + 1))
-        # for the rest we need the labels flattened
-        labels = mapper.forward1(labels)
-        # relabel clusters starting with the biggest and increase index with
-        # decreasing size
-        ordered_labels = np.zeros(labels.shape, dtype=int)
-        ordered_area = np.zeros(area.shape, dtype=int)
-        ordered_com = np.zeros((num, len(osamp.shape)), dtype=float)
-        ordered_maxpos = np.zeros((num, len(osamp.shape)), dtype=float)
-        for i, idx in enumerate(np.argsort(area)):
-            ordered_labels[labels == idx + 1] = num - i
-            # kinda ugly, but we are looping anyway
-            ordered_area[i] = area[idx]
-            ordered_com[i] = com[idx]
-            ordered_maxpos[i] = maxpos[idx]
-        labels = ordered_labels
-        area = ordered_area[::-1]
-        com = ordered_com[::-1]
-        maxpos = ordered_maxpos[::-1]
-        del ordered_labels  # this one can be big
+
+        # TODO:  must use labeler.qe's specification and provide those per each
+        # one of the fa's used.  Better be absorbed into some function
+
+        # com = measurements.center_of_mass(
+        #     osamp, labels=labels, index=np.arange(1, num + 1))
+        # maxpos = measurements.maximum_position(
+        #     osamp, labels=labels, index=np.arange(1, num + 1))
+        # # for the rest we need the labels flattened
+        # labels = mapper.forward1(labels)
+        # # relabel clusters starting with the biggest and increase index with
+        # # decreasing size
+        # ordered_labels = np.zeros(labels.shape, dtype=int)
+        # ordered_area = np.zeros(area.shape, dtype=int)
+        # ordered_com = np.zeros((num, osamp_ndim), dtype=float)
+        # ordered_maxpos = np.zeros((num, osamp_ndim), dtype=float)
+        # for i, idx in enumerate(np.argsort(area)):
+        #     ordered_labels[labels == idx + 1] = num - i
+        #     # kinda ugly, but we are looping anyway
+        #     ordered_area[i] = area[idx]
+        #     ordered_com[i] = com[idx]
+        #     ordered_maxpos[i] = maxpos[idx]
+        # labels = ordered_labels
+        # area = ordered_area[::-1]
+        # com = ordered_com[::-1]
+        # maxpos = ordered_maxpos[::-1]
+        # del ordered_labels  # this one can be big
+        # # location info
+        # outds.a['clusterlocations'] = \
+        #     np.rec.fromarrays(
+        #         [com, maxpos], names=('center_of_mass', 'max'))
+
         # store cluster labels after forward-mapping
         outds.fa['clusters_featurewise_thresh'] = labels.copy()
-        # location info
-        outds.a['clusterlocations'] = \
-            np.rec.fromarrays(
-                [com, maxpos], names=('center_of_mass', 'max'))
 
         # update cluster size histogram with the actual result to get a
         # proper lower bound for p-values
@@ -474,6 +504,7 @@ class GroupClusterThreshold(Learner):
             [area, cluster_probs_raw],
             ['size', 'prob_raw']
         )
+
         # evaluate a bunch of stats for all clusters
         morestats = {}
         for cid in xrange(len(area)):
@@ -538,8 +569,7 @@ def get_thresholding_map(data, p=0.001):
     return data[thridx, np.arange(data.shape[1])]
 
 
-def _get_map_cluster_sizes(map_):
-    labels, num = measurements.label(map_)
+def _get_map_cluster_sizes(map_, labels, num):
     area = measurements.sum(map_, labels, index=np.arange(1, num + 1))
     # TODO: So here if a given map didn't have any super-thresholded features,
     # we get 0 into our histogram.  BUT for the other maps, where at least 1 voxel
@@ -553,7 +583,37 @@ def _get_map_cluster_sizes(map_):
         return area.astype(int)
 
 
-def get_cluster_sizes(ds, cluster_counter=None):
+def _get_default_labeler(ds):
+    """Given a dataset, deduce which space to operate on by finding first FlattenMapper
+    and using its space
+    """
+    if 'mapper' not in ds.a:
+        raise ValueError(
+            "Dataset should have a mapper to get original 'shape'")
+
+    mappers = ds.a.mapper
+    if not isinstance(mappers, ChainMapper):
+        mappers = [mappers]
+
+    target_space = None
+    for mapper in mappers:
+        if isinstance(mapper, FlattenMapper):
+            target_space = mapper.get_space()
+            if target_space is None:
+                raise ValueError(
+                    "Mapper %s of the dataset %s has no space, so can't "
+                    "figure out what feature attribute to use to deduce "
+                    "neighborhood" % (mapper, ds))
+            break
+
+    if target_space is None:
+        raise ValueError(
+            "Could not find a flatten mapper which was used to produce %s" % ds)
+
+    return Labeler(qe=IndexQueryEngine(**{target_space: Sphere(1)}))
+
+
+def get_cluster_sizes(ds, cluster_counter=None, labeler=None):
     """Compute cluster sizes from all samples in a boolean dataset.
 
     Individually for each sample, in the input dataset, clusters of non-zero
@@ -567,6 +627,8 @@ def get_cluster_sizes(ds, cluster_counter=None):
     cluster_counter : list or None
       If not None, given list is extended with the cluster sizes computed
       from the present input dataset. Otherwise, a new list is generated.
+    labeler : Learner, optional
+      `Labeler` to get estimate neighbors for each feature of the dataset
 
     Returns
     -------
@@ -578,14 +640,16 @@ def get_cluster_sizes(ds, cluster_counter=None):
     if cluster_counter is None:
         cluster_counter = Counter()
 
-    mapper = IdentityMapper()
-    data = np.asanyarray(ds)
-    if hasattr(ds, 'a') and 'mapper' in ds.a:
-        mapper = ds.a.mapper
+    if labeler is None:
+        labeler = _get_default_labeler(ds)
+        labeler.train(ds)
 
-    for i in xrange(len(ds)):
-        osamp = _verified_reverse1(mapper, data[i])
-        m_clusters = _get_map_cluster_sizes(osamp)
+    dslabeled = labeler(ds)
+    for d, labels, nlabels in zip(
+            ds.samples,
+            dslabeled.samples,
+            dslabeled.sa[labeler.get_space()].value):
+        m_clusters = _get_map_cluster_sizes(d, labels, nlabels)
         cluster_counter.update(m_clusters)
     return cluster_counter
 
