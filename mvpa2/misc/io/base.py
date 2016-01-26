@@ -258,7 +258,7 @@ class ColumnData(dict):
                           "of columns in header [%i]." % (len(l), len(hdr))
 
                 for i, v in enumerate(l):
-                    if not dtype[i] is None:
+                    if dtype[i] is not None:
                         try:
                             v = dtype[i](v)
                         except ValueError:

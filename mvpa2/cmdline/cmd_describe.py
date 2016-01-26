@@ -94,16 +94,16 @@ def sample_histogram(ds, args):
     import pylab as pl
     pl.figure()
     pl.hist(np.ravel(ds.samples), bins=args.histogram_bins)
-    if not args.xlim is None:
+    if args.xlim is not None:
         pl.xlim(*args.xlim)
-    if not args.ylim is None:
+    if args.ylim is not None:
         pl.ylim(*args.ylim)
     for opt, fx in ((args.x_marker, pl.axvline),
                     (args.y_marker, pl.axhline)):
-        if not opt is None:
+        if opt is not None:
             for val in opt:
                 fx(val, linestyle='--')
-    if not args.figure_title is None:
+    if args.figure_title is not None:
         pl.title(args.figure_title)
     pl.show()
 
@@ -160,7 +160,7 @@ def setup_parser(parser):
 def run(args):
     ds = arg2ds(args.data)
     verbose(3, 'Concatenation yielded %i samples with %i features' % ds.shape)
-    if not args.numpy_xfm is None:
+    if args.numpy_xfm is not None:
         from mvpa2.mappers.fx import FxMapper
         fx, axis = args.numpy_xfm
         mapper = FxMapper(axis, fx)

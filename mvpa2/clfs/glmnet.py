@@ -392,7 +392,7 @@ class GLMNET_C(_GLMNET):
         See the help in R for further details on the parameters
         """
         # make sure they didn't specify regression
-        if not kwargs.pop('family', None) is None:
+        if kwargs.pop('family', None) is not None:
             warning('You specified the "family" parameter, but we '
                     'force this to be "multinomial".')
 

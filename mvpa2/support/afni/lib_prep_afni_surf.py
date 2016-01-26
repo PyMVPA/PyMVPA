@@ -233,7 +233,7 @@ def augmentconfig(c):
     # XXX not sure if this still makes sense
     c['fs_sid'] = None
     surfdir = c.get('surfdir', None)
-    if not surfdir is None and os.path.exists(surfdir):
+    if surfdir is not None and os.path.exists(surfdir):
         fs_log_fn = pathjoin(surfdir, '..', 'scripts', 'recon-all.done')
         print "Looking in %s" % fs_log_fn
         if os.path.exists(fs_log_fn):

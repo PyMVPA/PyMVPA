@@ -220,7 +220,7 @@ class Collection(BaseCollection):
         key : None or str or list of str
           What items to check if they were set in the collection
         """
-        if not (key is None):
+        if key is not None:
             if isinstance(key, basestring):
                 return self[key].is_set
             else:
@@ -278,7 +278,7 @@ class Collection(BaseCollection):
     def reset(self, key=None):
         """Reset the conditional attribute defined by `key`"""
 
-        if not key is None:
+        if key is not None:
             keys = [ key ]
         else:
             keys = self.keys()
@@ -495,7 +495,7 @@ class ConditionalAttributesCollection(Collection):
         if isinstance(other, ClassWithCollections):
             other = other.ca
 
-        if not other is None:
+        if other is not None:
             # lets take ca which are enabled in other but not in
             # self
             add_enable_ca = list(set(other.enabled).difference(
@@ -699,7 +699,7 @@ class AttributesCollector(type):
             # So, whenever there are items, we pass just the values of the dict.
             # There is no information last, since the keys of the dict are the
             # name attributes of each collectable in the list.
-            if not colitems is None:
+            if colitems is not None:
                 collections[col] = _col2class[col](items=colitems.values())
             else:
                 collections[col] = _col2class[col]()

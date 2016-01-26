@@ -364,7 +364,7 @@ class Surface(object):
             for nbr_i, nbr_d in nbr.items():
                 dnew = d + nbr_d
 
-                if not maxdistance is None and dnew > maxdistance:
+                if maxdistance is not None and dnew > maxdistance:
                     continue # skip if too far away
 
                 if nbr_i not in tdist or dnew < tdist[nbr_i]:
@@ -425,7 +425,7 @@ class Surface(object):
             for nbr_i, nbr_d in nbr.items():
                 dnew = d + nbr_d
 
-                if not maxdistance is None and dnew > maxdistance:
+                if maxdistance is not None and dnew > maxdistance:
                     continue # skip if too far away
 
                 if nbr_i not in tdist or dnew < tdist[nbr_i][0]:
@@ -581,7 +581,7 @@ class Surface(object):
         elif len(src_coords.shape) != 2 or src_coords.shape[1] != 3:
             raise ValueError("Expected Px3 array for src_coords")
 
-        use_mask = not node_mask_indices is None
+        use_mask = node_mask_indices is not None
         # vertices to consider
         v = self.vertices[node_mask_indices] if use_mask else self.vertices
 
@@ -783,7 +783,7 @@ class Surface(object):
             src, trg = (np.asarray([i for i in c]) for c in components)
 
         v = self.vertices
-        if not max_distance is None:
+        if max_distance is not None:
             # hopefully we can reduce the number of vertices significantly
             # if src and trg can be seperated easily (as in the case of
             # two hemispheres).
@@ -1291,7 +1291,7 @@ class Surface(object):
 
             mind = ds[minpos] ** .5
 
-            if not epsilon is None and mind > epsilon:
+            if epsilon is not None and mind > epsilon:
                 print minpos
                 raise ValueError("Not found near node for node %i (min distance %f > %f)" %
                                  (i, mind, epsilon))
@@ -1325,7 +1325,7 @@ class Surface(object):
         box_sizes = np.asarray([box_size, box_size, box_size]).ravel()
         box_sizes = np.reshape(box_sizes, (1, 3))
 
-        if not master is None:
+        if master is not None:
             if min_coord:
                 raise ValueError('Cannot have both {min,max}_coord and master')
             c = master.vertices
@@ -1481,7 +1481,7 @@ class Surface(object):
 
             mind = ds[minpos] ** .5
 
-            if not epsilon is None and not (mind < epsilon):
+            if epsilon is not None and not (mind < epsilon):
                 raise ValueError("Not found for node %i: %s > %s" %
                                         (i, mind, epsilon))
 
@@ -1819,7 +1819,7 @@ def reposition_hemisphere_pairs(surf_left, surf_right, facing_side,
     surfs = [surf_left, surf_right]
     nsurfs = len(surfs)
     hemisigns = [1, -1]
-    if not rotate_axis is None:
+    if rotate_axis is not None:
         theta = [0] * 3
 
         for i in xrange(nsurfs):
