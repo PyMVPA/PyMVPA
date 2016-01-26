@@ -797,7 +797,7 @@ class VolSurfMinimalLowresMapping(VolSurfMinimalMapping):
             else:
                 # is there - see if it is none
                 cur = n_in_low2v[n_in_low]
-                if cur is None and not v2pos is None:
+                if cur is None and v2pos is not None:
                     # also overwrite (v2pos can also be None, that's fine)
                     n_in_low2v[n_in_low] = v2pos
                 elif v2pos is not None:

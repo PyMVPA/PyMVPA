@@ -196,7 +196,7 @@ class XMLBasedAtlas(BaseAtlas):
 
     @property
     def version(self):
-        if not self.__atlas is None \
+        if self.__atlas is not None \
                and ("version" in self.__atlas.attrib.keys()):
             return self.__atlas.get("version")
         else:
@@ -213,7 +213,7 @@ class XMLBasedAtlas(BaseAtlas):
         """
         Lazy way to provide access to the definitions in the atlas
         """
-        if not self.__atlas is None:
+        if self.__atlas is not None:
             return getattr(self.__atlas, attr)
         else:
             raise XMLAtlasException(

@@ -373,7 +373,7 @@ def compute_ts_boxplot_stats(data, outlier_abs_minthresh=None,
     # data comes in as (subj x volume x parameter)
     orig_input = data
     # reduce data to L2-norm
-    if not aggfx is None:
+    if aggfx is not None:
         data = np.apply_along_axis(aggfx, 2, data, *args)
     # need to deal with missing data
     data = _mask_nan(np.asanyarray(data))
@@ -390,7 +390,7 @@ def compute_ts_boxplot_stats(data, outlier_abs_minthresh=None,
                                         (np.absolute(data - meand)),
                                         outlier_thresh * stdd))
 
-        if not outlier_abs_minthresh is None:
+        if outlier_abs_minthresh is not None:
             # apply absolute filter in addition
             outlier = np.logical_and(outlier,
                                      np.ma.greater(data,

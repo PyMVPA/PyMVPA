@@ -417,7 +417,7 @@ class GroupClusterThreshold(Learner):
             clusterstats[0].append(v)
             clusterstats[1].append(k)
 
-        if not self.params.multicomp_correction is None:
+        if self.params.multicomp_correction is not None:
             # do a local import as only this tiny portion needs statsmodels
             import statsmodels.stats.multitest as smm
             rej, probs_corr = smm.multipletests(

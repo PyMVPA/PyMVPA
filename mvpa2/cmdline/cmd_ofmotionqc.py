@@ -103,7 +103,7 @@ def run(args):
             exclude_subjs=args.exclude_subjs)
     segment_sizes = [len(d[d.keys()[0]]) for d in data]
 
-    if not args.relative is None:
+    if args.relative is not None:
         # recode per-subject estimates wrt their particular reference
         ref = {subj: d[args.relative[1]]
                for subj, d in data[args.relative[0]].iteritems()}

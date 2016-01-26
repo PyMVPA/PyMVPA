@@ -339,12 +339,12 @@ class Dataset(AttrDataset):
         # compile the necessary samples attributes collection
         sa_items = {}
 
-        if not targets is None:
+        if targets is not None:
             sa_items['targets'] = _expand_attribute(targets,
                                                     samples.shape[0],
                                                     'targets')
 
-        if not chunks is None:
+        if chunks is not None:
             # unlike previous implementation, we do not do magic to do chunks
             # if there are none, there are none
             sa_items['chunks'] = _expand_attribute(chunks,
@@ -367,7 +367,7 @@ class Dataset(AttrDataset):
             ds = ds.get_mapped(mm)
 
         # apply generic mapper
-        if not mapper is None:
+        if mapper is not None:
             ds = ds.get_mapped(mapper)
         return ds
 
@@ -401,14 +401,14 @@ class Dataset(AttrDataset):
                 "Input data should be (samples x channels x timepoints. Got: %s"
                 % samples.shape)
 
-        if not t0 is None and not dt is None:
+        if t0 is not None and dt is not None:
             timepoints = np.arange(t0, t0 + samples.shape[2] * dt, dt)
             # broadcast over all channels
             timepoints = np.vstack([timepoints] * samples.shape[1])
         else:
             timepoints = None
 
-        if not channelids is None:
+        if channelids is not None:
             if len(channelids) != samples.shape[1]:
                 raise ValueError(
                     "Number of channel ids does not match channels in the "
@@ -420,9 +420,9 @@ class Dataset(AttrDataset):
         ds = cls.from_wizard(samples, targets=targets, chunks=chunks)
 
         # add additional attributes
-        if not timepoints is None:
+        if timepoints is not None:
             ds.fa['timepoints'] = ds.a.mapper.forward1(timepoints)
-        if not channelids is None:
+        if channelids is not None:
             ds.fa['channels'] = ds.a.mapper.forward1(channelids)
 
         return ds
@@ -478,7 +478,7 @@ class HollowSamples(object):
         """
         if shape is None and sid is None and fid is None:
             raise ValueError("Either shape or ID vectors have to be given")
-        if not shape is None and not len(shape) == 2:
+        if shape is not None and not len(shape) == 2:
             raise ValueError("Only two-dimensional shapes are supported")
         if sid is None:
             self.sid = np.arange(shape[0], dtype='uint')
@@ -490,7 +490,7 @@ class HollowSamples(object):
             self.fid = fid
         self.dtype = dtype
         # sanity check
-        if not shape is None and not len(self.sid) == shape[0] \
+        if shape is not None and not len(self.sid) == shape[0] \
                 and not len(self.fid) == shape[1]:
             raise ValueError("Provided ID vectors do not match given `shape`")
 
@@ -617,13 +617,13 @@ def preprocessed_dataset(
     """
     raw = raw_loader(src)
 
-    if not preproc_raw is None:
+    if preproc_raw is not None:
         raw = preproc_raw(raw)
 
     ds = ds_converter(raw, **kwargs)
 
-    if not add_sa is None:
-        if hasattr(add_sa, 'dtype') and not add_sa.dtype.names is None:
+    if add_sa is not None:
+        if hasattr(add_sa, 'dtype') and add_sa.dtype.names is not None:
             # this is a recarray
             iter_ = add_sa.dtype.names
         else:
@@ -632,6 +632,6 @@ def preprocessed_dataset(
         for sa in iter_:
             ds.sa[sa] = add_sa[sa]
 
-    if not preproc_ds is None:
+    if preproc_ds is not None:
         ds = preproc_ds(ds)
     return ds

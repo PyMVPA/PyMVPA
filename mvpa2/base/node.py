@@ -231,7 +231,7 @@ class Node(ClassWithCollections):
 
     def _apply_postproc(self, ds, result):
         """Apply any post-processing to an output dataset"""
-        if not self.__postproc is None:
+        if self.__postproc is not None:
             if __debug__:
                 debug("NO",
                       "Applying post-processing node %s", (self.__postproc,))

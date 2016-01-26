@@ -536,7 +536,7 @@ class SurfaceVoxelsQueryEngine(SurfaceVerticesQueryEngine):
         # a voxel id (i.e. they are mapped to None). Remove those from the
         # output
         self._feature_id2vertex_id = dict((f, v) for f, v in fv
-                                                if not v is None)
+                                                if v is not None)
 
 
     def untrain(self):

@@ -128,7 +128,7 @@ def eta_string(start_time, progress, msg=None,
         bar = pct_str
 
     full_msg = '+%s %s %s' % (formatter(took), bar, formatter(-eta))
-    if not msg is None:
+    if msg is not None:
         full_msg = '%s  %s' % (full_msg, msg)
     return full_msg
 
