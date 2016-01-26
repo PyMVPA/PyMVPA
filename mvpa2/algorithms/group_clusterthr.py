@@ -227,6 +227,12 @@ class GroupClusterThreshold(Learner):
         does not have a mapper, 1D neighborhood along the features vector will
         be used
         """)
+
+    map_postproc = Parameter(
+        None,
+        doc="""A callable to be used to process target as well as each bootstrapped
+        sample.  E.g. could be a TFCE mapper (yet TODO)
+        """)
     # TODO: relevant only for cluster-based analyses.
 
     n_blocks = Parameter(
@@ -262,6 +268,10 @@ class GroupClusterThreshold(Learner):
         feature_thresh_prob = self.params.feature_thresh_prob
         n_bootstrap = self.params.n_bootstrap
 
+        if self.params.map_postproc is not None:
+            raise NotImplementedError(
+                "Support for map_postproc is not yet implemented. Come later"
+            )
         if self.params.metric != 'cluster_sizes':
             raise NotImplementedError(
                     "Support for metric %r is not yet implemented"
