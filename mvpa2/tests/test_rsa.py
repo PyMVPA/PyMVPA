@@ -166,3 +166,47 @@ def test_PDistTargetSimilaritySearchlight():
     # Actually here for some reason assert_array_lequal gave me a trouble
     assert_true(np.all(sl_both.samples[1] <= 1.0))
     assert_true(np.all(0 <= sl_both.samples[1]))
+
+
+def test_LassoRegression():
+    # a very correlated dataset
+    corrdata = np.array([[1, 2], [10, 20], [-1, -2], [-10, -20]])
+    # a perfect predictor
+    perfect_pred = np.array([0, 2, 2, 2, 2, 0])
+
+    ds = Dataset(corrdata)
+
+    # assert it pukes because predictor is not of the right shape
+    assert_raises(ValueError, LassoRegression, perfect_pred)
+
+    # now make it right
+    perfect_pred = np.atleast_2d(perfect_pred).T
+    regr = LassoRegression(perfect_pred, alpha=0, fit_intercept=False,
+                           rank_data=False)
+    coefs = regr(ds)
+    assert_almost_equal(coefs.samples, 1.)
+
+    # what if we select some items?
+    keep_pairss = [range(3), [1]]
+    for keep_pairs in keep_pairss:
+        regr = LassoRegression(perfect_pred, keep_pairs=keep_pairs, alpha=0,
+                            fit_intercept=False, rank_data=False)
+        coefs = regr(ds)
+        assert_almost_equal(coefs.samples, 1.)
+
+    # make a less perfect predictor
+    bad_pred = np.ones((6, 1))
+    predictors = np.hstack((perfect_pred, bad_pred))
+
+    # check it works with combination of parameters
+    for fit_intercept, rank_data in zip([True, False], [True, False]):
+        regr = LassoRegression(predictors, alpha=1,
+                               fit_intercept=fit_intercept, rank_data=rank_data)
+        coefs = regr(ds)
+        # check we get all the coefficients we need
+        wanted_samples = 3 if fit_intercept else 2
+        assert_equal(coefs.nsamples, wanted_samples)
+
+
+
+

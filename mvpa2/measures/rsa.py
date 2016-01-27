@@ -22,6 +22,8 @@ if externals.exists('scipy', raise_=True):
     from scipy.spatial.distance import pdist, squareform
     from scipy.stats import rankdata, pearsonr
 
+from sklearn.linear_model import Lasso
+
 
 class PDist(Measure):
     """Compute dissimiliarity matrix for samples in a dataset
@@ -39,7 +41,7 @@ class PDist(Measure):
           all possible metrics.""")
 
     center_data = Parameter(False, constraints='bool', doc="""\
-          If True then center each column of the data matrix by subtracing the
+          If True then center each column of the data matrix by subtracting the
           column mean from each element. This is recommended especially when
           using pairwise_metric='correlation'.""")
 
@@ -113,7 +115,7 @@ class PDistConsistency(Measure):
           matrices.""")
 
     center_data = Parameter(False, constraints='bool', doc="""\
-          If True then center each column of the data matrix by subtracing the
+          If True then center each column of the data matrix by subtracting the
           column mean from each element. This is recommended especially when
           using pairwise_metric='correlation'.""")
 
@@ -192,7 +194,7 @@ class PDistTargetSimilarity(Measure):
           target DSM.""")
 
     center_data = Parameter(False, constraints='bool', doc="""\
-          If True then center each column of the data matrix by subtracing the
+          If True then center each column of the data matrix by subtracting the
           column mean from each element. This is recommended especially when
           using pairwise_metric='correlation'.""")
 
@@ -231,3 +233,103 @@ class PDistTargetSimilarity(Measure):
             return Dataset([rho], fa={'metrics': ['rho']})
         else:
             return Dataset([[rho, p]], fa={'metrics': ['rho', 'p']})
+
+
+class LassoRegression(Measure):
+    """
+    Given a dataset, compute regularized regression (Lasso) on the computed neural
+    dissimilarity matrix using an arbitrary number of predictors
+    (model dissimilarity matrices).
+    """
+
+    is_trained = True
+    """Indicate that this measure is always trained."""
+
+    # copied from PDist class XXX: ok or pass it in kwargs?
+    pairwise_metric = Parameter('correlation', constraints='str', doc="""\
+          Distance metric to use for calculating pairwise vector distances for
+          dissimilarity matrix (DSM).  See scipy.spatial.distance.pdist for
+          all possible metrics.""")
+
+    center_data = Parameter(False, constraints='bool', doc="""\
+          If True then center each column of the data matrix by subtracting the
+          column mean from each element. This is recommended especially when
+          using pairwise_metric='correlation'.""")
+
+    alpha = Parameter(1.0, constraints='float', doc='alpha parameter for lasso'
+                                                    'regression')
+
+    fit_intercept = Parameter(True, constraints='bool', doc='whether to fit the'
+                                                            'intercept')
+
+    rank_data = Parameter(True, constraints='bool', doc='whether to rank the neural dsm and the '
+                                                        'predictor dsms before running the regression model')
+
+
+    def __init__(self, predictors, keep_pairs=None, **kwargs):
+        """
+        Parameters
+        ----------
+        predictors : array (N*(N-1)/2, n_predictors)
+            array containing the upper triangular matrix in vector form of the
+            predictor Dissimilarity Matrices. Each column is a predictor dsm.
+
+        keep_pairs : None or list or array
+            indices in range(N*(N-1)/2) to keep before running the regression.
+            All other elements will be removed. If None, the regression is run
+            on the entire DSM.
+
+        Returns
+        -------
+        Dataset
+            a dataset with n_predictors samples and one feature. If fit_intercept
+            is True, the last sample is the intercept.
+        """
+        super(LassoRegression, self).__init__(**kwargs)
+
+        if len(predictors.shape) == 1:
+            raise ValueError('predictors have shape {0}. Make sure the array '
+                             'is at least 2d and transposed correctly'.format(predictors.shape))
+        self.predictors = predictors
+        self.keep_pairs = keep_pairs
+
+    def _call(self, dataset):
+        # first run PDist
+        compute_dsm = PDist(pairwise_metric=self.params.pairwise_metric,
+                            center_data=self.params.center_data)
+        dsm = compute_dsm(dataset)
+        dsm_samples = dsm.samples
+
+        if self.params.rank_data:
+            dsm_samples = rankdata(dsm_samples)
+            predictors = np.apply_along_axis(rankdata, 0, self.predictors)
+        else:
+            predictors = self.predictors
+
+        # keep only the item we want
+        if self.keep_pairs:
+            dsm_samples = dsm_samples[self.keep_pairs]
+            predictors = predictors[self.keep_pairs, :]
+
+        # check that predictors and samples have the correct dimensions
+        if dsm_samples.shape[0] != predictors.shape[0]:
+            raise ValueError('computed dsm has {0} rows, while predictors have'
+                             '{1} rows. Check that predictors have the right'
+                             'shape'.format(dsm_samples.shape[0],
+                                            predictors.shape[0]))
+
+        # now fit the regression
+        lasso = Lasso(alpha=self.params.alpha, fit_intercept=self.params.fit_intercept)
+        lasso.fit(predictors, dsm_samples)
+
+        coefs = lasso.coef_
+        if predictors.shape[1] == 1:
+            coefs = [coefs]
+
+        sa = ['coef' + str(i) for i in range(len(coefs))]
+
+        if self.params.fit_intercept:
+            coefs = np.hstack((coefs, lasso.intercept_))
+            sa += ['intercept']
+
+        return Dataset(coefs, sa={'coefs': sa})
