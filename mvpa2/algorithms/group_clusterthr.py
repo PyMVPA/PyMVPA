@@ -201,9 +201,9 @@ class GroupClusterThreshold(Learner):
 
     metric = Parameter(
         'cluster_sizes',
-        constraints=EnsureChoice('max_cluster_size', 'cluster_sizes', 'cluster_sizes_non0',
-                                 'max_value'),
-        doc="""What metric is measured per each value to be aggregated into
+        constraints=EnsureChoice('max_cluster_size', 'cluster_sizes',
+                                 'cluster_sizes_non0', 'max_value'),
+            doc="""What metric is measured per each value to be aggregated into
             H0 distribution.  'max_cluster_size' collects a distribution of
             maximal cluster size detected in a sample (or 0), 'cluster_sizes'
             collects a distribution of all cluster sizes encountered while providing
@@ -211,7 +211,8 @@ class GroupClusterThreshold(Learner):
             'cluster_sizes_non0' does not count 0s. 'max_value' collects a distribution
             of maximal values.
             Some metrics ('max_cluster_size', 'max_value') estimate family-wise
-            metric so no post-hoc correction is strictly necessary.""")
+            metric so no post-hoc correction is strictly necessary and then
+            multicomp_correction will be set to None if not provided explicitly.""")
 
     multicomp_correction = Parameter(
         'fdr_bh', constraints=EnsureChoice('bonferroni', 'sidak', 'holm-sidak',
@@ -254,6 +255,11 @@ class GroupClusterThreshold(Learner):
             Requires `joblib` external module.""")
 
     def __init__(self, **kwargs):
+        if kwargs.get('metric', '').startswith('max_') and \
+                'multicomp_correction' not in kwargs:
+            # TODO: better just reset multicomp_correction to be None by default
+            # and demand setting it explicitly overall (change of behavior!)
+            kwargs['multicomp_correction'] = None
         # force disable auto-train: would make no sense
         Learner.__init__(self, auto_train=False, **kwargs)
         self.untrain()
@@ -277,7 +283,7 @@ class GroupClusterThreshold(Learner):
             raise NotImplementedError(
                 "Support for map_postproc is not yet implemented. Come later"
             )
-        if self.params.metric != 'cluster_sizes':
+        if self.params.metric not in ('cluster_sizes', 'cluster_sizes_non0'):
             raise NotImplementedError(
                     "Support for metric %r is not yet implemented"
                     % self.params.metric)
@@ -387,6 +393,7 @@ class GroupClusterThreshold(Learner):
         dsa = dict(mapper=ds.a.mapper) if 'mapper' in ds.a else {}
         if __debug__:
             debug('GCTHR', 'Estimating NULL distribution of cluster sizes')
+
         # this step can be computed in parallel chunks to speeds things up
         if self.params.n_proc == 1:
             # Serial execution
@@ -398,7 +405,8 @@ class GroupClusterThreshold(Learner):
                 bds = Dataset(clustermap, a=dsa)
                 # this function reverse-maps every sample one-by-one, hence no need
                 # to collect chunks of bootstrapped maps
-                cluster_sizes = get_cluster_sizes(bds, cluster_sizes, labeler=labeler)
+                cluster_sizes = get_cluster_sizes(
+                        bds, cluster_sizes, labeler=labeler, metric=self.params.metric)
         else:
             # Parallel execution
             # same code as above, just restructured for joblib's Parallel
@@ -408,8 +416,11 @@ class GroupClusterThreshold(Learner):
                                        delayed(get_cluster_sizes)
                                   (Dataset(np.mean(ds_samples[sidx],
                                            axis=0)[None] > thrmap,
-                                           a=dsa), None, labeler)
-                                       for sidx in bcombos):
+                                           a=dsa),
+                                   None,
+                                   labeler,
+                                   metric=self.params.metric)
+                                  for sidx in bcombos):
                 # aggregate
                 cluster_sizes += jobres
         # store cluster size histogram for later p-value evaluation
@@ -569,18 +580,42 @@ def get_thresholding_map(data, p=0.001):
     return data[thridx, np.arange(data.shape[1])]
 
 
-def _get_map_cluster_sizes(map_, labels, num):
-    area = measurements.sum(map_, labels, index=np.arange(1, num + 1))
-    # TODO: So here if a given map didn't have any super-thresholded features,
-    # we get 0 into our histogram.  BUT for the other maps, where at least 1 voxel
-    # passed the threshold we might get multiple clusters recorded within our
-    # distribution.  Which doesn't quite cut it for being called a FW cluster level.
-    # MAY BE it should count only the maximal cluster size (a single number)
-    # per given permutation (not all of them)
-    if not len(area):
-        return [0]
-    else:
-        return area.astype(int)
+class _ClustersMetric(object):
+    """A little helper to make callable specific for the cluster metric
+    """
+    def __init__(self, metric):
+        self._metric = getattr(self, '_' + metric)
+
+    def __call__(self, map_, labels, num):
+        area = measurements.sum(map_, labels, index=np.arange(1, num + 1))
+        return self._metric(area)
+
+    def _cluster_sizes(self, area):
+        """Metric which for no clusters found returns [0]"""
+        if not len(area):
+            return [0]
+        else:
+            import pdb; pdb.set_trace()
+            return area.astype(int)
+
+    def _cluster_sizes_non0(self, area):
+        """Metric which does not count cases where no clusters found"""
+        if not len(area):
+            return []
+        else:
+            return area.astype(int)
+
+    def _max_cluster_size(self, area):
+        """Metric which returns maximum cluster size"""
+        if not len(area):
+            return [0]
+        else:
+            return area.astype(int)
+
+
+def _get_map_cluster_sizes(map_, labels, num, metric='cluster_sizes'):
+    # TODO: deprecate entirely
+    return _ClustersMetric(metric=metric)(map_, labels, num)
 
 
 def _get_default_labeler(ds):
@@ -613,7 +648,7 @@ def _get_default_labeler(ds):
     return Labeler(qe=IndexQueryEngine(**{target_space: Sphere(1)}))
 
 
-def get_cluster_sizes(ds, cluster_counter=None, labeler=None):
+def get_cluster_sizes(ds, cluster_counter=None, labeler=None, metric='cluster_sizes'):
     """Compute cluster sizes from all samples in a boolean dataset.
 
     Individually for each sample, in the input dataset, clusters of non-zero
@@ -629,6 +664,9 @@ def get_cluster_sizes(ds, cluster_counter=None, labeler=None):
       from the present input dataset. Otherwise, a new list is generated.
     labeler : Learner, optional
       `Labeler` to get estimate neighbors for each feature of the dataset
+    metric : str, optional
+      Metric to be used while estimating clusters statistic across samples. See
+      `GroupClusterThreshold`'s parameter metric
 
     Returns
     -------
@@ -645,12 +683,12 @@ def get_cluster_sizes(ds, cluster_counter=None, labeler=None):
         labeler.train(ds)
 
     dslabeled = labeler(ds)
+    metric_callable = _ClustersMetric(metric=metric)
     for d, labels, nlabels in zip(
             ds.samples,
             dslabeled.samples,
             dslabeled.sa[labeler.get_space()].value):
-        m_clusters = _get_map_cluster_sizes(d, labels, nlabels)
-        cluster_counter.update(m_clusters)
+        cluster_counter.update(metric_callable(d, labels, nlabels))
     return cluster_counter
 
 
