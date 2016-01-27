@@ -10,6 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
+from os.path import lexists
 import numpy as np
 import copy
 
@@ -602,6 +603,74 @@ class AttrDataset(object):
         if own_file:
             hdf.close()
         return res
+
+    def to_npz(self, filename, compress=True):
+        """Save dataset to a .npz file storing all fa/sa/a which are ndarrays
+
+        Parameters
+        ----------
+        filename : str
+        compress : bool, optional
+          If True, savez_compressed is used
+        """
+        savez = np.savez_compressed if compress else np.savez
+        if not filename.endswith('.npz'):
+            filename += '.npz'
+        entries = {'samples': self.samples}
+        skipped = []
+        for c in ('a', 'fa', 'sa'):
+            col = getattr(self, c)
+            for k in col:
+                v = col[k].value
+                e = '%s.%s' % (c, k)
+                if isinstance(v, np.ndarray):
+                    entries[e] = v
+                else:
+                    skipped.append(e)
+        if skipped:
+            warning("Skipping %s since not ndarrays" % (', '.join(skipped)))
+        return savez(filename, **entries)
+
+    @classmethod
+    def from_npz(cls, filename):
+        """Load dataset from NumPy's .npz file, as e.g. stored by to_npz
+
+        File expected to have 'samples' item, which serves as samples, and
+        other items prefixed with the corresponding collection (e.g. 'sa.' or
+        'fa.').  All other entries are skipped
+
+        Parameters
+        ----------
+        filename: str
+          Filename for the .npz file.  Can be specified without .npz suffix
+
+        """
+        # some sugaring
+        filename_npz = filename + '.npz'
+        if not lexists(filename) and not filename.endswith('.npz') and lexists(filename_npz):
+            filename = filename_npz
+
+        entries = np.load(filename)
+
+        cols = {'a': {}, 'fa': {}, 'sa': {}}
+        skipped = []
+        for e, v in entries.items():
+            if e == 'samples':
+                samples = v
+            else:
+                if '.' not in e:
+                    skipped.append(e)
+                    continue
+                c, k = e.split('.', 1)
+                if c not in cols:
+                    skipped.append(e)
+                    continue
+                cols[c][k] = v
+        if skipped:
+            warning("Skipped following items since do not belong to any of "
+                    "known collections: %s" % (", ".join(sorted(skipped))))
+        return cls(samples, **cols)
+
 
     # shortcut properties
     nsamples = property(fget=len)
