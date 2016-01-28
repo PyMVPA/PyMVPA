@@ -159,7 +159,7 @@ def from_any(roi, postproc=None):
     elif isinstance(roi, basestring):
         roi = read(roi)
 
-    if not postproc is None:
+    if postproc is not None:
         roi = postproc(roi)
 
     return roi

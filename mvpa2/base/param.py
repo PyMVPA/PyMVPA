@@ -175,9 +175,9 @@ class Parameter(IndexedCollectable):
         string or list of strings (if indent is None)
         """
         paramsdoc = '%s' % self.name
-        if not self.constraints is None:
+        if self.constraints is not None:
             sdoc = self.constraints.short_description()
-            if not sdoc is None:
+            if sdoc is not None:
                 if sdoc[0] == '(' and sdoc[-1] == ')':
                     sdoc = sdoc[1:-1]
                 # parameters are always optional

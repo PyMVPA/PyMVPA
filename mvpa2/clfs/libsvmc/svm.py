@@ -96,7 +96,7 @@ class SVM(_SVM):
             for arg, impl in [ ('tube_epsilon', 'EPSILON_SVR'),
                                ('C', 'C_SVC'),
                                ('nu', 'NU_SVC') ]:
-                if kwargs.has_key(arg):
+                if arg in kwargs:
                     svm_impl = impl
                     if __debug__:
                         debug('SVM', 'No implementation was specified. Since '
@@ -173,7 +173,7 @@ class SVM(_SVM):
 
         """Store SVM parameters in libSVM compatible format."""
 
-        if self.params.has_key('C'):#svm_type in [_svm.svmc.C_SVC]:
+        if 'C' in self.params:  # svm_type in [_svm.svmc.C_SVC]:
             Cs = self._get_cvec(dataset)
             if len(Cs)>1:
                 C0 = abs(Cs[0])

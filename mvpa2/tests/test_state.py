@@ -79,28 +79,28 @@ class StateTests(unittest.TestCase):
         # update the ca... may be will be implemented in the future if necessity comes
         return
 
-        # add some conditional attribute
-        blank._registerState('state1', False)
-        self.assertTrue(blank.ca == ['state1'])
+        ## add some conditional attribute
+        #blank._registerState('state1', False)
+        #self.assertTrue(blank.ca == ['state1'])
 
-        self.assertTrue(blank.ca.is_enabled('state1') == False)
-        self.assertTrue(blank.ca.enabled == [])
-        self.assertRaises(UnknownStateError, blank.__getattribute__, 'state1')
+        #self.assertTrue(blank.ca.is_enabled('state1') == False)
+        #self.assertTrue(blank.ca.enabled == [])
+        #self.assertRaises(UnknownStateError, blank.__getattribute__, 'state1')
 
-        # assign value now
-        blank.state1 = 123
-        # should have no effect since the conditional attribute wasn't enabled
-        self.assertRaises(UnknownStateError, blank.__getattribute__, 'state1')
+        ## assign value now
+        #blank.state1 = 123
+        ## should have no effect since the conditional attribute wasn't enabled
+        #self.assertRaises(UnknownStateError, blank.__getattribute__, 'state1')
 
-        # lets enable and assign
-        blank.ca.enable('state1')
-        blank.state1 = 123
-        self.assertTrue(blank.state1 == 123)
+        ## lets enable and assign
+        #blank.ca.enable('state1')
+        #blank.state1 = 123
+        #self.assertTrue(blank.state1 == 123)
 
-        # we should not share ca across instances at the moment, so an arbitrary
-        # object could carry some custom ca
-        self.assertTrue(blank2.ca == [])
-        self.assertRaises(AttributeError, blank2.__getattribute__, 'state1')
+        ## we should not share ca across instances at the moment, so an arbitrary
+        ## object could carry some custom ca
+        #self.assertTrue(blank2.ca == [])
+        #self.assertRaises(AttributeError, blank2.__getattribute__, 'state1')
 
 
     def test_proper_state(self):

@@ -73,7 +73,7 @@ class FxMapper(Mapper):
         self.__axis = axis
         self.__uattrs = uattrs
         self.__fx = fx
-        if not fxargs is None:
+        if fxargs is not None:
             self.__fxargs = fxargs
         else:
             self.__fxargs = ()
@@ -86,7 +86,9 @@ class FxMapper(Mapper):
 
 
     @borrowdoc(Mapper)
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+                prefixes = []
         return super(FxMapper, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['axis', 'fx', 'uattrs'])
@@ -141,7 +143,7 @@ class FxMapper(Mapper):
 
     @borrowdoc(Mapper)
     def _forward_data(self, data):
-        if not self.__uattrs is None:
+        if self.__uattrs is not None:
             raise RuntimeError("%s does not support forward-mapping of plain "
                                "data when data grouping based on attributes "
                                "is requested"
@@ -243,7 +245,7 @@ class FxMapper(Mapper):
 
             fxed_samples = self.__smart_apply_along_axis(samples)
             mdata.append(fxed_samples)
-            if not self.__attrfx is None:
+            if self.__attrfx is not None:
                 # and now all samples attributes
                 for i, attr in enumerate(col):
                     fxed_attr = self.__attrfx(col[attr].value[selector])

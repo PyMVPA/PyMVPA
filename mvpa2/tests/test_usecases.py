@@ -11,9 +11,11 @@
 import unittest
 import numpy as np
 
+from mvpa2.testing import skip_if_no_external
 from mvpa2.testing.tools import ok_, assert_array_equal, assert_true, \
         assert_false, assert_equal, assert_not_equal, reseed_rng, assert_raises, \
-        assert_array_almost_equal, SkipTest, assert_datasets_equal
+        assert_array_almost_equal, SkipTest, assert_datasets_equal, assert_almost_equal
+from mvpa2.misc.data_generators import normal_feature_dataset
 
 @reseed_rng()
 def _test_mcasey20120222():  # pragma: no cover
@@ -57,20 +59,7 @@ def test_sifter_superord_usecase():
     from mvpa2.generators.partition import NFoldPartitioner
     from mvpa2.generators.base import  Sifter
 
-    # Let's simulate the beast -- 6 categories total groupped into 3
-    # super-ordinate, and actually without any 'superordinate' effect
-    # since subordinate categories independent
-    ds = normal_feature_dataset(nlabels=6,
-                                snr=100,   # pure signal! ;)
-                                perlabel=30,
-                                nfeatures=6,
-                                nonbogus_features=range(6),
-                                nchunks=5)
-    ds.sa['subord'] = ds.sa.targets.copy()
-    ds.sa['superord'] = ['super%d' % (int(i[1])%3,)
-                         for i in ds.targets]   # 3 superord categories
-    # let's override original targets just to be sure that we aren't relying on them
-    ds.targets[:] = 0
+    ds = _get_superord_dataset()
 
     npart = ChainNode([
     ## so we split based on superord
@@ -99,6 +88,27 @@ def test_sifter_superord_usecase():
     # I don't think that this would ever fail, so not marking it labile
     assert(np.mean(accs_regular) > .8)
     assert(np.mean(accs_super)   < .6)
+
+
+def _get_superord_dataset():
+    """A little helper to simulate a dataset with super/subord targets structure
+    """
+    # Let's simulate the beast -- 6 categories total groupped into 3
+    # super-ordinate, and actually without any 'superordinate' effect
+    # since subordinate categories independent
+    ds = normal_feature_dataset(nlabels=6,
+                                snr=100,  # pure signal! ;)
+                                perlabel=30,
+                                nfeatures=6,
+                                nonbogus_features=range(6),
+                                nchunks=5)
+    ds.sa['subord'] = ds.sa.targets.copy()
+    ds.sa['superord'] = ['super%d' % (int(i[1]) % 3,)
+                         for i in ds.targets]  # 3 superord categories
+    # let's override original targets just to be sure that we aren't relying on them
+    ds.targets[:] = 0
+    return ds
+
 
 def _test_edmund_chong_20120907():  # pragma: no cover
     # commented out to avoid syntax warnings while compiling
@@ -356,7 +366,7 @@ def test_rfe_sensmap():
 
     from mvpa2.misc.data_generators import normal_feature_dataset
 
-    # Let's simulate the beast -- 6 categories total groupped into 3
+    # Let's simulate the beast -- 6 categories total grouped into 3
     # super-ordinate, and actually without any 'superordinate' effect
     # since subordinate categories independent
     fds = normal_feature_dataset(nlabels=3,
@@ -495,3 +505,119 @@ def test_searchlight_errors_per_trial():
     # and error matching (up to precision) the one if we run with default error function
     assert_array_almost_equal(np.mean(results.targets[:, None] != results.samples, axis=0)[0],
                               np.mean(cv_error(dataset)))
+
+
+@reseed_rng()
+def test_simple_cluster_level_thresholding():
+    nf = 13
+    nperms = 100
+    pthr_feature = 0.5  # just for testing
+    pthr_cluster = 0.5
+    rand_acc = np.random.normal(size=(nperms, nf))
+    acc = np.random.normal(size=(1, nf))
+
+    # Step 1 is to "fit" "Nonparametrics" per each of the features
+    from mvpa2.clfs.stats import Nonparametric
+    dists = [Nonparametric(samples) for samples in rand_acc.T]
+    # we should be able to assert "p" value for each random sample for each feature
+    rand_acc_p = np.array(
+        [dist.rcdf(v) for dist, v in zip(dists, rand_acc.T)]
+        ).T
+
+    rand_acc_p_slow = np.array([
+        [dist.rcdf(v) for dist, v in zip(dists, sample)]
+         for sample in rand_acc])
+    assert_array_equal(rand_acc_p_slow, rand_acc_p)
+
+    assert_equal(rand_acc_p.shape, rand_acc.shape)
+    assert(np.all(rand_acc_p <= 1))
+    assert(np.all(rand_acc_p > 0))
+
+    # 2: apply the same to our acc
+    acc_p = np.array([dist.rcdf(v) for dist, v in zip(dists, acc[0])])[None, :]
+    assert(np.all(acc_p <= 1))
+    assert(np.all(acc_p > 0))
+
+    skip_if_no_external('scipy')
+    # Now we need to do our fancy cluster level madness
+    from mvpa2.algorithms.group_clusterthr import \
+        get_cluster_sizes, _transform_to_pvals, get_cluster_pvals, \
+        get_thresholding_map, repeat_cluster_vals
+
+    rand_acc_p_thr = rand_acc_p < pthr_feature
+    acc_p_thr = acc_p < pthr_feature
+
+    rand_cluster_sizes = get_cluster_sizes(rand_acc_p_thr)
+    acc_cluster_sizes = get_cluster_sizes(acc_p_thr)
+
+    # This is how we can compute it within present implementation.
+    # It will be a bit different (since it doesn't account for target value if
+    # I got it right), and would work only for accuracies
+    thr_map = get_thresholding_map(rand_acc, pthr_feature)
+    rand_cluster_sizes_ = get_cluster_sizes(rand_acc > thr_map)
+    acc_cluster_sizes_ = get_cluster_sizes(acc > thr_map)
+
+    assert_equal(rand_cluster_sizes, rand_cluster_sizes_)
+    assert_equal(acc_cluster_sizes, acc_cluster_sizes_)
+
+    #print rand_cluster_sizes
+    #print acc_cluster_sizes
+
+    # That is how it is done in group_clusterthr atm
+    # store cluster size histogram for later p-value evaluation
+    # use a sparse matrix for easy consumption (max dim is the number of
+    # features, i.e. biggest possible cluster)
+    from scipy.sparse import dok_matrix
+    scl = dok_matrix((1, nf + 1), dtype=int)
+    for s in rand_cluster_sizes:
+        scl[0, s] = rand_cluster_sizes[s]
+
+    test_count_sizes = repeat_cluster_vals(acc_cluster_sizes)
+    test_pvals = _transform_to_pvals(test_count_sizes, scl.astype('float'))
+    # needs conversion to array for comparisons
+    test_pvals = np.asanyarray(test_pvals)
+    # critical cluster_level threshold (without FW correction between clusters)
+    # would be
+    clusters_passed_threshold = test_count_sizes[test_pvals <= pthr_cluster]
+
+    if len(clusters_passed_threshold):
+        thr_cluster_size = min(clusters_passed_threshold)
+        #print("Min cluster size which passed threshold: %d" % thr_cluster_size)
+    else:
+        #print("No clusters passed threshold")
+        pass
+    #print test_count_sizes, test_pvals
+
+
+    acc_cluster_ps = get_cluster_pvals(acc_cluster_sizes, rand_cluster_sizes)
+
+    for test_pval, test_count_size in zip(test_pvals, test_count_sizes):
+        assert_almost_equal(acc_cluster_ps[test_count_size], test_pval)
+
+
+@reseed_rng()
+def test_permute_superord():
+    from mvpa2.base.node import ChainNode
+    from mvpa2.generators.partition import NFoldPartitioner
+    from mvpa2.generators.base import  Sifter
+    from mvpa2.generators.permutation import AttributePermutator
+
+    ds = _get_superord_dataset()
+    # mvpa2.seed(1)
+    part = ChainNode([
+    ## so we split based on superord
+        NFoldPartitioner(len(ds.sa['superord'].unique),
+                         attr='subord'),
+        ## so it should select only those splits where we took 1 from
+        ## each of the superord categories leaving things in balance
+        Sifter([('partitions', 2),
+                ('superord',
+                 { 'uvalues': ds.sa['superord'].unique,
+                   'balanced': True})]),
+        AttributePermutator(['superord'], limit=['partitions',
+                                                 'chunks']),
+    ], space='partitions')
+
+    for ds_perm in part.generate(ds):
+        # it does permutation
+        assert(np.sum(ds_perm.sa.superord != ds.sa.superord) != 0)

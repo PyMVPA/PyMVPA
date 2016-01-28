@@ -212,12 +212,12 @@ class ReST2IPyNB(object):
                     self._buffer = '*%s*' \
                             % [m for m in re.match(':ref:(.*) <|:ref:(.*)',
                                                    self._buffer).groups()
-                                                        if not m is None][0]
+                                                        if m is not None][0]
                 elif self._buffer.startswith(':math:'):
                     self._buffer = '$%s$' \
                             % [m for m in re.match(':math:(.*) <|:math:(.*)',
                                                    self._buffer).groups()
-                                                        if not m is None][0]
+                                                        if m is not None][0]
                 elif re.match(':([a-z]+):', self._buffer):
                     # catch other ref type we should handle, but do not yet
                     raise RuntimeError("unhandled reference type '%s'" % self._buffer)
@@ -328,7 +328,7 @@ class ReST2IPyNB(object):
                 raise RuntimeError("Unknown tag '%s'%s" % (tag, line))
 
     def _store_currcell(self):
-        if not self._currcell is None:
+        if self._currcell is not None:
             self._flush_buffer()
             if self._currcell['cell_type'] == 'code':
                 # remove last newline to save on vertical space
@@ -430,7 +430,7 @@ Base URL for links to the online glossary. Default=''
             toparse.append(t)
 
     # filter parse list
-    if not opts.excluded is None:
+    if opts.excluded is not None:
         toparse = [t for t in toparse if not t in opts.excluded]
 
     toparse_list = toparse

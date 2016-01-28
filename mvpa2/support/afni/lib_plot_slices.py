@@ -169,7 +169,7 @@ def slice_data(data, dim, where):
         return [slice_data(data, d, where) for d in dim]
 
     # make first dimension of interest
-    if dim > 0 and not data is None:
+    if dim > 0 and data is not None:
         data = data.swapaxes(0, dim)
 
     if type(where) in (list, tuple):
@@ -413,7 +413,7 @@ def make_plot(ulay, olay, dims, pos, title=None,
 
     # attempt to set a tight layout (doesn't work greatly)
     f.tight_layout()
-    if not title is None:
+    if title is not None:
         # set title
         axs[0][0].text(0, imglength, title, color=fontcolor, fontsize=fontsize)
 

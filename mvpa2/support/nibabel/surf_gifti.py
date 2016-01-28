@@ -99,7 +99,7 @@ def filename2vertices_faces_metadata(fn):
 
     for key, dict_ in vertex_map.iteritems():
         v = just_one(dict_)
-        if not v is None:
+        if v is not None:
             v_meta.append(gifti.GiftiNVPairs(key, v))
 
 
@@ -202,7 +202,7 @@ def to_xml(img, meta_fn_hint=None):
     if isinstance(img, surf.Surface):
         img = to_gifti_image(img)
 
-    if not meta_fn_hint is None:
+    if meta_fn_hint is not None:
         vertices = _get_single_array(img, 'pointset')
         faces = _get_single_array(img, 'triangle')
         vertices.meta, faces.meta = \

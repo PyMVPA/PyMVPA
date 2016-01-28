@@ -14,14 +14,15 @@ import time
 import numpy as np
 from mvpa2.support import copy
 
-from mvpa2.base.dochelpers import _str, _repr, _repr_attrs
+from mvpa2.base.dochelpers import _str, _repr_attrs
 from mvpa2.base.state import ClassWithCollections, ConditionalAttribute
 
 from mvpa2.base.collections import SampleAttributesCollection, \
-     FeatureAttributesCollection, DatasetAttributesCollection
+    FeatureAttributesCollection, DatasetAttributesCollection
 
 if __debug__:
     from mvpa2.base import debug
+
 
 class Node(ClassWithCollections):
     """Common processing object.
@@ -37,10 +38,12 @@ class Node(ClassWithCollections):
     the context of the corresponding processing in the output dataset.
     """
 
-    calling_time = ConditionalAttribute(enabled=True,
+    calling_time = ConditionalAttribute(
+        enabled=True,
         doc="Time (in seconds) it took to call the node")
 
-    raw_results = ConditionalAttribute(enabled=False,
+    raw_results = ConditionalAttribute(
+        enabled=False,
         doc="Computed results before invoking postproc. " +
             "Stored only if postproc is not None.")
 
@@ -100,7 +103,6 @@ class Node(ClassWithCollections):
             pass_attr = (pass_attr,)
         self.__pass_attr = pass_attr
 
-
     def __call__(self, ds):
         """
         The default implementation calls ``_precall()``, ``_call()``, and
@@ -121,9 +123,8 @@ class Node(ClassWithCollections):
         result = self._call(ds)
         result = self._postcall(ds, result)
 
-        self.ca.calling_time = time.time() - t0 # set the calling_time
+        self.ca.calling_time = time.time() - t0  # set the calling_time
         return result
-
 
     def _precall(self, ds):
         """Preprocessing of data
@@ -141,10 +142,8 @@ class Node(ClassWithCollections):
         """
         return ds
 
-
     def _call(self, ds):
         raise NotImplementedError
-
 
     def _postcall(self, ds, result):
         """Postprocessing of results.
@@ -232,7 +231,7 @@ class Node(ClassWithCollections):
 
     def _apply_postproc(self, ds, result):
         """Apply any post-processing to an output dataset"""
-        if not self.__postproc is None:
+        if self.__postproc is not None:
             if __debug__:
                 debug("NO",
                       "Applying post-processing node %s", (self.__postproc,))
@@ -260,21 +259,17 @@ class Node(ClassWithCollections):
         """
         yield self(ds)
 
-
     def get_space(self):
         """Query the processing space name of this node."""
         return self.__space
-
 
     def set_space(self, name):
         """Set the processing space name of this node."""
         self.__space = name
 
-
     def get_postproc(self):
         """Returns the post-processing node or None."""
         return self.__postproc
-
 
     def set_postproc(self, node):
         """Assigns a post-processing node
@@ -283,12 +278,12 @@ class Node(ClassWithCollections):
         """
         self.__postproc = node
 
-
     def __str__(self, *args, **kwargs):
         return _str(self, *args, **kwargs)
 
-
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(Node, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['space', 'pass_attr', 'postproc']))
@@ -305,11 +300,11 @@ class Node(ClassWithCollections):
 
 
 class CompoundNode(Node):
-    """List of nodes. 
+    """List of nodes.
 
     A CompoundNode behaves similar to a list container: Nodes can be appended,
     and the chain can be sliced like a list, etc ...
-    
+
     Subclasses such as ChainNode and CombinedNode implement the _call
     method in different ways.
     """
@@ -327,15 +322,12 @@ class CompoundNode(Node):
         self._nodes = nodes
         Node.__init__(self, **kwargs)
 
-
     def __copy__(self):
         # XXX how do we safely and exhaustively copy a node?
         return self.__class__([copy.copy(n) for n in self])
 
-
     def _call(self, ds):
         raise NotImplementedError("This is an abstract class.")
-
 
     def generate(self, ds, startnode=0):
         """
@@ -362,7 +354,6 @@ class CompoundNode(Node):
                 for rgds in self.generate(gds, startnode=startnode + 1):
                     yield rgds
 
-
     #
     # Behave as a container
     #
@@ -372,19 +363,15 @@ class CompoundNode(Node):
         # may be loop and add all the entries?
         self._nodes.append(node)
 
-
     def __len__(self):
         return len(self._nodes)
-
 
     def __iter__(self):
         for n in self._nodes:
             yield n
 
-
     def __reversed__(self):
         return reversed(self._nodes)
-
 
     def __getitem__(self, key):
         # if just one is requested return just one, otherwise return a
@@ -397,17 +384,17 @@ class CompoundNode(Node):
             sliced._nodes = self._nodes[key]
             return sliced
 
-
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(CompoundNode, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['nodes']))
 
-
     def __str__(self):
         return _str(self, '-'.join([str(n) for n in self]))
 
-    nodes = property(fget=lambda self:self._nodes)
+    nodes = property(fget=lambda self: self._nodes)
 
 
 class ChainNode(CompoundNode):
@@ -457,16 +444,16 @@ class CombinedNode(CompoundNode):
         mappers : list
         combine_axis : ['h', 'v']
         a: {'unique','drop_nonunique','uniques','all'} or True or False or None (default: None)
-            Indicates which dataset attributes from datasets are stored 
-            in merged_dataset. If an int k, then the dataset attributes from 
+            Indicates which dataset attributes from datasets are stored
+            in merged_dataset. If an int k, then the dataset attributes from
             datasets[k] are taken. If 'unique' then it is assumed that any
             attribute common to more than one dataset in datasets is unique;
             if not an exception is raised. If 'drop_nonunique' then as 'unique',
-            except that exceptions are not raised. If 'uniques' then, for each 
-            attribute,  any unique value across the datasets is stored in a tuple 
-            in merged_datasets. If 'all' then each attribute present in any 
-            dataset across datasets is stored as a tuple in merged_datasets; 
-            missing values are replaced by None. If None (the default) then no 
+            except that exceptions are not raised. If 'uniques' then, for each
+            attribute,  any unique value across the datasets is stored in a tuple
+            in merged_datasets. If 'all' then each attribute present in any
+            dataset across datasets is stored as a tuple in merged_datasets;
+            missing values are replaced by None. If None (the default) then no
             attributes are stored in merged_dataset. True is equivalent to
             'drop_nonunique'. False is equivalent to None.
         """
@@ -476,9 +463,8 @@ class CombinedNode(CompoundNode):
 
     def __copy__(self):
         return self.__class__([copy.copy(n) for n in self],
-                                         copy.copy(self._combine_axis),
-                                         copy.copy(self._a))
-
+                              copy.copy(self._combine_axis),
+                              copy.copy(self._a))
 
     def _call(self, ds):
         out = [node(ds) for node in self]
@@ -487,9 +473,9 @@ class CombinedNode(CompoundNode):
         stacked = stacker[self._combine_axis](out, self._a)
         return stacked
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(CombinedNode, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['combine_axis', 'a']))
-
-

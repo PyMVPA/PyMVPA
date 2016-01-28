@@ -33,9 +33,10 @@ from mvpa2.measures.nnsearchlight import sphere_m1nnsearchlight, \
      M1NNSearchlight
 from mvpa2.clfs.knn import kNN
 
-from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere, HollowSphere
+from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere, HollowSphere, CachedQueryEngine
 from mvpa2.misc.errorfx import corr_error, mean_match_accuracy
-from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner
+from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner, CustomPartitioner
+from mvpa2.generators.splitters import Splitter
 from mvpa2.generators.permutation import AttributePermutator
 from mvpa2.measures.base import CrossValidation
 
@@ -761,6 +762,37 @@ class SearchlightTests(unittest.TestCase):
             # remove those generated left-over files
             for f in glob.glob(tfile + '*'):
                 os.unlink(f)
+
+    def test_cached_qe_gnbsearchlight(self):
+        ds1 = datasets['3dsmall'].copy(deep=True)
+        qe = IndexQueryEngine(myspace=Sphere(2))
+        cached_qe = CachedQueryEngine(qe)
+        gnb_sl = GNBSearchlight(GNB(), NFoldPartitioner(), qe=cached_qe)
+        res = gnb_sl(ds1)
+        assert_false(cached_qe.ids is None)
+
+    def test_gnbsearchlight_3partitions_and_splitter(self):
+        ds = self.dataset[:, :20]
+        # custom partitioner which provides 3 partitions
+        part = CustomPartitioner([([2], [3], [1])])
+        gnb_sl = sphere_gnbsearchlight(GNB(), part)
+        res_gnb_sl = gnb_sl(ds)
+
+        # compare results to full blown searchlight
+        sl = sphere_searchlight(CrossValidation(GNB(), part))
+        res_sl = sl(ds)
+
+        assert_datasets_equal(res_gnb_sl, res_sl)
+
+        # and theoretically for this simple single cross-validation we could
+        # just use Splitter
+        splitter = Splitter('chunks', [2, 3])
+        # we have to put explicit None since can't become a kwarg in 1 day any
+        # longer here
+        gnb_sl_ = sphere_gnbsearchlight(GNB(), None, splitter=splitter)
+        res_gnb_sl_ = gnb_sl_(ds)
+        assert_datasets_equal(res_gnb_sl, res_gnb_sl_)
+
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(SearchlightTests)
