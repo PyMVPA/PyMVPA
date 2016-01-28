@@ -307,7 +307,7 @@ class LassoRegression(Measure):
             predictors = self.predictors
 
         # keep only the item we want
-        if self.keep_pairs:
+        if self.keep_pairs is not None:
             dsm_samples = dsm_samples[self.keep_pairs]
             predictors = predictors[self.keep_pairs, :]
 
