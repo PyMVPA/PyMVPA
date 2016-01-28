@@ -187,7 +187,7 @@ def test_LassoRegression():
     assert_almost_equal(coefs.samples, 1.)
 
     # what if we select some items?
-    keep_pairss = [range(3), [1]]
+    keep_pairss = [range(3), [1], np.arange(3)]
     for keep_pairs in keep_pairss:
         regr = LassoRegression(perfect_pred, keep_pairs=keep_pairs, alpha=0,
                             fit_intercept=False, rank_data=False)
