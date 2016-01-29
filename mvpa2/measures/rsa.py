@@ -22,7 +22,7 @@ if externals.exists('scipy', raise_=True):
     from scipy.spatial.distance import pdist, squareform
     from scipy.stats import rankdata, pearsonr
 
-from sklearn.linear_model import Lasso
+from sklearn.linear_model import Lasso, Ridge
 from sklearn.preprocessing import scale
 
 
@@ -236,9 +236,9 @@ class PDistTargetSimilarity(Measure):
             return Dataset([[rho, p]], fa={'metrics': ['rho', 'p']})
 
 
-class LassoRegression(Measure):
+class Regression(Measure):
     """
-    Given a dataset, compute regularized regression (Lasso) on the computed neural
+    Given a dataset, compute regularized regression (Ridge or Lasso) on the computed neural
     dissimilarity matrix using an arbitrary number of predictors
     (model dissimilarity matrices).
     """
@@ -256,6 +256,9 @@ class LassoRegression(Measure):
           If True then center each column of the data matrix by subtracting the
           column mean from each element. This is recommended especially when
           using pairwise_metric='correlation'.""")
+
+    method = Parameter('ridge', constraints=EnsureChoice('ridge', 'lasso'),
+                       doc='Compute Ridge (l2) or Lasso (l1) regression')
 
     alpha = Parameter(1.0, constraints='float', doc='alpha parameter for lasso'
                                                     'regression')
@@ -290,7 +293,7 @@ class LassoRegression(Measure):
             a dataset with n_predictors samples and one feature. If fit_intercept
             is True, the last sample is the intercept.
         """
-        super(LassoRegression, self).__init__(**kwargs)
+        super(Regression, self).__init__(**kwargs)
 
         if len(predictors.shape) == 1:
             raise ValueError('predictors have shape {0}. Make sure the array '
@@ -328,17 +331,21 @@ class LassoRegression(Measure):
                                             predictors.shape[0]))
 
         # now fit the regression
-        lasso = Lasso(alpha=self.params.alpha, fit_intercept=self.params.fit_intercept)
-        lasso.fit(predictors, dsm_samples)
+        if self.params.method == 'lasso':
+            reg = Lasso
+        elif self.params.method == 'ridge':
+            reg = Ridge
+        else:
+            raise ValueError('I do not know method {0}'.format(self.params.method))
+        reg_ = reg(alpha=self.params.alpha, fit_intercept=self.params.fit_intercept)
+        reg_.fit(predictors, dsm_samples)
 
-        coefs = lasso.coef_
-        if predictors.shape[1] == 1:
-            coefs = [coefs]
+        coefs = reg_.coef_.reshape(-1, 1)
 
         sa = ['coef' + str(i) for i in range(len(coefs))]
 
         if self.params.fit_intercept:
-            coefs = np.hstack((coefs, lasso.intercept_))
+            coefs = np.vstack((coefs, reg_.intercept_))
             sa += ['intercept']
 
         return Dataset(coefs, sa={'coefs': sa})

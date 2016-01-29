@@ -176,33 +176,39 @@ def test_LassoRegression():
 
     ds = Dataset(corrdata)
 
+    reg_types = ['lasso', 'ridge']
+
     # assert it pukes because predictor is not of the right shape
-    assert_raises(ValueError, LassoRegression, perfect_pred)
+    assert_raises(ValueError, Regression, perfect_pred)
 
     # now make it right
     perfect_pred = np.atleast_2d(perfect_pred).T
-    regr = LassoRegression(perfect_pred, alpha=0, fit_intercept=False,
-                           rank_data=False, normalize=False)
+    for reg_type in reg_types:
+        regr = Regression(perfect_pred, alpha=0, fit_intercept=False,
+                          rank_data=False, normalize=False, method=reg_type)
     coefs = regr(ds)
     assert_almost_equal(coefs.samples, 1.)
 
     # what if we select some items?
     keep_pairss = [range(3), [1], np.arange(3)]
-    for keep_pairs in keep_pairss:
-        regr = LassoRegression(perfect_pred, keep_pairs=keep_pairs, alpha=0,
-                            fit_intercept=False, rank_data=False, normalize=False)
-        coefs = regr(ds)
-        assert_almost_equal(coefs.samples, 1.)
+    for reg_type in reg_types:
+        for keep_pairs in keep_pairss:
+            regr = Regression(perfect_pred, keep_pairs=keep_pairs, alpha=0,
+                              fit_intercept=False, rank_data=False, normalize=False,
+                              method=reg_type)
+            coefs = regr(ds)
+            assert_almost_equal(coefs.samples, 1.)
 
     # make a less perfect predictor
     bad_pred = np.ones((6, 1))
     predictors = np.hstack((perfect_pred, bad_pred))
 
     # check it works with combination of parameters
-    for fit_intercept, rank_data, normalize in zip([True, False], [True, False], [True, False]):
-        regr = LassoRegression(predictors, alpha=1,
+    for fit_intercept, rank_data, normalize, reg_type in \
+            zip([True, False], [True, False], [True, False], reg_types):
+        regr = Regression(predictors, alpha=1,
                                fit_intercept=fit_intercept, rank_data=rank_data,
-                               normalize=normalize)
+                               normalize=normalize, method=reg_type)
         coefs = regr(ds)
         # check we get all the coefficients we need
         wanted_samples = 3 if fit_intercept else 2
