@@ -168,7 +168,7 @@ def test_PDistTargetSimilaritySearchlight():
     assert_true(np.all(0 <= sl_both.samples[1]))
 
 
-def test_LassoRegression():
+def test_Regression():
     # a very correlated dataset
     corrdata = np.array([[1, 2], [10, 20], [-1, -2], [-10, -20]])
     # a perfect predictor
