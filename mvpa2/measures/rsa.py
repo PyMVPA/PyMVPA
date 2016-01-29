@@ -23,6 +23,7 @@ if externals.exists('scipy', raise_=True):
     from scipy.stats import rankdata, pearsonr
 
 from sklearn.linear_model import Lasso
+from sklearn.preprocessing import scale
 
 
 class PDist(Measure):
@@ -265,6 +266,10 @@ class LassoRegression(Measure):
     rank_data = Parameter(True, constraints='bool', doc='whether to rank the neural dsm and the '
                                                         'predictor dsms before running the regression model')
 
+    normalize = Parameter(True, constraints='bool', doc='if True the predictors and neural dsm will be'
+                                                        'normalized (z-scored) prior to the regression (and after '
+                                                        'the data ranking, if rank_data=True)')
+
 
     def __init__(self, predictors, keep_pairs=None, **kwargs):
         """
@@ -305,6 +310,10 @@ class LassoRegression(Measure):
             predictors = np.apply_along_axis(rankdata, 0, self.predictors)
         else:
             predictors = self.predictors
+
+        if self.params.normalize:
+            predictors = scale(predictors, axis=0)
+            dsm_samples = scale(dsm_samples, axis=0)
 
         # keep only the item we want
         if self.keep_pairs is not None:

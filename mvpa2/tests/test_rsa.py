@@ -182,7 +182,7 @@ def test_LassoRegression():
     # now make it right
     perfect_pred = np.atleast_2d(perfect_pred).T
     regr = LassoRegression(perfect_pred, alpha=0, fit_intercept=False,
-                           rank_data=False)
+                           rank_data=False, normalize=False)
     coefs = regr(ds)
     assert_almost_equal(coefs.samples, 1.)
 
@@ -190,7 +190,7 @@ def test_LassoRegression():
     keep_pairss = [range(3), [1], np.arange(3)]
     for keep_pairs in keep_pairss:
         regr = LassoRegression(perfect_pred, keep_pairs=keep_pairs, alpha=0,
-                            fit_intercept=False, rank_data=False)
+                            fit_intercept=False, rank_data=False, normalize=False)
         coefs = regr(ds)
         assert_almost_equal(coefs.samples, 1.)
 
@@ -199,9 +199,10 @@ def test_LassoRegression():
     predictors = np.hstack((perfect_pred, bad_pred))
 
     # check it works with combination of parameters
-    for fit_intercept, rank_data in zip([True, False], [True, False]):
+    for fit_intercept, rank_data, normalize in zip([True, False], [True, False], [True, False]):
         regr = LassoRegression(predictors, alpha=1,
-                               fit_intercept=fit_intercept, rank_data=rank_data)
+                               fit_intercept=fit_intercept, rank_data=rank_data,
+                               normalize=normalize)
         coefs = regr(ds)
         # check we get all the coefficients we need
         wanted_samples = 3 if fit_intercept else 2
