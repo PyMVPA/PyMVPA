@@ -269,7 +269,7 @@ class Regression(Measure):
     rank_data = Parameter(True, constraints='bool', doc='whether to rank the neural dsm and the '
                                                         'predictor dsms before running the regression model')
 
-    normalize = Parameter(True, constraints='bool', doc='if True the predictors and neural dsm will be'
+    normalize = Parameter(False, constraints='bool', doc='if True the predictors and neural dsm will be'
                                                         'normalized (z-scored) prior to the regression (and after '
                                                         'the data ranking, if rank_data=True)')
 
