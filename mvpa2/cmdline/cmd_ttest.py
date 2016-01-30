@@ -61,6 +61,10 @@ def setup_parser(parser):
                         belong to.  E.g. if values are accuracies, it would be the
                         'greater', if errors -- the 'less'""")
 
+    parser.add_argument('--isample',
+                        default=0, type=int, help="""In case of multi sample dataset,
+                        which sample to extract to run the ttest on""")
+
 def guess_backend(fn):
     if fn.endswith('.gz'):
         fn = fn.strip('.gz')
@@ -85,7 +89,7 @@ def run(args):
         data = np.asarray([ni.get_data() for ni in nis])
     elif filetype_in == 'hdf5':
         dss = [h5load(f) for f in args.data]
-        data = np.asarray([d.samples for d in dss])
+        data = np.asarray([d.samples[args.isample] for d in dss])
 
     if args.mask:
         filetype_mask = guess_backend(args.mask)
