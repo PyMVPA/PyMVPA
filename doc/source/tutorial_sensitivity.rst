@@ -448,7 +448,8 @@ features will be retained that show some signal on their own. If that
 turns out to be a problem for a particular analysis, PyMVPA offers a
 number of multivariate alternatives for features selection. There is an
 implementation of :term:`recursive feature selection`
-(:class:`~mvpa2.featsel.rfe.RFE`), and also all classifier sensitivities
+(:class:`~mvpa2.featsel.rfe.RFE`) and a helper to simplify its invocation for a
+typical use-case (:class:`~mvpa.featself.rfe.SplitRFE`).  Also all classifier sensitivities
 can be used to select features. For classifiers where sensitivities cannot
 easily be extracted PyMVPA provides a noise perturbation measure
 (:class:`~mvpa2.measures.noiseperturbation.NoisePerturbationSensitivity`;
