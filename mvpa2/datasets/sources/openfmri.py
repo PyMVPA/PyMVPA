@@ -225,7 +225,24 @@ class OpenFMRIDataset(object):
         else:
             flavor = '_' + flavor
         fname = 'bold%s.nii.gz' % flavor
-        return self._load_bold_task_run_data(subj, task, run, [fname], nb.load)
+        img = self._load_bold_task_run_data(subj, task, run, [fname], nb.load)
+        zooms = img.header.get_zooms()
+        if len(zooms) > 3:
+            tr = zooms[3]
+            if tr == 1.0:
+                # Many "original" OpenfMRI datasets have a bug of having degenerate
+                # TR=1.0, so let's check if it corresponds to the scan_key
+                # TODO: there is no lazy evaluation, so would reread file over and
+                # over again.  At least should be cheap
+                props = self.get_scan_properties()
+                prop_tr = float(props.get('TR', 1.0))
+                if prop_tr != tr:
+                    new_zooms = zooms[:3] + (prop_tr,) + zooms[4:]
+                    warning("Dataset file has time dimension set to 1.0 whenever "
+                            "scan_key.txt states it to be %.2f.  Setting zooms "
+                            "to %s" % (prop_tr, new_zooms))
+                    img.header.set_zooms(new_zooms)
+        return img
 
     def get_bold_run_motion_estimates(self, subj, task, run,
                                       fname='bold_moest.txt'):
@@ -534,7 +551,8 @@ class OpenFMRIDataset(object):
             ev['onset_idx'] = i
         return events
 
-    def get_model_bold_dataset(self, model_id, subj_id, preproc_img=None,
+    def get_model_bold_dataset(self, model_id, subj_id, run_ids=None,
+                               preproc_img=None,
                                preproc_ds=None, modelfx=None, stack=True,
                                flavor=None, mask=None, add_fa=None,
                                add_sa=None, **kwargs):
@@ -548,6 +566,8 @@ class OpenFMRIDataset(object):
           Integer, or string ID of the subject whose data shall be considered.
           Alternatively, a list of IDs can be given and data from all matching
           subjects will be loaded at once.
+        run_ids : list, optional
+          Run ids to be loaded.  If None, all runs get loaded
         preproc_img : callable or None
           See get_bold_run_dataset() documentation
         preproc_ds : callable or None
@@ -597,7 +617,10 @@ class OpenFMRIDataset(object):
             # what runs exists: that means we have to load the model info
             # repeatedly
             for task in tasks:
-                for i, run in enumerate(self.get_bold_run_ids(sub, task)):
+                run_ids_ = run_ids \
+                    if run_ids is not None \
+                    else self.get_bold_run_ids(sub, task)
+                for i, run in enumerate(run_ids_):
                     events = self.get_bold_run_model(model_id, sub, run)
                     # at this point our events should only contain those
                     # matching the current task. If not, this model violates
