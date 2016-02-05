@@ -187,7 +187,7 @@ def plot_err_line_missing(data, x=None, errtype='ste', curves=None,
         for c in curves:
             xc, yc = c
             # scales line array to same range as datapoints
-            if not linestyle is None:
+            if linestyle is not None:
                 lines.append(pl.plot(xc, yc, linestyle))
             else:
                 lines.append(pl.plot(xc, yc))
@@ -256,7 +256,7 @@ def plot_samples_distance(dataset, sortbyattr=None):
 
 def plot_decision_boundary_2d(dataset, clf=None,
                               targets=None, regions=None, maps=None,
-                              maps_res=50, vals=[-1, 0, 1],
+                              maps_res=50, vals=None,
                               data_callback=None):
     """Plot a scatter of a classifier's decision boundary and data points
 
@@ -292,6 +292,8 @@ def plot_decision_boundary_2d(dataset, clf=None,
       I.e. this can be a function to normalize them, or cache them
       before they are classified.
     """
+    if vals is None:
+        vals = [-1, 0, 1]
 
     if False:
         ## from mvpa2.misc.data_generators import *
@@ -566,8 +568,8 @@ def inverse_cmap(cmap_name):
         cmap_data = eval('_cm._%s_data' % cmap_name)
     except:
         raise ValueError, "Cannot obtain data for the colormap %s" % cmap_name
-    new_data = dict( [(k, [(v[i][0], v[-(i+1)][1], v[-(i+1)][2])
-                           for i in xrange(len(v))])
+    new_data = dict( [(k, [(vi[0], v[-(i+1)][1], v[-(i+1)][2])
+                           for i, vi in enumerate(v)])
                       for k,v in cmap_data.iteritems()] )
     return mpl.colors.LinearSegmentedColormap('%s_rev' % cmap_name,
                                               new_data, _cm.LUTSIZE)
@@ -681,7 +683,7 @@ def timeseries_boxplot(median, mean=None, std=None, n=None, min=None, max=None,
         pl.fill_between(x, mean-err, mean+err, color='0.1',alpha=.5,  lw=0,
                         zorder=4, **kwargs)
     pl.plot(x, median, color='0.0', zorder=5, **kwargs)
-    if not segment_sizes is None:
+    if segment_sizes is not None:
         for i, run in enumerate(segment_sizes[:-1]):
             pl.axvline(np.sum(segment_sizes[:i+1]), color='0.2', linestyle='--',
                        **kwargs)
@@ -705,5 +707,5 @@ def concat_ts_boxplot_stats(run_stats):
     stats = {}
     for stat in ('mean', 'median', 'std', 'p25', 'p75', 'n', 'min', 'max'):
         stats[stat] = np.concatenate([r[0][stat] for r in run_stats])
-    outlierd = [r[1].T if not r[1] is None else None for r in run_stats]
+    outlierd = [r[1].T if r[1] is not None else None for r in run_stats]
     return stats, outlierd

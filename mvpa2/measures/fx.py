@@ -41,7 +41,9 @@ class BinaryFxFeaturewiseMeasure(FeaturewiseMeasure):
         self.uni = uni
         self.numeric = numeric
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(BinaryFxFeaturewiseMeasure, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['fx'])
@@ -81,9 +83,11 @@ if externals.exists('statsmodels'):
 
     # TODO move under .support somewhere and submit a PR with fix to statsmodels
     def mutualinfo_kde(x, y):
+        """A lean adapter for statsmodels mutualinfo_kde which retuns 0 for nan results
+        """
         res = mv_measures.mutualinfo_kde(x, y)
         if np.isnan(res):
-            return 0 # could get out of bounds
+            return 0  # could get out of bounds
         return res
 
     def targets_mutualinfo_kde(attr='targets'):

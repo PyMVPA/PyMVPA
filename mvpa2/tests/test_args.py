@@ -21,7 +21,7 @@ class ArgsHelpersTest(unittest.TestCase):
         kwargs = {'a':1, 'slave_a':3, 'slave_z':4, 'slave_slave_z':5, 'c':3}
 
         res = split_kwargs(kwargs, ['slave_'])
-        self.assertTrue(res.has_key('slave_') and res.has_key(''))
+        self.assertTrue('slave_' in res and '' in res)
         self.assertTrue(res['slave_'] == {'a':3, 'z':4, 'slave_z':5})
         self.assertTrue(res[''] == {'a':1, 'c':3})
 

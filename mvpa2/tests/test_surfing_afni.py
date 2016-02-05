@@ -436,7 +436,7 @@ class SurfTests(unittest.TestCase):
         dsets = []
         for v, i in zip(values, indices):
             dset = Dataset(v)
-            if not i is None:
+            if i is not None:
                 dset.fa['node_indices'] = i
             dsets.append(dset)
 

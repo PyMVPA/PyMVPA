@@ -392,7 +392,7 @@ def parser_add_optgroup_from_def(parser, defn, exclusive=False, prefix=None):
         else:
             # take the literal names
             optnames = namespec
-        if not prefix is None:
+        if prefix is not None:
             # overwrite all option names with a common prefix
             optnames = ['%s%s' % (prefix, on.lstrip('-')) for on in optnames]
         if param is None and len(opt) > 1 and not isinstance(opt[1], dict):
@@ -404,7 +404,7 @@ def parser_add_optgroup_from_def(parser, defn, exclusive=False, prefix=None):
         else:
             # nothing to add
             add_kwargs = {}
-        if not param is None:
+        if param is not None:
             param2arg(rgrp, param, arg_names=optnames, **add_kwargs)
         else:
             rgrp.add_argument(*optnames, **add_kwargs)
@@ -413,7 +413,7 @@ def parser_add_optgroup_from_def(parser, defn, exclusive=False, prefix=None):
 def process_common_dsattr_opts(ds, args):
     """Goes through an argument namespace and processes attribute options"""
     # legacy support
-    if not args.add_sa_attr is None:
+    if args.add_sa_attr is not None:
         from mvpa2.misc.io.base import SampleAttributes
         smpl_attrs = SampleAttributes(args.add_sa_attr)
         for a in ('targets', 'chunks'):
@@ -430,7 +430,7 @@ def process_common_dsattr_opts(ds, args):
             ('--add-fa-npy', args.add_fa_npy, ds.fa, _load_from_npy),
         )
     for varid, srcvar, dst_collection, loader in attr_cfgs:
-        if not srcvar is None:
+        if srcvar is not None:
             for spec in srcvar:
                 attr_name = spec[0]
                 if not len(spec) > 1:
@@ -535,7 +535,7 @@ def get_crossvalidation_instance(learner, partitioner, errorfx,
                                  prob_tail='left'):
     from mvpa2.base.node import ChainNode
     from mvpa2.measures.base import CrossValidation
-    if not balance_training is None:
+    if balance_training is not None:
         # balance training data
         try:
             amount = int(balance_training)
@@ -562,7 +562,7 @@ def get_crossvalidation_instance(learner, partitioner, errorfx,
         postproc = mean_sample()
     else:
         postproc = None
-    if not balancer is None:
+    if balancer is not None:
         # enable balancing step for each partitioning step
         gennode.append(balancer)
     if permutations > 0:

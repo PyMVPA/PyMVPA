@@ -248,7 +248,7 @@ Name of the project that contains the examples. This name is used in the
             toparse.append(t)
 
     # filter parse list
-    if not opts.excluded is None:
+    if opts.excluded is not None:
         toparse = [t for t in toparse if not t in opts.excluded]
 
     toparse_list = toparse

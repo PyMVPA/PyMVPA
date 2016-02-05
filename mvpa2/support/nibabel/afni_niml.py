@@ -120,7 +120,7 @@ def _mixedtypes_datastring2rawniml(s, niml):
         else:
             tp = types.code2numpy_type(tps[col])
             niform = niml.get('ni_form', None)
-            if not niform is None:
+            if niform is not None:
                 raise ValueError('Not supported: have ni_form with mixed types')
 
             d = np.zeros((nrows,), dtype=tp)  # allocate one-dimensional array
@@ -377,8 +377,12 @@ def _data2string(data, form):
         raise TypeError("Unknown type %r" % type(data))
 
 
-def _header2string(p, keyfirst=['dset_type', 'self_idcode', 'filename', 'data_type'], keylast=['ni_form']):
+def _header2string(p, keyfirst=None, keylast=None):
     '''Converts a header element to a string'''
+    if keyfirst is None:
+        keyfirst = ['dset_type', 'self_idcode', 'filename', 'data_type']
+    if keylast is None:
+        keylast = ['ni_form']
     otherkeys = list(set(p.keys()) - (set(keyfirst) | set(keylast)))
 
     added = set()
@@ -420,7 +424,7 @@ def read(fn, itemifsingletonlist=True, postfunction=None):
         s = f.read()
 
     r = string2rawniml(s)
-    if not postfunction is None:
+    if postfunction is not None:
         r = postfunction(r)
 
     if itemifsingletonlist and type(r) is list and len(r) == 1:
@@ -473,7 +477,7 @@ def string2rawniml(s, i=None):
     '''
 
     # return new starting position?
-    return_pos = not i is None
+    return_pos = i is not None
     if not return_pos:
         i = 0
 
@@ -705,7 +709,7 @@ def _binary_data_bytecount(niml):
 
 
 def write(fnout, niml, form='binary', prefunction=None):
-    if not prefunction is None:
+    if prefunction is not None:
         niml = prefunction(niml)
 
     s = rawniml2string(niml, form=form)
