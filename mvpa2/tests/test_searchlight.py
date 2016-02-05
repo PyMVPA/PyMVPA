@@ -763,7 +763,6 @@ class SearchlightTests(unittest.TestCase):
             for f in glob.glob(tfile + '*'):
                 os.unlink(f)
 
-<<<<<<< HEAD
     def test_adhoc_searchlight_pass_attr(test):
         ds1 = datasets['3dsmall'].copy(deep=True)
         # GNB searchlight with raw predictions
@@ -776,7 +775,7 @@ class SearchlightTests(unittest.TestCase):
         res = gnb_sl(ds1)
         for k in ds1.sa.keys():
             assert_in(k, res.sa.keys())
-=======
+
     def test_cached_qe_gnbsearchlight(self):
         ds1 = datasets['3dsmall'].copy(deep=True)
         qe = IndexQueryEngine(myspace=Sphere(2))
@@ -806,7 +805,6 @@ class SearchlightTests(unittest.TestCase):
         gnb_sl_ = sphere_gnbsearchlight(GNB(), None, splitter=splitter)
         res_gnb_sl_ = gnb_sl_(ds)
         assert_datasets_equal(res_gnb_sl, res_gnb_sl_)
->>>>>>> master
 
 
 def suite():  # pragma: no cover
