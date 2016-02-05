@@ -196,7 +196,7 @@ class XMLBasedAtlas(BaseAtlas):
 
     @property
     def version(self):
-        if not self.__atlas is None \
+        if self.__atlas is not None \
                and ("version" in self.__atlas.attrib.keys()):
             return self.__atlas.get("version")
         else:
@@ -213,7 +213,7 @@ class XMLBasedAtlas(BaseAtlas):
         """
         Lazy way to provide access to the definitions in the atlas
         """
-        if not self.__atlas is None:
+        if self.__atlas is not None:
             return getattr(self.__atlas, attr)
         else:
             raise XMLAtlasException(
@@ -293,7 +293,7 @@ class XMLBasedAtlas(BaseAtlas):
 
             levels = [ i for i in xrange(start, stop, step) ]
 
-        elif isinstance(levels, list) or isinstance(levels, tuple):
+        elif isinstance(levels, (list, tuple)):
             # levels given as list
             levels = list(levels)
 
@@ -352,7 +352,7 @@ class XMLBasedAtlas(BaseAtlas):
 
         elif len(index) in [1, 2]:
             coord = index[0]
-            if isinstance(coord, list) or isinstance(coord, tuple):
+            if isinstance(coord, (list, tuple)):
                 if len(coord) != 3:
                     raise TypeError("Given coordinates must be in 3D")
             else:
@@ -449,12 +449,12 @@ class Label(object):
         """Create label from an XML node
         """
         kwargs = {}
-        if Elabel.attrib.has_key('x'):
+        if 'x' in Elabel.attrib:
             kwargs['coord'] = ( Elabel.attrib.get('x'),
                                 Elabel.attrib.get('y'),
                                 Elabel.attrib.get('z') )
         for l in ('count', 'abbr', 'index'):
-            if Elabel.attrib.has_key(l):
+            if l in Elabel.attrib:
                 kwargs[l] = Elabel.attrib.get(l)
         return Label(Elabel.text.strip(), **kwargs)
 
@@ -488,14 +488,14 @@ class Level(object):
         """Simple factory of levels
         """
         if level_type is None:
-            if not Elevel.attrib.has_key("type"):
+            if not 'type' in Elevel.attrib:
                 raise XMLAtlasException("Level must have type specified. Level: " + `Elevel`)
             level_type = Elevel.get("type")
 
         levelTypes = { 'label':     LabelsLevel,
                        'reference': ReferencesLevel }
 
-        if levelTypes.has_key(level_type):
+        if level_type in levelTypes:
             return levelTypes[level_type].from_xml(Elevel)
         else:
             raise XMLAtlasException("Unknown level type " + level_type)
@@ -508,7 +508,9 @@ class LabelsLevel(Level):
 
 	XXX extend
     """
-    def __init__ (self, description, index=None, labels=[]):
+    def __init__ (self, description, index=None, labels=None):
+        if labels is None:
+            labels = []
         Level.__init__(self, description)
         self.__index = index
         self.__labels = labels
@@ -520,12 +522,14 @@ class LabelsLevel(Level):
 
     @staticmethod
     ##REF: Name was automagically refactored
-    def from_xml(Elevel, levelIndex=[0]):
+    def from_xml(Elevel, levelIndex=None):
         # XXX this is just for label type of level. For distance we need to ...
         # we need to assure the right indexing
 
+        if levelIndex is None:
+                levelIndex = [0]
         index = 0
-        if Elevel.attrib.has_key("index"):
+        if 'index' in Elevel.attrib:
             index = int(Elevel.get("index"))
 
         maxindex = max([int(i.get('index')) \
@@ -578,7 +582,9 @@ class LabelsLevel(Level):
 class ReferencesLevel(Level):
     """Level which carries reference points
     """
-    def __init__ (self, description, indexes=[]):
+    def __init__ (self, description, indexes=None):
+        if indexes is None:
+            indexes = []
         Level.__init__(self, description)
         self.__indexes = indexes
         self._type = "References"
@@ -637,7 +643,7 @@ class PyMVPAAtlas(XMLBasedAtlas):
         # XXX: should just take one from the qoffset... now that one is
         #       defined... this origin might be misleading actually
         self._origin = np.array( (0, 0, 0) )
-        if imagefile.attrib.has_key('offset'):
+        if 'offset' in imagefile.attrib:
             self._origin = np.array( [int(x) for x in
                                      imagefile.get('offset').split(',')] )
 
@@ -747,7 +753,7 @@ class LabelsAtlas(PyMVPAAtlas):
 
         resultLevels = []
         for level in levels:
-            if self._levels.has_key(level):
+            if level in self._levels:
                 level_ = self._levels[ level ]
             else:
                 raise IndexError(
@@ -816,7 +822,7 @@ class ReferencesAtlas(PyMVPAAtlas):
         """
         Set the level which will be queried
         """
-        if self._levels.has_key(level):
+        if level in self._levels:
             self.__referenceLevel = self._levels[level]
         else:
             raise IndexError, \

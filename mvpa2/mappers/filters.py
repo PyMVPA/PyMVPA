@@ -120,7 +120,7 @@ class FFTResampleMapper(Mapper):
         num = self.__num
 
         pos = None
-        if not self.__position_attr is None:
+        if self.__position_attr is not None:
             # we know something about sample position
             pos = ds.sa[self.__position_attr].value
             rsamples, pos = resample(ds.samples, self.__num, t=pos,
@@ -162,7 +162,7 @@ class FFTResampleMapper(Mapper):
             raise ValueError("Unkown attribute handling strategy '%s'."
                              % self.__attr_strategy)
 
-        if not pos is None:
+        if pos is not None:
             # we got the new sample positions and can store them
             mds.sa[self.__position_attr] = pos
         return mds

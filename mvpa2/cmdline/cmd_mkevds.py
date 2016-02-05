@@ -133,10 +133,10 @@ def run(args):
     # build list of events
     events = []
     timebased_events = False
-    if not args.event_attrs is None:
+    if args.event_attrs is not None:
         def_attrs = dict([(k, ds.sa[k].value) for k in args.event_attrs])
         events = find_events(**def_attrs)
-    elif not args.csv_events is None:
+    elif args.csv_events is not None:
         if args.csv_events == '-':
             csv = sys.stdin.read()
             import cStringIO
@@ -152,7 +152,7 @@ def run(args):
         events = []
         for ev in xrange(nevents):
             events.append(dict([(k, v[ev]) for k, v in csvt.iteritems()]))
-    elif not args.onsets is None:
+    elif args.onsets is not None:
         if not len(args.onsets):
             args.onsets = [i for i in sys.stdin]
         # time or sample-based?
@@ -161,7 +161,7 @@ def run(args):
         else:
             oconv = float
         events = [{'onset': oconv(o)} for o in args.onsets]
-    elif not args.fsl_ev3 is None:
+    elif args.fsl_ev3 is not None:
         timebased_events = True
         from mvpa2.misc.fsl import FslEV3
         events = []

@@ -112,7 +112,7 @@ def main():
     verbose(3, "Running searchlight on loaded data")
     results = sl(data)
 
-    if not ofile is None:
+    if ofile is not None:
         # map the result vector back into a nifti image
         rimg = map2nifti(data, results)
 

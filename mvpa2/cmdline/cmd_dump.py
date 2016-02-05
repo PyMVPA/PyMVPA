@@ -159,7 +159,7 @@ def run(args):
                         "this data type")
                 # who knows what it is
                 out.write(repr(dumpy))
-        if not out is sys.stdout:
+        if out is not sys.stdout:
             out.close()
     elif args.format == 'hdf5':
         from mvpa2.base.hdf5 import h5save

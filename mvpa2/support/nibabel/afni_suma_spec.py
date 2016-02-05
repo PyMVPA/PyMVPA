@@ -230,7 +230,7 @@ def hemi_pairs_add_views(spec_both, state, ext, directory=None, overwrite=False)
             surfnamelabels = ['SurfaceName', 'FreeSurferSurface']
             for surfnamelabel in surfnamelabels:
                 surfname = surfdef.get(surfnamelabel)
-                if not surfname is None:
+                if surfname is not None:
                     break
             #surfname = utils.foldr(surfdef.get, None, surfnamelabels)
 
@@ -386,7 +386,7 @@ def read(fn):
                     states.append(v)
                 elif k == 'Group':
                     groups.append(v)
-                elif not current_surface is None:
+                elif current_surface is not None:
                     current_surface[k] = v
             elif 'NewSurface' in line:
                 #current_surface = collections.OrderedDict()

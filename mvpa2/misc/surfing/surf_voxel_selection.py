@@ -220,11 +220,11 @@ class VoxelSelector(object):
         outside_node_margin = self._outside_node_margin
 
         def node_in_vol(nd):
-            return nd in n2v and not n2v[nd] is None
+            return nd in n2v and n2v[nd] is not None
 
         if not node_in_vol(src) and not outside_node_margin is True:
             skip = True
-            if not outside_node_margin is None:
+            if outside_node_margin is not None:
                 if math.isinf(outside_node_margin):
                     if __debug__:
                         debug("SVS", "")
@@ -244,7 +244,7 @@ class VoxelSelector(object):
                         debug("SVS", "node %s is outside - considering %d distances"
                                     " to other nodes that may be inside." % ((src,), len(node_distances)))
                     for nd, d in node_distances.iteritems():
-                        if nd in n2v and not n2v[nd] is None and d <= outside_node_margin:
+                        if nd in n2v and n2v[nd] is not None and d <= outside_node_margin:
                             if __debug__:
                                 debug("SVS", "node #%s is distance %s <= %s from #%d "
                                       " and kept" %
@@ -358,7 +358,7 @@ class VoxelSelector(object):
         for nd, d in n2d.iteritems():
             if nd in n2v:
                 vps = n2v[nd] # all voxels associated with this node
-                if not vps is None:
+                if vps is not None:
                     for vx, pos in vps.items():
                         v2dps[vx].add((d, pos)) # associate voxel with tuple of distance and relative position
 
@@ -700,7 +700,7 @@ def _reduce_mapper(node2volume_attributes, attribute_mapper,
 
         if _debug() and eta_step and (i % eta_step == 0 or i == n - 1):
             msg = bar(float(i + 1) / n, progresspat % (src, trg))
-            if not proc_id is None:
+            if proc_id is not None:
                 msg += ' (#%s)' % proc_id
             debug('SVS', msg, cr=True)
 

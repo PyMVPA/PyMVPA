@@ -201,7 +201,7 @@ class _SVM(Classifier):
             #self.params['C'].default = 1.0
 
         # Some postchecks
-        if self.params.has_key('weight') and self.params.has_key('weight_label'):
+        if 'weight' in self.params and 'weight_label' in self.params:
             if not len(self.params.weight_label) == len(self.params.weight):
                 raise ValueError, "Lenghts of 'weight' and 'weight_label' lists " \
                       "must be equal."
@@ -245,7 +245,7 @@ class _SVM(Classifier):
     def _get_cvec(self, data):
         """Estimate default and return scaled by it negative user's C values
         """
-        if not self.params.has_key('C'):#svm_type in [_svm.svmc.C_SVC]:
+        if not 'C' in self.params:#svm_type in [_svm.svmc.C_SVC]:
             raise RuntimeError, \
                   "Requested estimation of default C whenever C was not set"
 

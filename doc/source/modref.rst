@@ -276,7 +276,6 @@ Basic Plotting Utilities
    misc.fsl.melodic
    misc.io
    misc.io.base
-   misc.io.hamster
    misc.io.meg
    support.nibabel
    support.nibabel.afni_niml_annot

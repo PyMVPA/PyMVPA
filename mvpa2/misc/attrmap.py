@@ -75,7 +75,7 @@ class AttributeMap(object):
         self.mapnumeric = mapnumeric
         self.collisions_resolution = collisions_resolution
 
-        if not map is None:
+        if map is not None:
             if not isinstance(map, dict):
                 raise ValueError("Custom map need to be a dict.")
             self._nmap = map
@@ -101,7 +101,7 @@ class AttributeMap(object):
             return len(self._nmap)
 
     def __bool__(self):
-        return not self._nmap is None
+        return self._nmap is not None
 
     def clear(self):
         """Remove previously established mappings."""

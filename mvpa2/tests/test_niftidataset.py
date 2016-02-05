@@ -19,6 +19,7 @@ if not externals.exists('nibabel'):
 from mvpa2.base.dataset import vstack
 from mvpa2 import pymvpa_dataroot
 from mvpa2.datasets import Dataset
+from mvpa2.datasets.base import preprocessed_dataset
 from mvpa2.datasets.mri import fmri_dataset, _load_anyimg, map2nifti, \
     strip_nibabel
 from mvpa2.datasets.eventrelated import eventrelated_dataset
@@ -80,6 +81,15 @@ def test_fmridataset():
                       mask=maskimg,
                       sprefix='subj1',
                       add_fa={'myintmask': maskimg})
+    ds_alt = preprocessed_dataset(
+        pathjoin(pymvpa_dataroot, 'bold.nii.gz'),
+        nibabel.load,
+        fmri_dataset,
+        mask=maskimg,
+        sprefix='subj1',
+        add_fa={'myintmask': maskimg})
+    assert_datasets_almost_equal(ds, ds_alt)
+
     # content
     assert_equal(len(ds), 1452)
     assert_true(ds.nfeatures, 530)
@@ -157,6 +167,7 @@ def test_multiple_calls():
         samples=pathjoin(pymvpa_dataroot, 'example4d.nii.gz'),
         targets=1, sprefix='abc')
     assert_array_equal(data.a.abc_eldim, data2.a.abc_eldim)
+    assert_datasets_almost_equal(data, data2)
 
 
 def test_er_nifti_dataset():
@@ -169,6 +180,17 @@ def test_er_nifti_dataset():
     ds_orig = fmri_dataset(tssrc)
     # segment into events
     ds = eventrelated_dataset(ds_orig, evs, time_attr='time_coords')
+
+    # or like this
+    def toevents(ds):
+        return eventrelated_dataset(ds, evs, time_attr='time_coords')
+    import nibabel
+    ds_alt = preprocessed_dataset(
+        tssrc,
+        nibabel.load,
+        fmri_dataset,
+        preproc_ds=toevents)
+    assert_datasets_almost_equal(ds, ds_alt)
 
     # we ask for boxcars of 9s length, and the tr in the file header says 2.5s
     # hence we should get round(9.0/2.4) * np.prod((1,20,40) == 3200 features

@@ -271,7 +271,7 @@ data samples.
 
 >>> targets = events2sample_attr(events, fds.sa.time_coords,
 ...                              noinfolabel='rest', onset_shift=0.0)
->>> print np.unique([attr.targets[i] == targets[i] for i in range(len(targets))])
+>>> print np.unique([attr.targets[i] == t for i, t in enumerate(targets)])
 [ True]
 >>> print np.unique(attr.targets)
 ['bottle' 'cat' 'chair' 'face' 'house' 'rest' 'scissors' 'scrambledpix'
