@@ -101,7 +101,7 @@ class Splitter(Node):
             cfgs = splattr.unique
         if __debug__:
             debug('SPL', 'Determined %i split specifications' % len(cfgs))
-        if not ignore is None:
+        if ignore is not None:
             # remove to be ignored bits
             cfgs = [c for c in cfgs if not c in ignore]
             if __debug__:
@@ -117,7 +117,7 @@ class Splitter(Node):
 
         # split the data
         for isplit, split in enumerate(cfgs):
-            if not count is None and isplit >= count:
+            if count is not None and isplit >= count:
                 # number of max splits is reached
                 if __debug__:
                     debug('SPL',
@@ -157,7 +157,7 @@ class Splitter(Node):
             else:
                 lastsplit = (isplit == count - 1)
 
-            if not split_ds.a.has_key('lastsplit'):
+            if not 'lastsplit' in split_ds.a:
                 # if not yet known -- add one
                 split_ds.a['lastsplit'] = lastsplit
             else:

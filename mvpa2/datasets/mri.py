@@ -138,7 +138,7 @@ def map2nifti(dataset, data=None, imghdr=None, imgtype=None):
             imghdr = dataset.a.imghdr
         elif __debug__:
             debug('DS_NIFTI', 'No image header found. Using defaults.')
-    if not imghdr is None:
+    if imghdr is not None:
         if 'hdrtype' in imghdr:
             imghdr = _dict2hdr(imghdr)
         else:
@@ -162,7 +162,7 @@ def map2nifti(dataset, data=None, imghdr=None, imgtype=None):
 
     # set meaningful range
     try:
-        if not imghdr is None:
+        if imghdr is not None:
             if 'cal_max' in imghdr:
                 imghdr['cal_max'] = dsarray.max()
                 imghdr['cal_min'] = dsarray.min()
@@ -264,9 +264,9 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
 
     # compile the samples attributes
     sa = {}
-    if not targets is None:
+    if targets is not None:
         sa['targets'] = _expand_attribute(targets, imgdata.shape[0], 'targets')
-    if not chunks is None:
+    if chunks is not None:
         sa['chunks'] = _expand_attribute(chunks, imgdata.shape[0], 'chunks')
 
     # create a dataset
@@ -278,7 +278,7 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
     ds = ds.get_mapped(FlattenMapper(shape=imgdata.shape[1:], space=space))
 
     # now apply the mask if any
-    if not mask is None:
+    if mask is not None:
         flatmask = ds.a.mapper.forward1(mask)
         # direct slicing is possible, and it is potentially more efficient,
         # so let's use it
@@ -287,7 +287,7 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
         ds = ds[:, flatmask != 0]
 
     # load and store additional feature attributes
-    if not add_fa is None:
+    if add_fa is not None:
         for fattr in add_fa:
             value = _load_anyimg(add_fa[fattr], ensure=True)[0]
             ds.fa[fattr] = ds.a.mapper.forward1(value)
@@ -391,7 +391,7 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
         # try opening the beast; this might yield none in case of an unsupported
         # argument and is handled accordingly below
         data = _img2data(src)
-        if not data is None:
+        if data is not None:
             imgdata, imghdr, img = data
 
     if imgdata is not None and enforce_dim is not None:

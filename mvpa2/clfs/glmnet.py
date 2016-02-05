@@ -213,8 +213,8 @@ class _GLMNET(Classifier):
         # set the weights to the last step
         weights = r.coef(trained_model, s=last_lambda)
         if self.params.family == 'multinomial':
-            self.__weights = np.hstack([np.array(r['as.matrix'](weights[i]))[1:]
-                                       for i in range(len(weights))])
+            self.__weights = np.hstack([np.array(r['as.matrix'](weight))[1:]
+                                        for weight in weights])
         elif self.params.family == 'gaussian':
             self.__weights = np.array(r['as.matrix'](weights))[1:, 0]
         else:
@@ -392,7 +392,7 @@ class GLMNET_C(_GLMNET):
         See the help in R for further details on the parameters
         """
         # make sure they didn't specify regression
-        if not kwargs.pop('family', None) is None:
+        if kwargs.pop('family', None) is not None:
             warning('You specified the "family" parameter, but we '
                     'force this to be "multinomial".')
 

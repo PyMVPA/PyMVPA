@@ -92,7 +92,7 @@ def test_from_wizard():
     ok_(cds.a.keys() == ['random'])
 
     # there is not necessarily a mapper present
-    ok_(not ds.a.has_key('mapper'))
+    ok_(not 'mapper' in ds.a)
 
     # has to complain about misshaped samples attributes
     assert_raises(ValueError, Dataset.from_wizard, samples, labels + labels)
@@ -258,7 +258,7 @@ def test_basic_datamapping():
     ok_(isinstance(ds.samples, myarray))
 
     # mapper should end up in the dataset
-    ok_(ds.a.has_key('mapper'))
+    ok_('mapper' in ds.a)
 
     # check correct mapping
     ok_(ds.nsamples == 4)
@@ -976,6 +976,9 @@ def test_h5py_io(dsfile):
 
     # reload and check for identity
     ds2 = Dataset.from_hdf5(dsfile)
+
+    assert_datasets_equal(ds, ds2)
+    # Old tests -- better more than less ;)
     assert_array_equal(ds.samples, ds2.samples)
     for attr in ds.sa:
         assert_array_equal(ds.sa[attr].value, ds2.sa[attr].value)
@@ -997,6 +1000,29 @@ def test_h5py_io(dsfile):
         #assert_equal('#'.join(repr(ds.a.mapper).split('#')[:-1]),
         #             '#'.join(repr(ds2.a.mapper).split('#')[:-1]))
         pass
+
+
+@nodebug(['ID_IN_REPR', 'MODULE_IN_REPR'])
+@with_tempfile(suffix='.npz')
+def test_npz_io(dsfile):
+
+    # store random dataset to file
+    ds = datasets['3dlarge'].copy()
+
+    ds.a.pop('mapper')  # can't be saved
+    ds.to_npz(dsfile)
+
+    # reload and check for identity
+    ds2 = Dataset.from_npz(dsfile)
+    assert_datasets_equal(ds, ds2)
+
+    assert_array_equal(ds.samples, ds2.samples)
+
+    # But if we try to save with mapper -- it just gets ignored (warning is
+    # issued)
+    datasets['3dlarge'].to_npz(dsfile)
+    ds2_ = Dataset.from_npz(dsfile)
+    assert_datasets_equal(ds2, ds2_)
 
 
 def test_all_equal():

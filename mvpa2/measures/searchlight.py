@@ -21,7 +21,6 @@ import mvpa2
 from mvpa2.base import externals, warning
 from mvpa2.base.types import is_datasetlike
 from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
-from mvpa2.base.types import is_datasetlike
 from mvpa2.base.progress import ProgressBar
 if externals.exists('h5py'):
     # Is optionally required for passing searchlight
@@ -96,11 +95,13 @@ class BaseSearchlight(Measure):
         self.nproc = nproc
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
         """String representation of a `Measure`
 
         Includes only arguments which differ from default ones
         """
+        if prefixes is None:
+            prefixes = []
         return super(BaseSearchlight, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['queryengine', 'roi_ids', 'nproc']))
@@ -327,7 +328,9 @@ class Searchlight(BaseSearchlight):
         else:
             self.__add_center_fa = False
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(Searchlight, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['datameasure'])

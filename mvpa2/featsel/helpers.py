@@ -351,7 +351,7 @@ class RangeElementSelector(ElementSelector):
         """
         lower, upper = self.__range
         len_seq = len(seq)
-        if not lower is None:
+        if lower is not None:
             if self.__inclusive:
                 selected = seq >= lower
             else:
@@ -359,12 +359,12 @@ class RangeElementSelector(ElementSelector):
         else:
             selected = np.ones( (len_seq), dtype=np.bool )
 
-        if not upper is None:
+        if upper is not None:
             if self.__inclusive:
                 selected_upper = seq <= upper
             else:
                 selected_upper = seq < upper
-            if not lower is None:
+            if lower is not None:
                 if lower < upper:
                     # regular range
                     selected = np.logical_and(selected, selected_upper)

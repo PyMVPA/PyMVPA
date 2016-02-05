@@ -141,11 +141,13 @@ d[types.InstanceType] = _copy_inst
 
 del d
 
-def deepcopy(x, memo=None, _nil=[]):
+def deepcopy(x, memo=None, _nil=None):
     """Deep copy operation on arbitrary Python objects.
 
     See the module's __doc__ string for more info.
     """
+    if _nil is None:
+        _nil = []
 
     if memo is None:
         memo = {}
@@ -238,8 +240,8 @@ def _deepcopy_tuple(x, memo):
         return memo[d]
     except KeyError:
         pass
-    for i in range(len(x)):
-        if x[i] is not y[i]:
+    for i, xi in enumerate(x):
+        if xi is not y[i]:
             y = tuple(y)
             break
     else:
