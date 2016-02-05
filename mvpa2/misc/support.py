@@ -18,6 +18,7 @@ import os
 from os.path import join as pathjoin
 import sys
 
+from itertools import product
 # for SmartVersion
 from distutils.version import Version
 
@@ -325,7 +326,7 @@ def version_to_tuple(v):
     """
     if isinstance(v, basestring):
         v = map(str, v.split('.'))
-    elif isinstance(v, tuple) or isinstance(v, list):
+    elif isinstance(v, (tuple, list)):
         # assure tuple
         pass
     else:
@@ -608,7 +609,7 @@ class Event(dict):
 
         # basic checks
         for k in Event._MUSTHAVE:
-            if not self.has_key(k):
+            if not k in self:
                 raise ValueError, "Event must have '%s' defined." % k
 
 
@@ -652,7 +653,7 @@ class Event(dict):
             offset = onset - (out['onset'] * dt)
             out[offsetattr] = offset
 
-        if out.has_key('duration'):
+        if 'duration' in out:
             # how many timepoint cover the event (from computed onset
             # to the one timepoint just after the end of the event
             out['duration'] = int(np.ceil((onset + out['duration']) / dt) \
@@ -740,12 +741,13 @@ def get_limit_filter(limit, collection):
 
     Parameters
     -----------
-    limit : None or str or dict
-      If ``None`` all elements will be included in the filter. If an single
+    limit : None or str or list or dict
+      If ``None`` all elements will be included in the filter. If a single
       attribute name is given, its unique values will be used to define
-      chunks of data that are marked in the filter as unique integers. Finally,
-      if a dictionary is provided, its keys define attribute names and its
-      values (single value or sequence thereof) attribute value, where all
+      chunks of data that are marked in the filter as unique integers.
+      If a list given, then combination of those attributes is used as a pair.
+      Finally, if a dictionary is provided, its keys define attribute names and
+      its values (single value or sequence thereof) attribute value, where all
       key-value combinations across all given items define a "selection" of
       elements to be included in the filter (OR combination).
     collection : Collection
@@ -757,8 +759,8 @@ def get_limit_filter(limit, collection):
     -------
     array
       This array is either boolean, where a `True` elements represent including
-      in the filter, or the array is numerical, where it unique integer values
-      defines individual chunks of a filter.
+      in the filter, or the array is numerical, where its unique integer values
+      define individual chunks of a filter.
     """
     attr_length = collection.attr_length
 
@@ -773,6 +775,15 @@ def get_limit_filter(limit, collection):
         limit_filter = np.zeros(attr_length, dtype='int')
         for i, uv in enumerate(lattr.unique):
             limit_filter[lattr_data == uv] = i
+    elif isinstance(limit, list):
+        limit = list(set(limit))  # so if someone insane specified the same attr twice
+        limit_filter = np.zeros(attr_length, dtype='int')
+        for i, uvs in enumerate(product(*(collection[x].unique for x in limit))):
+            uv_filter = np.ones(attr_length, dtype=bool)
+            for l, uv in zip(limit, uvs):
+                np.logical_and(uv_filter, collection[l].value==uv,
+                               out=uv_filter)
+            limit_filter[uv_filter] = i
     elif isinstance(limit, dict):
         limit_filter = np.zeros(attr_length, dtype='bool')
         for a in limit:

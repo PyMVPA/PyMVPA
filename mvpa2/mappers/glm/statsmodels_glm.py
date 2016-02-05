@@ -58,5 +58,6 @@ class StatsmodelsGLMMapper(GLMMapper):
                 add_constant=False,
                 model_gen=self.model_gen)
         res = mod(ds)
-        res.sa[self.get_space()] = reg_names
+        if self.result_expr == 'params':
+            res.sa[self.get_space()] = reg_names
         return mod, res

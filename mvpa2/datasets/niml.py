@@ -54,7 +54,7 @@ def _as_vector_if_matrix_with_single_column(x):
 
 
 
-def from_niml(dset, fa_labels=[], sa_labels=[], a_labels=[]):
+def from_niml(dset, fa_labels=None, sa_labels=None, a_labels=None):
     '''Convert a NIML dataset to a Dataset
 
     Parameters
@@ -74,6 +74,12 @@ def from_niml(dset, fa_labels=[], sa_labels=[], a_labels=[]):
     dataset: mvpa2.base.Dataset
         a PyMVPA Dataset
     '''
+    if fa_labels is None:
+        fa_labels = []
+    if sa_labels is None:
+        sa_labels = []
+    if a_labels is None:
+        a_labels = []
 
     # check for singleton element
     if type(dset) is list and len(dset) == 1:
@@ -123,7 +129,7 @@ def from_niml(dset, fa_labels=[], sa_labels=[], a_labels=[]):
             if len(k_split) > 2:
                 infix = k_split[1].lower()
                 collection = infix2collection.get(infix, None)
-                if not collection is None:
+                if collection is not None:
                     short_k = _PYMVPA_SEP.join(k_split[2:])
                     expected_length = infix2length.get(infix, None)
                     if expected_length:
@@ -207,12 +213,12 @@ def to_niml(ds):
 
     node_indices_labels = ('node_indices', 'center_ids', 'ids', 'roi_ids')
     node_indices = _find_node_indices(ds, node_indices_labels)
-    if not node_indices is None:
+    if node_indices is not None:
         dset['node_indices'] = node_indices
 
     sample_labels = ('labels', 'targets')
     labels = _find_sample_labels(ds, sample_labels)
-    if not labels is None:
+    if labels is not None:
         dset['labels'] = labels
 
     attr_labels = ('a', 'fa', 'sa')

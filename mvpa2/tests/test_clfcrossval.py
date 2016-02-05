@@ -14,6 +14,10 @@ from mvpa2.base.node import ChainNode
 from mvpa2.generators.partition import NFoldPartitioner
 from mvpa2.generators.permutation import AttributePermutator
 from mvpa2.measures.base import CrossValidation
+from mvpa2.generators.splitters import Splitter
+from mvpa2.datasets.base import Dataset
+from mvpa2.clfs.base import Classifier
+from mvpa2.base.state import ConditionalAttribute
 
 from mvpa2.testing import *
 from mvpa2.testing.datasets import pure_multivariate_signal, get_mv_pattern
@@ -103,6 +107,55 @@ class CrossValidationTests(unittest.TestCase):
             pass_attr=['attr2bepassed'])
         res = cv(data)
         assert_array_equal(res.sa.attr2bepassed,data.sa.attr2bepassed[data.sa.chunks<=2])
+
+    def test_cv_no_generator(self):
+        ds = Dataset(np.arange(4), sa={'partitions': [1, 1, 2, 2],
+                                       'targets': ['a', 'b', 'c', 'd']})
+
+        class Measure(Classifier):
+
+            def _train(self, ds_):
+                assert_array_equal(ds_.samples, ds.samples[:2])
+                assert_array_equal(ds_.sa.partitions, [1] * len(ds_))
+
+            def _predict(self, ds_):
+                # also called for estimating training error
+                assert(ds_ is not ds)  # we pass a shallow copy
+                assert(len(ds_) < len(ds))
+                assert_equal(len(ds_.sa['partitions'].unique), 1)
+
+                return ['c', 'd']
+
+        measure = Measure()
+        cv = CrossValidation(measure)
+        res = cv(ds)
+        assert_array_equal(res, [[0]])  # we did perfect here ;)
+
+    def test_cv_no_generator_custom_splitter(self):
+        ds = Dataset(np.arange(4), sa={'category': ['to', 'to', 'from', 'from'],
+                                       'targets': ['a', 'b', 'c', 'd']})
+
+        class Measure(Classifier):
+
+            def _train(self, ds_):
+                assert_array_equal(ds_.samples, ds.samples[2:])
+                assert_array_equal(ds_.sa.category, ['from'] * len(ds_))
+
+            def _predict(self, ds_):
+                assert(ds_ is not ds)  # we pass a shallow copy
+                # could be called to predit training or testing data
+                if np.all(ds_.sa.targets != ['c', 'd']):
+                    assert_array_equal(ds_.samples, ds.samples[:2])
+                    assert_array_equal(ds_.sa.category, ['to'] * len(ds_))
+                else:
+                    assert_array_equal(ds_.sa.category, ['from'] * len(ds_))
+
+                return ['c', 'd']
+
+        measure = Measure()
+        cv = CrossValidation(measure, splitter=Splitter('category', ['from', 'to']))
+        res = cv(ds)
+        assert_array_equal(res, [[1]])  # failed perfectly ;-)
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(CrossValidationTests)

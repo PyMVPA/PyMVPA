@@ -299,7 +299,7 @@ class AltConstraints(Constraint):
 
     def short_description(self):
         cs = [c.short_description() for c in self.constraints
-                    if hasattr(c, 'short_description') and not c.short_description() is None]
+                    if hasattr(c, 'short_description') and c.short_description() is not None]
         doc = ' or '.join(cs)
         if len(cs) > 1:
             return '(%s)' % doc
@@ -350,7 +350,7 @@ class Constraints(Constraint):
 
     def short_description(self):
         cs = [c.short_description() for c in self.constraints
-                    if hasattr(c, 'short_description') and not c.short_description() is None]
+                    if hasattr(c, 'short_description') and c.short_description() is not None]
         doc = ' and '.join(cs)
         if len(cs) > 1:
             return '(%s)' % doc

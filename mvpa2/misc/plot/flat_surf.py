@@ -284,7 +284,7 @@ def flat_surface_data2rgba(data, range_='2_98%', threshold=None, color_map=None)
     mn, mx = _range2min_max(range_, data)
     scaled = _scale(data, 0., 1., mn, mx)
     rgba = cmap(scaled)
-    if not threshold is None:
+    if threshold is not None:
         mn, mx = _range2min_max(threshold, data)
         to_remove = np.logical_and(data > mn, data < mx)
         rgba[to_remove, :] = np.nan
@@ -380,7 +380,7 @@ class FlatSurfacePlotter(object):
             self._grid_def = flat_surface2grid_mask(self._surface, \
                                                     self._min_nsteps)
 
-        if self._underlay is None and not self._curvature is None:
+        if self._underlay is None and self._curvature is not None:
             self._set_underlay_from_curvature()
 
 
@@ -406,7 +406,7 @@ class FlatSurfacePlotter(object):
                                                 self._color_map)
         o_rgba[-msk] = np.nan # apply the mask again, to be sure
 
-        if not self._underlay is None:
+        if self._underlay is not None:
             o_msk = -np.isnan(np.sum(o_rgba, 2))
 
             u_rgba = self._underlay

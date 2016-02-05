@@ -107,15 +107,15 @@ def normal_feature_dataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
     data = np.random.standard_normal((perlabel * nlabels, nfeatures))
     if snr != 0:
         data /= np.sqrt(snr)
-    if (means is None) and (not nonbogus_features is None):
+    if means is None and nonbogus_features is not None:
         if len(nonbogus_features) != nlabels:
             raise ValueError(
                 "Provide as many nonbogus features as many labels you have")
         means = np.zeros((len(nonbogus_features), nfeatures))
         # pure multivariate -- single bit per feature
-        for i in xrange(len(nonbogus_features)):
-            means[i, nonbogus_features[i]] = 1.0
-    if not means is None and snr != 0:
+        for i, nbf in enumerate(nonbogus_features):
+            means[i, nbf] = 1.0
+    if means is not None and snr != 0:
         # add mean
         data += np.repeat(np.array(means, ndmin=2), perlabel, axis=0)
     if normalize:
@@ -380,7 +380,7 @@ def autocorrelated_noise(ds, sr, cutoff, lfnl=3.0, bord=10, hfnl=None, add_basel
         nsamples += msample
 
     # HF noise
-    if not hfnl is None:
+    if hfnl is not None:
         noise_amps = msample * (hfnl / 100.)
         nsamples += np.random.standard_normal(nsamples.shape) * noise_amps
 
@@ -423,7 +423,7 @@ def random_affine_transformation(ds, scale_fac=100., shift_fac=10.):
 
 
 def simple_hrf_dataset(
-        events=[1, 20, 25, 50, 60, 90, 92, 140],
+        events=None,
         hrf_gen=lambda t: double_gamma_hrf(t) - single_gamma_hrf(t, 0.8, 1, 0.05),
         fir_length=15,
         nsamples=None,
@@ -437,6 +437,8 @@ def simple_hrf_dataset(
     """
     events: list of Events or ndarray of onsets for simple(r) designs
     """
+    if events is None:
+        events = [1, 20, 25, 50, 60, 90, 92, 140]
     if isinstance(events, np.ndarray) or not isinstance(events[0], dict):
         events = [Event(onset=o) for o in events]
     else:
