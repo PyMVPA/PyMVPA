@@ -22,8 +22,9 @@ if externals.exists('scipy', raise_=True):
     from scipy.spatial.distance import pdist, squareform
     from scipy.stats import rankdata, pearsonr
 
-from sklearn.linear_model import Lasso, Ridge
-from sklearn.preprocessing import scale
+if externals.exists('skl', raise_=True):
+    from sklearn.linear_model import Lasso, Ridge
+    from sklearn.preprocessing import scale
 
 
 class PDist(Measure):
