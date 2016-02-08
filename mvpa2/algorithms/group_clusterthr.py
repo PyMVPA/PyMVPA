@@ -245,7 +245,10 @@ class GroupClusterThreshold(Learner):
         #
         # Step 1: find the per-feature threshold that corresponds to some p
         # in the NULL
-        segwidth = ds.nfeatures / self.params.n_blocks
+        if self.params.n_proc > 1 and self.params.n_blocks == 1:
+            segwidth = ds.nfeatures / self.params.n_proc
+        else:
+            segwidth = ds.nfeatures / self.params.n_blocks
         # speed things up by operating on an array not a dataset
         ds_samples = ds.samples
         if __debug__:
@@ -283,7 +286,7 @@ class GroupClusterThreshold(Learner):
             # same code as above, just in parallel with joblib's Parallel
             thrmap = np.hstack(
                 Parallel(n_jobs=self.params.n_proc,
-                         pre_dispatch=self.params.n_proc,
+                         #pre_dispatch=self.params.n_proc,
                          verbose=verbose_level_parallel)(
                              delayed(get_thresholding_map)
                         (d, self.params.feature_thresh_prob)
@@ -316,7 +319,7 @@ class GroupClusterThreshold(Learner):
             # Parallel execution
             # same code as above, just restructured for joblib's Parallel
             for jobres in Parallel(n_jobs=self.params.n_proc,
-                                   pre_dispatch=self.params.n_proc,
+                                   #pre_dispatch=self.params.n_proc,
                                    verbose=verbose_level_parallel)(
                                        delayed(get_cluster_sizes)
                                   (Dataset(np.mean(ds_samples[sidx],
