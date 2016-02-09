@@ -34,7 +34,7 @@ from mvpa2.cmdline.helpers \
 from mvpa2.datasets.mri import map2nifti, fmri_dataset
 from mvpa2.misc.stats import ttest_1samp
 import nibabel as nib
-import scipy.stats  as stats
+import scipy.stats as stats
 
 parser_args = {
     'formatter_class': argparse.RawDescriptionHelpFormatter,
