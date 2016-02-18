@@ -26,6 +26,7 @@ from scipy.sparse import dok_matrix
 
 from mvpa2.mappers.base import IdentityMapper, _verified_reverse1
 from mvpa2.datasets import Dataset
+from mvpa2.base import externals
 from mvpa2.base.learner import Learner
 from mvpa2.base.param import Parameter
 from mvpa2.base.constraints import \
@@ -459,7 +460,13 @@ def get_thresholding_map(data, p=0.001):
     p_index = int(len(data) * p)
     if p_index < 1:
         raise ValueError("requested probability is too low for the given number of samples")
-    return np.percentile(data, q=(1-p)*100, interpolation='higher', axis=0)
+    if externals.versions['numpy'] >= '1.9.0':
+        return np.percentile(data, q=(1-p)*100, interpolation='higher', axis=0)
+    else:
+        # threshold indices are all in one row of the argsorted inputs
+        thridx = np.argsort(data, axis=0, kind='quicksort')[-p_index]
+        return data[thridx, np.arange(data.shape[1])]
+
 
 
 def _get_map_cluster_sizes(map_):
