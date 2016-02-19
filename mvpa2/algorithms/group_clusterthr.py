@@ -457,6 +457,7 @@ def get_thresholding_map(data, p=0.001):
       Value greater or equal than the returned threshold have a probability `p` or less.
     """
     # we need NumPy indexing logic, even if a dataset comes in
+    data = np.asanyarray(data)
     p_index = int(len(data) * p)
     if p_index < 1:
         raise ValueError("requested probability is too low for the given number of samples")
