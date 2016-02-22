@@ -16,12 +16,16 @@ from mvpa2.datasets.base import Dataset
 
 # See other tests and test_procrust.py for some example on what to do ;)
 from mvpa2.algorithms.hyperalignment import Hyperalignment
+from mvpa2.algorithms.searchlight_hyperalignment import SearchlightHyperalignment
 from mvpa2.mappers.zscore import zscore
 from mvpa2.misc.support import idhash
-from mvpa2.misc.data_generators import random_affine_transformation
+from mvpa2.misc.data_generators import \
+        random_affine_transformation, local_random_affine_transformations
+from mvpa2.misc.fx import get_random_rotation
+from mvpa2.misc.neighborhood import Sphere, scatter_neighborhoods
 
 # Somewhat slow but provides all needed ;)
-from mvpa2.testing import sweepargs, reseed_rng
+from mvpa2.testing import *
 from mvpa2.testing.datasets import datasets
 
 from mvpa2.generators.partition import NFoldPartitioner
@@ -313,6 +317,52 @@ class HyperAlignmentTests(unittest.TestCase):
         bsc_orig = cvterr(mkdg_all)
         print 1-np.mean(bsc_orig)
         pass
+
+
+def test_searchlight_hyperalignment():
+    # toy data
+    data = np.random.randn(18,4,2)
+    space = 'voxel_indices'
+    # total number of datasets for the analysis
+    nds = 5
+    ds_orig = Dataset.from_wizard(data, space=space)
+    dss = [ds_orig]
+    # create  a few distorted datasets to match the desired number of datasets
+    dss += [local_random_affine_transformations(
+                ds_orig,
+                scatter_neighborhoods(Sphere(8),
+                                      ds_orig.fa[space].value,
+                                      deterministic=False)[1],
+                Sphere(1),
+                space=space)
+                    for i in range(nds-1)]
+    # we should have some distortion
+    for ds in dss[1:]:
+        assert_false(np.all(ds_orig.samples == ds.samples))
+
+    # store projections for each mapper separately
+    projs = [list() for i in range(nds)]
+    # run the algorithm with all combinations of the two major parameters
+    # for projection calculation.
+    for kwargs in [{'combine_neighbormappers': True, 'sparse_mode': 'coo'},
+                   {'combine_neighbormappers': True, 'dtype': 'float64'},
+                   {'combine_neighbormappers': False, 'sparse_mode': 'coo'},
+                   {'combine_neighbormappers': False, 'compute_recon': 'False'},
+                   {'combine_neighbormappers': True, 'exclude_from_model': [2,4]}]:
+        slhyp = SearchlightHyperalignment(**kwargs)
+        print 'nds:', len(dss)
+        mappers = slhyp(dss)
+        # one mapper per input ds
+        assert_equal(len(mappers), nds)
+        for midx, m in enumerate(mappers):
+            projs[midx].append(m.proj)
+
+    for midx, m in enumerate(mappers):
+        # different sparse modes yield the same projections
+        # without combine_neighbormappers
+        assert_array_almost_equal(projs[midx][2].todense(), projs[midx][3].todense())
+        # with combine_neighbormappers
+        assert_array_almost_equal(projs[midx][0].todense(), projs[midx][1].todense())
 
 
 def suite():  # pragma: no cover
