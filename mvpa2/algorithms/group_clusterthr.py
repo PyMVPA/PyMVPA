@@ -287,7 +287,6 @@ class GroupClusterThreshold(Learner):
             # same code as above, just in parallel with joblib's Parallel
             thrmap = np.hstack(
                 Parallel(n_jobs=self.params.n_proc,
-                         #pre_dispatch=self.params.n_proc,
                          verbose=verbose_level_parallel)(
                              delayed(get_thresholding_map)
                         (d, self.params.feature_thresh_prob)
@@ -320,7 +319,6 @@ class GroupClusterThreshold(Learner):
             # Parallel execution
             # same code as above, just restructured for joblib's Parallel
             for jobres in Parallel(n_jobs=self.params.n_proc,
-                                   pre_dispatch=self.params.n_proc,
                                    verbose=verbose_level_parallel)(
                                        delayed(get_cluster_sizes)
                                   (Dataset(np.mean(ds_samples[sidx],
