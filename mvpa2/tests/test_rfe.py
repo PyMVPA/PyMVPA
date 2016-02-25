@@ -582,6 +582,23 @@ class RFETests(unittest.TestCase):
             assert_array_equal(predictions, _predictions)
             assert_array_equal(_slicearg, rfeclf.mapper.slicearg)
 
+        # Test that we can collect stats from cas within cross-validation
+        sensitivities = []
+        nested_errors = []
+        nested_nfeatures = []
+        def store_me(data, node, result):
+            sens = node.measure.get_sensitivity_analyzer(force_train=False)(data)
+            sensitivities.append(sens)
+            nested_errors.append(node.measure.mapper.ca.nested_errors)
+            nested_nfeatures.append(node.measure.mapper.ca.nested_nfeatures)
+        cv = CrossValidation(rfeclf, NFoldPartitioner(count=1), callback=store_me,
+                             enable_ca=['stats'])
+        _ = cv(dataset)
+        # just to make sure we collected them
+        assert_equal(len(sensitivities), 1)
+        assert_equal(len(nested_errors), 1)
+        assert_equal(len(nested_nfeatures), 1)
+
 def suite():  # pragma: no cover
     return unittest.makeSuite(RFETests)
 
