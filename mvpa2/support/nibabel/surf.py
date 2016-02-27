@@ -702,6 +702,9 @@ class Surface(object):
                     break
 
             if not edge in edge2next:
+                if border_nodes==set(ns):
+                    # could not find last node, that is ok
+                    break
                 # this should not happen really
                 raise ValueError("no edge on border found")
 
@@ -1258,7 +1261,6 @@ class Surface(object):
             mind = ds[minpos] ** .5
 
             if not epsilon is None and mind > epsilon:
-                print minpos
                 raise ValueError("Not found near node for node %i (min distance %f > %f)" %
                                  (i, mind, epsilon))
             mapping[i] = minpos

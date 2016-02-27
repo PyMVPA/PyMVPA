@@ -476,7 +476,6 @@ class FlatSurfacePlotter(object):
         olay = griddata(x, y, data, xi, yi, interp='linear')
         nan_msk = np.logical_not(msk)
         olay[nan_msk] = np.nan
-
         o_rgba = flat_surface_data2rgba(olay, self._range_, self._threshold,
                                         self._color_map)
         o_rgba[nan_msk] = np.nan  # apply the mask again, to be sure
