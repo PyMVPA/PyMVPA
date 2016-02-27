@@ -157,6 +157,7 @@ from mvpa2.base.collections import Collection  # ArrayCollectable
 from mvpa2.misc.neighborhood import QueryEngineInterface
 from mvpa2.measures.searchlight import Searchlight
 from mvpa2.base import debug, warning
+from mvpa2.mappers.flatten import FlattenMapper
 
 
 
@@ -326,6 +327,7 @@ def _attributes_dict2cosmo(ds):
             dtypes = []
             values = []
 
+
             for k in attr_collection:
                 value = attr_collection[k].value
 
@@ -358,9 +360,10 @@ def _attributes_dict2cosmo(ds):
 
 
 
-def _mat_replace_matlab_function_by_string(x):
+def _mat_replace_functions_by_string(x):
     '''
-    Replace matlab function handles (as read by matread) by a string.
+    Replace matlab function handles (as read by matread) and FlattenMapper
+    objects by a string.
 
     Parameters
     ----------
@@ -369,24 +372,28 @@ def _mat_replace_matlab_function_by_string(x):
     Returns
     -------
     y : object
-        if x is a scipy.io.matlab.mio5_params.MatlabFunction then
+        if x is a scipy.io.matlab.mio5_params.MatlabFunction or
+        an mvpa2.mappers.flatten.FlattenMapper instance, then
         y is a string representation of x, otherwise y is equal to x
 
     Notes
     -----
-    scipy can read but not write Matlab function hanndles; the use case of
+    scipy can read but not write Matlab function handles; the use case of
     this function is to replace such function handles by something that scipy
     can write
     '''
 
-    if isinstance(x, matlab.mio5_params.MatlabFunction):
+    unsupported_classes=(matlab.mio5_params.MatlabFunction,
+                         FlattenMapper)
+
+    if isinstance(x, unsupported_classes):
         return np.asarray('%s' % x)
 
     return None
 
 
 
-def _mat_make_saveable(x, fixer=_mat_replace_matlab_function_by_string):
+def _mat_make_saveable(x, fixer=_mat_replace_functions_by_string):
     '''
     Make a Matlab data structure saveable by scipy's matsave
 
