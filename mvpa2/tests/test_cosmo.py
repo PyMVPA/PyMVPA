@@ -366,8 +366,9 @@ def test_fmri_to_cosmo():
     skip_if_no_external('nibabel')
     from mvpa2.datasets.mri import fmri_dataset
     # test exporting an fMRI dataset to CoSMoMVPA
-    pymvpa_ds = fmri_dataset(samples=pathjoin(pymvpa_dataroot, 'example4d.nii.gz'),
-                      targets=[1, 2], sprefix='voxel')
+    pymvpa_ds = fmri_dataset(
+        samples=pathjoin(pymvpa_dataroot, 'example4d.nii.gz'),
+        targets=[1, 2], sprefix='voxel')
     cosmomvpa_struct = cosmo.map2cosmo(pymvpa_ds)
     _assert_set_equal(cosmomvpa_struct.keys(), ['a', 'fa', 'sa', 'samples'])
 
@@ -385,8 +386,8 @@ def test_fmri_to_cosmo():
 
         assert_array_almost_equal(c_value, p_value)
 
-    fa_dict=dict(_obj2tup(cosmomvpa_struct['fa']))
-    fa_keys=['voxel_indices']
-    _assert_set_equal(fa_dict.keys(),fa_keys)
+    fa_dict = dict(_obj2tup(cosmomvpa_struct['fa']))
+    fa_keys = ['voxel_indices']
+    _assert_set_equal(fa_dict.keys(), fa_keys)
     for k in fa_keys:
         assert_array_almost_equal(fa_dict[k].T, pymvpa_ds.fa[k].value)
