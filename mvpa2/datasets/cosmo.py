@@ -157,6 +157,7 @@ from mvpa2.base.collections import Collection  # ArrayCollectable
 from mvpa2.misc.neighborhood import QueryEngineInterface
 from mvpa2.measures.searchlight import Searchlight
 from mvpa2.base import debug, warning
+from mvpa2.mappers.flatten import FlattenMapper
 
 
 
@@ -186,7 +187,6 @@ def _from_singleton(x, ndim=2):
         raise ValueError("Expected singleton shape %s for %s, found %s" %
                          (s, x, x.shape,))
     return x[(0,) * ndim]
-
 
 # dictionary indicating whether elements in .fa, .sa and .a must be
 # transposed for CoSMoMVPA data representation. As in CoSMoMVPA a dataset
@@ -358,9 +358,10 @@ def _attributes_dict2cosmo(ds):
 
 
 
-def _mat_replace_matlab_function_by_string(x):
+def _mat_replace_functions_by_string(x):
     '''
-    Replace matlab function handles (as read by matread) by a string.
+    Replace matlab function handles (as read by matread) and FlattenMapper
+    objects by a string.
 
     Parameters
     ----------
@@ -369,24 +370,28 @@ def _mat_replace_matlab_function_by_string(x):
     Returns
     -------
     y : object
-        if x is a scipy.io.matlab.mio5_params.MatlabFunction then
+        if x is a scipy.io.matlab.mio5_params.MatlabFunction or
+        an mvpa2.mappers.flatten.FlattenMapper instance, then
         y is a string representation of x, otherwise y is equal to x
 
     Notes
     -----
-    scipy can read but not write Matlab function hanndles; the use case of
+    scipy can read but not write Matlab function handles; the use case of
     this function is to replace such function handles by something that scipy
     can write
     '''
 
-    if isinstance(x, matlab.mio5_params.MatlabFunction):
+    unsupported_classes = (matlab.mio5_params.MatlabFunction,
+                           FlattenMapper)
+
+    if isinstance(x, unsupported_classes):
         return np.asarray('%s' % x)
 
     return None
 
 
 
-def _mat_make_saveable(x, fixer=_mat_replace_matlab_function_by_string):
+def _mat_make_saveable(x, fixer=_mat_replace_functions_by_string):
     '''
     Make a Matlab data structure saveable by scipy's matsave
 
@@ -492,7 +497,8 @@ def _check_cosmo_dataset(cosmo):
     if abs(decimals_nonzero) > warn_for_extreme_values_decimals:
         msg = ('Samples have extreme values, maximum absolute value is %s; '
                'This may affect some analyses. Considering scaling the samples, '
-               'e.g. by a factor of 10**%d ' % (max_nonzero, -decimals_nonzero))
+               'e.g. by a factor of 10**%d ' % (
+               max_nonzero, -decimals_nonzero))
         warning(msg)
 
 
@@ -663,7 +669,6 @@ class CosmoQueryEngine(QueryEngineInterface):
 
     '''
 
-
     def __init__(self, mapping, a=None, fa=None):
         '''
         Parameters
@@ -709,7 +714,6 @@ class CosmoQueryEngine(QueryEngineInterface):
         attributes['samples'] = np.zeros((0, nfeatures), dtype=np.int_)
         self._dataset_template = Dataset(**attributes)[:, ids]
 
-
     @staticmethod
     def _check_mapping(mapping):
         '''
@@ -722,13 +726,13 @@ class CosmoQueryEngine(QueryEngineInterface):
             if not np.isscalar(k):
                 raise ValueError('Key %s not a scalar' % k)
             if not isinstance(k, int):
-                raise ValueError('Keys %s must be int, found %s' % (k, type(k)))
+                raise ValueError(
+                    'Keys %s must be int, found %s' % (k, type(k)))
             if not isinstance(v, np.ndarray):
                 raise TypeError('Value %s for key %s must be numpy array' %
                                 (v, k))
             if not np.issubdtype(np.int_, v.dtype):
                 raise ValueError('Value %s for key %s must be int' % (v, k))
-
 
     @classmethod
     def from_mat(cls, neighbors, a=None, fa=None, origin=None):
@@ -778,7 +782,6 @@ class CosmoQueryEngine(QueryEngineInterface):
 
         return cls(mapping, a=a, fa=fa)
 
-
     def __repr__(self):
         '''
         Return representation of this instance
@@ -789,7 +792,6 @@ class CosmoQueryEngine(QueryEngineInterface):
                                                 self._mapping,
                                                 template.a,
                                                 template.fa)
-
 
     def __str__(self):
         '''
@@ -805,7 +807,6 @@ class CosmoQueryEngine(QueryEngineInterface):
                  ', '.join(template.fa.keys()),
                  ', '.join(template.a.keys())))
 
-
     def __reduce__(self):
         '''
         Return state of the instance that can be pickled
@@ -813,13 +814,11 @@ class CosmoQueryEngine(QueryEngineInterface):
         template = self._dataset_template
         return (self.__class__, (self._mapping, template.a, template.fa))
 
-
     def __len__(self):
         '''
         Return number of ids (keys)
         '''
         return len(self.ids)
-
 
     def train(self, dataset):
         '''
@@ -827,17 +826,14 @@ class CosmoQueryEngine(QueryEngineInterface):
         '''
         pass
 
-
     def untrain(self):
         '''
         This method does nothing
         '''
         pass
 
-
     def query(self, **kwargs):
         raise NotImplementedError
-
 
     def query_byid(self, id):
         '''
@@ -850,7 +846,6 @@ class CosmoQueryEngine(QueryEngineInterface):
 
         return self._mapping[id]
 
-
     @property
     def ids(self):
         '''
@@ -862,7 +857,6 @@ class CosmoQueryEngine(QueryEngineInterface):
 
         return self._ids
 
-
     @property
     def a(self):
         '''
@@ -872,7 +866,6 @@ class CosmoQueryEngine(QueryEngineInterface):
             Dataset attributes for the output dataset from using this instance
         '''
         return self._dataset_template.a
-
 
     @property
     def fa(self):
@@ -884,7 +877,6 @@ class CosmoQueryEngine(QueryEngineInterface):
             It has as many elements as self.ids
         '''
         return self._dataset_template.fa
-
 
     def set_output_dataset_attributes(self, ds):
         '''
@@ -939,7 +931,6 @@ class CosmoSearchlight(Searchlight):
     A typical use case is in combination with a neighborhood from CoSMoMVPA,
     either from a .mat matlab file or through a CosmoQueryEngine
     '''
-
 
     def __init__(self, datameasure, nbrhood, add_center_fa=False,
                  results_postproc_fx=None,
@@ -1008,7 +999,6 @@ class CosmoSearchlight(Searchlight):
                                                tmp_prefix=tmp_prefix,
                                                nblocks=nblocks,
                                                **kwargs)
-
 
     def _call(self, ds):
         '''
