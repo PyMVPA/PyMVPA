@@ -391,3 +391,10 @@ def test_fmri_to_cosmo():
     _assert_set_equal(fa_dict.keys(), fa_keys)
     for k in fa_keys:
         assert_array_almost_equal(fa_dict[k].T, pymvpa_ds.fa[k].value)
+
+
+
+def test_cosmo_empty_dataset():
+    ds = Dataset(np.zeros((0, 0)))
+    c = cosmo.map2cosmo(ds)
+    assert_equal(c['samples'].shape, (0, 0))
