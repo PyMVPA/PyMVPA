@@ -16,7 +16,7 @@ import numpy as np
 from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
 from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
 
-from mvpa2.clfs.distance import squared_euclidean_distance
+from mvpa2.clfs.distance import squared_euclidean_distance, one_minus_correlation
 
 from mvpa2.measures.adhocsearchlightbase import SimpleStatBaseSearchlight, \
      _STATS
@@ -44,7 +44,15 @@ class M1NNSearchlight(SimpleStatBaseSearchlight):
           Used to fetch space and dfx settings. TODO
         """
         # verify that desired features are supported
-        if knn.dfx != squared_euclidean_distance:
+        if knn.dfx == squared_euclidean_distance:
+            self._distance = 'euclidean'
+        elif knn.dfx == one_minus_correlation:
+            self._distance = 'correlation'
+            # we rely on having simple indexes for ROI members ATM
+            if 'indexsum' in kwargs and kwargs['indexsum'] != 'fancy':
+                raise ValueError("Can only use indexsum='fancy' with correlation distance.")
+            kwargs['indexsum'] = 'fancy'
+        else:
             raise ValueError(
                 "%s distance function is not yet supported by M1NNSearchlight"
                 % (knn.dfx,))
@@ -118,15 +126,60 @@ class M1NNSearchlight(SimpleStatBaseSearchlight):
 
         # hm, but we need for each combination of labels
         # so we keep 0th dimension corresponding to test "samples/labels"
-        diff_pl_pl = pl_test.means[:, None] - pl_train.means[None,:]
-        diff_pl_pl2 = np.square(diff_pl_pl)
+        if self._distance == 'euclidean':
+            diff_pl_pl = pl_test.means[:, None] - pl_train.means[None,:]
+            diff_pl_pl2 = np.square(diff_pl_pl)
 
-        # XXX OPT: is it worth may be reserving the space beforehand?
-        diff_pl_pl2_sl = np.zeros(diff_pl_pl2.shape[:-1] + (nroi_fids,))
-        indexsum_fx(diff_pl_pl2, roi_fids, out=diff_pl_pl2_sl)
+            # XXX OPT: is it worth may be reserving the space beforehand?
+            dist_pl_pl2_sl = np.zeros(diff_pl_pl2.shape[:-1] + (nroi_fids,))
+            indexsum_fx(diff_pl_pl2, roi_fids, out=dist_pl_pl2_sl)
+        elif self._distance == 'correlation':
+            roi_nfids = np.array(map(len, roi_fids))  #  # voxels in each ROI
+
+            # estimate the means of each of the searchlight within each condition
+            #   indexsum, divide by # of elements
+            shape_ = pl_test.means.shape[:-1] + (nroi_fids,)
+            def get_means_per_roi(pl):
+                roi_means = np.empty(shape_)
+                indexsum_fx(pl.means, roi_fids, out=roi_means)
+                roi_means /= roi_nfids
+                return roi_means
+            roi_means_train = get_means_per_roi(pl_train)
+            roi_means_test = get_means_per_roi(pl_test)
+
+            # de-mean within each searchlight
+            # problema since within each SL will be a different demean, and different
+            # ROIs have different number of features so we can't just go into 3rd dimension
+            # (well we probably could but not sure if it would benefit us)
+            # we can't easily do that without going per each ROI I am afraid!
+            # So let's stop being (way too) smart and just do per each ROI for now
+            dist_pl_pl2_sl = np.ones((nlabels, nlabels, nroi_fids))
+            for i, (fids, nfids, mean_train, mean_test) in enumerate(
+                    zip(roi_fids, roi_nfids, roi_means_train.T, roi_means_test.T)):
+                # Select those means from train and test
+                # OPT: I could have avoided computing demeaned, but oh well -- will leave it for someone
+                # to investigate on how much speed up it would get
+                roi_train_demeaned = pl_train.means[:, fids] - mean_train[:, None]
+                # estimate stddevs of each of the searchlight
+                #   take demeaned, square them, sum within each searchlight, divide by # of elements
+                roi_train_std = np.sqrt(np.sum(roi_train_demeaned * roi_train_demeaned, axis=1) / nfids)
+
+                roi_test_demeaned = pl_test.means[:, fids] - mean_test[:, None]
+                # estimate stddevs of each of the searchlight
+                #   take demeaned, square them, sum within each searchlight, divide by # of elements
+                roi_test_std = np.sqrt(np.sum(np.square(roi_test_demeaned), axis=1) / nfids)
+
+                # estimate dot-products between each label pair of training/testing
+                #   product, sum, divide by # of elements in each searchlight
+                dot_pl_pl = (roi_test_demeaned[:, None] * roi_train_demeaned[None, :]).mean(axis=-1)
+                # correlations, and subtract them from 1 so we get a distance
+                #   divide by sttdevs of each pair of training/testing
+                dist_pl_pl2_sl[:, :, i] -= dot_pl_pl / (roi_test_std[:, None] * roi_train_std[None, :])
+        else:
+            raise RuntimeError("Must have not got here")
 
         # predictions are just the labels with minimal distance
-        predictions = np.argmin(diff_pl_pl2_sl, axis=1)
+        predictions = np.argmin(dist_pl_pl2_sl, axis=1)
 
         return np.asanyarray(self._ulabels_numeric), predictions
 
