@@ -500,9 +500,9 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         elif indexsum == 'fancy':
             indexsum_fx = lastdim_columnsums_fancy_indexing
         else:
-            raise ValueError, \
+            raise ValueError(
                   "Do not know how to deal with indexsum=%s" % indexsum
-
+            )
         # Store roi_fids
         if self.reuse_neighbors and self.__roi_fids is None:
             self.__roi_fids = roi_fids
