@@ -23,7 +23,7 @@ class CmdlineHelpersTest(unittest.TestCase):
         globals_ = globals()
         for member in  [#'_verbose_callback',
                         'parser', 'opt', 'opts']:
-            self.assertTrue(globals_.has_key(member),
+            self.assertTrue(member in globals_,
                 msg="We must have imported %s from mvpa2.misc.cmdline!" % member)
 
     @sweepargs(example=[

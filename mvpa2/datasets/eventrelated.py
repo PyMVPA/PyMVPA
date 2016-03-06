@@ -90,7 +90,7 @@ def events2sample_attr(events, time_coords, noinfolabel=None,
         # assign all matching samples the condition ID
         for samp_idx in np.argwhere(duration_mask).T[0]:
             sa[samp_idx] = ev[condition_attr]
-    if not noinfolabel is None:
+    if noinfolabel is not None:
         for i, a in enumerate(sa):
             if a is None:
                 sa[i] = noinfolabel
@@ -150,7 +150,7 @@ def find_events(**kwargs):
         # check if things changed
         if not combo == old_combo:
             # did we ever had an event
-            if not old_combo is None:
+            if old_combo is not None:
                 events.append(_build_event(prev_onset, duration, old_combo))
                 # reset duration for next event
                 duration = 1
@@ -164,7 +164,7 @@ def find_events(**kwargs):
             duration += 1
 
     # push the last event in the pipeline
-    if not old_combo is None:
+    if old_combo is not None:
         events.append(_build_event(prev_onset, duration, old_combo))
 
     return events
@@ -181,7 +181,7 @@ def _events2dict(events):
 
 def _evvars2ds(ds, evvars, eprefix):
     for a in evvars:
-        if not eprefix is None and a in ds.sa:
+        if eprefix is not None and a in ds.sa:
             # if there is already a samples attribute like this, it got mapped
             # previously (e.g. by BoxcarMapper and is multi-dimensional).
             # We move it aside under new `eprefix` name
@@ -318,14 +318,14 @@ def extract_boxcar_event_samples(
         for ev in events:
             # do not mess with the input data
             ev = copy.deepcopy(ev)
-            if not event_offset is None:
+            if event_offset is not None:
                 ev['onset'] += event_offset
-            if not event_duration is None:
+            if event_duration is not None:
                 ev['duration'] = event_duration
             descr_events.append(ev)
         events = descr_events
 
-    if not time_attr is None:
+    if time_attr is not None:
         tvec = ds.sa[time_attr].value
         # we are asked to convert onset time into sample ids
         descr_events = []
@@ -375,7 +375,7 @@ def extract_boxcar_event_samples(
     # add samples attributes for the events, simply dump everything as a samples
     # attribute
     # special case onset and duration in case of conversion into descrete time
-    if not time_attr is None:
+    if time_attr is not None:
         for attr in ('onset', 'duration'):
             evvars[attr] = [e[attr] for e in events]
     ds = _evvars2ds(ds, evvars, eprefix)
@@ -542,7 +542,7 @@ def fit_event_hrf_model(
     if design_kwargs is None:
         design_kwargs = {}
 
-    if not regr_attrs is None:
+    if regr_attrs is not None:
         names = []
         regrs = []
         for attr in regr_attrs:

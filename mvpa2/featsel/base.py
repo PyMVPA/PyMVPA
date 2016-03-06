@@ -69,7 +69,9 @@ class FeatureSelection(SliceMapper):
         self._oshape = None
         self.filler = filler
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(FeatureSelection, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['filler'], default=0))
@@ -110,7 +112,7 @@ class FeatureSelection(SliceMapper):
     def _forward_dataset(self, dataset):
         # XXX this should probably not affect the source dataset, but right now
         # init_origid is not flexible enough
-        if not self.get_space() is None:
+        if self.get_space() is not None:
             # TODO need to do a copy first!!!
             dataset.init_origids('features', attr=self.get_space())
         # invoke super class _forward_dataset, this calls, _forward_dataset
@@ -230,7 +232,9 @@ class StaticFeatureSelection(FeatureSelection):
         self.__orig_slicearg = slicearg
         self._safe_assign_slicearg(slicearg)
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(FeatureSelection, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['dshape', 'oshape']))

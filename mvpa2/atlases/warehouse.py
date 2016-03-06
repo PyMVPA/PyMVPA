@@ -68,7 +68,7 @@ def Atlas(filename=None, name=None, *args, **kwargs):
                     }
             }[atlas_source]
         atlasType = tempAtlas.header.type.text
-        if atlasTypes.has_key(atlasType):
+        if atlasType in atlasTypes:
             if __debug__: debug('ATL_', "Creating %s Atlas" % atlasType)
             return atlasTypes[atlasType](filename=filename, *args, **kwargs)
             #return ReferencesAtlas(filename)

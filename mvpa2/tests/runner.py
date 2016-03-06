@@ -63,14 +63,14 @@ class TestProgramPyMVPA(unittest.TestProgram):
 def run():
     profilelevel = None
 
-    if environ.has_key('PROFILELEVEL'):
+    if 'PROFILELEVEL' in environ:
         profilelevel = int(environ['PROFILELEVEL'])
 
 
     if profilelevel is None:
         TestProgramPyMVPA()
     else:
-        profilelines = environ.has_key('PROFILELINES')
+        profilelines = 'PROFILELINES' in environ
 
         import hotshot, hotshot.stats
         pname = "%s.prof" % sys.argv[0]

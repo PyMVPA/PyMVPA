@@ -193,21 +193,23 @@ class Collection(BaseCollection):
                      repr(self.values()),
                      repr(self.name))
 
-        items_s = ""
-        sep = ""
-        for item in self:
-            try:
-                itemvalue = "%r" % (self[item].value,)
-                if len(itemvalue)>50:
-                    itemvalue = itemvalue[:10] + '...' + itemvalue[-10:]
-                items_s += "%s'%s':%s" % (sep, item, itemvalue)
-                sep = ', '
-            except:
-                pass
-        if items_s != "":
-            s += "items={%s}" % items_s
-        s += ")"
-        return s
+        # MIH: explicitly comment out the rest, as it is unreachable and
+        #      remained around for a while
+        # items_s = ""
+        # sep = ""
+        # for item in self:
+        #     try:
+        #         itemvalue = "%r" % (self[item].value,)
+        #         if len(itemvalue)>50:
+        #             itemvalue = itemvalue[:10] + '...' + itemvalue[-10:]
+        #         items_s += "%s'%s':%s" % (sep, item, itemvalue)
+        #         sep = ', '
+        #     except:
+        #         pass
+        # if items_s != "":
+        #     s += "items={%s}" % items_s
+        # s += ")"
+        # return s
 
 
     def is_set(self, key=None):
@@ -218,7 +220,7 @@ class Collection(BaseCollection):
         key : None or str or list of str
           What items to check if they were set in the collection
         """
-        if not (key is None):
+        if key is not None:
             if isinstance(key, basestring):
                 return self[key].is_set
             else:
@@ -276,7 +278,7 @@ class Collection(BaseCollection):
     def reset(self, key=None):
         """Reset the conditional attribute defined by `key`"""
 
-        if not key is None:
+        if key is not None:
             keys = [ key ]
         else:
             keys = self.keys()
@@ -457,7 +459,7 @@ class ConditionalAttributesCollection(Collection):
 
     def is_active(self, key):
         """Returns `True` if state `key` is known and is enabled"""
-        return self.has_key(key) and self.is_enabled(key)
+        return key in self and self.is_enabled(key)
 
 
     def enable(self, key, value=True, missingok=False):
@@ -493,7 +495,7 @@ class ConditionalAttributesCollection(Collection):
         if isinstance(other, ClassWithCollections):
             other = other.ca
 
-        if not other is None:
+        if other is not None:
             # lets take ca which are enabled in other but not in
             # self
             add_enable_ca = list(set(other.enabled).difference(
@@ -697,7 +699,7 @@ class AttributesCollector(type):
             # So, whenever there are items, we pass just the values of the dict.
             # There is no information last, since the keys of the dict are the
             # name attributes of each collectable in the list.
-            if not colitems is None:
+            if colitems is not None:
                 collections[col] = _col2class[col](items=colitems.values())
             else:
                 collections[col] = _col2class[col]()

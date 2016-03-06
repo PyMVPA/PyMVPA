@@ -50,11 +50,12 @@ class AttributePermutator(Node):
           all listed attributes.
         count : int
           Number of permutations to be yielded by .generate()
-        limit : None or str or dict
-          If ``None`` all attribute values will be permuted. If an single
+        limit : None or str or list or dict
+          If ``None`` all attribute values will be permuted. If a single
           attribute name is given, its unique values will be used to define
           chunks of data that are permuted individually (i.e. no attributed
-          values will be replaced across chunks). Finally, if a dictionary is
+          values will be replaced across chunks). If a list given, then combination
+          of those attributes per each sample is used together. Finally, if a dictionary is
           provided, its keys define attribute names and its values (single value
           or sequence thereof) attribute value, where all key-value combinations
           across all given items define a "selection" of to-be-permuted samples
@@ -73,6 +74,7 @@ class AttributePermutator(Node):
           If set, by-chance non-permutations will be prevented, i.e. it is
           checked that at least two items change their position. Since this
           check adds a runtime penalty it is off by default.
+
         """
         Node.__init__(self, **kwargs)
         self._pattr = attr
@@ -269,7 +271,9 @@ class AttributePermutator(Node):
         return _str(self, self._pattr, n=self.count, limit=self._limit,
                     assure=self._assure_permute)
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(AttributePermutator, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['attr'])

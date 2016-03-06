@@ -58,7 +58,9 @@ class WinnerMeasure(Measure):
         self.__fx = fx
         self.__other_axis_prefix = other_axis_prefix
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         prefixes_ = ['axis=%r,fx=%r,other_axis_prefix=%r' % (
                         self.__axis, self.__fx, self.__other_axis_prefix)]
         return "%s(%s)" % (self.__class__.__name__, ','.join(prefixes_))

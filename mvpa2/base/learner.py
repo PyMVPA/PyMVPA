@@ -93,7 +93,9 @@ class Learner(Node):
         self.__auto_train = auto_train
         self.__force_train = force_train
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(Learner, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['auto_train', 'force_train'], default=False))

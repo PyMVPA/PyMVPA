@@ -101,7 +101,7 @@ def hdf2obj(hdf, memo=None):
 
     # if this HDF group has an objref that points to an already recontructed
     # object, simple return this object again
-    if not objref is None and objref in memo:
+    if objref is not None and objref in memo:
         obj = memo[objref]
         if __debug__:
             debug('HDF5', "Use tracked object %s (%i)" % (type(obj), objref))
@@ -512,7 +512,7 @@ def _hdf_list_to_obj(hdf, memo, target_container=None):
             # we have a value for this item
             items[i] = obj
             # store value for ref if present
-            if not objref is None:
+            if objref is not None:
                 memo[objref] = obj
 
     return items
@@ -731,7 +731,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
     #
     # Below handles stuff that cannot be natively stored in HDF5
     #
-    if not name is None:
+    if name is not None:
         if __debug__:
             debug('HDF5', "Store '%s' (ref: %i) in [%s/%s]"
                           % (type(obj), obj_id, hdf.name, name))
@@ -747,7 +747,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
     #
     # Store important flags and references in the group meta data
     #
-    if not noid and not obj is None:
+    if not noid and obj is not None:
         # no refs for basic types
         grp.attrs.create('objref', obj_id)
         # we also note that we processed this object
@@ -832,7 +832,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
                 raise HDF5ConversionError(
                     "Can't obj2hdf lambda functions. Got %r" % (obj,))
             grp.attrs.create('name', oname)
-        if isinstance(obj, list) or isinstance(obj, tuple):
+        if isinstance(obj, (list, tuple)):
             _seqitems_to_hdf(obj, grp, memo, **kwargs)
         elif isinstance(obj, dict):
             if __debug__:
@@ -856,7 +856,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
         _seqitems_to_hdf(pieces[1], args, memo, **kwargs)
 
     # pull all remaining data from __reduce__
-    if not pieces is None and len(pieces) > 2:
+    if pieces is not None and len(pieces) > 2:
         # there is something in the state
         state = pieces[2]
         if __debug__:
@@ -927,7 +927,7 @@ def h5load(filename, name=None):
     """
     hdf = h5py.File(filename, 'r')
     try:
-        if not name is None:
+        if name is not None:
             if not name in hdf:
                 raise ValueError("No object of name '%s' in file '%s'."
                                  % (name, filename))

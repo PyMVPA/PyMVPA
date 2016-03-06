@@ -79,9 +79,11 @@ class Partitioner(Node):
         self._set_selection_strategy(selection_strategy)
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
         # Here we are jumping over Node's __repr__ since
         # it would enforce placing space
+        if prefixes is None:
+            prefixes = []
         return super(Node, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['count'])
@@ -128,7 +130,7 @@ class Partitioner(Node):
 
 
     def get_partitions_attr(self, ds, specs):
-        """Create a partition attribute array for a particular partion spec.
+        """Create a partition attribute array for a particular partition spec.
 
         Parameters
         ----------
@@ -258,7 +260,9 @@ class OddEvenPartitioner(Partitioner):
         Partitioner.__init__(self, **(kwargs))
         self.__usevalues = usevalues
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(OddEvenPartitioner, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['usevalues'], default=False))
@@ -317,7 +321,9 @@ class NGroupPartitioner(Partitioner):
         self.__ngroups = ngroups
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(NGroupPartitioner, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['ngroups'], default=4))
@@ -387,7 +393,9 @@ class CustomPartitioner(Partitioner):
         self.splitrule = splitrule
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(CustomPartitioner, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['splitrule']))
@@ -462,7 +470,9 @@ class NFoldPartitioner(Partitioner):
                                  % cvtype)
         self.cvtype = cvtype
 
-    def __repr__(self, prefixes=[]): #pylint: disable-msg=W0102
+    def __repr__(self, prefixes=None): #pylint: disable-msg=W0102
+        if prefixes is None:
+            prefixes = []
         return super(NFoldPartitioner, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['cvtype'], default=1))
@@ -520,7 +530,9 @@ class FactorialPartitioner(Partitioner):
         # store the subordinate partitioner
         self.partitioner = partitioner
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(FactorialPartitioner, self).__repr__(
                 prefixes=prefixes +
                          _repr_attrs(self, ['partitioner'], default=1))
@@ -610,9 +622,11 @@ class ExcludeTargetsCombinationsPartitioner(Node):
         self.partitions_keep = partitions_keep
         self.partition_assign = partition_assign
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
         # Here we are jumping over Node's __repr__ since
         # it would enforce placing space
+        if prefixes is None:
+            prefixes = []
         return super(ExcludeTargetsCombinationsPartitioner, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['k', 'targets_attr'])

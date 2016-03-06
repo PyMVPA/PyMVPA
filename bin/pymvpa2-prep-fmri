@@ -110,7 +110,7 @@ def main():
         verbose(2, "Output files will be uncompressed NIfTI images")
 
     # determine output path
-    if not options.subj is None:
+    if options.subj is not None:
         opath = options.subj
     else:
         opath = os.path.curdir

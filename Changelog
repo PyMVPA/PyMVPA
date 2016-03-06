@@ -42,11 +42,21 @@ Releases
       :class:`~mvpa2.algorithms.group_clusterthr.GroupClusterThreshold`.  Please
       recreate your datasets and re-estimate GroupClusterThreshold if that was
       the case for you
+    - ad-hoc searchlights (gnb, m1nn) can now operate with partitioners which
+      leave some samples out of training and testing sets.  Also `splitter` argument
+      was added to them for greater flexibility
 
   * Enhancements
 
     - Bundled version of libsvm updated to 3.12.  Now includes maxiter
       setting which prevents infinite looping which can happen in some rare cases
+    - A swarm of stylistic improvements ("is not", PEP8, etc) which should not
+      affect functionality but could result in more robust operation
+    - Crossvalidation can now operate with a None generator (i.e. partitioner) using
+      solely Splitter to generate a single split on original dataset.  Provides easier
+      means for "cross-classification"
+    - :class:`~mvpa2.measures.nnsearchlight.M1NNSearchlight` can now do classification
+      based on correlation distance (just provide `dfx=one_minus_correlation` to kNN)
 
   * New functionality
 

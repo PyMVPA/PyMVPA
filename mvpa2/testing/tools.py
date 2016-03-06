@@ -35,6 +35,7 @@ if externals.exists('nose'):
         # Asserting (pep8-ed from unittest)
         assert_true, assert_false, assert_raises,
         assert_equal, assert_equals, assert_not_equal, assert_not_equals,
+        assert_in, assert_not_in,
         # Decorators
         timed, with_setup, raises, istest, nottest, make_decorator)
 
@@ -95,8 +96,10 @@ def assert_reprstr_equal(x, y):
 
 
 
-def assert_collections_equal(x, y, ignore={}):
+def assert_collections_equal(x, y, ignore=None):
     # Seems to cause a circular import leading to problems
+    if ignore is None:
+        ignore = {}
     from mvpa2.base.node import Node
 
     assert_dict_keys_equal(x, y)
@@ -126,8 +129,8 @@ def assert_collections_equal(x, y, ignore={}):
 
 
 
-def assert_datasets_almost_equal(x, y, ignore_a={}, ignore_sa={},
-                                 ignore_fa={}, decimal=6):
+def assert_datasets_almost_equal(x, y, ignore_a=None, ignore_sa=None,
+                                 ignore_fa=None, decimal=6):
     """
     Parameters
     ----------
@@ -140,6 +143,12 @@ def assert_datasets_almost_equal(x, y, ignore_a={}, ignore_sa={},
       If None, it is required that x.samples and y.samples have the same
       dtype
     """
+    if ignore_a is None:
+        ignore_a = {}
+    if ignore_sa is None:
+        ignore_sa = {}
+    if ignore_fa is None:
+        ignore_fa = {}
     assert_equal(type(x), type(y))
     assert_collections_equal(x.a, y.a, ignore=ignore_a)
     assert_collections_equal(x.sa, y.sa, ignore=ignore_sa)
@@ -153,13 +162,19 @@ def assert_datasets_almost_equal(x, y, ignore_a={}, ignore_sa={},
 
 
 
-def assert_datasets_equal(x, y, ignore_a={}, ignore_sa={}, ignore_fa={}):
+def assert_datasets_equal(x, y, ignore_a=None, ignore_sa=None, ignore_fa=None):
     """
     Parameters
     ----------
     ignore_a, ignore_sa, ignore_fa: iterable
       Differences in values of which attributes to ignore
     """
+    if ignore_a is None:
+        ignore_a = {}
+    if ignore_sa is None:
+        ignore_sa = {}
+    if ignore_fa is None:
+        ignore_fa = {}
     assert_datasets_almost_equal(x, y, ignore_a=ignore_a, ignore_sa=ignore_sa,
                                  ignore_fa=ignore_fa, decimal=None)
 

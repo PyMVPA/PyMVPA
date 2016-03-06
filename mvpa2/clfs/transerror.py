@@ -101,8 +101,8 @@ class SummaryStatistics(object):
         self._stats = {}
         """Dictionary to keep statistics. Initialized here to please pylint"""
 
-        if not targets is None or not predictions is None:
-            if not targets is None and not predictions is None:
+        if targets is not None or predictions is not None:
+            if targets is not None and predictions is not None:
                 self.add(targets=targets, predictions=predictions,
                          estimates=estimates)
             else:
@@ -576,7 +576,7 @@ class ConfusionMatrix(SummaryStatistics):
         super(ConfusionMatrix, self)._compute()
 
         if __debug__:
-            if not self.__matrix is None:
+            if self.__matrix is not None:
                 debug("LAZY",
                       "Have to recompute %s#%s" \
                         % (self.__class__.__name__, id(self)))
@@ -891,7 +891,7 @@ class ConfusionMatrix(SummaryStatistics):
 
 
     def plot(self, labels=None, numbers=False, origin='upper',
-             numbers_alpha=None, xlabels_vertical=True, numbers_kwargs={},
+             numbers_alpha=None, xlabels_vertical=True, numbers_kwargs=None,
              **kwargs):
         """Provide presentation of confusion matrix in image
 
@@ -923,6 +923,8 @@ class ConfusionMatrix(SummaryStatistics):
         -------
          (fig, im, cb) -- figure, imshow, colorbar
         """
+        if numbers_kwargs is None:
+            numbers_kwargs = {}
 
         externals.exists("pylab", raise_=True)
         import pylab as pl
@@ -1639,7 +1641,7 @@ class ClassifierError(ClassWithCollections):
     def _precall(self, testdataset, trainingdataset=None):
         """Generic part which trains the classifier if necessary
         """
-        if not trainingdataset is None:
+        if trainingdataset is not None:
             if self.__train:
                 # XXX can be pretty annoying if triggered inside an algorithm
                 # where it cannot be switched of, but retraining might be
@@ -1663,7 +1665,7 @@ class ClassifierError(ClassWithCollections):
 
         if self.__clf.ca.is_enabled('trained_targets') \
                and not self.__clf.__is_regression__ \
-               and not testdataset is None:
+               and testdataset is not None:
             newlabels = set(testdataset.sa[self.clf.get_space()].unique) \
                         - set(self.__clf.ca.trained_targets)
             if len(newlabels)>0:
@@ -1756,7 +1758,7 @@ class ConfusionBasedError(ClassifierError):
         self.__confusion_state = confusion_state
         """What state to extract from"""
 
-        if not clf.ca.has_key(confusion_state):
+        if not confusion_state in clf.ca:
             raise ValueError, \
                   "Conditional attribute %s is not defined for classifier %r" % \
                   (confusion_state, clf)

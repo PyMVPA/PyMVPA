@@ -52,10 +52,12 @@ class FlattenMapper(Mapper):
         Mapper.__init__(self, **kwargs)
         self.__origshape = None         # pylint pacifier
         self.__maxdims = maxdims
-        if not shape is None:
+        if shape is not None:
             self._train_with_shape(shape)
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(FlattenMapper, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['shape', 'maxdims']))
@@ -108,7 +110,7 @@ class FlattenMapper(Mapper):
         #    return data.reshape(nsamples, -1)
         ## the first part of the shape matches (e.g. some additional axes present)
         #elif sshape[:len(oshape)] == oshape:
-        if not self.__maxdims is None:
+        if self.__maxdims is not None:
             maxdim = min(len(oshape), self.__maxdims)
         else:
             maxdim = len(oshape)
@@ -132,7 +134,7 @@ class FlattenMapper(Mapper):
                 debug('MAP_', "Forward-mapping fa '%s'." % k)
             attr = dataset.fa[k].value
             # the maximmum number of axis to flatten in the attr
-            if not self.__maxdims is None:
+            if self.__maxdims is not None:
                 maxdim = min(len(self.__origshape), self.__maxdims)
             else:
                 maxdim = len(self.__origshape)
@@ -238,7 +240,9 @@ class ProductFlattenMapper(FlattenMapper):
                                                len(factor_names)))
         self._factor_values = factor_values
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(ProductFlattenMapper, self).__repr__(
                         prefixes=prefixes
                         + _repr_attrs(self, ['factor_names',
@@ -420,7 +424,7 @@ def mask_mapper(mask=None, shape=None, space=None):
             # make full dataspace mask if nothing else is provided
             mask = np.ones(shape, dtype='bool')
     else:
-        if not shape is None:
+        if shape is not None:
             # expand mask to span all dimensions but first one
             # necessary e.g. if only one slice from timeseries of volumes is
             # requested.

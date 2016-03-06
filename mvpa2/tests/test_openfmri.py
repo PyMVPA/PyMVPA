@@ -37,8 +37,7 @@ def test_helpers(fname):
 
 
 def test_openfmri_dataset():
-    if not externals.exists('nibabel'):
-        raise SkipTest
+    skip_if_no_external('nibabel')
 
     of = ofm.OpenFMRIDataset(pathjoin(pymvpa_dataroot, 'haxby2001'))
     assert_equal(of.get_model_descriptions(), {1: 'visual object categories'})
@@ -132,8 +131,7 @@ def test_openfmri_dataset():
 
 
 def test_tutorialdata_loader_masking():
-    if not externals.exists('nibabel'):
-        raise SkipTest
+    skip_if_no_external('nibabel')
 
     ds_brain = load_tutorial_data(flavor='25mm')
     ds_nomask = load_tutorial_data(roi=None, flavor='25mm')
@@ -142,8 +140,7 @@ def test_tutorialdata_loader_masking():
 
 @sweepargs(roi=('brain', 'gray', 'hoc', 'vt', 'white'))
 def test_tutorialdata_rois(roi):
-    if not externals.exists('nibabel'):
-        raise SkipTest
+    skip_if_no_external('nibabel')
 
     # just checking that we have the files
     ds = load_tutorial_data(roi=roi, flavor='25mm')
@@ -152,8 +149,7 @@ def test_tutorialdata_rois(roi):
 
 @sweepargs(roi=(1, 4, 6, 12, 17, 22, 28, 32, 33, 36, 42, 43, 44))
 def test_hoc_rois(roi):
-    if not externals.exists('nibabel'):
-        raise SkipTest
+    skip_if_no_external('nibabel')
 
     # just checking which harvard-oxford rois we can rely on in the downsampled
     # data
@@ -162,8 +158,7 @@ def test_hoc_rois(roi):
 
 
 def test_roi_combo():
-    if not externals.exists('nibabel'):
-        raise SkipTest
+    skip_if_no_external('nibabel')
 
     ds1 = load_tutorial_data(roi=1, flavor='25mm')
     ds4 = load_tutorial_data(roi=4, flavor='25mm')
@@ -172,16 +167,14 @@ def test_roi_combo():
 
 
 def test_corner_cases():
-    if not externals.exists('nibabel'):
-        raise SkipTest
+    skip_if_no_external('nibabel')
 
     assert_raises(ValueError, load_tutorial_data,
                   roi=range, flavor='25mm')
 
 
 def test_example_data():
-    if not externals.exists('nibabel'):
-        raise SkipTest
+    skip_if_no_external('nibabel')
 
     # both expected flavor are present
     ds1 = load_example_fmri_dataset()
@@ -192,3 +185,44 @@ def test_example_data():
     # the 25mm example is the same as the coarse tutorial data
     ds25tut = load_tutorial_data(flavor='25mm')
     assert_array_equal(ds25.samples, ds25tut.samples)
+
+
+def _test_datalad_openfmri_dataset(d):
+    of = ofm.OpenFMRIDataset(d)
+
+    # smoke tests that we can load the dataset's attributes etc
+    #assert(of.get_model_descriptions())
+    sub_ids = of.get_subj_ids()
+    assert(sub_ids)
+    assert('TR' in of.get_scan_properties())
+    tasks = of.get_task_descriptions()
+    assert(tasks)
+    task = tasks.keys()[0]
+    run_ids = of.get_bold_run_ids(sub_ids[0], task)
+    assert(run_ids)
+    task_runs = of.get_task_bold_run_ids(task)
+    assert(task_runs)
+    model_ids = of.get_model_ids()
+    assert(model_ids)
+    from datalad.auto import AutomagicIO
+    with AutomagicIO():  # so necessary files get fetched if necessary
+        # try loading first run for some task of the first subject
+        data = of.get_model_bold_dataset(model_ids[0], sub_ids[0], task_runs.values()[0][:1])
+    assert(data.shape)
+
+
+
+def test_datalad_openfmri_datasets():
+    skip_if_no_external('nibabel')
+    skip_if_no_external('datalad')
+
+    # Test on datalad crawled datasets
+    # TODO: deal with paths to be configurable etc
+    #  or eventually rely on datalad's API to deploy those
+    TOPDIR = os.path.expanduser(pathjoin('~', 'datalad', 'crawl', 'openfmri'))
+    dss = glob.glob(pathjoin(TOPDIR, 'ds*105'))
+    if dss:
+        for d in dss:  # for now just one
+            yield _test_datalad_openfmri_dataset, d
+    else:
+        raise SkipTest("No datalad openfmri datasets were found under %s" % TOPDIR)

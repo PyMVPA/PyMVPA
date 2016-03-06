@@ -4,3 +4,8 @@ branch = True
 omit =
     /usr/*
     /home/travis/virtualenv/*
+    */src/mdp/mdp/*
+[report]
+exclude_lines =
+    pragma: no cover
+    raise NotImplementedError

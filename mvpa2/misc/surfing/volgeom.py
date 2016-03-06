@@ -63,7 +63,7 @@ class VolGeom(object):
         if self._affine.shape != (4, 4):
             raise ValueError('Affine matrix should be 4x4')
 
-        if not mask is None:
+        if mask is not None:
             if mask.size != self.nvoxels:
                 raise ValueError("%d voxels, but mask has %d" %
                                  (self.nvoxels, mask.size))
@@ -142,10 +142,12 @@ class VolGeom(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         prefixes_ = ['shape=(%s)' % ','.join(['%r' % i for i in self._shape]),
                      'affine=%r' % self._affine] + prefixes
-        if not self._mask is None:
+        if self._mask is not None:
             prefixes_ += ['mask=%r' % self._mask]
         return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
 
@@ -153,7 +155,7 @@ class VolGeom(object):
         sh = self.shape[:3]
         s = '%s(%s = %d voxels' % (self.__class__.__name__,
                              '%d x %d x %d' % sh, self.nvoxels)
-        if not self.mask is None:
+        if self.mask is not None:
             s += ', %d voxels survive the mask' % self.nvoxels_mask
 
         s += ')'
@@ -235,7 +237,7 @@ class VolGeom(object):
         invol[np.logical_or(lin < 0, lin >= self.nvoxels)] = np.False_
         invol[np.isnan(lin)] = np.False_
 
-        if apply_mask and not self.mask is None and invol.size:
+        if apply_mask and self.mask is not None and invol.size:
             invol[invol] = np.logical_and(invol[invol], self.mask[lin[invol]])
 
         return np.logical_not(invol)
@@ -581,7 +583,7 @@ class VolGeom(object):
         '''
         sh = self.shape
 
-        if not nt is None:
+        if nt is not None:
             sh = (sh[0], sh[1], sh[2], nt)
 
         data = np.zeros(sh)
@@ -646,7 +648,7 @@ class VolGeom(object):
 
         # see if the mask has to be dilated.
         # if all voxels are already in the mask this can be omitted
-        if not dilate is None and \
+        if dilate is not None and \
                     self.nvoxels_mask != self.nvoxels:
 
             if type(dilate) is int:
@@ -680,7 +682,7 @@ class VolGeom(object):
         sh = self.shape
         data_t1 = np.reshape(data_vec, sh[:3])
 
-        if not nt is None:
+        if nt is not None:
             sh = (sh[0], sh[1], sh[2], nt)
             data = np.zeros(sh, data_vec.dtype)
             for t in xrange(nt):
