@@ -121,9 +121,10 @@ class SVMTests(unittest.TestCase):
 
         # we should be able to print summary for the classifier
         clf_summary = clf.summary()
-        self.assertIn(" #SVs:", clf_summary)
-        self.assertIn(" #bounded_SVs:", clf_summary)
-        self.assertIn(" used_C:", clf_summary)
+        if externals.exists('libsvm') and isinstance(clf, libsvm.SVM):
+            self.assertIn(" #SVs:", clf_summary)
+            self.assertIn(" #bounded_SVs:", clf_summary)
+            self.assertIn(" used_C:", clf_summary)
 
         # on disbalanced
         e = cve(ds_)
