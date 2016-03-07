@@ -23,42 +23,50 @@ from mvpa2.featsel.helpers import FractionTailSelector, FixedNElementTailSelecto
 if __debug__:
     from mvpa2.base import debug
 
+
 def compute_feature_scores(datasets, exclude_from_model=None):
     """
     Takes a list of datasets and computes a magical feature
     score for each feature in each dataset
     :ref:`Haxby et al., Neuron (2011) <HGC+11>`
+
     Parameters
     ----------
-        datasets : list or tuple of datasets
-        
-        exclude_from_model: list of dataset indices that won't participate
+    datasets : list or tuple of datasets
+
+    exclude_from_model: list of dataset indices that won't participate
                     in voxel selection of others
 
     Returns
     -------
-        list : a list of feature scores; higher the score, better the feature
+    list : a list of feature scores; higher the score, better the feature
 
     NOTE: This function assumes that the datasets are zscored
     """
     if exclude_from_model is None:
-        exclude_from_model=[]
-    feature_scores = [ np.zeros(sd.nfeatures) for sd in datasets ]
+        exclude_from_model = []
+    feature_scores = [np.zeros(sd.nfeatures) for sd in datasets]
     for i, sd in enumerate(datasets):
         for j, sd2 in enumerate(datasets[i+1:]):
-            corr_temp= np.dot(sd.samples.T, sd2.samples)
-            if  j+i+1 not in exclude_from_model:                
-                feature_scores[i] = feature_scores[i] + np.max(corr_temp, axis = 1)
+            corr_temp = np.dot(sd.samples.T, sd2.samples)
+            if j+i+1 not in exclude_from_model:
+                feature_scores[i] += np.max(corr_temp, axis=1)
             if i not in exclude_from_model:
-                feature_scores[j+i+1] = feature_scores[j+i+1] + np.max(corr_temp, axis = 0)
+                feature_scores[j + i + 1] += np.max(corr_temp, axis=0)
     return feature_scores
 
 
 class HyperalignmentMeasure(Measure):
-    is_trained=True
+    """
+    HyperalignmentMeasure combines feature selection and hyperalignment
+    into a single node. This facilitates it's usage in any searchlight
+    or ROI.
+    """
+    is_trained = True
+
     def __init__(self, ndatasets, hyperalignment, scale=0.0, ref_ds=0,
-            featsel=1.0 ,full_matrix=True, use_same_features=False, 
-            exclude_from_model=None, dtype='float64', **kwargs):
+                 featsel=1.0, full_matrix=True, use_same_features=False,
+                 exclude_from_model=None, dtype='float64', **kwargs):
         Measure.__init__(self, **kwargs)
         self.ndatasets = ndatasets
         self.hyperalignment = hyperalignment
@@ -77,7 +85,7 @@ class HyperalignmentMeasure(Measure):
         nsamples = dataset.nsamples/self.ndatasets
         nfeatures = dataset.nfeatures
         seed_index = np.where(dataset.fa.roi_seed)
-        if self.scale>0.0:
+        if self.scale > 0.0:
             dist = np.sum(np.abs(dataset.fa.voxel_indices-dataset.fa.voxel_indices[seed_index]), axis=1)
             dist = np.exp(-(self.scale*dist/np.float(max(dist)) )**2)
             dataset.samples = dataset.samples*dist
@@ -91,61 +99,61 @@ class HyperalignmentMeasure(Measure):
         if self.featsel != 1.0:
             # computing feature scores from the data
             feature_scores = compute_feature_scores(ds, self.exclude_from_model)
-            if self.featsel <1.0:
+            if self.featsel < 1.0:
                 fselector = FractionTailSelector(self.featsel, tail='upper', mode='select',sort=False)
             else:
                 fselector = FixedNElementTailSelector(np.floor(self.featsel), tail='upper', mode='select',sort=False)
             # XXX Artificially make the seed_index feature score high to keep it(?)
             if self.use_same_features:
-                if len(self.exclude_from_model)>0:
+                if len(self.exclude_from_model):
                     feature_scores = [feature_scores[ifs] for ifs in range(len(self.ndatasets)) 
-                                        if ifs not in self.exclude_from_model]
+                                      if ifs not in self.exclude_from_model]
                 feature_scores = np.mean(np.asarray(feature_scores),axis=0)
                 feature_scores[seed_index] = max(feature_scores)
                 features_selected = fselector(feature_scores)
-                ds = [ sd[:, features_selected] for sd in ds]
+                ds = [sd[:, features_selected] for sd in ds]
             else:
                 features_selected = []
                 for fs in feature_scores:
                     fs[seed_index] = max(fs)
                     features_selected.append(fselector(fs))
-                ds = [ sd[:, fsel] for fsel,sd in zip(features_selected, ds)]
+                ds = [sd[:, fsel] for fsel, sd in zip(features_selected, ds)]
         # Try hyperalignment
         try:
             # it is crucial to retrain hyperalignment, otherwise it would simply
             # project into the common space of a previous iteration
-            if len(self.exclude_from_model)==0:
+            if len(self.exclude_from_model) == 0:
                 self.hyperalignment.train(ds)
             else:
                 self.hyperalignment.train([ds[i] for i in range(len(ds)) 
-                                            if i not in self.exclude_from_model])
+                                          if i not in self.exclude_from_model])
             mappers = self.hyperalignment(ds)
             if mappers[0].proj.dtype is self.dtype:
-                mappers = [ m.proj for m in mappers]
+                mappers = [m.proj for m in mappers]
             else:
-                mappers = [ m.proj.astype(self.dtype) for m in mappers]
+                mappers = [m.proj.astype(self.dtype) for m in mappers]
             if self.featsel != 1.0:
                 # Reshape the projection matrix from selected to all features
-                mappers_full = [ np.zeros((nfeatures,nfeatures)) for im in range(len(mappers))]
+                mappers_full = [np.zeros((nfeatures,nfeatures)) for im in range(len(mappers))]
                 if self.use_same_features:
-                    for mf,m in zip(mappers_full, mappers):
-                        mf[np.ix_(features_selected, features_selected)]=m
+                    for mf, m in zip(mappers_full, mappers):
+                        mf[np.ix_(features_selected, features_selected)] = m
                 else:
                     for mf,m,fsel in zip(mappers_full, mappers, features_selected):
-                        mf[np.ix_(fsel, features_selected[self.ref_ds])]=m
+                        mf[np.ix_(fsel, features_selected[self.ref_ds])] = m
                 mappers = mappers_full
         except LinAlgError:
             print "SVD didn't converge. Try with a new reference, may be."
             mappers = [np.eye(nfeatures, dtype='int')]*self.ndatasets
         # Extract only the row/column corresponding to the center voxel if full_matrix is False
         if not self.full_matrix:
-            mappers = [ np.squeeze(m[:,seed_index]) for m in mappers]
+            mappers = [np.squeeze(m[:, seed_index]) for m in mappers]
         # Package results
         results = np.asanyarray([{'proj': mapper} for mapper in mappers])
         # Add residual errors to the seed voxel to be used later to weed out bad SLs(?)
         if 'residual_errors' in self.hyperalignment.ca.enabled:
-            [ result.update({'residual_error': self.hyperalignment.ca['residual_errors'][ires]})
-                    for ires, result in enumerate(results)]
+            [result.update({'residual_error': self.hyperalignment.ca['residual_errors'][ires]})
+             for ires, result in enumerate(results)]
         return Dataset(samples=results)
 
 
@@ -156,12 +164,12 @@ class SearchlightHyperalignment(ClassWithCollections):
 
     """
     ref_ds = Parameter(0, allowedtype='int', min=0,
-            doc="""Index of a dataset to use as a reference. First dataset
+             doc="""Index of a dataset to use as a reference. First dataset
              is used as default. 
-            If you supply exclude_from_model list, you should 
+             If you supply exclude_from_model list, you should
              supply the ref_ds index as index after you remove those excluded datasets """)
 
-    sl = Parameter( sphere_searchlight(None, radius=3, add_center_fa=True, nblocks=19), allowedtype='Searchlight',
+    sl = Parameter(sphere_searchlight(None, radius=3, add_center_fa=True, nblocks=19), allowedtype='Searchlight',
             doc="""Searchlight instance with datameasure as None & add_center_fa=True.
             """)
 
