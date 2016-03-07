@@ -9,7 +9,7 @@
 
 """Unit tests for CoSMoMVPA dataset (http://cosmomvpa.org)"""
 
-from mvpa2.testing.tools import assert_raises, ok_, assert_true, \
+from mvpa2.testing.tools import assert_raises, assert_false, assert_true, \
     assert_equal, assert_array_equal, assert_array_almost_equal, \
     with_tempfile
 from mvpa2.testing import skip_if_no_external
@@ -391,3 +391,26 @@ def test_fmri_to_cosmo():
     _assert_set_equal(fa_dict.keys(), fa_keys)
     for k in fa_keys:
         assert_array_almost_equal(fa_dict[k].T, pymvpa_ds.fa[k].value)
+
+
+
+def test_cosmo_empty_dataset():
+    ds = Dataset(np.zeros((0, 0)))
+    c = cosmo.map2cosmo(ds)
+    assert_equal(c['samples'].shape, (0, 0))
+
+
+
+def test_cosmo_do_not_store_unsupported_datatype():
+    ds = Dataset(np.zeros((0, 0)))
+
+    class ArbitraryClass(object):
+        pass
+
+    ds.a['unused'] = ArbitraryClass()
+    c = cosmo.map2cosmo(ds)
+    assert_false('a' in c.keys())
+
+    ds.a['foo'] = np.zeros((1,))
+    c = cosmo.map2cosmo(ds)
+    assert_true('a' in c.keys())

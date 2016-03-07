@@ -55,6 +55,8 @@ Releases
     - Crossvalidation can now operate with a None generator (i.e. partitioner) using
       solely Splitter to generate a single split on original dataset.  Provides easier
       means for "cross-classification"
+    - :class:`~mvpa2.measures.nnsearchlight.M1NNSearchlight` can now do classification
+      based on correlation distance (just provide `dfx=one_minus_correlation` to kNN)
 
   * New functionality
 
