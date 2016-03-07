@@ -349,10 +349,11 @@ def _attributes_dict2cosmo(ds):
                 dtypes.append((k, 'O'))
                 values.append(value)
 
-            dtype = np.dtype(dtypes)
-            arr = np.array([[tuple(values)]], dtype=dtype)
+            if len(dtypes) > 0:
+                dtype = np.dtype(dtypes)
+                arr = np.array([[tuple(values)]], dtype=dtype)
 
-            cosmo[fieldname] = arr
+                cosmo[fieldname] = arr
 
     return cosmo
 
@@ -489,17 +490,20 @@ def _check_cosmo_dataset(cosmo):
 
     # ignore NaNs and infinity
     nonzero_msk = np.logical_and(np.isfinite(samples), samples != 0)
-    max_nonzero = np.max(np.abs(samples[nonzero_msk]))
 
-    # see how many decimals in the largest absolute value
-    decimals_nonzero = np.log10(max_nonzero)
+    if np.any(nonzero_msk):
+        max_nonzero = np.max(np.abs(samples[nonzero_msk]))
 
-    if abs(decimals_nonzero) > warn_for_extreme_values_decimals:
-        msg = ('Samples have extreme values, maximum absolute value is %s; '
-               'This may affect some analyses. Considering scaling the samples, '
-               'e.g. by a factor of 10**%d ' % (
-               max_nonzero, -decimals_nonzero))
-        warning(msg)
+        # see how many decimals in the largest absolute value
+        decimals_nonzero = np.log10(max_nonzero)
+
+        if abs(decimals_nonzero) > warn_for_extreme_values_decimals:
+            msg = (
+                'Samples have extreme values, maximum absolute value is %s; '
+                'This may affect some analyses. Considering scaling the samples, '
+                'e.g. by a factor of 10**%d ' % (
+                    max_nonzero, -decimals_nonzero))
+            warning(msg)
 
 
 
