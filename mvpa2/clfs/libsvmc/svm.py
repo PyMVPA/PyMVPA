@@ -34,7 +34,7 @@ if __debug__:
 
 # we better expose those since they are mentioned in docstrings
 # although pylint would not be happy
-from mvpa2.clfs.libsvmc._svmc import \
+from mvpa2.clfs.libsvmc.svmc import \
      C_SVC, NU_SVC, EPSILON_SVR, \
      NU_SVR, LINEAR, POLY, RBF, SIGMOID, \
      PRECOMPUTED, ONE_CLASS
