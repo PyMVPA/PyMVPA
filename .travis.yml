@@ -44,7 +44,7 @@ before_install:
     - echo "install.packages(c('energy', 'elasticnet'), '$PWD/R-libs', repos='http://cran.r-project.org')" | R --no-save
 install:
     - make
-    - if [ ! -z "$COVERAGE" ]; then pip install --user -v coveralls; fi
+    - if [ ! -z "$COVERAGE" ]; then pip install --user -v coveralls codecov; fi
     - if [ ! -z "$DUECREDIT_ENABLE"]; then pip install --user -v duecredit; fi
 script:
     # Run only nonlabile tests
@@ -57,7 +57,7 @@ script:
     - if [ ! -z "$COVERAGE" ]; then make coveragecmdline; fi
     - make build PYTHON=python3
 after_success:
-    - if [ ! -z "$COVERAGE" ]; then coveralls; fi
+    - if [ ! -z "$COVERAGE" ]; then coveralls; codecov; fi
 deploy:
   provider: pypi
   distributions: sdist
