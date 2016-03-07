@@ -33,7 +33,8 @@ before_install:
     # Optional Python modules
     # Note: it looks like the line could be truncated, thus spreading them through multiple lines
     - travis_retry sudo apt-get install shogun-python-modular $PY-psutil $PY-sklearn
-    - travis_retry sudo pip install -e git://github.com/mdp-toolkit/mdp-toolkit#egg=MDP
+    # Current MDP master after "native 3.x compatibility" RF causes failures, so to be enabled in another PR
+    # - travis_retry sudo pip install -e git://github.com/mdp-toolkit/mdp-toolkit#egg=MDP
     - travis_retry sudo apt-get install liblapack-dev $PY-statsmodels $PY-reportlab ipython
     - travis_retry sudo apt-get install $PY-pywt $PY-lxml $PY-pprocess $PY-nipy $PY-joblib
     - travis_retry sudo apt-get install python3-dev   # for rudimentary testing of conversion
