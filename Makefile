@@ -19,10 +19,10 @@ WWW_UPLOAD_URI_DEV=dev.pymvpa.org:/home/www/dev.pymvpa.org/pymvpa
 DATA_HOST=data.pymvpa.org
 DATA_DIR=datadb
 DATA_SUBDIRS='$(DATA_DIR)/tutorial_data \
-				 $(DATA_DIR)/mnist \
-				 $(DATA_DIR)/face_inversion_demo \
-				 $(DATA_DIR)/hyperalignment_tutorial_data \
-				 $(DATA_DIR)/haxby2001'
+                  $(DATA_DIR)/mnist \
+                  $(DATA_DIR)/face_inversion_demo \
+                  $(DATA_DIR)/hyperalignment_tutorial_data \
+                  $(DATA_DIR)/haxby2001'
 DATA_UPLOAD_URI=$(DATA_HOST):/home/www/data.pymvpa.org/www/datasets
 SWARMTOOL_DIR=tools/codeswarm
 SWARMTOOL_DIRFULL=$(CURDIR)/$(SWARMTOOL_DIR)
@@ -713,8 +713,7 @@ bdist_mpkg: 3rd
 fetch-data:
 	echo "I: fetching data from datadb"
 	[ -e datadb ] || mkdir -p datadb
-	rsync $(RSYNC_OPTS) $(DATA_HOST)::$(DATA_SUBDIRS) \
-				$(DATA_DIR)/
+	rsync $(RSYNC_OPTS) $(DATA_HOST)::$(DATA_SUBDIRS) $(DATA_DIR)/
 	for ds in datadb/*; do \
 		echo " I: looking at $$ds"; \
 		cd $(CURDIR)/$${ds} && \
