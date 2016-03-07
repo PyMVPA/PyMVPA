@@ -175,16 +175,16 @@ class SVM(_SVM):
 
         if 'C' in self.params:  # svm_type in [_svm.svmc.C_SVC]:
             Cs = self._get_cvec(dataset)
-            if len(Cs)>1:
+            if len(Cs) > 1:
                 C0 = abs(Cs[0])
                 scale = 1.0/(C0)#*np.sqrt(C0))
                 # so we got 1 C per label
                 uls = self._attrmap.to_numeric(targets_sa.unique)
                 if len(Cs) != len(uls):
-                    raise ValueError, "SVM was parameterized with %d Cs but " \
-                          "there are %d labels in the dataset" % \
-                          (len(Cs), len(targets_sa.unique))
-                weight = [ c*scale for c in Cs ]
+                    raise ValueError(
+                        "SVM was parameterized with %d Cs but there are %d "
+                        "labels in the dataset" % (len(Cs), len(targets_sa.unique)))
+                weight = [c * scale for c in Cs]
                 # All 3 need to be set to take an effect
                 libsvm_param._set_parameter('weight', weight)
                 libsvm_param._set_parameter('nr_weight', len(weight))
@@ -263,18 +263,17 @@ class SVM(_SVM):
         """
         s = super(SVM, self).summary()
         if self.trained:
-            s += '\n # of SVs: %d' % self.__model.get_total_n_sv()
+            s += '\n #SVs:%d' % self.__model.get_total_n_sv()
             try:
-                prm = _svm.svmc.svm_model_param_get(self.__model.model)
-                C = _svm.svmc.svm_parameter_C_get(prm)
+                param = self.__model.model.param
+                C = param.C
                 # extract information of how many SVs sit inside the margin,
                 # i.e. so called 'bounded SVs'
                 inside_margin = np.sum(
                     # take 0.99 to avoid rounding issues
-                    np.abs(self.__model.get_sv_coef())
-                          >= 0.99*_svm.svmc.svm_parameter_C_get(prm))
-                s += ' #bounded SVs:%d' % inside_margin
-                s += ' used C:%5g' % C
+                    np.abs(self.__model.get_sv_coef()) >= 0.99 * param.C)
+                s += ' #bounded_SVs:%d' % inside_margin
+                s += (' used_C:%-5g' % C).rstrip()
             except:
                 pass
         return s
