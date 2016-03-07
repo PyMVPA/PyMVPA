@@ -33,7 +33,10 @@ before_install:
     # Optional Python modules
     # Note: it looks like the line could be truncated, thus spreading them through multiple lines
     - travis_retry sudo apt-get install shogun-python-modular $PY-psutil $PY-sklearn
-    - travis_retry sudo pip install -e git://github.com/mdp-toolkit/mdp-toolkit#egg=MDP
+    # Current MDP master after "native 3.x compatibility" RF causes failures, so to be enabled in another PR
+    # - travis_retry sudo pip install -e git://github.com/mdp-toolkit/mdp-toolkit#egg=MDP
+    # Install from Yarik's branch for now with a workaround for exec
+    - travis_retry sudo pip install https://github.com/yarikoptic/mdp-toolkit/archive/bf-exec.zip
     - travis_retry sudo apt-get install liblapack-dev $PY-statsmodels $PY-reportlab ipython
     - travis_retry sudo apt-get install $PY-pywt $PY-lxml $PY-pprocess $PY-nipy $PY-joblib
     - travis_retry sudo apt-get install python3-dev   # for rudimentary testing of conversion
@@ -43,7 +46,7 @@ before_install:
     - echo "install.packages(c('energy', 'elasticnet'), '$PWD/R-libs', repos='http://cran.r-project.org')" | R --no-save
 install:
     - make
-    - if [ ! -z "$COVERAGE" ]; then pip install --user -v coveralls; fi
+    - if [ ! -z "$COVERAGE" ]; then pip install --user -v coveralls codecov; fi
     - if [ ! -z "$DUECREDIT_ENABLE"]; then pip install --user -v duecredit; fi
 script:
     # Run only nonlabile tests
@@ -56,7 +59,7 @@ script:
     - if [ ! -z "$COVERAGE" ]; then make coveragecmdline; fi
     - make build PYTHON=python3
 after_success:
-    - if [ ! -z "$COVERAGE" ]; then coveralls; fi
+    - if [ ! -z "$COVERAGE" ]; then coveralls; codecov; fi
 deploy:
   provider: pypi
   distributions: sdist

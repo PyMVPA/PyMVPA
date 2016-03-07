@@ -54,6 +54,7 @@ class SVMTests(unittest.TestCase):
         import mvpa2.support.copy as copy
         try:
             nl_clf.untrain()
+            nl_clf_copy_ = copy.copy(nl_clf)
             nl_clf_copy = copy.deepcopy(nl_clf)
         except:
             self.fail(msg="Failed to deepcopy not-yet trained SVM %s" % nl_clf)
@@ -104,26 +105,30 @@ class SVMTests(unittest.TestCase):
         # ballanced set
         # Lets add a bit of noise to drive classifier nuts. same
         # should be done for disballanced set
-        ds__.samples = ds__.samples + \
-                       0.5 * np.random.normal(size=(ds__.samples.shape))
+        ds__.samples += 0.5 * np.random.normal(size=(ds__.samples.shape))
         #
         # disballanced set
         # lets overpopulate label 0
         times = 20
         ds_ = ds[(range(ds.nsamples) + range(ds.nsamples//2) * times)]
-        ds_.samples = ds_.samples + \
-                      0.5 * np.random.normal(size=(ds_.samples.shape))
+        ds_.samples += 0.5 * np.random.normal(size=(ds_.samples.shape))
         spl = get_nsamples_per_attr(ds_, 'targets') #_.samplesperlabel
-        #print ds_.targets, ds_.chunks
 
         cve = CrossValidation(clf, NFoldPartitioner(), enable_ca='stats')
         # on balanced
         e = cve(ds__)
         tpr_1 = cve.ca.stats.stats["TPR"][1]
 
+        # we should be able to print summary for the classifier
+        clf_summary = clf.summary()
+        if externals.exists('libsvm') and isinstance(clf, libsvm.SVM):
+            self.assertIn(" #SVs:", clf_summary)
+            self.assertIn(" #bounded_SVs:", clf_summary)
+            self.assertIn(" used_C:", clf_summary)
+
         # on disbalanced
         e = cve(ds_)
-        tpr_2 =  cve.ca.stats.stats["TPR"][1]
+        tpr_2 = cve.ca.stats.stats["TPR"][1]
 
         # Set '1 C per label'
         # recreate cvte since previous might have operated on copies
@@ -167,7 +172,7 @@ class SVMTests(unittest.TestCase):
 
         if externals.exists('libsvm'):
             self.assertRaises(TypeError, libsvm.SVM, C=1.0, nu=2.3)
-            self.assertRaises(TypeError, libsvm.SVM,  C=1.0, nu=2.3)
+            self.assertRaises(TypeError, libsvm.SVM, C=1.0, nu=2.3)
             self.assertRaises(TypeError, LinearNuSVMC, C=2.3)
             self.assertRaises(TypeError, LinearCSVMC, nu=2.3)
 
@@ -179,7 +184,7 @@ class SVMTests(unittest.TestCase):
     @sweepargs(clf=clfswh['svm', 'linear', '!meta', 'C_SVC'][:1])
     def test_C_on_int_dataset(self, clf):
         a = np.arange(8, dtype=np.int16).reshape(4,-1)
-        a[0,0] = 322           # the value which would overflow
+        a[0, 0] = 322           # the value which would overflow
         self.assertTrue(np.isfinite(clf._get_default_c(a)))
 
 def suite():  # pragma: no cover
