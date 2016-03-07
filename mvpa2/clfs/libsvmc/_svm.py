@@ -18,8 +18,8 @@ import numpy as np
 
 from mvpa2.base.types import is_sequence_type
 
-from mvpa2.clfs.libsvmc import _svmc as svmc
-from mvpa2.clfs.libsvmc._svmc import C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, \
+from mvpa2.clfs.libsvmc import svmc
+from mvpa2.clfs.libsvmc.svmc import C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, \
                                   NU_SVR, LINEAR, POLY, RBF, SIGMOID, \
                                   PRECOMPUTED
 
@@ -91,7 +91,7 @@ class SVMParameter(object):
         """Internal class to to avoid memory leaks returning away svmc's params"""
 
         def __init__(self, params):
-            self.param = svmc.new_svm_parameter()
+            self.param = svmc.svm_parameter()
             for attr, val in params.items():
                 # adjust val if necessary
                 if attr == 'weight_label':
@@ -105,15 +105,14 @@ class SVMParameter(object):
                     # no need?
                     # free_double_array(self.weight)
                 # set the parameter through corresponding call
-                set_func = getattr(svmc, 'svm_parameter_%s_set' % (attr))
-                set_func(self.param, val)
+                setattr(self.param, attr, val)
 
         def __del__(self):
             if __debug__:
                 debug('SVM_', 'Destroying libsvm._SVMCParameter %s' % str(self))
-            free_int_array(svmc.svm_parameter_weight_label_get(self.param))
-            free_double_array(svmc.svm_parameter_weight_get(self.param))
-            svmc.delete_svm_parameter(self.param)
+            free_int_array(self.param.weight_label)
+            free_double_array(self.param.weight)
+            del self.param
 
 
     def __init__(self, **kw):
@@ -214,7 +213,7 @@ def seq_to_svm_node(x):
 class SVMProblem:
     def __init__(self, y, x):
         assert len(y) == len(x)
-        self.prob = prob = svmc.new_svm_problem()
+        self.prob = prob = svmc.svm_problem()
         self.size = size = len(y)
 
         self.y_array = y_array = svmc.new_double(size)
@@ -238,9 +237,9 @@ class SVMProblem:
         # bind to instance
         self.data = data
         self.maxlen = maxlen
-        svmc.svm_problem_l_set(prob, size)
-        svmc.svm_problem_y_set(prob, y_array)
-        svmc.svm_problem_x_set(prob, x_matrix)
+        prob.l = size
+        prob.y = y_array
+        prob.x = x_matrix
 
 
     def __repr__(self):
@@ -248,14 +247,17 @@ class SVMProblem:
 
 
     def __del__(self):
-        if __debug__:
+        if __debug__ and debug is not None:
             debug('SVM_', 'Destroying libsvm.SVMProblem %s' % `self`)
 
-        svmc.delete_svm_problem(self.prob)
-        svmc.delete_double(self.y_array)
+        del self.prob
+        if svmc is not None:
+            svmc.delete_double(self.y_array)
         for i in range(self.size):
-            svmc.svm_node_array_destroy(self.data[i])
-        svmc.svm_node_matrix_destroy(self.x_matrix)
+            if self.data:
+                del self.data[0]
+            #svmc.svm_node_array_destroy(self.data[i])
+        del self.x_matrix
 
 
 
@@ -408,14 +410,15 @@ class SVMModel:
 
 
     def __del__(self):
-        if __debug__:
+        if __debug__ and debug:
             # TODO: place libsvm versioning information into externals
             debug('SVM_', 'Destroying libsvm v. %s SVMModel %s',
-                  (hasattr(svmc, '__version__') \
+                  (svmc is not None \
+                   and hasattr(svmc, '__version__') \
                    and svmc.__version__ or "unknown",
                    `self`))
         try:
-            svmc.svm_destroy_model_helper(self.model)
+            del self.model
         except Exception, e:
             # blind way to overcome problem of already deleted model and
             # "SVMModel instance has no attribute 'model'" in  ignored
@@ -426,15 +429,15 @@ class SVMModel:
 
     ##REF: Name was automagically refactored
     def get_total_n_sv(self):
-        return svmc.svm_model_l_get(self.model)
+        return self.model.l
 
 
     ##REF: Name was automagically refactored
     def get_n_sv(self):
         """Returns a list with the number of support vectors per class.
         """
-        return [ svmc.int_getitem(svmc.svm_model_nSV_get( self.model ), i) 
-                    for i in range( self.nr_class ) ]
+        return [ svmc.int_getitem(self.model.nSV, i)
+                 for i in range( self.nr_class ) ]
 
 
     ##REF: Name was automagically refactored
@@ -444,7 +447,7 @@ class SVMModel:
         array( nSV x <nFeatures>)
         """
         return svmc.svm_node_matrix2numpy_array(
-                    svmc.svm_model_SV_get(self.model),
+                    self.model.SV,
                     self.get_total_n_sv(),
                     self.prob.maxlen)
 
@@ -480,7 +483,7 @@ class SVMModel:
         This way no byte of storage is wasted but imho such setup is quite convolved
         """
         return svmc.doubleppcarray2numpy_array(
-                    svmc.svm_model_sv_coef_get(self.model),
+                    self.model.sv_coef,
                     self.nr_class - 1,
                     self.get_total_n_sv())
 
@@ -488,5 +491,4 @@ class SVMModel:
     ##REF: Name was automagically refactored
     def get_rho(self):
         """Return constant(s) in decision function(s) (if multi-class)"""
-        return double_array_to_list(svmc.svm_model_rho_get(self.model),
-                                self.nr_class * (self.nr_class-1)//2)
+        return double_array_to_list(self.model.rho, self.nr_class * (self.nr_class-1)//2)
