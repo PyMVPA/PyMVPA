@@ -69,12 +69,30 @@ class FeatureSelection(SliceMapper):
         self._oshape = None
         self.filler = filler
 
-
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(FeatureSelection, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['filler'], default=0))
 
+    def __iadd__(self, other):
+        out = super(FeatureSelection, self).__iadd__(other)
+        if out is self:
+            # adjust our own attributes
+            # if one of them was not trained, we can't say we are trained
+            if self.is_trained != other.is_trained:
+                self.untrain()
+            elif hasattr(other, '_oshape'):
+                self._oshape = other._oshape
+            else:
+                # we can't know now
+                self._oshape = None
+        elif out is NotImplemented:
+            pass  # for paranoid
+        else:
+            raise RuntimeError("Must have not reached here")
+        return out
 
     def _forward_data(self, data):
         """Map data from the original dataspace into featurespace.
@@ -94,7 +112,7 @@ class FeatureSelection(SliceMapper):
     def _forward_dataset(self, dataset):
         # XXX this should probably not affect the source dataset, but right now
         # init_origid is not flexible enough
-        if not self.get_space() is None:
+        if self.get_space() is not None:
             # TODO need to do a copy first!!!
             dataset.init_origids('features', attr=self.get_space())
         # invoke super class _forward_dataset, this calls, _forward_dataset
@@ -214,7 +232,9 @@ class StaticFeatureSelection(FeatureSelection):
         self.__orig_slicearg = slicearg
         self._safe_assign_slicearg(slicearg)
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(FeatureSelection, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['dshape', 'oshape']))
@@ -397,11 +417,15 @@ class IterativeFeatureSelection(FeatureSelection):
         self._bestdetector = bestdetector
         self._train_pmeasure = train_pmeasure
 
+    # TODO!
+    #def __repr__(self):
+    #    raise NotImplementedError
 
     def _untrain(self):
         if __debug__:
             debug("FS_", "Untraining Iterative FS: %s" % self)
-        self._fmeasure.untrain()
+        if self._fmeasure is not None:
+            self._fmeasure.untrain()
         if self._pmeasure is not None:
             self._pmeasure.untrain()
         # ask base class to do its untrain

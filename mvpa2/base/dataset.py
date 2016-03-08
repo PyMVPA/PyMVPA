@@ -10,12 +10,13 @@
 
 __docformat__ = 'restructuredtext'
 
+from os.path import lexists
 import numpy as np
 import copy
 
 from mvpa2.base import externals, cfg, warning
 from mvpa2.base.collections import SampleAttributesCollection, \
-        FeatureAttributesCollection, DatasetAttributesCollection
+    FeatureAttributesCollection, DatasetAttributesCollection
 from mvpa2.base.types import is_datasetlike
 from mvpa2.base.dochelpers import _str, _strid
 
@@ -25,8 +26,9 @@ if __debug__:
 __REPR_STYLE__ = cfg.get('datasets', 'repr', 'full')
 
 if not __REPR_STYLE__ in ('full', 'str'):
-    raise ValueError, "Incorrect value %r for option datasets.repr." \
-          " Valid are 'full' and 'str'." % __REPR_STYLE__
+    raise ValueError("Incorrect value %r for option datasets.repr."
+                     " Valid are 'full' and 'str'." % __REPR_STYLE__)
+
 
 class AttrDataset(object):
     """Generic storage class for datasets with multiple attributes.
@@ -222,7 +224,7 @@ class AttrDataset(object):
                 "array-like.")
         if not len(samples.shape):
             raise ValueError("Only `samples` with at least one axis are "
-                    "supported (got: %i)" % len(samples.shape))
+                             "supported (got: %i)" % len(samples.shape))
 
         # handling of 1D-samples
         # i.e. 1D is treated as multiple samples with a single feature
@@ -236,15 +238,14 @@ class AttrDataset(object):
         # collections
         # Number of samples is .shape[0] for sparse matrix support
         self.sa = SampleAttributesCollection(length=len(self))
-        if not sa is None:
+        if sa is not None:
             self.sa.update(sa)
         self.fa = FeatureAttributesCollection(length=self.nfeatures)
-        if not fa is None:
+        if fa is not None:
             self.fa.update(fa)
         self.a = DatasetAttributesCollection()
-        if not a is None:
+        if a is not None:
             self.a.update(a)
-
 
     def init_origids(self, which, attr='origids', mode='new'):
         """Initialize the dataset's 'origids' attribute.
@@ -284,18 +285,18 @@ class AttrDataset(object):
         thisid = str(id(self))
         legal_modes = ('raise', 'existing', 'new')
         if not mode in legal_modes:
-            raise ValueError, "Incorrect mode %r. Known are %s." % \
-                  (mode, legal_modes)
+            raise ValueError("Incorrect mode %r. Known are %s."
+                             % (mode, legal_modes))
         if which in ('samples', 'both'):
             if attr in self.sa:
                 if mode == 'existing':
                     return
                 elif mode == 'raise':
-                    raise RuntimeError, \
-                          "Attribute %r already known to %s" % (attr, self.sa)
+                    raise RuntimeError("Attribute %r already known to %s"
+                                       % (attr, self.sa))
             ids = np.array(['%s-%i' % (thisid, i)
-                                for i in xrange(self.samples.shape[0])])
-            if self.sa.has_key(attr):
+                            for i in xrange(self.samples.shape[0])])
+            if attr in self.sa:
                 self.sa[attr].value = ids
             else:
                 self.sa[attr] = ids
@@ -304,31 +305,27 @@ class AttrDataset(object):
                 if mode == 'existing':
                     return
                 elif mode == 'raise':
-                    raise RuntimeError, \
-                          "Attribute %r already known to %s" % (attr, self.fa)
+                    raise RuntimeError("Attribute %r already known to %s"
+                                       % (attr, self.fa))
             ids = np.array(['%s-%i' % (thisid, i)
-                                for i in xrange(self.samples.shape[1])])
-            if self.fa.has_key(attr):
+                            for i in xrange(self.samples.shape[1])])
+            if attr in self.fa:
                 self.fa[attr].value = ids
             else:
                 self.fa[attr] = ids
 
-
     def __copy__(self):
         return self.copy(deep=False)
-
 
     def __deepcopy__(self, memo=None):
         return self.copy(deep=True, memo=memo)
 
-
     def __reduce__(self):
         return (self.__class__,
-                    (self.samples,
-                     dict(self.sa),
-                     dict(self.fa),
-                     dict(self.a)))
-
+                (self.samples,
+                 dict(self.sa),
+                 dict(self.fa),
+                 dict(self.a)))
 
     def copy(self, deep=True, sa=None, fa=None, a=None, memo=None):
         """Create a copy of a dataset.
@@ -380,7 +377,6 @@ class AttrDataset(object):
                          % (_strid(out), _strid(self)))
         return out
 
-
     def append(self, other):
         """This method should not be used and will be removed in the future"""
         warning("AttrDataset.append() is deprecated and will be removed. "
@@ -403,8 +399,7 @@ class AttrDataset(object):
         # concat all samples attributes
         for k, v in other.sa.iteritems():
             self.sa[k].value = np.concatenate((self.sa[k].value, v.value),
-                                             axis=0)
-
+                                              axis=0)
 
     def __getitem__(self, args):
         """
@@ -502,28 +497,26 @@ class AttrDataset(object):
         # and after a long way instantiate the new dataset of the same type
         return self.__class__(samples, sa=sa, fa=fa, a=a)
 
-
     def __repr_full__(self):
         return "%s(%s, sa=%s, fa=%s, a=%s)" \
-                % (self.__class__.__name__,
-                   repr(self.samples),
-                   repr(self.sa),
-                   repr(self.fa),
-                   repr(self.a))
-
+               % (self.__class__.__name__,
+                  repr(self.samples),
+                  repr(self.sa),
+                  repr(self.fa),
+                  repr(self.a))
 
     def __str__(self):
         samplesstr = 'x'.join(["%s" % x for x in self.shape])
         samplesstr += '@%s' % self.samples.dtype
         cols = [str(col).replace(col.__class__.__name__, label)
-                    for col, label in [(self.sa, 'sa'),
-                                       (self.fa, 'fa'),
-                                       (self.a, 'a')] if len(col)]
+                for col, label in [(self.sa, 'sa'),
+                                   (self.fa, 'fa'),
+                                   (self.a, 'a')] if len(col)]
         # include only collections that have content
         return _str(self, samplesstr, *cols)
 
-    __repr__ = {'full' : __repr_full__,
-                'str'  : __str__}[__REPR_STYLE__]
+    __repr__ = {'full': __repr_full__,
+                'str':  __str__}[__REPR_STYLE__]
 
     def __array__(self, *args):
         """Provide an 'array' view or copy over dataset.samples
@@ -545,10 +538,8 @@ class AttrDataset(object):
                 "methods. Container type is %s." % type(self.samples))
         return self.samples.__array__(*args)
 
-
     def __len__(self):
         return self.shape[0]
-
 
     @classmethod
     def from_hdf5(cls, source, name=None):
@@ -586,7 +577,7 @@ class AttrDataset(object):
             own_file = True
             hdf = h5py.File(source, 'r')
 
-        if not name is None:
+        if name is not None:
             # some HDF5 subset is requested
             if not name in hdf:
                 raise ValueError("Cannot find '%s' group in HDF file %s.  "
@@ -598,26 +589,93 @@ class AttrDataset(object):
             res = hdf2obj(dsgrp)
             if not isinstance(res, AttrDataset):
                 # TODO: unittest before committing
-                raise ValueError, "%r in %s contains %s not a dataset.  " \
-                      "File contains groups: %s." \
-                      % (name, source, type(res), hdf.keys())
+                raise ValueError("%r in %s contains %s not a dataset.  "
+                                 "File contains groups: %s."
+                                 % (name, source, type(res), hdf.keys()))
         else:
             # just consider the whole file
             res = hdf2obj(hdf)
             if not isinstance(res, AttrDataset):
                 # TODO: unittest before committing
-                raise ValueError, "Failed to load a dataset from %s.  " \
-                      "Loaded %s instead." \
-                      % (source, type(res))
+                raise ValueError("Failed to load a dataset from %s.  "
+                                 "Loaded %s instead."
+                                 % (source, type(res)))
         if own_file:
             hdf.close()
         return res
 
+    def to_npz(self, filename, compress=True):
+        """Save dataset to a .npz file storing all fa/sa/a which are ndarrays
+
+        Parameters
+        ----------
+        filename : str
+        compress : bool, optional
+          If True, savez_compressed is used
+        """
+        savez = np.savez_compressed if compress else np.savez
+        if not filename.endswith('.npz'):
+            filename += '.npz'
+        entries = {'samples': self.samples}
+        skipped = []
+        for c in ('a', 'fa', 'sa'):
+            col = getattr(self, c)
+            for k in col:
+                v = col[k].value
+                e = '%s.%s' % (c, k)
+                if isinstance(v, np.ndarray):
+                    entries[e] = v
+                else:
+                    skipped.append(e)
+        if skipped:
+            warning("Skipping %s since not ndarrays" % (', '.join(skipped)))
+        return savez(filename, **entries)
+
+    @classmethod
+    def from_npz(cls, filename):
+        """Load dataset from NumPy's .npz file, as e.g. stored by to_npz
+
+        File expected to have 'samples' item, which serves as samples, and
+        other items prefixed with the corresponding collection (e.g. 'sa.' or
+        'fa.').  All other entries are skipped
+
+        Parameters
+        ----------
+        filename: str
+          Filename for the .npz file.  Can be specified without .npz suffix
+
+        """
+        # some sugaring
+        filename_npz = filename + '.npz'
+        if not lexists(filename) and not filename.endswith('.npz') and lexists(filename_npz):
+            filename = filename_npz
+
+        entries = np.load(filename)
+
+        cols = {'a': {}, 'fa': {}, 'sa': {}}
+        skipped = []
+        for e, v in entries.items():
+            if e == 'samples':
+                samples = v
+            else:
+                if '.' not in e:
+                    skipped.append(e)
+                    continue
+                c, k = e.split('.', 1)
+                if c not in cols:
+                    skipped.append(e)
+                    continue
+                cols[c][k] = v
+        if skipped:
+            warning("Skipped following items since do not belong to any of "
+                    "known collections: %s" % (", ".join(sorted(skipped))))
+        return cls(samples, **cols)
+
 
     # shortcut properties
     nsamples = property(fget=len)
-    nfeatures = property(fget=lambda self:self.shape[1])
-    shape = property(fget=lambda self:self.samples.shape)
+    nfeatures = property(fget=lambda self: self.shape[1])
+    shape = property(fget=lambda self: self.samples.shape)
 
 
 def datasetmethod(func):
@@ -811,8 +869,8 @@ def all_equal(x, y):
 
     # eq could be a numpy array or similar. See if it has a length
     try:
-        len(eq) # that's fine, so we can zip x and y (below)
-                # and compare by elements
+        len(eq)  # that's fine, so we can zip x and y (below)
+                 # and compare by elements
     except TypeError:
         # if it's just a bool (or boolean-like, such as numpy.bool_)
         # then see if it is True or not
@@ -835,6 +893,7 @@ def all_equal(x, y):
 
     # do a recursive call on all elements
     return all(all_equal(xx, yy) for (xx, yy) in zip(x, y))
+
 
 def _stack_add_equal_dataset_attributes(merged_dataset, datasets, a=None):
     """Helper function for vstack and hstack to find dataset
@@ -886,11 +945,10 @@ def _stack_add_equal_dataset_attributes(merged_dataset, datasets, a=None):
     allowed_values = ['unique', 'uniques', 'drop_nonunique', 'all']
     if not a in allowed_values:
         raise ValueError("a should be an int or one of "
-                        "%r" % allowed_values)
+                         "%r" % allowed_values)
 
     # consider all keys that are present in at least one dataset
     all_keys = set.union(*[set(dataset.a.keys()) for dataset in datasets])
-
 
     def _contains(xs, y, comparator=all_equal):
         for x in xs:
@@ -915,8 +973,8 @@ def _stack_add_equal_dataset_attributes(merged_dataset, datasets, a=None):
                 elif not _contains(values, value):
                     if a == 'unique':
                         raise DatasetError("Not unique dataset attribute value "
-                                         " for %s: %s and %s" %
-                                            (key, values[0], value))
+                                           " for %s: %s and %s"
+                                           % (key, values[0], value))
                     else:
                         add_key = False
                         break
@@ -955,6 +1013,7 @@ def _expand_attribute(attr, length, attr_name):
     except TypeError:
         # make sequence of identical value matching the desired length
         return np.repeat(attr, length)
+
 
 def stack_by_unique_sample_attribute(dataset, sa_label):
     """Performs hstack based on unique values in sa_label
@@ -1039,6 +1098,7 @@ def _get_unique_attribute_masks(xs, raise_unequal_count=True):
                                  ' %s != %s' % (i, h, h0))
     return unq, masks
 
+
 def split_by_sample_attribute(ds, sa_label, raise_unequal_count=True):
     '''Splits a dataset based on unique values of a sample attribute
 
@@ -1062,10 +1122,11 @@ def split_by_sample_attribute(ds, sa_label, raise_unequal_count=True):
         else:
             return sum([split_by_sample_attribute(sa, sa_label[1:],
                                                   raise_unequal_count)
-                                for sa in sas], [])
+                        for sa in sas], [])
 
-    _, masks = _get_unique_attribute_masks(ds.sa[sa_label].value,
-                                    raise_unequal_count=raise_unequal_count)
+    _, masks = _get_unique_attribute_masks(
+        ds.sa[sa_label].value,
+        raise_unequal_count=raise_unequal_count)
 
     return [ds[mask, :].copy(deep=False) for mask in masks]
 
@@ -1093,13 +1154,13 @@ def split_by_feature_attribute(ds, fa_label, raise_unequal_count=True):
         else:
             return sum([split_by_feature_attribute(fa, fa_label[1:],
                                                    raise_unequal_count)
-                                for fa in fas], [])
+                        for fa in fas], [])
 
-    _, masks = _get_unique_attribute_masks(ds.fa[fa_label].value,
-                                    raise_unequal_count=raise_unequal_count)
+    _, masks = _get_unique_attribute_masks(
+        ds.fa[fa_label].value,
+        raise_unequal_count=raise_unequal_count)
 
     return [ds[:, mask].copy(deep=False) for mask in masks]
-
 
 
 class DatasetError(Exception):

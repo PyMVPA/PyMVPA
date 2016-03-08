@@ -225,7 +225,7 @@ class PolyDetrendMapper(Mapper):
             if not is_sequence_type(polyord):
                 # repeat to be proper length
                 polyord = [polyord] * len(uchunks)
-            elif not chunks_attr is None and len(polyord) != len(uchunks):
+            elif chunks_attr is not None and len(polyord) != len(uchunks):
                 raise ValueError("If you specify a sequence of polyord values "
                                  "they sequence length must match the "
                                  "number of unique chunks in the dataset.")
@@ -235,7 +235,7 @@ class PolyDetrendMapper(Mapper):
             update_polycoords = True
             # if the dataset know about the inspace we can store the
             # polycoords right away
-            if not inspace is None and inspace in ds.sa:
+            if inspace is not None and inspace in ds.sa:
                 self._polycoords = ds.sa[inspace].value
                 update_polycoords = False
             else:
@@ -249,7 +249,7 @@ class PolyDetrendMapper(Mapper):
 
                 # create the timespan
                 polycoords, polycoords_scaled = self._get_polycoords(ds, cinds)
-                if update_polycoords and not polycoords is None:
+                if update_polycoords and polycoords is not None:
                     self._polycoords[cinds] = polycoords
                 # create each polyord with the value for that chunk
                 for n in range(polyord[n] + 1):
@@ -262,7 +262,7 @@ class PolyDetrendMapper(Mapper):
             self._polycoords = None
 
         # see if add in optional regs
-        if not opt_reg is None:
+        if opt_reg is not None:
             # add in the optional regressors, too
             for oreg in opt_reg:
                 reg.append(ds.sa[oreg].value[np.newaxis].T)
@@ -297,7 +297,7 @@ class PolyDetrendMapper(Mapper):
                              " and was trained on %i)."
                              % (len(ds), len(regs)))
         # do we have to handle the polynomial space somehow?
-        if not inspace is None:
+        if inspace is not None:
             if inspace in ds.sa:
                 space_coords = ds.sa[inspace].value
                 # this dataset has some notion about our polyspace

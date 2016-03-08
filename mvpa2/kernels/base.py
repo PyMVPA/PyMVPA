@@ -125,7 +125,7 @@ class Kernel(ClassWithCollections):
     def _compute(self, d1, d2):
         """Specific implementation to be overridden
         """
-        raise NotImplemented, "Abstract method"
+        raise NotImplementedError("Abstract method")
 
     def computed(self, *args, **kwargs):
         """Compute kernel and return self

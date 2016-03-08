@@ -677,7 +677,7 @@ class ClassifiersTests(unittest.TestCase):
         # Otherwise multiclass libsvm builtin and our MultiClass would differ
         # in results
         svm = clf.clone()                 # operate on clone to avoid side-effects
-        if svm.params.has_key('C') and svm.params.C<0:
+        if 'C' in svm.params and svm.params.C<0:
             svm.params.C = 1.0                 # reset C to be 1
         svm2 = svm.clone()
         svm2.ca.enable(['training_stats'])

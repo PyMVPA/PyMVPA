@@ -28,14 +28,16 @@ from mvpa2.measures.searchlight import sphere_searchlight, Searchlight
 from mvpa2.measures.gnbsearchlight import sphere_gnbsearchlight, \
      GNBSearchlight
 from mvpa2.clfs.gnb import GNB
+from mvpa2.clfs.distance import one_minus_correlation
 
 from mvpa2.measures.nnsearchlight import sphere_m1nnsearchlight, \
      M1NNSearchlight
 from mvpa2.clfs.knn import kNN
 
-from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere, HollowSphere
+from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere, HollowSphere, CachedQueryEngine
 from mvpa2.misc.errorfx import corr_error, mean_match_accuracy
-from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner
+from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner, CustomPartitioner
+from mvpa2.generators.splitters import Splitter
 from mvpa2.generators.permutation import AttributePermutator
 from mvpa2.measures.base import CrossValidation
 
@@ -109,6 +111,14 @@ class SearchlightTests(unittest.TestCase):
                  sphere_m1nnsearchlight,
                  NFoldPartitioner(1),
                  0.05),
+                # and now a new thing -- correlation distance errorfx
+                (ChainMapper(
+                   [mean_group_sample(['targets', 'partitions']),
+                    kNN(1, dfx=one_minus_correlation)], space='targets', descr='NF-M1NN'),
+                 kNN(1, dfx=one_minus_correlation),
+                 sphere_m1nnsearchlight, # it will get distance from kNN
+                 NFoldPartitioner(1),
+                 0.05),
                 ]
                )
     @sweepargs(do_roi=(False, True))
@@ -180,8 +190,12 @@ class SearchlightTests(unittest.TestCase):
                SL(sllrn, partitioner, indexsum='fancy', **skwargs)
                ]
 
+        indexsums = ['fancy']  # we are having another test below
         if externals.exists('scipy'):
-            sls += [ SL(sllrn, partitioner, indexsum='sparse', **skwargs)]
+            if not (isinstance(sllrn, kNN) and sllrn.dfx == one_minus_correlation):
+                sls += [ SL(sllrn, partitioner, indexsum='sparse', **skwargs)]
+                indexsums += ['sparce']
+                # for correlation distance we need to use "fancy" way
 
         # Test nproc just once
         if externals.exists('pprocess') and not self._tested_pprocess:
@@ -254,8 +268,7 @@ class SearchlightTests(unittest.TestCase):
             self.assertTrue(dmax <= 1e-13)
 
         # Test the searchlight's reuse of neighbors
-        for indexsum in ['fancy'] + (
-            externals.exists('scipy') and ['sparse'] or []):
+        for indexsum in indexsums:
             sl = SL(sllrn, partitioner, indexsum='fancy',
                     reuse_neighbors=True, **skwargs)
             mvpa2.seed()
@@ -761,6 +774,37 @@ class SearchlightTests(unittest.TestCase):
             # remove those generated left-over files
             for f in glob.glob(tfile + '*'):
                 os.unlink(f)
+
+    def test_cached_qe_gnbsearchlight(self):
+        ds1 = datasets['3dsmall'].copy(deep=True)
+        qe = IndexQueryEngine(myspace=Sphere(2))
+        cached_qe = CachedQueryEngine(qe)
+        gnb_sl = GNBSearchlight(GNB(), NFoldPartitioner(), qe=cached_qe)
+        res = gnb_sl(ds1)
+        assert_false(cached_qe.ids is None)
+
+    def test_gnbsearchlight_3partitions_and_splitter(self):
+        ds = self.dataset[:, :20]
+        # custom partitioner which provides 3 partitions
+        part = CustomPartitioner([([2], [3], [1])])
+        gnb_sl = sphere_gnbsearchlight(GNB(), part)
+        res_gnb_sl = gnb_sl(ds)
+
+        # compare results to full blown searchlight
+        sl = sphere_searchlight(CrossValidation(GNB(), part))
+        res_sl = sl(ds)
+
+        assert_datasets_equal(res_gnb_sl, res_sl)
+
+        # and theoretically for this simple single cross-validation we could
+        # just use Splitter
+        splitter = Splitter('chunks', [2, 3])
+        # we have to put explicit None since can't become a kwarg in 1 day any
+        # longer here
+        gnb_sl_ = sphere_gnbsearchlight(GNB(), None, splitter=splitter)
+        res_gnb_sl_ = gnb_sl_(ds)
+        assert_datasets_equal(res_gnb_sl, res_gnb_sl_)
+
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(SearchlightTests)

@@ -136,6 +136,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
     def __init__(self, generator, queryengine, errorfx=mean_mismatch_error,
                  indexsum=None,
                  reuse_neighbors=False,
+                 splitter=None,
                  **kwargs):
         """Initialize the base class for "naive" searchlight classifiers
 
@@ -156,6 +157,9 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
           Compute neighbors information only once, thus allowing for
           efficient reuse on subsequent calls where dataset's feature
           attributes remain the same (e.g. during permutation testing)
+        splitter : Splitter, optional
+          Which will be used to split partitioned datasets.  If None specified
+          then standard one operating on partitions will be used
         """
 
         # init base class first
@@ -163,6 +167,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
 
         self._errorfx = errorfx
         self._generator = generator
+        self._splitter = splitter
 
         # TODO: move into _call since resetting over default None
         #       obscures __repr__
@@ -188,10 +193,13 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         # Storage to be used for neighborhood information
         self.__roi_fids = None
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(SimpleStatBaseSearchlight, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['generator'])
+            + _repr_attrs(self, ['splitter'])
             + _repr_attrs(self, ['errorfx'], default=mean_mismatch_error)
             + _repr_attrs(self, ['indexsum'])
             + _repr_attrs(self, ['reuse_neighbors'], default=False)
@@ -357,8 +365,15 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         # indicies
         # XXX we could make it even more lightweight I guess...
         dataset_indicies = Dataset(np.arange(nsamples), sa=dataset.sa)
-        splitter = Splitter(attr=generator.get_space())
-        partitions = list(generator.generate(dataset_indicies))
+
+        splitter = Splitter(attr=generator.get_space(), attr_values=[1, 2]) \
+            if self._splitter is None \
+            else self._splitter
+
+        partitions = list(generator.generate(dataset_indicies)) \
+            if generator \
+            else [dataset_indicies]
+
         if __debug__:
             for p in partitions:
                 if not (np.all(p.sa[targets_sa_name].value == labels)):
@@ -369,7 +384,8 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         nsplits = len(partitions)
         # ATM we need to keep the splits instead since they are used
         # in two places in the code: step 2 and 5
-        splits = list(tuple(splitter.generate(ds_)) for ds_ in partitions)
+        # We care only about training and testing partitions (i.e. first two)
+        splits = list(tuple(splitter.generate(ds_))[:2] for ds_ in partitions)
         del partitions                    # not used any longer
 
         # 2. Figure out the new 'chunks x labels' blocks of combinations
@@ -484,9 +500,9 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         elif indexsum == 'fancy':
             indexsum_fx = lastdim_columnsums_fancy_indexing
         else:
-            raise ValueError, \
+            raise ValueError(
                   "Do not know how to deal with indexsum=%s" % indexsum
-
+            )
         # Store roi_fids
         if self.reuse_neighbors and self.__roi_fids is None:
             self.__roi_fids = roi_fids
@@ -562,6 +578,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         return out
 
     generator = property(fget=lambda self: self._generator)
+    splitter = property(fget=lambda self: self._splitter)
     errorfx = property(fget=lambda self: self._errorfx)
     indexsum = property(fget=lambda self: self._indexsum)
     reuse_neighbors = property(fget=lambda self: self.__reuse_neighbors)

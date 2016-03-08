@@ -457,16 +457,21 @@ class SensitivityAnalysersTests(unittest.TestCase):
         od_intersect = fs(self.dataset)
         assert_true(od_intersect.nfeatures < od_union.nfeatures)
 
-    def test_anova(self):
+    @sweepargs(do_int=(False, True))
+    def test_anova(self, do_int):
         """Additional aspects of OnewayAnova
         """
         oa = OneWayAnova()
         oa_custom = OneWayAnova(space='custom')
 
-        ds = datasets['uni4large']
-        ds_custom = Dataset(ds.samples, sa={'custom' : ds.targets})
+        ds = datasets['uni4large'].copy()
+        if do_int:
+            ds.samples = (ds.samples * 1000).astype(np.int)
+        ds_samples_orig = ds.samples.copy()  # to verify that nothing was modified
+        ds_custom = Dataset(ds.samples, sa={'custom': ds.targets})
 
         r = oa(ds)
+        assert_array_equal(ds.samples, ds_samples_orig)  # no inplace changes!
         self.assertRaises(KeyError, oa_custom, ds)
         r_custom = oa_custom(ds_custom)
 
@@ -477,6 +482,17 @@ class SensitivityAnalysersTests(unittest.TestCase):
         r_custom2 = oa_custom(ds_custom)
         self.assertTrue(np.allclose(r.samples, r2.samples))
         self.assertTrue(np.allclose(r_custom.samples, r_custom2.samples))
+
+        skip_if_no_external('scipy')
+        from scipy.stats.stats import f_oneway
+        # compare against scipy implementation
+        # we need to create groups of those target samples
+        groups = [
+            ds[ds.targets == ut]
+            for ut in ds.sa['targets'].unique
+        ]
+        spf, spp = f_oneway(*groups)
+        assert_array_almost_equal(r.samples[0], spf)
 
 
     def test_transfer_measure(self):

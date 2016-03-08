@@ -22,6 +22,7 @@ if externals.exists('scipy', raise_=True):
     from scipy.spatial.distance import pdist, squareform
     from scipy.stats import rankdata, pearsonr
 
+
 class PDist(Measure):
     """Compute dissimiliarity matrix for samples in a dataset
 
@@ -30,7 +31,7 @@ class PDist(Measure):
     n is the number of samples.
     """
 
-    is_trained = True # Indicate that this measure is always trained.
+    is_trained = True  # Indicate that this measure is always trained.
 
     pairwise_metric = Parameter('correlation', constraints='str', doc="""\
           Distance metric to use for calculating pairwise vector distances for
@@ -60,15 +61,15 @@ class PDist(Measure):
 
         Measure.__init__(self, **kwargs)
 
-    def _call(self,ds):
+    def _call(self, ds):
 
         data = ds.samples
         # center data if specified
         if self.params.center_data:
-            data = data - np.mean(data,0)
+            data = data - np.mean(data, 0)
 
         # get dsm
-        dsm = pdist(data,metric=self.params.pairwise_metric)
+        dsm = pdist(data, metric=self.params.pairwise_metric)
 
         # if square return value make dsm square
         if self.params.square:
@@ -120,7 +121,6 @@ class PDistConsistency(Measure):
           If True return the square distance matrix, if False, returns the
           flattened upper triangle.""")
 
-
     def __init__(self, **kwargs):
         """
         Returns
@@ -149,23 +149,24 @@ class PDistConsistency(Measure):
         chunks = []
         for chunk in dataset.sa[chunks_attr].unique:
             data = np.atleast_2d(
-                    dataset.samples[dataset.sa[chunks_attr].value == chunk,:])
+                dataset.samples[dataset.sa[chunks_attr].value == chunk, :])
             if self.params.center_data:
-                data = data - np.mean(data,0)
+                data = data - np.mean(data, 0)
             dsm = pdist(data, self.params.pairwise_metric)
             dsms.append(dsm)
             chunks.append(chunk)
         dsms = np.vstack(dsms)
 
-        if self.params.consistency_metric=='spearman':
+        if self.params.consistency_metric == 'spearman':
             dsms = np.apply_along_axis(rankdata, 1, dsms)
         corrmat = np.corrcoef(dsms)
         if self.params.square:
             ds = Dataset(corrmat, sa={self.params.chunks_attr: chunks})
         else:
-            ds = Dataset(squareform(corrmat,checks=False),
+            ds = Dataset(squareform(corrmat, checks=False),
                          sa=dict(pairs=list(combinations(chunks, 2))))
         return ds
+
 
 class PDistTargetSimilarity(Measure):
     """Calculate the correlations of PDist measures with a target
@@ -184,9 +185,9 @@ class PDistTargetSimilarity(Measure):
           all possible metrics.""")
 
     comparison_metric = Parameter('pearson',
-                                   constraints=EnsureChoice('pearson',
-                                                            'spearman'),
-                                   doc="""\
+                                  constraints=EnsureChoice('pearson',
+                                                           'spearman'),
+                                  doc="""\
           Similarity measure to be used for comparing dataset DSM with the
           target DSM.""")
 
@@ -210,7 +211,7 @@ class PDistTargetSimilarity(Measure):
         -------
         Dataset
           If ``corrcoef_only`` is True, contains one feature: the correlation
-          coefficient (rho); or otherwise two-fetaures: rho plus p.
+          coefficient (rho); or otherwise two-features: rho plus p.
         """
         # init base classes first
         Measure.__init__(self, **kwargs)
@@ -218,15 +219,15 @@ class PDistTargetSimilarity(Measure):
         if self.params.comparison_metric == 'spearman':
             self.target_dsm = rankdata(target_dsm)
 
-    def _call(self,dataset):
+    def _call(self, dataset):
         data = dataset.samples
         if self.params.center_data:
-            data = data - np.mean(data,0)
-        dsm = pdist(data,self.params.pairwise_metric)
-        if self.params.comparison_metric=='spearman':
+            data = data - np.mean(data, 0)
+        dsm = pdist(data, self.params.pairwise_metric)
+        if self.params.comparison_metric == 'spearman':
             dsm = rankdata(dsm)
-        rho, p = pearsonr(dsm,self.target_dsm)
+        rho, p = pearsonr(dsm, self.target_dsm)
         if self.params.corrcoef_only:
             return Dataset([rho], fa={'metrics': ['rho']})
         else:
-            return Dataset([[rho,p]], fa={'metrics': ['rho', 'p']})
+            return Dataset([[rho, p]], fa={'metrics': ['rho', 'p']})

@@ -39,10 +39,12 @@ class SliceMapper(Mapper):
             slicearg = [slicearg]
         self._slicearg = slicearg
         # if we got some sort of slicearg we assume that we are ready to go
-        if not slicearg is None:
+        if slicearg is not None:
             self._set_trained()
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(SliceMapper, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['slicearg']))
@@ -83,7 +85,7 @@ class SliceMapper(Mapper):
                 # see comment above
                 return NotImplemented
         # list or tuple are alike
-        if isinstance(this, list) or isinstance(this, tuple):
+        if isinstance(this, (list, tuple)):
             # simply convert it into an array and proceed from there
             this = np.asanyarray(this)
         if this.dtype.type is np.bool_:

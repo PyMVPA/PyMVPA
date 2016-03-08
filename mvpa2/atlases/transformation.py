@@ -82,10 +82,10 @@ class SpaceTransformation(TransformationBase):
 
         TransformationBase.__init__(self, *args, **kwargs)
 
-        if not voxelSize is None: self.voxelSize = np.asarray(voxelSize)
+        if voxelSize is not None: self.voxelSize = np.asarray(voxelSize)
         else: self.voxelSize = 1
 
-        if not origin is None: self.origin = np.asarray(origin)
+        if origin is not None: self.origin = np.asarray(origin)
         else: self.origin = 0
 
         if to_real_space:

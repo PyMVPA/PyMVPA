@@ -156,7 +156,7 @@ class UnivariateStatsModels(FeaturewiseMeasure):
         if add_constant:
             self._exog = sm.add_constant(exog)
         self._res = res
-        if isinstance(res, np.ndarray) or isinstance(res, (list, tuple)):
+        if isinstance(res, (np.ndarray, list, tuple)):
             self._res = np.atleast_1d(res)
         self._model_gen = model_gen
 
@@ -203,7 +203,7 @@ class UnivariateStatsModels(FeaturewiseMeasure):
                 sa = ['fvalue', 'pvalue', 'df_num', 'df_denom']
         elif isinstance(res, str):
             sa = [res] * len(results)
-        if not sa is None:
+        if sa is not None:
             sa = {'descr': sa}
         # reassign the input feature attributes to the results
         return Dataset(results, sa=sa, fa=dataset.fa)

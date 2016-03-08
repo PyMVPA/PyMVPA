@@ -183,6 +183,7 @@ if externals.exists('statsmodels'):
     from mvpa2.measures.statsmodels_adaptor import *
 from mvpa2.measures.irelief import *
 from mvpa2.measures.base import *
+from mvpa2.measures.fx import *
 from mvpa2.measures.noiseperturbation import *
 from mvpa2.misc.neighborhood import *
 from mvpa2.measures.searchlight import *
@@ -203,8 +204,6 @@ from mvpa2.misc import *
 from mvpa2.misc.io import *
 from mvpa2.misc.io.base import *
 from mvpa2.misc.io.meg import *
-if externals.exists('cPickle') and externals.exists('gzip'):
-    from mvpa2.misc.io.hamster import *
 from mvpa2.misc.fsl import *
 from mvpa2.misc.bv import *
 from mvpa2.misc.bv.base import *
@@ -279,9 +278,11 @@ if externals.exists("running ipython env"):
     except Exception, e:
         warning("Failed to activate custom IPython completions due to %s" % e)
 
-def suite_stats(scope_dict={}):
+def suite_stats(scope_dict=None):
     """Return cruel dict of things which evil suite provides
     """
+    if scope_dict is None:
+        scope_dict = {}
 
     scope_dict = scope_dict or globals()
     import types

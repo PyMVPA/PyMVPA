@@ -110,7 +110,7 @@ def afni_niml_zscore_makefull_wizard(cfg):
     group_postfix = cfg.get('grouppostfix', None)
     if group_postfix is None:
         group_postfix = _smart_filename_decode(fns, 'postfix')
-        if not group_postfix is None:
+        if group_postfix is not None:
             print "Using automatic postfix %s" % group_postfix
 
     overwrite = cfg['overwrite']
@@ -122,7 +122,7 @@ def afni_niml_zscore_makefull_wizard(cfg):
         pad_to_ico_ld = cfg.get('pad_to_ico_ld', None)
         if pad_to_ico_ld is None:
             pad_to_ico_ld = _smart_filename_decode(fns, 'pad_to_ico_ld')
-            if not pad_to_ico_ld is None:
+            if pad_to_ico_ld is not None:
                 pad_to_node = pad_to_ico_ld * pad_to_ico_ld * 10 + 2
                 print "Using automatic pad_to_ico_ld=%r, pad_to_node=%r" % (pad_to_ico_ld, pad_to_node)
 
