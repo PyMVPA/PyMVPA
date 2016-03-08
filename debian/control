@@ -48,6 +48,7 @@ Recommends:
          python-pprocess,
          python-statsmodels,
          python-joblib,
+         python-duecredit,
 Suggests:
          fslview, fsl,
          python-mvpa2-doc,
