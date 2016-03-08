@@ -1,3 +1,13 @@
+pymvpa2 (2.4.2-1) unstable; urgency=medium
+
+  * Fresh upstream release
+    - compatible with swig 3 (Closes: #817000)
+  * debian/control
+    - boosted policy to 3.9.7
+    - relaxed build-depends
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 07 Mar 2016 20:35:31 -0500
+
 pymvpa2 (2.4.1-1) unstable; urgency=medium
 
   * Fresh upstream release
