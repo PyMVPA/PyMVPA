@@ -10,11 +10,12 @@
 import numpy as np
 from mvpa2.base.state import ClassWithCollections
 from mvpa2.base.param import Parameter
+from mvpa2.base.constraints import *
 from mvpa2.algorithms.hyperalignment import Hyperalignment
 from mvpa2.measures.base import Measure
 from mvpa2.datasets import Dataset, vstack
 from mvpa2.mappers.staticprojection import StaticProjectionMapper
-from scipy.linalg import LinAlgError
+from numpy.linalg import LinAlgError
 from mvpa2.measures.searchlight import sphere_searchlight
 from mvpa2.mappers.zscore import zscore
 from scipy.sparse import coo_matrix, dok_matrix, csc_matrix
@@ -22,6 +23,15 @@ from mvpa2.featsel.helpers import FractionTailSelector, FixedNElementTailSelecto
 
 if __debug__:
     from mvpa2.base import debug
+    if 'SHPAL' in debug.active:
+        def _shpaldebug(msg):
+            debug('SHPAL', "%s" % msg)
+    else:
+        def _shpaldebug(*args):
+            return None
+else:
+    def _shpaldebug(*args):
+        return None
 
 
 def compute_feature_scores(datasets, exclude_from_model=None):
@@ -47,9 +57,9 @@ def compute_feature_scores(datasets, exclude_from_model=None):
         exclude_from_model = []
     feature_scores = [np.zeros(sd.nfeatures) for sd in datasets]
     for i, sd in enumerate(datasets):
-        for j, sd2 in enumerate(datasets[i+1:]):
+        for j, sd2 in enumerate(datasets[i + 1:]):
             corr_temp = np.dot(sd.samples.T, sd2.samples)
-            if j+i+1 not in exclude_from_model:
+            if j + i + 1 not in exclude_from_model:
                 feature_scores[i] += np.max(corr_temp, axis=1)
             if i not in exclude_from_model:
                 feature_scores[j + i + 1] += np.max(corr_temp, axis=0)
@@ -82,33 +92,33 @@ class HyperalignmentMeasure(Measure):
 
     def _call(self, dataset):
         ds = []
-        nsamples = dataset.nsamples/self.ndatasets
+        nsamples = dataset.nsamples / self.ndatasets
         nfeatures = dataset.nfeatures
         seed_index = np.where(dataset.fa.roi_seed)
         if self.scale > 0.0:
-            dist = np.sum(np.abs(dataset.fa.voxel_indices-dataset.fa.voxel_indices[seed_index]), axis=1)
-            dist = np.exp(-(self.scale*dist/np.float(max(dist)) )**2)
-            dataset.samples = dataset.samples*dist
+            dist = np.sum(np.abs(dataset.fa.voxel_indices - dataset.fa.voxel_indices[seed_index]), axis=1)
+            dist = np.exp(-(self.scale * dist / np.float(max(dist))) ** 2)
+            dataset.samples = dataset.samples * dist
         # Creating a list of datasets for hyperalignment
         for i in range(self.ndatasets):
             # XXX this should rather be a Splitter taking the dataset apart
             # based on a sample attribute
-            ds.append(dataset[0+i*nsamples:nsamples*(i+1),])
+            ds.append(dataset[0 + i * nsamples:nsamples * (i + 1), ])
         # Voxel selection within Searchlight
         # Usual metric of between-subject between-voxel correspondence
         if self.featsel != 1.0:
             # computing feature scores from the data
             feature_scores = compute_feature_scores(ds, self.exclude_from_model)
             if self.featsel < 1.0:
-                fselector = FractionTailSelector(self.featsel, tail='upper', mode='select',sort=False)
+                fselector = FractionTailSelector(self.featsel, tail='upper', mode='select', sort=False)
             else:
-                fselector = FixedNElementTailSelector(np.floor(self.featsel), tail='upper', mode='select',sort=False)
+                fselector = FixedNElementTailSelector(np.floor(self.featsel), tail='upper', mode='select', sort=False)
             # XXX Artificially make the seed_index feature score high to keep it(?)
             if self.use_same_features:
                 if len(self.exclude_from_model):
-                    feature_scores = [feature_scores[ifs] for ifs in range(len(self.ndatasets)) 
+                    feature_scores = [feature_scores[ifs] for ifs in range(len(self.ndatasets))
                                       if ifs not in self.exclude_from_model]
-                feature_scores = np.mean(np.asarray(feature_scores),axis=0)
+                feature_scores = np.mean(np.asarray(feature_scores), axis=0)
                 feature_scores[seed_index] = max(feature_scores)
                 features_selected = fselector(feature_scores)
                 ds = [sd[:, features_selected] for sd in ds]
@@ -125,8 +135,8 @@ class HyperalignmentMeasure(Measure):
             if len(self.exclude_from_model) == 0:
                 self.hyperalignment.train(ds)
             else:
-                self.hyperalignment.train([ds[i] for i in range(len(ds)) 
-                                          if i not in self.exclude_from_model])
+                self.hyperalignment.train([ds[i] for i in range(len(ds))
+                                           if i not in self.exclude_from_model])
             mappers = self.hyperalignment(ds)
             if mappers[0].proj.dtype is self.dtype:
                 mappers = [m.proj for m in mappers]
@@ -134,17 +144,17 @@ class HyperalignmentMeasure(Measure):
                 mappers = [m.proj.astype(self.dtype) for m in mappers]
             if self.featsel != 1.0:
                 # Reshape the projection matrix from selected to all features
-                mappers_full = [np.zeros((nfeatures,nfeatures)) for im in range(len(mappers))]
+                mappers_full = [np.zeros((nfeatures, nfeatures)) for im in range(len(mappers))]
                 if self.use_same_features:
                     for mf, m in zip(mappers_full, mappers):
                         mf[np.ix_(features_selected, features_selected)] = m
                 else:
-                    for mf,m,fsel in zip(mappers_full, mappers, features_selected):
+                    for mf, m, fsel in zip(mappers_full, mappers, features_selected):
                         mf[np.ix_(fsel, features_selected[self.ref_ds])] = m
                 mappers = mappers_full
         except LinAlgError:
             print "SVD didn't converge. Try with a new reference, may be."
-            mappers = [np.eye(nfeatures, dtype='int')]*self.ndatasets
+            mappers = [np.eye(nfeatures, dtype='int')] * self.ndatasets
         # Extract only the row/column corresponding to the center voxel if full_matrix is False
         if not self.full_matrix:
             mappers = [np.squeeze(m[:, seed_index]) for m in mappers]
@@ -161,70 +171,74 @@ class SearchlightHyperalignment(ClassWithCollections):
     """
     Given a list of datasets, provide a list of mappers
     into common space using searchlight based hyperalignment.
-
+    :ref:`Guntupalli et al., Cerebral Cortex (2016)`
     """
-    ref_ds = Parameter(0, allowedtype='int', min=0,
-             doc="""Index of a dataset to use as a reference. First dataset
-             is used as default. 
-             If you supply exclude_from_model list, you should
-             supply the ref_ds index as index after you remove those excluded datasets """)
+    """
+    TODO:
+    Update Parameter constraints from allowedtype
+    """
+    ref_ds = Parameter(0, constraints='int', min=0,
+                       doc="""Index of a dataset to use as a reference. First dataset
+                            is used as default.
+                            If you supply exclude_from_model list, you should
+                            supply the ref_ds index as index after you remove those excluded datasets.""")
 
-    sl = Parameter(sphere_searchlight(None, radius=3, add_center_fa=True, nblocks=19), allowedtype='Searchlight',
-            doc="""Searchlight instance with datameasure as None & add_center_fa=True.
-            """)
+    sl = Parameter(sphere_searchlight(None, radius=3, add_center_fa=True, nblocks=19),
+                   # constraints='Searchlight',
+                   doc="""Searchlight instance with datameasure as None & add_center_fa=True.""")
 
-    sparse_radius = Parameter(None, allowedtype='int',
-            doc="""Radius supplied to scatter_neighborhoods. This is effectively the distance
-            between the centers where hyperalignment is performed in searchlights. If None, hyperalignment
-            is performed at every voxel.""")
+    sparse_radius = Parameter(None, constraints=(EnsureRange(min=1) & EnsureInt() | EnsureNone()),
+                              doc="""Radius supplied to scatter_neighborhoods in units of voxels.
+                                This is effectively the distance between the centers where hyperalignment
+                                is performed in searchlights.
+                                If None, hyperalignment is performed at every voxel (default).""")
 
     hyperalignment = Parameter(Hyperalignment(ref_ds=0),
-            doc="""Hyperalignment instance to be used in each searchlight sphere.
-            Default is just the Hyperalignment instance with default parameters.""")
+                               doc="""Hyperalignment instance to be used in each searchlight sphere.
+                                    Default is just the Hyperalignment instance with default parameters.""")
 
-    combine_neighbormappers = Parameter(True, allowedtype='bool',
-            doc="""This param determines whether to combine mappers for each voxel
-            from its neighborhood searchlights or just use the mapper for which it is the
-            center voxel.
-            Use this option with caution, as enabling it might square the runtime memory
-            requirement. If you run into memory issues, reduce the nproc in sl. """)
+    combine_neighbormappers = Parameter(True, constraints='bool',
+                                        doc="""This param determines whether to combine mappers for each voxel
+                                        from its neighborhood searchlights or just use the mapper for which it is the
+                                        center voxel.
+                                        Use this option with caution, as enabling it might square the runtime memory
+                                        requirement. If you run into memory issues, reduce the nproc in sl. """)
 
-    zscore_all = Parameter(False, allowedtype='bool',
-            doc="""Z-score all datasets prior hyperalignment.  Turn it off
-            if zscoring is not desired or was already performed. """)
+    compute_recon = Parameter(True, constraints='bool',
+                              doc="""This param determines whether to compute reverse mappers for each
+                              subject from common-space to subject space. These will be stored in the
+                              StaticProjectionMapper() and used when reverse() is called.
+                              Enabling it will double the size of the mappers returned.""")
 
-    compute_recon = Parameter(True, allowedtype='bool',
-            doc="""This param determines whether to compute reverse mappers for each 
-            subject from common-space to subject space. These will be stored in the
-            StaticProjectionMapper() and used when reverse() is called.
-            Enabling it will double the size of the mappers returned.""")
-    
-    featsel = Parameter(1.0, allowedtype='float',
-            doc="""Determines if feature selection will be performed in each searchlight.
-            1.0: Use all features. <1.0 is understood as selecting that proportion of
-            of feature in each searchlight using feature scores (Refer to the code);
-            >1.0 is understood as selecting at most that many features in each searchlight.""")
+    featsel = Parameter(1.0, constraints='float',
+                        doc="""Determines if feature selection will be performed in each searchlight.
+                        1.0: Use all features. < 1.0 is understood as selecting that proportion of features in each
+                        searchlight using feature scores;
+                        > 1.0 is understood as selecting at most that many features in each searchlight.""")
 
-    use_same_features = Parameter(False, allowedtype='bool',
-            doc="""Select same features when doing feature selection for all datasets.
-            If this is true, feature scores across datasets will be averaged to select best features""")
+    use_same_features = Parameter(False, constraints='bool',
+                                  doc="""Select same features when doing feature selection for all datasets.
+                                  If this is true, feature scores across datasets will be averaged to select
+                                  best features.""")
 
-    exclude_from_model = Parameter([], allowedtype='list',
-            doc="""List of dataset indices that will not participate in building common model.
-            These will still get mappers back but they don't influence the model or voxel selection.""")
+    exclude_from_model = Parameter([], constraints=EnsureListOf('int'),
+                                   doc="""List of dataset indices that will not participate in building common model.
+                                   These will still get mappers back but they don't influence the model
+                                   or voxel selection.""")
 
-    sparse_mode = Parameter('coo', allowedtype='str',
+    sparse_mode = Parameter('coo', constraints='str',
                             doc="""Via what type of sparse matrix to construct
                             the full projection matrix. Possible values are
                             'coo' (COOrdinate format; this is faster but
                             potentially more memory-hungry) or 'dok' (Dictionary
-                            Of Keys; .lower but incremental and less
+                            Of Keys; Slower but incremental and less
                             memory-hungry.""")
 
-    dtype = Parameter('float32', allowedtype='str',
-            doc="""dtype of elements transformation matrices to save on memory for big datasets""")
-            
+    dtype = Parameter('float32', constraints='str',
+                      doc="""dtype of elements transformation matrices to save on memory for big datasets""")
+
     def __init__(self, **kwargs):
+        _shpaldebug("Initiatlizing.")
         ClassWithCollections.__init__(self, **kwargs)
         self.params.sl.results_fx = self.results_fx
         self.params.sl.results_postproc_fx = self.results_postproc_fx
@@ -244,63 +258,57 @@ class SearchlightHyperalignment(ClassWithCollections):
         A list of trained StaticProjectionMappers of the same length as datasets
         """
         self.ndatasets = len(datasets)
-        ndatasets = self.ndatasets
         params = self.params
-        if __debug__:
-            debug('SHPAL', "SearchlightHyperalignment %s for %i datasets"
-                % (self, ndatasets))
+        _shpaldebug("SearchlightHyperalignment %s for %i datasets" % (self, self.ndatasets))
         if params.ref_ds in params.exclude_from_model:
-            raise ValueError, "Requested reference dataset %i is also " \
-                  "in the exclude list."% (params.ref_ds)            
+            raise (ValueError, "Requested reference dataset %i is also "
+                               "in the exclude list." % params.ref_ds)
         if params.ref_ds != params.hyperalignment.params.ref_ds:
-            print('SHPAL: Supplied ref_ds & hyperalignment instance ref_ds:%d differ.'%(params.hyperalignment.params.ref_ds))
-            print('SHPAL: using default hyperalignment instance with ref_ds: %d'%(params.ref_ds))
+            print('SHPAL: Supplied ref_ds & hyperalignment instance ref_ds:%d differ.'
+                  % params.hyperalignment.params.ref_ds)
+            print('SHPAL: using default hyperalignment instance with ref_ds: %d' % params.ref_ds)
             params.hyperalignment = Hyperalignment(ref_ds=params.ref_ds)
-        if params.ref_ds < 0 and params.ref_ds >= ndatasets:
-            raise ValueError, "Requested reference dataset %i is out of " \
-                  "bounds. We have only %i datasets provided" \
-                  % (params.ref_ds, ndatasets)
+        if params.ref_ds >= self.ndatasets:
+            raise (ValueError, "Requested reference dataset %i is out of "
+                               "bounds. We have only %i datasets provided" % (params.ref_ds, self.ndatasets))
         if len(params.exclude_from_model) > 0:
-            print('SHPAL: These datasets will not participate in building common model:'),
-            print params.exclude_from_model
+            print('SHPAL: These datasets will not participate in building common model:', params.exclude_from_model)
         # Setting up SearchlightHyperalignment
         slhyper = params.sl
         # we need to know which original features where comprising the
         # individual SL ROIs
         slhyper.ca.enable(['roi_feature_ids'])
+        _shpaldebug('Initializing HyperalignmentMeasure.')
         hmeasure = HyperalignmentMeasure(ndatasets=self.ndatasets, featsel=params.featsel, ref_ds=params.ref_ds,
-                      hyperalignment=params.hyperalignment, full_matrix=params.combine_neighbormappers,
-                      use_same_features=params.use_same_features, exclude_from_model=params.exclude_from_model, dtype=params.dtype)
+                                         hyperalignment=params.hyperalignment,
+                                         full_matrix=params.combine_neighbormappers,
+                                         use_same_features=params.use_same_features,
+                                         exclude_from_model=params.exclude_from_model, dtype=params.dtype)
         slhyper.datameasure = hmeasure
         if params.sparse_radius is not None:
+            _shpaldebug("Setting up sparse neighborhood")
             from mvpa2.misc.neighborhood import Sphere, scatter_neighborhoods
             if slhyper.roi_ids is None:
-                scoords, sidx = scatter_neighborhoods(Sphere(params.sparse_radius), 
+                scoords, sidx = scatter_neighborhoods(Sphere(params.sparse_radius),
                                                       datasets[params.ref_ds].fa.voxel_indices)
                 slhyper._BaseSearchlight__roi_ids = sidx
             else:
-                scoords, sidx = scatter_neighborhoods(Sphere(params.sparse_radius), 
+                scoords, sidx = scatter_neighborhoods(Sphere(params.sparse_radius),
                                                       datasets[params.ref_ds].fa.voxel_indices[slhyper.roi_ids])
                 slhyper._BaseSearchlight__roi_ids = [slhyper.roi_ids[sid] for sid in sidx]
-        # Zscoring time-series data if desired.
-        if params.zscore_all:
-            if __debug__:
-                debug('SHPAL', "Zscoring datasets")
-            for ds in datasets:
-                zscore(ds, chunks_attr=None)
-
         # XXX I think this class should already accept a single dataset only.
         # It should have a ``space`` setting that names a sample attribute that
         # can be used to identify individual/original datasets.
         # Taking a single dataset as argument would be cleaner, because the
         # algorithm relies on the assumption that there is a coarse feature
         # alignment, i.e. the SL ROIs cover roughly the same area
+        _shpaldebug('vstack-ing datasets.')
         datasets = vstack(datasets)
         self.nfeatures = datasets.nfeatures
-        #nfeatures = self.nfeatures                
-        if __debug__:
-            debug('SHPAL', "Performing Hyperalignment")
+        _shpaldebug("Performing Hyperalignment in searchlights")
         hmappers = slhyper(datasets).samples.tolist()
+        _shpaldebug("Finished Hyperalignment in searchlights.")
+        _shpaldebug("Clearing dataset variable.")
         datasets = None
         projections = [hm[0] for hm in hmappers]
         '''
@@ -353,6 +361,7 @@ class SearchlightHyperalignment(ClassWithCollections):
         # XXX Divide & Rule
         # chunk features into subsets and do them in series
         # initialize mappers
+        _shpaldebug("Postprocessing results.")
         ndatasets = self.ndatasets
         nfeatures = self.nfeatures
         params = self.params
@@ -360,20 +369,20 @@ class SearchlightHyperalignment(ClassWithCollections):
         if params.compute_recon:
             projections_recon = [csc_matrix((nfeatures, nfeatures), dtype=params.dtype) for i in range(ndatasets)]
         # Handle each results block
+        _shpaldebug("Handling results in postproc.")
         for res in results:
             roi_feature_ids_list = [rs_.a.roi_feature_ids for rs_ in res]
-            #res = hstack(rs)
             for isub in range(ndatasets):
                 if params.sparse_mode == 'coo':
                     proj = self._proj_via_coo(res.samples[isub,],
-                                                    [res.a.roi_feature_ids], nfeatures)
+                                              [res.a.roi_feature_ids], nfeatures)
                 else:
                     proj = self._proj_via_dok(res.samples[isub,],
-                                                    roi_feature_ids_list, nfeatures)
+                                              roi_feature_ids_list, nfeatures)
                 # Cleaning up the current subject's projections to free up memory
-                res[isub,].samples = [[]]*res.shape[1]
+                res[isub,].samples = [[]] * res.shape[1]
                 if params.compute_recon:
-                    proj_recon=proj[1]
+                    proj_recon = proj[1]
                     projections_recon[isub] = projections_recon[isub] + proj_recon
                 proj = proj[0]
                 projections[isub] = projections[isub] + proj
@@ -386,35 +395,37 @@ class SearchlightHyperalignment(ClassWithCollections):
         ndatasets = self.ndatasets
         nfeatures = self.nfeatures
         params = self.params
-        projections = [csc_matrix((nfeatures, nfeatures), dtype=params.dtype) for i in range(ndatasets)]             
+        projections = [csc_matrix((nfeatures, nfeatures), dtype=params.dtype) for i in range(ndatasets)]
+        _shpaldebug("Processing results in results_fx.")
         for rs in results:
             for isub, irs in enumerate(rs):
                 projections[isub] = projections[isub] + irs
         # Wrap StaticProjectionMapper around the matrices
         if params.compute_recon:
             projections = [StaticProjectionMapper(proj=proj, recon=proj.T) for proj in projections]
-        else:                
+        else:
             projections = [StaticProjectionMapper(proj=proj) for proj in projections]
         return projections
-    
+
     def _proj_via_coo(self, sl_results, roi_feature_id_list, nfeatures):
         """Construct the combined projection matrix via a COO sparse matrix"""
+        # _shpaldebug('Projectionv via COO sparse matrix.')
         params = self.params
-        #nseeds = len(sl_results)
-        I = [] # matrix element row
-        J = [] # matrix element column
-        V = [] # matrix element value
+        # nseeds = len(sl_results)
+        I = []  # matrix element row
+        J = []  # matrix element column
+        V = []  # matrix element value
         # track from how many ROIs each voxel receives "contributions"
         # regarding its projection
         nsls = np.zeros(nfeatures, dtype='int')
         # iterate over SL ROIs for the current mapper
-        for ivox,f in enumerate(sl_results):
+        for ivox, f in enumerate(sl_results):
             fproj = f['proj']
             roi_feature_ids = roi_feature_id_list[ivox]
             if not params.combine_neighbormappers:
                 I += roi_feature_ids
                 # in this case the projection is always a vector only
-                assert(len(fproj.shape) == 1)
+                assert (len(fproj.shape) == 1)
                 J += [ivox] * len(roi_feature_ids)
                 V += fproj.tolist()
                 # only the center voxel is affected by the projection
@@ -422,43 +433,43 @@ class SearchlightHyperalignment(ClassWithCollections):
                 nsls[ivox] += 1
             else:
                 # in this case we have a full projection matrix
-                assert(len(fproj.shape) == 2)
+                assert (len(fproj.shape) == 2)
                 for f2 in xrange(len(roi_feature_ids)):
                     I += roi_feature_ids
                     J += [roi_feature_ids[f2]] * len(roi_feature_ids)
-                    V += fproj[:,f2].tolist()
+                    V += fproj[:, f2].tolist()
                 # all voxels in the ROI are affected by the projection
                 nsls[roi_feature_ids] += 1
-        proj = coo_matrix((V,(I,J)), shape=(max(nfeatures, max(I)+1),
-                                            max(nfeatures,max(J)+1)), dtype=params.dtype)
+        proj = coo_matrix((V, (I, J)), shape=(max(nfeatures, max(I) + 1),
+                                              max(nfeatures, max(J) + 1)), dtype=params.dtype)
         if params.compute_recon:
-            proj_recon = coo_matrix((V,(J,I)), shape=(max(nfeatures, max(J)+1),
-                                            max(nfeatures,max(I)+1)), dtype=params.dtype)
+            proj_recon = coo_matrix((V, (J, I)), shape=(max(nfeatures, max(J) + 1),
+                                                        max(nfeatures, max(I) + 1)), dtype=params.dtype)
             return proj.tocsc(), proj_recon.tocsc(), nsls
         else:
             return proj.tocsc(), nsls
 
-
     def _proj_via_dok(self, sl_results, roi_feature_id_list, nfeatures):
         """Construct the combined projection matrix via a DOK sparse matrix"""
+        _shpaldebug('Projectionv via DOK sparse matrix.')
         params = self.params
-        #nseeds = len(sl_results)
+        # nseeds = len(sl_results)
         # create the sparse matrix to match the dtype of the results
         proj = dok_matrix((nfeatures, nfeatures),
                           dtype=sl_results[0]['proj'].dtype)
         if params.compute_recon:
             proj_recon = dok_matrix((nfeatures, nfeatures),
-                            dtype=sl_results[0]['proj'].dtype)
+                                    dtype=sl_results[0]['proj'].dtype)
         # track from how many ROIs each voxel receives "contributions"
         # regarding its projection
         nsls = np.zeros(nfeatures, dtype='int')
         # iterate over SL ROIs for the current mapper
-        for ivox,f in enumerate(sl_results):
+        for ivox, f in enumerate(sl_results):
             fproj = f['proj']
             roi_feature_ids = roi_feature_id_list[ivox]
             if not params.combine_neighbormappers:
                 # in this case the projection is always a vector only
-                assert(len(fproj.shape) == 1)
+                assert (len(fproj.shape) == 1)
                 for i, fp in enumerate(fproj):
                     # += to be consistent with what COO does for duplicates
                     proj[roi_feature_ids[i], ivox] += fp
@@ -469,7 +480,7 @@ class SearchlightHyperalignment(ClassWithCollections):
                 nsls[ivox] += 1
             else:
                 # in this case we have a full projection matrix
-                assert(len(fproj.shape) == 2)
+                assert (len(fproj.shape) == 2)
                 for f2 in xrange(len(roi_feature_ids)):
                     for i, fp in enumerate(fproj[:, f2]):
                         # Needs to be += as there could be multiple assignments
