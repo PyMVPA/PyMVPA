@@ -13,7 +13,7 @@ import numpy as np
 
 from ..base.dataset import vstack
 from ..datasets.base import Dataset
-from ..measures.label import Labeler
+from ..measures.label import ClustersLabeler
 from ..mappers.flatten import FlattenMapper
 from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
 
@@ -35,7 +35,7 @@ def test_Labeler_simple():
     ds.fa['coord'] = np.arange(ds.nfeatures)
 
     for radius, target in zip([1, 2, 3], target_clusters):
-        labeler = Labeler(qe=IndexQueryEngine(coord=Sphere(radius)), auto_train=True)
+        labeler = ClustersLabeler(qe=IndexQueryEngine(coord=Sphere(radius)), auto_train=True)
         ds_labeled = labeler(ds)
 
         # TODO: most likely would do it in incremental order???
@@ -77,9 +77,9 @@ def test_Labeler_simple():
             assert_equal(len(ds), 1)
 
             # now with our labeler
-            labeler = Labeler(qe=IndexQueryEngine(coord=Sphere(1)),
-                              auto_train=True,
-                              # cache=False,
+            labeler = ClustersLabeler(qe=IndexQueryEngine(coord=Sphere(1)),
+                                      auto_train=True,
+                                      # cache=False,
                               space='our_maxlabels')
             t0 = time()
             ds_labeled = labeler(ds)

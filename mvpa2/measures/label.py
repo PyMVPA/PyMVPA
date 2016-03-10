@@ -21,7 +21,7 @@ if __debug__:
     from ..base import debug
 
 
-class Labeler(Measure):
+class ClustersLabeler(Measure):
     """Determines contiguous regions of features using a query engine.
 
     "label" in the name chosen to mimic scipy.ndimage.measurements.label
@@ -47,7 +47,7 @@ class Labeler(Measure):
         """
         if kwargs.get('cache', True) and not isinstance(qe, CachedQueryEngine):
             qe = CachedQueryEngine(qe)
-        super(Labeler, self).__init__(qe=qe, space=space, **kwargs)
+        super(ClustersLabeler, self).__init__(qe=qe, space=space, **kwargs)
         self._untrain()
 
     @property
@@ -63,7 +63,7 @@ class Labeler(Measure):
         """
         self.params.qe.untrain()
         self._nfeatures_trained = None
-        super(Labeler, self)._untrain()
+        super(ClustersLabeler, self)._untrain()
 
 
     def _call(self, ds):

@@ -25,7 +25,7 @@ from scipy.ndimage import measurements
 from scipy.sparse import dok_matrix
 
 
-from mvpa2.measures.label import Labeler
+from mvpa2.measures.label import ClustersLabeler
 from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
 from mvpa2.datasets import Dataset, dataset_wizard
 from mvpa2.mappers.base import ChainMapper
@@ -227,9 +227,9 @@ class GroupClusterThreshold(Learner):
 
     labeler = Parameter(
         None,  #  constraints=  NOT SURE TODO
-        doc="""``Labeler`` - some learner which if trained on the training
+        doc="""``ClustersLabeler`` - some learner which if trained on the training
         dataset to group neighboring "spatially" features.
-        If None provided, a `Labeler` with IndexQueryEngine operating on
+        If None provided, a `ClustersLabeler` with IndexQueryEngine operating on
         feature attribute of the space of this instance will be used.  If no
         space is assigned, space of the first FlattenMapper in the ds.a.mapper
         will be used.""")
@@ -379,11 +379,11 @@ class GroupClusterThreshold(Learner):
         #       any bias.  We could  a) split chunks pool into two  b) create new
         #       pool of bcombos for metric estimation
 
-        # Labeler is needed to determine "clusters"
+        # ClustersLabeler is needed to determine "clusters"
         labeler = self.params.labeler
         if labeler is None:
             labeler = _get_default_labeler(ds, fattr=self.space)
-            warning("Labeler was not provided, deduced %s" % labeler)
+            warning("ClustersLabeler was not provided, deduced %s" % labeler)
         labeler.train(ds)
         self._labeler = labeler
 
@@ -642,7 +642,7 @@ def _get_map_cluster_metrics(map_, metric='cluster_sizes'):
     flat = FlattenMapper(space='map_coords')
     flat.train(map_ds)
     map_ds_flat = map_ds.get_mapped(flat)
-    labeler = Labeler(
+    labeler = ClustersLabeler(
         qe=IndexQueryEngine(**{
             'map_coords': Sphere(1)  # Sphere(np.sqrt(map_.ndim) + 0.0001) # for corners case
         })
@@ -695,7 +695,7 @@ def _get_default_labeler(ds, fattr=None):
             "mapper which was used to produce %s" % ds
         )
 
-    return Labeler(qe=IndexQueryEngine(**{fattr: Sphere(1)}))
+    return ClustersLabeler(qe=IndexQueryEngine(**{fattr: Sphere(1)}))
 
 
 def get_cluster_metric_counts(ds, labeler=None, fattr=None, metric='cluster_sizes'):
@@ -713,10 +713,10 @@ def get_cluster_metric_counts(ds, labeler=None, fattr=None, metric='cluster_size
       A dataset with boolean samples.  If an array, we assume that it is samples
       on which to operate on
     labeler : Learner, optional
-      `Labeler` to figure out neighbors for each feature of the dataset
+      `ClustersLabeler` to figure out neighbors for each feature of the dataset
     fattr : str, optional
       If no labeler provided, we will use this fattr as coordinates (space) for
-      a new `Labeler`
+      a new `ClustersLabeler`
     metric : str, optional
       Metric to be used while estimating clusters statistic across samples. See
       `GroupClusterThreshold`'s parameter metric
