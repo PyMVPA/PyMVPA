@@ -137,7 +137,7 @@ def test_cluster_count():
         assert_array_equal(M, ds)
         expected_result = Counter(np.hstack([gct._get_map_cluster_sizes(test_M_3d)] * 10))
         assert_array_equal(expected_result,
-                           gct.get_cluster_sizes(ds))
+                           gct.get_cluster_metric_counts(ds))
 
         # test the same with some arbitrary per-feature threshold
         thr = 4
@@ -157,7 +157,7 @@ def test_cluster_count():
         # threshold dataset by hand
         ds.samples = ds.samples > th_map
         assert_array_equal(expected_result,
-                           gct.get_cluster_sizes(ds))
+                           gct.get_cluster_metric_counts(ds))
 
 
 # run same test with parallel and serial execution

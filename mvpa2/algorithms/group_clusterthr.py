@@ -11,7 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 __all__ = ['GroupClusterThreshold', 'get_thresholding_map',
-           'get_cluster_sizes', 'get_cluster_pvals']
+           'get_cluster_metric_counts', 'get_cluster_pvals']
 
 if __debug__:
     from mvpa2.base import debug
@@ -27,7 +27,7 @@ from scipy.sparse import dok_matrix
 
 from mvpa2.measures.label import Labeler
 from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
-from mvpa2.datasets import Dataset
+from mvpa2.datasets import Dataset, dataset_wizard
 from mvpa2.mappers.base import ChainMapper
 from mvpa2.mappers.flatten import FlattenMapper
 from mvpa2.base.learner import Learner
@@ -377,7 +377,7 @@ class GroupClusterThreshold(Learner):
         #       Not sure if such double treatment of the same data doesn't provide
         #       any bias.  We could  a) split chunks pool into two  b) create new
         #       pool of bcombos for metric estimation
-        cluster_sizes = Counter()
+        cluster_metric_counts = Counter()
 
         # Labeler is needed to determine "clusters"
         labeler = self.params.labeler
@@ -405,15 +405,15 @@ class GroupClusterThreshold(Learner):
                 bds = Dataset(clustermap, a=dsa)
                 # this function reverse-maps every sample one-by-one, hence no need
                 # to collect chunks of bootstrapped maps
-                cluster_sizes = get_cluster_sizes(
-                        bds, cluster_sizes, labeler=labeler, metric=self.params.metric)
+                cluster_metric_counts = get_cluster_metric_counts(
+                        bds, cluster_metric_counts, labeler=labeler, metric=self.params.metric)
         else:
             # Parallel execution
             # same code as above, just restructured for joblib's Parallel
             for jobres in Parallel(n_jobs=self.params.n_proc,
                                    pre_dispatch=self.params.n_proc,
                                    verbose=verbose_level_parallel)(
-                                       delayed(get_cluster_sizes)
+                                       delayed(get_cluster_metric_counts)
                                   (Dataset(np.mean(ds_samples[sidx],
                                            axis=0)[None] > thrmap,
                                            a=dsa),
@@ -422,13 +422,13 @@ class GroupClusterThreshold(Learner):
                                    metric=self.params.metric)
                                   for sidx in bcombos):
                 # aggregate
-                cluster_sizes += jobres
+                cluster_metric_counts += jobres
         # store cluster size histogram for later p-value evaluation
         # use a sparse matrix for easy consumption (max dim is the number of
         # features, i.e. biggest possible cluster)
         scl = dok_matrix((1, ds.nfeatures + 1), dtype=int)
-        for s in cluster_sizes:
-            scl[0, s] = cluster_sizes[s]
+        for s in cluster_metric_counts:
+            scl[0, s] = cluster_metric_counts[s]
         self._null_cluster_sizes = scl
 
     def _call(self, ds):
@@ -582,6 +582,9 @@ def get_thresholding_map(data, p=0.001):
 
 class _ClustersMetric(object):
     """A little helper to make callable specific for the cluster metric
+
+    All metrics should return discrete (int) values since later is used by
+    Counter
     """
     def __init__(self, metric):
         self._metric = getattr(self, '_' + metric)
@@ -648,7 +651,7 @@ def _get_map_cluster_sizes(map_):
     )
     labeler.train(map_ds_flat)
 
-    cluster_sizes = get_cluster_sizes(
+    cluster_sizes = get_cluster_metric_counts(
         map_ds_flat,
         cluster_counter=None,
         labeler=labeler,
@@ -695,8 +698,8 @@ def _get_default_labeler(ds):
     return Labeler(qe=IndexQueryEngine(**{target_space: Sphere(1)}))
 
 
-def get_cluster_sizes(ds, cluster_counter=None, labeler=None, metric='cluster_sizes'):
-    """Compute metric (e.g. number of cluster sizes) from all samples in a boolean dataset.
+def get_cluster_metric_counts(ds, cluster_counter=None, labeler=None, metric='cluster_sizes'):
+    """Compute counts for cluster metric (e.g. number of cluster sizes) from all samples in a boolean dataset.
 
     Individually for each sample, in the input dataset, clusters of non-zero
     values will be determined using labeler.
@@ -707,7 +710,8 @@ def get_cluster_sizes(ds, cluster_counter=None, labeler=None, metric='cluster_si
     Parameters
     ----------
     ds : dataset or array
-      A dataset with boolean samples.
+      A dataset with boolean samples.  If an array, we assume that it is samples
+      on which to operate on
     cluster_counter : collections.Counter or None
       If not None, given list is extended with the cluster sizes computed
       from the present input dataset. Otherwise, a new list is generated.
@@ -727,6 +731,16 @@ def get_cluster_sizes(ds, cluster_counter=None, labeler=None, metric='cluster_si
     # XXX input needs to be boolean for the cluster size calculation to work
     if cluster_counter is None:
         cluster_counter = Counter()
+
+    if isinstance(ds, np.ndarray):
+        ndim = ds.ndim
+        # quick and dirty hack to force flattening to kick in!  We will add a
+        # degenerate dimension!  Should not effect clustering
+        # TODO: remove (thus demanding datasets, not ndarrays) or ...?
+        if ndim <= 2:
+            ds = ds[..., None]
+        ds = dataset_wizard(ds, space="temp_coords")
+        assert('mapper' in ds.a)
 
     if labeler is None:
         labeler = _get_default_labeler(ds)
@@ -748,7 +762,7 @@ def get_cluster_pvals(sizes, null_sizes):
     Parameters
     ----------
     sizes, null_sizes : Counter
-      Counters of cluster sizes (as returned by get_cluster_sizes) for target
+      Counters of cluster sizes (as returned by get_cluster_metric_counts) for target
       dataset and null distribution
     """
     # TODO: dedicated unit-test for this function
@@ -804,6 +818,7 @@ def repeat_cluster_vals(cluster_counts, vals=None):
         return np.repeat([vals[s] for s in sizes], [cluster_counts[s] for s in sizes])
 
 
+# TODO: consider it consuming Counter not its remanifestation in sparse matrix
 def _transform_to_pvals(sizes, null_sizes):
     # null_sizes will be modified in-place
     for size in sizes:
