@@ -230,7 +230,8 @@ class GroupClusterThreshold(Learner):
         doc="""``Labeler`` - some learner which if trained on the training
         dataset to group neighboring "spatially" features.
         If None provided, a `Labeler` with IndexQueryEngine operating on
-        feature attribute of the first FlattenMapper in the ds.a.mapper
+        feature attribute of the space of this instance will be used.  If no
+        space is assigned, space of the first FlattenMapper in the ds.a.mapper
         will be used.""")
 
     map_postproc = Parameter(
@@ -382,7 +383,7 @@ class GroupClusterThreshold(Learner):
         # Labeler is needed to determine "clusters"
         labeler = self.params.labeler
         if labeler is None:
-            labeler = _get_default_labeler(ds)
+            labeler = _get_default_labeler(ds, fattr=self.space)
             warning("Labeler was not provided, deduced %s" % labeler)
         labeler.train(ds)
         self._labeler = labeler
@@ -668,37 +669,43 @@ def _get_map_cluster_sizes(map_):
     return [0] if not cluster_sizes_list else cluster_sizes_list
 
 
-def _get_default_labeler(ds):
+def _get_default_labeler(ds, fattr=None):
     """Given a dataset, deduce which space to operate on by finding first
     :class:`FlattenMapper` and using its space
     """
-    if 'mapper' not in ds.a:
+    if fattr is None:
+        # So we need to figure it out
+        if 'mapper' not in ds.a:
+            raise ValueError(
+                "Since no fattr was provided, dataset should have a "
+                "mapper to figure out which feature attribute (among %s) to "
+                "use to get original 'shape'" % str(ds.fa.keys()))
+
+        mappers = ds.a.mapper
+        if not isinstance(mappers, ChainMapper):
+            mappers = [mappers]
+
+        for mapper in mappers:
+            if isinstance(mapper, FlattenMapper):
+                fattr = mapper.get_space()
+                if fattr is None:
+                    raise ValueError(
+                        "Mapper %s of the dataset %s has no space, so can't "
+                        "figure out what feature attribute to use to deduce "
+                        "neighborhood" % (mapper, ds))
+                break
+
+    if fattr is None:
         raise ValueError(
-            "Dataset should have a mapper to get original 'shape'")
+            "No fattr was provided and we could not find a flatten "
+            "mapper which was used to produce %s" % ds
+        )
 
-    mappers = ds.a.mapper
-    if not isinstance(mappers, ChainMapper):
-        mappers = [mappers]
-
-    target_space = None
-    for mapper in mappers:
-        if isinstance(mapper, FlattenMapper):
-            target_space = mapper.get_space()
-            if target_space is None:
-                raise ValueError(
-                    "Mapper %s of the dataset %s has no space, so can't "
-                    "figure out what feature attribute to use to deduce "
-                    "neighborhood" % (mapper, ds))
-            break
-
-    if target_space is None:
-        raise ValueError(
-            "Could not find a flatten mapper which was used to produce %s" % ds)
-
-    return Labeler(qe=IndexQueryEngine(**{target_space: Sphere(1)}))
+    return Labeler(qe=IndexQueryEngine(**{fattr: Sphere(1)}))
 
 
-def get_cluster_metric_counts(ds, cluster_counter=None, labeler=None, metric='cluster_sizes'):
+def get_cluster_metric_counts(ds, cluster_counter=None, labeler=None,
+                              fattr=None, metric='cluster_sizes'):
     """Compute counts for cluster metric (e.g. number of cluster sizes) from all samples in a boolean dataset.
 
     Individually for each sample, in the input dataset, clusters of non-zero
@@ -717,6 +724,9 @@ def get_cluster_metric_counts(ds, cluster_counter=None, labeler=None, metric='cl
       from the present input dataset. Otherwise, a new list is generated.
     labeler : Learner, optional
       `Labeler` to figure out neighbors for each feature of the dataset
+    fattr : str, optional
+      If no labeler provided, we will use this fattr as coordinates (space) for
+      a new `Labeler`
     metric : str, optional
       Metric to be used while estimating clusters statistic across samples. See
       `GroupClusterThreshold`'s parameter metric
@@ -734,16 +744,14 @@ def get_cluster_metric_counts(ds, cluster_counter=None, labeler=None, metric='cl
 
     if isinstance(ds, np.ndarray):
         ndim = ds.ndim
-        # quick and dirty hack to force flattening to kick in!  We will add a
-        # degenerate dimension!  Should not effect clustering
-        # TODO: remove (thus demanding datasets, not ndarrays) or ...?
-        if ndim <= 2:
-            ds = ds[..., None]
-        ds = dataset_wizard(ds, space="temp_coords")
-        assert('mapper' in ds.a)
+        ds = dataset_wizard(ds, space='temp_coord')
+        if 'temp_coord' not in ds.fa:
+            assert('mapper' not in ds.a)  # so no flattening happened
+            ds.fa['temp_coord'] = np.arange(ds.nfeatures)
+            fattr = 'temp_coord'
 
     if labeler is None:
-        labeler = _get_default_labeler(ds)
+        labeler = _get_default_labeler(ds, fattr=fattr)
         labeler.train(ds)
 
     dslabeled = labeler(ds)
