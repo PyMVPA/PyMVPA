@@ -330,42 +330,61 @@ class GroupClusterThreshold(Learner):
             debug('GCTHR',
                   'Compute per-feature thresholds in %i blocks of %i features'
                   % (self.params.n_blocks, segwidth))
-        # Execution can be done in parallel as the estimation is independent
-        # across features
 
-        def featuresegment_producer(ncols):
-            for segstart in xrange(0, ds.nfeatures, ncols):
-                # one average map for every stored bcombo
-                # this also slices the input data into feature subsets
-                # for the compute blocks
-                yield [np.mean(
-                       # get a view to a subset of the features
-                       # -- should be somewhat efficient as feature axis is
-                       # sliced
-                       ds_samples[sidx, segstart:segstart + ncols],
-                       axis=0)
-                       for sidx in bcombos]
-        if self.params.n_proc == 1:
-            # Serial execution
-            thrmap = np.hstack(  # merge across compute blocks
-                [get_thresholding_map(d, feature_thresh_prob)
-                 # compute a partial threshold map for as many features
-                 # as fit into a compute block
-                 for d in featuresegment_producer(segwidth)])
+        if self.params.map_postproc:
+            map_postproc = self.params.map_postproc
+            map_postproc.train(ds)
+            # no parallelization across features could be carried out so let's
+            # stay simple!
+            def proc_ds_sidx(sidx):
+                ds_sidx = ds[sidx]  # so we maintain whatever we can
+                m = mean_sample()(ds_sidx)
+                # Actually, according to Matteo it is
+                # accs -> t -> z -> TFCE
+                # so what we might really want is to unify away from mean_sample
+                # to an arbitrary measure which takes stack of results
+                # And anyways, if TFCE, no cluster level stats to be computed
+                # just max values
+                return map_postproc.forward(m)
+            # actually TODO:  unlike mean, map_postproc (e.g. TFCE) might be more
+            # CPU intensive, so we could parallelize that step!
+            thrmap = get_thresholding_map([proc_ds_sidx(sidx) for sidx in bcombos])
         else:
-            # Parallel execution
-            verbose_level_parallel = 50 \
-                if (__debug__ and 'GCTHR' in debug.active) else 0
-            # local import as only parallel execution needs this
-            from joblib import Parallel, delayed
-            # same code as above, just in parallel with joblib's Parallel
-            thrmap = np.hstack(
-                Parallel(n_jobs=self.params.n_proc,
-                         pre_dispatch=self.params.n_proc,
-                         verbose=verbose_level_parallel)(
-                             delayed(get_thresholding_map)
-                        (d, feature_thresh_prob)
-                             for d in featuresegment_producer(segwidth)))
+            # Execution can be done in parallel as the estimation is independent
+            # across features
+            def featuresegment_producer(ncols):
+                for segstart in xrange(0, ds.nfeatures, ncols):
+                    # one average map for every stored bcombo
+                    # this also slices the input data into feature subsets
+                    # for the compute blocks
+                    yield [np.mean(
+                           # get a view to a subset of the features
+                           # -- should be somewhat efficient as feature axis is
+                           # sliced
+                           ds_samples[sidx, segstart:segstart + ncols],
+                           axis=0)
+                           for sidx in bcombos]
+            if self.params.n_proc == 1:
+                # Serial execution
+                thrmap = np.hstack(  # merge across compute blocks
+                    [get_thresholding_map(d, feature_thresh_prob)
+                     # compute a partial threshold map for as many features
+                     # as fit into a compute block
+                     for d in featuresegment_producer(segwidth)])
+            else:
+                # Parallel execution
+                verbose_level_parallel = 50 \
+                    if (__debug__ and 'GCTHR' in debug.active) else 0
+                # local import as only parallel execution needs this
+                from joblib import Parallel, delayed
+                # same code as above, just in parallel with joblib's Parallel
+                thrmap = np.hstack(
+                    Parallel(n_jobs=self.params.n_proc,
+                             pre_dispatch=self.params.n_proc,
+                             verbose=verbose_level_parallel)(
+                                 delayed(get_thresholding_map)
+                            (d, feature_thresh_prob)
+                                 for d in featuresegment_producer(segwidth)))
         # store for later thresholding of input data
         self._thrmap = thrmap
 
@@ -397,7 +416,9 @@ class GroupClusterThreshold(Learner):
         def thresh_mean(idx):
             """Helper to  mean, apply threshold, wrap into a Dataset
             """
+            # TODO: logical place to plug in TFCE
             return Dataset(np.mean(ds_samples[idx], axis=0)[None] > thrmap)
+
         # kwargs for get_cluster_metric_counts
         gcmc_kw = dict(labeler=labeler, metric=self.params.metric)
 
