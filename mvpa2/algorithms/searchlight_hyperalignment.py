@@ -115,7 +115,7 @@ class HyperalignmentMeasure(Measure):
             # XXX Artificially make the seed_index feature score high to keep it(?)
             if self.use_same_features:
                 if len(self.exclude_from_model):
-                    feature_scores = [feature_scores[ifs] for ifs in range(len(self.ndatasets))
+                    feature_scores = [feature_scores[ifs] for ifs in range(len(ds))
                                       if ifs not in self.exclude_from_model]
                 feature_scores = np.mean(np.asarray(feature_scores), axis=0)
                 if seed_index is not None:
@@ -155,7 +155,7 @@ class HyperalignmentMeasure(Measure):
                 mappers = mappers_full
         except LinAlgError:
             print "SVD didn't converge. Try with a new reference, may be."
-            mappers = [np.eye(nfeatures, dtype='int')] * self.ndatasets
+            mappers = [np.eye(nfeatures, dtype='int')] * len(ds)
         # Extract only the row/column corresponding to the center voxel if full_matrix is False
         if not self.full_matrix:
             mappers = [np.squeeze(m[:, seed_index]) for m in mappers]
