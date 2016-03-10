@@ -188,7 +188,7 @@ class SearchlightHyperalignment(ClassWithCollections):
     radius = Parameter(3, constraints=EnsureInt() & EnsureRange(min=1),
                        doc=""" radius of searchlight in number of voxels""")
 
-    nproc = Parameter(None, constraints=EnsureInt() & EnsureRange(min=1) | EnsureNone(),
+    nproc = Parameter(1, constraints=EnsureInt() & EnsureRange(min=1) | EnsureNone(),
                       doc="""Number of cores to use.""")
 
     nblocks = Parameter(100, constraints=EnsureInt() & EnsureRange(min=1) | EnsureNone(),
