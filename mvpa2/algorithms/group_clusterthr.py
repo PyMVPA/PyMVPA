@@ -378,7 +378,6 @@ class GroupClusterThreshold(Learner):
         #       Not sure if such double treatment of the same data doesn't provide
         #       any bias.  We could  a) split chunks pool into two  b) create new
         #       pool of bcombos for metric estimation
-        cluster_metric_counts = Counter()
 
         # Labeler is needed to determine "clusters"
         labeler = self.params.labeler
@@ -394,32 +393,32 @@ class GroupClusterThreshold(Learner):
         if __debug__:
             debug('GCTHR', 'Estimating NULL distribution of cluster sizes')
 
+        # common drills
+        def thresh_mean(idx):
+            """Helper to  mean, apply threshold, wrap into a Dataset
+            """
+            return Dataset(np.mean(ds_samples[idx], axis=0)[None] > thrmap)
+        # kwargs for get_cluster_metric_counts
+        gcmc_kw = dict(labeler=labeler, metric=self.params.metric)
+
+        cluster_metric_counts = Counter()
         # this step can be computed in parallel chunks to speeds things up
         if self.params.n_proc == 1:
             # Serial execution
             for sidx in bcombos:
-                avgmap = np.mean(ds_samples[sidx], axis=0)[None]
-                # apply threshold
-                clustermap = avgmap > thrmap
-                # wrap into a throw-away dataset to get the reverse mapping right
-                bds = Dataset(clustermap)
                 # this function reverse-maps every sample one-by-one, hence no need
                 # to collect chunks of bootstrapped maps
-                cluster_metric_counts = get_cluster_metric_counts(
-                        bds, cluster_metric_counts, labeler=labeler, metric=self.params.metric)
+                cluster_metric_counts += get_cluster_metric_counts(
+                    thresh_mean(sidx), **gcmc_kw)
         else:
             # Parallel execution
             # same code as above, just restructured for joblib's Parallel
             for jobres in Parallel(n_jobs=self.params.n_proc,
                                    pre_dispatch=self.params.n_proc,
                                    verbose=verbose_level_parallel)(
-                                       delayed(get_cluster_metric_counts)
-                                  (Dataset(np.mean(ds_samples[sidx],
-                                           axis=0)[None] > thrmap),
-                                   None,
-                                   labeler,
-                                   metric=self.params.metric)
-                                  for sidx in bcombos):
+                delayed(get_cluster_metric_counts)(thresh_mean(sidx), **gcmc_kw)
+                for sidx in bcombos
+            ):
                 # aggregate
                 cluster_metric_counts += jobres
         # store cluster size histogram for later p-value evaluation
@@ -652,7 +651,6 @@ def _get_map_cluster_sizes(map_):
 
     cluster_sizes = get_cluster_metric_counts(
         map_ds_flat,
-        cluster_counter=None,
         labeler=labeler,
         metric='cluster_sizes'
     )  # returns a counter with numbers of clusters of a given size
@@ -702,8 +700,7 @@ def _get_default_labeler(ds, fattr=None):
     return Labeler(qe=IndexQueryEngine(**{fattr: Sphere(1)}))
 
 
-def get_cluster_metric_counts(ds, cluster_counter=None, labeler=None,
-                              fattr=None, metric='cluster_sizes'):
+def get_cluster_metric_counts(ds, labeler=None, fattr=None, metric='cluster_sizes'):
     """Compute counts for cluster metric (e.g. number of cluster sizes) from all samples in a boolean dataset.
 
     Individually for each sample, in the input dataset, clusters of non-zero
@@ -717,9 +714,6 @@ def get_cluster_metric_counts(ds, cluster_counter=None, labeler=None,
     ds : dataset or array
       A dataset with boolean samples.  If an array, we assume that it is samples
       on which to operate on
-    cluster_counter : collections.Counter or None
-      If not None, given list is extended with the cluster sizes computed
-      from the present input dataset. Otherwise, a new list is generated.
     labeler : Learner, optional
       `Labeler` to figure out neighbors for each feature of the dataset
     fattr : str, optional
@@ -737,9 +731,6 @@ def get_cluster_metric_counts(ds, cluster_counter=None, labeler=None,
       ``cluster_counter``).
     """
     # XXX input needs to be boolean for the cluster size calculation to work
-    if cluster_counter is None:
-        cluster_counter = Counter()
-
     if isinstance(ds, np.ndarray):
         ndim = ds.ndim
         ds = dataset_wizard(ds, space='temp_coord')
@@ -754,6 +745,7 @@ def get_cluster_metric_counts(ds, cluster_counter=None, labeler=None,
 
     dslabeled = labeler(ds)
     metric_callable = _ClustersMetric(metric=metric)
+    cluster_counter = Counter()
     for d, labels, nlabels in zip(
             ds.samples,
             dslabeled.samples,
