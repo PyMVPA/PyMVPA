@@ -165,43 +165,66 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         zscore(ds_orig, chunks_attr=None)
         dss = [ds_orig]
         # create  a few distorted datasets to match the desired number of datasets
-        dss += [local_random_affine_transformations(ds_orig,
+        # not sure if this truely mimics the real data, but at least we can test
+        # implementation
+        while len(dss) <= nds-2:
+            sd = local_random_affine_transformations(ds_orig,
                     scatter_neighborhoods(Sphere(1),
                     ds_orig.fa[space].value, deterministic=True)[1], Sphere(2), space=space,
                     scale_fac=1.0, shift_fac=0.0)
-                for i in range(nds-1)]
+            # sometimes above function returns dataset with nans, we don't want that.
+            if np.sum(np.isnan(sd.samples)) == 0 and np.all(sd.samples.std(0)):
+                dss.append(sd)
+        ds_orig_noisy = ds_orig.copy()
+        ds_orig_noisy.samples += 0.1*np.random.random(size=ds_orig_noisy.shape)
+        dss.append(ds_orig_noisy)
         _ = [zscore(sd, chunks_attr=None) for sd in dss[1:]]
         # we should have some distortion
         for ds in dss[1:]:
             assert_false(np.all(ds_orig.samples == ds.samples))
+        for ids, ds in enumerate(dss):
+            dss[ids].a['subject'] = ids
         # store projections for each mapper separately
-        projs = [list() for i in range(nds)]
+        projs = list()
         # run the algorithm with all combinations of the two major parameters
         # for projection calculation.
         for kwargs in [{'combine_neighbormappers': True},
                        {'combine_neighbormappers': True, 'dtype': 'float64', 'compute_recon': True},
+                       {'combine_neighbormappers': True, 'exclude_from_model': [2, 4]},
                        {'combine_neighbormappers': False},
                        {'combine_neighbormappers': False, 'mask_node_ids': np.arange(dss[0].nfeatures).tolist()},
-                       {'combine_neighbormappers': True, 'exclude_from_model': [2, 4]},
                        {'combine_neighbormappers': True, 'sparse_radius': 1}]:
             slhyp = SearchlightHyperalignment(nproc=nproc, radius=2, **kwargs)
-            print 'nds:', len(dss)
             mappers = slhyp(dss)
             # one mapper per input ds
             assert_equal(len(mappers), nds)
-            for midx, m in enumerate(mappers):
-                projs[midx].append(m)
-
-        for midx, m in enumerate(mappers):
+            projs.append(mappers)
+        # some checks
+        for midx in range(nds):
             # making sure mask_node_ids options works as expected
-            assert_array_almost_equal(projs[midx][2].proj.todense(), projs[midx][3].proj.todense())
-            # with different datatypes
-            assert_array_almost_equal(projs[midx][0].proj.todense(), projs[midx][1].proj.todense(), decimal=5)
-            assert_array_almost_equal(projs[midx][1].proj.todense(), projs[midx][1].recon.T.todense())
-            assert_equal(projs[midx][1].proj.dtype, 'float64')
-            assert_equal(projs[midx][0].proj.dtype, 'float32')
+            assert_array_almost_equal(projs[3][midx].proj.todense(), projs[4][midx].proj.todense())
+            # recon check
+            assert_array_almost_equal(projs[0][midx].proj.todense(),
+                                      projs[1][midx].recon.T.todense(), decimal=5)
+            assert_equal(projs[1][midx].proj.dtype, 'float64')
+            assert_equal(projs[0][midx].proj.dtype, 'float32')
+        # making sure the projections make sense
+        for proj in projs:
+            max_weight = proj[0].proj.max(0).toarray().squeeze()
+            diag_weight = proj[0].proj.diagonal()
+            # Check to make sure diagonal is the max weight, in almost all rows for reference subject
+            assert(np.sum(max_weight == diag_weight)/float(len(diag_weight)) > 0.98)
+            # and not true for other subjects
+            for i in range(1,nds-1):
+                assert(np.sum(proj[i].proj.max(0).toarray().squeeze() == proj[i].proj.diagonal())
+                       /float(proj[i].proj.shape[0]) < 0.80)
+            # Check to make sure projection weights match across duplicate datasets
+            max_weight = proj[-1].proj.max(0).toarray().squeeze()
+            diag_weight = proj[-1].proj.diagonal()
+            # Check to make sure diagonal is the max weight, in almost all rows for reference subject
+            assert(np.sum(max_weight == diag_weight)/float(len(diag_weight)) > 0.95)
         # project data
-        dss_hyper = [hm.forward(sd) for hm,sd in zip(mappers, dss)]
+        dss_hyper = [hm.forward(sd) for hm, sd in zip(projs[0], dss)]
         _ = [zscore(sd, chunks_attr=None) for sd in dss_hyper]
         ndcss = []
         nf = ds_orig.nfeatures
@@ -210,7 +233,9 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
                                        ds_orig.samples.T)[nf:, :nf], k=0)
             ndcss += [ndcs]
         assert_true(np.median(ndcss[0]) > 0.9)
-        assert_true(np.all([np.median(ndcs) > 0.2 for ndcs in ndcss[1:]]))
+        # noisy copy of original dataset should be similar to original after hyperalignment
+        assert_true(np.median(ndcss[-1]) > 0.9)
+        assert_true(np.all([np.median(ndcs) > 0.2 for ndcs in ndcss[1:-2]]))
 
 
 def suite():  # pragma: no cover
