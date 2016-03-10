@@ -101,7 +101,7 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
             nddss = []
             ndcss = []
             nf = ds_orig.nfeatures
-            ds_orig_Rref = np.dot(ds_orig.samples, Rs[ref_ds])
+            ds_orig_Rref = np.dot(ds_orig.samples, Rs[ref_ds]) * np.sign(dss_rotated_clean[ref_ds].a.random_scale)
             zscore(ds_orig_Rref, chunks_attr=None)
             for ds_back in dss_clean_back:
                 ndcs = np.diag(np.corrcoef(ds_back.samples.T[:nf, ],
@@ -153,8 +153,7 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         mappers_fs = [m[0]['proj'] for m in mappers_fs.samples]
         assert(np.alltrue([np.sum(m[7, :] == 0) == 4 for m in mappers_fs]))
 
-    @sweepargs(nproc=(1, 2))
-    def test_searchlight_hyperalignment(self, nproc):
+    def test_searchlight_hyperalignment(self):
         ds_orig = datasets['3dsmall']
         ds_orig.fa['voxel_indices'] = ds_orig.fa.myspace
         # toy data
@@ -188,13 +187,13 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         projs = list()
         # run the algorithm with all combinations of the two major parameters
         # for projection calculation.
-        for kwargs in [{'combine_neighbormappers': True},
+        for kwargs in [{'combine_neighbormappers': True, 'nproc': 2},
                        {'combine_neighbormappers': True, 'dtype': 'float64', 'compute_recon': True},
                        {'combine_neighbormappers': True, 'exclude_from_model': [2, 4]},
                        {'combine_neighbormappers': False},
                        {'combine_neighbormappers': False, 'mask_node_ids': np.arange(dss[0].nfeatures).tolist()},
                        {'combine_neighbormappers': True, 'sparse_radius': 1}]:
-            slhyp = SearchlightHyperalignment(nproc=nproc, radius=2, **kwargs)
+            slhyp = SearchlightHyperalignment(radius=2, **kwargs)
             mappers = slhyp(dss)
             # one mapper per input ds
             assert_equal(len(mappers), nds)
