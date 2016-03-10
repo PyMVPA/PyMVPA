@@ -391,7 +391,6 @@ class GroupClusterThreshold(Learner):
         # recompute the bootstrap average maps to threshold them and determine
         # cluster sizes
 
-        dsa = dict(mapper=ds.a.mapper) if 'mapper' in ds.a else {}
         if __debug__:
             debug('GCTHR', 'Estimating NULL distribution of cluster sizes')
 
@@ -403,7 +402,7 @@ class GroupClusterThreshold(Learner):
                 # apply threshold
                 clustermap = avgmap > thrmap
                 # wrap into a throw-away dataset to get the reverse mapping right
-                bds = Dataset(clustermap, a=dsa)
+                bds = Dataset(clustermap)
                 # this function reverse-maps every sample one-by-one, hence no need
                 # to collect chunks of bootstrapped maps
                 cluster_metric_counts = get_cluster_metric_counts(
@@ -416,8 +415,7 @@ class GroupClusterThreshold(Learner):
                                    verbose=verbose_level_parallel)(
                                        delayed(get_cluster_metric_counts)
                                   (Dataset(np.mean(ds_samples[sidx],
-                                           axis=0)[None] > thrmap,
-                                           a=dsa),
+                                           axis=0)[None] > thrmap),
                                    None,
                                    labeler,
                                    metric=self.params.metric)
