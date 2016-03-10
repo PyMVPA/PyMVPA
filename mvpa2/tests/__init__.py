@@ -126,6 +126,7 @@ def collect_unit_tests(verbosity=1):
         'test_svdmapper',
         'test_procrust',
         'test_hyperalignment',
+        'test_searchlight_hyperalignment',
         'test_transformers',
         'test_searchlight',
         'test_rfe',
