@@ -10,6 +10,7 @@
 
 from mvpa2.base import externals
 from mvpa2.testing.tools import skip_if_no_external
+from mvpa2.testing.tools import reseed_rng
 
 # TODO a tiny bit also needs statsmodels
 skip_if_no_external('statsmodels')
@@ -61,6 +62,16 @@ def test_pval():
     assert_array_almost_equal(desired_output, pvals)
 
 
+@reseed_rng()
+@sweepargs(ndim=[1, 2, 3, 4])
+@sweepargs(i=range(4))  # do 4 times
+def test_get_map_cluster_sizes(ndim, i):
+    # empirical test by comparing old(ndimage) to new (based on QE) implementation
+    map_ = np.random.uniform(0, 1, size=[80 // ndim**2] * ndim) > 0.7
+    assert_array_equal(np.bincount(gct._old_get_map_cluster_sizes(map_)),
+                       np.bincount(gct._get_map_cluster_sizes(map_)))
+
+
 def test_cluster_count():
     skip_if_no_external('scipy', min_version='0.10')
     # we get a ZERO cluster count of one if there are no clusters at all
@@ -70,6 +81,11 @@ def test_cluster_count():
     assert_equal(gct._get_map_cluster_sizes([0, 0, 0, 0]), [0])
     # if there is at least one cluster: no ZERO count
     assert_equal(gct._get_map_cluster_sizes([0, 0, 1, 0]), [1])
+    # Some basic tests
+    # 1 cluster of size 2
+    assert_array_equal(gct._get_map_cluster_sizes([0, 1, 1, 0]), [2])
+    # 2 clusters of size 1
+    assert_array_equal(gct._get_map_cluster_sizes([1, 0, 1, 0]), [1, 1])
     for i in range(2):  # rerun tests for bool type of test_M
         test_M = np.array([[1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0],
                            [0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1],
@@ -80,6 +96,7 @@ def test_cluster_count():
                            [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0],
                            [0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0],
                            [1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0]])
+        # bincount will be applied!
         expected_result = [5, 4, 3, 3, 2, 0, 2]  # 5 clusters of size 1,
                                                  # 4 clusters of size 2 ...
 
@@ -94,7 +111,9 @@ def test_cluster_count():
         expected_result_3d = np.array([0, 5, 0, 4, 0, 3, 0,
                                        3, 0, 2, 0, 0, 0, 2])
 
-        size = 10000  # how many times bigger than test_M_3d
+        # For a "unit" test no need to blow it into 10,000 to show that it works
+        # QE based way is indeed slower
+        size = 10  # how many times bigger than test_M_3d
         test_M_3d_big = np.hstack((test_M_3d.flatten(), np.zeros(144)))
         test_M_3d_big = np.hstack((test_M_3d_big for i in range(size))
                                   ).reshape(3 * size, 9, 16)
@@ -109,12 +128,12 @@ def test_cluster_count():
                      (test_ds_3d, expected_result_3d),
                      (test_M_3d_big, expected_result_3d_big),
                      (test_ds_3d_big, expected_result_3d_big)):
-            assert_array_equal(np.bincount(gct._get_map_cluster_sizes(t))[1:],
-                               e)
+            assert_array_equal(np.bincount(gct._get_map_cluster_sizes(t))[1:], e)
+
         # old
         M = np.vstack([test_M_3d.flatten()] * 10)
         # new
-        ds = dataset_wizard([test_M_3d] * 10)
+        ds = dataset_wizard([test_M_3d] * 10, space='coords')
         assert_array_equal(M, ds)
         expected_result = Counter(np.hstack([gct._get_map_cluster_sizes(test_M_3d)] * 10))
         assert_array_equal(expected_result,
@@ -130,7 +149,7 @@ def test_cluster_count():
         # old
         M = np.vstack([cluster_sizes_map.flatten()] * 10)
         # new
-        ds = dataset_wizard([cluster_sizes_map] * 10)
+        ds = dataset_wizard([cluster_sizes_map] * 10, space='coords')
         assert_array_equal(M, ds)
         expected_result = Counter(np.hstack(
             [gct._get_map_cluster_sizes(thresholded_cluster_sizes_map)] * 10))

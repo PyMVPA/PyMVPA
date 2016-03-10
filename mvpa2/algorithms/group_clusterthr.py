@@ -595,7 +595,6 @@ class _ClustersMetric(object):
         if not len(area):
             return [0]
         else:
-            import pdb; pdb.set_trace()
             return area.astype(int)
 
     def _cluster_sizes_non0(self, area):
@@ -613,14 +612,62 @@ class _ClustersMetric(object):
             return area.astype(int)
 
 
-def _get_map_cluster_sizes(map_, labels, num, metric='cluster_sizes'):
+def _old_get_map_cluster_sizes(map_):
+    labels, num = measurements.label(map_)
+    area = measurements.sum(map_, labels, index=np.arange(1, num + 1))
+    # TODO: So here if a given map didn't have any super-thresholded features,
+    # we get 0 into our histogram.  BUT for the other maps, where at least 1 voxel
+    # passed the threshold we might get multiple clusters recorded within our
+    # distribution.  Which doesn't quite cut it for being called a FW cluster level.
+    # MAY BE it should count only the maximal cluster size (a single number)
+    # per given permutation (not all of them)
+    if not len(area):
+        return [0]
+    else:
+        return area.astype(int)
+
+
+def _get_map_cluster_sizes(map_):
+    """Return a list with sizes per each cluster (unordered really) found in the map
+
+    This one is left in for now to verify correct operation
+    """
+    # For compatibility with older API...?
     # TODO: deprecate entirely
-    return _ClustersMetric(metric=metric)(map_, labels, num)
+
+    # we need to label clusters first
+    map_ = np.asanyarray(map_)
+    map_ds = Dataset([map_])
+    flat = FlattenMapper(space='map_coords')
+    flat.train(map_ds)
+    map_ds_flat = map_ds.get_mapped(flat)
+    labeler = Labeler(
+        qe=IndexQueryEngine(**{
+            'map_coords': Sphere(1)  # Sphere(np.sqrt(map_.ndim) + 0.0001) # for corners case
+        })
+    )
+    labeler.train(map_ds_flat)
+
+    cluster_sizes = get_cluster_sizes(
+        map_ds_flat,
+        cluster_counter=None,
+        labeler=labeler,
+        metric='cluster_sizes'
+    )  # returns a counter with numbers of clusters of a given size
+
+    if 0 in cluster_sizes:
+        cluster_sizes.pop(0)  # we aren't interested in that one
+
+    # and this is a list of clusters detected on the map and their sizes
+    # so per each one we would pretty much need to repeat it that many times
+    cluster_sizes_list = sum([[k] * v for k, v in cluster_sizes.iteritems()], [])
+
+    return [0] if not cluster_sizes_list else cluster_sizes_list
 
 
 def _get_default_labeler(ds):
-    """Given a dataset, deduce which space to operate on by finding first FlattenMapper
-    and using its space
+    """Given a dataset, deduce which space to operate on by finding first
+    :class:`FlattenMapper` and using its space
     """
     if 'mapper' not in ds.a:
         raise ValueError(
@@ -649,30 +696,33 @@ def _get_default_labeler(ds):
 
 
 def get_cluster_sizes(ds, cluster_counter=None, labeler=None, metric='cluster_sizes'):
-    """Compute cluster sizes from all samples in a boolean dataset.
+    """Compute metric (e.g. number of cluster sizes) from all samples in a boolean dataset.
 
     Individually for each sample, in the input dataset, clusters of non-zero
-    values will be determined after reverse-applying any transformation of the
-    dataset's mapper (if any).
+    values will be determined using labeler.
+
+    TODO: talk about how labeler is created if not provided and how we deduce
+    which fa to use for neighborhood
 
     Parameters
     ----------
     ds : dataset or array
       A dataset with boolean samples.
-    cluster_counter : list or None
+    cluster_counter : collections.Counter or None
       If not None, given list is extended with the cluster sizes computed
       from the present input dataset. Otherwise, a new list is generated.
     labeler : Learner, optional
-      `Labeler` to get estimate neighbors for each feature of the dataset
+      `Labeler` to figure out neighbors for each feature of the dataset
     metric : str, optional
       Metric to be used while estimating clusters statistic across samples. See
       `GroupClusterThreshold`'s parameter metric
 
     Returns
     -------
-    list
-      Unsorted list of cluster sizes from all samples in the input dataset
-      (optionally appended to any values passed via ``cluster_counter``).
+    counter
+      A collections.Counter (subclass of dict) of cluster sizes from all samples
+      in the input dataset (optionally appended to any values passed via
+      ``cluster_counter``).
     """
     # XXX input needs to be boolean for the cluster size calculation to work
     if cluster_counter is None:

@@ -22,8 +22,9 @@ if __debug__:
 
 
 class Labeler(Measure):
-    """Sensitivities of features for a given Classifier.
+    """Determines contiguous regions of features using a query engine.
 
+    "label" in the name chosen to mimic scipy.ndimage.measurements.label
     """
     qe = Parameter(
         None,
