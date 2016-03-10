@@ -606,11 +606,11 @@ class _ClustersMetric(object):
             return area.astype(int)
 
     def _max_cluster_size(self, area):
-        """Metric which returns maximum cluster size"""
+        """Metric which returns a list with the maximum cluster size"""
         if not len(area):
             return [0]
         else:
-            return area.astype(int)
+            return [int(area.max())]
 
 
 def _old_get_map_cluster_sizes(map_):
@@ -628,7 +628,7 @@ def _old_get_map_cluster_sizes(map_):
         return area.astype(int)
 
 
-def _get_map_cluster_sizes(map_):
+def _get_map_cluster_metrics(map_, metric='cluster_sizes'):
     """Return a list with sizes per each cluster (unordered really) found in the map
 
     This one is left in for now to verify correct operation
@@ -652,17 +652,15 @@ def _get_map_cluster_sizes(map_):
     cluster_sizes = get_cluster_metric_counts(
         map_ds_flat,
         labeler=labeler,
-        metric='cluster_sizes'
+        metric=metric
     )  # returns a counter with numbers of clusters of a given size
 
-    if 0 in cluster_sizes:
-        cluster_sizes.pop(0)  # we aren't interested in that one
+    # all the logic is in the metrics above.  so if they returned 0 -- must be
+    # the way we wanted
 
     # and this is a list of clusters detected on the map and their sizes
     # so per each one we would pretty much need to repeat it that many times
-    cluster_sizes_list = sum([[k] * v for k, v in cluster_sizes.iteritems()], [])
-
-    return [0] if not cluster_sizes_list else cluster_sizes_list
+    return sum([[k] * v for k, v in cluster_sizes.iteritems()], [])
 
 
 def _get_default_labeler(ds, fattr=None):

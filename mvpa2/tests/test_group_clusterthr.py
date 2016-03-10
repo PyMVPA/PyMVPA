@@ -69,7 +69,7 @@ def test_get_map_cluster_sizes(ndim, i):
     # empirical test by comparing old(ndimage) to new (based on QE) implementation
     map_ = np.random.uniform(0, 1, size=[80 // ndim**2] * ndim) > 0.7
     assert_array_equal(np.bincount(gct._old_get_map_cluster_sizes(map_)),
-                       np.bincount(gct._get_map_cluster_sizes(map_)))
+                       np.bincount(gct._get_map_cluster_metrics(map_)))
 
 
 def test_cluster_count():
@@ -78,14 +78,32 @@ def test_cluster_count():
     # this is needed to keept track of the number of bootstrap samples that yield
     # no cluster at all (high treshold) in order to compute p-values when there is no
     # actual cluster size histogram
-    assert_equal(gct._get_map_cluster_sizes([0, 0, 0, 0]), [0])
-    # if there is at least one cluster: no ZERO count
-    assert_equal(gct._get_map_cluster_sizes([0, 0, 1, 0]), [1])
+    gmcm = gct._get_map_cluster_metrics
     # Some basic tests
+    assert_equal(gmcm([0, 0, 0, 0]), [0])
+    assert_equal(gmcm([0, 0, 0, 0], metric='cluster_sizes_non0'), [])
+    assert_equal(gmcm([0, 0, 0, 0], metric='max_cluster_size'), [0])
+
+    # if there is at least one cluster: no ZERO count
+    assert_equal(gmcm([0, 0, 1, 0]), [1])
+    assert_equal(gmcm([0, 0, 1, 0], metric='cluster_sizes_non0'), [1])
+    assert_equal(gmcm([0, 0, 1, 0], metric='max_cluster_size'), [1])
+
     # 1 cluster of size 2
-    assert_array_equal(gct._get_map_cluster_sizes([0, 1, 1, 0]), [2])
+    for metric in ('cluster_sizes', 'cluster_sizes_non0', 'max_cluster_size'):
+        assert_array_equal(gmcm([0, 1, 1, 0], metric=metric), [2])
+
     # 2 clusters of size 1
-    assert_array_equal(gct._get_map_cluster_sizes([1, 0, 1, 0]), [1, 1])
+    assert_array_equal(gmcm([1, 0, 1, 0]), [1, 1])
+    assert_array_equal(gmcm([1, 0, 1, 0], metric='cluster_sizes_non0'), [1, 1])
+    assert_array_equal(gmcm([1, 0, 1, 0], metric='max_cluster_size'), [1])
+
+    # 2 clusters of size 1 and 2
+    assert_array_equal(gmcm([1, 0, 1, 1]), [1, 2])
+    assert_array_equal(gmcm([1, 0, 1, 1], metric='cluster_sizes_non0'), [1, 2])
+    assert_array_equal(gmcm([1, 0, 1, 1], metric='max_cluster_size'), [2])
+
+    # but if
     for i in range(2):  # rerun tests for bool type of test_M
         test_M = np.array([[1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0],
                            [0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1],
@@ -128,14 +146,15 @@ def test_cluster_count():
                      (test_ds_3d, expected_result_3d),
                      (test_M_3d_big, expected_result_3d_big),
                      (test_ds_3d_big, expected_result_3d_big)):
-            assert_array_equal(np.bincount(gct._get_map_cluster_sizes(t))[1:], e)
+            assert_array_equal(np.bincount(gmcm(t))[1:], e)
+            assert_array_equal(np.bincount(gmcm(t, metric='max_cluster_size'))[1:], [0]*(len(e)-1) + [1])
 
         # old
         M = np.vstack([test_M_3d.flatten()] * 10)
         # new
         ds = dataset_wizard([test_M_3d] * 10, space='coords')
         assert_array_equal(M, ds)
-        expected_result = Counter(np.hstack([gct._get_map_cluster_sizes(test_M_3d)] * 10))
+        expected_result = Counter(np.hstack([gmcm(test_M_3d)] * 10))
         assert_array_equal(expected_result,
                            gct.get_cluster_metric_counts(ds))
 
@@ -152,7 +171,7 @@ def test_cluster_count():
         ds = dataset_wizard([cluster_sizes_map] * 10, space='coords')
         assert_array_equal(M, ds)
         expected_result = Counter(np.hstack(
-            [gct._get_map_cluster_sizes(thresholded_cluster_sizes_map)] * 10))
+            [gmcm(thresholded_cluster_sizes_map)] * 10))
         th_map = np.ones(cluster_sizes_map.flatten().shape) * thr
         # threshold dataset by hand
         ds.samples = ds.samples > th_map
