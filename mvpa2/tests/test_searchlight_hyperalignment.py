@@ -27,6 +27,7 @@ from mvpa2.mappers.staticprojection import StaticProjectionMapper
 
 class SearchlightHyperalignmentTests(unittest.TestCase):
 
+    @reseed_rng()
     def get_testdata(self):
         # get a dataset with some prominent trends in it
         ds4l = datasets['uni4large']
@@ -153,6 +154,7 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         mappers_fs = [m[0]['proj'] for m in mappers_fs.samples]
         assert(np.alltrue([np.sum(m[7, :] == 0) == 4 for m in mappers_fs]))
 
+    @reseed_rng()
     def test_searchlight_hyperalignment(self):
         ds_orig = datasets['3dsmall']
         ds_orig.fa['voxel_indices'] = ds_orig.fa.myspace
@@ -166,7 +168,7 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         # create  a few distorted datasets to match the desired number of datasets
         # not sure if this truely mimics the real data, but at least we can test
         # implementation
-        while len(dss) <= nds-2:
+        while len(dss) <= nds - 2:
             sd = local_random_affine_transformations(ds_orig,
                     scatter_neighborhoods(Sphere(1),
                     ds_orig.fa[space].value, deterministic=True)[1], Sphere(2), space=space,
@@ -175,7 +177,7 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
             if np.sum(np.isnan(sd.samples)) == 0 and np.all(sd.samples.std(0)):
                 dss.append(sd)
         ds_orig_noisy = ds_orig.copy()
-        ds_orig_noisy.samples += 0.1*np.random.random(size=ds_orig_noisy.shape)
+        ds_orig_noisy.samples += 0.1 * np.random.random(size=ds_orig_noisy.shape)
         dss.append(ds_orig_noisy)
         _ = [zscore(sd, chunks_attr=None) for sd in dss[1:]]
         # we should have some distortion
@@ -209,19 +211,20 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
             assert_equal(projs[0][midx].proj.dtype, 'float32')
         # making sure the projections make sense
         for proj in projs:
-            max_weight = proj[0].proj.max(0).toarray().squeeze()
+            # no .max on sparse matrices on older scipy (e.g. on precise) so conver to array first
+            max_weight = proj[0].proj.toarray().max(0).squeeze()
             diag_weight = proj[0].proj.diagonal()
             # Check to make sure diagonal is the max weight, in almost all rows for reference subject
             assert(np.sum(max_weight == diag_weight)/float(len(diag_weight)) > 0.98)
             # and not true for other subjects
-            for i in range(1,nds-1):
-                assert(np.sum(proj[i].proj.max(0).toarray().squeeze() == proj[i].proj.diagonal())
+            for i in range(1, nds - 1):
+                assert(np.sum(proj[i].proj.toarray().max(0).squeeze() == proj[i].proj.diagonal())
                        /float(proj[i].proj.shape[0]) < 0.80)
             # Check to make sure projection weights match across duplicate datasets
-            max_weight = proj[-1].proj.max(0).toarray().squeeze()
+            max_weight = proj[-1].proj.toarray().max(0).squeeze()
             diag_weight = proj[-1].proj.diagonal()
             # Check to make sure diagonal is the max weight, in almost all rows for reference subject
-            assert(np.sum(max_weight == diag_weight)/float(len(diag_weight)) > 0.95)
+            assert(np.sum(max_weight == diag_weight) / float(len(diag_weight)) > 0.95)
         # project data
         dss_hyper = [hm.forward(sd) for hm, sd in zip(projs[0], dss)]
         _ = [zscore(sd, chunks_attr=None) for sd in dss_hyper]
