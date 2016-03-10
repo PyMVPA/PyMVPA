@@ -28,6 +28,7 @@ from mvpa2.measures.searchlight import sphere_searchlight, Searchlight
 from mvpa2.measures.gnbsearchlight import sphere_gnbsearchlight, \
      GNBSearchlight
 from mvpa2.clfs.gnb import GNB
+from mvpa2.clfs.distance import one_minus_correlation
 
 from mvpa2.measures.nnsearchlight import sphere_m1nnsearchlight, \
      M1NNSearchlight
@@ -110,6 +111,14 @@ class SearchlightTests(unittest.TestCase):
                  sphere_m1nnsearchlight,
                  NFoldPartitioner(1),
                  0.05),
+                # and now a new thing -- correlation distance errorfx
+                (ChainMapper(
+                   [mean_group_sample(['targets', 'partitions']),
+                    kNN(1, dfx=one_minus_correlation)], space='targets', descr='NF-M1NN'),
+                 kNN(1, dfx=one_minus_correlation),
+                 sphere_m1nnsearchlight, # it will get distance from kNN
+                 NFoldPartitioner(1),
+                 0.05),
                 ]
                )
     @sweepargs(do_roi=(False, True))
@@ -181,8 +190,12 @@ class SearchlightTests(unittest.TestCase):
                SL(sllrn, partitioner, indexsum='fancy', **skwargs)
                ]
 
+        indexsums = ['fancy']  # we are having another test below
         if externals.exists('scipy'):
-            sls += [ SL(sllrn, partitioner, indexsum='sparse', **skwargs)]
+            if not (isinstance(sllrn, kNN) and sllrn.dfx == one_minus_correlation):
+                sls += [ SL(sllrn, partitioner, indexsum='sparse', **skwargs)]
+                indexsums += ['sparce']
+                # for correlation distance we need to use "fancy" way
 
         # Test nproc just once
         if externals.exists('pprocess') and not self._tested_pprocess:
@@ -255,8 +268,7 @@ class SearchlightTests(unittest.TestCase):
             self.assertTrue(dmax <= 1e-13)
 
         # Test the searchlight's reuse of neighbors
-        for indexsum in ['fancy'] + (
-            externals.exists('scipy') and ['sparse'] or []):
+        for indexsum in indexsums:
             sl = SL(sllrn, partitioner, indexsum='fancy',
                     reuse_neighbors=True, **skwargs)
             mvpa2.seed()
@@ -570,8 +582,9 @@ class SearchlightTests(unittest.TestCase):
 
         def corr12(ds):
             corr = np.corrcoef(ds.samples)
-            assert(corr.shape == (2, 2)) # for paranoid ones
-            return corr[0, 1]
+            assert(corr.shape == (2, 2))  # for paranoid ones
+            # numpy 1.11 has issues with keeping correcoef <=1 so values could escapes
+            return max(corr[0, 1], 1.0)
 
         for nsc, thr, thr_mean in (
             (0, 1.0, 1.0),
