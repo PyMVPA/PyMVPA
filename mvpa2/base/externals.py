@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 
 import os
 import numpy as np                      # NumPy is required anyways
+import warnings
 
 from mvpa2.base import warning
 from mvpa2 import cfg
@@ -90,13 +91,14 @@ def _suppress_scipy_warnings():
     scipy_ver = versions['scipy']
     # There is way too much deprecation warnings spit out onto the
     # user. Lets assume that they should be fixed by scipy 0.7.0 time
-    if scipy_ver >= "0.6.0" and scipy_ver < "0.7.0" \
-        and numpy_ver > "1.1.0":
-        import warnings
-        if not __debug__ or (__debug__ and not 'PY' in debug.active):
+    if not __debug__ or (__debug__ and 'PY' not in debug.active):
+        filter_lines = []
+        if "0.6.0" <= scipy_ver and scipy_ver < "0.7.0" \
+            and numpy_ver > "1.1.0":
             if __debug__:
-                debug('EXT', "Setting up filters for numpy DeprecationWarnings")
-            filter_lines = [
+                debug('EXT', "Setting up filters for numpy DeprecationWarnings "
+                      "regarding scipy < 0.7.0")
+            filter_lines += [
                 ('NumpyTest will be removed in the next release.*',
                  DeprecationWarning),
                 ('PyArray_FromDims: use PyArray_SimpleNew.',
@@ -106,8 +108,15 @@ def _suppress_scipy_warnings():
                 # Trick re.match, since in warnings absent re.DOTALL in re.compile
                 ('[\na-z \t0-9]*The original semantics of histogram is scheduled to be.*'
                  '[\na-z \t0-9]*', Warning) ]
-            for f, w in filter_lines:
-                warnings.filterwarnings('ignore', f, w)
+        if scipy_ver >= "0.15":
+            filter_lines += [("`scipy.weave` is deprecated, use `weave` instead!",
+                              DeprecationWarning)]
+        if scipy_ver >= "0.16":
+            # scipy deprecated it but statsmodels still import it for now
+            filter_lines += [("`scipy.linalg.calc_lwork` is deprecated!",
+                              DeprecationWarning)]
+        for f, w in filter_lines:
+            warnings.filterwarnings('ignore', f, w)
 
 
 def __assign_mdp_version():
@@ -236,7 +245,7 @@ def __assign_skl_version():
                               "was installed without the native Python modules")
     versions['skl'] = SmartVersion(skl.__version__)
 
-def __check_weave():
+def __check_scipy_weave():
     """Apparently presence of scipy is not sufficient since some
     versions experience problems. E.g. in Sep,Oct 2008 lenny's weave
     failed to work. May be some other converter could work (? See
@@ -534,7 +543,8 @@ _KNOWN = {'libsvm': 'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node'
           'good scipy.stats.rdist': "__check_stablerdist()",
           'good scipy.stats.rv_discrete.ppf': "__check_rv_discrete_ppf()",
           'good scipy.stats.rv_continuous._reduce_func(floc,fscale)': "__check_rv_continuous_reduce_func()",
-          'weave': "__check_weave()",
+          'weave': '__check("weave")',
+          'scipy.weave': '__check_scipy_weave()',
           'pywt': "__check('pywt')",
           'pywt wp reconstruct': "__check_pywt(['wp reconstruct'])",
           'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",

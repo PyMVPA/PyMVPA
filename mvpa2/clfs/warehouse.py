@@ -355,7 +355,11 @@ if externals.exists('skl'):
             submod_ = __import__('scikits.learn.%s' % submod, fromlist=[submod])
         return getattr(submod_, class_)
 
-    sklLDA = _skl_import('lda', 'LDA')
+    if _skl_version >= "0.17":
+        sklLDA = _skl_import('discriminant_analysis', 'LinearDiscriminantAnalysis')
+    else:
+        sklLDA = _skl_import('lda', 'LDA')
+
     from mvpa2.clfs.skl.base import SKLLearnerAdapter
     clfswh += SKLLearnerAdapter(sklLDA(),
                                 tags=['lda', 'linear', 'multiclass', 'binary'],
