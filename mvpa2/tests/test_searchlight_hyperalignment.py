@@ -145,8 +145,8 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         mappers = ha(dss_rotated_clean)
         mappers = [m[0]['proj'] for m in mappers.samples]
         mappers_fs = [m[0]['proj'] for m in mappers_fs.samples]
-        # Testing the noisy features are eliminated from reference data
-        assert_true(np.alltrue([np.all(m[4:, 4:] == 0) for m in mappers_fs]))
+        # Testing that most of noisy features are eliminated from reference data
+        assert_true(np.alltrue([np.sum(m[:4, :4].std(0) > 0) > 2 for m in mappers_fs]))
         # And it correctly maps the selected features if they are selected
         if np.alltrue([np.all(m[4:, :4] == 0) for m in mappers_fs]):
             for m, mfs in zip(mappers, mappers_fs):
