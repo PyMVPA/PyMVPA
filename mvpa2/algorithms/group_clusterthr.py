@@ -24,7 +24,7 @@ import numpy as np
 from scipy.ndimage import measurements
 from scipy.sparse import dok_matrix
 
-
+from mvpa2.base.types import is_datasetlike
 from mvpa2.measures.label import ClustersLabeler
 from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
 from mvpa2.datasets import Dataset, dataset_wizard
@@ -202,11 +202,17 @@ class GroupClusterThreshold(Learner):
         doc="""Family-wise error rate for multiple comparison correction
             of cluster size probabilities.""")
 
+    measure = Parameter(
+        None,
+        doc="""FeaturewiseMeasure to estimate across samples (passed into __call__,
+        or bootstrapped based on `chunk_attr` groupping).  If not specified,
+        it would be a simple mean across samples.""")
+
     metric = Parameter(
         'cluster_sizes',
         constraints=EnsureChoice('max_cluster_size', 'cluster_sizes',
                                  'cluster_sizes_non0', 'max_value'),
-            doc="""What metric is measured per each value to be aggregated into
+        doc="""What metric is measured per each value to be aggregated into
             H0 distribution.  'max_cluster_size' collects a distribution of
             maximal cluster size detected in a sample (or 0), 'cluster_sizes'
             collects a distribution of all cluster sizes encountered while providing
@@ -237,11 +243,6 @@ class GroupClusterThreshold(Learner):
         space is assigned, space of the first FlattenMapper in the ds.a.mapper
         will be used.""")
 
-    map_postproc = Parameter(
-        None,
-        doc="""A callable to be used to process target as well as each bootstrapped
-        sample.  E.g. could be a TFCE mapper (yet TODO)
-        """)
     # TODO: relevant only for cluster-based analyses.
 
     n_blocks = Parameter(
@@ -284,10 +285,6 @@ class GroupClusterThreshold(Learner):
         feature_thresh_prob = self.params.feature_thresh_prob
         n_bootstrap = self.params.n_bootstrap
 
-        if self.params.map_postproc is not None:
-            raise NotImplementedError(
-                "Support for map_postproc is not yet implemented. Come later"
-            )
         if self.params.metric not in ('cluster_sizes', 'cluster_sizes_non0', 'max_cluster_size'):
             raise NotImplementedError(
                     "Support for metric %r is not yet implemented"
@@ -343,8 +340,8 @@ class GroupClusterThreshold(Learner):
             # average all samples into one, assuming we got something like one
             # sample per subject as input
             # TODO:  our "func" invocation
-            avgr = mean_sample()
-            ds = avgr(ds)
+            measure = self.params.measure or mean_sample()
+            ds = measure(ds)
 
         labeler = self._labeler
         assert(len(ds) == 1)
@@ -511,42 +508,48 @@ class GroupClusterThreshold(Learner):
             debug('GCTHR',
                   'Compute per-feature thresholds in %i blocks of %i features'
                   % (self.params.n_blocks, segwidth))
-        if self.params.map_postproc:
-            map_postproc = self.params.map_postproc
-            map_postproc.train(ds)
+
+        if self.params.measure:
+            # measure.train(ds) ???
 
             # no parallelization across features could be carried out so let's
             # stay simple!
-            def proc_ds_sidx(sidx):
-                ds_sidx = ds[sidx]  # so we maintain whatever we can
-                m = mean_sample()(ds_sidx)
-                # Actually, according to Matteo it is
-                # accs -> t -> z -> TFCE
-                # so what we might really want is to unify away from mean_sample
-                # to an arbitrary measure which takes stack of results
-                # And anyways, if TFCE, no cluster level stats to be computed
-                # just max values
-                return map_postproc.forward(m)
 
-            # actually TODO:  unlike mean, map_postproc (e.g. TFCE) might be more
+            # Actually, according to Matteo it is
+            # accs -> t -> z -> TFCE
+            # so what we might really want is to unify away from mean_sample
+            # to an arbitrary measure which takes stack of results
+            # And anyways, if TFCE, no cluster level stats to be computed
+            # just max values
+
+            # actually TODO:  unlike mean, measure (e.g. TFCE) might be more
             # CPU intensive, so we could parallelize that step!
-            thrmap = get_thresholding_map(
-                [proc_ds_sidx(sidx) for sidx in bcombos])
+            # Meanwhile just optimize for space by not brewing list first which
+            # later gets collapsed into array thus requiring twice the RAM at
+            # that point
+            measures = np.empty(shape=(len(bcombos), ds.nfeatures), dtype=ds.samples.dtype)
+            for isidx, sidx in enumerate(bcombos):
+                measures[isidx] = np.asanyarray(self.params.measure(ds[sidx]))
+            thrmap = get_thresholding_map(measures, feature_thresh_prob)
+            del measures
         else:
-            # Execution can be done in parallel as the estimation is independent
+            # If no measure specified -- simple mean is assumed and
+            # execution can be done in parallel as the estimation is independent
             # across features
             def featuresegment_producer(ncols):
                 for segstart in xrange(0, ds.nfeatures, ncols):
                     # one average map for every stored bcombo
                     # this also slices the input data into feature subsets
                     # for the compute blocks
-                    yield [np.mean(
-                        # get a view to a subset of the features
-                        # -- should be somewhat efficient as feature axis is
-                        # sliced
-                        ds_samples[sidx, segstart:segstart + ncols],
-                        axis=0)
-                           for sidx in bcombos]
+                    yield [
+                        np.mean(
+                            # get a view to a subset of the features
+                            # -- should be somewhat efficient as feature axis is
+                            # sliced
+                            ds_samples[sidx, segstart:segstart + ncols],
+                            axis=0)
+                        for sidx in bcombos
+                    ]
 
             if self.params.n_proc == 1:
                 # Serial execution
@@ -582,11 +585,13 @@ class GroupClusterThreshold(Learner):
             debug('GCTHR', 'Estimating NULL distribution of cluster sizes')
 
         # common drills
-        def thresh_mean(idx):
-            """Helper to  mean, apply threshold, wrap into a Dataset
+        measure = self.params.measure or mean_sample()
+        def thr_measure(idx):
+            """Helper to apply measure (e.g. mean), apply threshold, wrap into a Dataset
             """
-            # TODO: logical place to plug in TFCE?
-            return Dataset(np.mean(ds.samples[idx], axis=0)[None] > thrmap)
+            ds_ = measure(ds[idx])
+            assert(len(ds_) == 1)
+            return Dataset(ds_.samples > thrmap)
 
         # kwargs for get_cluster_metric_counts
         gcmc_kw = dict(labeler=labeler, metric=self.params.metric)
@@ -598,14 +603,14 @@ class GroupClusterThreshold(Learner):
                 # this function reverse-maps every sample one-by-one, hence no need
                 # to collect chunks of bootstrapped maps
                 cluster_metric_counts += get_cluster_metric_counts(
-                    thresh_mean(sidx), **gcmc_kw)
+                    thr_measure(sidx), **gcmc_kw)
         else:
             # Parallel execution
             # same code as above, just restructured for joblib's Parallel
             for jobres in Parallel(n_jobs=self.params.n_proc,
                                    pre_dispatch=self.params.n_proc,
                                    verbose=self._get_parallel_verbose_level())(
-                delayed(get_cluster_metric_counts)(thresh_mean(sidx), **gcmc_kw)
+                delayed(get_cluster_metric_counts)(thr_measure(sidx), **gcmc_kw)
                 for sidx in bcombos
             ):
                 # aggregate
@@ -635,12 +640,18 @@ def get_thresholding_map(data, p=0.001):
     data : 2D-array
       Array with data on which the cumulative distribution is based.
       Values in each column are sorted and the value corresponding to the
-      desired probability is returned.
+      desired probability is returned.  Could also be a list of arrays or datasets
     p : float [0,1]
       Value greater or equal than the returned threshold have a probability `p` or less.
     """
+
     # we need NumPy indexing logic, even if a dataset comes in
-    data = np.asanyarray(data)
+    if is_datasetlike(data):
+        data = data.samples
+    elif not isinstance(data, np.ndarray):
+        # could be a list of datasets or arrays
+        data = np.array(map(np.asanyarray, data))
+
     p_index = int(len(data) * p)
     if p_index < 1:
         raise ValueError("requested probability is too low for the given number of samples")
