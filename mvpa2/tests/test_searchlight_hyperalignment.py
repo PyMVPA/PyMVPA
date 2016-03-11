@@ -38,11 +38,14 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         Rs, dss_rotated, dss_rotated_clean = [], [], []
         # now lets compose derived datasets by using some random
         # rotation(s)
-        for i in xrange(n):
+        while len(dss_rotated_clean) < n:
             ds_ = random_affine_transformation(ds_orig, scale_fac=1.0, shift_fac=0.)
+            if ds_.a.random_scale <= 0:
+                continue
             Rs.append(ds_.a.random_rotation)
             zscore(ds_, chunks_attr=None)
             dss_rotated_clean.append(ds_)
+            i = len(dss_rotated_clean) - 1
             ds_2 = hstack([ds_, ds4l[:, ds4l.a.bogus_features[i*4:i*4+4]]])
             zscore(ds_2, chunks_attr=None)
             dss_rotated.append(ds_2)
@@ -98,10 +101,10 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
             dss_clean_back = [m.forward(ds_)
                               for m, ds_ in zip(mappers, dss)]
             _ = [zscore(sd, chunks_attr=None) for sd in dss_clean_back]
-            ds_norm = np.linalg.norm(dss[ref_ds].samples)
             nddss = []
             ndcss = []
             nf = ds_orig.nfeatures
+            ds_norm = np.linalg.norm(dss[ref_ds].samples[:, :nf])
             ds_orig_Rref = np.dot(ds_orig.samples, Rs[ref_ds]) * np.sign(dss_rotated_clean[ref_ds].a.random_scale)
             zscore(ds_orig_Rref, chunks_attr=None)
             for ds_back in dss_clean_back:
@@ -125,7 +128,7 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
                 " less for all. Got normed differences %s in %s case."
                 % (nddss, snoisy))
             self.assertTrue(
-                np.all(nddss[ref_ds] <= (.1, 0.2)[int(noisy)]),
+                np.all(nddss[ref_ds] <= (.1, 0.3)[int(noisy)]),
                 msg="Should have reconstructed original dataset quite "
                 "well even with zscoring. Got normed differences %s "
                 "in %s case." % (nddss, snoisy))
@@ -158,23 +161,22 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
     def test_searchlight_hyperalignment(self):
         ds_orig = datasets['3dsmall']
         ds_orig.fa['voxel_indices'] = ds_orig.fa.myspace
-        # toy data
-        # data = np.random.randn(18,4,2)
         space = 'voxel_indices'
         # total number of datasets for the analysis
         nds = 5
         zscore(ds_orig, chunks_attr=None)
         dss = [ds_orig]
         # create  a few distorted datasets to match the desired number of datasets
-        # not sure if this truely mimics the real data, but at least we can test
+        # not sure if this truly mimics the real data, but at least we can test
         # implementation
-        while len(dss) <= nds - 2:
+        while len(dss) < nds - 1:
             sd = local_random_affine_transformations(ds_orig,
                     scatter_neighborhoods(Sphere(1),
                     ds_orig.fa[space].value, deterministic=True)[1], Sphere(2), space=space,
                     scale_fac=1.0, shift_fac=0.0)
-            # sometimes above function returns dataset with nans, we don't want that.
-            if np.sum(np.isnan(sd.samples)) == 0 and np.all(sd.samples.std(0)):
+            # sometimes above function returns dataset with nans, infs, we don't want that.
+            if np.sum(np.isnan(sd.samples)+np.isinf(sd.samples)) == 0 \
+                    and np.all(sd.samples.std(0)):
                 dss.append(sd)
         ds_orig_noisy = ds_orig.copy()
         ds_orig_noisy.samples += 0.1 * np.random.random(size=ds_orig_noisy.shape)
