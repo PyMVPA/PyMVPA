@@ -160,6 +160,9 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
 
     @reseed_rng()
     def test_searchlight_hyperalignment(self):
+        if not externals.exists('h5py'):
+            self.assertRaises(RuntimeError)
+            raise SkipTest('h5py required for test of default backend="hdf5"')
         ds_orig = datasets['3dsmall']
         ds_orig.fa['voxel_indices'] = ds_orig.fa.myspace
         space = 'voxel_indices'
