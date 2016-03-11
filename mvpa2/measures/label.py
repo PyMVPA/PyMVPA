@@ -9,6 +9,8 @@
 """Label adjacent features in a dataset
 """
 import numpy as np
+from collections import defaultdict
+from operator import itemgetter
 
 from ..base.param import Parameter
 from ..base.constraints import EnsureBool
@@ -35,6 +37,13 @@ class ClustersLabeler(Measure):
         constraints=EnsureBool(),
         doc="Wrap provided QueryEngine with CachedQueryEngine to speed up "
             "subsequent queries"
+    )
+
+    sorted = Parameter(
+        True,
+        constraints=EnsureBool(),
+        doc="Sort labels by size of the detected clusters. Largest -- first."
+            " Ties broken randomly"
     )
 
     def __init__(self, qe, space='maxlabels', **kwargs):
@@ -82,7 +91,7 @@ class ClustersLabeler(Measure):
         for d, lmap in zip(ds.samples, lmaps):
             nonzero = np.nonzero(d)
             assert(len(nonzero) == 1)  # only 1 coordinate
-
+            sizes = defaultdict(int)
             idx = 0
 
             for seed in nonzero[0]:
@@ -91,6 +100,7 @@ class ClustersLabeler(Measure):
                 idx += 1
                 candidates = [seed]
                 lmap[seed] = idx
+                sizes[idx] += 1
                 while candidates:
                     candidate = candidates.pop()
                     # process its neighbors
@@ -100,8 +110,29 @@ class ClustersLabeler(Measure):
                             # or simply was 0 to start with
                         # immediately label
                         lmap[neighbor] = idx
+                        sizes[idx] += 1
                         candidates.append(neighbor)
             maxlabels.append(idx)
+
+            if self.params.sorted:
+                # we need to relabel based on sizes
+                # for paranoids
+                if __debug__:
+                    idxs = sorted(np.unique(lmap))
+                    if 0 in idxs:
+                        idxs.remove(0)
+                    assert(idxs == sorted(sizes))
+                mapping = {old_label: new_index + 1
+                           for new_index, (old_label, s)
+                           in enumerate(sorted(sizes.items(), key=itemgetter(1), reverse=True))}
+                assert(0 not in mapping)
+                # according to minimal benchmarking this remains the fastest way
+                # ATM e.g. comparing to vectorizing simple replacement, but TODO
+                # make it even more efficient
+                lmap_ = lmap.copy()
+                for old_label, new_label in mapping.iteritems():
+                    lmap_[lmap == old_label] = new_label
+                lmap[:] = lmap_[:]
 
         out = Dataset(lmaps, a=ds.a, sa=ds.sa, fa=ds.fa)
         out.sa[self.get_space()] = maxlabels

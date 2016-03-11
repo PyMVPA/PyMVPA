@@ -465,7 +465,8 @@ class GroupClusterThreshold(Learner):
         rej, probs_corr = smm.multipletests(
             probs_raw,
             alpha=fwe_rate,
-            is_sorted=False,  # just to make sure
+            # default and is not present on older versions of statsmodels
+            # is_sorted=False,  # just to make sure
             returnsorted=False,
             method=method)[:2]
 

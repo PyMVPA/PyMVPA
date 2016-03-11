@@ -17,6 +17,7 @@ from ..measures.label import ClustersLabeler
 from ..mappers.flatten import FlattenMapper
 from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
 
+from ..testing import sweepargs
 from ..testing.tools import assert_equal
 from ..testing.tools import assert_raises
 from ..testing.tools import assert_array_equal
@@ -25,17 +26,26 @@ from ..testing.tools import skip_if_no_external
 from ..testing.tools import assert_array_equal_up_to_reassignment
 
 
-def test_Labeler_simple():
+@sweepargs(sorted_=[True, False])
+def test_Labeler_simple(sorted_):
     # Let's test first on 1d case
-    ds = Dataset(np.array([[0, 1, 1, 1, 0, 0, 1, 1, 0, 1]], dtype=bool))
     # with different radius
-    target_clusters  = [   [0, 1, 1, 1, 0, 0, 2, 2, 0, 3],
-                           [0, 1, 1, 1, 0, 0, 2, 2, 0, 2],
-                           [0, 1, 1, 1, 0, 0, 1, 1, 0, 1]]
+    ds = Dataset(np.array([[0, 1, 1, 0, 1, 0, 0, 1, 1, 1, ]], dtype=bool))
+    # target clustering would differ depending on either sorted or not
+    target_clusters = {
+        True:  [[0, 2, 2, 0, 3, 0, 0, 1, 1, 1],
+                [0, 2, 2, 0, 2, 0, 0, 1, 1, 1],
+                [0, 1, 1, 0, 1, 0, 0, 1, 1, 1]],
+        False: [[0, 1, 1, 0, 2, 0, 0, 3, 3, 3],
+                [0, 1, 1, 0, 1, 0, 0, 2, 2, 2],
+                [0, 1, 1, 0, 1, 0, 0, 1, 1, 1]]
+    }
     ds.fa['coord'] = np.arange(ds.nfeatures)
 
-    for radius, target in zip([1, 2, 3], target_clusters):
-        labeler = ClustersLabeler(qe=IndexQueryEngine(coord=Sphere(radius)), auto_train=True)
+    for radius, target in zip([1, 2, 3], target_clusters[sorted_]):
+        labeler = ClustersLabeler(qe=IndexQueryEngine(coord=Sphere(radius)),
+                                  sorted=sorted_,
+                                  auto_train=True)
         ds_labeled = labeler(ds)
 
         # TODO: most likely would do it in incremental order???
