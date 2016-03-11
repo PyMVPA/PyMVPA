@@ -164,9 +164,10 @@ class HyperalignmentMeasure(Measure):
         # Package results
         results = np.asanyarray([{'proj': mapper} for mapper in mappers])
         # Add residual errors to the seed voxel to be used later to weed out bad SLs(?)
-        if 'residual_errors' in self.hyperalignment.ca.enabled:
-            [result.update({'residual_error': self.hyperalignment.ca['residual_errors'][ires]})
-             for ires, result in enumerate(results)]
+        # NOPE!
+        # if 'residual_errors' in self.hyperalignment.ca.enabled:
+        #    [result.update({'residual_error': self.hyperalignment.ca['residual_errors'][ires]})
+        #     for ires, result in enumerate(results)]
         return Dataset(samples=results)
 
 
