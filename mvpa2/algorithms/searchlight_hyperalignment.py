@@ -27,7 +27,8 @@ from mvpa2.support import copy
 if externals.exists('h5py'):
     from mvpa2.base.hdf5 import h5save, h5load
 
-from scipy.sparse import coo_matrix, csc_matrix
+if externals.exists('scipy'):
+    from scipy.sparse import coo_matrix, csc_matrix
 from mvpa2.featsel.helpers import FractionTailSelector, FixedNElementTailSelector
 
 if __debug__:
@@ -263,6 +264,9 @@ class SearchlightHyperalignment(ClassWithCollections):
                                "install python-pprocess, or reduce `nproc` "
                                "to 1 (got nproc=%i) or set to default None"
                                % self.params.nproc)
+        if not externals.exists('scipy'):
+            raise RuntimeError("The 'scipy' module is required for "
+                               "searchlight hyperalignment.")
         if self.params.results_backend == 'native':
             raise NotImplementedError("'native' mode to handle results is still a "
                                       "work in progress.")
