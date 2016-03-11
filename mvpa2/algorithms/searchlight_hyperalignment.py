@@ -22,9 +22,10 @@ from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
 from mvpa2.base.progress import ProgressBar
 import os
 from tempfile import mktemp
-from mvpa2.base.hdf5 import h5save, h5load
 from mvpa2.base import externals, warning
 from mvpa2.support import copy
+if externals.exists('h5py'):
+    from mvpa2.base.hdf5 import h5save, h5load
 
 from scipy.sparse import coo_matrix, csc_matrix
 from mvpa2.featsel.helpers import FractionTailSelector, FixedNElementTailSelector
@@ -262,6 +263,15 @@ class SearchlightHyperalignment(ClassWithCollections):
                                "install python-pprocess, or reduce `nproc` "
                                "to 1 (got nproc=%i) or set to default None"
                                % self.params.nproc)
+        if self.params.results_backend == 'native':
+            raise NotImplementedError("'native' mode to handle results is still a "
+                                      "work in progress.")
+            #warning("results_backend is set to 'native'. This has been known"
+            #        "to result in longer run time when working with big datasets.")
+        if self.params.results_backend == 'hdf5' and \
+                not externals.exists('h5py'):
+            raise RuntimeError("The 'hdf5' module is required for "
+                               "when results_backend is set to 'hdf5'")
 
     def _proc_block(self, block, datasets, measure, qe, seed=None, iblock='main'):
         if seed is not None:
