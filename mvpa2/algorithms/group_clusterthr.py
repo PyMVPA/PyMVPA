@@ -33,12 +33,15 @@ from mvpa2.mappers.flatten import FlattenMapper
 from mvpa2.base.learner import Learner
 from mvpa2.base.param import Parameter
 from mvpa2.base import warning
+from mvpa2.base import externals
 from mvpa2.base.constraints import \
     EnsureInt, EnsureFloat, EnsureRange, EnsureChoice, EnsureNone, EnsureStr
 from mvpa2.mappers.fx import mean_sample
 
 from mvpa2.support.due import due, Doi
 
+if externals.exists('joblib'):
+    from joblib import Parallel, delayed
 
 class GroupClusterThreshold(Learner):
     """Statistical evaluation of group-level average accuracy maps
@@ -268,7 +271,8 @@ class GroupClusterThreshold(Learner):
     def _untrain(self):
         self._labeler = None
         self._thrmap = None
-        self._null_cluster_sizes = None
+        self._null_cluster_metric_counts = None
+
 
     @due.dcite(
         Doi("10.1016/j.neuroimage.2012.09.063"),
@@ -284,7 +288,7 @@ class GroupClusterThreshold(Learner):
             raise NotImplementedError(
                 "Support for map_postproc is not yet implemented. Come later"
             )
-        if self.params.metric not in ('cluster_sizes', 'cluster_sizes_non0'):
+        if self.params.metric not in ('cluster_sizes', 'cluster_sizes_non0', 'max_cluster_size'):
             raise NotImplementedError(
                     "Support for metric %r is not yet implemented"
                     % self.params.metric)
@@ -304,7 +308,6 @@ class GroupClusterThreshold(Learner):
                         % (len(ds), feature_thresh_prob))
             raise NotImplementedError("Dealing with chunk_attr=None is not yet")
 
-
         #
         # Step 0: bootstrap maps by drawing one for each chunk and average them
         # (do N iterations)
@@ -313,172 +316,56 @@ class GroupClusterThreshold(Learner):
         # the matrix of bootstrapped maps either row-wise or column-wise (as
         # needed) to save memory by a factor of (close to) `n_bootstrap`
         # which samples belong to which chunk
-        chunk_samples = dict([(c, np.where(ds.sa[chunk_attr].value == c)[0])
-                              for c in ds.sa[chunk_attr].unique])
+        bcombos = self._get_bcombos(ds, chunk_attr, n_bootstrap)
 
-        # pre-built the bootstrap combinations
-        bcombos = [[random.sample(v, 1)[0] for v in chunk_samples.values()]
-                   for i in xrange(n_bootstrap)]
-        bcombos = np.array(bcombos, dtype=int)
         #
         # Step 1: find the per-feature threshold that corresponds to some p
         # in the NULL
-        segwidth = ds.nfeatures / self.params.n_blocks
-        # speed things up by operating on an array not a dataset
-        ds_samples = ds.samples
-        if __debug__:
-            debug('GCTHR',
-                  'Compute per-feature thresholds in %i blocks of %i features'
-                  % (self.params.n_blocks, segwidth))
-
-        if self.params.map_postproc:
-            map_postproc = self.params.map_postproc
-            map_postproc.train(ds)
-            # no parallelization across features could be carried out so let's
-            # stay simple!
-            def proc_ds_sidx(sidx):
-                ds_sidx = ds[sidx]  # so we maintain whatever we can
-                m = mean_sample()(ds_sidx)
-                # Actually, according to Matteo it is
-                # accs -> t -> z -> TFCE
-                # so what we might really want is to unify away from mean_sample
-                # to an arbitrary measure which takes stack of results
-                # And anyways, if TFCE, no cluster level stats to be computed
-                # just max values
-                return map_postproc.forward(m)
-            # actually TODO:  unlike mean, map_postproc (e.g. TFCE) might be more
-            # CPU intensive, so we could parallelize that step!
-            thrmap = get_thresholding_map([proc_ds_sidx(sidx) for sidx in bcombos])
-        else:
-            # Execution can be done in parallel as the estimation is independent
-            # across features
-            def featuresegment_producer(ncols):
-                for segstart in xrange(0, ds.nfeatures, ncols):
-                    # one average map for every stored bcombo
-                    # this also slices the input data into feature subsets
-                    # for the compute blocks
-                    yield [np.mean(
-                           # get a view to a subset of the features
-                           # -- should be somewhat efficient as feature axis is
-                           # sliced
-                           ds_samples[sidx, segstart:segstart + ncols],
-                           axis=0)
-                           for sidx in bcombos]
-            if self.params.n_proc == 1:
-                # Serial execution
-                thrmap = np.hstack(  # merge across compute blocks
-                    [get_thresholding_map(d, feature_thresh_prob)
-                     # compute a partial threshold map for as many features
-                     # as fit into a compute block
-                     for d in featuresegment_producer(segwidth)])
-            else:
-                # Parallel execution
-                verbose_level_parallel = 50 \
-                    if (__debug__ and 'GCTHR' in debug.active) else 0
-                # local import as only parallel execution needs this
-                from joblib import Parallel, delayed
-                # same code as above, just in parallel with joblib's Parallel
-                thrmap = np.hstack(
-                    Parallel(n_jobs=self.params.n_proc,
-                             pre_dispatch=self.params.n_proc,
-                             verbose=verbose_level_parallel)(
-                                 delayed(get_thresholding_map)
-                            (d, feature_thresh_prob)
-                                 for d in featuresegment_producer(segwidth)))
         # store for later thresholding of input data
-        self._thrmap = thrmap
+        self._thrmap = thrmap = self._get_thrmap(ds, bcombos, feature_thresh_prob)
 
         #
         # Step 2: threshold all NULL maps and build distribution of NULL cluster
-        #         sizes
+        #         metric
         #
         # TODO: yoh: note that the same bcombos which were used to estimate thrmap
         #       will now be used to estimate cluster sizes/metric.
         #       Not sure if such double treatment of the same data doesn't provide
         #       any bias.  We could  a) split chunks pool into two  b) create new
         #       pool of bcombos for metric estimation
+        self._null_cluster_metric_counts = \
+            self._get_null_cluster_metric_counts(ds, thrmap, bcombos)
 
-        # ClustersLabeler is needed to determine "clusters"
-        labeler = self.params.labeler
-        if labeler is None:
-            labeler = _get_default_labeler(ds, fattr=self.space)
-            warning("ClustersLabeler was not provided, deduced %s" % labeler)
-        labeler.train(ds)
-        self._labeler = labeler
-
-        # recompute the bootstrap average maps to threshold them and determine
-        # cluster sizes
-
-        if __debug__:
-            debug('GCTHR', 'Estimating NULL distribution of cluster sizes')
-
-        # common drills
-        def thresh_mean(idx):
-            """Helper to  mean, apply threshold, wrap into a Dataset
-            """
-            # TODO: logical place to plug in TFCE
-            return Dataset(np.mean(ds_samples[idx], axis=0)[None] > thrmap)
-
-        # kwargs for get_cluster_metric_counts
-        gcmc_kw = dict(labeler=labeler, metric=self.params.metric)
-
-        cluster_metric_counts = Counter()
-        # this step can be computed in parallel chunks to speeds things up
-        if self.params.n_proc == 1:
-            # Serial execution
-            for sidx in bcombos:
-                # this function reverse-maps every sample one-by-one, hence no need
-                # to collect chunks of bootstrapped maps
-                cluster_metric_counts += get_cluster_metric_counts(
-                    thresh_mean(sidx), **gcmc_kw)
-        else:
-            # Parallel execution
-            # same code as above, just restructured for joblib's Parallel
-            for jobres in Parallel(n_jobs=self.params.n_proc,
-                                   pre_dispatch=self.params.n_proc,
-                                   verbose=verbose_level_parallel)(
-                delayed(get_cluster_metric_counts)(thresh_mean(sidx), **gcmc_kw)
-                for sidx in bcombos
-            ):
-                # aggregate
-                cluster_metric_counts += jobres
-        # store cluster size histogram for later p-value evaluation
-        # use a sparse matrix for easy consumption (max dim is the number of
-        # features, i.e. biggest possible cluster)
-        scl = dok_matrix((1, ds.nfeatures + 1), dtype=int)
-        for s in cluster_metric_counts:
-            scl[0, s] = cluster_metric_counts[s]
-        self._null_cluster_sizes = scl
 
     def _call(self, ds):
         if len(ds) > 1:
+            # TODO: shouldn't we always demand all original data to enter?
             # average all samples into one, assuming we got something like one
             # sample per subject as input
+            # TODO:  our "func" invocation
             avgr = mean_sample()
             ds = avgr(ds)
-        # threshold input; at this point we only have one sample left
-        thrd = ds.samples[0] > self._thrmap
 
-        # # mapper default
-        # mapper = IdentityMapper()
-        # # overwrite if possible
-        # if hasattr(ds, 'a') and 'mapper' in ds.a:
-        #     mapper = ds.a.mapper
-        # # reverse-map input
-        # othrd = _verified_reverse1(mapper, thrd)
-        # # TODO: what is your purpose in life osamp? ;-)
-        # osamp = _verified_reverse1(mapper, ds.samples[0])
-        # osamp_ndim = osamp.ndim
+        labeler = self._labeler
+        assert(len(ds) == 1)
+        ds_sample = ds.samples[0]
+        thrmap = self._thrmap
+
+        # threshold input; at this point we only have one sample left
+        thrd = ds_sample > thrmap
 
         # prep output dataset
         outds = ds.copy(deep=False)
-        outds.fa['featurewise_thresh'] = self._thrmap
+        outds.fa['featurewise_thresh'] = thrmap
 
         # determine clusters
-        labeler = self._labeler
+        # labeler was already trained so doesn't need any .fa etc
         thrd_labeled = labeler(Dataset(thrd[None, :]))
         assert(len(thrd_labeled) == 1)  # just a single map at a time
         labels = thrd_labeled.samples[0]
+
+        # And now estimate all kinds of stats on those clusters to be stored
+        # within touds for retrospection later on
         labeler_space = labeler.get_space()
         if labeler_space in thrd_labeled.sa:
             num = thrd_labeled.sa[labeler_space].value[0]
@@ -521,57 +408,219 @@ class GroupClusterThreshold(Learner):
         #     np.rec.fromarrays(
         #         [com, maxpos], names=('center_of_mass', 'max'))
 
-        # store cluster labels after forward-mapping
-        outds.fa['clusters_featurewise_thresh'] = labels.copy()
-
         # update cluster size histogram with the actual result to get a
         # proper lower bound for p-values
         # this will make a copy, because the original matrix is int
         cluster_probs_raw = _transform_to_pvals(
-            area, self._null_cluster_sizes.astype('float'))
+            area, self._null_cluster_metric_counts.astype('float'))
 
-        clusterstats = (
-            [area, cluster_probs_raw],
-            ['size', 'prob_raw']
-        )
+        clusterstats = {
+            'size': area,
+            'prob_raw': cluster_probs_raw,
+        }
 
         # evaluate a bunch of stats for all clusters
-        morestats = {}
         for cid in xrange(len(area)):
             # keep clusters on outer loop, because selection is more expensive
-            clvals = ds.samples[0, labels == cid + 1]
+            clvals = ds_sample[labels == cid + 1]
             for id_, fx in (
                     ('mean', np.mean),
                     ('median', np.median),
                     ('min', np.min),
                     ('max', np.max),
                     ('std', np.std)):
-                stats = morestats.get(id_, [])
+                stats = clusterstats.get(id_, [])
                 stats.append(fx(clvals))
-                morestats[id_] = stats
+                clusterstats[id_] = stats
 
-        for k, v in morestats.items():
-            clusterstats[0].append(v)
-            clusterstats[1].append(k)
+        # store cluster labels
+        outds.fa['clusters_featurewise_thresh'] = labels.copy()
 
-        if self.params.multicomp_correction is not None:
-            # do a local import as only this tiny portion needs statsmodels
-            import statsmodels.stats.multitest as smm
-            rej, probs_corr = smm.multipletests(
-                cluster_probs_raw,
-                alpha=self.params.fwe_rate,
-                method=self.params.multicomp_correction)[:2]
-            # store corrected per-cluster probabilities
-            clusterstats[0].append(probs_corr)
-            clusterstats[1].append('prob_corrected')
-            # remove cluster labels that did not pass the FWE threshold
+        # Post-hoc corrections
+        correction_method = self.params.multicomp_correction
+        if correction_method is not None:
+            clusterstats['prob_corrected'], outds.fa['clusters_fwe_thresh'] = \
+                self._get_corrected_probs(
+                    cluster_probs_raw,
+                    labels=labels,
+                    fwe_rate=self.params.fwe_rate,
+                    method=correction_method)
+
+        outds.a['clusterstats'] = \
+            np.rec.fromarrays(clusterstats.values(), names=clusterstats.keys())
+        return outds
+
+    #
+    # @staticmethods below might become independent helper functions
+    #
+    @staticmethod
+    def _get_corrected_probs(probs_raw, labels=None, fwe_rate=None, method=None):
+        """Given original uncorrected probabilities and labels for them
+        return corrected probabilities and labels with not-rejected elements
+        zeroed out
+        """""
+        # do a local import as only this tiny portion needs statsmodels
+        import statsmodels.stats.multitest as smm
+
+        rej, probs_corr = smm.multipletests(
+            probs_raw,
+            alpha=fwe_rate,
+            is_sorted=False,  # just to make sure
+            returnsorted=False,
+            method=method)[:2]
+
+        if labels is not None:
+            # for paranoid Yarik!
+            if __debug__:
+                # check that per each non-0 label we have a prob
+                labels_uniq = sorted(np.unique(labels))
+                if labels_uniq[0] == 0:
+                    labels_uniq.remove(0)
+                assert(np.all(labels_uniq == np.arange(1, len(probs_raw)+1)))
+
+            labels = labels.copy()
+            # remove labels that did not pass the FWE threshold
             for i, r in enumerate(rej):
                 if not r:
                     labels[labels == i + 1] = 0
-            outds.fa['clusters_fwe_thresh'] = labels
-        outds.a['clusterstats'] = \
-            np.rec.fromarrays(clusterstats[0], names=clusterstats[1])
-        return outds
+            return probs_corr, labels
+        else:
+            return probs_corr
+
+
+    @staticmethod
+    def _get_bcombos(ds, chunk_attr, n_bootstrap):
+        """Return bootstrap combinations of indexes across provided random samples"""
+        chunk_samples = dict([(c, np.where(ds.sa[chunk_attr].value == c)[0])
+                              for c in ds.sa[chunk_attr].unique])
+        # pre-built the bootstrap combinations
+        bcombos = [[random.sample(v, 1)[0] for v in chunk_samples.values()]
+                   for i in xrange(n_bootstrap)]
+        bcombos = np.array(bcombos, dtype=int)
+        return bcombos
+
+
+    def _get_thrmap(self, ds, bcombos, feature_thresh_prob):
+        """Estimate thresholding map given a ds with permutations and bcombos
+        """
+        segwidth = ds.nfeatures / self.params.n_blocks
+        # speed things up by operating on an array not a dataset
+        ds_samples = ds.samples
+        if __debug__:
+            debug('GCTHR',
+                  'Compute per-feature thresholds in %i blocks of %i features'
+                  % (self.params.n_blocks, segwidth))
+        if self.params.map_postproc:
+            map_postproc = self.params.map_postproc
+            map_postproc.train(ds)
+
+            # no parallelization across features could be carried out so let's
+            # stay simple!
+            def proc_ds_sidx(sidx):
+                ds_sidx = ds[sidx]  # so we maintain whatever we can
+                m = mean_sample()(ds_sidx)
+                # Actually, according to Matteo it is
+                # accs -> t -> z -> TFCE
+                # so what we might really want is to unify away from mean_sample
+                # to an arbitrary measure which takes stack of results
+                # And anyways, if TFCE, no cluster level stats to be computed
+                # just max values
+                return map_postproc.forward(m)
+
+            # actually TODO:  unlike mean, map_postproc (e.g. TFCE) might be more
+            # CPU intensive, so we could parallelize that step!
+            thrmap = get_thresholding_map(
+                [proc_ds_sidx(sidx) for sidx in bcombos])
+        else:
+            # Execution can be done in parallel as the estimation is independent
+            # across features
+            def featuresegment_producer(ncols):
+                for segstart in xrange(0, ds.nfeatures, ncols):
+                    # one average map for every stored bcombo
+                    # this also slices the input data into feature subsets
+                    # for the compute blocks
+                    yield [np.mean(
+                        # get a view to a subset of the features
+                        # -- should be somewhat efficient as feature axis is
+                        # sliced
+                        ds_samples[sidx, segstart:segstart + ncols],
+                        axis=0)
+                           for sidx in bcombos]
+
+            if self.params.n_proc == 1:
+                # Serial execution
+                thrmap = np.hstack(  # merge across compute blocks
+                    [get_thresholding_map(d, feature_thresh_prob)
+                     # compute a partial threshold map for as many features
+                     # as fit into a compute block
+                     for d in featuresegment_producer(segwidth)])
+            else:
+                # Parallel execution
+                # same code as above, just in parallel with joblib's Parallel
+                thrmap = np.hstack(
+                    Parallel(n_jobs=self.params.n_proc,
+                             pre_dispatch=self.params.n_proc,
+                             verbose=self._get_parallel_verbose_level())(
+                        delayed(get_thresholding_map)
+                        (d, feature_thresh_prob)
+                        for d in featuresegment_producer(segwidth)))
+        return thrmap
+
+
+    def _get_null_cluster_metric_counts(self, ds, thrmap, bcombos):
+        # ClustersLabeler is needed to determine "clusters"
+        labeler = self.params.labeler
+        if labeler is None:
+            labeler = _get_default_labeler(ds, fattr=self.space)
+            warning("ClustersLabeler was not provided, deduced %s" % labeler)
+        labeler.train(ds)
+        self._labeler = labeler
+        # recompute the bootstrap average maps to threshold them and determine
+        # cluster sizes
+        if __debug__:
+            debug('GCTHR', 'Estimating NULL distribution of cluster sizes')
+
+        # common drills
+        def thresh_mean(idx):
+            """Helper to  mean, apply threshold, wrap into a Dataset
+            """
+            # TODO: logical place to plug in TFCE?
+            return Dataset(np.mean(ds.samples[idx], axis=0)[None] > thrmap)
+
+        # kwargs for get_cluster_metric_counts
+        gcmc_kw = dict(labeler=labeler, metric=self.params.metric)
+        cluster_metric_counts = Counter()
+        # this step can be computed in parallel chunks to speeds things up
+        if self.params.n_proc == 1:
+            # Serial execution
+            for sidx in bcombos:
+                # this function reverse-maps every sample one-by-one, hence no need
+                # to collect chunks of bootstrapped maps
+                cluster_metric_counts += get_cluster_metric_counts(
+                    thresh_mean(sidx), **gcmc_kw)
+        else:
+            # Parallel execution
+            # same code as above, just restructured for joblib's Parallel
+            for jobres in Parallel(n_jobs=self.params.n_proc,
+                                   pre_dispatch=self.params.n_proc,
+                                   verbose=self._get_parallel_verbose_level())(
+                delayed(get_cluster_metric_counts)(thresh_mean(sidx), **gcmc_kw)
+                for sidx in bcombos
+            ):
+                # aggregate
+                cluster_metric_counts += jobres
+        # store cluster size histogram for later p-value evaluation
+        # use a sparse matrix for easy consumption (max dim is the number of
+        # features, i.e. biggest possible cluster)
+        scl = dok_matrix((1, ds.nfeatures + 1), dtype=int)
+        for s in cluster_metric_counts:
+            scl[0, s] = cluster_metric_counts[s]
+        return scl
+
+
+    def _get_parallel_verbose_level(self):
+        """Just a helper to set verbose option for Parallel"""
+        return 50 if (__debug__ and 'GCTHR' in debug.active) else 0
 
 
 def get_thresholding_map(data, p=0.001):

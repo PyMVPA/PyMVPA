@@ -220,7 +220,7 @@ def test_group_clusterthreshold_simple(n_proc):
                                             loc=0,
                                             scale=1. / np.sqrt(nsubj)))) < 0.01)
 
-    clstr_sizes = clthr._null_cluster_sizes
+    clstr_sizes = clthr._null_cluster_metric_counts
     # getting anything but a lonely one feature cluster is very unlikely
     assert_true(max([c[0] for c in clstr_sizes.keys()]) <= 1)
     # threshold orig map
