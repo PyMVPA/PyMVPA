@@ -70,11 +70,11 @@ def setup_parser(parser):
         '--outlier-minthresh', type=float, default=None,
         help="""absolute minimum threshold of outlier detection. Only value
         larger than this this threshold will ever be considered as an
-        outlier. Default: None""")
+        outlier. [Default: None]""")
     parser.add_argument(
         '--outlier-stdthresh', type=float, default=None,
         help="""minimum threshold in units of standard deviation
-        for outlier detection. Default: None""")
+        for outlier detection. [Default: None]""")
     parser.add_argument(
         '--savefig', metavar='FILENAME', nargs=1,
         help="""file name to store the QC figure under. Without this option
