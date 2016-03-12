@@ -157,4 +157,4 @@ def run(args):
     if args.savefig is None:
         pl.show()
     else:
-        pl.savefig(args.savefig)
+        pl.savefig(args.savefig[0])
