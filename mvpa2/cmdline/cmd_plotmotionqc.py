@@ -76,8 +76,9 @@ def setup_parser(parser):
         help="""minimum threshold in units of standard deviation
         for outlier detection. Default: None""")
     parser.add_argument(
-        '--savefig', default=None,
-        help="""file name to store the QC figure under. Default: None""")
+        '--savefig', metavar='FILENAME', nargs=1,
+        help="""file name to store the QC figure under. Without this option
+        the figure is shown in an interactive viewer.""")
     return parser
 
 

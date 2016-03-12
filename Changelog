@@ -36,7 +36,7 @@ Releases
   * Enhancements
 
     - The ``ofmotionqc`` command line command has been renamed to
-      ``plotmotionqc``. It no longer requires a dataset formated in
+      ``plotmotionqc``. It no longer requires a dataset formatted in
       OpenFMRI-style, but works with any organization of input data.
 
 * 2.4.2 (Tue, 8 Mar 2016)
