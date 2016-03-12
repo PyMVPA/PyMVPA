@@ -582,8 +582,9 @@ class SearchlightTests(unittest.TestCase):
 
         def corr12(ds):
             corr = np.corrcoef(ds.samples)
-            assert(corr.shape == (2, 2)) # for paranoid ones
-            return corr[0, 1]
+            assert(corr.shape == (2, 2))  # for paranoid ones
+            # numpy 1.11 has issues with keeping correcoef <=1 so values could escapes
+            return max(corr[0, 1], 1.0)
 
         for nsc, thr, thr_mean in (
             (0, 1.0, 1.0),
