@@ -53,7 +53,7 @@ def setup_parser(parser):
     parser.add_argument(
         '-s', '--segment', metavar='FILE', type=np.loadtxt, nargs='+',
         action='append',
-        help="""Two or more text files with motion estimate time series.
+        help="""two or more text files with motion estimate time series.
         This option can be given multiple times (with multiple time series
         each to generate a multi-segment plot (e.g. for multiple run).""")
     parser.add_argument(
@@ -61,7 +61,7 @@ def setup_parser(parser):
         choices=('transrot', 'rottrans'),
         help="""column order of estimates in the files. `transrot` indicates
         translation first, followed by rotation. `rottrans` refers to the
-        oposite order. Default: 'transrot'""")
+        oposite order. [Default: 'transrot']""")
     parser.add_argument(
         '--rad2deg', action='store_true',
         help="""If specified, rotation estimates are assumed to be in radian

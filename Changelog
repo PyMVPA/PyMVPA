@@ -31,6 +31,14 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
+* 2.4.3 (???)
+
+  * Enhancements
+
+    - The ``ofmotionqc`` command line command has been renamed to
+      ``plotmotionqc``. It no longer requires a dataset formated in
+      OpenFMRI-style, but works with any organization of input data.
+
 * 2.4.2 (Tue, 8 Mar 2016)
 
   * Fixes
