@@ -99,6 +99,12 @@ def motionqc_plot(data, outlier_abs_minthresh=None, outlier_stdthresh=None, ylab
             aggfx=np.linalg.norm,
             greedy_outlier=True)
             for d in data])
+
+    outlier = None
+    if outlier_stdthresh:
+        outlier = [list(np.where(np.sum(np.logical_not(o.mask), axis=0))[0])
+                   for o in stats[1]]
+
     # plot
     timeseries_boxplot(
         stats[0]['median'],
@@ -119,9 +125,12 @@ def motionqc_plot(data, outlier_abs_minthresh=None, outlier_stdthresh=None, ylab
 
     pl.xlabel('time')
 
+    return outlier
+
 
 def run(args):
     import pylab as pl
+    from mvpa2.base import verbose
 
     # segments x [subjects x timepoints x properties]
     data = [np.array(s) for s in args.segment]
@@ -141,18 +150,28 @@ def run(args):
     fig = pl.figure(figsize=(12, 5))
     # translation
     ax = pl.subplot(211)
-    motionqc_plot(
+    outlier = motionqc_plot(
         [d[..., :3] for d in data],
         args.outlier_minthresh,
         args.outlier_stdthresh,
         "translation\nestimate L2-norm")
+    if outlier:
+        verbose(
+            0,
+            "Detected per-segment translation outlier input samples {0} (zero-based)".format(
+                outlier))
     # rotation
     ax = pl.subplot(212)
-    motionqc_plot(
+    outlier = motionqc_plot(
         [d[..., 3:] for d in data],
         args.outlier_minthresh,
         args.outlier_stdthresh,
         "rotation\nestimate L2-norm")
+    if outlier:
+        verbose(
+            0,
+            "Detected per-segment rotation outlier input samples {0} (zero-based)".format(
+                outlier))
 
     if args.savefig is None:
         pl.show()
