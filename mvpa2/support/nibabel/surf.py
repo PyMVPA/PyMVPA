@@ -1262,12 +1262,7 @@ class Surface(object):
 
             mind = ds[minpos] ** .5
 
-<<<<<<< HEAD
-            if not epsilon is None and mind > epsilon:
-=======
             if epsilon is not None and mind > epsilon:
-                print minpos
->>>>>>> master
                 raise ValueError("Not found near node for node %i (min distance %f > %f)" %
                                  (i, mind, epsilon))
             mapping[i] = minpos
