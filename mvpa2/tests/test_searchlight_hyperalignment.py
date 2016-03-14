@@ -142,6 +142,9 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         ha_fsf = HyperalignmentMeasure(featsel=0.5)
         ha_fsn = HyperalignmentMeasure(featsel=4)
         ha_fsf_same = HyperalignmentMeasure(featsel=0.5, use_same_features=True)
+        ha = HyperalignmentMeasure(full_matrix=False)
+        # check for valueerror if full_matrix=False and no roi_seed fa
+        self.assertRaises(ValueError, ha, dss_rotated)
         ha = HyperalignmentMeasure()
         dss_rotated[ref_ds].fa['roi_seed'] = [1, 0, 0, 0, 0, 0, 0, 0]
         mappers_fsf = ha_fsf(dss_rotated)

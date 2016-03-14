@@ -103,8 +103,11 @@ class HyperalignmentMeasure(Measure):
         if 'roi_seed' in ds[ref_ds].fa:
             seed_index = np.where(ds[ref_ds].fa.roi_seed)
         else:
+            if not self.full_matrix:
+                raise(ValueError, "Setting full_matrix=False requires"
+                                  "roi_seed `fa` in reference dataset "
+                                  "indicating center feature.")
             seed_index = None
-            self.full_matrix = True
         # Voxel selection within Searchlight
         # Usual metric of between-subject between-voxel correspondence
         if self.featsel != 1.0:
