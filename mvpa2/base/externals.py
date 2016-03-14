@@ -175,9 +175,9 @@ def __check_pywt(features=None):
 def __check_libsvm_verbosity_control():
     """Check for available verbose control functionality
     """
-    import mvpa2.clfs.libsvmc._svmc as _svmc
+    from mvpa2.clfs.libsvmc import svmc
     try:
-        _svmc.svm_set_verbosity(0)
+        svmc.svm_set_verbosity(0)
     except:
         raise ImportError(
             "Provided version of libsvm has no way to control "
