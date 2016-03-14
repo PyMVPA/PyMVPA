@@ -675,6 +675,9 @@ class AttributesCollector(type):
                         for pname, pval in super_collection.iteritems():
                             if pname not in collection:
                                 collection[pname] = pval
+                            else:
+                                debug("COLR", "Not overriding %s.%s of cls %s from base %s"
+                                      % (col, pname, cls, base))
                     else:
                         collections[col] = super_collection
 
