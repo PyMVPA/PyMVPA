@@ -34,13 +34,19 @@ from mvpa2.support.due import due, Doi
 if __debug__:
     from mvpa2.base import debug
 
-if externals.exists('scipy'):
+import numpy as np
+if 'nanmean' in dir(np):
+    from numpy import nanmean
+elif externals.exists('scipy'):
     from scipy.stats.stats import nanmean
+else:
+    from mvpa2.clfs.stats import nanmean
+
+if externals.exists('scipy'):
     from mvpa2.misc.stats import chisquare
     from scipy.stats import linregress, friedmanchisquare
     from mvpa2.misc.errorfx import corr_error, corr_error_prob
 else:
-    from mvpa2.clfs.stats import nanmean
     chisquare = None
     linregress = None
 

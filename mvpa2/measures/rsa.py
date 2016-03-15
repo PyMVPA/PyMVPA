@@ -39,7 +39,7 @@ class PDist(Measure):
           all possible metrics.""")
 
     center_data = Parameter(False, constraints='bool', doc="""\
-          If True then center each column of the data matrix by subtracing the
+          If True then center each column of the data matrix by subtracting the
           column mean from each element. This is recommended especially when
           using pairwise_metric='correlation'.""")
 
@@ -113,7 +113,7 @@ class PDistConsistency(Measure):
           matrices.""")
 
     center_data = Parameter(False, constraints='bool', doc="""\
-          If True then center each column of the data matrix by subtracing the
+          If True then center each column of the data matrix by subtracting the
           column mean from each element. This is recommended especially when
           using pairwise_metric='correlation'.""")
 
@@ -192,7 +192,7 @@ class PDistTargetSimilarity(Measure):
           target DSM.""")
 
     center_data = Parameter(False, constraints='bool', doc="""\
-          If True then center each column of the data matrix by subtracing the
+          If True then center each column of the data matrix by subtracting the
           column mean from each element. This is recommended especially when
           using pairwise_metric='correlation'.""")
 
