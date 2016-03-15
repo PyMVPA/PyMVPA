@@ -16,7 +16,7 @@ Build-Depends: debhelper (>= 7.0.50~),
                python-sphinx, python-numpydoc,
                graphviz, inkscape, imagemagick, bc,
                python-matplotlib,
-               python-statsmodels,
+               python-statsmodels [!s390x],
                python-joblib
 Standards-Version: 3.9.7
 Homepage: http://www.pymvpa.org
