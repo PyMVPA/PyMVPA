@@ -213,7 +213,8 @@ class SurfingSurfaceTests(unittest.TestCase):
         vertices_noisy = vertices + noise
 
         # make some vertices NaN (as might be the case for flat surfaces)
-        nan_count = np.ceil(plane.nvertices * nan_vertices_ratio)
+        nan_count_float = plane.nvertices * nan_vertices_ratio
+        nan_count = np.ceil(nan_count_float).astype(np.int)
         nan_vertices = np.random.random_integers(plane.nvertices,
                                                  size=(nan_count,)) - 1
         vertices_noisy[nan_vertices, dim] = np.nan
