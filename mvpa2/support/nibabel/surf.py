@@ -404,7 +404,7 @@ class Surface(object):
             for nbr_i, nbr_d in nbr.items():
                 dnew = d + nbr_d
 
-                if not maxdistance is None and dnew > maxdistance:
+                if maxdistance is not None and dnew > maxdistance:
                     continue  # skip if too far away
 
                 if nbr_i not in tdist or dnew < tdist[nbr_i][0]:
