@@ -489,6 +489,14 @@ class FlatSurfacePlotter(object):
             Bitmap with RGBA values that can be plotted.
         '''
         self._pre_setup()
+
+        expected_shape = (self._surface.nvertices,)
+        if data.shape != expected_shape:
+            raise ValueError('data shape was expected to be %s based on '
+                             'the number of nodes of the surface, '
+                             'found %s' % (
+                                 expected_shape, data.shape))
+
         x, y, msk, xi, yi = self._grid_def
         olay = griddata(x, y, data, xi, yi, interp='linear')
         nan_msk = np.logical_not(msk)

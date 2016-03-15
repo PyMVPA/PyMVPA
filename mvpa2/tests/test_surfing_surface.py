@@ -27,6 +27,7 @@ from mvpa2.support.nibabel.surf import vector_alignment_find_rotation, \
     generate_plane, Surface
 
 from mvpa2.misc.plot.flat_surf import flat_surface2xy, FlatSurfacePlotter
+from mvpa2.base.dataset import AttrDataset
 
 
 
@@ -285,6 +286,13 @@ class SurfingSurfaceTests(unittest.TestCase):
         # RGB values should match
         c = np.corrcoef(img_rgb.T, expected_img_rgb.T)[:3, 3:6]
         assert (np.all(np.diag(c) > .9))
+
+    def test_flat_surface_plotting_exception_wrong_size(self):
+        s = surf.generate_plane((0, 0, 0), (0, 0, 1), (0, 1, 0), 6, 6)
+
+        for offset in (-1, 0, 1):
+            nfeatures = s.nvertices + offset
+            ds = AttrDataset(samples=np.random.normal(size=(1, nfeatures)))
 
     def test_surfing_nodes_on_border_paths_surface_with_hole(self):
         s = surf.generate_plane((0, 0, 0), (0, 0, 1), (0, 1, 0), 6, 6)
