@@ -9,7 +9,7 @@
 """Unit tests for SVM classifier"""
 
 import numpy as np
-
+import gc
 from mvpa2.datasets import dataset_wizard
 
 from mvpa2.testing import *
@@ -186,6 +186,33 @@ class SVMTests(unittest.TestCase):
         a = np.arange(8, dtype=np.int16).reshape(4,-1)
         a[0, 0] = 322           # the value which would overflow
         self.assertTrue(np.isfinite(clf._get_default_c(a)))
+
+
+    def test_memleak(self):
+        skip_if_no_external('libsvm')
+        if __debug__:
+            # to minimize patch in this commit, will not RF to move get_vmem
+            # outside of debug
+            from mvpa2.base.verbosity import get_vmem
+        else:
+            raise SkipTest("for now operates only in __debug__ mode")
+
+        ds = mvpa2.clfs.base.Dataset.from_wizard(
+            samples=np.arange(400000).reshape([4, 100000]),
+            targets=np.arange(4))
+
+        for iter in range(6):
+            svm = mvpa2.clfs.svm.SVM(svm_impl="EPSILON_SVR", C=1)
+            svm.train(ds)
+            svm.predict(ds)
+            gc.collect()
+            if iter == 3:  # Let all the mess stabilize a bit in first iterations
+                mem0 = get_vmem()
+        mem1 = get_vmem()
+        # allow for 100 additional bytes just in case (mem1 takes space too ;))
+        self.assertTrue(mem0[1] + 100 >= mem1[1],
+                        msg="Memory consumption was %d, became %d"
+                            % (mem0[1], mem1[1]))
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(SVMTests)
