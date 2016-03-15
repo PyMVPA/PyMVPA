@@ -711,7 +711,15 @@ class Surface(object):
             # start a path
             pth = []
             pths.append(pth)
+
+            visited_edges = set()
+
             while True:
+                if edge in visited_edges:
+                    raise ValueError('Duplicate visit of %s' % edge)
+
+                visited_edges.add(edge)
+
                 p, q = edge2next[edge]
 
                 if (q, p) in e2f:
@@ -724,9 +732,11 @@ class Surface(object):
                     pth.append(p)  # p is on the border
                     if p in border_nodes:
                         border_nodes.remove(p)
-                    else:
+                    elif b0 == p:
                         # we made a tour and back to the starting point
                         break
+                    else:
+                        continue
 
         return pths
 

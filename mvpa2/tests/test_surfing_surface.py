@@ -285,3 +285,27 @@ class SurfingSurfaceTests(unittest.TestCase):
         # RGB values should match
         c = np.corrcoef(img_rgb.T, expected_img_rgb.T)[:3, 3:6]
         assert (np.all(np.diag(c) > .9))
+
+    def test_surfing_nodes_on_border_paths_surface_with_hole(self):
+        s = surf.generate_plane((0, 0, 0), (0, 0, 1), (0, 1, 0), 6, 6)
+        faces_to_remove = [1, 3, 7, 8, 3, 12, 13, 14, 22]
+        faces_to_keep = np.setdiff1d(np.arange(s.nfaces), faces_to_remove)
+        faces_to_add = [(0, 3, 10), (0, 4, 7), (0, 6, 4)]
+        faces_hole = np.vstack((s.faces[faces_to_keep], faces_to_add))
+        s_hole = surf.Surface(s.vertices, faces_hole)
+
+        pths = s_hole.nodes_on_border_paths()
+
+        expected_pths = [[1, 6, 4, 7, 0],
+                         [3, 4, 9, 8, 2],
+                         [11, 17, 23, 29, 35,
+                          34, 33, 32, 31, 30,
+                          24, 18, 12, 6, 7,
+                          13, 19, 14, 9, 10,
+                          5]]
+
+        def as_sorted_sets(xs):
+            return sorted(map(set, xs), key=min)
+
+        assert_equal(as_sorted_sets(pths),
+                     as_sorted_sets(expected_pths), )
