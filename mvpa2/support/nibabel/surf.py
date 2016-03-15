@@ -81,7 +81,6 @@ class Surface(object):
         if self._f.shape != (self._nf, 3):
             raise Exception("Wrong shape for faces")
 
-
     @property
     def node2faces(self):
         '''
@@ -203,8 +202,9 @@ class Surface(object):
                 for j in xrange(3):
                     e = (faces[i, j], faces[i, (j + 1) % 3])
                     if e in e2f:
-                        raise ValueError('duplicate key (%d,%d). Do all normals'
-                                         ' point in the same "direction"?' % e)
+                        raise ValueError(
+                            'duplicate key (%d,%d). Do all normals'
+                            ' point in the same "direction"?' % e)
                     e2f[e] = i
             self._e2f = e2f
 
@@ -345,7 +345,7 @@ class Surface(object):
                 dnew = d + nbr_d
 
                 if maxdistance is not None and dnew > maxdistance:
-                    continue # skip if too far away
+                    continue  # skip if too far away
 
                 if nbr_i not in tdist or dnew < tdist[nbr_i]:
                     # set distance and append to queue
@@ -702,7 +702,7 @@ class Surface(object):
                     break
 
             if not edge in edge2next:
-                if border_nodes==set(ns):
+                if border_nodes == set(ns):
                     # could not find last node, that is ok
                     break
                 # this should not happen really
@@ -820,7 +820,8 @@ class Surface(object):
         if not isinstance(n, np.ndarray):
             n = np.asarray(n)
         if n.shape != (3,):
-            raise ValueError("Expected vector with 3 elements, found %s" % ((n.shape,)))
+            raise ValueError(
+                "Expected vector with 3 elements, found %s" % ((n.shape,)))
 
         if v is None:
             v = self.vertices
@@ -969,7 +970,8 @@ class Surface(object):
             True iff the current surface has the same number of coordinates and the
             same faces as 'other'. '''
 
-        return self._v.shape == other._v.shape and np.array_equal(self._f, other._f)
+        return self._v.shape == other._v.shape and np.array_equal(self._f,
+                                                                  other._f)
 
     def __add__(self, other):
         '''coordinate-wise addition of two surfaces with the same topology'''
@@ -1228,16 +1230,18 @@ class Surface(object):
                 # N=10*LD^2+2 nodes
                 ld = ((nx - 2) / 10) ** 2
                 if ld != int(ld):
-                    raise ValueError("Not from mapicosahedron with %d nodes" % n)
+                    raise ValueError(
+                        "Not from mapicosahedron with %d nodes" % n)
                 return int(ld)
 
             ldx, ldy = map(getld, (nx, ny))
             r = ldy / ldx  # ratio
 
             if int(r) != r:
-                raise ValueError("ico linear divisions for high res surface (%d)"
-                                 "should be multiple of that for low res surface (%d)",
-                                 (ldy, ldx))
+                raise ValueError(
+                    "ico linear divisions for high res surface (%d)"
+                    "should be multiple of that for low res surface (%d)",
+                    (ldy, ldx))
 
         mapping = dict()
         x = self.vertices
@@ -1253,8 +1257,9 @@ class Surface(object):
                 return mapping
 
         if nx > ny:
-            raise ValueError("Other surface has fewer nodes (%d) than this one (%d)" %
-                             (nx, ny))
+            raise ValueError(
+                "Other surface has fewer nodes (%d) than this one (%d)" %
+                (nx, ny))
 
         for i in xrange(nx):
             ds = np.sum((x[i, :] - y) ** 2, axis=1)
@@ -1263,8 +1268,9 @@ class Surface(object):
             mind = ds[minpos] ** .5
 
             if epsilon is not None and mind > epsilon:
-                raise ValueError("Not found near node for node %i (min distance %f > %f)" %
-                                 (i, mind, epsilon))
+                raise ValueError(
+                    "Not found near node for node %i (min distance %f > %f)" %
+                    (i, mind, epsilon))
             mapping[i] = minpos
 
         return mapping
@@ -1352,16 +1358,18 @@ class Surface(object):
                 # N=10*LD^2+2 nodes
                 ld = ((nx - 2) / 10) ** 2
                 if ld != int(ld):
-                    raise ValueError("Not from mapicosahedron with %d nodes" % n)
+                    raise ValueError(
+                        "Not from mapicosahedron with %d nodes" % n)
                 return int(ld)
 
             ldx, ldy = map(getld, (nx, ny))
             r = ldy / ldx  # ratio
 
             if int(r) != r:
-                raise ValueError("ico linear divisions for high res surface (%d)"
-                                 "should be multiple of that for low res surface (%d)",
-                                 (ldy, ldx))
+                raise ValueError(
+                    "ico linear divisions for high res surface (%d)"
+                    "should be multiple of that for low res surface (%d)",
+                    (ldy, ldx))
 
         mapping = dict()
         x = self.vertices
@@ -1389,7 +1397,8 @@ class Surface(object):
         n_boxes = 20
         box_size = max(np.max(x, 0) - np.min(x, 0)) / n_boxes
 
-        x_boxed = self.coordinates_to_box_indices(box_size, master=highres) + .5
+        x_boxed = self.coordinates_to_box_indices(box_size,
+                                                  master=highres) + .5
         y_boxed = highres.coordinates_to_box_indices(box_size) + .5
 
         # get indices of nodes that are very near a box boundary
@@ -1533,7 +1542,8 @@ class Surface(object):
 
                 if len(common):
                     # keep only distances to allowed nodes
-                    small_ds = dict((k, v) for k, v in ds.iteritems() if k in common)
+                    small_ds = dict(
+                        (k, v) for k, v in ds.iteritems() if k in common)
 
                     # find nearest node
                     nearest_node_highres = min(small_ds, key=small_ds.get)
@@ -1641,9 +1651,9 @@ class Surface(object):
 
     @property
     def nanmean_face_normal(self):
-        face_normals=self.face_normals
-        nan_msk=np.any(np.isnan(face_normals),axis=1)
-        return np.mean(face_normals[np.logical_not(nan_msk),:],axis=0)
+        face_normals = self.face_normals
+        nan_msk = np.any(np.isnan(face_normals), axis=1)
+        return np.mean(face_normals[np.logical_not(nan_msk), :], axis=0)
 
     def connected_components(self):
         nv = self.nvertices
@@ -2182,7 +2192,6 @@ def vector_alignment_find_rotation(x, y):
         array of shape (3,3) so that the vector np.dot(r,x) points
         in the same direction as y, and has the same L2 norm as x
     '''
-
 
     x = normalized(x)
     y = normalized(y)
