@@ -35,6 +35,12 @@ class ChoiceClass(ClassWithCollections):
                   constraints=EnsureChoice('choice1', 'choice2'),
                   doc="documentation")
 
+# Subclass which overrides C and changes default
+class ChoiceSubClass(ChoiceClass):
+    C = Parameter('choice3',
+                  constraints=EnsureChoice('choice2', 'choice3'),
+                  doc="documentation")
+
 class BlankClass(ClassWithCollections):
     pass
 
@@ -68,6 +74,13 @@ class ParamsTests(unittest.TestCase):
 
     def test_choice(self):
         c = ChoiceClass()
+        self.assertEqual(c.params.C, 'choice1')
+        self.assertRaises(ValueError, c.params.__setattr__, 'C', 'bu')
+        self.assertRaises(ValueError, c.params.__setattr__, 'C', 'choice3')
+
+    def test_choice_subclass(self):
+        c = ChoiceSubClass()
+        self.assertEqual(c.params.C, 'choice3')
         self.assertRaises(ValueError, c.params.__setattr__, 'C', 'bu')
 
     def test_simple(self):
