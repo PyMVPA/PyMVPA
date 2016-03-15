@@ -370,7 +370,24 @@ def curvature_from_any(c):
 
 
 class FlatSurfacePlotter(object):
-    '''Plots data on a flat surface'''
+    '''Plots data on a flat surface
+
+    Example
+    =======
+    flat_surf_fn = 'flat_anat_surface.surf.gii'
+    ds = h5load('surface_data.h5py')
+
+    # plot data on surface
+    fsp = FlatSurfacePlotter(flat_surf_fn)
+    img = fsp(ds.samples[0])
+
+    # plot data with threshold and curvature
+    conv_fn='ico16_lh.conv.1D.dset' # from AFNI SUMA's SurfaceMetrics -conv
+    fsp_thr=FSP(flat_surf_fn,
+                curvature = conv_fn,
+                threshold=(.5, .8))
+    img_thr=fsp_thr(sl_dset.samples[0])
+    '''
 
     def __init__(self, surface, curvature=None, min_nsteps=500,
                  range_='2_98%', threshold=None, color_map=None,
