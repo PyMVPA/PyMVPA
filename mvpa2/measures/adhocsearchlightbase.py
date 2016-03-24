@@ -514,7 +514,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
 
         for isplit, split in enumerate(splits):
             if __debug__:
-                debug('SLC', ' Split %i out of %i' % (isplit, nsplits))
+                debug('SLC', ' Split %i out of %i' % (isplit+1, nsplits))
             # figure out for a given splits the blocks we want to work
             # with
             # sample_indicies
