@@ -8,7 +8,13 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Searchlight-based hyperalignment"""
 
+import os
 import numpy as np
+
+from tempfile import mktemp
+from numpy.linalg import LinAlgError
+from scipy.sparse import coo_matrix, csc_matrix
+
 import mvpa2
 from mvpa2.base.state import ClassWithCollections
 from mvpa2.base.param import Parameter
@@ -17,17 +23,14 @@ from mvpa2.algorithms.hyperalignment import Hyperalignment
 from mvpa2.measures.base import Measure
 from mvpa2.datasets import Dataset, vstack
 from mvpa2.mappers.staticprojection import StaticProjectionMapper
-from numpy.linalg import LinAlgError
 from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
 from mvpa2.base.progress import ProgressBar
-import os
-from tempfile import mktemp
 from mvpa2.base.hdf5 import h5save, h5load
 from mvpa2.base import externals, warning
 from mvpa2.support import copy
-
-from scipy.sparse import coo_matrix, csc_matrix
 from mvpa2.featsel.helpers import FractionTailSelector, FixedNElementTailSelector
+
+from mvpa2.support.due import due, Doi
 
 if __debug__:
     from mvpa2.base import debug
@@ -41,7 +44,10 @@ else:
     def _shpaldebug(*args):
         return None
 
-
+@due.dcite(
+    Doi('10.1016/j.neuron.2011.08.026'),
+    description="Per-feature measure of maximal correlation to features in other datasets",
+    tags=["implementation"])
 def compute_feature_scores(datasets, exclude_from_model=None):
     """
     Takes a list of datasets and computes a magical feature
@@ -352,6 +358,11 @@ class SearchlightHyperalignment(ClassWithCollections):
         for r in results:
             yield self.__handle_results(r)
 
+
+    @due.dcite(
+        Doi('10.1093/cercor/bhw068'),
+        description="Full cortex hyperalignment of data to a common space",
+        tags=["implementation"])
     def __call__(self, datasets):
         """Estimate mappers for each dataset using searchlight-based
         hyperalignment.
