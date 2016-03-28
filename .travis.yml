@@ -53,6 +53,7 @@ script:
     - export PATH=$HOME/.local/bin:$PATH  PYTHONPATH=.:$PYTHONPATH  R_LIBS=$PWD/R-libs
     - export NOSETESTS=$(which nosetests)
     - eval   $COVERAGE $NOSETESTS -v mvpa2 $DOCTESTS -s
+    - make testsuite  # test that all imports are available within the suite. adjust Makefile or suite.py to fix if fails
     - if [ ! -z "$COVERAGE" ]; then make coveragecmdline; fi
     - make build PYTHON=python3
 after_success:
