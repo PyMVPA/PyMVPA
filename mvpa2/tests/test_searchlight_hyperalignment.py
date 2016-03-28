@@ -276,6 +276,9 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
 
     @reseed_rng()
     def test_searchlight_hyperalignment_warnings_and_exceptions(self):
+        if not externals.exists('scipy'):
+            self.assertRaises(RuntimeError)
+            raise SkipTest('scipy is required for searchight hyperalignment')
         ds_orig = datasets['3dsmall'][:, :1]  # tiny dataset just to test exceptions
         ds_orig.fa['voxel_indices'] = ds_orig.fa.myspace
         slhyper = SearchlightHyperalignment()
