@@ -309,7 +309,6 @@ class SearchlightHyperalignment(ClassWithCollections):
         self.ndatasets = 0
         self.nfeatures = 0
         self.projections = None
-        self.projections_recon = None
         if self.params.nproc is not None and self.params.nproc > 1 \
                 and not externals.exists('pprocess'):
             raise RuntimeError("The 'pprocess' module is required for "
@@ -408,8 +407,6 @@ class SearchlightHyperalignment(ClassWithCollections):
                       % len(results_data))
             for isub, res in enumerate(results_data):
                 self.projections[isub] = self.projections[isub] + res
-                if self.params.compute_recon:
-                    self.projections_recon[isub] = self.projections_recon[isub] + res.T
             return
 
     def __handle_all_results(self, results):
@@ -543,10 +540,6 @@ class SearchlightHyperalignment(ClassWithCollections):
         self.projections = [
             csc_matrix((self.nfeatures, self.nfeatures), dtype=params.dtype)
             for isub in range(self.ndatasets)]
-        if params.compute_recon:
-            self.projections_recon = [
-                csc_matrix((self.nfeatures, self.nfeatures), dtype=params.dtype)
-                for isub in range(self.ndatasets)]
 
         # compute
         if params.nproc is not None and params.nproc > 1:
@@ -581,12 +574,8 @@ class SearchlightHyperalignment(ClassWithCollections):
         list(results_ds)
 
         _shpaldebug('Wrapping projection matrices into StaticProjectionMappers')
-        if params.compute_recon:
-            self.projections = [
-                StaticProjectionMapper(proj=proj, recon=proj_recon)
-                for proj, proj_recon in zip(self.projections, self.projections_recon)]
-        else:
-            self.projections = [
-                StaticProjectionMapper(proj=proj)
-                for proj in self.projections]
+        self.projections = [
+            StaticProjectionMapper(proj=proj, recon=proj.T) if params.compute_recon
+            else StaticProjectionMapper(proj=proj)
+            for proj in self.projections]
         return self.projections
