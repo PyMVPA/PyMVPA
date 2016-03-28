@@ -157,7 +157,7 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
 
     @reseed_rng()
     def test_searchlight_hyperalignment(self):
-        ds_orig = datasets['3dsmall'].copy()
+        ds_orig = datasets['3dsmall'].copy()[:, :15]
         ds_orig.fa['voxel_indices'] = ds_orig.fa.myspace
         # toy data
         # data = np.random.randn(18,4,2)
