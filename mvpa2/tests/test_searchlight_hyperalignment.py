@@ -38,11 +38,14 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         Rs, dss_rotated, dss_rotated_clean = [], [], []
         # now lets compose derived datasets by using some random
         # rotation(s)
-        for i in xrange(n):
+        while len(dss_rotated_clean) < n:
             ds_ = random_affine_transformation(ds_orig, scale_fac=1.0, shift_fac=0.)
+            if ds_.a.random_scale <= 0:
+                continue
             Rs.append(ds_.a.random_rotation)
             zscore(ds_, chunks_attr=None)
             dss_rotated_clean.append(ds_)
+            i = len(dss_rotated_clean) - 1
             ds_2 = hstack([ds_, ds4l[:, ds4l.a.bogus_features[i * 4: i * 4 + 4]]])
             zscore(ds_2, chunks_attr=None)
             dss_rotated.append(ds_2)
@@ -52,8 +55,8 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         ds_orig, dss_rotated, dss_rotated_clean, _ = self.get_testdata()
         fs_clean = compute_feature_scores(dss_rotated_clean)
         fs_noisy = compute_feature_scores(dss_rotated)
-        # Making sure features with least score are all bogus features
-        assert_true(np.all([np.all(np.argsort(fs)[:4] > 3) for fs in fs_noisy]))
+        # Making sure features with least score are almost all bogus features
+        assert_true(np.all([np.sum(np.argsort(fs)[:4] > 3) > 2 for fs in fs_noisy]))
         # Making sure the feature scores of true features are in the same order
         # assert_array_equal(np.argsort(np.asarray(fs_noisy)[:, :4]),
         #                   np.argsort(np.asarray(fs_clean)))
@@ -98,10 +101,10 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
             dss_clean_back = [m.forward(ds_)
                               for m, ds_ in zip(mappers, dss)]
             _ = [zscore(sd, chunks_attr=None) for sd in dss_clean_back]
-            ds_norm = np.linalg.norm(dss[ref_ds].samples)
             nddss = []
             ndcss = []
             nf = ds_orig.nfeatures
+            ds_norm = np.linalg.norm(dss[ref_ds].samples[:, :nf])
             ds_orig_Rref = np.dot(ds_orig.samples, Rs[ref_ds]) \
                            * np.sign(dss_rotated_clean[ref_ds].a.random_scale)
             zscore(ds_orig_Rref, chunks_attr=None)
@@ -126,50 +129,71 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
                 " less for all. Got normed differences %s in %s case."
                 % (nddss, snoisy))
             self.assertTrue(
-                nddss[ref_ds] <= (.1, 0.2)[int(noisy)],
+                nddss[ref_ds] <= (.1, 0.3)[int(noisy)],
                 msg="Should have reconstructed original dataset quite "
                 "well even with zscoring. Got normed differences %s "
                 "in %s case." % (nddss, snoisy))
             self.assertTrue(
-                np.all(np.array(nddss) >= 0.95 * nddss[ref_ds]),
+                np.all(np.array(nddss) / nddss[ref_ds] >= (0.95, 0.8)[int(noisy)]),
                 msg="Should have reconstructed orig_ds best of all. "
                 "Got normed differences %s in %s case with ref_ds=%d."
                 % (nddss, snoisy, ref_ds))
-        # Testing feature selection within the measure
-        ha_fs = HyperalignmentMeasure(featsel=0.5)
+        # Testing feature selection within the measure using fraction and count
+        # same features
+        ha_fsf = HyperalignmentMeasure(featsel=0.5)
+        ha_fsn = HyperalignmentMeasure(featsel=4)
+        ha_fsf_same = HyperalignmentMeasure(featsel=0.5, use_same_features=True)
+        ha = HyperalignmentMeasure(full_matrix=False)
+        # check for valueerror if full_matrix=False and no roi_seed fa
+        self.assertRaises(ValueError, ha, dss_rotated)
         ha = HyperalignmentMeasure()
         dss_rotated[ref_ds].fa['roi_seed'] = [1, 0, 0, 0, 0, 0, 0, 0]
-        mappers_fs = ha_fs(dss_rotated)
+        mappers_fsf = ha_fsf(dss_rotated)
+        mappers_fsf_same = ha_fsf_same(dss_rotated)
+        mappers_fsn = ha_fsn(dss_rotated)
         mappers = ha(dss_rotated_clean)
         mappers = [m[0]['proj'] for m in mappers.samples]
-        mappers_fs = [m[0]['proj'] for m in mappers_fs.samples]
-        # Testing the noisy features are eliminated
-        assert_true(np.alltrue([np.all(m[4:, 4:] == 0) for m in mappers_fs]))
-        # And it correctly maps the selected features
-        for m, mfs in zip(mappers, mappers_fs):
-            assert_array_equal(m, mfs[:4, :4])
+        mappers_fsf = [m[0]['proj'] for m in mappers_fsf.samples]
+        mappers_fsf_same = [m[0]['proj'] for m in mappers_fsf_same.samples]
+        mappers_fsn = [m[0]['proj'] for m in mappers_fsn.samples]
+        # Testing that most of noisy features are eliminated from reference data
+        assert_true(np.alltrue([np.sum(m[:4, :4].std(0) > 0) > 2 for m in mappers_fsf]))
+        # using same features make it most likely to eliminate all noisy features
+        assert_true(np.alltrue([np.sum(m[:4, :4].std(0) > 0) == 4 for m in mappers_fsf_same]))
+        assert_true(np.alltrue([np.sum(m[:4, :4].std(0) > 0) > 2 for m in mappers_fsn]))
+        # And it correctly maps the selected features if they are selected
+        if np.alltrue([np.all(m[4:, :4] == 0) for m in mappers_fsf]):
+            for m, mfs in zip(mappers, mappers_fsf):
+                assert_array_equal(m, mfs[:4, :4])
+        if np.alltrue([np.all(m[4:, :4] == 0) for m in mappers_fsf_same]):
+            for m, mfs in zip(mappers, mappers_fsf_same):
+                assert_array_equal(m, mfs[:4, :4])
         # testing roi_seed forces feature selection
         dss_rotated[ref_ds].fa['roi_seed'] = [0, 0, 0, 0, 0, 0, 0, 1]
         ha_fs = HyperalignmentMeasure(featsel=0.5)
-        mappers_fs = ha_fs(dss_rotated)
-        mappers_fs = [m[0]['proj'] for m in mappers_fs.samples]
-        assert(np.alltrue([np.sum(m[7, :] == 0) == 4 for m in mappers_fs]))
+        mappers_fsf = ha_fsf(dss_rotated)
+        mappers_fsf = [m[0]['proj'] for m in mappers_fsf.samples]
+        assert(np.alltrue([np.sum(m[7, :] == 0) == 4 for m in mappers_fsf]))
 
     @reseed_rng()
     def test_searchlight_hyperalignment(self):
+        if not externals.exists('h5py'):
+            self.assertRaises(RuntimeError)
+            raise SkipTest('h5py required for test of default backend="hdf5"')
+        if not externals.exists('scipy'):
+            self.assertRaises(RuntimeError)
+            raise SkipTest('scipy is required for searchight hyperalignment')
         ds_orig = datasets['3dsmall'].copy()[:, :15]
         ds_orig.fa['voxel_indices'] = ds_orig.fa.myspace
-        # toy data
-        # data = np.random.randn(18,4,2)
         space = 'voxel_indices'
         # total number of datasets for the analysis
         nds = 5
         zscore(ds_orig, chunks_attr=None)
         dss = [ds_orig]
-        # Create a few distorted datasets to match the desired number of datasets
-        # Not sure if this truely mimics the real data, but at least we can test
+        # create a few distorted datasets to match the desired number of datasets
+        # not sure if this truly mimics the real data, but at least we can test
         # implementation
-        while len(dss) <= nds - 2:
+        while len(dss) < nds - 1:
             sd = local_random_affine_transformations(
                 ds_orig,
                 scatter_neighborhoods(
@@ -178,8 +202,9 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
                 Sphere(2),
                 space=space,
                 scale_fac=1.0, shift_fac=0.0)
-            # sometimes above function returns dataset with nans, we don't want that.
-            if np.sum(np.isnan(sd.samples)) == 0 and np.all(sd.samples.std(0)):
+            # sometimes above function returns dataset with nans, infs, we don't want that.
+            if np.sum(np.isnan(sd.samples)+np.isinf(sd.samples)) == 0 \
+                    and np.all(sd.samples.std(0)):
                 dss.append(sd)
         ds_orig_noisy = ds_orig.copy()
         ds_orig_noisy.samples += 0.1 * np.random.random(size=ds_orig_noisy.shape)
@@ -188,8 +213,11 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         # we should have some distortion
         for ds in dss[1:]:
             assert_false(np.all(ds_orig.samples == ds.samples))
-        for ids, ds in enumerate(dss):
-            dss[ids].a['subject'] = ids
+        # testing checks
+        slhyp = SearchlightHyperalignment(ref_ds=1, exclude_from_model=[1])
+        self.assertRaises(ValueError, slhyp, dss[:3])
+        slhyp = SearchlightHyperalignment(ref_ds=3)
+        self.assertRaises(ValueError, slhyp, dss[:3])
         # store projections for each mapper separately
         projs = list()
         # run the algorithm with all combinations of the two major parameters
