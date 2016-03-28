@@ -187,76 +187,116 @@ class SearchlightHyperalignment(ClassWithCollections):
     3) Datasets should have feature attribute `voxel_indices`
     containing spatial coordinates of all features
     """
+
+    # TODO: add {training_,}residual_errors .ca ?
+
+    ## Parameters common with Hyperalignment but overriden
+
     ref_ds = Parameter(0, constraints=EnsureInt() & EnsureRange(min=0),
-                       doc="""Index of a dataset to use as a reference. First dataset
-                            is used as default. If you supply exclude_from_model list, you should
-                            supply the ref_ds index as index after you remove those excluded datasets.""")
+        doc="""Index of a dataset to use as a reference. First dataset is used
+            as default. If you supply exclude_from_model list, you should supply
+            the ref_ds index as index after you remove those excluded datasets.
+            Note that unlike regular Hyperalignment, there is no automagic
+            choosing of the "best" ref_ds by default.""")
 
-    radius = Parameter(3, constraints=EnsureInt() & EnsureRange(min=1),
-                       doc=""" radius of searchlight in number of voxels""")
+    ## Parameters specific to SearchlightHyperalignment
 
-    nproc = Parameter(1, constraints=EnsureInt() & EnsureRange(min=1) | EnsureNone(),
-                      doc="""Number of cores to use.""")
+    # TODO: atm hardcodes to use Sphere.  Theoretically can easily allow any neighborhood
+    radius = Parameter(
+        3,
+        constraints=EnsureInt() & EnsureRange(min=1),
+        doc=""" radius of searchlight in number of voxels""")
 
-    nblocks = Parameter(100, constraints=EnsureInt() & EnsureRange(min=1) | EnsureNone(),
-                        doc="""Number of blocks to divide to process. More = less memory overload.""")
+    nproc = Parameter(
+        1,
+        constraints=EnsureInt() & EnsureRange(min=1) | EnsureNone(),
+        doc="""Number of cores to use.""")
 
-    sparse_radius = Parameter(None, constraints=(EnsureRange(min=1) & EnsureInt() | EnsureNone()),
-                              doc="""Radius supplied to scatter_neighborhoods in units of voxels.
-                                This is effectively the distance between the centers where hyperalignment
-                                is performed in searchlights.
-                                If None, hyperalignment is performed at every voxel (default).""")
+    nblocks = Parameter(
+        100,
+        constraints=EnsureInt() & EnsureRange(min=1) | EnsureNone(),
+        doc="""Number of blocks to divide to process. Higher number results in
+            smaller memory consumption.""")
 
-    hyperalignment = Parameter(Hyperalignment(ref_ds=0),
-                               doc="""Hyperalignment instance to be used in each searchlight sphere.
-                                    Default is just the Hyperalignment instance with default parameters.""")
+    sparse_radius = Parameter(
+        None,
+        constraints=(EnsureRange(min=1) & EnsureInt() | EnsureNone()),
+        doc="""Radius supplied to scatter_neighborhoods in units of voxels.
+            This is effectively the distance between the centers where
+            hyperalignment is performed in searchlights.
+            If None, hyperalignment is performed at every voxel (default).""")
 
-    combine_neighbormappers = Parameter(True, constraints=EnsureBool(),
-                                        doc="""This param determines whether to combine mappers for each voxel
-                                        from its neighborhood searchlights or just use the mapper for which it is the
-                                        center voxel.
-                                        Use this option with caution, as enabling it might square the runtime memory
-                                        requirement. If you run into memory issues, reduce the nproc in sl. """)
+    hyperalignment = Parameter(
+        Hyperalignment(ref_ds=0),
+        doc="""Hyperalignment instance to be used in each searchlight sphere.
+            Default is just the Hyperalignment instance with default parameters.
+            """)
 
-    compute_recon = Parameter(True, constraints=EnsureBool(),
-                              doc="""This param determines whether to compute reverse mappers for each
-                              subject from common-space to subject space. These will be stored in the
-                              StaticProjectionMapper() and used when reverse() is called.
-                              Enabling it will double the size of the mappers returned.""")
+    combine_neighbormappers = Parameter(
+        True,
+        constraints=EnsureBool(),
+        doc="""This param determines whether to combine mappers for each voxel
+            from its neighborhood searchlights or just use the mapper for which
+            it is the center voxel.  Use this option with caution, as enabling
+            it might square the runtime memory requirement. If you run into
+            memory issues, reduce the nproc in sl. """)
 
-    featsel = Parameter(1.0, constraints=EnsureFloat() & EnsureRange(min=0.0, max=1.0) |
-                        EnsureInt() & EnsureRange(min=2),
-                        doc="""Determines if feature selection will be performed in each searchlight.
-                        1.0: Use all features. < 1.0 is understood as selecting that proportion of features in each
-                        searchlight using feature scores;
-                        > 1.0 is understood as selecting at most that many features in each searchlight.""")
+    compute_recon = Parameter(
+        True,
+        constraints=EnsureBool(),
+        doc="""This param determines whether to compute reverse mappers for each
+            subject from common-space to subject space. These will be stored in
+            the StaticProjectionMapper() and used when reverse() is called.
+            Enabling it will double the size of the mappers returned.""")
+
+    featsel = Parameter(
+        1.0,
+        constraints=EnsureFloat() & EnsureRange(min=0.0, max=1.0) |
+            EnsureInt() & EnsureRange(min=2),
+        doc="""Determines if feature selection will be performed in each searchlight.
+            1.0: Use all features. < 1.0 is understood as selecting that
+            proportion of features in each searchlight using feature scores;
+            > 1.0 is understood as selecting at most that many features in each
+            searchlight.""")
 
     # TODO: Should we get rid of this feature?
-    use_same_features = Parameter(False, constraints=EnsureBool(),
-                                  doc="""Select same features when doing feature selection for all datasets.
-                                  If this is true, feature scores across datasets will be averaged to select
-                                  best features.""")
+    use_same_features = Parameter(
+        False,
+        constraints=EnsureBool(),
+        doc="""Select the same (best) features when doing feature selection for
+            all datasets.""")
 
-    exclude_from_model = Parameter([], constraints=EnsureListOf(int),
-                                   doc="""List of dataset indices that will not participate in building common model.
-                                   These will still get mappers back but they don't influence the model
-                                   or voxel selection.""")
+    exclude_from_model = Parameter(
+        [],
+        constraints=EnsureListOf(int),
+        doc="""List of dataset indices that will not participate in building
+            common model.  These will still get mappers back but they don't
+            influence the model or voxel selection.""")
 
-    mask_node_ids = Parameter(None, constraints=EnsureListOf(int) | EnsureNone(),
-                              doc="""You can specify a mask to compute searchlight hyperalignment only within this mask.
-                              These would be a list of voxel indices.""")
+    mask_node_ids = Parameter(
+        None,
+        constraints=EnsureListOf(int) | EnsureNone(),
+        doc="""You can specify a mask to compute searchlight hyperalignment only
+            within this mask.  These would be a list of voxel indices.""")
 
-    dtype = Parameter('float32', constraints='str',
-                      doc="""dtype of elements transformation matrices to save on memory for big datasets""")
+    dtype = Parameter(
+        'float32',
+        constraints='str',
+        doc="""dtype of elements transformation matrices to save on memory for
+            big datasets""")
 
-    results_backend = Parameter('hdf5', constraints='str',
-                                doc=""" 'hdf5' or 'native' See Searchlight documentation.""")
+    results_backend = Parameter(
+        'hdf5',
+        constraints=EnsureChoice('hdf5', 'native'),
+        doc="""'hdf5' or 'native'. See Searchlight documentation.""")
 
-    tmp_prefix = Parameter('tmpsl', constraints='str',
-                           doc=""" 'hdf5' or 'native' See Searchlight documentation.""")
+    tmp_prefix = Parameter(
+        'tmpsl',
+        constraints='str',
+        doc="""Prefix for temporary files. See Searchlight documentation.""")
 
     def __init__(self, **kwargs):
-        _shpaldebug("Initiatlizing.")
+        _shpaldebug("Initializing.")
         ClassWithCollections.__init__(self, **kwargs)
         self.ndatasets = 0
         self.nfeatures = 0
@@ -277,7 +317,8 @@ class SearchlightHyperalignment(ClassWithCollections):
             debug('SLC', 'Starting computing block for %i elements' % len(block))
         bar = ProgressBar()
         projections = [csc_matrix((self.nfeatures, self.nfeatures),
-                                  dtype=self.params.dtype) for isub in range(self.ndatasets)]
+                                  dtype=self.params.dtype)
+                       for isub in range(self.ndatasets)]
         for i, node_id in enumerate(block):
             # retrieve the feature ids of all features in the ROI from the query
             # engine
@@ -357,7 +398,6 @@ class SearchlightHyperalignment(ClassWithCollections):
         """
         for r in results:
             yield self.__handle_results(r)
-
 
     @due.dcite(
         Doi('10.1093/cercor/bhw068'),
