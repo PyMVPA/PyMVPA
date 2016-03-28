@@ -76,7 +76,6 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
 
     def test_hyperalignment_measure(self):
         ref_ds = 0
-        skip_if_no_external('scipy')
         ha = HyperalignmentMeasure()
         ds_orig, dss_rotated, dss_rotated_clean, Rs = self.get_testdata()
         # Lets test two scenarios -- in one with no noise -- we should get
