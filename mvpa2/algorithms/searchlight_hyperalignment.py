@@ -25,10 +25,15 @@ from mvpa2.datasets import Dataset, vstack
 from mvpa2.mappers.staticprojection import StaticProjectionMapper
 from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
 from mvpa2.base.progress import ProgressBar
-from mvpa2.base.hdf5 import h5save, h5load
 from mvpa2.base import externals, warning
 from mvpa2.support import copy
 from mvpa2.featsel.helpers import FractionTailSelector, FixedNElementTailSelector
+
+if externals.exists('h5py'):
+    from mvpa2.base.hdf5 import h5save, h5load
+
+if externals.exists('scipy'):
+    from scipy.sparse import coo_matrix, csc_matrix
 
 from mvpa2.support.due import due, Doi
 
@@ -108,8 +113,11 @@ class HyperalignmentMeasure(Measure):
         if 'roi_seed' in ds[ref_ds].fa:
             seed_index = np.where(ds[ref_ds].fa.roi_seed)
         else:
+            if not self.full_matrix:
+                raise(ValueError, "Setting full_matrix=False requires"
+                                  "roi_seed `fa` in reference dataset "
+                                  "indicating center feature.")
             seed_index = None
-            self.full_matrix = True
         # Voxel selection within Searchlight
         # Usual metric of between-subject between-voxel correspondence
         if self.featsel != 1.0:
@@ -169,9 +177,10 @@ class HyperalignmentMeasure(Measure):
         # Package results
         results = np.asanyarray([{'proj': mapper} for mapper in mappers])
         # Add residual errors to the seed voxel to be used later to weed out bad SLs(?)
-        if 'residual_errors' in self.hyperalignment.ca.enabled:
-            [result.update({'residual_error': self.hyperalignment.ca['residual_errors'][ires]})
-             for ires, result in enumerate(results)]
+        # NOPE!
+        # if 'residual_errors' in self.hyperalignment.ca.enabled:
+        #    [result.update({'residual_error': self.hyperalignment.ca['residual_errors'][ires]})
+        #     for ires, result in enumerate(results)]
         return Dataset(samples=results)
 
 
@@ -309,6 +318,18 @@ class SearchlightHyperalignment(ClassWithCollections):
                                "install python-pprocess, or reduce `nproc` "
                                "to 1 (got nproc=%i) or set to default None"
                                % self.params.nproc)
+        if not externals.exists('scipy'):
+            raise RuntimeError("The 'scipy' module is required for "
+                               "searchlight hyperalignment.")
+        if self.params.results_backend == 'native':
+            raise NotImplementedError("'native' mode to handle results is still a "
+                                      "work in progress.")
+            #warning("results_backend is set to 'native'. This has been known"
+            #        "to result in longer run time when working with big datasets.")
+        if self.params.results_backend == 'hdf5' and \
+                not externals.exists('h5py'):
+            raise RuntimeError("The 'hdf5' module is required for "
+                               "when results_backend is set to 'hdf5'")
 
     def _proc_block(self, block, datasets, measure, qe, seed=None, iblock='main'):
         if seed is not None:
