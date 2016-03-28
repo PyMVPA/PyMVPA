@@ -13,7 +13,6 @@ import numpy as np
 
 from tempfile import mktemp
 from numpy.linalg import LinAlgError
-from scipy.sparse import coo_matrix, csc_matrix
 
 import mvpa2
 from mvpa2.base.state import ClassWithCollections
