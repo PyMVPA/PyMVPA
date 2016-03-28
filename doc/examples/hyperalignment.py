@@ -78,7 +78,7 @@ clf = LinearCSVMC()
 # feature selection helpers
 nf = 100
 fselector = FixedNElementTailSelector(nf, tail='upper',
-                                      mode='select',sort=False)
+                                      mode='select', sort=False)
 sbfs = SensitivityBasedFeatureSelection(OneWayAnova(), fselector,
                                         enable_ca=['sensitivities'])
 # create classifier with automatic feature selection
@@ -112,7 +112,7 @@ Between-subject classification using anatomically aligned data
 
 For between-subject classification with MNI-aligned voxels, we can stack up
 all individual datasets into a single one, as (anatomical!) feature
-correspondence is given. The crossvalidation analysis using the feature
+correspondence is given. The cross-validation analysis using the feature
 selection classifier will automatically perform the desired ANOVA-based feature
 selection on every training dataset partition. However, data folding will now
 be done by leaving out a complete subject for testing.
@@ -155,8 +155,8 @@ cv = CrossValidation(clf, NFoldPartitioner(attr='subject'),
 # leave-one-run-out for hyperalignment training
 for test_run in range(nruns):
     # split in training and testing set
-    ds_train = [sd[sd.sa.chunks != test_run,:] for sd in ds_all]
-    ds_test = [sd[sd.sa.chunks == test_run,:] for sd in ds_all]
+    ds_train = [sd[sd.sa.chunks != test_run, :] for sd in ds_all]
+    ds_test = [sd[sd.sa.chunks == test_run, :] for sd in ds_all]
 
     # manual feature selection for every individual dataset in the list
     anova = OneWayAnova()
@@ -182,7 +182,7 @@ for test_run in range(nruns):
     # by running the test dataset through the forward() function of the mapper.
 
     ds_test_fs = [featsels[i].forward(sd) for i, sd in enumerate(ds_test)]
-    ds_hyper = [ hypmaps[i].forward(sd) for i, sd in enumerate(ds_test_fs)]
+    ds_hyper = [hypmaps[i].forward(sd) for i, sd in enumerate(ds_test_fs)]
 
     # Now, we have a list of datasets with feature correspondence in a common
     # space derived from the training data. Just as in the between-subject
@@ -272,23 +272,24 @@ anova = OneWayAnova()
 fscores = [anova(sd) for sd in ds_all]
 fscores = np.mean(np.asarray(vstack(fscores)), axis=0)
 # apply to full datasets
-ds_fs = [sd[:,fselector(fscores)] for i,sd in enumerate(ds_all)]
+ds_fs = [sd[:, fselector(fscores)] for i, sd in enumerate(ds_all)]
 #run hyperalignment on full datasets
 hyper = Hyperalignment()
 mappers = hyper(ds_fs)
-ds_hyper = [ mappers[i].forward(ds_) for i,ds_ in enumerate(ds_fs)]
+ds_hyper = [mappers[i].forward(ds_) for i, ds_ in enumerate(ds_fs)]
 # similarity of original data samples
 sm_orig = [np.corrcoef(
-                sd.get_mapped(
-                    mean_group_sample(['targets'])).samples)
-                        for sd in ds_fs]
+               sd.get_mapped(
+                   mean_group_sample(['targets'])).samples)
+                       for sd in ds_fs]
 # mean across subjects
 sm_orig_mean = np.mean(sm_orig, axis=0)
 # same individual average but this time for hyperaligned data
 sm_hyper_mean = np.mean(
-                    [np.corrcoef(
-                        sd.get_mapped(mean_group_sample(['targets'])).samples)
-                            for sd in ds_hyper], axis=0)
+    [np.corrcoef(
+        sd.get_mapped(mean_group_sample(['targets'])).samples)
+     for sd in ds_hyper],
+    axis=0)
 # similarity for averaged hyperaligned data
 ds_hyper = vstack(ds_hyper)
 sm_hyper = np.corrcoef(ds_hyper.get_mapped(mean_group_sample(['targets'])))
@@ -297,29 +298,29 @@ ds_fs = vstack(ds_fs)
 sm_anat = np.corrcoef(ds_fs.get_mapped(mean_group_sample(['targets'])))
 
 """
-We then plot the respective similarity strucures.
+We then plot the respective similarity structures.
 """
 
 # class labels should be in more meaningful order for visualization
 # (human faces, animals faces, objects)
-intended_label_order = [2,4,1,5,3,0,6]
+intended_label_order = [2, 4, 1, 5, 3, 0, 6]
 labels = ds_all[0].UT
 labels = labels[intended_label_order]
 
-pl.figure(figsize=(6,6))
+pl.figure(figsize=(6, 6))
 # plot all three similarity structures
 for i, sm_t in enumerate((
     (sm_orig_mean, "Average within-subject\nsimilarity"),
     (sm_anat, "Similarity of group average\ndata (anatomically aligned)"),
     (sm_hyper_mean, "Average within-subject\nsimilarity (hyperaligned data)"),
     (sm_hyper, "Similarity of group average\ndata (hyperaligned)"),
-                      )):
+    )):
     sm, title = sm_t
     # reorder matrix columns to match label order
-    sm = sm[intended_label_order][:,intended_label_order]
-    pl.subplot(2, 2, i+1)
+    sm = sm[intended_label_order][:, intended_label_order]
+    pl.subplot(2, 2, i + 1)
     pl.imshow(sm, vmin=-1.0, vmax=1.0, interpolation='nearest')
-    pl.colorbar(shrink=.4, ticks=[-1,0,1])
+    pl.colorbar(shrink=.4, ticks=[-1, 0, 1])
     pl.title(title, size=12)
     ylim = pl.ylim()
     pl.xticks(range(ncats), labels, size='small', stretch='ultra-condensed',
@@ -359,9 +360,8 @@ between-subject classification shown above. The only difference is an addition
 ``for`` loop doing the alpha value sweep for each cross-validation fold.
 """
 
-alpha_levels = np.concatenate(
-                    (np.linspace(0.0, 0.7, 8),
-                     np.linspace(0.8, 1.0, 9)))
+alpha_levels = np.concatenate((np.linspace(0.0, 0.7, 8),
+                               np.linspace(0.8, 1.0, 9)))
 # to collect the results for later visualization
 bsc_hyper_results = np.zeros((nsubjs, len(alpha_levels), nruns))
 # same cross-validation over subjects as before
@@ -371,8 +371,8 @@ cv = CrossValidation(clf, NFoldPartitioner(attr='subject'),
 # leave-one-run-out for hyperalignment training
 for test_run in range(nruns):
     # split in training and testing set
-    ds_train = [sd[sd.sa.chunks != test_run,:] for sd in ds_all]
-    ds_test = [sd[sd.sa.chunks == test_run,:] for sd in ds_all]
+    ds_train = [sd[sd.sa.chunks != test_run, :] for sd in ds_all]
+    ds_test = [sd[sd.sa.chunks == test_run, :] for sd in ds_all]
 
     # manual feature selection for every individual dataset in the list
     anova = OneWayAnova()
@@ -386,7 +386,7 @@ for test_run in range(nruns):
                                alpha=alpha)
         hypmaps = hyper(ds_train_fs)
         ds_test_fs = [featsels[i].forward(sd) for i, sd in enumerate(ds_test)]
-        ds_hyper = [ hypmaps[i].forward(sd) for i, sd in enumerate(ds_test_fs)]
+        ds_hyper = [hypmaps[i].forward(sd) for i, sd in enumerate(ds_test_fs)]
         ds_hyper = vstack(ds_hyper)
         zscore(ds_hyper, chunks_attr='subject')
         res_cv = cv(ds_hyper)
