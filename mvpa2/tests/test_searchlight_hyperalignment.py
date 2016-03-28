@@ -76,6 +76,7 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
 
     def test_hyperalignment_measure(self):
         ref_ds = 0
+        skip_if_no_external('scipy')
         ha = HyperalignmentMeasure()
         ds_orig, dss_rotated, dss_rotated_clean, Rs = self.get_testdata()
         # Lets test two scenarios -- in one with no noise -- we should get
@@ -177,12 +178,8 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
 
     @reseed_rng()
     def test_searchlight_hyperalignment(self):
-        if not externals.exists('h5py'):
-            self.assertRaises(RuntimeError)
-            raise SkipTest('h5py required for test of default backend="hdf5"')
-        if not externals.exists('scipy'):
-            self.assertRaises(RuntimeError)
-            raise SkipTest('scipy is required for searchight hyperalignment')
+        skip_if_no_external('scipy')
+        skip_if_no_external('h5py')
         ds_orig = datasets['3dsmall'].copy()[:, :15]
         ds_orig.fa['voxel_indices'] = ds_orig.fa.myspace
         space = 'voxel_indices'
@@ -276,6 +273,7 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
 
     @reseed_rng()
     def test_searchlight_hyperalignment_warnings_and_exceptions(self):
+        skip_if_no_external('scipy')
         ds_orig = datasets['3dsmall'][:, :1]  # tiny dataset just to test exceptions
         ds_orig.fa['voxel_indices'] = ds_orig.fa.myspace
         slhyper = SearchlightHyperalignment()
