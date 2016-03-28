@@ -43,7 +43,7 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
             Rs.append(ds_.a.random_rotation)
             zscore(ds_, chunks_attr=None)
             dss_rotated_clean.append(ds_)
-            ds_2 = hstack([ds_, ds4l[:, ds4l.a.bogus_features[i*4:i*4+4]]])
+            ds_2 = hstack([ds_, ds4l[:, ds4l.a.bogus_features[i * 4: i * 4 + 4]]])
             zscore(ds_2, chunks_attr=None)
             dss_rotated.append(ds_2)
         return ds_orig, dss_rotated, dss_rotated_clean, Rs
@@ -102,7 +102,8 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
             nddss = []
             ndcss = []
             nf = ds_orig.nfeatures
-            ds_orig_Rref = np.dot(ds_orig.samples, Rs[ref_ds]) * np.sign(dss_rotated_clean[ref_ds].a.random_scale)
+            ds_orig_Rref = np.dot(ds_orig.samples, Rs[ref_ds]) \
+                           * np.sign(dss_rotated_clean[ref_ds].a.random_scale)
             zscore(ds_orig_Rref, chunks_attr=None)
             for ds_back in dss_clean_back:
                 ndcs = np.diag(np.corrcoef(ds_back.samples.T[:nf, ],
@@ -125,7 +126,7 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
                 " less for all. Got normed differences %s in %s case."
                 % (nddss, snoisy))
             self.assertTrue(
-                np.all(nddss[ref_ds] <= (.1, 0.2)[int(noisy)]),
+                nddss[ref_ds] <= (.1, 0.2)[int(noisy)],
                 msg="Should have reconstructed original dataset quite "
                 "well even with zscoring. Got normed differences %s "
                 "in %s case." % (nddss, snoisy))
@@ -165,14 +166,18 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         nds = 5
         zscore(ds_orig, chunks_attr=None)
         dss = [ds_orig]
-        # create  a few distorted datasets to match the desired number of datasets
-        # not sure if this truely mimics the real data, but at least we can test
+        # Create a few distorted datasets to match the desired number of datasets
+        # Not sure if this truely mimics the real data, but at least we can test
         # implementation
         while len(dss) <= nds - 2:
-            sd = local_random_affine_transformations(ds_orig,
-                    scatter_neighborhoods(Sphere(1),
-                    ds_orig.fa[space].value, deterministic=True)[1], Sphere(2), space=space,
-                    scale_fac=1.0, shift_fac=0.0)
+            sd = local_random_affine_transformations(
+                ds_orig,
+                scatter_neighborhoods(
+                    Sphere(1),
+                    ds_orig.fa[space].value, deterministic=True)[1],
+                Sphere(2),
+                space=space,
+                scale_fac=1.0, shift_fac=0.0)
             # sometimes above function returns dataset with nans, we don't want that.
             if np.sum(np.isnan(sd.samples)) == 0 and np.all(sd.samples.std(0)):
                 dss.append(sd)
@@ -203,7 +208,8 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         # some checks
         for midx in range(nds):
             # making sure mask_node_ids options works as expected
-            assert_array_almost_equal(projs[3][midx].proj.todense(), projs[4][midx].proj.todense())
+            assert_array_almost_equal(projs[3][midx].proj.todense(),
+                                      projs[4][midx].proj.todense())
             # recon check
             assert_array_almost_equal(projs[0][midx].proj.todense(),
                                       projs[1][midx].recon.T.todense(), decimal=5)
@@ -215,11 +221,11 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
             max_weight = proj[0].proj.toarray().max(0).squeeze()
             diag_weight = proj[0].proj.diagonal()
             # Check to make sure diagonal is the max weight, in almost all rows for reference subject
-            assert(np.sum(max_weight == diag_weight)/float(len(diag_weight)) > 0.98)
+            assert(np.sum(max_weight == diag_weight) / float(len(diag_weight)) > 0.98)
             # and not true for other subjects
             for i in range(1, nds - 1):
                 assert(np.sum(proj[i].proj.toarray().max(0).squeeze() == proj[i].proj.diagonal())
-                       /float(proj[i].proj.shape[0]) < 0.80)
+                       / float(proj[i].proj.shape[0]) < 0.80)
             # Check to make sure projection weights match across duplicate datasets
             max_weight = proj[-1].proj.toarray().max(0).squeeze()
             diag_weight = proj[-1].proj.diagonal()
@@ -232,7 +238,8 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         nf = ds_orig.nfeatures
         for ds_hyper in dss_hyper:
             ndcs = np.diag(np.corrcoef(ds_hyper.samples.T,
-                                       ds_orig.samples.T)[nf:, :nf], k=0)
+                                       ds_orig.samples.T)[nf:, :nf],
+                           k=0)
             ndcss += [ndcs]
         assert_true(np.median(ndcss[0]) > 0.9)
         # noisy copy of original dataset should be similar to original after hyperalignment

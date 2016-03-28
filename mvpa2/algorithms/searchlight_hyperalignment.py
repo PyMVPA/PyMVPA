@@ -73,11 +73,12 @@ def compute_feature_scores(datasets, exclude_from_model=None):
                 feature_scores[j + i + 1] += np.max(corr_temp, axis=0)
     return feature_scores
 
-
+# XXX Is it really a measure or a Mapper or just a Node???
 class HyperalignmentMeasure(Measure):
-    """
+    """Feature selection and hyperalignment in a single node
+
     HyperalignmentMeasure combines feature selection and hyperalignment
-    into a single node. This facilitates it's usage in any searchlight
+    into a single node. This facilitates its usage in any searchlight
     or ROI.
     """
     is_trained = True
@@ -303,12 +304,13 @@ class SearchlightHyperalignment(ClassWithCollections):
                         I += roi_feature_ids
                         J += [roi_feature_ids[f2]] * len(roi_feature_ids)
                         V += hmappers[isub][0]['proj'][:, f2].tolist()
-                proj = coo_matrix((V, (I, J)),
-                                  shape=(max(self.nfeatures, max(I)+1), max(self.nfeatures, max(J)+1)),
-                                  dtype=self.params.dtype)
+                proj = coo_matrix(
+                    (V, (I, J)),
+                    shape=(max(self.nfeatures, max(I) + 1), max(self.nfeatures, max(J) + 1)),
+                    dtype=self.params.dtype)
                 proj = proj.tocsc()
                 # Cleaning up the current subject's projections to free up memory
-                hmappers[isub, ] = [[]]*hmappers.shape[1]
+                hmappers[isub, ] = [[] for _ in xrange(hmappers.shape[1])]
                 projections[isub] = projections[isub] + proj
 
         if self.params.results_backend == 'native':
@@ -364,29 +366,37 @@ class SearchlightHyperalignment(ClassWithCollections):
         """
         self.ndatasets = len(datasets)
         params = self.params
-        _shpaldebug("SearchlightHyperalignment %s for %i datasets" % (self, self.ndatasets))
+
+        _shpaldebug("SearchlightHyperalignment %s for %i datasets"
+                    % (self, self.ndatasets))
         if params.ref_ds in params.exclude_from_model:
-            raise (ValueError, "Requested reference dataset %i is also "
-                               "in the exclude list." % params.ref_ds)
+            raise ValueError("Requested reference dataset %i is also "
+                             "in the exclude list." % params.ref_ds)
         if params.ref_ds != params.hyperalignment.params.ref_ds:
             warning('Supplied ref_ds & hyperalignment instance ref_ds:%d differ.'
                     % params.hyperalignment.params.ref_ds)
             warning('Using default hyperalignment instance with ref_ds: %d' % params.ref_ds)
             params.hyperalignment = Hyperalignment(ref_ds=params.ref_ds)
         if params.ref_ds >= self.ndatasets:
-            raise (ValueError, "Requested reference dataset %i is out of "
-                               "bounds. We have only %i datasets provided" % (params.ref_ds, self.ndatasets))
+            raise ValueError("Requested reference dataset %i is out of "
+                             "bounds. We have only %i datasets provided"
+                             % (params.ref_ds, self.ndatasets))
         if len(params.exclude_from_model) > 0:
-            warning("These datasets will not participate in building common model: %s" % params.exclude_from_model)
+            warning("These datasets will not participate in building common "
+                    "model: %s" % params.exclude_from_model)
+
         # Setting up SearchlightHyperalignment
         # we need to know which original features where comprising the
         # individual SL ROIs
         _shpaldebug('Initializing HyperalignmentMeasure.')
-        hmeasure = HyperalignmentMeasure(featsel=params.featsel,
-                                         hyperalignment=params.hyperalignment,
-                                         full_matrix=params.combine_neighbormappers,
-                                         use_same_features=params.use_same_features,
-                                         exclude_from_model=params.exclude_from_model, dtype=params.dtype)
+        hmeasure = HyperalignmentMeasure(
+            featsel=params.featsel,
+            hyperalignment=params.hyperalignment,
+            full_matrix=params.combine_neighbormappers,
+            use_same_features=params.use_same_features,
+            exclude_from_model=params.exclude_from_model,
+            dtype=params.dtype)
+
         # Performing SL processing manually
         _shpaldebug("Setting up for searchlights")
         if params.nproc is None and externals.exists('pprocess'):
@@ -398,6 +408,7 @@ class SearchlightHyperalignment(ClassWithCollections):
                         "number of cores. Using 1"
                         % externals.versions['pprocess'])
                 params.nproc = 1
+
         # XXX I think this class should already accept a single dataset only.
         # It should have a ``space`` setting that names a sample attribute that
         # can be used to identify individual/original datasets.
@@ -416,21 +427,28 @@ class SearchlightHyperalignment(ClassWithCollections):
             _shpaldebug("Setting up sparse neighborhood")
             from mvpa2.misc.neighborhood import scatter_neighborhoods
             if params.mask_node_ids is None:
-                scoords, sidx = scatter_neighborhoods(Sphere(params.sparse_radius),
-                                                      datasets[params.ref_ds].fa.voxel_indices, deterministic=True)
+                scoords, sidx = scatter_neighborhoods(
+                    Sphere(params.sparse_radius),
+                    datasets[params.ref_ds].fa.voxel_indices,
+                    deterministic=True)
                 roi_ids = sidx
             else:
-                scoords, sidx = scatter_neighborhoods(Sphere(params.sparse_radius),
-                                                      datasets[params.ref_ds].fa.voxel_indices[params.mask_node_ids],
-                                                      deterministic=True)
+                scoords, sidx = scatter_neighborhoods(
+                    Sphere(params.sparse_radius),
+                    datasets[params.ref_ds].fa.voxel_indices[params.mask_node_ids],
+                    deterministic=True)
                 roi_ids = [params.mask_node_ids[sid] for sid in sidx]
+
         # Initialize projections
         _shpaldebug('Initializing projection matrices')
-        self.projections = [csc_matrix((self.nfeatures, self.nfeatures),
-                                       dtype=params.dtype) for isub in range(self.ndatasets)]
+        self.projections = [
+            csc_matrix((self.nfeatures, self.nfeatures), dtype=params.dtype)
+            for isub in range(self.ndatasets)]
         if params.compute_recon:
-            self.projections_recon = [csc_matrix((self.nfeatures, self.nfeatures),
-                                                 dtype=params.dtype) for isub in range(self.ndatasets)]
+            self.projections_recon = [
+                csc_matrix((self.nfeatures, self.nfeatures), dtype=params.dtype)
+                for isub in range(self.ndatasets)]
+
         # compute
         if params.nproc is not None and params.nproc > 1:
             # split all target ROIs centers into `nproc` equally sized blocks
@@ -458,16 +476,18 @@ class SearchlightHyperalignment(ClassWithCollections):
         else:
             # otherwise collect the results in an 1-item list
             _shpaldebug('Using 1 process to compute mappers.')
-            p_results = [
-                    self._proc_block(roi_ids, datasets, hmeasure, qe)]
+            p_results = [self._proc_block(roi_ids, datasets, hmeasure, qe)]
         results_ds = self.__handle_all_results(p_results)
         # Dummy iterator for, you know, iteration
-        for res in results_ds:
-            pass
+        list(results_ds)
+
         _shpaldebug('Wrapping projection matrices into StaticProjectionMappers')
         if params.compute_recon:
-            self.projections = [StaticProjectionMapper(proj=proj, recon=proj_recon)
-                                for proj, proj_recon in zip(self.projections, self.projections_recon)]
+            self.projections = [
+                StaticProjectionMapper(proj=proj, recon=proj_recon)
+                for proj, proj_recon in zip(self.projections, self.projections_recon)]
         else:
-            self.projections = [StaticProjectionMapper(proj=proj) for proj in self.projections]
+            self.projections = [
+                StaticProjectionMapper(proj=proj)
+                for proj in self.projections]
         return self.projections
