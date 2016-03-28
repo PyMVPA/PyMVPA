@@ -157,7 +157,7 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
 
     @reseed_rng()
     def test_searchlight_hyperalignment(self):
-        ds_orig = datasets['3dsmall']
+        ds_orig = datasets['3dsmall'].copy()
         ds_orig.fa['voxel_indices'] = ds_orig.fa.myspace
         # toy data
         # data = np.random.randn(18,4,2)
@@ -245,6 +245,18 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         # noisy copy of original dataset should be similar to original after hyperalignment
         assert_true(np.median(ndcss[-1]) > 0.9)
         assert_true(np.all([np.median(ndcs) > 0.2 for ndcs in ndcss[1:-2]]))
+
+    @reseed_rng()
+    def test_searchlight_hyperalignment_warnings_and_exceptions(self):
+        ds_orig = datasets['3dsmall'][:, :1]  # tiny dataset just to test exceptions
+        ds_orig.fa['voxel_indices'] = ds_orig.fa.myspace
+        slhyper = SearchlightHyperalignment()
+        self.assertRaises(ValueError, slhyper, [ds_orig])  # need more than 1
+        ds_orig.samples += 1.0  # not zscored for sure
+        # TODO: we need assert_warnings to also capture our own warnings,
+        # currently they are just suppressed :-/  So this is just a smoke test
+        mappers = slhyper([ds_orig, ds_orig.copy()])
+
 
 
 def suite():  # pragma: no cover
