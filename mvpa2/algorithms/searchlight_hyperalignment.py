@@ -415,26 +415,54 @@ class SearchlightHyperalignment(ClassWithCollections):
         -------
         A list of trained StaticProjectionMappers of the same length as datasets
         """
-        self.ndatasets = len(datasets)
-        params = self.params
 
-        _shpaldebug("SearchlightHyperalignment %s for %i datasets"
-                    % (self, self.ndatasets))
+        # Perform some checks first before modifying internal state
+        params = self.params
+        ndatasets = len(datasets)
+
+        if len(datasets) <= 1:
+            raise ValueError("SearchlightHyperalignment needs > 1 dataset to "
+                             "operate on. Got: %d" % self.ndatasets)
+
         if params.ref_ds in params.exclude_from_model:
             raise ValueError("Requested reference dataset %i is also "
                              "in the exclude list." % params.ref_ds)
+
+        if params.ref_ds >= ndatasets:
+            raise ValueError("Requested reference dataset %i is out of "
+                             "bounds. We have only %i datasets provided"
+                             % (params.ref_ds, self.ndatasets))
+
+        # The rest of the checks are just warnings
+        self.ndatasets = ndatasets
+
+        _shpaldebug("SearchlightHyperalignment %s for %i datasets"
+                    % (self, self.ndatasets))
+
         if params.ref_ds != params.hyperalignment.params.ref_ds:
             warning('Supplied ref_ds & hyperalignment instance ref_ds:%d differ.'
                     % params.hyperalignment.params.ref_ds)
             warning('Using default hyperalignment instance with ref_ds: %d' % params.ref_ds)
             params.hyperalignment = Hyperalignment(ref_ds=params.ref_ds)
-        if params.ref_ds >= self.ndatasets:
-            raise ValueError("Requested reference dataset %i is out of "
-                             "bounds. We have only %i datasets provided"
-                             % (params.ref_ds, self.ndatasets))
         if len(params.exclude_from_model) > 0:
             warning("These datasets will not participate in building common "
                     "model: %s" % params.exclude_from_model)
+
+        if __debug__:
+            # verify that datasets were zscored prior the alignment since it is
+            # assumed/required preprocessing step
+            for ids, ds in enumerate(datasets):
+                for f, fname, tval in ((np.mean, 'means', 0),
+                                       (np.std, 'stds', 1)):
+                    vals = f(ds, axis=0)
+                    vals_comp = np.abs(vals - tval) > 1e-5
+                    if np.any(vals_comp):
+                        warning('%d %s are too different (max diff=%g) from %d in '
+                                'dataset %d to come from a zscored dataset. '
+                                'Please zscore datasets first for correct operation '
+                                '(unless if was intentional)'
+                                % (np.sum(vals_comp), fname,
+                                   np.max(np.abs(vals)), tval, ids))
 
         # Setting up SearchlightHyperalignment
         # we need to know which original features where comprising the
