@@ -355,7 +355,7 @@ class SearchlightHyperalignment(ClassWithCollections):
                 # just one was provided to be "broadcasted"
                 roi_feature_ids_all *= len(datasets)
             # if qe returns zero-sized ROI for any subject, pass...
-            if any(len(x) for x in roi_feature_ids_all) == 0:
+            if any(len(x)==0 for x in roi_feature_ids_all):
                 continue
             # selecting neighborhood for all subject for hyperalignment
             ds_temp = [sd[:, ids] for sd, ids in zip(datasets, roi_feature_ids_all)]
