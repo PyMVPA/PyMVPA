@@ -209,11 +209,17 @@ class SearchlightHyperalignment(ClassWithCollections):
 
     ## Parameters specific to SearchlightHyperalignment
 
-    # TODO: atm hardcodes to use Sphere.  Theoretically can easily allow any neighborhood
+    queryengine = Parameter(
+        None,
+        doc="""A single (or a list of query engines, one per each dataset) to be
+        used.  If not provided, volumetric searchlight, with spherical
+        neighborhood as instructed by radius parameter will be used.""")
+
     radius = Parameter(
         3,
         constraints=EnsureInt() & EnsureRange(min=1),
-        doc=""" radius of searchlight in number of voxels""")
+        doc="""Radius of a searchlight sphere in number of voxels to be used if
+         no `queryengine` argument was provided.""")
 
     nproc = Parameter(
         1,
@@ -231,7 +237,8 @@ class SearchlightHyperalignment(ClassWithCollections):
         constraints=(EnsureRange(min=1) & EnsureInt() | EnsureNone()),
         doc="""Radius supplied to scatter_neighborhoods in units of voxels.
             This is effectively the distance between the centers where
-            hyperalignment is performed in searchlights.
+            hyperalignment is performed in searchlights.  ATM applicable only
+            if no custom queryengine was provided.
             If None, hyperalignment is performed at every voxel (default).""")
 
     hyperalignment = Parameter(
@@ -329,7 +336,7 @@ class SearchlightHyperalignment(ClassWithCollections):
             raise RuntimeError("The 'hdf5' module is required for "
                                "when results_backend is set to 'hdf5'")
 
-    def _proc_block(self, block, datasets, measure, qe, seed=None, iblock='main'):
+    def _proc_block(self, block, datasets, measure, queryengines, seed=None, iblock='main'):
         if seed is not None:
             mvpa2.seed(seed)
         if __debug__:
@@ -343,29 +350,31 @@ class SearchlightHyperalignment(ClassWithCollections):
             # engine
 
             # Find the neighborhood for that selected nearest node
-            roi_feature_ids = qe[node_id]
+            roi_feature_ids_all = [qe[node_id] for qe in queryengines]
+            if len(roi_feature_ids_all) == 1:
+                # just one was provided to be "broadcasted"
+                roi_feature_ids_all *= len(datasets)
             # if qe returns zero-sized ROI for any subject, pass...
-            if len(roi_feature_ids) == 0:
+            if any(len(x) for x in roi_feature_ids_all) == 0:
                 continue
             # selecting neighborhood for all subject for hyperalignment
-            ds_temp = [sd[:, roi_feature_ids] for sd in datasets]
-            roi_seed = np.array(roi_feature_ids) == node_id
+            ds_temp = [sd[:, ids] for sd, ids in zip(datasets, roi_feature_ids_all)]
+            roi_seed = np.array(roi_feature_ids_all[self.params.ref_ds]) == node_id
             ds_temp[self.params.ref_ds].fa['roi_seed'] = roi_seed
             if __debug__:
                 msg = 'ROI (%i/%i), %i features' % (i + 1, len(block), len(roi_seed))
                 debug('SLC', bar(float(i + 1) / len(block), msg), cr=True)
             hmappers = measure(ds_temp)
             hmappers = hmappers.samples
-            for isub in range(len(hmappers)):
+            assert(len(hmappers) == len(datasets))
+            for isub, roi_feature_ids in enumerate(roi_feature_ids_all):
                 if not self.params.combine_neighbormappers:
                     I = roi_feature_ids
                     #J = [roi_feature_ids[node_id]] * len(roi_feature_ids)
                     J = [node_id] * len(roi_feature_ids)
                     V = hmappers[isub][0]['proj'].tolist()
                 else:
-                    I = []
-                    J = []
-                    V = []
+                    I, J, V = [], [], []
                     for f2 in xrange(len(roi_feature_ids)):
                         I += roi_feature_ids
                         J += [roi_feature_ids[f2]] * len(roi_feature_ids)
@@ -511,15 +520,21 @@ class SearchlightHyperalignment(ClassWithCollections):
         # Taking a single dataset as argument would be cleaner, because the
         # algorithm relies on the assumption that there is a coarse feature
         # alignment, i.e. the SL ROIs cover roughly the same area
-        _shpaldebug('Setting up query engine.')
-        qe = IndexQueryEngine(voxel_indices=Sphere(params.radius))
-        qe.train(datasets[params.ref_ds])
+        queryengines = self._get_trained_queryengines(
+            datasets, params.queryengine, params.radius, params.ref_ds)
+
         self.nfeatures = datasets[params.ref_ds].nfeatures
         _shpaldebug("Performing Hyperalignment in searchlights")
         # Setting up centers for running SL Hyperalignment
         if params.sparse_radius is None:
-            roi_ids = params.mask_node_ids if params.mask_node_ids is not None else qe.ids
+            roi_ids = self._get_verified_ids(queryengines) \
+                if params.mask_node_ids is None \
+                else params.mask_node_ids
         else:
+            if params.queryengine is not None:
+                raise NotImplementedError(
+                    "using sparse_radius whenever custom queryengine is "
+                    "provided is not yet supported.")
             _shpaldebug("Setting up sparse neighborhood")
             from mvpa2.misc.neighborhood import scatter_neighborhoods
             if params.mask_node_ids is None:
@@ -563,12 +578,12 @@ class SearchlightHyperalignment(ClassWithCollections):
             for iblock, block in enumerate(node_blocks):
                 # should we maybe deepcopy the measure to have a unique and
                 # independent one per process?
-                compute(block, datasets, copy.copy(hmeasure), qe,
+                compute(block, datasets, copy.copy(hmeasure), queryengines,
                         seed=seed, iblock=iblock)
         else:
             # otherwise collect the results in an 1-item list
             _shpaldebug('Using 1 process to compute mappers.')
-            p_results = [self._proc_block(roi_ids, datasets, hmeasure, qe)]
+            p_results = [self._proc_block(roi_ids, datasets, hmeasure, queryengines)]
         results_ds = self.__handle_all_results(p_results)
         # Dummy iterator for, you know, iteration
         list(results_ds)
@@ -579,3 +594,43 @@ class SearchlightHyperalignment(ClassWithCollections):
             else StaticProjectionMapper(proj=proj)
             for proj in self.projections]
         return self.projections
+
+    def _get_verified_ids(self, queryengines):
+        """Helper to return ids of queryengines, verifying that they are the same"""
+        qe0 = queryengines[0]
+        roi_ids = qe0.ids
+        for qe in queryengines:
+            if qe is not qe0:
+                # if a different query engine (so wasn't just replicated)
+                if np.any(qe.ids != qe0.ids):
+                    raise RuntimeError(
+                        "Query engine %s provided different ids than %s. Not supported"
+                        % (qe0, qe))
+        return roi_ids
+
+    def _get_trained_queryengines(self, datasets, queryengine, radius, ref_ds):
+        """Helper to return trained query engine(s), either list of one or one per each dataset
+
+        if queryengine is None then IndexQueryEngine based on radius is created
+        """
+        ndatasets = len(datasets)
+        if queryengine:
+            if isinstance(queryengine, (list, tuple)):
+                queryengines = queryengine
+                if len(queryengines) != ndatasets:
+                    raise ValueError(
+                        "%d query engines were specified although %d datasets "
+                        "provided" % (len(queryengines), ndatasets))
+                _shpaldebug("Training provided query engines")
+                for qe, ds in zip(queryengines, datasets):
+                    qe.train(ds)
+            else:
+                queryengine.train(datasets[ref_ds])
+                queryengines = [queryengine]
+        else:
+            _shpaldebug('No custom query engines were provided. Setting up the '
+                        'volumetric query engine on voxel_indices.')
+            queryengine = IndexQueryEngine(voxel_indices=Sphere(radius))
+            queryengine.train(datasets[ref_ds])
+            queryengines = [queryengine]
+        return queryengines
