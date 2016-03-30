@@ -374,6 +374,8 @@ class SearchlightHyperalignment(ClassWithCollections):
                     #J = [roi_feature_ids[node_id]] * len(roi_feature_ids)
                     J = [node_id] * len(roi_feature_ids)
                     V = hmappers[isub][0]['proj'].tolist()
+                    if np.isscalar(V):
+                        V = [V]
                 else:
                     I, J, V = [], [], []
                     for f2, roi_feature_id_ref_ds in enumerate(roi_feature_ids_ref_ds):
