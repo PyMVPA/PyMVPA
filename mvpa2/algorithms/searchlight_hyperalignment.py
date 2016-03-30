@@ -254,7 +254,7 @@ class SearchlightHyperalignment(ClassWithCollections):
             from its neighborhood searchlights or just use the mapper for which
             it is the center voxel.  Use this option with caution, as enabling
             it might square the runtime memory requirement. If you run into
-            memory issues, reduce the nproc in sl. """)
+            memory issues, reduce the nproc in sl.""")
 
     compute_recon = Parameter(
         True,
@@ -367,6 +367,7 @@ class SearchlightHyperalignment(ClassWithCollections):
             hmappers = measure(ds_temp)
             hmappers = hmappers.samples
             assert(len(hmappers) == len(datasets))
+            roi_feature_ids_ref_ds = roi_feature_ids_all[self.params.ref_ds]
             for isub, roi_feature_ids in enumerate(roi_feature_ids_all):
                 if not self.params.combine_neighbormappers:
                     I = roi_feature_ids
@@ -375,9 +376,9 @@ class SearchlightHyperalignment(ClassWithCollections):
                     V = hmappers[isub][0]['proj'].tolist()
                 else:
                     I, J, V = [], [], []
-                    for f2 in xrange(len(roi_feature_ids)):
+                    for f2, roi_feature_id_ref_ds in enumerate(roi_feature_ids_ref_ds):
                         I += roi_feature_ids
-                        J += [roi_feature_ids[f2]] * len(roi_feature_ids)
+                        J += [roi_feature_id_ref_ds] * len(roi_feature_ids)
                         V += hmappers[isub][0]['proj'][:, f2].tolist()
                 proj = coo_matrix(
                     (V, (I, J)),
