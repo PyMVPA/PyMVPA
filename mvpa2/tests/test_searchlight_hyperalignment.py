@@ -297,10 +297,9 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         qe0 = FancyQE([[0], [1], [2], [3]])  # does nothing
         qe1 = FancyQE([[1], [2], [3], [0]])  # knows to look into the right
 
-        def apply_slhyper(queryengine, dss=[ds0, ds1], return_mappers=False):
+        def apply_slhyper(queryengine, dss=[ds0, ds1], return_mappers=False, **kw):
             """Helper for a common code to create/call slhyper"""
-            slhyper = SearchlightHyperalignment(#combine_neighbormappers=False,
-                                                queryengine=queryengine)  # broadcast a single one
+            slhyper = SearchlightHyperalignment(queryengine=queryengine, **kw)
             mappers = slhyper(dss)
             proj = [m.proj.todense() for m in mappers]
             return (proj, mappers) if return_mappers else proj
@@ -311,8 +310,9 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
 
         # both are provided
         projs, mappers = apply_slhyper([qe0, qe1], return_mappers=True)
-        assert_array_equal(projs[0], np.eye(nf))  # must be identity since we made them so
-        assert_array_equal(projs[1], np.roll(np.eye(nf), 1, axis=0))  # pretty much incorporating that shift
+        tprojs_shifted = [np.eye(nf), np.roll(np.eye(nf), 1, axis=0)]
+        assert_array_equal(projs[0], tprojs_shifted[0])  # must be identity since we made them so
+        assert_array_equal(projs[1], tprojs_shifted[1])  # pretty much incorporating that shift
 
         # TODO -- not identity assert_array_equal(projs[0], np.eye(len(p)))  # must be identity since we made them so
         # and must restore data properly
@@ -333,15 +333,36 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
             # but not the others!
             assert_array_equal(np.diagonal(proj) != 0, [True, True, False, True])
 
+        # smoke test whenever combine is False
+        apply_slhyper(qe1, combine_neighbormappers=False)
+
         # and now only one qe lacking for that id
         projs = apply_slhyper([qe0, qe1_])
         tproj0 = np.eye(nf)
         tproj0[1, 1] = 0
-        for proj, tproj in zip(projs, [tproj0, np.roll(tproj0, 1, axis=0)]):
+        tprojs_shifted_1st0 = [tproj0, np.roll(tproj0, 1, axis=0)]
+        for proj, tproj in zip(projs, tprojs_shifted_1st0):
             # assess that both have '2nd' one 0
             # but not the others!
             assert_array_equal(proj, tproj)
 
+        # And now a test with varying number of selected fids, no shift
+        qe0 = FancyQE([[0], [1, 2], [1, 2, 3], [0, 1, 2, 3]])
+        projs = apply_slhyper(qe0)
+        # Test that in general we get larger coefficients for "correct" transformation
+        for p, tproj in zip(projs, tprojs_shifted):
+            #print np.round(p, decimals=3)
+            #print np.asarray(p)[tproj>0]
+            assert(np.all(np.asarray(p)[tproj>0] >= 1.0)) # .astype(int), tproj)
+            #print np.asarray(p)[tproj==0]
+            assert_array_lequal(np.mean(np.asarray(p)[tproj==0]), 0.3)
+
+        qe1 = FancyQE([[0, 1, 2, 3], [1, 2, 3], [2, 3], [3]])
+        # Just a smoke test, for now TODO
+        projs = apply_slhyper([qe0, qe1])
+        # print
+        # for p, tproj in zip(projs, tprojs_shifted):
+        #     print np.round(p, decimals=3)
 
 
 
