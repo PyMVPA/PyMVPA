@@ -27,6 +27,7 @@ from mvpa2.base.progress import ProgressBar
 from mvpa2.base import externals, warning
 from mvpa2.support import copy
 from mvpa2.featsel.helpers import FractionTailSelector, FixedNElementTailSelector
+from mvpa2.base.types import is_datasetlike
 
 if externals.exists('h5py'):
     from mvpa2.base.hdf5 import h5save, h5load
@@ -351,6 +352,10 @@ class SearchlightHyperalignment(ClassWithCollections):
 
             # Find the neighborhood for that selected nearest node
             roi_feature_ids_all = [qe[node_id] for qe in queryengines]
+            # handling queryengines that return AttrDatasets
+            for isub in range(len(roi_feature_ids_all)):
+                if is_datasetlike(roi_feature_ids_all[isub]):
+                    roi_feature_ids_all[isub] = roi_feature_ids_all[isub].samples[0, :].tolist()
             if len(roi_feature_ids_all) == 1:
                 # just one was provided to be "broadcasted"
                 roi_feature_ids_all *= len(datasets)
