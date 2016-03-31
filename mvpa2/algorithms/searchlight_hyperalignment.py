@@ -109,13 +109,14 @@ class HyperalignmentMeasure(Measure):
     def _call(self, ds):
         ref_ds = self.hyperalignment.params.ref_ds
         nsamples, nfeatures = ds[ref_ds].shape
-        if 'roi_seed' in ds[ref_ds].fa:
+        if 'roi_seed' in ds[ref_ds].fa and np.any(ds[ref_ds].fa['roi_seed']) :
             seed_index = np.where(ds[ref_ds].fa.roi_seed)
         else:
             if not self.full_matrix:
-                raise(ValueError, "Setting full_matrix=False requires"
-                                  "roi_seed `fa` in reference dataset "
-                                  "indicating center feature.")
+                raise ValueError(
+                    "Setting full_matrix=False requires roi_seed `fa` in the "
+                    "reference dataset indicating center feature and some "
+                    "feature(s) being marked as `roi_sid`.")
             seed_index = None
         # Voxel selection within Searchlight
         # Usual metric of between-subject between-voxel correspondence
