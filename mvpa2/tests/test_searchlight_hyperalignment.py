@@ -334,7 +334,13 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
             assert_array_equal(np.diagonal(proj) != 0, [True, True, False, True])
 
         # smoke test whenever combine is False
-        apply_slhyper(qe1, combine_neighbormappers=False)
+        # In this case should work ok
+        apply_slhyper(qe0, combine_neighbormappers=False)
+        # this one ok as well since needs only matching ones in ref_ds
+        apply_slhyper([qe0, qe1], combine_neighbormappers=False)
+        # here since features do not match node_ids -- should raise ValueError
+        assert_raises(ValueError, apply_slhyper, qe1, combine_neighbormappers=False)
+        assert_raises(ValueError, apply_slhyper, [qe0, qe1], ref_ds=1, combine_neighbormappers=False)
 
         # and now only one qe lacking for that id
         projs = apply_slhyper([qe0, qe1_])
