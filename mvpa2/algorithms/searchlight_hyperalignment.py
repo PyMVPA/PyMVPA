@@ -123,7 +123,7 @@ class HyperalignmentMeasure(Measure):
         # Usual metric of between-subject between-voxel correspondence
         # Making sure ref_ds has most features, if not force feature selection on others
         nfeatures_all = [sd.nfeatures for sd in ds]
-        nfeatures_bin = [sd.nfeatures > nfeatures for sd in ds]
+        bigger_ds_idxs = [i for i, sd in enumerate(ds) if sd.nfeatures > nfeatures]
         if self.featsel != 1.0:
             # computing feature scores from the data
             feature_scores = compute_feature_scores(ds, self.exclude_from_model)
@@ -148,13 +148,14 @@ class HyperalignmentMeasure(Measure):
                         fs[seed_index] = max(fs)
                     features_selected.append(fselector(fs))
                 ds = [sd[:, fsel] for fsel, sd in zip(features_selected, ds)]
-        elif np.sum(nfeatures_bin) > 0:
+        elif bigger_ds_idxs:
+            # compute feature scores and select for bigger datasets
             feature_scores = compute_feature_scores(ds, self.exclude_from_model)
-            feature_scores = [feature_scores[isub] for isub in np.where(nfeatures_bin)[0]]
+            feature_scores = [feature_scores[isub] for isub in bigger_ds_idxs]
             fselector = FixedNElementTailSelector(nfeatures, tail='upper', mode='select', sort=False)
             features_selected = [fselector(fs) for fs in feature_scores]
-            for isub_large, isub in enumerate(np.where(nfeatures_bin)[0]):
-                ds[isub] = ds[isub][:, features_selected[isub_large]]
+            for selected_features, isub in zip(features_selected, bigger_ds_idxs):
+                ds[isub] = ds[isub][:, selected_features]
         # Try hyperalignment
         try:
             # it is crucial to retrain hyperalignment, otherwise it would simply
@@ -179,10 +180,10 @@ class HyperalignmentMeasure(Measure):
                     for mf, m, fsel in zip(mappers_full, mappers, features_selected):
                         mf[np.ix_(fsel, features_selected[ref_ds])] = m
                 mappers = mappers_full
-            elif np.sum(nfeatures_bin) > 0:
-                for isub_large, isub in enumerate(np.where(nfeatures_bin)[0]):
+            elif bigger_ds_idxs:
+                for selected_features, isub in zip(features_selected, bigger_ds_idxs):
                     mapper_full = np.zeros((nfeatures_all[isub], nfeatures_all[ref_ds]))
-                    mapper_full[np.ix_(features_selected[isub_large], range(nfeatures))] = mappers[isub]
+                    mapper_full[np.ix_(selected_features, range(nfeatures))] = mappers[isub]
                     mappers[isub] = mapper_full
         except LinAlgError:
             print "SVD didn't converge. Try with a new reference, may be."
