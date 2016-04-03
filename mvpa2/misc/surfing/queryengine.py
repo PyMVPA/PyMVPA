@@ -286,12 +286,12 @@ class SurfaceRingQueryEngine(SurfaceQueryEngine):
         # Sorting nodes based on distance to center node to work around
         # the problem with add_center_fa in Searchlight
         nearby_nodes_keys = sorted(nearby_nodes, key=nearby_nodes.__getitem__)
+        neighborhood = []
         if self.include_center and vertex_id in nearby_nodes_keys:
-            return sum((v2f[node] for node in nearby_nodes_keys
-                        if nearby_nodes[node] > self.inner_radius), v2f[vertex_id])
-        else:
-            return sum((v2f[node] for node in nearby_nodes
-                        if nearby_nodes[node] > self.inner_radius), [])
+            neighborhood = v2f[vertex_id]
+        return sum((v2f[node] for node in nearby_nodes_keys
+                    if nearby_nodes[node] > self.inner_radius), neighborhood)
+
 
 
 class SurfaceVerticesQueryEngine(QueryEngineInterface):
