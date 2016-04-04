@@ -372,6 +372,8 @@ class SearchlightHyperalignment(ClassWithCollections):
             # handling queryengines that return AttrDatasets
             for isub in range(len(roi_feature_ids_all)):
                 if is_datasetlike(roi_feature_ids_all[isub]):
+                    # making sure queryengine returned proper shaped output
+                    assert(roi_feature_ids_all[isub].nsamples == 1)
                     roi_feature_ids_all[isub] = roi_feature_ids_all[isub].samples[0, :].tolist()
             if len(roi_feature_ids_all) == 1:
                 # just one was provided to be "broadcasted"
