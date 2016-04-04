@@ -27,6 +27,7 @@ from mvpa2.base.progress import ProgressBar
 from mvpa2.base import externals, warning
 from mvpa2.support import copy
 from mvpa2.featsel.helpers import FractionTailSelector, FixedNElementTailSelector
+from mvpa2.base.types import is_datasetlike
 
 if externals.exists('h5py'):
     from mvpa2.base.hdf5 import h5save, h5load
@@ -120,6 +121,9 @@ class HyperalignmentMeasure(Measure):
             seed_index = None
         # Voxel selection within Searchlight
         # Usual metric of between-subject between-voxel correspondence
+        # Making sure ref_ds has most features, if not force feature selection on others
+        nfeatures_all = [sd.nfeatures for sd in ds]
+        bigger_ds_idxs = [i for i, sd in enumerate(ds) if sd.nfeatures > nfeatures]
         if self.featsel != 1.0:
             # computing feature scores from the data
             feature_scores = compute_feature_scores(ds, self.exclude_from_model)
@@ -144,6 +148,14 @@ class HyperalignmentMeasure(Measure):
                         fs[seed_index] = max(fs)
                     features_selected.append(fselector(fs))
                 ds = [sd[:, fsel] for fsel, sd in zip(features_selected, ds)]
+        elif bigger_ds_idxs:
+            # compute feature scores and select for bigger datasets
+            feature_scores = compute_feature_scores(ds, self.exclude_from_model)
+            feature_scores = [feature_scores[isub] for isub in bigger_ds_idxs]
+            fselector = FixedNElementTailSelector(nfeatures, tail='upper', mode='select', sort=False)
+            features_selected = [fselector(fs) for fs in feature_scores]
+            for selected_features, isub in zip(features_selected, bigger_ds_idxs):
+                ds[isub] = ds[isub][:, selected_features]
         # Try hyperalignment
         try:
             # it is crucial to retrain hyperalignment, otherwise it would simply
@@ -168,6 +180,11 @@ class HyperalignmentMeasure(Measure):
                     for mf, m, fsel in zip(mappers_full, mappers, features_selected):
                         mf[np.ix_(fsel, features_selected[ref_ds])] = m
                 mappers = mappers_full
+            elif bigger_ds_idxs:
+                for selected_features, isub in zip(features_selected, bigger_ds_idxs):
+                    mapper_full = np.zeros((nfeatures_all[isub], nfeatures_all[ref_ds]))
+                    mapper_full[np.ix_(selected_features, range(nfeatures))] = mappers[isub]
+                    mappers[isub] = mapper_full
         except LinAlgError:
             print "SVD didn't converge. Try with a new reference, may be."
             mappers = [np.eye(nfeatures, dtype='int')] * len(ds)
@@ -352,6 +369,12 @@ class SearchlightHyperalignment(ClassWithCollections):
 
             # Find the neighborhood for that selected nearest node
             roi_feature_ids_all = [qe[node_id] for qe in queryengines]
+            # handling queryengines that return AttrDatasets
+            for isub in range(len(roi_feature_ids_all)):
+                if is_datasetlike(roi_feature_ids_all[isub]):
+                    # making sure queryengine returned proper shaped output
+                    assert(roi_feature_ids_all[isub].nsamples == 1)
+                    roi_feature_ids_all[isub] = roi_feature_ids_all[isub].samples[0, :].tolist()
             if len(roi_feature_ids_all) == 1:
                 # just one was provided to be "broadcasted"
                 roi_feature_ids_all *= len(datasets)
