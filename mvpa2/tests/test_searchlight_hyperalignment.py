@@ -22,6 +22,7 @@ from mvpa2.misc.neighborhood import Sphere, scatter_neighborhoods
 from mvpa2.testing import *
 from mvpa2.testing.datasets import datasets
 from mvpa2.base.dataset import hstack
+from mvpa2.datasets.base import Dataset
 from mvpa2.mappers.staticprojection import StaticProjectionMapper
 
 
@@ -283,6 +284,120 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         mappers = slhyper([ds_orig, ds_orig.copy()])
 
 
+    @reseed_rng()
+    def test_custom_qas(self):
+        # Test if we could provide custom QEs per each of the datasets
+        skip_if_no_external('scipy')
+
+        ns, nf = 10, 4  # # of samples/features -- a very BIG dataset ;)
+        ds0 = Dataset(np.random.normal(size=(ns, nf)))
+        zscore(ds0, chunks_attr=None)
+        ds1 = ds0[:, [3, 0, 1, 2]]  # features circular shifted to the right
+
+        qe0 = FancyQE([[0], [1], [2], [3]])  # does nothing
+        qe1 = FancyQE([[1], [2], [3], [0]])  # knows to look into the right
+
+        def apply_slhyper(queryengine, dss=[ds0, ds1], return_mappers=False, **kw):
+            """Helper for a common code to create/call slhyper"""
+            slhyper = SearchlightHyperalignment(queryengine=queryengine, **kw)
+            mappers = slhyper(dss)
+            proj = [m.proj.todense() for m in mappers]
+            return (proj, mappers) if return_mappers else proj
+
+        # since this single qe resulted in trying to match non-matching time series
+        # projections should be non-identity, but no offdiagonal elements
+        assert_no_offdiag(apply_slhyper(qe0))
+
+        # both are provided
+        projs, mappers = apply_slhyper([qe0, qe1], return_mappers=True)
+        tprojs_shifted = [np.eye(nf), np.roll(np.eye(nf), 1, axis=0)]
+        assert_array_equal(projs[0], tprojs_shifted[0])  # must be identity since we made them so
+        assert_array_equal(projs[1], tprojs_shifted[1])  # pretty much incorporating that shift
+
+        # TODO -- not identity assert_array_equal(projs[0], np.eye(len(p)))  # must be identity since we made them so
+        # and must restore data properly
+        assert_array_almost_equal(mappers[0].forward(ds0), mappers[1].forward(ds1))
+
+        # give more then # of qes
+        assert_raises(ValueError,
+                      SearchlightHyperalignment(queryengine=[qe0, qe1]),
+                      [ds0, ds1, ds0])
+
+        # The one having no voxels for the "1st" id in "subj1"
+        qe1_ = FancyQE([[1], [], [3], [0]])  # knows to look into the right
+
+        projs = apply_slhyper(qe1_)
+        assert_no_offdiag(projs)
+        for proj in projs:
+            # assess that both have '2nd' one 0
+            # but not the others!
+            assert_array_equal(np.diagonal(proj) != 0, [True, True, False, True])
+
+        # smoke test whenever combine is False
+        # In this case should work ok
+        apply_slhyper(qe0, combine_neighbormappers=False)
+        # this one ok as well since needs only matching ones in ref_ds
+        apply_slhyper([qe0, qe1], combine_neighbormappers=False)
+        # here since features do not match node_ids -- should raise ValueError
+        assert_raises(ValueError, apply_slhyper, qe1, combine_neighbormappers=False)
+        assert_raises(ValueError, apply_slhyper, [qe0, qe1], ref_ds=1, combine_neighbormappers=False)
+
+        # and now only one qe lacking for that id
+        projs = apply_slhyper([qe0, qe1_])
+        tproj0 = np.eye(nf)
+        tproj0[1, 1] = 0
+        tprojs_shifted_1st0 = [tproj0, np.roll(tproj0, 1, axis=0)]
+        for proj, tproj in zip(projs, tprojs_shifted_1st0):
+            # assess that both have '2nd' one 0
+            # but not the others!
+            assert_array_equal(proj, tproj)
+
+        # And now a test with varying number of selected fids, no shift
+        qe0 = FancyQE([[0], [1, 2], [1, 2, 3], [0, 1, 2, 3]])
+        projs = apply_slhyper(qe0)
+        # Test that in general we get larger coefficients for "correct" transformation
+        for p, tproj in zip(projs, tprojs_shifted):
+            #print np.round(p, decimals=3)
+            #print np.asarray(p)[tproj>0]
+            assert(np.all(np.asarray(p)[tproj>0] >= 1.0)) # .astype(int), tproj)
+            #print np.asarray(p)[tproj==0]
+            assert_array_lequal(np.mean(np.asarray(p)[tproj==0]), 0.3)
+
+        qe1 = FancyQE([[0, 1, 2, 3], [1, 2, 3], [2, 3], [3]])
+        # Just a smoke test, for now TODO
+        projs = apply_slhyper([qe0, qe1])
+        # print
+        # for p, tproj in zip(projs, tprojs_shifted):
+        #     print np.round(p, decimals=3)
+
+
+
+def assert_no_offdiag(a):
+    if isinstance(a, list):
+        for a_ in a:
+            assert_no_offdiag(a_)
+    else:
+        assert_array_equal(a - np.diag(np.diagonal(a)), 0)
+
+class FancyQE(object):
+    """Little helper QE which knows what to return for neighbors"""
+
+    def __init__(self, results, ids=None):
+        if ids is None:
+            # then for all ids in results which is a list
+            ids = list(range(len(results)))
+        else:
+            assert (len(results) >= max(ids))
+            assert (min(ids) >= 0)
+        self.ids = ids
+        self.results = results
+
+    def train(self, ds):
+        # anything else to do ? ;)
+        assert (ds.nfeatures > max(self.ids))
+
+    def __getitem__(self, i):
+        return self.results[i]
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(SearchlightHyperalignmentTests)
