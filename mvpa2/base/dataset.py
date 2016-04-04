@@ -692,13 +692,13 @@ def datasetmethod(func):
     return func
 
 
-def vstack(datasets, a=None):
+def vstack(datasets, a=None, fa='update'):
     """Stacks datasets vertically (appending samples).
 
     Feature attribute collections are merged incrementally, attribute with
-    identical keys overwriting previous ones in the stacked dataset. All
-    datasets must have an identical set of sample attributes (matching keys,
-    not values), otherwise a ValueError will be raised.
+    identical keys overwriting previous ones in the stacked dataset, unless
+    `fa != 'update'`.  All datasets must have an identical set of sample
+    attributes (matching keys, not values), otherwise a ValueError will be raised.
     No dataset attributes from any source dataset will be transferred into the
     stacked dataset. If all input dataset have common dataset attributes that
     are also valid for the stacked dataset, they can be moved into the output
@@ -724,6 +724,11 @@ def vstack(datasets, a=None):
         missing values are replaced by None. If None (the default) then no
         attributes are stored in merged_dataset. True is equivalent to
         'drop_nonunique'. False is equivalent to None.
+    fa: {'update', 'drop_nonunique'}, (default: 'update')
+        Indicate which feature attributes are stored in merged dataset.
+        If 'update' - attributes are updated while growing the dataset.
+        If 'drop_nonunique', attribute would be dropped from the dataset if its
+        value differs across datasets for any feature.
 
     Returns
     -------
@@ -753,20 +758,18 @@ def vstack(datasets, a=None):
     # create the dataset
     merged = datasets[0].__class__(stacked_samp, sa=stacked_sa)
 
-    for ds in datasets:
-        merged.fa.update(ds.fa)
-
+    _stack_add_equal_attributes(merged, datasets, fa, 'fa')
     _stack_add_equal_dataset_attributes(merged, datasets, a)
     return merged
 
 
-def hstack(datasets, a=None):
+def hstack(datasets, a=None, sa='update'):
     """Stacks datasets horizontally (appending features).
 
     Sample attribute collections are merged incrementally, attribute with
-    identical keys overwriting previous ones in the stacked dataset. All
-    datasets must have an identical set of feature attributes (matching keys,
-    not values), otherwise a ValueError will be raised.
+    identical keys overwriting previous ones in the stacked dataset, unless
+    `sa != 'update'`. All datasets must have an identical set of feature
+    attributes (matching keys, not values), otherwise a ValueError will be raised.
     No dataset attributes from any source dataset will be transferred into the
     stacked dataset.
 
@@ -787,6 +790,11 @@ def hstack(datasets, a=None):
         missing values are replaced by None. If None (the default) then no
         attributes are stored in merged_dataset. True is equivalent to
         'drop_nonunique'. False is equivalent to None.
+    sa: {'update', 'drop_nonunique'}, (default: 'update')
+        Indicate which feature attributes are stored in merged dataset.
+        If 'update' - attributes are updated while growing the dataset.
+        If 'drop_nonunique', attribute would be dropped from the dataset if its
+        value differs across datasets for any sample.
 
     Returns
     -------
@@ -822,12 +830,48 @@ def hstack(datasets, a=None):
     # create the dataset
     merged = datasets[0].__class__(stacked_samp, fa=stacked_fa)
 
-    for ds in datasets:
-        merged.sa.update(ds.sa)
-
+    _stack_add_equal_attributes(merged, datasets, sa, 'sa')
     _stack_add_equal_dataset_attributes(merged, datasets, a)
 
     return merged
+
+
+def _stack_add_equal_attributes(merged, datasets, strategy, colname):
+    """Helper function for vstack and hstack to perform update of the
+    corresponding collection according to the strategy
+    """
+    mergedcol = getattr(merged, colname)
+
+    if strategy == 'update':
+        for ds in datasets:
+            mergedcol.update(getattr(ds, colname))
+
+    elif strategy == 'drop_nonunique':
+        # discover those attributes which differ
+        drop = set()
+        ds0 = datasets[0]
+        ds0col = getattr(ds0, colname)
+        for ds in datasets[1:]:
+            dscol = getattr(ds, colname)
+            for attr, v in dscol.iteritems():
+                if ((attr not in ds0col) or
+                        np.any(ds0col[attr].value != v.value)):
+                    drop.add(attr)
+            # and ds0 might have some attributes which others don't
+            for attr in ds0col:
+                if attr not in dscol:
+                    drop.add(attr)
+
+        # now update but only those which to not drop
+        for ds in datasets:
+            mergedcol.update(
+                {attr: v for attr, v in getattr(ds, colname).items()
+                 if attr not in drop}
+            )
+
+    else:
+        raise ValueError("Unknown strategy %s on how to deal with %s collection"
+                         % (strategy, colname))
 
 
 def all_equal(x, y):

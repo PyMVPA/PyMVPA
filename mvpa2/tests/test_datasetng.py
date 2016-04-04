@@ -467,6 +467,39 @@ def test_stack_add_dataset_attributes():
                 assert_equal(r.a.common, range(10))
                 assert_array_equal(r.a.array, np.arange(10))
 
+def test_stack_add_attributes():
+    data0 = Dataset.from_wizard(np.ones((5, 5)), targets=1)
+    data1 = Dataset.from_wizard(np.ones((5, 5)), targets=1)
+    data0.fa['ok'] = data0.sa['ok'] = np.arange(5)
+    data1.fa['ok'] = data1.sa['ok'] = np.arange(5)
+    data0.fa['nok'] = data0.sa['nok'] = [0]
+    data1.fa['nok'] = data1.sa['nok'] = np.arange(5)
+
+    # function, collection name, the other collection name
+    for xstack, colname, ocolname in ((vstack, 'fa', 'sa'),
+                                      (hstack, 'sa', 'fa')):
+        for add_param in None, 'update', 'drop_nonunique':
+
+            kw = {colname: add_param} if add_param else {}
+            r = xstack((data0, data1), **kw)
+            COL = lambda x: getattr(x, colname)
+            col = COL(r)
+            ocol = getattr(r, ocolname)
+
+            # in any scenario, the other collection should have got
+            # both names and be just fine
+            assert_array_equal(ocol['nok'].value, [0] * 5 + range(5))
+            assert_array_equal(ocol['ok'].value, range(5) * 2)
+
+            if add_param in (None, 'update'):
+                # will be of the last dataset
+                assert_array_equal(col['nok'].value, COL(data1)['nok'].value)
+                assert_array_equal(col['ok'].value, COL(data1)['ok'].value)
+            elif add_param == 'drop_nonunique':
+                assert('nok' not in col)  # must be dropped since not unique
+                # both the same but let's check ;)
+                assert_array_equal(col['ok'].value, COL(data0)['ok'].value)
+                assert_array_equal(col['ok'].value, COL(data1)['ok'].value)
 
 def test_unique_stack():
     data = Dataset(np.reshape(np.arange(24), (4, 6)),
