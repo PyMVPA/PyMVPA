@@ -418,4 +418,93 @@ if cfg.getboolean('examples', 'interactive', True):
 We can clearly see that the regular hyperalignment performs best for this
 dataset. However, please refer to :ref:`Xu et al. 2012 <XLR2012>` for an
 example showing that this is not always the case.
+
+Searchlight Hyperalignment
+--------------------------
+
+Hyperalignment as described in :ref:`Haxby et al. 2011 <HGC+11>` aligns features
+within an ROI across subjects. :ref: `Guntupalli et al. 2016 <GHH+16>` extends
+hyperalignment to whole brain by using Searchlight Hyperalignmnt algorithm which applies
+hyperalignment within searchlights and aggregates resulting local transformations
+into a global transformation that can be applied to whole brain.
+Original hyperalignment algorithm is not constrained my anatomical location of features
+across subjects beyond the ROI definition, whereas Searchlight Hyperalignment can be
+constrained to perform alignment locally.
+
+We will perform the same analysis as performed previously with hyperalignment,
+but this time using Searchlight Hyperalignment. We will skip ANOVA-based feature selection,
+but perform feature selection within SL using a method described in :ref:`Haxby et al. 2011<HGC+11>`.
+We will use spherical searchlights of 3-voxel radius and use a sparsely selected voxels as centers for
+quick computation.
+Searchlight Hyperalignment accepts custom queryengines instead of default volume searchlight
+through `queryengine` argument.
+"""
+verbose(1, "Performing classification analyses...")
+verbose(2, "between-subject (searchlight hyperaligned)...", cr=False, lf=False)
+# feature selection helpers
+slhyper_start_time = time.time()
+bsc_slhyper_results = []
+# same cross-validation over subjects as before
+cv = CrossValidation(clf, NFoldPartitioner(attr='subject'),
+                     errorfx=mean_match_accuracy)
+
+# leave-one-run-out for hyperalignment training
+for test_run in range(nruns):
+    # split in training and testing set
+    ds_train = [sd[sd.sa.chunks != test_run, :] for sd in ds_all]
+    ds_test = [sd[sd.sa.chunks == test_run, :] for sd in ds_all]
+
+    # Initializing Searchlight Hyperalignment with Sphere searchlights of 3 voxel radius.
+    # Using 40% features in each SL and spacing centers at 3-voxels distance.
+    slhyper = SearchlightHyperalignment(radius=3, featsel=0.4, sparse_radius=3)
+
+    # Performing searchlight hyperalignment on training data.
+    # This step is similar to regular hyperalignment, calling
+    # the searchlight hyperalignment object with a list of datasets.
+    # Searchlight Hyperalignment returns a list of mappers corresponding to
+    # subjects in the same order as the list of datasets we passed in.
+    slhypmaps = slhyper(ds_train)
+
+    # Applying hyperalignment parameters is similar to applying any mapper in
+    # PyMVPA. We apply the hyperalignment parameters by running the test dataset
+    # through the forward() function of the mapper.
+    ds_hyper = [slhypmaps[i].forward(sd) for i, sd in enumerate(ds_test)]
+
+    # Running between-subject classification as before.
+    ds_hyper = vstack(ds_hyper)
+    zscore(ds_hyper, chunks_attr='subject')
+    res_cv = cv(ds_hyper)
+    bsc_slhyper_results.append(res_cv)
+
+bsc_slhyper_results = hstack(bsc_slhyper_results)
+verbose(2, "done in %.1f seconds" % (time.time() - slhyper_start_time,))
+
+"""
+Comparing the results
+---------------------
+
+Performance
+^^^^^^^^^^^
+
+First we take a look at the classification performance (or accuracy) of all
+three analysis approaches.
+"""
+
+verbose(1, "Average classification accuracies:")
+verbose(2, "between-subject (searchlight hyperaligned): %.2f +/-%.3f" \
+        % (np.mean(bsc_slhyper_results),
+           np.std(np.mean(bsc_slhyper_results, axis=1)) / np.sqrt(nsubjs - 1)))
+
+"""
+The output of this demo looks like this::
+ Performing classification analyses...
+  between-subject (searchlight hyperaligned)...done in 250 seconds
+ Average classification accuracies:
+  between-subject (searchlight hyperaligned): 0.60 +/-0.032
+
+Between-subject classification using searchlight hyperalignment is slightly worse
+than regular hyperalignment, but remember that we did not do ANOVA-based feature selection
+and used all voxels in the VT mask. Eventhough, we performed feature selection within each searchlight,
+it still retains a lot of features.
+
 """
