@@ -31,6 +31,26 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
+* 2.4.4 (???)
+
+  * Enhancements
+
+    - The ``ofmotionqc`` command line command has been renamed to
+      ``plotmotionqc``. It no longer requires a dataset formatted in
+      OpenFMRI-style, but works with any organization of input data.
+
+* 2.4.3 (Tue, 15 Mar 2016)
+
+  * Fixes
+
+    - Fixed memory leaking in libsvm bindings introduced in 2.4.2 (gh-443)
+    - Avoid overriding parameters defined in subclasses with the ones from
+      super class
+    - Address freshish deprecations (warnings) in sklearn, scipy, etc
+    - Workaround in the test for numpy's corrcoef issue resulting in corrcoef
+      a bit outside of [-1, 1] range
+
+
 * 2.4.2 (Tue, 8 Mar 2016)
 
   * Fixes
