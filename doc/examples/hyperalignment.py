@@ -52,7 +52,7 @@ ds_all = h5load(filepath)
 # zscore all datasets individually
 _ = [zscore(ds) for ds in ds_all]
 # inject the subject ID into all datasets
-for i,sd in enumerate(ds_all):
+for i, sd in enumerate(ds_all):
     sd.sa['subject'] = np.repeat(i, len(sd))
 # number of subjects
 nsubjs = len(ds_all)
@@ -162,7 +162,7 @@ for test_run in range(nruns):
     anova = OneWayAnova()
     fscores = [anova(sd) for sd in ds_train]
     featsels = [StaticFeatureSelection(fselector(fscore)) for fscore in fscores]
-    ds_train_fs = [featsels[i].forward(sd) for i, sd in enumerate(ds_train)]
+    ds_train_fs = [fs.forward(sd) for fs, sd in zip(featsels, ds_train)]
 
 
     # Perform hyperalignment on the training data with default parameters.
@@ -181,8 +181,8 @@ for test_run in range(nruns):
     # hyperalignment parameters. And then apply the hyperalignment parameters
     # by running the test dataset through the forward() function of the mapper.
 
-    ds_test_fs = [featsels[i].forward(sd) for i, sd in enumerate(ds_test)]
-    ds_hyper = [hypmaps[i].forward(sd) for i, sd in enumerate(ds_test_fs)]
+    ds_test_fs = [fs.forward(sd) for fs, sd in zip(featsels, ds_test)]
+    ds_hyper = [h.forward(sd) for h, sd in zip(hypmaps, ds_test_fs)]
 
     # Now, we have a list of datasets with feature correspondence in a common
     # space derived from the training data. Just as in the between-subject
@@ -272,11 +272,11 @@ anova = OneWayAnova()
 fscores = [anova(sd) for sd in ds_all]
 fscores = np.mean(np.asarray(vstack(fscores)), axis=0)
 # apply to full datasets
-ds_fs = [sd[:, fselector(fscores)] for i, sd in enumerate(ds_all)]
+ds_fs = [sd[:, fselector(fscores)] for sd in ds_all]
 #run hyperalignment on full datasets
 hyper = Hyperalignment()
 mappers = hyper(ds_fs)
-ds_hyper = [mappers[i].forward(ds_) for i, ds_ in enumerate(ds_fs)]
+ds_hyper = [m.forward(ds_) for m, ds_ in zip(mappers, ds_fs)]
 # similarity of original data samples
 sm_orig = [np.corrcoef(
                sd.get_mapped(
@@ -385,8 +385,8 @@ for test_run in range(nruns):
                                                            space='commonspace'),
                                alpha=alpha)
         hypmaps = hyper(ds_train_fs)
-        ds_test_fs = [featsels[i].forward(sd) for i, sd in enumerate(ds_test)]
-        ds_hyper = [hypmaps[i].forward(sd) for i, sd in enumerate(ds_test_fs)]
+        ds_test_fs = [fs.forward(sd) for fs, sd in zip(featsels, ds_test)]
+        ds_hyper = [h.forward(sd) for h, sd in zip(hypmaps, ds_test_fs)]
         ds_hyper = vstack(ds_hyper)
         zscore(ds_hyper, chunks_attr='subject')
         res_cv = cv(ds_hyper)
@@ -422,23 +422,26 @@ example showing that this is not always the case.
 Searchlight Hyperalignment
 --------------------------
 
-Hyperalignment as described in :ref:`Haxby et al. 2011 <HGC+11>` aligns features
-within an ROI across subjects. :ref: `Guntupalli et al. 2016 <GHH+16>` extends
-hyperalignment to whole brain by using Searchlight Hyperalignmnt algorithm which applies
-hyperalignment within searchlights and aggregates resulting local transformations
-into a global transformation that can be applied to whole brain.
-Original hyperalignment algorithm is not constrained my anatomical location of features
-across subjects beyond the ROI definition, whereas Searchlight Hyperalignment can be
-constrained to perform alignment locally.
+Hyperalignment as described in :ref:`Haxby et al. 2011 <HGC+11>` aligns
+features within an ROI across subjects. :ref: `Guntupalli et al. 2016
+<GHH+16>` extends hyperalignment to whole brain by using Searchlight
+Hyperalignment algorithm which applies hyperalignment within searchlights and
+aggregates resulting local transformations into a global transformation that
+can be applied to whole brain. Original hyperalignment algorithm is not
+constrained my anatomical location of features across subjects beyond the ROI
+definition, whereas Searchlight Hyperalignment can be constrained to perform
+alignment locally.
 
-We will perform the same analysis as performed previously with hyperalignment,
-but this time using Searchlight Hyperalignment. We will skip ANOVA-based feature selection,
-but perform feature selection within SL using a method described in :ref:`Haxby et al. 2011<HGC+11>`.
-We will use spherical searchlights of 3-voxel radius and use a sparsely selected voxels as centers for
-quick computation.
-Searchlight Hyperalignment accepts custom queryengines instead of default volume searchlight
-through `queryengine` argument.
+We will perform the same analysis as performed previously with
+hyperalignment, but this time using Searchlight Hyperalignment. We will skip
+ANOVA-based feature selection, but perform feature selection within SL using
+a method described in :ref:`Haxby et al. 2011<HGC+11>`. We will use spherical
+searchlights of 3-voxel radius and use a sparsely selected voxels as centers
+for quick computation.
+Searchlight Hyperalignment accepts custom queryengines instead of default
+volume searchlight through `queryengine` argument.
 """
+
 verbose(1, "Performing classification analyses...")
 verbose(2, "between-subject (searchlight hyperaligned)...", cr=False, lf=False)
 # feature selection helpers
@@ -468,7 +471,7 @@ for test_run in range(nruns):
     # Applying hyperalignment parameters is similar to applying any mapper in
     # PyMVPA. We apply the hyperalignment parameters by running the test dataset
     # through the forward() function of the mapper.
-    ds_hyper = [slhypmaps[i].forward(sd) for i, sd in enumerate(ds_test)]
+    ds_hyper = [h.forward(sd) for h, sd in zip(slhypmaps, ds_test)]
 
     # Running between-subject classification as before.
     ds_hyper = vstack(ds_hyper)
@@ -502,9 +505,10 @@ The output of this demo looks like this::
  Average classification accuracies:
   between-subject (searchlight hyperaligned): 0.60 +/-0.032
 
-Between-subject classification using searchlight hyperalignment is slightly worse
-than regular hyperalignment, but remember that we did not do ANOVA-based feature selection
-and used all voxels in the VT mask. Eventhough, we performed feature selection within each searchlight,
-it still retains a lot of features.
+Between-subject classification using searchlight hyperalignment is slightly
+worse than regular hyperalignment, but remember that we did not do
+ANOVA-based feature selection and used all voxels in the VT mask. Eventhough,
+we performed feature selection within each searchlight, it still retains a
+lot of features.
 
 """
