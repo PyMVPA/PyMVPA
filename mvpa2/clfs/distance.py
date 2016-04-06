@@ -341,9 +341,13 @@ def pnorm_w_python(data1, data2=None, weight=None, p=2,
     return af(d)
 
 
-if externals.exists('weave'):
-    from scipy import weave
-    from scipy.weave import converters
+if externals.exists('weave') or externals.exists('scipy.weave') :
+    if externals.exists('weave'):
+        import weave
+        from weave import converters
+    else:
+        from scipy import weave
+        from scipy.weave import converters
 
     def pnorm_w(data1, data2=None, weight=None, p=2):
         """Weighted p-norm between two datasets (scipy.weave implementation)
