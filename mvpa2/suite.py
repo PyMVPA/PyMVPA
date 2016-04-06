@@ -126,6 +126,7 @@ if externals.exists('nibabel') :
     from mvpa2.datasets.gifti import map2gifti, gifti_dataset
 from mvpa2.datasets.sources import *
 from mvpa2.datasets.sources.native import *
+from mvpa2.datasets.sources.bids import *
 from mvpa2.datasets.sources.openfmri import *
 from mvpa2.datasets import niml
 from mvpa2.datasets.niml import from_niml, to_niml

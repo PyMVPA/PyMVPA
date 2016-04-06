@@ -666,11 +666,21 @@ class AttributesCollector(type):
                     debug("COLR",
                           "Collect collections %s for %s from %s",
                           (newcollections, cls, base))
-                for col, collection in newcollections.iteritems():
+                for col, super_collection in newcollections.iteritems():
                     if col in collections:
-                        collections[col].update(collection)
+                        if __debug__:
+                            debug("COLR", "Updating existing collection %s with the one from super class" % col)
+                        collection = collections[col]
+                        # Current class could have overriden a parameter, so
+                        # we need to keep it without updating
+                        for pname, pval in super_collection.iteritems():
+                            if pname not in collection:
+                                collection[pname] = pval
+                            elif __debug__:
+                                debug("COLR", "Not overriding %s.%s of cls %s from base %s"
+                                      % (col, pname, cls, base))
                     else:
-                        collections[col] = collection
+                        collections[col] = super_collection
 
 
         if __debug__:
