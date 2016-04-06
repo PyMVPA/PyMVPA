@@ -54,6 +54,9 @@ Studies employing PyMVPA
 2016
 ----
 
+* :ref:`Guntupalli et al., Cerebral Cortex (2016) <GHH+16>`.
+  A Model of Representational Spaces in Human Cortex
+
 * Watson et al., NeuroImage (2016). Spatial properties of objects predict
   patterns of neural response in the ventral visual pathway
 
