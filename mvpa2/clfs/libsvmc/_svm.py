@@ -254,9 +254,9 @@ class SVMProblem:
         if svmc is not None:
             svmc.delete_double(self.y_array)
         for i in range(self.size):
-            if self.data:
-                del self.data[0]
-            #svmc.svm_node_array_destroy(self.data[i])
+            svmc.svm_node_array_destroy(self.data[i])
+        svmc.svm_node_matrix_destroy(self.x_matrix)
+        del self.data
         del self.x_matrix
 
 
@@ -418,6 +418,7 @@ class SVMModel:
                    and svmc.__version__ or "unknown",
                    `self`))
         try:
+            svmc.svm_destroy_model_helper(self.model)
             del self.model
         except Exception, e:
             # blind way to overcome problem of already deleted model and
