@@ -546,7 +546,7 @@ def get_cluster_sizes(ds, cluster_counter=None, neighborhood=None):
         mapper = ds.a.mapper
 
     for i in xrange(len(ds)):
-        osamp = mapper.reverse1(data[i])
+        osamp = _verified_reverse1(mapper, data[i])
         if not neighborhood is None:
             m_clusters = _get_map_cluster_sizes_custom_neighborhood(osamp, neighborhood)
         else:
