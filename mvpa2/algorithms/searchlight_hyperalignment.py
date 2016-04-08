@@ -94,11 +94,14 @@ class FeatureSelectionHyperalignment(ClassWithCollections):
     dataset, similarly to how Hyperalignment does.
 
     """
-    is_trained = True
+
 
     def __init__(self, hyperalignment=Hyperalignment(ref_ds=0),
                  featsel=1.0, full_matrix=True, use_same_features=False,
                  exclude_from_model=None, dtype='float32', **kwargs):
+        """
+        For description of parameters see :class:`SearchlightHyperalignment`
+        """
         super(FeatureSelectionHyperalignment, self).__init__(**kwargs)
         self.hyperalignment = hyperalignment
         self.featsel = featsel
