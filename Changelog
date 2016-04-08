@@ -38,6 +38,9 @@ Releases
     - :class:`~mvpa2.algorithms.searchlight_hyperalignment.SearchlightHyperalignment`
       to carry out full-datset/brain hyperalignment of functional data while
       honoring spatial neighborhoods.
+      See :ref:`Guntupalli et al., Cerebral Cortex (2016) <GHH+16>` A Model of
+      Representational Spaces in Human Cortex for more information
+
 
   * Enhancements
 
