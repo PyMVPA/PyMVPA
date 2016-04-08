@@ -428,7 +428,7 @@ features within an ROI across subjects. :ref: `Guntupalli et al. 2016
 Hyperalignment algorithm which applies hyperalignment within searchlights and
 aggregates resulting local transformations into a global transformation that
 can be applied to whole brain. Original hyperalignment algorithm is not
-constrained my anatomical location of features across subjects beyond the ROI
+constrained by anatomical location of features across subjects beyond the ROI
 definition, whereas Searchlight Hyperalignment can be constrained to perform
 alignment locally.
 
