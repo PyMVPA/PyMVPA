@@ -19,8 +19,6 @@ from mvpa2.base.state import ClassWithCollections
 from mvpa2.base.param import Parameter
 from mvpa2.base.constraints import *
 from mvpa2.algorithms.hyperalignment import Hyperalignment
-from mvpa2.measures.base import Measure
-from mvpa2.datasets import Dataset, vstack
 from mvpa2.mappers.staticprojection import StaticProjectionMapper
 from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
 from mvpa2.base.progress import ProgressBar
@@ -37,17 +35,18 @@ if externals.exists('scipy'):
 
 from mvpa2.support.due import due, Doi
 
+
+# A little debug helper to avoid constant if __debug__ conditioning,
+# but it also means that debugging could not be activated at run time
+# after the import of this module
+def _shpaldebug(*args):
+    pass
 if __debug__:
     from mvpa2.base import debug
     if 'SHPAL' in debug.active:
         def _shpaldebug(msg):
             debug('SHPAL', "%s" % msg)
-    else:
-        def _shpaldebug(*args):
-            return None
-else:
-    def _shpaldebug(*args):
-        return None
+
 
 @due.dcite(
     Doi('10.1016/j.neuron.2011.08.026'),
@@ -84,20 +83,23 @@ def compute_feature_scores(datasets, exclude_from_model=None):
                 feature_scores[j + i + 1] += np.max(corr_temp, axis=0)
     return feature_scores
 
-# XXX Is it really a measure or a Mapper or just a Node???
-class HyperalignmentMeasure(Measure):
-    """Feature selection and hyperalignment in a single node
 
-    HyperalignmentMeasure combines feature selection and hyperalignment
-    into a single node. This facilitates its usage in any searchlight
-    or ROI.
+class FeatureSelectionHyperalignment(ClassWithCollections):
+    """A helper which brings feature selection and hyperalignment in a single call
+
+    It was created to facilitate its usage in any searchlight or ROI, where
+    hyperalignment is trained and called on the same list of datasets.  But
+    unlike Hyperalignment, it doesn't need to be separately trained.
+    Called with a list of datasets, it returns a list of Mappers, one per each
+    dataset, similarly to how Hyperalignment does.
+
     """
     is_trained = True
 
     def __init__(self, hyperalignment=Hyperalignment(ref_ds=0),
                  featsel=1.0, full_matrix=True, use_same_features=False,
                  exclude_from_model=None, dtype='float32', **kwargs):
-        Measure.__init__(self, **kwargs)
+        super(FeatureSelectionHyperalignment, self).__init__(**kwargs)
         self.hyperalignment = hyperalignment
         self.featsel = featsel
         self.use_same_features = use_same_features
@@ -107,11 +109,11 @@ class HyperalignmentMeasure(Measure):
         self.full_matrix = full_matrix
         self.dtype = dtype
 
-    def _call(self, ds):
+    def __call__(self, datasets):
         ref_ds = self.hyperalignment.params.ref_ds
-        nsamples, nfeatures = ds[ref_ds].shape
-        if 'roi_seed' in ds[ref_ds].fa and np.any(ds[ref_ds].fa['roi_seed']) :
-            seed_index = np.where(ds[ref_ds].fa.roi_seed)
+        nsamples, nfeatures = datasets[ref_ds].shape
+        if 'roi_seed' in datasets[ref_ds].fa and np.any(datasets[ref_ds].fa['roi_seed']) :
+            seed_index = np.where(datasets[ref_ds].fa.roi_seed)
         else:
             if not self.full_matrix:
                 raise ValueError(
@@ -122,11 +124,11 @@ class HyperalignmentMeasure(Measure):
         # Voxel selection within Searchlight
         # Usual metric of between-subject between-voxel correspondence
         # Making sure ref_ds has most features, if not force feature selection on others
-        nfeatures_all = [sd.nfeatures for sd in ds]
-        bigger_ds_idxs = [i for i, sd in enumerate(ds) if sd.nfeatures > nfeatures]
+        nfeatures_all = [sd.nfeatures for sd in datasets]
+        bigger_ds_idxs = [i for i, sd in enumerate(datasets) if sd.nfeatures > nfeatures]
         if self.featsel != 1.0:
             # computing feature scores from the data
-            feature_scores = compute_feature_scores(ds, self.exclude_from_model)
+            feature_scores = compute_feature_scores(datasets, self.exclude_from_model)
             if self.featsel < 1.0:
                 fselector = FractionTailSelector(self.featsel, tail='upper', mode='select', sort=False)
             else:
@@ -134,38 +136,38 @@ class HyperalignmentMeasure(Measure):
             # XXX Artificially make the seed_index feature score high to keep it(?)
             if self.use_same_features:
                 if len(self.exclude_from_model):
-                    feature_scores = [feature_scores[ifs] for ifs in range(len(ds))
+                    feature_scores = [feature_scores[ifs] for ifs in range(len(datasets))
                                       if ifs not in self.exclude_from_model]
                 feature_scores = np.mean(np.asarray(feature_scores), axis=0)
                 if seed_index is not None:
                     feature_scores[seed_index] = max(feature_scores)
                 features_selected = fselector(feature_scores)
-                ds = [sd[:, features_selected] for sd in ds]
+                datasets = [sd[:, features_selected] for sd in datasets]
             else:
                 features_selected = []
                 for fs in feature_scores:
                     if seed_index is not None:
                         fs[seed_index] = max(fs)
                     features_selected.append(fselector(fs))
-                ds = [sd[:, fsel] for fsel, sd in zip(features_selected, ds)]
+                datasets = [sd[:, fsel] for fsel, sd in zip(features_selected, datasets)]
         elif bigger_ds_idxs:
             # compute feature scores and select for bigger datasets
-            feature_scores = compute_feature_scores(ds, self.exclude_from_model)
+            feature_scores = compute_feature_scores(datasets, self.exclude_from_model)
             feature_scores = [feature_scores[isub] for isub in bigger_ds_idxs]
             fselector = FixedNElementTailSelector(nfeatures, tail='upper', mode='select', sort=False)
             features_selected = [fselector(fs) for fs in feature_scores]
             for selected_features, isub in zip(features_selected, bigger_ds_idxs):
-                ds[isub] = ds[isub][:, selected_features]
+                datasets[isub] = datasets[isub][:, selected_features]
         # Try hyperalignment
         try:
             # it is crucial to retrain hyperalignment, otherwise it would simply
             # project into the common space of a previous iteration
             if len(self.exclude_from_model) == 0:
-                self.hyperalignment.train(ds)
+                self.hyperalignment.train(datasets)
             else:
-                self.hyperalignment.train([ds[i] for i in range(len(ds))
+                self.hyperalignment.train([datasets[i] for i in range(len(datasets))
                                            if i not in self.exclude_from_model])
-            mappers = self.hyperalignment(ds)
+            mappers = self.hyperalignment(datasets)
             if mappers[0].proj.dtype is self.dtype:
                 mappers = [m.proj for m in mappers]
             else:
@@ -187,18 +189,11 @@ class HyperalignmentMeasure(Measure):
                     mappers[isub] = mapper_full
         except LinAlgError:
             print "SVD didn't converge. Try with a new reference, may be."
-            mappers = [np.eye(nfeatures, dtype='int')] * len(ds)
+            mappers = [np.eye(nfeatures, dtype='int')] * len(datasets)
         # Extract only the row/column corresponding to the center voxel if full_matrix is False
         if not self.full_matrix:
             mappers = [np.squeeze(m[:, seed_index]) for m in mappers]
-        # Package results
-        results = np.asanyarray([{'proj': mapper} for mapper in mappers])
-        # Add residual errors to the seed voxel to be used later to weed out bad SLs(?)
-        # NOPE!
-        # if 'residual_errors' in self.hyperalignment.ca.enabled:
-        #    [result.update({'residual_error': self.hyperalignment.ca['residual_errors'][ires]})
-        #     for ires, result in enumerate(results)]
-        return Dataset(samples=results)
+        return mappers
 
 
 class SearchlightHyperalignment(ClassWithCollections):
@@ -354,7 +349,7 @@ class SearchlightHyperalignment(ClassWithCollections):
             raise RuntimeError("The 'hdf5' module is required for "
                                "when results_backend is set to 'hdf5'")
 
-    def _proc_block(self, block, datasets, measure, queryengines, seed=None, iblock='main'):
+    def _proc_block(self, block, datasets, featselhyper, queryengines, seed=None, iblock='main'):
         if seed is not None:
             mvpa2.seed(seed)
         if __debug__:
@@ -388,8 +383,7 @@ class SearchlightHyperalignment(ClassWithCollections):
             if __debug__:
                 msg = 'ROI (%i/%i), %i features' % (i + 1, len(block), len(roi_seed))
                 debug('SLC', bar(float(i + 1) / len(block), msg), cr=True)
-            hmappers = measure(ds_temp)
-            hmappers = hmappers.samples
+            hmappers = featselhyper(ds_temp)
             assert(len(hmappers) == len(datasets))
             roi_feature_ids_ref_ds = roi_feature_ids_all[self.params.ref_ds]
             for isub, roi_feature_ids in enumerate(roi_feature_ids_all):
@@ -397,7 +391,7 @@ class SearchlightHyperalignment(ClassWithCollections):
                     I = roi_feature_ids
                     #J = [roi_feature_ids[node_id]] * len(roi_feature_ids)
                     J = [node_id] * len(roi_feature_ids)
-                    V = hmappers[isub][0]['proj'].tolist()
+                    V = hmappers[isub].tolist()
                     if np.isscalar(V):
                         V = [V]
                 else:
@@ -405,14 +399,14 @@ class SearchlightHyperalignment(ClassWithCollections):
                     for f2, roi_feature_id_ref_ds in enumerate(roi_feature_ids_ref_ds):
                         I += roi_feature_ids
                         J += [roi_feature_id_ref_ds] * len(roi_feature_ids)
-                        V += hmappers[isub][0]['proj'][:, f2].tolist()
+                        V += hmappers[isub][:, f2].tolist()
                 proj = coo_matrix(
                     (V, (I, J)),
                     shape=(max(self.nfeatures, max(I) + 1), max(self.nfeatures, max(J) + 1)),
                     dtype=self.params.dtype)
                 proj = proj.tocsc()
                 # Cleaning up the current subject's projections to free up memory
-                hmappers[isub, ] = [[] for _ in xrange(hmappers.shape[1])]
+                hmappers[isub] = [[] for _ in hmappers]
                 projections[isub] = projections[isub] + proj
 
         if self.params.results_backend == 'native':
@@ -520,8 +514,8 @@ class SearchlightHyperalignment(ClassWithCollections):
         # Setting up SearchlightHyperalignment
         # we need to know which original features where comprising the
         # individual SL ROIs
-        _shpaldebug('Initializing HyperalignmentMeasure.')
-        hmeasure = HyperalignmentMeasure(
+        _shpaldebug('Initializing FeatureSelectionHyperalignment.')
+        hmeasure = FeatureSelectionHyperalignment(
             featsel=params.featsel,
             hyperalignment=params.hyperalignment,
             full_matrix=params.combine_neighbormappers,
