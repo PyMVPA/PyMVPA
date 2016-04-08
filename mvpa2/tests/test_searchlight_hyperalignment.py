@@ -12,7 +12,7 @@ import unittest
 import numpy as np
 
 from mvpa2.algorithms.searchlight_hyperalignment import SearchlightHyperalignment, \
-    HyperalignmentMeasure, compute_feature_scores
+    FeatureSelectionHyperalignment, compute_feature_scores
 from mvpa2.mappers.zscore import zscore
 from mvpa2.misc.support import idhash
 from mvpa2.misc.data_generators import \
@@ -77,7 +77,7 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
 
     def test_hyperalignment_measure(self):
         ref_ds = 0
-        ha = HyperalignmentMeasure()
+        fsha = FeatureSelectionHyperalignment()
         ds_orig, dss_rotated, dss_rotated_clean, Rs = self.get_testdata()
         # Lets test two scenarios -- in one with no noise -- we should get
         # close to perfect reconstruction.  If noisy features were added -- not so good
@@ -87,9 +87,9 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
             # Hyperalignment store their idhashes of samples
             idhashes = [idhash(ds.samples) for ds in dss]
             idhashes_targets = [idhash(ds.targets) for ds in dss]
-            mappers = ha(dss)
-            mappers = [StaticProjectionMapper(proj=m[0]['proj'], recon=m[0]['proj'].T)
-                       for m in mappers.samples]
+            mappers = fsha(dss)
+            mappers = [StaticProjectionMapper(proj=m, recon=m.T)
+                       for m in mappers]
             idhashes_ = [idhash(ds.samples) for ds in dss]
             idhashes_targets_ = [idhash(ds.targets) for ds in dss]
             self.assertEqual(
@@ -141,22 +141,18 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
                 % (nddss, snoisy, ref_ds))
         # Testing feature selection within the measure using fraction and count
         # same features
-        ha_fsf = HyperalignmentMeasure(featsel=0.5)
-        ha_fsn = HyperalignmentMeasure(featsel=4)
-        ha_fsf_same = HyperalignmentMeasure(featsel=0.5, use_same_features=True)
-        ha = HyperalignmentMeasure(full_matrix=False)
+        fsha_fsf = FeatureSelectionHyperalignment(featsel=0.5)
+        fsha_fsn = FeatureSelectionHyperalignment(featsel=4)
+        fsha_fsf_same = FeatureSelectionHyperalignment(featsel=0.5, use_same_features=True)
+        fsha = FeatureSelectionHyperalignment(full_matrix=False)
         # check for valueerror if full_matrix=False and no roi_seed fa
-        self.assertRaises(ValueError, ha, dss_rotated)
-        ha = HyperalignmentMeasure()
+        self.assertRaises(ValueError, fsha, dss_rotated)
+        fsha = FeatureSelectionHyperalignment()
         dss_rotated[ref_ds].fa['roi_seed'] = [1, 0, 0, 0, 0, 0, 0, 0]
-        mappers_fsf = ha_fsf(dss_rotated)
-        mappers_fsf_same = ha_fsf_same(dss_rotated)
-        mappers_fsn = ha_fsn(dss_rotated)
-        mappers = ha(dss_rotated_clean)
-        mappers = [m[0]['proj'] for m in mappers.samples]
-        mappers_fsf = [m[0]['proj'] for m in mappers_fsf.samples]
-        mappers_fsf_same = [m[0]['proj'] for m in mappers_fsf_same.samples]
-        mappers_fsn = [m[0]['proj'] for m in mappers_fsn.samples]
+        mappers_fsf = fsha_fsf(dss_rotated)
+        mappers_fsf_same = fsha_fsf_same(dss_rotated)
+        mappers_fsn = fsha_fsn(dss_rotated)
+        mappers = fsha(dss_rotated_clean)
         # Testing that most of noisy features are eliminated from reference data
         assert_true(np.alltrue([np.sum(m[:4, :4].std(0) > 0) > 2 for m in mappers_fsf]))
         # using same features make it most likely to eliminate all noisy features
@@ -171,9 +167,8 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
                 assert_array_equal(m, mfs[:4, :4])
         # testing roi_seed forces feature selection
         dss_rotated[ref_ds].fa['roi_seed'] = [0, 0, 0, 0, 0, 0, 0, 1]
-        ha_fs = HyperalignmentMeasure(featsel=0.5)
-        mappers_fsf = ha_fsf(dss_rotated)
-        mappers_fsf = [m[0]['proj'] for m in mappers_fsf.samples]
+        fsha_fsf = FeatureSelectionHyperalignment(featsel=0.5)
+        mappers_fsf = fsha_fsf(dss_rotated)
         assert(np.alltrue([np.sum(m[7, :] == 0) == 4 for m in mappers_fsf]))
 
     @reseed_rng()
