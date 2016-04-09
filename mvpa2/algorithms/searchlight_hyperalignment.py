@@ -243,7 +243,7 @@ class SearchlightHyperalignment(ClassWithCollections):
         doc="""Number of cores to use.""")
 
     nblocks = Parameter(
-        100,
+        None,
         constraints=EnsureInt() & EnsureRange(min=1) | EnsureNone(),
         doc="""Number of blocks to divide to process. Higher number results in
             smaller memory consumption.""")
