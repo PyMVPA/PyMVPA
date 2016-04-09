@@ -14,14 +14,13 @@ import numpy as np
 from mvpa2.base import cfg
 from mvpa2.datasets.base import Dataset
 
-# See other tests and test_procrust.py for some example on what to do ;)
 from mvpa2.algorithms.hyperalignment import Hyperalignment
 from mvpa2.mappers.zscore import zscore
 from mvpa2.misc.support import idhash
 from mvpa2.misc.data_generators import random_affine_transformation
 
 # Somewhat slow but provides all needed ;)
-from mvpa2.testing import sweepargs, reseed_rng
+from mvpa2.testing import *
 from mvpa2.testing.datasets import datasets
 
 from mvpa2.generators.partition import NFoldPartitioner
