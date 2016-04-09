@@ -52,7 +52,7 @@ ds_all = h5load(filepath)
 # zscore all datasets individually
 _ = [zscore(ds) for ds in ds_all]
 # inject the subject ID into all datasets
-for i,sd in enumerate(ds_all):
+for i, sd in enumerate(ds_all):
     sd.sa['subject'] = np.repeat(i, len(sd))
 # number of subjects
 nsubjs = len(ds_all)
@@ -78,7 +78,7 @@ clf = LinearCSVMC()
 # feature selection helpers
 nf = 100
 fselector = FixedNElementTailSelector(nf, tail='upper',
-                                      mode='select',sort=False)
+                                      mode='select', sort=False)
 sbfs = SensitivityBasedFeatureSelection(OneWayAnova(), fselector,
                                         enable_ca=['sensitivities'])
 # create classifier with automatic feature selection
@@ -112,7 +112,7 @@ Between-subject classification using anatomically aligned data
 
 For between-subject classification with MNI-aligned voxels, we can stack up
 all individual datasets into a single one, as (anatomical!) feature
-correspondence is given. The crossvalidation analysis using the feature
+correspondence is given. The cross-validation analysis using the feature
 selection classifier will automatically perform the desired ANOVA-based feature
 selection on every training dataset partition. However, data folding will now
 be done by leaving out a complete subject for testing.
@@ -155,14 +155,14 @@ cv = CrossValidation(clf, NFoldPartitioner(attr='subject'),
 # leave-one-run-out for hyperalignment training
 for test_run in range(nruns):
     # split in training and testing set
-    ds_train = [sd[sd.sa.chunks != test_run,:] for sd in ds_all]
-    ds_test = [sd[sd.sa.chunks == test_run,:] for sd in ds_all]
+    ds_train = [sd[sd.sa.chunks != test_run, :] for sd in ds_all]
+    ds_test = [sd[sd.sa.chunks == test_run, :] for sd in ds_all]
 
     # manual feature selection for every individual dataset in the list
     anova = OneWayAnova()
     fscores = [anova(sd) for sd in ds_train]
     featsels = [StaticFeatureSelection(fselector(fscore)) for fscore in fscores]
-    ds_train_fs = [featsels[i].forward(sd) for i, sd in enumerate(ds_train)]
+    ds_train_fs = [fs.forward(sd) for fs, sd in zip(featsels, ds_train)]
 
 
     # Perform hyperalignment on the training data with default parameters.
@@ -181,8 +181,8 @@ for test_run in range(nruns):
     # hyperalignment parameters. And then apply the hyperalignment parameters
     # by running the test dataset through the forward() function of the mapper.
 
-    ds_test_fs = [featsels[i].forward(sd) for i, sd in enumerate(ds_test)]
-    ds_hyper = [ hypmaps[i].forward(sd) for i, sd in enumerate(ds_test_fs)]
+    ds_test_fs = [fs.forward(sd) for fs, sd in zip(featsels, ds_test)]
+    ds_hyper = [h.forward(sd) for h, sd in zip(hypmaps, ds_test_fs)]
 
     # Now, we have a list of datasets with feature correspondence in a common
     # space derived from the training data. Just as in the between-subject
@@ -272,23 +272,24 @@ anova = OneWayAnova()
 fscores = [anova(sd) for sd in ds_all]
 fscores = np.mean(np.asarray(vstack(fscores)), axis=0)
 # apply to full datasets
-ds_fs = [sd[:,fselector(fscores)] for i,sd in enumerate(ds_all)]
+ds_fs = [sd[:, fselector(fscores)] for sd in ds_all]
 #run hyperalignment on full datasets
 hyper = Hyperalignment()
 mappers = hyper(ds_fs)
-ds_hyper = [ mappers[i].forward(ds_) for i,ds_ in enumerate(ds_fs)]
+ds_hyper = [m.forward(ds_) for m, ds_ in zip(mappers, ds_fs)]
 # similarity of original data samples
 sm_orig = [np.corrcoef(
-                sd.get_mapped(
-                    mean_group_sample(['targets'])).samples)
-                        for sd in ds_fs]
+               sd.get_mapped(
+                   mean_group_sample(['targets'])).samples)
+                       for sd in ds_fs]
 # mean across subjects
 sm_orig_mean = np.mean(sm_orig, axis=0)
 # same individual average but this time for hyperaligned data
 sm_hyper_mean = np.mean(
-                    [np.corrcoef(
-                        sd.get_mapped(mean_group_sample(['targets'])).samples)
-                            for sd in ds_hyper], axis=0)
+    [np.corrcoef(
+        sd.get_mapped(mean_group_sample(['targets'])).samples)
+     for sd in ds_hyper],
+    axis=0)
 # similarity for averaged hyperaligned data
 ds_hyper = vstack(ds_hyper)
 sm_hyper = np.corrcoef(ds_hyper.get_mapped(mean_group_sample(['targets'])))
@@ -297,29 +298,29 @@ ds_fs = vstack(ds_fs)
 sm_anat = np.corrcoef(ds_fs.get_mapped(mean_group_sample(['targets'])))
 
 """
-We then plot the respective similarity strucures.
+We then plot the respective similarity structures.
 """
 
 # class labels should be in more meaningful order for visualization
 # (human faces, animals faces, objects)
-intended_label_order = [2,4,1,5,3,0,6]
+intended_label_order = [2, 4, 1, 5, 3, 0, 6]
 labels = ds_all[0].UT
 labels = labels[intended_label_order]
 
-pl.figure(figsize=(6,6))
+pl.figure(figsize=(6, 6))
 # plot all three similarity structures
 for i, sm_t in enumerate((
     (sm_orig_mean, "Average within-subject\nsimilarity"),
     (sm_anat, "Similarity of group average\ndata (anatomically aligned)"),
     (sm_hyper_mean, "Average within-subject\nsimilarity (hyperaligned data)"),
     (sm_hyper, "Similarity of group average\ndata (hyperaligned)"),
-                      )):
+    )):
     sm, title = sm_t
     # reorder matrix columns to match label order
-    sm = sm[intended_label_order][:,intended_label_order]
-    pl.subplot(2, 2, i+1)
+    sm = sm[intended_label_order][:, intended_label_order]
+    pl.subplot(2, 2, i + 1)
     pl.imshow(sm, vmin=-1.0, vmax=1.0, interpolation='nearest')
-    pl.colorbar(shrink=.4, ticks=[-1,0,1])
+    pl.colorbar(shrink=.4, ticks=[-1, 0, 1])
     pl.title(title, size=12)
     ylim = pl.ylim()
     pl.xticks(range(ncats), labels, size='small', stretch='ultra-condensed',
@@ -359,9 +360,8 @@ between-subject classification shown above. The only difference is an addition
 ``for`` loop doing the alpha value sweep for each cross-validation fold.
 """
 
-alpha_levels = np.concatenate(
-                    (np.linspace(0.0, 0.7, 8),
-                     np.linspace(0.8, 1.0, 9)))
+alpha_levels = np.concatenate((np.linspace(0.0, 0.7, 8),
+                               np.linspace(0.8, 1.0, 9)))
 # to collect the results for later visualization
 bsc_hyper_results = np.zeros((nsubjs, len(alpha_levels), nruns))
 # same cross-validation over subjects as before
@@ -371,8 +371,8 @@ cv = CrossValidation(clf, NFoldPartitioner(attr='subject'),
 # leave-one-run-out for hyperalignment training
 for test_run in range(nruns):
     # split in training and testing set
-    ds_train = [sd[sd.sa.chunks != test_run,:] for sd in ds_all]
-    ds_test = [sd[sd.sa.chunks == test_run,:] for sd in ds_all]
+    ds_train = [sd[sd.sa.chunks != test_run, :] for sd in ds_all]
+    ds_test = [sd[sd.sa.chunks == test_run, :] for sd in ds_all]
 
     # manual feature selection for every individual dataset in the list
     anova = OneWayAnova()
@@ -385,8 +385,8 @@ for test_run in range(nruns):
                                                            space='commonspace'),
                                alpha=alpha)
         hypmaps = hyper(ds_train_fs)
-        ds_test_fs = [featsels[i].forward(sd) for i, sd in enumerate(ds_test)]
-        ds_hyper = [ hypmaps[i].forward(sd) for i, sd in enumerate(ds_test_fs)]
+        ds_test_fs = [fs.forward(sd) for fs, sd in zip(featsels, ds_test)]
+        ds_hyper = [h.forward(sd) for h, sd in zip(hypmaps, ds_test_fs)]
         ds_hyper = vstack(ds_hyper)
         zscore(ds_hyper, chunks_attr='subject')
         res_cv = cv(ds_hyper)
@@ -418,4 +418,97 @@ if cfg.getboolean('examples', 'interactive', True):
 We can clearly see that the regular hyperalignment performs best for this
 dataset. However, please refer to :ref:`Xu et al. 2012 <XLR2012>` for an
 example showing that this is not always the case.
+
+Searchlight Hyperalignment
+--------------------------
+
+Hyperalignment as described in :ref:`Haxby et al. 2011 <HGC+11>` aligns
+features within an ROI across subjects. :ref: `Guntupalli et al. 2016
+<GHH+16>` extends hyperalignment to whole brain by using Searchlight
+Hyperalignment algorithm which applies hyperalignment within searchlights and
+aggregates resulting local transformations into a global transformation that
+can be applied to whole brain. Original hyperalignment algorithm is not
+constrained by anatomical location of features across subjects beyond the ROI
+definition, whereas Searchlight Hyperalignment can be constrained to perform
+alignment locally.
+
+We will perform the same analysis as performed previously with
+hyperalignment, but this time using Searchlight Hyperalignment. We will skip
+ANOVA-based feature selection, but perform feature selection within SL using
+a method described in :ref:`Haxby et al. 2011<HGC+11>`. We will use spherical
+searchlights of 3-voxel radius and use a sparsely selected voxels as centers
+for quick computation.
+Searchlight Hyperalignment accepts custom queryengines instead of default
+volume searchlight through `queryengine` argument.
+"""
+
+verbose(1, "Performing classification analyses...")
+verbose(2, "between-subject (searchlight hyperaligned)...", cr=False, lf=False)
+# feature selection helpers
+slhyper_start_time = time.time()
+bsc_slhyper_results = []
+# same cross-validation over subjects as before
+cv = CrossValidation(clf, NFoldPartitioner(attr='subject'),
+                     errorfx=mean_match_accuracy)
+
+# leave-one-run-out for hyperalignment training
+for test_run in range(nruns):
+    # split in training and testing set
+    ds_train = [sd[sd.sa.chunks != test_run, :] for sd in ds_all]
+    ds_test = [sd[sd.sa.chunks == test_run, :] for sd in ds_all]
+
+    # Initializing Searchlight Hyperalignment with Sphere searchlights of 3 voxel radius.
+    # Using 40% features in each SL and spacing centers at 3-voxels distance.
+    slhyper = SearchlightHyperalignment(radius=3, featsel=0.4, sparse_radius=3)
+
+    # Performing searchlight hyperalignment on training data.
+    # This step is similar to regular hyperalignment, calling
+    # the searchlight hyperalignment object with a list of datasets.
+    # Searchlight Hyperalignment returns a list of mappers corresponding to
+    # subjects in the same order as the list of datasets we passed in.
+    slhypmaps = slhyper(ds_train)
+
+    # Applying hyperalignment parameters is similar to applying any mapper in
+    # PyMVPA. We apply the hyperalignment parameters by running the test dataset
+    # through the forward() function of the mapper.
+    ds_hyper = [h.forward(sd) for h, sd in zip(slhypmaps, ds_test)]
+
+    # Running between-subject classification as before.
+    ds_hyper = vstack(ds_hyper)
+    zscore(ds_hyper, chunks_attr='subject')
+    res_cv = cv(ds_hyper)
+    bsc_slhyper_results.append(res_cv)
+
+bsc_slhyper_results = hstack(bsc_slhyper_results)
+verbose(2, "done in %.1f seconds" % (time.time() - slhyper_start_time,))
+
+"""
+Comparing the results
+---------------------
+
+Performance
+^^^^^^^^^^^
+
+First we take a look at the classification performance (or accuracy) of all
+three analysis approaches.
+"""
+
+verbose(1, "Average classification accuracies:")
+verbose(2, "between-subject (searchlight hyperaligned): %.2f +/-%.3f" \
+        % (np.mean(bsc_slhyper_results),
+           np.std(np.mean(bsc_slhyper_results, axis=1)) / np.sqrt(nsubjs - 1)))
+
+"""
+The output of this demo looks like this::
+ Performing classification analyses...
+  between-subject (searchlight hyperaligned)...done in 250 seconds
+ Average classification accuracies:
+  between-subject (searchlight hyperaligned): 0.60 +/-0.032
+
+Between-subject classification using searchlight hyperalignment is slightly
+worse than regular hyperalignment, but remember that we did not do
+ANOVA-based feature selection and used all voxels in the VT mask. Eventhough,
+we performed feature selection within each searchlight, it still retains a
+lot of features.
+
 """
