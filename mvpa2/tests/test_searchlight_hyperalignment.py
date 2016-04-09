@@ -219,7 +219,8 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
                        {'combine_neighbormappers': True, 'exclude_from_model': [2, 4]},
                        {'combine_neighbormappers': False},
                        {'combine_neighbormappers': False, 'mask_node_ids': np.arange(dss[0].nfeatures).tolist()},
-                       {'combine_neighbormappers': True, 'sparse_radius': 1}]:
+                       {'combine_neighbormappers': True, 'sparse_radius': 1},
+                       {'combine_neighbormappers': True, 'nblocks': 2}]:
             slhyp = SearchlightHyperalignment(radius=2, **kwargs)
             mappers = slhyp(dss)
             # one mapper per input ds

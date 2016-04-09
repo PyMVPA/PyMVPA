@@ -607,7 +607,12 @@ class SearchlightHyperalignment(ClassWithCollections):
         else:
             # otherwise collect the results in an 1-item list
             _shpaldebug('Using 1 process to compute mappers.')
-            p_results = [self._proc_block(roi_ids, datasets, hmeasure, queryengines)]
+            if params.nblocks is None:
+                params.nblocks = 1
+            params.nblocks = min(len(roi_ids), params.nblocks)
+            node_blocks = np.array_split(roi_ids, params.nblocks)
+            p_results = [self._proc_block(block, datasets, hmeasure, queryengines)
+                         for block in node_blocks]
         results_ds = self.__handle_all_results(p_results)
         # Dummy iterator for, you know, iteration
         list(results_ds)
