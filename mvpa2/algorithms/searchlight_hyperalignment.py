@@ -132,10 +132,12 @@ class FeatureSelectionHyperalignment(ClassWithCollections):
         if self.featsel != 1.0:
             # computing feature scores from the data
             feature_scores = compute_feature_scores(datasets, self.exclude_from_model)
-            if self.featsel < 1.0:
-                fselector = FractionTailSelector(self.featsel, tail='upper', mode='select', sort=False)
-            else:
-                fselector = FixedNElementTailSelector(np.floor(self.featsel), tail='upper', mode='select', sort=False)
+            nfeatures_sel = nfeatures  # default
+            if self.featsel < 1.0 and np.floor(self.featsel * nfeatures):
+                nfeatures_sel = int(np.floor(self.featsel * nfeatures))
+            if self.featsel > 1.0:
+                nfeatures_sel = min(nfeatures, self.featsel)
+            fselector = FixedNElementTailSelector(nfeatures_sel, tail='upper', mode='select', sort=False)
             # XXX Artificially make the seed_index feature score high to keep it(?)
             if self.use_same_features:
                 if len(self.exclude_from_model):
@@ -286,7 +288,7 @@ class SearchlightHyperalignment(ClassWithCollections):
             EnsureInt() & EnsureRange(min=2),
         doc="""Determines if feature selection will be performed in each searchlight.
             1.0: Use all features. < 1.0 is understood as selecting that
-            proportion of features in each searchlight using feature scores;
+            proportion of features in each searchlight of ref_ds using feature scores;
             > 1.0 is understood as selecting at most that many features in each
             searchlight.""")
 
