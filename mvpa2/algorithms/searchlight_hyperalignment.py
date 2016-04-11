@@ -179,7 +179,8 @@ class FeatureSelectionHyperalignment(ClassWithCollections):
                 mappers = [m.proj.astype(self.dtype) for m in mappers]
             if self.featsel != 1.0:
                 # Reshape the projection matrix from selected to all features
-                mappers_full = [np.zeros((nfeatures, nfeatures)) for im in range(len(mappers))]
+                mappers_full = [np.zeros((nfeatures_all[im], nfeatures_all[ref_ds]))
+                                for im in range(len(mappers))]
                 if self.use_same_features:
                     for mf, m in zip(mappers_full, mappers):
                         mf[np.ix_(features_selected, features_selected)] = m
