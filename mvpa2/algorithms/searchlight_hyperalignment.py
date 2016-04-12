@@ -134,8 +134,8 @@ class FeatureSelectionHyperalignment(ClassWithCollections):
             # computing feature scores from the data
             feature_scores = compute_feature_scores(datasets, self.exclude_from_model)
             nfeatures_sel = nfeatures  # default
-            if self.featsel < 1.0 and np.floor(self.featsel * nfeatures):
-                nfeatures_sel = int(np.floor(self.featsel * nfeatures))
+            if self.featsel < 1.0 and int(self.featsel * nfeatures) > 0:
+                nfeatures_sel = int(self.featsel * nfeatures)
             if self.featsel > 1.0:
                 nfeatures_sel = min(nfeatures, self.featsel)
             fselector = FixedNElementTailSelector(nfeatures_sel, tail='upper', mode='select', sort=False)
