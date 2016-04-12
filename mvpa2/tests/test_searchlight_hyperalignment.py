@@ -153,6 +153,8 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         mappers_fsf_same = fsha_fsf_same(dss_rotated)
         mappers_fsn = fsha_fsn(dss_rotated)
         mappers = fsha(dss_rotated_clean)
+        mappers_diffsizedss = fsha_fsf([sd[:, nfs] for nfs, sd in
+            zip([np.arange(5), np.random.permutation(np.arange(8)), np.arange(8)[::-1], np.arange(8)], dss_rotated)])
         # Testing that most of noisy features are eliminated from reference data
         assert_true(np.alltrue([np.sum(m[:4, :4].std(0) > 0) > 2 for m in mappers_fsf]))
         # using same features make it most likely to eliminate all noisy features
