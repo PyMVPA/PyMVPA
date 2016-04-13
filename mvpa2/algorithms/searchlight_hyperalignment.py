@@ -24,8 +24,9 @@ from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
 from mvpa2.base.progress import ProgressBar
 from mvpa2.base import externals, warning
 from mvpa2.support import copy
-from mvpa2.featsel.helpers import FractionTailSelector, FixedNElementTailSelector
+from mvpa2.featsel.helpers import FixedNElementTailSelector
 from mvpa2.base.types import is_datasetlike
+from mvpa2.misc.surfing.queryengine import SurfaceVerticesQueryEngine
 
 if externals.exists('h5py'):
     from mvpa2.base.hdf5 import h5save, h5load
@@ -115,14 +116,14 @@ class FeatureSelectionHyperalignment(ClassWithCollections):
     def __call__(self, datasets):
         ref_ds = self.hyperalignment.params.ref_ds
         nsamples, nfeatures = datasets[ref_ds].shape
-        if 'roi_seed' in datasets[ref_ds].fa and np.any(datasets[ref_ds].fa['roi_seed']) :
+        if 'roi_seed' in datasets[ref_ds].fa and np.any(datasets[ref_ds].fa['roi_seed']):
             seed_index = np.where(datasets[ref_ds].fa.roi_seed)
         else:
             if not self.full_matrix:
                 raise ValueError(
                     "Setting full_matrix=False requires roi_seed `fa` in the "
                     "reference dataset indicating center feature and some "
-                    "feature(s) being marked as `roi_sid`.")
+                    "feature(s) being marked as `roi_seed`.")
             seed_index = None
         # Voxel selection within Searchlight
         # Usual metric of between-subject between-voxel correspondence
@@ -132,10 +133,12 @@ class FeatureSelectionHyperalignment(ClassWithCollections):
         if self.featsel != 1.0:
             # computing feature scores from the data
             feature_scores = compute_feature_scores(datasets, self.exclude_from_model)
-            if self.featsel < 1.0:
-                fselector = FractionTailSelector(self.featsel, tail='upper', mode='select', sort=False)
-            else:
-                fselector = FixedNElementTailSelector(np.floor(self.featsel), tail='upper', mode='select', sort=False)
+            nfeatures_sel = nfeatures  # default
+            if self.featsel < 1.0 and int(self.featsel * nfeatures) > 0:
+                nfeatures_sel = int(self.featsel * nfeatures)
+            if self.featsel > 1.0:
+                nfeatures_sel = min(nfeatures, self.featsel)
+            fselector = FixedNElementTailSelector(nfeatures_sel, tail='upper', mode='select', sort=False)
             # XXX Artificially make the seed_index feature score high to keep it(?)
             if self.use_same_features:
                 if len(self.exclude_from_model):
@@ -177,7 +180,8 @@ class FeatureSelectionHyperalignment(ClassWithCollections):
                 mappers = [m.proj.astype(self.dtype) for m in mappers]
             if self.featsel != 1.0:
                 # Reshape the projection matrix from selected to all features
-                mappers_full = [np.zeros((nfeatures, nfeatures)) for im in range(len(mappers))]
+                mappers_full = [np.zeros((nfeatures_all[im], nfeatures_all[ref_ds]))
+                                for im in range(len(mappers))]
                 if self.use_same_features:
                     for mf, m in zip(mappers_full, mappers):
                         mf[np.ix_(features_selected, features_selected)] = m
@@ -268,9 +272,9 @@ class SearchlightHyperalignment(ClassWithCollections):
         constraints=EnsureBool(),
         doc="""This param determines whether to combine mappers for each voxel
             from its neighborhood searchlights or just use the mapper for which
-            it is the center voxel.  Use this option with caution, as enabling
-            it might square the runtime memory requirement. If you run into
-            memory issues, reduce the nproc in sl.""")
+            it is the center voxel. This will not be applicable for certain
+            queryengines whose ids and neighborhoods are from different spaces,
+            such as for SurfaceVerticesQueryEngine""")
 
     compute_recon = Parameter(
         True,
@@ -286,7 +290,7 @@ class SearchlightHyperalignment(ClassWithCollections):
             EnsureInt() & EnsureRange(min=2),
         doc="""Determines if feature selection will be performed in each searchlight.
             1.0: Use all features. < 1.0 is understood as selecting that
-            proportion of features in each searchlight using feature scores;
+            proportion of features in each searchlight of ref_ds using feature scores;
             > 1.0 is understood as selecting at most that many features in each
             searchlight.""")
 
@@ -332,6 +336,8 @@ class SearchlightHyperalignment(ClassWithCollections):
         self.ndatasets = 0
         self.nfeatures = 0
         self.projections = None
+        # This option makes the roi_seed in each SL to be selected during feature selection
+        self.force_roi_seed = True
         if self.params.nproc is not None and self.params.nproc > 1 \
                 and not externals.exists('pprocess'):
             raise RuntimeError("The 'pprocess' module is required for "
@@ -381,10 +387,12 @@ class SearchlightHyperalignment(ClassWithCollections):
                 continue
             # selecting neighborhood for all subject for hyperalignment
             ds_temp = [sd[:, ids] for sd, ids in zip(datasets, roi_feature_ids_all)]
-            roi_seed = np.array(roi_feature_ids_all[self.params.ref_ds]) == node_id
-            ds_temp[self.params.ref_ds].fa['roi_seed'] = roi_seed
+            if self.force_roi_seed:
+                roi_seed = np.array(roi_feature_ids_all[self.params.ref_ds]) == node_id
+                ds_temp[self.params.ref_ds].fa['roi_seed'] = roi_seed
             if __debug__:
-                msg = 'ROI (%i/%i), %i features' % (i + 1, len(block), len(roi_seed))
+                msg = 'ROI (%i/%i), %i features' % (i + 1, len(block),
+                                                    ds_temp[self.params.ref_ds].nfeatures)
                 debug('SLC', bar(float(i + 1) / len(block), msg), cr=True)
             hmappers = featselhyper(ds_temp)
             assert(len(hmappers) == len(datasets))
@@ -546,7 +554,12 @@ class SearchlightHyperalignment(ClassWithCollections):
         # alignment, i.e. the SL ROIs cover roughly the same area
         queryengines = self._get_trained_queryengines(
             datasets, params.queryengine, params.radius, params.ref_ds)
-
+        # For surface nodes to voxels queryengines, roi_seed hardly makes sense
+        if isinstance(queryengines[params.ref_ds], SurfaceVerticesQueryEngine):
+            self.force_roi_seed = False
+            if not self.params.combine_neighbormappers:
+                raise NotImplementedError("Mapping from voxels to surface nodes is not "
+                        "implmented yet. Try setting combine_neighbormappers to True.")
         self.nfeatures = datasets[params.ref_ds].nfeatures
         _shpaldebug("Performing Hyperalignment in searchlights")
         # Setting up centers for running SL Hyperalignment
