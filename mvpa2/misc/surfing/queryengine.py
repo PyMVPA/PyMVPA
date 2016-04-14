@@ -270,7 +270,7 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
                                  "(%s,%s,%s)" %
                                         (vg_ds.shape[:3], vg.shape[:3]))
         else:
-            warning("Could not find dataset volume geometry for %r" % dataset)
+            warning("Could not find dataset volume geometry for %s" % dataset)
 
 
         self._map_voxel_coord = map_voxel_coord = {}
