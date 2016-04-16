@@ -272,6 +272,8 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
     @reseed_rng()
     def test_searchlight_hyperalignment_warnings_and_exceptions(self):
         skip_if_no_external('scipy')
+        skip_if_no_external('hdf5')  # needed for default results backend hdf5
+
         ds_orig = datasets['3dsmall'][:, :1]  # tiny dataset just to test exceptions
         ds_orig.fa['voxel_indices'] = ds_orig.fa.myspace
         slhyper = SearchlightHyperalignment()
@@ -285,6 +287,7 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
     def test_custom_qas(self):
         # Test if we could provide custom QEs per each of the datasets
         skip_if_no_external('scipy')
+        skip_if_no_external('hdf5')  # needed for default results backend hdf5
 
         ns, nf = 10, 4  # # of samples/features -- a very BIG dataset ;)
         ds0 = Dataset(np.random.normal(size=(ns, nf)))
