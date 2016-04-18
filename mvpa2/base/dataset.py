@@ -692,20 +692,14 @@ def datasetmethod(func):
     return func
 
 
-def vstack(datasets, a=None, fa='update'):
+def vstack(datasets, a=None, fa='drop_nonunique'):
     """Stacks datasets vertically (appending samples).
 
-    Feature attribute collections are merged incrementally, attribute with
-    identical keys overwriting previous ones in the stacked dataset, unless
-    `fa != 'update'`.  All datasets must have an identical set of sample
-    attributes (matching keys, not values), otherwise a ValueError will be raised.
-    No dataset attributes from any source dataset will be transferred into the
-    stacked dataset. If all input dataset have common dataset attributes that
-    are also valid for the stacked dataset, they can be moved into the output
-    dataset like this::
-
-      ds_merged = vstack((ds1, ds2, ds3))
-      ds_merged.a.update(ds1.a)
+    All datasets must have an identical set of sample attributes (matching
+    keys, not values), otherwise a ValueError will be raised. See `a` argument
+    documentation for transferring dataset attributes, and `fa` argument for
+    feature attributes -- by default feature attributes which differ in any
+    input dataset from the others would be dropped.
 
     Parameters
     ----------
@@ -724,7 +718,7 @@ def vstack(datasets, a=None, fa='update'):
         missing values are replaced by None. If None (the default) then no
         attributes are stored in merged_dataset. True is equivalent to
         'drop_nonunique'. False is equivalent to None.
-    fa: {'update', 'drop_nonunique'}, (default: 'update')
+    fa: {'update', 'drop_nonunique'}, (default: 'drop_nonunique')
         Indicate which feature attributes are stored in merged dataset.
         If 'update' - attributes are updated while growing the dataset.
         If 'drop_nonunique', attribute would be dropped from the dataset if its
@@ -763,15 +757,14 @@ def vstack(datasets, a=None, fa='update'):
     return merged
 
 
-def hstack(datasets, a=None, sa='update'):
+def hstack(datasets, a=None, sa='drop_nonunique'):
     """Stacks datasets horizontally (appending features).
 
-    Sample attribute collections are merged incrementally, attribute with
-    identical keys overwriting previous ones in the stacked dataset, unless
-    `sa != 'update'`. All datasets must have an identical set of feature
-    attributes (matching keys, not values), otherwise a ValueError will be raised.
-    No dataset attributes from any source dataset will be transferred into the
-    stacked dataset.
+    All datasets must have an identical set of sample attributes (matching
+    keys, not values), otherwise a ValueError will be raised. See `a` argument
+    documentation for transferring dataset attributes, and `sa` argument for
+    sample attributes -- by default sample attributes which differ in any
+    input dataset from the others would be dropped.
 
     Parameters
     ----------

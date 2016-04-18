@@ -491,11 +491,11 @@ def test_stack_add_attributes():
             assert_array_equal(ocol['nok'].value, [0] * 5 + range(5))
             assert_array_equal(ocol['ok'].value, range(5) * 2)
 
-            if add_param in (None, 'update'):
+            if add_param in ('update',):
                 # will be of the last dataset
                 assert_array_equal(col['nok'].value, COL(data1)['nok'].value)
                 assert_array_equal(col['ok'].value, COL(data1)['ok'].value)
-            elif add_param == 'drop_nonunique':
+            elif add_param in (None, 'drop_nonunique'):
                 assert('nok' not in col)  # must be dropped since not unique
                 # both the same but let's check ;)
                 assert_array_equal(col['ok'].value, COL(data0)['ok'].value)
