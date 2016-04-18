@@ -477,20 +477,23 @@ def _cluster_labels_custom_neighborhood(map_, neigh):
          (neigh.row[keep_edges],
           neigh.col[keep_edges])),
         neigh.shape)
-    return csgraph.connected_components(neigh_thr, directed=False)[1]
+    return (csgraph.connected_components(neigh_thr, directed=False)[1]+1)*map_
 
 
 def _get_map_cluster_sizes_custom_neighborhood(map_, neigh):
     cl_lbls = _cluster_labels_custom_neighborhood(map_, neigh)
     labels, counts = np.unique(cl_lbls*map_, return_counts=True)
+    if labels[0] == 0:
+        counts = counts[1:]
     return counts
 
 
 def _clusterize_custom_neighborhood(map_, neigh):
     cl_lbls = _cluster_labels_custom_neighborhood(map_, neigh)
     labels, counts = np.unique(cl_lbls*map_, return_counts=True)
+    if labels[0] == 0:
+        labels, counts = labels[1:], counts[1:]
     new_labels = np.zeros(cl_lbls.shape, dtype=np.uint)
-    li = 0
     for li,l in enumerate(labels):
         new_labels[cl_lbls==l] = li+1
     return new_labels, li
