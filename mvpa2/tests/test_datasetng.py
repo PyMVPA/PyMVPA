@@ -385,7 +385,7 @@ def test_mergeds():
     merged = vstack(datasets)
     assert_equal(merged.shape,
                  (np.sum([len(ds) for ds in datasets]), data1.nfeatures))
-    assert_true('test' in merged.fa)
+    assert_false('test' in merged.fa)
     assert_array_equal(merged.sa.targets, [1] * 5 + [2] * 3 + [3] * 2)
 
     #
@@ -396,7 +396,7 @@ def test_mergeds():
     merged = hstack(datasets)
     assert_equal(merged.shape,
                  (len(data1), np.sum([ds.nfeatures for ds in datasets])))
-    assert_true('chunks' in merged.sa)
+    assert_false('chunks' in merged.sa)
     assert_array_equal(merged.fa.one, [1] * 5 + [0] * 5)
 
 def test_hstack():
