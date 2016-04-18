@@ -1080,7 +1080,6 @@ def stack_by_unique_sample_attribute(dataset, sa_label):
         ds.append(d)
 
     stacked_ds = hstack(ds, True)
-    stacked_ds.sa.pop(sa_label)
 
     return stacked_ds
 
@@ -1114,7 +1113,6 @@ def stack_by_unique_feature_attribute(dataset, fa_label):
         ds.append(d)
 
     stacked_ds = vstack(ds, True)
-    stacked_ds.fa.pop(fa_label)
 
     return stacked_ds
 
