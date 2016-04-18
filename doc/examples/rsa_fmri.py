@@ -16,13 +16,13 @@ Representational similarity analysis (RSA) on fMRI data
 In this example we are going to take a look at representational similarity
 analysis (RSA). This term was coined by :ref:`Kriegeskorte et al. (2008)
 <KMB08>` and refers to a technique were data samples are converted into a
-self-referential distance space, in order to aid comparsion across domains. The
+self-referential distance space, in order to aid comparison across domains. The
 premise is that whenever no appropriate transformation is known to directly
 compare two types of data directly (1st-level), it is still useful to compare
 similarities computed in individual domains (2nd-level). For example, this
 analysis technique has been used to identify inter-species commonalities in
 brain response pattern variations during stimulation with visual objects
-(single-cell recordings in monkeys compared to human fMRI, Krigeskorte et al.,
+(single-cell recordings in monkeys compared to human fMRI, Kriegeskorte et al.,
 2008), and to relate brain response pattern similarities to predictions of
 computational models of perception (Connolly et al., 2012).
 """
@@ -60,7 +60,7 @@ zscore(ds, chunks_attr='chunks', param_est=('targets', 'rest'))
 ds = ds[ds.sa.targets != 'rest']
 
 """
-RSA is all about so-called dissimilarity matrices: square, symetric matrices
+RSA is all about so-called dissimilarity matrices: square, symmetric matrices
 with a zero diagonal that encode the (dis)similarity between all pairs of
 data samples or conditions in a dataset. We compose a little helper function
 to plot such matrices, including a color-scale and proper labeling of matrix
@@ -68,19 +68,20 @@ rows and columns.
 """
 
 # little helper function to plot dissimilarity matrices
+# since we are using correlation-distance, we use colorbar range of [0,2]
 def plot_mtx(mtx, labels, title):
     pl.figure()
     pl.imshow(mtx, interpolation='nearest')
     pl.xticks(range(len(mtx)), labels, rotation=-45)
     pl.yticks(range(len(mtx)), labels)
     pl.title(title)
-    pl.clim((0,1))
+    pl.clim((0, 2))
     pl.colorbar()
 
 """
 As a start, we want to inspect the dissimilarity structure of the stimulation
 conditions in the entire ROI. For this purpose, we average all samples of
-each conditions into a single examplar, using an FxMapper() instance.
+each conditions into a single exemplar, using an FxMapper() instance.
 """
 
 # compute a dataset with the mean samples for all conditions
@@ -208,13 +209,13 @@ import nibabel as nb
 anat = nb.load(pjoin(datapath, 'sub001', 'anatomy', 'highres001.nii.gz'))
 
 from nipy.labs.viz_tools.activation_maps import plot_map
-pl.figure(figsize=(15,4))
+pl.figure(figsize=(15, 4))
 sp = pl.subplot(121)
 pl.title('Distribution of target similarity structure correlation')
 slices = plot_map(
             vol,
             ds.a.imgaffine,
-            cut_coords=np.array((12,-42,-20)),
+            cut_coords=np.array((12, -42, -20)),
             threshold=.5,
             cmap="bwr",
             vmin=0,
@@ -229,7 +230,6 @@ pl.colorbar(img, cax=cax)
 
 sp = pl.subplot(122)
 pl.hist(slres_tdsm.samples[0],
-        #range=(0,410),
         normed=False,
         bins=30,
         color='0.6')
