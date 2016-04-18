@@ -483,16 +483,12 @@ def _cluster_labels_custom_neighborhood(map_, neigh):
 def _get_map_cluster_sizes_custom_neighborhood(map_, neigh):
     cl_lbls = _cluster_labels_custom_neighborhood(map_, neigh)
     labels, counts = np.unique(cl_lbls*map_, return_counts=True)
-    if labels[0] == 0:
-        counts = counts[1:]
     return counts
 
 
 def _clusterize_custom_neighborhood(map_, neigh):
     cl_lbls = _cluster_labels_custom_neighborhood(map_, neigh)
     labels, counts = np.unique(cl_lbls*map_, return_counts=True)
-    if labels[0] == 0:
-        labels, counts = labels[1:], counts[1:]
     new_labels = np.zeros(cl_lbls.shape, dtype=np.uint)
     li = 0
     for li,l in enumerate(labels):
