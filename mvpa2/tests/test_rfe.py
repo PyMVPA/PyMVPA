@@ -321,8 +321,8 @@ class RFETests(unittest.TestCase):
             # of normed sensitivities across those splits
             (RFE(rfesvm_split.get_sensitivity_analyzer(
                     postproc=ChainMapper([ FxMapper('features', l2_normed),
-                                           FxMapper('samples', np.mean),
-                                           FxMapper('samples', np.abs)])),
+                                           FxMapper('samples', np.abs),
+                                           FxMapper('samples', np.mean)])),
                  ConfusionBasedError(rfesvm_split, confusion_state='stats'),
                  Repeater(2),             #  we will use the same full cv-training dataset
                  fselector=FractionTailSelector(
