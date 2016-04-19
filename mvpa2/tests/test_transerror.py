@@ -309,7 +309,7 @@ class ErrorsTests(unittest.TestCase):
             # its testing labile
             if (('lars' in clf.__tags__) and cfg.getboolean('tests', 'labile', default='yes')) \
                 or (not 'lars' in clf.__tags__):
-                self.assertTrue(stats['ACC'] > 1.2 / Nlabels)
+                self.assertTrue(stats['ACC'] > 1.15 / Nlabels)
             auc = stats['AUC']
             if (Nlabels == 2) or (Nlabels > 2 and auc[0] is not np.nan):
                 mauc = np.min(stats['AUC'])
