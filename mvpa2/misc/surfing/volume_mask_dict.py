@@ -110,7 +110,12 @@ class VolumeMaskDictionary(Mapping):
         if self._src2nbr is not None:
             prefixes_.append('src2nbr=%r' % self._src2nbr)
         if self._src2aux is not None:
-            prefixes_.append('src2aux=%r' % self._src2aux)
+            # using the representation of the full _src2aux may cause
+            # a significant slow-down, therefore only list the keys
+            # and not any values
+            dict_summary=', '.join('%s=<...>' % k for k in self._src2aux)
+            prefixes_.append('src2aux=%s(%s)' % (type(self._src2aux),
+                                                 dict_summary))
 
         return "%s(%s)" % (self.__class__.__name__, ','.join(prefixes_))
 
