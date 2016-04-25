@@ -321,8 +321,8 @@ class RFETests(unittest.TestCase):
             # of normed sensitivities across those splits
             (RFE(rfesvm_split.get_sensitivity_analyzer(
                     postproc=ChainMapper([ FxMapper('features', l2_normed),
-                                           FxMapper('samples', np.mean),
-                                           FxMapper('samples', np.abs)])),
+                                           FxMapper('samples', np.abs),
+                                           FxMapper('samples', np.mean)])),
                  ConfusionBasedError(rfesvm_split, confusion_state='stats'),
                  Repeater(2),             #  we will use the same full cv-training dataset
                  fselector=FractionTailSelector(
@@ -581,6 +581,23 @@ class RFETests(unittest.TestCase):
             predictions = rfeclf(dataset).samples
             assert_array_equal(predictions, _predictions)
             assert_array_equal(_slicearg, rfeclf.mapper.slicearg)
+
+        # Test that we can collect stats from cas within cross-validation
+        sensitivities = []
+        nested_errors = []
+        nested_nfeatures = []
+        def store_me(data, node, result):
+            sens = node.measure.get_sensitivity_analyzer(force_train=False)(data)
+            sensitivities.append(sens)
+            nested_errors.append(node.measure.mapper.ca.nested_errors)
+            nested_nfeatures.append(node.measure.mapper.ca.nested_nfeatures)
+        cv = CrossValidation(rfeclf, NFoldPartitioner(count=1), callback=store_me,
+                             enable_ca=['stats'])
+        _ = cv(dataset)
+        # just to make sure we collected them
+        assert_equal(len(sensitivities), 1)
+        assert_equal(len(nested_errors), 1)
+        assert_equal(len(nested_nfeatures), 1)
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(RFETests)

@@ -502,10 +502,10 @@ def test_static_reverse_doesnt_work_after_feature_selection_tuneup_1():
 
 def test_static_reverse_doesnt_work_after_feature_selection_tuneup_2():
     from mvpa2.testing.tools import skip_if_no_external
+    skip_if_no_external('nibabel')
     from mvpa2.datasets.mri import fmri_dataset
     from mvpa2 import pymvpa_dataroot
     from os.path import join as pathjoin
-    skip_if_no_external('nibabel')
 
     ds_orig = fmri_dataset(samples=pathjoin(pymvpa_dataroot, 'bold.nii.gz'),
                            mask=pathjoin(pymvpa_dataroot, 'mask.nii.gz'),
