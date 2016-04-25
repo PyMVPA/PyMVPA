@@ -501,9 +501,12 @@ class FixedNElementTailSelector(TailSelector):
     def _set_n_elements(self, nelements):
         if __debug__:
             if nelements <= 0:
-                raise ValueError, "Number of elements less or equal to zero " \
-                                  "does not make sense."
-
+                raise ValueError("Number of elements less or equal to zero "
+                                  "does not make sense.")
+        if not isinstance(nelements, int):
+            if int(nelements) != nelements:
+                raise ValueError("nelements must be an integer. Got %s" % nelements)
+            nelements = int(nelements)
         self.__nelements = nelements
 
 
