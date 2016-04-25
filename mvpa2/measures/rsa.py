@@ -39,7 +39,7 @@ class PDist(Measure):
           all possible metrics.""")
 
     center_data = Parameter(False, constraints='bool', doc="""\
-          If True then center each column of the data matrix by subtracing the
+          If True then center each column of the data matrix by subtracting the
           column mean from each element. This is recommended especially when
           using pairwise_metric='correlation'.""")
 
@@ -59,7 +59,7 @@ class PDist(Measure):
           and the entire sample attributes collection of the input dataset.
         """
 
-        Measure.__init__(self, **kwargs)
+        super(PDist, self).__init__(**kwargs)
 
     def _call(self, ds):
 
@@ -113,7 +113,7 @@ class PDistConsistency(Measure):
           matrices.""")
 
     center_data = Parameter(False, constraints='bool', doc="""\
-          If True then center each column of the data matrix by subtracing the
+          If True then center each column of the data matrix by subtracting the
           column mean from each element. This is recommended especially when
           using pairwise_metric='correlation'.""")
 
@@ -134,7 +134,7 @@ class PDistConsistency(Measure):
         # TODO: Another metric for consistency metric could be the "Rv"
         # coefficient...  (ac)
         # init base classes first
-        Measure.__init__(self, **kwargs)
+        super(PDistConsistency, self).__init__(**kwargs)
 
     def _call(self, dataset):
         """Computes the average correlation in similarity structure across chunks."""
@@ -192,7 +192,7 @@ class PDistTargetSimilarity(Measure):
           target DSM.""")
 
     center_data = Parameter(False, constraints='bool', doc="""\
-          If True then center each column of the data matrix by subtracing the
+          If True then center each column of the data matrix by subtracting the
           column mean from each element. This is recommended especially when
           using pairwise_metric='correlation'.""")
 
@@ -214,7 +214,7 @@ class PDistTargetSimilarity(Measure):
           coefficient (rho); or otherwise two-features: rho plus p.
         """
         # init base classes first
-        Measure.__init__(self, **kwargs)
+        super(PDistTargetSimilarity, self).__init__(**kwargs)
         self.target_dsm = target_dsm
         if self.params.comparison_metric == 'spearman':
             self.target_dsm = rankdata(target_dsm)
