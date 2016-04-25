@@ -361,7 +361,7 @@ between-subject classification shown above. The only difference is an addition
 """
 
 alpha_levels = np.concatenate((np.linspace(0.0, 0.7, 8),
-                               np.linspace(0.8, 1.0, 9)))
+                               np.linspace(0.8, 1.0, 5)))
 # to collect the results for later visualization
 bsc_hyper_results = np.zeros((nsubjs, len(alpha_levels), nruns))
 # same cross-validation over subjects as before
