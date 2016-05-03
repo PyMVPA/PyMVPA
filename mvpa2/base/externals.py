@@ -12,6 +12,7 @@
 __docformat__ = 'restructuredtext'
 
 import os
+import sys
 import numpy as np                      # NumPy is required anyways
 import warnings
 
@@ -457,7 +458,7 @@ def __check_reportlab():
 def __check(name, a='__version__'):
     exec "import %s" % name
     try:
-        exec "v = %s.%s" % (name, a)
+        v = getattr(sys.modules[name], '__version__')
         # it might be lxml.etree, so take only first module
         versions[name.split('.')[0]] = SmartVersion(v)
     except Exception as e:
@@ -695,8 +696,9 @@ def exists(dep, force=False, raise_=False, issueWarning=None,
             np.seterr(**old_handling)
 
         if __debug__:
-            debug('EXT', "Presence of %s is%s verified%s" %
-                  (dep, {True:'', False:' NOT'}[result], error_str))
+            vstr = ' (%s)' % versions[dep] if dep in versions else ''
+            debug('EXT', "Presence of %s%s is%s verified%s" %
+                  (dep, vstr, {True: '', False: ' NOT'}[result], error_str))
 
     if not result:
         if raise_:

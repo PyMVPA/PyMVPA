@@ -21,7 +21,7 @@ from mvpa2.base import warning
 
 
 def _prefix(prefix, val):
-    if isinstance(val, int):
+    if isinstance(val, (np.integer, int)):
         return '%s%.3i' % (prefix, val)
     else:
         return '%s%s' % (prefix, val)
@@ -71,13 +71,15 @@ def _get_description_dict(path, xfm_key=None):
 
 
 def _subdirs2ids(path, prefix, **kwargs):
-    ids = []
+    # num_ids to separate sorting of numeric and literal ids
+    ids, num_ids = [], []
     if not os.path.exists(path):
         return ids
     for item in os.listdir(path):
         if item.startswith(prefix) and os.path.isdir(_opj(path, item)):
-                ids.append(_id2int(item, **kwargs))
-    return sorted(ids)
+            id_ = _id2int(item, **kwargs)
+            (num_ids if isinstance(id_, (np.integer, int)) else ids).append(id_)
+    return sorted(num_ids) + sorted(ids)
 
 
 def _stripext(path):
