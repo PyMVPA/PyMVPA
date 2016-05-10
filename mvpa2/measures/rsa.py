@@ -301,9 +301,9 @@ class Regression(Measure):
         self.keep_pairs = keep_pairs
 
     def _call(self, dataset):
-        if externals.exists('skl', raise_=False):
-            from sklearn.linear_model import Lasso, Ridge
-            from sklearn.preprocessing import scale
+        externals.exists('skl', raise_=True)
+        from sklearn.linear_model import Lasso, Ridge
+        from sklearn.preprocessing import scale
 
         # first run PDist
         compute_dsm = PDist(pairwise_metric=self.params.pairwise_metric,
