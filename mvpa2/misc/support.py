@@ -343,18 +343,24 @@ def version_to_tuple(v):
         except ValueError:
             # try to split into sequences of literals and numerics
             suffix = x
+            resd_prev = {}
             while suffix != '':
                 res = regex.search(suffix)
                 if res:
                     resd = res.groupdict()
+                    if resd == resd_prev:
+                        # we are in a loop, nothing meaningful would come out
+                        vres += [suffix]
+                        break
+                    resd_prev = resd
                     if resd['numeric'] != '':
                         vres += [int(resd['numeric'])]
                     if resd['alpha'] != '':
                         vres += [resd['alpha']]
                     suffix = resd['suffix']
                 else:
-                    # We can't detech anything meaningful -- let it go as is
-                    resd += [suffix]
+                    # We can't detect anything meaningful -- let it go as is
+                    vres += [suffix]
                     break
     v = tuple(vres)
 

@@ -22,10 +22,6 @@ if externals.exists('scipy', raise_=True):
     from scipy.spatial.distance import pdist, squareform
     from scipy.stats import rankdata, pearsonr
 
-if externals.exists('skl', raise_=True):
-    from sklearn.linear_model import Lasso, Ridge
-    from sklearn.preprocessing import scale
-
 
 class PDist(Measure):
     """Compute dissimiliarity matrix for samples in a dataset
@@ -239,9 +235,11 @@ class PDistTargetSimilarity(Measure):
 
 class Regression(Measure):
     """
-    Given a dataset, compute regularized regression (Ridge or Lasso) on the computed neural
-    dissimilarity matrix using an arbitrary number of predictors
+    Given a dataset, compute regularized regression (Ridge or Lasso) on the
+    computed neural dissimilarity matrix using an arbitrary number of predictors
     (model dissimilarity matrices).
+
+    Requires scikit-learn
     """
 
     is_trained = True
@@ -303,6 +301,10 @@ class Regression(Measure):
         self.keep_pairs = keep_pairs
 
     def _call(self, dataset):
+        externals.exists('skl', raise_=True)
+        from sklearn.linear_model import Lasso, Ridge
+        from sklearn.preprocessing import scale
+
         # first run PDist
         compute_dsm = PDist(pairwise_metric=self.params.pairwise_metric,
                             center_data=self.params.center_data)
