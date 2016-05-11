@@ -776,6 +776,28 @@ class SearchlightTests(unittest.TestCase):
             for f in glob.glob(tfile + '*'):
                 os.unlink(f)
 
+    def test_gnbsearghlight_exclude_partition(self):
+        # just a smoke test with a custom partitioner
+        ds1 = datasets['3dsmall'].copy(deep=True)
+        gnb_sl = GNBSearchlight(
+            GNB(),
+            generator=CustomPartitioner([([0], [1])]),
+            qe=IndexQueryEngine(myspace=Sphere(2)),
+            errorfx=None)
+        res = gnb_sl(ds1)
+
+    def test_splitter_gnbsearghlight(self):
+        ds1 = datasets['3dsmall'].copy(deep=True)
+
+        gnb_sl = GNBSearchlight(
+            GNB(),
+            generator=CustomPartitioner([([0], [1])]),
+            qe=IndexQueryEngine(myspace=Sphere(2)),
+            splitter=Splitter(attr='partitions', attr_values=[1, 2]),
+            errorfx=None)
+        res = gnb_sl(ds1)
+        assert_equal(res.nsamples, (ds1.chunks == 1).sum())
+
     def test_cached_qe_gnbsearchlight(self):
         ds1 = datasets['3dsmall'].copy(deep=True)
         qe = IndexQueryEngine(myspace=Sphere(2))

@@ -27,7 +27,7 @@ The mvpa2 package contains the following subpackages and modules:
          `Yaroslav Halchenko <debian@onerussian.com>`__,
          `Nikolaas N. Oosterhof <n.n.oosterhof@googlemail.com>`__
 :requires: Python 2.6+
-:version: 2.4.3
+:version: 2.5.0
 :see: `The PyMVPA webpage <http://www.pymvpa.org>`__
 :see: `GIT Repository Browser <http://github.com/PyMVPA/PyMVPA>`__
 
@@ -42,7 +42,7 @@ The mvpa2 package contains the following subpackages and modules:
 __docformat__ = 'restructuredtext'
 
 # canonical PyMVPA version string
-__version__ = '2.4.3'
+__version__ = '2.5.0'
 
 import os
 from os.path import join as pathjoin
