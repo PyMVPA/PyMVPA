@@ -53,3 +53,5 @@ _nno
 .project
 .pydevproject
 searchlight_surfnew.py
+bin/py3mvpa2-prep-fmri
+doc/examples/rsa_fmri_py3.py
