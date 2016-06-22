@@ -376,7 +376,8 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
 
         if __debug__:
             for p in partitions:
-                if not (np.all(p.sa[targets_sa_name].value == labels)):
+                assert(p.shape[1] == 1)
+                if not (np.all(p.sa[targets_sa_name].value == labels[p.samples[:, 0]])):
                     raise NotImplementedError(
                         "%s does not yet support partitioners altering the targets "
                         "(e.g. permutators)" % self.__class__)
@@ -500,9 +501,9 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         elif indexsum == 'fancy':
             indexsum_fx = lastdim_columnsums_fancy_indexing
         else:
-            raise ValueError, \
+            raise ValueError(
                   "Do not know how to deal with indexsum=%s" % indexsum
-
+            )
         # Store roi_fids
         if self.reuse_neighbors and self.__roi_fids is None:
             self.__roi_fids = roi_fids
@@ -514,7 +515,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
 
         for isplit, split in enumerate(splits):
             if __debug__:
-                debug('SLC', ' Split %i out of %i' % (isplit, nsplits))
+                debug('SLC', ' Split %i out of %i' % (isplit+1, nsplits))
             # figure out for a given splits the blocks we want to work
             # with
             # sample_indicies
