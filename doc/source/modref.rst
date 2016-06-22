@@ -70,6 +70,7 @@ Datasets: Input, Output, Storage and Preprocessing
    datasets.eeglab
    datasets.miscfx
    datasets.sources.native
+   datasets.sources.bids
    datasets.sources.openfmri
    datasets.sources.skl_data
 

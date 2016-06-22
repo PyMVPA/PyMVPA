@@ -287,7 +287,8 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             if ncolumns is None:
                 ncolumns = int(np.sqrt(nslices))
             ndcolumns = ncolumns
-            nrows = max(nrows, int(np.ceil(nslices*1.0/ncolumns)))
+            # or 0 for the case if nrows is None and max needs both numerics
+            nrows = max(nrows or 0, int(np.ceil(nslices * 1.0 / ncolumns)))
 
             # Check if additional column/row information was provided
             # and extend nrows/ncolumns

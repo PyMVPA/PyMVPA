@@ -40,7 +40,7 @@ class Splitter(Node):
         attr : str
           Typically the sample or feature attribute used to determine splits.
         attr_values : tuple
-          If not None, this is a list of value of the ``attr`` used to determine
+          If not None, this is a list of values of the ``attr`` used to determine
           the splits. The order of values in this list defines the order of the
           resulting splits. It is possible to specify a particular value
           multiple times. All dataset samples with values that are not listed

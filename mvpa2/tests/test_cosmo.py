@@ -9,19 +9,23 @@
 
 """Unit tests for CoSMoMVPA dataset (http://cosmomvpa.org)"""
 
-from mvpa2.testing.tools import assert_raises, ok_, assert_true, \
-    assert_equal, assert_array_equal, with_tempfile
+from mvpa2.testing.tools import assert_raises, assert_false, assert_true, \
+    assert_equal, assert_array_equal, assert_array_almost_equal, \
+    with_tempfile
 from mvpa2.testing import skip_if_no_external
 
 skip_if_no_external('scipy')
 from scipy.io import loadmat, savemat, matlab
 from mvpa2.datasets import cosmo
+from mvpa2 import pymvpa_dataroot
 
 from mvpa2.measures.base import Measure
 from mvpa2.datasets.base import Dataset
 from mvpa2.mappers.fx import mean_feature
 
 import numpy as np
+
+from os.path import join as pathjoin
 
 arr = np.asarray
 
@@ -40,6 +44,29 @@ def _tup2obj(tuples):
         values.append(v)
 
     return np.array([[tuple(values)]], dtype=np.dtype(dtypes))
+
+
+
+def _obj2tup(obj):
+    # obj is an object array from scipy Matlab data structure
+    names = obj.dtype.names
+
+    if names is None:
+        # not an object array
+        return None
+
+    tups = []
+
+    if obj.shape != (1, 1):
+        raise ValueError('Unsupported non-singleton shape')
+
+    for k in names:
+        # get singleton element out
+        tup = (k, obj[0, 0][k])
+
+        tups.append(tup)
+
+    return tups
 
 
 
@@ -118,7 +145,7 @@ def _create_small_mat_nbrhood_dict():
 
     # XXX in the future we may want to use a real origin with
     # contents of .a and .fa taken from the dataset
-    origin = ('unused',0)
+    origin = ('unused', 0)
 
     return dict(neighbors=neighbors, fa=fa, a=a, origin=origin)
 
@@ -168,6 +195,12 @@ def _assert_array_collectable_equal(x, y):
     # test for keys and values equal in x and y
     _assert_array_collectable_less_or_equal(x, y)
     _assert_array_collectable_less_or_equal(y, x)
+
+
+
+def _assert_subset(x, y):
+    # test that first argument is a subset of the second
+    assert_true(set(x).issubset(set(y)))
 
 
 
@@ -326,3 +359,58 @@ def test_cosmo_repr_and_str():
         for fmt in 'rs':
             obj_str = (("%%%s" % fmt) % obj)
             assert_true(obj.__class__.__name__ in obj_str)
+
+
+
+def test_fmri_to_cosmo():
+    skip_if_no_external('nibabel')
+    from mvpa2.datasets.mri import fmri_dataset
+    # test exporting an fMRI dataset to CoSMoMVPA
+    pymvpa_ds = fmri_dataset(
+        samples=pathjoin(pymvpa_dataroot, 'example4d.nii.gz'),
+        targets=[1, 2], sprefix='voxel')
+    cosmomvpa_struct = cosmo.map2cosmo(pymvpa_ds)
+    _assert_set_equal(cosmomvpa_struct.keys(), ['a', 'fa', 'sa', 'samples'])
+
+    a_dict = dict(_obj2tup(cosmomvpa_struct['a']))
+    mri_keys = ['imgaffine', 'voxel_eldim', 'voxel_dim']
+    _assert_subset(mri_keys, a_dict.keys())
+
+    for k in mri_keys:
+        c_value = a_dict[k]
+        p_value = pymvpa_ds.a[k].value
+
+        if isinstance(p_value, tuple):
+            c_value = c_value.ravel()
+            p_value = np.asarray(p_value).ravel()
+
+        assert_array_almost_equal(c_value, p_value)
+
+    fa_dict = dict(_obj2tup(cosmomvpa_struct['fa']))
+    fa_keys = ['voxel_indices']
+    _assert_set_equal(fa_dict.keys(), fa_keys)
+    for k in fa_keys:
+        assert_array_almost_equal(fa_dict[k].T, pymvpa_ds.fa[k].value)
+
+
+
+def test_cosmo_empty_dataset():
+    ds = Dataset(np.zeros((0, 0)))
+    c = cosmo.map2cosmo(ds)
+    assert_equal(c['samples'].shape, (0, 0))
+
+
+
+def test_cosmo_do_not_store_unsupported_datatype():
+    ds = Dataset(np.zeros((0, 0)))
+
+    class ArbitraryClass(object):
+        pass
+
+    ds.a['unused'] = ArbitraryClass()
+    c = cosmo.map2cosmo(ds)
+    assert_false('a' in c.keys())
+
+    ds.a['foo'] = np.zeros((1,))
+    c = cosmo.map2cosmo(ds)
+    assert_true('a' in c.keys())
