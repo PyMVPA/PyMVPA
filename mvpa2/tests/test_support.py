@@ -256,6 +256,10 @@ class SupportFxTests(unittest.TestCase):
                             msg="Failed to compare tuple of %s to %s"
                             % (v1, v2))
 
+    def test_obscure_version(self):
+        # which lead travis to hang while checking reportlab, so just a smoke
+        # test that the beast doesn't halt
+        v = SmartVersion(' $Id: __init__.py 3788 2010-09-29 10:44:00Z xxxx $ ')
 
 def test_value2idx():
     times = [1.2, 1.3, 2., 4., 0., 2., 1.1]

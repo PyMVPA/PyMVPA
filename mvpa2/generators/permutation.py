@@ -51,7 +51,7 @@ class AttributePermutator(Node):
         count : int
           Number of permutations to be yielded by .generate()
         limit : None or str or list or dict
-          If ``None`` all attribute values will be permuted. If an single
+          If ``None`` all attribute values will be permuted. If a single
           attribute name is given, its unique values will be used to define
           chunks of data that are permuted individually (i.e. no attributed
           values will be replaced across chunks). If a list given, then combination
@@ -74,6 +74,7 @@ class AttributePermutator(Node):
           If set, by-chance non-permutations will be prevented, i.e. it is
           checked that at least two items change their position. Since this
           check adds a runtime penalty it is off by default.
+
         """
         Node.__init__(self, **kwargs)
         self._pattr = attr

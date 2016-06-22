@@ -1255,15 +1255,14 @@ class Surface(object):
             def getld(n):
                 # a mapicosahedron surface with LD linear divisions has
                 # N=10*LD^2+2 nodes
-                ld = ((nx - 2) / 10) ** 2
+                ld = ((nx - 2) / 10) ** 0.5
                 if ld != int(ld):
                     raise ValueError("Not from mapicosahedron with %d nodes" % n)
                 return int(ld)
 
             ldx, ldy = map(getld, (nx, ny))
-            r = ldy / ldx # ratio
 
-            if int(r) != r:
+            if ldy % ldx != 0:
                 raise ValueError("ico linear divisions for high res surface (%d)"
                                  "should be multiple of that for low res surface (%d)",
                                  (ldy, ldx))
@@ -1381,15 +1380,14 @@ class Surface(object):
             def getld(n):
                 # a mapicosahedron surface with LD linear divisions has
                 # N=10*LD^2+2 nodes
-                ld = ((nx - 2) / 10) ** 2
+                ld = ((nx - 2) / 10) ** 0.5
                 if ld != int(ld):
                     raise ValueError("Not from mapicosahedron with %d nodes" % n)
                 return int(ld)
 
             ldx, ldy = map(getld, (nx, ny))
-            r = ldy / ldx # ratio
 
-            if int(r) != r:
+            if ldy % ldx != 0:
                 raise ValueError("ico linear divisions for high res surface (%d)"
                                  "should be multiple of that for low res surface (%d)",
                                  (ldy, ldx))

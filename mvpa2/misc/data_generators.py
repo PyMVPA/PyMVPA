@@ -13,6 +13,8 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa2.datasets.base import dataset_wizard, Dataset
+from mvpa2.misc.neighborhood import IndexQueryEngine
+from mvpa2 import pymvpa_dataroot, pymvpa_datadbroot
 from mvpa2.misc.fx import get_random_rotation
 from mvpa2.base.dataset import vstack
 
@@ -521,3 +523,62 @@ def simple_hrf_dataset(
     ds.sa['noise'] = noise
     ds.samples += noise
     return ds
+
+def local_random_affine_transformations(
+        ds, distort_seeds, distort_neighbor, space, scale_fac=100,
+        shift_fac=10):
+    """Distort a dataset in the local neighborhood of selected features.
+
+    This function is similar to ``random_affine_transformation()``, but applies
+    multiple random affine transformations to a spatially constraint local
+    neighborhood.
+
+    Parameters
+    ----------
+    ds : Dataset
+      The to be transformed/distorted dataset.
+    distort_seeds : list(int)
+      This a sequence of feature ids (corresponding to the input dataset) that
+      serve as anchor to determine the local neighborhood for a distortion. The
+      number of seeds also determines the number of different local distortions
+      that are going to be applied.
+    distort_neighbor : callable
+      And object that when called with a coordinate generates a sequence of
+      coordinates that comprise its neighborhood (see e.g. ``Sphere()``).
+    space : str
+      Name of the feature attribute of the input dataset that contains the
+      relevant feature coordinates (e.g. 'voxel_indices').
+    scale_fac : float
+      See ``random_affine_transformation()``
+    shift_fac : float
+      See ``random_affine_transformation()``
+
+    Returns
+    -------
+    Dataset
+      A dataset derived from the input dataset with added local distortions.
+    """
+    # which dataset attributes to aggregate
+    random_stats = ['random_rotation', 'random_scale', 'random_shift']
+    kwa = {space: distort_neighbor}
+    qe = IndexQueryEngine(**kwa)
+    qe.train(ds)
+    ds_distorted = ds.copy()
+    for stat in random_stats:
+        ds_distorted.a[stat + 's'] = {}
+    # for each seed region
+    for seed in distort_seeds:
+        # select the neighborhood for this seed
+        # take data from the distorted dataset to avoid
+        # 'loosing' previous distortions
+        distort_ids = qe[seed]
+        ds_d = random_affine_transformation(
+                               ds_distorted[:, distort_ids],
+                               scale_fac=scale_fac,
+                               shift_fac=shift_fac)
+        # recover the distortions stats for this seed
+        for stat in random_stats:
+            ds_distorted.a[stat + 's'].value[seed] = ds_d.a[stat].value
+        # put the freshly distorted data back
+        ds_distorted.samples[:, distort_ids] = ds_d.samples
+    return ds_distorted

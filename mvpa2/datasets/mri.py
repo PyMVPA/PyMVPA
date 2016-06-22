@@ -279,6 +279,9 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
 
     # now apply the mask if any
     if mask is not None:
+        # permit 4D image mask if time dimension is 1
+        if mask.shape == (1,) + imgdata.shape[1:]:
+            mask = mask.reshape(mask.shape[1:])
         flatmask = ds.a.mapper.forward1(mask)
         # direct slicing is possible, and it is potentially more efficient,
         # so let's use it
