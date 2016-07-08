@@ -1,3 +1,11 @@
+pymvpa2 (2.5.0-2) unstable; urgency=medium
+
+  * debian/control
+    - swap order of swig2.0 and swig in build-depends to please buildds
+      (Closes: #830394)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 08 Jul 2016 09:33:17 -0400
+
 pymvpa2 (2.5.0-1) unstable; urgency=medium
 
   * Fresh upstream feature release
