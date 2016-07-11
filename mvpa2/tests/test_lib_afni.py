@@ -9,11 +9,10 @@
 """Unit tests for PyMVPA atlases"""
 
 import numpy as np
-import nibabel as nb
 from mvpa2.testing import *
 
 skip_if_no_external('nibabel')
-
+import nibabel as nb
 from mvpa2.support.afni import lib_prep_afni_surf
 
 @sweepargs(mock_3dinfo=[False,True])
