@@ -372,9 +372,10 @@ def getenv():
     env = os.environ
 
     if 'FREESURFER_HOME' not in env:
-        env['FREESURFER_HOME'] = env[
-            'HOME']  # FreeSurfer requires this var,
+        # FreeSurfer requires this var,
         # even though we don't use it
+        env['FREESURFER_HOME'] = env['HOME']
+
 
     return env
 
