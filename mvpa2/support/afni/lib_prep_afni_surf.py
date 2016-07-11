@@ -187,9 +187,8 @@ def augmentconfig(c):
 
     # update steps
     if c.get('steps', 'all') == 'all':
-        c[
-            'steps'] = ('toafni+mapico+moresurfs+skullstrip+'
-                        'align+makespec+makespecboth+makesurfmasks')
+        c['steps'] = ('toafni+mapico+moresurfs+skullstrip+'
+                      'align+makespec+makespecboth+makesurfmasks')
 
     hasanatvol = 'anatvol' in c and c['anatvol']
     hasepivol = 'epivol' in c and c['epivol']
@@ -315,16 +314,21 @@ def augmentconfig(c):
 
 
 
-def _ensure_expvol_is_plump(expvol):
+def _ensure_expvol_is_plump(expvol, func=None):
     '''Helper function that raises an error if the experimental volume
-        is oblique, because such volumes are not supported (yet)'''
-    cmd = '3dinfo "%s"' % expvol
-    info = utils.cmd_capture_output(cmd)
+        is oblique, because such volumes are not supported (yet)
+
+    If the "func" argument is provided, it can be used to override
+    the default 3dinfo command to get the dataset info output'''
+    if func is None:
+        cmd = '3dinfo "%s" 2>/dev/null' % expvol
+        func = lambda: utils.cmd_capture_output(cmd)
+
+    info = func()
     info_lines = info.split('\n')
 
     prefix = 'Data Axes Tilt:  '
     is_plump = None
-    print info_lines
     for line in info_lines:
         sp = line.split(prefix)
         has_match = len(sp) == 2 and sp[0] == ''
@@ -338,7 +342,8 @@ def _ensure_expvol_is_plump(expvol):
             elif 'plumb' in value:
                 is_plump = True
             else:
-                raise ValueError('Unable to find orientation')
+                raise ValueError('Unable to find orientation in: "%s"' %
+                                 info_lines)
 
     if is_plump is None:
         raise ValueError('Did not find orientation using prefix "%s"' % prefix)
@@ -375,7 +380,6 @@ def getenv():
         # FreeSurfer requires this var,
         # even though we don't use it
         env['FREESURFER_HOME'] = env['HOME']
-
 
     return env
 
