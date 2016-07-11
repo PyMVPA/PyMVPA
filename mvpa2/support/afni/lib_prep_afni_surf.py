@@ -257,9 +257,11 @@ def augmentconfig(c):
             print "Set absolute path for %s: %s" % (pathvar, c[pathvar])
 
     if c['template'] and c['notemplate']:
-        error('Cannot have both template and notemplate')
+        raise ValueError('Cannot have both template and notemplate')
 
     if 'expvol' in c:
+        _ensure_expvol_is_plump(c['expvol'])
+
         p, n, o, e = utils.afni_fileparts(c['expvol'])
 
         if c.get('outvol_space', None) is None:
@@ -288,6 +290,58 @@ def augmentconfig(c):
 
 
     return c
+
+def _ensure_expvol_is_plump(expvol):
+    '''Helper function that raises an error if the experimental volume
+        is oblique, because such volumes are not supported (yet)'''
+    cmd = '3dinfo "%s"' % expvol
+    info = utils.cmd_capture_output(cmd)
+    info_lines=info.split('\n')
+
+    prefix='Data Axes Tilt:  '
+    is_plump=None
+    print info_lines
+    for line in info_lines:
+        sp=line.split(prefix)
+        has_match=len(sp)==2 and sp[0]==''
+        if has_match:
+            if is_plump is not None:
+                raise ValueError('Multiple matches for prefix "%s"' % prefix)
+            value=sp[1].lower()
+            if 'oblique' in value:
+                is_plump=False
+            elif 'plump' in value:
+                is_plump is True
+            else:
+                raise ValueError('Unable to find orientation')
+
+    if is_plump is None:
+        raise ValueError('Did not find orientation using prefix "%s"' % prefix)
+
+    if not is_plump:
+        raise ValueError('The volume "%s" is oblique (not plump), for which '
+                         'alignment is currently not supported by '
+                         'this AFNI-based pipeline. There are '
+                          'two possible avenues to deal with this:\n'
+                          '(1) copy the volume to another file (e.g. '
+                         'using 3dcopy), then destroy '
+                          'the oblique-ity using 3drefit with the '
+                         '"-deoblique" option. Note that using 3drefit '
+                          'with "-deoblique" '
+                         'destroys some header information, so make sure '
+                         'to make a copy of the volume first.\n'
+                         '(2) run 3dresample with the  "-deoblique" option. '
+                         'Unless 3drefit (option 1 above), this may '
+                         'resample the data.\n'
+                         ' If there are multiple '
+                         'files in the same oblique space (such as multiple '
+                         'fMRI runs) which will be used for subsequent '
+                          'analyses, then it is recommended to deoblique '
+                          'them all and in the same way.' % expvol)
+
+
+
+
 
 def getenv():
     '''returns the path environment
