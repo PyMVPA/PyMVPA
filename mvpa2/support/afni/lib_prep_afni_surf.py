@@ -332,10 +332,11 @@ def _ensure_expvol_is_plump(expvol):
             if is_plump is not None:
                 raise ValueError('Multiple matches for prefix "%s"' % prefix)
             value = sp[1].lower()
+
             if 'oblique' in value:
                 is_plump = False
-            elif 'plump' in value:
-                is_plump is True
+            elif 'plumb' in value:
+                is_plump = True
             else:
                 raise ValueError('Unable to find orientation')
 
