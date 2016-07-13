@@ -15,6 +15,7 @@ import os
 import sys
 import numpy as np                      # NumPy is required anyways
 import warnings
+import subprocess
 
 from mvpa2.base import warning
 from mvpa2 import cfg
@@ -525,6 +526,14 @@ def __check_liblapack_so():
         # reraise with exception type we catch/handle while testing externals
         raise RuntimeError("Failed to import liblapack.so: %s" % e)
 
+def __check_subprocess_call(args):
+    """Executes the command using subprocess"""
+    try:
+        subprocess.check_output(args)
+    except Exception, e:
+        raise ImportError('The following command gave an error: "%s"' % args)
+
+
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm': 'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'libsvm verbosity control': '__check_libsvm_verbosity_control();',
@@ -594,6 +603,7 @@ _KNOWN = {'libsvm': 'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node'
           'statsmodels': 'import statsmodels.api as __',
           'mock': "__check('mock')",
           'datalad': "__check('datalad')",
+          'afni-3dinfo': "__check_subprocess_call(['3dinfo','-h'])"
           }
 
 
