@@ -46,8 +46,8 @@ class SurfaceQueryEngine(QueryEngineInterface):
 
         Parameters
         ----------
-        surface: surf.Surface or str
-            surface object, or filename of a surface
+        surface: surf.Surface
+            surface object
         radius: float
             size of neighborhood.
         distance_metric: str

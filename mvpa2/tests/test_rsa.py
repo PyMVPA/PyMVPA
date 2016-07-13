@@ -166,3 +166,84 @@ def test_PDistTargetSimilaritySearchlight():
     # Actually here for some reason assert_array_lequal gave me a trouble
     assert_true(np.all(sl_both.samples[1] <= 1.0))
     assert_true(np.all(0 <= sl_both.samples[1]))
+
+
+def test_Regression():
+    skip_if_no_external('skl')
+    # a very correlated dataset
+    corrdata = np.array([[1, 2], [10, 20], [-1, -2], [-10, -20]])
+    # a perfect predictor
+    perfect_pred = np.array([0, 2, 2, 2, 2, 0])
+
+    ds = Dataset(corrdata)
+
+    reg_types = ['lasso', 'ridge']
+
+    # assert it pukes because predictor is not of the right shape
+    assert_raises(ValueError, Regression, perfect_pred)
+
+    # now make it right
+    perfect_pred = np.atleast_2d(perfect_pred).T
+    # assert it pukes for unknown method
+    assert_raises(ValueError, Regression, perfect_pred, method='bzot')
+
+    for reg_type in reg_types:
+        regr = Regression(perfect_pred, alpha=0, fit_intercept=False,
+                          rank_data=False, normalize=False, method=reg_type)
+    coefs = regr(ds)
+    assert_almost_equal(coefs.samples, 1.)
+
+    # assert it pukes if predictor and ds have different shapes
+    regr = Regression(perfect_pred)
+    assert_raises(ValueError, regr, ds[:-1])
+
+    # what if we select some items?
+    keep_pairss = [range(3), [1], np.arange(3)]
+    for reg_type in reg_types:
+        for keep_pairs in keep_pairss:
+            regr = Regression(perfect_pred, keep_pairs=keep_pairs, alpha=0,
+                              fit_intercept=False, rank_data=False, normalize=False,
+                              method=reg_type)
+            coefs = regr(ds)
+            assert_almost_equal(coefs.samples, 1.)
+
+    # make a less perfect predictor
+    bad_pred = np.ones((6, 1))
+    predictors = np.hstack((perfect_pred, bad_pred))
+
+    # check it works with combination of parameters
+    from itertools import product
+    outputs =  [np.array([[0.], [0.], [0.]]),
+               np.array([[0.76665188], [0.], [0.]]),
+               np.array([[ 0.5], [0.], [1.75]]),
+               np.array([[0.92307692], [0.], [0.26923077]]),
+               np.array([[0.], [0.], [ 3.70074342e-17]]),
+               np.array([[8.57142857e-01], [0.], [-2.64338815e-17]]),
+               np.array([[0.], [0.], [1.33333333]]),
+               np.array([[0.84210526], [0.], [0.21052632]]),
+               np.array([[0.], [0.]]),
+               np.array([[0.76665188], [0.]]),
+               np.array([[0.92982456], [0.]]),
+               np.array([[0.92850288], [0.07053743]]),
+               np.array([[0.], [0.]]),
+               np.array([[0.85714286], [0.]]),
+               np.array([[0.625], [0.]]),
+               np.array([[0.87272727], [0.14545455]])]
+
+    for i, (fit_intercept, rank_data, normalize, reg_type) in \
+            enumerate(
+                    product([True, False], [True, False],
+                            [True, False], reg_types)):
+        regr = Regression(predictors, alpha=1,
+                               fit_intercept=fit_intercept, rank_data=rank_data,
+                               normalize=normalize, method=reg_type)
+        coefs = regr(ds)
+        # check we get all the coefficients we need
+        wanted_samples = 3 if fit_intercept else 2
+        assert_equal(coefs.nsamples, wanted_samples)
+        # check we get the actual output
+        assert_almost_equal(coefs.samples, outputs[i])
+
+
+
+

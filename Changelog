@@ -31,7 +31,15 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
-* 2.5.0 (???)
+* 2.5.0 (Thu, 12 May 2016)
+
+  * Fixes
+
+    - Various python3 related small fixes
+    - Minor fix allowing adhoc searchlights (e.g. gnbsearchlight) to work with
+      CustomPartitioner
+    - Fixed SmartVersion to not infinitely loop upon receiving an awkward
+      version string
 
   * New functionality
 
@@ -40,13 +48,19 @@ Releases
       honoring spatial neighborhoods.
       See :ref:`Guntupalli et al., Cerebral Cortex (2016) <GHH+16>` A Model of
       Representational Spaces in Human Cortex for more information
+    - :class:`~mvpa2.measures.rsa.Regression` measure to compute regularized
+      regression (Ridge or Lasso) on the computed neural dissimilarity matrix
+    - :class:`~mvpa2.misc.surfing.queryengine.SurfaceRingQueryEngine`
 
 
   * Enhancements
 
     - The ``ofmotionqc`` command line command has been renamed to
       ``plotmotionqc``. It no longer requires a dataset formatted in
-      OpenFMRI-style, but works with any organization of input data.
+      OpenFMRI-style, but works with any organization of input data
+    - SplitRFE docstring example reordered suggested mappers (l2 -> abs -> mean)
+    - Show only summary of representation of internal _src2aux of
+      VolumeMaskDictionary object, which otherwise could be too big to print
 
 * 2.4.3 (Tue, 15 Mar 2016)
 

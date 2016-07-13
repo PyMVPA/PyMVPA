@@ -442,3 +442,23 @@ def test_strip_nibabel():
     assert_true('imgtype' in ds.a)
     assert_true('imgaffine' in ds.a)
     assert_equal(type(ds.a.imghdr), dict)
+
+
+def test_4d_mask():
+    """ Test masking with 4D datasets
+
+    If the time dimension has length 1, permit, otherwise fail"""
+    import nibabel
+    bold = pathjoin(pymvpa_dataroot, 'bold.nii.gz')
+    mask = pathjoin(pymvpa_dataroot, 'mask.nii.gz')
+    # mask4d.nii.gz is simply mask.nii.gz with an extra dimension added
+    mask4d = pathjoin(pymvpa_dataroot, 'mask4d.nii.gz')
+    # mask4dfail.nii.gz is mask.nii.gz copied twice in the 4th dimension
+    mask4df = pathjoin(pymvpa_dataroot, 'mask4dfail.nii.gz')
+    assert_equal(nibabel.load(mask).shape + (1,),
+                 nibabel.load(mask4d).shape)
+
+    bold1 = fmri_dataset(bold, mask=mask)
+    bold2 = fmri_dataset(bold, mask=mask4d)
+    assert_equal(bold1.shape, bold2.shape)
+    assert_raises(ValueError, fmri_dataset, bold, mask=mask4df)
