@@ -10,6 +10,7 @@
 
 import itertools
 import numpy as np
+from time import time
 
 from mvpa2.testing.tools import ok_, assert_array_equal, assert_true, \
         assert_false, assert_equal, assert_raises, assert_almost_equal, \
@@ -532,3 +533,27 @@ def test_factorialpartitioner():
                         [2, 1, 1, 2],
                         [1, 2, 2, 1],
                         [1, 1, 2, 2]])
+
+def test_factorialpartitioner_big():
+    # just to see that we can cope with relatively large datasets/numbers
+    ds = normal_feature_dataset(nlabels=8,
+                                perlabel=88,
+                                nfeatures=2,
+                                nchunks=11)
+
+    # and now let's do factorial partitioner
+
+    def partition(ds_=ds, **kwargs):
+        partitioner = FactorialPartitioner(
+            partitioner=NFoldPartitioner(attr='targets'),
+            attr='chunks',
+            **kwargs)
+        return [p.sa.partitions for p in partitioner.generate(ds_)]
+
+    # prohibitively large
+    # print len(partition(ds))
+    t0 = time()
+    assert_equal(len(partition(ds, count=2, selection_strategy='first')), 2)
+    assert(time() - t0 < 0.1)
+
+    assert_equal(len(partition(ds, count=10, selection_strategy='random')), 2)
