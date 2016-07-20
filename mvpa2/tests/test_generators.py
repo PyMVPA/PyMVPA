@@ -93,7 +93,7 @@ def test_partitionmapper():
     assert_equal(len(parts), 2)
     for i, p in enumerate(parts):
         assert_array_equal(p.sa['partitions'].unique, [1, 2])
-        assert_equal(p.a.partitions_set, i)
+        assert_equal(p.a.p_set, i)
         assert_equal(len(p), len(ds))
 
 
@@ -451,49 +451,69 @@ def test_factorialpartitioner():
                 ]),
     ], space='partitions')
 
+    def partition(partitioner, ds_=ds):
+        return [p.sa.partitions for p in partitioner.generate(ds_)]
+
     # now the new implementation
     # common kwargs
     factkw = dict(partitioner=NFoldPartitioner(attr='subord'), attr='superord')
 
-    factpart = FactorialPartitioner(count=1, **factkw)
-    assert_raises(NotImplementedError, next, factpart.generate(ds))
+    fpart = FactorialPartitioner(**factkw)
+    p_npart = partition(npart)
+    p_fpart = partition(fpart)
 
-    factpart = FactorialPartitioner(selection_strategy='random', **factkw)
-    assert_raises(NotImplementedError, next, factpart.generate(ds))
+    assert_array_equal(np.sort(p_npart), np.sort(p_fpart))
 
-    factpart = FactorialPartitioner(**factkw)
-    partitions_npart = [p.sa.partitions for p in npart.generate(ds)]
-    partitions_factpart = [p.sa.partitions for p in factpart.generate(ds)]
+    fpart2 = FactorialPartitioner(count=2, selection_strategy='first', **factkw)
+    p_fpart2 = partition(fpart2)
+    assert_equal(len(p_fpart), 8)
+    assert_equal(len(p_fpart2), 2)
+    assert_array_equal(p_fpart[:2], p_fpart2)
 
-    assert_array_equal(np.sort(partitions_npart), np.sort(partitions_factpart))
+    # 1 equidistant -- should be the first one
+    fpart1 = FactorialPartitioner(count=1, **factkw)
+    p_fpart1 = partition(fpart1)
+    assert_equal(len(p_fpart1), 1)
+    assert_array_equal(p_fpart[:1], p_fpart1)
 
-    factpart2 = FactorialPartitioner(count=2, selection_strategy='first', **factkw)
-    partitions_factpart2 = [p.sa.partitions for p in factpart2.generate(ds)]
-    assert_equal(len(partitions_factpart), 8)
-    assert_equal(len(partitions_factpart2), 2)
-    for p1, p2 in zip(partitions_factpart, partitions_factpart2):
-        assert_array_equal(p1, p2)
+    # 2 equidistant
+    fpart2 = FactorialPartitioner(count=2, **factkw)
+    p_fpart2 = partition(fpart2)
+    assert_equal(len(p_fpart2), 2)
+    assert_array_equal(p_fpart[::4], p_fpart2)
+
+    # without count -- should be all of them in original order
+    fpartr = FactorialPartitioner(selection_strategy='random', **factkw)
+    assert_array_equal(p_fpart, partition(fpartr))
+
+    # but if with a count we should get some selection
+    fpartr2 = FactorialPartitioner(selection_strategy='random', count=2, **factkw)
+    # Let's generate a number of random selections:
+    rand2_partitions = [partition(fpartr2) for i in xrange(10)]
+    for p in rand2_partitions:
+        assert_equal(len(p), 2)
+    # majority of them must be different
+    assert len(set([tuple(map(tuple, x)) for x in rand2_partitions])) >= 5
 
     # now let's check it behaves correctly if we have only one superord class
     nfold = NFoldPartitioner(attr='subord')
-    partitions_nfold = [p.sa.partitions for p in nfold.generate(ds_1super)]
-    partitions_factpart = [p.sa.partitions for p in factpart.generate(ds_1super)]
-    assert_array_equal(np.sort(partitions_nfold), np.sort(partitions_factpart))
+    p_nfold = partition(nfold, ds_1super)
+    p_fpart = partition(fpart, ds_1super)
+    assert_array_equal(np.sort(p_nfold), np.sort(p_fpart))
 
     # smoke test for unbalanced subord classes
     warning_msg = 'One or more superordinate attributes do not have the same '\
                   'number of subordinate attributes. This could yield to '\
                   'unbalanced partitions.'
     with assert_warnings([(RuntimeWarning, warning_msg)]):
-        partitions_factpart = [p.sa.partitions
-                               for p in factpart.generate(ds_unbalanced)]
+        p_fpart = partition(fpart, ds_unbalanced)
 
-    partitions_unbalanced = [np.array([2, 2, 2, 1]), np.array([2, 2, 1, 2])]
+    p_unbalanced = [np.array([2, 2, 2, 1]), np.array([2, 2, 1, 2])]
     superord_unbalanced = [([2], [1, 1, 2]), ([2], [1, 1, 2])]
     subord_unbalanced = [([2], [0, 0, 1]), ([1], [0, 0, 2])]
 
     for out_part, true_part, super_out, sub_out in \
-            zip(partitions_factpart, partitions_unbalanced,
+            zip(p_fpart, p_unbalanced,
                 superord_unbalanced, subord_unbalanced):
         assert_array_equal(out_part, true_part)
         assert_array_equal((ds_unbalanced[out_part == 1].sa.superord.tolist(),
@@ -506,8 +526,8 @@ def test_factorialpartitioner():
     # now let's test on a dummy dataset
     ds_dummy = Dataset(range(4), sa={'subord': range(4),
                                      'superord': [1,2]*2})
-    partitions_factpart = [p.sa.partitions for p in factpart.generate(ds_dummy)]
-    assert_array_equal(partitions_factpart,
+    p_fpart = partition(fpart, ds_dummy)
+    assert_array_equal(p_fpart,
                        [[2, 2, 1, 1],
                         [2, 1, 1, 2],
                         [1, 2, 2, 1],
