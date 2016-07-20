@@ -98,8 +98,10 @@ class Partitioner(Node):
         """
         strategy = strategy.lower()
         if not strategy in self._STRATEGIES:
-            raise ValueError, "selection_strategy is not known. Known are %s" \
-                  % str(self._STRATEGIES)
+            raise ValueError(
+                "selection_strategy is not known. Known are %s"
+                % str(self._STRATEGIES)
+            )
         self.__selection_strategy = strategy
 
 
@@ -232,8 +234,10 @@ class Partitioner(Node):
     def splitattr(self):
         return self.attr
 
-    selection_strategy = property(fget=lambda self:self.__selection_strategy,
-                        fset=_set_selection_strategy)
+    selection_strategy = property(
+        fget=lambda self: self.__selection_strategy,
+        fset=_set_selection_strategy
+    )
     attr = property(fget=lambda self: self.__attr)
 
 
@@ -539,6 +543,19 @@ class FactorialPartitioner(Partitioner):
 
 
     def generate(self, ds):
+        # Initial checks on what we have implemented or not yet
+        if self.selection_strategy not in ['equidistant', 'first']:
+            raise NotImplementedError(
+                "The strategy %s is not yet implemented"
+                % self.selection_strategy
+            )
+
+        if self.selection_strategy == 'equidistant' and self.count is not None:
+            raise NotImplementedError(
+                "The strategy %s is not yet implemented with count"
+                % self.selection_strategy
+            )
+
         # check whether the ds is balanced
         unique_super = ds.sa[self.attr].unique
         nunique_subord = []
@@ -546,20 +563,28 @@ class FactorialPartitioner(Partitioner):
             mask = ds.sa[self.attr].value == usuper
             nunique_subord.append(len(np.unique(ds[mask].sa[self.partitioner.attr].value)))
         if len(np.unique(nunique_subord)) != 1:
-            warnings.warn('One or more superordinate attributes do not have the same '
-                    'number of subordinate attributes. This could yield to '
-                    'unbalanced partitions.', category=RuntimeWarning)
+            warnings.warn(
+                'One or more superordinate attributes do not have the same '
+                'number of subordinate attributes. This could yield to '
+                'unbalanced partitions.', category=RuntimeWarning
+            )
 
         # make a fake ds from the first feature to use the attributes
         fakeds = ds[:, 0]
-        if self.selection_strategy != 'equidistant':
-            raise NotImplementedError("This strategy is not yet implemented")
 
         attr_value = ds.sa[self.attr].value
         uattr = ds.sa[self.attr].unique
         uattr_masks = [attr_value == u for u in uattr]
 
-        for partitionings in iterprod(*[self.partitioner.generate(fakeds[uattr_mask]) for uattr_mask in uattr_masks]):
+        for ipart, partitionings in enumerate(iterprod(
+            *[
+                self.partitioner.generate(fakeds[uattr_mask])
+                for uattr_mask in uattr_masks
+            ]
+        )):
+            if self.count is not None and ipart >= self.count:
+                break
+
             pds = ds.copy(deep=False)
             target_partitioning = np.zeros(len(pds), dtype=int)
             for uattr_mask, partitioning in zip(uattr_masks, partitionings):

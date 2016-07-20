@@ -452,15 +452,27 @@ def test_factorialpartitioner():
     ], space='partitions')
 
     # now the new implementation
-    factpart = FactorialPartitioner(
-        NFoldPartitioner(attr='subord'),
-        attr='superord'
-    )
+    # common kwargs
+    factkw = dict(partitioner=NFoldPartitioner(attr='subord'), attr='superord')
 
+    factpart = FactorialPartitioner(count=1, **factkw)
+    assert_raises(NotImplementedError, next, factpart.generate(ds))
+
+    factpart = FactorialPartitioner(selection_strategy='random', **factkw)
+    assert_raises(NotImplementedError, next, factpart.generate(ds))
+
+    factpart = FactorialPartitioner(**factkw)
     partitions_npart = [p.sa.partitions for p in npart.generate(ds)]
     partitions_factpart = [p.sa.partitions for p in factpart.generate(ds)]
 
     assert_array_equal(np.sort(partitions_npart), np.sort(partitions_factpart))
+
+    factpart2 = FactorialPartitioner(count=2, selection_strategy='first', **factkw)
+    partitions_factpart2 = [p.sa.partitions for p in factpart2.generate(ds)]
+    assert_equal(len(partitions_factpart), 8)
+    assert_equal(len(partitions_factpart2), 2)
+    for p1, p2 in zip(partitions_factpart, partitions_factpart2):
+        assert_array_equal(p1, p2)
 
     # now let's check it behaves correctly if we have only one superord class
     nfold = NFoldPartitioner(attr='subord')
