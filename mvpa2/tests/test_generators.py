@@ -94,7 +94,7 @@ def test_partitionmapper():
     assert_equal(len(parts), 2)
     for i, p in enumerate(parts):
         assert_array_equal(p.sa['partitions'].unique, [1, 2])
-        assert_equal(p.a.p_set, i)
+        assert_equal(p.a.partitions_set, i)
         assert_equal(len(p), len(ds))
 
 
@@ -536,8 +536,8 @@ def test_factorialpartitioner():
 
 def test_factorialpartitioner_big():
     # just to see that we can cope with relatively large datasets/numbers
-    ds = normal_feature_dataset(nlabels=8,
-                                perlabel=88,
+    ds = normal_feature_dataset(nlabels=6,
+                                perlabel=66,
                                 nfeatures=2,
                                 nchunks=11)
 
@@ -554,6 +554,10 @@ def test_factorialpartitioner_big():
     # print len(partition(ds))
     t0 = time()
     assert_equal(len(partition(ds, count=2, selection_strategy='first')), 2)
-    assert(time() - t0 < 0.1)
+    # Those time limits are really a stretch. on a any reasonable box not too busy
+    # should be done in fraction of a second, but allow to catch "naive"
+    # implementation
+    assert(time() - t0 < 1)
 
-    assert_equal(len(partition(ds, count=10, selection_strategy='random')), 2)
+    assert_equal(len(partition(ds, count=2, selection_strategy='random')), 2)
+    assert(time() - t0 < 1)

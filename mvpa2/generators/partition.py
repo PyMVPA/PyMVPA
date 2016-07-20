@@ -20,6 +20,7 @@ from mvpa2.datasets.miscfx import coarsen_chunks
 import mvpa2.misc.support as support
 
 from itertools import product as iterprod
+from mvpa2.misc.support import xrandom_iterprod
 
 import warnings
 
@@ -582,18 +583,25 @@ class FactorialPartitioner(Partitioner):
                 for uattr_mask in uattr_masks
         ]
 
-        if self.selection_strategy == 'random' or \
-                (self.selection_strategy == 'equidistant' and self.count is not None):
-            # we need to figure out total number and/or all partitionings
-            # ahead of time so we could randomly or equidistantly select
-            all_partitionings = map(list, all_partitionings)
-            n_cfg = np.prod(map(len, all_partitionings))
-            selected_indexes = set(self.get_selected_indexes(n_cfg))
-        else:
-            selected_indexes = None
+        product_gen = iterprod
+        selected_indexes = None
+        if self.count is not None:
+            if self.selection_strategy in ['equidistant', 'random']:
+                all_partitionings = map(list, all_partitionings)
+
+            if self.selection_strategy == 'equidistant':
+                # we need to figure out total number and/or all partitionings
+                # ahead of time so we could randomly or equidistantly select
+                n_cfg = np.prod(map(len, all_partitionings))
+                selected_indexes = set(self.get_selected_indexes(n_cfg))
+            elif self.selection_strategy == 'random':
+                # if no count is given, just return all as "random" ones ;-)
+                def product_gen(*args):
+                    for i in xrandom_iterprod(self.count, *args):
+                        yield i
 
         ipart_selected = 0
-        for ipart, partitionings in enumerate(iterprod(*all_partitionings)):
+        for ipart, partitionings in enumerate(product_gen(*all_partitionings)):
             if self.count is not None and ipart_selected >= self.count:
                 break
             if selected_indexes is not None:

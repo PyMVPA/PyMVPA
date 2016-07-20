@@ -234,6 +234,20 @@ def unique_combinations(L, n, sort=False):
     return res
 
 
+def xrandom_iterprod(n, *seq):
+    """Generate n random iterprod's from given sequences"""
+    ls = map(len, seq)
+    seen = set()
+    if n > np.prod(ls):
+        n = np.prod(ls)
+    while len(seen) < n:
+        sel = tuple(random.randint(0, l - 1) for l in ls)
+        if sel in seen:
+            continue
+        seen.add(sel)
+        yield [s[i] for s, i in zip(seq, sel)]
+
+
 ##REF: Name was automagically refactored
 def indent_doc(v):
     """Given a `value` returns a string where each line is indented
