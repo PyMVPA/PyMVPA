@@ -20,6 +20,7 @@ from mvpa2.datasets.miscfx import coarsen_chunks
 import mvpa2.misc.support as support
 
 from itertools import product as iterprod
+from mvpa2.misc.support import xrandom_iterprod
 
 import warnings
 
@@ -98,8 +99,10 @@ class Partitioner(Node):
         """
         strategy = strategy.lower()
         if not strategy in self._STRATEGIES:
-            raise ValueError, "selection_strategy is not known. Known are %s" \
-                  % str(self._STRATEGIES)
+            raise ValueError(
+                "selection_strategy is not known. Known are %s"
+                % str(self._STRATEGIES)
+            )
         self.__selection_strategy = strategy
 
 
@@ -201,39 +204,56 @@ class Partitioner(Node):
             if count < 1:
                 # we can only wish a good luck
                 return []
-            strategy = self.selection_strategy
-            if strategy == 'first':
-                cfgs = cfgs[:count]
-            elif strategy in ['equidistant', 'random']:
-                if strategy == 'equidistant':
-                    # figure out what step is needed to
-                    # accommodate the `count` number
-                    step = float(n_cfgs) / count
-                    assert(step >= 1.0)
-                    indexes = [int(round(step * i)) for i in xrange(count)]
-                elif strategy == 'random':
-                    indexes = np.random.permutation(range(n_cfgs))[:count]
-                    # doesn't matter much but lets keep them in the original
-                    # order at least
-                    indexes.sort()
-                else:
-                    # who said that I am paranoid?
-                    raise RuntimeError, "Really should not happen"
-                if __debug__:
-                    debug("SPL", "For %s selection strategy selected %s "
-                          "partition specs from %d total"
-                          % (strategy, indexes, n_cfgs))
+            indexes = self.get_selected_indexes(n_cfgs)
+            if isinstance(indexes, slice):
+                cfgs = cfgs[indexes]
+            else:
                 cfgs = [cfgs[i] for i in indexes]
 
         return cfgs
+
+    def get_selected_indexes(self, n_cfgs):
+        """A naive selection of indexes according to strategy and count
+
+        Parameters
+        ----------
+        n_cfgs: int
+          Total number of configurations to select from
+        """
+        strategy = self.selection_strategy
+        count = self.count
+        if strategy == 'first':
+            indexes = slice(0, count)
+        elif strategy in ['equidistant', 'random']:
+            if strategy == 'equidistant':
+                # figure out what step is needed to
+                # accommodate the `count` number
+                step = float(n_cfgs) / count
+                assert (step >= 1.0)
+                indexes = [int(round(step * i)) for i in xrange(count)]
+            elif strategy == 'random':
+                indexes = np.random.permutation(range(n_cfgs))[:count]
+                # doesn't matter much but lets keep them in the original
+                # order at least
+                indexes.sort()
+            else:
+                # who said that I am paranoid?
+                raise RuntimeError("Really should not happen")
+        if __debug__:
+            debug("SPL", "For %s selection strategy selected %s "
+                         "partition specs from %d total",
+                  (strategy, indexes, n_cfgs))
+        return indexes
 
     @property
     @deprecated("to be removed in PyMVPA 2.1; use .attr instead")
     def splitattr(self):
         return self.attr
 
-    selection_strategy = property(fget=lambda self:self.__selection_strategy,
-                        fset=_set_selection_strategy)
+    selection_strategy = property(
+        fget=lambda self: self.__selection_strategy,
+        fset=_set_selection_strategy
+    )
     attr = property(fget=lambda self: self.__attr)
 
 
@@ -537,7 +557,6 @@ class FactorialPartitioner(Partitioner):
                 prefixes=prefixes +
                          _repr_attrs(self, ['partitioner'], default=1))
 
-
     def generate(self, ds):
         # check whether the ds is balanced
         unique_super = ds.sa[self.attr].unique
@@ -546,25 +565,54 @@ class FactorialPartitioner(Partitioner):
             mask = ds.sa[self.attr].value == usuper
             nunique_subord.append(len(np.unique(ds[mask].sa[self.partitioner.attr].value)))
         if len(np.unique(nunique_subord)) != 1:
-            warnings.warn('One or more superordinate attributes do not have the same '
-                    'number of subordinate attributes. This could yield to '
-                    'unbalanced partitions.', category=RuntimeWarning)
+            warnings.warn(
+                'One or more superordinate attributes do not have the same '
+                'number of subordinate attributes. This could yield to '
+                'unbalanced partitions.', category=RuntimeWarning
+            )
 
         # make a fake ds from the first feature to use the attributes
         fakeds = ds[:, 0]
-        if self.selection_strategy != 'equidistant':
-            raise NotImplementedError("This strategy is not yet implemented")
 
         attr_value = ds.sa[self.attr].value
         uattr = ds.sa[self.attr].unique
         uattr_masks = [attr_value == u for u in uattr]
 
-        for partitionings in iterprod(*[self.partitioner.generate(fakeds[uattr_mask]) for uattr_mask in uattr_masks]):
+        all_partitionings = [
+                self.partitioner.generate(fakeds[uattr_mask])
+                for uattr_mask in uattr_masks
+        ]
+
+        product_gen = iterprod
+        selected_indexes = None
+        if self.count is not None:
+            if self.selection_strategy in ['equidistant', 'random']:
+                all_partitionings = map(list, all_partitionings)
+
+            if self.selection_strategy == 'equidistant':
+                # we need to figure out total number and/or all partitionings
+                # ahead of time so we could randomly or equidistantly select
+                n_cfg = np.prod(map(len, all_partitionings))
+                selected_indexes = set(self.get_selected_indexes(n_cfg))
+            elif self.selection_strategy == 'random':
+                # if no count is given, just return all as "random" ones ;-)
+                def product_gen(*args):
+                    for i in xrandom_iterprod(self.count, *args):
+                        yield i
+
+        ipart_selected = 0
+        for ipart, partitionings in enumerate(product_gen(*all_partitionings)):
+            if self.count is not None and ipart_selected >= self.count:
+                break
+            if selected_indexes is not None:
+                if ipart not in selected_indexes:
+                    continue
             pds = ds.copy(deep=False)
             target_partitioning = np.zeros(len(pds), dtype=int)
             for uattr_mask, partitioning in zip(uattr_masks, partitionings):
                 target_partitioning[uattr_mask] = partitioning.sa[self.partitioner.space].value
             pds.sa[self.space] = target_partitioning
+            ipart_selected += 1
             yield pds
 
 
