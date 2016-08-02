@@ -11,7 +11,7 @@
 
 __docformat__ = 'restructuredtext'
 
-__all__ = [ 'OpenFMRIDataset' ]
+__all__ = [ 'OpenFMRIDataset']
 
 import os
 from os.path import join as _opj
@@ -19,23 +19,29 @@ import numpy as np
 from mvpa2.datasets import vstack
 from mvpa2.base import warning
 
+
 def _prefix(prefix, val):
-    if isinstance(val, int):
+    if isinstance(val, (np.integer, int)):
         return '%s%.3i' % (prefix, val)
     else:
         return '%s%s' % (prefix, val)
 
+
 def _cond2id(val):
     return _prefix('cond', val)
+
 
 def _model2id(val):
     return _prefix('model', val)
 
+
 def _sub2id(val):
     return _prefix('sub', val)
 
+
 def _taskrun(task, run):
     return '%s_%s' % (_prefix('task', task), _prefix('run', run))
+
 
 def _id2int(id_, strip=None):
     if strip is None and isinstance(id_, basestring):
@@ -51,26 +57,36 @@ def _id2int(id_, strip=None):
         pass
     return id_
 
+
 def _get_description_dict(path, xfm_key=None):
     props = {}
     if os.path.exists(path):
         for line in open(path, 'r'):
             key = line.split()[0]
             value = line[len(key):].strip()
-            if not xfm_key is None:
+            if xfm_key is not None:
                 key = xfm_key(key)
             props[key] = value
     return props
 
+
 def _subdirs2ids(path, prefix, **kwargs):
-    ids = []
+    # num_ids to separate sorting of numeric and literal ids
+    ids, num_ids = [], []
     if not os.path.exists(path):
         return ids
     for item in os.listdir(path):
-        if item.startswith(prefix) \
-           and os.path.isdir(_opj(path, item)):
-            ids.append(_id2int(item, **kwargs))
-    return sorted(ids)
+        if item.startswith(prefix) and os.path.isdir(_opj(path, item)):
+            id_ = _id2int(item, **kwargs)
+            (num_ids if isinstance(id_, (np.integer, int)) else ids).append(id_)
+    return sorted(num_ids) + sorted(ids)
+
+
+def _stripext(path):
+    for ext in ('.nii', '.nii.gz', '.hdr', '.hdr.gz', '.img', '.img.gz'):
+        if path.endswith(ext):
+            return path[:-len(ext)]
+    return path
 
 
 class OpenFMRIDataset(object):
@@ -89,7 +105,7 @@ class OpenFMRIDataset(object):
           Path to the dataset (i.e. the directory with the 'sub*'
           subdirectories).
         """
-        self._basedir = basedir
+        self.basedir = os.path.expanduser(os.path.expandvars(basedir))
 
     def get_subj_ids(self):
         """Return a (sorted) list of IDs for all subjects in the dataset
@@ -97,12 +113,12 @@ class OpenFMRIDataset(object):
         Standard numerical subject IDs a returned as integer values. All other
         types of IDs are returned as strings with the 'sub' prefix stripped.
         """
-        return _subdirs2ids(self._basedir, 'sub')
+        return _subdirs2ids(self.basedir, 'sub')
 
     def get_scan_properties(self):
         """Return a dictionary with the scan properties listed in scan_key.txt
         """
-        fname = _opj(self._basedir, 'scan_key.txt')
+        fname = _opj(self.basedir, 'scan_key.txt')
         return _get_description_dict(fname)
 
     def get_task_descriptions(self):
@@ -111,7 +127,7 @@ class OpenFMRIDataset(object):
         Dictionary keys are integer task IDs, values are task description
         strings.
         """
-        fname = _opj(self._basedir, 'task_key.txt')
+        fname = _opj(self.basedir, 'task_key.txt')
         return _get_description_dict(fname, xfm_key=_id2int)
 
     def get_model_descriptions(self):
@@ -124,7 +140,7 @@ class OpenFMRIDataset(object):
         is inconsistently described, ``get_model_ids()`` actually may discover
         more or less models in comparison to the avauilable model descriptions.
         """
-        fname = _opj(self._basedir, 'model_key.txt')
+        fname = _opj(self.basedir, 'model_key.txt')
         return _get_description_dict(fname, xfm_key=_id2int)
 
     def get_bold_run_ids(self, subj, task):
@@ -141,7 +157,7 @@ class OpenFMRIDataset(object):
           Run ID
         """
         task_prefix = _prefix('task', task)
-        return _subdirs2ids(_opj(self._basedir, _sub2id(subj), 'BOLD'),
+        return _subdirs2ids(_opj(self.basedir, _sub2id(subj), 'BOLD'),
                             '%s_' % (task_prefix,),
                             strip=len(task_prefix) + 4)
 
@@ -157,10 +173,9 @@ class OpenFMRIDataset(object):
                 out[sub] = runs
         return out
 
-
     def _load_data(self, path, loadfx):
         # little helper to access stuff in datasets
-        path = _opj(self._basedir, *path)
+        path = _opj(self.basedir, *path)
         return loadfx(path)
 
     def _load_subj_data(self, subj, path, loadfx):
@@ -171,7 +186,7 @@ class OpenFMRIDataset(object):
     def _load_bold_task_run_data(self, subj, task, run, path, loadfx):
         # little helper for BOLD and associated data
         return self._load_subj_data(
-                subj, ['BOLD', _taskrun(task, run)] + path, loadfx)
+            subj, ['BOLD', _taskrun(task, run)] + path, loadfx)
 
     def _load_model_task_run_onsets(self, subj, model, task, run, cond):
         # little helper for BOLD and associated data
@@ -181,10 +196,10 @@ class OpenFMRIDataset(object):
             return np.recfromtxt(fname, names=ev_fields)
 
         return self._load_subj_data(
-                subj,
-                ['model', _model2id(model), 'onsets',
-                 _taskrun(task, run), '%s.txt' % _cond2id(cond)],
-                _load_hlpr)
+            subj,
+            ['model', _model2id(model), 'onsets',
+             _taskrun(task, run), '%s.txt' % _cond2id(cond)],
+            _load_hlpr)
 
     def get_bold_run_image(self, subj, task, run, flavor=None):
         """Return a NiBabel image instance for the BOLD data of a
@@ -212,11 +227,27 @@ class OpenFMRIDataset(object):
         else:
             flavor = '_' + flavor
         fname = 'bold%s.nii.gz' % flavor
-        return self._load_bold_task_run_data(subj, task, run, [fname], nb.load)
-
+        img = self._load_bold_task_run_data(subj, task, run, [fname], nb.load)
+        zooms = img.header.get_zooms()
+        if len(zooms) > 3:
+            tr = zooms[3]
+            if tr == 1.0:
+                # Many "original" OpenfMRI datasets have a bug of having degenerate
+                # TR=1.0, so let's check if it corresponds to the scan_key
+                # TODO: there is no lazy evaluation, so would reread file over and
+                # over again.  At least should be cheap
+                props = self.get_scan_properties()
+                prop_tr = float(props.get('TR', 1.0))
+                if prop_tr != tr:
+                    new_zooms = zooms[:3] + (prop_tr,) + zooms[4:]
+                    warning("Dataset file has time dimension set to 1.0 whenever "
+                            "scan_key.txt states it to be %.2f.  Setting zooms "
+                            "to %s" % (prop_tr, new_zooms))
+                    img.header.set_zooms(new_zooms)
+        return img
 
     def get_bold_run_motion_estimates(self, subj, task, run,
-            fname='bold_moest.txt'):
+                                      fname='bold_moest.txt'):
         """Return the volume-wise motion estimates for a particular BOLD run
 
         Parameters
@@ -238,7 +269,7 @@ class OpenFMRIDataset(object):
           rotation in deg)
         """
         return self._load_bold_task_run_data(
-                subj, task, run, [fname], np.loadtxt)
+            subj, task, run, [fname], np.loadtxt)
 
     def get_task_bold_attributes(self, task, fname, loadfx, exclude_subjs=None):
         """Return data attributes for all BOLD data from a specific task.
@@ -266,50 +297,56 @@ class OpenFMRIDataset(object):
 
         Returns
         -------
-        list(array)
-          A list of arrays, one for each BOLD run. Each array is
-          (subjects x volumes x features).
+        list(dict(array))
+          A list (one item per run) of dictionaries (one item per subject,
+          key is subject ID) of arrays. Each array carries the information
+          loaded from the respective files.
         """
         if exclude_subjs is None:
             exclude_subjs = []
         # runs per task per subj
         tbri = self.get_task_bold_run_ids(task)
         nruns = max([max(tbri[s]) for s in tbri if not s in exclude_subjs])
-        nsubjs = len(tbri)
         # structure to hold all data
         data = [None] * nruns
 
         # over all possible run ids
         for run in xrange(nruns):
             # for all actual subjects
-            # TODO add subject filter
             for subj in sorted(tbri.keys()):
+                if subj in exclude_subjs:
+                    continue
                 try:
                     # run + 1 because openfmri is one-based
                     d = self._load_bold_task_run_data(subj, task, run + 1,
-                            [fname], loadfx)
+                                                      [fname], loadfx)
                     if data[run] is None:
-                        data[run] = [d]
+                        data[run] = {subj: d}
                     else:
-                        data[run].append(d)
+                        data[run][subj] = d
                 except IOError:
                     # no data
                     pass
+            run_data = data[run]
             # deal with missing values
-            max_vol = max([len(d) for d in data[run]])
-            for i, d in enumerate(data[run]):
+            max_vol = max([len(run_data[d]) for d in run_data])
+            for subj in run_data:
+                d = run_data[subj]
                 if len(d) == max_vol:
                     continue
+                # XXX WTF 6? determine shape of an attribute from other subjs
                 fixed_run = np.empty((max_vol, 6), dtype=np.float)
                 fixed_run[:] = np.nan
                 if len(d):
                     fixed_run[:len(d)] = d
-                data[run][i] = fixed_run
+                run_data[subj] = fixed_run
+                # make sure we have arrays
+                run_data[subj] = np.array(run_data[subj])
 
-        return [np.array(d) for d in data]
+        return data
 
-    def get_bold_run_dataset(self, subj, task, run, flavor=None, add_sa=None,
-            **kwargs):
+    def get_bold_run_dataset(self, subj, task, run, flavor=None,
+                             preproc_img=None, add_sa=None, **kwargs):
         """Return a dataset instance for the BOLD data of a particular
         subject/task/run combination.
 
@@ -327,7 +364,14 @@ class OpenFMRIDataset(object):
         run : int
           Run ID.
         flavor : None or str
-          BOLD data flavor to access (see dataset description)
+          BOLD data flavor to access (see dataset description). If ``flavor``
+          corresponds to an existing file in the respective task/run directory,
+          it is assumed to be a stored dataset in HDF5 format and loaded via
+          ``h5load()`` -- otherwise datasets are constructed from NIfTI images.
+        preproc_img : callable or None
+          If not None, this callable will be called with the loaded source BOLD
+          image instance as an argument before fmri_dataset() is executed.
+          The callable must return an image instance.
         add_sa: str or tuple(str)
           Single or sequence of names of files in the respective BOLD
           directory containing additional samples attributes. At this time
@@ -345,10 +389,20 @@ class OpenFMRIDataset(object):
         """
         from mvpa2.datasets.mri import fmri_dataset
 
-        bold_img = self.get_bold_run_image(subj, task, run, flavor=flavor)
+        # check whether flavor corresponds to a particular file
+        if flavor is not None:
+            path = _opj(self.basedir, _sub2id(subj),
+                        'BOLD', _taskrun(task, run), flavor)
+        if flavor is not None and os.path.exists(path):
+            from mvpa2.base.hdf5 import h5load
+            ds = h5load(path)
+        else:
+            bold_img = self.get_bold_run_image(subj, task, run, flavor=flavor)
+            if preproc_img is not None:
+                bold_img = preproc_img(bold_img)
+            # load (and mask) data
+            ds = fmri_dataset(bold_img, **kwargs)
 
-        # load and mask data
-        ds = fmri_dataset(bold_img, **kwargs)
         # inject sample attributes
         for name, var in (('subj', subj), ('task', task), ('run', run)):
             ds.sa[name] = np.repeat(var, len(ds))
@@ -356,14 +410,14 @@ class OpenFMRIDataset(object):
         if add_sa is None:
             return ds
 
-        if isinstance(add_sa , basestring):
+        if isinstance(add_sa, basestring):
             add_sa = (add_sa,)
         for sa in add_sa:
             # TODO: come up with a fancy way of detecting what kind of thing
             # we are accessing -- in any case: first axis needs to match
             # nsamples
             attrs = self._load_bold_task_run_data(
-                    subj, task, run, [sa], np.loadtxt)
+                subj, task, run, [sa], np.loadtxt)
             if len(attrs.shape) == 1:
                 ds.sa[sa] = attrs
             else:
@@ -373,7 +427,7 @@ class OpenFMRIDataset(object):
 
     def get_model_ids(self):
         """Return a sorted list of integer IDs for all available models"""
-        return _subdirs2ids(_opj(self._basedir, 'models'), 'model')
+        return _subdirs2ids(_opj(self.basedir, 'models'), 'model')
 
     def get_model_conditions(self, model):
         """Return a description of all conditions for a given model
@@ -396,17 +450,53 @@ class OpenFMRIDataset(object):
           of task and condition ID.
         """
         def_data = self._load_data(
-                ['models', _model2id(model), 'condition_key.txt'],
-                np.recfromtxt)
+            ['models', _model2id(model), 'condition_key.txt'],
+            open)
         conds = []
         # load model meta data
         for dd in def_data:
+            if not dd.strip():
+                # ignore empty lines
+                continue
+            dd = dd.split()
             cond = {}
             cond['task'] = _id2int(dd[0])
             cond['id'] = _id2int(dd[1])
-            cond['name'] = dd[2]
+            cond['name'] = ' '.join(dd[2:])
             conds.append(cond)
         return conds
+
+    def get_model_contrasts(self, model):
+        """Return a defined contrasts for a model
+
+        Parameters
+        ----------
+        model : int
+          Model identifier.
+
+        Returns
+        -------
+        dict(dict)
+          A dictionary is returned, where each key is a (numerical) task ID
+          and each value is a dictionary with contrast labels (str) as keys and
+          contrast vectors as values.
+        """
+        from collections import OrderedDict
+        props = {}
+        try:
+            def_data = self._load_data(
+                ['models', _model2id(model), 'task_contrasts.txt'],
+                open)
+        except IOError:
+            return props
+
+        for line in def_data:
+            line = line.split()
+            task_id = _id2int(line[0])
+            task = props.get(task_id, OrderedDict())
+            task[line[1]] = np.array(line[2:], dtype=float)
+            props[task_id] = task
+        return props
 
     def get_bold_run_model(self, model, subj, run):
         """Return the stimulation design for a particular subject/task/run.
@@ -425,8 +515,13 @@ class OpenFMRIDataset(object):
         list
           One item per event in the run. All items are dictionaries with the
           following keys: 'condition', 'onset', 'duration', 'intensity',
-          'run', 'task', where the first is a literal label, the last two are
-          integer IDs, and the rest are typically floating point values.
+          'run', 'task', 'trial_idx', 'ctrial_idx', where the first is a
+          literal label, the last four are integer IDs, and the rest are
+          typically floating point values. 'onset_idx' is the index of the
+          event specification sorted by time across the entire run (typically
+          corresponding to a trial index), 'conset_idx' is analog but contains
+          the onset index per condition, i.e. the nth trial of the respective
+          condition in a run.
         """
 
         conditions = self.get_model_conditions(model)
@@ -436,29 +531,33 @@ class OpenFMRIDataset(object):
         # get onset info for specific subject/task/run combo
         for cond in conditions:
             task_id = cond['task']
-            task_descr = self.get_task_descriptions()[task_id]
             try:
                 evdata = np.atleast_1d(
-                       self._load_model_task_run_onsets(
-                           subj, model, task_id, run, cond['id']))
+                    self._load_model_task_run_onsets(
+                        subj, model, task_id, run, cond['id']))
             except IOError:
                 warning("onset definition file not found; no information "
                         "about condition '%s' for run %i"
                         % (cond['name'], run))
                 continue
-            for ev in evdata:
+            for i, ev in enumerate(evdata):
                 evdict = dict(zip(ev_fields,
                                   [ev[field] for field in ev_fields]))
                 evdict['task'] = task_id
                 evdict['condition'] = cond['name']
                 evdict['run'] = run
+                evdict['conset_idx'] = i
                 events.append(evdict)
+        events = sorted(events, key=lambda x: x['onset'])
+        for i, ev in enumerate(events):
+            ev['onset_idx'] = i
         return events
 
-    def get_model_bold_dataset(self, model_id, subj_id,
-                          preprocfx=None, modelfx=None, stack=True,
-                          flavor=None, mask=None, add_fa=None,
-                          add_sa=None, **kwargs):
+    def get_model_bold_dataset(self, model_id, subj_id, run_ids=None,
+                               preproc_img=None,
+                               preproc_ds=None, modelfx=None, stack=True,
+                               flavor=None, mask=None, add_fa=None,
+                               add_sa=None, **kwargs):
         """Build a PyMVPA dataset for a model defined in the OpenFMRI dataset
 
         Parameters
@@ -469,7 +568,11 @@ class OpenFMRIDataset(object):
           Integer, or string ID of the subject whose data shall be considered.
           Alternatively, a list of IDs can be given and data from all matching
           subjects will be loaded at once.
-        preprocfx : callable or None
+        run_ids : list, optional
+          Run ids to be loaded.  If None, all runs get loaded
+        preproc_img : callable or None
+          See get_bold_run_dataset() documentation
+        preproc_ds : callable or None
           If not None, this callable will be called with each run bold dataset
           as an argument before ``modelfx`` is executed. The callable must
           return a dataset.
@@ -504,11 +607,11 @@ class OpenFMRIDataset(object):
             # loading a model dataset without actually considering the model
             # probably makes little sense, so at least create an attribute
             from mvpa2.datasets.eventrelated import assign_conditionlabels
-            modelfx=assign_conditionlabels
+            modelfx = assign_conditionlabels
         conds = self.get_model_conditions(model_id)
         # what tasks do we need to consider for this model
         tasks = np.unique([c['task'] for c in conds])
-        if isinstance(subj_id, int) or isinstance(subj_id, basestring):
+        if isinstance(subj_id, (int, basestring)):
             subj_id = [subj_id]
         dss = []
         for sub in subj_id:
@@ -516,7 +619,10 @@ class OpenFMRIDataset(object):
             # what runs exists: that means we have to load the model info
             # repeatedly
             for task in tasks:
-                for run in self.get_bold_run_ids(sub, task):
+                run_ids_ = run_ids \
+                    if run_ids is not None \
+                    else self.get_bold_run_ids(sub, task)
+                for i, run in enumerate(run_ids_):
                     events = self.get_bold_run_model(model_id, sub, run)
                     # at this point our events should only contain those
                     # matching the current task. If not, this model violates
@@ -537,14 +643,20 @@ class OpenFMRIDataset(object):
                         # it could be argued whether we'd still want this data loaded
                         # XXX maybe a flag?
                         continue
-                    d = self.get_bold_run_dataset(sub, task, run=run, flavor=flavor,
-                            chunks=run, mask=mask, add_fa=add_fa, add_sa=add_sa)
-                    if not preprocfx is None:
-                        d = preprocfx(d)
-                    d = modelfx(d, events, **kwargs)
+                    d = self.get_bold_run_dataset(
+                        sub, task, run=run, flavor=flavor,
+                        preproc_img=preproc_img, chunks=i, mask=mask,
+                        add_fa=add_fa, add_sa=add_sa)
+                    if preproc_ds is not None:
+                        d = preproc_ds(d)
+                    d = modelfx(
+                        d, events, **dict([(k, v) for k, v in kwargs.iteritems()
+                                          if not k in ('preproc_img', 'preproc_ds',
+                                                       'modelfx', 'stack', 'flavor',
+                                                       'mask', 'add_fa', 'add_sa')]))
                     # if the modelfx doesn't leave 'chunk' information, we put
                     # something minimal in
-                    for attr, info in (('chunks', run), ('subj', sub)):
+                    for attr, info in (('chunks', i), ('run', run), ('subj', sub)):
                         if not attr in d.sa:
                             d.sa[attr] = [info] * len(d)
                     dss.append(d)
@@ -574,4 +686,4 @@ class OpenFMRIDataset(object):
         if path is None:
             path = []
         return self._load_subj_data(
-                subj, ['anatomy'] + path + [fname], nb.load)
+            subj, ['anatomy'] + path + [fname], nb.load)

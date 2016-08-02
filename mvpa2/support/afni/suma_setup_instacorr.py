@@ -22,6 +22,7 @@ NNO May 2012
 
 import numpy as np
 import os
+from os.path import join as pathjoin
 import re
 import argparse
 
@@ -109,7 +110,7 @@ def afni_niml_zscore_makefull_wizard(cfg):
     group_postfix = cfg.get('grouppostfix', None)
     if group_postfix is None:
         group_postfix = _smart_filename_decode(fns, 'postfix')
-        if not group_postfix is None:
+        if group_postfix is not None:
             print "Using automatic postfix %s" % group_postfix
 
     overwrite = cfg['overwrite']
@@ -121,7 +122,7 @@ def afni_niml_zscore_makefull_wizard(cfg):
         pad_to_ico_ld = cfg.get('pad_to_ico_ld', None)
         if pad_to_ico_ld is None:
             pad_to_ico_ld = _smart_filename_decode(fns, 'pad_to_ico_ld')
-            if not pad_to_ico_ld is None:
+            if pad_to_ico_ld is not None:
                 pad_to_node = pad_to_ico_ld * pad_to_ico_ld * 10 + 2
                 print "Using automatic pad_to_ico_ld=%r, pad_to_node=%r" % (pad_to_ico_ld, pad_to_node)
 
@@ -133,7 +134,7 @@ def afni_niml_zscore_makefull_wizard(cfg):
     for fn in fns:
         [pth, nm] = os.path.split(fn)
 
-        fnout = os.path.join(pth, prefix + nm)
+        fnout = pathjoin(pth, prefix + nm)
 
         if os.path.exists(fnout) and not overwrite:
             print("Output file %s already exists, skipping (use '--overwrite' to override)" % fnout)
@@ -151,7 +152,7 @@ def afni_niml_zscore_makefull_wizard(cfg):
         ext = ext[:(len(nm) - len(ext))]
 
     fullprefix = nm if group_postfix is None else '%s%s' % (nm, group_postfix)
-    fullname = os.path.join(pth, fullprefix)
+    fullname = pathjoin(pth, fullprefix)
 
 
 

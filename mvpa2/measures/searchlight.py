@@ -21,7 +21,6 @@ import mvpa2
 from mvpa2.base import externals, warning
 from mvpa2.base.types import is_datasetlike
 from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
-from mvpa2.base.types import is_datasetlike
 from mvpa2.base.progress import ProgressBar
 if externals.exists('h5py'):
     # Is optionally required for passing searchlight
@@ -35,6 +34,8 @@ from mvpa2.measures.base import Measure
 from mvpa2.base.state import ConditionalAttribute
 from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
 from mvpa2.mappers.base import ChainMapper
+
+from mvpa2.support.due import due, Doi
 
 class BaseSearchlight(Measure):
     """Base class for searchlights.
@@ -94,16 +95,26 @@ class BaseSearchlight(Measure):
         self.nproc = nproc
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
         """String representation of a `Measure`
 
         Includes only arguments which differ from default ones
         """
+        if prefixes is None:
+            prefixes = []
         return super(BaseSearchlight, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['queryengine', 'roi_ids', 'nproc']))
 
 
+    @due.dcite(
+        Doi('10.1073/pnas.0600244103'),
+        description="Searchlight analysis approach",
+        tags=["implementation"])
+    @due.dcite(
+        Doi('10.1038/nrn1931'),
+        description="Application of the searchlight approach to decoding using classifiers",
+        tags=["use"])
     def _call(self, dataset):
         """Perform the ROI search.
         """
@@ -317,7 +328,9 @@ class Searchlight(BaseSearchlight):
         else:
             self.__add_center_fa = False
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(Searchlight, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['datameasure'])

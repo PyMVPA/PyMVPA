@@ -126,6 +126,7 @@ def collect_unit_tests(verbosity=1):
         'test_svdmapper',
         'test_procrust',
         'test_hyperalignment',
+        'test_searchlight_hyperalignment',
         'test_transformers',
         'test_searchlight',
         'test_rfe',
@@ -138,7 +139,6 @@ def collect_unit_tests(verbosity=1):
 
     __optional_tests = [ ('scipy', 'ridge'),
                          ('scipy', 'gpr'),
-                         (['cPickle', 'gzip'], 'hamster'),
                        ]
 
     # and now for the optional tests
@@ -161,7 +161,7 @@ def collect_test_suites(verbosity=1, instantiate=True):
     for t in tests:
         # TODO: exclude tests which fail to import: e.g. on Windows
         # could get WindowsError due to missing msvcr90.dll
-        exec 'import mvpa2.tests.' + t
+        exec('import mvpa2.tests.%s' % t)
     if instantiate:
         # instantiate all tests suites and return dict of them (with ID as key)
         return dict([(t[5:], eval('mvpa2.tests.' + t + '.suite()')) for t in tests ])
@@ -170,13 +170,15 @@ def collect_test_suites(verbosity=1, instantiate=True):
 
 
 def collect_nose_tests(verbosity=1):
-    """Return list of tests which are pure nose-based
+    """Return tests which are purely nose-based (now it is actually a mix)
     """
+
     tests = [
         # Basic data structures/manipulators
         'test_base',
         'test_collections',
         'test_attrmap',
+        'test_constraints',
 
         # Datasets
         'test_datasetng',
@@ -192,6 +194,7 @@ def collect_nose_tests(verbosity=1):
 
         # Classifiers
         'test_multiclf',
+        'test_smlr',
 
         # Misc supporting
         'test_neighborhood',
@@ -212,8 +215,9 @@ def collect_nose_tests(verbosity=1):
         'test_staticprojection',
 
         # Learners
+        'test_compound',
         'test_enet',
-        'test_spam',
+        'test_glmmapper',
         'test_lars',
         'test_glmnet',
         'test_kernel',
@@ -223,17 +227,21 @@ def collect_nose_tests(verbosity=1):
         # Algorithms
         'test_emp_null',
         'test_clfcrossval',
+        'test_group_clusterthr',
 
         # IO
         'test_iohelpers',
         'test_hdf5',
         'test_hdf5_clf',
+        'test_openfmri',
 
         # Measures
         'test_transerror',
         'test_datameasure',
         'test_dcov',
         'test_corrstability',
+        'test_fxmeasure',
+        'test_rsa',
 
         # Misc
         'test_misc',
@@ -248,6 +256,8 @@ def collect_nose_tests(verbosity=1):
         'test_winner',
         'test_viz',
         ]
+    """Return list of tests which are pure nose-based
+    """
 
     if not cfg.getboolean('tests', 'lowmem', default='no'):
         tests += ['test_atlases']

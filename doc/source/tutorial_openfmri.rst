@@ -57,7 +57,7 @@ dataset in this demo which already comes with PyMVPA.
 
 .. _Haxby et al, (2001) data: https://openfmri.org/dataset/ds000105
 
->>> path = opj(mvpa2.pymvpa_dataroot , 'openfmri')
+>>> path = opj(mvpa2.pymvpa_dataroot , 'haxby2001')
 >>> of = OpenFMRIDataset(path)
 
 Through this handler we can access lots of information about this dataset.
@@ -183,7 +183,7 @@ specification of a dataset attribute that encodes the timing of a time series
 samples; ``time_attr``).
 
 >>> print ds
-<Dataset: 96x129@float64, <sa: chunks,condition,regressors>, <fa: voxel_indices>, <a: add_regs,imghdr,imgtype,mapper,model,voxel_dim,voxel_eldim>>
+<Dataset: 96x129@float64, <sa: chunks,condition,regressors,run,subj>, <fa: voxel_indices>, <a: add_regs,imgaffine,imghdr,imgtype,mapper,voxel_dim,voxel_eldim>>
 
 This all led to an output dataset with 96 samples, one sample per each of the
 eight condition in each of the 12 runs.
@@ -202,10 +202,11 @@ eight condition in each of the 12 runs.
  'bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe'
  'bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe']
 >>> print ds.sa.chunks
-[ 1  1  1  1  1  1  1  1  2  2  2  2  2  2  2  2  3  3  3  3  3  3  3  3  4
-  4  4  4  4  4  4  4  5  5  5  5  5  5  5  5  6  6  6  6  6  6  6  6  7  7
-  7  7  7  7  7  7  8  8  8  8  8  8  8  8  9  9  9  9  9  9  9  9 10 10 10
- 10 10 10 10 10 11 11 11 11 11 11 11 11 12 12 12 12 12 12 12 12]
+[ 0  0  0  0  0  0  0  0  1  1  1  1  1  1  1  1  2  2  2  2  2  2  2  2  3
+  3  3  3  3  3  3  3  4  4  4  4  4  4  4  4  5  5  5  5  5  5  5  5  6  6
+  6  6  6  6  6  6  7  7  7  7  7  7  7  7  8  8  8  8  8  8  8  8  9  9  9
+  9  9  9  9  9 10 10 10 10 10 10 10 10 11 11 11 11 11 11 11 11]
+
 
 Each value in the sample matrix corresponds to the estimated model parameter
 (or weight) for the associated voxel. Model fitting is performed individually
@@ -215,7 +216,7 @@ information are available in the returned dataset.
 Depending on the type of preprocessing that was applied to this data flavor,
 the dataset ``ds`` may be ready for immediate analysis, for example in
 a cross-validated classification analysis. If further preprocessing steps
-are desired, the ``preprocfx`` argument of
+are desired, the ``preproc_ds`` argument of
 :meth:`~mvpa2.datasets.sources.openfmri.OpenFMRIDataset.get_model_bold_dataset`
 provides an interface for applying additional transformations, such as temporal
 filtering, to the time series data of each individual BOLD fMRI run.

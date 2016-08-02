@@ -9,40 +9,39 @@
 """Unit tests for PyMVPA surface searchlight voxel selection"""
 
 from mvpa2.testing import *
+
 skip_if_no_external('nibabel')
 
 import numpy as np
 from numpy.testing.utils import assert_array_almost_equal, \
-        assert_array_equal, assert_raises
+    assert_array_equal, assert_raises
 
 import nibabel as nb
 
 import os
+from os.path import join as pathjoin
 import tempfile
 
-from mvpa2.testing import  reseed_rng
-from mvpa2.testing.datasets import datasets
+from mvpa2.testing import reseed_rng
 
-from mvpa2 import cfg
 from mvpa2.base import externals
-from mvpa2.datasets import Dataset
-from mvpa2.measures.base import Measure
 from mvpa2.datasets.mri import fmri_dataset
 
 from mvpa2.support.nibabel import surf
-from mvpa2.misc.surfing import surf_voxel_selection, queryengine, volgeom, \
-                                volsurf
-from mvpa2.misc.surfing.volume_mask_dict import VolumeMaskDictionary
+from mvpa2.misc.surfing import surf_voxel_selection, volgeom, \
+    volsurf
+from mvpa2.misc.surfing.volume_mask_dict import VolumeMaskDictionary, \
+    _dict_with_arrays2array_tuple
 from mvpa2.misc.surfing import volume_mask_dict
+from mvpa2.misc.surfing.volgeom import VolGeom
 
 from mvpa2.measures.searchlight import Searchlight
 from mvpa2.misc.surfing.queryengine import SurfaceVerticesQueryEngine, \
-                                           SurfaceVoxelsQueryEngine, \
-                                           disc_surface_queryengine
+    SurfaceVoxelsQueryEngine, \
+    disc_surface_queryengine
 
-from mvpa2.measures.base import Measure, \
-        TransferMeasure, RepeatedMeasure, CrossValidation
-from mvpa2.clfs.smlr import SMLR
+from mvpa2.measures.base import Measure, CrossValidation
+
 from mvpa2.generators.partition import OddEvenPartitioner
 from mvpa2.mappers.fx import mean_sample
 from mvpa2.misc.io.base import SampleAttributes
@@ -55,8 +54,8 @@ if externals.exists('h5py'):
     from mvpa2.base.hdf5 import h5save, h5load
 
 
-class SurfVoxelSelectionTests(unittest.TestCase):
 
+class SurfVoxelSelectionTests(unittest.TestCase):
     def test_voxel_selection(self):
         '''Compare surface and volume based searchlight'''
 
@@ -71,8 +70,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         radius = 10.
 
         '''Define input filenames'''
-        epi_fn = os.path.join(pymvpa_dataroot, 'bold.nii.gz')
-        maskfn = os.path.join(pymvpa_dataroot, 'mask.nii.gz')
+        epi_fn = pathjoin(pymvpa_dataroot, 'bold.nii.gz')
+        maskfn = pathjoin(pymvpa_dataroot, 'mask.nii.gz')
 
         '''
         Use the EPI datafile to define a surface.
@@ -88,8 +87,6 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         from the affine transformation matrix of the volume'''
         plane = surf.generate_plane(aff[:3, 3], aff[:3, 0], aff[:3, 1],
                                     nx, ny)
-
-
 
         '''
         Simulate pial and white matter as just above and below
@@ -109,7 +106,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         Euclidean distance measure
         '''
         surf_voxsel = surf_voxel_selection.voxel_selection(vsm, radius,
-                                                    distance_metric='e')
+                                                           distance_metric='e')
 
         '''Define the measure'''
 
@@ -124,7 +121,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             postproc = mean_sample
         else:
             meas = _Voxel_Count_Measure()
-            postproc = lambda x:x
+            postproc = lambda x: x
 
         '''
         Surface analysis: define the query engine, cross validation,
@@ -132,7 +129,6 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         '''
         surf_qe = SurfaceVerticesQueryEngine(surf_voxsel)
         surf_sl = Searchlight(meas, queryengine=surf_qe, postproc=postproc)
-
 
         '''
         new (Sep 2012): also test 'simple' queryengine wrapper function
@@ -144,7 +140,6 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         surf_sl2 = Searchlight(meas, queryengine=surf_qe2,
                                postproc=postproc)
 
-
         '''
         Same for the volume analysis
         '''
@@ -155,15 +150,14 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         vol_qe = IndexQueryEngine(**kwa)
         vol_sl = Searchlight(meas, queryengine=vol_qe, postproc=postproc)
 
-
         '''The following steps are similar to start_easy.py'''
-        attr = SampleAttributes(os.path.join(pymvpa_dataroot,
-                                'attributes_literal.txt'))
+        attr = SampleAttributes(pathjoin(pymvpa_dataroot,
+                                         'attributes_literal.txt'))
 
         mask = surf_voxsel.get_mask()
 
-        dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot,
-                                                    'bold.nii.gz'),
+        dataset = fmri_dataset(samples=pathjoin(pymvpa_dataroot,
+                                                'bold.nii.gz'),
                                targets=attr.targets,
                                chunks=attr.chunks,
                                mask=mask)
@@ -175,13 +169,13 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
             # zscore dataset relative to baseline ('rest') mean
             zscore(dataset, chunks_attr='chunks',
-                        param_est=('targets', ['rest']))
+                   param_est=('targets', ['rest']))
 
         # select class face and house for this demo analysis
         # would work with full datasets (just a little slower)
         dataset = dataset[np.array([l in ['face', 'house']
                                     for l in dataset.sa.targets],
-                                    dtype='bool')]
+                                   dtype='bool')]
 
         '''Apply searchlight to datasets'''
         surf_dset = surf_sl(dataset)
@@ -222,13 +216,15 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         # Thus just making it compressed volume for those cases
         suf = '.gz' \
             if (externals.exists('pprocess') and
-                    externals.versions['numpy'] < '1.6.2') \
+                externals.versions['numpy'] < '1.6.2') \
             else ''
-        fd, volfn = tempfile.mkstemp('vol.nii' + suf, 'test'); os.close(fd)
+        fd, volfn = tempfile.mkstemp('vol.nii' + suf, 'test');
+        os.close(fd)
         volimg.to_filename(volfn)
         volds = fmri_dataset(volfn)
 
-        fd, volfngz = tempfile.mkstemp('vol.nii.gz', 'test'); os.close(fd)
+        fd, volfngz = tempfile.mkstemp('vol.nii.gz', 'test');
+        os.close(fd)
         volimg.to_filename(volfngz)
         voldsgz = fmri_dataset(volfngz)
 
@@ -264,7 +260,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         # number of voxels expected in each searchlight
         r_expected = np.array([[18, 9, 10, 9, 9, 9, 9, 10, 9,
-                                 9, 9, 9, 11, 11, 11, 11, 10,
+                                9, 9, 9, 11, 11, 11, 11, 10,
                                 10, 10, 9, 10, 11, 9, 10, 10,
                                 8, 7, 8, 8, 8, 9, 10, 12, 12,
                                 11, 7, 7, 8, 5, 9, 11, 11, 12,
@@ -276,8 +272,6 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                                 16, 17, 15, 17, 17, 17, 16, 16,
                                 16, 18, 16, 16, 16, 16, 18, 16]])
 
-
-
         params = dict(intermediate_=(intermediate, intermediatefn, None),
                       center_nodes_=(None, range(nv)),
                       volume_=(volimg, volfn, volds, volfngz, voldsgz),
@@ -285,15 +279,16 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                       volume_mask_=(None, True, 0, 2),
                       call_method_=("qe", "rvs", "gam"))
 
-        combis = _cartprod(params) # compute all possible combinations
-        combistep = 17  #173
-                        # some fine prime number to speed things up
-                        # if this value becomes too big then not all
-                        # cases are covered
-                        # the unit test tests itself whether all values
-                        # occur at least once
+        combis = _cartprod(params)  # compute all possible combinations
+        combistep = 17  # 173
+        # some fine prime number to speed things up
+        # if this value becomes too big then not all
+        # cases are covered
+        # the unit test tests itself whether all values
+        # occur at least once
 
         tested_params = dict()
+
         def val2str(x):
             return '%r:%r' % (type(x), x)
 
@@ -326,9 +321,9 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             if call_method_ == "qe":
                 # use the fancy query engine wrapper
                 qe = disc_surface_queryengine(radius,
-                        volume_, s_i, s_o, s_m,
-                        source_surf_nodes=center_nodes_,
-                        volume_mask=volume_mask_)
+                                              volume_, s_i, s_o, s_m,
+                                              source_surf_nodes=center_nodes_,
+                                              volume_mask=volume_mask_)
                 sl = Searchlight(m, queryengine=qe)
                 r = sl(ds).samples
 
@@ -339,8 +334,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                                       volume_mask_)
                 vs = volsurf.VolSurfMaximalMapping(vg, s_i, s_o)
                 sel = surf_voxel_selection.voxel_selection(
-                        vs, radius, source_surf=s_m,
-                        source_surf_nodes=center_nodes_)
+                    vs, radius, source_surf=s_m,
+                    source_surf_nodes=center_nodes_)
                 qe = SurfaceVerticesQueryEngine(sel)
                 sl = Searchlight(m, queryengine=qe)
                 r = sl(ds).samples
@@ -351,8 +346,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                                       volume_mask_)
                 vs = volsurf.VolSurfMaximalMapping(vg, s_i, s_o)
                 sel = surf_voxel_selection.voxel_selection(
-                        vs, radius, source_surf=s_m,
-                        source_surf_nodes=center_nodes_)
+                    vs, radius, source_surf=s_m,
+                    source_surf_nodes=center_nodes_)
                 mp = sel
 
                 ks = sel.keys()
@@ -375,8 +370,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                 vstr = val2str(v)
                 if not vstr in tested_params[k]:
                     raise ValueError("Missing value %r for %s" %
-                                        (tested_params[k], k))
-
+                                     (tested_params[k], k))
 
     def test_volsurf_projections(self):
         white = surf.generate_plane((0, 0, 0), (0, 1, 0), (0, 0, 1), 10, 10)
@@ -395,14 +389,13 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             assert_array_equal(delta, np.zeros((100, 3)))
             assert_true(np.all(w == ws))
 
-
         vs = volsurf.VolSurfMaximalMapping(vg, white, pial, nsteps=2)
         n2vs = vs.get_node2voxels_mapping()
-        assert_equal(n2vs, dict((i, {i:0., i + 100:1.}) for i in xrange(100)))
+        assert_equal(n2vs, dict((i, {i: 0., i + 100: 1.}) for i in xrange(100)))
 
         nd = 17
         ds_mm_expected = np.sum((above.vertices - pial.vertices[nd, :]) ** 2,
-                                                                    1) ** .5
+                                1) ** .5
         ds_mm = vs.coordinates_to_grey_distance_mm(nd, above.vertices)
         assert_array_almost_equal(ds_mm_expected, ds_mm)
 
@@ -411,11 +404,11 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         assert_array_equal(ds_mm_nodewise, np.ones((100,)) * 3)
 
-
     @with_tempfile('.h5py', 'voxsel')
     def test_surface_outside_volume_voxel_selection(self, fn):
         skip_if_no_external('h5py')
         from mvpa2.base.hdf5 import h5save, h5load
+
         vol_shape = (10, 10, 10, 1)
         vol_affine = np.identity(4)
         vg = volgeom.VolGeom(vol_shape, vol_affine)
@@ -428,14 +421,14 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         inner = surf.generate_sphere(sphere_density) * 5 + far
 
         vs = volsurf.VolSurfMaximalMapping(vg, inner, outer)
-        radii = [10., 10] # fixed and variable radii
+        radii = [10., 10]  # fixed and variable radii
 
         outside_node_margins = [0, far, True]
         for outside_node_margin in outside_node_margins:
             for radius in radii:
-                selector = lambda:surf_voxel_selection.voxel_selection(vs,
-                                    radius,
-                                    outside_node_margin=outside_node_margin)
+                selector = lambda: surf_voxel_selection.voxel_selection(vs,
+                                                                        radius,
+                                                                        outside_node_margin=outside_node_margin)
 
                 if type(radius) is int and outside_node_margin is True:
                     assert_raises(ValueError, selector)
@@ -451,9 +444,9 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                         assert_array_equal(sel.keys(), [])
 
                     if outside_node_margin is True and \
-                                 externals.versions['hdf5'] < '1.8.7':
+                                    externals.versions['hdf5'] < '1.8.7':
                         raise SkipTest("Versions of hdf5 before 1.8.7 have "
-                                             "problems with empty arrays")
+                                       "problems with empty arrays")
 
                     h5save(fn, sel)
                     sel_copy = h5load(fn)
@@ -463,8 +456,6 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                         assert_equal(sel[k], sel_copy[k])
 
                     assert_equal(sel, sel_copy)
-
-
 
     def test_surface_voxel_query_engine(self):
         vol_shape = (10, 10, 10, 1)
@@ -485,15 +476,15 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         for fallback, expected_nfeatures in ((True, 1000), (False, 183)):
             voxsel = surf_voxel_selection.voxel_selection(vs, radius)
             qe = SurfaceVoxelsQueryEngine(voxsel,
-                                        fallback_euclidean_distance=fallback)
+                                          fallback_euclidean_distance=fallback)
 
             # test i/o and ensure that the loaded instance is trained
             if externals.exists('h5py'):
-                fd, qefn = tempfile.mkstemp('qe.hdf5', 'test'); os.close(fd)
+                fd, qefn = tempfile.mkstemp('qe.hdf5', 'test');
+                os.close(fd)
                 h5save(qefn, qe)
                 qe = h5load(qefn)
                 os.remove(qefn)
-
 
             m = _Voxel_Count_Measure()
 
@@ -509,8 +500,6 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
             assert_true(np.all(np.logical_and(5 <= counts, counts <= 18)))
             assert_equal(sl_map.nfeatures, expected_nfeatures)
-
-
 
     @reseed_rng()
     def test_surface_minimal_voxel_selection(self):
@@ -529,7 +518,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         outer = surf.generate_sphere(sphere_density) * 5 + 8 + noise
         inner = surf.generate_sphere(sphere_density) * 3 + 8 + noise
 
-        radii = [5., 20., 10] # note: no fixed radii at the moment
+        radii = [5., 20., 10]  # note: no fixed radii at the moment
 
         # Note: a little outside margin is necessary
         # as otherwise there are nodes in the minimal case
@@ -539,8 +528,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             for output_modality in ('surface', 'volume'):
                 for i, nvm in enumerate(('minimal', 'maximal')):
                     qe = disc_surface_queryengine(radius, vg, inner,
-                                        outer, node_voxel_mapping=nvm,
-                                        output_modality=output_modality)
+                                                  outer, node_voxel_mapping=nvm,
+                                                  output_modality=output_modality)
                     voxsel = qe.voxsel
 
                     if i == 0:
@@ -586,7 +575,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         add_fa = ['center_distances', 'grey_matter_position']
         qe = disc_surface_queryengine(radius, vg, inner, outer,
-                            add_fa=add_fa)
+                                      add_fa=add_fa)
         ds = fmri_dataset(vg.get_masked_nifti_image())
 
         # the following is not really a strong requirement. XXX remove?
@@ -601,7 +590,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             raise AssertionError(
                 'Failed to query %r from %r after training on %r. '
                 'Exception was: %r'
-                 % (i, qe, ds, e))
+                % (i, qe, ds, e))
 
         assert_equal(qe[qe.ids[0]].samples[0, 0], 883)
 
@@ -625,13 +614,13 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                             lambda f, vmd: vmd]
         for setstate_use_legacy, reduce_use_legacy in true_false_combis:
             reducer = VolumeMaskDictionary._reduce_legacy \
-                            if reduce_use_legacy  \
-                                else reduce_current
+                if reduce_use_legacy \
+                else reduce_current
             VolumeMaskDictionary.__reduce__ = reducer
 
             setstater = VolumeMaskDictionary._setstate_legacy \
-                            if setstate_use_legacy \
-                            else setstate_current
+                if setstate_use_legacy \
+                else setstate_current
             VolumeMaskDictionary.__setstate__ = setstater
 
             indices_stored = voxsel.__reduce__()[2][3]
@@ -664,15 +653,14 @@ class SurfVoxelSelectionTests(unittest.TestCase):
             for vmd_load_method in vmd_load_methods:
                 sel_copy = vmd_load_method(fn, sel)
                 assert_equal(sel.aux_keys(), add_fa)
-                expected_values = [1.13851869106, 1.03270423412] # smoke test
+                expected_values = [1.13851869106, 1.03270423412]  # smoke test
                 for key, v in zip(add_fa, expected_values):
                     for id in qe.ids:
                         assert_array_equal(sel.get_aux(id, key),
                                            sel_copy.get_aux(id, key))
 
                     assert_array_almost_equal(sel.get_aux(qe.ids[0], key)[3],
-                                                                            v)
-
+                                              v)
 
     @with_tempfile('.h5py', 'voxsel')
     def test_surface_minimal_lowres_voxel_selection(self, fn):
@@ -695,8 +683,8 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         for i, nvm in enumerate(('minimal', 'minimal_lowres')):
             qe = disc_surface_queryengine(radius, vg, inner,
-                                      outer, source,
-                                      node_voxel_mapping=nvm)
+                                          outer, source,
+                                          node_voxel_mapping=nvm)
 
             voxsel = qe.voxsel
             if i == 0:
@@ -722,9 +710,6 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                     assert_array_equal(voxsel.get(id),
                                        voxsel_copy.get(id))
 
-
-
-
     @reseed_rng()
     def test_minimal_dataset(self):
         vol_shape = (10, 10, 10, 3)
@@ -744,11 +729,9 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         outer = surf.generate_sphere(sphere_density) * 10. + 5
         inner = surf.generate_sphere(sphere_density) * 7. + 5
 
-
         radius = 10
         sel = surf_voxel_selection.run_voxel_selection(radius, ds,
                                                        inner, outer)
-
 
         sel_fids = set.union(*(set(sel[k]) for k in sel.keys()))
 
@@ -757,13 +740,12 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         vg = sel.volgeom
         sel_vox = map(tuple, vg.lin2ijk(np.asarray(list(sel_fids))))
 
-
         fid_mask = np.asarray([v in sel_vox for v in ds_vox])
         assert_array_equal(fid_mask, sel.get_dataset_feature_mask(ds))
 
         # check if it raises errors
         ni_neg_msk = nb.Nifti1Image(1 - msk, vol_affine)
-        neg_ds = fmri_dataset(ni_data, mask=ni_neg_msk) # inverted mask
+        neg_ds = fmri_dataset(ni_data, mask=ni_neg_msk)  # inverted mask
 
         assert_raises(ValueError, sel.get_dataset_feature_mask, neg_ds)
 
@@ -788,7 +770,6 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         outer = surf.generate_sphere(sphere_density) * 10. + 5
         inner = surf.generate_sphere(sphere_density) * 7. + 5
 
-
         radius = 10
         sel = surf_voxel_selection.run_voxel_selection(radius, ds,
                                                        inner, outer)
@@ -798,21 +779,21 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         # (tup: i) with i an int means that tup as input should return i
         #          elements
         qe_ids2nvoxels = {SurfaceVoxelsQueryEngine:
-                                    {(1, 2, 3):13,
-                                    tuple(np.arange(0, 200, 2)): 82,
-                                    (601,): None,
-                                    None: 126},
-                        SurfaceVerticesQueryEngine:
-                                    {(1, 2, 3):None,
-                                    (205, 209, 210, 214):36,
-                                    None: 126}}
+                              {(1, 2, 3): 13,
+                               tuple(np.arange(0, 200, 2)): 82,
+                               (601,): None,
+                               None: 126},
+                          SurfaceVerticesQueryEngine:
+                              {(1, 2, 3): None,
+                               (205, 209, 210, 214): 36,
+                               None: 126}}
 
         for constructor, ids2nfeatures in qe_ids2nvoxels.iteritems():
             qe = constructor(sel)
             qe.train(ds)
             img = qe.get_masked_nifti_image()
             assert_array_equal(img.get_data(),
-                                qe.get_masked_nifti_image(qe.ids).get_data())
+                               qe.get_masked_nifti_image(qe.ids).get_data())
 
             img_getter = qe.get_masked_nifti_image
             for ids, nfeatures in ids2nfeatures.iteritems():
@@ -827,12 +808,12 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                     if constructor is SurfaceVerticesQueryEngine:
                         expected_image = qe.get_masked_nifti_image(ids_list)
                         expected_mask = expected_image.get_data()
-                        check_mask_func = lambda x:assert_array_equal(
-                                                        expected_mask, x)
-                        check_image_func = lambda x:check_mask_func(
-                                            x.get_data()) and \
-                                            assert_array_equal(x.get_affine(),
-                                                  expected_image.get_affine())
+                        check_mask_func = lambda x: assert_array_equal(
+                            expected_mask, x)
+                        check_image_func = lambda x: check_mask_func(
+                            x.get_data()) and \
+                                assert_array_equal(x.affine,
+                                                   expected_image.affine)
 
                         check_mask_func(sel.get_mask(ids_list))
                         check_image_func(sel.get_nifti_image_mask(ids_list))
@@ -843,6 +824,30 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                             tups_mask[tup] += 1
                         assert_array_equal(expected_mask != 0, tups_mask != 0)
 
+    def test_volume_mask_dictionary_different_value_types(self):
+        # build tiny VolumeMaskDictionary
+        vg = VolGeom((2, 2, 2), np.zeros((4, 4)))
+
+        d = VolumeMaskDictionary(vg, None)
+        d.add(0, [3, 4], dict(foo=np.asarray([1.1, 2])))
+        d.add(1, [5, 6], dict(foo=np.asarray([1.3, 2])))
+
+        # set the values to different varieties of float
+        d._src2aux['foo'][0] = d._src2aux['foo'][0].astype(np.float32)
+        d._src2aux['foo'][1] = d._src2aux['foo'][1].astype(np.float64)
+
+        # float elements must be converted properly
+        at = _dict_with_arrays2array_tuple(d._src2aux)
+        at_expected = dict(foo=(np.asarray([0, 1]),
+                                np.asarray([2, 2]),
+                                np.asarray([1.1, 2., 1.3, 2.])))
+        for i, (at_elem, at_expected_elem) in enumerate(zip(at['foo'], at_expected['foo'])):
+            assert_array_almost_equal(at_elem, at_expected_elem)
+
+        # set auxilary attribute so that _src2aux has no common
+        # datatype; this should raise an error
+        d._src2aux['foo'][1] = np.asarray('bar')
+        assert_raises(TypeError, _dict_with_arrays2array_tuple, d._src2aux)
 
 
 
@@ -858,26 +863,33 @@ def _cartprod(d):
     for v in itervals:
         cps = _cartprod(d)
         for cp in cps:
-            kv = {k:v}
+            kv = {k: v}
             kv.update(cp)
             r.append(kv)
     d[k] = vs
     return r
 
+
+
 class _Voxel_Count_Measure(Measure):
     # used to check voxel selection results
     is_trained = True
+
     def __init__(self, **kwargs):
         Measure.__init__(self, **kwargs)
 
     def _call(self, dset):
         return dset.nfeatures
 
+
+
 def suite():  # pragma: no cover
     """Create the suite"""
     return unittest.makeSuite(SurfVoxelSelectionTests)
 
 
+
 if __name__ == '__main__':  # pragma: no cover
     import runner
+
     runner.run()

@@ -59,6 +59,10 @@ else:
 
 __sdebug('algorithms')
 from mvpa2.algorithms.hyperalignment import *
+if externals.exists('scipy'):
+    # Some pieces do not demand scipy, but for now let's just do this way
+    from mvpa2.algorithms.searchlight_hyperalignment import *
+    from mvpa2.algorithms.group_clusterthr import *
 
 __sdebug('clfs')
 from mvpa2 import clfs
@@ -119,7 +123,10 @@ from mvpa2.datasets.eep import *
 from mvpa2.datasets.eventrelated import *
 if externals.exists('nibabel') :
     from mvpa2.datasets.mri import *
+    from mvpa2.datasets.gifti import map2gifti, gifti_dataset
 from mvpa2.datasets.sources import *
+from mvpa2.datasets.sources.native import *
+from mvpa2.datasets.sources.bids import *
 from mvpa2.datasets.sources.openfmri import *
 from mvpa2.datasets import niml
 from mvpa2.datasets.niml import from_niml, to_niml
@@ -170,6 +177,7 @@ if externals.exists('mdp'):
 if externals.exists('mdp ge 2.4'):
     from mvpa2.mappers.lle import *
 from mvpa2.mappers.glm import *
+from mvpa2.mappers.skl_adaptor import *
 
 __sdebug('measures')
 from mvpa2 import measures
@@ -178,6 +186,7 @@ if externals.exists('statsmodels'):
     from mvpa2.measures.statsmodels_adaptor import *
 from mvpa2.measures.irelief import *
 from mvpa2.measures.base import *
+from mvpa2.measures.fx import *
 from mvpa2.measures.noiseperturbation import *
 from mvpa2.misc.neighborhood import *
 from mvpa2.measures.searchlight import *
@@ -198,8 +207,6 @@ from mvpa2.misc import *
 from mvpa2.misc.io import *
 from mvpa2.misc.io.base import *
 from mvpa2.misc.io.meg import *
-if externals.exists('cPickle') and externals.exists('gzip'):
-    from mvpa2.misc.io.hamster import *
 from mvpa2.misc.fsl import *
 from mvpa2.misc.bv import *
 from mvpa2.misc.bv.base import *
@@ -249,7 +256,8 @@ if externals.exists("lxml") and externals.exists("nibabel"):
 __sdebug("surface searchlight")
 from mvpa2.misc.surfing.queryengine import SurfaceVerticesQueryEngine, \
                                            SurfaceVoxelsQueryEngine, \
-                                            disc_surface_queryengine
+                                           SurfaceQueryEngine, \
+                                           disc_surface_queryengine
 
 from mvpa2.misc.surfing import surf_voxel_selection, volgeom, \
                                 volsurf, volume_mask_dict
@@ -273,9 +281,11 @@ if externals.exists("running ipython env"):
     except Exception, e:
         warning("Failed to activate custom IPython completions due to %s" % e)
 
-def suite_stats(scope_dict={}):
+def suite_stats(scope_dict=None):
     """Return cruel dict of things which evil suite provides
     """
+    if scope_dict is None:
+        scope_dict = {}
 
     scope_dict = scope_dict or globals()
     import types

@@ -50,14 +50,14 @@ class SimpleSOMMapper(Mapper):
             Kohonen layer.
         distance_metric: callable or None
             Kernel distance metric between elements in Kohonen layer. If None
-            then Euclidean distance is used. Otherwise it should be a 
+            then Euclidean distance is used. Otherwise it should be a
             callable that accepts two input arguments x and y and returns
             the distance d through d=distance_metric(x,y)
         initialization_func: callable or None
-            Initialization function to set self._K, that should take one 
+            Initialization function to set self._K, that should take one
             argument with training samples and return an numpy array. If None,
-            then values in the returned array are taken from a standard normal 
-            distribution.  
+            then values in the returned array are taken from a standard normal
+            distribution.
         """
         # init base class
         Mapper.__init__(self)
@@ -89,6 +89,14 @@ class SimpleSOMMapper(Mapper):
         self._dqd = None
         self._initialization_func = initialization_func
 
+        # precompute necessary sizes for dqd (and later infl)
+        self._dqdshape = np.array(
+                             [self.kshape[0]//2,
+                              self.kshape[1]//2,
+                              np.ceil(self.kshape[0]/2.).astype('int'),
+                              np.ceil(self.kshape[1]/2.).astype('int')])
+
+
     @accepts_dataset_as_samples
     def _pretrain(self, samples):
         """Perform network pre-training.
@@ -112,7 +120,7 @@ class SimpleSOMMapper(Mapper):
         # (just compute one quadrant, as the distances are symmetric)
         # XXX maybe do other than squared Euclidean?
         self._dqd = np.fromfunction(self.distance_metric,
-                             self.kshape, dtype='float')
+                             self._dqdshape[2:]+1, dtype='float')
 
 
     @accepts_dataset_as_samples
@@ -123,11 +131,11 @@ class SimpleSOMMapper(Mapper):
         ----------
         samples : array-like
             Used for unsupervised training of the SOM.
-          
+
         Notes
         -----
-        It is assumed that prior to calling this method the _pretrain method 
-        was called with the same argument.  
+        It is assumed that prior to calling this method the _pretrain method
+        was called with the same argument.
         """
 
         # ensure that dqd was set properly
@@ -145,37 +153,41 @@ class SimpleSOMMapper(Mapper):
             # has to be recomputed since kernel shrinks over time
             k = self._compute_influence_kernel(it, dqd)
 
+            # form the influence kernel from unfolding the kernel (from the
+            # single quadrant that is precomputed), then cutting to the right shape
+            infl = np.vstack((
+                    np.hstack((
+                        # upper left
+                        k[self._dqdshape[0]:0:-1, self._dqdshape[1]:0:-1],
+                        # upper right
+                        k[self._dqdshape[0]:0:-1, :self._dqdshape[3]])),
+                    np.hstack((
+                        # lower left
+                        k[:self._dqdshape[2], self._dqdshape[1]:0:-1],
+                        # lower right
+                        k[:self._dqdshape[2], :self._dqdshape[3]]))
+                            ))
+
             # for all training vectors
             for s in samples:
                 # determine closest unit (as element coordinate)
                 b = self._get_bmu(s)
-                # train all units at once by unfolding the kernel (from the
-                # single quadrant that is precomputed), cutting it to the
-                # right shape and simply multiply it to the difference of target
-                # and all unit weights....
-                infl = np.vstack((
-                        np.hstack((
-                            # upper left
-                            k[b[0]:0:-1, b[1]:0:-1],
-                            # upper right
-                            k[b[0]:0:-1, :self.kshape[1] - b[1]])),
-                        np.hstack((
-                            # lower left
-                            k[:self.kshape[0] - b[0], b[1]:0:-1],
-                            # lower right
-                            k[:self.kshape[0] - b[0], :self.kshape[1] - b[1]]))
-                               ))
-                unit_deltas += infl[:, :, np.newaxis] * (s - self._K)
 
-            # apply cumulative unit deltas
-            self._K += unit_deltas
+                # roll the kernel so that peak is at this coordinate
+                sample_infl = np.roll(infl, self._dqdshape[2]+b[0], axis=0)
+                sample_infl = np.roll(sample_infl, self._dqdshape[3]+b[1], axis=1)
+
+                # get the adjustment to be made to the Kohonen layer by multiplying
+                # by the difference
+                unit_deltas = sample_infl[:, :, np.newaxis] * (s - self._K)
+
+                # apply sample unit delta
+                self._K += unit_deltas
 
             if __debug__:
                 debug("SOM", "Iteration %d/%d done: ||unit_deltas||=%g" %
                       (it, self.niter, np.sqrt(np.sum(unit_deltas ** 2))))
 
-            # reset unit deltas
-            unit_deltas.fill(0.)
 
 
     ##REF: Name was automagically refactored

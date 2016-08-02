@@ -63,7 +63,7 @@ class Collectable(object):
         self.__doc__ = doc
         self.__name = name
         self._value = None
-        if not value is None:
+        if value is not None:
             self._set(value)
         if __debug__ and __mvpadebug__:
             debug("COL", "Initialized %r", (self,))
@@ -178,7 +178,7 @@ class SequenceCollectable(Collectable):
         # first configure the value checking, to enable it for the base class
         # init
         # XXX should we disallow empty Collectables??
-        if not value is None and not hasattr(value, '__len__'):
+        if value is not None and not hasattr(value, '__len__'):
             raise ValueError("%s only takes sequences as value."
                              % self.__class__.__name__)
         self._target_length = length
@@ -212,7 +212,7 @@ class SequenceCollectable(Collectable):
     def _set(self, val):
         # check if the new value has the desired length -- if length checking is
         # desired at all
-        if not self._target_length is None \
+        if self._target_length is not None \
            and len(val) != self._target_length:
             raise ValueError("Value length [%i] does not match the required "
                              "length [%i] of attribute '%s'."
@@ -327,7 +327,7 @@ class Collection(dict):
         items : all types accepted by update()
         """
         dict.__init__(self)
-        if not items is None:
+        if items is not None:
             self.update(items)
 
     def copy(self, deep=True, a=None, memo=None):
@@ -540,7 +540,7 @@ class UniformLengthCollection(Collection):
 
     def __reduce__(self):
         return (self.__class__,
-                    (self.items(), self._uniform_length))
+                (self.items(), self._uniform_length))
 
     @borrowdoc(Collection)
     def copy(self, *args, **kwargs):
@@ -583,7 +583,7 @@ class UniformLengthCollection(Collection):
         if not isinstance(value, ArrayCollectable):
             # if it is only a single element iterable, attempt broadcasting
             if is_sequence_type(value) and len(value) == 1 \
-                    and not ulength is None:
+                    and ulength is not None:
                 if ulength > 1:
                     # cannot use np.repeat, because it destroys dimensionality
                     value = [value[0]] * ulength
@@ -601,9 +601,94 @@ class UniformLengthCollection(Collection):
         value.set_length_check(ulength)
         Collection.__setitem__(self, key, value)
 
+    @staticmethod
+    def _compare_to_value(a, v, strict=True):
+        """Helper to find elements within attribute matching the value
+
+        value might be a multidimensional beast
+
+        Parameters
+        ----------
+        strict: bool, optional
+          If True, it would throw ValueError exception if provided value
+          is not present, or incompatible.  If False, it would allow to proceed
+          returning an empty mask (all values False)
+        """
+        r = a == v
+
+        if isinstance(r, bool):
+            # comparison collapsed to a single thing, must be False
+            assert(r is False)
+            raise ValueError("%r is not comparable to items among %s"
+                             % (v, a))
+
+        if a.ndim > 1:
+            # we are dealing with multi-dimensional attributes.
+            # then value we are looking for must be just 1 dimension less,
+            # otherwise numpy would broadcast the value and match which is not
+            # desired
+            vshape = np.asanyarray(v).shape
+            if vshape != a.shape[1:]:
+                raise ValueError("Value %r you are looking for is of %s "
+                                 "shape, whenever collection contains entries "
+                                 "of shape %s" % (v, vshape, a.shape[1:]))
+
+        # collapse all other dimensions.  numpy would have broadcasted
+        # the leading dimension
+        while r.ndim > 1:
+            r = np.all(r, axis=1)
+        if not np.any(r):
+            if strict:
+                raise ValueError("None of the items matched %r among %s"
+                                 % (v, a))
+            else:
+                return np.zeros(len(a), dtype=bool)
+        return r
+
+    def match(self, d, strict=True):
+        """Given a dictionary describing selection, return mask for matching items
+
+        Given a dictionary with keys known to the collection, search for item
+        attributes which would satisfy the selection.  E.g.
+
+        >>> col = UniformLengthCollection({'roi': ['a', 'b', 'c', 'a']})
+        >>> print col.match({'roi': ['a']})
+        [ True False False  True]
+        >>> print col.match({'roi': ['c', 'a']})
+        [ True False  True  True]
+
+        Multiple keys could be specified with desired matching values.
+        Intersection of matchings is returned across different keys:
+
+        >>> col = UniformLengthCollection({'roi': ['a', 'b', 'c', 'a'],
+        ...                                'vox': [[1,0], [0,1], [1,0], [0, 1]]})
+        >>> print col.match({'roi': ['c', 'a'], 'vox': [[0,1]]})
+        [False False False  True]
+
+        Parameters
+        ----------
+        d: dict
+          Dict describing the selection.  Keys must be known to the collection
+        strict: bool, optional
+          If True, absent matching to any specified selection key/value pair
+          would result in ValueError exception.  If False, it would allow to
+          not have matches, but if only a single value for a key is given or none
+          of the values match -- you will end up with empty selection.
+        """
+        mask = np.ones(self.attr_length, dtype=bool)
+
+        for k, target_values in d.iteritems():
+            if not k in self.keys():
+                raise ValueError("%s is not known to %s" % (k, self))
+            value = self[k].value
+            target_values_mask = reduce(np.logical_or,
+                                        [self._compare_to_value(value, target_value, strict=strict)
+                                         for target_value in target_values])
+            mask = np.logical_and(mask, target_values_mask)
+        return mask
 
     attr_length = property(fget=lambda self:self._uniform_length,
-                    doc="Uniform length of all attributes in a collection")
+                           doc="Uniform length of all attributes in a collection")
 
 
 

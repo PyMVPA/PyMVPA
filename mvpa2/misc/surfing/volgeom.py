@@ -32,6 +32,7 @@ if externals.exists('nibabel'):
     import nibabel as nb
 
 from mvpa2.misc.neighborhood import Sphere
+from mvpa2.mappers.base import ChainMapper
 
 class VolGeom(object):
     '''Defines a mapping between sub and linear indices and world coordinate
@@ -62,7 +63,7 @@ class VolGeom(object):
         if self._affine.shape != (4, 4):
             raise ValueError('Affine matrix should be 4x4')
 
-        if not mask is None:
+        if mask is not None:
             if mask.size != self.nvoxels:
                 raise ValueError("%d voxels, but mask has %d" %
                                  (self.nvoxels, mask.size))
@@ -141,10 +142,12 @@ class VolGeom(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         prefixes_ = ['shape=(%s)' % ','.join(['%r' % i for i in self._shape]),
                      'affine=%r' % self._affine] + prefixes
-        if not self._mask is None:
+        if self._mask is not None:
             prefixes_ += ['mask=%r' % self._mask]
         return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
 
@@ -152,7 +155,7 @@ class VolGeom(object):
         sh = self.shape[:3]
         s = '%s(%s = %d voxels' % (self.__class__.__name__,
                              '%d x %d x %d' % sh, self.nvoxels)
-        if not self.mask is None:
+        if self.mask is not None:
             s += ', %d voxels survive the mask' % self.nvoxels_mask
 
         s += ')'
@@ -234,7 +237,7 @@ class VolGeom(object):
         invol[np.logical_or(lin < 0, lin >= self.nvoxels)] = np.False_
         invol[np.isnan(lin)] = np.False_
 
-        if apply_mask and not self.mask is None and invol.size:
+        if apply_mask and self.mask is not None and invol.size:
             invol[invol] = np.logical_and(invol[invol], self.mask[lin[invol]])
 
         return np.logical_not(invol)
@@ -580,7 +583,7 @@ class VolGeom(object):
         '''
         sh = self.shape
 
-        if not nt is None:
+        if nt is not None:
             sh = (sh[0], sh[1], sh[2], nt)
 
         data = np.zeros(sh)
@@ -645,7 +648,7 @@ class VolGeom(object):
 
         # see if the mask has to be dilated.
         # if all voxels are already in the mask this can be omitted
-        if not dilate is None and \
+        if dilate is not None and \
                     self.nvoxels_mask != self.nvoxels:
 
             if type(dilate) is int:
@@ -679,7 +682,7 @@ class VolGeom(object):
         sh = self.shape
         data_t1 = np.reshape(data_vec, sh[:3])
 
-        if not nt is None:
+        if nt is not None:
             sh = (sh[0], sh[1], sh[2], nt)
             data = np.zeros(sh, data_vec.dtype)
             for t in xrange(nt):
@@ -778,7 +781,7 @@ def from_any(s, mask_volume=None):
     try:
         # see if s behaves like a spatial image (nifti image)
         shape = s.shape
-        affine = s.get_affine()
+        affine = s.affine
 
         if isinstance(mask_volume, int):
             data = s.get_data()
@@ -795,20 +798,14 @@ def from_any(s, mask_volume=None):
     except:
         try:
             # see if s behaves like a Dataset with image header
-            hdr = s.a.imghdr
-            try:
-                shape = hdr.get_data_shape()
-                affine = hdr.get_best_affine()
-            except AttributeError:
-                # maybe there are shape and voxel dimensions
-                shape = s.a.voxel_dim
-
-                # set the affine matrix with origin (0,0,0)
-                affine = np.zeros((4, 4))
-                affine[0, 0], affine[1, 1], affine[2, 2] = s.a.voxel_eldim
-                affine[:2, -1] = -.5 * np.diag(affine)[:2]
-                affine[3, 3] = 1
-
+            # there is always an affine, if it comes from nibabel
+            affine = s.a.imgaffine
+            # if this comes from fmri_dataset() the first mapper is
+            # a FlattenMapper that knows the original data shape
+            if isinstance(s.a.mapper, ChainMapper):
+                shape = s.a.mapper[0].shape
+            else:
+                shape = s.a.mapper.shape
             mask = None
             if isinstance(mask_volume, int):
                 mask = np.asarray(s.samples[mask_volume, :])
@@ -823,15 +820,16 @@ def from_any(s, mask_volume=None):
                     mask_volume_indices = s.fa[mask_volume]
 
                 if mask_volume_indices:
-                    sh = shape[:3]
-                    mask = np.zeros(sh)
+                    mask = np.zeros(shape)
 
                     for idx in mask_volume_indices.value:
                         mask[tuple(idx)] = 1
-        except:
+        except Exception, e:
             #no idea what type of beast this is.
-            raise ValueError('Unrecognized input %r - not a VolGeom, '
-                             '(filename of) Nifti image, or (mri-)Dataset' % s)
+            raise ValueError(
+                'Unrecognized input %r - not a VolGeom, '
+                '(filename of) Nifti image, or (mri-)Dataset: %s'
+                % (s, e))
 
     return VolGeom(shape=shape, affine=affine, mask=mask)
 

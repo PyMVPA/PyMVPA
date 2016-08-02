@@ -136,6 +136,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
     def __init__(self, generator, queryengine, errorfx=mean_mismatch_error,
                  indexsum=None,
                  reuse_neighbors=False,
+                 splitter=None,
                  **kwargs):
         """Initialize the base class for "naive" searchlight classifiers
 
@@ -156,6 +157,9 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
           Compute neighbors information only once, thus allowing for
           efficient reuse on subsequent calls where dataset's feature
           attributes remain the same (e.g. during permutation testing)
+        splitter : Splitter, optional
+          Which will be used to split partitioned datasets.  If None specified
+          then standard one operating on partitions will be used
         """
 
         # init base class first
@@ -163,6 +167,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
 
         self._errorfx = errorfx
         self._generator = generator
+        self._splitter = splitter
 
         # TODO: move into _call since resetting over default None
         #       obscures __repr__
@@ -188,10 +193,13 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         # Storage to be used for neighborhood information
         self.__roi_fids = None
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(SimpleStatBaseSearchlight, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['generator'])
+            + _repr_attrs(self, ['splitter'])
             + _repr_attrs(self, ['errorfx'], default=mean_mismatch_error)
             + _repr_attrs(self, ['indexsum'])
             + _repr_attrs(self, ['reuse_neighbors'], default=False)
@@ -322,6 +330,17 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         # The shape of results
         r_shape = (nrois,) + X.shape[2:]
 
+
+        def assign_ulabels(a):
+            out = np.empty(shape=a.shape, dtype=ulabels.dtype)
+            it = np.nditer([a, out],
+                    flags = ['external_loop', 'buffered'],
+                    op_flags = [['readonly'],
+                                ['writeonly', 'allocate', 'no_broadcast']])
+            for x, y in it:
+                y[...] = ulabels[x]
+            return it.operands[1]
+
         #
         # Everything toward optimization ;)
         #
@@ -346,11 +365,19 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         # indicies
         # XXX we could make it even more lightweight I guess...
         dataset_indicies = Dataset(np.arange(nsamples), sa=dataset.sa)
-        splitter = Splitter(attr=generator.get_space())
-        partitions = list(generator.generate(dataset_indicies))
+
+        splitter = Splitter(attr=generator.get_space(), attr_values=[1, 2]) \
+            if self._splitter is None \
+            else self._splitter
+
+        partitions = list(generator.generate(dataset_indicies)) \
+            if generator \
+            else [dataset_indicies]
+
         if __debug__:
             for p in partitions:
-                if not (np.all(p.sa[targets_sa_name].value == labels)):
+                assert(p.shape[1] == 1)
+                if not (np.all(p.sa[targets_sa_name].value == labels[p.samples[:, 0]])):
                     raise NotImplementedError(
                         "%s does not yet support partitioners altering the targets "
                         "(e.g. permutators)" % self.__class__)
@@ -358,7 +385,8 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         nsplits = len(partitions)
         # ATM we need to keep the splits instead since they are used
         # in two places in the code: step 2 and 5
-        splits = list(tuple(splitter.generate(ds_)) for ds_ in partitions)
+        # We care only about training and testing partitions (i.e. first two)
+        splits = list(tuple(splitter.generate(ds_))[:2] for ds_ in partitions)
         del partitions                    # not used any longer
 
         # 2. Figure out the new 'chunks x labels' blocks of combinations
@@ -407,7 +435,14 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         self._reserve_pl_stats_space((nlabels, ) + s_shape)
 
         # results
-        results = np.zeros((nsplits,) + r_shape)
+        if errorfx is mean_mismatch_error:
+            # if we know how it would look like, prepare the storage
+            results = np.zeros((nsplits,) + r_shape)
+        else:
+            # Otherwise delay assembling the results
+            results = []
+
+        all_targets, all_cvfolds = [], []
 
         # 4. Lets deduce all neighbors... might need to be RF into the
         #    parallel part later on
@@ -466,9 +501,9 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         elif indexsum == 'fancy':
             indexsum_fx = lastdim_columnsums_fancy_indexing
         else:
-            raise ValueError, \
+            raise ValueError(
                   "Do not know how to deal with indexsum=%s" % indexsum
-
+            )
         # Store roi_fids
         if self.reuse_neighbors and self.__roi_fids is None:
             self.__roi_fids = roi_fids
@@ -480,7 +515,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
 
         for isplit, split in enumerate(splits):
             if __debug__:
-                debug('SLC', ' Split %i out of %i' % (isplit, nsplits))
+                debug('SLC', ' Split %i out of %i' % (isplit+1, nsplits))
             # figure out for a given splits the blocks we want to work
             # with
             # sample_indicies
@@ -508,20 +543,43 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
                 results[isplit, :] = \
                     (predictions != targets[:, None]).sum(axis=0) \
                     / float(len(targets))
-            else:
+                all_cvfolds += [isplit]
+            elif errorfx:
                 # somewhat silly but a way which allows to use pre-crafted
                 # error functions without a chance to screw up
-                for i, fpredictions in enumerate(predictions.T):
-                    results[isplit, i] = errorfx(fpredictions, targets)
+                result = np.atleast_2d(
+                    np.array([errorfx(fpredictions, targets)
+                              for fpredictions in predictions.T]))
+                results.append(result)
+                all_cvfolds += [isplit] * result.shape[0]
 
+            else:
+                # and if no errorfx -- we just need to assign original
+                # labels to the predictions BUT keep in mind that it is a matrix
+                results.append(assign_ulabels(predictions))
+                all_targets += [ulabels[i] for i in targets]
+                all_cvfolds += [isplit] * len(targets)
+
+            pass  # end of the split loop
+
+        if isinstance(results, list):
+            # we have just collected them, now they need to be vstacked
+            results = np.vstack(results)
+            assert(results.ndim >= 2)
 
         if __debug__:
             debug('SLC', "%s._call() is done in %.3g sec" %
                   (self.__class__.__name__, time.time() - time_start))
 
-        return Dataset(results)
+        out = Dataset(results)
+        if all_targets:
+            out.sa['targets'] = all_targets
+        out.sa['cvfolds'] = all_cvfolds
+        out.fa['center_ids'] = roi_ids
+        return out
 
     generator = property(fget=lambda self: self._generator)
+    splitter = property(fget=lambda self: self._splitter)
     errorfx = property(fget=lambda self: self._errorfx)
     indexsum = property(fget=lambda self: self._indexsum)
     reuse_neighbors = property(fget=lambda self: self.__reuse_neighbors)

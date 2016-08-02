@@ -26,6 +26,9 @@ from mvpa2.clfs.base import Classifier
 from mvpa2.base.param import Parameter
 from mvpa2.base.constraints import EnsureListOf
 
+from mvpa2.support.due import due, BibTeX
+
+
 if __debug__:
     from mvpa2.base import debug
 
@@ -198,7 +201,7 @@ class _SVM(Classifier):
             #self.params['C'].default = 1.0
 
         # Some postchecks
-        if self.params.has_key('weight') and self.params.has_key('weight_label'):
+        if 'weight' in self.params and 'weight_label' in self.params:
             if not len(self.params.weight_label) == len(self.params.weight):
                 raise ValueError, "Lenghts of 'weight' and 'weight_label' lists " \
                       "must be equal."
@@ -242,7 +245,7 @@ class _SVM(Classifier):
     def _get_cvec(self, data):
         """Estimate default and return scaled by it negative user's C values
         """
-        if not self.params.has_key('C'):#svm_type in [_svm.svmc.C_SVC]:
+        if not 'C' in self.params:#svm_type in [_svm.svmc.C_SVC]:
             raise RuntimeError, \
                   "Requested estimation of default C whenever C was not set"
 
@@ -301,6 +304,23 @@ class _SVM(Classifier):
 
         return value
 
+    @due.dcite(
+        BibTeX("""
+@Book{Vapnik95:SVM,
+ title = "The Nature of Statistical Learning Theory",
+ author = "Vladimir Vapnik",
+ publisher = "Springer",
+ address = "New York",
+ isbn = "0-387-94559-8",
+ year = "1995",
+ pymvpa-keywords = "support vector machine, SVM"
+}"""),
+        path="mvpa2.clfs.SVM",
+        description="Support Vector Machines (SVM)",
+        tags=["implementation"])
+    def _train(self, dataset):
+        # exists primarily for dcite, and no parent has it defined
+        pass
 
     # TODO: make part of kernel object
     #def _getDefaultGamma(self, dataset):

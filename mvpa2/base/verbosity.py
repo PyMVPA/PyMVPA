@@ -430,13 +430,16 @@ if __debug__:
         #       while being unable to get values for the properties
         from psutil import Process as __Process
         __pymvpa_process__ = __Process(__pymvpa_pid__)
+        __pymvpa_memory_info = __pymvpa_process__.memory_info if hasattr(__pymvpa_process__, 'memory_info') \
+                             else __pymvpa_process__.get_memory_info
+
 
         def get_vmem():
             """Return utilization of virtual memory
 
             Generic implementation using psutil
             """
-            mi = __pymvpa_process__.get_memory_info()
+            mi = __pymvpa_memory_info()
             # in later versions of psutil mi is a named tuple.
             # but that is not the case on Debian squeeze with psutil 0.1.3
             rss = mi[0] / 1024
@@ -543,7 +546,7 @@ if __debug__:
         def __call__(self):
             dt = 0.0
             ct = time.time()
-            if not self.__prev is None:
+            if self.__prev is not None:
                 dt = ct - self.__prev
             self.__prev = ct
             return self.__format % dt

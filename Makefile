@@ -16,8 +16,14 @@ WWW_DIR=$(BUILDDIR)/website
 SWARM_DIR=$(BUILDDIR)/swarm
 WWW_UPLOAD_URI=www.pymvpa.org:/home/www/www.pymvpa.org/pymvpa
 WWW_UPLOAD_URI_DEV=dev.pymvpa.org:/home/www/dev.pymvpa.org/pymvpa
-DATA_UPLOAD_URI=data.pymvpa.org:/home/www/data.pymvpa.org/www/datasets
-DATA_URI=data.pymvpa.org::datadb
+DATA_HOST=data.pymvpa.org
+DATA_DIR=datadb
+DATA_SUBDIRS='$(DATA_DIR)/tutorial_data \
+                  $(DATA_DIR)/mnist \
+                  $(DATA_DIR)/face_inversion_demo \
+                  $(DATA_DIR)/hyperalignment_tutorial_data \
+                  $(DATA_DIR)/haxby2001'
+DATA_UPLOAD_URI=$(DATA_HOST):/home/www/data.pymvpa.org/www/datasets
 SWARMTOOL_DIR=tools/codeswarm
 SWARMTOOL_DIRFULL=$(CURDIR)/$(SWARMTOOL_DIR)
 RSYNC_OPTS=-az -H --no-perms --no-owner --verbose --progress --no-g --exclude prev/
@@ -259,12 +265,11 @@ notebooks: notebooks-stamp
 notebooks-stamp: examples2rst
 	mkdir -p $(NOTEBOOKBUILD_DIR)
 	tools/rst2ipnbpy \
-		--baseurl http://pymvpa.org \
+		--baseurl http://pymvpa.org/examples \
 		--apiref_baseurl http://pymvpa.org/generated \
 		--glossary_baseurl http://pymvpa.org/glossary.html \
 		--outdir $(NOTEBOOKBUILD_DIR) \
 		--exclude doc/source/tutorial_prerequisites.rst \
-		--exclude doc/source/examples/searchlight_surf.rst \
 		--verbose \
 		doc/source/tutorial_*.rst doc/source/examples/*.rst
 	touch $@
@@ -447,9 +452,9 @@ tcc-%: build
 		MVPA_WARNINGS_SUPPRESS=1 \
 		bash ./doc/examples/cmdline/$*.sh > /dev/null
 
-testcmdline: tc-start_easy tc-query_pymvpa tc-fmri_analyses
+testcmdline: tc-start_easy tc-query_pymvpa tc-fmri_analyses tc-plot_motion
 
-coveragecmdline: tcc-query_pymvpa tcc-fmri_analyses
+coveragecmdline: tcc-query_pymvpa tcc-fmri_analyses tcc-plot_motion
 
 te-%: build
 	@echo -n "I: Testing example $*: "
@@ -457,6 +462,7 @@ te-%: build
 	&& logfile=temp-$@.log   \
 	|| { mkdir -p $$MVPA_TESTS_LOGDIR; logfile=$$MVPA_TESTS_LOGDIR/$@.log; }; \
 	MVPA_EXAMPLES_INTERACTIVE=no \
+	MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
 	 $(MPLPYTHONPATH) /usr/bin/time $(PYTHON) doc/examples/$*.py >| $$logfile 2>&1 \
 	 && { echo "passed";  ex=0; } \
 	 || { echo "failed:"; ex=1; cat $$logfile; }; \
@@ -468,7 +474,7 @@ testexamples: te-svdclf te-smlr te-sensanas te-pylab_2d \
               te-erp_plot te-match_distribution te-permutation_test \
               te-searchlight_minimal te-smlr te-start_easy te-topo_plot \
               te-gpr te-gpr_model_selection0 te-mri_plot te-searchlight \
-              te-clfs_examples
+              te-eventrelated te-clfs_examples
 
 testdocstrings: dt-mvpa
 
@@ -544,6 +550,8 @@ testsuite:
 	 grep -v -e 'mvpa.\.base\.dochelpers' \
 			 -e 'mvpa.\.\(tests\|testing\|sandbox\|support\)' \
 			 -e 'mvpa.\.misc\.args' \
+			 -e 'mvpa.\.algorithms\.benchmarks' \
+			 -e 'mvpa.\.misc\.surfing\.volgeom' \
 			 -e 'mvpa.\.clfs\.\(libsvmc\|sg\|spam\)' \
 	| while read i; do \
 	 grep -q "^ *$$i" mvpa2/suite.py || \
@@ -705,12 +713,8 @@ bdist_mpkg: 3rd
 fetch-data:
 	echo "I: fetching data from datadb"
 	[ -e datadb ] || mkdir -p datadb
-	rsync $(RSYNC_OPTS) $(DATA_URI)/tutorial_data $(DATA_URI)/mnist \
-		$(DATA_URI)/face_inversion_demo \
-	      	$(DATA_URI)/hyperalignment_tutorial_data \
-                $(DATA_URI)/haxby2001 \
-		datadb/ 
-	@for ds in datadb/*; do \
+	rsync $(RSYNC_OPTS) $(DATA_HOST)::$(DATA_SUBDIRS) $(DATA_DIR)/
+	for ds in datadb/*; do \
 		echo " I: looking at $$ds"; \
 		cd $(CURDIR)/$${ds} && \
 		md5sum -c MD5SUMS && \

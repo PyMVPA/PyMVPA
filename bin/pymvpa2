@@ -39,8 +39,9 @@ enabled_cmds = [
   'select',
   'atlaslabeler',
   'exec',
-  'ofmotionqc',
   'scatter',
+  'plotmotionqc',
+  'ttest',
 ]
 
 # what version are we talking
@@ -52,7 +53,7 @@ if not pymvpa_version:
 
 def _license_info():
     return """\
-Copyright (c) 2006-2014 PyMVPA developers
+Copyright (c) 2006-2016 PyMVPA developers
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

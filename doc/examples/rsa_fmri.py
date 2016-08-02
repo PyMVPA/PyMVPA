@@ -16,19 +16,20 @@ Representational similarity analysis (RSA) on fMRI data
 In this example we are going to take a look at representational similarity
 analysis (RSA). This term was coined by :ref:`Kriegeskorte et al. (2008)
 <KMB08>` and refers to a technique were data samples are converted into a
-self-referential distance space, in order to aid comparsion across domains. The
+self-referential distance space, in order to aid comparison across domains. The
 premise is that whenever no appropriate transformation is known to directly
 compare two types of data directly (1st-level), it is still useful to compare
 similarities computed in individual domains (2nd-level). For example, this
 analysis technique has been used to identify inter-species commonalities in
 brain response pattern variations during stimulation with visual objects
-(single-cell recordings in monkeys compared to human fMRI, Krigeskorte et al.,
+(single-cell recordings in monkeys compared to human fMRI, Kriegeskorte et al.,
 2008), and to relate brain response pattern similarities to predictions of
 computational models of perception (Connolly et al., 2012).
 """
 
 import numpy as np
 import pylab as pl
+from os.path import join as pjoin
 from mvpa2 import cfg
 
 """
@@ -39,9 +40,9 @@ from regions on the ventral and occipital surface of the brain.
 """
 
 # load dataset -- ventral and occipital ROIs
-from mvpa2.misc.data_generators import load_datadb_tutorial_data
-from mvpa2 import pymvpa_datadbroot
-ds = load_datadb_tutorial_data(roi=(15, 16, 23, 24, 36, 38, 39, 40, 48))
+from mvpa2.datasets.sources.native import load_tutorial_data
+datapath = pjoin(cfg.get('location', 'tutorial data'), 'haxby2001')
+ds = load_tutorial_data(roi=(15, 16, 23, 24, 36, 38, 39, 40, 48))
 
 """
 We only do minimal pre-processing: linear trend removal and Z-scoring all voxel
@@ -59,7 +60,7 @@ zscore(ds, chunks_attr='chunks', param_est=('targets', 'rest'))
 ds = ds[ds.sa.targets != 'rest']
 
 """
-RSA is all about so-called dissimilarity matrices: square, symetric matrices
+RSA is all about so-called dissimilarity matrices: square, symmetric matrices
 with a zero diagonal that encode the (dis)similarity between all pairs of
 data samples or conditions in a dataset. We compose a little helper function
 to plot such matrices, including a color-scale and proper labeling of matrix
@@ -67,19 +68,20 @@ rows and columns.
 """
 
 # little helper function to plot dissimilarity matrices
+# since we are using correlation-distance, we use colorbar range of [0,2]
 def plot_mtx(mtx, labels, title):
     pl.figure()
     pl.imshow(mtx, interpolation='nearest')
     pl.xticks(range(len(mtx)), labels, rotation=-45)
     pl.yticks(range(len(mtx)), labels)
     pl.title(title)
-    pl.clim((0,1))
+    pl.clim((0, 2))
     pl.colorbar()
 
 """
 As a start, we want to inspect the dissimilarity structure of the stimulation
 conditions in the entire ROI. For this purpose, we average all samples of
-each conditions into a single examplar, using an FxMapper() instance.
+each conditions into a single exemplar, using an FxMapper() instance.
 """
 
 # compute a dataset with the mean samples for all conditions
@@ -143,7 +145,7 @@ all data into a single sample per stimulation conditions, per ``chunk``. A
 chunk in this context indicates a complete fMRI recording run.
 """
 
-# more interesting: let's look at the stability of similarity sturctures
+# more interesting: let's look at the stability of similarity structures
 # across experiment runs
 # mean condition samples, as before, but now individually for each run
 mtcgs = mean_group_sample(['targets', 'chunks'])
@@ -162,7 +164,7 @@ sl_cons = sphere_searchlight(dscm, 2)
 slres_cons = sl_cons(mtcds)
 
 """
-Now we can determine the most brain location with the most stable
+Now we can determine the brain location with the most stable
 dissimilarity matrix.
 """
 
@@ -204,25 +206,23 @@ it onto the brain anatomy.
 # plot the spatial distribution using NiPy
 vol = ds.a.mapper.reverse1(slres_tdsm.samples[0])
 import nibabel as nb
-from os.path import join as pjoin
-anat = nb.load(pjoin(pymvpa_datadbroot, 'tutorial_data', 'tutorial_data',
-                     'data', 'sub001', 'anatomy', 'highres001.nii.gz'))
+anat = nb.load(pjoin(datapath, 'sub001', 'anatomy', 'highres001.nii.gz'))
 
 from nipy.labs.viz_tools.activation_maps import plot_map
-pl.figure(figsize=(15,4))
+pl.figure(figsize=(15, 4))
 sp = pl.subplot(121)
 pl.title('Distribution of target similarity structure correlation')
 slices = plot_map(
             vol,
-            ds.a.imghdr.get_best_affine(),
-             cut_coords=np.array((12,-42,-20)),
-             threshold=.5,
-             cmap="bwr",
-             vmin=0,
-             vmax=1.,
-             axes=sp,
-             anat=anat.get_data(),
-             anat_affine=anat.get_affine(),
+            ds.a.imgaffine,
+            cut_coords=np.array((12, -42, -20)),
+            threshold=.5,
+            cmap="bwr",
+            vmin=0,
+            vmax=1.,
+            axes=sp,
+            anat=anat.get_data(),
+            anat_affine=anat.affine,
          )
 img = pl.gca().get_images()[1]
 cax = pl.axes([.05, .05, .05, .9])
@@ -230,7 +230,6 @@ pl.colorbar(img, cax=cax)
 
 sp = pl.subplot(122)
 pl.hist(slres_tdsm.samples[0],
-        #range=(0,410),
         normed=False,
         bins=30,
         color='0.6')

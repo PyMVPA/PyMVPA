@@ -10,7 +10,6 @@
 
 __docformat__ = 'restructuredtext'
 
-import os
 import numpy as np
 
 from mvpa2.base import externals
@@ -31,27 +30,24 @@ class MelodicResults( object ):
         rpath = None
         lookup = ['', 'filtered_func_data.ica']
         for lu in lookup:
-            if os.path.exists(os.path.join(path, lu, 'melodic_IC' + fext)):
-                rpath = os.path.join(path, lu)
+            if os.path.exists(pathjoin(path, lu, 'melodic_IC' + fext)):
+                rpath = pathjoin(path, lu)
                 break
         if rpath is None:
             raise ValueError("Cannot find Melodic results at '%s'" % path)
         else:
             self._rpath = rpath
-        self._ic = nb.load(os.path.join(rpath, 'melodic_IC' + fext))
-        if externals.versions['nibabel'] >= '1.2':
-            self._icshape = self._ic.shape
-        else:
-            self._icshape = self._ic.get_shape()
-        self._mask = nb.load(os.path.join(rpath, 'mask' + fext))
-        self._tmodes = np.loadtxt(os.path.join(rpath, 'melodic_Tmodes' ))
-        self._smodes = np.loadtxt(os.path.join(rpath, 'melodic_Smodes'))
-        self._icstats = np.loadtxt(os.path.join(rpath, 'melodic_ICstats'))
+        self._ic = nb.load(pathjoin(rpath, 'melodic_IC' + fext))
+        self._icshape = self._ic.shape
+        self._mask = nb.load(pathjoin(rpath, 'mask' + fext))
+        self._tmodes = np.loadtxt(pathjoin(rpath, 'melodic_Tmodes' ))
+        self._smodes = np.loadtxt(pathjoin(rpath, 'melodic_Smodes'))
+        self._icstats = np.loadtxt(pathjoin(rpath, 'melodic_ICstats'))
 
 
     def _get_stat(self, type, ic):
         # melodic's IC number is one-based, we do zero-based
-        img = nb.load(os.path.join(self._rpath, 'stats',
+        img = nb.load(pathjoin(self._rpath, 'stats',
                                    '%s%i' % (type, ic + 1) + self._fext))
         return img.get_data()
 

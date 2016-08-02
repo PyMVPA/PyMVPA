@@ -85,7 +85,7 @@ class PolyDetrendMapper(Mapper):
     >>> np.sum(np.abs(mds)) < 0.00001
     True
     """
-    polyord = Parameter(1, doc=\
+    polyord = Parameter(1, doc=
           """Order of the Legendre polynomial to remove from the data.  This
           will remove every polynomial up to and including the provided
           value.  For example, 3 will remove 0th, 1st, 2nd, and 3rd order
@@ -97,7 +97,7 @@ class PolyDetrendMapper(Mapper):
           values with the length equal to the number of chunks.""",
           constraints=cts.AltConstraints(cts.EnsureInt()))
 
-    chunks_attr = Parameter(None, doc=\
+    chunks_attr = Parameter(None, doc=
           """If None, the whole dataset is detrended at once. Otherwise, the given
           samples attribute (given by its name) is used to define chunks of the
           dataset that are processed individually. In that case, all the samples
@@ -107,7 +107,7 @@ class PolyDetrendMapper(Mapper):
           should be spanned be the polynomials (see `space` argument).""",
           constraints=cts.AltConstraints(None, cts.EnsureStr()))
 
-    opt_regs = Parameter(None, doc=\
+    opt_regs = Parameter(None, doc=
           """List of sample attribute names that should be used as
           additional regressors.  An example use would be to regress out motion
           parameters.""",
@@ -225,7 +225,7 @@ class PolyDetrendMapper(Mapper):
             if not is_sequence_type(polyord):
                 # repeat to be proper length
                 polyord = [polyord] * len(uchunks)
-            elif not chunks_attr is None and len(polyord) != len(uchunks):
+            elif chunks_attr is not None and len(polyord) != len(uchunks):
                 raise ValueError("If you specify a sequence of polyord values "
                                  "they sequence length must match the "
                                  "number of unique chunks in the dataset.")
@@ -235,7 +235,7 @@ class PolyDetrendMapper(Mapper):
             update_polycoords = True
             # if the dataset know about the inspace we can store the
             # polycoords right away
-            if not inspace is None and inspace in ds.sa:
+            if inspace is not None and inspace in ds.sa:
                 self._polycoords = ds.sa[inspace].value
                 update_polycoords = False
             else:
@@ -249,7 +249,7 @@ class PolyDetrendMapper(Mapper):
 
                 # create the timespan
                 polycoords, polycoords_scaled = self._get_polycoords(ds, cinds)
-                if update_polycoords and not polycoords is None:
+                if update_polycoords and polycoords is not None:
                     self._polycoords[cinds] = polycoords
                 # create each polyord with the value for that chunk
                 for n in range(polyord[n] + 1):
@@ -262,7 +262,7 @@ class PolyDetrendMapper(Mapper):
             self._polycoords = None
 
         # see if add in optional regs
-        if not opt_reg is None:
+        if opt_reg is not None:
             # add in the optional regressors, too
             for oreg in opt_reg:
                 reg.append(ds.sa[oreg].value[np.newaxis].T)
@@ -297,7 +297,7 @@ class PolyDetrendMapper(Mapper):
                              " and was trained on %i)."
                              % (len(ds), len(regs)))
         # do we have to handle the polynomial space somehow?
-        if not inspace is None:
+        if inspace is not None:
             if inspace in ds.sa:
                 space_coords = ds.sa[inspace].value
                 # this dataset has some notion about our polyspace

@@ -10,33 +10,41 @@ cache:
   - apt
 env:
  global:
-    - PY=python PYSUF=''
+    - PY=python PYSUF='' PYPI=0
     # - PYTHON=python3 PYSUF=3 : python3-numpy not currently available
  matrix:
-    - PYTHON=$PY DOCTESTS=--with-doctest
+    - PYTHON=$PY DOCTESTS=--with-doctest PYPI=1
     - PYTHON="$PY -O" DOCTESTS=--with-doctest
     # Doctests are unguarded against absent externals, so no --with-doctest for them
     - PYTHONPATH=mvpa2/tests/badexternals
     # Some DEBUG targets are excluded since either their output could
     # not be redirected or they augment output in the doctests
     - COVERAGE="coverage run --rcfile=.travis_coveragerc" MVPA_DEBUG=ENFORCE_CA_ENABLED  DOCTESTS=--with-doctest
+    # So we get duecredit report printed out, and identical to original run so we could compare
+    # time impact
+    - PYTHON=$PY DOCTESTS=--with-doctest DUECREDIT_ENABLE=yes
 before_install:
+    # to prevent IPv6 being used for APT
+    - sudo bash -c "echo 'Acquire::ForceIPv4 \"true\";' > /etc/apt/apt.conf.d/99force-ipv4"
     # The ultimate one-liner setup for NeuroDebian repository
     - bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
     # - sudo apt-get install $PYTHON-dev
     - travis_retry sudo apt-get install swig $PY-numpy $PY-scipy $PY-matplotlib $PY-h5py $PY-nose $PY-nibabel $PY-mock
     # Optional Python modules
     # Note: it looks like the line could be truncated, thus spreading them through multiple lines
-    - travis_retry sudo apt-get install shogun-python-modular $PY-mdp $PY-psutil $PY-sklearn
+    - travis_retry sudo apt-get install shogun-python-modular $PY-psutil $PY-sklearn
+    - travis_retry sudo pip install -e git://github.com/mdp-toolkit/mdp-toolkit#egg=MDP
     - travis_retry sudo apt-get install liblapack-dev $PY-statsmodels $PY-reportlab ipython
-    - travis_retry sudo apt-get install $PY-pywt $PY-lxml $PY-pprocess $PY-nipy
+    - travis_retry sudo apt-get install $PY-pywt $PY-lxml $PY-pprocess $PY-nipy $PY-joblib
+    - travis_retry sudo apt-get install python3-dev   # for rudimentary testing of conversion
     # Very optional R interfaces via rpy2
     - travis_retry sudo apt-get install $PY-rpy2
     - mkdir -p $PWD/R-libs
     - echo "install.packages(c('energy', 'elasticnet'), '$PWD/R-libs', repos='http://cran.r-project.org')" | R --no-save
 install:
     - make
-    - if [ ! -z "$COVERAGE" ]; then pip install --user -v coveralls; fi
+    - if [ ! -z "$COVERAGE" ]; then pip install --user -v coveralls codecov; fi
+    - if [ ! -z "$DUECREDIT_ENABLE"]; then pip install --user -v duecredit; fi
 script:
     # Run only nonlabile tests
     - export MVPA_EXTERNALS_RAISE_EXCEPTION=off  MVPA_MATPLOTLIB_BACKEND=agg
@@ -45,6 +53,19 @@ script:
     - export PATH=$HOME/.local/bin:$PATH  PYTHONPATH=.:$PYTHONPATH  R_LIBS=$PWD/R-libs
     - export NOSETESTS=$(which nosetests)
     - eval   $COVERAGE $NOSETESTS -v mvpa2 $DOCTESTS -s
+    - make testsuite  # test that all imports are available within the suite. adjust Makefile or suite.py to fix if fails
     - if [ ! -z "$COVERAGE" ]; then make coveragecmdline; fi
+    - make build PYTHON=python3
 after_success:
-    - if [ ! -z "$COVERAGE" ]; then coveralls; fi
+    - if [ ! -z "$COVERAGE" ]; then coveralls; codecov; fi
+deploy:
+  provider: pypi
+  distributions: sdist
+  user: yarikoptic
+  password:
+    secure: mTxbioGS+sdfxnJRbAGZCxjWlaGJx+KqXPfYGESKcg6IVaSUM9D4CUhxgHHW88FYSnkmCvwuu57w7AAot9FyG6Q/1q656gluCbEJzfDJerSH1S06HqAEmjSPJvIEG/zwvPIUm3RPc+8j9XtedztM3aVWkqBHAzvUzEnsX1jJpic=
+  on:
+    tags: true
+    branch: master
+    repo: PyMVPA/PyMVPA
+    condition: "$PYPI == 1 && $TRAVIS_TAG =~ ^upstream/.*"

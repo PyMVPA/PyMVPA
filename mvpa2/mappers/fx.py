@@ -23,7 +23,7 @@ from mvpa2.mappers.base import Mapper
 from mvpa2.misc.support import array_whereequal
 from mvpa2.base.dochelpers import borrowdoc
 
-from mvpa2.misc.transformers import sum_of_abs, max_of_abs
+from mvpa2.misc.transformers import sum_of_abs, max_of_abs, subtract_mean
 
 if __debug__:
     from mvpa2.base import debug
@@ -73,7 +73,7 @@ class FxMapper(Mapper):
         self.__axis = axis
         self.__uattrs = uattrs
         self.__fx = fx
-        if not fxargs is None:
+        if fxargs is not None:
             self.__fxargs = fxargs
         else:
             self.__fxargs = ()
@@ -86,7 +86,9 @@ class FxMapper(Mapper):
 
 
     @borrowdoc(Mapper)
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+                prefixes = []
         return super(FxMapper, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['axis', 'fx', 'uattrs'])
@@ -141,7 +143,7 @@ class FxMapper(Mapper):
 
     @borrowdoc(Mapper)
     def _forward_data(self, data):
-        if not self.__uattrs is None:
+        if self.__uattrs is not None:
             raise RuntimeError("%s does not support forward-mapping of plain "
                                "data when data grouping based on attributes "
                                "is requested"
@@ -243,7 +245,7 @@ class FxMapper(Mapper):
 
             fxed_samples = self.__smart_apply_along_axis(samples)
             mdata.append(fxed_samples)
-            if not self.__attrfx is None:
+            if self.__attrfx is not None:
                 # and now all samples attributes
                 for i, attr in enumerate(col):
                     fxed_attr = self.__attrfx(col[attr].value[selector])
@@ -384,6 +386,13 @@ def mean_feature(attrfx='merge'):
     FxMapper instance.
     """
     return FxMapper('features', np.mean, attrfx=attrfx)
+
+
+def subtract_mean_feature(attrfx='merge'):
+    """Subtract mean of features across samples.
+    Functionaly equivalent to MeanRemoval, but much slower.
+    """
+    return FxMapper('features', subtract_mean, attrfx=attrfx)
 
 
 def mean_group_feature(attrs, attrfx='merge', **kwargs):
@@ -629,3 +638,37 @@ class BinaryFxNode(Node):
         if np.isscalar(err):
             err = np.array(err, ndmin=2)
         return Dataset(err)
+
+
+class MeanRemoval(Mapper):
+    """Subtract sample mean from features."""
+
+    is_trained = True
+
+    in_place = Parameter(
+        False,
+        doc="""If False: a copy of the dataset will be made before demeaning.
+        If True: demeaning will be performed in-place, i.e. input data is
+        modified. This is faster, but can have side-effects when the original
+        dataset is used elsewhere again, and implies that floating point data
+        types are required to prevent rounding errors in this case.""",
+        constraints=EnsureBool())
+
+    def __init__(self, in_place=False, **kwargs):
+        Mapper.__init__(self, **kwargs)
+        self.in_place = in_place
+
+    def _forward_data(self, data):
+        mdata = data
+        mean = np.mean(mdata, axis=1)
+
+        if self.in_place:
+            if not np.issubdtype(mdata.dtype, float):
+                warning("Integer dtype. Mean removal won't work correctly for "
+                        "this implementation. Rounding errors will occur. "
+                        "Use in_place=False instead")
+            mdata -= mean[:, np.newaxis]
+
+        else:
+            mdata = mdata - mean[:, np.newaxis]
+        return mdata

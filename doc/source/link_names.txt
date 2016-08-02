@@ -50,7 +50,7 @@
 .. _`nipy mailing list`: http://projects.scipy.org/mailman/listinfo/nipy-devel
 .. _`nipy bugs`: https://bugs.launchpad.net/nipy
 .. _pep8: http://www.python.org/dev/peps/pep-0008/
-.. _`numpy coding style`: http://scipy.org/scipy/numpy/wiki/CodingStyleGuidelines
+.. _`numpy coding style`: https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
 
 .. Code support stuff
 .. _pychecker: http://pychecker.sourceforge.net/
@@ -64,7 +64,7 @@
 .. _ECB: http://ecb.sourceforge.net/
 .. _emacs_python_mode: http://www.emacswiki.org/cgi-bin/wiki/PythonMode
 .. _doctest-mode: http://www.cis.upenn.edu/~edloper/projects/doctestmode/
-.. _nose: http://somethingaboutorange.com/mrl/projects/nose
+.. _nose: https://nose.readthedocs.org
 .. _`python coverage tester`: http://nedbatchelder.com/code/modules/coverage.html
 .. _screen: http://www.gnu.org/software/screen/
 .. _ccache: http://ccache.samba.org/
@@ -93,6 +93,7 @@
 
 .. Not so python imaging projects
 .. _Caret: http://brainvis.wustl.edu/wiki/index.php/Caret:About
+.. _CoSMoMVPA: http://www.github.com/CoSMoMVPA
 .. _matlab: http://www.mathworks.com
 .. _spm: http://www.fil.ion.ucl.ac.uk/spm
 .. _spm8: http://www.fil.ion.ucl.ac.uk/spm/software/spm8
@@ -114,9 +115,9 @@
 .. _Shogun: http://www.shogun-toolbox.org
 .. _Orange: http://magix.fri.uni-lj.si/orange
 .. _PyML: http://pyml.sourceforge.net
-.. _MVPA Toolbox: http://www.csbmb.princeton.edu/mvpa/
+.. _MVPA Toolbox: https://code.google.com/p/princeton-mvpa-toolbox/
 .. _scikit-learn: http://scikit-learn.org
-
+.. _nilearn: http://nilearn.github.io
 
 .. File formats
 .. _DICOM: http://medical.nema.org/
@@ -142,6 +143,7 @@
 .. _Debian: http://www.debian.org
 .. _`Debian project`: http://www.debian.org
 .. _Ubuntu: http://www.ubuntu.com
+.. _Xubuntu: http://www.xubuntu.org
 .. _exppsy: http://alioth.debian.org/projects/pkg-exppsy
 .. _`Debian Med`: http://debian-med.alioth.debian.org
 .. _`Debian Science`: http://wiki.debian.org/DebianScience
@@ -150,6 +152,18 @@
 .. |RTAI| replace:: :abbr:`RTAI (Real Time Application Interface)`
 .. _Lin4Neuro: http://www.nemotos.net/lin4neuro
 .. _fail2ban: http://www.fail2ban.org
+
+.. Debian releases
+.. _Debian 6.0 (squeeze): http://www.debian.org/releases/squeeze
+.. _Debian 7.0 (wheezy): http://www.debian.org/releases/wheezy
+.. _Debian 7.8 (wheezy): http://www.debian.org/releases/wheezy
+.. _Debian 8.0 (jessie): http://www.debian.org/releases/jessie
+
+.. Desktop environments
+.. _GNOME: http://www.gnome.org/
+.. _GNOME3: http://www.gnome.org/gnome-3/
+.. _XFCE: http://www.xfce.org/
+.. _XFCE4: http://www.xfce.org/
 
 .. Functional imaging labs
 .. _`functional imaging laboratory`: http://www.fil.ion.ucl.ac.uk
@@ -199,6 +213,7 @@
 .. |ITP| replace:: :abbr:`ITP (Intent to Package)`
 .. |RFP| replace:: :abbr:`RFP (Request for packaging)`
 .. |DBTS| replace:: :abbr:`DBTS (Debian Bug Tracking System)`
+.. _debian-installer: http://www.debian.org/devel/debian-installer/
 
 .. mailing lists
 .. _neurodebian-users: http://lists.alioth.debian.org/mailman/listinfo/neurodebian-users

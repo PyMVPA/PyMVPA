@@ -20,8 +20,8 @@
   <http://ipython.org/ipython-doc/dev/interactive/htmlnotebook.html>`_:
   [`ipynb <notebooks/tutorial_classifiers.ipynb>`_]
 
-In this chapter we will continue our work from :ref:`chap_tutorial_mappers`
-in order to replicate the work of :ref:`Haxby et al. (2001) <HGF+01>`. For this
+In this chapter we will continue our work from :ref:`chap_tutorial_mappers` in
+order to replicate the study of :ref:`Haxby et al. (2001) <HGF+01>`. For this
 tutorial there is a little helper function to yield the dataset we generated
 manually before:
 
@@ -37,10 +37,10 @@ the desired parameters.
 
 A k-Nearest-Neighbor classifier performs classification based on the similarity
 of a sample with respect to each sample in a :term:`training dataset`.  The
-value of ``k`` specifies the number of neighbors to derive a
-prediction, ``dfx`` sets the distance measure that determines the neighbors, and
-``voting`` selects a strategy to choose a single label from the set of targets
-assigned to these neighbors.
+value of ``k`` specifies the number of neighbors to derive a prediction,
+``dfx`` sets the distance measure that determines the neighbors, and ``voting``
+selects a strategy to choose a single label from the set of targets assigned to
+these neighbors.
 
 .. exercise::
 
@@ -53,8 +53,8 @@ dataset to its ``train()`` method.
 >>> clf.train(ds)
 
 A trained classifier can subsequently be used to perform classification of
-unlabeled samples. The classification can be assessed by comparing these
-predictions to the target labels.
+unlabeled samples. The classification performance can be assessed by comparing
+these predictions to the target labels.
 
 >>> predictions = clf.predict(ds.samples)
 >>> np.mean(predictions == ds.sa.targets)
@@ -127,34 +127,35 @@ the transfer error after swapping the roles:
 We see that on average the classifier error is really low, and we achieve an
 accuracy level comparable to the results reported in the original study.
 
+
 .. index:: cross-validation
-.. _sec_tutorial_crossvalidation:
+.. _chap_tutorial_crossvalidation:
+
 
 Cross-validation
 ================
 
-What we have just done was manually split the dataset into
-combinations of training and testing datasets, given a specific sample attribute
--- in this case whether a *pattern of activation* or
-:term:`sample` came from *even* or *odd* runs.  We ran the classification
-analysis on each split to estimate the performance of the
-classifier model. In general, this approach is called :term:`cross-validation`,
-and involves splitting the dataset into multiple pairs of subsets, choosing
-sample groups by some criterion, and estimating the classifier performance by
-training it on the first dataset in a split and testing against the second
-dataset from the same split.
+What we have just done was to manually split the dataset into combinations of
+training and testing datasets, given a specific sample attribute -- in this
+case whether a *pattern of activation* or :term:`sample` came from *even* or
+*odd* runs.  We ran the classification analysis on each split to estimate the
+performance of the classifier model. In general, this approach is called
+:term:`cross-validation`, and involves splitting the dataset into multiple
+pairs of subsets, choosing sample groups by some criterion, and estimating the
+classifier performance by training it on the first dataset in a split and
+testing against the second dataset from the same split.
 
 PyMVPA provides a way to allow complete cross-validation procedures to run
-fully automatically, without the need for manual splitting of a dataset. Using
-the `~mvpa2.measures.base.CrossValidation` class, a cross-validation is set up
-by specifying what measure should be computed on each dataset split and how
-dataset splits should be generated. The measure that is usually computed is
-the transfer error that we already looked at in the previous section. The
-second element, a :term:`generator` for datasets, is another very common tool
-in PyMVPA. The following example uses
+fully automatic, without the need for manual splitting of a dataset. Using the
+`~mvpa2.measures.base.CrossValidation` class, a cross-validation is set up by
+specifying what measure should be computed on each dataset split and how
+dataset splits should be generated. The measure that is usually computed is the
+transfer error that we already looked at in the previous section. The second
+element, a :term:`generator` for datasets, is another very common tool in
+PyMVPA. The following example uses
 `~mvpa2.generators.partition.HalfPartitioner`, a generator that, when called
-with a dataset, marks all samples regarding their association with the first
-or second half of the dataset. This happens based on the values of a specified
+with a dataset, marks all samples regarding their association with the first or
+second half of the dataset. This happens based on the values of a specified
 sample attribute -- in this case ``runtype`` -- much like the manual dataset
 splitting that we have performed earlier.
 `~mvpa2.generators.partition.HalfPartitioner` will make sure to subsequently
@@ -174,7 +175,7 @@ step.
 .. exercise::
 
   Try calling the ``hpart`` object with our dataset. What happens? Now try
-  passing the dataset to its ``generate()`` methods. What happens now?
+  passing the dataset to its ``generate()`` method. What happens now?
   Make yourself familiar with the concept of a Python generator. Investigate
   what the code snippet ``list(xrange(5))`` does, and try to adapt it to the
   ``HalfPartitioner``.
@@ -237,13 +238,13 @@ a cross-validated classification analysis.
 4. Evaluate the error in a cross-validation procedure
 5. Inspect results
 
-Our previous choice of the classifier was guided by the intention to
-replicate :ref:`Haxby et al. (2001) <HGF+01>`, but what if we want to
-try a different algorithm? In this case a nice feature of PyMVPA comes into
-play. All classifiers implement a common interface that makes them easily
-exchangeable without the need to adapt any other part of the analysis code.
-If, for example, we want to try the popular :mod:`support vector machine <mvpa2.clfs.svm>`
-(SVM) on our example dataset it looks like this:
+Our previous choice of the classifier was guided by the intention to replicate
+:ref:`Haxby et al. (2001) <HGF+01>`, but what if we want to try a different
+algorithm? In this case another nice feature of PyMVPA comes into play. All
+classifiers implement a common interface that makes them easily interchangeable
+without the need to adapt any other part of the analysis code.  If, for
+example, we want to try the popular :mod:`~mvpa2.clfs.svm` (Support Vector
+Machines) on our example dataset it looks like this:
 
 >>> clf = LinearCSVMC()
 >>> cvte = CrossValidation(clf, HalfPartitioner(attr='runtype'))
@@ -258,13 +259,13 @@ SVM with its default settings seems to perform slightly worse than the
 simple kNN-classifier. We'll get back to the classifiers shortly. Let's
 first look at the remaining part of this analysis.
 
-We already know that `~mvpa2.measures.base.CrossValidation` can be used to compute
-errors. So far we have used only the mean mismatch between actual
-targets and classifier predictions as the error function (which is the default).
-However, PyMVPA offers a number of alternative functions in the
-:mod:`mvpa2.misc.errorfx` module, but it is also trivial to specify custom ones.
-For example, if we do not want to have error reported, but instead accuracy, we
-can do that:
+We already know that `~mvpa2.measures.base.CrossValidation` can be used to
+compute errors. So far we have only used the mean number of mismatches between
+actual targets and classifier predictions as the error function (which is the
+default).  However, PyMVPA offers a number of alternative functions in the
+:mod:`~mvpa2.misc.errorfx` module, but it is also trivial to specify custom
+ones.  For example, if we do not want to have error reported, but instead
+accuracy, we can do that:
 
 >>> cvte = CrossValidation(clf, HalfPartitioner(attr='runtype'),
 ...                        errorfx=lambda p, t: np.mean(p == t))
@@ -288,17 +289,17 @@ the testing dataset once. In case of our dataset we could consider each of
 the 12 runs as independent measurements (fMRI data doesn't allow us to
 consider temporally adjacent data to be considered independent).
 
-To run such an analysis we first need to redo our dataset preprocessing,
-since in the current one we only have one sample per stimulus category for
+To run such an analysis, we first need to redo our dataset preprocessing,
+as, in the current one, we only have one sample per stimulus category for
 both odd and even runs. To get a dataset with one sample per stimulus
 category for each run, we need to modify the averaging step. Using what we
 have learned from the :ref:`last tutorial part <chap_tutorial_mappers>` the
 following code snippet should be plausible:
 
 >>> # directory that contains the data files
->>> datapath = os.path.join(tutorial_data_path, 'data')
+>>> datapath = os.path.join(tutorial_data_path, 'haxby2001')
 >>> # load the raw data
->>> ds = load_datadb_tutorial_data(roi='vt')
+>>> ds = load_tutorial_data(roi='vt')
 >>> # pre-process
 >>> poly_detrend(ds, polyord=1, chunks_attr='chunks')
 >>> zscore(ds, param_est=('targets', ['rest']))
@@ -399,13 +400,13 @@ analysis procedures can be applied here as well.
 .. _cross tabulation: http://en.wikipedia.org/wiki/Cross_tabulation
 .. _signal detection theory: http://en.wikipedia.org/wiki/Detection_theory
 
-PyMVPA provides convenient access to :term:`confusion matrices <confusion matrix>`, i.e.
-contingency tables of targets vs. actual predictions.  However, to prevent
-wasting CPU-time and memory they are not computed by default, but instead
-have to be enabled explicitly. Optional analysis results like this are
-available in a dedicated collection of :term:`conditional attribute`\ s --
-analogous to ``sa`` and ``fa`` in datasets, it is named ``ca``. Let's see
-how it works:
+PyMVPA provides convenient access to
+:term:`confusion matrices <confusion matrix>`, i.e.  contingency tables of
+targets vs. actual predictions.  However, to prevent wasting CPU-time and
+memory they are not computed by default, but instead have to be enabled
+explicitly. Optional analysis results like this are available in a dedicated
+collection of :term:`conditional attribute`\ s -- analogous to ``sa`` and
+``fa`` in datasets, it is named ``ca``. Let's see how it works:
 
 >>> cvte = CrossValidation(clf, NFoldPartitioner(),
 ...                        errorfx=lambda p, t: np.mean(p == t),

@@ -10,19 +10,22 @@
 
 import itertools
 import numpy as np
+from time import time
 
 from mvpa2.testing.tools import ok_, assert_array_equal, assert_true, \
         assert_false, assert_equal, assert_raises, assert_almost_equal, \
-        reseed_rng, assert_not_equal
+        reseed_rng, assert_not_equal, assert_in, assert_not_in
+from mvpa2.testing.tools import assert_warnings
 
 from mvpa2.datasets import dataset_wizard, Dataset
 from mvpa2.generators.splitters import Splitter
 from mvpa2.base.node import ChainNode
 from mvpa2.generators.partition import OddEvenPartitioner, NFoldPartitioner, \
-     ExcludeTargetsCombinationsPartitioner
+     ExcludeTargetsCombinationsPartitioner, FactorialPartitioner
 from mvpa2.generators.permutation import AttributePermutator
 from mvpa2.generators.base import  Repeater, Sifter
 from mvpa2.generators.resampling import Balancer
+from mvpa2.misc.data_generators import normal_feature_dataset
 from mvpa2.misc.support import get_nelements_per_value
 
 
@@ -97,6 +100,12 @@ def test_partitionmapper():
 
 @reseed_rng()
 def test_attrpermute():
+
+    # Was about to use borrowkwargs but didn't work out . Test doesn't hurt
+    doc = AttributePermutator.__init__.__doc__
+    assert_in('limit : ', doc)
+    assert_not_in('collection : ', doc)
+
     ds = give_data()
     ds.sa['ids'] = range(len(ds))
     pristine_data = ds.samples.copy()
@@ -368,3 +377,187 @@ def test_exclude_targets_combinations_subjectchunks():
     # yoh: equivalent to set(itertools.product(range(3), range(3))))
     #      but .product is N/A for python2.5
     assert_equal(testing_pairs, set(zip(*np.where(np.ones((3,3))))))
+
+
+def test_permute_chunks():
+
+    def is_sorted(x):
+        return np.array_equal(np.sort(x), x)
+
+    ds = give_data()
+    # change targets labels
+    # there is no target labels permuting within chunks,
+    # assure = True would be error
+    ds.sa['targets'] = range(len(ds.sa.targets))
+    permutation = AttributePermutator(attr='targets',
+                                      chunk_attr='chunks',
+                                      strategy='chunks',
+                                      assure=True)
+
+    pds = permutation(ds)
+
+    assert_false(is_sorted(pds.sa.targets))
+    assert_true(np.array_equal(pds.samples, ds.samples))
+    for chunk_id in np.unique(pds.sa.chunks):
+        chunk_ds = pds[pds.sa.chunks == chunk_id]
+        assert_true(is_sorted(chunk_ds.sa.targets))
+
+    permutation = AttributePermutator(attr='targets',
+                                      strategy='chunks')
+    assert_raises(ValueError, permutation, ds)
+
+
+def test_factorialpartitioner():
+    # Test against sifter and chainmap implemented in test_usecases
+    # -- code below copied from test_usecases --
+    # Let's simulate the beast -- 6 categories total groupped into 3
+    # super-ordinate, and actually without any 'superordinate' effect
+    # since subordinate categories independent
+    ds = normal_feature_dataset(nlabels=6,
+                                snr=100,   # pure signal! ;)
+                                perlabel=30,
+                                nfeatures=6,
+                                nonbogus_features=range(6),
+                                nchunks=5)
+    ds.sa['subord'] = ds.sa.targets.copy()
+    ds.sa['superord'] = ['super%d' % (int(i[1])%3,)
+                         for i in ds.targets]   # 3 superord categories
+    # let's override original targets just to be sure that we aren't relying on them
+    ds.targets[:] = 0
+
+    # let's make two other datasets to test later
+    # one superordinate category only
+    ds_1super = ds.copy()
+    ds_1super.sa['superord'] = ['super1' for i in ds_1super.targets]
+
+    # one superordinate category has only one subordinate
+    #ds_unbalanced = ds.copy()
+    #nsuper1 = np.sum(ds_unbalanced.sa.superord == 'super1')
+    #mask_superord = ds_unbalanced.sa.superord == 'super1'
+    #uniq_subord = np.unique(ds_unbalanced.sa.subord[mask_superord])
+    #ds_unbalanced.sa.subord[mask_superord] = [uniq_subord[0] for i in range(nsuper1)]
+    ds_unbalanced = Dataset(range(4), sa={'subord': [0, 0, 1, 2],
+                                          'superord': [1, 1, 2, 2]})
+
+    npart = ChainNode([
+        ## so we split based on superord
+        NFoldPartitioner(len(ds.sa['superord'].unique),
+                         attr='subord'),
+        ## so it should select only those splits where we took 1 from
+        ## each of the superord categories leaving things in balance
+        Sifter([('partitions', 2),
+                ('superord',
+                 { 'uvalues': ds.sa['superord'].unique,
+                   'balanced': True})
+                ]),
+    ], space='partitions')
+
+    def partition(partitioner, ds_=ds):
+        return [p.sa.partitions for p in partitioner.generate(ds_)]
+
+    # now the new implementation
+    # common kwargs
+    factkw = dict(partitioner=NFoldPartitioner(attr='subord'), attr='superord')
+
+    fpart = FactorialPartitioner(**factkw)
+    p_npart = partition(npart)
+    p_fpart = partition(fpart)
+
+    assert_array_equal(np.sort(p_npart), np.sort(p_fpart))
+
+    fpart2 = FactorialPartitioner(count=2, selection_strategy='first', **factkw)
+    p_fpart2 = partition(fpart2)
+    assert_equal(len(p_fpart), 8)
+    assert_equal(len(p_fpart2), 2)
+    assert_array_equal(p_fpart[:2], p_fpart2)
+
+    # 1 equidistant -- should be the first one
+    fpart1 = FactorialPartitioner(count=1, **factkw)
+    p_fpart1 = partition(fpart1)
+    assert_equal(len(p_fpart1), 1)
+    assert_array_equal(p_fpart[:1], p_fpart1)
+
+    # 2 equidistant
+    fpart2 = FactorialPartitioner(count=2, **factkw)
+    p_fpart2 = partition(fpart2)
+    assert_equal(len(p_fpart2), 2)
+    assert_array_equal(p_fpart[::4], p_fpart2)
+
+    # without count -- should be all of them in original order
+    fpartr = FactorialPartitioner(selection_strategy='random', **factkw)
+    assert_array_equal(p_fpart, partition(fpartr))
+
+    # but if with a count we should get some selection
+    fpartr2 = FactorialPartitioner(selection_strategy='random', count=2, **factkw)
+    # Let's generate a number of random selections:
+    rand2_partitions = [partition(fpartr2) for i in xrange(10)]
+    for p in rand2_partitions:
+        assert_equal(len(p), 2)
+    # majority of them must be different
+    assert len(set([tuple(map(tuple, x)) for x in rand2_partitions])) >= 5
+
+    # now let's check it behaves correctly if we have only one superord class
+    nfold = NFoldPartitioner(attr='subord')
+    p_nfold = partition(nfold, ds_1super)
+    p_fpart = partition(fpart, ds_1super)
+    assert_array_equal(np.sort(p_nfold), np.sort(p_fpart))
+
+    # smoke test for unbalanced subord classes
+    warning_msg = 'One or more superordinate attributes do not have the same '\
+                  'number of subordinate attributes. This could yield to '\
+                  'unbalanced partitions.'
+    with assert_warnings([(RuntimeWarning, warning_msg)]):
+        p_fpart = partition(fpart, ds_unbalanced)
+
+    p_unbalanced = [np.array([2, 2, 2, 1]), np.array([2, 2, 1, 2])]
+    superord_unbalanced = [([2], [1, 1, 2]), ([2], [1, 1, 2])]
+    subord_unbalanced = [([2], [0, 0, 1]), ([1], [0, 0, 2])]
+
+    for out_part, true_part, super_out, sub_out in \
+            zip(p_fpart, p_unbalanced,
+                superord_unbalanced, subord_unbalanced):
+        assert_array_equal(out_part, true_part)
+        assert_array_equal((ds_unbalanced[out_part == 1].sa.superord.tolist(),
+                            ds_unbalanced[out_part == 2].sa.superord.tolist()),
+                           super_out)
+        assert_array_equal((ds_unbalanced[out_part == 1].sa.subord.tolist(),
+                            ds_unbalanced[out_part == 2].sa.subord.tolist()),
+                           sub_out)
+
+    # now let's test on a dummy dataset
+    ds_dummy = Dataset(range(4), sa={'subord': range(4),
+                                     'superord': [1,2]*2})
+    p_fpart = partition(fpart, ds_dummy)
+    assert_array_equal(p_fpart,
+                       [[2, 2, 1, 1],
+                        [2, 1, 1, 2],
+                        [1, 2, 2, 1],
+                        [1, 1, 2, 2]])
+
+def test_factorialpartitioner_big():
+    # just to see that we can cope with relatively large datasets/numbers
+    ds = normal_feature_dataset(nlabels=6,
+                                perlabel=66,
+                                nfeatures=2,
+                                nchunks=11)
+
+    # and now let's do factorial partitioner
+
+    def partition(ds_=ds, **kwargs):
+        partitioner = FactorialPartitioner(
+            partitioner=NFoldPartitioner(attr='targets'),
+            attr='chunks',
+            **kwargs)
+        return [p.sa.partitions for p in partitioner.generate(ds_)]
+
+    # prohibitively large
+    # print len(partition(ds))
+    t0 = time()
+    assert_equal(len(partition(ds, count=2, selection_strategy='first')), 2)
+    # Those time limits are really a stretch. on a any reasonable box not too busy
+    # should be done in fraction of a second, but allow to catch "naive"
+    # implementation
+    assert(time() - t0 < 1)
+
+    assert_equal(len(partition(ds, count=2, selection_strategy='random')), 2)
+    assert(time() - t0 < 1)

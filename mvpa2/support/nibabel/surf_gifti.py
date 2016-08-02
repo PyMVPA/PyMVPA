@@ -14,7 +14,7 @@ from mvpa2.base import externals
 if externals.exists("nibabel", raise_=True):
     from nibabel.gifti import gifti, giftiio
 
-import numpy as np, os, datetime, re
+import numpy as np, os, re
 
 from mvpa2.support.nibabel import surf
 import io
@@ -99,7 +99,7 @@ def filename2vertices_faces_metadata(fn):
 
     for key, dict_ in vertex_map.iteritems():
         v = just_one(dict_)
-        if not v is None:
+        if v is not None:
             v_meta.append(gifti.GiftiNVPairs(key, v))
 
 
@@ -157,9 +157,11 @@ def to_gifti_image(s, add_indices=False, swap_LPI_RAI=False):
     for arr in (vertices, faces) + ((indices,) if add_indices else ()):
         arr.ind_ord = 1
         arr.encoding = 3
-        arr.endian = 'LittleEndian' # XXX this does not work (see below)
+        arr.endian = 'LittleEndian'  # XXX this does not work (see below)
         arr.dims = list(arr.data.shape)
-        arr.num_dim = len(arr.dims)
+        if externals.versions['nibabel'] < '2.1':
+            # in later versions it is a computed property
+            arr.num_dim = len(arr.dims)
 
     # make the image
     meta = gifti.GiftiMetaData()
@@ -202,7 +204,7 @@ def to_xml(img, meta_fn_hint=None):
     if isinstance(img, surf.Surface):
         img = to_gifti_image(img)
 
-    if not meta_fn_hint is None:
+    if meta_fn_hint is not None:
         vertices = _get_single_array(img, 'pointset')
         faces = _get_single_array(img, 'triangle')
         vertices.meta, faces.meta = \

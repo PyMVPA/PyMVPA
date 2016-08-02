@@ -228,7 +228,9 @@ class NullDist(ClassWithCollections):
 
         self._set_tail(tail)
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(NullDist, self).__repr__(
             prefixes=["tail=%s" % `self.__tail`] + prefixes)
 
@@ -348,7 +350,9 @@ class MCNullDist(NullDist):
 
         self.__permutator = permutator
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         prefixes_ = ["%s" % self.__permutator]
         if self._dist_class != Nonparametric:
             prefixes_.insert(0, 'dist_class=%r' % (self._dist_class,))
@@ -375,7 +379,7 @@ class MCNullDist(NullDist):
         # the function.
         # XXX that is a bit awkward but is necessary to keep the code changes
         # in the rest of PyMVPA minimal till this behavior become mandatory
-        if not self._measure is None:
+        if self._measure is not None:
             measure = self._measure
             measure.untrain()
 
@@ -555,7 +559,9 @@ class FixedNullDist(NullDist):
         return self._dist.cdf(x)
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         prefixes_ = ["dist=%s" % `self._dist`]
         return super(FixedNullDist, self).__repr__(
             prefixes=prefixes_ + prefixes)

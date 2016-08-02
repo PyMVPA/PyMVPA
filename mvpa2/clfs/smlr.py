@@ -22,6 +22,8 @@ from mvpa2.base.constraints import *
 from mvpa2.base.state import ConditionalAttribute
 from mvpa2.datasets.base import Dataset
 
+from mvpa2.support.due import due, Doi
+
 __all__ = [ "SMLR", "SMLRWeights" ]
 
 
@@ -71,7 +73,7 @@ class SMLR(Classifier):
     """
 
     __tags__ = [ 'smlr', 'linear', 'has_sensitivity', 'binary',
-                 'multiclass', 'does_feature_selection',
+                 'multiclass', 'oneclass', 'does_feature_selection',
                  'random_tie_breaking']
     # XXX: later 'kernel-based'?
 
@@ -310,11 +312,16 @@ class SMLR(Classifier):
         return cycles
 
 
+    @due.dcite(
+        Doi('10.1109/TPAMI.2005.127'),
+        path="mvpa2.clfs.smlr:SMLR",
+        description="Sparse multinomial-logistic regression classifier",
+        tags=["implementation"])
     def _train(self, dataset):
         """Train the classifier using `dataset` (`Dataset`).
         """
         targets_sa_name = self.get_space()    # name of targets sa
-        targets_sa = dataset.sa[targets_sa_name] # actual targets sa
+        targets_sa = dataset.sa[targets_sa_name]  # actual targets sa
 
         # Process the labels to turn into 1 of N encoding
         uniquelabels = targets_sa.unique
@@ -356,9 +363,9 @@ class SMLR(Classifier):
         elif self.params.implementation.upper() == 'PYTHON':
             _stepwise_regression = self._python_stepwise_regression
         else:
-            raise ValueError, \
-                  "Unknown implementation %s of stepwise_regression" % \
-                  self.params.implementation
+            raise ValueError(
+                  "Unknown implementation %s of stepwise_regression" %
+                  self.params.implementation)
 
         # set the feature dimensions
         ns, nd = X.shape
@@ -367,10 +374,10 @@ class SMLR(Classifier):
         if self.params.fit_all_weights:
             c_to_fit = M
         else:
-            c_to_fit = M-1
+            c_to_fit = M - 1
 
         # Precompute what we can
-        auto_corr = ((M-1.)/(2.*M))*(np.sum(X*X, 0))
+        auto_corr = ((M - 1.) / (2. * M)) * (np.sum(X * X, 0))
         XY = np.dot(X.T, Y[:, :c_to_fit])
         lambda_over_2_auto_corr = (self.params.lm/2.)/auto_corr
 
@@ -378,11 +385,11 @@ class SMLR(Classifier):
         w = np.zeros((nd, c_to_fit), dtype=np.double)
         Xw = np.zeros((ns, c_to_fit), dtype=np.double)
         E = np.ones((ns, c_to_fit), dtype=np.double)
-        S = M*np.ones(ns, dtype=np.double)
+        S = M * np.ones(ns, dtype=np.double)
 
         # set verbosity
         if __debug__:
-            verbosity = int( "SMLR_" in debug.active )
+            verbosity = int("SMLR_" in debug.active)
             debug('SMLR_', 'Calling stepwise_regression. Seed %s' % self.params.seed)
         else:
             verbosity = 0
@@ -406,9 +413,9 @@ class SMLR(Classifier):
 
         if cycles >= self.params.maxiter:
             # did not converge
-            raise ConvergenceError, \
-                  "More than %d Iterations without convergence" % \
-                  (self.params.maxiter)
+            raise ConvergenceError(
+                "More than %d iterations without convergence" %
+                self.params.maxiter)
 
         # see if unsparsify the weights
         if self.params.unsparsify:
@@ -446,7 +453,7 @@ class SMLR(Classifier):
 
         if self.ca.is_enabled('feature_ids'):
             self.ca.feature_ids = np.where(np.max(np.abs(w[:dataset.nfeatures, :]),
-                                             axis=1)>0)[0]
+                                             axis=1) > 0)[0]
 
         # and a bias
         if self.params.has_bias:
@@ -470,39 +477,40 @@ class SMLR(Classifier):
 
         # loop over each column
         for i in range(weights.shape[1]):
-            w = weights[:,i]
+            w = weights[:, i]
 
             # get the nonzero ind
-            ind = w!=0
+            ind = w != 0
 
             # get the features with non-zero weights
-            a = b[:,ind]
+            a = b[:, ind]
 
             # predict all the data with the non-zero features
-            betas = np.linalg.lstsq(a,b)[0]
+            betas = np.linalg.lstsq(a, b)[0]
 
             # determine the R^2 for each feature based on the sum
             # squared prediction error
-            f = np.dot(a,betas)
-            sse = np.power((b-f),2).sum(0)
-            rsquare = np.zeros(sse.shape,dtype=sse.dtype)
-            gind = sst>0
-            rsquare[gind] = 1-(sse[gind]/sst[gind])
+            f = np.dot(a, betas)
+            sse = np.power((b - f), 2).sum(0)
+            rsquare = np.zeros(sse.shape, dtype=sse.dtype)
+            gind = sst > 0
+            rsquare[gind] = 1 - (sse[gind]/sst[gind])
 
             # derrive new weights by combining the betas and weights
             # scaled by the rsquare
-            new_weights[:,i] = np.dot(w[ind],betas)*rsquare
+            new_weights[:, i] = np.dot(w[ind], betas)*rsquare
 
         # take the tails
-        tozero = np.abs(new_weights) < self.params.std_to_keep*np.std(new_weights)
-        orig_zero = weights==0.0
+        tozero = np.abs(new_weights) < self.params.std_to_keep * np.std(new_weights)
+        orig_zero = weights == 0.0
         if orig_zero.sum() < tozero.sum():
             # should not end up with fewer than start
             tozero = orig_zero
         new_weights[tozero] = 0.0
 
-        debug('SMLR_', "Start nonzero: %d; Finish nonzero: %d" % \
-              ((weights!=0).sum(), (new_weights!=0).sum()))
+        if __debug__:
+            debug('SMLR_', "Start nonzero: %d; Finish nonzero: %d" %
+                  ((weights != 0).sum(), (new_weights != 0).sum()))
 
         return new_weights
 
@@ -597,7 +605,7 @@ class SMLRWeights(Sensitivity):
             debug('SMLR',
                   "Extracting weights for %d-class SMLR" %
                   (len(weights) + 1) +
-                  "Result: min=%f max=%f" %\
+                  "Result: min=%f max=%f" %
                   (np.min(weights), np.max(weights)))
 
         # limit the labels to the number of sensitivity sets, to deal

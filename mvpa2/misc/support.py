@@ -13,8 +13,12 @@ __docformat__ = 'restructuredtext'
 import itertools
 import math
 import random
-import re, os, sys
+import re
+import os
+from os.path import join as pathjoin
+import sys
 
+from itertools import product
 # for SmartVersion
 from distutils.version import Version
 
@@ -41,7 +45,7 @@ def reuse_absolute_path(file1, file2, force=False):
     """
     if not file2.startswith(os.path.sep) or force:
         # lets reuse path to file1
-        return os.path.join(os.path.dirname(file1), file2.lstrip(os.path.sep))
+        return pathjoin(os.path.dirname(file1), file2.lstrip(os.path.sep))
     else:
         return file2
 
@@ -230,6 +234,20 @@ def unique_combinations(L, n, sort=False):
     return res
 
 
+def xrandom_iterprod(n, *seq):
+    """Generate n random iterprod's from given sequences"""
+    ls = map(len, seq)
+    seen = set()
+    if n > np.prod(ls):
+        n = np.prod(ls)
+    while len(seen) < n:
+        sel = tuple(random.randint(0, l - 1) for l in ls)
+        if sel in seen:
+            continue
+        seen.add(sel)
+        yield [s[i] for s, i in zip(seq, sel)]
+
+
 ##REF: Name was automagically refactored
 def indent_doc(v):
     """Given a `value` returns a string where each line is indented
@@ -321,8 +339,8 @@ def version_to_tuple(v):
     of numerics and alpha numbers
     """
     if isinstance(v, basestring):
-        v = v.split('.')
-    elif isinstance(v, tuple) or isinstance(v, list):
+        v = map(str, v.split('.'))
+    elif isinstance(v, (tuple, list)):
         # assure tuple
         pass
     else:
@@ -339,18 +357,24 @@ def version_to_tuple(v):
         except ValueError:
             # try to split into sequences of literals and numerics
             suffix = x
+            resd_prev = {}
             while suffix != '':
                 res = regex.search(suffix)
                 if res:
                     resd = res.groupdict()
+                    if resd == resd_prev:
+                        # we are in a loop, nothing meaningful would come out
+                        vres += [suffix]
+                        break
+                    resd_prev = resd
                     if resd['numeric'] != '':
                         vres += [int(resd['numeric'])]
                     if resd['alpha'] != '':
                         vres += [resd['alpha']]
                     suffix = resd['suffix']
                 else:
-                    # We can't detech anything meaningful -- let it go as is
-                    resd += [suffix]
+                    # We can't detect anything meaningful -- let it go as is
+                    vres += [suffix]
                     break
     v = tuple(vres)
 
@@ -367,7 +391,15 @@ class SmartVersion(Version):
     So here is an ad-hoc and not as nice implementation
     """
 
+    def __reduce__(self):
+        """Rudimentary __reduce__ because Version is not derived from object"""
+        # parent class Version might not even assign any vstring when empty
+        return self.__class__, (getattr(self, 'vstring', ''),)
+
     def parse(self, vstring):
+        # Unicode gives grief on older releases and anyway arguably comparable
+        if isinstance(vstring, unicode):
+            vstring = str(vstring)
         self.vstring = vstring
         self.version = version_to_tuple(vstring)
 
@@ -381,7 +413,7 @@ class SmartVersion(Version):
             return ""
 
     def __cmp__(self, other):
-        if isinstance(other, (str, tuple, list)):
+        if isinstance(other, (str, unicode, tuple, list)):
             other = SmartVersion(other)
         elif isinstance(other, SmartVersion):
             pass
@@ -404,6 +436,17 @@ class SmartVersion(Version):
 
         # Do ad-hoc comparison of strings
         i = 0
+
+        # if any of the versions was not parsed (e.g. if None was provided),
+        # comparison can't be performed really unless both have no version
+        # assigned
+        if (not hasattr(self, 'version')) and (not hasattr(other, 'version')):
+            return 0
+
+        for v in (self, other):
+            if not (hasattr(v, 'version')):
+                raise ValueError('%s has no version information' % v)
+
         s, o = self.version, other.version
         regex_prerelease = re.compile('~|-?dev|-?rc|-?svn|-?pre|-?beta|-?alpha', re.I)
         for i in xrange(max(len(s), len(o))):
@@ -586,7 +629,7 @@ class Event(dict):
 
         # basic checks
         for k in Event._MUSTHAVE:
-            if not self.has_key(k):
+            if not k in self:
                 raise ValueError, "Event must have '%s' defined." % k
 
 
@@ -630,7 +673,7 @@ class Event(dict):
             offset = onset - (out['onset'] * dt)
             out[offsetattr] = offset
 
-        if out.has_key('duration'):
+        if 'duration' in out:
             # how many timepoint cover the event (from computed onset
             # to the one timepoint just after the end of the event
             out['duration'] = int(np.ceil((onset + out['duration']) / dt) \
@@ -718,12 +761,13 @@ def get_limit_filter(limit, collection):
 
     Parameters
     -----------
-    limit : None or str or dict
-      If ``None`` all elements will be included in the filter. If an single
+    limit : None or str or list or dict
+      If ``None`` all elements will be included in the filter. If a single
       attribute name is given, its unique values will be used to define
-      chunks of data that are marked in the filter as unique integers. Finally,
-      if a dictionary is provided, its keys define attribute names and its
-      values (single value or sequence thereof) attribute value, where all
+      chunks of data that are marked in the filter as unique integers.
+      If a list given, then combination of those attributes is used as a pair.
+      Finally, if a dictionary is provided, its keys define attribute names and
+      its values (single value or sequence thereof) attribute value, where all
       key-value combinations across all given items define a "selection" of
       elements to be included in the filter (OR combination).
     collection : Collection
@@ -735,8 +779,8 @@ def get_limit_filter(limit, collection):
     -------
     array
       This array is either boolean, where a `True` elements represent including
-      in the filter, or the array is numerical, where it unique integer values
-      defines individual chunks of a filter.
+      in the filter, or the array is numerical, where its unique integer values
+      define individual chunks of a filter.
     """
     attr_length = collection.attr_length
 
@@ -751,6 +795,15 @@ def get_limit_filter(limit, collection):
         limit_filter = np.zeros(attr_length, dtype='int')
         for i, uv in enumerate(lattr.unique):
             limit_filter[lattr_data == uv] = i
+    elif isinstance(limit, list):
+        limit = list(set(limit))  # so if someone insane specified the same attr twice
+        limit_filter = np.zeros(attr_length, dtype='int')
+        for i, uvs in enumerate(product(*(collection[x].unique for x in limit))):
+            uv_filter = np.ones(attr_length, dtype=bool)
+            for l, uv in zip(limit, uvs):
+                np.logical_and(uv_filter, collection[l].value==uv,
+                               out=uv_filter)
+            limit_filter[uv_filter] = i
     elif isinstance(limit, dict):
         limit_filter = np.zeros(attr_length, dtype='bool')
         for a in limit:

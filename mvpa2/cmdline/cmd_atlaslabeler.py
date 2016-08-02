@@ -72,7 +72,7 @@ def select_from_volume_iterator(volFileName, lt=None, ut=None):
         raise IOError("Cannot open image file %s" % volFileName)
 
     volData = volFile.get_data()
-    voxdim = volFile.get_header().get_zooms()[:3]
+    voxdim = volFile.header.get_zooms()[:3]
     if lt is None and ut is None:
         mask = volData != 0.0
     elif lt is None and ut is not None:
@@ -108,9 +108,9 @@ def parsed_coordinates_iterator(
                       % (line, parseString))
         else:
             r = match.groupdict()
-            if r.has_key('v'): v = dtype(r['v'])
+            if 'v' in r: v = dtype(r['v'])
             else:              v = 0.0
-            if r.has_key('t'): t = dtype(r['t'])
+            if 't' in r: t = dtype(r['t'])
             else:              t = 0.0
             yield (v, ctype(r['x']), ctype(r['y']), ctype(r['z']), t)
 
@@ -124,7 +124,7 @@ def present_labels(args, labels):
             # XXX warning -- some inconsistencies in atlas.py
             #     need refactoring
             s = label['label'] #.text
-            if label.has_key('prob') and not args.createSummary:
+            if 'prob' in label and not args.createSummary:
                 s += "(%d%%%%)" % label['prob']
             res += [s]
         if res == []:
@@ -197,7 +197,7 @@ def get_summary(args, summary, output):
                 coord = volQForm[summary_['maxcoord']]
                 output.write(" %r" % (tuple(coord),))
 
-        if args.createSummary>3 and summary_.has_key('distances'):
+        if args.createSummary>3 and 'distances' in summary_:
             # if we got statistics over referenced voxels
             Nr, mean, std, minv, maxv, ssummary = \
                 statistics(summary_['distances'])
@@ -470,7 +470,7 @@ def run(args):
             coordsIterator = select_from_volume_iterator(
                 infile, args.lowerThreshold, args.upperThreshold)
             assert(coordT is None)
-            coordT = Linear(niftiInput.get_header().get_qform())
+            coordT = Linear(niftiInput.header.get_qform())
             # lets store volumeQForm for possible conversion of voxels into coordinates
             volQForm = coordT
             # previous iterator returns space coordinates
@@ -494,7 +494,7 @@ def run(args):
 
     if not args.forbidDirectMapping \
            and niftiInput is not None and not args.transformationFile:
-        akwargs = {'resolution': niftiInput.get_header().get_zooms()[0]}
+        akwargs = {'resolution': niftiInput.header.get_zooms()[0]}
         query_voxel = True   # if we can query directly by voxel, do so
 
         akwargs.update(akwargs_common)
@@ -511,13 +511,13 @@ def run(args):
                 " it misspecified, or use -T to provide transformation. Trying"
                 " to proceed" %(args.inputSpace, atlas.space))
             query_voxel = False
-        elif not (niftiInput.get_header().get_qform() == atlas._image.get_header().get_qform()).all():
+        elif not (niftiInput.header.get_qform() == atlas._image.header.get_qform()).all():
             if args.atlasImageFile is None:
                 warning(
                     "Cannot do direct mapping between files with different qforms."
                     " Please provide original transformation (-T)."
                     "\n Input qform:\n%s\n Atlas qform: \n%s"
-                    %(niftiInput.get_header().get_qform(), atlas._image.get_header().get_qform), 1)
+                    %(niftiInput.header.get_qform(), atlas._image.header.get_qform), 1)
                 # reset ability to query by voxels
                 query_voxel = False
             else:
@@ -525,8 +525,8 @@ def run(args):
                     "QForms are different between input image and "
                     "provided atlas image."
                     "\n Input qform of %s:\n%s\n Atlas qform of %s:\n%s"
-                    %(infile, niftiInput.get_header().get_qform(),
-                      args.atlasImageFile, atlas._image.get_header().get_qform()), 1)
+                    %(infile, niftiInput.header.get_qform(),
+                      args.atlasImageFile, atlas._image.header.get_qform()), 1)
         else:
             coordT = None
     else:
@@ -645,7 +645,7 @@ def run(args):
             try:
                 int_level = int(level)
             except:
-                if atlas.levels.has_key(level):
+                if level in atlas.levels:
                     int_level = atlas.levels[level].index
                 else:
                     raise RuntimeError(
@@ -673,7 +673,7 @@ def run(args):
                   "but input wasn't a volume"
             sys.exit(1)
         ni_dump = nb.load(infile)
-        ni_dump_data = np.zeros(ni_dump.get_header().get_data_shape()[:3] + (len(args.levels),))
+        ni_dump_data = np.zeros(ni_dump.header.get_data_shape()[:3] + (len(args.levels),))
 
     # Also check if we have provided voxels but not querying by voxels
     if args.input_voxels:
@@ -728,17 +728,17 @@ def run(args):
                 #if len(voxel_label):
                 #   assert(voxel_label['index'] == ind)
                 summaryIndex += text + " / "
-            if not summary.has_key(summaryIndex):
+            if not summaryIndex in summary:
                 summary[summaryIndex] = {'values':[], 'max':value,
                                          'maxcoord':coord_orig}
-                if voxel.has_key('voxel_referenced'):
+                if 'voxel_referenced' in voxel:
                     summary[summaryIndex]['distances'] = []
             summary_ = summary[summaryIndex]
             summary_['values'].append(value)
             if summary_['max'] < value:
                 summary_['max'] = value
                 summary_['maxcoord'] = coord_orig
-            if voxel.has_key('voxel_referenced'):
+            if 'voxel_referenced' in voxel:
                 if voxel['voxel_referenced'] and voxel['distance']>=1e-3:
                     verbose(5, 'Appending distance %e for voxel at %s'
                             % (voxel['distance'], voxel['coord_orig']))
@@ -788,7 +788,7 @@ def run(args):
         fileIn.close()
 
     if args.dumpmapFile:
-        ni_dump = nb.Nifti1Image(ni_dump_data, None, ni_dump.get_header())
+        ni_dump = nb.Nifti1Image(ni_dump_data, None, ni_dump.header)
         ni_dump.to_filename(args.dumpmapFile)
 
     if args.createSummary:

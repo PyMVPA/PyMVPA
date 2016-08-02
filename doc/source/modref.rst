@@ -69,6 +69,9 @@ Datasets: Input, Output, Storage and Preprocessing
    datasets.cosmo
    datasets.eeglab
    datasets.miscfx
+   datasets.sources.native
+   datasets.sources.bids
+   datasets.sources.openfmri
    datasets.sources.skl_data
 
 
@@ -198,6 +201,7 @@ Additional Algorithms
    :toctree: generated
 
    algorithms.hyperalignment
+   algorithms.group_clusterthr
 
 
 Miscellaneous
@@ -273,7 +277,6 @@ Basic Plotting Utilities
    misc.fsl.melodic
    misc.io
    misc.io.base
-   misc.io.hamster
    misc.io.meg
    support.nibabel
    support.nibabel.afni_niml_annot
@@ -286,4 +289,6 @@ Basic Plotting Utilities
    support.nibabel.surf_caret
    support.nibabel.surf_gifti
    support.nibabel.surf
-   
+
+
+.. include:: link_names.txt

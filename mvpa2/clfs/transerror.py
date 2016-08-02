@@ -29,17 +29,24 @@ from mvpa2.base.state import ConditionalAttribute, ClassWithCollections, \
      UnknownStateError
 from mvpa2.base.dochelpers import enhanced_doc_string, table2string
 from mvpa2.clfs.stats import auto_null_dist
+from mvpa2.support.due import due, Doi
 
 if __debug__:
     from mvpa2.base import debug
 
-if externals.exists('scipy'):
+import numpy as np
+if 'nanmean' in dir(np):
+    from numpy import nanmean
+elif externals.exists('scipy'):
     from scipy.stats.stats import nanmean
+else:
+    from mvpa2.clfs.stats import nanmean
+
+if externals.exists('scipy'):
     from mvpa2.misc.stats import chisquare
     from scipy.stats import linregress, friedmanchisquare
     from mvpa2.misc.errorfx import corr_error, corr_error_prob
 else:
-    from mvpa2.clfs.stats import nanmean
     chisquare = None
     linregress = None
 
@@ -100,8 +107,8 @@ class SummaryStatistics(object):
         self._stats = {}
         """Dictionary to keep statistics. Initialized here to please pylint"""
 
-        if not targets is None or not predictions is None:
-            if not targets is None and not predictions is None:
+        if targets is not None or predictions is not None:
+            if targets is not None and predictions is not None:
                 self.add(targets=targets, predictions=predictions,
                          estimates=estimates)
             else:
@@ -575,7 +582,7 @@ class ConfusionMatrix(SummaryStatistics):
         super(ConfusionMatrix, self)._compute()
 
         if __debug__:
-            if not self.__matrix is None:
+            if self.__matrix is not None:
                 debug("LAZY",
                       "Have to recompute %s#%s" \
                         % (self.__class__.__name__, id(self)))
@@ -890,7 +897,7 @@ class ConfusionMatrix(SummaryStatistics):
 
 
     def plot(self, labels=None, numbers=False, origin='upper',
-             numbers_alpha=None, xlabels_vertical=True, numbers_kwargs={},
+             numbers_alpha=None, xlabels_vertical=True, numbers_kwargs=None,
              **kwargs):
         """Provide presentation of confusion matrix in image
 
@@ -922,6 +929,8 @@ class ConfusionMatrix(SummaryStatistics):
         -------
          (fig, im, cb) -- figure, imshow, colorbar
         """
+        if numbers_kwargs is None:
+            numbers_kwargs = {}
 
         externals.exists("pylab", raise_=True)
         import pylab as pl
@@ -1229,7 +1238,7 @@ class BayesConfusionHypothesis(Node):
       [[0, 1], [2], [3, 4, 5]]
 
     This hypothesis represent the state where class 0 and 1 cannot be
-    distinguish from each other, but both 0 and 1 together can be distinguished
+    distinguished from each other, but both 0 and 1 together can be distinguished
     from class 2 and the group of 3, 4, and 5 -- where classes from the later
     group cannot be distinguished from one another.
 
@@ -1259,7 +1268,7 @@ class BayesConfusionHypothesis(Node):
           Name of the sample attribute in the output dataset where the
           hypothesis partition configurations will be stored.
         prior_Hs : array
-          Vector of priors for each hypotheses. Typically used in conjuction
+          Vector of priors for each hypotheses. Typically used in conjunction
           with an explicit set of possible hypotheses (see ``hypotheses``).
           If ``None`` a flat prior is assumed.
         log : bool
@@ -1282,6 +1291,10 @@ class BayesConfusionHypothesis(Node):
         self._postprob = postprob
         self._hypotheses = hypotheses
 
+    @due.dcite(
+        Doi("10.1016/j.patcog.2011.04.025"),
+        description="Bayesian hypothesis testing",
+        tags=["reference-implementation"])
     def _call(self, ds):
         from mvpa2.support.bayes.partitioner import Partition
         from mvpa2.support.bayes.partial_independence import compute_logp_H
@@ -1634,7 +1647,7 @@ class ClassifierError(ClassWithCollections):
     def _precall(self, testdataset, trainingdataset=None):
         """Generic part which trains the classifier if necessary
         """
-        if not trainingdataset is None:
+        if trainingdataset is not None:
             if self.__train:
                 # XXX can be pretty annoying if triggered inside an algorithm
                 # where it cannot be switched of, but retraining might be
@@ -1658,7 +1671,7 @@ class ClassifierError(ClassWithCollections):
 
         if self.__clf.ca.is_enabled('trained_targets') \
                and not self.__clf.__is_regression__ \
-               and not testdataset is None:
+               and testdataset is not None:
             newlabels = set(testdataset.sa[self.clf.get_space()].unique) \
                         - set(self.__clf.ca.trained_targets)
             if len(newlabels)>0:
@@ -1751,7 +1764,7 @@ class ConfusionBasedError(ClassifierError):
         self.__confusion_state = confusion_state
         """What state to extract from"""
 
-        if not clf.ca.has_key(confusion_state):
+        if not confusion_state in clf.ca:
             raise ValueError, \
                   "Conditional attribute %s is not defined for classifier %r" % \
                   (confusion_state, clf)

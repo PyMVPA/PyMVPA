@@ -47,7 +47,11 @@ _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
         'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet',
         'gnb', 'plr', 'rpy2', 'swig', 'skl', 'lda', 'qda',
-        'random-forest', 'extra-trees', 'random']
+        'random-forest', 'extra-trees', 'random',
+        # oneclass-binary can provide binary output for the labels
+        # oneclass would always output a single label but with
+        #  estimates/probabilities of interest
+        'oneclass', 'oneclass-binary']
 
 class Warehouse(object):
     """Class to keep known instantiated classifiers
@@ -351,7 +355,11 @@ if externals.exists('skl'):
             submod_ = __import__('scikits.learn.%s' % submod, fromlist=[submod])
         return getattr(submod_, class_)
 
-    sklLDA = _skl_import('lda', 'LDA')
+    if _skl_version >= "0.17":
+        sklLDA = _skl_import('discriminant_analysis', 'LinearDiscriminantAnalysis')
+    else:
+        sklLDA = _skl_import('lda', 'LDA')
+
     from mvpa2.clfs.skl.base import SKLLearnerAdapter
     clfswh += SKLLearnerAdapter(sklLDA(),
                                 tags=['lda', 'linear', 'multiclass', 'binary'],
@@ -363,6 +371,7 @@ if externals.exists('skl'):
         clfswh += SKLLearnerAdapter(sklRandomForestClassifier(),
                                      tags=['random-forest', 'linear', 'non-linear',
                                            'binary', 'multiclass',
+                                           'oneclass',
                                            'non-deterministic', 'needs_population',],
                                      descr='skl.RandomForestClassifier()')
 
@@ -378,6 +387,7 @@ if externals.exists('skl'):
         clfswh += SKLLearnerAdapter(sklExtraTreesClassifier(),
                                      tags=['extra-trees', 'linear', 'non-linear',
                                            'binary', 'multiclass',
+                                           'oneclass',
                                            'non-deterministic', 'needs_population',],
                                      descr='skl.ExtraTreesClassifier()')
 
@@ -542,6 +552,18 @@ if len(clfswh['linear', 'svm']) > 0:
                      0.2, mode='discard', tail='lower')),
              descr="LinSVM with nested-CV RFE")
 
+    _clfs_splitrfe_svm_anova = \
+         FeatureSelectionClassifier(
+             linearSVMC.clone(),
+             SplitRFE(
+                 linearSVMC.clone(),
+                 OddEvenPartitioner(),
+                 fselector=FractionTailSelector(
+                     0.2, mode='discard', tail='lower'),
+                 fmeasure=OneWayAnova()),
+             descr="LinSVM with nested-CV Anova RFE")
+    clfswh += _clfs_splitrfe_svm_anova
+
     clfswh += \
         FeatureSelectionClassifier(
             linearSVMC.clone(),
@@ -658,7 +680,7 @@ if len(clfswh['linear', 'svm']) > 0:
     #   FeatureSelectionClassifier(
     #    clf = LinearCSVMC(),
     #    feature_selection = RFE(             # on features selected via RFE
-    #        sensitivity_analyzer=\
+    #        sensitivity_analyzer=
     #            rfesvm.get_sensitivity_analyzer(postproc=absolute_features()),
     #        transfer_error=TransferError(rfesvm),
     #        stopping_criterion=FixedErrorThresholdStopCrit(0.05),
@@ -675,7 +697,7 @@ if len(clfswh['linear', 'svm']) > 0:
     #   FeatureSelectionClassifier(
     #    clf = LinearCSVMC(),
     #    feature_selection = RFE(             # on features selected via RFE
-    #        sensitivity_analyzer=\
+    #        sensitivity_analyzer=
     #            rfesvm.get_sensitivity_analyzer(postproc=absolute_features()),
     #        transfer_error=TransferError(rfesvm),
     #        stopping_criterion=FixedErrorThresholdStopCrit(0.05),

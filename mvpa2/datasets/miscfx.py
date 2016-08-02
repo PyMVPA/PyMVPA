@@ -342,7 +342,7 @@ def summary(dataset, stats=True, lstats='auto', sstats='auto', idhash=False,
         except KeyError, e:
             s += 'No per %s/%s due to %r' % (targets_attr, chunks_attr, e)
 
-    if sstats and not targets_attr is None:
+    if sstats and targets_attr is not None:
         if len(dataset.sa[targets_attr].unique) < maxt:
             ss = SequenceStats(dataset.sa[targets_attr].value)
             s += str(ss)
@@ -420,7 +420,7 @@ class SequenceStats(dict):
     """Simple helper to provide representation of sequence statistics
 
     Matlab analog:
-    http://cfn.upenn.edu/aguirre/code/matlablib/mseq/mtest.m
+    https://cfn.upenn.edu/aguirre/wiki/public:m_sequences_code:mtest.m
 
     WARNING: Experimental -- API might change without warning!
     Current implementation is ugly!

@@ -144,6 +144,7 @@ Notes
 __docformat__ = 'restructuredtext'
 
 from mvpa2.base import externals
+
 externals.exists('scipy', raise_=True)
 
 from scipy.io import loadmat, savemat, matlab
@@ -152,10 +153,12 @@ import numpy as np
 from mvpa2.datasets.base import Dataset
 from mvpa2.featsel.base import StaticFeatureSelection
 from mvpa2.mappers.base import ChainMapper
-from mvpa2.base.collections import Collection #ArrayCollectable
+from mvpa2.base.collections import Collection  # ArrayCollectable
 from mvpa2.misc.neighborhood import QueryEngineInterface
 from mvpa2.measures.searchlight import Searchlight
 from mvpa2.base import debug, warning
+from mvpa2.mappers.flatten import FlattenMapper
+
 
 
 def _numpy_array_astype_unsafe(arr, type_):
@@ -172,6 +175,8 @@ def _numpy_array_astype_unsafe(arr, type_):
     else:
         return arr.astype(type_, casting='unsafe')
 
+
+
 def _from_singleton(x, ndim=2):
     '''
     If x is an array of shape (1,1,...1) with ndim dimensions it returns the
@@ -180,10 +185,8 @@ def _from_singleton(x, ndim=2):
     s = (1,) * ndim
     if x.shape != s:
         raise ValueError("Expected singleton shape %s for %s, found %s" %
-                                (s, x, x.shape,))
+                         (s, x, x.shape,))
     return x[(0,) * ndim]
-
-
 
 # dictionary indicating whether elements in .fa, .sa and .a must be
 # transposed for CoSMoMVPA data representation. As in CoSMoMVPA a dataset
@@ -191,6 +194,8 @@ def _from_singleton(x, ndim=2):
 # transpose
 _attr_fieldname2do_transpose = dict(fa=True, sa=False, a=False)
 _is_private_key = lambda s: s.startswith('__') and s.endswith('__')
+
+
 
 def _loadmat_internal(fn):
     '''
@@ -287,6 +292,7 @@ def _attributes_cosmo2dict(cosmo):
     return pymvpa_attributes
 
 
+
 def _attributes_dict2cosmo(ds):
     '''
     Converts attributes in Dataset to CoSMoMVPA-like attributes
@@ -323,31 +329,40 @@ def _attributes_dict2cosmo(ds):
             for k in attr_collection:
                 value = attr_collection[k].value
 
-                if len(value.shape) == 1:
-                    # transform vectors (shape=(P,)) to vectors in matrix
-                    # form (shape=(1,P))
-                    value = np.reshape(value, (-1, 1))
+                if isinstance(value, tuple):
+                    value = np.asarray(value)
 
-                if do_transpose:
-                    # feature attribute case, to match dimensionality
-                    # in second dimension
-                    value = value.T
+                try:
+                    if len(value.shape) == 1:
+                        # transform vectors (shape=(P,)) to vectors in matrix
+                        # form (shape=(1,P))
+                        value = np.reshape(value, (-1, 1))
+
+                    if do_transpose:
+                        # feature attribute case, to match dimensionality
+                        # in second dimension
+                        value = value.T
+                except AttributeError:
+                    # not supported data element, skip
+                    continue
 
                 dtypes.append((k, 'O'))
                 values.append(value)
 
-            dtype = np.dtype(dtypes)
-            arr = np.array([[tuple(values)]], dtype=dtype)
+            if len(dtypes) > 0:
+                dtype = np.dtype(dtypes)
+                arr = np.array([[tuple(values)]], dtype=dtype)
 
-            cosmo[fieldname] = arr
+                cosmo[fieldname] = arr
 
     return cosmo
 
 
 
-def _mat_replace_matlab_function_by_string(x):
+def _mat_replace_functions_by_string(x):
     '''
-    Replace matlab function handles (as read by matread) by a string.
+    Replace matlab function handles (as read by matread) and FlattenMapper
+    objects by a string.
 
     Parameters
     ----------
@@ -356,23 +371,28 @@ def _mat_replace_matlab_function_by_string(x):
     Returns
     -------
     y : object
-        if x is a scipy.io.matlab.mio5_params.MatlabFunction then
+        if x is a scipy.io.matlab.mio5_params.MatlabFunction or
+        an mvpa2.mappers.flatten.FlattenMapper instance, then
         y is a string representation of x, otherwise y is equal to x
 
     Notes
     -----
-    scipy can read but not write Matlab function hanndles; the use case of
+    scipy can read but not write Matlab function handles; the use case of
     this function is to replace such function handles by something that scipy
     can write
     '''
 
-    if isinstance(x, matlab.mio5_params.MatlabFunction):
+    unsupported_classes = (matlab.mio5_params.MatlabFunction,
+                           FlattenMapper)
+
+    if isinstance(x, unsupported_classes):
         return np.asarray('%s' % x)
 
     return None
 
 
-def _mat_make_saveable(x, fixer=_mat_replace_matlab_function_by_string):
+
+def _mat_make_saveable(x, fixer=_mat_replace_functions_by_string):
     '''
     Make a Matlab data structure saveable by scipy's matsave
 
@@ -411,7 +431,7 @@ def _mat_make_saveable(x, fixer=_mat_replace_matlab_function_by_string):
     if type(x) is dict:
         # use recursion
         return dict((k, _mat_make_saveable(v, fixer=fixer))
-                        for k, v in x.iteritems())
+                    for k, v in x.iteritems())
 
     elif isinstance(x, np.ndarray) and x.dtype.names is None:
         # standard array or object array
@@ -449,6 +469,7 @@ def _mat_make_saveable(x, fixer=_mat_replace_matlab_function_by_string):
         raise TypeError('Unexpected type %s in %s' % (type(x), x))
 
 
+
 def _check_cosmo_dataset(cosmo):
     '''
     Helper function to ensure a cosmo input for cosmo_dataset is valid.
@@ -469,16 +490,21 @@ def _check_cosmo_dataset(cosmo):
 
     # ignore NaNs and infinity
     nonzero_msk = np.logical_and(np.isfinite(samples), samples != 0)
-    max_nonzero = np.max(np.abs(samples[nonzero_msk]))
 
-    # see how many decimals in the largest absolute value
-    decimals_nonzero = np.log10(max_nonzero)
+    if np.any(nonzero_msk):
+        max_nonzero = np.max(np.abs(samples[nonzero_msk]))
 
-    if abs(decimals_nonzero) > warn_for_extreme_values_decimals:
-        msg = ('Samples have extreme values, maximum absolute value is %s; '
-             'This may affect some analyses. Considering scaling the samples, '
-             'e.g. by a factor of 10**%d ' % (max_nonzero, -decimals_nonzero))
-        warning(msg)
+        # see how many decimals in the largest absolute value
+        decimals_nonzero = np.log10(max_nonzero)
+
+        if abs(decimals_nonzero) > warn_for_extreme_values_decimals:
+            msg = (
+                'Samples have extreme values, maximum absolute value is %s; '
+                'This may affect some analyses. Considering scaling the samples, '
+                'e.g. by a factor of 10**%d ' % (
+                    max_nonzero, -decimals_nonzero))
+            warning(msg)
+
 
 
 def cosmo_dataset(cosmo):
@@ -518,6 +544,7 @@ def cosmo_dataset(cosmo):
     return Dataset(**args)
 
 
+
 def map2cosmo(ds, filename=None):
     '''
     Convert PyMVPA Dataset to CoSMoMVPA struct saveable by scipy's savemat
@@ -553,6 +580,7 @@ def map2cosmo(ds, filename=None):
         savemat(filename, cosmo_fixed)
 
     return cosmo_fixed
+
 
 
 def from_any(x):
@@ -609,6 +637,7 @@ def from_any(x):
     raise ValueError('Unrecognized input %s' % x)
 
 
+
 class CosmoQueryEngine(QueryEngineInterface):
     '''
     queryengine for neighborhoods defined in CoSMoMVPA.
@@ -643,6 +672,7 @@ class CosmoQueryEngine(QueryEngineInterface):
     >> map2cosmo(ds_res,'result.mat')
 
     '''
+
     def __init__(self, mapping, a=None, fa=None):
         '''
         Parameters
@@ -700,16 +730,16 @@ class CosmoQueryEngine(QueryEngineInterface):
             if not np.isscalar(k):
                 raise ValueError('Key %s not a scalar' % k)
             if not isinstance(k, int):
-                raise ValueError('Keys %s must be int, found %s' % (k, type(k)))
+                raise ValueError(
+                    'Keys %s must be int, found %s' % (k, type(k)))
             if not isinstance(v, np.ndarray):
                 raise TypeError('Value %s for key %s must be numpy array' %
-                                                                    (v, k))
+                                (v, k))
             if not np.issubdtype(np.int_, v.dtype):
                 raise ValueError('Value %s for key %s must be int' % (v, k))
 
-
     @classmethod
-    def from_mat(cls, neighbors, a=None, fa=None):
+    def from_mat(cls, neighbors, a=None, fa=None, origin=None):
         '''
         Create CosmoQueryEngine from mat struct
 
@@ -723,10 +753,15 @@ class CosmoQueryEngine(QueryEngineInterface):
             dataset attributes to be used for the output of a Searchlight
         fa: None or dict or ArrayCollectable
             dataset attributes to be used for the output of a Searchlight
+        origin:
+            Optional contents of .a and .fa of dataset indexed by neighbors;
+            its content is ignored
 
         Notes
         -----
-        Empty elements are ignored
+        Empty elements are ignored.
+        Future implementations may store the origin element, and check that
+        its contents agrees with a dataset when this instances trains on it.
         '''
 
         neighbors_vec = neighbors.ravel()
@@ -751,7 +786,6 @@ class CosmoQueryEngine(QueryEngineInterface):
 
         return cls(mapping, a=a, fa=fa)
 
-
     def __repr__(self):
         '''
         Return representation of this instance
@@ -772,10 +806,10 @@ class CosmoQueryEngine(QueryEngineInterface):
         ids = self.ids
 
         return ('%s(%d center ids (%d .. %d), <fa: %s>, <a: %s>' %
-                        (self.__class__.__name__, len(ids),
-                         np.min(ids), np.max(ids),
-                         ', '.join(template.fa.keys()),
-                         ', '.join(template.a.keys())))
+                (self.__class__.__name__, len(ids),
+                 np.min(ids), np.max(ids),
+                 ', '.join(template.fa.keys()),
+                 ', '.join(template.a.keys())))
 
     def __reduce__(self):
         '''
@@ -866,7 +900,7 @@ class CosmoQueryEngine(QueryEngineInterface):
         '''
         if not 'center_ids' in ds.fa:
             raise KeyError('Dataset seems not to be the result from '
-                            'running a searchlight: missing .fa.center_ids')
+                           'running a searchlight: missing .fa.center_ids')
 
         center_ids = ds.fa.center_ids
 
@@ -889,6 +923,7 @@ class CosmoQueryEngine(QueryEngineInterface):
         ds_copy.fa.update(ds_template.fa)
 
         return ds_copy
+
 
 
 class CosmoSearchlight(Searchlight):
@@ -958,7 +993,7 @@ class CosmoSearchlight(Searchlight):
         expected_type = CosmoQueryEngine
         if not isinstance(queryengine, expected_type):
             raise TypeError('Queryengine should be a %s, found type %s' %
-                                    (expected_type, type(queryengine)))
+                            (expected_type, type(queryengine)))
 
         super(CosmoSearchlight, self).__init__(datameasure, queryengine,
                                                add_center_fa=add_center_fa,

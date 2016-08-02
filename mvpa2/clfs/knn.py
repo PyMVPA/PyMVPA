@@ -63,7 +63,7 @@ class kNN(Classifier):
         doc="Distances computed for each sample")
 
 
-    __tags__ = ['knn', 'non-linear', 'binary', 'multiclass']
+    __tags__ = ['knn', 'non-linear', 'binary', 'multiclass', 'oneclass']
 
     def __init__(self, k=2, dfx=squared_euclidean_distance,
                  voting='weighted', **kwargs):
@@ -94,9 +94,11 @@ class kNN(Classifier):
         self.__weights = None
 
 
-    def __repr__(self, prefixes=[]): # pylint: disable-msg=W0102
+    def __repr__(self, prefixes=None): # pylint: disable-msg=W0102
         """Representation of the object
         """
+        if prefixes is None:
+            prefixes = []
         return super(kNN, self).__repr__(
             ["k=%d" % self.__k, "dfx=%s" % self.__dfx,
              "voting=%s" % repr(self.__voting)]

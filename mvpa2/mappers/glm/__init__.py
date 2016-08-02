@@ -65,7 +65,7 @@ class GLMMapper(Mapper):
         """
         Parameters
         ----------
-        regs : list
+        regs : list or tuple
           Names of sample attributes to be extracted from an input dataset and
           used as design matrix columns.
         add_regs : tuple, optional
@@ -79,7 +79,7 @@ class GLMMapper(Mapper):
             kwargs['space'] = 'regressor_names'
         # so far no separate training
         Mapper.__init__(self, auto_train=True, **kwargs)
-        self.regs = list(regs)
+        self.regs = tuple(regs)
         if add_regs is None:
             add_regs = tuple()
         self.add_regs = tuple(add_regs)

@@ -1,4 +1,4 @@
-# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# emacs: -*- coding: utf-8; mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -26,12 +26,15 @@ from mvpa2.clfs.libsvmc import _svm
 from mvpa2.kernels.libsvm import LinearLSKernel
 from mvpa2.clfs.libsvmc.sens import LinearSVMWeights
 
+from mvpa2.support.due import due, Doi, BibTeX
+
+
 if __debug__:
     from mvpa2.base import debug
 
 # we better expose those since they are mentioned in docstrings
 # although pylint would not be happy
-from mvpa2.clfs.libsvmc._svmc import \
+from mvpa2.clfs.libsvmc.svmc import \
      C_SVC, NU_SVC, EPSILON_SVR, \
      NU_SVR, LINEAR, POLY, RBF, SIGMOID, \
      PRECOMPUTED, ONE_CLASS
@@ -60,15 +63,15 @@ class SVM(_SVM):
                             }
     _KNOWN_IMPLEMENTATIONS = {
         'C_SVC' : (_svm.svmc.C_SVC, ('C',),
-                   ('binary', 'multiclass'), 'C-SVM classification'),
+                   ('binary', 'multiclass', 'oneclass'), 'C-SVM classification'),
         'NU_SVC' : (_svm.svmc.NU_SVC, ('nu',),
-                    ('binary', 'multiclass'), 'nu-SVM classification'),
+                    ('binary', 'multiclass', 'oneclass'), 'nu-SVM classification'),
         'ONE_CLASS' : (_svm.svmc.ONE_CLASS, (),
-                       ('oneclass',), 'one-class-SVM'),
+                       ('oneclass-binary',), 'one-class-SVM'),
         'EPSILON_SVR' : (_svm.svmc.EPSILON_SVR, ('C', 'tube_epsilon'),
                          ('regression',), 'epsilon-SVM regression'),
         'NU_SVR' : (_svm.svmc.NU_SVR, ('nu', 'tube_epsilon'),
-                    ('regression',), 'nu-SVM regression')
+                    ('regression', 'oneclass'), 'nu-SVM regression')
         }
 
     __default_kernel_class__ = LinearLSKernel
@@ -93,7 +96,7 @@ class SVM(_SVM):
             for arg, impl in [ ('tube_epsilon', 'EPSILON_SVR'),
                                ('C', 'C_SVC'),
                                ('nu', 'NU_SVC') ]:
-                if kwargs.has_key(arg):
+                if arg in kwargs:
                     svm_impl = impl
                     if __debug__:
                         debug('SVM', 'No implementation was specified. Since '
@@ -120,10 +123,18 @@ class SVM(_SVM):
         """Holds the trained SVM."""
 
 
-
+    @due.dcite(
+        Doi('10.1145/1961189.1961199'),
+        description="LIBSVM: A library for support vector machines",
+        path="libsvm",
+        tags=["implementation"])
+    # TODO: conditioned citations for nu-SVM and one-class
+    #    B. Schölkopf, A. Smola, R. Williamson, and P. L. Bartlett. New support vector algorithms. Neural Computation, 12, 2000, 1207-1245.
+    #    B. Schölkopf, J. Platt, J. Shawe-Taylor, A. J. Smola, and R. C. Williamson. Estimating the support of a high-dimensional distribution. Neural Computation, 13, 2001, 1443-1471.
     def _train(self, dataset):
         """Train SVM
         """
+        super(SVM, self)._train(dataset)
         targets_sa_name = self.get_space()    # name of targets sa
         targets_sa = dataset.sa[targets_sa_name] # actual targets sa
 
@@ -162,18 +173,18 @@ class SVM(_SVM):
 
         """Store SVM parameters in libSVM compatible format."""
 
-        if self.params.has_key('C'):#svm_type in [_svm.svmc.C_SVC]:
+        if 'C' in self.params:  # svm_type in [_svm.svmc.C_SVC]:
             Cs = self._get_cvec(dataset)
-            if len(Cs)>1:
+            if len(Cs) > 1:
                 C0 = abs(Cs[0])
                 scale = 1.0/(C0)#*np.sqrt(C0))
                 # so we got 1 C per label
                 uls = self._attrmap.to_numeric(targets_sa.unique)
                 if len(Cs) != len(uls):
-                    raise ValueError, "SVM was parameterized with %d Cs but " \
-                          "there are %d labels in the dataset" % \
-                          (len(Cs), len(targets_sa.unique))
-                weight = [ c*scale for c in Cs ]
+                    raise ValueError(
+                        "SVM was parameterized with %d Cs but there are %d "
+                        "labels in the dataset" % (len(Cs), len(targets_sa.unique)))
+                weight = [c * scale for c in Cs]
                 # All 3 need to be set to take an effect
                 libsvm_param._set_parameter('weight', weight)
                 libsvm_param._set_parameter('nr_weight', len(weight))
@@ -214,7 +225,7 @@ class SVM(_SVM):
                 # want to move out logic from libsvm over here to base
                 # predictions on obtined values, or adjust libsvm to
                 # spit out values from predict() as well
-                if nlabels == 2:
+                if nlabels == 2 and self._svm_impl != 'ONE_CLASS':
                     # Apperently libsvm reorders labels so we need to
                     # track (1,0) values instead of (0,1) thus just
                     # lets take negative reverse
@@ -252,18 +263,17 @@ class SVM(_SVM):
         """
         s = super(SVM, self).summary()
         if self.trained:
-            s += '\n # of SVs: %d' % self.__model.get_total_n_sv()
+            s += '\n #SVs:%d' % self.__model.get_total_n_sv()
             try:
-                prm = _svm.svmc.svm_model_param_get(self.__model.model)
-                C = _svm.svmc.svm_parameter_C_get(prm)
+                param = self.__model.model.param
+                C = param.C
                 # extract information of how many SVs sit inside the margin,
                 # i.e. so called 'bounded SVs'
                 inside_margin = np.sum(
                     # take 0.99 to avoid rounding issues
-                    np.abs(self.__model.get_sv_coef())
-                          >= 0.99*_svm.svmc.svm_parameter_C_get(prm))
-                s += ' #bounded SVs:%d' % inside_margin
-                s += ' used C:%5g' % C
+                    np.abs(self.__model.get_sv_coef()) >= 0.99 * param.C)
+                s += ' #bounded_SVs:%d' % inside_margin
+                s += (' used_C:%-5g' % C).rstrip()
             except:
                 pass
         return s

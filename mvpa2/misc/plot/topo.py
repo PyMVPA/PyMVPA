@@ -113,7 +113,9 @@ def plot_head_topography(topography, sensorlocations, plotsensors=False,
 
     # fit topology onto xy projection of sphere
     topo = griddata(sproj[:, 0], sproj[:, 1],
-            np.ravel(np.array(topography)), x, y)
+                    np.ravel(np.array(topography)), x, y,
+                    interp='nn' if externals.versions['matplotlib'] < '1.4.0'
+                           else 'linear')
 
     # mask values outside the head
     if masked:

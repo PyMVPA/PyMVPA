@@ -32,7 +32,6 @@ from mvpa2.base.collections import \
      DatasetAttributesCollection, ArrayCollectable, SampleAttribute, \
      Collectable
 
-
 class myarray(np.ndarray):
     pass
 
@@ -93,7 +92,7 @@ def test_from_wizard():
     ok_(cds.a.keys() == ['random'])
 
     # there is not necessarily a mapper present
-    ok_(not ds.a.has_key('mapper'))
+    ok_(not 'mapper' in ds.a)
 
     # has to complain about misshaped samples attributes
     assert_raises(ValueError, Dataset.from_wizard, samples, labels + labels)
@@ -259,7 +258,7 @@ def test_basic_datamapping():
     ok_(isinstance(ds.samples, myarray))
 
     # mapper should end up in the dataset
-    ok_(ds.a.has_key('mapper'))
+    ok_('mapper' in ds.a)
 
     # check correct mapping
     ok_(ds.nsamples == 4)
@@ -977,6 +976,9 @@ def test_h5py_io(dsfile):
 
     # reload and check for identity
     ds2 = Dataset.from_hdf5(dsfile)
+
+    assert_datasets_equal(ds, ds2)
+    # Old tests -- better more than less ;)
     assert_array_equal(ds.samples, ds2.samples)
     for attr in ds.sa:
         assert_array_equal(ds.sa[attr].value, ds2.sa[attr].value)
@@ -1000,6 +1002,29 @@ def test_h5py_io(dsfile):
         pass
 
 
+@nodebug(['ID_IN_REPR', 'MODULE_IN_REPR'])
+@with_tempfile(suffix='.npz')
+def test_npz_io(dsfile):
+
+    # store random dataset to file
+    ds = datasets['3dlarge'].copy()
+
+    ds.a.pop('mapper')  # can't be saved
+    ds.to_npz(dsfile)
+
+    # reload and check for identity
+    ds2 = Dataset.from_npz(dsfile)
+    assert_datasets_equal(ds, ds2)
+
+    assert_array_equal(ds.samples, ds2.samples)
+
+    # But if we try to save with mapper -- it just gets ignored (warning is
+    # issued)
+    datasets['3dlarge'].to_npz(dsfile)
+    ds2_ = Dataset.from_npz(dsfile)
+    assert_datasets_equal(ds2, ds2_)
+
+
 def test_all_equal():
     # all these values are supposed to be different from each other
     # but equal to themselves
@@ -1012,11 +1037,16 @@ def test_all_equal():
     g = True
     h = ''
     i = 'a'
+    j = dict(bummer=np.arange(5))
 
-    values = [a, b, c, d, e, f, g, h, i]
+    values = [a, b, c, d, e, f, g, h, i, j]
     for ii, v in enumerate(values):
         for jj, w in enumerate(values):
-            assert_equal(all_equal(v, w), ii == jj)
+            # make deepcopy so == operator cannot cheat by checking id()
+            assert_equal(all_equal(copy.deepcopy(v),
+                                   copy.deepcopy(w)),
+                         ii == jj,
+                         msg='cmp(%s, %s)' % (type(v), type(w)))
 
     # ensure that this function behaves like the 
     # standard python '==' comparator for singulars
@@ -1056,3 +1086,88 @@ def test_assign_sa():
     assert('targets' in ds1.sa.keys()) # issue reported in 149
     assert_equal(ds1.sa['task'].name, 'task')
     assert_equal(ds1.sa['targets'].name,'targets')
+
+def test_dataset_select_getitem():
+    ds = Dataset(np.arange(15).reshape((5,-1)),
+                 sa=dict(targets=range(5),
+                         chunks=['a', 'b', 'a', 'b', 'a']),
+                 fa=dict(voxel_indices=[[1, 2], [2, 1], [0, 0]],
+                         roi=['x', 'x', 'z']))
+
+    # either sa or fa selection must be provided!
+    assert_raises(RuntimeError, ds.select)
+    assert_raises(RuntimeError, ds.select, strict=False)
+
+    sd = {'targets': range(3), 'chunks': 'a'}
+    for ds_ in (ds[sd], ds.select(sd), ds.select(sd, strict=False)):
+        assert(ds_.shape == (2, 3))
+        assert_array_equal(ds_.chunks, ['a', 'a'])
+
+    fd = {'roi': ['x']}
+    for ds_ in (ds[sd, fd ], ds.select(sd, fd), ds.select(sd, fd, strict=False)):
+        assert(ds_.shape == (2, 2))
+        assert_array_equal(ds_.chunks, ['a', 'a'])
+        assert_array_equal(ds_.fa.roi, ['x', 'x'])
+
+    fd = {'voxel_indices': [[1, 2]]}
+    for ds_ in (ds[:, fd], ds.select(None, fd), ds.select(fadict=fd), ds.select(fadict=fd, strict=False)):
+        assert(ds_.shape == (5, 1))
+        assert_array_equal(ds_.fa.voxel_indices, [[1, 2]])
+
+    # select two voxels, but also swap "selection" values out of order.
+    # result should still be not reordered features
+    ds_ = ds[{'chunks': ['b']},
+             {'voxel_indices': [[0, 0], [1, 2]]}]
+    assert(ds_.shape == (2, 2))
+    assert_array_equal(ds_.chunks, ['b', 'b'])
+    assert_array_equal(ds_.fa.voxel_indices, [[1, 2], [0, 0]])
+
+    for m in (ds.__getitem__, ds.select):
+        assert_raises(ValueError, m, {'invalid': [1]})
+    # we are strict for now, to avoid human typos in specifying which items
+    # to pick up -- if none was matching -- error!
+    assert_raises(ValueError, ds.__getitem__, {'targets': ['nonexisting']})
+    assert_raises(ValueError, ds.__getitem__, {'targets': [0, 999]})
+    # but allow loose matching with strict=False
+    ds_ = ds.select({'targets': [0, 999]}, strict=False)
+    assert_array_equal(ds[{'targets': [0]}].samples, ds_.samples)
+    assert_true(np.all(ds_.sa.targets == 0))
+
+    # Let's just test collection's function directly regarding correct operation
+    # on difficult cases
+    voxel_indices = np.array([[[1, 2, 3], [2, 1, 1]],
+                              [[2, 1, 1], [2, 1, 1]],
+                              [[1, 2, 3], [1, 2, 3]],
+                              [[4, 4, 4], [4, 4, 4]],
+                              [[2, 1, 1], [2, 1, 1]],
+                              ])
+    cmp = FeatureAttributesCollection._compare_to_value
+    for strict in [True, False]:
+        assert_raises(ValueError, cmp, voxel_indices, [1, 2, 3], strict=strict)
+        assert_raises(ValueError, cmp, voxel_indices, 4, strict=strict)
+        assert_raises(ValueError, cmp, voxel_indices, [[1, 2, 3]], strict=strict)
+    assert_array_equal(cmp(voxel_indices, [[2, 1, 1], [2, 1, 1]]),
+                       [False, True, False, False, True])
+    # matching compatible elements should puke if not present, unless strict=False
+    assert_raises(ValueError, cmp, voxel_indices, [[2, 1, 1], [2, 1, 999]])
+    assert_array_equal(cmp(voxel_indices, [[2, 1, 1], [2, 1, 999]], strict=False),
+                       [False, False, False, False, False])
+
+
+def test_attributes_match():
+    col = FeatureAttributesCollection({'roi': ['a', 'b', 'c', 'a'],
+                                       'coord': [[0, 1], [0, 2], [0, 1], [0, 2]]})
+    assert_array_equal(col.match(dict(roi=['a', 'c'])), [True, False, True, True])
+    assert_array_equal(col.match(dict(roi=['a', 'c'], coord=[[0, 1]])),
+                       [True, False, True, False])
+    # by default we are strict
+    assert_raises(ValueError, col.match, dict(roi=['a', 'c', 'xxx']))
+    # but otherwise should just ignore absent items completely
+    # logic:  e.g. select all c1 and c2, if no c2 present -- select
+    #         at least all c1, if neither present -- nothing really to select
+    assert_array_equal(col.match(dict(roi=['a', 'c', 'xxx']), strict=False),
+                       [True, False, True, True])
+    assert_array_equal(col.match(dict(roi=['xxx']), strict=False), [False]*4)
+
+    # selection requested per list of items to match, not just an item
+    assert_raises(ValueError, col.match, dict(coord=[0, 1]))

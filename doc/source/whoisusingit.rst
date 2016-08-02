@@ -51,16 +51,135 @@ Institutions Where PyMVPA Is Known To Be Used
 Studies employing PyMVPA
 ========================
 
+2016
+----
+
+* :ref:`Guntupalli et al., Cerebral Cortex (2016) <GHH+16>`.
+  A Model of Representational Spaces in Human Cortex
+
+* Watson et al., NeuroImage (2016). Spatial properties of objects predict
+  patterns of neural response in the ventral visual pathway
+
+* Watson et al., NeuroImage (2016). Patterns of neural response in
+  scene-selective regions of the human brain are affected by low-level
+  manipulations of spatial frequency
+
+2015
+----
+
+* Floren et al., Frontiers in Human Neuroscience (2015). Accurately decoding
+  visual information from fMRI data obtained in a realistic virtual environment
+
+* Merkel et al, NeuroImage (2015). Neural correlates of multiple object
+  tracking strategies
+
+* Pogoda, et al., Brain and Cognition (2015). Multivariate representation of
+  food preferences in the human brain
+
+* Emmerling et al., NeuroImage (2015). Decoding the direction of imagined
+  visual motion using 7 T ultra-high field fMRI
+
+* Danelli et al., Frontiers in Psychology (2015). Framing effects reveal
+  discrete lexical-semantic and sublexical procedures in reading: an fMRI study
+
+* Schlegel et al., NeuroImage (2015). The artist emerges: Visual art learning
+  alters neural structure and function
+
+* Maass et al., ELife (2015). Functional subregions of the human entorhinal
+  cortex
+
+* Sha et al., Journal of Cognitive Neuroscience (2015). The Animacy Continuum
+  in the Human Ventral Vision Pathway
+
+* :ref:`Greisel et al., arXiv (2015) <GSD+15>`. Photometric redshifts and
+  model spectral energy distributions of galaxies from the SDSS-III BOSS DR10
+  data
+
+* :ref:`McNamee et al., Journal of Neuroscience (2015) <McMLZ+15>`. Characterizing
+  the associative content of brain structures involved in habitual and
+  goal-directed actions in humans: a multivariate fMRI study
+
+* :ref:`Cole et al., Cerebral Cortex (2015) <CIB15>`. The behavioral relevance
+  of task information in human prefrontal cortex
+
+* :ref:`Guo and Meng, NeuroImage (2015) <GM15>`. The encoding of
+  category-specific versus nonspecific information in human inferior temporal
+  cortex
+
+
 2014
 ----
 
-* :ref:`Rueschemeyer et al., Journal of Cognitive Neuroscience (in press)
-  <REA+14>`. Observing, Performing, and Understanding Actions: Revisiting
-  the Role of Cortical Motor Areas in Processing of Action Words.
-* :ref:`Hanke et al., Scientific Data (in press) <HBI+14>`. A high-resolution
+* :ref:`Rueschemeyer et al., Journal of Cognitive Neuroscience (2014)
+  <REA+14>`. Observing, performing, and understanding actions: Revisiting
+  the role of cortical motor areas in processing of action words.
+
+* :ref:`Hanke et al., Scientific Data (2014) <HBI+14>`. A high-resolution
   7-Tesla fMRI dataset from complex natural stimulation with an audio movie.
-* :ref:`Helfinstein et al. PNAS (2014) <HSC+14>`. Predicting risky choices from
+
+* :ref:`Helfinstein et al., PNAS (2014) <HSC+14>`. Predicting risky choices from
   brain activity patterns.
+
+* :ref:`Sha et al., Journal of Cognitive Neuroscience (2014) <SHA+14>`. The
+  animacy continuum in the human ventral vision pathway
+
+* :ref:`Schönwiesner et al., Cerebral Cortex (2014) <SDV+14>`. Parcellation of
+  Human and Monkey core auditory cortex with fMRI pattern classification and
+  objective detection of tonotopic gradient reversals
+
+* :ref:`Klein and Zatorre, Cerebral Cortex (2014) <KZ14>`. Representations of
+  invariant musical categories are decodable by pattern analysis of locally
+  distributed BOLD responses in superior temporal and intraparietal sulci
+
+* :ref:`Huffman and Start, Hippocampus (2014) <HS14>`. Multivariate pattern
+  analysis of the human medial temporal lobe revealed representationally
+  categorical cortex and representationally agnostic hippocampus
+
+* :ref:`Schlegel et al., NeuroImage (2014) <SAF+15>`. The artist emerges:
+  Visual art learning alters neural structure and function
+
+* :ref:`Jimura et al, Frontiers in Human Neuroscience (2014) <JCS+14>`. The
+  neural basis of task switching changes with skill acquisition
+
+* :ref:`Lee and McCarthy, Cerebral Cortex (2014) <LMcC14>`. Functional
+  Heterogeneity and Convergence in the Right Temporoparietal Junction
+
+* :ref:`Watson et al., NeuroImage (2014) <WHA14>`. Patterns of response to
+  visual scenes are linked to the low-level properties of the image
+
+* :ref:`Schlichting and Preston, PNAS (2014) <SP14>`. Memory reactivation
+  during rest supports upcoming learning of related content
+
+* :ref:`Mittner et al., Journal of Neuroscience (2014) <MBT+14>`. When the
+  brain takes a break: A model-based analysis of mind wandering
+
+* :ref:`Wang et al., Journal of Neuroscience (2014) <WLM+14>`. Distributed
+  Value Representation in the Medial Prefrontal Cortex during Intertemporal
+  Choices
+
+* :ref:`Parkinson et al., Journal of Neuroscience (2014) <PLW14>`. A common
+  cortical metric for spatial, temporal, and social distance
+
+* :ref:`Kim et al., Frontiers in Human Neuroscience (2014)
+  <KLE+14>`. Discriminable spatial patterns of activation for faces and bodies
+  in the fusiform gyrus
+
+* :ref:`Pollmann et al., NeuroImage (2014) <PZB+14>`. The right
+  temporo-parietal junction contributes to visual feature binding
+
+* :ref:`Fogelson et al., Frontiers in Psychology (2014) <FKM+14>`. Unconscious
+  neural processing differs with method used to render stimuli invisible
+
+* :ref:`Plitt et al., Social Neuroscience (2014) <PSE14>`. Are corporations
+  people too? The neural correlates of moral judgments about companies and
+  individuals
+
+* :ref:`Kubilius et al., Journal of Vision (2014) <KWO14>`. Encoding of
+  configural regularity in the human visual system
+
+* :ref:`Heitmeyer et al., Automated Software Engineering (2014)
+  <HPL+14>`. Building high assurance human-centric decision systems
+
 
 2013
 ----
@@ -71,8 +190,8 @@ Studies employing PyMVPA
   by subdural surface electrodes
 
 * :ref:`Manelis and Reder, Cerebral Cortex (2013) <MR13>`.
-  He Who Is Well Prepared Has Half Won The Battle: An fMRI Study of Task
-  Preparation
+  he who is well prepared has half won the battle: an fMRI study of task
+  preparation
 
 * :ref:`Kohler et al., NeuroImage (2013) <KFR+13>`. Pattern classification
   precedes region-average hemodynamic response in early visual cortex.
@@ -237,6 +356,16 @@ Studies employing PyMVPA
 
 Articles referring to PyMVPA
 ============================
+
+2014
+----
+
+* :ref:`Haxby et al, Annual review of neuroscience (2014) <HCG15>`. Decoding
+  neural representational spaces using multivariate pattern analysis
+
+* :ref:`Avants et al, NeuroImage (2014) <ALR+14>`. Sparse canonical
+  correlation analysis relates network-level atrophy to multivariate cognitive
+  measures in a neurodegenerative population
 
 2013
 ----

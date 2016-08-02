@@ -29,9 +29,8 @@ import os
 from mvpa2.support.nibabel import afni_niml_dset as niml_dset
 
 from mvpa2.base.collections import SampleAttributesCollection, \
-        FeatureAttributesCollection, DatasetAttributesCollection, \
-        ArrayCollectable
-
+    FeatureAttributesCollection, DatasetAttributesCollection, \
+    ArrayCollectable
 
 from mvpa2.base import warning, debug, externals
 from mvpa2.datasets.base import Dataset
@@ -43,7 +42,19 @@ if externals.exists('h5py'):
 _PYMVPA_PREFIX = 'PYMVPA'
 _PYMVPA_SEP = '_'
 
-def from_niml(dset, fa_labels=[], sa_labels=[], a_labels=[]):
+
+
+def _as_vector_if_matrix_with_single_column(x):
+    '''Helper function'''
+    if isinstance(x, np.ndarray) and \
+                    len(x.shape) == 2 and x.shape[1] == 1:
+        return x.ravel()
+    else:
+        return x
+
+
+
+def from_niml(dset, fa_labels=None, sa_labels=None, a_labels=None):
     '''Convert a NIML dataset to a Dataset
 
     Parameters
@@ -63,6 +74,12 @@ def from_niml(dset, fa_labels=[], sa_labels=[], a_labels=[]):
     dataset: mvpa2.base.Dataset
         a PyMVPA Dataset
     '''
+    if fa_labels is None:
+        fa_labels = []
+    if sa_labels is None:
+        sa_labels = []
+    if a_labels is None:
+        a_labels = []
 
     # check for singleton element
     if type(dset) is list and len(dset) == 1:
@@ -96,11 +113,11 @@ def from_niml(dset, fa_labels=[], sa_labels=[], a_labels=[]):
                           (fa_labels_, fa),
                           (a_labels_, a)]
 
-    infix2collection = {'sa':sa,
-                      'fa':fa,
-                      'a':a}
+    infix2collection = {'sa': sa,
+                        'fa': fa,
+                        'a': a}
 
-    infix2length = {'sa':nsamples, 'fa':nfeatures}
+    infix2length = {'sa': nsamples, 'fa': nfeatures}
 
     for k, v in dset.iteritems():
         if k in ignore_labels:
@@ -112,7 +129,7 @@ def from_niml(dset, fa_labels=[], sa_labels=[], a_labels=[]):
             if len(k_split) > 2:
                 infix = k_split[1].lower()
                 collection = infix2collection.get(infix, None)
-                if not collection is None:
+                if collection is not None:
                     short_k = _PYMVPA_SEP.join(k_split[2:])
                     expected_length = infix2length.get(infix, None)
                     if expected_length:
@@ -127,12 +144,16 @@ def from_niml(dset, fa_labels=[], sa_labels=[], a_labels=[]):
 
                         if expected_length != len(v):
                             raise ValueError("Unexpected length: %d != %d" %
-                                                (expected_length, len(v)))
+                                             (expected_length, len(v)))
+
+                        v = _as_vector_if_matrix_with_single_column(v)
 
                         v = ArrayCollectable(v, length=expected_length)
 
                     collection[short_k] = v
                     continue
+
+        v = _as_vector_if_matrix_with_single_column(v)
 
         found_label = False
 
@@ -144,6 +165,7 @@ def from_niml(dset, fa_labels=[], sa_labels=[], a_labels=[]):
 
         if found_label:
             continue
+
 
         # try to be smart and deduce this from dimensions.
         # this only works if nfeatures!=nsamples otherwise it would be
@@ -168,6 +190,8 @@ def from_niml(dset, fa_labels=[], sa_labels=[], a_labels=[]):
 
     return ds
 
+
+
 def to_niml(ds):
     '''Convert a Dataset to a NIML dataset
 
@@ -189,12 +213,12 @@ def to_niml(ds):
 
     node_indices_labels = ('node_indices', 'center_ids', 'ids', 'roi_ids')
     node_indices = _find_node_indices(ds, node_indices_labels)
-    if not node_indices is None:
+    if node_indices is not None:
         dset['node_indices'] = node_indices
 
     sample_labels = ('labels', 'targets')
     labels = _find_sample_labels(ds, sample_labels)
-    if not labels is None:
+    if labels is not None:
         dset['labels'] = labels
 
     attr_labels = ('a', 'fa', 'sa')
@@ -223,8 +247,10 @@ def to_niml(ds):
 
     return dset
 
+
+
 def hstack(dsets, pad_to_feature_index=None, hstack_method='drop_nonunique',
-                set_empty_value=0.):
+           set_empty_value=0.):
     '''Stacks NIML datasets while considering node indices
 
     Parameters
@@ -286,11 +312,11 @@ def hstack(dsets, pad_to_feature_index=None, hstack_method='drop_nonunique',
             nfeatures_empty = pad_to - dset.nfeatures
             if nfeatures_empty < 0:
                 raise ValueError("Dataset has %d features, cannot pad "
-                                    "to %d" % (dset.nfeatures, pad_to))
+                                 "to %d" % (dset.nfeatures, pad_to))
 
             # make empty array
             empty_arr = np.zeros((dset.nsamples, nfeatures_empty),
-                                    dtype=dset.samples.dtype) + set_empty_value
+                                 dtype=dset.samples.dtype) + set_empty_value
             empty_dset = Dataset(empty_arr, sa=stripped_dset.sa.copy(deep=True))
 
             # combine current dset and empty array
@@ -306,7 +332,7 @@ def hstack(dsets, pad_to_feature_index=None, hstack_method='drop_nonunique',
 
         hstack_index = node_index + first_node_index
         hstack_other_index = other_index + first_node_index
-        first_node_index += pad_to or (max_node_index + 1) # prepare for next iteration
+        first_node_index += pad_to or (max_node_index + 1)  # prepare for next iteration
 
         padded_dsets.append(padded_dset)
         hstack_indices.append(hstack_index)
@@ -319,6 +345,7 @@ def hstack(dsets, pad_to_feature_index=None, hstack_method='drop_nonunique',
     hstack_dset.fa[node_indices_labels[0]] = hstack_indices
 
     return hstack_dset
+
 
 
 def _find_sample_labels(dset, sample_labels):
@@ -348,6 +375,7 @@ def _find_sample_labels(dset, sample_labels):
             break
 
     return None if use_label is None else sample_label_list
+
 
 
 def _find_node_indices(dset, node_indices_labels):
@@ -380,9 +408,11 @@ def _find_node_indices(dset, node_indices_labels):
             else:
                 if not np.array_equal(dset.fa[label].value, node_indices_int):
                     raise ValueError("Different indices for feature attributes"
-                                     " %s and %s" % (use_key, label))
+                                     " %s and %s" % (use_label, label))
 
     return None if use_label is None else node_indices_int
+
+
 
 def write(fn, ds, form='binary'):
     '''Write a Dataset to a file in NIML format
@@ -399,6 +429,8 @@ def write(fn, ds, form='binary'):
     niml_ds = to_niml(ds)
     niml_dset.write(fn, niml_ds, form=form)
 
+
+
 def read(fn):
     '''Read a Dataset from a file in NIML format
 
@@ -408,21 +440,41 @@ def read(fn):
         Filename
     '''
 
-    readers_converters = [(niml_dset.read, from_niml)]
+    readers_converters = {('.dset',): (niml_dset.read, from_niml)}
+
     if externals.exists('h5py'):
-        readers_converters.append((h5load, None))
+        readers_converters[('.h5py', '.hdf')] = (h5load, None)
 
-    for reader, converter in readers_converters:
-        try:
-            r = reader(fn)
-            if converter:
-                r = converter(r)
-            return r
+    keys = [exts for exts in readers_converters.iterkeys()
+            if any(fn.endswith(ext) for ext in exts)]
 
-        except:
-            pass
+    n_keys = len(keys)
 
-    raise ValueError("Unable to read %s" % fn)
+    if n_keys == 1:
+        # single extension matches
+        key = keys[0]
+        reader, converter = readers_converters[key]
+
+        r = reader(fn)
+        if converter is not None:
+            r = converter(r)
+        return r
+
+    else:
+        # unclear extension, try all readers and throw less informative
+        # error message
+        for reader, converter in readers_converters.itervalues():
+            try:
+                r = reader(fn)
+                if converter:
+                    r = converter(r)
+                return r
+
+            except:
+                pass
+
+        raise ValueError("Unable to read %s with unclear extension" % fn)
+
 
 
 def from_any(x):
@@ -446,4 +498,3 @@ def from_any(x):
         return x
 
     raise ValueError("Not supported: %r" % (x,))
-

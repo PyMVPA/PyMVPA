@@ -9,6 +9,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import os
+from os.path import join as pathjoin
 import numpy as np
 
 # later replace with
@@ -16,22 +17,21 @@ from mvpa2.suite import *
 
 tutorial_data_path = mvpa2.cfg.get('location', 'tutorial data', default=os.path.curdir)
 
-def get_raw_haxby2001_data(path=os.path.join(tutorial_data_path, 'data'),
-                           roi='vt'):
+def get_raw_haxby2001_data(path=tutorial_data_path, roi='vt'):
     if roi is 0:
         # this means something special in the searchlight tutorial
-        maskpath = os.path.join(path, 'sub001', 'masks', 'orig')
-        nimg = nb.load(os.path.join(maskpath, 'hoc.nii.gz'))
-        nimg_brain = nb.load(os.path.join(maskpath, 'brain.nii.gz'))
+        maskpath = pathjoin(path, 'haxby2001', 'sub001', 'masks', 'orig')
+        nimg = nb.load(pathjoin(maskpath, 'hoc.nii.gz'))
+        nimg_brain = nb.load(pathjoin(maskpath, 'brain.nii.gz'))
         tmpmask = nimg.get_data() == roi
         # trim it down to the lower anterior quadrant
         tmpmask[:, :, tmpmask.shape[-1]/2:] = False
         tmpmask[:, :tmpmask.shape[1]/2] = False
         tmpmask[nimg_brain.get_data() > 0] = False
-        mask = nb.Nifti1Image(tmpmask.astype(int), None, nimg.get_header())
-        return load_datadb_tutorial_data(path=path, roi=mask)
+        mask = nb.Nifti1Image(tmpmask.astype(int), None, nimg.header)
+        return load_tutorial_data(path=path, roi=mask)
     else:
-        return load_datadb_tutorial_data(path=path, roi=roi)
+        return load_tutorial_data(path=path, roi=roi)
 
 
 def get_haxby2001_data(path=None, roi='vt'):

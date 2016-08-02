@@ -1,0 +1,62 @@
+#!/usr/bin/python
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Convert NiBabel objects in PyMVPA datasets attributes into a portable form
+
+PyMVPA datasets that contain NiBabel objects, such as image header instances,
+as it was default prior PyMVPA 2.4, can suffer from NiBabel API changes that
+result in the inability to re-load serialized datasets (e.g. from HDF5) with
+newer versions of NiBabel.
+
+This script converts these NiBabel internals into a simpler form that helps
+process such datasets with a much wider range of NiBabel Versions, and
+removes the need to have NiBabel installed for simply loading such a dataset.
+
+If you run into this problem, you need access to NiBabel source code that
+can still process your dataset. A reasonable guess is to try NiBabel
+version 1.1. Here is a recipe:
+
+Get the NiBabel repository from github and checkout the version you need::
+
+  % git clone  https://github.com/nipy/nibabel /tmp/nibabel
+  % cd /tmp/nibabel
+  % git checkout 1.1.0
+
+Now call this script with the path to your old NiBabel, the HDF5 file with
+the to-be-converted datasets, and the output filename.
+
+  % tools/strip_nibabel /tmp/nibabel olddata.hdf5 newdata.hdf5
+
+This tools support HDF5 files containing a single dataset, as well as
+files with sequences of datasets.
+
+If you have a more complicated conversion task, please inspect the function
+``strip_nibabel()`` used in this script to aid a custom conversion.
+"""
+
+__docformat__ = 'restructuredtext'
+
+
+import sys
+# need to happen before any other import
+sys.path = [sys.argv[1]] + sys.path
+
+from mvpa2.base.hdf5 import h5load, h5save
+from mvpa2.datasets.mri import _hdr2dict, strip_nibabel
+
+oldfname, newfname = sys.argv[2:4]
+
+src = h5load(oldfname)
+
+if isinstance(src, list) or isinstance(src, tuple):
+    out = [strip_nibabel(s) for s in src]
+else:
+    out = strip_nibabel(src)
+
+h5save(newfname, out, compression=9)

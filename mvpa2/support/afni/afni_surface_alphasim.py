@@ -17,7 +17,13 @@ Note: this method has not been validated properly yet.
 NNO Oct 2012
 '''
 
-import os, fnmatch, datetime, re, argparse, math
+import os
+from os.path import join as pathjoin
+import fnmatch
+import datetime
+import re
+import argparse
+import math
 
 from mvpa2.support.afni import afni_utils as utils
 
@@ -41,7 +47,7 @@ def _ext(config, for1D=False):
         return ''.join(utils.afni_fileparts(fn)[2:])
 
 def _mask_expr(config):
-    '''returns an expression that can be used as an infix in 
+    '''returns an expression that can be used as an infix in
     running other commands (depending on whether in volume or on surface)'''
     m = config['mask']
     if not m:
@@ -53,7 +59,7 @@ def _mask_expr(config):
             return '-mask %s' % m
 
 def compute_fwhm(config):
-    # helper function - called by critical_clustersize 
+    # helper function - called by critical_clustersize
     # computes FWHM of residuals of input data and stores in config
     output_dir = c['output_dir']
 
@@ -103,7 +109,7 @@ def compute_fwhm(config):
 
     # compute residuals, and estimate FWHM for each of them
     # store FWHM output in fwhm_fn
-    fwhm_fn = os.path.join(output_dir, _fn(config, 'fwhm', '.1D'))
+    fwhm_fn = pathjoin(output_dir, _fn(config, 'fwhm', '.1D'))
     cmds.append('; echo > "%s"' % fwhm_fn)
 
     resid_fns = []
@@ -136,7 +142,7 @@ def compute_fwhm(config):
     config['buck_fn'] = buck_fn
     config['buck_fn_1D'] = buck_fn_1D
 
-    mean_fwhm_fn = os.path.join(output_dir, _fn(config, 'mean_fwhm', '.1D'))
+    mean_fwhm_fn = pathjoin(output_dir, _fn(config, 'mean_fwhm', '.1D'))
     with open(mean_fwhm_fn, 'w') as f:
         f.write('%.3f\n' % config['fwhm'])
 
@@ -220,7 +226,7 @@ def null_clustersize(config):
 
     # read maximum cluster size form size_fn
     sz_str = None
-    with open(os.path.join(output_dir, size_fn)) as f:
+    with open(pathjoin(output_dir, size_fn)) as f:
         sz_str = f.read()
 
     try:
@@ -231,7 +237,7 @@ def null_clustersize(config):
     print "Null data: maximum size %f" % sz
 
     if is_surf:
-        smoothing_fn_rec = os.path.join(output_dir, _fn(config, 'rand_buck_smooth', '.1D.dset.1D.smrec'))
+        smoothing_fn_rec = pathjoin(output_dir, _fn(config, 'rand_buck_smooth', '.1D.dset.1D.smrec'))
         if not os.path.exists(smoothing_fn_rec):
             raise ValueError("Smoothing did not succeed. Please check the error"
                              " messaged. You may have to set sigma manually")
@@ -268,7 +274,7 @@ def _remove_files(config, list_of_files):
                 exts = ['']
 
             for ext in exts:
-                full_fn = os.path.join(config['output_dir'], fn + ext)
+                full_fn = pathjoin(config['output_dir'], fn + ext)
                 if os.path.exists(full_fn):
                     os.remove(full_fn)
 
@@ -276,7 +282,7 @@ def _remove_files(config, list_of_files):
 def critical_clustersize(config):
     '''computes the critical cluster sizes
     it does so by calling compute_fwhm and null_clustersize
-    
+
     config['max_size'] is a list with he maximum cluster size of
     each iteration'''
 
@@ -293,7 +299,7 @@ def critical_clustersize(config):
 
     # store the results in a file
     clsize_fn = _fn(config, 'critical_cluster_size', '.1D')
-    with open(os.path.join(config['output_dir'], clsize_fn), 'w') as f:
+    with open(pathjoin(config['output_dir'], clsize_fn), 'w') as f:
         f.write('# Critical sizes for tthr=%.3f, fwhm=%.3f, %d files\n' % (
                     config['tthr'], config['fwhm'], len(config['data_files'])))
         for s in sz:
@@ -308,7 +314,8 @@ def _critical_size_index(config):
 
     idx = math.ceil((1. - pthr) * nsize) # index of critical cluster size
     if idx >= nsize or idx == 0:
-        raise ValueError("Illegal critical index (p=%s): %s" % (pthr, idx))
+        raise ValueError("Illegal critical index (p=%s): %s; "
+                            "consider increasing --niter" % (pthr, idx))
 
     return int(idx)
 
@@ -430,22 +437,22 @@ def get_testing_config():
 def get_options():
     description = '''
     Experimental implementation of alternative AlphaSim for volumes and surfaces.\n
-    
+
     Currently only supports group analysis with t-test against 0.
-    
+
     Input paramaters are an uncorrected t-test threshold (tthr)
     and cluster-size corrected p-value (a.k.a. alpha level) (pthr).
-    
+
     This program takes the following steps:
     (0) Participant's map are t-tested against zero, thresholded by tthr and clustered.
-    (1) residuals are computed by subtracting the group mean from each participants' map 
+    (1) residuals are computed by subtracting the group mean from each participants' map
     (2) the average smoothness of these residual maps is estimated
     (3) null maps are generated from random gaussian noise that is smoothened
-    with the estimated smoothness from step (2), thresholded by tthr, and clustered. 
+    with the estimated smoothness from step (2), thresholded by tthr, and clustered.
     The maximum cluster size is stored for each null map.
     (4) A cluster from (0) survive pthr if a smaller ratio than pthr of the
     null maps generated in (3) have a maximum cluster size.
-    
+
     Copyright 2012 Nikolaas N. Oosterhof <nikolaas.oosterhof@unitn.it>
     '''
 
@@ -455,18 +462,48 @@ def get_options():
 
 
     parser = argparse.ArgumentParser(description=description, epilog=epilog)
-    parser.add_argument("-d", "--data_files", required=True, help="Data input files (that are tested against 0 with a one-sample t-test)", nargs='+')
-    parser.add_argument("-o", "--output_dir", required=True, help="Output directory")
-    parser.add_argument("-s", "--surface_file", required=False, help="Anatomical surface file (.asc)", default=None)
-    parser.add_argument("-t", "--tthr", required=True, help="t-test uncorrected threshold", type=float)
-    parser.add_argument("-p", "--pthr", required=False, help="p-value for corrected threshold", type=float, default=.05)
-    parser.add_argument("-n", "--niter", required=False, help="Number of iterations", type=int, default=1000)
-    parser.add_argument("-i", "--brik_index", required=False, help="Brik index in input files", type=int, default=0)
-    parser.add_argument("-P", "--prefix", required=False, help="Prefix for data output", default='alphasim_')
-    parser.add_argument("-m", "--mask", required=False, help="Mask dataset", default=None)
-    parser.add_argument("-k", "--keep_files", required=False, help="Keep temporary files", default=False, action="store_true")
-    parser.add_argument("-N", "--pad_to_node", required=False, help="pad_to_node (for surfaces)", default=0, type=int)
-    parser.add_argument('-S', "--sigma", required=False, help='sigma for SurfSmooth', default=0., type=float)
+    parser.add_argument("-d", "--data_files", required=True,
+                            help=("Data input files (that are tested against "
+                                "0 with a one-sample t-test)"), nargs='+')
+    parser.add_argument("-o", "--output_dir", required=True,
+                            help="Output directory")
+    parser.add_argument("-s", "--surface_file", required=False,
+                            help=("Anatomical surface file (.asc); required"
+                                    " for surface-based analysis"),
+                            default=None)
+    parser.add_argument("-t", "--tthr", required=True,
+                            help="t-test uncorrected threshold", type=float)
+    parser.add_argument("-p", "--pthr", required=False,
+                            help="p-value for corrected threshold",
+                            type=float, default=.05)
+    parser.add_argument("-n", "--niter", required=False,
+                            help="Number of iterations", type=int,
+                            default=1000)
+    parser.add_argument("-i", "--brik_index", required=False,
+                            help="Brik index in input files",
+                            type=int, default=0)
+    parser.add_argument("-P", "--prefix", required=False,
+                            help="Prefix for data output",
+                            default='alphasim_')
+    parser.add_argument("-m", "--mask", required=False,
+                            help="Mask dataset", default=None)
+    parser.add_argument("-k", "--keep_files", required=False,
+                            help="Keep temporary files", default=False,
+                            action="store_true")
+    parser.add_argument("-N", "--pad_to_node", required=False,
+                            help="pad_to_node (for surfaces)",
+                            default=0, type=int)
+    parser.add_argument('-S', "--sigma", required=False,
+                            help=('sigma (smoothing bandwidth) for SurfSmooth. '
+                                    'If smoothing of surface '
+                                    'data takes a long time, '
+                                    'set this value to a value between 1 and '
+                                    '1.5 and see how many smoothing '
+                                    'iterations are performed. '
+                                    'Ideally, the number of '
+                                    'smoothing iterations should be between '
+                                    '10 and 20'),
+                            default=0., type=float)
 
     args = None
     namespace = parser.parse_args(args)
@@ -482,6 +519,20 @@ def fix_options(config):
         return y
 
     for i in xrange(len(config['data_files'])):
+        full_path=f(config['data_files'][i])
+
+        if _extension_indicates_surface_file(full_path) and \
+                                            not _is_surf(config):
+            raise ValueError("Input file %d (%s) indicates surface-based "
+                                "input but '--surface_file' was not specified."
+                                " To use this function for surface-based "
+                                "analysis, supply an anatomical surface "
+                                "file (preferably the intermediate surface "
+                                "[=the node-wise average of the pial and "
+                                "white surface], or alternatively, a pial "
+                                "or white surface) using the --surface_file "
+                                "option." % (i+1, full_path))
+
         config['data_files'][i] = f(config['data_files'][i])
 
     config['output_dir'] = f(config['output_dir'], check=False)
@@ -496,6 +547,12 @@ def fix_options(config):
     if p <= 0 or p >= 1:
         raise ValueError('Require 0 < pthr < 1')
     _critical_size_index(config) # raises error if p too small
+
+
+def _extension_indicates_surface_file(fn):
+    surface_extensions=['.gii','.niml.dset','.1D','.1D.dset']
+
+    return any(fn.endswith(ext) for ext in surface_extensions)
 
 
 

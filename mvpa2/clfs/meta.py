@@ -100,7 +100,9 @@ class BoostedClassifier(Classifier):
         """Store the list of classifiers"""
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         if self.__clfs is None or len(self.__clfs)==0:
             #prefix_ = "clfs=%s" % repr(self.__clfs)
             prefix_ = []
@@ -244,7 +246,9 @@ class ProxyClassifier(Classifier):
             self.__tags__ += clf.__tags__
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(ProxyClassifier, self).__repr__(
             ["clf=%s" % repr(self.__clf)] + prefixes)
 
@@ -305,7 +309,7 @@ class ProxyClassifier(Classifier):
     def _untrain(self):
         """Untrain ProxyClassifier
         """
-        if not self.__clf is None:
+        if self.__clf is not None:
             self.__clf.untrain()
         super(ProxyClassifier, self)._untrain()
 
@@ -418,7 +422,7 @@ class MaximalVote(PredictionsCombiner):
                 for label in prediction: # for every label
                     # XXX we might have multiple labels assigned
                     # but might not -- don't remember now
-                    if not all_label_counts[i].has_key(label):
+                    if not label in all_label_counts[i]:
                         all_label_counts[i][label] = 0
                     all_label_counts[i][label] += 1
 
@@ -573,9 +577,11 @@ class CombinedClassifier(BoostedClassifier):
         """Actual combiner which would be decided upon later"""
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
         """Literal representation of `CombinedClassifier`.
         """
+        if prefixes is None:
+            prefixes = []
         return super(CombinedClassifier, self).__repr__(
             ["combiner=%s" % repr(self.__combiner)] + prefixes)
 
@@ -774,9 +780,11 @@ class TreeClassifier(ProxyClassifier):
         """Dictionary of classifiers used by the groups"""
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
         """String representation of TreeClassifier
         """
+        if prefixes is None:
+            prefixes = []
         prefix = "groups=%s" % repr(self._groups)
         return super(TreeClassifier, self).__repr__([prefix] + prefixes)
 
@@ -909,10 +917,14 @@ class TreeClassifier(ProxyClassifier):
 
         # now for predictions pointing to specific groups go into
         # corresponding one
-        # defer initialization since dtype would depend on predictions
-        predictions = None
+        predictions = np.zeros((len(dataset),),
+                               dtype=self.ca.trained_targets.dtype)
         for pred_group in set(clf_predictions):
-            gk = index2group[pred_group]
+            try:
+                gk = index2group[pred_group]
+            except IndexError:
+                raise IndexError("%s: Cannot obtain value for index %r among %r"
+                                 % (self, pred_group, index2group))
             clf_ = clfs[gk]
             group_indexes = (clf_predictions == pred_group)
             if __debug__:
@@ -920,14 +932,10 @@ class TreeClassifier(ProxyClassifier):
                       'Predicting for group %s using %s on %d samples',
                       (gk, clf_, np.sum(group_indexes)))
             if clf_ is None:
-                p = groups[gk][0] # our only label
+                predictions[group_indexes] = groups[gk][0] # our only label
             else:
-                p = clf_.predict(dataset[group_indexes])
-
-            if predictions is None:
-                predictions = np.zeros((len(dataset),),
-                                       dtype=np.asanyarray(p).dtype)
-            predictions[group_indexes] = p
+                predictions[group_indexes] = clf_.predict(dataset[group_indexes])
+                
         return predictions
 
 
@@ -992,7 +1000,9 @@ class BinaryClassifier(ProxyClassifier):
     def neglabels(self):
         return self.__neglabels
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         prefix = "poslabels=%s, neglabels=%s" % (
             repr(self.__poslabels), repr(self.__neglabels))
         return super(BinaryClassifier, self).__repr__([prefix] + prefixes)
@@ -1110,7 +1120,9 @@ class MulticlassClassifier(CombinedClassifier):
 
     # XXX fix it up a bit... it seems that MulticlassClassifier should
     # be actually ProxyClassifier and use BoostedClassifier internally
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         prefix = "bclf_type=%s, clf=%s" % (repr(self.__bclf_type),
                                             repr(self.__clf))
         return super(MulticlassClassifier, self).__repr__([prefix] + prefixes)
@@ -1313,7 +1325,7 @@ class SplitClassifier(CombinedClassifier):
 
 
     @group_kwargs(prefixes=['slave_'], passthrough=True)
-    def get_sensitivity_analyzer(self, slave_kwargs={}, **kwargs):
+    def get_sensitivity_analyzer(self, slave_kwargs=None, **kwargs):
         """Return an appropriate SensitivityAnalyzer for `SplitClassifier`
 
         Parameters
@@ -1321,6 +1333,8 @@ class SplitClassifier(CombinedClassifier):
         combiner
           If not provided, `first_axis_mean` is assumed
         """
+        if slave_kwargs is None:
+                slave_kwargs = {}
         return BoostedClassifierSensitivityAnalyzer(
                 self, sa_attr='splits',
                 analyzer=self.__clf.get_sensitivity_analyzer(
@@ -1400,7 +1414,9 @@ class MappedClassifier(ProxyClassifier):
         return ProxyClassifier._predict(self, self.__mapper.forward(dataset))
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(MappedClassifier, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['mapper']))
@@ -1488,13 +1504,13 @@ class RegressionAsClassifier(ProxyClassifier):
         self._trained_centers = None
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         if self.centroids is not None:
-            prefixes = prefixes + ['centroids=%r'
-                                   % self.centroids]
+            prefixes += ['centroids=%r' % self.centroids]
         if self.distance_measure is not None:
-            prefixes = prefixes + ['distance_measure=%r'
-                                   % self.distance_measure]
+            prefixes += ['distance_measure=%r' % self.distance_measure]
         return super(RegressionAsClassifier, self).__repr__(prefixes)
 
 

@@ -119,7 +119,7 @@ if __name__ == "__main__":
             except SystemExit:
                 pass
 
-            if not runnable.__dict__.has_key('main'):
+            if not 'main' in runnable.__dict__:
                 verbose(0, "OOPS: file/module %s has no function main defined" \
                            % cmdname)
                 sys.exit(1)

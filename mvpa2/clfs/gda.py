@@ -47,7 +47,7 @@ class GDA(Classifier):
 
     """
 
-    __tags__ = ['binary', 'multiclass']
+    __tags__ = ['binary', 'multiclass', 'oneclass']
 
 
     prior = Parameter('laplacian_smoothing',
@@ -95,7 +95,7 @@ class GDA(Classifier):
             raise ValueError, \
                   "No idea on how to handle '%s' way to compute priors" \
                   % self.params.prior
-        return priors
+        return np.atleast_1d(priors)
 
 
     def _train(self, dataset):

@@ -253,7 +253,7 @@ def enhanced_doc_string(item, *args, **kwargs):
         item._customize_doc()
 
     initdoc = ""
-    if lcl.has_key('__init__'):
+    if '__init__' in lcl:
         func = lcl['__init__']
         initdoc = func.__doc__
 
@@ -280,7 +280,7 @@ def enhanced_doc_string(item, *args, **kwargs):
         known_params = set([i[0] for i in params_list])
 
         # If there are additional ones:
-        if lcl.has_key('_paramsdoc'):
+        if '_paramsdoc' in lcl:
             params_list += [i for i in lcl['_paramsdoc']
                             if not (i[0] in known_params)]
             known_params = set([i[0] for i in params_list])
@@ -342,7 +342,7 @@ def enhanced_doc_string(item, *args, **kwargs):
                   initdoc ]
 
     # Add information about the ca if available
-    if lcl.has_key('_cadoc') and len(item._cadoc):
+    if '_cadoc' in lcl and len(item._cadoc):
         # to don't conflict with Notes section if such was already
         # present
         lcldoc = lcl['__doc__'] or ''
@@ -494,7 +494,7 @@ def _repr(obj, *args, **kwargs):
                    + ["%s=%s" % (k, v) for k, v in kwargs.iteritems()])
 
 
-    if not truncate is None and len(auto_repr) > max_length:
+    if truncate is not None and len(auto_repr) > max_length:
         auto_repr = auto_repr[:max_length] + '...'
 
     # finally wrap in <> and return
@@ -506,6 +506,11 @@ def _strid(obj):
     """Helper for centralized string id representation in debug msgs
     """
     return "#%d" % (id(obj))
+
+def strip_strid(s):
+    """Strip off strids (#NUMBER) within a string
+    """
+    return re.sub("#[0-9]{7,100}", "", s)
 
 def _str(obj, *args, **kwargs):
     """Helper to get a structured __str__ for all objects.
@@ -543,7 +548,7 @@ def _str(obj, *args, **kwargs):
         if len(auto_descr):
             s = s + ': ' + auto_descr
 
-    if not truncate is None and len(s) > truncate - 5:
+    if truncate is not None and len(s) > truncate - 5:
         # -5 to take <...> into account
         s = s[:truncate-5] + '...'
 
@@ -558,6 +563,15 @@ def _str(obj, *args, **kwargs):
     # finally wrap in <> and return
     # + instead of '%s' for bits of speedup
     return '<' + s + '>'
+
+
+def safe_str(obj):
+    """Return string of an object even if str() call fails
+    """
+    try:
+        return str(obj)
+    except Exception as exc:
+        return "%s(FAILED str due to %s)" % (type(obj), str(exc))
 
 
 def borrowdoc(cls, methodname=None):

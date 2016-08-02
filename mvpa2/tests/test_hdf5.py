@@ -1,4 +1,4 @@
-# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# emacs: -*- coding: utf-8; mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -16,15 +16,24 @@ from mvpa2.testing.datasets import datasets, saveload_warehouse
 skip_if_no_external('h5py')
 import h5py
 
+from glob import glob
 import os
+from os.path import join as pathjoin
+from os.path import exists, realpath
 import sys
 import tempfile
 
 from mvpa2.base.dataset import AttrDataset, save
 from mvpa2.base.hdf5 import h5save, h5load, obj2hdf, HDF5ConversionError
-from mvpa2.misc.data_generators import load_example_fmri_dataset
+from mvpa2.base.dochelpers import safe_str
+from mvpa2.datasets.sources import load_example_fmri_dataset
 from mvpa2.mappers.fx import mean_sample
 from mvpa2.mappers.boxcar import BoxcarMapper
+from mvpa2.misc.support import SmartVersion
+
+from mvpa2 import pymvpa_dataroot
+from mvpa2.testing import sweepargs
+from mvpa2.testing.regress import get_testing_fmri_dataset_filename
 
 class HDFDemo(object):
     pass
@@ -91,7 +100,7 @@ def test_h5py_dataset_typecheck():
 
 
 def test_matfile_v73_compat():
-    mat = h5load(os.path.join(pymvpa_dataroot, 'v73.mat'))
+    mat = h5load(pathjoin(pymvpa_dataroot, 'v73.mat'))
     assert_equal(len(mat), 2)
     assert_equal(sorted(mat.keys()), ['x', 'y'])
     assert_array_equal(mat['x'], np.arange(6)[None].T)
@@ -108,10 +117,8 @@ def test_directaccess():
     assert_array_equal(h5load(f.name).samples,
                        datasets['uni4medium'].samples)
 
-
 def test_function_ptrs():
-    if not externals.exists('nibabel'):
-        raise SkipTest
+    skip_if_no_external('nibabel')
     ds = load_example_fmri_dataset()
     # add a mapper with a function ptr inside
     ds = ds.get_mapped(mean_sample())
@@ -122,7 +129,7 @@ def test_function_ptrs():
     # check that the reconstruction function pointer in the FxMapper points
     # to the right one
     assert_array_equal(ds_loaded.a.mapper.forward(fresh),
-                        ds.samples)
+                       ds.samples)
 
 def test_various_special_cases():
     # 0d object ndarray
@@ -179,7 +186,7 @@ def test_recursion():
 @with_tempfile()
 def test_h5save_mkdir(dirname):
     # create deeper directory name
-    filename = os.path.join(dirname, 'a', 'b', 'c', 'test_file.hdf5')
+    filename = pathjoin(dirname, 'a', 'b', 'c', 'test_file.hdf5')
     assert_raises(IOError, h5save, filename, {}, mkdir=False)
 
     # And create by default
@@ -231,18 +238,18 @@ def test_state_setter_getter():
 
 @sweepargs(obj=(
     # simple 1d -- would have worked before as well
-    np.array([{'d': np.empty(shape=(2,3))}], dtype=object),
+    np.array([{'d': np.empty(shape=(2, 3))}], dtype=object),
     # 2d -- before fix would be reconstructed incorrectly
-    np.array([[{'d': np.empty(shape=(2,3))}]], dtype=object),
+    np.array([[{'d': np.empty(shape=(2, 3))}]], dtype=object),
     # a bit more elaborate storage
-    np.array([[{'d': np.empty(shape=(2,3)),
+    np.array([[{'d': np.empty(shape=(2, 3)),
                 'k': 33}]*2]*3, dtype=object),
     # Swaroop's use-case
-    AttrDataset(np.array([{'d': np.empty(shape=(2,3))}], dtype=object)),
+    AttrDataset(np.array([{'d': np.empty(shape=(2, 3))}], dtype=object)),
     # as it would be reconstructed before the fix -- obj array of obj arrays
-    np.array([np.array([{'d': np.empty(shape=(2,3))}], dtype=object)],
+    np.array([np.array([{'d': np.empty(shape=(2, 3))}], dtype=object)],
              dtype=object),
-    np.array([],dtype='int64'),
+    np.array([], dtype='int64'),
     ))
 def test_save_load_object_dtype_ds(obj=None):
     """Test saving of custom object ndarray (GH #84)
@@ -278,10 +285,12 @@ _python_objs = [
     # tuples
     (1, 2), tuple(),
     # pure Python sets
-    set([1,2]), set(), set([None]), set([tuple()]),
+    set([1, 2]), set(), set([None]), set([tuple()]),
+    # Our SmartVersion which was missing __reduce__
+    SmartVersion("0.1"),
     ]
 import collections
-_python_objs.append([collections.deque([1,2])])
+_python_objs.append([collections.deque([1, 2])])
 if hasattr(collections, 'OrderedDict'):
     _python_objs.append([collections.OrderedDict(),
                          collections.OrderedDict(a9=1, a0=2)])
@@ -294,12 +303,34 @@ if hasattr(collections, 'namedtuple') and sys.version_info > (2, 7, 4):
     # And the one with non-matching name
     _NamedTuple_ = collections.namedtuple('NamedTuple', ['red', 'blue'])
     _python_objs.extend([_NamedTuple(4, 2),
-                         _NamedTuple_(4, 2),])
+                         _NamedTuple_(4, 3), ])
 if hasattr(collections, 'OrderedDict'):
     _python_objs.extend([collections.OrderedDict(a=1, b=2)])
 
+_unicode_arrays = [np.array([['a', u'мама', 'x'],
+                             [u"ы", 'a', 'z']], order=o)
+                   for o in 'CF']
 
-@sweepargs(obj=_python_objs)
+# non-record (simple) numpy arrays
+_numpy_objs = [
+    np.arange(3),
+    np.arange(6).reshape((2, 3), order='C'),
+    np.arange(6).reshape((2, 3), order='F'),
+    np.array(list('abcdef')),
+    np.array("string"),
+    np.array(u"ы"),
+  ] \
+  + _unicode_arrays \
+  + [a[:, ::2] for a in _unicode_arrays]
+
+# record arrays
+_numpy_objs += [
+    np.array([(1.0, 2), (3.0, 4)], dtype=[('x', float), ('y', int)]),
+    np.array([(1.0, 'a'), (3.0, 'b')], dtype=[('x', float), ('y', 'S1')]),
+    np.array([(1.0, u'ы'), (3.0, 'b')], dtype=[('x', float), ('y', '<U1')]),
+]
+
+@sweepargs(obj=_python_objs + _numpy_objs)
 def test_save_load_python_objs(obj):
     """Test saving objects of various types
     """
@@ -309,14 +340,21 @@ def test_save_load_python_objs(obj):
     # save/reload
     try:
         h5save(f.name, obj)
-    except Exception, e:
-        raise AssertionError("Failed to h5save %s: %s" % (obj, e))
+    except Exception as e:
+        raise AssertionError("Failed to h5save %s: %s" % (safe_str(obj), e))
     try:
         obj_ = h5load(f.name)
-    except Exception, e:
-        raise AssertionError("Failed to h5load %s: %s" % (obj, e))
+    except Exception as e:
+        raise AssertionError("Failed to h5load %s: %s" % (safe_str(obj), e))
+
     assert_equal(type(obj), type(obj_))
-    assert_equal(obj, obj_)
+
+    if isinstance(obj, np.ndarray):
+        assert_equal(obj.dtype, obj_.dtype)
+        assert_array_equal(obj, obj_)
+    else:
+        assert_equal(obj, obj_)
+
 
 def saveload(obj, f, backend='hdf5'):
     """Helper to save/load using some of tested backends
@@ -371,7 +409,7 @@ def test_nested_obj_arrays(f, backend, a):
     # import pydb; pydb.debugger()
     ok_(a_[1][2] is a_)
 
-@sweepargs(backend=['hdf5','pickle'])
+@sweepargs(backend=['hdf5', 'pickle'])
 @with_tempfile()
 def test_ca_col(f, backend):
     from mvpa2.base.state import ConditionalAttributesCollection, ConditionalAttribute
@@ -392,8 +430,9 @@ def test_ca_col(f, backend):
 # regression tests for datasets which have been previously saved
 
 def test_reg_load_hyperalignment_example_hdf5():
+    skip_if_no_external('nibabel')
     from mvpa2 import pymvpa_datadbroot
-    filepath = os.path.join(pymvpa_datadbroot,
+    filepath = pathjoin(pymvpa_datadbroot,
                         'hyperalignment_tutorial_data',
                         'hyperalignment_tutorial_data.hdf5.gz')
     if not os.path.exists(filepath):
@@ -426,3 +465,55 @@ def test_versions(f):
     hdf = h5py.File(f, 'r')
     assert_equal(hdf.attrs.get('__pymvpa_hdf5_version__'), '2')
     assert_equal(hdf.attrs.get('__pymvpa_version__'), mvpa2.__version__)
+
+def test_present_fmri_dataset():
+    skip_if_no_external('nibabel')
+    # just a helper to signal if we have any of those available
+    f = get_testing_fmri_dataset_filename()
+    if not os.path.exists(f):
+        raise SkipTest("Absent %s. Verify that you got submodule" % f)
+
+
+test_files = glob(pathjoin(pymvpa_dataroot, 'testing', 'fmri_dataset', '*.hdf5'))
+
+
+@sweepargs(testfile=test_files)
+@with_tempfile(suffix=".nii.gz")
+def test_regress_fmri_dataset(tempfile=None, testfile=None):
+    skip_if_no_external('nibabel')
+
+    # verify that we have actual load
+    if not (exists(testfile) and exists(realpath(testfile))):
+        raise SkipTest("File %s seems to be missing -- 'git annex get .' "
+                       "to fetch all test files first" % testfile)
+    # Still might be a direct mode, or windows -- so lets check the size
+    if os.stat(testfile).st_size < 1000:
+        raise SkipTest("File %s seems to be small/empty -- 'git annex get .' "
+                       "to fetch all test files first" % testfile)
+
+    from mvpa2.datasets.mri import map2nifti
+
+    ds = h5load(testfile)  # load previously generated dataset
+    # rudimentary checks that data was loaded correctly
+    assert_equal(np.sum(ds), 11444)
+    assert_equal(sorted(ds.sa.keys()),
+                 ['chunks', 'targets', 'time_coords', 'time_indices'])
+    assert_equal(sorted(ds.fa.keys()), ['voxel_indices'])
+
+    # verify that map2nifti works whenever version of nibabel on the system
+    # greater or equal that one it was saved with:
+    if externals.versions['nibabel'] >= ds.a.versions['nibabel']:
+        # test that we can get str of the niftihdr:
+        # to avoid such issues as https://github.com/PyMVPA/PyMVPA/issues/278
+        hdr_str = str(ds.a.imghdr)
+        assert(hdr_str != "")
+        ds_ni = map2nifti(ds)
+        # verify that we can store generated nifti to a file
+        ds_ni.to_filename(tempfile)
+        assert(os.path.exists(tempfile))
+    else:
+        raise SkipTest(
+            "Our version of nibabel %s is older than the one file %s was saved "
+            "with: %s" % (externals.versions['nibabel'],
+                          testfile,
+                          ds.a.versions['nibabel']))

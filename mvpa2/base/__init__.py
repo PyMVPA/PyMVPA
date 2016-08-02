@@ -20,9 +20,11 @@ PyMVPA code, and are generic building blocks
 __docformat__ = 'restructuredtext'
 
 
-import sys, os
+import sys
+import os
 from mvpa2.base.config import ConfigManager
 from mvpa2.base.verbosity import LevelLogger, OnceLogger
+
 
 #
 # Setup verbose and debug outputs
@@ -40,14 +42,17 @@ class _SingletonType(type):
             mcs._instances[sid] = instance
         return mcs._instances[sid]
 
+
 class __Singleton:
     """To ensure single instance of a class instantiation (object)
 
     """
 
     __metaclass__ = _SingletonType
+
     def __init__(self, *args):
         pass
+
     # Provided __call__ just to make silly pylint happy
     def __call__(self):
         raise NotImplementedError
@@ -75,6 +80,7 @@ verbose = __Singleton("verbose", LevelLogger(
 # 2 -- cmdline handling
 # 3 --
 # 4 -- computation/algorithm relevant thingies
+
 
 # Helper for errors printing
 def error(msg, critical=True):
@@ -119,7 +125,6 @@ class WarningLog(OnceLogger):
         self.__maxcount = maxcount
         self.__explanation_seen = False
 
-
     def __call__(self, msg, bt=None):
         import traceback
         if bt is None:
@@ -130,24 +135,23 @@ class WarningLog(OnceLogger):
         if not self.__explanation_seen:
             self.__explanation_seen = True
             fullmsg += "\n * Please note: warnings are " + \
-                  "printed only once, but underlying problem might " + \
-                  "occur many times *"
+                "printed only once, but underlying problem might " + \
+                "occur many times *"
         if bt and self.__btlevels > 0:
             fullmsg += "Top-most backtrace:\n"
-            fullmsg += reduce(lambda x, y: x + "\t%s:%d in %s where '%s'\n" % \
-                              y,
-                              traceback.extract_stack(limit=self.__btlevels),
-                              "")
+            fullmsg += reduce(
+                lambda x, y:
+                x + "\t%s:%d in %s where '%s'\n" % y,
+                traceback.extract_stack(limit=self.__btlevels),
+                "")
 
         OnceLogger.__call__(self, msgid, fullmsg, self.__maxcount)
 
-
-    ##REF: Name was automagically refactored
     def _set_max_count(self, value):
         """Set maxcount for the warning"""
         self.__maxcount = value
 
-    maxcount = property(fget=lambda x:x.__maxcount, fset=_set_max_count)
+    maxcount = property(fget=lambda x: x.__maxcount, fset=_set_max_count)
 
 # XXX what is 'bt'? Maybe more verbose name?
 if cfg.has_option('warnings', 'bt'):
@@ -169,7 +173,7 @@ warning = WarningLog(
     btlevels=warnings_btlevels,
     btdefault=warnings_bt,
     maxcount=warnings_maxcount
-    )
+)
 
 
 if __debug__:
@@ -212,6 +216,7 @@ if __debug__:
     debug.register('IRELIEF', "Various I-RELIEFs")
     debug.register('SA_', "Sensitivity analyzers (verbose)")
     debug.register('PSA', "Perturbation analyzer call")
+    debug.register('RFE', "Recursive Feature Elimination")
     debug.register('RFEC', "Recursive Feature Elimination call")
     debug.register('RFEC_', "Recursive Feature Elimination call (verbose)")
     debug.register('IFSC', "Incremental Feature Search call")
@@ -297,6 +302,8 @@ if __debug__:
 
     debug.register('GNB', "GNB - Gaussian Naive Bayes")
 
+    debug.register('GDA', "GDA - Gaussian Discriminant Analyses")
+
     debug.register('GPR', "GPR")
     debug.register('GPR_WEIGHTS', "Track progress of GPRWeights computation")
     debug.register('KRN', "Kernels module (mvpa2.kernels)")
@@ -327,8 +334,10 @@ if __debug__:
     debug.register('REPM', "Repeated measure (e.g. super-class of CrossValidation)")
     debug.register('CERR', "Various ClassifierErrors")
 
-    debug.register('HPAL', "Hyperalignment")
-    debug.register('HPAL_', "Hyperalignment (verbose)")
+    debug.register('HPAL',   "Hyperalignment")
+    debug.register('HPAL_',  "Hyperalignment (verbose)")
+    debug.register('SHPAL',  "Searchlight Hyperalignment")
+    debug.register('GCTHR', "Group cluster threshold")
     debug.register('ATL', "Atlases")
     debug.register('ATL_', "Atlases (verbose)")
     debug.register('ATL__', "Atlases (very verbose)")
@@ -342,6 +351,8 @@ if __debug__:
 
     debug.register('ATTRREFER', "Debugging of top-level attribute referencing, "
                    "needed for current refactoring carried out in tent/flexds")
+
+    debug.register('BM', "Benchmark")
 
     # Lets check if environment can tell us smth
     if cfg.has_option('general', 'debug'):
@@ -382,12 +393,15 @@ if __debug__:
             def flush(self):
                 self.stdout.flush()
 
+            def isatty(self):
+                return False
+
         _out = _pymvpa_stdout_debug(sys)
 
-else: # if not __debug__
+else:  # if not __debug__
 
     # this debugger function does absolutely nothing.
-    # It avoids the need of using 'if __debug__' for debug(...) calls.    
+    # It avoids the need of using 'if __debug__' for debug(...) calls.
 
     from mvpa2.base.verbosity import BlackHoleLogger
 

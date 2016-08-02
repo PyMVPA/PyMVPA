@@ -100,7 +100,7 @@ def ttest_1samp(a, popmean=0, axis=0, mask=None, alternative='two-sided'):
     This is a refinement for the :func:`scipy.stats.ttest_1samp` for
     the null hypothesis testing that the expected value (mean) of a
     sample of independent observations is equal to the given
-    population mean, `popmean`.  It adds ability to test carry single
+    population mean, `popmean`.  It adds ability to carry single
     tailed test as well as operate on samples with varying number of
     active measurements, as specified by `mask` argument.
 
@@ -229,7 +229,7 @@ def binomial_proportion_ci(n, X, alpha=.05, meth='jeffreys'):
     Anderson Winkler and Tom Nichols.
 
     Parameters
-    ==========
+    ----------
     n : int
       Number of trials
     X : int or array
@@ -241,17 +241,16 @@ def binomial_proportion_ci(n, X, alpha=.05, meth='jeffreys'):
       Interval estimation method.
 
     Returns
-    =======
+    -------
     2-item array or 2D array
       With the lower and upper bound for the confidence interval. If X was given
       as a vector with p items a 2xp array is returned.
 
-    See also
-    ========
-    Brown LD, Cai TT, DasGupta AA. Interval estimation for a
-    binomial proportion. Statistical Science. 2001 16(2):101-133.
-
-    http://brainder.org/2012/04/21/confidence-intervals-for-bernoulli-trials/
+    References
+    ----------
+    .. [1] Brown LD, Cai TT, DasGupta AA. Interval estimation for a
+       binomial proportion. Statistical Science. 2001 16(2):101-133.
+       http://brainder.org/2012/04/21/confidence-intervals-for-bernoulli-trials
     """
 
     from scipy import stats
@@ -374,7 +373,7 @@ def compute_ts_boxplot_stats(data, outlier_abs_minthresh=None,
     # data comes in as (subj x volume x parameter)
     orig_input = data
     # reduce data to L2-norm
-    if not aggfx is None:
+    if aggfx is not None:
         data = np.apply_along_axis(aggfx, 2, data, *args)
     # need to deal with missing data
     data = _mask_nan(np.asanyarray(data))
@@ -385,8 +384,13 @@ def compute_ts_boxplot_stats(data, outlier_abs_minthresh=None,
     stdd = np.ma.std(data, axis=0)
     outlierd = None
     if outlier_thresh > 0.0:
-        outlier = np.ma.greater((np.absolute(data - meand)), outlier_thresh * stdd)
-        if not outlier_abs_minthresh is None:
+        # deal properly with NaNs so that they are not considered outliers
+        outlier = np.logical_and(np.logical_not(np.isnan(data)),
+                                 np.ma.greater(
+                                        (np.absolute(data - meand)),
+                                        outlier_thresh * stdd))
+
+        if outlier_abs_minthresh is not None:
             # apply absolute filter in addition
             outlier = np.logical_and(outlier,
                                      np.ma.greater(data,

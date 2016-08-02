@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 
 
 import os
+from os.path import join as pathjoin
 from datetime import datetime
 
 import mvpa2
@@ -123,7 +124,7 @@ class Report(object):
         if path is None:
             self._filename = name
         else:
-            self._filename = os.path.join(path, name)
+            self._filename = pathjoin(path, name)
 
         self.__nfigures = 0
 
@@ -189,7 +190,7 @@ class Report(object):
     # TODO: workaround -- either passing symbolic names or assign
     #       post-class creation
     #@borrowkwargs(reportlab.platypus.Image, '__init__')
-    def figure(self, fig=None, name=None, savefig_kwargs={}, **kwargs):
+    def figure(self, fig=None, name=None, savefig_kwargs=None, **kwargs):
         """Add a figure to the report
 
         Parameters
@@ -203,6 +204,8 @@ class Report(object):
         **kwargs
           Passed to :class:`reportlab.platypus.Image` constructor
         """
+        if savefig_kwargs is None:
+            savefig_kwargs = {}
 
         if externals.exists('pylab', raise_=True):
             import pylab as pl
@@ -224,7 +227,7 @@ class Report(object):
             name = name.replace('#', str(self.__nfigures))
 
             # Save image
-            fig_filename = os.path.join(self._filename,
+            fig_filename = pathjoin(self._filename,
                                         '%s.%s' % (name, self.fig_ext))
             if __debug__ and not self in debug.handlers:
                 debug("REP_", "Saving figure '%s' into %s"

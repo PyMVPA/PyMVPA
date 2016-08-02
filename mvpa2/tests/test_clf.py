@@ -173,7 +173,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
     # TODO: XXX finally just make regression/clf separation cleaner
-    @sweepargs(clf=clfswh[:])
+    @sweepargs(clf=clfswh['!random', 'binary', 'multiclass'])
     def test_classifier_generalization(self, clf):
         """Simple test if classifiers can generalize ok on simple data
         """
@@ -335,7 +335,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
     # TODO: sg - remove our limitations, meta, lda, qda and skl -- also
-    @sweepargs(clf=clfswh['!sg', '!plr', '!meta', '!lda', '!qda', '!glmnet'])
+    @sweepargs(clf=clfswh['oneclass', 'oneclass-binary'])
     def test_single_class(self, clf):
         """Test if binary and multiclass can handle single class training/testing
         """
@@ -587,22 +587,22 @@ class ClassifiersTests(unittest.TestCase):
 
         # Test conflicting definition
         tclf = TreeClassifier(clfs[0], {
-            'L0+2' : (('L0', 'L2'), clfs[1]),
-            'L2+3' : (('L2', 'L3'), clfs[2])})
+            'L0+2': (('L0', 'L2'), clfs[1]),
+            'L2+3': (('L2', 'L3'), clfs[2])})
         self.assertRaises(ValueError, tclf.train, ds)
         """Should raise exception since label 2 is in both"""
 
         # Test insufficient definition
         tclf = TreeClassifier(clfs[0], {
-            'L0+5' : (('L0', 'L5'), clfs[1]),
-            'L2+3' : (('L2', 'L3'),       clfs[2])})
+            'L0+5': (('L0', 'L5'), clfs[1]),
+            'L2+3': (('L2', 'L3'),       clfs[2])})
         self.assertRaises(ValueError, tclf.train, ds)
         """Should raise exception since no group for L1"""
 
         # proper definition now
         tclf = TreeClassifier(clfs[0], {
-            'L0+1' : (('L0', 'L1'), clfs[1]),
-            'L2+3' : (('L2', 'L3'), clfs[2])})
+            'L0+1': (('L0', 'L1'), clfs[1]),
+            'L2+3': (('L2', 'L3'), clfs[2])})
 
         # Lets test train/test cycle using CVTE
         cv = CrossValidation(tclf, OddEvenPartitioner(), postproc=mean_sample(),
@@ -637,8 +637,8 @@ class ClassifiersTests(unittest.TestCase):
         clfs_mc = [clf.clone() for clf in clfs_mc[:4]] # and clones again
 
         tclf = TreeClassifier(clfs_mc[0], {
-            'L0' : (('L0',), None),
-            'L1+2+3' : (('L1', 'L2', 'L3'), clfs_mc[1])})
+            'L0': (('L0',), None),
+            'L1+2+3': (('L1', 'L2', 'L3'), clfs_mc[1])})
 
         cv = CrossValidation(tclf,
                              OddEvenPartitioner(),
@@ -677,7 +677,7 @@ class ClassifiersTests(unittest.TestCase):
         # Otherwise multiclass libsvm builtin and our MultiClass would differ
         # in results
         svm = clf.clone()                 # operate on clone to avoid side-effects
-        if svm.params.has_key('C') and svm.params.C<0:
+        if 'C' in svm.params and svm.params.C<0:
             svm.params.C = 1.0                 # reset C to be 1
         svm2 = svm.clone()
         svm2.ca.enable(['training_stats'])
@@ -1093,7 +1093,40 @@ class ClassifiersTests(unittest.TestCase):
             xx = pl.hist(accs, bins=bins, align='left')
             pl.xlim((0. - step/2, 1.+step/2))
 
+    @sweepargs(clf=clfswh['multiclass'])
+    def test_diff_len_labels_str(self, clf):
+        # check if the classifier can handle a dataset with labels as string of
+        # variable length
+        # was failing on TreeClassifier due to np.str dtype being assumed from first
+        # returned value
+        ds = datasets['uni4small'].copy()
+        newlabels = dict([(l,l+'_'*li) for li,l in enumerate(ds.uniquetargets)])
+        ds.targets = [newlabels[l] for l in ds.targets]
 
+        clf2 = clf.clone()
+        clf2.train(ds)
+        predictions = clf2.predict(ds)
+        # predictions on the same ds as training should give same labels
+        assert(set(ds.uniquetargets).issuperset(predictions))
+
+    def test_diff_len_labels_str_treeclassifier(self):
+        # check if the classifier can handle a dataset with labels as string of
+        # variable length
+        # was failing on TreeClassifier due to np.str dtype being assumed from first
+        # returned value
+        ds = datasets['uni4small'].copy()
+        newlabels = dict([(l,l+'_'*li) for li,l in enumerate(ds.uniquetargets)])
+        ds.targets = [newlabels[l] for l in ds.targets]
+
+        clf = TreeClassifier(mvpa2.testing.clfs.SVM(), {
+                'group1':(ds.uniquetargets[:2], mvpa2.testing.clfs.SVM()),
+                'group2':(ds.uniquetargets[2:], mvpa2.testing.clfs.SVM())})
+        clf.train(ds)
+        predictions = clf.predict(ds)
+        # predictions on the same ds as training should give same labels
+        assert(np.all(np.unique(predictions) == ds.uniquetargets))
+
+        
 def suite():  # pragma: no cover
     return unittest.makeSuite(ClassifiersTests)
 

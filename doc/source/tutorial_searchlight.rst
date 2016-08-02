@@ -26,7 +26,7 @@ our chosen ROIs) our signal of interest is located.  And that is despite the
 fact that we have analyzed the data repeatedly, with different classifiers and
 investigated error rates and confusion matrices. So what can we do?
 
-Ideally, we would like to have some way to estimate a score for each feature
+Ideally, we would like to have some way of estimating a score for each feature
 that indicates how important that particular feature (most of the time a
 voxel) is in the context of a certain classification task. There are various
 possibilities to get a vector of such per-feature scores in PyMVPA. We could
@@ -66,8 +66,8 @@ idea. We created an object instance ``aov`` being a
 This one differs little from a call to
 :class:`~mvpa2.measures.base.CrossValidation`.  Both are objects that get
 instantiated (potentially with some custom arguments) and yield the results in
-a dataset when called with an input dataset. This is called a
-:term:`processing object` and is a common concept in PyMVPA.
+a dataset when called with an input dataset. This is called a :term:`processing
+object` and is a common concept in PyMVPA.
 
 However, there is a difference between the two processing objects.
 :class:`~mvpa2.measures.base.CrossValidation` returns a dataset with a single
@@ -112,7 +112,7 @@ a small, sphere-shaped neighborhood of brain voxels and computes a
 multivariate measure to quantify the amount of information encoded in its
 pattern (e.g.  `mutual information`_). Later on this :term:`searchlight`
 approach has been extended to run a full classifier cross-validation in
-every possible sphere in the brain. Since that, multiple studies have
+every possible sphere in the brain. Since that, numerous studies have
 employed this approach to localize relevant information in a locally
 constraint fashion.
 
@@ -123,13 +123,13 @@ PyMVPA. We can load and preprocess datasets, we can set up a
 cross-validation procedure.
 
 >>> clf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
->>> cvte = CrossValidation(clf, HalfPartitioner())
+>>> cv = CrossValidation(clf, HalfPartitioner())
 
-The only thing left is that we have to split the dataset into all possible
-sphere neighborhoods that intersect with the brain. To achieve this, we
-can use :func:`~mvpa2.measures.searchlight.sphere_searchlight`:
+The only thing left to do is that we have to split the dataset into all
+possible sphere neighborhoods that intersect with the brain. To achieve this,
+we can use :func:`~mvpa2.measures.searchlight.sphere_searchlight`:
 
->>> sl = sphere_searchlight(cvte, radius=3, postproc=mean_sample())
+>>> sl = sphere_searchlight(cv, radius=3, postproc=mean_sample())
 
 This single line configures a searchlight analysis that runs a full
 cross-validation in every possible sphere in the dataset. Each sphere has a
@@ -259,15 +259,14 @@ we observe errors somewhere
 between the theoretical chance level and zero and we don't know what caused
 the error to decrease. We don't even know which samples get misclassified.
 
-From :ref:`chap_tutorial_classifiers` we know
-that there is a way out of this dilemma. We can look at the confusion
-matrix of a classifier to get a lot more information that is otherwise
-hidden. However, we cannot reasonably do this for thousands of searchlight
-spheres (Note that this is not completely true. See e.g. :ref:`Connolly et al.,
-2012 <CGG+12>` for some creative use-cases for searchlights).
-It becomes obvious that a searchlight analysis is probably not the
-end of a data exploration but rather a crude take off,
-as it raises more questions than it answers.
+From :ref:`chap_tutorial_classifiers` we know that there is a way out of this
+dilemma. We can look at the confusion matrix of a classifier to get a lot more
+information that is otherwise hidden. However, we cannot reasonably do this for
+thousands of searchlight spheres (Note that this is not completely true. See
+e.g. :ref:`Connolly et al., 2012 <CGG+12>` for some creative use-cases for
+searchlights).  It becomes obvious that a searchlight analysis is probably not
+the end of a data exploration but rather a crude take off, as it raises more
+questions than it answers.
 
 Moreover, a searchlight cannot detect signals that extend beyond a small
 local neighborhood. This property effectively limits the scope of analyses
@@ -276,12 +275,16 @@ will hardly restrict the analysis to patches of a few cubic millimeters of
 brain tissue. As we have seen before, searchlights also have another nasty
 aspect. Although they provide us with a multivariate localization measure,
 they also inherit the curse of univariate fMRI data analysis --
-`multiple comparisons`_.
+`multiple comparisons`_. PyMVPA comes with an algorithm that can help to
+cope with the problem in the context of group analyses:
+:class:`~mvpa2.algorithms.group_clusterthr.GroupClusterThreshold`.
+
 
 .. _multiple comparisons: http://en.wikipedia.org/wiki/Multiple_comparisons
 
-Despite these limitations a searchlight analysis can be a valuable
-exploratory tool if used appropriately. The capabilities of PyMVPA's searchlight
+Despite these limitations a searchlight analysis can be a valuable exploratory
+tool if used appropriately. The capabilities of PyMVPA's searchlight
 implementation go beyond what we looked at in this tutorial. It is not only
-possible to run *spatial* searchlights, but multiple spaces can be
-considered simultaneously.
+possible to run *spatial* searchlights, but multiple spaces can be considered
+simultaneously. This is further illustrated in
+:ref:`chap_tutorial_eventrelated_searchlight`.
