@@ -503,11 +503,6 @@ def plot_scatter_matrix(d, style='full', labels=None, fig=None, width_=6, **kwar
 
 
 def unique_path_parts(*paths):
-    ## paths = [
-    ##     '/data/famface/subjects/sz00/results/mvpa110716-ev+1_3/gauss_fwhm_4.0/mni/similarity:all_sl3_identity_noself_correlation:correlation.nii.gz',
-    ##     '/data/famface/subjects/sz00/results/mvpa110716-ev+1_3/gauss_fwhm_4.0/similarity:all5_sl3_identity_noself_correlation:spearmanr.nii.gz',
-    ##     '/data/famface/subjects/sz00/results/mvpa110716-ev+1_3/gauss_fwhm_4.0/similarity:all5_sl3_identity_noself_correlation:spearmanrXXX.nii.gz',
-    ##     ]
     paths_splits = [p.split(os.path.sep) for p in paths]
     minlen = min([len(x) for x in paths_splits])
     paths_split = np.array([p.split(os.path.sep, minlen-1) for p in paths]).T
