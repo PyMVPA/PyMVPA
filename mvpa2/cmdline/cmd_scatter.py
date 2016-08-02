@@ -61,15 +61,8 @@ scatterplot_opts_grp = ('options for scatterplot', [
 
 
 def setup_parser(parser):
-    from .helpers import parser_add_optgroup_from_def, \
-        parser_add_common_attr_opts, single_required_hdf5output, ca_opts_grp
-    #parser_add_common_opt(parser, 'multidata', required=True)
+    from .helpers import parser_add_optgroup_from_def
     parser_add_optgroup_from_def(parser, scatterplot_opts_grp)
-    #parser_add_optgroup_from_def(parser, ca_opts_grp)
-    #parser_add_optgroup_from_def(parser, searchlight_constraints_opts_grp)
-    #parser_add_optgroup_from_def(parser, crossvalidation_opts_grp,
-    #                             prefix='--cv-')
-    #parser_add_optgroup_from_def(parser, single_required_hdf5output)
 
 
 def run(args):
