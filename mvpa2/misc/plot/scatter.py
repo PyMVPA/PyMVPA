@@ -1,47 +1,14 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*- 
-#ex: set sts=4 ts=4 sw=4 noet:
-#------------------------- =+- Python script -+= -------------------------
-"""
- @file      scatter.py
- @date      Thu Jul 14 14:56:33 2011
- @brief
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+""""""
 
-
-  Yaroslav Halchenko                                            Dartmouth
-  web:     http://www.onerussian.com                              College
-  e-mail:  yoh@onerussian.com                              ICQ#: 60653192
-
- DESCRIPTION (NOTES):
-
- COPYRIGHT: Yaroslav Halchenko 2011
-
- LICENSE: MIT
-
-  Permission is hereby granted, free of charge, to any person obtaining a copy
-  of this software and associated documentation files (the "Software"), to deal
-  in the Software without restriction, including without limitation the rights
-  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-  copies of the Software, and to permit persons to whom the Software is
-  furnished to do so, subject to the following conditions:
-
-  The above copyright notice and this permission notice shall be included in
-  all copies or substantial portions of the Software.
-
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-  THE SOFTWARE.
-"""
-#-----------------\____________________________________/------------------
-
-__author__ = 'Yaroslav Halchenko'
-__copyright__ = 'Copyright (c) 2011 Yaroslav Halchenko'
-__license__ = 'MIT'
-
-
+__docformat__ = 'restructuredtext'
 import sys, os
 import pylab as pl
 import nibabel as nb
@@ -60,6 +27,7 @@ def fill_nonfinites(a, fill=0, inplace=True):
             a = a.copy()
         a[nonfinites] = fill
     return a
+
 
 def plot_scatter(dataXd, mask=None, masked_opacity=0.,
                  labels=None, colors=True,
@@ -676,93 +644,3 @@ def plot_scatter_files(files,
         return figs, datas
     else:
         return figs
-
-
-if False: # __name__ == "__main__":
-    verbose.level = 3
-    # really simple case for easy testing
-    import numpy as np
-    n = 100
-    x = np.random.uniform(size=(n, n, 3)) - 0.5
-    y = np.sin(x*10) + np.random.normal(size=(n, n, 3))*0.2
-    xy = np.array((x,y))
-    mask = (x >= 0.1) & (y >= -0.1)
-    plot_scatter(xy, mask=mask, masked_opacity=0.1)
-    pl.show()
-    
-
-    (['/data/famface/results/mvpa111229+tempderivs2-ev+1_3-27.ok2/__mean_betas4__sl2__/t-tests/mni/_familiarity_noself_gross_acc-chance_sigma.nii.gz',
-      '/data/famface/results/mvpa111229+tempderivs2-ev+1_3-27.ok2/__mean_betas4__sl2__/t-tests/mni/_familiarity_noself_gross_acc-chance_m.nii.gz'],
-     '/data/famface/nobackup_cache/figs/data/famface/results/mvpa111229+tempderivs2-ev+1_3-27.ok2/__mean_betas4__sl2__/t-tests/mni/_familiarity_noself_gross_acc-chance_z_sigma-vs-m',
-     [],
-     '/data/famface/results/mvpa111229+tempderivs2-ev+1_3-27.ok2/__mean_betas4__sl2__/t-tests/mni/_familiarity_noself_gross_acc-chance_z.nii.gz',
-     0.20000000000000001,
-     3.0613306)
-
-if False:
-    kwargs = {'mask_file': '/data/famface/results/mvpa111229+tempderivs2-ev+1_3-27.ok2/__mean_betas3__sl3__/t-tests/ants/svmsl3_identity_noself_gross_acc-chance_z.nii.gz', 'files': ['/data/famface/results/mvpa111229+tempderivs2-ev+1_3-27.ok2/__mean_betas3__sl3__/t-tests/ants/svmsl3_identity_noself_gross_acc-chance_sigma.nii.gz', '/data/famface/results/mvpa111229+tempderivs2-ev+1_3-27.ok2/__mean_betas3__sl3__/t-tests/ants/svmsl3_identity_noself_gross_acc-chance_m.nii.gz'], 'thresholds': [], 'mask_thresholds': 3.0273163, 'masked_opacity': 0.20000000000000001}
-    plot_scatter_files(**kwargs)
-
-if False:
-    fig = pl.figure(figsize=(12, 12))
-    plot_scatter_files(['/data/famface/results/mvpa111229+tempderivs2-ev+1_3-27.ok2/__mean_betas4__sl3__/t-tests/mni/_familiarity_noself_gross_acc-chance_z.nii.gz', '/data/famface/results/mvpa111229+tempderivs2-ev+1_3-27.ok2/__mean_betas4__sl3__/t-tests/mni/_familiarity_noself_cvidentity_gross_acc-chance_z.nii.gz'],
-                       thresholds=[[2.6549172], [2.522563]],
-                       fig = fig,
-                       rasterized=True)
-    fig.savefig('/tmp/fig3.svg')
-    fig.savefig('/tmp/fig3.png', dpi=50)
-    #fig = pl.gcf()
-    #for dpi in 75, 300, 1000:
-    #    n = '/tmp/fig2-%d' % dpi
-    #    for e in 'svg', 'pdf', 'png':
-    #        fig.savefig(n + '.' + e, dpi=dpi)
-
-if False:
-    d1 = '/data/famface/subjects/km00/results/mvpa120829+tempderivs2-ev+1_3/gauss_fwhm_4.0_betas+tderivs_zchunks_trials/'
-    d2 = '/data/famface/subjects/km00/results/mvpa111229+tempderivs2-ev+1_3/gauss_fwhm_4.0_betas+tderivs_zchunks_trials/'
-    files = [d1 + 'm1nnsl3_familiarity_noself_cvidentity_gross_acc-chance.nii.gz',
-             d1 + 'svmsl3_familiarity_noself_cvidentity_gross_acc-chance.nii.gz',
-             d2 + 'svmsl3_familiarity_noself_cvidentity_gross_acc-chance.nii.gz',
-             ]
-    plot_scatter_files(files, style='full', hint_opacity=False)
-
-#def test_plot_scatter():
-if False:
-    mvpa2.seed(2)
-    from mvpa2.misc.fx import get_random_rotation
-    import numpy as np
-    d = np.random.normal(size=(2, 300))
-    d[0] /= 3
-    r = get_random_rotation(len(d))
-    d = np.dot(r, d)
-    fig = pl.figure(figsize=(5, 10))
-    axes = []
-    for sp in xrange(3):
-        sp = pl.subplot(3, 1, sp+1);
-        axes.append(pl.gca())
-    ## fig1 = plot_scatter(d, ax_scatter=axes[0], ax_hist_x=axes[1], ax_hist_y=axes[2], bp_location='hist', rasterized=True)
-    ## fig1.savefig('/tmp/fig1.svg', dpi=300)
-    ## fig1.savefig('/tmp/fig1.png', dpi=300)
-    pl
-    #plot_scatter(d)
-    #plot_scatter(d, bp_location=None)
-
-
-    #plot_scatter(d, ax_scatter=axes[0], ax_hist_x=axes[1], ax_hist_y=axes[2], bp_location='hist')
-    #plot_scatter(d)
-    #plot_scatter(d, bp_location=None)
-    pl.show()
-
-if False:
-    # matrix plot
-    mvpa2.seed(3)
-    from mvpa2.misc.fx import get_random_rotation
-    import numpy as np
-    d = np.random.normal(size=(3, 300))
-    d[0] /= 3
-    d[-1] *= 1.5
-    r = get_random_rotation(len(d))
-    d = np.dot(r, d)
-    d[0] -= 1                          # offset
-    d[1] += 1.5                          # offset
-    plot_scatter_matrix(d, labels=['dim%d' %i for i in xrange(len(d))])
