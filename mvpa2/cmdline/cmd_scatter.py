@@ -56,8 +56,7 @@ scatterplot_opts_grp = ('options for scatterplot', [
              help="Half-width of the uniform jitter to add to y-coords. Useful"
                   " for quantized (thus overlapping) data")),
     (("-o", "--output-img"),
-        dict(help="Where to output png of the scatterplot. If selected,"
-                  "no figure will be shown"))
+        dict(help="Where to output png of the scatterplot."))
 ])
 
 
@@ -83,4 +82,6 @@ def run(args):
                        x_jitter=args.x_jitter,
                        y_jitter=args.y_jitter,
                        uniq=args.unique_points)
+    if args.output_img:
+        pl.savefig(args.output_img)
     pl.show()
