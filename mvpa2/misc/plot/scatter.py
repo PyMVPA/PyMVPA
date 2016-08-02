@@ -94,7 +94,9 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
       Plot uniq values (those present in one but not in the other) along each axis
       with crosses
     """
-    assert(len(dataXd) == 2)
+    if len(dataXd) != 2:
+        raise ValueError("First axis of dataXd can only have two dimensions, "
+                         "got {0}".format(len(dataXd)))
     dataXd = np.asanyarray(dataXd)      # TODO: allow to operate on list of arrays to not waste RAM/cycles
     data = dataXd.reshape((2, -1))
     if dataXd.ndim < 5:
