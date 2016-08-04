@@ -9,6 +9,8 @@
 """Unit tests for PyMVPA misc.plot.scatter"""
 
 from mvpa2.testing import *
+skip_if_no_external('pylab')
+
 from mvpa2.misc.plot.scatter import plot_scatter, plot_scatter_matrix, \
     plot_scatter_files
 import numpy as np
