@@ -213,6 +213,7 @@ from mvpa2.misc.bv.base import *
 from mvpa2.misc.support import *
 from mvpa2.misc.transformers import *
 from mvpa2.misc.dcov import dCOV, dcorcoef
+from mvpa2.misc.plot.scatter import *
 
 __sdebug("nibabel")
 if externals.exists("nibabel"):

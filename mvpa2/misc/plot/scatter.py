@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-""""""
+"""Routines to scatterplot data"""
 
 __docformat__ = 'restructuredtext'
 import sys, os
