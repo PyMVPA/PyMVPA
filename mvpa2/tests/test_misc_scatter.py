@@ -12,17 +12,31 @@ from mvpa2.testing import *
 skip_if_no_external('pylab')
 
 from mvpa2.misc.plot.scatter import plot_scatter, plot_scatter_matrix, \
-    plot_scatter_files
+    plot_scatter_files, _get_data
 import numpy as np
 from mock import patch
 
 
-data2d = np.ones((2, 10, 10))
+data2d = np.random.randn(2, 10, 10)
 data3d = np.random.randn(3, 10, 10)
 
 def test_plot_scatter():
     # smoke test
     fig = plot_scatter(data2d)
+
+    # smoke test with jitter
+    fig = plot_scatter(data2d, x_jitter=0.1)
+    fig = plot_scatter(data2d, y_jitter=0.1)
+    fig = plot_scatter(data2d, x_jitter=0.1, y_jitter=0.1)
+
+    # smoke test with mask
+    mask = np.random.randint(0, 2, size=data2d.shape)
+    mask[1] = 1
+    fig = plot_scatter(data2d, mask=mask)
+
+    # smoke test with threshold
+    fig = plot_scatter(data2d, thresholds=[0.2])
+    fig = plot_scatter(data2d, thresholds=[0.2, 0.4])
 
     assert_raises(ValueError, plot_scatter, data3d)
 
@@ -35,3 +49,10 @@ def test_plot_scatter_matrix():
         fig = plot_scatter_matrix(data3d)
         assert_equal(len(pscatter_mock.call_args_list), 6)
 
+def test_get_data():
+    from os.path import join as pjoin
+    fn = pjoin(pymvpa_dataroot,
+               *('haxby2001/sub001/anatomy/lowres001.nii.gz'.split('/')))
+
+    data = _get_data(fn)
+    assert_true(data.ndim, 3)

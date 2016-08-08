@@ -137,6 +137,8 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
     if not np.all(finites):
         msg = " non-finite x: %d, y: %d" % (np.sum(~finites[0]), np.sum(~finites[1]))
 
+    #TODO: make this one independent of verbose.level - introduce some
+    #argument/handling
     verbose(1, "total: %d union: %d%s intersection: %d x_only: %d y_only: %d%s"
             % (len(nzsum),
                np.sum(union),
