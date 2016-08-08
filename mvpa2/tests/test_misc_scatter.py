@@ -33,7 +33,6 @@ def test_plot_scatter():
 
     # smoke test with mask
     mask = np.random.randint(0, 2, size=data2d.shape)
-    mask[1] = 1
     fig = plot_scatter(data2d, mask=mask)
 
     # smoke test with threshold
