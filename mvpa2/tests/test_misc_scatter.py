@@ -14,8 +14,10 @@ skip_if_no_external('pylab')
 from mvpa2.misc.plot.scatter import plot_scatter, plot_scatter_matrix, \
     plot_scatter_files, _get_data
 import numpy as np
-from mock import patch
 
+from glob import glob
+from mock import patch
+from os.path import join as pjoin
 
 data2d = np.random.randn(2, 10, 10)
 data3d = np.random.randn(3, 10, 10)
@@ -49,8 +51,14 @@ def test_plot_scatter_matrix():
         fig = plot_scatter_matrix(data3d)
         assert_equal(len(pscatter_mock.call_args_list), 6)
 
+
+def test_plot_scatter_files():
+    fns = glob(pjoin(pymvpa_dataroot,
+                     *('haxby2001/sub001/anatomy/lowres00*.nii.gz'.split('/'))))
+    figs = plot_scatter_files(fns)
+
+
 def test_get_data():
-    from os.path import join as pjoin
     fn = pjoin(pymvpa_dataroot,
                *('haxby2001/sub001/anatomy/lowres001.nii.gz'.split('/')))
 
