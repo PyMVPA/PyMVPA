@@ -39,7 +39,7 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
                  xlim=None, ylim=None,
                  rasterized=None,
                  uniq=False,
-                 stats=False,
+                 include_stats=False,
                  ):
     """
     Parameters
@@ -91,9 +91,10 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
     rasterized: bool, optional
       Passed to scatter call, to allow rasterization of heavy scatter plots
     uniq: bool, optional
-      Plot uniq values (those present in one but not in the other) along each axis
+      Plot uniq values (those present in one but not in the other) along
+      each axis
       with crosses
-    ststs: bool, optional
+    include_stats: bool, optional
       Whether to report additional statistics on the data
     """
     if len(dataXd) != 2:
@@ -147,7 +148,7 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
                np.sum(xnoty), np.sum(ynotx),
                msg))
 
-    if stats:
+    if include_stats:
         # report some statistics as well
         import scipy.stats as ss
         r, p = ss.pearsonr(x, y)

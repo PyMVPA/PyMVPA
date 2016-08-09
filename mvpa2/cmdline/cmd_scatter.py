@@ -78,7 +78,7 @@ def run(args):
                        x_jitter=args.x_jitter,
                        y_jitter=args.y_jitter,
                        uniq=args.unique_points,
-                       stats=args.stats)
+                       include_stats=args.stats)
     if args.output_img:
         pl.savefig(args.output_img)
     pl.show()

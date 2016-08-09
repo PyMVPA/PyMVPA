@@ -59,7 +59,7 @@ def test_plot_scatter():
     fig = plot_scatter(data2d, thresholds=[0.2, 0.4])
 
     # smoke tests with stats
-    fig = plot_scatter(data2d, stats=True)
+    fig = plot_scatter(data2d, include_stats=True)
 
     # test when it should fail
     assert_raises(ValueError, plot_scatter, data3d)
