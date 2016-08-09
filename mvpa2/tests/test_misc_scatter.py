@@ -19,8 +19,12 @@ from glob import glob
 from mock import patch
 from os.path import join as pjoin
 
-data2d = np.random.randn(2, 10, 10)
-data3d = np.random.randn(3, 10, 10)
+data2d = np.random.randn(2, 4, 4)
+data3d = np.random.randn(3, 4, 4)
+
+data2d_3d = np.random.randn(2, 4, 4, 4)
+data2d_4d = np.random.randn(2, 4, 4, 4, 2)
+data2d_5d = np.random.randn(2, 4, 4, 4, 2, 3)
 
 
 def test_fill_nonfinites():
@@ -35,8 +39,10 @@ def test_fill_nonfinites():
 
 
 def test_plot_scatter():
-    # smoke test
+    # smoke test with possible 2 sample datasets
     fig = plot_scatter(data2d)
+    fig = plot_scatter(data2d_3d)
+    fig = plot_scatter(data2d_4d)
 
     # smoke test with jitter
     fig = plot_scatter(data2d, x_jitter=0.1)
@@ -46,6 +52,7 @@ def test_plot_scatter():
     # smoke test with mask
     mask = np.random.randint(0, 2, size=data2d.shape)
     fig = plot_scatter(data2d, mask=mask)
+    fig = plot_scatter(data2d, mask=mask, masked_opacity=0.42)
 
     # smoke test with threshold
     fig = plot_scatter(data2d, thresholds=[0.2])
@@ -54,7 +61,9 @@ def test_plot_scatter():
     # smoke tests with stats
     fig = plot_scatter(data2d, stats=True)
 
+    # test when it should fail
     assert_raises(ValueError, plot_scatter, data3d)
+    assert_raises(ValueError, plot_scatter, data2d_5d)
 
 def test_plot_scatter_matrix():
     # smoke test
