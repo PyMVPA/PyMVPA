@@ -39,6 +39,9 @@ def test_plot_scatter():
     fig = plot_scatter(data2d, thresholds=[0.2])
     fig = plot_scatter(data2d, thresholds=[0.2, 0.4])
 
+    # smoke tests with stats
+    fig = plot_scatter(data2d, stats=True)
+
     assert_raises(ValueError, plot_scatter, data3d)
 
 def test_plot_scatter_matrix():

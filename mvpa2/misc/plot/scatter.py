@@ -14,7 +14,6 @@ import pylab as pl
 import nibabel as nb
 import numpy as np
 
-from mvpa2.base import verbose
 
 __all__ = ['plot_scatter']
 
@@ -40,6 +39,7 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
                  xlim=None, ylim=None,
                  rasterized=None,
                  uniq=False,
+                 stats=False,
                  ):
     """
     Parameters
@@ -93,6 +93,8 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
     uniq: bool, optional
       Plot uniq values (those present in one but not in the other) along each axis
       with crosses
+    ststs: bool, optional
+      Whether to report additional statistics on the data
     """
     if len(dataXd) != 2:
         raise ValueError("First axis of dataXd can only have two dimensions, "
@@ -137,9 +139,7 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
     if not np.all(finites):
         msg = " non-finite x: %d, y: %d" % (np.sum(~finites[0]), np.sum(~finites[1]))
 
-    #TODO: make this one independent of verbose.level - introduce some
-    #argument/handling
-    verbose(1, "total: %d union: %d%s intersection: %d x_only: %d y_only: %d%s"
+    print("total: %d union: %d%s intersection: %d x_only: %d y_only: %d%s"
             % (len(nzsum),
                np.sum(union),
                mask is not None and ' masked: %d' % np.sum(mask) or '',
@@ -147,7 +147,7 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
                np.sum(xnoty), np.sum(ynotx),
                msg))
 
-    if verbose.level > 1:
+    if stats:
         # report some statistics as well
         import scipy.stats as ss
         r, p = ss.pearsonr(x, y)
@@ -162,7 +162,7 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
             statsline += '  dcorr%s=%.4g' % (dcor_s, dcor)
         except ImportError:
             pass
-        verbose(2, statsline)
+        print(statsline)
     else:
         statsline = ''
 
@@ -171,7 +171,7 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
     #pl.plot(datainter[0], datainter[1], '.')
     #fig.show()
 
-    nullfmt   = pl.NullFormatter()         # no labels
+    nullfmt  = pl.NullFormatter()         # no labels
 
     # definitions for the axes
     left, width = 0.1, 0.65
