@@ -12,7 +12,7 @@ from mvpa2.testing import *
 skip_if_no_external('pylab')
 
 from mvpa2.misc.plot.scatter import plot_scatter, plot_scatter_matrix, \
-    plot_scatter_files, _get_data
+    plot_scatter_files, _get_data, fill_nonfinites
 import numpy as np
 
 from glob import glob
@@ -21,6 +21,18 @@ from os.path import join as pjoin
 
 data2d = np.random.randn(2, 10, 10)
 data3d = np.random.randn(3, 10, 10)
+
+
+def test_fill_nonfinites():
+    a = np.array([np.nan, np.inf, 2])
+    aa = a.copy()
+    fill_nonfinites(a)
+    assert_array_equal(a, [0, 0, 2])
+
+    aaa = fill_nonfinites(aa, inplace=False)
+    assert_array_equal(aaa, a)
+    assert_false(np.array_equal(aa, aaa))
+
 
 def test_plot_scatter():
     # smoke test
