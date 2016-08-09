@@ -9,7 +9,7 @@
 """Unit tests for PyMVPA cmdline ttest"""
 
 from mvpa2.testing import *
-from mvpa2.cmdline.cmd_ttest import run
+from mvpa2.cmdline.cmd_ttest import run, guess_backend
 from mvpa2.datasets import Dataset
 
 import numpy as np
@@ -20,7 +20,12 @@ if __debug__:
     from mvpa2.base import debug
 
 def test_guess_backend():
-    pass
+    assert_equal('nifti', guess_backend('meh.nii.gz'))
+    assert_equal('nifti', guess_backend('meh.nii'))
+    assert_equal('hdf5', guess_backend('meh.hdf5'))
+    assert_equal('hdf5', guess_backend('meh.h5'))
+    assert_equal('nifti', guess_backend('meh.tar'))
+
 
 def test_cmdline_ttest():
     skip_if_no_external('mock')
