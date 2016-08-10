@@ -41,6 +41,7 @@ parser_args = {
 }
 
 def setup_parser(parser):
+    """Setup parser for command line arguments"""
     from .helpers import parser_add_optgroup_from_def, \
         parser_add_common_attr_opts
     parser_add_common_opt(parser, 'multidata', required=True)
@@ -66,6 +67,7 @@ def setup_parser(parser):
                         which sample to extract to run the ttest on""")
 
 def guess_backend(fn):
+    """Guess which filetype we're dealing with"""
     if fn.endswith('.gz'):
         fn = fn.strip('.gz')
     if fn.endswith('.nii'):
@@ -80,6 +82,7 @@ def guess_backend(fn):
 
 
 def run(args):
+    """Run it"""
     verbose(1, "Loading %d result files" % len(args.data))
 
     filetype_in = guess_backend(args.data[0])
