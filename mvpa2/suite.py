@@ -271,6 +271,11 @@ if externals.exists('nibabel'):
     from mvpa2.support.nibabel import surf_gifti
 
 
+__sdebug("cmdline")
+if externals.exists("nibabel") and externals.exists("scipy"):
+    from mvpa2.cmdline.cmd_ttest import *
+
+
 __sdebug("ipython goodies")
 if externals.exists("running ipython env"):
     try:
