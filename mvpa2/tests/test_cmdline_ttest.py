@@ -9,6 +9,7 @@
 """Unit tests for PyMVPA cmdline ttest"""
 
 from mvpa2.testing import *
+skip_if_no_external('h5py')
 from mvpa2.cmdline.cmd_ttest import run, guess_backend
 from mvpa2.datasets import Dataset
 
