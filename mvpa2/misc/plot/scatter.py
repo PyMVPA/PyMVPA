@@ -9,13 +9,17 @@
 """Routines to scatterplot data"""
 
 __docformat__ = 'restructuredtext'
+
+
 import sys, os
 import pylab as pl
 import nibabel as nb
 import numpy as np
 
+from mvpa2.base import verbose
 
 __all__ = ['plot_scatter']
+
 
 def fill_nonfinites(a, fill=0, inplace=True):
     """Replace all non-finites (NaN, inf) etc with a fill value
@@ -92,10 +96,10 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
       Passed to scatter call, to allow rasterization of heavy scatter plots
     uniq: bool, optional
       Plot uniq values (those present in one but not in the other) along
-      each axis
-      with crosses
+      each axis with crosses
     include_stats: bool, optional
-      Whether to report additional statistics on the data
+      Whether to report additional statistics on the data. Stats are also
+      reported via verbose at level 2
     """
     if len(dataXd) != 2:
         raise ValueError("First axis of dataXd can only have two dimensions, "
@@ -140,7 +144,7 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
     if not np.all(finites):
         msg = " non-finite x: %d, y: %d" % (np.sum(~finites[0]), np.sum(~finites[1]))
 
-    print("total: %d union: %d%s intersection: %d x_only: %d y_only: %d%s"
+    verbose(1, "total: %d union: %d%s intersection: %d x_only: %d y_only: %d%s"
             % (len(nzsum),
                np.sum(union),
                mask is not None and ' masked: %d' % np.sum(mask) or '',
@@ -163,7 +167,7 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
             statsline += '  dcorr%s=%.4g' % (dcor_s, dcor)
         except ImportError:
             pass
-        print(statsline)
+        verbose(2, statsline)
     else:
         statsline = ''
 
@@ -439,7 +443,7 @@ def plot_scatter_matrix(d, style='full', labels=None, fig=None, width_=6, **kwar
     # predefine axes for the plots
     # 1st row -- histograms
     # next ones -- scatter plots
-    axes = np.zeros(shape=(n,n), dtype=object)
+    axes = np.zeros(shape=(n, n), dtype=object)
 
     if style == 'upper_triang':
         # style with upper row -- hists
@@ -452,7 +456,7 @@ def plot_scatter_matrix(d, style='full', labels=None, fig=None, width_=6, **kwar
         for d1 in xrange(0, n-1):
             for d2 in xrange(d1+1, n):
                 # only upper triangle
-                plot_scatter(d[[d2, d1]], ax_scatter=axes[d1+1, d2],
+                plot_scatter([d[i] for i in [d2, d1]], ax_scatter=axes[d1+1, d2],
                              ax_hist_x=axes[0, d2] if d1==0 else None,
                              ax_hist_y=None,
                              bp_location='hist')
@@ -563,6 +567,10 @@ def plot_scatter_files(files,
     masked_opacity: float, optional
       By default masked out values are not plotted at all.  Value in
       (0,1] will make them visible with this specified opacity
+    mask_thresholds: int or list or tuple, optional
+      A single (min) or two (lower, upper) values to decide which values to mask
+      out (exclude).  If lower < upper, excludes range [lower, upper].
+      if upper < lower, plots only values within [lower, upper] range.
     volume: int, None
       If multi-volume files provided, which volume to consider.
       Otherwise will plot for points from all volumes
