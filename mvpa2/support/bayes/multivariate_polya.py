@@ -26,9 +26,9 @@ def multivariate_polya(x, alpha):
     A = alpha.sum()
     likelihood = factorial(N) * gamma(A) / gamma(N + A)
     # likelihood = gamma(A) / gamma(N + A)
-    for i in range(len(x)):
-        likelihood /= factorial(x[i])
-        likelihood *= gamma(x[i] + alpha[i]) / gamma(alpha[i])
+    for i, xi in enumerate(x):
+        likelihood /= factorial(xi)
+        likelihood *= gamma(xi + alpha[i]) / gamma(alpha[i])
     return likelihood
 
 

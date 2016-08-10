@@ -163,7 +163,9 @@ class RFE(IterativeFeatureSelection):
         self._nfeatures_min = nfeatures_min
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(RFE, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['update_sensitivity'], default=True))
@@ -335,7 +337,7 @@ class RFE(IterativeFeatureSelection):
             #      in lightsvm. Or for god's sake leave-one-out
             #      on a wdataset
             # TODO: document these cases in this class
-            if not testdataset is None:
+            if testdataset is not None:
                 wtestdataset = wtestdataset[:, selected_ids]
 
             step += 1
@@ -415,13 +417,11 @@ class SplitRFE(RFE):
     >>> rfe = SplitRFE(
     ...           LinearCSVMC(),
     ...           OddEvenPartitioner(),
-    ...           # take sensitivities per each split, L2 norm, mean, abs them
+    ...           # take sensitivities per each split, L2 norm, abs, mean them
     ...           fmeasure_postproc=ChainMapper([
     ...               FxMapper('features', l2_normed),
-    ...               FxMapper('samples', np.mean),
-    ...               FxMapper('samples', np.abs)]),
-    ...           # use the error stored in the confusion matrix of split classifier
-    ...           errorfx=ConfusionBasedError(rfesvm_split, confusion_state='stats'),
+    ...               FxMapper('samples', np.abs),
+    ...               FxMapper('samples', np.mean)]),
     ...           # select 50% of the best on each step
     ...           fselector=FractionTailSelector(
     ...               0.50,
@@ -520,7 +520,9 @@ class SplitRFE(RFE):
         self.fmeasure_postproc = fmeasure_postproc
         self.nproc = nproc
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         return super(SplitRFE, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['lrn', 'partitioner'])

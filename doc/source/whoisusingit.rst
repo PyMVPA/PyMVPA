@@ -51,8 +51,45 @@ Institutions Where PyMVPA Is Known To Be Used
 Studies employing PyMVPA
 ========================
 
+2016
+----
+
+* :ref:`Guntupalli et al., Cerebral Cortex (2016) <GHH+16>`.
+  A Model of Representational Spaces in Human Cortex
+
+* Watson et al., NeuroImage (2016). Spatial properties of objects predict
+  patterns of neural response in the ventral visual pathway
+
+* Watson et al., NeuroImage (2016). Patterns of neural response in
+  scene-selective regions of the human brain are affected by low-level
+  manipulations of spatial frequency
+
 2015
 ----
+
+* Floren et al., Frontiers in Human Neuroscience (2015). Accurately decoding
+  visual information from fMRI data obtained in a realistic virtual environment
+
+* Merkel et al, NeuroImage (2015). Neural correlates of multiple object
+  tracking strategies
+
+* Pogoda, et al., Brain and Cognition (2015). Multivariate representation of
+  food preferences in the human brain
+
+* Emmerling et al., NeuroImage (2015). Decoding the direction of imagined
+  visual motion using 7 T ultra-high field fMRI
+
+* Danelli et al., Frontiers in Psychology (2015). Framing effects reveal
+  discrete lexical-semantic and sublexical procedures in reading: an fMRI study
+
+* Schlegel et al., NeuroImage (2015). The artist emerges: Visual art learning
+  alters neural structure and function
+
+* Maass et al., ELife (2015). Functional subregions of the human entorhinal
+  cortex
+
+* Sha et al., Journal of Cognitive Neuroscience (2015). The Animacy Continuum
+  in the Human Ventral Vision Pathway
 
 * :ref:`Greisel et al., arXiv (2015) <GSD+15>`. Photometric redshifts and
   model spectral energy distributions of galaxies from the SDSS-III BOSS DR10

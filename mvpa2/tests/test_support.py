@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA serial feature inclusion algorithm"""
 
+from itertools import product as iterprod
+
 from mvpa2.testing import *
 from mvpa2.misc.support import *
 from mvpa2.base.types import asobjarray
@@ -67,7 +69,7 @@ class SupportFxTests(unittest.TestCase):
         # conversion
         self.assertTrue(ev.as_descrete_time(dt=2).items() == [('onset', 1)])
         evc = ev.as_descrete_time(dt=2, storeoffset=True)
-        self.assertTrue(evc.has_key('offset'))
+        self.assertTrue('offset' in evc)
         self.assertTrue(evc['offset'] == 0.5)
 
         # same with duration included
@@ -256,6 +258,10 @@ class SupportFxTests(unittest.TestCase):
                             msg="Failed to compare tuple of %s to %s"
                             % (v1, v2))
 
+    def test_obscure_version(self):
+        # which lead travis to hang while checking reportlab, so just a smoke
+        # test that the beast doesn't halt
+        v = SmartVersion(' $Id: __init__.py 3788 2010-09-29 10:44:00Z xxxx $ ')
 
 def test_value2idx():
     times = [1.2, 1.3, 2., 4., 0., 2., 1.1]
@@ -282,9 +288,44 @@ def test_limit_filter():
                        np.logical_or(ds.sa.chunks == 3,
                                      ds.sa.chunks == 1))
 
+    # if a list
+    assert_array_equal(get_limit_filter('chunks', ds.sa),
+                       get_limit_filter(['chunks'], ds.sa))
+    assert_array_equal(get_limit_filter('chunks', ds.sa),
+                       get_limit_filter(['chunks']*2, ds.sa))
+    lf = get_limit_filter(['chunks', 'targets'], ds.sa)
+    assert_array_equal(len(np.unique(lf)), len(ds.UC) * len(ds.UT))
+    for uv in np.unique(lf):
+        for a in ['chunks', 'targets']:
+            # within each 'block' values will be unique
+            assert_equal(len(np.unique(ds.sa[a].value[lf == uv])), 1)
+
+
 def test_mask2slice():
     slc = np.repeat(False, 5)
     assert_equal(mask2slice(slc), slice(None, 0, None))
+
+
+def test_xrandom_iterprod():
+    # just some exhaustive one
+    all_12ab = [[1, 'a'], [1, 'b'], [2, 'a'], [2, 'b']]
+    assert_equal(sorted(xrandom_iterprod(10, [1, 2], 'ab')), all_12ab)
+
+    # Let's do a few of some long ones, random ones and verify that come out correctly
+    for i in xrange(10):
+        ns = random.randint(1, 5)
+        seqs = [range(random.randint(1, 5)) for i in range(ns)]
+        all_prods = set(map(tuple, iterprod(*seqs)))
+
+        for count in [random.randint(0, 8) for i in range(3)]:
+            real_count = min(count, np.prod(map(len, seqs)))
+            r_prods = set(map(tuple, xrandom_iterprod(count, *seqs)))
+            assert_equal(len(r_prods), real_count)
+
+            # assert that they are all unique
+            assert_equal(len(set(r_prods)), real_count)
+            # assert that they are all a part of all prods
+            assert all_prods.issuperset(r_prods)
 
 
 def suite():  # pragma: no cover

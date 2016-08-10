@@ -70,6 +70,7 @@ Datasets: Input, Output, Storage and Preprocessing
    datasets.eeglab
    datasets.miscfx
    datasets.sources.native
+   datasets.sources.bids
    datasets.sources.openfmri
    datasets.sources.skl_data
 
@@ -276,7 +277,6 @@ Basic Plotting Utilities
    misc.fsl.melodic
    misc.io
    misc.io.base
-   misc.io.hamster
    misc.io.meg
    support.nibabel
    support.nibabel.afni_niml_annot

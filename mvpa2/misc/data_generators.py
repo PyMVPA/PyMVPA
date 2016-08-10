@@ -13,6 +13,8 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa2.datasets.base import dataset_wizard, Dataset
+from mvpa2.misc.neighborhood import IndexQueryEngine
+from mvpa2 import pymvpa_dataroot, pymvpa_datadbroot
 from mvpa2.misc.fx import get_random_rotation
 from mvpa2.base.dataset import vstack
 
@@ -107,15 +109,15 @@ def normal_feature_dataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
     data = np.random.standard_normal((perlabel * nlabels, nfeatures))
     if snr != 0:
         data /= np.sqrt(snr)
-    if (means is None) and (not nonbogus_features is None):
+    if means is None and nonbogus_features is not None:
         if len(nonbogus_features) != nlabels:
             raise ValueError(
                 "Provide as many nonbogus features as many labels you have")
         means = np.zeros((len(nonbogus_features), nfeatures))
         # pure multivariate -- single bit per feature
-        for i in xrange(len(nonbogus_features)):
-            means[i, nonbogus_features[i]] = 1.0
-    if not means is None and snr != 0:
+        for i, nbf in enumerate(nonbogus_features):
+            means[i, nbf] = 1.0
+    if means is not None and snr != 0:
         # add mean
         data += np.repeat(np.array(means, ndmin=2), perlabel, axis=0)
     if normalize:
@@ -380,7 +382,7 @@ def autocorrelated_noise(ds, sr, cutoff, lfnl=3.0, bord=10, hfnl=None, add_basel
         nsamples += msample
 
     # HF noise
-    if not hfnl is None:
+    if hfnl is not None:
         noise_amps = msample * (hfnl / 100.)
         nsamples += np.random.standard_normal(nsamples.shape) * noise_amps
 
@@ -423,7 +425,7 @@ def random_affine_transformation(ds, scale_fac=100., shift_fac=10.):
 
 
 def simple_hrf_dataset(
-        events=[1, 20, 25, 50, 60, 90, 92, 140],
+        events=None,
         hrf_gen=lambda t: double_gamma_hrf(t) - single_gamma_hrf(t, 0.8, 1, 0.05),
         fir_length=15,
         nsamples=None,
@@ -437,6 +439,8 @@ def simple_hrf_dataset(
     """
     events: list of Events or ndarray of onsets for simple(r) designs
     """
+    if events is None:
+        events = [1, 20, 25, 50, 60, 90, 92, 140]
     if isinstance(events, np.ndarray) or not isinstance(events[0], dict):
         events = [Event(onset=o) for o in events]
     else:
@@ -519,3 +523,62 @@ def simple_hrf_dataset(
     ds.sa['noise'] = noise
     ds.samples += noise
     return ds
+
+def local_random_affine_transformations(
+        ds, distort_seeds, distort_neighbor, space, scale_fac=100,
+        shift_fac=10):
+    """Distort a dataset in the local neighborhood of selected features.
+
+    This function is similar to ``random_affine_transformation()``, but applies
+    multiple random affine transformations to a spatially constraint local
+    neighborhood.
+
+    Parameters
+    ----------
+    ds : Dataset
+      The to be transformed/distorted dataset.
+    distort_seeds : list(int)
+      This a sequence of feature ids (corresponding to the input dataset) that
+      serve as anchor to determine the local neighborhood for a distortion. The
+      number of seeds also determines the number of different local distortions
+      that are going to be applied.
+    distort_neighbor : callable
+      And object that when called with a coordinate generates a sequence of
+      coordinates that comprise its neighborhood (see e.g. ``Sphere()``).
+    space : str
+      Name of the feature attribute of the input dataset that contains the
+      relevant feature coordinates (e.g. 'voxel_indices').
+    scale_fac : float
+      See ``random_affine_transformation()``
+    shift_fac : float
+      See ``random_affine_transformation()``
+
+    Returns
+    -------
+    Dataset
+      A dataset derived from the input dataset with added local distortions.
+    """
+    # which dataset attributes to aggregate
+    random_stats = ['random_rotation', 'random_scale', 'random_shift']
+    kwa = {space: distort_neighbor}
+    qe = IndexQueryEngine(**kwa)
+    qe.train(ds)
+    ds_distorted = ds.copy()
+    for stat in random_stats:
+        ds_distorted.a[stat + 's'] = {}
+    # for each seed region
+    for seed in distort_seeds:
+        # select the neighborhood for this seed
+        # take data from the distorted dataset to avoid
+        # 'loosing' previous distortions
+        distort_ids = qe[seed]
+        ds_d = random_affine_transformation(
+                               ds_distorted[:, distort_ids],
+                               scale_fac=scale_fac,
+                               shift_fac=shift_fac)
+        # recover the distortions stats for this seed
+        for stat in random_stats:
+            ds_distorted.a[stat + 's'].value[seed] = ds_d.a[stat].value
+        # put the freshly distorted data back
+        ds_distorted.samples[:, distort_ids] = ds_d.samples
+    return ds_distorted

@@ -114,7 +114,7 @@ def _fill_in_scattered_results(sl, dataset, roi_ids, results):
                 observ_counter = np.zeros(dataset.nfeatures, dtype=int)
             #project the result onto all features -- love broadcasting!
             resmap[:, res.a.roi_feature_ids] += res.samples
-            if not probmap is None:
+            if probmap is not None:
                 probmap[res.a.roi_feature_ids] += res.fa.null_prob
             # increment observation counter for all relevant features
             observ_counter[res.a.roi_feature_ids] += 1
@@ -124,7 +124,7 @@ def _fill_in_scattered_results(sl, dataset, roi_ids, results):
     resmap[:, observ_mask] /= observ_counter[observ_mask]
     result_ds = Dataset(resmap,
                         fa={'observations': observ_counter})
-    if not probmap is None:
+    if probmap is not None:
         # transpose to make broadcasting work -- creates a view, so in-place
         # modification still does the job
         probmap.T[:,observ_mask] /= observ_counter[observ_mask]
@@ -161,7 +161,7 @@ def run(args):
     else:
         raise RuntimeError("this should not happen")
     ds = arg2ds(args.data)
-    if not args.ds_preproc_fx is None:
+    if args.ds_preproc_fx is not None:
         ds = args.ds_preproc_fx(ds)
     # setup neighborhood
     # XXX add big switch to allow for setting up surface-based neighborhoods

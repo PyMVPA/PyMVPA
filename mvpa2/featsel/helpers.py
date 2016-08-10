@@ -351,7 +351,7 @@ class RangeElementSelector(ElementSelector):
         """
         lower, upper = self.__range
         len_seq = len(seq)
-        if not lower is None:
+        if lower is not None:
             if self.__inclusive:
                 selected = seq >= lower
             else:
@@ -359,12 +359,12 @@ class RangeElementSelector(ElementSelector):
         else:
             selected = np.ones( (len_seq), dtype=np.bool )
 
-        if not upper is None:
+        if upper is not None:
             if self.__inclusive:
                 selected_upper = seq <= upper
             else:
                 selected_upper = seq < upper
-            if not lower is None:
+            if lower is not None:
                 if lower < upper:
                     # regular range
                     selected = np.logical_and(selected, selected_upper)
@@ -501,9 +501,12 @@ class FixedNElementTailSelector(TailSelector):
     def _set_n_elements(self, nelements):
         if __debug__:
             if nelements <= 0:
-                raise ValueError, "Number of elements less or equal to zero " \
-                                  "does not make sense."
-
+                raise ValueError("Number of elements less or equal to zero "
+                                  "does not make sense.")
+        if not isinstance(nelements, int):
+            if int(nelements) != nelements:
+                raise ValueError("nelements must be an integer. Got %s" % nelements)
+            nelements = int(nelements)
         self.__nelements = nelements
 
 

@@ -98,17 +98,24 @@ class VolumeMaskDictionary(Mapping):
         # it is generated.
         self._lazy_nbr2src = None
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
         prefixes_ = ['vg=%r' % self._volgeom,
                     'source=%r' % self._source] + prefixes
 
-        if not self._meta is None:
+        if self._meta is not None:
             prefixes_.append('meta=%r' % self._meta)
 
-        if not self._src2nbr is None:
+        if self._src2nbr is not None:
             prefixes_.append('src2nbr=%r' % self._src2nbr)
-        if not self._src2aux is None:
-            prefixes_.append('src2aux=%r' % self._src2aux)
+        if self._src2aux is not None:
+            # using the representation of the full _src2aux may cause
+            # a significant slow-down, therefore only list the keys
+            # and not any values
+            dict_summary=', '.join('%s=<...>' % k for k in self._src2aux)
+            prefixes_.append('src2aux=%s(%s)' % (type(self._src2aux),
+                                                 dict_summary))
 
         return "%s(%s)" % (self.__class__.__name__, ','.join(prefixes_))
 
@@ -146,7 +153,7 @@ class VolumeMaskDictionary(Mapping):
 
         self._src2nbr[src] = np.asarray(nbrs, dtype=np.int)
 
-        if not self._lazy_nbr2src is None:
+        if self._lazy_nbr2src is not None:
             self._add_target2source(src)
 
         if aux:

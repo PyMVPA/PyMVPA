@@ -158,7 +158,7 @@ def test_group_clusterthreshold_simple(n_proc):
                     fa=dict(fid=range(perm_samples.shape[1])))
     # the algorithm instance
     # scale number of bootstraps to match desired probability
-    # plus a safety margin to mimimize bad luck in sampling
+    # plus a safety margin to minimize bad luck in sampling
     clthr = gct.GroupClusterThreshold(n_bootstrap=int(3. / feature_thresh_prob),
                                       feature_thresh_prob=feature_thresh_prob,
                                       fwe_rate=0.01, n_blocks=3, n_proc=n_proc)
@@ -271,3 +271,13 @@ def test_group_clusterthreshold_simple(n_proc):
                        res.a.clusterstats['size'])
 
     # TODO continue with somewhat more real dataset
+
+def test_repeat_cluster_vals():
+    assert_array_equal(gct.repeat_cluster_vals({1: 2, 3: 1}), [1, 1, 3])
+    assert_array_equal(gct.repeat_cluster_vals({1: 2, 3: 2, 2: 1}),
+                       [1, 1, 2, 3, 3])
+
+    assert_array_equal(gct.repeat_cluster_vals({1: 2, 3: 1}, {1: 0.2, 3: 0.5}),
+                       [0.2, 0.2, 0.5])
+    assert_array_equal(gct.repeat_cluster_vals({1: 2, 3: 2, 2: 1}, {1: 'a', 2: 'b', 3: 'c'}),
+                       ['a', 'a', 'b', 'c', 'c'])

@@ -130,7 +130,7 @@ class ColumnData(dict):
         # generate missing properties for each item in the header
         classdict = self.__class__.__dict__
         for k in self.keys():
-            if not classdict.has_key(k):
+            if not k in classdict:
                 getter = "lambda self: self._get_attrib('%s')" % (k)
                 # Sanitarize the key, substitute ' []' with '_'
                 k_ = sub('[[\] ]', '_', k)
@@ -175,7 +175,7 @@ class ColumnData(dict):
         -------
         Value if `key` is known
         """
-        if self.has_key(key):
+        if key in self:
             return self[key]
         else:
             raise ValueError, "Instance %r has no data about %r" \
@@ -258,7 +258,7 @@ class ColumnData(dict):
                           "of columns in header [%i]." % (len(l), len(hdr))
 
                 for i, v in enumerate(l):
-                    if not dtype[i] is None:
+                    if dtype[i] is not None:
                         try:
                             v = dtype[i](v)
                         except ValueError:
@@ -295,7 +295,7 @@ class ColumnData(dict):
         """
         # for all columns in the other object
         for k, v in other.iteritems():
-            if not self.has_key(k):
+            if not k in self:
                 raise ValueError, 'Unknown key [%r].' % (k,)
             if not isinstance(v, list):
                 raise ValueError, 'Can only merge list data, but got [%r].' \
@@ -366,7 +366,7 @@ class ColumnData(dict):
                     raise ValueError, 'Header list does not match number of ' \
                                       'columns.'
                 for k in header_order:
-                    if not self.has_key(k):
+                    if not k in self:
                         raise ValueError, 'Unknown key [%r]' % (k,)
                 col_hdr = header_order
 

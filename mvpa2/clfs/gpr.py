@@ -160,8 +160,7 @@ class GPR(Classifier):
         # append proper clf_internal depending on the kernel
         # TODO: add "__tags__" to kernels since the check
         #       below does not scale
-        if isinstance(kernel, GeneralizedLinearKernel) or \
-           isinstance(kernel, LinearKernel):
+        if isinstance(kernel, (GeneralizedLinearKernel, LinearKernel)):
             self.__tags__ += ['linear']
         else:
             self.__tags__ += ['non-linear']
