@@ -274,7 +274,8 @@ if externals.exists('nibabel'):
 
 
 __sdebug("cmdline")
-if externals.exists("nibabel") and externals.exists("scipy"):
+if externals.exists("nibabel") and externals.exists("scipy") \
+        and externals.exists('ctypes'):
     from mvpa2.cmdline.cmd_ttest import *
 
 
