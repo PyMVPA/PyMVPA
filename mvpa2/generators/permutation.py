@@ -19,6 +19,7 @@ from mvpa2.base.dochelpers import _repr_attrs
 from mvpa2.base.node import Node
 from mvpa2.base.dochelpers import _str, _repr
 from mvpa2.misc.support import get_limit_filter
+from mvpa2.misc.support import get_rng
 
 from mvpa2.support.utils import deprecated
 from mvpa2.mappers.fx import _product
@@ -40,7 +41,7 @@ class AttributePermutator(Node):
     dataset.
     """
     def __init__(self, attr, count=1, limit=None, assure=False,
-                 strategy='simple', chunk_attr=None, rng=np.random, **kwargs):
+                 strategy='simple', chunk_attr=None, rng=None, **kwargs):
         """
         Parameters
         ----------
@@ -177,7 +178,7 @@ class AttributePermutator(Node):
     def _permute_simple(self, limit_idx, in_pattrs, out_pattrs):
         """The simplest permutation
         """
-        perm_idx = self.rng.permutation(limit_idx)
+        perm_idx = get_rng(self.rng).permutation(limit_idx)
 
         if __debug__:
             debug('APERM', "Obtained permutation %s", (perm_idx, ))
@@ -200,7 +201,7 @@ class AttributePermutator(Node):
         unique_groups = list(set(pattrs_lim_zip))
         # now we need to permute the groups to generate remapping
         # get permutation indexes first
-        perm_idx = self.rng.permutation(np.arange(len(unique_groups)))
+        perm_idx = get_rng(self.rng).permutation(np.arange(len(unique_groups)))
         # generate remapping
         remapping = dict([(t, unique_groups[i])
                           for t, i in zip(unique_groups, perm_idx)])
@@ -246,7 +247,7 @@ class AttributePermutator(Node):
 
         for in_pattr, out_pattr in zip(in_pattrs, out_pattrs):
             shuffled = uniques.copy()
-            self.rng.shuffle(shuffled)
+            get_rng(self.rng).shuffle(shuffled)
 
             for orig, new in zip(uniques, shuffled):
                 out_pattr.value[np.where(chunks == orig)] = \
@@ -281,7 +282,7 @@ class AttributePermutator(Node):
             + _repr_attrs(self, ['limit'])
             + _repr_attrs(self, ['assure'], default=False)
             + _repr_attrs(self, ['strategy'], default='simple')
-            + _repr_attrs(self, ['rng'], default=np.random)
+            + _repr_attrs(self, ['rng'], default=None)
             )
 
     @property

@@ -31,9 +31,9 @@ from mvpa2.misc.support import get_nelements_per_value
 
 def give_data():
     # 100x10, 10 chunks, 4 targets
-    return dataset_wizard(np.random.normal(size=(100,10)),
-                          targets=[ i%4 for i in range(100) ],
-                          chunks=[ i//10 for i in range(100)])
+    return dataset_wizard(np.random.normal(size=(100, 10)),
+                          targets=[i%4 for i in range(100)],
+                          chunks=[i//10 for i in range(100)])
 
 
 @reseed_rng()
@@ -202,6 +202,8 @@ def test_attrpermute():
 @reseed_rng()
 def test_balancer():
     ds = give_data()
+    ds.sa['ids'] = np.arange(len(ds))  # some sa to ease tracking of samples
+
     # only mark the selection in an attribute
     bal = Balancer()
     res = bal(ds)
@@ -221,6 +223,16 @@ def test_balancer():
     # now use it as a generator
     dses = list(bal.generate(ds))
     assert_equal(len(dses), 5)
+
+    # if we rerun again, it would be a different selection
+    res2 = bal(ds)
+    assert_true(np.any(res.sa.ids != bal(ds).sa.ids))
+
+    # but if we create a balancer providing seed rng int,
+    # should be identical results
+    bal = Balancer(apply_selection=True, count=5, rng=1)
+    assert_false(np.any(bal(ds).sa.ids != bal(ds).sa.ids))
+
     # with limit
     bal = Balancer(limit={'chunks': 3}, apply_selection=True)
     res = bal(ds)
@@ -249,8 +261,8 @@ def test_balancer():
             np.round(np.array(get_nelements_per_value(ds.sa.targets).values()) * 0.5),
             np.array(get_nelements_per_value(res.sa.targets).values()))
     # check on feature attribute
-    ds.fa['one'] = np.tile([1,2], 5)
-    ds.fa['chk'] = np.repeat([1,2], 5)
+    ds.fa['one'] = np.tile([1, 2], 5)
+    ds.fa['chk'] = np.repeat([1, 2], 5)
     bal = Balancer(attr='one', amount=2, limit='chk', apply_selection=True)
     res = bal(ds)
     assert_equal(get_nelements_per_value(res.fa.one).values(),

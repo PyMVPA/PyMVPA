@@ -10,13 +10,12 @@
 
 __docformat__ = 'restructuredtext'
 
-import random
-
 import numpy as np
 
 from mvpa2.base.node import Node
 from mvpa2.base.dochelpers import _str, _repr
 from mvpa2.misc.support import get_limit_filter, get_nelements_per_value
+from mvpa2.misc.support import get_rng
 
 
 class Balancer(Node):
@@ -38,6 +37,7 @@ class Balancer(Node):
                  apply_selection=False,
                  include_offlimit=False,
                  space='balanced_set',
+                 rng=None,
                  **kwargs):
         """
         Parameters
@@ -76,6 +76,10 @@ class Balancer(Node):
           Name of the selection marker attribute in the output dataset that is
           created if the balanced selection is not applied to the output dataset
           (see ``apply_selection`` argument).
+        rng : int or RandomState, optional
+          Integer to seed a new RandomState upon each call, or instance of the
+          numpy.random.RandomState to be reused across calls. If None, the
+          numpy.random singleton would be used
         """
         Node.__init__(self, space=space, **kwargs)
         self._amount = amount
@@ -85,6 +89,7 @@ class Balancer(Node):
         self._limit_filter = None
         self._include_offlimit = include_offlimit
         self._apply_selection = apply_selection
+        self._rng = rng
 
 
     def _call(self, ds):
@@ -101,6 +106,8 @@ class Balancer(Node):
         # ids of elements that are part of the balanced set
         balanced_set = []
         full_limit_set = []
+        rng = get_rng(self._rng)
+
         # for each chunk in the filter (might be just the selected ones)
         for limit_value in np.unique(limit_filter):
             if limit_filter.dtype == np.bool:
@@ -140,8 +147,11 @@ class Balancer(Node):
             # select determined number of elements per unique attribute value
             selected = []
             for ua in uattr_limited:
-                selected += random.sample(list((attr_limited == ua).nonzero()[0]),
-                                          epa[ua])
+                selected += rng.choice(
+                    (attr_limited == ua).nonzero()[0],
+                    epa[ua],
+                    replace=False
+                ).tolist()
 
             # determine the final indices of selected elements and store
             # as part of the balanced set

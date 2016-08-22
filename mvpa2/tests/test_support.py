@@ -328,6 +328,23 @@ def test_xrandom_iterprod():
             assert all_prods.issuperset(r_prods)
 
 
+@reseed_rng()
+def test_get_rng():
+
+    random_int = np.random.randint(1000)
+    assert_true(get_rng(), np.random)
+    # seeded with the same int, we should get rng which would generate
+    # identical sequences of integers
+    assert_array_equal(
+        get_rng(random_int).randint(0, 100+1),
+        get_rng(random_int).randint(0, 100+1)
+    )
+
+    some_rng = get_rng(random_int)
+    # The same instance returned if preseeded RNG is passed into
+    assert(some_rng is get_rng(some_rng))
+
+
 def suite():  # pragma: no cover
     return unittest.makeSuite(SupportFxTests)
 
