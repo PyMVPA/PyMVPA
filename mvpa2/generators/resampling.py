@@ -10,6 +10,8 @@
 
 __docformat__ = 'restructuredtext'
 
+import time
+
 import numpy as np
 
 from mvpa2.base.node import Node
@@ -203,3 +205,92 @@ class Balancer(Node):
     def __str__(self):
         return _str(self, str(self._amount), n=self._attr, count=self.count,
                     apply_selection=self._apply_selection)
+
+
+class LogExclusions(Node):
+    """Log excluded entries
+
+    Given a dataset with a boolean sample or feature attribute, return a
+    dataset with only those samples/features marked `True`.
+    """
+    def __init__(self, fname, append=True, space='balanced_set', **kwargs):
+        """
+        Parameters
+        ----------
+        space : str
+          Name of the selection marker attribute in the input dataset that
+          indicates the desired subset.
+        """
+        Node.__init__(self, space=space, **kwargs)
+        self._fname = fname
+        # Truncate at start, append otherwise, to avoid holding an open
+        # filehandle throughout execution
+        if not append:
+            open(fname, 'w').close()
+
+    def _call(self, ds):
+        space = self.get_space()
+        _attr, collection = ds.get_attr(space)
+
+        battr = collection[space].value
+        if battr.dtype != np.dtype('bool'):
+            raise ValueError("LogExclusions space must be bools")
+
+        if collection is ds.sa:
+            excluded = ds[~battr]
+            desc = zip(excluded.sa.chunks, excluded.sa.targets,
+                       excluded.sa.time_coords)
+        elif collection is ds.fa:
+            desc = ds[:, ~battr].fa.voxel_indices
+        else:
+            # paranoid
+            raise RuntimeError(
+                    "Don't know where this collection comes from. "
+                    "This should never happen!")
+
+        with open(self._fname, 'a') as fobj:
+            fobj.write('# New entry {}\n'.format(time.ctime()))
+            for entry in desc:
+                fobj.write(','.join(map(str, entry)))
+                fobj.write('\n')
+
+        return ds
+
+
+class ApplySelection(Node):
+    """Applies a selection to a dataset
+
+    Given a dataset with a boolean sample or feature attribute, return a
+    dataset with only those samples/features marked `True`.
+    """
+    def __init__(self, space='balanced_set', **kwargs):
+        """
+        Parameters
+        ----------
+        space : str
+          Name of the selection marker attribute in the input dataset that
+          indicates the desired subset.
+        """
+        Node.__init__(self, space=space, **kwargs)
+
+    def _call(self, ds):
+        space = self.get_space()
+        _attr, collection = ds.get_attr(space)
+
+        battr = collection[space].value
+        if battr.dtype != np.dtype('bool'):
+            raise ValueError("ApplySelection space must be bools")
+
+        if collection is ds.sa:
+            out = ds[battr]
+            del out.sa[space]
+        elif collection is ds.fa:
+            out = ds[:, battr]
+            del out.fa[space]
+        else:
+            # paranoid
+            raise RuntimeError(
+                    "Don't know where this collection comes from. "
+                    "This should never happen!")
+
+        return out
