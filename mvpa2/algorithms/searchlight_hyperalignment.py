@@ -265,9 +265,10 @@ class SearchlightHyperalignment(ClassWithCollections):
     hyperalignment = Parameter(
         Hyperalignment(ref_ds=None),
         doc="""Hyperalignment instance to be used in each searchlight sphere.
-            Default is just the Hyperalignment instance with default parameters.
-            Its `ref_ds` parameter would be overridden and therefore has no effect.
-            """)
+            Default is just the Hyperalignment instance with default
+            parameters. Its `ref_ds` parameter would be overridden by the
+            `ref_ds` parameter of this SearchlightHyperalignment instance
+            because we want to be consistent and only need one `ref_ds`.""")
 
     combine_neighbormappers = Parameter(
         True,
