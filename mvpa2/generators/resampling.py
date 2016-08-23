@@ -86,29 +86,27 @@ class Balancer(Node):
         self._attr = attr
         self.count = count
         self._limit = limit
-        self._limit_filter = None
         self._include_offlimit = include_offlimit
         self._apply_selection = apply_selection
         self._rng = rng
-        self.__rng = None  # will be used within _call but could be initialized
-                           # within generate
 
+    def _get_call_kwargs(self, ds):
+        attr, collection = ds.get_attr(self._attr)
+        # _call might need to operate on the dedicated instantiated rng
+        # e.g. if seed int is provided
+        return {
+            'limit_filter': get_limit_filter(self._limit, collection),
+            'rng': get_rng(self._rng)
+        }
 
-    def _call(self, ds):
+    def _call(self, ds, limit_filter=None, rng=None):
         # local binding
         amount = self._amount
         attr, collection = ds.get_attr(self._attr)
 
-        # get filter if not set already (maybe from generate())
-        if self._limit_filter is None:
-            limit_filter = get_limit_filter(self._limit, collection)
-        else:
-            limit_filter = self._limit_filter
-
         # ids of elements that are part of the balanced set
         balanced_set = []
         full_limit_set = []
-        rng = self.__rng or get_rng(self._rng)
 
         # for each chunk in the filter (might be just the selected ones)
         for limit_value in np.unique(limit_filter):
@@ -194,25 +192,13 @@ class Balancer(Node):
                         "This should never happen!")
             return out
 
-
     def generate(self, ds):
         """Generate the desired number of balanced datasets datasets."""
         # figure out filter for all runs at once
-        attr, collection = ds.get_attr(self._attr)
-        self._limit_filter = get_limit_filter(self._limit, collection)
-        try:
-            # _call might need to operate on the dedicated instantiated rng
-            # e.g. if seed int is provided
-            self.__rng = get_rng(self._rng)
-            # permute as often as requested
-            for i in xrange(self.count):
-                yield self(ds)
-        finally:
-            self.__rng = None
-
-        # reset filter to do the right thing upon next call to object
-        self._limit_filter = None
-
+        # permute as often as requested, reusing the same kwargs
+        kwargs = self._get_call_kwargs(ds)
+        for i in xrange(self.count):
+            yield self(ds, _call_kwargs=kwargs)
 
     def __str__(self):
         return _str(self, str(self._amount), n=self._attr, count=self.count,

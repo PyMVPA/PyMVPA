@@ -260,8 +260,31 @@ def test_balancer():
     assert_false(all(balanced[1].sa.ids == balanced[2].sa.ids))
 
     # And should be exactly the same
-    assert_true(assert_datasets_equal(ds_a, ds_b)
-                for ds_a, ds_b in zip(balanced, b.generate(ds)))
+    for ds_a, ds_b in zip(balanced, b.generate(ds)):
+        assert_datasets_equal(ds_a, ds_b)
+
+    # Contribution by Chris Markiewicz
+    # And interleaving __call__ and generator fetches
+    gen1 = b.generate(ds)
+    gen2 = b.generate(ds)
+
+    seq1, seq2, seq3 = [], [], []
+
+    for i in xrange(3):
+        seq1.append(gen1.next())
+        seq2.append(gen2.next())
+        seq3.append(b(ds))
+
+    # Produces expected sequences
+
+    for i in xrange(3):
+        assert_datasets_equal(balanced[i], seq1[i])
+        assert_datasets_equal(balanced[i], seq2[i])
+
+    # And all __call__s return the same result
+    ds_a = seq3[0]
+    for ds_b in seq3[1:]:
+        assert_array_equal(ds_a.sa.ids, ds_b.sa.ids)
 
     # with limit
     bal = Balancer(limit={'chunks': 3}, apply_selection=True)

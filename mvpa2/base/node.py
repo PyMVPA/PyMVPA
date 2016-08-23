@@ -103,7 +103,15 @@ class Node(ClassWithCollections):
             pass_attr = (pass_attr,)
         self.__pass_attr = pass_attr
 
-    def __call__(self, ds):
+    def _get_call_kwargs(self, ds):
+        """Helper to provide _call kwargs, to be overriden in sub-classes
+
+        To be used if the same state variables should be set/used by
+        .generate or direct __call__
+        """
+        return {}
+
+    def __call__(self, ds, _call_kwargs={}):
         """
         The default implementation calls ``_precall()``, ``_call()``, and
         finally returns the output of ``_postcall()``.
@@ -112,6 +120,12 @@ class Node(ClassWithCollections):
         ----------
         ds: Dataset
           Input dataset.
+        _call_kwargs: dict, optional
+          Used internally to pass "state" keyword arguments into _call,
+          primarily used internally (e.g. by `generate` method). It is up
+          for a subclass to implement/use it where necessary. `_get_call_kwargs()`
+          method will be used to provide the set of kwargs to be set/used by
+          `generate` or direct `__call__` calls
 
         Returns
         -------
@@ -120,7 +134,7 @@ class Node(ClassWithCollections):
         t0 = time.time()                # record the time when call initiated
 
         self._precall(ds)
-        result = self._call(ds)
+        result = self._call(ds, **(_call_kwargs or self._get_call_kwargs(ds)))
         result = self._postcall(ds, result)
 
         self.ca.calling_time = time.time() - t0  # set the calling_time
