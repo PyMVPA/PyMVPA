@@ -74,7 +74,3 @@ def test_cmdline_args(stat, alternative, data, mask, outfn):
     args.output = outfn
 
     run(args)
-
-
-
-
