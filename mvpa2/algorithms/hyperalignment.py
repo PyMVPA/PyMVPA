@@ -38,7 +38,21 @@ from mvpa2.support.due import due, Doi
 if __debug__:
     from mvpa2.base import debug
 
-__all__ = [ "Hyperalignment" ]
+__all__ = ["Hyperalignment"]
+
+#
+# Helper functions which will be used as defaults for Hyperalignment parameters
+# to avoid lambdas (we fail to serialize them ATM in h5save) and to
+# provide easier to comprehend repr of their values
+#
+
+def mean_xy(x, y):
+    return 0.5 * (x + y)
+
+
+def mean_axis0(a):
+    return np.mean(a, axis=0)
+
 
 class Hyperalignment(ClassWithCollections):
     """Align the features across multiple datasets into a common feature space.
@@ -143,7 +157,7 @@ class Hyperalignment(ClassWithCollections):
             doc="""Flag to Z-score the common space after each adjustment.
                 This should be left enabled in most cases.""")
 
-    combiner1 = Parameter(lambda x,y: 0.5*(x+y), #
+    combiner1 = Parameter(mean_xy,  #
             doc="""How to update common space in the 1st-level loop. This must
                 be a callable that takes two arguments. The first argument is
                 one of the input datasets after projection onto the 1st-level
@@ -153,7 +167,7 @@ class Hyperalignment(ClassWithCollections):
                 By default the new common space is the average of the current
                 common space and the recently projected dataset.""")
 
-    combiner2 = Parameter(lambda l: np.mean(l, axis=0),
+    combiner2 = Parameter(mean_axis0,
             doc="""How to combine all individual spaces to common space. This
             must be a callable that take a sequence of datasets as an argument.
             The callable must return a single array. This combiner is called
