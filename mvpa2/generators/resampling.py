@@ -149,11 +149,7 @@ class Balancer(Node):
             # select determined number of elements per unique attribute value
             selected = []
             for ua in uattr_limited:
-                selected += rng.choice(
-                    (attr_limited == ua).nonzero()[0],
-                    epa[ua],
-                    replace=False
-                ).tolist()
+                selected += rng.permutation((attr_limited == ua).nonzero()[0])[:epa[ua]].tolist()
 
             # determine the final indices of selected elements and store
             # as part of the balanced set
