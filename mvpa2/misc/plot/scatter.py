@@ -136,6 +136,9 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
     if mask is not None:
         # replicate mask ntimepoints times
         mask = np.repeat(mask.ravel(), ntimepoints)[intersection] != 0
+        # get masked values of x and y
+        x_masked, y_masked = data[:, mask]
+
 
     xnoty = (nz[0].astype(int) - nz[1].astype(int))>0
     ynotx = (nz[1].astype(int) - nz[0].astype(int))>0
@@ -392,13 +395,21 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
     #       actually consider masked-out values
     if ax_hist_x is not None:
         ax_hist_x.xaxis.set_major_formatter(nullfmt)
-        histx = ax_hist_x.hist(x, bins=binsx, facecolor='b')
+        if mask is not None:
+            histx = ax_hist_x.hist(x_masked, bins=binsx, facecolor='b')
+        else:
+            histx = ax_hist_x.hist(x, bins=binsx, facecolor='b')
         ax_hist_x.set_xlim( ax_scatter.get_xlim() )
         ax_hist_x.vlines(0, 0, 0.9*np.max(histx[0]), 'r')
 
     if ax_hist_y is not None:
         ax_hist_y.yaxis.set_major_formatter(nullfmt)
-        histy = ax_hist_y.hist(y, bins=binsy, orientation='horizontal', facecolor='g')
+        if mask is not None:
+            histy = ax_hist_y.hist(y_masked, bins=binsy,
+                                   orientation='horizontal', facecolor='g')
+        else:
+            histy = ax_hist_y.hist(y, bins=binsy,
+                                   orientation='horizontal', facecolor='g')
         ax_hist_y.set_ylim( ax_scatter.get_ylim() )
         ax_hist_y.hlines(0, 0, 0.9*np.max(histy[0]), 'r')
 
@@ -407,12 +418,18 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
     # Box plots
     if ax_bp_x is not None:
         ax_bp_x.axis('off')
-        bpx = ax_bp_x.boxplot(x, vert=0) #'r', 0)
+        if mask is not None:
+            bpx = ax_bp_x.boxplot(x_masked, vert=0) #'r', 0)
+        else:
+            bpx = ax_bp_x.boxplot(x, vert=0) #'r', 0)
         ax_bp_x.set_xlim(ax_scatter.get_xlim())
 
     if ax_bp_y is not None:
         ax_bp_y.axis('off')
-        bpy = ax_bp_y.boxplot(y, sym='g+')
+        if mask is not None:
+            bpy = ax_bp_y.boxplot(y_masked, sym='g+')
+        else:
+            bpy = ax_bp_y.boxplot(y, sym='g+')
         ax_bp_y.set_ylim(ax_scatter.get_ylim())
 
     if statsline:
