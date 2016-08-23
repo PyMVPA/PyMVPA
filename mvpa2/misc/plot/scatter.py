@@ -136,8 +136,8 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
     if mask is not None:
         # replicate mask ntimepoints times
         mask = np.repeat(mask.ravel(), ntimepoints)[intersection] != 0
-        # get masked values of x and y
-        x_masked, y_masked = data[:, mask]
+        x_masked = x[mask]
+        y_masked = y[mask]
 
 
     xnoty = (nz[0].astype(int) - nz[1].astype(int))>0
