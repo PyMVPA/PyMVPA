@@ -259,6 +259,10 @@ def test_balancer():
     assert_false(all(balanced[0].sa.ids == balanced[2].sa.ids))
     assert_false(all(balanced[1].sa.ids == balanced[2].sa.ids))
 
+    # And should be exactly the same
+    assert_true(assert_datasets_equal(ds_a, ds_b)
+                for ds_a, ds_b in zip(balanced, b.generate(ds)))
+
     # with limit
     bal = Balancer(limit={'chunks': 3}, apply_selection=True)
     res = bal(ds)
