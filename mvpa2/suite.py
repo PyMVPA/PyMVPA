@@ -222,6 +222,7 @@ if externals.exists("pylab"):
     from mvpa2.viz import *
     from mvpa2.misc.plot import *
     from mvpa2.misc.plot.erp import *
+    from mvpa2.misc.plot.scatter import *
     if externals.exists(['griddata', 'scipy']):
         from mvpa2.misc.plot.topo import *
     from mvpa2.misc.plot.lightbox import plot_lightbox
