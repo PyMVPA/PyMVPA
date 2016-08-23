@@ -376,7 +376,8 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
 
         if __debug__:
             for p in partitions:
-                if not (np.all(p.sa[targets_sa_name].value == labels)):
+                assert(p.shape[1] == 1)
+                if not (np.all(p.sa[targets_sa_name].value == labels[p.samples[:, 0]])):
                     raise NotImplementedError(
                         "%s does not yet support partitioners altering the targets "
                         "(e.g. permutators)" % self.__class__)

@@ -12,8 +12,10 @@
 __docformat__ = 'restructuredtext'
 
 import os
+import sys
 import numpy as np                      # NumPy is required anyways
 import warnings
+import subprocess
 
 from mvpa2.base import warning
 from mvpa2 import cfg
@@ -457,7 +459,7 @@ def __check_reportlab():
 def __check(name, a='__version__'):
     exec "import %s" % name
     try:
-        exec "v = %s.%s" % (name, a)
+        v = getattr(sys.modules[name], '__version__')
         # it might be lxml.etree, so take only first module
         versions[name.split('.')[0]] = SmartVersion(v)
     except Exception as e:
@@ -523,6 +525,14 @@ def __check_liblapack_so():
     except OSError, e:
         # reraise with exception type we catch/handle while testing externals
         raise RuntimeError("Failed to import liblapack.so: %s" % e)
+
+def __check_subprocess_call(args):
+    """Executes the command using subprocess"""
+    try:
+        subprocess.check_output(args)
+    except Exception, e:
+        raise ImportError('The following command gave an error: "%s"' % args)
+
 
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm': 'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
@@ -593,6 +603,7 @@ _KNOWN = {'libsvm': 'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node'
           'statsmodels': 'import statsmodels.api as __',
           'mock': "__check('mock')",
           'datalad': "__check('datalad')",
+          'afni-3dinfo': "__check_subprocess_call(['3dinfo','-h'])"
           }
 
 
@@ -695,8 +706,9 @@ def exists(dep, force=False, raise_=False, issueWarning=None,
             np.seterr(**old_handling)
 
         if __debug__:
-            debug('EXT', "Presence of %s is%s verified%s" %
-                  (dep, {True:'', False:' NOT'}[result], error_str))
+            vstr = ' (%s)' % versions[dep] if dep in versions else ''
+            debug('EXT', "Presence of %s%s is%s verified%s" %
+                  (dep, vstr, {True: '', False: ' NOT'}[result], error_str))
 
     if not result:
         if raise_:

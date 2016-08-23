@@ -234,6 +234,20 @@ def unique_combinations(L, n, sort=False):
     return res
 
 
+def xrandom_iterprod(n, *seq):
+    """Generate n random iterprod's from given sequences"""
+    ls = map(len, seq)
+    seen = set()
+    if n > np.prod(ls):
+        n = np.prod(ls)
+    while len(seen) < n:
+        sel = tuple(random.randint(0, l - 1) for l in ls)
+        if sel in seen:
+            continue
+        seen.add(sel)
+        yield [s[i] for s, i in zip(seq, sel)]
+
+
 ##REF: Name was automagically refactored
 def indent_doc(v):
     """Given a `value` returns a string where each line is indented
@@ -343,18 +357,24 @@ def version_to_tuple(v):
         except ValueError:
             # try to split into sequences of literals and numerics
             suffix = x
+            resd_prev = {}
             while suffix != '':
                 res = regex.search(suffix)
                 if res:
                     resd = res.groupdict()
+                    if resd == resd_prev:
+                        # we are in a loop, nothing meaningful would come out
+                        vres += [suffix]
+                        break
+                    resd_prev = resd
                     if resd['numeric'] != '':
                         vres += [int(resd['numeric'])]
                     if resd['alpha'] != '':
                         vres += [resd['alpha']]
                     suffix = resd['suffix']
                 else:
-                    # We can't detech anything meaningful -- let it go as is
-                    resd += [suffix]
+                    # We can't detect anything meaningful -- let it go as is
+                    vres += [suffix]
                     break
     v = tuple(vres)
 

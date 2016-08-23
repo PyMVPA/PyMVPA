@@ -59,7 +59,9 @@ else:
 
 __sdebug('algorithms')
 from mvpa2.algorithms.hyperalignment import *
-if externals.exists('scipy') :
+if externals.exists('scipy'):
+    # Some pieces do not demand scipy, but for now let's just do this way
+    from mvpa2.algorithms.searchlight_hyperalignment import *
     from mvpa2.algorithms.group_clusterthr import *
 
 __sdebug('clfs')
@@ -220,6 +222,7 @@ if externals.exists("pylab"):
     from mvpa2.viz import *
     from mvpa2.misc.plot import *
     from mvpa2.misc.plot.erp import *
+    from mvpa2.misc.plot.scatter import *
     if externals.exists(['griddata', 'scipy']):
         from mvpa2.misc.plot.topo import *
     from mvpa2.misc.plot.lightbox import plot_lightbox
