@@ -90,6 +90,8 @@ class Balancer(Node):
         self._include_offlimit = include_offlimit
         self._apply_selection = apply_selection
         self._rng = rng
+        self.__rng = None  # will be used within _call but could be initialized
+                           # within generate
 
 
     def _call(self, ds):
@@ -106,7 +108,7 @@ class Balancer(Node):
         # ids of elements that are part of the balanced set
         balanced_set = []
         full_limit_set = []
-        rng = get_rng(self._rng)
+        rng = self.__rng or get_rng(self._rng)
 
         # for each chunk in the filter (might be just the selected ones)
         for limit_value in np.unique(limit_filter):
@@ -202,9 +204,15 @@ class Balancer(Node):
         # figure out filter for all runs at once
         attr, collection = ds.get_attr(self._attr)
         self._limit_filter = get_limit_filter(self._limit, collection)
-        # permute as often as requested
-        for i in xrange(self.count):
-            yield self(ds)
+        try:
+            # _call might need to operate on the dedicated instantiated rng
+            # e.g. if seed int is provided
+            self.__rng = get_rng(self._rng)
+            # permute as often as requested
+            for i in xrange(self.count):
+                yield self(ds)
+        finally:
+            self.__rng = None
 
         # reset filter to do the right thing upon next call to object
         self._limit_filter = None

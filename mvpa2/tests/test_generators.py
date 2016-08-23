@@ -32,7 +32,7 @@ from mvpa2.misc.support import get_nelements_per_value
 def give_data():
     # 100x10, 10 chunks, 4 targets
     return dataset_wizard(np.random.normal(size=(100, 10)),
-                          targets=[i%4 for i in range(100)],
+                          targets=[i % 4 for i in range(100)],
                           chunks=[i//10 for i in range(100)])
 
 
@@ -232,6 +232,14 @@ def test_balancer():
     # should be identical results
     bal = Balancer(apply_selection=True, count=5, rng=1)
     assert_false(np.any(bal(ds).sa.ids != bal(ds).sa.ids))
+
+    # But results should differ if we use .generate to produce those multiple
+    # balanced datasets
+    b = Balancer(apply_selection=True, count=3, rng=1)
+    balanced = list(b.generate(ds))
+    assert_false(all(balanced[0].sa.ids == balanced[1].sa.ids))
+    assert_false(all(balanced[0].sa.ids == balanced[2].sa.ids))
+    assert_false(all(balanced[1].sa.ids == balanced[2].sa.ids))
 
     # with limit
     bal = Balancer(limit={'chunks': 3}, apply_selection=True)
