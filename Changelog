@@ -31,6 +31,22 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
+* 2.6.0 (... 2016)
+
+  * **IMPORTANT* possibly backward-incompatible fixes
+
+    - Dataset's `vstack` and `hstack` now by default would drop those feature
+      or sample (`fa`, `sa`) attributes which do not have the same value across
+      all datasets ("drop_nonunique").  Previous behaviour was to update aggregate
+      collections, so the attribute value of the last dataset would have been
+      stored in the stacked dataset.  Such behaviour could be brought back by
+      `fa="update"` for `vstack` or similar value for `sa="update"` for `hstack`
+      calls.
+      If you find that some sa/fa you have relied on using in your code is no
+      longer available after stacking, verify that you did intend to maintain the
+      "last known" value, and adjust argument in stacking function to "update".
+
+
 * 2.5.0 (Thu, 12 May 2016)
 
   * Fixes
