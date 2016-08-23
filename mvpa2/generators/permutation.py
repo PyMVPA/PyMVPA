@@ -82,11 +82,15 @@ class AttributePermutator(Node):
 
         self.count = count
         self._limit = limit
-        self._pcfg = None
+
         self._assure_permute = assure
         self.strategy = strategy
         self.rng = rng
         self.chunk_attr = chunk_attr
+
+        self._pcfg = None
+        self._rng = None  # instance of rng to be used, might need to be
+                          # instantiated within generate
 
     def _get_pcfg(self, ds):
         # determine to be permuted attribute to find the collection
@@ -121,7 +125,7 @@ class AttributePermutator(Node):
         # Method to use for permutations
         try:
             permute_fx = getattr(self, "_permute_%s" % self.strategy)
-            permute_kwargs = {}
+            permute_kwargs = {'rng': self._rng or get_rng(self.rng)}
         except AttributeError:
             raise ValueError("Unknown permutation strategy %r" % self.strategy)
 
@@ -175,10 +179,10 @@ class AttributePermutator(Node):
         return out
 
 
-    def _permute_simple(self, limit_idx, in_pattrs, out_pattrs):
+    def _permute_simple(self, limit_idx, in_pattrs, out_pattrs, rng=None):
         """The simplest permutation
         """
-        perm_idx = get_rng(self.rng).permutation(limit_idx)
+        perm_idx = rng.permutation(limit_idx)
 
         if __debug__:
             debug('APERM', "Obtained permutation %s", (perm_idx, ))
@@ -190,7 +194,7 @@ class AttributePermutator(Node):
             out_pattr.value[limit_idx] = in_pattr.value[perm_idx]
 
 
-    def _permute_uattrs(self, limit_idx, in_pattrs, out_pattrs):
+    def _permute_uattrs(self, limit_idx, in_pattrs, out_pattrs, rng=None):
         """Provide a permutation given a specified strategy
         """
         # Select given limit_idx
@@ -201,7 +205,7 @@ class AttributePermutator(Node):
         unique_groups = list(set(pattrs_lim_zip))
         # now we need to permute the groups to generate remapping
         # get permutation indexes first
-        perm_idx = get_rng(self.rng).permutation(np.arange(len(unique_groups)))
+        perm_idx = rng.permutation(np.arange(len(unique_groups)))
         # generate remapping
         remapping = dict([(t, unique_groups[i])
                           for t, i in zip(unique_groups, perm_idx)])
@@ -232,7 +236,7 @@ class AttributePermutator(Node):
                 " all chunks have the same order of targets: %s"
                 % (sample_targets,))
 
-    def _permute_chunks(self, limit_idx, in_pattrs, out_pattrs, chunks=None):
+    def _permute_chunks(self, limit_idx, in_pattrs, out_pattrs, chunks=None, rng=None):
         # limit_idx is doing nothing
 
         if chunks is None:
@@ -247,7 +251,7 @@ class AttributePermutator(Node):
 
         for in_pattr, out_pattr in zip(in_pattrs, out_pattrs):
             shuffled = uniques.copy()
-            get_rng(self.rng).shuffle(shuffled)
+            rng.shuffle(shuffled)
 
             for orig, new in zip(uniques, shuffled):
                 out_pattr.value[np.where(chunks == orig)] = \
@@ -257,15 +261,20 @@ class AttributePermutator(Node):
     def generate(self, ds):
         """Generate the desired number of permuted datasets."""
         # figure out permutation setup once for all runs
-        self._pcfg = self._get_pcfg(ds)
-        # permute as often as requested
-        for i in xrange(self.count):
-            ## if __debug__:
-            ##     debug('APERM', "%s generating %i-th permutation", (self, i))
-            yield self(ds)
-
-        # reset permutation setup to do the right thing upon next call to object
-        self._pcfg = None
+        try:
+            assert(self._rng is None)  # it must not be set somehow before
+            # XXX the problem is that even if I comment this one out -- tests pass :-/
+            self._rng = get_rng(self.rng)
+            self._pcfg = self._get_pcfg(ds)
+            # permute as often as requested
+            for i in xrange(self.count):
+                ## if __debug__:
+                ##     debug('APERM', "%s generating %i-th permutation", (self, i))
+                yield self(ds)
+        finally:
+            # reset permutation setup to do the right thing upon next call to object
+            self._pcfg = None
+            self._rng = None
 
 
     def __str__(self):

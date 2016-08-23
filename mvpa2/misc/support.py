@@ -815,7 +815,7 @@ def get_limit_filter(limit, collection):
             else:
                 limit_filter[collection[a].value == limit[a]] = True
     else:
-        raise RuntimeError("Unhandle condition")
+        raise RuntimeError("Unhandled condition")
 
     return limit_filter
 

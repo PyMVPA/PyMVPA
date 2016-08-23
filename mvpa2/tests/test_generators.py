@@ -16,6 +16,7 @@ from mvpa2.testing.tools import ok_, assert_array_equal, assert_true, \
         assert_false, assert_equal, assert_raises, assert_almost_equal, \
         reseed_rng, assert_not_equal, assert_in, assert_not_in
 from mvpa2.testing.tools import assert_warnings
+from mvpa2.testing.tools import assert_datasets_equal
 
 from mvpa2.datasets import dataset_wizard, Dataset
 from mvpa2.generators.splitters import Splitter
@@ -152,12 +153,29 @@ def test_attrpermute():
 
     # and now try generating more permutations
     nruns = 2
+    def assert_all_different_permutations(pds):
+        assert_equal(len(pds), nruns)
+        for i, p in enumerate(pds):
+            assert_false(np.all(p.sa.ids == ds.sa.ids))
+            for p_ in pds[i+1:]:
+                assert_false(np.all(p.sa.ids == p_.sa.ids))
+
     permutation = AttributePermutator(['targets', 'ids'],
                                       assure=True, count=nruns)
     pds = list(permutation.generate(ds))
-    assert_equal(len(pds), nruns)
-    for p in pds:
-        assert_false(np.all(p.sa.ids == ds.sa.ids))
+    assert_all_different_permutations(pds)
+
+    # if we provide seeding, and generate, it should also return different datasets
+    permutation = AttributePermutator(['targets', 'ids'],
+                                      count=nruns, rng=1)
+    pds1 = list(permutation.generate(ds))
+    assert_all_different_permutations(pds)
+
+    # but if we regenerate -- should all be the same to before
+    pds2 = list(permutation.generate(ds))
+    assert_equal(len(pds1), len(pds2))
+    for p1, p2 in zip(pds1, pds2):
+        assert_datasets_equal(p1, p2)
 
     # permute feature attrs
     ds.fa['ids'] = range(ds.shape[1])
