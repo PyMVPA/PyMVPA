@@ -88,11 +88,10 @@ def run(args):
     filetype_in = guess_backend(args.data[0])
 
     if filetype_in == 'nifti':
-        nis = [nib.load(f) for f in args.data]
-        data = np.asarray([ni.get_data() for ni in nis])
+        dss = [fmri_dataset(f) for f in args.data]
     elif filetype_in == 'hdf5':
         dss = [h5load(f) for f in args.data]
-        data = np.asarray([d.samples[args.isample] for d in dss])
+    data = np.asarray([d.samples[args.isample] for d in dss])
 
     if args.mask:
         filetype_mask = guess_backend(args.mask)
@@ -132,21 +131,9 @@ def run(args):
 
     verbose(1, "Saving to %s" % args.output)
     filetype_out = guess_backend(args.output)
-    if filetype_in == 'nifti':
-        if filetype_out == 'nifti':
-            nib.Nifti1Image(s, None, header=nis[0].header).to_filename(args.output)
-        else:  # filetype_out hdf5
-            # need to get mapper and stuff
-            s_ = fmri_dataset(nis[0])
-            s_.samples = s_.a.mapper(s)
-            h5save(args.output, s_)
-    else:  # filetype_in hdf5
-        if filetype_out == 'nifti':
-            try:
-                map2nifti(dss[0], data=s).to_filename(args.output)
-            except (NameError, ValueError):
-                raise ValueError('Cannot output with requested file format')
-        else:  # filetype_out hdf5
-            s = Dataset(s, sa=dss[0].sa, fa=dss[0].fa, a=dss[0].a)
-            h5save(args.output, s)
+    if filetype_out == 'nifti':
+        map2nifti(dss[0], data=s).to_filename(args.output)
+    else:  # filetype_out is hdf5
+        s = Dataset(np.atleast_2d(s), fa=dss[0].fa, a=dss[0].a)
+        h5save(args.output, s)
     return s
