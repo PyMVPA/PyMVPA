@@ -212,6 +212,23 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         self.assertRaises(ValueError, slhyp, dss[:3])
         slhyp = SearchlightHyperalignment(ref_ds=3)
         self.assertRaises(ValueError, slhyp, dss[:3])
+        # explicit test of exclude_from_model
+        slhyp = SearchlightHyperalignment(
+            ref_ds=2, exclude_from_model=[1], featsel=0.7)
+        projs1 = slhyp(dss)
+        aligned1 = [proj.forward(ds) for proj, ds in zip(projs1, dss)]
+        samples = dss[1].samples.copy()
+        dss[1].samples += 0.1 * np.random.random(size=dss[1].shape)
+        projs2 = slhyp(dss)
+        aligned2 = [proj.forward(ds) for proj, ds in zip(projs1, dss)]
+        for i in [0, 2, 3, 4]:
+            assert_array_almost_equal(projs1[i].proj.todense(),
+                                      projs2[i].proj.todense())
+            assert_array_almost_equal(aligned1[i].samples, aligned2[i].samples)
+        assert_false(np.all(
+            projs1[1].proj.todense() == projs1[2].proj.todense()))
+        assert_false(np.all(aligned1[1].samples == aligned2[1].samples))
+        dss[1].samples = samples
         # store projections for each mapper separately
         projs = list()
         # run the algorithm with all combinations of the two major parameters
