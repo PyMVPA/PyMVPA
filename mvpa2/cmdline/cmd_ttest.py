@@ -98,7 +98,7 @@ def run(args):
         if filetype_mask == 'nifti':
             mask = nib.load(args.mask).get_data()
         elif filetype_mask == 'hdf5':
-            mask = h5load(args.mask)
+            mask = h5load(args.mask).samples
         out_of_mask = mask == 0
     else:
         # just take where no voxel had a value

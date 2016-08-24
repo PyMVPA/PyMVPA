@@ -50,9 +50,14 @@ class TestCmdlineTtest(unittest.TestCase):
         datafn_hdf5 = pjoin(self.tmpdir, 'datain.hdf5')
         h5save(datafn_hdf5, data_)
 
+        mask_ = fmri_dataset(maskfn)
+        maskfn_hdf5 = pjoin(self.tmpdir, 'maskfn.hdf5')
+        h5save(maskfn_hdf5, mask_)
+
         self.datafn = [datafn, datafn_hdf5]
         self.outfn = [pjoin(self.tmpdir, 'output') + ext
                       for ext in ['.nii.gz', '.nii', '.hdf5', '.h5']]
+        self.maskfn = ['', maskfn, maskfn_hdf5]
 
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
@@ -81,8 +86,8 @@ class TestCmdlineTtest(unittest.TestCase):
 
     @sweepargs(stat=['z', 'p', 't'])
     @sweepargs(alternative=['two-sided', 'greater'])
-    @sweepargs(mask=['', maskfn])
-    def test_cmdline_args(self, stat, alternative, mask):
+    def test_cmdline_args(self, stat, alternative):
         for data in self.datafn:
-            for outfn in self.outfn:
-                self.run_ttest(data, outfn, stat, alternative, mask)
+            for mask in self.maskfn:
+                for outfn in self.outfn:
+                    self.run_ttest(data, outfn, stat, alternative, mask)
