@@ -23,6 +23,7 @@ import numpy as np
 from mvpa2.misc.stats import ttest_1samp
 import scipy.stats as stats
 from os.path import join as pjoin
+import unittest
 
 if __debug__:
     from mvpa2.base import debug
@@ -40,37 +41,48 @@ datafn = pjoin(pymvpa_dataroot,
 maskfn = pjoin(pymvpa_dataroot,
                'haxby2001/sub001/masks/25mm/brain.nii.gz')
 
-tmpdir = mkdtemp()
-# temporarly save the input nii to hdf5 so we can reuseit
-data_ = fmri_dataset(datafn)
-datafn_hdf5 = pjoin(tmpdir, 'datain.hdf5')
-h5save(datafn_hdf5, data_)
-outfn = [pjoin(tmpdir, 'output') + ext for ext in ['.nii.gz', '.nii',
-                                                   '.hdf5', '.h5']]
 
-@sweepargs(stat=['z', 'p', 't'])
-@sweepargs(alternative=['two-sided', 'greater'])
-@sweepargs(data=[datafn, datafn_hdf5])
-@sweepargs(mask=['', maskfn])
-@sweepargs(outfn=outfn)
-def test_cmdline_args(stat, alternative, data, mask, outfn):
-    """Just a big smoke test"""
-    class FakeArg(object):
-        def __init__(self):
-            self.data = []
-            self.chance_level = 0.
-            self.alternative = 'two-sided'
-            self.stat = 'z'
-            self.mask = ''
-            self.output = ''
-            self.isample = 0
+class TestCmdlineTtest(unittest.TestCase):
+    def setUp(self):
+        self.tmpdir = mkdtemp()
 
-    args = FakeArg()
-    args.chance_level = 0.
-    args.alternative = alternative
-    args.stat = stat
-    args.mask = mask
-    args.data = [data for _ in range(3)]
-    args.output = outfn
+        data_ = fmri_dataset(datafn)
+        datafn_hdf5 = pjoin(self.tmpdir, 'datain.hdf5')
+        h5save(datafn_hdf5, data_)
 
-    run(args)
+        self.datafn = [datafn, datafn_hdf5]
+        self.outfn = [pjoin(self.tmpdir, 'output') + ext
+                      for ext in ['.nii.gz', '.nii', '.hdf5', '.h5']]
+
+    def tearDown(self):
+        shutil.rmtree(self.tmpdir)
+
+    @staticmethod
+    def run_ttest(data, outfn, stat, alternative, mask):
+        class FakeArg(object):
+            def __init__(self):
+                self.data = []
+                self.chance_level = 0.
+                self.alternative = 'two-sided'
+                self.stat = 'z'
+                self.mask = ''
+                self.output = ''
+                self.isample = 0
+
+        args = FakeArg()
+        args.chance_level = 0.
+        args.alternative = alternative
+        args.stat = stat
+        args.mask = mask
+        args.data = [data for _ in range(3)]
+        args.output = outfn
+
+        run(args)
+
+    @sweepargs(stat=['z', 'p', 't'])
+    @sweepargs(alternative=['two-sided', 'greater'])
+    @sweepargs(mask=['', maskfn])
+    def test_cmdline_args(self, stat, alternative, mask):
+        for data in self.datafn:
+            for outfn in self.outfn:
+                self.run_ttest(data, outfn, stat, alternative, mask)
