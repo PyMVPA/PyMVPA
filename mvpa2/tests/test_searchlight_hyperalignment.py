@@ -174,7 +174,8 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         assert(np.alltrue([np.sum(m[7, :] == 0) == 4 for m in mappers_fsf]))
 
     @reseed_rng()
-    def test_searchlight_hyperalignment(self):
+    @with_tempfile('.hdf5')
+    def test_searchlight_hyperalignment(self, tempfile):
         skip_if_no_external('scipy')
         skip_if_no_external('h5py')
         ds_orig = datasets['3dsmall'].copy()[:, :15]
@@ -245,6 +246,7 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
             # one mapper per input ds
             assert_equal(len(mappers), nds)
             projs.append(mappers)
+
         # some checks
         for midx in range(nds):
             # making sure mask_node_ids options works as expected
@@ -271,6 +273,7 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
             diag_weight = proj[-1].proj.diagonal()
             # Check to make sure diagonal is the max weight, in almost all rows for reference subject
             assert(np.sum(max_weight == diag_weight) / float(len(diag_weight)) >= 0.80)
+
         # project data
         dss_hyper = [hm.forward(sd) for hm, sd in zip(projs[0], dss)]
         _ = [zscore(sd, chunks_attr=None) for sd in dss_hyper]
@@ -285,6 +288,13 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         # noisy copy of original dataset should be similar to original after hyperalignment
         assert_true(np.median(ndcss[-1]) > 0.9)
         assert_true(np.all([np.median(ndcs) > 0.2 for ndcs in ndcss[1:-2]]))
+
+        # just a single test to verify that we can save hyperalignment instances
+        try:
+            from mvpa2.base.hdf5 import h5save
+        except ImportError:
+            raise SkipTest("h5save of hyperalignment")
+        h5save(tempfile, slhyp)
 
     @reseed_rng()
     def test_searchlight_hyperalignment_warnings_and_exceptions(self):
