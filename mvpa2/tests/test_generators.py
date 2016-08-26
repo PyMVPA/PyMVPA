@@ -622,7 +622,7 @@ def test_factorialpartitioner_big():
     # Those time limits are really a stretch. on a any reasonable box not too busy
     # should be done in fraction of a second, but allow to catch "naive"
     # implementation
-    assert(time() - t0 < 1)
+    assert(time() - t0 < 3)
 
     assert_equal(len(partition(ds, count=2, selection_strategy='random')), 2)
-    assert(time() - t0 < 1)
+    assert(time() - t0 < 3)
