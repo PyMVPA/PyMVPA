@@ -16,6 +16,7 @@ from mvpa2.testing.tools import ok_, assert_array_equal, assert_true, \
         assert_false, assert_equal, assert_raises, assert_almost_equal, \
         reseed_rng, assert_not_equal, assert_in, assert_not_in
 from mvpa2.testing.tools import assert_warnings
+from mvpa2.testing.tools import assert_datasets_equal
 
 from mvpa2.datasets import dataset_wizard, Dataset
 from mvpa2.generators.splitters import Splitter
@@ -31,9 +32,9 @@ from mvpa2.misc.support import get_nelements_per_value
 
 def give_data():
     # 100x10, 10 chunks, 4 targets
-    return dataset_wizard(np.random.normal(size=(100,10)),
-                          targets=[ i%4 for i in range(100) ],
-                          chunks=[ i//10 for i in range(100)])
+    return dataset_wizard(np.random.normal(size=(100, 10)),
+                          targets=[i % 4 for i in range(100)],
+                          chunks=[i//10 for i in range(100)])
 
 
 @reseed_rng()
@@ -152,12 +153,29 @@ def test_attrpermute():
 
     # and now try generating more permutations
     nruns = 2
+    def assert_all_different_permutations(pds):
+        assert_equal(len(pds), nruns)
+        for i, p in enumerate(pds):
+            assert_false(np.all(p.sa.ids == ds.sa.ids))
+            for p_ in pds[i+1:]:
+                assert_false(np.all(p.sa.ids == p_.sa.ids))
+
     permutation = AttributePermutator(['targets', 'ids'],
                                       assure=True, count=nruns)
     pds = list(permutation.generate(ds))
-    assert_equal(len(pds), nruns)
-    for p in pds:
-        assert_false(np.all(p.sa.ids == ds.sa.ids))
+    assert_all_different_permutations(pds)
+
+    # if we provide seeding, and generate, it should also return different datasets
+    permutation = AttributePermutator(['targets', 'ids'],
+                                      count=nruns, rng=1)
+    pds1 = list(permutation.generate(ds))
+    assert_all_different_permutations(pds)
+
+    # but if we regenerate -- should all be the same to before
+    pds2 = list(permutation.generate(ds))
+    assert_equal(len(pds1), len(pds2))
+    for p1, p2 in zip(pds1, pds2):
+        assert_datasets_equal(p1, p2)
 
     # permute feature attrs
     ds.fa['ids'] = range(ds.shape[1])
@@ -202,6 +220,8 @@ def test_attrpermute():
 @reseed_rng()
 def test_balancer():
     ds = give_data()
+    ds.sa['ids'] = np.arange(len(ds))  # some sa to ease tracking of samples
+
     # only mark the selection in an attribute
     bal = Balancer()
     res = bal(ds)
@@ -221,6 +241,51 @@ def test_balancer():
     # now use it as a generator
     dses = list(bal.generate(ds))
     assert_equal(len(dses), 5)
+
+    # if we rerun again, it would be a different selection
+    res2 = bal(ds)
+    assert_true(np.any(res.sa.ids != bal(ds).sa.ids))
+
+    # but if we create a balancer providing seed rng int,
+    # should be identical results
+    bal = Balancer(apply_selection=True, count=5, rng=1)
+    assert_false(np.any(bal(ds).sa.ids != bal(ds).sa.ids))
+
+    # But results should differ if we use .generate to produce those multiple
+    # balanced datasets
+    b = Balancer(apply_selection=True, count=3, rng=1)
+    balanced = list(b.generate(ds))
+    assert_false(all(balanced[0].sa.ids == balanced[1].sa.ids))
+    assert_false(all(balanced[0].sa.ids == balanced[2].sa.ids))
+    assert_false(all(balanced[1].sa.ids == balanced[2].sa.ids))
+
+    # And should be exactly the same
+    for ds_a, ds_b in zip(balanced, b.generate(ds)):
+        assert_datasets_equal(ds_a, ds_b)
+
+    # Contribution by Chris Markiewicz
+    # And interleaving __call__ and generator fetches
+    gen1 = b.generate(ds)
+    gen2 = b.generate(ds)
+
+    seq1, seq2, seq3 = [], [], []
+
+    for i in xrange(3):
+        seq1.append(gen1.next())
+        seq2.append(gen2.next())
+        seq3.append(b(ds))
+
+    # Produces expected sequences
+
+    for i in xrange(3):
+        assert_datasets_equal(balanced[i], seq1[i])
+        assert_datasets_equal(balanced[i], seq2[i])
+
+    # And all __call__s return the same result
+    ds_a = seq3[0]
+    for ds_b in seq3[1:]:
+        assert_array_equal(ds_a.sa.ids, ds_b.sa.ids)
+
     # with limit
     bal = Balancer(limit={'chunks': 3}, apply_selection=True)
     res = bal(ds)
@@ -249,8 +314,8 @@ def test_balancer():
             np.round(np.array(get_nelements_per_value(ds.sa.targets).values()) * 0.5),
             np.array(get_nelements_per_value(res.sa.targets).values()))
     # check on feature attribute
-    ds.fa['one'] = np.tile([1,2], 5)
-    ds.fa['chk'] = np.repeat([1,2], 5)
+    ds.fa['one'] = np.tile([1, 2], 5)
+    ds.fa['chk'] = np.repeat([1, 2], 5)
     bal = Balancer(attr='one', amount=2, limit='chk', apply_selection=True)
     res = bal(ds)
     assert_equal(get_nelements_per_value(res.fa.one).values(),
