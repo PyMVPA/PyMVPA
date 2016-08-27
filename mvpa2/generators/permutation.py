@@ -75,6 +75,11 @@ class AttributePermutator(Node):
           If set, by-chance non-permutations will be prevented, i.e. it is
           checked that at least two items change their position. Since this
           check adds a runtime penalty it is off by default.
+        rng : int or RandomState, optional
+          Integer to seed a new RandomState upon each call, or instance of the
+          numpy.random.RandomState to be reused across calls. If None, the
+          numpy.random singleton would be used
+
 
         """
         Node.__init__(self, **kwargs)
