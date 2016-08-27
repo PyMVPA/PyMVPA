@@ -18,7 +18,7 @@ Build-Depends: debhelper (>= 7.0.50~),
                python-matplotlib,
                python-statsmodels [!s390x],
                python-joblib
-Standards-Version: 3.9.7
+Standards-Version: 3.9.8
 Homepage: http://www.pymvpa.org
 Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/pymvpa.git
 Vcs-Git: git://git.debian.org/git/pkg-exppsy/pymvpa.git -b dist2/debian/proper/sid

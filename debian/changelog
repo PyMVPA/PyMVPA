@@ -1,3 +1,12 @@
+pymvpa2 (2.6.0-1) unstable; urgency=medium
+
+  * Fresh upstream release
+    - variety of bugfixes, e.g. compatibility with scipy 0.17.1, nibabel 2.1
+  * debian/control
+    - policy boost to 3.9.8
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 26 Aug 2016 20:21:05 -0400
+
 pymvpa2 (2.5.0-2) unstable; urgency=medium
 
   * debian/control
