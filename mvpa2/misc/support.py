@@ -234,6 +234,20 @@ def unique_combinations(L, n, sort=False):
     return res
 
 
+def xrandom_iterprod(n, *seq):
+    """Generate n random iterprod's from given sequences"""
+    ls = map(len, seq)
+    seen = set()
+    if n > np.prod(ls):
+        n = np.prod(ls)
+    while len(seen) < n:
+        sel = tuple(random.randint(0, l - 1) for l in ls)
+        if sel in seen:
+            continue
+        seen.add(sel)
+        yield [s[i] for s, i in zip(seq, sel)]
+
+
 ##REF: Name was automagically refactored
 def indent_doc(v):
     """Given a `value` returns a string where each line is indented
@@ -801,7 +815,7 @@ def get_limit_filter(limit, collection):
             else:
                 limit_filter[collection[a].value == limit[a]] = True
     else:
-        raise RuntimeError("Unhandle condition")
+        raise RuntimeError("Unhandled condition")
 
     return limit_filter
 
@@ -837,3 +851,26 @@ def get_nelements_per_value(data):
 
     return result
 
+
+# inspired by get_random_state function/approach in scikit.learn
+def get_rng(r=None):
+    """Return instantiated numpy.random.RandomState given r.
+
+    If r is None, return numpy.random singleton, so it will not be reinitialized
+    for each invocation of `get_random_state`.
+
+    If r is int, it is used to seed a new numpy.random.RandomState, so you would
+    be guaranteed to get reproducible random operations upon each invocation
+    of the function using get_random_state
+
+    If r is an existing numpy.random.RandomState instance, it simply will be
+    returned and thus reused, possibly across multiple calls to the object using
+    this get_random_state.
+    """
+    if isinstance(r, np.random.RandomState):
+        return r
+    elif r is None or r is np.random:
+        return np.random
+    else:
+        # try to seed a new state
+        return np.random.RandomState(r)

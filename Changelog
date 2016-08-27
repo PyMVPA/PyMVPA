@@ -31,6 +31,51 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
+* 2.6.0 (Sat, 26 Aug 2016)
+
+  Primarily a bugfix release with some added new functionality.  People contributed
+  code to the release: Matteo Visconti dOC, Yaroslav Halchenko, Nikolaas N. Oosterhof,
+  Feilong Ma, Christopher J. Markiewicz, Swaroop Guntupalli.
+
+  * **IMPORTANT** possibly backward-incompatible fixes
+
+    - Dataset's :func:`~mvpa2.base.dataset.vstack` and :func:`~mvpa2.base.dataset.hstack`
+      now by default would drop those feature or sample (`fa`, `sa`) attributes
+      which do not have the same value across all datasets ("drop_nonunique").
+      Previous behaviour was to update aggregated collections, so the attribute
+      value of the last dataset would have been stored in the stacked dataset.
+      Such behaviour could be brought back by `fa="update"` for `vstack` or
+      similar value for `sa="update"` for `hstack` calls.
+      If you find that some `sa`/`fa` you have relied on using in your code is no
+      longer available after stacking, verify that you did intend to maintain the
+      "last known" value, and adjust argument in stacking function to "update".
+
+  * Fixes
+
+    - Fixed minor bug in computing ico linear divisions while working with surfaces
+    - Handling of `ref_ds` in :class:`~mvpa2.algorithms.searchlight_hyperalignment.SearchlightHyperalignment`
+    - Compatibility fixes for :mod:`scipy` 0.18.0 and :mod:`nibabel` 2.1.0.
+
+
+  * New functionality
+
+    - `pymvpa2 scatter` command line and :mod:`~mvpa2.misc.plot.scatter` module to scatter plot
+      datasets and nifti volumes, with coloring based on spatial location (see
+      e.g. `OHBM12 poster <http://haxbylab.dartmouth.edu/publications/HGG+12_sfn12_famfaces.png>`__
+      for an example, proper demo is coming)
+
+  * Enhancements
+
+    - Allow for "4D" mri mask volumes with degenerate time dimension (e.g. coming
+      from AFNI)
+    - `pymvpa2 ttest` could operate now on h5save'd datasets
+    - It is possible now to `h5save` trained Hyperalignment instances
+    - :class:`~mvpa2.generators.resampling.Balancer` and
+      :class:`~mvpa2.generators.permutation.AttributePermutator` now got `rng`
+      argument to seed RNG.  Please use an `int` as a seed specification if you
+      want random selections/permutations be consistent across searchlights
+
+
 * 2.5.0 (Thu, 12 May 2016)
 
   * Fixes
