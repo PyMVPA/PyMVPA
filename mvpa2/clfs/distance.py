@@ -39,8 +39,8 @@ def absmin_distance(a, b):
     return max(abs(a-b))
 
 
-def manhatten_distance(a, b):
-    """Return Manhatten distance between a and b
+def manhattan_distance(a, b):
+    """Return Manhattan distance between a and b
     """
     return sum(abs(a-b))
 
