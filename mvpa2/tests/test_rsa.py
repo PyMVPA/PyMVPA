@@ -73,6 +73,23 @@ def test_PDistConsistency():
     assert_array_almost_equal(res4.samples,cres2)
 
 
+def test_CDist():
+    targets = np.tile(xrange(3),2)
+    chunks = np.repeat(np.array((0,1)),3)
+    ds = dataset_wizard(samples=data, targets=targets, chunks=chunks)
+    # Some distance metrics
+    euc = pdist(data, 'euclidean')
+    pear = pdist(data, 'correlation')
+    city = pdist(data, 'cityblock')
+    cdist_euc = CDist(pairwise_metric='euclidean')
+    cdist_pear = CDist(pairwise_metric='correlation')
+    cdist_city = CDist(pairwise_metric='cityblock')
+    for pd_, cd_ in zip([euc, pear, city], [cdist_euc, cdist_pear, cdist_city]):
+        cd_.train(ds[ds.sa.chunks == 0, ])
+        res = cd_(ds[ds.sa.chunks == 1, ])
+        # Check to make sure the pdist results are close to CDist results
+        assert_array_almost_equal(res.samples.ravel(), squareform(pd_)[:3, 3:].ravel())
+
 
 def test_PDist():
     targets = np.tile(xrange(3),2)

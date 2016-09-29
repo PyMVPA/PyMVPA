@@ -10,17 +10,56 @@
 
 __docformat__ = 'restructuredtext'
 
-from itertools import combinations
+from itertools import combinations, product
 import numpy as np
 from mvpa2.measures.base import Measure
 from mvpa2.datasets.base import Dataset
 from mvpa2.base import externals
 from mvpa2.base.param import Parameter
 from mvpa2.base.constraints import EnsureChoice
+from mvpa2.mappers.fx import mean_group_sample
 
 if externals.exists('scipy', raise_=True):
-    from scipy.spatial.distance import pdist, squareform
+    from scipy.spatial.distance import pdist, squareform, cdist
     from scipy.stats import rankdata, pearsonr
+
+
+class CDist(Measure):
+
+    pairwise_metric = Parameter('correlation', constraints='str', doc="""\
+          Distance metric to use for calculating pairwise vector distances for
+          dissimilarity matrix (DSM).  See scipy.spatial.distance.pdist for
+          all possible metrics.""")
+
+    sattr = Parameter(['targets'], doc="""
+        List of sample attributes whose unique values will be used to identify the
+        samples groups. Typically your category labels or targets.""")
+
+    def __init__(self, **kwargs):
+        Measure.__init__(self, **kwargs)
+        self.train_ds = None
+        self.sattr = self.params.sattr
+
+    def _train(self, ds):
+        if self.sattr is not None:
+            mgs = mean_group_sample(attrs=self.sattr)
+            self.train_ds = mgs(ds)
+        else:
+            self.train_ds = ds.copy(deep=True)
+
+    def __call__(self, ds, **kwargs):
+        if self.sattr is not None:
+            mgs = mean_group_sample(attrs=self.sattr)
+            test_ds = mgs(ds)
+        else:
+            test_ds = ds.copy(deep=True)
+        # Call actual distance metric
+        distds = cdist(self.train_ds.samples, test_ds, metric=self.params.pairwise_metric)
+        # Make target pairs
+        distds = Dataset(samples=distds.ravel()[None, ],
+                         fa={'pairs': list(product(test_ds.UT, test_ds.UT))})
+
+        return distds
 
 
 class PDist(Measure):
