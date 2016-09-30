@@ -83,7 +83,9 @@ def test_CDist():
         pd_ = pdist(data, metric)
         cd_ = CDist(pairwise_metric=metric)
 
+        assert_true(not cd_.is_trained)
         cd_.train(ds[ds.sa.chunks == 0, ])
+        assert_true(cd_.is_trained)
         res = cd_(ds[ds.sa.chunks == 1, ])
         # Check to make sure the pdist results are close to CDist results
         assert_array_almost_equal(res.samples.ravel(),

@@ -54,6 +54,7 @@ class CDist(Measure):
 
     def _train(self, ds):
         self._train_ds = self._prepare_ds(ds)
+        self.is_trained = True
 
     def _call(self, ds):
         test_ds = self._prepare_ds(ds)
