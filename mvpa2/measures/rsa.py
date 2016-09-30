@@ -44,20 +44,17 @@ class CDist(Measure):
         Measure.__init__(self, **kwargs)
         self._train_ds = None
 
-    def _train(self, ds):
-        if self.params.sattr is not None:
-            mgs = mean_group_sample(attrs=self.params.sattr)
-            self._train_ds = mgs(ds)
-        else:
-            self._train_ds = ds.copy(deep=True)
 
     def _prepare_ds(self, ds):
         if self.params.sattr is not None:
             mgs = mean_group_sample(attrs=self.params.sattr)
-            test_ds = mgs(ds)
+            ds_ = mgs(ds)
         else:
-            test_ds = ds.copy(deep=True)
-        return test_ds
+            ds_ = ds.copy(deep=True)
+        return ds_
+
+    def _train(self, ds):
+        self._train_ds = self._prepare_ds(ds)
 
     def _call(self, ds):
         test_ds = self._prepare_ds(ds)
