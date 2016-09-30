@@ -27,6 +27,8 @@ def test_distances():
     assert_equal(cartesian_distance(a, b), 5.0)
     assert_equal(manhattan_distance(a, b), 7)
     assert_equal(absmin_distance(a, b), 4)
+    # test that fixing typo didn't impact results
+    assert_equal(manhattan_distance(a, b), manhatten_distance(a, b))
 
 
 def test_identity():
