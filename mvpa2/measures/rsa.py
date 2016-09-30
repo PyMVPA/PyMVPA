@@ -25,8 +25,13 @@ if externals.exists('scipy', raise_=True):
 
 
 class CDist(Measure):
+    """Compute dissimiliarity matrix for samples in a dataset
 
-    pairwise_metric = Parameter('correlation', constraints='str', doc="""\
+    This `Measure` can be trained on part of the dataset (for example,
+    a partition) and called on another partition. It can be used in
+    cross-validation to generate cross-validated RSA.
+    """
+    pairwise_metric = Parameter('correlation', constraints='str', doc="""
           Distance metric to use for calculating pairwise vector distances for
           dissimilarity matrix (DSM).  See scipy.spatial.distance.pdist for
           all possible metrics.""")
@@ -37,28 +42,28 @@ class CDist(Measure):
 
     def __init__(self, **kwargs):
         Measure.__init__(self, **kwargs)
-        self.train_ds = None
-        self.sattr = self.params.sattr
+        self._train_ds = None
+
+    def _prepare_ds(self, ds):
+        if self.params.sattr is not None:
+            mgs = mean_group_sample(attrs=self.params.sattr)
+            ds_ = mgs(ds)
+        else:
+            ds_ = ds.copy(deep=True)
+        return ds_
 
     def _train(self, ds):
-        if self.sattr is not None:
-            mgs = mean_group_sample(attrs=self.sattr)
-            self.train_ds = mgs(ds)
-        else:
-            self.train_ds = ds.copy(deep=True)
+        self._train_ds = self._prepare_ds(ds)
+        self.is_trained = True
 
-    def __call__(self, ds, **kwargs):
-        if self.sattr is not None:
-            mgs = mean_group_sample(attrs=self.sattr)
-            test_ds = mgs(ds)
-        else:
-            test_ds = ds.copy(deep=True)
+    def _call(self, ds):
+        test_ds = self._prepare_ds(ds)
         # Call actual distance metric
-        distds = cdist(self.train_ds.samples, test_ds, metric=self.params.pairwise_metric)
+        distds = cdist(self._train_ds.samples, test_ds,
+                       metric=self.params.pairwise_metric)
         # Make target pairs
         distds = Dataset(samples=distds.ravel()[None, ],
                          fa={'pairs': list(product(test_ds.UT, test_ds.UT))})
-
         return distds
 
 
