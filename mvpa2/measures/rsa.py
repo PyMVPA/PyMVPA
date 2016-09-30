@@ -44,7 +44,6 @@ class CDist(Measure):
         Measure.__init__(self, **kwargs)
         self._train_ds = None
 
-
     def _prepare_ds(self, ds):
         if self.params.sattr is not None:
             mgs = mean_group_sample(attrs=self.params.sattr)
