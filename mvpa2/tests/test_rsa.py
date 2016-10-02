@@ -25,7 +25,7 @@ from mvpa2.generators.partition import NFoldPartitioner
 from mvpa2.measures.base import CrossValidation
 from mvpa2.base import externals
 import scipy.stats as stats
-from scipy.spatial.distance import pdist, squareform
+from scipy.spatial.distance import pdist, squareform, cdist
 from scipy.stats import rankdata, pearsonr
 
 data = np.array([[ 0.22366105, 0.51562476, 0.62623543, 0.28081652, 0.56513533],
@@ -79,47 +79,41 @@ def test_CDist():
     targets = np.tile(range(3), 2)
     chunks = np.repeat(np.array((0,1)), 3)
     ds = dataset_wizard(samples=data, targets=targets, chunks=chunks)
+    train_data = ds[ds.sa.chunks == 0, ]
+    test_data = ds[ds.sa.chunks == 1, ]
+
     # Some distance metrics
-    metrics = ['euclidean', 'correlation', 'cityblock']
-    for metric in metrics:
-        pd_ = pdist(data, metric)
-        cd_ = CDist(pairwise_metric=metric)
+    metrics = ['euclidean', 'correlation', 'cityblock', 'mahalanobis']
+    VI_mahalanobis = np.eye(5)
+    for sattr in [['targets'], None]:
+        for metric in metrics:
+            metric_kwargs = {'VI': VI_mahalanobis} if metric == 'mahalanobis' \
+                else {}
+            scipy_cdist = cdist(train_data.samples, test_data.samples,
+                        metric, **metric_kwargs)
+            pymvpa_cdist = CDist(pairwise_metric=metric,
+                        pairwise_metric_kwargs=metric_kwargs,
+                        sattr=sattr)
 
-        assert_true(not cd_.is_trained)
-        cd_.train(ds[ds.sa.chunks == 0, ])
-        assert_true(cd_.is_trained)
-        res = cd_(ds[ds.sa.chunks == 1, ])
-        # Check to make sure the pdist results are close to CDist results
-        assert_array_almost_equal(res.samples.ravel(),
-                                  squareform(pd_)[:3, 3:].ravel())
-
-    # check it doesn't blow up without mean group samples
-    for metric in metrics:
-        pd_ = pdist(data, metric)
-        cd_ = CDist(sattr=None, pairwise_metric=metric)
-
-        assert_true(not cd_.is_trained)
-        cd_.train(ds)
-        assert_true(cd_.is_trained)
-        res = cd_(ds)
-        # Check to make sure the pdist results are close to CDist results
-        assert_array_almost_equal(res.samples.ravel(),
-                                  squareform(pd_).ravel())
-
+            assert_true(not pymvpa_cdist.is_trained)
+            pymvpa_cdist.train(train_data)
+            assert_true(pymvpa_cdist.is_trained)
+            res = pymvpa_cdist(test_data)
+            # Check to make sure the cdist results are close to CDist results
+            assert_array_almost_equal(res.samples.ravel(),
+                                      scipy_cdist.ravel())
 
 def test_CDist_cval():
     targets = np.tile(range(3), 2)
     chunks = np.repeat(np.array((0,1)), 3)
     ds = dataset_wizard(samples=data, targets=targets, chunks=chunks)
 
-    metrics = ['euclidean', 'correlation', 'cityblock']
-    for metric in metrics:
-        cv = CrossValidation(CDist(pairwise_metric=metric),
-                             generator=NFoldPartitioner(),
-                             errorfx=None)
-        res = cv(ds)
-        assert_array_equal(res.samples[0].reshape((3, 3)),
-                           res.samples[1].reshape((3, 3)).T)
+    cv = CrossValidation(CDist(),
+                         generator=NFoldPartitioner(),
+                         errorfx=None)
+    res = cv(ds)
+    assert_array_equal(res.samples[0].reshape((3, 3)),
+                       res.samples[1].reshape((3, 3)).T)
 
 
 def test_PDist():

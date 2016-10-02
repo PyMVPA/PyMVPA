@@ -33,8 +33,13 @@ class CDist(Measure):
     """
     pairwise_metric = Parameter('correlation', constraints='str', doc="""
           Distance metric to use for calculating pairwise vector distances for
-          dissimilarity matrix (DSM).  See scipy.spatial.distance.pdist for
+          dissimilarity matrix (DSM).  See scipy.spatial.distance.cdist for
           all possible metrics.""")
+
+    pairwise_metric_kwargs = Parameter({}, doc="""
+    kwargs dictionary passed to cdist. For example,
+    if `pairwise_metric='mahalanobis'`, `pairwise_metric_kwargs`
+    might contain the inverse of the covariance matrix.""")
 
     sattr = Parameter(['targets'], doc="""
         List of sample attributes whose unique values will be used to identify the
@@ -59,8 +64,9 @@ class CDist(Measure):
     def _call(self, ds):
         test_ds = self._prepare_ds(ds)
         # Call actual distance metric
-        distds = cdist(self._train_ds.samples, test_ds,
-                       metric=self.params.pairwise_metric)
+        distds = cdist(self._train_ds.samples, test_ds.samples,
+                       metric=self.params.pairwise_metric,
+                       **self.params.pairwise_metric_kwargs)
         # Make target pairs
         distds = Dataset(samples=distds.ravel()[None, ],
                          fa={'pairs': list(product(self._train_ds.T,
