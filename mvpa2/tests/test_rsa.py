@@ -21,6 +21,8 @@ from mvpa2.datasets.base import dataset_wizard, Dataset
 from mvpa2.testing.tools import *
 
 from mvpa2.measures.rsa import *
+from mvpa2.generators.partition import NFoldPartitioner
+from mvpa2.measures.base import CrossValidation
 from mvpa2.base import externals
 import scipy.stats as stats
 from scipy.spatial.distance import pdist, squareform
@@ -105,6 +107,21 @@ def test_CDist():
                                   squareform(pd_).ravel())
 
 
+def test_CDist_cval():
+    targets = np.tile(range(3), 2)
+    chunks = np.repeat(np.array((0,1)), 3)
+    ds = dataset_wizard(samples=data, targets=targets, chunks=chunks)
+
+    metrics = ['euclidean', 'correlation', 'cityblock']
+    for metric in metrics:
+        cv = CrossValidation(CDist(pairwise_metric=metric),
+                             generator=NFoldPartitioner(),
+                             errorfx=None)
+        res = cv(ds)
+        assert_array_equal(res.samples[0].reshape((3, 3)),
+                           res.samples[1].reshape((3, 3)).T)
+
+
 def test_PDist():
     targets = np.tile(xrange(3),2)
     chunks = np.repeat(np.array((0,1)),3)
@@ -139,6 +156,7 @@ def test_PDist():
     # sample attributes are carried over
     assert_almost_equal(ds.sa.targets, dsm_res.sa.targets)
 
+
 def test_PDistTargetSimilarity():
     ds = Dataset(data)
     tdsm = range(15)
@@ -164,6 +182,7 @@ def test_PDistTargetSimilarity():
     assert_array_equal(a3.fa.metrics, ['rho', 'p'])
     assert_array_almost_equal(a4.samples.squeeze(), ans1[0])
     assert_array_equal(a4.fa.metrics, ['rho'])
+
 
 def test_PDistTargetSimilaritySearchlight():
     # Test ability to use PDistTargetSimilarity in a searchlight
