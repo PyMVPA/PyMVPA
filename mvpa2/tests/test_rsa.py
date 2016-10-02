@@ -91,6 +91,19 @@ def test_CDist():
         assert_array_almost_equal(res.samples.ravel(),
                                   squareform(pd_)[:3, 3:].ravel())
 
+    # check it doesn't blow up without mean group samples
+    for metric in metrics:
+        pd_ = pdist(data, metric)
+        cd_ = CDist(sattr=None, pairwise_metric=metric)
+
+        assert_true(not cd_.is_trained)
+        cd_.train(ds)
+        assert_true(cd_.is_trained)
+        res = cd_(ds)
+        # Check to make sure the pdist results are close to CDist results
+        assert_array_almost_equal(res.samples.ravel(),
+                                  squareform(pd_).ravel())
+
 
 def test_PDist():
     targets = np.tile(xrange(3),2)
