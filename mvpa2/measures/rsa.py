@@ -55,7 +55,7 @@ class CDist(Measure):
             mgs = mean_group_sample(attrs=self.params.sattr)
             ds_ = mgs(ds)
         else:
-            ds_ = ds.copy(deep=True)
+            ds_ = ds.copy()
         return ds_
 
     def _train(self, ds):
