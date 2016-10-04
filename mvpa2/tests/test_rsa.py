@@ -92,6 +92,8 @@ def test_CDist():
                 else {}
             scipy_cdist = cdist(train_data.samples, test_data.samples,
                         metric, **metric_kwargs)
+            scipy_pdist = pdist(train_data.samples,
+                                metric, **metric_kwargs)
             pymvpa_cdist = CDist(pairwise_metric=metric,
                         pairwise_metric_kwargs=metric_kwargs,
                         sattr=sattr)
@@ -99,10 +101,15 @@ def test_CDist():
             assert_true(not pymvpa_cdist.is_trained)
             pymvpa_cdist.train(train_data)
             assert_true(pymvpa_cdist.is_trained)
-            res = pymvpa_cdist(test_data)
+            res_cv = pymvpa_cdist(test_data)
+            res_nocv = pymvpa_cdist(train_data)
             # Check to make sure the cdist results are close to CDist results
-            assert_array_almost_equal(res.samples.ravel(),
+            assert_array_almost_equal(res_cv.samples.ravel(),
                                       scipy_cdist.ravel())
+            # if called with train_data again, results should match with pdist
+            assert_array_almost_equal(res_nocv.samples.ravel(),
+                                      scipy_pdist.ravel())
+
 
 def test_CDist_cval():
     if _ENFORCE_CA_ENABLED:
