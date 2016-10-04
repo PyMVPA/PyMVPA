@@ -25,25 +25,26 @@ if externals.exists('scipy', raise_=True):
 
 
 class CDist(Measure):
-    """Compute dissimiliarity matrix for samples in a dataset
+    """Compute cross-validated dissimiliarity matrix for samples in a dataset
 
     This `Measure` can be trained on part of the dataset (for example,
     a partition) and called on another partition. It can be used in
     cross-validation to generate cross-validated RSA.
+    Returns flattened dissimilarity values.
     """
-    pairwise_metric = Parameter('correlation', constraints='str', doc="""
-          Distance metric to use for calculating pairwise vector distances for
-          dissimilarity matrix (DSM).  See scipy.spatial.distance.cdist for
-          all possible metrics.""")
+    pairwise_metric = Parameter('correlation', constraints='str',
+            doc="""Distance metric to use for calculating pairwise vector distances for
+            dissimilarity matrix (DSM).  See scipy.spatial.distance.cdist for
+            all possible metrics.""")
 
-    pairwise_metric_kwargs = Parameter({}, doc="""
-    kwargs dictionary passed to cdist. For example,
-    if `pairwise_metric='mahalanobis'`, `pairwise_metric_kwargs`
-    might contain the inverse of the covariance matrix.""")
+    pairwise_metric_kwargs = Parameter({},
+            doc="""kwargs dictionary passed to cdist. For example,
+            if `pairwise_metric='mahalanobis'`, `pairwise_metric_kwargs`
+            might contain the inverse of the covariance matrix.""")
 
-    sattr = Parameter(['targets'], doc="""
-        List of sample attributes whose unique values will be used to identify the
-        samples groups. Typically your category labels or targets.""")
+    sattr = Parameter(['targets'],
+            doc="""List of sample attributes whose unique values will be used to
+            identify the samples groups. Typically your category labels or targets.""")
 
     def __init__(self, **kwargs):
         Measure.__init__(self, **kwargs)
