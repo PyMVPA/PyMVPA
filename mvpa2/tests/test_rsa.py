@@ -108,7 +108,7 @@ def test_CDist():
                                       scipy_cdist.ravel())
             # if called with train_data again, results should match with pdist
             assert_array_almost_equal(res_nocv.samples.ravel(),
-                                      scipy_pdist.ravel())
+                                      squareform(scipy_pdist).ravel())
 
 
 def test_CDist_cval():
