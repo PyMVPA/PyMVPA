@@ -107,7 +107,8 @@ def test_CDist():
 def test_CDist_cval():
     if _ENFORCE_CA_ENABLED:
         # skip testing for now, since we are having issue with 'training_stats'
-        return
+        raise SkipTest("Skipping test to avoid issue with 'training_stats while CA enabled")
+    
     targets = np.tile(range(3), 2)
     chunks = np.repeat(np.array((0,1)), 3)
     ds = dataset_wizard(samples=data, targets=targets, chunks=chunks)
