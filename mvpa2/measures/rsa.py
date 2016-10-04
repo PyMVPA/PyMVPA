@@ -68,8 +68,8 @@ class CDist(Measure):
                        metric=self.params.pairwise_metric,
                        **self.params.pairwise_metric_kwargs)
         # Make target pairs
-        distds = Dataset(samples=distds.ravel()[None, ],
-                         fa={'pairs': list(product(self._train_ds.T,
+        distds = Dataset(samples=distds.ravel()[:, None],
+                         sa={'pairs': list(product(self._train_ds.T,
                                                    test_ds.T))})
         return distds
 

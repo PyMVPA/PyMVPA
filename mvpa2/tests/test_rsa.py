@@ -112,8 +112,11 @@ def test_CDist_cval():
                          generator=NFoldPartitioner(),
                          errorfx=None)
     res = cv(ds)
-    assert_array_equal(res.samples[0].reshape((3, 3)),
-                       res.samples[1].reshape((3, 3)).T)
+    # Testing to make sure the both folds return same results, as they should
+    assert_array_almost_equal(res[res.sa.cvfolds == 0, ].samples.reshape(3, 3),
+                       res[res.sa.cvfolds == 1, ].samples.reshape(3, 3).T)
+    # Testing to make sure the last dimension is always 1 to make it work with Searchlights
+    assert_equal(res.nfeatures, 1)
 
 
 def test_PDist():
