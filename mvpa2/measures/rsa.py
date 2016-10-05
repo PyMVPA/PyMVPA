@@ -65,8 +65,9 @@ class CDist(Measure):
     def _call(self, ds):
         test_ds = self._prepare_ds(ds)
         if test_ds.nsamples != self._train_ds.nsamples:
-            raise ValueError('Dataset should have same sample size for dissimilarity.'\
-                             'train: %d, test: %d'%(self._train_ds.nsamples, test_ds.nsamples))
+            raise ValueError('Datasets should have same sample size for dissimilarity, '\
+                             'nsamples for train: %d, test: %d'%(self._train_ds.nsamples,
+                                                                 test_ds.nsamples))
         # Call actual distance metric
         distds = cdist(self._train_ds.samples, test_ds.samples,
                        metric=self.params.pairwise_metric,
