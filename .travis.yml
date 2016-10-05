@@ -10,7 +10,7 @@ cache:
   - apt
 env:
  global:
-    - PY=python PYSUF='' PYPI=0
+    - PY=python PYSUF='' PYPI=0 COVERAGE="coverage run --rcfile=.travis_coveragerc"
     # - PYTHON=python3 PYSUF=3 : python3-numpy not currently available
  matrix:
     - PYTHON=$PY DOCTESTS=--with-doctest PYPI=1
@@ -19,7 +19,7 @@ env:
     - PYTHONPATH=mvpa2/tests/badexternals
     # Some DEBUG targets are excluded since either their output could
     # not be redirected or they augment output in the doctests
-    - COVERAGE="coverage run --rcfile=.travis_coveragerc" MVPA_DEBUG=ENFORCE_CA_ENABLED  DOCTESTS=--with-doctest
+    - MVPA_DEBUG=ENFORCE_CA_ENABLED  DOCTESTS=--with-doctest
     # So we get duecredit report printed out, and identical to original run so we could compare
     # time impact
     - PYTHON=$PY DOCTESTS=--with-doctest DUECREDIT_ENABLE=yes
