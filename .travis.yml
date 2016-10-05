@@ -54,7 +54,8 @@ script:
     - export NOSETESTS=$(which nosetests)
     - eval   $COVERAGE $NOSETESTS -v mvpa2 $DOCTESTS -s
     - make testsuite  # test that all imports are available within the suite. adjust Makefile or suite.py to fix if fails
-    - if [ ! -z "$COVERAGE" ]; then make coveragecmdline; fi
+    # we cannot run those in badexternals "mode"
+    - if [ ! -z "$COVERAGE" ] && [ "$DOCTESTS" = "--with-doctest" ]; then make coveragecmdline; fi
     - make build PYTHON=python3
 after_success:
     - if [ ! -z "$COVERAGE" ]; then coveralls; codecov; fi
