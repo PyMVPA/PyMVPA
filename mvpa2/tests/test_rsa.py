@@ -83,6 +83,14 @@ def test_CDist():
     train_data = ds[ds.sa.chunks == 0, ]
     test_data = ds[ds.sa.chunks == 1, ]
 
+    # Check for nsamples match
+    pymvpa_cdist = CDist(sattr=['targets','chunks'])
+    pymvpa_cdist.train(train_data)
+    assert_raises(ValueError, pymvpa_cdist, test_data[test_data.T < 2, ])
+    # Check it create sa as intended
+    res = pymvpa_cdist(test_data)
+    assert_dict_keys_equal(res.sa, test_data.sa)
+
     # Some distance metrics
     metrics = ['euclidean', 'correlation', 'cityblock', 'mahalanobis']
     VI_mahalanobis = np.eye(5)
