@@ -535,7 +535,7 @@ def unique_path_parts(*paths):
 def _get_data(f):
     """Adapter to load data from various formats
     """
-    if f.endswith('.hdf5'):
+    if f.endswith('.hdf5') or f.endwsith('.hdf5.gz'):
         from mvpa2.base.hdf5 import h5load
         data = h5load(f).samples
     else: #if f.endswith('.nii.gz') or f.endswith('.img') or f.endswith('.hdr'):
