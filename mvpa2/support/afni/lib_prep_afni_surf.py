@@ -440,7 +440,7 @@ def run_mapico(config, env):
                               hemi, icold))
                     continue
 
-            cmd = ('MapIcosahedron -overwrite -spec %s_%sh.spec "'
+            cmd = ('MapIcosahedron -overwrite -spec %s_%sh.spec '
                    '-ld %d -fix_cut_surfaces -prefix %s') % (sid, hemi,
                                                              icold, icoprefix)
             cmds.append(cmd)
