@@ -222,6 +222,7 @@ if externals.exists("pylab"):
     from mvpa2.viz import *
     from mvpa2.misc.plot import *
     from mvpa2.misc.plot.erp import *
+    from mvpa2.misc.plot.scatter import *
     if externals.exists(['griddata', 'scipy']):
         from mvpa2.misc.plot.topo import *
     from mvpa2.misc.plot.lightbox import plot_lightbox
@@ -271,6 +272,13 @@ from mvpa2.support.nibabel import afni_niml_dset, afni_suma_1d, \
                                   afni_niml_roi, afni_niml_annot
 if externals.exists('nibabel'):
     from mvpa2.support.nibabel import surf_gifti
+
+
+__sdebug("cmdline")
+if externals.exists("nibabel") and externals.exists("scipy") \
+        and externals.exists('ctypes') \
+        and externals.exists('h5py'):
+    from mvpa2.cmdline.cmd_ttest import *
 
 
 __sdebug("ipython goodies")

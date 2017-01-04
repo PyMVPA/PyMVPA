@@ -181,7 +181,7 @@ def test_fx_native_calls(f):
     import inspect
 
     ds = datasets['uni2small']
-    if f in ['size', 'rollaxis']:
+    if f in ['size', 'rollaxis', 'stack']:
         # really not appropriate ones here to test
         return
     try:
@@ -192,7 +192,7 @@ def test_fx_native_calls(f):
     except:
         return
 
-    # so we got a function which has 'axis' arugment
+    # so we got a function which has 'axis' argument
     for naxis in (0, 1):  # check on both axes
         for do_group in (False, True):  # test with
                                         # groupping and without

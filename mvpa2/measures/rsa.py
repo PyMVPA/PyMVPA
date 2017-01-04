@@ -10,17 +10,77 @@
 
 __docformat__ = 'restructuredtext'
 
-from itertools import combinations
+from itertools import combinations, product
 import numpy as np
 from mvpa2.measures.base import Measure
 from mvpa2.datasets.base import Dataset
 from mvpa2.base import externals
 from mvpa2.base.param import Parameter
 from mvpa2.base.constraints import EnsureChoice
+from mvpa2.mappers.fx import mean_group_sample
 
 if externals.exists('scipy', raise_=True):
-    from scipy.spatial.distance import pdist, squareform
+    from scipy.spatial.distance import pdist, squareform, cdist
     from scipy.stats import rankdata, pearsonr
+
+
+class CDist(Measure):
+    """Compute cross-validated dissimiliarity matrix for samples in a dataset
+
+    This `Measure` can be trained on part of the dataset (for example,
+    a partition) and called on another partition. It can be used in
+    cross-validation to generate cross-validated RSA.
+    Returns flattened dissimilarity values.
+    """
+    pairwise_metric = Parameter('correlation', constraints='str',
+            doc="""Distance metric to use for calculating pairwise vector distances for
+            dissimilarity matrix (DSM).  See scipy.spatial.distance.cdist for
+            all possible metrics.""")
+
+    pairwise_metric_kwargs = Parameter({},
+            doc="""kwargs dictionary passed to cdist. For example,
+            if `pairwise_metric='mahalanobis'`, `pairwise_metric_kwargs`
+            might contain the inverse of the covariance matrix.""")
+
+    sattr = Parameter(['targets'],
+            doc="""List of sample attributes whose unique values will be used to
+            identify the samples groups. Typically your category labels or targets.""")
+
+    def __init__(self, **kwargs):
+        Measure.__init__(self, **kwargs)
+        self._train_ds = None
+
+    def _prepare_ds(self, ds):
+        if self.params.sattr is not None:
+            mgs = mean_group_sample(attrs=self.params.sattr)
+            ds_ = mgs(ds)
+        else:
+            ds_ = ds.copy()
+        return ds_
+
+    def _train(self, ds):
+        self._train_ds = self._prepare_ds(ds)
+        self.is_trained = True
+
+    def _call(self, ds):
+        test_ds = self._prepare_ds(ds)
+        if test_ds.nsamples != self._train_ds.nsamples:
+            raise ValueError('Datasets should have same sample size for dissimilarity, '\
+                             'nsamples for train: %d, test: %d'%(self._train_ds.nsamples,
+                                                                 test_ds.nsamples))
+        # Call actual distance metric
+        distds = cdist(self._train_ds.samples, test_ds.samples,
+                       metric=self.params.pairwise_metric,
+                       **self.params.pairwise_metric_kwargs)
+        # Make target pairs
+        sa_dict = dict()
+        for k in self._train_ds.sa:
+            if k in test_ds.sa:
+                sa_dict[k] = list(product(self._train_ds.sa.get(k).value,
+                                                   test_ds.sa.get(k).value))
+
+        distds = Dataset(samples=distds.ravel()[:, None], sa=sa_dict)
+        return distds
 
 
 class PDist(Measure):

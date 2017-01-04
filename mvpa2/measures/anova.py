@@ -133,17 +133,17 @@ class CompoundOneWayAnova(OneWayAnova):
     """Compound comparisons via univariate ANOVA.
 
     This measure compute an ANOVA F-score per each feature, for each
-    one-vs-rest comparision for all unique labels in a dataset. Each F-score
-    vector for each comparision is included in the return datasets as a separate
-    samples. Corresponding p-values are avialable in feature attributes named
-    'fprob_X', where `X` is the name of the actual comparision label. Note that
+    one-vs-rest comparison for all unique labels in a dataset. Each F-score
+    vector for each comparison is included in the return datasets as a separate
+    samples. Corresponding p-values are available in feature attributes named
+    'fprob_X', where `X` is the name of the actual comparison label. Note that
     p-values are only available, if SciPy is installed. The comparison labels
-    for each F-vectore are also stored as 'targets' sample attribute in the
+    for each F-vector are also stored as 'targets' sample attribute in the
     returned dataset.
     """
 
     def _call(self, dataset):
-        """Computes featurewise f-scores using compound comparisons."""
+        """Computes feature-wise f-scores using compound comparisons."""
 
         targets_sa = dataset.sa[self.get_space()]
         orig_labels = targets_sa.value
@@ -165,6 +165,8 @@ class CompoundOneWayAnova(OneWayAnova):
                 del f_ds.fa['fprob']
             results.append(f_ds)
 
-        results = vstack(results)
+        # use 'update' strategy for fa since we need to accumulate all those
+        # fprob_X's
+        results = vstack(results, fa='update')
         results.sa[self.get_space()] = targets_sa.unique
         return results
