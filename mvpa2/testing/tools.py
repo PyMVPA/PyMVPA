@@ -38,6 +38,14 @@ if externals.exists('nose'):
         assert_in, assert_not_in,
         # Decorators
         timed, with_setup, raises, istest, nottest, make_decorator)
+
+    try:
+        # compatibility helpers for testing functions introduced in more recent versions
+        # of unittest/nose
+        from nose.tools import assert_is_instance
+    except ImportError:
+        def assert_is_instance(obj, cls, msg=None):
+            assert_true(isinstance(obj, cls), msg=msg)
 else:
     # Lets make it possible to import testing.tools even if nose is
     # NA, and run unittests which do not require nose yet
@@ -50,7 +58,8 @@ else:
 
     ok_ = eq_ = assert_true = assert_false = assert_raises = \
         assert_equal = assert_equals = assert_not_equal = asserte_not_equals = \
-        timed = with_setup = raises = istest = nottest = make_decorator = _need_nose
+        timed = with_setup = raises = istest = nottest = make_decorator = \
+        assert_is_instance = _need_nose
 
     class SkipTest(Exception):
         """Raise this exception to mark a test as skipped.
@@ -170,13 +179,6 @@ def assert_datasets_equal(x, y, ignore_a=None, ignore_sa=None, ignore_fa=None):
                                  ignore_fa=ignore_fa, decimal=None)
 
 
-
-if sys.version_info < (2, 7):
-    # compatibility helpers for testing functions introduced in more recent versions
-    # of unittest/nose
-
-    def assert_is_instance(obj, cls, msg=None):
-        assert_true(isinstance(obj, cls), msg=msg)
 
 if externals.exists('mock'):
     import mock
