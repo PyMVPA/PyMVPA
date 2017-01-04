@@ -97,13 +97,14 @@ class FeatureSelectionHyperalignment(ClassWithCollections):
     """
 
 
-    def __init__(self, hyperalignment=Hyperalignment(ref_ds=0),
+    def __init__(self, ref_ds=0, hyperalignment=Hyperalignment(ref_ds=0),
                  featsel=1.0, full_matrix=True, use_same_features=False,
                  exclude_from_model=None, dtype='float32', **kwargs):
         """
         For description of parameters see :class:`SearchlightHyperalignment`
         """
         super(FeatureSelectionHyperalignment, self).__init__(**kwargs)
+        self.ref_ds = ref_ds
         self.hyperalignment = hyperalignment
         self.featsel = featsel
         self.use_same_features = use_same_features
@@ -114,7 +115,7 @@ class FeatureSelectionHyperalignment(ClassWithCollections):
         self.dtype = dtype
 
     def __call__(self, datasets):
-        ref_ds = self.hyperalignment.params.ref_ds
+        ref_ds = self.ref_ds
         nsamples, nfeatures = datasets[ref_ds].shape
         if 'roi_seed' in datasets[ref_ds].fa and np.any(datasets[ref_ds].fa['roi_seed']):
             seed_index = np.where(datasets[ref_ds].fa.roi_seed)
@@ -223,7 +224,7 @@ class SearchlightHyperalignment(ClassWithCollections):
     ref_ds = Parameter(0, constraints=EnsureInt() & EnsureRange(min=0),
         doc="""Index of a dataset to use as a reference. First dataset is used
             as default. If you supply exclude_from_model list, you should supply
-            the ref_ds index as index after you remove those excluded datasets.
+            the ref_ds index as index before you remove those excluded datasets.
             Note that unlike regular Hyperalignment, there is no automagic
             choosing of the "best" ref_ds by default.""")
 
@@ -262,10 +263,12 @@ class SearchlightHyperalignment(ClassWithCollections):
             If None, hyperalignment is performed at every voxel (default).""")
 
     hyperalignment = Parameter(
-        Hyperalignment(ref_ds=0),
+        Hyperalignment(ref_ds=None),
         doc="""Hyperalignment instance to be used in each searchlight sphere.
-            Default is just the Hyperalignment instance with default parameters.
-            """)
+            Default is just the Hyperalignment instance with default
+            parameters. Its `ref_ds` parameter would be overridden by the
+            `ref_ds` parameter of this SearchlightHyperalignment instance
+            because we want to be consistent and only need one `ref_ds`.""")
 
     combine_neighbormappers = Parameter(
         True,
@@ -448,6 +451,8 @@ class SearchlightHyperalignment(ClassWithCollections):
                       % len(results_data))
             for isub, res in enumerate(results_data):
                 self.projections[isub] = self.projections[isub] + res
+            if __debug__:
+                debug('SLC_', "Finished adding results")
             return
 
     def __handle_all_results(self, results):
@@ -497,11 +502,12 @@ class SearchlightHyperalignment(ClassWithCollections):
         _shpaldebug("SearchlightHyperalignment %s for %i datasets"
                     % (self, self.ndatasets))
 
-        if params.ref_ds != params.hyperalignment.params.ref_ds:
-            warning('Supplied ref_ds & hyperalignment instance ref_ds:%d differ.'
-                    % params.hyperalignment.params.ref_ds)
-            warning('Using default hyperalignment instance with ref_ds: %d' % params.ref_ds)
-            params.hyperalignment = Hyperalignment(ref_ds=params.ref_ds)
+        selected = [_ for _ in range(ndatasets)
+                    if _ not in params.exclude_from_model]
+        ref_ds_train = selected.index(params.ref_ds)
+        params.hyperalignment.params.ref_ds = ref_ds_train
+        warning('Using %dth dataset as the reference dataset (%dth after '
+                'excluding datasets)' % (params.ref_ds, ref_ds_train))
         if len(params.exclude_from_model) > 0:
             warning("These datasets will not participate in building common "
                     "model: %s" % params.exclude_from_model)
@@ -527,6 +533,7 @@ class SearchlightHyperalignment(ClassWithCollections):
         # individual SL ROIs
         _shpaldebug('Initializing FeatureSelectionHyperalignment.')
         hmeasure = FeatureSelectionHyperalignment(
+            ref_ds=params.ref_ds,
             featsel=params.featsel,
             hyperalignment=params.hyperalignment,
             full_matrix=params.combine_neighbormappers,
@@ -555,7 +562,8 @@ class SearchlightHyperalignment(ClassWithCollections):
         queryengines = self._get_trained_queryengines(
             datasets, params.queryengine, params.radius, params.ref_ds)
         # For surface nodes to voxels queryengines, roi_seed hardly makes sense
-        if isinstance(queryengines[params.ref_ds], SurfaceVerticesQueryEngine):
+        qe = queryengines[(0 if len(queryengines) == 1 else params.ref_ds)]
+        if isinstance(qe, SurfaceVerticesQueryEngine):
             self.force_roi_seed = False
             if not self.params.combine_neighbormappers:
                 raise NotImplementedError("Mapping from voxels to surface nodes is not "

@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA serial feature inclusion algorithm"""
 
+from itertools import product as iterprod
+
 from mvpa2.testing import *
 from mvpa2.misc.support import *
 from mvpa2.base.types import asobjarray
@@ -302,6 +304,45 @@ def test_limit_filter():
 def test_mask2slice():
     slc = np.repeat(False, 5)
     assert_equal(mask2slice(slc), slice(None, 0, None))
+
+
+def test_xrandom_iterprod():
+    # just some exhaustive one
+    all_12ab = [[1, 'a'], [1, 'b'], [2, 'a'], [2, 'b']]
+    assert_equal(sorted(xrandom_iterprod(10, [1, 2], 'ab')), all_12ab)
+
+    # Let's do a few of some long ones, random ones and verify that come out correctly
+    for i in xrange(10):
+        ns = random.randint(1, 5)
+        seqs = [range(random.randint(1, 5)) for i in range(ns)]
+        all_prods = set(map(tuple, iterprod(*seqs)))
+
+        for count in [random.randint(0, 8) for i in range(3)]:
+            real_count = min(count, np.prod(map(len, seqs)))
+            r_prods = set(map(tuple, xrandom_iterprod(count, *seqs)))
+            assert_equal(len(r_prods), real_count)
+
+            # assert that they are all unique
+            assert_equal(len(set(r_prods)), real_count)
+            # assert that they are all a part of all prods
+            assert all_prods.issuperset(r_prods)
+
+
+@reseed_rng()
+def test_get_rng():
+
+    random_int = np.random.randint(1000)
+    assert_true(get_rng(), np.random)
+    # seeded with the same int, we should get rng which would generate
+    # identical sequences of integers
+    assert_array_equal(
+        get_rng(random_int).randint(0, 100+1),
+        get_rng(random_int).randint(0, 100+1)
+    )
+
+    some_rng = get_rng(random_int)
+    # The same instance returned if preseeded RNG is passed into
+    assert(some_rng is get_rng(some_rng))
 
 
 def suite():  # pragma: no cover

@@ -23,7 +23,8 @@ if externals.exists('scipy', raise_=True):
     import scipy.stats
     import scipy.stats as stats
 
-if not externals.exists('good scipy.stats.rdist'):
+if not externals.exists('good scipy.stats.rdist') \
+        and externals.versions['scipy'] < '1.18.0':
     if __debug__:
         debug("EXT", "Fixing up scipy.stats.rdist")
     # Lets fix it up, future imports of scipy.stats should carry fixed
@@ -59,7 +60,8 @@ if not externals.exists('good scipy.stats.rdist'):
     """
                       )
     # Fix up number of arguments for veccdf's vectorize
-    if rdist.veccdf.nin == 1:
+    # Sicne scipy 0.18.0 there is veccdf in rdist_gen
+    if hasattr(rdist, 'veccdf') and (rdist.veccdf.nin == 1):
         if __debug__:
             debug("EXT", "Fixing up veccdf.nin to make 2 for rdist")
         rdist.veccdf.nin = 2
@@ -67,7 +69,7 @@ if not externals.exists('good scipy.stats.rdist'):
     scipy.stats.distributions.rdist_gen = scipy.stats.rdist_gen = rdist_gen
     scipy.stats.distributions.rdist = scipy.stats.rdist = rdist
 
-    try: # Retest
+    try:  # Retest
         externals.exists('good scipy.stats.rdist', force=True,
                          raise_=True)
     except RuntimeError:

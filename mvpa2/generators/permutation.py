@@ -19,6 +19,7 @@ from mvpa2.base.dochelpers import _repr_attrs
 from mvpa2.base.node import Node
 from mvpa2.base.dochelpers import _str, _repr
 from mvpa2.misc.support import get_limit_filter
+from mvpa2.misc.support import get_rng
 
 from mvpa2.support.utils import deprecated
 from mvpa2.mappers.fx import _product
@@ -40,7 +41,7 @@ class AttributePermutator(Node):
     dataset.
     """
     def __init__(self, attr, count=1, limit=None, assure=False,
-                 strategy='simple', chunk_attr=None, rng=np.random, **kwargs):
+                 strategy='simple', chunk_attr=None, rng=None, **kwargs):
         """
         Parameters
         ----------
@@ -74,6 +75,11 @@ class AttributePermutator(Node):
           If set, by-chance non-permutations will be prevented, i.e. it is
           checked that at least two items change their position. Since this
           check adds a runtime penalty it is off by default.
+        rng : int or RandomState, optional
+          Integer to seed a new RandomState upon each call, or instance of the
+          numpy.random.RandomState to be reused across calls. If None, the
+          numpy.random singleton would be used
+
 
         """
         Node.__init__(self, **kwargs)
@@ -81,13 +87,13 @@ class AttributePermutator(Node):
 
         self.count = count
         self._limit = limit
-        self._pcfg = None
+
         self._assure_permute = assure
         self.strategy = strategy
         self.rng = rng
         self.chunk_attr = chunk_attr
 
-    def _get_pcfg(self, ds):
+    def _get_call_kwargs(self, ds):
         # determine to be permuted attribute to find the collection
         pattr = self._pattr
         if isinstance(pattr, str):
@@ -96,19 +102,17 @@ class AttributePermutator(Node):
             # must be sequence of attrs, take first since we only need the shape
             pattr, collection = ds.get_attr(pattr[0])
 
-        return get_limit_filter(self._limit, collection)
+        # _call might need to operate on the dedicated instantiated rng
+        # e.g. if seed int is provided
+        return {
+            'limit_filter': get_limit_filter(self._limit, collection),
+            'rng': get_rng(self.rng)
+        }
 
-
-    def _call(self, ds):
+    def _call(self, ds, limit_filter=None, rng=None):
         # local binding
         pattr = self._pattr
         assure_permute = self._assure_permute
-
-        # get permutation setup if not set already (maybe from generate())
-        if self._pcfg is None:
-            pcfg = self._get_pcfg(ds)
-        else:
-            pcfg = self._pcfg
 
         if isinstance(pattr, str):
             # wrap single attr name into tuple to simplify the code
@@ -120,7 +124,7 @@ class AttributePermutator(Node):
         # Method to use for permutations
         try:
             permute_fx = getattr(self, "_permute_%s" % self.strategy)
-            permute_kwargs = {}
+            permute_kwargs = {'rng': rng}
         except AttributeError:
             raise ValueError("Unknown permutation strategy %r" % self.strategy)
 
@@ -137,16 +141,16 @@ class AttributePermutator(Node):
             for pa in out_pattrs:
                 pa.value = pa.value.copy()
 
-            for limit_value in np.unique(pcfg):
-                if pcfg.dtype == np.bool:
+            for limit_value in np.unique(limit_filter):
+                if limit_filter.dtype == np.bool:
                     # simple boolean filter -> do nothing on False
                     if not limit_value:
                         continue
                     # otherwise get indices of "selected ones"
-                    limit_idx = pcfg.nonzero()[0]
+                    limit_idx = limit_filter.nonzero()[0]
                 else:
                     # non-boolean limiter -> determine "chunk" and permute within
-                    limit_idx = (pcfg == limit_value).nonzero()[0]
+                    limit_idx = (limit_filter == limit_value).nonzero()[0]
 
                 # need list to index properly
                 limit_idx = list(limit_idx)
@@ -174,10 +178,10 @@ class AttributePermutator(Node):
         return out
 
 
-    def _permute_simple(self, limit_idx, in_pattrs, out_pattrs):
+    def _permute_simple(self, limit_idx, in_pattrs, out_pattrs, rng=None):
         """The simplest permutation
         """
-        perm_idx = self.rng.permutation(limit_idx)
+        perm_idx = rng.permutation(limit_idx)
 
         if __debug__:
             debug('APERM', "Obtained permutation %s", (perm_idx, ))
@@ -189,7 +193,7 @@ class AttributePermutator(Node):
             out_pattr.value[limit_idx] = in_pattr.value[perm_idx]
 
 
-    def _permute_uattrs(self, limit_idx, in_pattrs, out_pattrs):
+    def _permute_uattrs(self, limit_idx, in_pattrs, out_pattrs, rng=None):
         """Provide a permutation given a specified strategy
         """
         # Select given limit_idx
@@ -200,7 +204,7 @@ class AttributePermutator(Node):
         unique_groups = list(set(pattrs_lim_zip))
         # now we need to permute the groups to generate remapping
         # get permutation indexes first
-        perm_idx = self.rng.permutation(np.arange(len(unique_groups)))
+        perm_idx = rng.permutation(np.arange(len(unique_groups)))
         # generate remapping
         remapping = dict([(t, unique_groups[i])
                           for t, i in zip(unique_groups, perm_idx)])
@@ -231,7 +235,7 @@ class AttributePermutator(Node):
                 " all chunks have the same order of targets: %s"
                 % (sample_targets,))
 
-    def _permute_chunks(self, limit_idx, in_pattrs, out_pattrs, chunks=None):
+    def _permute_chunks(self, limit_idx, in_pattrs, out_pattrs, chunks=None, rng=None):
         # limit_idx is doing nothing
 
         if chunks is None:
@@ -246,26 +250,21 @@ class AttributePermutator(Node):
 
         for in_pattr, out_pattr in zip(in_pattrs, out_pattrs):
             shuffled = uniques.copy()
-            self.rng.shuffle(shuffled)
+            rng.shuffle(shuffled)
 
             for orig, new in zip(uniques, shuffled):
                 out_pattr.value[np.where(chunks == orig)] = \
                     in_pattr.value[np.where(chunks == new)]
 
-
     def generate(self, ds):
         """Generate the desired number of permuted datasets."""
         # figure out permutation setup once for all runs
-        self._pcfg = self._get_pcfg(ds)
         # permute as often as requested
         for i in xrange(self.count):
+            kwargs = self._get_call_kwargs(ds)
             ## if __debug__:
             ##     debug('APERM', "%s generating %i-th permutation", (self, i))
-            yield self(ds)
-
-        # reset permutation setup to do the right thing upon next call to object
-        self._pcfg = None
-
+            yield self(ds, _call_kwargs=kwargs)
 
     def __str__(self):
         return _str(self, self._pattr, n=self.count, limit=self._limit,
@@ -281,13 +280,8 @@ class AttributePermutator(Node):
             + _repr_attrs(self, ['limit'])
             + _repr_attrs(self, ['assure'], default=False)
             + _repr_attrs(self, ['strategy'], default='simple')
-            + _repr_attrs(self, ['rng'], default=np.random)
+            + _repr_attrs(self, ['rng'], default=None)
             )
-
-    @property
-    @deprecated("to be removed in 2.1 -- use .count instead")
-    def nruns(self):
-        return self.count
 
     attr = property(fget=lambda self: self._pattr)
     limit = property(fget=lambda self: self._limit)

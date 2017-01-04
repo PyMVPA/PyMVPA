@@ -19,11 +19,14 @@ from mvpa2.mappers.fx import *
 from mvpa2.datasets.base import dataset_wizard, Dataset
 
 from mvpa2.testing.tools import *
+from mvpa2.testing import _ENFORCE_CA_ENABLED
 
 from mvpa2.measures.rsa import *
+from mvpa2.generators.partition import NFoldPartitioner
+from mvpa2.measures.base import CrossValidation
 from mvpa2.base import externals
 import scipy.stats as stats
-from scipy.spatial.distance import pdist, squareform
+from scipy.spatial.distance import pdist, squareform, cdist
 from scipy.stats import rankdata, pearsonr
 
 data = np.array([[ 0.22366105, 0.51562476, 0.62623543, 0.28081652, 0.56513533],
@@ -73,6 +76,68 @@ def test_PDistConsistency():
     assert_array_almost_equal(res4.samples,cres2)
 
 
+def test_CDist():
+    targets = np.tile(range(3), 2)
+    chunks = np.repeat(np.array((0,1)), 3)
+    ds = dataset_wizard(samples=data, targets=targets, chunks=chunks)
+    train_data = ds[ds.sa.chunks == 0, ]
+    test_data = ds[ds.sa.chunks == 1, ]
+
+    # Check for nsamples match
+    pymvpa_cdist = CDist(sattr=['targets','chunks'])
+    pymvpa_cdist.train(train_data)
+    assert_raises(ValueError, pymvpa_cdist, test_data[test_data.T < 2, ])
+    # Check it create sa as intended
+    res = pymvpa_cdist(test_data)
+    assert_dict_keys_equal(res.sa, test_data.sa)
+
+    # Some distance metrics
+    metrics = ['euclidean', 'correlation', 'cityblock', 'mahalanobis']
+    VI_mahalanobis = np.eye(5)
+    for sattr in [['targets'], None]:
+        for metric in metrics:
+            metric_kwargs = {'VI': VI_mahalanobis} if metric == 'mahalanobis' \
+                else {}
+            scipy_cdist = cdist(train_data.samples, test_data.samples,
+                        metric, **metric_kwargs)
+            scipy_pdist = pdist(train_data.samples,
+                                metric, **metric_kwargs)
+            pymvpa_cdist = CDist(pairwise_metric=metric,
+                        pairwise_metric_kwargs=metric_kwargs,
+                        sattr=sattr)
+
+            assert_true(not pymvpa_cdist.is_trained)
+            pymvpa_cdist.train(train_data)
+            assert_true(pymvpa_cdist.is_trained)
+            res_cv = pymvpa_cdist(test_data)
+            res_nocv = pymvpa_cdist(train_data)
+            # Check to make sure the cdist results are close to CDist results
+            assert_array_almost_equal(res_cv.samples.ravel(),
+                                      scipy_cdist.ravel())
+            # if called with train_data again, results should match with pdist
+            assert_array_almost_equal(res_nocv.samples.ravel(),
+                                      squareform(scipy_pdist).ravel())
+
+
+def test_CDist_cval():
+    if _ENFORCE_CA_ENABLED:
+        # skip testing for now, since we are having issue with 'training_stats'
+        raise SkipTest("Skipping test to avoid issue with 'training_stats while CA enabled")
+    
+    targets = np.tile(range(3), 2)
+    chunks = np.repeat(np.array((0,1)), 3)
+    ds = dataset_wizard(samples=data, targets=targets, chunks=chunks)
+
+    cv = CrossValidation(CDist(),
+                         generator=NFoldPartitioner(),
+                         errorfx=None)
+    res = cv(ds)
+    # Testing to make sure the both folds return same results, as they should
+    assert_array_almost_equal(res[res.sa.cvfolds == 0, ].samples.reshape(3, 3),
+                       res[res.sa.cvfolds == 1, ].samples.reshape(3, 3).T)
+    # Testing to make sure the last dimension is always 1 to make it work with Searchlights
+    assert_equal(res.nfeatures, 1)
+
 
 def test_PDist():
     targets = np.tile(xrange(3),2)
@@ -108,6 +173,7 @@ def test_PDist():
     # sample attributes are carried over
     assert_almost_equal(ds.sa.targets, dsm_res.sa.targets)
 
+
 def test_PDistTargetSimilarity():
     ds = Dataset(data)
     tdsm = range(15)
@@ -133,6 +199,7 @@ def test_PDistTargetSimilarity():
     assert_array_equal(a3.fa.metrics, ['rho', 'p'])
     assert_array_almost_equal(a4.samples.squeeze(), ans1[0])
     assert_array_equal(a4.fa.metrics, ['rho'])
+
 
 def test_PDistTargetSimilaritySearchlight():
     # Test ability to use PDistTargetSimilarity in a searchlight

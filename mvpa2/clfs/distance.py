@@ -18,6 +18,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 from mvpa2.base import externals
+from mvpa2.support.utils import deprecated
 
 if __debug__:
     from mvpa2.base import debug, warning
@@ -39,10 +40,15 @@ def absmin_distance(a, b):
     return max(abs(a-b))
 
 
-def manhatten_distance(a, b):
-    """Return Manhatten distance between a and b
+def manhattan_distance(a, b):
+    """Return Manhattan distance between a and b
     """
     return sum(abs(a-b))
+
+
+@deprecated("Use correctly spelled manhattan_distance instead")
+def manhatten_distance(a, b):
+    return manhattan_distance(a, b)
 
 
 def mahalanobis_distance(x, y=None, w=None):

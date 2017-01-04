@@ -14,6 +14,7 @@
 *~
 .coverage
 .nfs*
+/.idea
 /.emacs.local
 /coverage
 /logs
@@ -53,3 +54,4 @@ _nno
 .project
 .pydevproject
 searchlight_surfnew.py
+/venv*

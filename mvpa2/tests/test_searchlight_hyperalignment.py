@@ -174,7 +174,8 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         assert(np.alltrue([np.sum(m[7, :] == 0) == 4 for m in mappers_fsf]))
 
     @reseed_rng()
-    def test_searchlight_hyperalignment(self):
+    @with_tempfile('.hdf5')
+    def test_searchlight_hyperalignment(self, tempfile):
         skip_if_no_external('scipy')
         skip_if_no_external('h5py')
         ds_orig = datasets['3dsmall'].copy()[:, :15]
@@ -212,6 +213,23 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         self.assertRaises(ValueError, slhyp, dss[:3])
         slhyp = SearchlightHyperalignment(ref_ds=3)
         self.assertRaises(ValueError, slhyp, dss[:3])
+        # explicit test of exclude_from_model
+        slhyp = SearchlightHyperalignment(
+            ref_ds=2, exclude_from_model=[1], featsel=0.7)
+        projs1 = slhyp(dss)
+        aligned1 = [proj.forward(ds) for proj, ds in zip(projs1, dss)]
+        samples = dss[1].samples.copy()
+        dss[1].samples += 0.1 * np.random.random(size=dss[1].shape)
+        projs2 = slhyp(dss)
+        aligned2 = [proj.forward(ds) for proj, ds in zip(projs1, dss)]
+        for i in [0, 2, 3, 4]:
+            assert_array_almost_equal(projs1[i].proj.todense(),
+                                      projs2[i].proj.todense())
+            assert_array_almost_equal(aligned1[i].samples, aligned2[i].samples)
+        assert_false(np.all(
+            projs1[1].proj.todense() == projs1[2].proj.todense()))
+        assert_false(np.all(aligned1[1].samples == aligned2[1].samples))
+        dss[1].samples = samples
         # store projections for each mapper separately
         projs = list()
         # run the algorithm with all combinations of the two major parameters
@@ -228,6 +246,7 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
             # one mapper per input ds
             assert_equal(len(mappers), nds)
             projs.append(mappers)
+
         # some checks
         for midx in range(nds):
             # making sure mask_node_ids options works as expected
@@ -254,6 +273,7 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
             diag_weight = proj[-1].proj.diagonal()
             # Check to make sure diagonal is the max weight, in almost all rows for reference subject
             assert(np.sum(max_weight == diag_weight) / float(len(diag_weight)) >= 0.80)
+
         # project data
         dss_hyper = [hm.forward(sd) for hm, sd in zip(projs[0], dss)]
         _ = [zscore(sd, chunks_attr=None) for sd in dss_hyper]
@@ -268,6 +288,13 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         # noisy copy of original dataset should be similar to original after hyperalignment
         assert_true(np.median(ndcss[-1]) > 0.9)
         assert_true(np.all([np.median(ndcs) > 0.2 for ndcs in ndcss[1:-2]]))
+
+        # just a single test to verify that we can save hyperalignment instances
+        try:
+            from mvpa2.base.hdf5 import h5save
+        except ImportError:
+            raise SkipTest("h5save of hyperalignment")
+        h5save(tempfile, slhyp)
 
     @reseed_rng()
     def test_searchlight_hyperalignment_warnings_and_exceptions(self):
