@@ -10,13 +10,12 @@
 
 __docformat__ = 'restructuredtext'
 
-import random
-
 import numpy as np
 
 from mvpa2.base.node import Node
 from mvpa2.base.dochelpers import _str, _repr
 from mvpa2.misc.support import get_limit_filter, get_nelements_per_value
+from mvpa2.misc.support import get_rng
 
 
 class Balancer(Node):
@@ -38,6 +37,7 @@ class Balancer(Node):
                  apply_selection=False,
                  include_offlimit=False,
                  space='balanced_set',
+                 rng=None,
                  **kwargs):
         """
         Parameters
@@ -76,31 +76,38 @@ class Balancer(Node):
           Name of the selection marker attribute in the output dataset that is
           created if the balanced selection is not applied to the output dataset
           (see ``apply_selection`` argument).
+        rng : int or RandomState, optional
+          Integer to seed a new RandomState upon each call, or instance of the
+          numpy.random.RandomState to be reused across calls. If None, the
+          numpy.random singleton would be used
         """
         Node.__init__(self, space=space, **kwargs)
         self._amount = amount
         self._attr = attr
         self.count = count
         self._limit = limit
-        self._limit_filter = None
         self._include_offlimit = include_offlimit
         self._apply_selection = apply_selection
+        self._rng = rng
 
+    def _get_call_kwargs(self, ds):
+        attr, collection = ds.get_attr(self._attr)
+        # _call might need to operate on the dedicated instantiated rng
+        # e.g. if seed int is provided
+        return {
+            'limit_filter': get_limit_filter(self._limit, collection),
+            'rng': get_rng(self._rng)
+        }
 
-    def _call(self, ds):
+    def _call(self, ds, limit_filter=None, rng=None):
         # local binding
         amount = self._amount
         attr, collection = ds.get_attr(self._attr)
 
-        # get filter if not set already (maybe from generate())
-        if self._limit_filter is None:
-            limit_filter = get_limit_filter(self._limit, collection)
-        else:
-            limit_filter = self._limit_filter
-
         # ids of elements that are part of the balanced set
         balanced_set = []
         full_limit_set = []
+
         # for each chunk in the filter (might be just the selected ones)
         for limit_value in np.unique(limit_filter):
             if limit_filter.dtype == np.bool:
@@ -140,8 +147,7 @@ class Balancer(Node):
             # select determined number of elements per unique attribute value
             selected = []
             for ua in uattr_limited:
-                selected += random.sample(list((attr_limited == ua).nonzero()[0]),
-                                          epa[ua])
+                selected += rng.permutation((attr_limited == ua).nonzero()[0])[:epa[ua]].tolist()
 
             # determine the final indices of selected elements and store
             # as part of the balanced set
@@ -186,19 +192,13 @@ class Balancer(Node):
                         "This should never happen!")
             return out
 
-
     def generate(self, ds):
         """Generate the desired number of balanced datasets datasets."""
         # figure out filter for all runs at once
-        attr, collection = ds.get_attr(self._attr)
-        self._limit_filter = get_limit_filter(self._limit, collection)
-        # permute as often as requested
+        # permute as often as requested, reusing the same kwargs
+        kwargs = self._get_call_kwargs(ds)
         for i in xrange(self.count):
-            yield self(ds)
-
-        # reset filter to do the right thing upon next call to object
-        self._limit_filter = None
-
+            yield self(ds, _call_kwargs=kwargs)
 
     def __str__(self):
         return _str(self, str(self._amount), n=self._attr, count=self.count,

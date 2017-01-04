@@ -183,6 +183,59 @@ class SurfTests(unittest.TestCase):
 
         assert_true(s.nodes_on_border(0))
 
+    def test_surf_border_nonconnected_nodes(self):
+        s = surf.generate_cube()
+
+        # add empty node
+        v = np.vstack((s.vertices, [2, 2, 2]))
+
+        # remove two faces
+        s2 = surf.Surface(v, s.faces[:-2])
+
+        is_on_border = [False, False, False, False,
+                        True, True, True, True,
+                        False]
+        assert_array_equal(s2.nodes_on_border(),
+                           np.asarray(is_on_border))
+
+
+
+    def test_surf_normalized(self):
+
+        def assert_is_unit_norm(v):
+            assert_almost_equal(1., np.sum(v*v))
+            assert_equal(v.shape, (len(v),))
+
+        def assert_same_direction(v,w):
+            assert_almost_equal(v.dot(w),(v.dot(v)*w.dot(w))**.5)
+
+        def helper_test_vec_normalized(v):
+            v_norm=surf.normalized(v)
+            assert_is_unit_norm(v_norm)
+            assert_same_direction(v,v_norm)
+
+            return v_norm
+
+        sizes=[(8,),(7,4)]
+
+        for size in sizes:
+            v=np.random.normal(size=size)
+            if len(size)==1:
+                helper_test_vec_normalized(v)
+            else:
+                # test for vectors and for matrix
+                v_n = surf.normalized(v)
+
+                n_vecs=v.shape[1]
+                for i in xrange(n_vecs):
+                    v_n_i=helper_test_vec_normalized(v[i,:])
+                    assert_array_almost_equal(v_n_i, v_n[i,:])
+
+
+
+
+
+
     @with_tempfile('.asc', 'test_surf')
     def test_surf_fs_asc(self, temp_fn):
         s = surf.generate_sphere(5) * 100

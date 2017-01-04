@@ -623,6 +623,16 @@ $(COVERAGE_REPORT): build
 	  python-coverage -a -i -o /usr,/var ; }
 
 
+# Check what modules aren't listed in the modref
+check-modref:
+	find mvpa2 -iname \*.py \
+	| grep -v -e badexternals -e 'mvpa2/__init__.py' -e 'test_' -e 'cmd_' \
+	| while read mf; do \
+		m=$${mf%.py}; m=`echo $$m | sed -e 's,mvpa2/\(.*\)$$,\1,g' -e 's,/__init__,,g' | tr / . `; \
+		echo $$m | grep -q "^ *$$m\$$" doc/source/modref.rst || echo $$m; \
+	done
+
+
 #
 # Sources
 #
