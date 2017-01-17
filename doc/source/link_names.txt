@@ -41,7 +41,7 @@
 .. _bazaar: http://bazaar-vcs.org/
 
 .. Other working process
-.. _pynifti: http://niftilib.sourceforge.net/pynifti/
+.. _nibabel: http://nipy.org/nibabel/
 .. _nifticlibs: http://nifti.nimh.nih.gov
 .. _nifti: http://nifti.nimh.nih.gov
 .. _`nipy launchpad`: https://launchpad.net/nipy
