@@ -155,12 +155,10 @@ class Surface(object):
             sum_dist = np.zeros((n,))
             count_dist = np.zeros((n,))
             a = f[:, 0]
-            p = v[a]
             for j in xrange(3):
                 b = f[:, (j + 1) % 3]
-                q = v[b]
 
-                d = np.sum((p - q) ** 2, 1) ** .5
+                d = np.sum((v[a] - v[b]) ** 2, 1) ** .5
 
                 count_dist[a] += 1
                 count_dist[b] += 1
