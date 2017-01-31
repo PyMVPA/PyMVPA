@@ -199,7 +199,7 @@ class Hyperalignment(ClassWithCollections):
         params = self.params            # for quicker access ;)
         ca = self.ca
         # Check to make sure we get a list of datasets as input.
-        if not (isinstance(datasets, list) or isinstance(datasets, tuple)):
+        if not isinstance(datasets, (list, tuple, np.ndarray)):
             raise TypeError("datasets should be a list (of datasets).")
 
         ndatasets = len(datasets)
@@ -301,6 +301,10 @@ class Hyperalignment(ClassWithCollections):
         """
         if self.commonspace is None:
             self.train(datasets)
+        else:
+            # Check to make sure we get a list of datasets as input.
+            if not isinstance(datasets, (list, tuple, np.ndarray)):
+                raise TypeError("datasets should be a list (of datasets).")
 
         # place datasets into a copy of the list since items
         # will be reassigned

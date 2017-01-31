@@ -218,6 +218,14 @@ class HyperAlignmentTests(unittest.TestCase):
         ha.train([ds_all[0]])
         zscore(ds_all[0], chunks_attr=None)
         assert_array_equal(ha.commonspace, ds_all[0].samples)
+        # make sure it accepts tuple of ndarray
+        ha = Hyperalignment()
+        m = ha(tuple(ds_all))
+        ha = Hyperalignment()
+        dss_arr = np.empty(len(ds_all), dtype=object)
+        for i in range(len(ds_all)):
+            dss_arr[i] = ds_all[i]
+        m = ha(dss_arr)
 
     def _test_on_swaroop_data(self):  # pragma: no cover
         #
