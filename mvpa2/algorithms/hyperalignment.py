@@ -199,7 +199,7 @@ class Hyperalignment(ClassWithCollections):
         params = self.params            # for quicker access ;)
         ca = self.ca
         # Check to make sure we get a list of datasets as input.
-        if not isinstance(datasets, list):
+        if not (isinstance(datasets, list) or isinstance(datasets, tuple)):
             raise TypeError("datasets should be a list (of datasets).")
 
         ndatasets = len(datasets)
