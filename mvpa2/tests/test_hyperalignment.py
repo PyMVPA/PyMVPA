@@ -206,6 +206,19 @@ class HyperAlignmentTests(unittest.TestCase):
         # Making sure it raises error if ref_ds is out of range
         self.assertRaises(ValueError, ha, ds_all)
 
+    def test_hyper_input_dataset_check(self):
+        # If supplied with only one dataset during training,
+        # make sure it doesn't run multiple levels and crap out
+        ha = Hyperalignment()
+        ds_all = [datasets['uni4small'] for i in range(3)]
+        # Make sure it raises TypeError if a list is not passed
+        self.assertRaises(TypeError, ha, ds_all[0])
+        self.assertRaises(TypeError, ha.train, ds_all[0])
+        # And it doesn't crap out with a single dataset for training
+        ha.train([ds_all[0]])
+        zscore(ds_all[0], chunks_attr=None)
+        assert_array_equal(ha.commonspace, ds_all[0].samples)
+
     def _test_on_swaroop_data(self):  # pragma: no cover
         #
         print "Running swaroops test on data we don't have"
