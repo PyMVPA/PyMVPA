@@ -181,7 +181,7 @@ class HyperAlignmentTests(unittest.TestCase):
         # Making random data per subject for testing with bias added to first subject
         ds_test = [np.random.rand(1, ds.nfeatures) for i in range(len(ds_all))]
         ds_test[0] += np.arange(1, ds.nfeatures + 1) * 100
-        assert(np.corrcoef(ds_test[2], ds_test[1])[0, 1] < 0.99)  # that would have been rudiculous if it was
+        assert(np.corrcoef(ds_test[2], ds_test[1])[0, 1] < 0.99)  # that would have been ridiculous if it was
 
         # Test with varying alpha so we for sure to not have that issue now
         for alpha in (0, 0.01, 0.5, 0.99, 1.0):
