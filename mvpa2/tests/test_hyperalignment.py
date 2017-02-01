@@ -181,7 +181,7 @@ class HyperAlignmentTests(unittest.TestCase):
         # Making random data per subject for testing with bias added to first subject
         ds_test = [np.random.rand(1, ds.nfeatures) for i in range(len(ds_all))]
         ds_test[0] += np.arange(1, ds.nfeatures + 1) * 100
-        assert(np.corrcoef(ds_test[2], ds_test[1])[0, 1] < 0.99)  # that would have been rudiculous if it was
+        assert(np.corrcoef(ds_test[2], ds_test[1])[0, 1] < 0.99)  # that would have been ridiculous if it was
 
         # Test with varying alpha so we for sure to not have that issue now
         for alpha in (0, 0.01, 0.5, 0.99, 1.0):
@@ -205,6 +205,27 @@ class HyperAlignmentTests(unittest.TestCase):
         ds_all = [datasets['uni4small'] for i in range(3)]
         # Making sure it raises error if ref_ds is out of range
         self.assertRaises(ValueError, ha, ds_all)
+
+    def test_hyper_input_dataset_check(self):
+        # If supplied with only one dataset during training,
+        # make sure it doesn't run multiple levels and crap out
+        ha = Hyperalignment()
+        ds_all = [datasets['uni4small'] for i in range(3)]
+        # Make sure it raises TypeError if a list is not passed
+        self.assertRaises(TypeError, ha, ds_all[0])
+        self.assertRaises(TypeError, ha.train, ds_all[0])
+        # And it doesn't crap out with a single dataset for training
+        ha.train([ds_all[0]])
+        zscore(ds_all[0], chunks_attr=None)
+        assert_array_equal(ha.commonspace, ds_all[0].samples)
+        # make sure it accepts tuple of ndarray
+        ha = Hyperalignment()
+        m = ha(tuple(ds_all))
+        ha = Hyperalignment()
+        dss_arr = np.empty(len(ds_all), dtype=object)
+        for i in range(len(ds_all)):
+            dss_arr[i] = ds_all[i]
+        m = ha(dss_arr)
 
     def _test_on_swaroop_data(self):  # pragma: no cover
         #

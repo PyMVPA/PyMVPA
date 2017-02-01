@@ -198,6 +198,11 @@ class Hyperalignment(ClassWithCollections):
         """
         params = self.params            # for quicker access ;)
         ca = self.ca
+        # Check to make sure we get a list of datasets as input.
+        if not isinstance(datasets, (list, tuple, np.ndarray)):
+            raise TypeError("Input datasets should be a sequence "
+                            "(of type list, tuple, or ndarray) of datasets.")
+
         ndatasets = len(datasets)
         nfeatures = [ds.nfeatures for ds in datasets]
         alpha = params.alpha
@@ -262,22 +267,26 @@ class Hyperalignment(ClassWithCollections):
                       "it is of a floating type")
             commonspace = commonspace.astype(float)
             zscore(commonspace, chunks_attr=None)
+        # If there is only one dataset in training phase, there is nothing to be done
+        # just use that data as the common space
+        if len(datasets) < 2:
+            self.commonspace = commonspace
+        else:
+            # create a mapper per dataset
+            # might prefer some other way to initialize... later
+            mappers = [deepcopy(params.alignment) for ds in datasets]
 
-        # create a mapper per dataset
-        # might prefer some other way to initialize... later
-        mappers = [deepcopy(params.alignment) for ds in datasets]
-
-        #
-        # Level 1 -- initial projection
-        #
-        lvl1_projdata = self._level1(datasets, commonspace, ref_ds, mappers,
-                                     residuals)
-        #
-        # Level 2 -- might iterate multiple times
-        #
-        # this is the final common space
-        self.commonspace = self._level2(datasets, lvl1_projdata, mappers,
-                                        residuals)
+            #
+            # Level 1 -- initial projection
+            #
+            lvl1_projdata = self._level1(datasets, commonspace, ref_ds, mappers,
+                                         residuals)
+            #
+            # Level 2 -- might iterate multiple times
+            #
+            # this is the final common space
+            self.commonspace = self._level2(datasets, lvl1_projdata, mappers,
+                                            residuals)
 
 
     def __call__(self, datasets):
@@ -293,6 +302,11 @@ class Hyperalignment(ClassWithCollections):
         """
         if self.commonspace is None:
             self.train(datasets)
+        else:
+            # Check to make sure we get a list of datasets as input.
+            if not isinstance(datasets, (list, tuple, np.ndarray)):
+                raise TypeError("Input datasets should be a sequence "
+                                "(of type list, tuple, or ndarray) of datasets.")
 
         # place datasets into a copy of the list since items
         # will be reassigned
