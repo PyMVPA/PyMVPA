@@ -200,7 +200,8 @@ class Hyperalignment(ClassWithCollections):
         ca = self.ca
         # Check to make sure we get a list of datasets as input.
         if not isinstance(datasets, (list, tuple, np.ndarray)):
-            raise TypeError("datasets should be a list (of datasets).")
+            raise TypeError("Input datasets should be a sequence "
+                            "(of type list, tuple, or ndarray) of datasets.")
 
         ndatasets = len(datasets)
         nfeatures = [ds.nfeatures for ds in datasets]
@@ -304,7 +305,8 @@ class Hyperalignment(ClassWithCollections):
         else:
             # Check to make sure we get a list of datasets as input.
             if not isinstance(datasets, (list, tuple, np.ndarray)):
-                raise TypeError("datasets should be a list (of datasets).")
+                raise TypeError("Input datasets should be a sequence "
+                                "(of type list, tuple, or ndarray) of datasets.")
 
         # place datasets into a copy of the list since items
         # will be reassigned
