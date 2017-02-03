@@ -210,8 +210,9 @@ class Balancer(Node):
 class LogExclusions(Node):
     """Log excluded entries
 
-    Given a dataset with a boolean sample or feature attribute, return a
-    dataset with only those samples/features marked `True`.
+    Given a dataset with a boolean sample or feature attribute, log the entries
+    that are excluded (marked `False`).
+    Returns an unmodified dataset.
     """
     def __init__(self, fname, append=True, space='balanced_set', **kwargs):
         """
@@ -221,7 +222,7 @@ class LogExclusions(Node):
           Name of the selection marker attribute in the input dataset that
           indicates the desired subset.
         """
-        Node.__init__(self, space=space, **kwargs)
+        super(LogExclusions, self).__init__(space=space, **kwargs)
         self._fname = fname
         # Truncate at start, append otherwise, to avoid holding an open
         # filehandle throughout execution
@@ -271,7 +272,7 @@ class ApplySelection(Node):
           Name of the selection marker attribute in the input dataset that
           indicates the desired subset.
         """
-        Node.__init__(self, space=space, **kwargs)
+        super(ApplySelection, self).__init__(space=space, **kwargs)
 
     def _call(self, ds):
         space = self.get_space()
