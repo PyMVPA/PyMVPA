@@ -318,3 +318,48 @@ class SurfingSurfaceTests(unittest.TestCase):
 
         assert_equal(as_sorted_sets(pths),
                      as_sorted_sets(expected_pths), )
+
+    def test_average_node_edge_length(self):
+        for side in xrange(1, 5):
+            s_flat = surf.generate_plane((0, 0, 0), (0, 0, 1), (0, 1, 0), 6, 6)
+            rnd_xyz = 0 * np.random.normal(size=s_flat.vertices.shape)
+            s = surf.Surface(s_flat.vertices + rnd_xyz, s_flat.faces)
+
+            nvertices = s.nvertices
+
+            sd = np.zeros((nvertices,))
+            c = np.zeros((nvertices,))
+
+            def d(src, trg, vertices=s.vertices):
+                s = vertices[src, :]
+                t = vertices[trg, :]
+
+                delta = s - t
+                print s, t, delta
+                return np.sum(delta ** 2) ** .5
+
+            for i_face in s.faces:
+                for i in xrange(3):
+                    src = i_face[i]
+                    trg = i_face[(i + 1) % 3]
+
+                    sd[src] += d(src, trg)
+                    sd[trg] += d(src, trg)
+                    c[src] += 1
+                    c[trg] += 1
+
+                    print i, src, trg, d(src, trg)
+
+            assert_array_almost_equal(sd / c, s.average_node_edge_length)
+
+    def test_average_node_edge_length_tiny(self):
+        a = np.random.uniform(low=2, high=5)
+        b = np.random.uniform(low=2, high=5)
+        c = (a ** 2 + b ** 2) ** .5
+
+        vertices = [(0, 0, 0), (0, 0, a), (0, b, 0)]
+        faces = [(0, 1, 2)]
+
+        s = Surface(vertices, faces)
+        expected_avg = [(a + b) / 2, (a + c) / 2, (b + c) / 2]
+        assert_almost_equal(s.average_node_edge_length, expected_avg)
