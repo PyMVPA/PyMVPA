@@ -186,7 +186,11 @@ class Hyperalignment(ClassWithCollections):
     def __init__(self, **kwargs):
         ClassWithCollections.__init__(self, **kwargs)
         self.commonspace = None
-        self.svm = None
+        # mapper to a low-dimensional subspace derived using SVD on training data
+        # Initializing here so that call can access it without passing after train.
+        # Moreover, it is similar to commonspace, in that, it is required for mapping
+        # new subjects
+        self.svd_mapper = None
 
 
     @due.dcite(
@@ -297,9 +301,9 @@ class Hyperalignment(ClassWithCollections):
                                             residuals)
         if params.output_dim is not None:
             mappers = self._level3(datasets)
-            self.svm = self._reduce_svd(self._map_and_mean(datasets, mappers))
-            #self.svm = self._reduce_svd(self.commonspace)
-            self.svm = StaticProjectionMapper(proj=self.svm.proj[:, :params.output_dim])
+            self.svd_mapper = SVDMapper()
+            self.svd_mapper.train(self._map_and_mean(datasets, mappers))
+            self.svd_mapper = StaticProjectionMapper(proj=self.svd_mapper.proj[:, :params.output_dim])
 
     def __call__(self, datasets):
         """Derive a common feature space from a series of datasets.
@@ -358,8 +362,7 @@ class Hyperalignment(ClassWithCollections):
         elif params.alpha < 1:
                 mappers = [ChainMapper([wm, m]) for wm, m in zip(wmappers, mappers)]
         if params.output_dim is not None:
-            mappers = [ChainMapper([m, ZScoreMapper(auto_train=True, force_train=True, chunks_attr=None),
-                                    self.svm]) for m in mappers]
+            mappers = [ChainMapper([m, self.svd_mapper]) for m in mappers]
         return mappers
 
 
@@ -511,16 +514,11 @@ class Hyperalignment(ClassWithCollections):
         params = self.params
         data_mapped = [[] for ds in datasets]
         for i, (m, ds_new) in enumerate(zip(mappers, datasets)):
-            if  __debug__:
-                debug('HPAL_', "Mapping for SVD: ds #%i" % i)
+            if __debug__:
+                debug('HPAL_', "Mapping training data for SVD: ds #%i" % i)
             ds_ = m.forward(ds_new.samples)
-            zscore(ds_, chunks_attr=None)
+            # XXX should we zscore data becore averaging and running SVD?
+            # zscore(ds_, chunks_attr=None)
             data_mapped[i] = ds_
         dss_mean = params.combiner2(data_mapped)
         return dss_mean
-
-    def _reduce_svd(self, dss_mean):
-        zscore(dss_mean, chunks_attr=None)
-        svd = SVDMapper(force_train=True)
-        svd.train(dss_mean)
-        return svd
