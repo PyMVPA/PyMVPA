@@ -13,11 +13,13 @@ import numpy as np
 
 from mvpa2.base import cfg
 from mvpa2.datasets.base import Dataset
+from mvpa2.base.dataset import hstack
 
 from mvpa2.algorithms.hyperalignment import Hyperalignment
 from mvpa2.mappers.zscore import zscore
 from mvpa2.misc.support import idhash
 from mvpa2.misc.data_generators import random_affine_transformation
+from mvpa2.mappers.svd import SVDMapper
 
 # Somewhat slow but provides all needed ;)
 from mvpa2.testing import *
@@ -172,47 +174,67 @@ class HyperAlignmentTests(unittest.TestCase):
         self.assertEqual(rerrors.shape, (1, n))
 
     def test_hpal_svd_combo(self):
-        # get rotated dataset for test
+        # get seed dataset
         ds4l = datasets['uni4large']
         ds_orig = ds4l[:, ds4l.a.nonbogus_features]
-        nf = ds_orig.nfeatures
+        # XXX Is this SVD mapping required?
+        svm = SVDMapper()
+        svm.train(ds_orig)
+        ds_svs = svm.forward(ds_orig)
+        ds_orig.samples = ds_svs.samples
+        nf_true = ds_orig.nfeatures
         n = 4  # # of datasets to generate
-        dss_rotated_clean = [random_affine_transformation(ds_orig, scale_fac=100, shift_fac=10)
-                             for i in xrange(n)]
-        # zscoring
-        _ = [zscore(sd, chunks_attr=None) for sd in dss_rotated_clean]
+        # Adding non-shared dimensions for each subject
+        dss_rotated = [[]]*n
+        for i in range(n):
+            dss_rotated[i] = hstack(
+                (ds_orig, ds4l[:, ds4l.a.bogus_features[i * 4: i * 4 + 4]]))
+        # rotate data
+        nf = dss_rotated[0].nfeatures
+        dss_rotated = [random_affine_transformation(dss_rotated[i])
+                       for i in xrange(n)]
         # Test if it is close to doing hpal+SVD in sequence outside hpal
         # First, as we do in sequence outside hpal
         ha = Hyperalignment()
-        mappers_orig = ha(dss_rotated_clean)
-        dss_clean_back = [m.forward(ds_)
-                          for m, ds_ in zip(mappers_orig, dss_rotated_clean)]
-        _ = [zscore(sd, chunks_attr=None) for sd in dss_clean_back]
-        dss_mean = np.mean([sd.samples for sd in dss_clean_back], axis=0)
-        zscore(dss_mean, chunks_attr=None)
-        from mvpa2.mappers.svd import SVDMapper
+        mappers_orig = ha(dss_rotated)
+        dss_back = [m.forward(ds_)
+                    for m, ds_ in zip(mappers_orig, dss_rotated)]
+        dss_mean = np.mean([sd.samples for sd in dss_back], axis=0)
         svm = SVDMapper()
         svm.train(dss_mean)
-        dss_sv = [svm.forward(sd) for sd in dss_clean_back]
-        # Test for SVD dimensionality reduction
-        for output_dim in range(1, 5):
+        dss_sv = [svm.forward(sd) for sd in dss_back]
+        # Test for SVD dimensionality reduction even with 2 training subjects
+        for output_dim in [1, 4]:
             ha = Hyperalignment(output_dim=output_dim)
-            ha.train(dss_rotated_clean)
-            mappers = ha(dss_rotated_clean)
-            dss_clean_back = [m.forward(ds_)
-                              for m, ds_ in zip(mappers, dss_rotated_clean)]
-            for sd in dss_clean_back:
-                assert(sd.nfeatures == output_dim)
+            ha.train(dss_rotated[:2])
+            mappers = ha(dss_rotated)
+            dss_back = [m.forward(ds_)
+                        for m, ds_ in zip(mappers, dss_rotated)]
+            for sd in dss_back:
+                assert (sd.nfeatures == output_dim)
         # Check if combined hpal+SVD works as expected
         sv_corrs = []
-        for sd1, sd2 in zip(dss_sv, dss_clean_back):
-            ndcs = np.diag(np.corrcoef(sd1.samples.T, sd2.samples.T)[nf:, :nf], k=0)
+        for sd1, sd2 in zip(dss_sv, dss_back):
+            ndcs = np.diag(np.corrcoef(sd1.samples.T, sd2.samples.T)[nf:, :nf],
+                           k=0)
             sv_corrs.append(ndcs)
         self.assertTrue(
             np.all(np.abs(np.array(sv_corrs)) >= 0.99),
-            msg="Hyperalignment with dimensionality reduction should have reconstructed "
-                "SVD dataset. Got correlations %s."
+            msg="Hyperalignment with dimensionality reduction should have"
+                "reconstructed SVD dataset. Got correlations %s."
                 % sv_corrs)
+        # Check if it recovers original SVs
+        sv_corrs_orig = []
+        for sd in dss_back:
+            ndcs = np.diag(
+                np.corrcoef(sd.samples.T, ds_orig.samples.T)[nf_true:, :nf_true],
+                k=0)
+            sv_corrs_orig.append(ndcs)
+        self.assertTrue(
+            np.all(np.abs(np.array(sv_corrs_orig)) >= 0.9),
+            msg="Expected original dimensions after"
+                "SVD. Got correlations %s."
+                % sv_corrs_orig)
 
     def test_hypal_michael_caused_problem(self):
         from mvpa2.misc import data_generators
