@@ -32,6 +32,7 @@ from mvpa2.datasets import Dataset
 from mvpa2.mappers.base import ChainMapper
 from mvpa2.mappers.zscore import zscore, ZScoreMapper
 from mvpa2.mappers.staticprojection import StaticProjectionMapper
+from mvpa2.mappers.svd import SVDMapper
 
 from mvpa2.support.due import due, Doi
 
@@ -130,6 +131,12 @@ class Hyperalignment(ClassWithCollections):
             `None` (default) an instance of
             :class:`~mvpa2.mappers.procrustean.ProcrusteanMapper` is
             used.""")
+    output_dim = Parameter(None, constraints=(EnsureInt() & EnsureRange(min=1)| EnsureNone()),
+            doc="""Output common space dimensionality. If None, datasets are aligned
+             to the features of the `ref_ds`. Otherwise, dimensionality reduction is
+             performed using SVD and only the top SVs are kept. To get all features in
+             SVD-aligned space, give output_dim>=nfeatures.
+            """)
 
     alpha = Parameter(1, constraints=EnsureFloat() & EnsureRange(min=0, max=1),
             doc="""Regularization parameter to traverse between (Shrinkage)-CCA
@@ -179,6 +186,11 @@ class Hyperalignment(ClassWithCollections):
     def __init__(self, **kwargs):
         ClassWithCollections.__init__(self, **kwargs)
         self.commonspace = None
+        # mapper to a low-dimensional subspace derived using SVD on training data
+        # Initializing here so that call can access it without passing after train.
+        # Moreover, it is similar to commonspace, in that, it is required for mapping
+        # new subjects
+        self._svd_mapper = None
 
 
     @due.dcite(
@@ -287,7 +299,12 @@ class Hyperalignment(ClassWithCollections):
             # this is the final common space
             self.commonspace = self._level2(datasets, lvl1_projdata, mappers,
                                             residuals)
-
+        if params.output_dim is not None:
+            mappers = self._level3(datasets)
+            self._svd_mapper = SVDMapper()
+            self._svd_mapper.train(self._map_and_mean(datasets, mappers))
+            self._svd_mapper = StaticProjectionMapper(
+                proj=self._svd_mapper.proj[:, :params.output_dim])
 
     def __call__(self, datasets):
         """Derive a common feature space from a series of datasets.
@@ -340,14 +357,14 @@ class Hyperalignment(ClassWithCollections):
             # We need to construct new mappers which would chain
             # zscore and then final transformation
             if params.alpha < 1:
-                return [ChainMapper([zm, wm, m]) for zm, wm, m in zip(zmappers, wmappers, mappers)]
+                mappers = [ChainMapper([zm, wm, m]) for zm, wm, m in zip(zmappers, wmappers, mappers)]
             else:
-                return [ChainMapper([zm, m]) for zm, m in zip(zmappers, mappers)]
-        else:
-            if params.alpha < 1:
-                return [ChainMapper([wm, m]) for wm, m in zip(wmappers, mappers)]
-            else:
-                return mappers
+                mappers = [ChainMapper([zm, m]) for zm, m in zip(zmappers, mappers)]
+        elif params.alpha < 1:
+            mappers = [ChainMapper([wm, m]) for wm, m in zip(wmappers, mappers)]
+        if params.output_dim is not None:
+            mappers = [ChainMapper([m, self._svd_mapper]) for m in mappers]
+        return mappers
 
 
     def _regularize(self, datasets, alpha):
@@ -493,3 +510,16 @@ class Hyperalignment(ClassWithCollections):
                 residuals[0, i] = np.linalg.norm(data_mapped - self.commonspace)
 
         return mappers
+
+    def _map_and_mean(self, datasets, mappers):
+        params = self.params
+        data_mapped = [[] for ds in datasets]
+        for i, (m, ds_new) in enumerate(zip(mappers, datasets)):
+            if __debug__:
+                debug('HPAL_', "Mapping training data for SVD: ds #%i" % i)
+            ds_ = m.forward(ds_new.samples)
+            # XXX should we zscore data becore averaging and running SVD?
+            # zscore(ds_, chunks_attr=None)
+            data_mapped[i] = ds_
+        dss_mean = params.combiner2(data_mapped)
+        return dss_mean
