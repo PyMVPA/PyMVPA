@@ -155,8 +155,8 @@ class Hyperalignment(ClassWithCollections):
                 number of features is used.""")
 
     nproc = Parameter(1, constraints=EnsureInt() & EnsureRange(min=1),
-            doc="Number of processes to use to parallelize the last step of"
-                "alignment. Requires `joblib` package.")
+            doc="""Number of processes to use to parallelize the last step of
+                alignment. Requires joblib package.""")
 
     zscore_all = Parameter(False, constraints='bool',
             doc="""Flag to Z-score all datasets prior hyperalignment.
@@ -551,14 +551,14 @@ def get_trained_mapper(ds, commonspace, mapper, compute_residual=False):
 
     Parameters
     ----------
-    ds: Input dataset.
-
-    commonspace: Target commonspace
-
-    mapper: Mapper to train. Typically ProcrusteanMapper.
-
-    compute_residual: Whether to compute residuals or not. Default is False,
-            and returns None.
+    ds: dataset
+        A dataset
+    commonspace: ndarray
+        Commonspace data.
+    mapper: Mapper
+        Typically ProcrusteanMapper.
+    compute_residual: bool
+        Whether to compute residuals or not. Default is False and returns None.
     """
     ds.sa[mapper.get_space()] = commonspace
     mapper.train(ds)

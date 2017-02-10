@@ -219,8 +219,8 @@ class HyperAlignmentTests(unittest.TestCase):
                            k=0)
             sv_corrs.append(ndcs)
         self.assertTrue(
-            np.all(np.abs(np.array(sv_corrs)) >= 0.99),
-            msg="Hyperalignment with dimensionality reduction should have"
+            np.all(np.abs(np.array(sv_corrs)) >= 0.9),
+            msg="Hyperalignment with dimensionality reduction should have "
                 "reconstructed SVD dataset. Got correlations %s."
                 % sv_corrs)
         # Check if it recovers original SVs
@@ -232,7 +232,7 @@ class HyperAlignmentTests(unittest.TestCase):
             sv_corrs_orig.append(ndcs)
         self.assertTrue(
             np.all(np.abs(np.array(sv_corrs_orig)) >= 0.9),
-            msg="Expected original dimensions after"
+            msg="Expected original dimensions after "
                 "SVD. Got correlations %s."
                 % sv_corrs_orig)
 
