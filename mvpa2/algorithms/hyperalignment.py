@@ -154,6 +154,10 @@ class Hyperalignment(ClassWithCollections):
                 reference.  If `None`, then the dataset with the maximum
                 number of features is used.""")
 
+    nproc = Parameter(4, constraints=EnsureInt() & EnsureRange(min=1),
+            doc="Number of processes to use to parallelize the last step of"
+                "alignment. Requires `joblib` package.")
+
     zscore_all = Parameter(False, constraints='bool',
             doc="""Flag to Z-score all datasets prior hyperalignment.
             Turn it off if Z-scoring is not desired or was already performed.
@@ -488,26 +492,40 @@ class Hyperalignment(ClassWithCollections):
         # key different from level-2; the common space is uniform
         #temp_commonspace = commonspace
 
-        residuals = None
+        residuals = [None]*len(datasets)
         if self.ca['residual_errors'].enabled:
-            residuals = np.zeros((1, len(datasets)))
-            self.ca.residual_errors = Dataset(samples=residuals)
+            #residuals = np.zeros((1, len(datasets)))
+            residuals = np.zeros(len(datasets))
+            self.ca.residual_errors = Dataset(samples=residuals[None, :])
 
         # start from original input datasets again
-        for i, (m, ds_new) in enumerate(zip(mappers, datasets)):
-            if __debug__:
-                debug('HPAL_', "Level 3: ds #%i" % i)
+        if params.nproc == 1:
+            for i, (m, ds_new) in enumerate(zip(mappers, datasets)):
+                if __debug__:
+                    debug('HPAL_', "Level 3: ds #%i" % i)
+                m = get_trained_mapper(ds_new, self.commonspace, m, residuals[i])
+                '''
+                # retrain mapper on final common space
+                ds_new.sa[m.get_space()] = self.commonspace
+                m.train(ds_new)
+                # remove common space attribute again to save on memory
+                del ds_new.sa[m.get_space()]
 
-            # retrain mapper on final common space
-            ds_new.sa[m.get_space()] = self.commonspace
-            m.train(ds_new)
-            # remove common space attribute again to save on memory
-            del ds_new.sa[m.get_space()]
-
-            if residuals is not None:
-                # obtain final projection
-                data_mapped = m.forward(ds_new.samples)
-                residuals[0, i] = np.linalg.norm(data_mapped - self.commonspace)
+                if residuals is not None:
+                    # obtain final projection
+                    data_mapped = m.forward(ds_new.samples)
+                    residuals[0, i] = np.linalg.norm(data_mapped - self.commonspace)
+                '''
+        else:
+            verbose_level_parallel = 50 \
+                if (__debug__ and 'GCTHR' in debug.active) else 0
+            from joblib import Parallel, delayed
+            mappers = Parallel(n_jobs=params.nproc,
+                     pre_dispatch=params.nproc,
+                     verbose=verbose_level_parallel)(
+                delayed(get_trained_mapper)
+                (ds, self.commonspace, mapper, residual)
+                for ds, mapper, residual in zip(datasets, mappers, residuals))
 
         return mappers
 
@@ -523,3 +541,13 @@ class Hyperalignment(ClassWithCollections):
             data_mapped[i] = ds_
         dss_mean = params.combiner2(data_mapped)
         return dss_mean
+
+def get_trained_mapper(ds, commonspace, mapper, residual):
+    ds.sa[mapper.get_space()] = commonspace
+    mapper.train(ds)
+    # XXX Is this required?
+    del ds.sa[mapper.get_space()]
+    if residual is not None:
+        data_mapped = mapper.forward(ds.samples)
+        residual = np.linalg.norm(data_mapped - commonspace)
+    return mapper
