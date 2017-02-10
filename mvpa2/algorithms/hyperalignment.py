@@ -190,7 +190,7 @@ class Hyperalignment(ClassWithCollections):
         # Initializing here so that call can access it without passing after train.
         # Moreover, it is similar to commonspace, in that, it is required for mapping
         # new subjects
-        self.svd_mapper = None
+        self._svd_mapper = None
 
 
     @due.dcite(
@@ -301,9 +301,10 @@ class Hyperalignment(ClassWithCollections):
                                             residuals)
         if params.output_dim is not None:
             mappers = self._level3(datasets)
-            self.svd_mapper = SVDMapper()
-            self.svd_mapper.train(self._map_and_mean(datasets, mappers))
-            self.svd_mapper = StaticProjectionMapper(proj=self.svd_mapper.proj[:, :params.output_dim])
+            self._svd_mapper = SVDMapper()
+            self._svd_mapper.train(self._map_and_mean(datasets, mappers))
+            self._svd_mapper = StaticProjectionMapper(
+                proj=self._svd_mapper.proj[:, :params.output_dim])
 
     def __call__(self, datasets):
         """Derive a common feature space from a series of datasets.
@@ -360,9 +361,9 @@ class Hyperalignment(ClassWithCollections):
             else:
                 mappers = [ChainMapper([zm, m]) for zm, m in zip(zmappers, mappers)]
         elif params.alpha < 1:
-                mappers = [ChainMapper([wm, m]) for wm, m in zip(wmappers, mappers)]
+            mappers = [ChainMapper([wm, m]) for wm, m in zip(wmappers, mappers)]
         if params.output_dim is not None:
-            mappers = [ChainMapper([m, self.svd_mapper]) for m in mappers]
+            mappers = [ChainMapper([m, self._svd_mapper]) for m in mappers]
         return mappers
 
 
