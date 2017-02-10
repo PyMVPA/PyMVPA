@@ -236,6 +236,24 @@ class HyperAlignmentTests(unittest.TestCase):
                 "SVD. Got correlations %s."
                 % sv_corrs_orig)
 
+    def test_hpal_joblib(self):
+        skip_if_no_external('joblib')
+        # get seed dataset
+        ds4l = datasets['uni4large']
+        dss_rotated = [random_affine_transformation(ds4l, scale_fac=100, shift_fac=10)
+                       for i in range(4)]
+        ha = Hyperalignment(nproc=1, enable_ca=['residual_errors'])
+        ha.train(dss_rotated[:2])
+        mappers = ha(dss_rotated)
+        ha_proc = Hyperalignment(nproc=2, enable_ca=['residual_errors'])
+        ha_proc.train(dss_rotated[:2])
+        mappers_nproc = ha_proc(dss_rotated)
+        self.assertTrue(
+            np.all([np.array_equal(m.proj, mp.proj)
+                   for m, mp in zip(mappers, mappers_nproc)]),
+            msg="Mappers differ when using nproc>1.")
+        assert_array_equal(ha.ca.residual_errors.samples, ha_proc.ca.residual_errors.samples)
+
     def test_hypal_michael_caused_problem(self):
         from mvpa2.misc import data_generators
         from mvpa2.mappers.zscore import zscore
