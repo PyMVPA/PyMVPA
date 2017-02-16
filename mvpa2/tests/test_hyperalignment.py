@@ -253,6 +253,9 @@ class HyperAlignmentTests(unittest.TestCase):
                    for m, mp in zip(mappers, mappers_nproc)]),
             msg="Mappers differ when using nproc>1.")
         assert_array_equal(ha.ca.residual_errors.samples, ha_proc.ca.residual_errors.samples)
+        # smoke test
+        ha = Hyperalignment(nproc=0)
+        mappers = ha(dss_rotated)
 
     def test_hypal_michael_caused_problem(self):
         from mvpa2.misc import data_generators
