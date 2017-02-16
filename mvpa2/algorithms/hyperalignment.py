@@ -186,6 +186,13 @@ class Hyperalignment(ClassWithCollections):
             updated common space, and is subsequently called again after each
             2nd-level iteration.""")
 
+    joblib_backend = Parameter(None, constraints=EnsureChoice('multiprocessing',
+                                                    'threading') | EnsureNone(),
+            doc="""Backend to use for joblib when using nproc>1.
+            Options are 'multiprocessing' and 'threading'. Default is to use
+            'multiprocessing' unless run on OSX which have known issues with
+            joblib v0.10.3. If it is set to specific value here, then that will
+            be used at the risk of failure.""")
 
     def __init__(self, **kwargs):
         ClassWithCollections.__init__(self, **kwargs)
@@ -495,8 +502,8 @@ class Hyperalignment(ClassWithCollections):
         if params.nproc > 1:
             from mvpa2.base import externals, warning
             if not externals.exists('joblib'):
-                warning("Setting nproc > 1 requires joblib package, which"
-                        "does not seem to exist. Setting nproc to 1")
+                warning("Setting nproc > 1 requires joblib package, which "
+                        "does not seem to exist. Setting nproc to 1.")
                 params.nproc = 1
 
         # start from original input datasets again
@@ -515,8 +522,14 @@ class Hyperalignment(ClassWithCollections):
             verbose_level_parallel = 20 \
                 if (__debug__ and 'HPAL' in debug.active) else 0
             from joblib import Parallel, delayed
+            import sys
+            # joblib's 'multiprocessing' backend has known issues of failure on OSX
+            # Tested with MacOS 10.12.13, python 2.7.13, joblib v0.10.3
+            if params.joblib_backend is None:
+                params.joblib_backend = 'threading' if sys.platform == 'darwin' \
+                                        else'multiprocessing'
             res = Parallel(n_jobs=params.nproc,
-                     pre_dispatch=params.nproc, backend='threading',
+                     pre_dispatch=params.nproc, backend=params.joblib_backend,
                      verbose=verbose_level_parallel)(
                 delayed(get_trained_mapper)
                 (ds, self.commonspace, mapper, self.ca['residual_errors'].enabled)
