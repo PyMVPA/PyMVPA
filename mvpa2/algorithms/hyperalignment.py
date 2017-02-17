@@ -154,6 +154,11 @@ class Hyperalignment(ClassWithCollections):
                 reference.  If `None`, then the dataset with the maximum
                 number of features is used.""")
 
+    nproc = Parameter(1, constraints=EnsureInt(),
+            doc="""Number of processes to use to parallelize the last step of
+                alignment. If different from 1, it passes it as n_jobs to
+                `joblib.Parallel`. Requires joblib package.""")
+
     zscore_all = Parameter(False, constraints='bool',
             doc="""Flag to Z-score all datasets prior hyperalignment.
             Turn it off if Z-scoring is not desired or was already performed.
@@ -182,6 +187,13 @@ class Hyperalignment(ClassWithCollections):
             updated common space, and is subsequently called again after each
             2nd-level iteration.""")
 
+    joblib_backend = Parameter(None, constraints=EnsureChoice('multiprocessing',
+                                                    'threading') | EnsureNone(),
+            doc="""Backend to use for joblib when using nproc>1.
+            Options are 'multiprocessing' and 'threading'. Default is to use
+            'multiprocessing' unless run on OSX which have known issues with
+            joblib v0.10.3. If it is set to specific value here, then that will
+            be used at the risk of failure.""")
 
     def __init__(self, **kwargs):
         ClassWithCollections.__init__(self, **kwargs)
@@ -461,7 +473,7 @@ class Hyperalignment(ClassWithCollections):
                 # common space is updated for the next iteration
                 del ds_new.sa[m.get_space()]
                 # obtain the 2nd-level projection
-                ds_ =  m.forward(ds_new.samples)
+                ds_ = m.forward(ds_new.samples)
                 if params.zscore_common:
                     zscore(ds_, chunks_attr=None)
                 # store for 2nd-level combiner
@@ -487,27 +499,56 @@ class Hyperalignment(ClassWithCollections):
 
         # key different from level-2; the common space is uniform
         #temp_commonspace = commonspace
-
-        residuals = None
-        if self.ca['residual_errors'].enabled:
-            residuals = np.zeros((1, len(datasets)))
-            self.ca.residual_errors = Dataset(samples=residuals)
+        # Fixing nproc=0
+        if params.nproc == 0:
+            from mvpa2.base import warning
+            warning("nproc of 0 doesn't make sense. Setting nproc to 1.")
+            params.nproc = 1
+        # Checking for joblib, if not, set nproc to 1
+        if params.nproc != 1:
+            from mvpa2.base import externals, warning
+            if not externals.exists('joblib'):
+                warning("Setting nproc different from 1 requires joblib package, which "
+                        "does not seem to exist. Setting nproc to 1.")
+                params.nproc = 1
 
         # start from original input datasets again
-        for i, (m, ds_new) in enumerate(zip(mappers, datasets)):
+        if params.nproc == 1:
+            residuals = []
+            for i, (m, ds_new) in enumerate(zip(mappers, datasets)):
+                if __debug__:
+                    debug('HPAL_', "Level 3: ds #%i" % i)
+                m, residual = get_trained_mapper(ds_new, self.commonspace, m,
+                                                 self.ca['residual_errors'].enabled)
+                if self.ca['residual_errors'].enabled:
+                    residuals.append(residual)
+        else:
             if __debug__:
-                debug('HPAL_', "Level 3: ds #%i" % i)
+                debug('HPAL_', "Level 3: Using joblib with nproc = %d " % params.nproc)
+            verbose_level_parallel = 20 \
+                if (__debug__ and 'HPAL' in debug.active) else 0
+            from joblib import Parallel, delayed
+            import sys
+            # joblib's 'multiprocessing' backend has known issues of failure on OSX
+            # Tested with MacOS 10.12.13, python 2.7.13, joblib v0.10.3
+            if params.joblib_backend is None:
+                params.joblib_backend = 'threading' if sys.platform == 'darwin' \
+                                        else 'multiprocessing'
+            res = Parallel(
+                    n_jobs=params.nproc, pre_dispatch=params.nproc,
+                    backend=params.joblib_backend,
+                    verbose=verbose_level_parallel
+                    )(
+                        delayed(get_trained_mapper)
+                        (ds, self.commonspace, mapper, self.ca['residual_errors'].enabled)
+                        for ds, mapper in zip(datasets, mappers)
+                    )
+            mappers = [m for m, r in res]
+            if self.ca['residual_errors'].enabled:
+                residuals = [r for m, r in res]
 
-            # retrain mapper on final common space
-            ds_new.sa[m.get_space()] = self.commonspace
-            m.train(ds_new)
-            # remove common space attribute again to save on memory
-            del ds_new.sa[m.get_space()]
-
-            if residuals is not None:
-                # obtain final projection
-                data_mapped = m.forward(ds_new.samples)
-                residuals[0, i] = np.linalg.norm(data_mapped - self.commonspace)
+        if self.ca['residual_errors'].enabled:
+            self.ca.residual_errors = Dataset(samples=np.array(residuals)[None, :])
 
         return mappers
 
@@ -518,8 +559,37 @@ class Hyperalignment(ClassWithCollections):
             if __debug__:
                 debug('HPAL_', "Mapping training data for SVD: ds #%i" % i)
             ds_ = m.forward(ds_new.samples)
-            # XXX should we zscore data becore averaging and running SVD?
+            # XXX should we zscore data before averaging and running SVD?
             # zscore(ds_, chunks_attr=None)
             data_mapped[i] = ds_
         dss_mean = params.combiner2(data_mapped)
         return dss_mean
+
+
+def get_trained_mapper(ds, commonspace, mapper, compute_residual=False):
+    """
+    Trains a given mapper using dataset and commonspace and computes residuals if
+    necessary.
+
+    Parameters
+    ----------
+    ds: dataset
+        A dataset
+    commonspace: ndarray
+        Commonspace data.
+    mapper: Mapper
+        Typically ProcrusteanMapper.
+    compute_residual: bool
+        Whether to compute residuals or not. Default is False and returns None.
+    """
+    # retrain mapper on final common space
+    ds.sa[mapper.get_space()] = commonspace
+    mapper.train(ds)
+    # remove common space attribute again to save on memory
+    del ds.sa[mapper.get_space()]
+    residual = None
+    if compute_residual:
+        # obtain final projection
+        data_mapped = mapper.forward(ds.samples)
+        residual = np.linalg.norm(data_mapped - commonspace)
+    return mapper, residual
