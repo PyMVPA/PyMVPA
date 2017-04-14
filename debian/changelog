@@ -1,6 +1,7 @@
 pymvpa2 (2.6.1-1) experimental; urgency=medium
 
   * Fresh upstream (primarily minor bugfix) release
+    - python-mock into build-depends
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 14 Apr 2017 12:23:28 -0400
 

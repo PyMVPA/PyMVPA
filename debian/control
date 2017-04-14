@@ -17,7 +17,8 @@ Build-Depends: debhelper (>= 7.0.50~),
                graphviz, inkscape, imagemagick, bc,
                python-matplotlib,
                python-statsmodels [!s390x],
-               python-joblib
+               python-joblib,
+               python-mock,
 Standards-Version: 3.9.8
 Homepage: http://www.pymvpa.org
 Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/pymvpa.git
@@ -49,6 +50,7 @@ Recommends:
          python-statsmodels,
          python-joblib,
          python-duecredit,
+         python-mock,
 Suggests:
          fslview, fsl,
          python-mvpa2-doc,
