@@ -78,7 +78,7 @@ which is set to `1`. PyMVPA recognizes a number of such sections and
 configuration variables. A full list is shown at the end of this section and
 is also available in the source package (`doc/examples/pymvpa2.cfg`).
 
-.. _Python's ConfigParser: http://docs.python.org/lib/module-ConfigParser.html
+.. _Python's ConfigParser: https://docs.python.org/2/library/configparser.html
 
 In addition to configuration files, the config manager also looks for special
 environment variables to read settings from. Names of such variables have to
@@ -405,7 +405,7 @@ PyMVPA contains a few little helpers to make interfacing with FSL_ easier.
 The purpose of these helpers is to increase the efficiency when doing an
 analysis by (re)using useful information that is already available from some
 FSL output. FSL usually stores most interesting information in the NIfTI
-format. Therefore it can be easily imported into PyMVPA using PyNIfTI. However,
+format. Therefore it can be easily imported into PyMVPA using NiBabel. However,
 some information is stored in text files, e.g. estimated motion correction
 parameters and *FEAT's three-column custom EV* files. PyMVPA provides import
 and export helpers for both of them (among other stuff like a *MELODIC*

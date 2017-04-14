@@ -145,8 +145,8 @@ here.
 * PyML_: Interactive object oriented framework for machine learning
   written in Python. PyML focuses on SVMs and other kernel methods.
 
-* PyNIfTI_: Read and write NIfTI images from within Python.
-  *PyMVPA uses PyNIfTI to access MRI datasets.*
+* NiBabel_: Read and write NIfTI images from within Python.
+  *PyMVPA uses NiBabel to access MRI datasets.*
 
 * `scikit-learn`_: Python module integrating classic machine learning
   algorithms in the tightly-knit world of scientific Python packages.

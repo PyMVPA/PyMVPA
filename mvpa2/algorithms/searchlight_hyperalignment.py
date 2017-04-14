@@ -451,6 +451,8 @@ class SearchlightHyperalignment(ClassWithCollections):
                       % len(results_data))
             for isub, res in enumerate(results_data):
                 self.projections[isub] = self.projections[isub] + res
+            if __debug__:
+                debug('SLC_', "Finished adding results")
             return
 
     def __handle_all_results(self, results):

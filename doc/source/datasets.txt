@@ -237,7 +237,7 @@ look at the subclasses of :class:`~mvpa2.datasets.base.Dataset`):
 * NIfTI/Analyze images
 
   PyMVPA provides a specialized dataset for MRI data in the NIfTI format.
-  :class:`~mvpa2.datasets.nifti.NiftiDataset` uses PyNIfTI_ to read the data and automatically configures an
+  :class:`~mvpa2.datasets.nifti.NiftiDataset` uses NiBabel_ to read the data and automatically configures an
   appropriate :class:`~mvpa2.mappers.array.DenseArrayMapper` with metric information read from the NIfTI
   file header.
 
@@ -247,7 +247,7 @@ look at the subclasses of :class:`~mvpa2.datasets.base.Dataset`):
   file (written by eeprobe_)
 
 
-.. _PyNIfTI: http://niftilib.sf.net/pynifti
+.. _NiBabel: http://nipy.org/nibabel/
 .. _eeprobe: http://www.ant-neuro.com/products/eeprobe
 
 
