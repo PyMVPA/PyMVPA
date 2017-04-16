@@ -191,6 +191,7 @@ def setup_package():
           # please maintain alphanumeric order
           packages=[ 'mvpa2',
                      'mvpa2.algorithms',
+                     'mvpa2.algorithms.benchmarks',
                      'mvpa2.atlases',
                      'mvpa2.base',
                      'mvpa2.clfs',
