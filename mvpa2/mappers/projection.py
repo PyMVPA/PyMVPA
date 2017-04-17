@@ -14,7 +14,7 @@ import numpy as np
 
 from mvpa2.base.dochelpers import enhanced_doc_string
 from mvpa2.mappers.base import Mapper, accepts_dataset_as_samples
-
+from mvpa2.base.state import ConditionalAttribute
 
 if __debug__:
     from mvpa2.base import debug
@@ -43,6 +43,8 @@ class ProjectionMapper(Mapper):
     """
 
     _DEV__doc__ = """Think about renaming `demean`, may be `translation`?"""
+    
+    pass_fa = ConditionalAttribute(enabled=False, doc="Output feature attribute")
 
     def __init__(self, demean=True, **kwargs):
         """Initialize the ProjectionMapper
@@ -69,7 +71,8 @@ class ProjectionMapper(Mapper):
         """Offset (most often just mean) in the input space"""
         self._offset_out = None
         """Offset (most often just mean) in the output space"""
-
+        self.ca.pass_fa = None
+        """Feature attribute to be passed onto output dataset"""
     __doc__ = enhanced_doc_string('ProjectionMapper', locals(), Mapper)
 
 

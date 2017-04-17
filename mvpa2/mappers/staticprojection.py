@@ -11,7 +11,6 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as np
-from mvpa2.base.dochelpers import borrowdoc
 from mvpa2.mappers.projection import ProjectionMapper
 
 if __debug__:
