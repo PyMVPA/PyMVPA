@@ -231,7 +231,7 @@ class AttributePermutator(Node):
                     # Escape as early as possible
                     return
 
-        warning("Permutation via strategy='chunk' makes no sense --"
+        raise RuntimeError("Permutation via strategy='chunk' makes no sense --"
                 " all chunks have the same order of targets: %s"
                 % (sample_targets,))
 

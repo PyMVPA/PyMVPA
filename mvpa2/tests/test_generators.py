@@ -450,15 +450,17 @@ def test_permute_chunks():
         return np.array_equal(np.sort(x), x)
 
     ds = give_data()
-    # change targets labels
-    # there is no target labels permuting within chunks,
-    # assure = True would be error
-    ds.sa['targets'] = range(len(ds.sa.targets))
+  
     permutation = AttributePermutator(attr='targets',
                                       chunk_attr='chunks',
                                       strategy='chunks',
                                       assure=True)
+    # same targets for every chunk                                 
+    ds.sa.targets = range(len(ds[ds.sa.chunks==0]))*len(np.unique(ds.sa.chunks))
+    assert_raises(RuntimeError, permutation, ds)
 
+    # unique targets for every chunk
+    ds.sa['targets'] = range(len(ds.sa.targets))
     pds = permutation(ds)
 
     assert_false(is_sorted(pds.sa.targets))
