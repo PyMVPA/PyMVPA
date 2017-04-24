@@ -26,6 +26,7 @@ from scipy.sparse import dok_matrix
 
 from mvpa2.mappers.base import IdentityMapper, _verified_reverse1
 from mvpa2.datasets import Dataset
+from mvpa2.base import externals
 from mvpa2.base.learner import Learner
 from mvpa2.base.param import Parameter
 from mvpa2.base.constraints import \
@@ -245,7 +246,10 @@ class GroupClusterThreshold(Learner):
         #
         # Step 1: find the per-feature threshold that corresponds to some p
         # in the NULL
-        segwidth = ds.nfeatures / self.params.n_blocks
+        if self.params.n_proc > 1 and self.params.n_blocks == 1:
+            segwidth = ds.nfeatures / self.params.n_proc
+        else:
+            segwidth = ds.nfeatures / self.params.n_blocks
         # speed things up by operating on an array not a dataset
         ds_samples = ds.samples
         if __debug__:
@@ -260,13 +264,13 @@ class GroupClusterThreshold(Learner):
                 # one average map for every stored bcombo
                 # this also slices the input data into feature subsets
                 # for the compute blocks
-                yield [np.mean(
+                yield np.array([np.mean(
                        # get a view to a subset of the features
                        # -- should be somewhat efficient as feature axis is
                        # sliced
                        ds_samples[sidx, segstart:segstart + ncols],
                        axis=0)
-                       for sidx in bcombos]
+                       for sidx in bcombos])
         if self.params.n_proc == 1:
             # Serial execution
             thrmap = np.hstack(  # merge across compute blocks
@@ -283,7 +287,6 @@ class GroupClusterThreshold(Learner):
             # same code as above, just in parallel with joblib's Parallel
             thrmap = np.hstack(
                 Parallel(n_jobs=self.params.n_proc,
-                         pre_dispatch=self.params.n_proc,
                          verbose=verbose_level_parallel)(
                              delayed(get_thresholding_map)
                         (d, self.params.feature_thresh_prob)
@@ -316,7 +319,6 @@ class GroupClusterThreshold(Learner):
             # Parallel execution
             # same code as above, just restructured for joblib's Parallel
             for jobres in Parallel(n_jobs=self.params.n_proc,
-                                   pre_dispatch=self.params.n_proc,
                                    verbose=verbose_level_parallel)(
                                        delayed(get_cluster_sizes)
                                   (Dataset(np.mean(ds_samples[sidx],
@@ -457,9 +459,13 @@ def get_thresholding_map(data, p=0.001):
     p_index = int(len(data) * p)
     if p_index < 1:
         raise ValueError("requested probability is too low for the given number of samples")
-    # threshold indices are all in one row of the argsorted inputs
-    thridx = np.argsort(data, axis=0, kind='quicksort')[-p_index]
-    return data[thridx, np.arange(data.shape[1])]
+    if externals.versions['numpy'] >= '1.9.0':
+        return np.percentile(data, q=(1-p)*100, interpolation='higher', axis=0)
+    else:
+        # threshold indices are all in one row of the argsorted inputs
+        thridx = np.argsort(data, axis=0, kind='quicksort')[-p_index]
+        return data[thridx, np.arange(data.shape[1])]
+
 
 
 def _get_map_cluster_sizes(map_):
