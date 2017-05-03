@@ -7,16 +7,20 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """ Neighborhood objects """
+#from __future__ import division
 
 import numpy as np
 from numpy import array
 import sys
 import itertools
+import nibabel as nib
+import networkx as nx
 
 from mvpa2.base import warning
 from mvpa2.base.types import is_sequence_type
 from mvpa2.base.dochelpers import borrowkwargs, borrowdoc, _repr_attrs, _repr
 from mvpa2.clfs.distance import cartesian_distance
+from mvpa2.datasets.mri import fmri_dataset
 
 from mvpa2.misc.support import idhash as idhash_
 
@@ -339,6 +343,122 @@ class HollowSphere(Sphere):
         if not len(res):
             warning("%s defines no neighbors" % self)
         return np.vstack([np.zeros(ndim,dtype='int'),res]) if self.include_center else res
+
+
+class SurfaceDiskQueryEngine(object):
+    """Disk on a surface embedded in a higher dimensional space
+
+    This is an IndexedQueryEngine, in effect, but requires:
+    1) NifTI images of left and right hemispheres, with nearest neighbor
+    vertex indices for each voxel as the values
+    2) Left and right hemisphere graphs which are lists of dictionaries
+    such that G[i][j] is the distance between connected nodes i and j
+    3) Coordinates of vertices in Euclidean space
+    """
+    def __init__(self, radius, lverts, lgraph, lcoords,
+                               rverts, rgraph, rcoords):
+        self._radius = radius
+        self.lverts = lverts
+        self.rverts = rverts
+        self.lgraph = lgraph
+        self.rgraph = rgraph
+        self.lcoords = lcoords
+        self.rcoords = rcoords
+
+    def __repr__(self, prefixes=[]):
+        return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes))
+
+    # Cargo cult programming
+    @property
+    def radius(self):
+        return self._radius
+
+    @radius.setter
+    def radius(self, newrad):
+        self._radius = newrad
+
+    @classmethod
+    def loadFromFiles(cls, radius, lvtxvol, lhsurf, rvtxvol, rhsurf,
+            mask=None):
+        # Vertex volumes generated with Freesurfer's mri_surf2vol --vtxvol
+        lverts = fmri_dataset(lvtxvol, mask=mask)
+        rverts = fmri_dataset(rvtxvol, mask=mask)
+
+        # Standard freesurfer [lr]h.* files
+        lcoords, lfaces = nib.freesurfer.read_geometry(lhsurf)
+        rcoords, rfaces = nib.freesurfer.read_geometry(rhsurf)
+
+        def buildGraph(coords, faces):
+            """Build a bidirectional graph with Euclidean distances as edges"""
+            graph = nx.Graph()
+            
+            euclid = lambda x, y: np.sqrt(np.sum((x - y) ** 2))
+            for i, j, k in faces:
+                graph.add_edge(i, j, weight=euclid(coords[i, :], coords[j, :]))
+                graph.add_edge(i, k, weight=euclid(coords[i, :], coords[k, :]))
+                graph.add_edge(j, k, weight=euclid(coords[j, :], coords[k, :]))
+
+            return graph
+
+        lgraph = buildGraph(lcoords, lfaces)
+        rgraph = buildGraph(rcoords, rfaces)
+
+        return cls(radius, lverts, lgraph, lcoords, rverts, rgraph, rcoords)
+
+    def train(self, dataset):
+        self.ids = np.arange(dataset.nfeatures)
+
+    def __getitem__(self, coordinate):
+        if self.lverts.samples[0, coordinate] != -1:
+            verts = self.lverts.samples[0]
+            graph = self.lgraph
+        elif self.rverts.samples[0, coordinate] != -1:
+            verts = self.rverts.samples[0]
+            graph = self.rgraph
+        else:
+            # XXX BIG ASSUMPTION
+            # Index 0 will never be informative
+            return [0]
+
+        source = verts[coordinate]
+        disk = nx.single_source_dijkstra_path_length(graph, source,
+                                                     self._radius)
+
+        idcs = [i for i, v in enumerate(verts) if v in disk]
+
+        return idcs
+
+
+class DoubleDiskQueryEngine(SurfaceDiskQueryEngine):
+    coordinate = None
+
+    def setFirstDisk(self, coordinate):
+        self.coordinate = coordinate
+        self._setFirstDisk()
+
+    def _setFirstDisk(self):
+        self.firstDisk = super(DoubleDiskQueryEngine, self).__getitem__(self.coordinate)
+        self.fdset = set(self.firstDisk)
+
+    @property
+    def radius(self):
+        return self._radius
+
+    @radius.setter
+    def radius(self, newrad):
+        print "Setting radius in DoubleDiskQE"
+        self._radius = newrad
+        if self.coordinate is not None:
+            self._setFirstDisk()
+
+    def getSingleDisk(self):
+        return SurfaceDiskQueryEngine(self._radius,
+                                      self.lverts, self.lgraph, self.lcoords,
+                                      self.rverts, self.rgraph, self.rcoords)
+
+    def __getitem__(self, coordinate):
+        secondDisk = super(DoubleDiskQueryEngine, self).__getitem__(coordinate)
+        return self.firstDisk + [x for x in secondDisk if x not in self.fdset]
 
 
 class QueryEngineInterface(object):

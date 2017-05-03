@@ -32,7 +32,8 @@ from mvpa2.support import copy
 from mvpa2.featsel.base import StaticFeatureSelection
 from mvpa2.measures.base import Measure
 from mvpa2.base.state import ConditionalAttribute
-from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
+from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere, \
+                                    SurfaceDiskQueryEngine
 from mvpa2.mappers.base import ChainMapper
 
 from mvpa2.support.due import due, Doi
@@ -595,6 +596,17 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
     return Searchlight(datameasure, queryengine=qe, roi_ids=center_ids,
                        **kwargs)
 
+@borrowkwargs(Searchlight, '__init__', exclude=['roi_ids'])
+def surface_searchlight(datameasure, sdqe=None, radius=1,
+                        lverts=None, lgraph=None, lcoords=None,
+                        rverts=None, rgraph=None, rcoords=None,
+                        center_ids=None, **kwargs):
+    if sqde is None:
+        sdqe = SurfaceDiskQueryEngine(radius, lverts, lgraph, lcoords,
+                                              rverts, rgraph, rcoords)
+    # init the searchlight with the queryengine
+    return Searchlight(datameasure, queryengine=sdqe, roi_ids=center_ids,
+                       **kwargs)
 
 #class OptimalSearchlight( object ):
 #    def __init__( self,
