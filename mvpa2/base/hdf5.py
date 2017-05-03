@@ -296,6 +296,8 @@ def _recon_customobj_customrecon(hdf, memo):
 
 
 def _import_from_thin_air(mod_name, importee, cls_name=None):
+    # to overcome  TypeError: Item in ``from list'' must be str, not unicode
+    importee = str(importee)
     if cls_name is None:
         cls_name = importee
     try:
