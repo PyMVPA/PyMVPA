@@ -131,6 +131,9 @@ class ENET(Classifier):
     def _train(self, data):
         """Train the classifier using `data` (`Dataset`).
         """
+        # R enet expects targets to be numerical values
+        if data.uniquetargets.dtype.type is np.string_:
+            data.targets = self._attrmap.to_numeric(data.sa[self.get_space()].value)
         targets = data.sa[self.get_space()].value[:, np.newaxis]
         enet_kwargs = {}
         if self.__max_steps is not None:
