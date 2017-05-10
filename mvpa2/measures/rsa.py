@@ -527,7 +527,7 @@ class CrossNobisSearchlight(Searchlight):
         super(CrossNobisSearchlight, self)._untrain()
         self.__all_pairs = None    
 
-    def _sl_call(self, dataset, roi_ids, nproc):
+    def _sl_call(self, dataset, roi_ids, nproc, dataset_residuals=None):
         """Call to CrossNobisSearchlight
         """
         
@@ -634,6 +634,23 @@ class CrossNobisSearchlight(Searchlight):
                             dif = dataset.samples[i] - dataset.samples[j]
                         self._all_pairs[pair] = dif
                         self._all_pairs_targets[pair] = pair_targ
+
+        # estimate the residual covariance from the training sets only
+        self._splits_cov = None
+        if dataset_residuals is not None:
+            dataset_indicies = Dataset(np.arange(dataset_indicies.nsamples), sa=dataset_residuals.sa)
+            partitions = list(generator.generate(dataset_indicies)) \
+                         if generator \
+                            else [dataset_indicies]
+            
+            train_sets = [splitter.generate(ds_)[0] for ds_ in partitions]
+            self._splits_cov = [np.sparse.lil_matrix((dataset.nfeatures,)*2) for tds in train_sets]
+            
+            for f in roi_ids:
+                neighs = self._queryengine[f]        
+                for split_idx, train_idx in enumerate(train_sets):
+                    self._splits_cov[splits_idx][neighs,neighs] = np.linalg.cov(dataset_residuals[train_idx.samples, neighs])
+
 
         if nproc is not None and nproc > 1:
             # split all target ROIs centers into `nproc` equally sized blocks
