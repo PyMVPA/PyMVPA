@@ -669,7 +669,7 @@ class CrossNobisSearchlight(Searchlight):
                 train_ds = dataset_residuals[train_idx.samples.ravel()]
                 for i in range(int(sl_ext_conn.nnz/1e5+1)):
                     slz = slice(i*blocksize,(i+1)*blocksize)
-                    cov_tmp[slz] = (train_ds.samples[:,sl_ext_conn.row[slz]]*train_ds.samples[:,sl_ext_conn.row[slz]]).sum(0)
+                    cov_tmp[slz] = (train_ds.samples[:,sl_ext_conn.row[slz]]*train_ds.samples[:,sl_ext_conn.col[slz]]).sum(0)
                     
                 self._splits_cov[split_idx] = scipy.sparse.coo_matrix((cov_tmp,(sl_ext_conn.row,sl_ext_conn.col)))
                 
