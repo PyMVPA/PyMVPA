@@ -34,6 +34,7 @@ from mvpa2.generators.splitters import Splitter
 if externals.exists('scipy', raise_=True):
     from scipy.spatial.distance import pdist, squareform, cdist
     from scipy.stats import rankdata, pearsonr
+    import scipy.sparse
 
 
 class CrossNobis(Measure):
@@ -612,7 +613,12 @@ class CrossNobisSearchlight(Searchlight):
         self._all_pairs_targets = dict()
         self._splits_idx = []
 
+
         # precompute all the intra-chunk pairs difference used in the cross-validation
+        if __debug__:
+            debug('SLC',
+                  'Phase 2. Precompute all samples paired differences per split')
+
         for splits2 in self._splits:
             self._splits_idx.append([])
             for split in splits2:
@@ -638,20 +644,35 @@ class CrossNobisSearchlight(Searchlight):
         # estimate the residual covariance from the training sets only
         self._splits_cov = None
         if dataset_residuals is not None:
-            dataset_indicies = Dataset(np.arange(dataset_indicies.nsamples), sa=dataset_residuals.sa)
+            if __debug__:
+                debug('SLC',
+                      'Phase 2b. Precompute the feature covariance per split')
+                
+            dataset_indicies = Dataset(np.arange(dataset_residuals.nsamples), sa=dataset_residuals.sa)
             partitions = list(generator.generate(dataset_indicies)) \
                          if generator \
                             else [dataset_indicies]
             
-            train_sets = [splitter.generate(ds_)[0] for ds_ in partitions]
-            self._splits_cov = [np.sparse.lil_matrix((dataset.nfeatures,)*2) for tds in train_sets]
+            sl_ext_conn = scipy.sparse.lil_matrix((dataset.nfeatures,)*2, dtype=np.bool)
+            train_sets = [list(splitter.generate(ds_))[0] for ds_ in partitions]
+            self._splits_cov = []
             
             for f in roi_ids:
-                neighs = self._queryengine[f]        
-                for split_idx, train_idx in enumerate(train_sets):
-                    self._splits_cov[splits_idx][neighs,neighs] = np.linalg.cov(dataset_residuals[train_idx.samples, neighs])
-
-
+                neighs = self._queryengine[f]
+                for n1 in neighs:
+                    sl_ext_conn[n1, neighs] = True
+            sl_ext_conn = sl_ext_conn.tocoo()
+            
+            blocksize = 1e5
+            for split_idx, train_idx in enumerate(train_sets):
+                cov_tmp = np.empty(sl_ext_conn.nnz)
+                train_ds = dataset_residuals[train_idx.samples.ravel()]
+                for i in range(int(sl_ext_conn.nnz/1e5+1)):
+                    slz = slice(i*blocksize,(i+1)*blocksize)
+                    cov_tmp[slz] = (train_ds.samples[:,sl_ext_conn.row[slz]]*train_ds.samples[:,sl_ext_conn.row[slz]]).sum(0)
+                    
+                self._splits_cov[split_idx] = scipy.sparse.coo_matrix((cov_tmp,(sl_ext_conn.row,sl_ext_conn.col)))
+                
         if nproc is not None and nproc > 1:
             # split all target ROIs centers into `nproc` equally sized blocks
             nproc_needed = min(len(roi_ids), nproc)
