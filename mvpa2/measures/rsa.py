@@ -671,7 +671,7 @@ class CrossNobisSearchlight(Searchlight):
                     slz = slice(i*blocksize,(i+1)*blocksize)
                     cov_tmp[slz] = (train_ds.samples[:,sl_ext_conn.row[slz]]*train_ds.samples[:,sl_ext_conn.col[slz]]).sum(0)
                     
-                self._splits_cov[split_idx] = scipy.sparse.coo_matrix((cov_tmp,(sl_ext_conn.row,sl_ext_conn.col)))
+                self._splits_cov.append(scipy.sparse.coo_matrix((cov_tmp,(sl_ext_conn.row,sl_ext_conn.col))).tolil())
                 
         if nproc is not None and nproc > 1:
             # split all target ROIs centers into `nproc` equally sized blocks
@@ -729,6 +729,9 @@ class CrossNobisSearchlight(Searchlight):
             debug('SLC',
                   "Starting computing block for %i elements" % len(block))
             start_time = time.time()
+        if self._splits_cov is not None:
+            externals.exists('skl', raise_=True)
+            from sklearn.covariance import ledoit_wolf
 
         ulabels = self._ulabels_numeric
         nlabels = len(ulabels)
@@ -765,25 +768,32 @@ class CrossNobisSearchlight(Searchlight):
                 roi_fids = roi_specs
 
             n_fids = len(roi_fids)
-            #cov = 
             res = np.zeros(n_pair_targets)
             counts = np.zeros_like(res, dtype=np.uint)
 
-            for split2_idx, split2 in zip(self._splits_idx, self._splits):
+
+            for spi, split2_idx, split2 in zip(range(len(self._splits)), self._splits_idx, self._splits):
                 for pair_train in split2_idx[0]:
                     target_train = self._all_pairs_targets[pair_train]
+                    if self._splits_cov is not None:
+                        cov = self._splits_cov[spi][roi_fids][:,roi_fids].toarray()
+                        shrink_cov, shrinkage = ledoit_wolf(cov)
+                        inv_cov = np.linalg.inv(shrink_cov)
                     for pair_test in split2_idx[1]:
                         target_test = self._all_pairs_targets[pair_test]
                         if target_train == target_test:
                             t1,t2 = target_train
                             res_idx = (t1*(t1-1)/2+t1) + t2
                             vec_train = self._all_pairs[pair_train][roi_fids]
-                            vec_test = self._all_pairs[pair_test][roi_fids]
-                            res[res_idx] += vec_train.dot(vec_test)/n_fids
+                            vec_test = self._all_pairs[pair_test][roi_fids] 
+                            if self._splits_cov is not None:
+                                res[res_idx] += vec_train.dot(inv_cov).dot(vec_test.T)/n_fids
+                            else:
+                                res[res_idx] += vec_train.dot(vec_test)/n_fids
                             counts[res_idx] += 1
-
+                    if self._splits_cov is not None:
+                        del cov, shrink_cov, inv_cov
             results[:,i] = res/counts
-
             if __debug__:
                 msg = 'ROI %i (%i/%i), %i features' % \
                             (f + 1, i + 1, len(block), n_fids)
