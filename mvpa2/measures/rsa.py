@@ -647,7 +647,9 @@ class CrossNobisSearchlight(Searchlight):
             if __debug__:
                 debug('SLC',
                       'Phase 2b. Precompute the feature covariance per split')
-                
+            externals.exists('skl', raise_=True) 
+            from sklearn.covariance import ledoit_wolf_shrinkage
+               
             dataset_indicies = Dataset(np.arange(dataset_residuals.nsamples), sa=dataset_residuals.sa)
             partitions = list(generator.generate(dataset_indicies)) \
                          if generator \
@@ -656,6 +658,7 @@ class CrossNobisSearchlight(Searchlight):
             sl_ext_conn = scipy.sparse.lil_matrix((dataset.nfeatures,)*2, dtype=np.bool)
             train_sets = [list(splitter.generate(ds_))[0] for ds_ in partitions]
             self._splits_cov = []
+            self._splits_cov_shrinkage = []
  
             if __debug__:
                 debug('SLC',
@@ -671,6 +674,7 @@ class CrossNobisSearchlight(Searchlight):
                       'Phase 2b2. Compute covariances')
             blocksize = 1e5
             for split_idx, train_idx in enumerate(train_sets):
+                
                 cov_tmp = np.empty(sl_ext_conn.nnz)
                 train_ds = dataset_residuals[train_idx.samples.ravel()]
                 for i in range(int(sl_ext_conn.nnz/1e5+1)):
@@ -678,6 +682,7 @@ class CrossNobisSearchlight(Searchlight):
                     cov_tmp[slz] = (train_ds.samples[:,sl_ext_conn.row[slz]]*train_ds.samples[:,sl_ext_conn.col[slz]]).sum(0)
                     
                 self._splits_cov.append(scipy.sparse.coo_matrix((cov_tmp,(sl_ext_conn.row,sl_ext_conn.col))).tolil())
+                self._splits_cov_shrinkage.append(ledoit_wolf_shrinkage(train_ds.samples))
                 
         if nproc is not None and nproc > 1:
             # split all target ROIs centers into `nproc` equally sized blocks
@@ -735,9 +740,6 @@ class CrossNobisSearchlight(Searchlight):
             debug('SLC',
                   "Starting computing block for %i elements" % len(block))
             start_time = time.time()
-        if self._splits_cov is not None:
-            externals.exists('skl', raise_=True)
-            from sklearn.covariance import ledoit_wolf
 
         ulabels = self._ulabels_numeric
         nlabels = len(ulabels)
@@ -784,10 +786,12 @@ class CrossNobisSearchlight(Searchlight):
                     target_train = self._all_pairs_targets[pair_train]
                     if self._splits_cov is not None:
                         cov = self._splits_cov[spi][roi_fids][:,roi_fids].toarray()
-                        ## TODO shrinkage
+                        shrinkage = self._splits_cov_shrinkage[spi]
+                        mu = np.sum(np.trace(cov))/n_fids
                         cov_shrink = cov*(1-shrinkage)
-                        cov_shrink.flat[::cov.shape[0]+1] += np.trace(cov)*shrinkage
+                        cov_shrink.flat[::cov.shape[0]+1] += mu*shrinkage
                         inv_cov = np.linalg.inv(cov_shrink)
+
                     for pair_test in split2_idx[1]:
                         target_test = self._all_pairs_targets[pair_test]
                         if target_train == target_test:
