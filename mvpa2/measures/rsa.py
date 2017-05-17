@@ -656,13 +656,19 @@ class CrossNobisSearchlight(Searchlight):
             sl_ext_conn = scipy.sparse.lil_matrix((dataset.nfeatures,)*2, dtype=np.bool)
             train_sets = [list(splitter.generate(ds_))[0] for ds_ in partitions]
             self._splits_cov = []
-            
+ 
+            if __debug__:
+                debug('SLC',
+                      'Phase 2b1. Compute neighborhoods')
             for f in roi_ids:
                 neighs = self._queryengine[f]
                 for n1 in neighs:
                     sl_ext_conn[n1, neighs] = True
             sl_ext_conn = sl_ext_conn.tocoo()
             
+            if __debug__:
+                debug('SLC',
+                      'Phase 2b2. Compute covariances')
             blocksize = 1e5
             for split_idx, train_idx in enumerate(train_sets):
                 cov_tmp = np.empty(sl_ext_conn.nnz)
@@ -707,7 +713,7 @@ class CrossNobisSearchlight(Searchlight):
         result_ds = hstack([pr for pr in p_results])
         return result_ds
 
-    def _proc_block(self, block, ds, seed=None, iblock='main'):
+    def _proc_block(self, block, ds, seed=None, iblock='main',shrinkage=.01):
         """Little helper to capture the parts of the computation that can be
         parallelized
 
@@ -768,17 +774,20 @@ class CrossNobisSearchlight(Searchlight):
                 roi_fids = roi_specs
 
             n_fids = len(roi_fids)
+            if n_fids<1:
+                continue
             res = np.zeros(n_pair_targets)
             counts = np.zeros_like(res, dtype=np.uint)
-
 
             for spi, split2_idx, split2 in zip(range(len(self._splits)), self._splits_idx, self._splits):
                 for pair_train in split2_idx[0]:
                     target_train = self._all_pairs_targets[pair_train]
                     if self._splits_cov is not None:
                         cov = self._splits_cov[spi][roi_fids][:,roi_fids].toarray()
-                        shrink_cov, shrinkage = ledoit_wolf(cov)
-                        inv_cov = np.linalg.inv(shrink_cov)
+                        ## TODO shrinkage
+                        cov_shrink = cov*(1-shrinkage)
+                        cov_shrink.flat[::cov.shape[0]+1] += np.trace(cov)*shrinkage
+                        inv_cov = np.linalg.inv(cov_shrink)
                     for pair_test in split2_idx[1]:
                         target_test = self._all_pairs_targets[pair_test]
                         if target_train == target_test:
@@ -792,7 +801,7 @@ class CrossNobisSearchlight(Searchlight):
                                 res[res_idx] += vec_train.dot(vec_test)/n_fids
                             counts[res_idx] += 1
                     if self._splits_cov is not None:
-                        del cov, shrink_cov, inv_cov
+                        del cov, inv_cov
             results[:,i] = res/counts
             if __debug__:
                 msg = 'ROI %i (%i/%i), %i features' % \
