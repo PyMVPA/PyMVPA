@@ -663,26 +663,37 @@ class CrossNobisSearchlight(Searchlight):
             if __debug__:
                 debug('SLC',
                       'Phase 2b1. Compute neighborhoods')
+            sl_ext_conn = set()
             for f in roi_ids:
                 neighs = self._queryengine[f]
-                for n1 in neighs:
-                    sl_ext_conn[n1, neighs] = True
-            sl_ext_conn = sl_ext_conn.tocoo()
+                sl_ext_conn.update(product(neighs,neighs))
+                #for n1 in neighs:
+                #    sl_ext_conn[n1, neighs] = True
+            #sl_ext_conn = sl_ext_conn.tocoo()
+            self._sl_ext_conn = np.sort(np.array(list(sl_ext_conn),dtype=[('row',np.uint),('col',np.uint)]))
+            self._sl_ext_conn = self._sl_ext_conn.view(np.uint).reshape(-1,2).T.copy()
+            del sl_ext_conn
             
-            if __debug__:
-                debug('SLC',
-                      'Phase 2b2. Compute covariances')
-            blocksize = 1e5
+            blocksize = int(1e5)
             for split_idx, train_idx in enumerate(train_sets):
                 
-                cov_tmp = np.empty(sl_ext_conn.nnz)
+                if __debug__:
+                    debug('SLC',
+                          'Phase 2b2. Compute covariances, split %d/%d'%(split_idx, len(train_sets)),cr=True)
+                cov_tmp = np.empty(len(self._sl_ext_conn))
+                
                 train_ds = dataset_residuals[train_idx.samples.ravel()]
-                for i in range(int(sl_ext_conn.nnz/1e5+1)):
+                for i in range(int(len(self._sl_ext_conn)/1e5+1)):
                     slz = slice(i*blocksize,(i+1)*blocksize)
-                    cov_tmp[slz] = (train_ds.samples[:,sl_ext_conn.row[slz]]*train_ds.samples[:,sl_ext_conn.col[slz]]).sum(0)
+                    cov_tmp[slz] = (train_ds.samples[:,self._sl_ext_conn['row'][slz]]*\
+                                    train_ds.samples[:,self._sl_ext_conn['col'][slz]]).sum(0)
                     
-                self._splits_cov.append(scipy.sparse.coo_matrix((cov_tmp,(sl_ext_conn.row,sl_ext_conn.col))).tolil())
+                self._splits_cov.append(cov_tmp)
                 self._splits_cov_shrinkage.append(ledoit_wolf_shrinkage(train_ds.samples))
+            if __debug__:
+                debug('SLC','')
+                          
+                                                    
                 
         if nproc is not None and nproc > 1:
             # split all target ROIs centers into `nproc` equally sized blocks
@@ -718,7 +729,7 @@ class CrossNobisSearchlight(Searchlight):
         result_ds = hstack([pr for pr in p_results])
         return result_ds
 
-    def _proc_block(self, block, ds, seed=None, iblock='main',shrinkage=.01):
+    def _proc_block(self, block, ds, seed=None, iblock='main'):
         """Little helper to capture the parts of the computation that can be
         parallelized
 
@@ -759,6 +770,9 @@ class CrossNobisSearchlight(Searchlight):
         # measure within them
         bar = ProgressBar()
 
+        if self._splits_cov is not None:
+            cov_mask = np.empty(self._sl_ext_conn.shape[1], dtype=np.bool)
+
         for i, f in enumerate(block):
             # retrieve the feature ids of all features in the ROI from the query
             # engine
@@ -774,6 +788,7 @@ class CrossNobisSearchlight(Searchlight):
                 roi_fids = roi_specs.samples[0]
             else:
                 roi_fids = roi_specs
+            roi_fids = sorted(roi_fids)
 
             n_fids = len(roi_fids)
             if n_fids<1:
@@ -781,16 +796,31 @@ class CrossNobisSearchlight(Searchlight):
             res = np.zeros(n_pair_targets)
             counts = np.zeros_like(res, dtype=np.uint)
 
+            if self._splits_cov is not None:
+                cov_mask.fill(False)
+                sl_ext_conn = self._sl_ext_conn#.view(np.uint).reshape(-1,2).T
+                for l,r in zip(*[np.searchsorted(sl_ext_conn[0],roi_fids,s) for s in ['left','right']]):
+                    cov_mask[l:r] = True
+                cov_mask[cov_mask] = np.any(sl_ext_conn[1,cov_mask,np.newaxis] == roi_fids,-1)
+                cov_mask_idx = np.argwhere(cov_mask).flatten()
+                #for n in roi_fids:
+                #    cov_mask[0, cov_mask[0]] = [1, cov_mask[0]]
+                #    cov_mask[0] += (sl_ext_conn == n)
+                #cov_mask[0] *= cov_mask[1]
+                cov = np.empty((n_fids, n_fids))
+                cov_shrink = np.empty((n_fids, n_fids))
+                inv_cov = np.empty((n_fids, n_fids))
+
             for spi, split2_idx, split2 in zip(range(len(self._splits)), self._splits_idx, self._splits):
                 for pair_train in split2_idx[0]:
                     target_train = self._all_pairs_targets[pair_train]
                     if self._splits_cov is not None:
-                        cov = self._splits_cov[spi][roi_fids][:,roi_fids].toarray()
+                        cov[:] = self._splits_cov[spi][cov_mask_idx].reshape(n_fids,n_fids)
                         shrinkage = self._splits_cov_shrinkage[spi]
                         mu = np.sum(np.trace(cov))/n_fids
-                        cov_shrink = cov*(1-shrinkage)
+                        cov_shrink[:] = cov*(1-shrinkage)
                         cov_shrink.flat[::cov.shape[0]+1] += mu*shrinkage
-                        inv_cov = np.linalg.inv(cov_shrink)
+                        inv_cov[:] = np.linalg.inv(cov_shrink)
 
                     for pair_test in split2_idx[1]:
                         target_test = self._all_pairs_targets[pair_test]
@@ -804,8 +834,8 @@ class CrossNobisSearchlight(Searchlight):
                             else:
                                 res[res_idx] += vec_train.dot(vec_test)/n_fids
                             counts[res_idx] += 1
-                    if self._splits_cov is not None:
-                        del cov, inv_cov
+            if self._splits_cov is not None:
+                del cov, cov_shrink, inv_cov, cov_mask_idx
             results[:,i] = res/counts
             if __debug__:
                 msg = 'ROI %i (%i/%i), %i features' % \
