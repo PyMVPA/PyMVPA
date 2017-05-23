@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 if __debug__:
     from mvpa2.base import debug
 
-from itertools import combinations, product
+from itertools import combinations, combinations_with_replacement, product
 import numpy as np
 import tempfile, os
 import time
@@ -608,6 +608,7 @@ class CrossNobisSearchlight(Searchlight):
         # We care only about training and testing partitions (i.e. first two)
         self._splits = list(tuple(splitter.generate(ds_))[:2] for ds_ in partitions)
         del partitions                    # not used any longer
+        self._nsplits = len(self._splits)
 
         self._all_pairs = dict()
         self._all_pairs_targets = dict()
@@ -631,7 +632,7 @@ class CrossNobisSearchlight(Searchlight):
                         self._splits_idx[-1][-1].append(pair)
                         if pair in self._all_pairs:
                             continue
-                        # order the targets to always fill the same half of the dissimilarity matrix
+                        # order the targets to always fill the lower triangle of the dissimilarity matrix
                         if ti<tj:
                             pair_targ = (tj,ti)
                             dif = dataset.samples[j] - dataset.samples[i]
@@ -655,23 +656,23 @@ class CrossNobisSearchlight(Searchlight):
                          if generator \
                             else [dataset_indicies]
             
-            sl_ext_conn = scipy.sparse.lil_matrix((dataset.nfeatures,)*2, dtype=np.bool)
             train_sets = [list(splitter.generate(ds_))[0] for ds_ in partitions]
             self._splits_cov = []
-            self._splits_cov_shrinkage = []
- 
+            self._splits_cov2 = []
+            self._splits_cov_nsamples = []
+            #self._splits_cov_shrinkage = []
+
             if __debug__:
                 debug('SLC',
                       'Phase 2b1. Compute neighborhoods')
             sl_ext_conn = set()
             for f in roi_ids:
-                neighs = self._queryengine[f]
-                sl_ext_conn.update(product(neighs,neighs))
-                #for n1 in neighs:
-                #    sl_ext_conn[n1, neighs] = True
-            #sl_ext_conn = sl_ext_conn.tocoo()
-            self._sl_ext_conn = np.sort(np.array(list(sl_ext_conn),dtype=[('row',np.uint),('col',np.uint)]))
-            self._sl_ext_conn = self._sl_ext_conn.view(np.uint).reshape(-1,2).T.copy()
+                neighs = sorted(self._queryengine[f])
+                #sl_ext_conn.update([(n1,n2) for ni,n1 in enumerate(neighs) for n2 in neighs[:ni+1]])
+                sl_ext_conn.update(combinations_with_replacement(neighs,2))
+                #sl_ext_conn.update(product(neighs,neighs))
+            sl_ext_conn = np.sort(np.array(list(sl_ext_conn),dtype=[('row',np.uint),('col',np.uint)]))
+            self._sl_ext_conn = sl_ext_conn.view(np.uint).reshape(-1,2).T.copy()
             del sl_ext_conn
             
             blocksize = int(1e5)
@@ -680,21 +681,31 @@ class CrossNobisSearchlight(Searchlight):
                 if __debug__:
                     debug('SLC',
                           'Phase 2b2. Compute covariances, split %d/%d'%(split_idx, len(train_sets)),cr=True)
-                cov_tmp = np.empty(len(self._sl_ext_conn))
+                cov_tmp = np.empty(self._sl_ext_conn.shape[1])
+                cov_tmp2 = np.empty(self._sl_ext_conn.shape[1])
                 
-                train_ds = dataset_residuals[train_idx.samples.ravel()]
-                for i in range(int(len(self._sl_ext_conn)/1e5+1)):
+                resid = dataset_residuals.samples[train_idx.samples.ravel()]
+                resid2 = resid**2
+                nsamp = train_idx.nsamples
+
+                for i in range(int(len(cov_tmp)/blocksize+1)):
                     slz = slice(i*blocksize,(i+1)*blocksize)
-                    cov_tmp[slz] = (train_ds.samples[:,self._sl_ext_conn['row'][slz]]*\
-                                    train_ds.samples[:,self._sl_ext_conn['col'][slz]]).sum(0)
-                    
+                    cov_tmp[slz] = np.einsum('ij, ij->j',
+                                             resid[:,self._sl_ext_conn[0,slz]],
+                                             resid[:,self._sl_ext_conn[1,slz]])
+                    cov_tmp2[slz] = np.einsum('ij, ij->j',
+                                             resid2[:,self._sl_ext_conn[0,slz]],
+                                             resid2[:,self._sl_ext_conn[1,slz]])
+                cov_tmp /= nsamp
+                cov_tmp2 /= nsamp
                 self._splits_cov.append(cov_tmp)
-                self._splits_cov_shrinkage.append(ledoit_wolf_shrinkage(train_ds.samples))
+                self._splits_cov2.append(cov_tmp2)
+                self._splits_cov_nsamples.append(nsamp)
+                #self._splits_cov_shrinkage.append(ledoit_wolf_shrinkage(train_ds.samples))
             if __debug__:
                 debug('SLC','')
-                          
-                                                    
-                
+
+
         if nproc is not None and nproc > 1:
             # split all target ROIs centers into `nproc` equally sized blocks
             nproc_needed = min(len(roi_ids), nproc)
@@ -716,10 +727,10 @@ class CrossNobisSearchlight(Searchlight):
                 # should we maybe deepcopy the measure to have a unique and
                 # independent one per process?
                 seed = mvpa2.get_random_seed()
-                compute(block, dataset, seed=seed, iblock=iblock)
+                compute(block, dataset, seed=seed, dataset_residuals=dataset_residuals)
         else:
             # otherwise collect the results in an 1-item list
-            p_results = [self._proc_block(roi_ids, dataset)]
+            p_results = [self._proc_block(roi_ids, dataset, dataset_residuals=dataset_residuals)]
 
         # Finally collect and possibly process results
         # p_results here is either a generator from pprocess.Map or a list.
@@ -729,7 +740,7 @@ class CrossNobisSearchlight(Searchlight):
         result_ds = hstack([pr for pr in p_results])
         return result_ds
 
-    def _proc_block(self, block, ds, seed=None, iblock='main'):
+    def _proc_block(self, block, ds, seed=None, dataset_residuals=False):
         """Little helper to capture the parts of the computation that can be
         parallelized
 
@@ -771,6 +782,7 @@ class CrossNobisSearchlight(Searchlight):
         bar = ProgressBar()
 
         if self._splits_cov is not None:
+            shrinkages = np.zeros((self._nsplits,len(block)))
             cov_mask = np.empty(self._sl_ext_conn.shape[1], dtype=np.bool)
 
         for i, f in enumerate(block):
@@ -788,40 +800,51 @@ class CrossNobisSearchlight(Searchlight):
                 roi_fids = roi_specs.samples[0]
             else:
                 roi_fids = roi_specs
-            roi_fids = sorted(roi_fids)
+            roi_fids = np.sort(roi_fids)
 
             n_fids = len(roi_fids)
             if n_fids<1:
+                results[:,i] = 0
                 continue
             res = np.zeros(n_pair_targets)
             counts = np.zeros_like(res, dtype=np.uint)
 
             if self._splits_cov is not None:
                 cov_mask.fill(False)
-                sl_ext_conn = self._sl_ext_conn#.view(np.uint).reshape(-1,2).T
-                for l,r in zip(*[np.searchsorted(sl_ext_conn[0],roi_fids,s) for s in ['left','right']]):
+                # rows are sorted, optimize sparse matrix slicing
+                #for l,r in zip(*[np.searchsorted(self._sl_ext_conn[0],roi_fids,s) for s in ['left','right']]):
+                for l,r in zip(*np.searchsorted(self._sl_ext_conn[0],[roi_fids,roi_fids+1],'left')):
                     cov_mask[l:r] = True
-                cov_mask[cov_mask] = np.any(sl_ext_conn[1,cov_mask,np.newaxis] == roi_fids,-1)
+                cov_mask[cov_mask] = np.any(self._sl_ext_conn[1,cov_mask,np.newaxis] == roi_fids,-1)
                 cov_mask_idx = np.argwhere(cov_mask).flatten()
-                #for n in roi_fids:
-                #    cov_mask[0, cov_mask[0]] = [1, cov_mask[0]]
-                #    cov_mask[0] += (sl_ext_conn == n)
-                #cov_mask[0] *= cov_mask[1]
+                triu_idx = np.triu_indices(n_fids)
                 cov = np.empty((n_fids, n_fids))
+                cov2 = np.empty((n_fids, n_fids))
                 cov_shrink = np.empty((n_fids, n_fids))
                 inv_cov = np.empty((n_fids, n_fids))
 
             for spi, split2_idx, split2 in zip(range(len(self._splits)), self._splits_idx, self._splits):
+                if self._splits_cov is not None:
+                    cov[triu_idx] = self._splits_cov[spi][cov_mask_idx]
+                    cov2[triu_idx] = self._splits_cov2[spi][cov_mask_idx]
+                    cov[triu_idx[::-1]] = cov[triu_idx]
+                    cov2[triu_idx[::-1]] = cov2[triu_idx]
+                    # ledoit wolf shrinkage
+                    mu = np.sum(np.trace(cov))/n_fids
+                    delta_ = cov.copy()
+                    delta_.flat[::n_fids + 1] -= mu
+                    delta = (delta_ ** 2).sum() / n_fids
+                    beta_ = 1. / (n_fids * self._splits_cov_nsamples[spi]) * np.sum(cov2 - cov ** 2)
+                    beta = min(beta_, delta)
+                    shrinkage = beta / delta
+                    shrinkages[spi,i] = shrinkage
+                    
+                    cov_shrink[:] = cov*(1-shrinkage)
+                    cov_shrink.flat[::cov.shape[0]+1] += mu*shrinkage
+                    inv_cov[:] = np.linalg.inv(cov_shrink)
+
                 for pair_train in split2_idx[0]:
                     target_train = self._all_pairs_targets[pair_train]
-                    if self._splits_cov is not None:
-                        cov[:] = self._splits_cov[spi][cov_mask_idx].reshape(n_fids,n_fids)
-                        shrinkage = self._splits_cov_shrinkage[spi]
-                        mu = np.sum(np.trace(cov))/n_fids
-                        cov_shrink[:] = cov*(1-shrinkage)
-                        cov_shrink.flat[::cov.shape[0]+1] += mu*shrinkage
-                        inv_cov[:] = np.linalg.inv(cov_shrink)
-
                     for pair_test in split2_idx[1]:
                         target_test = self._all_pairs_targets[pair_test]
                         if target_train == target_test:
@@ -835,7 +858,7 @@ class CrossNobisSearchlight(Searchlight):
                                 res[res_idx] += vec_train.dot(vec_test)/n_fids
                             counts[res_idx] += 1
             if self._splits_cov is not None:
-                del cov, cov_shrink, inv_cov, cov_mask_idx
+                del cov, cov2, delta_, cov_shrink, inv_cov, cov_mask_idx
             results[:,i] = res/counts
             if __debug__:
                 msg = 'ROI %i (%i/%i), %i features' % \
@@ -849,5 +872,7 @@ class CrossNobisSearchlight(Searchlight):
         results = Dataset(results,
                           #sa=dict(targets=),
                           fa=ds[:,block].fa)
+        if self._splits_cov is not None:
+            results.fa['shrinkage'] = shrinkages.T
 
         return results
