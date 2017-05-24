@@ -727,10 +727,10 @@ class CrossNobisSearchlight(Searchlight):
                 # should we maybe deepcopy the measure to have a unique and
                 # independent one per process?
                 seed = mvpa2.get_random_seed()
-                compute(block, dataset, seed=seed, dataset_residuals=dataset_residuals)
+                compute(block, dataset, seed=seed)
         else:
             # otherwise collect the results in an 1-item list
-            p_results = [self._proc_block(roi_ids, dataset, dataset_residuals=dataset_residuals)]
+            p_results = [self._proc_block(roi_ids, dataset  )]
 
         # Finally collect and possibly process results
         # p_results here is either a generator from pprocess.Map or a list.
@@ -740,7 +740,7 @@ class CrossNobisSearchlight(Searchlight):
         result_ds = hstack([pr for pr in p_results])
         return result_ds
 
-    def _proc_block(self, block, ds, seed=None, dataset_residuals=False):
+    def _proc_block(self, block, ds, seed=None) :
         """Little helper to capture the parts of the computation that can be
         parallelized
 
@@ -766,6 +766,9 @@ class CrossNobisSearchlight(Searchlight):
         ulabels = self._ulabels_numeric
         nlabels = len(ulabels)
         n_pair_targets = nlabels*(nlabels-1)/2+nlabels
+
+        res = np.zeros(n_pair_targets)
+        counts = np.zeros_like(res, dtype=np.uint)
 
         results = np.empty((n_pair_targets, len(block)))
 
@@ -806,8 +809,6 @@ class CrossNobisSearchlight(Searchlight):
             if n_fids<1:
                 results[:,i] = 0
                 continue
-            res = np.zeros(n_pair_targets)
-            counts = np.zeros_like(res, dtype=np.uint)
 
             if self._splits_cov is not None:
                 cov_mask.fill(False)
@@ -843,22 +844,24 @@ class CrossNobisSearchlight(Searchlight):
                     cov_shrink.flat[::cov.shape[0]+1] += mu*shrinkage
                     inv_cov[:] = np.linalg.inv(cov_shrink)
 
+
+
                 for pair_train in split2_idx[0]:
                     target_train = self._all_pairs_targets[pair_train]
-                    for pair_test in split2_idx[1]:
-                        target_test = self._all_pairs_targets[pair_test]
-                        if target_train == target_test:
-                            t1,t2 = target_train
-                            res_idx = (t1*(t1-1)/2+t1) + t2
-                            vec_train = self._all_pairs[pair_train][roi_fids]
-                            vec_test = self._all_pairs[pair_test][roi_fids] 
-                            if self._splits_cov is not None:
-                                res[res_idx] += vec_train.dot(inv_cov).dot(vec_test.T)/n_fids
-                            else:
-                                res[res_idx] += vec_train.dot(vec_test)/n_fids
-                            counts[res_idx] += 1
+                    vec_train = self._all_pairs[pair_train][roi_fids]
+                    t1,t2 = target_train
+                    res_idx = (t1*(t1-1)/2+t1) + t2
+
+                    all_test_vecs = np.asarray([self._all_pairs[pair_test][roi_fids] \
+                                                 for pair_test in split2_idx[1] if self._all_pairs_targets[pair_test]])
+                    if self._splits_cov is not None:
+                        res[res_idx] += vec_train.dot(inv_cov).dot(all_test_vecs.T).sum()/n_fids
+                    else:
+                        res[res_idx] += vec_train.dot(all_test_vecs).sum()/n_fids
+                    counts[res_idx] += len(all_test_vecs)
+                    
             if self._splits_cov is not None:
-                del cov, cov2, delta_, cov_shrink, inv_cov, cov_mask_idx
+                del cov, cov2, delta_, cov_shrink, inv_cov, cov_mask_idx, roi_fids
             results[:,i] = res/counts
             if __debug__:
                 msg = 'ROI %i (%i/%i), %i features' % \
