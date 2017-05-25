@@ -757,12 +757,14 @@ class CrossNobisSearchlight(Searchlight):
         results = Dataset(np.empty((n_pair_targets*self._nsplits, len(block))),
                           sa=dict(targets=target_pairs),
                           fa=ds[:,block].fa.copy())
-
-        if store_roi_feature_ids = self.ca.is_enabled('roi_feature_ids'):
+        store_roi_feature_ids = self.ca.is_enabled('roi_feature_ids')
+        if store_roi_feature_ids:
             results.fa['roi_feature_ids'] = np.zeros(results.nfeatures, dtype=np.object)
-        if store_roi_sizes = self.ca.is_enabled('roi_sizes'):
+        store_roi_sizes = self.ca.is_enabled('roi_sizes')
+        if store_roi_sizes:
             results.fa['roi_sizes'] = np.zeros(results.nfeatures, dtype=np.uint)
-        if store_roi_center_ids = self.ca.is_enabled('roi_center_ids')
+        store_roi_center_ids = self.ca.is_enabled('roi_center_ids')
+        if store_roi_center_ids:
             results.fa['roi_center_ids'] = block
 
 
@@ -771,7 +773,8 @@ class CrossNobisSearchlight(Searchlight):
         bar = ProgressBar()
 
         if self._splits_cov is not None:
-            if store_roi_shrinkage = self.ca.is_enabled('roi_shrinkage'):
+            store_roi_shrinkage = self.ca.is_enabled('roi_shrinkage')
+            if store_roi_shrinkage:
                 results.fa['roi_shrinkage'] = np.zeros((results.nfeatures,self._nsplits), dtype=np.float)
             cov_mask = np.empty(self._sl_ext_conn.shape[1], dtype=np.bool)
 
