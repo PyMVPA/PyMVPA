@@ -520,10 +520,6 @@ class CrossNobisSearchlight(Searchlight):
 
         self.__all_pairs = None
 
-        # Storage to be used for neighborhood information
-        self.__roi_fids = None
-
-
     def _untrain(self):
         super(CrossNobisSearchlight, self)._untrain()
         self.__all_pairs = None    
@@ -552,7 +548,7 @@ class CrossNobisSearchlight(Searchlight):
                   'Unlike a classifier, %s (for now) operates on already'
                   'flattened datasets' % (self.__class__.__name__))
         labels = targets_sa.value
-        ulabels = targets_sa.unique
+        self._ulabels = ulabels = targets_sa.unique
         nlabels = len(ulabels)
         label2index = dict((l, il) for il, l in enumerate(ulabels))
         labels_numeric = np.array([label2index[l] for l in labels])
@@ -560,20 +556,6 @@ class CrossNobisSearchlight(Searchlight):
         # set the feature dimensions
         nsamples = len(X)
         nrois = len(roi_ids)
-        s_shape = X.shape[1:]           # shape of a single sample
-        # The shape of results
-        r_shape = (nrois,) + X.shape[2:]
-
-
-        def assign_ulabels(a):
-            out = np.empty(shape=a.shape, dtype=ulabels.dtype)
-            it = np.nditer([a, out],
-                    flags = ['external_loop', 'buffered'],
-                    op_flags = [['readonly'],
-                                ['writeonly', 'allocate', 'no_broadcast']])
-            for x, y in it:
-                y[...] = ulabels[x]
-            return it.operands[1]
 
         # 1. Query generator for the splits we will have
         if __debug__:
@@ -770,32 +752,33 @@ class CrossNobisSearchlight(Searchlight):
         res = np.zeros(n_pair_targets)
         counts = np.zeros_like(res, dtype=np.uint)
 
-        results = np.empty((n_pair_targets, len(block)))
+        target_pairs = [(ul1,ul2) for uli, ul1 in enumerate(self._ulabels) for ul2 in self._ulabels[:uli]]
 
-        store_roi_feature_ids = self.ca.is_enabled('roi_feature_ids')
-        store_roi_sizes = self.ca.is_enabled('roi_sizes')
-        store_roi_center_ids = self.ca.is_enabled('roi_center_ids')
+        results = Dataset(np.empty((n_pair_targets*self._nsplits, len(block))),
+                          sa=dict(targets=target_pairs),
+                          fa=ds[:,block].fa.copy())
 
-        assure_dataset = any([store_roi_feature_ids,
-                              store_roi_sizes,
-                              store_roi_center_ids])
+        if store_roi_feature_ids = self.ca.is_enabled('roi_feature_ids'):
+            results.fa['roi_feature_ids'] = np.zeros(results.nfeatures, dtype=np.object)
+        if store_roi_sizes = self.ca.is_enabled('roi_sizes'):
+            results.fa['roi_sizes'] = np.zeros(results.nfeatures, dtype=np.uint)
+        if store_roi_center_ids = self.ca.is_enabled('roi_center_ids')
+            results.fa['roi_center_ids'] = block
+
 
         # put rois around all features in the dataset and compute the
         # measure within them
         bar = ProgressBar()
 
         if self._splits_cov is not None:
-            shrinkages = np.zeros((self._nsplits,len(block)))
+            if store_roi_shrinkage = self.ca.is_enabled('roi_shrinkage'):
+                results.fa['roi_shrinkage'] = np.zeros((results.nfeatures,self._nsplits), dtype=np.float)
             cov_mask = np.empty(self._sl_ext_conn.shape[1], dtype=np.bool)
 
         for i, f in enumerate(block):
             # retrieve the feature ids of all features in the ROI from the query
             # engine
             roi_specs = self._queryengine[f]
-
-            if __debug__ and  debug_slc_:
-                debug('SLC_', 'For %r query returned roi_specs %r'
-                      % (f, roi_specs))
 
             if is_datasetlike(roi_specs):
                 # TODO: unittest
@@ -806,6 +789,16 @@ class CrossNobisSearchlight(Searchlight):
             roi_fids = np.sort(roi_fids)
 
             n_fids = len(roi_fids)
+
+            if store_roi_feature_ids:
+                results.fa.roi_feature_ids[i] = roi_fids
+            if store_roi_sizes:
+                results.fa.roi_sizes[i] = n_fids
+
+            if __debug__ and  debug_slc_:
+                debug('SLC_', 'For %r query returned roi_specs %r'
+                      % (f, roi_specs))
+
             if n_fids<1:
                 results[:,i] = 0
                 continue
@@ -825,6 +818,8 @@ class CrossNobisSearchlight(Searchlight):
                 inv_cov = np.empty((n_fids, n_fids))
 
             for spi, split2_idx, split2 in zip(range(len(self._splits)), self._splits_idx, self._splits):
+                res.fill(0)
+                counts.fill(0)
                 if self._splits_cov is not None:
                     cov[triu_idx] = self._splits_cov[spi][cov_mask_idx]
                     cov2[triu_idx] = self._splits_cov2[spi][cov_mask_idx]
@@ -833,18 +828,17 @@ class CrossNobisSearchlight(Searchlight):
                     # ledoit wolf shrinkage
                     mu = np.sum(np.trace(cov))/n_fids
                     delta_ = cov.copy()
-                    delta_.flat[::n_fids + 1] -= mu
+                    delta_.flat[::n_fids+1] -= mu
                     delta = (delta_ ** 2).sum() / n_fids
                     beta_ = 1. / (n_fids * self._splits_cov_nsamples[spi]) * np.sum(cov2 - cov ** 2)
                     beta = min(beta_, delta)
                     shrinkage = beta / delta
-                    shrinkages[spi,i] = shrinkage
+                    if store_roi_shrinkage:
+                        results.fa.shrinkages[i,spi] = shrinkage
                     
                     cov_shrink[:] = cov*(1-shrinkage)
-                    cov_shrink.flat[::cov.shape[0]+1] += mu*shrinkage
+                    cov_shrink.flat[::n_fids+1] += mu*shrinkage
                     inv_cov[:] = np.linalg.inv(cov_shrink)
-
-
 
                 for pair_train in split2_idx[0]:
                     target_train = self._all_pairs_targets[pair_train]
@@ -853,16 +847,18 @@ class CrossNobisSearchlight(Searchlight):
                     res_idx = (t1*(t1-1)/2+t1) + t2
 
                     all_test_vecs = np.asarray([self._all_pairs[pair_test][roi_fids] \
-                                                 for pair_test in split2_idx[1] if self._all_pairs_targets[pair_test]])
+                                                for pair_test in split2_idx[1] if self._all_pairs_targets[pair_test]])
                     if self._splits_cov is not None:
                         res[res_idx] += vec_train.dot(inv_cov).dot(all_test_vecs.T).sum()/n_fids
                     else:
                         res[res_idx] += vec_train.dot(all_test_vecs).sum()/n_fids
                     counts[res_idx] += len(all_test_vecs)
                     
+                results.samples[spi*n_pair_targets:(spi+1)*n_pair_targets,i] = res/counts
+            
             if self._splits_cov is not None:
                 del cov, cov2, delta_, cov_shrink, inv_cov, cov_mask_idx, roi_fids
-            results[:,i] = res/counts
+            
             if __debug__:
                 msg = 'ROI %i (%i/%i), %i features' % \
                             (f + 1, i + 1, len(block), n_fids)
@@ -871,11 +867,5 @@ class CrossNobisSearchlight(Searchlight):
         if __debug__:
             # just to get to new line
             debug('SLC', '')
-
-        results = Dataset(results,
-                          #sa=dict(targets=),
-                          fa=ds[:,block].fa)
-        if self._splits_cov is not None:
-            results.fa['shrinkage'] = shrinkages.T
 
         return results
