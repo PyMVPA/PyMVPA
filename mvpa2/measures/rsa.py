@@ -28,6 +28,7 @@ from mvpa2.base import externals
 from mvpa2.base.param import Parameter
 from mvpa2.base.constraints import EnsureChoice
 from mvpa2.base.dataset import hstack
+from mvpa2.base.state import ConditionalAttribute
 from mvpa2.mappers.fx import mean_group_sample
 from mvpa2.generators.splitters import Splitter
 
@@ -497,6 +498,9 @@ class Regression(Measure):
 
 class CrossNobisSearchlight(Searchlight):
 
+    roi_shrinkages = ConditionalAttribute(enabled=True,
+        doc="Center ID for all generated ROIs.")
+
     def __init__(self, generator, queryengine,
                  splitter=None,
                  **kwargs):
@@ -752,10 +756,10 @@ class CrossNobisSearchlight(Searchlight):
         res = np.zeros(n_pair_targets)
         counts = np.zeros_like(res, dtype=np.uint)
 
-        target_pairs = [(ul1,ul2) for uli, ul1 in enumerate(self._ulabels) for ul2 in self._ulabels[:uli]]
+        target_pairs = [(ul1,ul2) for uli, ul1 in enumerate(self._ulabels) for ul2 in self._ulabels[:uli+1]]
 
         results = Dataset(np.empty((n_pair_targets*self._nsplits, len(block))),
-                          sa=dict(targets=target_pairs),
+                          sa=dict(targets=target_pairs*self._nsplits),
                           fa=ds[:,block].fa.copy())
         store_roi_feature_ids = self.ca.is_enabled('roi_feature_ids')
         if store_roi_feature_ids:
@@ -773,9 +777,9 @@ class CrossNobisSearchlight(Searchlight):
         bar = ProgressBar()
 
         if self._splits_cov is not None:
-            store_roi_shrinkage = self.ca.is_enabled('roi_shrinkage')
-            if store_roi_shrinkage:
-                results.fa['roi_shrinkage'] = np.zeros((results.nfeatures,self._nsplits), dtype=np.float)
+            store_roi_shrinkages = self.ca.is_enabled('roi_shrinkages')
+            if store_roi_shrinkages:
+                results.fa['roi_shrinkages'] = np.zeros((results.nfeatures,self._nsplits), dtype=np.float)
             cov_mask = np.empty(self._sl_ext_conn.shape[1], dtype=np.bool)
 
         for i, f in enumerate(block):
@@ -803,7 +807,7 @@ class CrossNobisSearchlight(Searchlight):
                       % (f, roi_specs))
 
             if n_fids<1:
-                results[:,i] = 0
+                results.samples[:,i] = 0
                 continue
 
             if self._splits_cov is not None:
@@ -819,6 +823,7 @@ class CrossNobisSearchlight(Searchlight):
                 cov2 = np.empty((n_fids, n_fids))
                 cov_shrink = np.empty((n_fids, n_fids))
                 inv_cov = np.empty((n_fids, n_fids))
+                delta_ = np.empty((n_fids, n_fids))
 
             for spi, split2_idx, split2 in zip(range(len(self._splits)), self._splits_idx, self._splits):
                 res.fill(0)
@@ -830,14 +835,14 @@ class CrossNobisSearchlight(Searchlight):
                     cov2[triu_idx[::-1]] = cov2[triu_idx]
                     # ledoit wolf shrinkage
                     mu = np.sum(np.trace(cov))/n_fids
-                    delta_ = cov.copy()
+                    delta_[:] = cov.copy()
                     delta_.flat[::n_fids+1] -= mu
                     delta = (delta_ ** 2).sum() / n_fids
                     beta_ = 1. / (n_fids * self._splits_cov_nsamples[spi]) * np.sum(cov2 - cov ** 2)
                     beta = min(beta_, delta)
                     shrinkage = beta / delta
-                    if store_roi_shrinkage:
-                        results.fa.shrinkages[i,spi] = shrinkage
+                    if store_roi_shrinkages:
+                        results.fa.roi_shrinkages[i,spi] = shrinkage
                     
                     cov_shrink[:] = cov*(1-shrinkage)
                     cov_shrink.flat[::n_fids+1] += mu*shrinkage
@@ -858,9 +863,11 @@ class CrossNobisSearchlight(Searchlight):
                     counts[res_idx] += len(all_test_vecs)
                     
                 results.samples[spi*n_pair_targets:(spi+1)*n_pair_targets,i] = res/counts
-            
+
+                
             if self._splits_cov is not None:
-                del cov, cov2, delta_, cov_shrink, inv_cov, cov_mask_idx, roi_fids
+                del cov, cov2, delta_, cov_shrink, inv_cov, cov_mask_idx
+            del roi_fids
             
             if __debug__:
                 msg = 'ROI %i (%i/%i), %i features' % \
