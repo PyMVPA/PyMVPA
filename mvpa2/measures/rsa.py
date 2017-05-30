@@ -614,7 +614,7 @@ class CrossNobisSearchlight(Searchlight):
                     ti = labels_numeric[i]
                     for j in split.samples[:ii,0]:
                         tj = labels_numeric[j]
-                        pair = (i,j)
+                        pair = (i,j)                        
                         self._splits_idx[-1][-1].append(pair)
                         if pair in self._all_pairs:
                             continue
@@ -627,6 +627,9 @@ class CrossNobisSearchlight(Searchlight):
                             dif = dataset.samples[i] - dataset.samples[j]
                         self._all_pairs[pair] = dif
                         self._all_pairs_targets[pair] = pair_targ
+        self._all_pairs_idx = self._all_pairs.keys()
+        self._all_pairs = np.asarray([self._all_pairs[k] for k in self._all_pairs_idx])
+        self._all_pairs_targets = np.asarray([self._all_pairs_targets[k] for k in self._all_pairs_idx])
 
         # estimate the residual covariance from the training sets only
         self._splits_cov = None
@@ -661,7 +664,7 @@ class CrossNobisSearchlight(Searchlight):
             self._sl_ext_conn = sl_ext_conn.view(np.uint32).reshape(-1,2).T.copy()
             del sl_ext_conn
             
-            blocksize = int(1e5)
+            blocksize = int(1e6)
             for split_idx, train_idx in enumerate(train_sets):
                 
                 if __debug__:
@@ -676,12 +679,14 @@ class CrossNobisSearchlight(Searchlight):
 
                 for i in range(int(len(cov_tmp)/blocksize+1)):
                     slz = slice(i*blocksize,(i+1)*blocksize)
-                    cov_tmp[slz] = np.einsum('ij, ij->j',
-                                             resid[:,self._sl_ext_conn[0,slz]],
-                                             resid[:,self._sl_ext_conn[1,slz]])
-                    cov_tmp2[slz] = np.einsum('ij, ij->j',
-                                             resid2[:,self._sl_ext_conn[0,slz]],
-                                             resid2[:,self._sl_ext_conn[1,slz]])
+                    np.einsum('ij, ij->j',
+                              resid[:,self._sl_ext_conn[0,slz]],
+                              resid[:,self._sl_ext_conn[1,slz]],
+                              out=cov_tmp[slz])
+                    np.einsum('ij, ij->j',
+                              resid2[:,self._sl_ext_conn[0,slz]],
+                              resid2[:,self._sl_ext_conn[1,slz]],
+                              out=cov_tmp2[slz])
                 cov_tmp /= nsamp
                 cov_tmp2 /= nsamp
                 self._splits_cov.append(cov_tmp)
@@ -827,7 +832,9 @@ class CrossNobisSearchlight(Searchlight):
                 inv_cov = np.empty((n_fids, n_fids))
                 delta_ = np.empty((n_fids, n_fids))
 
-            for spi, split2_idx, split2 in zip(range(len(self._splits)), self._splits_idx, self._splits):
+            tmp_pairs = self._all_pairs[:, roi_fids]
+
+            for spi, split2_idx in enumerate(self._splits_idx):
                 res.fill(0)
                 counts.fill(0)
                 if self._splits_cov is not None:
@@ -850,14 +857,22 @@ class CrossNobisSearchlight(Searchlight):
                     cov_shrink.flat[::n_fids+1] += mu*shrinkage
                     inv_cov[:] = np.linalg.inv(cov_shrink)
 
+                test_idxs = np.asarray([self._all_pairs_idx.index(test_idx) for test_idx in split2_idx[1]])
                 for pair_train in split2_idx[0]:
-                    target_train = self._all_pairs_targets[pair_train]
-                    vec_train = self._all_pairs[pair_train][roi_fids]
+                    train_idx = self._all_pairs_idx.index(pair_train)
+                    target_train = self._all_pairs_targets[train_idx]
+                    vec_train = tmp_pairs[train_idx]
+                    #vec_train = self._all_pairs[pair_train][roi_fids]
                     t1,t2 = target_train
                     res_idx = (t1*(t1-1)/2+t1) + t2
 
-                    all_test_vecs = np.asarray([self._all_pairs[pair_test][roi_fids] \
-                                                for pair_test in split2_idx[1] if self._all_pairs_targets[pair_test]])
+                    self._all_pairs_targets==target_train
+                    
+                    pair_test_idxs = test_idxs[np.all(self._all_pairs_targets[test_idxs]==target_train,1)]
+                    all_test_vecs = tmp_pairs[pair_test_idxs]
+                    #all_test_vecs = np.asarray([self._all_pairs[pair_test][roi_fids] \
+                    #                            for pair_test in split2_idx[1] \
+                    #                            if self._all_pairs_targets[pair_test]==target_train])
                     if self._splits_cov is not None:
                         res[res_idx] += vec_train.dot(inv_cov).dot(all_test_vecs.T).sum()/n_fids
                     else:
