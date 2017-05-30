@@ -657,8 +657,8 @@ class CrossNobisSearchlight(Searchlight):
                 #sl_ext_conn.update([(n1,n2) for ni,n1 in enumerate(neighs) for n2 in neighs[:ni+1]])
                 sl_ext_conn.update(combinations_with_replacement(neighs,2))
                 #sl_ext_conn.update(product(neighs,neighs))
-            sl_ext_conn = np.sort(np.array(list(sl_ext_conn),dtype=[('row',np.uint),('col',np.uint)]))
-            self._sl_ext_conn = sl_ext_conn.view(np.uint).reshape(-1,2).T.copy()
+            sl_ext_conn = np.sort(np.array(list(sl_ext_conn),dtype=[('row',np.uint32),('col',np.uint32)]))
+            self._sl_ext_conn = sl_ext_conn.view(np.uint32).reshape(-1,2).T.copy()
             del sl_ext_conn
             
             blocksize = int(1e5)
@@ -687,7 +687,7 @@ class CrossNobisSearchlight(Searchlight):
                 self._splits_cov.append(cov_tmp)
                 self._splits_cov2.append(cov_tmp2)
                 self._splits_cov_nsamples.append(nsamp)
-                #self._splits_cov_shrinkage.append(ledoit_wolf_shrinkage(train_ds.samples))
+                del resid, resid2
             if __debug__:
                 debug('SLC','')
 
@@ -793,7 +793,7 @@ class CrossNobisSearchlight(Searchlight):
                 roi_fids = roi_specs.samples[0]
             else:
                 roi_fids = roi_specs
-            roi_fids = np.sort(roi_fids)
+            roi_fids = np.sort(np.asarray(roi_fids,dtype=np.uint32))
 
             n_fids = len(roi_fids)
 
@@ -813,10 +813,12 @@ class CrossNobisSearchlight(Searchlight):
             if self._splits_cov is not None:
                 cov_mask.fill(False)
                 # rows are sorted, optimize sparse matrix slicing
-                #for l,r in zip(*[np.searchsorted(self._sl_ext_conn[0],roi_fids,s) for s in ['left','right']]):
-                for l,r in zip(*np.searchsorted(self._sl_ext_conn[0],[roi_fids,roi_fids+1],'left')):
-                    cov_mask[l:r] = True
-                cov_mask[cov_mask] = np.any(self._sl_ext_conn[1,cov_mask,np.newaxis] == roi_fids,-1)
+                tmp_idx = []
+                lr_rows = np.searchsorted(self._sl_ext_conn[0],[roi_fids,roi_fids+1],'left')
+                for l,r in zip(*lr_rows):
+                    col_idx = self._sl_ext_conn[1,l:r]
+                    for fid in roi_fids:
+                        cov_mask[l:r] |= (col_idx == fid)
                 cov_mask_idx = np.argwhere(cov_mask).flatten()
                 triu_idx = np.triu_indices(n_fids)
                 cov = np.empty((n_fids, n_fids))
