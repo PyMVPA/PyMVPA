@@ -7,13 +7,10 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Plumbing layer for PyMVPA
-
 Module Organization
 ===================
-
 mvpa2.base module contains various modules which are used through out
 PyMVPA code, and are generic building blocks
-
 :group Basic: externals, config, verbosity, dochelpers
 """
 
@@ -45,7 +42,6 @@ class _SingletonType(type):
 
 class __Singleton:
     """To ensure single instance of a class instantiation (object)
-
     """
 
     __metaclass__ = _SingletonType
@@ -85,7 +81,6 @@ verbose = __Singleton("verbose", LevelLogger(
 # Helper for errors printing
 def error(msg, critical=True):
     """Helper function to output errors in a consistent way.
-
     Parameters
     ----------
     msg : string
@@ -104,13 +99,11 @@ if cfg.has_option('general', 'verbose'):
 
 class WarningLog(OnceLogger):
     """Logging class of messsages to be printed just once per each message
-
     """
 
     def __init__(self, btlevels=10, btdefault=False,
                  maxcount=1, *args, **kwargs):
         """Define Warning logger.
-
         It is defined by
           btlevels : int
             how many levels of backtrack to print to give a hint on WTF
@@ -368,7 +361,6 @@ if __debug__:
 
         class _pymvpa_stdout_debug(object):
             """
-
             Kudos to CODEHEAD
             http://codingrecipes.com/decorating-pythons-sysstdout
             for this design pattern
