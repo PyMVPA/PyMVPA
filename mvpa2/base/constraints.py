@@ -21,13 +21,12 @@ import numpy as np
 if __debug__:
     from mvpa2.base import debug
 
-
 class Constraint(object):
     """Base class for input value conversion/validation.
+    
     These classes are also meant to be able to generate appropriate
     documentation on an appropriate parameter value.
     """
-
     def __and__(self, other):
         return Constraints(self, other)
 
@@ -49,11 +48,9 @@ class Constraint(object):
         # used as a condensed primer for the parameter lists
         raise NotImplementedError("abstract class")
 
-
 class EnsureDType(Constraint):
     """Ensure that an input (or several inputs) are of a particular data type.
     """
-
     # TODO extend to support numpy-like dtype specs, e.g. 'int64'
     # in addition to functors
     def __init__(self, dtype):
@@ -85,25 +82,22 @@ class EnsureDType(Constraint):
 class EnsureInt(EnsureDType):
     """Ensure that an input (or several inputs) are of a data type 'int'.
     """
-
     def __init__(self):
         """Initializes EnsureDType with int"""
         EnsureDType.__init__(self, int)
 
-
+        
 class EnsureFloat(EnsureDType):
     """Ensure that an input (or several inputs) are of a data type 'float'.
     """
-
     def __init__(self):
         """Initializes EnsureDType with float"""
         EnsureDType.__init__(self, float)
 
-
+        
 class EnsureListOf(Constraint):
     """Ensure that an input is a list of a particular data type
     """
-
     def __init__(self, dtype):
         """
         Parameters
@@ -151,14 +145,14 @@ class EnsureTupleOf(Constraint):
     def long_description(self):
         return "value must be convertible to %s" % self.short_description()
 
-
+    
 class EnsureBool(Constraint):
     """Ensure that an input is a bool.
+    
     A couple of literal labels are supported, such as:
     False: '0', 'no', 'off', 'disable', 'false'
     True: '1', 'yes', 'on', 'enable', 'true'
     """
-
     def __call__(self, value):
         if isinstance(value, bool):
             return value
@@ -176,12 +170,12 @@ class EnsureBool(Constraint):
     def short_description(self):
         return 'bool'
 
-
+    
 class EnsureStr(Constraint):
     """Ensure an input is a string.
+    
     No automatic conversion is attempted.
     """
-
     def __call__(self, value):
         if not isinstance(value, basestring):
             # do not perform a blind conversion ala str(), as almost
@@ -196,10 +190,9 @@ class EnsureStr(Constraint):
     def short_description(self):
         return 'str'
 
-
+    
 class EnsureNone(Constraint):
     """Ensure an input is of value `None`"""
-
     def __call__(self, value):
         if value is None:
             return None
@@ -212,7 +205,7 @@ class EnsureNone(Constraint):
     def long_description(self):
         return 'value must be `None`'
 
-
+    
 class EnsureChoice(Constraint):
     """Ensure an input is element of a set of possible values"""
 
@@ -240,9 +233,9 @@ class EnsureChoice(Constraint):
 
 class EnsureRange(Constraint):
     """Ensure an input is within a particular range
+    
     No type checks are performed.
     """
-
     def __init__(self, min=None, max=None):
         """
         Parameters
@@ -276,12 +269,13 @@ class EnsureRange(Constraint):
 
 class AltConstraints(Constraint):
     """Logical OR for constraints.
+    
     An arbitrary number of constraints can be given. They are evaluated in the
     order in which they were specified. The value returned by the first
     constraint that does not raise an exception is the global return value.
+    
     Documentation is aggregated for all alternative constraints.
     """
-
     def __init__(self, *constraints):
         """
         Parameters
@@ -328,13 +322,14 @@ class AltConstraints(Constraint):
 
 class Constraints(Constraint):
     """Logical AND for constraints.
+    
     An arbitrary number of constraints can be given. They are evaluated in the
     order in which they were specified. The return value of each constraint is
     passed an input into the next. The return value of the last constraint
     is the global return value. No intermediate exceptions are caught.
+    
     Documentation is aggregated for all constraints.
     """
-
     def __init__(self, *constraints):
         """
         Parameters
@@ -394,3 +389,4 @@ def expand_contraint_spec(spec):
             return constraint_spec_map[spec]
         except KeyError:
             raise ValueError("unsupport constraint specification '%r'" % (spec,))
+
