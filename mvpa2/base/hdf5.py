@@ -787,7 +787,9 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
 
     # common container handling, either __reduce__ was not possible
     # or it was the default implementation
-    if pieces is None or pieces[0].__name__ == '_reconstructor':
+    # _reconstructor could be overloaded by e.g. shogun with _sg_reconstructor
+    # which makes our tender piece of magic fail
+    if pieces is None or pieces[0].__name__.endswith('_reconstructor'):
         # figure out the source module
         if hasattr(obj, '__module__'):
             src_module = obj.__module__
