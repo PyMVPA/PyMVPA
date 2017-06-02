@@ -546,7 +546,7 @@ def _hdf_to_ndarray(hdf):
             shape = hdf.attrs['shape']
         if 'dtype_names' in hdf.attrs:
             assert('dtype' not in hdf.attrs)
-            names = [x.decode() for x in hdf.attrs['dtype_names']]
+            names = [x for x in hdf.attrs['dtype_names']]
             dtypes = [x.decode() for x in hdf.attrs['dtype_types']]
             dtype = zip(names, dtypes)
         else:
