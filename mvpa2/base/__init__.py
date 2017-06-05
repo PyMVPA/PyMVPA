@@ -14,6 +14,9 @@ PyMVPA code, and are generic building blocks
 :group Basic: externals, config, verbosity, dochelpers
 """
 
+from builtins import object
+from future.utils import with_metaclass
+from functools import reduce
 __docformat__ = 'restructuredtext'
 
 
@@ -40,11 +43,9 @@ class _SingletonType(type):
         return mcs._instances[sid]
 
 
-class __Singleton:
+class __Singleton(with_metaclass(_SingletonType, object)):
     """To ensure single instance of a class instantiation (object)
     """
-
-    __metaclass__ = _SingletonType
 
     def __init__(self, *args):
         pass
