@@ -8,9 +8,12 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Registry-like monster"""
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
 __docformat__ = 'restructuredtext'
 
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 import os
 from os.path import join as pathjoin
 
@@ -85,9 +88,9 @@ class ConfigManager(SafeConfigParser):
             self.__cfg_filenames = []
 
         # set critical defaults
-        for sec, vars in ConfigManager._DEFAULTS.iteritems():
+        for sec, vars in ConfigManager._DEFAULTS.items():
             self.add_section(sec)
-            for key, value in vars.iteritems():
+            for key, value in vars.items():
                 self.set(sec, key, value)
 
         # now get the setting
@@ -122,7 +125,7 @@ class ConfigManager(SafeConfigParser):
         files = self.read(filenames)
 
         # no look for variables in the environment
-        for var in [v for v in os.environ.keys() if v.startswith('MVPA_')]:
+        for var in [v for v in list(os.environ.keys()) if v.startswith('MVPA_')]:
             # strip leading 'MVPA_' and lower case entries
             svar = var[5:].lower()
 
