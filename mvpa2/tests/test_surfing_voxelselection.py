@@ -361,7 +361,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         # clean up
         all_fns = [volfn, volfngz, outerfn, innerfn, intermediatefn]
-        map(os.remove, all_fns)
+        list(map(os.remove, all_fns))
 
         for k, vs in params.iteritems():
             if not k in tested_params:

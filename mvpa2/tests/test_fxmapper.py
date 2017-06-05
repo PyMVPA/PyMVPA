@@ -181,7 +181,7 @@ def test_fx_native_calls(f):
     import inspect
 
     ds = datasets['uni2small']
-    if f in ['size', 'rollaxis', 'stack']:
+    if f in ['size', 'rollaxis', 'stack', 'expand_dims']:
         # really not appropriate ones here to test
         return
     try:
