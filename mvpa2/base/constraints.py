@@ -27,6 +27,7 @@ class Constraint(object):
     These classes are also meant to be able to generate appropriate
     documentation on an appropriate parameter value.
     """
+
     def __and__(self, other):
         return Constraints(self, other)
 
@@ -150,16 +151,10 @@ class EnsureTupleOf(Constraint):
     def long_description(self):
         return "value must be convertible to %s" % self.short_description()
 
-<<<<<<< HEAD
 
 class EnsureBool(Constraint):
     """Ensure that an input is a bool.
-=======
     
-class EnsureBool(Constraint):
-    """Ensure that an input is a bool.
-    
->>>>>>> origin/patch-1
     A couple of literal labels are supported, such as:
     False: '0', 'no', 'off', 'disable', 'false'
     True: '1', 'yes', 'on', 'enable', 'true'
@@ -182,16 +177,9 @@ class EnsureBool(Constraint):
     def short_description(self):
         return 'bool'
 
-<<<<<<< HEAD
-
-class EnsureStr(Constraint):
-    """Ensure an input is a string.
-=======
-    
 class EnsureStr(Constraint):
     """Ensure an input is a string.
     
->>>>>>> origin/patch-1
     No automatic conversion is attempted.
     """
 
@@ -209,11 +197,7 @@ class EnsureStr(Constraint):
     def short_description(self):
         return 'str'
 
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> origin/patch-1
 class EnsureNone(Constraint):
     """Ensure an input is of value `None`"""
 
@@ -229,11 +213,7 @@ class EnsureNone(Constraint):
     def long_description(self):
         return 'value must be `None`'
 
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> origin/patch-1
 class EnsureChoice(Constraint):
     """Ensure an input is element of a set of possible values"""
 
@@ -261,10 +241,7 @@ class EnsureChoice(Constraint):
 
 class EnsureRange(Constraint):
     """Ensure an input is within a particular range
-<<<<<<< HEAD
-=======
-    
->>>>>>> origin/patch-1
+
     No type checks are performed.
     """
 
@@ -301,17 +278,15 @@ class EnsureRange(Constraint):
 
 class AltConstraints(Constraint):
     """Logical OR for constraints.
-<<<<<<< HEAD
-    An arbitrary number of constraints can be given. They are evaluated in the
-    order in which they were specified. The value returned by the first
-    constraint that does not raise an exception is the global return value.
-=======
-    
+
     An arbitrary number of constraints can be given. They are evaluated in the
     order in which they were specified. The value returned by the first
     constraint that does not raise an exception is the global return value.
     
->>>>>>> origin/patch-1
+    An arbitrary number of constraints can be given. They are evaluated in the
+    order in which they were specified. The value returned by the first
+    constraint that does not raise an exception is the global return value.
+    
     Documentation is aggregated for all alternative constraints.
     """
 
@@ -361,18 +336,12 @@ class AltConstraints(Constraint):
 
 class Constraints(Constraint):
     """Logical AND for constraints.
-<<<<<<< HEAD
-=======
-    
->>>>>>> origin/patch-1
+
     An arbitrary number of constraints can be given. They are evaluated in the
     order in which they were specified. The return value of each constraint is
     passed an input into the next. The return value of the last constraint
     is the global return value. No intermediate exceptions are caught.
-<<<<<<< HEAD
-=======
-    
->>>>>>> origin/patch-1
+
     Documentation is aggregated for all constraints.
     """
 
