@@ -8,7 +8,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Distance functions to be used in kernels and elsewhere
 """
+from __future__ import division
 
+from builtins import range
+from past.utils import old_div
 __docformat__ = 'restructuredtext'
 
 # TODO: Make all distance functions accept 2D matrices samples x features
@@ -209,7 +212,7 @@ def squared_euclidean_distance(data1, data2=None, weight=None):
         if less0num > 0:
             norm0 = np.linalg.norm(squared_euclidean_distance_matrix[less0])
             totalnorm = np.linalg.norm(squared_euclidean_distance_matrix)
-            if totalnorm != 0 and norm0 / totalnorm > 1e-8:
+            if totalnorm != 0 and old_div(norm0, totalnorm) > 1e-8:
                 warning("Found %d elements out of %d unstable (<0) in " \
                         "computation of squared_euclidean_distance_matrix. " \
                         "Their norm is %s when total norm is %s" % \
@@ -248,9 +251,9 @@ def one_minus_correlation(X, Y):
     # check if matrices have same number of columns
     if __debug__:
         if not X.shape[1] == Y.shape[1]:
-            raise ValueError, 'correlation() requires to matrices with the ' \
+            raise ValueError('correlation() requires to matrices with the ' \
                               'same #columns (Got: %s and %s)' \
-                              % (X.shape, Y.shape)
+                              % (X.shape, Y.shape))
 
     # zscore each sample/row
     Zx = X - np.c_[X.mean(axis=1)]
@@ -258,7 +261,7 @@ def one_minus_correlation(X, Y):
     Zy = Y - np.c_[Y.mean(axis=1)]
     Zy /= np.c_[Y.std(axis=1)]
 
-    C = ((np.matrix(Zx) * np.matrix(Zy).T) / Zx.shape[1]).A
+    C = (old_div((np.matrix(Zx) * np.matrix(Zy).T), Zx.shape[1])).A
 
     # let it behave like a distance, i.e. smaller is closer
     C -= 1.0
@@ -308,9 +311,8 @@ def pnorm_w_python(data1, data2=None, weight=None, p=2,
     S2, F2 = data2.shape[:2]
     # sanity check
     if not (F1==F2==weight.size):
-        raise ValueError, \
-              "Datasets should have same #columns == #weights. Got " \
-              "%d %d %d" % (F1, F2, weight.size)
+        raise ValueError("Datasets should have same #columns == #weights. Got " \
+              "%d %d %d" % (F1, F2, weight.size))
     d = np.zeros((S1, S2), 'd')
 
     # Adjust local functions for specific p values
@@ -321,12 +323,12 @@ def pnorm_w_python(data1, data2=None, weight=None, p=2,
         af = lambda x:x
     else:
         pf = lambda x:x ** p
-        af = lambda x:x ** (1.0/p)
+        af = lambda x:x ** (old_div(1.0,p))
 
     # heuristic 'auto' might need to be adjusted
     if heuristic == 'auto':
         heuristic = {False: 'samples',
-                     True: 'features'}[(F1/S1) < 500]
+                     True: 'features'}[(old_div(F1,S1)) < 500]
 
     if heuristic == 'features':
         #  Efficient implementation if the feature size is little.
@@ -337,13 +339,13 @@ def pnorm_w_python(data1, data2=None, weight=None, p=2,
     elif heuristic == 'samples':
         #  Efficient implementation if the feature size is much larger
         #  than number of samples
-        for NS in xrange(S1):
+        for NS in range(S1):
             dfw = pf(np.abs(data1[NS] - data2) * weight)
             d[NS] = np.sum(dfw, axis=1)
             pass
     else:
-        raise ValueError, "Unknown heuristic '%s'. Need one of " \
-              "'auto', 'samples', 'features'" % heuristic
+        raise ValueError("Unknown heuristic '%s'. Need one of " \
+              "'auto', 'samples', 'features'" % heuristic)
     return af(d)
 
 
@@ -379,9 +381,8 @@ if externals.exists('weave') or externals.exists('scipy.weave') :
         code = ""
         if data2 == None or id(data1)==id(data2):
             if not (F1==weight.size):
-                raise ValueError, \
-                      "Dataset should have same #columns == #weights. Got " \
-                      "%d %d" % (F1, weight.size)
+                raise ValueError("Dataset should have same #columns == #weights. Got " \
+                      "%d %d" % (F1, weight.size))
             F = F1
             d = np.zeros((S1, S1), 'd')
             try:
@@ -413,13 +414,12 @@ if externals.exists('weave') or externals.exists('scipy.weave') :
                                type_converters=converters.blitz,
                                compiler = 'gcc')
             d = d + np.triu(d).T # copy upper part to lower part
-            return d**(1.0/p)
+            return d**(old_div(1.0,p))
 
         S2, F2 = data2.shape[:2]
         if not (F1==F2==weight.size):
-            raise ValueError, \
-                  "Datasets should have same #columns == #weights. Got " \
-                  "%d %d %d" % (F1, F2, weight.size)
+            raise ValueError("Datasets should have same #columns == #weights. Got " \
+                  "%d %d %d" % (F1, F2, weight.size))
         F = F1
         d = np.zeros((S1, S2), 'd')
         try:
@@ -452,7 +452,7 @@ if externals.exists('weave') or externals.exists('scipy.weave') :
                                 'F', 'weight', 'd', 'p'],
                                type_converters=converters.blitz,
                                compiler = 'gcc')
-        return d**(1.0/p)
+        return d**(old_div(1.0,p))
 
 else:
     # Bind pure python implementation

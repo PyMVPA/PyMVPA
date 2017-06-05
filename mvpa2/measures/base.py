@@ -17,6 +17,7 @@ has to be in some iterable container.
 
 """
 
+from builtins import str
 __docformat__ = 'restructuredtext'
 
 import numpy as np
@@ -153,7 +154,7 @@ class Measure(Learner):
                 elif tail in ['any', 'both']:
                     acdf = 1.0 - np.clip(np.abs(null_prob.samples), 0, 0.5)
                 else:
-                    raise RuntimeError, 'Unhandled tail %s' % tail
+                    raise RuntimeError('Unhandled tail %s' % tail)
                 # We need to clip to avoid non-informative inf's ;-)
                 # that happens due to lack of precision in mantissa
                 # which is 11 bits in double. We could clip values
@@ -525,7 +526,7 @@ class CrossValidation(RepeatedMeasure):
             training_stats = node.ca['training_stats'].value
             if isinstance(training_stats, dict):
                 # if it was a dictionary of results - we should collect them per item
-                for k,v in training_stats.iteritems():
+                for k,v in training_stats.items():
                     if not len(ca['training_stats'].value) or k not in ca['training_stats'].value:
                         ca['training_stats'].value[k] = v
                     else:
@@ -603,7 +604,7 @@ class TransferMeasure(Measure):
         # once
         # activate the dataset splitter
         dsgen = splitter.generate(ds)
-        dstrain = dsgen.next()
+        dstrain = next(dsgen)
 
         if not len(dstrain):
             raise ValueError(
@@ -623,7 +624,7 @@ class TransferMeasure(Measure):
         # TODO get training confusion/stats
 
         # run with second
-        dstest = dsgen.next()
+        dstest = next(dsgen)
         if not len(dstest):
             raise ValueError(
                 "Got empty testing dataset from splitting in TransferMeasure. "
@@ -708,7 +709,7 @@ class StaticMeasure(Measure):
         """
         Measure.__init__(self, *args, **kwargs)
         if measure is None:
-            raise ValueError, "Sensitivity measure has to be provided"
+            raise ValueError("Sensitivity measure has to be provided")
         self.__measure = measure
         self.__bias = bias
 
@@ -783,9 +784,8 @@ class Sensitivity(FeaturewiseMeasure):
                     found = True
                     break
             if not found:
-                raise ValueError, \
-                  "Classifier %s has to be of allowed class (%s), but is %r" \
-                  % (clf, _LEGAL_CLFS, type(clf))
+                raise ValueError("Classifier %s has to be of allowed class (%s), but is %r" \
+                  % (clf, _LEGAL_CLFS, type(clf)))
 
         self.__clf = clf
         """Classifier used to computed sensitivity"""
@@ -983,8 +983,7 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
         Sensitivity.__init__(self, clf, **kwargs)
 
         if analyzer is not None and len(self._slave_kwargs):
-            raise ValueError, \
-                  "Provide either analyzer of slave_* arguments, not both"
+            raise ValueError("Provide either analyzer of slave_* arguments, not both")
 
         # Do not force_train slave sensitivity since the dataset might
         # be inappropriate -- rely on the classifier being trained by
@@ -1027,9 +1026,8 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
             if self.__analyzer is None:
                 analyzer = clf.get_sensitivity_analyzer(**(self._slave_kwargs))
                 if analyzer is None:
-                    raise ValueError, \
-                          "Wasn't able to figure basic analyzer for clf %r" % \
-                          (clf,)
+                    raise ValueError("Wasn't able to figure basic analyzer for clf %r" % \
+                          (clf,))
                 if __debug__:
                     debug("SA", "Selected analyzer %r for clf %r" % \
                           (analyzer, clf))
@@ -1072,8 +1070,7 @@ class ProxyClassifierSensitivityAnalyzer(Sensitivity):
         Sensitivity.__init__(self, clf, **kwargs)
         # _slave_kwargs is assigned due to assign=True in @group_kwargs
         if analyzer is not None and len(self._slave_kwargs):
-            raise ValueError, \
-                  "Provide either analyzer of slave_* arguments, not both"
+            raise ValueError("Provide either analyzer of slave_* arguments, not both")
 
         # Do not force_train slave sensitivity since the dataset might
         # be inappropriate -- rely on the classifier being trained by
@@ -1099,9 +1096,8 @@ class ProxyClassifierSensitivityAnalyzer(Sensitivity):
             analyzer = clfclf.get_sensitivity_analyzer(
                 **(self._slave_kwargs))
             if analyzer is None:
-                raise ValueError, \
-                      "Wasn't able to figure basic analyzer for clf %s" % \
-                      `clfclf`
+                raise ValueError("Wasn't able to figure basic analyzer for clf %s" % \
+                      repr(clfclf))
             if __debug__:
                 debug("SA", "Selected analyzer %s for clf %s" % \
                       (analyzer, clfclf))

@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##g
 """Parameter representation"""
 
+from builtins import str
 __docformat__ = 'restructuredtext'
 
 import re
@@ -101,7 +102,7 @@ class Parameter(IndexedCollectable):
         # and potentially dangerous...
         # let's at least keep track of what is passed
         self._additional_props = []
-        for k, v in kwargs.iteritems():
+        for k, v in kwargs.items():
             self.__setattr__(k, v)
             self._additional_props.append(k)
 
@@ -123,7 +124,7 @@ class Parameter(IndexedCollectable):
 
         if __debug__:
             if 'val' in kwargs:
-                raise ValueError, "'val' property name is illegal."
+                raise ValueError("'val' property name is illegal.")
 
 
     def __reduce__(self):
@@ -203,7 +204,7 @@ class Parameter(IndexedCollectable):
             paramsdoc += [indent + x
                           for x in textwrap.wrap(doc, width=width-len(indent),
                                                  replace_whitespace=True)]
-        except Exception, e:
+        except Exception as e:
             pass
         return '\n'.join(paramsdoc)
 
@@ -226,9 +227,8 @@ class Parameter(IndexedCollectable):
         different_value = self._value != val
         isarray = isinstance(different_value, np.ndarray)
         if self._ro and not init:
-            raise RuntimeError, \
-                  "Attempt to set read-only parameter %s to %s" \
-                  % (self.name, val)
+            raise RuntimeError("Attempt to set read-only parameter %s to %s" \
+                  % (self.name, val))
         if (isarray and np.any(different_value)) or \
            ((not isarray) and different_value):
             if __debug__:

@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Helpers for feature selection (scoring, selection strategies)"""
 
+from builtins import object
 __docformat__ = 'restructuredtext'
 
 from math import floor
@@ -110,8 +111,7 @@ class MultiStopCrit(StoppingCriterion):
           of base criteria.
         """
         if not mode in ('and', 'or'):
-            raise ValueError, \
-                  "A mode %r is not supported." % (mode, )
+            raise ValueError("A mode %r is not supported." % (mode, ))
 
         self.__mode = mode
         self.__crits = crits
@@ -143,9 +143,8 @@ class FixedErrorThresholdStopCrit(StoppingCriterion):
         """
         StoppingCriterion.__init__(self)
         if threshold > 1.0 or threshold < 0.0:
-            raise ValueError, \
-                  "Threshold %f is out of a reasonable range [0,1]." \
-                    % threshold
+            raise ValueError("Threshold %f is out of a reasonable range [0,1]." \
+                    % threshold)
         self.__threshold = threshold
 
 
@@ -176,9 +175,8 @@ class NStepsStopCrit(StoppingCriterion):
         """
         StoppingCriterion.__init__(self)
         if steps < 0:
-            raise ValueError, \
-                  "Number of steps %i is out of a reasonable range." \
-                    % steps
+            raise ValueError("Number of steps %i is out of a reasonable range." \
+                    % steps)
         self.__steps = steps
 
 
@@ -210,8 +208,7 @@ class NBackHistoryStopCrit(StoppingCriterion):
         """
         StoppingCriterion.__init__(self)
         if steps < 0:
-            raise ValueError, \
-                  "Number of steps (got %d) should be non-negative" % steps
+            raise ValueError("Number of steps (got %d) should be non-negative" % steps)
         self.__bestdetector = bestdetector
         self.__steps = steps
 
@@ -262,8 +259,8 @@ class ElementSelector(ClassWithCollections):
         """Choose `select` or `discard` mode."""
 
         if not mode in ['discard', 'select']:
-            raise ValueError, "Unkown selection mode [%s]. Can only be one " \
-                              "of 'select' or 'discard'." % mode
+            raise ValueError("Unknown selection mode [%s]. Can only be one " \
+                              "of 'select' or 'discard'." % mode)
 
         self.__mode = mode
 
@@ -419,8 +416,8 @@ class TailSelector(ElementSelector):
     def _set_tail(self, tail):
         """Set the tail to be processed."""
         if not tail in ['lower', 'upper']:
-            raise ValueError, "Unkown tail argument [%s]. Can only be one " \
-                              "of 'lower' or 'upper'." % tail
+            raise ValueError("Unkown tail argument [%s]. Can only be one " \
+                              "of 'lower' or 'upper'." % tail)
 
         self.__tail = tail
 
@@ -549,9 +546,8 @@ class FractionTailSelector(TailSelector):
     def _set_f_elements(self, felements):
         """What fraction to discard"""
         if felements > 1.0 or felements < 0.0:
-            raise ValueError, \
-                  "Fraction (%f) cannot be outside of [0.0,1.0]" \
-                  % felements
+            raise ValueError("Fraction (%f) cannot be outside of [0.0,1.0]" \
+                  % felements)
 
         self.__felements = felements
 

@@ -9,6 +9,10 @@
 """Helper to map literal attribute to numerical ones (and back)"""
 
 
+from builtins import zip
+from builtins import str
+from builtins import range
+from builtins import object
 import numpy as np
 from mvpa2.base.types import is_sequence_type
 
@@ -115,14 +119,14 @@ class AttributeMap(object):
         if self._nmap is None:
             return None
         else:
-            return self._nmap.keys()
+            return list(self._nmap.keys())
 
     def values(self):
         """Returns the numerical values of the attribute map."""
         if self._nmap is None:
             return None
         else:
-            return self._nmap.values()
+            return list(self._nmap.values())
 
     def iteritems(self):
         """Dict-like generator yielding literal/numerical pairs."""
@@ -156,7 +160,7 @@ class AttributeMap(object):
         if self._nmap is None:
             # sorted list of unique attr values
             ua = np.unique(attr)
-            self._nmap = dict(zip(ua, range(len(ua))))
+            self._nmap = dict(list(zip(ua, list(range(len(ua))))))
         elif __debug__:
             ua = np.unique(attr)
             mkeys = sorted(self._nmap.keys())
@@ -169,7 +173,7 @@ class AttributeMap(object):
 
 
         num = np.empty(attr.shape, dtype=np.int)
-        for k, v in self._nmap.iteritems():
+        for k, v in self._nmap.items():
             num[attr == k] = v
         return num
 
@@ -178,19 +182,18 @@ class AttributeMap(object):
         """
         cr = self.collisions_resolution
         if cr == 'lucky':
-            lmap = dict([(v, k) for k, v in self._nmap.iteritems()])
+            lmap = dict([(v, k) for k, v in self._nmap.items()])
         elif cr in [None, 'tuple']:
             lmap = {}
             counts = {}                     # is used for 'tuple' resolution
-            for k, v in self._nmap.iteritems():
+            for k, v in self._nmap.items():
                 count = counts.get(v, 0)
                 if count:               # we saw it already
                     if cr is None:
-                        raise ValueError, \
-                            "Numeric value %r was already reverse mapped to " \
+                        raise ValueError("Numeric value %r was already reverse mapped to " \
                             "%r.  Now trying to remap into %r.  Please adjust" \
                             " your mapping or change collissions_resolution" \
-                            " parameter" % (v, lmap[v], k)
+                            " parameter" % (v, lmap[v], k))
                     else:
                         if count == 1:
                             lmap[v] = (lmap[v], k)
@@ -200,9 +203,8 @@ class AttributeMap(object):
                     lmap[v] = k
                 counts[v] = count +1
         else:
-            raise ValueError, \
-                  "Provided parameter collisions_resolution=%r is of unknown " \
-                  "value. See documentation for AttributeMapper" % (cr,)
+            raise ValueError("Provided parameter collisions_resolution=%r is of unknown " \
+                  "value. See documentation for AttributeMapper" % (cr,))
         return lmap
 
     def to_literal(self, attr, recurse=False):
