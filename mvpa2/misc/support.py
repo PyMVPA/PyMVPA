@@ -32,6 +32,9 @@ from mvpa2.base.types import is_sequence_type
 if __debug__:
     from mvpa2.base import debug
 
+PY2 = sys.version_info[0] == 2
+PY3 = sys.version_info[0] == 3
+builtins_mod = '__builtin__' if PY2 else 'builtins'
 
 ##REF: Name was automagically refactored
 def reuse_absolute_path(file1, file2, force=False):

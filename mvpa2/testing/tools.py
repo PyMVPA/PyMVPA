@@ -101,17 +101,22 @@ def assert_collections_equal(x, y, ignore=None):
     if ignore is None:
         ignore = {}
     from mvpa2.base.node import Node
+    from mvpa2.base.collections import Collectable
 
     assert_dict_keys_equal(x, y)
     for k in x.keys():
-        v1, v2 = x[k].value, y[k].value
+        v1, v2 = x[k], y[k]
         assert_equal(type(v1), type(v2),
                      msg="Values for key %s have different types: %s and %s"
                          % (k, type(v1), type(v2)))
+        if isinstance(v1, Collectable):
+            v1, v2 = v1.value, v2.value
         if k in ignore:
             continue
         if isinstance(v1, np.ndarray):
             assert_array_equal(v1, v2)
+        elif isinstance(v1, dict):
+            assert_collections_equal(v1, v2)
         elif isinstance(v1, Node) and not (
                 hasattr(v1, '__cmp__')
                 or (hasattr(v1, '__eq__') and v1.__class__.__eq__ is not object.__eq__)):
