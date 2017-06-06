@@ -27,8 +27,8 @@ def test_sklearn_data_wrappers():
             continue
         found_fx += 1
         # fx() signatures must be the same
-        assert_equal(inspect.getargspec(getattr(skldata, fx)),
-                     inspect.getargspec(getattr(mvpads, 'skl_%s' % fx[5:])))
+        assert_equal(inspect.getfullargspec(getattr(skldata, fx)),
+                     inspect.getfullargspec(getattr(mvpads, 'skl_%s' % fx[5:])))
         if fx in ('load_iris',):
             # add this one if sklearn issue #2865 is resolved
             # 'load_boston'):

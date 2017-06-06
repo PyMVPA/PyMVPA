@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Implementation of a common processing object (node)."""
 
+from builtins import str
+from past.builtins import basestring
 __docformat__ = 'restructuredtext'
 
 import time
@@ -184,7 +186,7 @@ class Node(ClassWithCollections):
         pass_attr = self.__pass_attr
         if pass_attr is not None:
             ca = self.ca
-            ca_keys = self.ca.keys()
+            ca_keys = list(self.ca.keys())
             for a in pass_attr:
                 maxis = 0
                 rcol = None

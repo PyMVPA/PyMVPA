@@ -172,7 +172,7 @@ class TestNodeOnDefault(Node):
 
 def test_conditional_attr():
     import copy
-    import cPickle
+    import _pickle as cPickle
     for node in (TestNodeOnDefault(enable_ca=['test', 'stats']),
                  TestNodeOffDefault(enable_ca=['test', 'stats'])):
         node.ca.test = range(5)

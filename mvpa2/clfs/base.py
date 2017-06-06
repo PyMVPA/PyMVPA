@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Plumbing for all learners (classifiers and regressions)"""
 
+from builtins import zip
+from builtins import str
 __docformat__ = 'restructuredtext'
 
 import numpy as np
@@ -341,10 +343,9 @@ class Classifier(Learner):
             # check if number of features is the same as in the data
             # it was trained on
             if nfeatures != self.__trainednfeatures:
-                raise ValueError, \
-                      "Classifier %s was trained on data with %d features, " % \
+                raise ValueError("Classifier %s was trained on data with %d features, " % \
                       (self, self.__trainednfeatures) + \
-                      "thus can't predict for %d features" % nfeatures
+                      "thus can't predict for %d features" % nfeatures)
 
 
         if self.params.retrainable:
@@ -418,10 +419,9 @@ class Classifier(Learner):
         if self._attrmap:
             try:
                 result = self._attrmap.to_literal(result)
-            except KeyError, e:
-                raise FailedToPredictError, \
-                      "Failed to convert predictions from numeric into " \
-                      "literals: %s" % e
+            except KeyError as e:
+                raise FailedToPredictError("Failed to convert predictions from numeric into " \
+                      "literals: %s" % e)
 
         self._postpredict(dataset, result)
         return result
@@ -458,10 +458,9 @@ class Classifier(Learner):
             if __debug__ and 'CHECK_TRAINED' in debug.active:
                 res2 = (self.__trainedidhash == dataset.idhash)
                 if res2 != res:
-                    raise RuntimeError, \
-                          "is_trained is weak and shouldn't be relied upon. " \
+                    raise RuntimeError("is_trained is weak and shouldn't be relied upon. " \
                           "Got result %b although comparing of idhash says %b" \
-                          % (res, res2)
+                          % (res, res2))
             return res
 
 
@@ -562,13 +561,13 @@ class Classifier(Learner):
         if __debug__:
             debug('CLF_',
                   'Retrainable: resetting flags on either data was changed')
-        keys = self.__idhashes.keys() + self._paramscols
+        keys = list(self.__idhashes.keys()) + self._paramscols
         # we might like to just reinit estimates to False???
         #_changedData = self._changedData
         #if isinstance(_changedData, dict):
         #    for key in _changedData.keys():
         #        _changedData[key] = False
-        self._changedData = dict(zip(keys, [False]*len(keys)))
+        self._changedData = dict(list(zip(keys, [False]*len(keys))))
         self.__changedData_isset = False
 
 
@@ -588,11 +587,10 @@ class Classifier(Learner):
             if isinstance(changed2, np.ndarray):
                 changed2 = changed2.any()
             if changed != changed2 and not changed:
-                raise RuntimeError, \
-                  'idhash found to be weak for %s. Though hashid %s!=%s %s, '\
+                raise RuntimeError('idhash found to be weak for %s. Though hashid %s!=%s %s, '\
                   'estimates %s!=%s %s' % \
                   (key, idhash_, __idhashes[key], changed,
-                   entry, __trained[key], changed2)
+                   entry, __trained[key], changed2))
             if update:
                 __trained[key] = entry
 
@@ -660,13 +658,11 @@ class Classifier(Learner):
         # which should be ok in most of the cases
         if __debug__:
             if not self.params.retrainable:
-                raise RuntimeError, \
-                      "Do not use re(train,predict) on non-retrainable %s" % \
-                      self
+                raise RuntimeError("Do not use re(train,predict) on non-retrainable %s" % \
+                      self)
 
             if 'params' in kwargs or 'kernel_params' in kwargs:
-                raise ValueError, \
-                      "Retraining for changed params not working yet"
+                raise ValueError("Retraining for changed params not working yet")
 
         self.__reset_changed_data()
 
@@ -677,7 +673,7 @@ class Classifier(Learner):
         chd.update(kwargs)
         # mark for future 'train()' items which are explicitely
         # mentioned as changed
-        for key, value in kwargs.iteritems():
+        for key, value in kwargs.items():
             if value:
                 ichd[key] = True
         self.__changedData_isset = True
@@ -689,9 +685,8 @@ class Classifier(Learner):
                 # so it wasn't told to be invalid
                 if not chd[key] and not ichd.get(key, False):
                     if self.__was_data_changed(key, data_, update=False):
-                        raise RuntimeError, \
-                              "Data %s found changed although wasn't " \
-                              "labeled as such" % key
+                        raise RuntimeError("Data %s found changed although wasn't " \
+                              "labeled as such" % key)
 
         # TODO: parameters of classifiers... for now there is explicit
         # 'forbidance' above
@@ -701,9 +696,9 @@ class Classifier(Learner):
         if __debug__ and 'CHECK_RETRAIN' in debug.active and self.trained \
                and not self._changedData['traindata'] \
                and self.__trained['traindata'].shape != dataset.samples.shape:
-            raise ValueError, "In retrain got dataset with %s size, " \
+            raise ValueError("In retrain got dataset with %s size, " \
                   "whenever previousely was trained on %s size" \
-                  % (dataset.samples.shape, self.__trained['traindata'].shape)
+                  % (dataset.samples.shape, self.__trained['traindata'].shape))
         self.train(dataset)
 
 
@@ -730,12 +725,10 @@ class Classifier(Learner):
           got changed
         """
         if len(kwargs)>0:
-            raise RuntimeError, \
-                  "repredict for now should be used without params since " \
-                  "it makes little sense to repredict if anything got changed"
+            raise RuntimeError("repredict for now should be used without params since " \
+                  "it makes little sense to repredict if anything got changed")
         if __debug__ and not self.params.retrainable:
-            raise RuntimeError, \
-                  "Do not use retrain/repredict on non-retrainable classifiers"
+            raise RuntimeError("Do not use retrain/repredict on non-retrainable classifiers")
 
         self.__reset_changed_data()
         chd = self._changedData
@@ -749,18 +742,17 @@ class Classifier(Learner):
                 # so it wasn't told to be invalid
                 #if not chd[key]:# and not ichd.get(key, False):
                 if self.__was_data_changed(key, data_, update=False):
-                    raise RuntimeError, \
-                          "Data %s found changed although wasn't " \
-                          "labeled as such" % key
+                    raise RuntimeError("Data %s found changed although wasn't " \
+                          "labeled as such" % key)
 
         # Should be superseded by above
         # remove in future???
         if __debug__ and 'CHECK_RETRAIN' in debug.active \
                and not self._changedData['testdata'] \
                and self.__trained['testdata'].shape != dataset.samples.shape:
-            raise ValueError, "In repredict got dataset with %s size, " \
+            raise ValueError("In repredict got dataset with %s size, " \
                   "whenever previously was trained on %s size" \
-                  % (dataset.samples.shape, self.__trained['testdata'].shape)
+                  % (dataset.samples.shape, self.__trained['testdata'].shape))
 
         return self.predict(dataset)
 
