@@ -537,7 +537,7 @@ class CrossNobisSearchlight(Searchlight):
         splitter = Splitter(attr=generator.get_space(), attr_values=[1, 2]) \
             if self._splitter is None \
             else self._splitter
-
+        nproc = self.nproc
 
         # estimate the residual covariance from the training sets only
         self._splits_cov = None
@@ -575,7 +575,7 @@ class CrossNobisSearchlight(Searchlight):
                 nproc_needed = min(nsplits, nproc)
                 p_results = pprocess.Map(limit=nproc_needed)
                 if __debug__:
-                    debug('SLC', "Computec covariance: starting off %s child processes for nsplits=%i"
+                    debug('SLC', "Compute covariance: starting off %s child processes for nsplits=%i"
                           % (nproc_needed, nsplits))
                 compute = p_results.manage(
                     pprocess.MakeParallel(self._split_cov))
