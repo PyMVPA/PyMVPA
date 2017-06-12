@@ -528,7 +528,103 @@ class CrossNobisSearchlight(Searchlight):
         super(CrossNobisSearchlight, self)._untrain()
         self.__all_pairs = None    
 
-    def _sl_call(self, dataset, roi_ids, nproc, dataset_residuals=None):
+    def _train(self, ds=None):
+        """ compute sparse covariance matrix
+        """
+
+        generator = self._generator
+        qe = self.queryengine
+        splitter = Splitter(attr=generator.get_space(), attr_values=[1, 2]) \
+            if self._splitter is None \
+            else self._splitter
+
+
+        # estimate the residual covariance from the training sets only
+        self._splits_cov = None
+        if ds is not None:
+            if __debug__:
+                debug('SLC',
+                      'Phase 2b. Precompute the feature covariance per split')
+            externals.exists('skl', raise_=True) 
+            from sklearn.covariance import ledoit_wolf_shrinkage
+               
+            dataset_indicies = Dataset(np.arange(ds.nsamples), sa=ds.sa)
+            partitions = list(generator.generate(dataset_indicies)) \
+                         if generator \
+                            else [dataset_indicies]
+            
+            train_sets = [list(splitter.generate(ds_))[0] for ds_ in partitions]
+            self._splits_cov = []
+            self._splits_cov2 = []
+            self._splits_cov_nsamples = []
+
+            if __debug__:
+                debug('SLC',
+                      'Phase 2b1. Compute neighborhoods')
+            sl_ext_conn = set()
+            for f in xrange(ds.nfeatures):
+                neighs = sorted(self._queryengine[f])
+                sl_ext_conn.update(combinations_with_replacement(neighs,2))
+            sl_ext_conn = np.sort(np.array(list(sl_ext_conn),dtype=[('row',np.uint32),('col',np.uint32)]))
+            self._sl_ext_conn = sl_ext_conn.view(np.uint32).reshape(-1,2).T.copy()
+            del sl_ext_conn
+            
+            if nproc is not None and nproc > 1:
+                import pprocess
+                nsplits = len(train_sets)
+                nproc_needed = min(nsplits, nproc)
+                p_results = pprocess.Map(limit=nproc_needed)
+                if __debug__:
+                    debug('SLC', "Computec covariance: starting off %s child processes for nsplits=%i"
+                          % (nproc_needed, nsplits))
+                compute = p_results.manage(
+                    pprocess.MakeParallel(self._split_cov))
+                for split_idx, train_idx in enumerate(train_sets):
+                    compute(split_idx, train_idx, ds)
+                for cov_tmp, cov_tmp2, nsamp in p_results:
+                    self._splits_cov.append(cov_tmp)
+                    self._splits_cov2.append(cov_tmp2)
+                    self._splits_cov_nsamples.append(nsamp)                    
+            else:
+                for split_idx, train_idx in enumerate(train_sets):
+                    if __debug__:
+                        debug('SLC',
+                              'Phase 2b2. Compute covariances, split %d/%d'%(split_idx, len(train_sets)),cr=True)
+                    
+                    cov_tmp, cov_tmp2, nsamp = self._splits_cov(split_idx, train_idx, ds)
+                    self._splits_cov.append(cov_tmp)
+                    self._splits_cov2.append(cov_tmp2)
+                    self._splits_cov_nsamples.append(nsamp)
+                    
+                    if __debug__:
+                        debug('SLC','')
+        
+    def _split_cov(self,split_idx, train_idx, ds, blocksize = int(1e6)):
+        
+        cov_tmp = np.empty(self._sl_ext_conn.shape[1])
+        cov_tmp2 = np.empty(self._sl_ext_conn.shape[1])
+                
+        resid = ds.samples[train_idx.samples.ravel()]
+        resid2 = resid**2
+        nsamp = train_idx.nsamples
+
+        for i in range(int(len(cov_tmp)/blocksize+1)):
+            slz = slice(i*blocksize,(i+1)*blocksize)
+            np.einsum('ij, ij->j',
+                      resid[:,self._sl_ext_conn[0,slz]],
+                      resid[:,self._sl_ext_conn[1,slz]],
+                      out=cov_tmp[slz])
+            np.einsum('ij, ij->j',
+                      resid2[:,self._sl_ext_conn[0,slz]],
+                      resid2[:,self._sl_ext_conn[1,slz]],
+                      out=cov_tmp2[slz])
+        cov_tmp /= nsamp
+        cov_tmp2 /= nsamp
+        del resid, resid2
+        return cov_tmp, cov_tmp2, nsamp
+
+
+    def _sl_call(self, dataset, roi_ids, nproc):
         """Call to CrossNobisSearchlight
         """
         
@@ -630,71 +726,6 @@ class CrossNobisSearchlight(Searchlight):
         self._all_pairs_idx = self._all_pairs.keys()
         self._all_pairs = np.asarray([self._all_pairs[k] for k in self._all_pairs_idx])
         self._all_pairs_targets = np.asarray([self._all_pairs_targets[k] for k in self._all_pairs_idx])
-
-        # estimate the residual covariance from the training sets only
-        self._splits_cov = None
-        if dataset_residuals is not None:
-            if __debug__:
-                debug('SLC',
-                      'Phase 2b. Precompute the feature covariance per split')
-            externals.exists('skl', raise_=True) 
-            from sklearn.covariance import ledoit_wolf_shrinkage
-               
-            dataset_indicies = Dataset(np.arange(dataset_residuals.nsamples), sa=dataset_residuals.sa)
-            partitions = list(generator.generate(dataset_indicies)) \
-                         if generator \
-                            else [dataset_indicies]
-            
-            train_sets = [list(splitter.generate(ds_))[0] for ds_ in partitions]
-            self._splits_cov = []
-            self._splits_cov2 = []
-            self._splits_cov_nsamples = []
-            #self._splits_cov_shrinkage = []
-
-            if __debug__:
-                debug('SLC',
-                      'Phase 2b1. Compute neighborhoods')
-            sl_ext_conn = set()
-            for f in roi_ids:
-                neighs = sorted(self._queryengine[f])
-                #sl_ext_conn.update([(n1,n2) for ni,n1 in enumerate(neighs) for n2 in neighs[:ni+1]])
-                sl_ext_conn.update(combinations_with_replacement(neighs,2))
-                #sl_ext_conn.update(product(neighs,neighs))
-            sl_ext_conn = np.sort(np.array(list(sl_ext_conn),dtype=[('row',np.uint32),('col',np.uint32)]))
-            self._sl_ext_conn = sl_ext_conn.view(np.uint32).reshape(-1,2).T.copy()
-            del sl_ext_conn
-            
-            blocksize = int(1e6)
-            for split_idx, train_idx in enumerate(train_sets):
-                
-                if __debug__:
-                    debug('SLC',
-                          'Phase 2b2. Compute covariances, split %d/%d'%(split_idx, len(train_sets)),cr=True)
-                cov_tmp = np.empty(self._sl_ext_conn.shape[1])
-                cov_tmp2 = np.empty(self._sl_ext_conn.shape[1])
-                
-                resid = dataset_residuals.samples[train_idx.samples.ravel()]
-                resid2 = resid**2
-                nsamp = train_idx.nsamples
-
-                for i in range(int(len(cov_tmp)/blocksize+1)):
-                    slz = slice(i*blocksize,(i+1)*blocksize)
-                    np.einsum('ij, ij->j',
-                              resid[:,self._sl_ext_conn[0,slz]],
-                              resid[:,self._sl_ext_conn[1,slz]],
-                              out=cov_tmp[slz])
-                    np.einsum('ij, ij->j',
-                              resid2[:,self._sl_ext_conn[0,slz]],
-                              resid2[:,self._sl_ext_conn[1,slz]],
-                              out=cov_tmp2[slz])
-                cov_tmp /= nsamp
-                cov_tmp2 /= nsamp
-                self._splits_cov.append(cov_tmp)
-                self._splits_cov2.append(cov_tmp2)
-                self._splits_cov_nsamples.append(nsamp)
-                del resid, resid2
-            if __debug__:
-                debug('SLC','')
 
 
         if nproc is not None and nproc > 1:
