@@ -584,7 +584,7 @@ class CrossNobisSearchlight(Searchlight):
                 compute = p_results.manage(
                     pprocess.MakeParallel(self._split_cov))
                 for split_idx, train_idx in enumerate(train_sets):
-                    compute(split_idx, train_idx, ds)
+                    compute(split_idx, ds.samples[train_idx.samples.ravel()])
                 for cov_tmp, cov_tmp2, nsamp in p_results:
                     self._splits_cov.append(cov_tmp)
                     self._splits_cov2.append(cov_tmp2)
@@ -603,14 +603,13 @@ class CrossNobisSearchlight(Searchlight):
                     if __debug__:
                         debug('SLC','')
         
-    def _split_cov(self,split_idx, train_idx, ds, blocksize = int(1e5)):
+    def _split_cov(self, split_idx, resid, blocksize = int(1e5)):
         
         cov_tmp = np.empty(self._sl_ext_conn.shape[1])
         cov_tmp2 = np.empty(self._sl_ext_conn.shape[1])
                 
-        resid = ds.samples[train_idx.samples.ravel()]
         resid2 = resid**2
-        nsamp = train_idx.nsamples
+        nsamp = len(resid)
 
         for i in range(int(len(cov_tmp)/blocksize+1)):
             slz = slice(i*blocksize,(i+1)*blocksize)
