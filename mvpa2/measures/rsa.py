@@ -562,9 +562,13 @@ class CrossNobisSearchlight(Searchlight):
                 debug('SLC',
                       'Phase 2b1. Compute neighborhoods')
             sl_ext_conn = set()
+
+            # TODO: make parallel if possible
+            def neighs_cross(f):
+                return list(combinations_with_replacement(sorted(self._queryengine[f]),2))
             for f in xrange(ds.nfeatures):
-                neighs = sorted(self._queryengine[f])
-                sl_ext_conn.update(combinations_with_replacement(neighs,2))
+                sl_ext_conn.update(neighs_cross(f))
+
             sl_ext_conn = np.sort(np.array(list(sl_ext_conn),dtype=[('row',np.uint32),('col',np.uint32)]))
             self._sl_ext_conn = sl_ext_conn.view(np.uint32).reshape(-1,2).T.copy()
             del sl_ext_conn
@@ -599,7 +603,7 @@ class CrossNobisSearchlight(Searchlight):
                     if __debug__:
                         debug('SLC','')
         
-    def _split_cov(self,split_idx, train_idx, ds, blocksize = int(1e6)):
+    def _split_cov(self,split_idx, train_idx, ds, blocksize = int(1e5)):
         
         cov_tmp = np.empty(self._sl_ext_conn.shape[1])
         cov_tmp2 = np.empty(self._sl_ext_conn.shape[1])
