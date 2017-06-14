@@ -582,9 +582,9 @@ class CrossNobisSearchlight(Searchlight):
                     debug('SLC', "Compute covariance: starting off %s child processes for nsplits=%i"
                           % (nproc_needed, nsplits))
                 compute = p_results.manage(
-                    pprocess.MakeParallel(self._split_cov))
+                    pprocess.MakeParallel(CrossNobisSearchlight._split_cov))
                 for split_idx, train_idx in enumerate(train_sets):
-                    compute(split_idx, ds.samples[train_idx.samples.ravel()])
+                    compute(self._sl_ext_conn, split_idx, ds.samples[train_idx.samples.ravel()])
                 for cov_tmp, cov_tmp2, nsamp in p_results:
                     self._splits_cov.append(cov_tmp)
                     self._splits_cov2.append(cov_tmp2)
@@ -595,7 +595,7 @@ class CrossNobisSearchlight(Searchlight):
                         debug('SLC',
                               'Phase 2b2. Compute covariances, split %d/%d'%(split_idx, len(train_sets)),cr=True)
                     
-                    cov_tmp, cov_tmp2, nsamp = self._splits_cov(split_idx, train_idx, ds)
+                    cov_tmp, cov_tmp2, nsamp = CrossNobisSearchlight._splits_cov(self._sl_ext_conn, split_idx, train_idx, ds)
                     self._splits_cov.append(cov_tmp)
                     self._splits_cov2.append(cov_tmp2)
                     self._splits_cov_nsamples.append(nsamp)
@@ -603,10 +603,10 @@ class CrossNobisSearchlight(Searchlight):
                     if __debug__:
                         debug('SLC','')
         
-    def _split_cov(self, split_idx, resid, blocksize = int(1e5)):
+    def _split_cov(sl_ext_conn, split_idx, resid, blocksize = int(1e5)):
         
-        cov_tmp = np.empty(self._sl_ext_conn.shape[1])
-        cov_tmp2 = np.empty(self._sl_ext_conn.shape[1])
+        cov_tmp = np.empty(sl_ext_conn.shape[1])
+        cov_tmp2 = np.empty(sl_ext_conn.shape[1])
                 
         resid2 = resid**2
         nsamp = len(resid)
@@ -614,16 +614,18 @@ class CrossNobisSearchlight(Searchlight):
         for i in range(int(len(cov_tmp)/blocksize+1)):
             slz = slice(i*blocksize,(i+1)*blocksize)
             np.einsum('ij, ij->j',
-                      resid[:,self._sl_ext_conn[0,slz]],
-                      resid[:,self._sl_ext_conn[1,slz]],
+                      resid[:,sl_ext_conn[0,slz]],
+                      resid[:,sl_ext_conn[1,slz]],
                       out=cov_tmp[slz])
             np.einsum('ij, ij->j',
-                      resid2[:,self._sl_ext_conn[0,slz]],
-                      resid2[:,self._sl_ext_conn[1,slz]],
+                      resid2[:,sl_ext_conn[0,slz]],
+                      resid2[:,sl_ext_conn[1,slz]],
                       out=cov_tmp2[slz])
         cov_tmp /= nsamp
         cov_tmp2 /= nsamp
         del resid, resid2
+        if __debug__:
+            debug('SLC','completed split %d'%split_idx, cr=True)
         return cov_tmp, cov_tmp2, nsamp
 
 
