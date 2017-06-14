@@ -593,7 +593,7 @@ class CrossNobisSearchlight(Searchlight):
                               out=cov_tmp2[slz])
                     cov_tmp /= nsamp
                     cov_tmp2 /= nsamp
-                    del resid, resid2
+                del resid, resid2
                 if __debug__:
                     debug('SLC','completed split %d/%d'%(split_idx,len(train_sets)))
                 return cov_tmp, cov_tmp2, nsamp
