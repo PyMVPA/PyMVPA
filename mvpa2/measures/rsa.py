@@ -591,8 +591,8 @@ class CrossNobisSearchlight(Searchlight):
                               resid2[:,self._sl_ext_conn[0,slz]],
                               resid2[:,self._sl_ext_conn[1,slz]],
                               out=cov_tmp2[slz])
-                    cov_tmp /= nsamp
-                    cov_tmp2 /= nsamp
+                cov_tmp /= nsamp
+                cov_tmp2 /= nsamp
                 del resid, resid2
                 if __debug__:
                     debug('SLC','completed split %d/%d'%(split_idx,len(train_sets)))
@@ -620,7 +620,7 @@ class CrossNobisSearchlight(Searchlight):
                         debug('SLC',
                               'Phase 2b2. Compute covariances, split %d/%d'%(split_idx, len(train_sets)),cr=True)
                     
-                    cov_tmp, cov_tmp2, nsamp = _splits_cov(split_idx, train_idx, ds)
+                    cov_tmp, cov_tmp2, nsamp = _splits_cov(split_idx, ds.samples[train_idx.samples.ravel()])
                     self._splits_cov.append(cov_tmp)
                     self._splits_cov2.append(cov_tmp2)
                     self._splits_cov_nsamples.append(nsamp)
