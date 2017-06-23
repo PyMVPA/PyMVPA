@@ -29,6 +29,13 @@ libsvmc_libraries = []
 extra_link_args = []
 libsvmc_library_dirs = []
 
+requires = {
+    'core': [
+        'scipy',
+        'nibabel'
+    ]
+}
+
 # platform-specific settings
 if sys.platform == "darwin":
     extra_link_args.append("-bundle")
@@ -188,6 +195,7 @@ def setup_package():
               "it is eminently suited for such datasets.\n"
               "PyMVPA is truly free software (in every respect) and "
               "additionally requires nothing but free-software to run.",
+          setup_requires=['numpy'],
           # please maintain alphanumeric order
           packages=[ 'mvpa2',
                      'mvpa2.algorithms',
@@ -227,6 +235,7 @@ def setup_package():
                      'mvpa2.tests.badexternals',
                      'mvpa2.viz',
                    ],
+          install_requires=requires['core'],
           data_files=[('mvpa2', [os.path.join('mvpa2', 'COMMIT_HASH')])]
                      + find_data_files(os.path.join('mvpa2', 'data'),
                                        '*.txt', '*.nii.gz', '*.rtc', 'README', '*.bin',
