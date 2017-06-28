@@ -624,10 +624,6 @@ class CrossNobisSearchlight(Searchlight):
                     self._splits_cov.append(cov_tmp)
                     self._splits_cov2.append(cov_tmp2)
                     self._splits_cov_nsamples.append(nsamp)
-                    
-                    if __debug__:
-                        debug('SLC','')
-        
 
 
     def _sl_call(self, dataset, roi_ids, nproc):
