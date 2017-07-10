@@ -499,7 +499,7 @@ class Regression(Measure):
 class CrossNobisSearchlight(Searchlight):
 
     roi_shrinkages = ConditionalAttribute(enabled=True,
-        doc="Center ID for all generated ROIs.")
+        doc="The optimal shrinkage of the covariance matrix for each searchlight.")
 
     def __init__(self, generator, queryengine,
                  splitter=None,
