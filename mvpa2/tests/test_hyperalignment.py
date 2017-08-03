@@ -36,11 +36,13 @@ class HyperAlignmentTests(unittest.TestCase):
     @sweepargs(zscore_all=(False, True))
     @sweepargs(zscore_common=(False, True))
     @sweepargs(ref_ds=(None, 2))
+    @sweepargs(level1_equal_weight=(False, True))
     @reseed_rng()
-    def test_basic_functioning(self, ref_ds, zscore_common, zscore_all):
+    def test_basic_functioning(self, ref_ds, zscore_common, zscore_all, level1_equal_weight):
         ha = Hyperalignment(ref_ds=ref_ds,
                             zscore_all=zscore_all,
-                            zscore_common=zscore_common)
+                            zscore_common=zscore_common,
+                            level1_equal_weight=level1_equal_weight)
         if ref_ds is None:
             ref_ds = 0                      # by default should be this one
 
