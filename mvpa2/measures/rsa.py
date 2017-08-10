@@ -620,7 +620,7 @@ class CrossNobisSearchlight(Searchlight):
                         debug('SLC',
                               'Phase 2b2. Compute covariances, split %d/%d'%(split_idx, len(train_sets)),cr=True)
                     
-                    cov_tmp, cov_tmp2, nsamp = _splits_cov(split_idx, ds.samples[train_idx.samples.ravel()])
+                    cov_tmp, cov_tmp2, nsamp = _split_cov(split_idx, ds.samples[train_idx.samples.ravel()])
                     self._splits_cov.append(cov_tmp)
                     self._splits_cov2.append(cov_tmp2)
                     self._splits_cov_nsamples.append(nsamp)
