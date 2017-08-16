@@ -903,9 +903,6 @@ class CrossNobisSearchlight(Searchlight):
                     
                     pair_test_idxs = test_idxs[np.all(self._all_pairs_targets[test_idxs]==target_train,1)]
                     all_test_vecs = tmp_pairs[pair_test_idxs]
-                    #all_test_vecs = np.asarray([self._all_pairs[pair_test][roi_fids] \
-                    #                            for pair_test in split2_idx[1] \
-                    #                            if self._all_pairs_targets[pair_test]==target_train])
                     if self._splits_cov is not None:
                         res[res_idx] += vec_train.dot(inv_cov).dot(all_test_vecs.T).sum()/n_fids
                     else:
