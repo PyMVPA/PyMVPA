@@ -494,6 +494,7 @@ def _clusterize_custom_neighborhood(map_, neigh):
     if labels[0] == 0:
         labels, counts = labels[1:], counts[1:]
     new_labels = np.zeros(cl_lbls.shape, dtype=np.uint)
+    li = 0
     for li,l in enumerate(labels):
         new_labels[cl_lbls==l] = li+1
     return new_labels, li
