@@ -796,7 +796,8 @@ class CrossNobisSearchlight(Searchlight):
 
         target_pairs = [(ul1,ul2) for uli, ul1 in enumerate(self._ulabels) for ul2 in self._ulabels[:uli+1]]
 
-        results = Dataset(np.empty((n_pair_targets*self._nsplits, len(block))),
+        results = Dataset(np.empty((n_pair_targets*self._nsplits, len(block)),
+                                   dtype=ds.samples.dtype),
                           sa=dict(targets=target_pairs*self._nsplits),
                           fa=ds[:,block].fa.copy())
         store_roi_feature_ids = self.ca.is_enabled('roi_feature_ids')
@@ -859,11 +860,11 @@ class CrossNobisSearchlight(Searchlight):
                         cov_mask[l:r] |= (col_idx == fid)
                 cov_mask_idx = np.argwhere(cov_mask).flatten()
                 triu_idx = np.triu_indices(n_fids)
-                cov = np.empty((n_fids, n_fids))
-                cov2 = np.empty((n_fids, n_fids))
-                cov_shrink = np.empty((n_fids, n_fids))
-                inv_cov = np.empty((n_fids, n_fids))
-                delta_ = np.empty((n_fids, n_fids))
+                cov = np.empty((n_fids, n_fids), dtype=ds.samples.dtype)
+                cov2 = np.empty((n_fids, n_fids), dtype=ds.samples.dtype)
+                cov_shrink = np.empty((n_fids, n_fids), dtype=ds.samples.dtype)
+                inv_cov = np.empty((n_fids, n_fids), dtype=ds.samples.dtype)
+                delta_ = np.empty((n_fids, n_fids), dtype=ds.samples.dtype)
 
             tmp_pairs = self._all_pairs[:, roi_fids]
 
