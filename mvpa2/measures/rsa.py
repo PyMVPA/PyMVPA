@@ -81,8 +81,8 @@ class CrossNobis(Measure):
         if np.any(ulabels != self.ulabels):
             raise ValueError('Datasets should have same targets for dissimilarity.')
         
-        targets_sort_idx = np.argsort(targets_sa.value)        
-
+        targets_sort_idx = np.argsort(targets_sa.value)
+        
         test_pairs = Dataset(
             [ds.samples[i]-ds.samples[j] for ii,i in enumerate(targets_sort_idx) for j in targets_sort_idx[ii+1:]])
         test_pairs.targets = np.asarray(
@@ -575,8 +575,8 @@ class CrossNobisSearchlight(Searchlight):
 
             def _split_cov(split_idx, resid, blocksize = int(1e5)):
                 
-                cov_tmp = np.empty(self._sl_ext_conn.shape[1])
-                cov_tmp2 = np.empty(self._sl_ext_conn.shape[1])
+                cov_tmp = np.empty(self._sl_ext_conn.shape[1], dtype=resid.dtype)
+                cov_tmp2 = np.empty(self._sl_ext_conn.shape[1], dtype=resid.dtype)
                 
                 resid2 = resid**2
                 nsamp = len(resid)
