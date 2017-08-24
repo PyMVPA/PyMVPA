@@ -522,7 +522,7 @@ class CrossNobisSearchlight(Searchlight):
 
         self._generator = generator
         self._splitter = splitter
-
+        self._sl_ext_conn = None
         self._splits_cov = None
 
     def _untrain(self):
