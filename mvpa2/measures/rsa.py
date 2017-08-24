@@ -522,13 +522,13 @@ class CrossNobisSearchlight(Searchlight):
 
         self._generator = generator
         self._splitter = splitter
-        self._sl_ext_conn = None
         self._splits_cov = None
 
     def _untrain(self):
         super(CrossNobisSearchlight, self)._untrain()
         self._splits_cov = None
-        del self._sl_ext_conn
+        if hasattr(self, '_sl_ext_conn'):
+            del self._sl_ext_conn
 
     def _train(self, ds=None):
         """ compute sparse covariance matrix
