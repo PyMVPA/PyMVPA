@@ -68,7 +68,7 @@ or even the unit test battery, also part of the source distribution (in the
 .. _Pattern Recognition and Machine Learning: http://research.microsoft.com/~cmbishop/PRML
 
 .. _online:
-.. _The Elements of Statistical Learning\: Data Mining, Inference, and Prediction: http://www-stat.stanford.edu/~tibs/ElemStatLearn/
+.. _The Elements of Statistical Learning\: Data Mining, Inference, and Prediction: http://web.stanford.edu/~hastie/ElemStatLearn/
 .. _Trevor Hastie: http://www-stat.stanford.edu/~hastie/
 .. _Robert Tibshirani: http://www-stat.stanford.edu/~tibs/
 .. _Jerome Friedman: http://www-stat.stanford.edu/~jhf/
