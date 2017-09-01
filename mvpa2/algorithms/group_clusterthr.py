@@ -497,7 +497,7 @@ def _clusterize_custom_neighborhood(map_, neigh):
     li = 0
     for li,l in enumerate(labels):
         new_labels[cl_lbls==l] = li+1
-    return new_labels, li
+    return new_labels, li+1
 
 
 def _get_map_cluster_sizes(map_):
