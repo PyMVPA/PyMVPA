@@ -31,19 +31,43 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
-* 2.6.1 (...)
+* 2.6.2 (???, ???)
+
+  Something great will happen!
 
   * Fixes
 
-    -
 
   * New functionality
 
-    -
 
   * Enhancements
 
-    -
+
+* 2.6.1 (Fri, Apr 14 2017)
+
+  Primarily a bugfix release
+
+  * Fixes
+
+    - Deprecation: fixed typo in `manhattan_distance`
+    - Documentation: various outdated links and project names fixed
+    - Removed spurious quote within command line invocation of `prep-afni-surf`
+    - Fixed computation of the edge lengths on the surface, which could have
+      resulted in slightly incorrect surface searchlight sizes
+
+  * New functionality
+
+    - :class:`~mvpa2.measures.rsa.CDist` for cross-validated dissimilarity
+      measures computation
+
+  * Enhancements
+
+    - :class:`~mvpa2.algorithms.hyperalignment.Hyperalignment`
+      - `output_dim` option could be used to perform dimensionality reduction
+        via SVD while composing the common space
+      - `nproc` and `joblib_backend` parameters could be used to parallelize the
+        last step of the alignment
 
 * 2.6.0 (Sat, 26 Aug 2016)
 

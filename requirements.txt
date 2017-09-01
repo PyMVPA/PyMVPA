@@ -6,3 +6,5 @@ duecredit
 nibabel
 # not compatible ATM with python3
 # pprocess
+# Some parts use it already
+joblib

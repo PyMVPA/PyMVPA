@@ -60,7 +60,7 @@ by default. The Python website offers `installers for Windows and MacOS X`_.
 
 However, PyMVPA can make use of many additional software packages to
 enhance its functionality. Therefore it is preferable to use a Python
-distribution that offers are large variety of scientific Python packages.
+distribution that offers a large variety of scientific Python packages.
 For Windows, `Python(x,y)`_ matches these requirements.  For MacOS X, the
 MacPorts_ project offers a large variety of Python packages (including
 PyMVPA).

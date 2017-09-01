@@ -25,6 +25,7 @@ scatterplot_opts_grp = ('options for scatterplot', [
      dict(nargs='+',
           help='Nifti datasets to scatterplot')),
     (('--volume', '-t'), dict(
+        type=int,
         help="If 4D image given which volume to plot.  If 5D with rudimentary "
              "4th, it gets removed. Default -- all")),
     (("-m", "--mask-file"),
