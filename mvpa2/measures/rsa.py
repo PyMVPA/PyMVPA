@@ -875,7 +875,7 @@ class CrossNobisSearchlight(Searchlight):
                     cov_shrink[:] = cov*(1-shrinkage)
                     cov_shrink.flat[::n_fids+1] += mu*shrinkage
 
-                    cov_eigval, cov_eigvec = np.linalg.eig(cov_shrink)
+                    cov_eigval, cov_eigvec = np.linalg.eigh(cov_shrink)
                     cov_powminushalf = cov_eigvec.dot((cov_eigvec/np.sqrt(cov_eigval)).T)
                     
                     split_pairs_mask = pair_split_attr==split_value
