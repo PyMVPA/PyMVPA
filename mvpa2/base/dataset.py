@@ -8,6 +8,11 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Multi-purpose dataset container with support for attributes."""
 
+from builtins import zip
+from builtins import str
+from builtins import range
+from past.builtins import basestring
+from builtins import object
 __docformat__ = 'restructuredtext'
 
 from os.path import lexists
@@ -295,7 +300,7 @@ class AttrDataset(object):
                     raise RuntimeError("Attribute %r already known to %s"
                                        % (attr, self.sa))
             ids = np.array(['%s-%i' % (thisid, i)
-                            for i in xrange(self.samples.shape[0])])
+                            for i in range(self.samples.shape[0])])
             if attr in self.sa:
                 self.sa[attr].value = ids
             else:
@@ -308,7 +313,7 @@ class AttrDataset(object):
                     raise RuntimeError("Attribute %r already known to %s"
                                        % (attr, self.fa))
             ids = np.array(['%s-%i' % (thisid, i)
-                            for i in xrange(self.samples.shape[1])])
+                            for i in range(self.samples.shape[1])])
             if attr in self.fa:
                 self.fa[attr].value = ids
             else:
@@ -389,7 +394,7 @@ class AttrDataset(object):
         if not sorted(self.sa.keys()) == sorted(other.sa.keys()):
             raise DatasetError("Cannot merge dataset. This datasets samples "
                                "attributes %s cannot be mapped into the other "
-                               "set %s" % (self.sa.keys(), other.sa.keys()))
+                               "set %s" % (list(self.sa.keys()), list(other.sa.keys())))
 
         # concat the samples as well
         self.samples = np.concatenate((self.samples, other.samples), axis=0)
@@ -397,7 +402,7 @@ class AttrDataset(object):
         # tell the collection the new desired length of all attributes
         self.sa.set_length_check(len(self.samples))
         # concat all samples attributes
-        for k, v in other.sa.iteritems():
+        for k, v in other.sa.items():
             self.sa[k].value = np.concatenate((self.sa[k].value, v.value),
                                               axis=0)
 
@@ -465,7 +470,7 @@ class AttrDataset(object):
 
         # per-sample attributes; always needs to run even if slice(None), since
         # we need fresh SamplesAttributes even if they share the data
-        for attr in self.sa.values():
+        for attr in list(self.sa.values()):
             # preserve attribute type
             newattr = attr.__class__(doc=attr.__doc__)
             # slice
@@ -475,7 +480,7 @@ class AttrDataset(object):
 
         # per-feature attributes; always needs to run even if slice(None),
         # since we need fresh SamplesAttributes even if they share the data
-        for attr in self.fa.values():
+        for attr in list(self.fa.values()):
             # preserve attribute type
             newattr = attr.__class__(doc=attr.__doc__)
             # slice
@@ -484,7 +489,7 @@ class AttrDataset(object):
             fa[attr.name] = newattr
 
         # and finally dataset attributes: this time copying
-        for attr in self.a.values():
+        for attr in list(self.a.values()):
             # preserve attribute type
             newattr = attr.__class__(name=attr.name, doc=attr.__doc__)
             # do a shallow copy here
@@ -582,7 +587,7 @@ class AttrDataset(object):
             if not name in hdf:
                 raise ValueError("Cannot find '%s' group in HDF file %s.  "
                                  "File contains groups: %s"
-                                 % (name, source, hdf.keys()))
+                                 % (name, source, list(hdf.keys())))
 
             # access the group that should contain the dataset
             dsgrp = hdf[name]
@@ -591,7 +596,7 @@ class AttrDataset(object):
                 # TODO: unittest before committing
                 raise ValueError("%r in %s contains %s not a dataset.  "
                                  "File contains groups: %s."
-                                 % (name, source, type(res), hdf.keys()))
+                                 % (name, source, type(res), list(hdf.keys())))
         else:
             # just consider the whole file
             res = hdf2obj(hdf)
@@ -654,7 +659,7 @@ class AttrDataset(object):
 
         cols = {'a': {}, 'fa': {}, 'sa': {}}
         skipped = []
-        for e, v in entries.items():
+        for e, v in list(entries.items()):
             if e == 'samples':
                 samples = v
             else:
@@ -683,10 +688,10 @@ def datasetmethod(func):
     """
     if __debug__:
         debug("DS_",
-              "Binding function %s to AttrDataset class" % func.func_name)
+              "Binding function %s to AttrDataset class" % func.__name__)
 
     # Bind the function
-    setattr(AttrDataset, func.func_name, func)
+    setattr(AttrDataset, func.__name__, func)
 
     # return the original one
     return func
@@ -846,7 +851,7 @@ def _stack_add_equal_attributes(merged, datasets, strategy, colname):
         ds0col = getattr(ds0, colname)
         for ds in datasets[1:]:
             dscol = getattr(ds, colname)
-            for attr, v in dscol.iteritems():
+            for attr, v in dscol.items():
                 if ((attr not in ds0col) or
                         np.any(ds0col[attr].value != v.value)):
                     drop.add(attr)
@@ -858,7 +863,7 @@ def _stack_add_equal_attributes(merged, datasets, strategy, colname):
         # now update but only those which to not drop
         for ds in datasets:
             mergedcol.update(
-                {attr: v for attr, v in getattr(ds, colname).items()
+                {attr: v for attr, v in list(getattr(ds, colname).items())
                  if attr not in drop}
             )
 
@@ -974,7 +979,7 @@ def _stack_add_equal_dataset_attributes(merged_dataset, datasets, a=None):
     if type(a) is int:
         base_dataset = datasets[a]
 
-        for key in base_dataset.a.keys():
+        for key in list(base_dataset.a.keys()):
             merged_dataset.a[key] = base_dataset.a[key].value
 
         return

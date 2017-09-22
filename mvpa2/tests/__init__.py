@@ -7,7 +7,9 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit test interface for PyMVPA"""
+from __future__ import print_function
 
+from builtins import str
 import sys
 import unittest
 import numpy as np
@@ -352,7 +354,7 @@ def run(limit=None, verbosity=None, exit_=False):
 
             if limit is None:
                 # make global test suite (use them all)
-                ts = unittest.TestSuite(suites.values())
+                ts = unittest.TestSuite(list(suites.values()))
             else:
                 ts = unittest.TestSuite([suites[s] for s in limit])
 
@@ -364,7 +366,7 @@ def run(limit=None, verbosity=None, exit_=False):
                     """Run the bloody test and puke the seed value if failed"""
                     result = super(TextTestRunnerPyMVPA, self).run(test)
                     if not result.wasSuccessful():
-                        print "MVPA_SEED=%s" % _random_seed
+                        print("MVPA_SEED=%s" % _random_seed)
 
             # finally run it
             TextTestRunnerPyMVPA(verbosity=verbosity).run(ts)

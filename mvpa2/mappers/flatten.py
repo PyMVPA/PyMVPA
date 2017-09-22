@@ -7,7 +7,12 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Flatten multi-dimensional samples"""
+from __future__ import division
 
+from builtins import zip
+from builtins import str
+from builtins import range
+from past.utils import old_div
 __docformat__ = 'restructuredtext'
 
 import numpy as np
@@ -138,8 +143,7 @@ class FlattenMapper(Mapper):
                 maxdim = min(len(self.__origshape), self.__maxdims)
             else:
                 maxdim = len(self.__origshape)
-            multiplier = mds.nfeatures \
-                    / np.prod(attr.shape[:maxdim])
+            multiplier = old_div(mds.nfeatures, np.prod(attr.shape[:maxdim]))
             if __debug__:
                 debug('MAP_', "Broadcasting fa '%s' %s %d times"
                         % (k, attr.shape, multiplier))
@@ -260,7 +264,7 @@ class ProductFlattenMapper(FlattenMapper):
         super(ProductFlattenMapper, self)._train(ds)
         self._factor_values = []
         for nm in self._factor_names:
-            if not nm in ds.a.keys():
+            if not nm in list(ds.a.keys()):
                 raise KeyError("Missing attribute: %s" % nm)
             self._factor_values.append(ds.a[nm].value)
 
@@ -284,7 +288,7 @@ class ProductFlattenMapper(FlattenMapper):
 
         oshape = self.shape
 
-        factor_names_values = zip(*(self._factor_names, self._factor_values))
+        factor_names_values = list(zip(*(self._factor_names, self._factor_values)))
         # now map all the factor names and values to feature attributes
         for i, (name, value) in enumerate(factor_names_values):
             # keep track of both the value itself and the indices
@@ -331,7 +335,7 @@ class ProductFlattenMapper(FlattenMapper):
     def _reverse_dataset(self, dataset):
         self._check_is_trained()
 
-        factor_names_values = zip(*(self._factor_names, self._factor_values))
+        factor_names_values = list(zip(*(self._factor_names, self._factor_values)))
 
         mds = super(ProductFlattenMapper, self)._reverse_dataset(dataset)
         postfix = '_indices'
@@ -341,7 +345,7 @@ class ProductFlattenMapper(FlattenMapper):
                 del mds.fa[label]
 
         for nm, values in factor_names_values: #:self._get_reversed_factor_name_values(mds):
-            if nm in mds.a.keys() and any(mds.a[nm].value != values):
+            if nm in list(mds.a.keys()) and any(mds.a[nm].value != values):
                 raise ValueError("name clash for %s" % nm)
             del mds.fa[nm]
             mds.a[nm] = values
@@ -376,7 +380,7 @@ class ProductFlattenMapper(FlattenMapper):
         '''
 
         output_factor_names = []
-        factor_names_values = zip(*(self._factor_names, self._factor_values))
+        factor_names_values = list(zip(*(self._factor_names, self._factor_values)))
         for dim, (name, values) in enumerate(factor_names_values):
             vs = reversed_dataset.fa[name].value
 
@@ -387,7 +391,7 @@ class ProductFlattenMapper(FlattenMapper):
             assert(n == len(values))
 
             unq_vs = []
-            for i in xrange(n):
+            for i in range(n):
                 v = vs[i, ...]
                 unq_v = np.unique(v)
                 assert(unq_v.size == 1)
@@ -418,8 +422,7 @@ def mask_mapper(mask=None, shape=None, space=None):
     """
     if mask is None:
         if shape is None:
-            raise ValueError, \
-                  "Either `shape` or `mask` have to be specified."
+            raise ValueError("Either `shape` or `mask` have to be specified.")
         else:
             # make full dataspace mask if nothing else is provided
             mask = np.ones(shape, dtype='bool')
@@ -431,10 +434,9 @@ def mask_mapper(mask=None, shape=None, space=None):
             mask = np.array(mask, copy=False, subok=True, ndmin=len(shape))
             # check for compatibility
             if not shape == mask.shape:
-                raise ValueError, \
-                    "The mask dataspace shape %s is not " \
+                raise ValueError("The mask dataspace shape %s is not " \
                     "compatible with the provided shape %s." \
-                    % (mask.shape, shape)
+                    % (mask.shape, shape))
 
     fm = FlattenMapper(shape=mask.shape, space=space)
     flatmask = fm.forward1(mask)

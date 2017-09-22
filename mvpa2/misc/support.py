@@ -7,7 +7,20 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Support function -- little helpers in everyday life"""
+from __future__ import division
 
+from past.builtins import cmp
+from future import standard_library
+standard_library.install_aliases()
+from builtins import next
+from builtins import map
+from builtins import zip
+from builtins import bytes
+from builtins import str
+from builtins import range
+from past.builtins import basestring
+from past.utils import old_div
+from builtins import object
 __docformat__ = 'restructuredtext'
 
 import itertools
@@ -72,19 +85,18 @@ def transform_with_boxcar(data, startpoints, boxlength, offset=0, fx=np.mean):
     :rtype: array (len(startpoints) x data.shape[1:])
     """
     if boxlength < 1:
-        raise ValueError, "Boxlength lower than 1 makes no sense."
+        raise ValueError("Boxlength lower than 1 makes no sense.")
 
     # check for illegal boxes
     for sp in startpoints:
         if ( sp + offset + boxlength - 1 > len(data)-1 ) \
            or ( sp + offset < 0 ):
-            raise ValueError, \
-                  'Illegal box: start: %i, offset: %i, length: %i' \
-                  % (sp, offset, boxlength)
+            raise ValueError('Illegal box: start: %i, offset: %i, length: %i' \
+                  % (sp, offset, boxlength))
 
     # build a list of list where each sublist contains the indexes of to be
     # averaged data elements
-    selector = [ range( i + offset, i + offset + boxlength ) \
+    selector = [ list(range( i + offset, i + offset + boxlength)) \
                  for i in startpoints ]
 
     # average each box
@@ -115,7 +127,7 @@ def xunique_combinations(L, n):
     if n == 0:
         yield []
     else:
-        for i in xrange(len(L)-n+1):
+        for i in range(len(L)-n+1):
             for cc in xunique_combinations(L[i+1:], n-1):
                 yield [L[i]]+cc
 
@@ -142,7 +154,7 @@ def __xrandom_unique_combinations(L, n, k=None):
     if k is not None:
         # Just a helper for convenient limiting
         g = xrandom_unique_combinations(L, n)
-        for i in xrange(k):
+        for i in range(k):
             yield next(g)
     elif n == 0:
         yield []
@@ -165,7 +177,7 @@ def ncombinations(n, k):
     if 0 <= k <= n:
         ntok = 1
         ktok = 1
-        for t in xrange(1, min(k, n - k) + 1):
+        for t in range(1, min(k, n - k) + 1):
             ntok *= n
             ktok *= t
             n -= 1
@@ -205,7 +217,7 @@ def xrandom_unique_combinations(L, n, k=None):
         # Let's cycle through permutations while tracking
         # repeats
         seen = set()
-        indexes = range(len(L)) # switch to indices so we could
+        indexes = list(range(len(L))) # switch to indices so we could
                                 # reliably hash them
         while len(seen) < min(k, ncomb):
             np.random.shuffle(indexes)
@@ -239,7 +251,7 @@ def unique_combinations(L, n, sort=False):
 
 def xrandom_iterprod(n, *seq):
     """Generate n random iterprod's from given sequences"""
-    ls = map(len, seq)
+    ls = list(map(len, seq))
     seen = set()
     if n > np.prod(ls):
         n = np.prod(ls)
@@ -311,7 +323,7 @@ def is_in_volume(coord, shape):
     No more generalization (arbitrary minimal coord) is done to save
     on performance
     """
-    for i in xrange(len(coord)):
+    for i in range(len(coord)):
         if coord[i] < 0 or coord[i] >= shape[i]:
             return False
     return True
@@ -342,12 +354,12 @@ def version_to_tuple(v):
     of numerics and alpha numbers
     """
     if isinstance(v, basestring):
-        v = map(str, v.split('.'))
+        v = list(map(str, v.split('.')))
     elif isinstance(v, (tuple, list)):
         # assure tuple
         pass
     else:
-        raise ValueError, "Do not know how to treat version '%s'" % str(v)
+        raise ValueError("Do not know how to treat version '%s'" % str(v))
 
     # Try to convert items into ints
     vres = []
@@ -401,7 +413,7 @@ class SmartVersion(Version):
 
     def parse(self, vstring):
         # Unicode gives grief on older releases and anyway arguably comparable
-        if isinstance(vstring, unicode):
+        if isinstance(vstring, str):
             vstring = str(vstring)
         self.vstring = vstring
         self.version = version_to_tuple(vstring)
@@ -416,7 +428,7 @@ class SmartVersion(Version):
             return ""
 
     def __cmp__(self, other):
-        if isinstance(other, (str, unicode, tuple, list)):
+        if isinstance(other, (str, tuple, list)):
             other = SmartVersion(other)
         elif isinstance(other, SmartVersion):
             pass
@@ -435,7 +447,7 @@ class SmartVersion(Version):
             # having above cmp overloads builtin cmp for this function so we
             # need manually rebind it or just resort to above cmp in general
             # (why not?)
-            from __builtin__ import cmp
+            from builtins import cmp
 
         # Do ad-hoc comparison of strings
         i = 0
@@ -452,7 +464,7 @@ class SmartVersion(Version):
 
         s, o = self.version, other.version
         regex_prerelease = re.compile('~|-?dev|-?rc|-?svn|-?pre|-?beta|-?alpha', re.I)
-        for i in xrange(max(len(s), len(o))):
+        for i in range(max(len(s), len(o))):
             if i < len(s): si = s[i]
             else: si = None
             if i < len(o): oi = o[i]
@@ -473,8 +485,8 @@ class SmartVersion(Version):
                             # otherwise the other one wins
                             return -mult
                     else:
-                        raise RuntimeError, "Should not have got here with %s" \
-                              % y
+                        raise RuntimeError("Should not have got here with %s" \
+                              % y)
                 elif isinstance(x, int):
                     if not isinstance(y, int):
                         return mult
@@ -512,14 +524,13 @@ def get_break_points(items, contiguous=True):
     """List of items which was already seen"""
     result = []
     """Resultant list"""
-    for index in xrange(len(items)):
+    for index in range(len(items)):
         item = items[index]
         if item in known:
             if index > 0:
                 if prev != item:            # breakpoint
                     if contiguous:
-                        raise ValueError, \
-                        "Item %s was already seen before" % str(item)
+                        raise ValueError("Item %s was already seen before" % str(item))
                     else:
                         result.append(index)
         else:
@@ -547,7 +558,7 @@ def rfe_history_to_maps(history):
     nfeatures, steps = len(history), max(history) - min(history) + 1
     history_maps = np.zeros((steps, nfeatures))
 
-    for step in xrange(steps):
+    for step in range(steps):
         history_maps[step, history >= step] = 1
 
     return history_maps
@@ -633,7 +644,7 @@ class Event(dict):
         # basic checks
         for k in Event._MUSTHAVE:
             if not k in self:
-                raise ValueError, "Event must have '%s' defined." % k
+                raise ValueError("Event must have '%s' defined." % k)
 
 
     ##REF: Name was automagically refactored
@@ -669,7 +680,7 @@ class Event(dict):
         out = copy(self)
 
         # get the timepoint just prior the onset
-        out['onset'] = int(np.floor(onset / dt))
+        out['onset'] = int(np.floor(old_div(onset, dt)))
 
         if storeoffset:
             # compute offset
@@ -679,7 +690,7 @@ class Event(dict):
         if 'duration' in out:
             # how many timepoint cover the event (from computed onset
             # to the one timepoint just after the end of the event
-            out['duration'] = int(np.ceil((onset + out['duration']) / dt) \
+            out['duration'] = int(np.ceil(old_div((onset + out['duration']), dt)) \
                                   - out['onset'])
 
         return out
@@ -848,7 +859,7 @@ def get_nelements_per_value(data):
         values = data
 
     # use dictionary to cope with arbitrary values
-    result = dict(zip(uniquevalues, [ 0 ] * len(uniquevalues)))
+    result = dict(list(zip(uniquevalues, [ 0 ] * len(uniquevalues))))
     for l in values:
         result[l] += 1
 

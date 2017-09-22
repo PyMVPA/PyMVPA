@@ -7,7 +7,13 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Various helpers to improve docstrings and textual output"""
+from __future__ import division
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from past.builtins import basestring
+from past.utils import old_div
 __docformat__ = 'restructuredtext'
 
 import re, textwrap
@@ -17,7 +23,7 @@ types = __import__('types')
 # for table2string
 import numpy as np
 from math import ceil
-from StringIO import StringIO
+from io import StringIO
 from mvpa2 import cfg
 
 from mvpa2.base.externals import versions, exists
@@ -53,7 +59,7 @@ elif __rst_conventions == 'numpy':
         """Provide section heading"""
         return "%s\n%s" % (section_name, '-'*len(section_name))
 else:
-    raise ValueError, "Unknown convention %s for RST" % __rst_conventions
+    raise ValueError("Unknown convention %s for RST" % __rst_conventions)
 
 
 def _rst(s, snotrst=''):
@@ -215,28 +221,26 @@ def enhanced_doc_string(item, *args, **kwargs):
     # Handling of arguments
     if len(kwargs):
         if set(kwargs.keys()).issubset(set(['force_extend'])):
-            raise ValueError, "Got unknown keyword arguments (smth among %s)" \
-                  " in enhanced_doc_string." % kwargs
+            raise ValueError("Got unknown keyword arguments (smth among %s)" \
+                  " in enhanced_doc_string." % kwargs)
     force_extend = kwargs.get('force_extend', False)
     skip_params = kwargs.get('skip_params', [])
 
     # XXX make it work also not only with classes but with methods as well
     if isinstance(item, basestring):
         if len(args)<1 or not isinstance(args[0], dict):
-            raise ValueError, \
-                  "Please provide locals for enhanced_doc_string of %s" % item
+            raise ValueError("Please provide locals for enhanced_doc_string of %s" % item)
         name = item
         lcl = args[0]
         args = args[1:]
     elif hasattr(item, "im_class"):
         # bound method
-        raise NotImplementedError, \
-              "enhanced_doc_string is not yet implemented for methods"
+        raise NotImplementedError("enhanced_doc_string is not yet implemented for methods")
     elif hasattr(item, "__name__"):
         name = item.__name__
         lcl = item.__dict__
     else:
-        raise ValueError, "Don't know how to extend docstring for %s" % item
+        raise ValueError("Don't know how to extend docstring for %s" % item)
 
     # check whether docstring magic is requested or not
     if not cfg.getboolean('doc', 'pimp docstrings', True):
@@ -263,8 +267,8 @@ def enhanced_doc_string(item, *args, **kwargs):
         # do only if kwargs is one of the arguments
         # in python 2.5 args are no longer in co_names but in varnames
         extend_args = force_extend or \
-                      'kwargs' in (func.func_code.co_names +
-                                   func.func_code.co_varnames)
+                      'kwargs' in (func.__code__.co_names +
+                                   func.__code__.co_varnames)
 
         if __debug__ and not extend_args:
             debug('DOCH',
@@ -419,11 +423,11 @@ def table2string(table, out=None):
                 align = item[1]
                 item = item[2:]
                 if not align in ['l', 'r', 'c', 'w']:
-                    raise ValueError, 'Unknown alignment %s. Known are l,r,c' % align
+                    raise ValueError('Unknown alignment %s. Known are l,r,c' % align)
             else:
                 align = 'c'
 
-            NspacesL = max(ceil((col_width[j] - len(item))/2.0), 0)
+            NspacesL = max(ceil(old_div((col_width[j] - len(item)),2.0)), 0)
             NspacesR = max(col_width[j] - NspacesL - len(item), 0)
 
             if align in ['w', 'c']:
@@ -433,7 +437,7 @@ def table2string(table, out=None):
             elif align == 'r':
                 NspacesL, NspacesR = NspacesL + NspacesR, 0
             else:
-                raise RuntimeError, 'Should not get here with align=%s' % align
+                raise RuntimeError('Should not get here with align=%s' % align)
 
             string_ += "%%%ds%%s%%%ds " \
                        % (NspacesL, NspacesR) % ('', item, '')
@@ -452,8 +456,8 @@ def _saferepr(f):
     https://github.com/PyMVPA/PyMVPA/issues/122
     """
     if type(f) == types.MethodType:
-        objid = _strid(f.im_self) if __debug__ and 'ID_IN_REPR' in debug.active else ""
-        return "<bound %s%s.%s>" % (f.im_class.__name__, objid, f.__func__.__name__)
+        objid = _strid(f.__self__) if __debug__ and 'ID_IN_REPR' in debug.active else ""
+        return "<bound %s%s.%s>" % (f.__self__.__class__.__name__, objid, f.__func__.__name__)
     else:
         return repr(f)
 
@@ -491,7 +495,7 @@ def _repr(obj, *args, **kwargs):
     if max_length < 0:
         max_length = 0
     auto_repr = ', '.join(list(args)
-                   + ["%s=%s" % (k, v) for k, v in kwargs.iteritems()])
+                   + ["%s=%s" % (k, v) for k, v in kwargs.items()])
 
 
     if truncate is not None and len(auto_repr) > max_length:
@@ -544,7 +548,7 @@ def _str(obj, *args, **kwargs):
     if s is None:
         s = obj.__class__.__name__
         auto_descr = ', '.join(list(args)
-                       + ["%s=%s" % (k, v) for k, v in kwargs.iteritems()])
+                       + ["%s=%s" % (k, v) for k, v in kwargs.items()])
         if len(auto_descr):
             s = s + ': ' + auto_descr
 

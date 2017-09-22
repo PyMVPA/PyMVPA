@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Helpers for arguments handling."""
 
+from builtins import zip
 __docformat__ = 'restructuredtext'
 
 def split_kwargs(kwargs, prefixes=None):
@@ -28,7 +29,7 @@ def split_kwargs(kwargs, prefixes=None):
     if not ('' in prefixes):
         prefixes = prefixes + ['']
     result = [ [] for i in prefixes ]
-    for k,v in kwargs.iteritems():
+    for k,v in kwargs.items():
         for i,p in enumerate(prefixes):
             if k.startswith(p):
                 result[i].append((k.replace(p,'',1), v))
@@ -58,8 +59,7 @@ def group_kwargs(prefixes, assign=False, passthrough=False):
     def decorated_method(method):
         def do_group_kwargs(self, *args_, **kwargs_):
             if '' in prefixes:
-                raise ValueError, \
-                      "Please don't put empty string ('') into prefixes"
+                raise ValueError("Please don't put empty string ('') into prefixes")
             # group as needed
             splits = split_kwargs(kwargs_, prefixes)
             # adjust resultant kwargs__
@@ -69,11 +69,11 @@ def group_kwargs(prefixes, assign=False, passthrough=False):
                 k = '%skwargs' % prefix
                 if k in kwargs__:
                     # is unprobable but can happen
-                    raise ValueError, '%s is already given in the arguments' % k
+                    raise ValueError('%s is already given in the arguments' % k)
                 if passthrough:   kwargs__[k] = skwargs
                 if assign: setattr(self, '_%s' % k, skwargs)
             return method(self, *args_, **kwargs__)
-        do_group_kwargs.func_name = method.func_name
+        do_group_kwargs.__name__ = method.__name__
         return do_group_kwargs
 
     return decorated_method

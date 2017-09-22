@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Submodule to provide sweepargs decorator for unittests"""
 
+from builtins import str
+from six import reraise as raise_
 __docformat__ = 'restructuredtext'
 
 import sys
@@ -52,7 +54,7 @@ def sweepargs(**kwargs):
             failed_tests = {}
             skipped_tests = []
             report_progress = cfg.get('tests', 'verbosity', default=1) > 1
-            for argname in kwargs.keys():
+            for argname in list(kwargs.keys()):
                 for argvalue in kwargs[argname]:
                     if isinstance(argvalue, Classifier):
                         # clear classifier before its use
@@ -68,10 +70,10 @@ def sweepargs(**kwargs):
                                   % (method.__name__, args_, kwargs_))
                         method(*args_, **kwargs_)
                         status = '+'
-                    except SkipTest, e:
+                    except SkipTest as e:
                         skipped_tests += [e]
                         status = 'S'
-                    except AssertionError, e:
+                    except AssertionError as e:
                         status = 'F'
                         estr = str(e)
                         etype, value, tb = sys.exc_info()
@@ -128,7 +130,7 @@ def sweepargs(**kwargs):
                             "(specific tracebacks are below):" % cestr
                 else:
                     estr += "\n Single scenario %s:" % cestr
-                for ek, els in failed_tests.iteritems():
+                for ek, els in failed_tests.items():
                     estr += '\n'
                     if multiple:
                         estr += ek
@@ -141,19 +143,18 @@ def sweepargs(**kwargs):
                              for ea, eav, etb, es in els]))
                     # take first one... they all should be identical
                     etb = els[0][2]
-                raise AssertionError(estr), None, etb
+                raise_(AssertionError(estr), None, etb)
             if len(skipped_tests):
                 # so if nothing has failed, lets at least report that some were
                 # skipped -- for now just  a simple SkipTest message
                 raise SkipTest("%d tests were skipped in testing %s"
-                               % (len(skipped_tests), method.func_name))
-        do_sweep.func_name = method.func_name
+                               % (len(skipped_tests), method.__name__))
+        do_sweep.__name__ = method.__name__
         do_sweep.__doc__ = method.__doc__
         return do_sweep
 
     if len(kwargs) > 1:
-        raise NotImplementedError, \
-              "No sweeping over multiple arguments in sweepargs. Meanwhile " \
-              "use two @sweepargs decorators for the test."
+        raise NotImplementedError("No sweeping over multiple arguments in sweepargs. Meanwhile " \
+              "use two @sweepargs decorators for the test.")
 
     return unittest_method
