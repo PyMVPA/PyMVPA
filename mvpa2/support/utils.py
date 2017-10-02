@@ -31,7 +31,7 @@ class deprecated(object):
 
     >>> from sklearn.utils import deprecated
     >>> deprecated() # doctest: +ELLIPSIS
-    <sklearn.utils.deprecated object at ...>
+    <sklearn.utils.depre...>
 
     >>> @deprecated()
     ... def some_function(): pass
