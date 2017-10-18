@@ -588,8 +588,8 @@ class CrossNobisSearchlight(Searchlight):
                               resid2[:,self._sl_ext_conn[0,slz]],
                               resid2[:,self._sl_ext_conn[1,slz]],
                               out=cov_tmp2[slz])
-                cov_tmp /= nsamp
-                cov_tmp2 /= nsamp
+                cov_tmp /= nsamp #assume centered
+                cov_tmp2 /= nsamp #assume centered
                 del resid, resid2
                 if __debug__:
                     debug('SLC','completed split %d/%d'%(split_no, self._nsplits))
@@ -862,7 +862,7 @@ class CrossNobisSearchlight(Searchlight):
                     cov2[triu_idx[::-1]] = cov2[triu_idx]
                     # ledoit wolf shrinkage
                     mu = np.sum(np.trace(cov))/n_fids
-                    delta_[:] = cov.copy()
+                    delta_[:] = cov
                     delta_.flat[::n_fids+1] -= mu
                     delta = (delta_ ** 2).sum() / n_fids
                     beta_ = 1. / (n_fids * self._splits_cov_nsamples[split_value]) * np.sum(cov2 - cov ** 2)
