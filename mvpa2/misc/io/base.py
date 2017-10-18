@@ -197,7 +197,7 @@ class ColumnData(dict):
         """
         length = None
         for k in self.keys():
-            if length == None:
+            if length is None:
                 length = len(self[k])
             else:
                 if not len(self[k]) == length:
@@ -354,7 +354,7 @@ class ColumnData(dict):
         with open(filename, 'w') as file_:
 
             # write header
-            if header_order == None:
+            if header_order is None:
                 if self._header_order is None:
                     col_hdr = self.keys()
                 else:

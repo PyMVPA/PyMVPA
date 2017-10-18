@@ -510,7 +510,7 @@ class ConfusionMatrix(SummaryStatistics):
 
         SummaryStatistics.__init__(self, **kwargs)
 
-        if labels == None:
+        if labels is None:
             labels = []
 
         self.__labels = labels

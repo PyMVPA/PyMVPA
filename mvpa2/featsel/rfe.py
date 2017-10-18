@@ -264,7 +264,7 @@ class RFE(IterativeFeatureSelection):
             ca.history[orig_feature_ids] = step
 
             # Compute sensitivity map
-            if self.__update_sensitivity or sensitivity == None:
+            if self.__update_sensitivity or sensitivity is None:
                 sensitivity = self._fmeasure(wdataset)
                 if len(sensitivity) > 1:
                     raise ValueError(

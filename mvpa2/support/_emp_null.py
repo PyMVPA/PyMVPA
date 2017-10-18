@@ -383,7 +383,7 @@ class ENN(object):
         ax.set_xticklabels(ax.get_xticks(), fontsize=16)
         ax.set_yticklabels(ax.get_yticks(), fontsize=16)
 
-        if efp != None:
+        if efp is not None:
             ax.plot(self.x, np.minimum(alpha, efp), 'k')
     
 

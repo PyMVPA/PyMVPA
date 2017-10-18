@@ -46,13 +46,13 @@ def double_array(seq):
 
 ##REF: Name was automagically refactored
 def free_int_array(x):
-    if x != 'NULL' and x != None:
+    if x != 'NULL' and x is not None:
         svmc.delete_int(x)
 
 
 ##REF: Name was automagically refactored
 def free_double_array(x):
-    if x != 'NULL' and x != None:
+    if x != 'NULL' and x is not None:
         svmc.delete_double(x)
 
 
@@ -263,7 +263,7 @@ class SVMProblem:
 
 class SVMModel:
     def __init__(self, arg1, arg2=None):
-        if arg2 == None:
+        if arg2 is None:
             # create model from file
             filename = arg1
             self.model = svmc.svm_load_model(filename)

@@ -563,8 +563,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # which do not require any specific order.
         # And yet due to another issue
         # https://github.com/numpy/numpy/issues/3759
-        # we can't just == None for the bool mask
-        None_fa = np.array([x == None for x in  res.fa.nonbogus_targets])
+        # we can't just is None for the bool mask
+        None_fa = np.array([x is None for x in  res.fa.nonbogus_targets])
         assert_array_equal(res.samples[0, None_fa], [18])
         assert_array_equal(res.samples[0, ~None_fa], [1, 1])
 

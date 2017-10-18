@@ -215,7 +215,7 @@ class BibTeX(dict):
     """
     def __init__(self, filename = None):
 
-        if not filename == None:
+        if not filename is None:
             self.open(filename)
 
         # spaces to be used for indentation
@@ -233,7 +233,7 @@ class BibTeX(dict):
         while 1:
             entry = _bibtex.next(file)
 
-            if entry == None: break
+            if entry is None: break
 
             eprops = {}
 
