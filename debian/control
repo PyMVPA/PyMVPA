@@ -4,6 +4,7 @@ Priority: optional
 Maintainer: NeuroDebian team <team@neuro.debian.net>
 Uploaders: Michael Hanke <mih@debian.org>, Yaroslav Halchenko <debian@onerussian.com>
 Build-Depends: debhelper (>= 9~),
+               dh-python,
                python-all-dev (>= 2.6.6-3~),
                swig | swig2.0,
                python-numpy, python-scipy,
