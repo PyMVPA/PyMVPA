@@ -250,6 +250,7 @@ def collect_nose_tests(verbosity=1):
         'test_cmdline_ttest',
         'test_lib_afni',
         'test_misc_scatter',
+        'test_misc_plot',
         'test_misc',
         'test_errorfx',
         'test_testing',

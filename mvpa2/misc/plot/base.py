@@ -575,9 +575,8 @@ def inverse_cmap(cmap_name):
                                               new_data, _cm.LUTSIZE)
 
 
-##REF: Name was automagically refactored
 def plot_dataset_chunks(ds, clf_labels=None):
-    """Quick plot to see chunk sctructure in dataset with 2 features
+    """Quick plot to see chunk structure in dataset with 2 features
 
     if clf_labels is provided for the predicted labels, then
     incorrectly labeled samples will have 'x' in them
@@ -590,10 +589,14 @@ def plot_dataset_chunks(ds, clf_labels=None):
         clf_labels = None
     colors = ('b', 'g', 'r', 'c', 'm', 'y', 'k', 'w')
     labels = ds.uniquetargets
+    if labels.dtype.kind == 'f' and len(labels) > len(colors):
+        raise NotImplementedError(
+            "Cannot plot with labels being floats and more than 7 "
+            "of the unique values")
     labels_map = dict(zip(labels, colors[:len(labels)]))
-    for chunk in ds.uniquechunks:
+    for chunk in ds.UC:
         chunk_text = str(chunk)
-        ids = ds.where(chunks=chunk)
+        ids = ds.C == chunk
         ds_chunk = ds[ids]
         for i in xrange(ds_chunk.nsamples):
             s = ds_chunk.samples[i]
