@@ -2,6 +2,9 @@ pymvpa2 (2.6.1-2) unstable; urgency=medium
 
   * Upload to unstable
   * debian/patches/00* - addressing for changes in sphinx
+  * debian/control
+    - boosted policy to 4.0.0
+    - boosted compat/debhelper to 9
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 17 Oct 2017 20:55:22 -0400
 

@@ -3,7 +3,7 @@ Section: python
 Priority: optional
 Maintainer: NeuroDebian team <team@neuro.debian.net>
 Uploaders: Michael Hanke <mih@debian.org>, Yaroslav Halchenko <debian@onerussian.com>
-Build-Depends: debhelper (>= 7.0.50~),
+Build-Depends: debhelper (>= 9~),
                python-all-dev (>= 2.6.6-3~),
                swig | swig2.0,
                python-numpy, python-scipy,
@@ -19,7 +19,7 @@ Build-Depends: debhelper (>= 7.0.50~),
                python-statsmodels [!s390x],
                python-joblib,
                python-mock,
-Standards-Version: 3.9.8
+Standards-Version: 4.0.0
 Homepage: http://www.pymvpa.org
 Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/pymvpa.git
 Vcs-Git: git://git.debian.org/git/pkg-exppsy/pymvpa.git -b dist2/debian/proper/sid
