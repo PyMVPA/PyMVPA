@@ -134,6 +134,18 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
     x, y = datainter = data[:, intersection]
 
     if mask is not None:
+        if mask.size * ntimepoints == intersection.size:
+            # we have got a single mask applicable to both x and y
+            pass
+        elif mask.size * ntimepoints == 2 * intersection.size:
+            # we have got a mask per each, let's get an intersection
+            assert mask.shape[0] == 2, "had to get 1 for x, 1 for y"
+            mask = np.logical_and(mask[0], mask[1])
+        else:
+            raise ValueError(
+                "mask of shape %s. data of shape %s. ntimepoints=%d.  "
+                "Teach me how to apply it" % (mask.shape, data.shape, ntimepoints)
+            )
         # replicate mask ntimepoints times
         mask = np.repeat(mask.ravel(), ntimepoints)[intersection] != 0
         x_masked = x[mask]
