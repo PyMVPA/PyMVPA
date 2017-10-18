@@ -17,6 +17,7 @@ if externals.exists("nibabel", raise_=True):
 import numpy as np, os, re
 
 from mvpa2.support.nibabel import surf
+from mvpa2.misc.io import safe_write
 import io
 
 
@@ -252,10 +253,5 @@ def write(fn, s, overwrite=True):
         raise ValueError("Filename %s does not end with required"
                          " extension %s" % (fn, EXT))
 
-
     xml = to_xml(s, fn)
-
-    with io.FileIO(fn, 'wb') as f:
-        n = f.write(xml)
-    if n != len(xml):
-        raise ValueError("Not all bytes written to %s" % fn)
+    safe_write(fn, xml)
