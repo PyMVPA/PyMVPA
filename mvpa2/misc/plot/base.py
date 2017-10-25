@@ -599,7 +599,7 @@ def plot_dataset_chunks(ds, clf_labels=None):
             s = ds_chunk.samples[i]
             l = ds_chunk.targets[i]
             format = ''
-            if clf_labels != None:
+            if clf_labels is not None:
                 if clf_labels[i] != ds_chunk.targets[i]:
                     pl.plot([s[0]], [s[1]], 'x' + labels_map[l])
             pl.text(s[0], s[1], chunk_text, color=labels_map[l],

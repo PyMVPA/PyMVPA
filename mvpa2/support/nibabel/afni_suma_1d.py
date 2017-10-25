@@ -20,7 +20,7 @@ def write(fnout, data, nodeidxs=None):
     data = np.array(data)
     nv = data.shape[0]
     nt = 1 if data.ndim == 1 else data.shape[1]
-    if nodeidxs != None:
+    if nodeidxs is not None:
         # make space
         alldata = np.zeros((nv, nt + 1))
 

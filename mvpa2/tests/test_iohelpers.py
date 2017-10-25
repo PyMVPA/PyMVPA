@@ -202,7 +202,7 @@ class IOHelperTests(unittest.TestCase):
                 "We must got column names correctly")
         self.assertTrue(len(attr.r_60_B) == attr.nrows,
                 "We must have got access to column by property")
-        self.assertTrue(attr.toarray() != None,
+        self.assertTrue(attr.toarray() is not None,
                 "We must have got access to column by property")
 
     def testdesign2labels(self):
