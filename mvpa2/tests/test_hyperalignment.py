@@ -15,7 +15,7 @@ from mvpa2.base import cfg
 from mvpa2.datasets.base import Dataset
 from mvpa2.base.dataset import hstack
 
-from mvpa2.algorithms.hyperalignment import Hyperalignment
+from mvpa2.algorithms.hyperalignment import Hyperalignment, mean_xy
 from mvpa2.mappers.zscore import zscore
 from mvpa2.misc.support import idhash
 from mvpa2.misc.data_generators import random_affine_transformation
@@ -314,6 +314,26 @@ class HyperAlignmentTests(unittest.TestCase):
         for i in range(len(ds_all)):
             dss_arr[i] = ds_all[i]
         m = ha(dss_arr)
+
+    def test_mean_xy(self):
+        arr = np.random.random((10, ))
+
+        # Mean with equal weights
+        mean = arr[0]
+        counts = 1
+        for num in arr[1:]:
+            mean = mean_xy(mean, num, weights=(float(counts), 1.0))
+            counts += 1
+        np.testing.assert_allclose(mean, np.mean(arr))
+
+        # Mean with unequal weights, weights are like 1, 1, 2, 4, 8, 16, ...
+        weights = 0.5**np.arange(10)[::-1]
+        weights[0] = weights[1]
+        mean2 = arr[0]
+        for num in arr[1:]:
+            mean2 = mean_xy(mean2, num)
+        np.testing.assert_allclose(mean2, sum(arr * weights) / np.sum(weights))
+
 
     def _test_on_swaroop_data(self):  # pragma: no cover
         #
