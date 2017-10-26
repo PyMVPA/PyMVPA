@@ -13,7 +13,6 @@ import unittest
 import numpy as np
 import itertools
 from numpy.linalg import norm
-from scipy.stats import zscore
 from mvpa2.base import externals
 from mvpa2.datasets.base import dataset_wizard
 from mvpa2.testing import *
@@ -121,7 +120,7 @@ class ProcrusteanMapperTests(unittest.TestCase):
         for i in range(rep):
             a = np.random.random((10, 10))
             T = np.linalg.qr(a)[0]
-            d = zscore(np.random.random((10, 10)), axis=0)
+            d = np.random.random((10, 10))
             d2 = np.dot(d, T)
             ds = dataset_wizard(samples=d, targets=d2)
 
