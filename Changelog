@@ -31,15 +31,20 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
-* 2.6.2 (???, ???)
+* 2.6.2 (Tue, Oct 31 2017)
 
-  Something great will happen!
+  Primarily a bugfix release
 
   * Fixes
-
+    - numpy 1.13.1 compatibility fixes
+    - documentation: urls and building fix ups
+    - some fixes for Python3 compatibility in hdf5 (h5save/h5load) support
+    - use single line affine matrix representation in pymvpa2-prep-afni-surf
+    - saving large .niml files should not crash now
 
   * New functionality
-
+    - :func:`~mvpa2.misc.errorfx.mean_tpr` and :func:`~mvpa2.misc.errorfx.mean_fnr`
+      error functions (to be used in disbalanced datasets)
 
   * Enhancements
 
