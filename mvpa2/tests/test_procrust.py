@@ -116,12 +116,17 @@ class ProcrusteanMapperTests(unittest.TestCase):
                                     msg="%s: Failed to reconstruct into source space correctly."
                                         " normed error=%g" % (sdim, ndsfr))
 
+    @reseed_rng()
     def test_reflection(self, rep=10):
         for i in range(rep):
-            a = np.random.random((10, 10))
-            T = np.linalg.qr(a)[0]
-            d = np.random.random((10, 10))
+            from mvpa2.testing.datasets import get_random_rotation
+            d = np.random.random((100, 2))
+            T = get_random_rotation(d.shape[1])
             d2 = np.dot(d, T)
+            # scale it up a bit
+            d2 *= 1.2
+            # add a reflection by flipping the first dimension
+            d2[:, 0] *= -1
             ds = dataset_wizard(samples=d, targets=d2)
 
             norm0 = np.linalg.norm(d - d2)
