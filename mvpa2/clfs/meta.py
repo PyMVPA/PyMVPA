@@ -85,7 +85,7 @@ class BoostedClassifier(Classifier):
           dict of keyworded arguments which might get used
           by State or Classifier
         """
-        if clfs == None:
+        if clfs is None:
             clfs = []
 
         Classifier.__init__(self, **kwargs)
@@ -518,7 +518,7 @@ class ClassifierCombiner(PredictionsCombiner):
         self.__clf = clf
         """Classifier to train on `variables` ca of provided classifiers"""
 
-        if variables == None:
+        if variables is None:
             variables = ['predictions']
         self.__variables = variables
         """What conditional attributes of the classifiers to use"""
@@ -565,7 +565,7 @@ class CombinedClassifier(BoostedClassifier):
             estimate (which is pretty much what is stored under
             `estimates`)
         """
-        if clfs == None:
+        if clfs is None:
             clfs = []
 
         BoostedClassifier.__init__(self, clfs, **kwargs)

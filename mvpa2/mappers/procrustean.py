@@ -173,14 +173,15 @@ class ProcrusteanMapper(ProjectionMapper):
                 # http://en.wikipedia.org/wiki/Orthogonal_Procrustes_problem
                 # for more and info and original references, see
                 # http://dx.doi.org/10.1007%2FBF02289451
-                nsv = len(s)
-                s[:-1] = 1
-                s[-1] = np.linalg.det(T)
-                T = np.dot(U[:, :nsv] * s, Vh)
+                s_new = np.ones_like(s)
+                s_new[-1] = np.linalg.det(T)
+                T = np.dot(Vh.T * s_new, U.T)
 
             # figure out scale and final translation
-            # XXX with reflection False -- not sure if here or there or anywhere...
-            ss = sum(s)
+            if not params.reflection:
+                ss = np.sum(s_new * s)
+            else:
+                ss = np.sum(s)
 
         # if we were to collect standardized distance
         # std_d = 1 - sD**2

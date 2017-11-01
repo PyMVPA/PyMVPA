@@ -404,7 +404,7 @@ def summary_targets(dataset, targets_attr='targets', chunks_attr='chunks',
             d = {'  ' + name1 : l}
             d.update(dict([ (k, stats[k][i]) for k in stats.keys()]))
             table.append( [ ('%.3g', '%s')[isinstance(d[e], basestring)
-                                           or d[e] == None]
+                                           or d[e] is None]
                             % d[e] for e in entries] )
         return '\nSummary for %s across %s\n' % (name1, name2) \
                + table2string(table)

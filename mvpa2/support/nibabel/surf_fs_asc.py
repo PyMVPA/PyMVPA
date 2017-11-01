@@ -114,7 +114,7 @@ def write(fn, surface, overwrite=False, comment=None):
         raise Exception("File already exists: %s" % fn)
 
     s = []
-    if comment == None:
+    if comment is None:
         comment = '# Created %s' % str(datetime.datetime.now())
     s.append(comment)
 

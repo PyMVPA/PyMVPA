@@ -60,7 +60,7 @@ class IterativeRelief_Devel(FeaturewiseMeasure):
 
         # Threshold in W changes (stopping criterion for irelief)
         self.threshold = threshold
-        if kernel == None:
+        if kernel is None:
             self.kernel = ExponentialKernel
         else:
             self.kernel = kernel
@@ -97,7 +97,7 @@ class IterativeRelief_Devel(FeaturewiseMeasure):
         """Computes featurewise I-RELIEF weights."""
         samples = dataset.samples
         NS, NF = samples.shape[:2]
-        if self.w_guess == None:
+        if self.w_guess is None:
             self.w = np.ones(NF, 'd')
         # do normalization in all cases to be safe :)
         self.w = self.w/(self.w**2).sum()
@@ -185,7 +185,7 @@ class IterativeReliefOnline_Devel(IterativeRelief_Devel):
         """Computes featurewise I-RELIEF-2 weights. Online version."""
         NS = dataset.samples.shape[0]
         NF = dataset.samples.shape[1]
-        if self.w_guess == None:
+        if self.w_guess is None:
             self.w = np.ones(NF, 'd')
         # do normalization in all cases to be safe :)
         self.w = self.w/(self.w**2).sum()
@@ -332,7 +332,7 @@ class IterativeRelief(FeaturewiseMeasure):
         samples = dataset.samples
         NS, NF = samples.shape[:2]
 
-        if self.w_guess == None:
+        if self.w_guess is None:
             w = np.ones(NF, 'd')
 
         w /= (w ** 2).sum() # do normalization in all cases to be safe :)
@@ -407,7 +407,7 @@ class IterativeReliefOnline(IterativeRelief):
         threshold = self.threshold
         a = self.a
 
-        if self.w_guess == None:
+        if self.w_guess is None:
             w = np.ones(NF, 'd')
 
         # do normalization in all cases to be safe :)

@@ -92,7 +92,7 @@ class BLR(Classifier):
         train_labels = self._attrmap.to_numeric(data.sa[self.get_space()].value)
         # provide a basic (i.e. identity matrix) and correct prior
         # sigma_p, if not provided before or not compliant to 'data':
-        if self.sigma_p == None: # case: not provided
+        if self.sigma_p is None: # case: not provided
             self.sigma_p = np.eye(data.samples.shape[1]+1)
         elif self.sigma_p.shape[1] != (data.samples.shape[1]+1): # case: wrong dimensions
             self.sigma_p = np.eye(data.samples.shape[1]+1)

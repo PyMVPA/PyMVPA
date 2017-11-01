@@ -85,8 +85,8 @@ class SplitterTests(unittest.TestCase):
         moresplits = [ list(spl.generate(p)) for p in oes.generate(splits[0][0])]
 
         for split in moresplits:
-            self.assertTrue(split[0] != None)
-            self.assertTrue(split[1] != None)
+            self.assertTrue(split[0] is not None)
+            self.assertTrue(split[1] is not None)
 
 
     def test_half_split(self):
@@ -111,8 +111,8 @@ class SplitterTests(unittest.TestCase):
         moresplits = [ list(spl.generate(p)) for p in hs.generate(splits[0][0])]
 
         for split in moresplits:
-            self.assertTrue(split[0] != None)
-            self.assertTrue(split[1] != None)
+            self.assertTrue(split[0] is not None)
+            self.assertTrue(split[1] is not None)
 
     def test_n_group_split(self):
         """Test NGroupSplitter alongside with the reversal of the
@@ -147,8 +147,8 @@ class SplitterTests(unittest.TestCase):
         moresplits = [ list(spl.generate(p)) for p in hs.generate(splits[0][0])]
 
         for split in moresplits:
-            self.assertTrue(split[0] != None)
-            self.assertTrue(split[1] != None)
+            self.assertTrue(split[0] is not None)
+            self.assertTrue(split[1] is not None)
 
         # now test more groups
         s5 = NGroupPartitioner(5)
