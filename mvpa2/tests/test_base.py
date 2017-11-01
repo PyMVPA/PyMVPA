@@ -19,6 +19,7 @@ def test_wtf(filename):
     """Very basic testing of wtf()"""
 
     sinfo = str(wtf())
+    print(sinfo)  # Display it so later we could actually use to troubleshoot
     sinfo_excludes = str(wtf(exclude=['runtime']))
     ok_(len(sinfo) > len(sinfo_excludes),
         msg="Got not less info when excluded runtime."
