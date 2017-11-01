@@ -35,7 +35,7 @@ class Logger(object):
 
         Each hanlder must have write() method implemented
         """
-        if handlers == None:
+        if handlers is None:
             handlers = [stdout]
         self.__close_handlers = []
         self.__handlers = []            # pylint friendliness
@@ -247,7 +247,7 @@ class SetLogger(Logger):
         """
         if register is None:
             register = {}
-        if active == None:
+        if active is None:
             active = []
         Logger.__init__(self, *args, **kwargs)
         self.__printsetid = printsetid
@@ -584,7 +584,7 @@ if __debug__:
             *args, **kwargs
               Passed to SetLogger initialization  XXX
             """
-            if metrics == None:
+            if metrics is None:
                 metrics = []
             SetLogger.__init__(self, *args, **kwargs)
             self.__metrics = []

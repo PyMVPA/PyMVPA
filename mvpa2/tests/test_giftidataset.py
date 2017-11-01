@@ -34,7 +34,7 @@ from mvpa2.testing import sweepargs
 
 def _get_test_sample_node_data(format_=None):
     # returns test data in various formats
-    if format_ == None:
+    if format_ is None:
         samples = np.asarray(
             [[2.032, -0.892, -0.826, 1.163],
              [0.584, 1.844, 1.166, -0.848],

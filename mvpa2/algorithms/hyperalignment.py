@@ -47,8 +47,8 @@ __all__ = ["Hyperalignment"]
 # provide easier to comprehend repr of their values
 #
 
-def mean_xy(x, y):
-    return 0.5 * (x + y)
+def mean_xy(x, y, weights=(.5, .5)):
+    return (weights[0] * x + weights[1] * y) / (weights[0] + weights[1])
 
 
 def mean_axis0(a):
@@ -178,6 +178,12 @@ class Hyperalignment(ClassWithCollections):
                 each projected input dataset, except for the reference dataset.
                 By default the new common space is the average of the current
                 common space and the recently projected dataset.""")
+
+    level1_equal_weight = Parameter(False, constraints='bool',
+            doc="""Flag to force all datasets to have the same weight in the
+            level 1 iteration. False (default) means each time the new common
+            space is the average of the current common space and the newly
+            aligned dataset, and therefore earlier datasets have less weight.""")
 
     combiner2 = Parameter(mean_axis0,
             doc="""How to combine all individual spaces to common space. This
@@ -400,6 +406,7 @@ class Hyperalignment(ClassWithCollections):
     def _level1(self, datasets, commonspace, ref_ds, mappers, residuals):
         params = self.params            # for quicker access ;)
         data_mapped = [ds.samples for ds in datasets]
+        counts = 1  # number of datasets used so far for generating commonspace
         for i, (m, ds_new) in enumerate(zip(mappers, datasets)):
             if __debug__:
                 debug('HPAL_', "Level 1: ds #%i" % i)
@@ -430,7 +437,12 @@ class Hyperalignment(ClassWithCollections):
             # to make a batch update after processing all 1st-level datasets
             # to an identical 1st-level common space
             # TODO: make just a function so we dont' waste space
-            commonspace = params.combiner1(ds_, commonspace)
+            if params.level1_equal_weight:
+                commonspace = params.combiner1(ds_, commonspace,
+                                               weights=(float(counts), 1.0))
+            else:
+                commonspace = params.combiner1(ds_, commonspace)
+            counts += 1
             if params.zscore_common:
                 zscore(commonspace, chunks_attr=None)
         return data_mapped

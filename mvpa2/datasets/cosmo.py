@@ -925,10 +925,9 @@ class CosmoQueryEngine(QueryEngineInterface):
         return ds_copy
 
 
-
 class CosmoSearchlight(Searchlight):
     '''
-    Implement a standard Saerchlight measure, but with a separate
+    Implement a standard Searchlight measure, but with a separate
     postprocessing step that involves setting feature (.fa)
     and dataset (.a) attributes after the searchlight call has been made.
 

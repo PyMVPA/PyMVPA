@@ -72,6 +72,45 @@ def mismatch_error(predicted, target):
     """
     return np.sum( np.asanyarray(predicted) != target )
 
+
+def mean_tpr(predicted, target):
+    """Mean True Positive Rate (TPR).
+
+    Mean of estimates per each class
+    """
+    if len(predicted) != len(target) or not len(target):
+        raise ValueError(
+            "Both predicted and target should be of the same non-0 length")
+    targets = set(predicted)
+    targets.update(target)
+
+    target = np.asanyarray(target)
+    predicted = np.asanyarray(predicted)
+
+    TPRs = []
+    for t in targets:
+        Pmask = target == t
+        TPmask = predicted[Pmask] == t
+        assert len(TPmask) <= len(Pmask),  "do not see how this could have been violated unless indexing is screwedup..."
+        P = np.sum(Pmask)
+        TP = np.sum(TPmask)
+        if not P:
+            # better be safe than sorry
+            raise ValueError(
+                "For target %s there were only predicted values, but no "
+                "expected ones. TPR is undefined in this case, so use some "
+                "other errorfx if you really need to deal with such data (or "
+                "verify if your shuffling etc is correct)"
+                % str(t)
+            )
+        TPRs.append(float(TP)/P)
+    return np.mean(TPRs)
+
+
+def mean_fnr(predicted, target):
+    """Mean False Negative Rate (FNR) = 1 - TPR"""
+    return 1 - mean_tpr(predicted, target)
+
 def prediction_target_matches(predicted, target):
     """Returns a boolean vector of correctness of predictions"""
     return np.asanyarray(predicted) == target

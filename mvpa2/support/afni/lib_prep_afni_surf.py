@@ -668,7 +668,7 @@ def run_alignment(config, env):
         if config['identity']:
             fullmatrix_content = '"MATRIX(%s)"' % unity.replace(" ", ",")
 
-            cmd = ('cd "%s"; cat_matvec %s > %s; '
+            cmd = ('cd "%s"; cat_matvec -ONELINE %s > %s; '
                    '3dcopy -overwrite %s%s %s%s%s' % (
                        refdir, fullmatrix_content, fullmatrixfn, a_n, ext, a_n,
                        alignsuffix, ext))

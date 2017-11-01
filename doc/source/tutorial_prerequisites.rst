@@ -60,7 +60,7 @@ by default. The Python website offers `installers for Windows and MacOS X`_.
 
 However, PyMVPA can make use of many additional software packages to
 enhance its functionality. Therefore it is preferable to use a Python
-distribution that offers are large variety of scientific Python packages.
+distribution that offers a large variety of scientific Python packages.
 For Windows, `Python(x,y)`_ matches these requirements.  For MacOS X, the
 MacPorts_ project offers a large variety of Python packages (including
 PyMVPA).
@@ -202,7 +202,7 @@ Computation 2011 Workshop at Dartmouth College
 <http://haxbylab.dartmouth.edu/meetings/ncworkshop11.html>`_.
 
 .. _online:
-.. _The Elements of Statistical Learning\: Data Mining, Inference, and Prediction: http://www-stat.stanford.edu/~tibs/ElemStatLearn/
+.. _The Elements of Statistical Learning\: Data Mining, Inference, and Prediction: http://web.stanford.edu/~hastie/ElemStatLearn/
 .. _Trevor Hastie: http://www-stat.stanford.edu/~hastie/
 .. _Robert Tibshirani: http://www-stat.stanford.edu/~tibs/
 .. _Jerome Friedman: http://www-stat.stanford.edu/~jhf/

@@ -118,7 +118,7 @@ class LinearSVMWeights(Sensitivity):
                 # structure of bloody storage
 
                 # total # of pairs
-                npairs = nr_class * (nr_class-1)/2
+                npairs = (nr_class * (nr_class-1))//2
                 # # of SVs in each class
                 NSVs_perclass = model.get_n_sv()
                 # indices where each class starts in each row of SVs

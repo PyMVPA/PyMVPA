@@ -335,7 +335,7 @@ class SurfingSurfaceTests(unittest.TestCase):
                 t = vertices[trg, :]
 
                 delta = s - t
-                print s, t, delta
+                # print s, t, delta
                 return np.sum(delta ** 2) ** .5
 
             for i_face in s.faces:
@@ -348,7 +348,7 @@ class SurfingSurfaceTests(unittest.TestCase):
                     c[src] += 1
                     c[trg] += 1
 
-                    print i, src, trg, d(src, trg)
+                    # print i, src, trg, d(src, trg)
 
             assert_array_almost_equal(sd / c, s.average_node_edge_length)
 

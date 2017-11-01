@@ -11,6 +11,7 @@ disk."""
 
 __docformat__ = 'restructuredtext'
 
+import os
 import numpy as np
 import mvpa2.support.copy as copy
 from mvpa2.base.dochelpers import enhanced_doc_string
@@ -25,7 +26,7 @@ if __debug__:
 __all__ = ['DataReader', 'ColumnData', 'SampleAttributes',
            'SensorLocations', 'XAVRSensorLocations',
            'TuebingenMEGSensorLocations',
-           'labels2chunks', 'design2labels']
+           'labels2chunks', 'design2labels', 'safe_write']
 
 class DataReader(object):
     """Base class for data readers.
@@ -196,7 +197,7 @@ class ColumnData(dict):
         """
         length = None
         for k in self.keys():
-            if length == None:
+            if length is None:
                 length = len(self[k])
             else:
                 if not len(self[k]) == length:
@@ -353,7 +354,7 @@ class ColumnData(dict):
         with open(filename, 'w') as file_:
 
             # write header
-            if header_order == None:
+            if header_order is None:
                 if self._header_order is None:
                     col_hdr = self.keys()
                 else:
@@ -624,3 +625,18 @@ labels2chunks.__doc__ = \
 
     :rtype: list
     """ % __known_chunking_methods.keys()
+
+
+def safe_write(fnout, s, mode='wb'):
+    """Helper to write to a file and check result file size to match"""
+
+    with open(fnout, mode) as f:
+        f.write(s)
+
+    n = os.stat(fnout).st_size
+    if n != len(s):
+        raise ValueError(
+            "%d bytes out of %d were not written to %s"
+            % (len(s) - n, len(s), fnout)
+        )
+    return n
