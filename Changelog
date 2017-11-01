@@ -36,6 +36,9 @@ Releases
   Primarily a bugfix release
 
   * Fixes
+    - fixed scaling in ProcrusteanMapper (gh-545). So if you are using
+      Hyperalignment, you better re-pre-process, and do not mix results/transformations
+      across versions of the PyMVPA
     - numpy 1.13.1 compatibility fixes
     - documentation: urls and building fix ups
     - some fixes for Python3 compatibility in hdf5 (h5save/h5load) support
@@ -45,8 +48,6 @@ Releases
   * New functionality
     - :func:`~mvpa2.misc.errorfx.mean_tpr` and :func:`~mvpa2.misc.errorfx.mean_fnr`
       error functions (to be used in disbalanced datasets)
-
-  * Enhancements
 
 
 * 2.6.1 (Fri, Apr 14 2017)
