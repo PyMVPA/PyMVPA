@@ -325,8 +325,8 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
     ax_scatter.plot((np.min(x), np.max(x)), (0, 0), 'r', alpha=0.5)
     ax_scatter.plot((0,0), (np.min(y), np.max(y)), 'r', alpha=0.5)
 
-    if (mask is not None and not masked_opacity):
-        # if there is a mask which was not intended to be plotted,
+    if (mask is not None and not masked_opacity and np.sum(mask)):
+        # if there is a non-degenerate mask which was not intended to be plotted,
         # take those values away while estimating min/max range
         _ = x[mask]; minx, maxx = np.min(_), np.max(_)
         _ = y[mask]; miny, maxy = np.min(_), np.max(_)
@@ -404,15 +404,15 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
         ax_scatter.set_ylim( ylim )
 
     # get values to plot for histogram and boxplot
-    x_hist, y_hist = (x, y) if mask is None else (x_masked, y_masked)
+    x_hist, y_hist = (x, y) if (mask is None or not np.sum(mask)) else (x_masked, y_masked)
 
-    if ax_hist_x is not None:
+    if np.any(binsx) and ax_hist_x is not None:
         ax_hist_x.xaxis.set_major_formatter(nullfmt)
         histx = ax_hist_x.hist(x_hist, bins=binsx, facecolor='b')
         ax_hist_x.set_xlim( ax_scatter.get_xlim() )
         ax_hist_x.vlines(0, 0, 0.9*np.max(histx[0]), 'r')
 
-    if ax_hist_y is not None:
+    if np.any(binsy) and ax_hist_y is not None:
         ax_hist_y.yaxis.set_major_formatter(nullfmt)
         histy = ax_hist_y.hist(y_hist, bins=binsy,
                                orientation='horizontal', facecolor='g')
