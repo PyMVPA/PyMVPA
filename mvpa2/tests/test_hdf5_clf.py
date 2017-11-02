@@ -30,23 +30,22 @@ from mvpa2.base.hdf5 import h5save, h5load, obj2hdf
 
 
 @sweepargs(lrn=clfswh[:] + regrswh[:])
-def test_h5py_clfs(lrn):
+@with_tempfile()
+def test_h5py_clfs(fname, lrn):
     # lets simply clone it so we could make its all states on
     lrn = lrn.clone()
     # Lets enable all the states
     lrn.ca.enable('all')
 
-    f = tempfile.NamedTemporaryFile()
-
     # Store/reload untrained learner
     try:
-        h5save(f.name, lrn)
+        h5save(fname, lrn)
     except Exception, e:
         raise AssertionError, \
               "Failed to store due to %r" % (e,)
 
     try:
-        lrn_ = h5load(f.name)
+        lrn_ = h5load(fname)
         pass
     except Exception, e:
         raise AssertionError, \
@@ -78,14 +77,14 @@ def test_h5py_clfs(lrn):
 
     # now lets store/reload the trained one
     try:
-        h5save(f.name, lrn_)
+        h5save(fname, lrn_)
     except Exception, e:
         raise AssertionError, \
               "Failed to store trained lrn due to %r" % (e,)
 
     # This lrn__ is doubly stored/loaded ;-)
     try:
-        lrn__ = h5load(f.name)
+        lrn__ = h5load(fname)
     except Exception, e:
         raise AssertionError, \
               "Failed to load trained lrn due to %r" % (e,)
