@@ -26,11 +26,13 @@ if __debug__:
 # WaveletPacket and WaveletTransformation mappers share lots of common
 # functionality at the moment
 
+DEFAULT_MODE = "periodization" if externals.versions["pywt"] >= "0.4" else "per"
+
 class _WaveletMapper(Mapper):
     """Generic class for Wavelet mappers (decomposition and packet)
     """
 
-    def __init__(self, dim=1, wavelet='sym4', mode='per', maxlevel=None):
+    def __init__(self, dim=1, wavelet='sym4', mode=DEFAULT_MODE, maxlevel=None):
         """Initialize _WaveletMapper mapper
 
         Parameters

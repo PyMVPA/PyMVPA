@@ -166,9 +166,10 @@ def __check_pywt(features=None):
          0.72436454,  0.2193098,  -0.0135051,   0.34283984,  0.65596245,
          0.49598417,  0.39935064,  0.26370727,  0.05572373,  0.40194438,
          0.47004551,  0.60327258,  0.25628266,  0.32964893,  0.24009889])
-    mode = 'per'
-    wp = pywt.WaveletPacket(data, 'sym2', mode)
-    wp2 = pywt.WaveletPacket(data=None, wavelet='sym2', mode=mode)
+    # default one is the per or periodization
+    DEFAULT_MODE = 'per' if 'per' in pywt.MODES.modes else 'periodization'
+    wp = pywt.WaveletPacket(data, 'sym2', DEFAULT_MODE)
+    wp2 = pywt.WaveletPacket(data=None, wavelet='sym2', mode=DEFAULT_MODE)
     try:
         for node in wp.get_level(2): wp2[node.path] = node.data
     except:
