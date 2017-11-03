@@ -110,8 +110,10 @@ def test_h5py_clfs(fname, lrn):
             ok_(np.asscalar(error__) <= 2*np.asscalar(error))
     else:
         # must match precisely
-        assert_array_equal(error, error_)
-        assert_array_equal(error, error__)
+        # but not on windows 32 bit - had miniscule difference
+        cmp_ = assert_array_almost_equal if on_windows else assert_array_equal
+        cmp_(error, error_)
+        cmp_(error, error__)
 
     # TODO: verify ca's
 
