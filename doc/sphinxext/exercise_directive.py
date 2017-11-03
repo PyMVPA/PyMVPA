@@ -39,7 +39,7 @@ if make_admonition:
     class BaseExcerciseDirective(Directive):
         def run(self):
             return make_admonition(
-                exercise, self.name, ['Exercise'], self.options,
+                excercise_node, self.name, ['Exercise'], self.options,
                 self.content, self.lineno, self.content_offset, self.block_text,
                 self.state, self.state_machine)
 else:
