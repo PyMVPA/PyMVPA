@@ -192,10 +192,13 @@ class WTF(object):
     def _acquire_runtime(self, out):
         out.write("RUNTIME:\n")
         out.write(" PyMVPA Environment Variables:\n")
-        out.write('  ' + '  '.join(
-            ['%-20s: "%s"\n' % (str(k), str(v))
-             for k, v in os.environ.iteritems()
-             if (k.startswith('MVPA') or k.startswith('PYTHON'))]))
+        pymvpa_envvars = '  '.join([
+            '%-20s: "%s"\n' % (str(k), str(v))
+            for k, v in os.environ.iteritems()
+            if (k.startswith('MVPA') or k.startswith('PYTHON'))
+        ])
+        if pymvpa_envvars:
+            out.write('  ' + pymvpa_envvars)
 
         out.write(" PyMVPA Runtime Configuration:\n")
         out.write('  ' + str(cfg).replace('\n', '\n  ').rstrip() + '\n')
@@ -203,6 +206,7 @@ class WTF(object):
     def _acquire_process(self, out):
         try:
             procstat = open('/proc/%d/status' % os.getpid()).readlines()
+            procstat += ['Python recursion limit: %d' % sys.getrecursionlimit()]
             out.write(' Process Information:\n')
             out.write('  ' + '  '.join(procstat))
         except:

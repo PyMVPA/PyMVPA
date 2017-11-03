@@ -37,6 +37,8 @@ def test_plot_dataset_chunks(dsp):
     # smoke test for now
     if 'chunks' not in ds.sa:
         return  # nothing to plot in this one
+    print dsname
     plot_dataset_chunks(ds[:, :2])  # could only plot two
+    pl.close(pl.gcf())
     if ds.nfeatures > 2:
         assert_raises(ValueError, plot_dataset_chunks, ds)
