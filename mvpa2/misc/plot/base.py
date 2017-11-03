@@ -582,7 +582,7 @@ def plot_dataset_chunks(ds, clf_labels=None):
     incorrectly labeled samples will have 'x' in them
     """
     if ds.nfeatures != 2:
-        raise ValueError, "Can plot only in 2D, ie for datasets with 2 features"
+        raise ValueError("Can plot only in 2D, ie for datasets with 2 features")
     if pl.matplotlib.get_backend() == 'TkAgg':
         pl.ioff()
     if clf_labels is not None and len(clf_labels) != ds.nsamples:
@@ -615,7 +615,8 @@ def plot_dataset_chunks(ds, clf_labels=None):
             1.1 * np.max(dss[:, 0]),
             1.1 * np.min(dss[:, 1])))
     pl.draw()
-    pl.ion()
+    if pl.matplotlib.get_backend() == 'TkAgg':
+        pl.ion()
 
 
 def timeseries_boxplot(median, mean=None, std=None, n=None, min=None, max=None,

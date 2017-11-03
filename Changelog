@@ -31,6 +31,15 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
+* 2.6.3 (Fri, Nov 03 2017)
+
+  Minor bugfix release -- getting ready for conda-forge
+
+  * Fixes
+    - variety of tune ups to test to pass all around
+    - minor fixes to scatter and chunks plots
+
+
 * 2.6.2 (Tue, Oct 31 2017)
 
   Primarily a bugfix release
