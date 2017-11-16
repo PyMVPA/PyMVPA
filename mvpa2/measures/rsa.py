@@ -845,7 +845,7 @@ class CrossNobisSearchlight(Searchlight):
                     col_idx = self._sl_ext_conn[1,l:r]
                     #for fid in roi_fids:
                     #    cov_mask[l:r] |= (col_idx == fid)
-                    cov_mask[l:r] = np.any(col_idx[:,np.newaxis] == roi_fids[np.newaxis],1)
+                    cov_mask[l:r] = np.any(col_idx[:,np.newaxis] == roi_fids[np.newaxis],1) # weerdly faster than in1d
                 cov_mask_idx = np.argwhere(cov_mask).flatten()
                 triu_idx = np.triu_indices(n_fids)
                 cov = np.empty((n_fids, n_fids), dtype=ds.samples.dtype)
