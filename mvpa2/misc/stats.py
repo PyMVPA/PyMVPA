@@ -80,7 +80,7 @@ def chisquare(obs, exp='uniform'):
 
     # return chisq and probability (upper tail)
     # taking only the elements with something expected
-    return chisq, st.chisqprob(chisq, np.sum(exp_nonzeros) - 1)
+    return chisq, st.chi2.sf(chisq, np.sum(exp_nonzeros) - 1)
 
 
 def _chk_asanyarray(a, axis):
