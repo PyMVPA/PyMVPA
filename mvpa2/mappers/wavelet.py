@@ -15,6 +15,10 @@ if externals.exists('pywt', raise_=True):
     # the docs even if pywt is not installed
     import pywt
 
+    DEFAULT_MODE = "periodization" if externals.versions["pywt"] >= "0.4" else "per"
+else:
+    DEFAULT_MODE = None
+
 import numpy as np
 
 from mvpa2.base import warning
@@ -25,8 +29,6 @@ if __debug__:
 
 # WaveletPacket and WaveletTransformation mappers share lots of common
 # functionality at the moment
-
-DEFAULT_MODE = "periodization" if externals.versions["pywt"] >= "0.4" else "per"
 
 class _WaveletMapper(Mapper):
     """Generic class for Wavelet mappers (decomposition and packet)
