@@ -18,7 +18,7 @@ from mvpa2.clfs.meta import FeatureSelectionClassifier, SplitClassifier, \
      MulticlassClassifier, RegressionAsClassifier
 from mvpa2.clfs.smlr import SMLR
 from mvpa2.clfs.knn import kNN
-from mvpa2.clfs.gda import LDA, QDA
+from mvpa2.clfs.gda import LDA, QDA, ShrinkageLDA
 from mvpa2.clfs.gnb import GNB
 from mvpa2.kernels.np import LinearKernel, SquaredExponentialKernel, \
      GeneralizedLinearKernel
@@ -244,7 +244,7 @@ if externals.exists('libsvm'):
 
 if externals.exists('shogun'):
     from mvpa2.clfs import sg
-    
+
     from mvpa2.kernels.sg import LinearSGKernel, PolySGKernel, RbfSGKernel
     clfswh._known_tags.update(sg.SVM._KNOWN_IMPLEMENTATIONS)
 
@@ -708,4 +708,3 @@ if len(clfswh['linear', 'svm']) > 0:
     #        # update sensitivity at each step
     #   splitter = OddEvenSplitter(),
     #   descr='LinSVM+RFE(OddEven)')
-
