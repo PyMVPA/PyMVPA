@@ -459,17 +459,24 @@ def __check_reportlab():
 
 def __check(name, a='__version__'):
     exec "import %s" % name
+    # it might be lxml.etree, so take only first module
+    topmodname = name.split('.')[0]
     try:
         v = getattr(sys.modules[name], '__version__')
-        # it might be lxml.etree, so take only first module
-        versions[name.split('.')[0]] = SmartVersion(v)
     except Exception as e:
         # we can't assign version but it is there
         if __debug__:
             debug('EXT', 'Failed to acquire a version of %(name)s: %(e)s'
                   % locals())
-        pass
-    return True
+        # if module is present but does not bear __version__
+        try:
+            import pkg_resources
+            v = pkg_resources.get_distribution(topmodname).version
+        except Exception as e:
+            # and if all that failed -- just assign '0'
+            v = '0'
+    versions[topmodname] = SmartVersion(v)
+    return True  # we did manage to import it -- so it is there
 
 def __check_h5py():
     __check('h5py', 'version.version')
