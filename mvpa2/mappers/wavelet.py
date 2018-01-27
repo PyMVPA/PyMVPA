@@ -15,6 +15,10 @@ if externals.exists('pywt', raise_=True):
     # the docs even if pywt is not installed
     import pywt
 
+    DEFAULT_MODE = "periodization" if externals.versions["pywt"] >= "0.4" else "per"
+else:
+    DEFAULT_MODE = None
+
 import numpy as np
 
 from mvpa2.base import warning
@@ -30,7 +34,7 @@ class _WaveletMapper(Mapper):
     """Generic class for Wavelet mappers (decomposition and packet)
     """
 
-    def __init__(self, dim=1, wavelet='sym4', mode='per', maxlevel=None):
+    def __init__(self, dim=1, wavelet='sym4', mode=DEFAULT_MODE, maxlevel=None):
         """Initialize _WaveletMapper mapper
 
         Parameters
