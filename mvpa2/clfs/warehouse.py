@@ -18,7 +18,7 @@ from mvpa2.clfs.meta import FeatureSelectionClassifier, SplitClassifier, \
      MulticlassClassifier, RegressionAsClassifier
 from mvpa2.clfs.smlr import SMLR
 from mvpa2.clfs.knn import kNN
-from mvpa2.clfs.gda import LDA, QDA, ShrinkageLDA
+from mvpa2.clfs.gda import LDA, QDA
 from mvpa2.clfs.gnb import GNB
 from mvpa2.kernels.np import LinearKernel, SquaredExponentialKernel, \
      GeneralizedLinearKernel
@@ -46,7 +46,7 @@ _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'non-deterministic', 'needs_population',
         'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
         'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet',
-        'gnb', 'plr', 'rpy2', 'swig', 'skl', 'lda', 'qda',
+        'gnb', 'plr', 'rpy2', 'swig', 'skl', 'lda', 'qda', 'shrinkage',
         'random-forest', 'extra-trees', 'random',
         # oneclass-binary can provide binary output for the labels
         # oneclass would always output a single label but with
@@ -357,6 +357,8 @@ if externals.exists('skl'):
 
     if _skl_version >= "0.17":
         sklLDA = _skl_import('discriminant_analysis', 'LinearDiscriminantAnalysis')
+        from mvpa2.clfs.shrinklda import ShrinkageLDA
+        clfswh += ShrinkageLDA(descr='ShrinkageLDA()')
     else:
         sklLDA = _skl_import('lda', 'LDA')
 
