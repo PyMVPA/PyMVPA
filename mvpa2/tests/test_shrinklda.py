@@ -19,6 +19,7 @@ from mvpa2.misc.data_generators import normal_feature_dataset
 from mvpa2.clfs.shrinklda import ShrinkageLDA
 from mvpa2.measures.base import CrossValidation
 from mvpa2.generators.partition import NFoldPartitioner
+from mvpa2.testing import *
 
 class ShrinkageLDATests(unittest.TestCase):
 
