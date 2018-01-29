@@ -1,3 +1,9 @@
+pymvpa2 (2.6.4-1) unstable; urgency=medium
+
+  * Fresh upstream bugfix release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 29 Jan 2018 15:15:50 -0500
+
 pymvpa2 (2.6.3-1) unstable; urgency=medium
 
   * Fresh bugfix release -- primarily just tests
