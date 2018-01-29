@@ -50,6 +50,7 @@ ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 	for buildver in $(shell pyversions -vr); do \
 		echo "I: Running PyMVPA unittests using python$$buildver"; \
 		cd $(CURDIR)/debian/tmp/usr/lib/python$$buildver/*-packages && \
+        MVPA_SEED=1 \
 		PYTHONPATH=. MVPA_TESTS_LABILE=no MVPA_TESTS_LOWMEM=yes \
 		MVPA_TESTS_QUICK=yes MVPA_TESTS_VERBOSITY=3 MVPA_MATPLOTLIB_BACKEND=agg \
 		python$$buildver -m nose -s -v mvpa2 \

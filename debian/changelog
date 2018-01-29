@@ -4,6 +4,9 @@ pymvpa2 (2.6.4-1) unstable; urgency=medium
   * Manually create simple smlrc.so and svmc.so symlinks to multiarch .so.
     Apparently numpy.ctypeslib.load_library is not creating a valid multiarch
     suffix to match the one created by dh_python2
+  * debian/rules
+    - run tests under fixed MVPA_SEED=1 to avoid surprises, so should
+      resolve spurious FTBFS (Closes: #880793)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 29 Jan 2018 15:15:50 -0500
 
