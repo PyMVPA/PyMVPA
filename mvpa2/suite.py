@@ -94,6 +94,10 @@ __sdebug('clfs smlr')
 from mvpa2.clfs.smlr import *
 from mvpa2.clfs.blr import *
 from mvpa2.clfs.gnb import *
+if externals.exists('skl'):
+    if externals.versions['skl'] >= '0.17':
+        from mvpa2.clfs.shrinklda import *
+        from mvpa2.clfs.skl.base import SKLLearnerAdapter
 from mvpa2.clfs.stats import *
 from mvpa2.clfs.similarity import *
 if externals.exists('libsvm') or externals.exists('shogun'):
