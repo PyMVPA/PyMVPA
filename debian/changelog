@@ -1,6 +1,9 @@
 pymvpa2 (2.6.4-1) unstable; urgency=medium
 
   * Fresh upstream bugfix release
+  * Manually create simple smlrc.so and svmc.so symlinks to multiarch .so.
+    Apparently numpy.ctypeslib.load_library is not creating a valid multiarch
+    suffix to match the one created by dh_python2
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 29 Jan 2018 15:15:50 -0500
 

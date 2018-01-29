@@ -72,6 +72,15 @@ endif
 override_dh_python2:
 	dh_python2
 	if [ -x /usr/bin/dh_numpy ]; then dh_numpy; fi
+	# Create a symlink to fix up for dh_python2 creating arch-specific
+	# libs, while numpy not understanding those for python2:
+	# https://github.com/PyMVPA/PyMVPA/issues/568
+	/usr/bin/find debian/python-mvpa2*lib -iname *.so \
+	| while read so; do \
+		bso=$$(basename $$so); dso=$$(dirname $$so); \
+		tso=$$dso/$${bso%%.*}.so; \
+		[ -e "$$tso" ] || ln -sf $$bso $$tso ;\
+	done
 
 override_dh_installchangelogs:
 	dh_installchangelogs Changelog
