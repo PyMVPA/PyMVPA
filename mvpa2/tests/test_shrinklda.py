@@ -14,7 +14,6 @@ import numpy as np
 from mvpa2.clfs.skl.base import SKLLearnerAdapter
 
 from mvpa2.misc.data_generators import normal_feature_dataset
-from mvpa2.clfs.shrinklda import ShrinkageLDA
 from mvpa2.measures.base import CrossValidation
 from mvpa2.generators.partition import NFoldPartitioner
 from mvpa2.testing import *
@@ -31,6 +30,7 @@ class ShrinkageLDATests(unittest.TestCase):
         if not externals.exists('skl') or externals.versions['skl'] < '0.17':
             self.skipTest('sklearn (0.17 or higher) unavailable')
         else:
+            from mvpa2.clfs.shrinklda import ShrinkageLDA
             from sklearn.discriminant_analysis import \
             LinearDiscriminantAnalysis as sklLDA
             # Dataset properties: should be of type "high p, low n" as is
