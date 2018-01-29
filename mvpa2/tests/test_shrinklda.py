@@ -51,7 +51,7 @@ class ShrinkageLDATests(unittest.TestCase):
         partitioner = NFoldPartitioner(attr='chunks')
 
         delta_t = []
-        for clf_num, clf in enumerate([pymvpa_clf, skl_clf]):
+        for clf in [pymvpa_clf, skl_clf]:
             cv = CrossValidation(clf, partitioner)
             _ = cv(ds)
             delta_t.append(cv.ca.calling_time)
