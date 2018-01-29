@@ -31,6 +31,21 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
+* 2.6.4 (Mon, Jan 29 2017)
+
+  A bugfix release
+
+  * Fixes
+    - compatibility with :mod:`pywt` >= 0.4
+    - compatibility with :mod:`scipy.stats` >= 0.17.0 for `chisqprob`
+
+  * Enhancements
+    - make `h5save` "robust" in the presence of file locks - wait for a while
+      to acquire the lock
+    - consult :mod:`pkg_resources` about versions of external packages if no
+      `__version__` was found
+
+
 * 2.6.3 (Fri, Nov 03 2017)
 
   Minor bugfix release -- getting ready for conda-forge
