@@ -16,7 +16,7 @@ import pylab as pl
 import nibabel as nb
 import numpy as np
 
-from mvpa2.base import verbose
+from mvpa2.base import verbose, warning
 
 __all__ = ['plot_scatter']
 
@@ -286,21 +286,22 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
 
         # for orientation we need to plot 1 slice... assume that the last dimension is z -- figure out a slice with max # of non-zeros
         zdim_entries = ndindices_nz[:, -1]
-        zdim_counts, _ = np.histogram(zdim_entries, bins=np.arange(0, np.max(zdim_entries)+1))
-        zdim_max = np.argmax(zdim_counts)
+        if np.size(zdim_entries):
+            zdim_counts, _ = np.histogram(zdim_entries, bins=np.arange(0, np.max(zdim_entries)+1))
+            zdim_max = np.argmax(zdim_counts)
 
-        if hint_opacity:
-            # now we need to plot that zdim_max slice taking into account our colormap
-            # create new axes
-            axslice = pl.axes([left, bottom+height * 0.72, width/4., height/5.],
-                              axisbg='y')
-            axslice.axis('off')
-            sslice = np.zeros(dataXd.shape[1:3]) # XXX hardcoded assumption on dimcolor =1
-            sslice[:, : ] = np.arange(dimcolor_len)[None, :]
-            # if there is time dimension -- choose minimal value across all values
-            dataXd_mint = np.min(dataXd, axis=-1) if dataXd.ndim == 5 else dataXd
-            sslice[dataXd_mint[0, ..., zdim_max] == 0] = -1 # reset those not in the picture to be "under" range
-            axslice.imshow(sslice, alpha=hint_opacity, cmap=cm)
+            if hint_opacity:
+                # now we need to plot that zdim_max slice taking into account our colormap
+                # create new axes
+                axslice = pl.axes([left, bottom+height * 0.72, width/4., height/5.],
+                                  axisbg='y')
+                axslice.axis('off')
+                sslice = np.zeros(dataXd.shape[1:3]) # XXX hardcoded assumption on dimcolor =1
+                sslice[:, : ] = np.arange(dimcolor_len)[None, :]
+                # if there is time dimension -- choose minimal value across all values
+                dataXd_mint = np.min(dataXd, axis=-1) if dataXd.ndim == 5 else dataXd
+                sslice[dataXd_mint[0, ..., zdim_max] == 0] = -1 # reset those not in the picture to be "under" range
+                axslice.imshow(sslice, alpha=hint_opacity, cmap=cm)
     else:
         # the scatter plot without colors to distinguish location
         ax_scatter.scatter(x, y, **sc_kwargs)
@@ -322,8 +323,13 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
 
 
     # Axes
-    ax_scatter.plot((np.min(x), np.max(x)), (0, 0), 'r', alpha=0.5)
-    ax_scatter.plot((0,0), (np.min(y), np.max(y)), 'r', alpha=0.5)
+    if np.size(x):
+        ax_scatter.plot((np.min(x), np.max(x)), (0, 0), 'r', alpha=0.5)
+    else:
+        warning("There is nothing to plot, returning early")
+        return pl.gcf()
+
+    ax_scatter.plot((0, 0), (np.min(y), np.max(y)), 'r', alpha=0.5)
 
     if (mask is not None and not masked_opacity and np.sum(mask)):
         # if there is a non-degenerate mask which was not intended to be plotted,

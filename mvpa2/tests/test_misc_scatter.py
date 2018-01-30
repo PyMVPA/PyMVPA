@@ -56,6 +56,11 @@ def test_plot_scatter():
     fig = plot_scatter(data2d, mask=mask)
     fig = plot_scatter(data2d, mask=mask, masked_opacity=0.42)
 
+    data2d_nan = np.empty(data2d.shape)
+    data2d_nan[:, :] = np.nan
+    # must not blow
+    fig = plot_scatter(data2d_nan, mask=mask)
+
     # smoke test with threshold
     fig = plot_scatter(data2d, thresholds=[0.2])
     fig = plot_scatter(data2d, thresholds=[0.2, 0.4])
