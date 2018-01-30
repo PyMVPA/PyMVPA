@@ -401,8 +401,18 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
         binwidthx = (maxx - minx)/51.
         binwidthy = (maxy - miny)/51.
 
-        binsx = np.arange(minx, maxx + binwidthx, binwidthx)
-        binsy = np.arange(miny, maxy + binwidthy, binwidthy)
+        try:
+            binsx = np.arange(minx, maxx + binwidthx, binwidthx)
+            binsy = np.arange(miny, maxy + binwidthy, binwidthy)
+        except Exception as exc:
+            warning(
+                "Received following exception while trying to get bins for "
+                "minx=%(minx)f maxx=%(maxx)f binwidthx=%(binwidthx)s "
+                "miny=%(miny)f maxy=%(maxy)f binwidthy=%(binwidthy)s: %(exc)s. "
+                "Returning early"
+                % locals()
+            )
+            return pl.gcf()
 
     if xlim is not None:
         ax_scatter.set_xlim( xlim )
