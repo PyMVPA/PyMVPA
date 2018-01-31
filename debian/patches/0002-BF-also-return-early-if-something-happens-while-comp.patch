@@ -1,0 +1,38 @@
+From a242da690f4594835865de37c8715353dca94e1f Mon Sep 17 00:00:00 2001
+From: Yaroslav Halchenko <debian@onerussian.com>
+Date: Tue, 30 Jan 2018 11:18:57 -0500
+Subject: [PATCH 2/2] BF: also return early if something happens while
+ computing bins and provide informative msg
+
+---
+ mvpa2/misc/plot/scatter.py | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
+
+diff --git a/mvpa2/misc/plot/scatter.py b/mvpa2/misc/plot/scatter.py
+index 09b650bc..b48be2c3 100755
+--- a/mvpa2/misc/plot/scatter.py
++++ b/mvpa2/misc/plot/scatter.py
+@@ -401,8 +401,18 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
+         binwidthx = (maxx - minx)/51.
+         binwidthy = (maxy - miny)/51.
+ 
+-        binsx = np.arange(minx, maxx + binwidthx, binwidthx)
+-        binsy = np.arange(miny, maxy + binwidthy, binwidthy)
++        try:
++            binsx = np.arange(minx, maxx + binwidthx, binwidthx)
++            binsy = np.arange(miny, maxy + binwidthy, binwidthy)
++        except Exception as exc:
++            warning(
++                "Received following exception while trying to get bins for "
++                "minx=%(minx)f maxx=%(maxx)f binwidthx=%(binwidthx)s "
++                "miny=%(miny)f maxy=%(maxy)f binwidthy=%(binwidthy)s: %(exc)s. "
++                "Returning early"
++                % locals()
++            )
++            return pl.gcf()
+ 
+     if xlim is not None:
+         ax_scatter.set_xlim( xlim )
+-- 
+2.15.1
+

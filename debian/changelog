@@ -1,3 +1,11 @@
+pymvpa2 (2.6.4-2) unstable; urgency=medium
+
+  * patches to fortify scatter code and tests against degenerate cases which
+    reveal themselves on exotic platforms (Now should really Closes: #880793).
+    ref: https://github.com/numpy/numpy/issues/10496
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 31 Jan 2018 11:09:23 -0500
+
 pymvpa2 (2.6.4-1) unstable; urgency=medium
 
   * Fresh upstream bugfix release
@@ -6,7 +14,7 @@ pymvpa2 (2.6.4-1) unstable; urgency=medium
     suffix to match the one created by dh_python2
   * debian/rules
     - run tests under fixed MVPA_SEED=1 to avoid surprises, so should
-      resolve spurious FTBFS (Closes: #880793)
+      resolve spurious FTBFS (tried to close #880793)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 29 Jan 2018 15:15:50 -0500
 
