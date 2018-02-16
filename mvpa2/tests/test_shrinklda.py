@@ -35,10 +35,10 @@ class ShrinkageLDATests(unittest.TestCase):
             LinearDiscriminantAnalysis as sklLDA
             # Dataset properties: should be of type "high p, low n" as is
             # typical for fMRI data
-            n_features = 500
-            n_chunks = 10
+            n_features = 250
+            n_chunks = 3
             n_classes = 3
-            n_samples_per_class = 60 # should be multiple of n_chunks
+            n_samples_per_class = 18 # should be multiple of n_chunks
             snr = 3.0
 
             # Shrinkage estimators to use. OAS not an available option for
