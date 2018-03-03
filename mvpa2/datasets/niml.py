@@ -399,7 +399,7 @@ def _find_node_indices(dset, node_indices_labels):
                 if len(node_indices) != dset.nfeatures:
                     raise ValueError("Node indices mismatch: found %d values "
                                      " but dataset has %d features" %
-                                     (len(node_indices, dset.nfeatures)))
+                                     (len(node_indices), dset.nfeatures))
                 node_indices_int = np.asarray(node_indices, dtype=np.int)
                 if not np.array_equal(node_indices_int, node_indices):
                     raise ValueError("Node indices should have integer values")
