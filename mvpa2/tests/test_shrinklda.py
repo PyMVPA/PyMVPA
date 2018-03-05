@@ -27,44 +27,44 @@ class ShrinkageLDATests(unittest.TestCase):
         # accuracies next to identical? Is the PyMVPA implementation faster?
 
         # First check if scikit-learn is available at all
-        if not externals.exists('skl') or externals.versions['skl'] < '0.17':
-            self.skipTest('sklearn (0.17 or higher) unavailable')
-        else:
-            from mvpa2.clfs.shrinklda import ShrinkageLDA
-            from sklearn.discriminant_analysis import \
-            LinearDiscriminantAnalysis as sklLDA
-            # Dataset properties: should be of type "high p, low n" as is
-            # typical for fMRI data
-            n_features = 250
-            n_chunks = 3
-            n_classes = 3
-            n_samples_per_class = 18 # should be multiple of n_chunks
-            snr = 3.0
+        skip_if_no_external('skl', min_version='0.17')
 
-            # Shrinkage estimators to use. OAS not an available option for
-            # sklLDA.
-            shrink_type = 'ledoit-wolf'
+        # Run test if scikit-learn with required version is available
+        from mvpa2.clfs.shrinklda import ShrinkageLDA
+        from sklearn.discriminant_analysis import \
+        LinearDiscriminantAnalysis as sklLDA
+        # Dataset properties: should be of type "high p, low n" as is
+        # typical for fMRI data
+        n_features = 250
+        n_chunks = 3
+        n_classes = 3
+        n_samples_per_class = 18 # should be multiple of n_chunks
+        snr = 3.0
 
-            # The competitors
-            pymvpa_clf = ShrinkageLDA(shrinkage_estimator='ledoit-wolf')
-            # Using 'lsqr' because it is claimed to be more efficient than 'svd'
-            # see sklearn doc.
-            skl_clf = SKLLearnerAdapter(sklLDA(solver='lsqr', shrinkage='auto'))
+        # Shrinkage estimators to use. OAS not an available option for
+        # sklLDA.
+        shrink_type = 'ledoit-wolf'
 
-            ds = normal_feature_dataset(perlabel=n_samples_per_class,
-            nlabels=n_classes, nfeatures=n_features, nchunks=n_chunks,
-            nonbogus_features=range(n_classes), snr=snr)
+        # The competitors
+        pymvpa_clf = ShrinkageLDA(shrinkage_estimator='ledoit-wolf')
+        # Using 'lsqr' because it is claimed to be more efficient than 'svd'
+        # see sklearn doc.
+        skl_clf = SKLLearnerAdapter(sklLDA(solver='lsqr', shrinkage='auto'))
 
-            partitioner = NFoldPartitioner(attr='chunks')
+        ds = normal_feature_dataset(perlabel=n_samples_per_class,
+        nlabels=n_classes, nfeatures=n_features, nchunks=n_chunks,
+        nonbogus_features=range(n_classes), snr=snr)
 
-            delta_t = []
-            for clf in [pymvpa_clf, skl_clf]:
-                cv = CrossValidation(clf, partitioner)
-                _ = cv(ds)
-                delta_t.append(cv.ca.calling_time)
+        partitioner = NFoldPartitioner(attr='chunks')
 
-            # Was the PyMVPA version faster than the wrapped sklearn version?
-            self.assertTrue(delta_t[0] < delta_t[1])
+        delta_t = []
+        for clf in [pymvpa_clf, skl_clf]:
+            cv = CrossValidation(clf, partitioner)
+            _ = cv(ds)
+            delta_t.append(cv.ca.calling_time)
+
+        # Was the PyMVPA version faster than the wrapped sklearn version?
+        self.assertTrue(delta_t[0] < delta_t[1])
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(ShrinkageLDATests)
