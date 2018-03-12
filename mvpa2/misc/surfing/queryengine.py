@@ -66,6 +66,7 @@ class SurfaceQueryEngine(QueryEngineInterface):
         self.distance_metric = distance_metric
         self.fa_node_key = fa_node_key
         self._vertex2feature_map = None
+        self._ids = None
 
         allowed_metrics = ('dijkstra', 'euclidean')
         if not self.distance_metric in allowed_metrics:
@@ -111,10 +112,15 @@ class SurfaceQueryEngine(QueryEngineInterface):
     @property
     def ids(self):
         self._check_trained()
-        return self._vertex2feature_map.keys()
+        # we want to return only those ids that have neighbors
+        if self._ids is None:
+            self._ids = [k for k in self._vertex2feature_map.keys()
+                         if len(self._vertex2feature_map[k])]
+        return self._ids
 
     def untrain(self):
         self._vertex2feature_map = None
+        self._ids = None
 
     def train(self, ds):
         '''
