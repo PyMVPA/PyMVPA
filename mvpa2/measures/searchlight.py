@@ -37,6 +37,7 @@ from mvpa2.mappers.base import ChainMapper
 
 from mvpa2.support.due import due, Doi
 
+
 class BaseSearchlight(Measure):
     """Base class for searchlights.
 
@@ -66,10 +67,13 @@ class BaseSearchlight(Measure):
           Engine to use to discover the "neighborhood" of each feature.
           See :class:`~mvpa2.misc.neighborhood.QueryEngine`.
         roi_ids : None or list(int) or str
-          List of feature ids (not coordinates) the shall serve as ROI seeds
-          (e.g. sphere centers). Alternatively, this can be the name of a
+          List of query engine ids (e.g.,  feature ids, not coordinates, in case
+          of `IndexQueryEngine`; and `node_indices` in case of
+          `SurfaceQueryEngine`) that shall serve as ROI seeds
+          (e.g., sphere centers). Alternatively, this can be the name of a
           feature attribute of the input dataset, whose non-zero values
-          determine the feature ids. By default all features will be used.
+          determine the feature ids (be careful to use it only with
+          `IndexQueryEngine`).  By default all query engine ids will be used.
         nproc : None or int
           How many processes to use for computation.  Requires `pprocess`
           external module.  If None -- all available cores will be used.
