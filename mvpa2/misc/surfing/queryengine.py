@@ -234,15 +234,6 @@ class SurfaceRingQueryEngine(SurfaceQueryEngine):
         if self._vertex2feature_map is None:
             raise ValueError('Not trained on dataset: %s' % self)
 
-
-    @property
-    def ids(self):
-        self._check_trained()
-        return self._vertex2feature_map.keys()
-
-    def untrain(self):
-        self._vertex2feature_map = None
-
     def train(self, ds):
         '''
         Train the queryengine

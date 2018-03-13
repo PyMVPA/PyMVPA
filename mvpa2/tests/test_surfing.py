@@ -1029,6 +1029,9 @@ class SurfTests(unittest.TestCase):
             # train the qe
             qe.train(ds3)
 
+            # check we have only the indices in ds
+            assert_array_equal(np.unique(ds3.fa.node_indices), qe.ids)
+
             for node in np.arange(-1, s2.nvertices + 1):
                 if node < 0 or node >= s2.nvertices:
                     assert_raises(KeyError, lambda: qe.query_byid(node))
