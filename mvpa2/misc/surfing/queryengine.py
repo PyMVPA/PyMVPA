@@ -112,10 +112,6 @@ class SurfaceQueryEngine(QueryEngineInterface):
     @property
     def ids(self):
         self._check_trained()
-        # we want to return only those ids that have neighbors
-        if self._ids is None:
-            self._ids = [k for k in self._vertex2feature_map.keys()
-                         if len(self._vertex2feature_map[k])]
         return self._ids
 
     def untrain(self):
@@ -159,6 +155,9 @@ class SurfaceQueryEngine(QueryEngineInterface):
         for feature_id, vertex_id in enumerate(vertex_ids):
             v2f[vertex_id].append(feature_id)
 
+        # store ids only for those vertices for which we have neighbors
+        self._ids = [k for k in self._vertex2feature_map.keys()
+                     if len(self._vertex2feature_map[k])]
 
     def query(self, **kwargs):
         raise NotImplementedError

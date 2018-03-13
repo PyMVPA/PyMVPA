@@ -991,6 +991,9 @@ class SurfTests(unittest.TestCase):
             assert_true('SurfaceQueryEngine' in '%s' % qe)
             assert_true('SurfaceQueryEngine' in '%r' % qe)
 
+            # check we have only the indices in ds
+            assert_array_equal(np.unique(ds3.fa.node_indices), qe.ids)
+
     def test_surf_ring_queryengine(self):
         s = surf.generate_plane((0, 0, 0), (0, 1, 0), (0, 0, 1), 4, 5)
         # add second layer
