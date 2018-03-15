@@ -118,7 +118,7 @@ class SurfaceQueryEngine(QueryEngineInterface):
 
     def train(self, ds):
         '''
-        Train the queryengine
+        Train the query-engine
 
         Parameters
         ----------
@@ -130,10 +130,9 @@ class SurfaceQueryEngine(QueryEngineInterface):
 
         fa_key = self.fa_node_key
         nvertices = self.surface.nvertices
-        nfeatures = ds.nfeatures
 
-        if not fa_key in ds.fa.keys():
-            raise ValueError('Attribute .fa.%s not found.', fa_key)
+        if fa_key not in ds.fa.keys():
+            raise ValueError('Attribute .fa.%s not found.' % fa_key)
 
         vertex_ids = ds.fa[fa_key].value.ravel()
 
@@ -144,11 +143,11 @@ class SurfaceQueryEngine(QueryEngineInterface):
             raise ValueError("Vertex id '%s' found that is not in "
                              "np.arange(%d)" % (delta[0], nvertices))
 
-        # vertex_ids can have multiple occurences of the same node index
+        # vertex_ids can have multiple occurrences of the same node index
         # for different features, hence use a list.
         # initialize each vertex with an empty list
-        self._vertex2feature_map = v2f = dict((vertex_id, list())
-                                            for vertex_id in xrange(nvertices))
+        self._vertex2feature_map = v2f = dict(
+            (vertex_id, list()) for vertex_id in xrange(nvertices))
 
         for feature_id, vertex_id in enumerate(vertex_ids):
             v2f[vertex_id].append(feature_id)
@@ -291,7 +290,6 @@ class SurfaceRingQueryEngine(SurfaceQueryEngine):
             neighborhood = v2f[vertex_id]
         return sum((v2f[node] for node in nearby_nodes_keys
                     if nearby_nodes[node] > self.inner_radius), neighborhood)
-
 
 
 class SurfaceVerticesQueryEngine(QueryEngineInterface):
