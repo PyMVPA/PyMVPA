@@ -407,9 +407,15 @@ def make_plot(ulay, olay, dims, pos, title=None,
             counter += 1
             ax = axs[i, j]
 
-            ax.imshow(sl[i][j], extent=(0, imglength) * 2)
+            if externals.versions['matplotlib'] < '2.0.0':
+                ax.imshow(sl[i][j], extent=(0, imglength) * 2)
+                ax.set_axis_bgcolor(bgcolor)
+            else:
+                ax.imshow(sl[i][j].astype(np.float32), 
+                          extent=(0, imglength) * 2)
+                ax.set_facecolor(bgcolor)
+            
             ax.axis('off')
-            ax.set_axis_bgcolor(bgcolor)
 
     # attempt to set a tight layout (doesn't work greatly)
     f.tight_layout()
