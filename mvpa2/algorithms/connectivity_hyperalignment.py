@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Feb 03, 2016
-
-@author: Swaroop Guntupalli
-"""
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8 -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -12,8 +7,13 @@ Created on Feb 03, 2016
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Connectivity-based hyperalignment on surface with PCs
+
 (Because everything is better on surface and PCA is the silver bullet!)
 See :ref:`Guntupalli et al., Plos Comp. Bio (2018)` for details.
+
+Created on Feb 03, 2016
+
+@author: Swaroop Guntupalli
 """
 
 __docformat__ = 'restructuredtext'
@@ -57,13 +57,19 @@ else:
     def _chpaldebug(*args):
         return None
 
-'''Mean group feature measure
-    because the vanilla one doesn't want to work for me.
-'''
 class MeanFeatureMeasure(Measure):
+    """Mean group feature measure
+
+    Because the vanilla one doesn't want to work for me (Swaroop).
+    TODO: figure out why "didn't work" exactly, and adjust description
+    and possibly name above
+    """
+
     is_trained = True
+
     def __init__(self, **kwargs):
         Measure.__init__(self, **kwargs)
+
     def _call(self, dataset):
         return Dataset(samples=np.mean(dataset.samples, axis=1))
 
@@ -90,12 +96,13 @@ class ConnectivityHyperalignment(SearchlightHyperalignment):
 
     seed_indices = Parameter(None, constraints=EnsureListOf(int) | EnsureNone(),
             doc="""A list of node indices that correspond to seed centers for
-            seed queryengines. If None, all centers of seed_queryengines are used.""")
+            seed queryengines. If None, all centers of seed_queryengines
+            are used.""")
 
     seed_queryengines = Parameter(None,
-            doc="""A list of queryengines to determing seed searchlights for connectomes.
-            If a single queryengine is given in the list, then it is assumed that it applies to
-            all datasets.""")
+            doc="""A list of queryengines to determine seed searchlights for
+            connectomes. If a single queryengine is given in the list, then it
+            is assumed that it applies to all datasets.""")
 
     seed_radius = Parameter(None, constraints=EnsureInt() & EnsureRange(min=1) |
                             EnsureNone(),
@@ -117,15 +124,14 @@ class ConnectivityHyperalignment(SearchlightHyperalignment):
 
     common_model = Parameter(None, constraints=EnsureStr() | EnsureNone(),
             doc="""Precomputed common model supplied as hdf5 filename (for now).
-            It is expected to be a dict with feature-targets connectome and common models
-             in each target ROI with appropriate pcs (for now). Expects 'local_models' and
-             'connectome_model' keys.""")
+            It is expected to be a dict with feature-targets connectome and
+            common models in each target ROI with appropriate pcs (for now).
+            Expects 'local_models' and 'connectome_model' keys.""")
 
     save_model = Parameter(None, constraints=EnsureStr() | EnsureNone(),
             doc="""Precomputed common model supplied as hdf5 filename (for now).
-            It is expected to be a tuple with feature-targets connectome and common models
-             in each target ROI with appropriate pcs (for now).""")
-
+            It is expected to be a tuple with feature-targets connectome and
+            common models in each target ROI with appropriate pcs (for now).""")
 
     def __init__(self, **kwargs):
         SearchlightHyperalignment.__init__(self, **kwargs)
@@ -155,10 +161,14 @@ class ConnectivityHyperalignment(SearchlightHyperalignment):
         '''
         Hyperalign connectomes and return mapppers
         and trained SVDMapper of common space.
-        Inputs:
+
+        Parameters
+        ----------
         sl_connectomes: a list of connectomes to hyperalign
         local_common_model: a reference common model to be used.
-        Returns:
+
+        Returns
+        -------
         a tuple (sl_hmappers, svm, local_common_model)
         sl_hmappers: a list of mappers corresponding to input list in that order.
         svm: a svm mapper based on the input data. if given a common model, this is None.
@@ -256,6 +266,7 @@ class ConnectivityHyperalignment(SearchlightHyperalignment):
                         zscore(sd_svs, chunks_attr=None)
                     pcd.append(sd_svs)
             if params.save_model is not None:
+                # TODO: should use debug
                 print('Saving local models to %s' % params.save_model)
                 h5save(params.save_model, sl_common_models)
             pc_data = [hstack(pcd) for pcd in pc_data]
@@ -264,6 +275,7 @@ class ConnectivityHyperalignment(SearchlightHyperalignment):
         # compute connectomes using connectivity targets (PCs or seed means)
         connectomes = []
         if params.common_model is not None and os.path.exists(params.common_model):
+            # TODO: should use debug
             print('Loading from saved common model: %s' % params.common_model)
             connectome_model = common_model['connectome_model']
             connectomes.append(connectome_model)
@@ -287,6 +299,7 @@ class ConnectivityHyperalignment(SearchlightHyperalignment):
         Parameters
         ----------
           datasets : list or tuple of datasets
+
         Returns
         -------
         A list of trained Mappers of the same length as datasets
