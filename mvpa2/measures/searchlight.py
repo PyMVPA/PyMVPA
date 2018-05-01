@@ -208,6 +208,83 @@ class Searchlight(BaseSearchlight):
     """
 
     @staticmethod
+    def _concat_results_inplace(sl, dataset, roi_ids, results):
+        """The simplest implementation for collecting the results --
+        just put them into a list
+
+        This this implementation simply collects them into a list and
+        uses only sl. for assigning conditional attributes.  But
+        custom implementation might make use of more/less of them.
+        Implemented as @staticmethod just to emphasize that in
+        principle it is independent of the actual searchlight instance
+
+        This version works exactly as `Searchlight._concat_results` but
+        allocates first the final Dataset and fills it in, reducing the time
+        required by hstacking.
+        """
+        # get first result to estimate final size
+        res1 = results[0] if isinstance(results, list) else results.next()
+        # allocate output
+        if __debug__ and 'SLC' in debug.active:
+            debug('SLC', '')            # just newline
+            debug('SLC', ' allocating output of shape (%d, %d)' %
+                  (res1[0].nsamples, len(roi_ids)))
+
+        result_ds = Dataset(np.zeros((res1[0].nsamples, len(roi_ids))),
+                            sa=res1[0].sa)
+        result_ds.fa['center_ids'] = roi_ids
+
+        # We are assuming all outputs are in order of roi_ids -- this
+        # assumption was present also in _concat_results, so I guess it's
+        # safe to assume
+        # also save the ds.a to save them in case we have ca enabled
+        stored_a = []
+        for i, r in enumerate(res1):
+            result_ds.samples[:, i] = r.samples
+            stored_a.append(r.a)
+        # now store results in the correct position
+        start = len(res1)
+        for res in results:
+            for i, r in enumerate(res, start):
+                result_ds.samples[:, i] = r.samples
+                stored_a.append(r.a)
+            start += len(res)
+
+        if __debug__:
+            debug('SLC', " filled dataset with shape %s" % (result_ds.shape,))
+
+        if sl.ca.is_enabled('roi_feature_ids'):
+            sl.ca.roi_feature_ids = [a.roi_feature_ids for a in stored_a]
+        if sl.ca.is_enabled('roi_sizes'):
+            sl.ca.roi_sizes = [a.roi_sizes for a in stored_a]
+        if sl.ca.is_enabled('roi_center_ids'):
+            sl.ca.roi_center_ids = [a.roi_center_ids for a in stored_a]
+
+        if 'mapper' in dataset.a:
+            # since we know the space we can stick the original mapper into the
+            # results as well
+            if roi_ids is None:
+                result_ds.a['mapper'] = copy.copy(dataset.a.mapper)
+            else:
+                # there is an additional selection step that needs to be
+                # expressed by another mapper
+                mapper = copy.copy(dataset.a.mapper)
+
+                # NNO if the orignal mapper has no append (because it's not a
+                # chainmapper, for example), we make our own chainmapper.
+                feat_sel_mapper = StaticFeatureSelection(
+                    roi_ids, dshape=dataset.shape[1:])
+                if hasattr(mapper, 'append'):
+                    mapper.append(feat_sel_mapper)
+                else:
+                    mapper = ChainMapper([dataset.a.mapper,
+                                          feat_sel_mapper])
+
+                result_ds.a['mapper'] = mapper
+        return result_ds
+
+
+    @staticmethod
     def _concat_results(sl=None, dataset=None, roi_ids=None, results=None):
         """The simplest implementation for collecting the results --
         just put them into a list
@@ -273,6 +350,7 @@ class Searchlight(BaseSearchlight):
                  results_postproc_fx=None,
                  results_backend='native',
                  results_fx=None,
+                 store_results_inplace=False,
                  tmp_prefix='tmpsl',
                  nblocks=None,
                  **kwargs):
@@ -303,6 +381,8 @@ class Searchlight(BaseSearchlight):
           the list.  It receives as keyword arguments sl, dataset,
           roi_ids, and results (iterable of lists).  It is the one to take
           care of assigning roi_* ca's
+        store_results_inplace : bool, optional
+          TODO
         tmp_prefix : str, optional
           If specified -- serves as a prefix for temporary files storage
           if results_backend == 'hdf5'.  Thus can specify the directory to use
@@ -321,8 +401,11 @@ class Searchlight(BaseSearchlight):
         if self.results_backend == 'hdf5':
             # Assure having hdf5
             externals.exists('h5py', raise_=True)
-        self.results_fx = Searchlight._concat_results \
-                          if results_fx is None else results_fx
+        if store_results_inplace:
+            self.results_fx = Searchlight._concat_results_inplace
+        else:
+            self.results_fx = Searchlight._concat_results \
+                              if results_fx is None else results_fx
         self.tmp_prefix = tmp_prefix
         self.nblocks = nblocks
         if isinstance(add_center_fa, str):
