@@ -834,24 +834,33 @@ class SearchlightTests(unittest.TestCase):
         ds.fa['feature_id'] = np.arange(ds.nfeatures)
 
         def measure(ds):
-            return ds.fa.feature_id
+            # return more than one sample
+            return np.repeat(ds.fa.feature_id, 10, axis=0)
 
         nprocs = [1, 2] if externals.exists('pprocess') else [1]
+        enable_ca=['roi_sizes', 'raw_results',
+                   'roi_feature_ids']
         for nproc in nprocs:
             sl = sphere_searchlight(measure,
                                     radius=0,
                                     center_ids=np.arange(ds.nfeatures),
                                     nproc=nproc,
+                                    nblocks=ds.nfeatures,
+                                    enable_ca=enable_ca
                                     )
             sl_inplace = sphere_searchlight(measure,
                                     radius=0,
                                     store_results_inplace=True,
                                     center_ids=np.arange(ds.nfeatures),
                                     nproc=nproc,
+                                    nblocks=ds.nfeatures,
+                                    enable_ca=enable_ca
                                     )
             out = sl(ds)
             out_inplace = sl_inplace(ds)
 
+            for c in enable_ca:
+                assert_array_equal(sl.ca[c].value, sl_inplace.ca[c].value)
         assert_array_equal(out.samples, out_inplace.samples)
         assert_array_equal(out.fa.center_ids, out_inplace.fa.center_ids)
 
