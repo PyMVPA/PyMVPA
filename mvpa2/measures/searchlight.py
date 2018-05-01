@@ -244,11 +244,11 @@ class Searchlight(BaseSearchlight):
             stored_a.append(r.a)
         # now store results in the correct position
         start = len(res1)
-        for res in results:
-            for i, r in enumerate(res, start):
-                result_ds.samples[:, i] = r.samples.ravel()
-                stored_a.append(r.a)
-            start += len(res)
+        # collect the other results
+        results = sum(results, [])
+        for i, res in enumerate(results, start):
+            result_ds.samples[:, i] = res.samples.ravel()
+            stored_a.append(res.a)
 
         if __debug__:
             debug('SLC', " filled dataset with shape %s" % (result_ds.shape,))
