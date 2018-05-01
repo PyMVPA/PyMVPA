@@ -313,11 +313,13 @@ class Searchlight(BaseSearchlight):
             debug('SLC', " hstacked shape %s" % (result_ds.shape,))
 
         if sl.ca.is_enabled('roi_feature_ids'):
-            sl.ca.roi_feature_ids = [r.a.roi_feature_ids for r in results]
+            sl.ca.roi_feature_ids = np.squeeze(
+                [r.a.roi_feature_ids for r in results])
         if sl.ca.is_enabled('roi_sizes'):
-            sl.ca.roi_sizes = [r.a.roi_sizes for r in results]
+            sl.ca.roi_sizes = np.squeeze([r.a.roi_sizes for r in results])
         if sl.ca.is_enabled('roi_center_ids'):
-            sl.ca.roi_center_ids = [r.a.roi_center_ids for r in results]
+            sl.ca.roi_center_ids = np.squeeze(
+                [r.a.roi_center_ids for r in results])
 
         if 'mapper' in dataset.a:
             # since we know the space we can stick the original mapper into the
@@ -401,10 +403,8 @@ class Searchlight(BaseSearchlight):
         if self.results_backend == 'hdf5':
             # Assure having hdf5
             externals.exists('h5py', raise_=True)
-        if store_results_inplace:
-            self.results_fx = Searchlight._concat_results_inplace
-        else:
-            self.results_fx = Searchlight._concat_results \
+        self.store_results_inplace = store_results_inplace
+        self.results_fx = Searchlight._concat_results \
                               if results_fx is None else results_fx
         self.tmp_prefix = tmp_prefix
         self.nblocks = nblocks
@@ -432,6 +432,8 @@ class Searchlight(BaseSearchlight):
         """Classical generic searchlight implementation
         """
         assert(self.results_backend in ('native', 'hdf5'))
+        proc_block = self._proc_block_inplace if self.store_results_inplace \
+            else self._proc_block
         # compute
         if nproc is not None and nproc > 1:
             # split all target ROIs centers into `nproc` equally sized blocks
@@ -449,7 +451,7 @@ class Searchlight(BaseSearchlight):
                 debug('SLC', "Starting off %s child processes for nblocks=%i"
                       % (nproc_needed, nblocks))
             compute = p_results.manage(
-                        pprocess.MakeParallel(self._proc_block))
+                        pprocess.MakeParallel(proc_block))
             for iblock, block in enumerate(roi_blocks):
                 # should we maybe deepcopy the measure to have a unique and
                 # independent one per process?
@@ -459,7 +461,7 @@ class Searchlight(BaseSearchlight):
         else:
             # otherwise collect the results in an 1-item list
             p_results = [
-                    self._proc_block(roi_ids, dataset, self.__datameasure)]
+                    proc_block(roi_ids, dataset, self.__datameasure)]
 
         # Finally collect and possibly process results
         # p_results here is either a generator from pprocess.Map or a list.
@@ -599,6 +601,139 @@ class Searchlight(BaseSearchlight):
             raise RuntimeError("Must not reach this point")
         return results
 
+
+    def _proc_block_inplace(self, block, ds, measure, seed=None,
+                            iblock='main'):
+        from collections import defaultdict
+        if seed is not None:
+            mvpa2.seed(seed)
+        if __debug__:
+            debug_slc_ = 'SLC_' in debug.active
+            debug('SLC',
+                  "Starting computing block for %i elements" % len(block))
+
+        # compute first result in block to get estimate of output
+        first_block = block[0]
+        first_res = self._proc_block([first_block], ds, measure, seed=seed,
+                                     iblock=first_block)[0]
+        nsamples, nfeatures = first_res.shape
+        results = np.zeros((nsamples, nfeatures * len(block)))
+        results[:, :nfeatures] = first_res.samples
+        start = nfeatures
+        step = nfeatures
+
+        store_roi_feature_ids = self.ca.is_enabled('roi_feature_ids')
+        store_roi_sizes = self.ca.is_enabled('roi_sizes')
+        store_roi_center_ids = self.ca.is_enabled('roi_center_ids')
+
+        assure_dataset = any([store_roi_feature_ids,
+                              store_roi_sizes,
+                              store_roi_center_ids])
+
+        # put rois around all features in the dataset and compute the
+        # measure within them
+        bar = ProgressBar()
+
+        # initialize dictionaries to store fa and a
+        fa = defaultdict(list)
+        for first_res_fa in first_res.fa:
+            val = first_res.fa[first_res_fa].value
+            if isinstance(val, list):
+                adder = fa[first_res_fa].extend
+            else:
+                adder = fa[first_res_fa].append
+            adder(val)
+
+        a = defaultdict(list)
+        for first_res_a in first_res.a:
+            val = first_res.a[first_res_a].value
+            if first_res_a != 'roi_feature_ids' and isinstance(val, list):
+                adder = a[first_res_a].extend
+            else:
+                adder = a[first_res_a].append
+            adder(val)
+
+        for i, f in enumerate(block[1:]):
+            # retrieve the feature ids of all features in the ROI from the query
+            # engine
+            roi_specs = self._queryengine[f]
+
+            if __debug__ and  debug_slc_:
+                debug('SLC_', 'For %r query returned roi_specs %r'
+                      % (f, roi_specs))
+
+            if is_datasetlike(roi_specs):
+                # TODO: unittest
+                assert(len(roi_specs) == 1)
+                roi_fids = roi_specs.samples[0]
+            else:
+                roi_fids = roi_specs
+
+            # slice the dataset
+            roi = ds[:, roi_fids]
+
+            if is_datasetlike(roi_specs):
+                for n, v in roi_specs.fa.iteritems():
+                    roi.fa[n] = v
+
+            if self.__add_center_fa:
+                # add fa to indicate ROI seed if requested
+                roi_seed = np.zeros(roi.nfeatures, dtype='bool')
+                if f in roi_fids:
+                    roi_seed[roi_fids.index(f)] = True
+                else:
+                    warning("Center feature attribute id %s not found" % f)
+                roi.fa[self.__add_center_fa] = roi_seed
+
+            # compute the datameasure and store in results
+            res = measure(roi)
+
+            if assure_dataset and not is_datasetlike(res):
+                res = Dataset(np.atleast_1d(res))
+            if store_roi_feature_ids:
+                # add roi feature ids to intermediate result dataset for later
+                # aggregation
+                a['roi_feature_ids'].append(roi_fids)
+            if store_roi_sizes:
+                a['roi_sizes'].append(roi.nfeatures)
+            if store_roi_center_ids:
+                a['roi_center_ids'].append(f)
+            # store results inplace
+            end = start + step
+            results[:, start:end] = res.samples
+            start = end
+
+            if __debug__:
+                msg = 'ROI %i (%i/%i), %i features' % \
+                      (f + 1, i + 1, len(block), roi.nfeatures)
+                debug('SLC', bar(float(i + 1) / len(block), msg), cr=True)
+
+        if __debug__:
+            # just to get to new line
+            debug('SLC', '')
+        # now make it a dataset and a list to make it compatible with the rest
+        results = [Dataset(results, sa=first_res.sa, a=dict(a), fa=dict(fa))]
+
+        if self.results_postproc_fx:
+            if __debug__:
+                debug('SLC', "Post-processing %d results in proc_block using %s"
+                      % (len(results), self.results_postproc_fx))
+            results = self.results_postproc_fx(results)
+        if self.results_backend == 'native':
+            pass                        # nothing special
+        elif self.results_backend == 'hdf5':
+            # store results in a temporary file and return a filename
+            results_file = tempfile.mktemp(prefix=self.tmp_prefix,
+                                           suffix='-%s.hdf5' % iblock)
+            if __debug__:
+                debug('SLC', "Storing results into %s" % results_file)
+            h5save(results_file, results)
+            if __debug__:
+                debug('SLC_', "Results stored")
+            results = results_file
+        else:
+            raise RuntimeError("Must not reach this point")
+        return results
 
     def __set_datameasure(self, datameasure):
         """Set the datameasure"""
