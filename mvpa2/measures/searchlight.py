@@ -561,7 +561,7 @@ class Searchlight(BaseSearchlight):
 
         # compute first result in block to get estimate of output
         if __debug__:
-            debug('SLC', "Computing measure for first ROI to preallocate "
+            debug('SLC', "\nComputing measure for first ROI to preallocate "
                          "output")
         first_res, roi = self.__process_roi(ds, block[0], measure,
                                             assure_dataset)
@@ -569,7 +569,7 @@ class Searchlight(BaseSearchlight):
         results = np.empty((nsamples, nfeatures * len(block)),
                            dtype=first_res.samples.dtype)
         if __debug__:
-            debug('SLC', "Preallocated ouput of shape %s" % results.shape)
+            debug('SLC', "Preallocated ouput of shape %s" % str(results.shape))
         results[:, :nfeatures] = first_res.samples
         start = nfeatures
         step = nfeatures
