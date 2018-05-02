@@ -603,7 +603,8 @@ class SearchlightTests(unittest.TestCase):
             ok_(np.all(slmap.samples >= thr))
             ok_(np.mean(slmap.samples) >= thr)
 
-    def test_swaroop_case(self):
+    @sweepargs(preallocate_output=(True, False))
+    def test_swaroop_case(self, preallocate_output):
         """Test hdf5 backend to pass results on Swaroop's usecase
         """
         skip_if_no_external('h5py')
@@ -629,7 +630,8 @@ class SearchlightTests(unittest.TestCase):
             sl = sphere_searchlight(sw_measure(),
                                     radius=1,
                                     tmp_prefix=our_custom_prefix,
-                                    results_backend=backend)
+                                    results_backend=backend,
+                                    preallocate_output=preallocate_output)
             t0 = time.time()
             results.append(np.asanyarray(sl(ds)))
             # print "Done for backend %s in %d sec" % (backend, time.time() - t0)
@@ -653,15 +655,18 @@ class SearchlightTests(unittest.TestCase):
         assert_equal(len(tempfiles), 0)
 
 
-    def test_nblocks(self):
+    @sweepargs(preallocate_output=(False, True))
+    def test_nblocks(self, preallocate_output):
         skip_if_no_external('pprocess')
         # just a basic test to see that we are getting the same
         # results with different nblocks
         ds = datasets['3dsmall'].copy(deep=True)[:, :13]
         ds.fa['voxel_indices'] = ds.fa.myspace
         cv = CrossValidation(GNB(), OddEvenPartitioner())
-        res1 = sphere_searchlight(cv, radius=1, nproc=2)(ds)
-        res2 = sphere_searchlight(cv, radius=1, nproc=2, nblocks=5)(ds)
+        res1 = sphere_searchlight(cv, radius=1, nproc=2,
+                                  preallocate_output=preallocate_output)(ds)
+        res2 = sphere_searchlight(cv, radius=1, nproc=2, nblocks=5,
+                                  preallocate_output=preallocate_output)(ds)
         assert_array_equal(res1, res2)
 
 
@@ -829,7 +834,7 @@ class SearchlightTests(unittest.TestCase):
         assert_datasets_equal(res_gnb_sl, res_gnb_sl_)
 
     @sweepargs(nblocks=(1, 2, 25))
-    def test_concat_results_inplace(self, nblocks):
+    def test_preallocate_output(self, nblocks):
         ds = datasets['3dsmall'].copy()[:, :25] # smaller copy
         ds.fa['voxel_indices'] = ds.fa.myspace
         ds.fa['feature_id'] = np.arange(ds.nfeatures)

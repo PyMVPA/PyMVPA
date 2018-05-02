@@ -435,7 +435,6 @@ class Searchlight(BaseSearchlight):
         if seed is not None:
             mvpa2.seed(seed)
         if __debug__:
-            debug_slc_ = 'SLC_' in debug.active
             debug('SLC',
                   "Starting computing block for %i elements" % len(block))
             start_time = time.time()
@@ -453,50 +452,7 @@ class Searchlight(BaseSearchlight):
         bar = ProgressBar()
 
         for i, f in enumerate(block):
-            # retrieve the feature ids of all features in the ROI from the query
-            # engine
-            roi_specs = self._queryengine[f]
-
-            if __debug__ and  debug_slc_:
-                debug('SLC_', 'For %r query returned roi_specs %r'
-                      % (f, roi_specs))
-
-            if is_datasetlike(roi_specs):
-                # TODO: unittest
-                assert(len(roi_specs) == 1)
-                roi_fids = roi_specs.samples[0]
-            else:
-                roi_fids = roi_specs
-
-            # slice the dataset
-            roi = ds[:, roi_fids]
-
-            if is_datasetlike(roi_specs):
-                for n, v in roi_specs.fa.iteritems():
-                    roi.fa[n] = v
-
-            if self.__add_center_fa:
-                # add fa to indicate ROI seed if requested
-                roi_seed = np.zeros(roi.nfeatures, dtype='bool')
-                if f in roi_fids:
-                    roi_seed[roi_fids.index(f)] = True
-                else:
-                    warning("Center feature attribute id %s not found" % f)
-                roi.fa[self.__add_center_fa] = roi_seed
-
-            # compute the datameasure and store in results
-            res = measure(roi)
-
-            if assure_dataset and not is_datasetlike(res):
-                res = Dataset(np.atleast_1d(res))
-            if store_roi_feature_ids:
-                # add roi feature ids to intermediate result dataset for later
-                # aggregation
-                res.a['roi_feature_ids'] = roi_fids
-            if store_roi_sizes:
-                res.a['roi_sizes'] = roi.nfeatures
-            if store_roi_center_ids:
-                res.a['roi_center_ids'] = f
+            res, roi = self.__process_roi(ds, f, measure, assure_dataset)
             results.append(res)
 
             if __debug__:
@@ -529,6 +485,47 @@ class Searchlight(BaseSearchlight):
             raise RuntimeError("Must not reach this point")
         return results
 
+    def __process_roi(self, ds, roi_feature_id, measure, assure_dataset):
+        # retrieve the feature ids of all features in the ROI from the query
+        # engine
+        roi_specs = self._queryengine[roi_feature_id]
+        if __debug__:
+            debug('SLC_', 'For %r query returned roi_specs %r'
+                  % (roi_feature_id, roi_specs))
+        if is_datasetlike(roi_specs):
+            # TODO: unittest
+            assert (len(roi_specs) == 1)
+            roi_fids = roi_specs.samples[0]
+        else:
+            roi_fids = roi_specs
+
+        # slice the dataset
+        roi = ds[:, roi_fids]
+        if is_datasetlike(roi_specs):
+            for n, v in roi_specs.fa.iteritems():
+                roi.fa[n] = v
+        if self.__add_center_fa:
+            # add fa to indicate ROI seed if requested
+            roi_seed = np.zeros(roi.nfeatures, dtype='bool')
+            if roi_feature_id in roi_fids:
+                roi_seed[roi_fids.index(roi_feature_id)] = True
+            else:
+                warning("Center feature attribute id %s not found" % roi_feature_id)
+            roi.fa[self.__add_center_fa] = roi_seed
+
+        # compute the datameasure and store in results
+        res = measure(roi)
+        if assure_dataset and not is_datasetlike(res):
+            res = Dataset(np.atleast_1d(res))
+        if self.ca.is_enabled('roi_feature_ids'):
+            # add roi feature ids to intermediate result dataset for later
+            # aggregation
+            res.a['roi_feature_ids'] = roi_fids
+        if self.ca.is_enabled('roi_sizes'):
+            res.a['roi_sizes'] = roi.nfeatures
+        if self.ca.is_enabled('roi_center_ids'):
+            res.a['roi_center_ids'] = roi_feature_id
+        return res, roi
 
     def _proc_block_inplace(self, block, ds, measure, seed=None,
                             iblock='main'):
@@ -551,19 +548,8 @@ class Searchlight(BaseSearchlight):
         if seed is not None:
             mvpa2.seed(seed)
         if __debug__:
-            debug_slc_ = 'SLC_' in debug.active
             debug('SLC',
                   "Starting computing block for %i elements" % len(block))
-
-        # compute first result in block to get estimate of output
-        first_block = block[0]
-        first_res = self._proc_block([first_block], ds, measure, seed=seed,
-                                     iblock=first_block)[0]
-        nsamples, nfeatures = first_res.shape
-        results = np.zeros((nsamples, nfeatures * len(block)))
-        results[:, :nfeatures] = first_res.samples
-        start = nfeatures
-        step = nfeatures
 
         store_roi_feature_ids = self.ca.is_enabled('roi_feature_ids')
         store_roi_sizes = self.ca.is_enabled('roi_sizes')
@@ -572,6 +558,16 @@ class Searchlight(BaseSearchlight):
         assure_dataset = any([store_roi_feature_ids,
                               store_roi_sizes,
                               store_roi_center_ids])
+
+        # compute first result in block to get estimate of output
+        first_res, roi = self.__process_roi(ds, block[0], measure,
+                                            assure_dataset)
+        nsamples, nfeatures = first_res.shape
+        results = np.empty((nsamples, nfeatures * len(block)),
+                           dtype=first_res.samples.dtype)
+        results[:, :nfeatures] = first_res.samples
+        start = nfeatures
+        step = nfeatures
 
         # put rois around all features in the dataset and compute the
         # measure within them
@@ -597,46 +593,11 @@ class Searchlight(BaseSearchlight):
             adder(val)
 
         for i, f in enumerate(block[1:]):
-            # retrieve the feature ids of all features in the ROI from the query
-            # engine
-            roi_specs = self._queryengine[f]
-
-            if __debug__ and  debug_slc_:
-                debug('SLC_', 'For %r query returned roi_specs %r'
-                      % (f, roi_specs))
-
-            if is_datasetlike(roi_specs):
-                # TODO: unittest
-                assert(len(roi_specs) == 1)
-                roi_fids = roi_specs.samples[0]
-            else:
-                roi_fids = roi_specs
-
-            # slice the dataset
-            roi = ds[:, roi_fids]
-
-            if is_datasetlike(roi_specs):
-                for n, v in roi_specs.fa.iteritems():
-                    roi.fa[n] = v
-
-            if self.__add_center_fa:
-                # add fa to indicate ROI seed if requested
-                roi_seed = np.zeros(roi.nfeatures, dtype='bool')
-                if f in roi_fids:
-                    roi_seed[roi_fids.index(f)] = True
-                else:
-                    warning("Center feature attribute id %s not found" % f)
-                roi.fa[self.__add_center_fa] = roi_seed
-
-            # compute the datameasure and store in results
-            res = measure(roi)
-
-            if assure_dataset and not is_datasetlike(res):
-                res = Dataset(np.atleast_1d(res))
+            res, roi = self.__process_roi(ds, f, measure, assure_dataset)
             if store_roi_feature_ids:
                 # add roi feature ids to intermediate result dataset for later
                 # aggregation
-                a['roi_feature_ids'].append(roi_fids)
+                a['roi_feature_ids'].append(res.a.roi_feature_ids)
             if store_roi_sizes:
                 a['roi_sizes'].append(roi.nfeatures)
             if store_roi_center_ids:
