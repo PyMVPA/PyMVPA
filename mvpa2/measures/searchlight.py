@@ -353,9 +353,9 @@ class Searchlight(BaseSearchlight):
                  results_postproc_fx=None,
                  results_backend='native',
                  results_fx=None,
-                 store_results_inplace=False,
                  tmp_prefix='tmpsl',
                  nblocks=None,
+                 preallocate_output=False,
                  **kwargs):
         """
         Parameters
@@ -384,8 +384,6 @@ class Searchlight(BaseSearchlight):
           the list.  It receives as keyword arguments sl, dataset,
           roi_ids, and results (iterable of lists).  It is the one to take
           care of assigning roi_* ca's
-        store_results_inplace : bool, optional
-          TODO
         tmp_prefix : str, optional
           If specified -- serves as a prefix for temporary files storage
           if results_backend == 'hdf5'.  Thus can specify the directory to use
@@ -393,6 +391,11 @@ class Searchlight(BaseSearchlight):
         nblocks : None or int
           Into how many blocks to split the computation (could be larger than
           nproc).  If None -- nproc is used.
+        preallocate_output : bool, optional
+          If set, the output of each computation block will be pre-allocated.
+          This can speed up computations if the datameasure returns a large
+          number of samples and there are many features for which the
+          datameasure is computed.
         **kwargs
           In addition this class supports all keyword arguments of its
           base-class :class:`~mvpa2.measures.searchlight.BaseSearchlight`.
@@ -404,7 +407,7 @@ class Searchlight(BaseSearchlight):
         if self.results_backend == 'hdf5':
             # Assure having hdf5
             externals.exists('h5py', raise_=True)
-        self.store_results_inplace = store_results_inplace
+        self.preallocate_output = preallocate_output
         self.results_fx = Searchlight._concat_results \
                               if results_fx is None else results_fx
         self.tmp_prefix = tmp_prefix
@@ -433,7 +436,7 @@ class Searchlight(BaseSearchlight):
         """Classical generic searchlight implementation
         """
         assert(self.results_backend in ('native', 'hdf5'))
-        proc_block = self._proc_block_inplace if self.store_results_inplace \
+        proc_block = self._proc_block_inplace if self.preallocate_output \
             else self._proc_block
         # compute
         if nproc is not None and nproc > 1:
@@ -605,6 +608,22 @@ class Searchlight(BaseSearchlight):
 
     def _proc_block_inplace(self, block, ds, measure, seed=None,
                             iblock='main'):
+        """Little helper to capture the parts of the computation that can be
+        parallelized. This method preallocates the output of the block,
+        reducing the number of elementes to be hstacked down the processing
+        line.
+
+        Parameters
+        ----------
+        seed
+          RNG seed.  Should be provided e.g. in child process invocations
+          to guarantee that they all seed differently to not keep generating
+          the same sequencies due to reusing the same copy of numpy's RNG
+        block
+          Critical for generating non-colliding temp filenames in case
+          of hdf5 backend.  Otherwise RNGs of different processes might
+          collide in their temporary file names leading to problems.
+        """
         from collections import defaultdict
         if seed is not None:
             mvpa2.seed(seed)
