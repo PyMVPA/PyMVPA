@@ -313,15 +313,15 @@ class Searchlight(BaseSearchlight):
         if __debug__:
             debug('SLC', " hstacked shape %s" % (result_ds.shape,))
 
+        # unlist in case we are preallocating, since we're returning a list
+        # of lists instead of a list of elements
+        f = lambda x: sum(x, []) if sl.preallocate_output else x
         if sl.ca.is_enabled('roi_feature_ids'):
-            sl.ca.roi_feature_ids = np.squeeze(
-                [r.a.roi_feature_ids for r in results]).tolist()
+            sl.ca.roi_feature_ids = f([r.a.roi_feature_ids for r in results])
         if sl.ca.is_enabled('roi_sizes'):
-            sl.ca.roi_sizes = np.squeeze(
-                [r.a.roi_sizes for r in results]).tolist()
+            sl.ca.roi_sizes = f([r.a.roi_sizes for r in results])
         if sl.ca.is_enabled('roi_center_ids'):
-            sl.ca.roi_center_ids = np.squeeze(
-                [r.a.roi_center_ids for r in results]).tolist()
+            sl.ca.roi_center_ids = f([r.a.roi_center_ids for r in results])
 
         if 'mapper' in dataset.a:
             # since we know the space we can stick the original mapper into the

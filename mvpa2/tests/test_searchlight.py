@@ -828,7 +828,8 @@ class SearchlightTests(unittest.TestCase):
         res_gnb_sl_ = gnb_sl_(ds)
         assert_datasets_equal(res_gnb_sl, res_gnb_sl_)
 
-    def test_concat_results_inplace(self):
+    @sweepargs(nblocks=(1, 2, 25))
+    def test_concat_results_inplace(self, nblocks):
         ds = datasets['3dsmall'].copy()[:, :25] # smaller copy
         ds.fa['voxel_indices'] = ds.fa.myspace
         ds.fa['feature_id'] = np.arange(ds.nfeatures)
@@ -838,23 +839,22 @@ class SearchlightTests(unittest.TestCase):
             return np.repeat(ds.fa.feature_id, 10, axis=0)
 
         nprocs = [1, 2] if externals.exists('pprocess') else [1]
-        enable_ca=['roi_sizes', 'raw_results',
-                   'roi_feature_ids']
+        enable_ca = ['roi_sizes', 'raw_results', 'roi_feature_ids']
         for nproc in nprocs:
             sl = sphere_searchlight(measure,
                                     radius=0,
                                     center_ids=np.arange(ds.nfeatures),
                                     nproc=nproc,
-                                    nblocks=ds.nfeatures,
-                                    enable_ca=enable_ca
+                                    enable_ca=enable_ca,
+                                    nblocks=nblocks
                                     )
             sl_inplace = sphere_searchlight(measure,
                                     radius=0,
-                                    store_results_inplace=True,
+                                    preallocate_output=True,
                                     center_ids=np.arange(ds.nfeatures),
                                     nproc=nproc,
-                                    nblocks=ds.nfeatures,
-                                    enable_ca=enable_ca
+                                    enable_ca=enable_ca,
+                                    nblocks=nblocks
                                     )
             out = sl(ds)
             out_inplace = sl_inplace(ds)
