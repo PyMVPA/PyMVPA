@@ -561,7 +561,7 @@ class Searchlight(BaseSearchlight):
 
         # compute first result in block to get estimate of output
         if __debug__:
-            debug('SLC', "\nComputing measure for first ROI to preallocate "
+            debug('SLC', "Computing measure for first ROI to preallocate "
                          "output")
         first_res, roi = self.__process_roi(ds, block[0], measure,
                                             assure_dataset)
