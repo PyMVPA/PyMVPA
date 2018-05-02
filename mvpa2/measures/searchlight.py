@@ -16,6 +16,7 @@ if __debug__:
 import numpy as np
 import tempfile, os
 import time
+from collections import defaultdict
 
 import mvpa2
 from mvpa2.base import externals, warning
@@ -624,7 +625,6 @@ class Searchlight(BaseSearchlight):
           of hdf5 backend.  Otherwise RNGs of different processes might
           collide in their temporary file names leading to problems.
         """
-        from collections import defaultdict
         if seed is not None:
             mvpa2.seed(seed)
         if __debug__:
