@@ -130,7 +130,7 @@ class BaseSearchlight(Measure):
             import pprocess
             try:
                 nproc = pprocess.get_number_of_cores() or 1
-            except AttributeError:
+            except (AttributeError, IOError) as e:
                 warning("pprocess version %s has no API to figure out maximal "
                         "number of cores. Using 1"
                         % externals.versions['pprocess'])
