@@ -314,12 +314,13 @@ class Searchlight(BaseSearchlight):
 
         if sl.ca.is_enabled('roi_feature_ids'):
             sl.ca.roi_feature_ids = np.squeeze(
-                [r.a.roi_feature_ids for r in results])
+                [r.a.roi_feature_ids for r in results]).tolist()
         if sl.ca.is_enabled('roi_sizes'):
-            sl.ca.roi_sizes = np.squeeze([r.a.roi_sizes for r in results])
+            sl.ca.roi_sizes = np.squeeze(
+                [r.a.roi_sizes for r in results]).tolist()
         if sl.ca.is_enabled('roi_center_ids'):
             sl.ca.roi_center_ids = np.squeeze(
-                [r.a.roi_center_ids for r in results])
+                [r.a.roi_center_ids for r in results]).tolist()
 
         if 'mapper' in dataset.a:
             # since we know the space we can stick the original mapper into the
