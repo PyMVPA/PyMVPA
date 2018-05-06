@@ -95,7 +95,7 @@ def test_sphere():
     if __debug__:
         # No float coordinates allowed for now...
         # XXX might like to change that ;)
-        # 
+        #
         assert_raises(ValueError, s, (1.0, 1.0, 1.0))
 
 
@@ -167,6 +167,14 @@ def test_hollowsphere_include_center():
     assert_array_equal(hs((2, 1)),  [(2,1), (1, 1), (2, 0), (2, 2), (3, 1)])
     assert_array_equal(hs((1, )),   [(1,), (0,), (2,)])
     assert_equal(len(hs((1,1,1))), 7)
+
+
+def test_disk_basic():
+    coordinates = ... something something
+    hs = ne.Disk(1, 0)
+    assert_array_equal(hs((2, 1)),  [(1, 1), (2, 0), (2, 2), (3, 1)])
+    assert_array_equal(hs((1, )),   [(0,), (2,)])
+    assert_equal(len(hs((1,1,1))), 6)
 
 
 def test_query_engine():
