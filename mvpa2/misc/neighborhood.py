@@ -341,6 +341,98 @@ class HollowSphere(Sphere):
         return np.vstack([np.zeros(ndim,dtype='int'),res]) if self.include_center else res
 
 
+class Disk(object):
+    """Mesh Disk
+
+    Use this if you want to obtain all the neighbors within a given
+    radius from a vertex on the freesurfer surface mesh.
+
+    Examples
+    --------
+    Missing...
+    """
+
+    def __init__(self, coordinate, radius=0.01, sphere_radius=100.0):
+        """ Initialize the Disk
+
+        Parameters
+        ----------
+        coordinate: list
+          List of vertex coordinates in x, y, z.
+        radius: float
+          Radius of the 'disk'. If no `sphere_radius` is provided
+          radius will be effectively percentage of maximum radius
+        sphere_radius: float
+          Radius of the mesh sphere on which disk extend will be
+          computed
+
+        """
+        self._radius = radius
+        self._sphere_radius = sphere_radius
+        self._coordinate = coordinate
+
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
+        prefixes_ = ['radius=%r' % (self._radius,)] + prefixes
+        return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
+
+    # Properties to assure R/O behavior for now
+    @property
+    def coordinate(self):
+        return self._coordinate
+
+    def radius(self):
+        return self._radius
+
+    def sphere_radius(self):
+        return self._sphere_radius
+
+    def __call__(self, coordinate):
+        """Get all mesh coordinates within disk diameter
+
+        Parameters
+        ----------
+        coordinate : sequence type of length 3 with integers
+
+        Returns
+        -------
+        Missing...
+
+        """
+        # type checking
+        coords = np.asanyarray(self._coordinate)
+
+        # find center id
+        center_id = [i for i, e in enumerate(coords)
+                  if e[0] == coordinate[0]
+                        and e[1] == coordinate[1]
+                        and e[2] == coordinate[2]][0]
+
+        # calculate radian value for percentage of maximal geodesic distance
+        disc_radian = np.pi * 100. * self._radius
+
+        # return center_id if radius is 0
+        if self._radius == 0:
+            return coordinate
+
+        # recenter sphere
+        centered_coordinate = coords - coords[center_id]
+
+        # calculate the distance of each vertex to the new center
+        distances = np.linalg.norm(centered_coordinate, axis=1)
+
+        # calculate max euclidean distance for a given geodeisc distance on sphere
+        #   This distance is the result of the following two equations:
+        #     ArcLenght = angle_between_vectors * radius -> solved for angle
+        #     EuclidDistance = 2 * radius * sin(angle/2) <- insert angle
+        max_distance = 2 * self._sphere_radius * \
+            np.sin((disc_radian / (2 * self._sphere_radius)))
+
+        coord_array = coords[np.where(distances <= max_distance)[0]]
+        return [tuple(x) for x in coord_array.tolist()]
+
+
 class QueryEngineInterface(object):
     """Very basic class for `QueryEngine`\s defining the interface
 
