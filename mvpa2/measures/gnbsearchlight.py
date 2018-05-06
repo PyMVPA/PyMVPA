@@ -14,7 +14,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
-from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
+from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere, Disk
 
 from mvpa2.measures.adhocsearchlightbase import \
      SimpleStatBaseSearchlight, _STATS
@@ -23,7 +23,7 @@ if __debug__:
     from mvpa2.base import debug
     import time as time
 
-__all__ = [ "GNBSearchlight", 'sphere_gnbsearchlight' ]
+__all__ = [ "GNBSearchlight", 'sphere_gnbsearchlight', 'disk_gnbsearchlight' ]
 
 class GNBSearchlight(SimpleStatBaseSearchlight):
     """Efficient implementation of Gaussian Naive Bayes `Searchlight`.
@@ -210,6 +210,55 @@ def sphere_gnbsearchlight(gnb, generator, radius=1, center_ids=None,
     """
     # build a matching query engine from the arguments
     kwa = {space: Sphere(radius)}
+    qe = IndexQueryEngine(**kwa)
+    # init the searchlight with the queryengine
+    return GNBSearchlight(gnb, generator, qe,
+                          roi_ids=center_ids, *args, **kwargs)
+
+
+@borrowkwargs(GNBSearchlight, '__init__', exclude=['roi_ids', 'queryengine'])
+def disk_gnbsearchlight(gnb, generator, radius=0.01, center_ids=None,
+                        coords=None, space='vertex_indices', *args, **kwargs):
+    """Creates a `GNBSearchlight` to assess :term:`cross-validation`
+    classification performance of GNB on all possible disks of a
+    certain size within a dataset.
+
+    The idea of taking advantage of naiveness of GNB for the sake of
+    quick searchlight-ing stems from Francisco Pereira (paper under
+    review).
+
+
+    Parameters
+    ----------
+    radius : float
+      All features within this radius around the center will be part
+      of a disk.
+    center_ids : list of int
+      List of feature ids (not coordinates) the shall serve as disk
+      centers. By default all features will be used (it is passed
+      roi_ids argument for Searchlight).
+    coords : list of float
+      List of feature ids coordinates on the inflated surface.
+    space : str
+      Name of a feature attribute of the input dataset that defines the spatial
+      coordinates of all features.
+    **kwargs
+      In addition this class supports all keyword arguments of
+      :class:`~mvpa2.measures.gnbsearchlight.GNBSearchlight`.
+
+    Notes
+    -----
+    If any `BaseSearchlight` is used as `SensitivityAnalyzer` one has to make
+    sure that the specified scalar `Measure` returns large
+    (absolute) values for high sensitivities and small (absolute) values
+    for low sensitivities. Especially when using error functions usually
+    low values imply high performance and therefore high sensitivity.
+    This would in turn result in sensitivity maps that have low
+    (absolute) values indicating high sensitivities and this conflicts
+    with the intended behavior of a `SensitivityAnalyzer`.
+    """
+    # build a matching query engine from the arguments
+    kwa = {space: Disk(coords, radius)}
     qe = IndexQueryEngine(**kwa)
     # init the searchlight with the queryengine
     return GNBSearchlight(gnb, generator, qe,
