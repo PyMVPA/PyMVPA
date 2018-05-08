@@ -236,7 +236,7 @@ class Searchlight(BaseSearchlight):
         if __debug__:
             debug('SLC', " hstacked shape %s" % (result_ds.shape,))
 
-        # unlist in case we are preallocating, since we're returning a list
+        # flatten in case we are preallocating, since we're returning a list
         # of lists instead of a list of elements
         f = lambda x: sum(x, []) if sl.preallocate_output else x
         if sl.ca.is_enabled('roi_feature_ids'):

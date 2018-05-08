@@ -866,8 +866,8 @@ class SearchlightTests(unittest.TestCase):
 
             for c in enable_ca:
                 assert_array_equal(sl.ca[c].value, sl_inplace.ca[c].value)
-        assert_array_equal(out.samples, out_inplace.samples)
-        assert_array_equal(out.fa.center_ids, out_inplace.fa.center_ids)
+            assert_array_equal(out.samples, out_inplace.samples)
+            assert_array_equal(out.fa.center_ids, out_inplace.fa.center_ids)
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(SearchlightTests)
