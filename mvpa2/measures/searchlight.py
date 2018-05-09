@@ -325,7 +325,9 @@ class Searchlight(BaseSearchlight):
           If set, the output of each computation block will be pre-allocated.
           This can speed up computations if the datameasure returns a large
           number of samples and there are many features for which the
-          datameasure is computed.
+          datameasure is computed. The user should verify the correct
+          assignment of sample attributes and feature attributes, since no
+          hstacking is performed within each computing block.
         **kwargs
           In addition this class supports all keyword arguments of its
           base-class :class:`~mvpa2.measures.searchlight.BaseSearchlight`.
