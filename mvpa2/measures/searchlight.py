@@ -37,6 +37,7 @@ from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
 from mvpa2.mappers.base import ChainMapper
 
 from mvpa2.support.due import due, Doi
+from mvpa2.testing import on_osx
 
 
 class BaseSearchlight(Measure):
@@ -128,13 +129,18 @@ class BaseSearchlight(Measure):
 
         if nproc is None and externals.exists('pprocess'):
             import pprocess
-            try:
-                nproc = pprocess.get_number_of_cores() or 1
-            except (AttributeError, IOError) as e:
-                warning("pprocess version %s has no API to figure out maximal "
-                        "number of cores. Using 1"
-                        % externals.versions['pprocess'])
+            if on_osx:
+                warning("Unable to determine automatically maximal number of "
+                        "cores on Mac OS X. Using 1")
                 nproc = 1
+            else:
+                try:
+                    nproc = pprocess.get_number_of_cores() or 1
+                except AttributeError:
+                    warning("pprocess version %s has no API to figure out maximal "
+                            "number of cores. Using 1"
+                            % externals.versions['pprocess'])
+                    nproc = 1
         # train the queryengine
         self._queryengine.train(dataset)
 
