@@ -232,7 +232,7 @@ def sphere_m1nnsearchlight(knn, generator, radius=1, center_ids=None,
 
 
 @borrowkwargs(M1NNSearchlight, '__init__', exclude=['roi_ids', 'queryengine'])
-def sphere_m1nnsearchlight(knn, generator, radius=0.01, center_ids=None,
+def disk_m1nnsearchlight(knn, generator, radius=0.01, center_ids=None,
                         coords=None, space='vertex_indices', *args, **kwargs):
     """Creates a `M1NNSearchlight` to assess :term:`cross-validation`
     classification performance of M1NN on all possible disks of a
