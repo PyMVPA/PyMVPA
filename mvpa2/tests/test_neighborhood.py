@@ -181,7 +181,7 @@ def test_disk_basic():
     disk1 = ne.Disk(coordinates, 0)
     disk2 = ne.Disk(coordinates, 0.3)
     disk3 = ne.Disk(coordinates, 0.6)
-    assert_array_equal(disk1(coordinates[0]), [tuple(coordinates[0])])
+    assert_array_equal(disk1(coordinates[0]), coordinates[0])
     assert_array_equal(np.array(disk2(coordinates[0])), coordinates[:4])
     assert_array_equal(np.array(disk3(coordinates[0])),
                        np.vstack((coordinates[:9], coordinates[10])))

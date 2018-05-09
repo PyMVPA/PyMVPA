@@ -346,22 +346,6 @@ class Disk(object):
 
     Use this if you want to obtain all the neighbors within a given
     radius from a vertex on a spherical surface mesh.
-
-    Examples
-    --------
-    Create a mesh Disk with a diameter that covers 1.0% of the equator of a
-    spherical surface mesh. A diameter of 50% implies that the disk covers half
-    the sphere.
-
-    >>> from nibabel import freesurfer as nf
-    >>> coords, faces = nf.read_geometry('lh.sphere')
-    >>> d = Disk(coords, diameter=0.01)
-    >>> d(coords[0])
-    [(19.331, -92.343, -33.150),
-     (18.998, -92.332, -33.373),
-     ...
-     (18.829, -92.887, -31.896),
-     (19.904, -92.579, -32.136)]
     """
 
     def __init__(self, coordinates, diameter=0.01):
