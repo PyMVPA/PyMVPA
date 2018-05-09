@@ -32,7 +32,7 @@ from mvpa2.support import copy
 from mvpa2.featsel.base import StaticFeatureSelection
 from mvpa2.measures.base import Measure
 from mvpa2.base.state import ConditionalAttribute
-from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
+from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere, Disk
 from mvpa2.mappers.base import ChainMapper
 
 from mvpa2.support.due import due, Doi
@@ -70,7 +70,7 @@ class BaseSearchlight(Measure):
           List of query engine ids (e.g.,  feature ids, not coordinates, in case
           of `IndexQueryEngine`; and `node_indices` in case of
           `SurfaceQueryEngine`) that shall serve as ROI seeds
-          (e.g., sphere centers). Alternatively, this can be the name of a
+          (e.g., sphere centers or disk centers). Alternatively, this can be the name of a
           feature attribute of the input dataset, whose non-zero values
           determine the feature ids (be careful to use it only with
           `IndexQueryEngine`).  By default all query engine ids will be used.
@@ -594,6 +594,58 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
     """
     # build a matching query engine from the arguments
     kwa = {space: Sphere(radius)}
+    qe = IndexQueryEngine(**kwa)
+    # init the searchlight with the queryengine
+    return Searchlight(datameasure, queryengine=qe, roi_ids=center_ids,
+                       **kwargs)
+
+
+@borrowkwargs(Searchlight, '__init__', exclude=['roi_ids', 'queryengine'])
+def disk_searchlight(datameasure, radius=0.01, center_ids=None,
+                     coords=None, space='vertex_indices', **kwargs):
+    """Creates a `Searchlight` to run a scalar `Measure` on
+    all possible disks of a certain size within a dataset.
+
+    The idea for a searchlight algorithm stems from a paper by
+    :ref:`Kriegeskorte et al. (2006) <KGB06>`.
+
+    Parameters
+    ----------
+    datameasure : callable
+      Any object that takes a :class:`~mvpa2.datasets.base.Dataset`
+      and returns some measure when called.
+    radius : int
+      All features within this radius around the center will be part
+      of a disk. Radius is in grid-indices, i.e. ``1`` corresponds
+      to all immediate neighbors, regardless of the physical distance.
+    center_ids : list of int
+      List of feature ids (not coordinates) the shall serve as disk
+      centers. Alternatively, this can be the name of a feature attribute
+      of the input dataset, whose non-zero values determine the feature
+      ids.  By default all features will be used (it is passed as ``roi_ids``
+      argument of Searchlight).
+    coords : list of float
+      List of feature ids coordinates on the inflated surface.
+    space : str
+      Name of a feature attribute of the input dataset that defines the spatial
+      coordinates of all features.
+    **kwargs
+      In addition this class supports all keyword arguments of its
+      base-class :class:`~mvpa2.measures.base.Measure`.
+
+    Notes
+    -----
+    If `Searchlight` is used as `SensitivityAnalyzer` one has to make
+    sure that the specified scalar `Measure` returns large
+    (absolute) values for high sensitivities and small (absolute) values
+    for low sensitivities. Especially when using error functions usually
+    low values imply high performance and therefore high sensitivity.
+    This would in turn result in sensitivity maps that have low
+    (absolute) values indicating high sensitivities and this conflicts
+    with the intended behavior of a `SensitivityAnalyzer`.
+    """
+    # build a matching query engine from the arguments
+    kwa = {space: Disk(coords, radius)}
     qe = IndexQueryEngine(**kwa)
     # init the searchlight with the queryengine
     return Searchlight(datameasure, queryengine=qe, roi_ids=center_ids,

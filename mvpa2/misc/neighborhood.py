@@ -341,6 +341,82 @@ class HollowSphere(Sphere):
         return np.vstack([np.zeros(ndim,dtype='int'),res]) if self.include_center else res
 
 
+class Disk(object):
+    """Mesh Disk on Sphere surface
+
+    Use this if you want to obtain all the neighbors within a given
+    radius from a vertex on a spherical surface mesh.
+    """
+
+    def __init__(self, coordinates, diameter=0.01):
+        """ Initialize the Disk
+
+        Parameters
+        ----------
+        coordinates: list
+          List of vertex coordinates in tuples of x, y, z.
+        diameter: float
+          Diameter of the 'disk' in percentage of equatorial sphere coverage.
+        """
+        self._diameter = diameter
+        self._coordinates = coordinates
+
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
+        prefixes_ = ['diameter=%r' % (self._diameter,)] + prefixes
+        return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
+
+    # Properties to assure R/O behavior for now
+    @property
+    def coordinates(self):
+        return self._coordinates
+
+    def diameter(self):
+        return self._diameter
+
+    def __call__(self, coordinate):
+        """Get all mesh coordinates within disk diameter at a given coordinate
+
+        Parameters
+        ----------
+        coordinate : sequence type of length 3 with integers
+
+        Returns
+        -------
+        list of tuples of size 3
+
+        """
+
+        # type checking
+        coords = np.asanyarray(self._coordinates)
+
+        # return center_id if diameter is 0
+        if self._diameter == 0:
+            return coordinate
+
+        # compute angle of disk coverage in radian
+        disc_radian = np.pi * self._diameter
+
+        # recenter sphere - move point of origin to coordinate of interest
+        centered_coordinate = coords - coordinate
+
+        # calculate the distance of each vertex to the new center
+        distances = np.linalg.norm(centered_coordinate, axis=1)
+
+        # correct distances so that sphere radius is 1, i.e. maximum distance=2
+        distances /= distances.max() / 2
+
+        # Compute segment length that covers `disc_radian` on the sphere with:
+        #   EuclidDistance = 2 * radius * sin(angle / 2) ; with radius = 1
+        segment_length = 2 * np.sin(disc_radian / 2)
+
+        # Select vertices within this distance
+        coord_array = coords[np.where(distances <= segment_length)[0]]
+
+        return [tuple(x) for x in coord_array.tolist()]
+
+
 class QueryEngineInterface(object):
     """Very basic class for `QueryEngine`\s defining the interface
 

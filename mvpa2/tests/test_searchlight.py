@@ -24,17 +24,17 @@ from mvpa2.base import externals
 from mvpa2.mappers.base import ChainMapper
 from mvpa2.mappers.fx import mean_group_sample
 from mvpa2.clfs.transerror import ConfusionMatrix
-from mvpa2.measures.searchlight import sphere_searchlight, Searchlight
+from mvpa2.measures.searchlight import sphere_searchlight, Searchlight, disk_searchlight
 from mvpa2.measures.gnbsearchlight import sphere_gnbsearchlight, \
-     GNBSearchlight
+     GNBSearchlight, disk_gnbsearchlight
 from mvpa2.clfs.gnb import GNB
 from mvpa2.clfs.distance import one_minus_correlation
 
 from mvpa2.measures.nnsearchlight import sphere_m1nnsearchlight, \
-     M1NNSearchlight
+     M1NNSearchlight, disk_m1nnsearchlight
 from mvpa2.clfs.knn import kNN
 
-from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere, HollowSphere, CachedQueryEngine
+from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere, HollowSphere, Disk, CachedQueryEngine
 from mvpa2.misc.errorfx import corr_error, mean_match_accuracy
 from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner, CustomPartitioner
 from mvpa2.generators.splitters import Splitter
@@ -59,8 +59,10 @@ class SearchlightTests(unittest.TestCase):
         ok_(not 'nproc' in GNBSearchlight.__init__.__doc__)
         ok_(not 'nproc' in GNBSearchlight.__doc__)
         ok_(not 'nproc' in sphere_gnbsearchlight.__doc__)
+        ok_(not 'nproc' in disk_gnbsearchlight.__doc__)
         # but present elsewhere
         ok_('nproc' in sphere_searchlight.__doc__)
+        ok_('nproc' in disk_searchlight.__doc__)
         ok_('nproc' in Searchlight.__init__.__doc__)
 
     # https://github.com/PyMVPA/PyMVPA/issues/106
@@ -69,6 +71,14 @@ class SearchlightTests(unittest.TestCase):
         for sl in (sphere_searchlight,
                    sphere_gnbsearchlight,
                    sphere_m1nnsearchlight):
+            for kw in ('queryengine', 'qe'):
+                ok_(not kw in sl.__doc__,
+                    msg='There should be no %r in %s.__doc__' % (kw, sl))
+
+        # queryengine should not be provided to disk_* helpers
+        for sl in (disk_searchlight,
+                   disk_gnbsearchlight,
+                   disk_m1nnsearchlight):
             for kw in ('queryengine', 'qe'):
                 ok_(not kw in sl.__doc__,
                     msg='There should be no %r in %s.__doc__' % (kw, sl))
