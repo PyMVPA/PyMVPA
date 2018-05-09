@@ -170,11 +170,24 @@ def test_hollowsphere_include_center():
 
 
 def test_disk_basic():
-    coordinates = ... something something
-    hs = ne.Disk(1, 0)
-    assert_array_equal(hs((2, 1)),  [(1, 1), (2, 0), (2, 2), (3, 1)])
-    assert_array_equal(hs((1, )),   [(0,), (2,)])
-    assert_equal(len(hs((1,1,1))), 6)
+    coordinates = np.array([[ 12.64, -32.02,  93.88], [-52.71,  25.88,  80.93],
+                            [ 69.81,  20.30,  68.65], [-42.73, -70.45,  56.65],
+                            [-18.04,  88.13,  43.67], [ 76.40, -56.40,  31.32],
+                            [-97.73, -10.68,  18.29], [ 65.94,  74.91,   6.23],
+                            [  2.47, -99.77,  -6.30], [-67.78,  71.05, -18.86],
+                            [ 94.78,  -6.26, -31.25], [-70.43, -55.77, -43.91],
+                            [ 12.59,  81.80, -56.11], [ 39.77, -60.71, -68.78],
+                            [-56.46,  14.02, -81.33], [ 29.75,  16.56, -94.02]])
+    disk1 = ne.Disk(coordinates, 0)
+    disk2 = ne.Disk(coordinates, 0.3)
+    disk3 = ne.Disk(coordinates, 0.6)
+    assert_array_equal(disk1(coordinates[0]), [tuple(coordinates[0])])
+    assert_array_equal(np.array(disk2(coordinates[0])), coordinates[:4])
+    assert_array_equal(np.array(disk3(coordinates[0])),
+                       np.vstack((coordinates[:9], coordinates[10])))
+    assert_equal(len(disk1(coordinates[0])), 1)
+    assert_equal(len(disk2(coordinates[0])), 4)
+    assert_equal(len(disk3(coordinates[0])), 10)
 
 
 def test_query_engine():
