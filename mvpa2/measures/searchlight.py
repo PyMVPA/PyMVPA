@@ -16,6 +16,7 @@ if __debug__:
 import numpy as np
 import tempfile, os
 import time
+from collections import defaultdict
 
 import mvpa2
 from mvpa2.base import externals, warning
@@ -36,6 +37,7 @@ from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
 from mvpa2.mappers.base import ChainMapper
 
 from mvpa2.support.due import due, Doi
+from mvpa2.testing import on_osx
 
 
 class BaseSearchlight(Measure):
@@ -127,13 +129,18 @@ class BaseSearchlight(Measure):
 
         if nproc is None and externals.exists('pprocess'):
             import pprocess
-            try:
-                nproc = pprocess.get_number_of_cores() or 1
-            except AttributeError:
-                warning("pprocess version %s has no API to figure out maximal "
-                        "number of cores. Using 1"
-                        % externals.versions['pprocess'])
+            if on_osx:
+                warning("Unable to determine automatically maximal number of "
+                        "cores on Mac OS X. Using 1")
                 nproc = 1
+            else:
+                try:
+                    nproc = pprocess.get_number_of_cores() or 1
+                except AttributeError:
+                    warning("pprocess version %s has no API to figure out maximal "
+                            "number of cores. Using 1"
+                            % externals.versions['pprocess'])
+                    nproc = 1
         # train the queryengine
         self._queryengine.train(dataset)
 
@@ -235,12 +242,15 @@ class Searchlight(BaseSearchlight):
         if __debug__:
             debug('SLC', " hstacked shape %s" % (result_ds.shape,))
 
+        # flatten in case we are preallocating, since we're returning a list
+        # of lists instead of a list of elements
+        f = lambda x: sum(x, []) if sl.preallocate_output else x
         if sl.ca.is_enabled('roi_feature_ids'):
-            sl.ca.roi_feature_ids = [r.a.roi_feature_ids for r in results]
+            sl.ca.roi_feature_ids = f([r.a.roi_feature_ids for r in results])
         if sl.ca.is_enabled('roi_sizes'):
-            sl.ca.roi_sizes = [r.a.roi_sizes for r in results]
+            sl.ca.roi_sizes = f([r.a.roi_sizes for r in results])
         if sl.ca.is_enabled('roi_center_ids'):
-            sl.ca.roi_center_ids = [r.a.roi_center_ids for r in results]
+            sl.ca.roi_center_ids = f([r.a.roi_center_ids for r in results])
 
         if 'mapper' in dataset.a:
             # since we know the space we can stick the original mapper into the
@@ -275,6 +285,7 @@ class Searchlight(BaseSearchlight):
                  results_fx=None,
                  tmp_prefix='tmpsl',
                  nblocks=None,
+                 preallocate_output=False,
                  **kwargs):
         """
         Parameters
@@ -310,6 +321,13 @@ class Searchlight(BaseSearchlight):
         nblocks : None or int
           Into how many blocks to split the computation (could be larger than
           nproc).  If None -- nproc is used.
+        preallocate_output : bool, optional
+          If set, the output of each computation block will be pre-allocated.
+          This can speed up computations if the datameasure returns a large
+          number of samples and there are many features for which the
+          datameasure is computed. The user should verify the correct
+          assignment of sample attributes and feature attributes, since no
+          hstacking is performed within each computing block.
         **kwargs
           In addition this class supports all keyword arguments of its
           base-class :class:`~mvpa2.measures.searchlight.BaseSearchlight`.
@@ -321,8 +339,9 @@ class Searchlight(BaseSearchlight):
         if self.results_backend == 'hdf5':
             # Assure having hdf5
             externals.exists('h5py', raise_=True)
+        self.preallocate_output = preallocate_output
         self.results_fx = Searchlight._concat_results \
-                          if results_fx is None else results_fx
+                              if results_fx is None else results_fx
         self.tmp_prefix = tmp_prefix
         self.nblocks = nblocks
         if isinstance(add_center_fa, str):
@@ -349,6 +368,8 @@ class Searchlight(BaseSearchlight):
         """Classical generic searchlight implementation
         """
         assert(self.results_backend in ('native', 'hdf5'))
+        proc_block = self._proc_block_inplace if self.preallocate_output \
+            else self._proc_block
         # compute
         if nproc is not None and nproc > 1:
             # split all target ROIs centers into `nproc` equally sized blocks
@@ -366,7 +387,7 @@ class Searchlight(BaseSearchlight):
                 debug('SLC', "Starting off %s child processes for nblocks=%i"
                       % (nproc_needed, nblocks))
             compute = p_results.manage(
-                        pprocess.MakeParallel(self._proc_block))
+                        pprocess.MakeParallel(proc_block))
             for iblock, block in enumerate(roi_blocks):
                 # should we maybe deepcopy the measure to have a unique and
                 # independent one per process?
@@ -376,7 +397,7 @@ class Searchlight(BaseSearchlight):
         else:
             # otherwise collect the results in an 1-item list
             p_results = [
-                    self._proc_block(roi_ids, dataset, self.__datameasure)]
+                    proc_block(roi_ids, dataset, self.__datameasure)]
 
         # Finally collect and possibly process results
         # p_results here is either a generator from pprocess.Map or a list.
@@ -422,7 +443,6 @@ class Searchlight(BaseSearchlight):
         if seed is not None:
             mvpa2.seed(seed)
         if __debug__:
-            debug_slc_ = 'SLC_' in debug.active
             debug('SLC',
                   "Starting computing block for %i elements" % len(block))
             start_time = time.time()
@@ -440,50 +460,7 @@ class Searchlight(BaseSearchlight):
         bar = ProgressBar()
 
         for i, f in enumerate(block):
-            # retrieve the feature ids of all features in the ROI from the query
-            # engine
-            roi_specs = self._queryengine[f]
-
-            if __debug__ and  debug_slc_:
-                debug('SLC_', 'For %r query returned roi_specs %r'
-                      % (f, roi_specs))
-
-            if is_datasetlike(roi_specs):
-                # TODO: unittest
-                assert(len(roi_specs) == 1)
-                roi_fids = roi_specs.samples[0]
-            else:
-                roi_fids = roi_specs
-
-            # slice the dataset
-            roi = ds[:, roi_fids]
-
-            if is_datasetlike(roi_specs):
-                for n, v in roi_specs.fa.iteritems():
-                    roi.fa[n] = v
-
-            if self.__add_center_fa:
-                # add fa to indicate ROI seed if requested
-                roi_seed = np.zeros(roi.nfeatures, dtype='bool')
-                if f in roi_fids:
-                    roi_seed[roi_fids.index(f)] = True
-                else:
-                    warning("Center feature attribute id %s not found" % f)
-                roi.fa[self.__add_center_fa] = roi_seed
-
-            # compute the datameasure and store in results
-            res = measure(roi)
-
-            if assure_dataset and not is_datasetlike(res):
-                res = Dataset(np.atleast_1d(res))
-            if store_roi_feature_ids:
-                # add roi feature ids to intermediate result dataset for later
-                # aggregation
-                res.a['roi_feature_ids'] = roi_fids
-            if store_roi_sizes:
-                res.a['roi_sizes'] = roi.nfeatures
-            if store_roi_center_ids:
-                res.a['roi_center_ids'] = f
+            res, roi = self.__process_roi(ds, f, measure, assure_dataset)
             results.append(res)
 
             if __debug__:
@@ -516,6 +493,164 @@ class Searchlight(BaseSearchlight):
             raise RuntimeError("Must not reach this point")
         return results
 
+    def __process_roi(self, ds, roi_feature_id, measure, assure_dataset):
+        # retrieve the feature ids of all features in the ROI from the query
+        # engine
+        roi_specs = self._queryengine[roi_feature_id]
+        if __debug__:
+            debug('SLC_', 'For %r query returned roi_specs %r'
+                  % (roi_feature_id, roi_specs))
+        if is_datasetlike(roi_specs):
+            # TODO: unittest
+            assert (len(roi_specs) == 1)
+            roi_fids = roi_specs.samples[0]
+        else:
+            roi_fids = roi_specs
+
+        # slice the dataset
+        roi = ds[:, roi_fids]
+        if is_datasetlike(roi_specs):
+            for n, v in roi_specs.fa.iteritems():
+                roi.fa[n] = v
+        if self.__add_center_fa:
+            # add fa to indicate ROI seed if requested
+            roi_seed = np.zeros(roi.nfeatures, dtype='bool')
+            if roi_feature_id in roi_fids:
+                roi_seed[roi_fids.index(roi_feature_id)] = True
+            else:
+                warning("Center feature attribute id %s not found" % roi_feature_id)
+            roi.fa[self.__add_center_fa] = roi_seed
+
+        # compute the datameasure and store in results
+        res = measure(roi)
+        if assure_dataset and not is_datasetlike(res):
+            res = Dataset(np.atleast_1d(res))
+        if self.ca.is_enabled('roi_feature_ids'):
+            # add roi feature ids to intermediate result dataset for later
+            # aggregation
+            res.a['roi_feature_ids'] = roi_fids
+        if self.ca.is_enabled('roi_sizes'):
+            res.a['roi_sizes'] = roi.nfeatures
+        if self.ca.is_enabled('roi_center_ids'):
+            res.a['roi_center_ids'] = roi_feature_id
+        return res, roi
+
+    def _proc_block_inplace(self, block, ds, measure, seed=None,
+                            iblock='main'):
+        """Little helper to capture the parts of the computation that can be
+        parallelized. This method preallocates the output of the block,
+        reducing the number of elementes to be hstacked down the processing
+        line.
+
+        Parameters
+        ----------
+        seed
+          RNG seed.  Should be provided e.g. in child process invocations
+          to guarantee that they all seed differently to not keep generating
+          the same sequencies due to reusing the same copy of numpy's RNG
+        block
+          Critical for generating non-colliding temp filenames in case
+          of hdf5 backend.  Otherwise RNGs of different processes might
+          collide in their temporary file names leading to problems.
+        """
+        if seed is not None:
+            mvpa2.seed(seed)
+        if __debug__:
+            debug('SLC',
+                  "Starting computing block for %i elements" % len(block))
+
+        store_roi_feature_ids = self.ca.is_enabled('roi_feature_ids')
+        store_roi_sizes = self.ca.is_enabled('roi_sizes')
+        store_roi_center_ids = self.ca.is_enabled('roi_center_ids')
+
+        assure_dataset = any([store_roi_feature_ids,
+                              store_roi_sizes,
+                              store_roi_center_ids])
+
+        # compute first result in block to get estimate of output
+        if __debug__:
+            debug('SLC', "Computing measure for first ROI to preallocate "
+                         "output")
+        first_res, roi = self.__process_roi(ds, block[0], measure,
+                                            assure_dataset)
+        nsamples, nfeatures = first_res.shape
+        results = np.empty((nsamples, nfeatures * len(block)),
+                           dtype=first_res.samples.dtype)
+        if __debug__:
+            debug('SLC', "Preallocated ouput of shape %s" % str(results.shape))
+        results[:, :nfeatures] = first_res.samples
+        start = nfeatures
+        step = nfeatures
+
+        # put rois around all features in the dataset and compute the
+        # measure within them
+        bar = ProgressBar()
+
+        # initialize dictionaries to store fa and a
+        fa = defaultdict(list)
+        for first_res_fa in first_res.fa:
+            val = first_res.fa[first_res_fa].value
+            if isinstance(val, list):
+                adder = fa[first_res_fa].extend
+            else:
+                adder = fa[first_res_fa].append
+            adder(val)
+
+        a = defaultdict(list)
+        for first_res_a in first_res.a:
+            val = first_res.a[first_res_a].value
+            if first_res_a != 'roi_feature_ids' and isinstance(val, list):
+                adder = a[first_res_a].extend
+            else:
+                adder = a[first_res_a].append
+            adder(val)
+
+        for i, f in enumerate(block[1:]):
+            res, roi = self.__process_roi(ds, f, measure, assure_dataset)
+            if store_roi_feature_ids:
+                # add roi feature ids to intermediate result dataset for later
+                # aggregation
+                a['roi_feature_ids'].append(res.a.roi_feature_ids)
+            if store_roi_sizes:
+                a['roi_sizes'].append(roi.nfeatures)
+            if store_roi_center_ids:
+                a['roi_center_ids'].append(f)
+            # store results inplace
+            end = start + step
+            results[:, start:end] = res.samples
+            start = end
+
+            if __debug__:
+                msg = 'ROI %i (%i/%i), %i features' % \
+                      (f + 1, i + 1, len(block), roi.nfeatures)
+                debug('SLC', bar(float(i + 1) / len(block), msg), cr=True)
+
+        if __debug__:
+            # just to get to new line
+            debug('SLC', '')
+        # now make it a dataset and a list to make it compatible with the rest
+        results = [Dataset(results, sa=first_res.sa, a=dict(a), fa=dict(fa))]
+
+        if self.results_postproc_fx:
+            if __debug__:
+                debug('SLC', "Post-processing %d results in proc_block using %s"
+                      % (len(results), self.results_postproc_fx))
+            results = self.results_postproc_fx(results)
+        if self.results_backend == 'native':
+            pass                        # nothing special
+        elif self.results_backend == 'hdf5':
+            # store results in a temporary file and return a filename
+            results_file = tempfile.mktemp(prefix=self.tmp_prefix,
+                                           suffix='-%s.hdf5' % iblock)
+            if __debug__:
+                debug('SLC', "Storing results into %s" % results_file)
+            h5save(results_file, results)
+            if __debug__:
+                debug('SLC_', "Results stored")
+            results = results_file
+        else:
+            raise RuntimeError("Must not reach this point")
+        return results
 
     def __set_datameasure(self, datameasure):
         """Set the datameasure"""
