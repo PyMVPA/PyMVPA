@@ -11,9 +11,10 @@
 import unittest
 import numpy as np
 from scipy.spatial.distance import cdist, pdist, squareform
-from scipy.stats import special_ortho_group
+# from scipy.stats import special_ortho_group
 from scipy import stats
 
+from mvpa2.misc.fx import get_random_rotation
 from mvpa2.mappers.zscore import zscore
 from mvpa2.datasets.base import Dataset
 from mvpa2.support.nibabel.surf import Surface
@@ -51,7 +52,8 @@ class ConnectivityHyperalignmentTests(unittest.TestCase):
             ds = np.zeros_like(ds_orig)
             for j in range(n_triangles):
                 ds[:, j*3:(j+1)*3] = np.dot(ds_orig[:, j*3:(j+1)*3],
-                                            special_ortho_group.rvs(3, random_state=rs))
+                                            get_random_rotation(3))
+                                            # special_ortho_group.rvs(3, random_state=rs))
             ds = Dataset(ds)
             ds.fa['node_indices'] = np.arange(nv)
             ds_train, ds_test = ds[:nt//2, :], ds[nt//2:, :]
