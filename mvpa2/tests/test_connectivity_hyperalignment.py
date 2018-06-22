@@ -10,9 +10,6 @@
 
 import unittest
 import numpy as np
-from scipy.spatial.distance import cdist, pdist, squareform
-# from scipy.stats import special_ortho_group
-from scipy import stats
 
 from mvpa2.misc.fx import get_random_rotation
 from mvpa2.mappers.zscore import zscore
@@ -21,6 +18,7 @@ from mvpa2.support.nibabel.surf import Surface
 from mvpa2.misc.surfing.queryengine import SurfaceQueryEngine
 
 from mvpa2.algorithms.connectivity_hyperalignment import ConnectivityHyperalignment
+from mvpa2.testing import skip_if_no_external
 
 
 class ConnectivityHyperalignmentTests(unittest.TestCase):
@@ -64,7 +62,9 @@ class ConnectivityHyperalignmentTests(unittest.TestCase):
         return dss_train, dss_test, surface
 
     def compute_connectivity_profile_similarity(self, dss):
-        conns = [1 - squareform(pdist(ds.samples.T, 'correlation')) for ds in dss]
+        # from scipy.spatial.distance import pdist, squareform
+        # conns = [1 - squareform(pdist(ds.samples.T, 'correlation')) for ds in dss]
+        conns = [np.corrcoef(ds.samples.T) for ds in dss]
         conn_sum = np.sum(conns, axis=0)
         sim = np.zeros((len(dss), dss[0].shape[1]))
         for i, conn in enumerate(conns):
@@ -75,6 +75,9 @@ class ConnectivityHyperalignmentTests(unittest.TestCase):
         return sim
 
     def test_connectivity_hyperalignment(self):
+        skip_if_no_external('scipy')
+        skip_if_no_external('hdf5')  # needed for default results backend hdf5
+
         dss_train, dss_test, surface = self.get_testdata()
         qe = SurfaceQueryEngine(surface, 10, fa_node_key='node_indices')
         cha = ConnectivityHyperalignment(
