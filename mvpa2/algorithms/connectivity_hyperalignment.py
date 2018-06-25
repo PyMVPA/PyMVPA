@@ -42,6 +42,8 @@ from mvpa2.algorithms.searchlight_hyperalignment import SearchlightHyperalignmen
 
 from mvpa2.algorithms.hyperalignment import Hyperalignment
 
+from mvpa2.support.due import due, Doi
+
 if externals.exists('h5py'):
     from mvpa2.base.hdf5 import h5save, h5load
 
@@ -293,6 +295,10 @@ class ConnectivityHyperalignment(SearchlightHyperalignment):
             h5save(params.connectomes, connectomes)
         return connectomes
 
+    @due.dcite(
+        Doi('10.1371/journal.pcbi.1006120'),
+        description="Connectivity-based hyperalignment",
+        tags=["implementation"])
     def __call__(self, datasets):
         """Estimate mappers for each dataset
 
