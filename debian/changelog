@@ -1,6 +1,8 @@
 pymvpa2 (2.6.5-1) unstable; urgency=medium
 
   * Fresh minor upstream release
+  * debian/patches
+    - two patches to make docs buildable (Closes: #896628)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 25 Jun 2018 22:03:05 -0400
 

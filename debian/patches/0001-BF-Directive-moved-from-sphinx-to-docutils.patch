@@ -1,0 +1,28 @@
+From 9ab9cdb7b67de148af87a0b32b956c42dc40fb30 Mon Sep 17 00:00:00 2001
+From: Yaroslav Halchenko <debian@onerussian.com>
+Date: Tue, 26 Jun 2018 13:49:09 -0400
+Subject: [PATCH 1/2] BF: Directive moved from sphinx to docutils
+
+---
+ doc/sphinxext/exercise_directive.py | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/doc/sphinxext/exercise_directive.py b/doc/sphinxext/exercise_directive.py
+index 6b6bc0b4..676f12fd 100644
+--- a/doc/sphinxext/exercise_directive.py
++++ b/doc/sphinxext/exercise_directive.py
+@@ -14,7 +14,10 @@ This directive can be used to add exercise boxes to tutorials.
+ __docformat__ = 'restructuredtext'
+ 
+ from sphinx import addnodes
+-from sphinx.util.compat import Directive
++try:
++    from sphinx.util.compat import Directive
++except ImportError:
++    from docutils.parsers.rst import Directive
+ # DeprecationWarning: make_admonition is deprecated, use docutils.parsers.rst.directives.admonitions.BaseAdmonition instead
+ try:
+     from sphinx.util.compat import make_admonition
+-- 
+2.17.0
+
