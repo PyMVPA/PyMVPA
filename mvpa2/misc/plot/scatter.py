@@ -287,14 +287,18 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
                                   **sc_kwargs)
 
             # Plot (on top) those which are not masked-out
-            x_plot, y_plot, edgecolors_plot = x[mask], y[mask], edgecolors[mask]
+            if mask.size:
+                x_plot, y_plot, edgecolors_plot = x[mask], y[mask], edgecolors[mask]
+            else:
+                # older numpys blow here
+                x_plot, y_plot, edgecolors_plot = (np.array([]),) * 3
         else:
             # Just plot all of them at once
             x_plot, y_plot, edgecolors_plot = x, y, edgecolors
 
         if len(x_plot):
             ax_scatter.scatter(x_plot, y_plot, edgecolors=edgecolors_plot,
-                              **sc_kwargs)
+                             **sc_kwargs)
 
         # for orientation we need to plot 1 slice... assume that the last dimension is z -- figure out a slice with max # of non-zeros
         zdim_entries = ndindices_nz[:, -1]
