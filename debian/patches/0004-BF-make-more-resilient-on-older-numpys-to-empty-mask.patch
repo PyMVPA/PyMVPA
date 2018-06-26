@@ -1,0 +1,37 @@
+From 2ddada8e69b74e73ce9266d5f13cde944c7d4c19 Mon Sep 17 00:00:00 2001
+From: Yaroslav Halchenko <debian@onerussian.com>
+Date: Tue, 26 Jun 2018 17:32:09 -0400
+Subject: [PATCH 4/4] BF: make more resilient on older numpys to empty mask
+
+---
+ mvpa2/misc/plot/scatter.py | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/mvpa2/misc/plot/scatter.py b/mvpa2/misc/plot/scatter.py
+index 22af5f98..952f0282 100755
+--- a/mvpa2/misc/plot/scatter.py
++++ b/mvpa2/misc/plot/scatter.py
+@@ -287,14 +287,18 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
+                                   **sc_kwargs)
+ 
+             # Plot (on top) those which are not masked-out
+-            x_plot, y_plot, edgecolors_plot = x[mask], y[mask], edgecolors[mask]
++            if mask.size:
++                x_plot, y_plot, edgecolors_plot = x[mask], y[mask], edgecolors[mask]
++            else:
++                # older numpys blow here
++                x_plot, y_plot, edgecolors_plot = (np.array([]),) * 3
+         else:
+             # Just plot all of them at once
+             x_plot, y_plot, edgecolors_plot = x, y, edgecolors
+ 
+         if len(x_plot):
+             ax_scatter.scatter(x_plot, y_plot, edgecolors=edgecolors_plot,
+-                              **sc_kwargs)
++                             **sc_kwargs)
+ 
+         # for orientation we need to plot 1 slice... assume that the last dimension is z -- figure out a slice with max # of non-zeros
+         zdim_entries = ndindices_nz[:, -1]
+-- 
+2.17.0
+

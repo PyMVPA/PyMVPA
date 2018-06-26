@@ -1,40 +1,71 @@
-From 98e4b8ac853d8eab797c2a1162bc37a6a46c51be Mon Sep 17 00:00:00 2001
+From 4213d5f0480e3704e89a4a9bc9e3783813e07289 Mon Sep 17 00:00:00 2001
 From: Yaroslav Halchenko <debian@onerussian.com>
 Date: Tue, 26 Jun 2018 14:41:44 -0400
-Subject: [PATCH 3/3] BF: compatibility with matplotlib 2.2.0 - axisbg ->
+Subject: [PATCH 3/4] BF: compatibility with matplotlib 2.2.0 - axisbg ->
  facecolor
 
 ---
- mvpa2/misc/plot/scatter.py | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ mvpa2/misc/plot/scatter.py | 26 +++++++++++++++++++-------
+ 1 file changed, 19 insertions(+), 7 deletions(-)
 
 diff --git a/mvpa2/misc/plot/scatter.py b/mvpa2/misc/plot/scatter.py
-index b48be2c3..54c587fc 100755
+index b48be2c3..22af5f98 100755
 --- a/mvpa2/misc/plot/scatter.py
 +++ b/mvpa2/misc/plot/scatter.py
-@@ -236,14 +236,14 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
+@@ -17,6 +17,7 @@ import nibabel as nb
+ import numpy as np
+ 
+ from mvpa2.base import verbose, warning
++from mvpa2.base import externals
+ 
+ __all__ = ['plot_scatter']
+ 
+@@ -32,6 +33,17 @@ def fill_nonfinites(a, fill=0, inplace=True):
+     return a
+ 
+ 
++if externals.versions['matplotlib'] >= '2':
++    pl_axes = pl.axes
++else:
++    # older versions, e.g. 1.3, do not understand facecolor
++    def pl_axes(*args, **kwargs):
++        if 'facecolor' in kwargs:
++            kwargs['axisbg'] = kwargs.pop('facecolor')
++        return pl.axes(*args, **kwargs)
++    pl_axes.__doc__ = pl.axes.__doc__
++
++
+ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
+                  labels=None, colors=True,
+                  dimcolor=1, title=None, limits='auto',
+@@ -235,15 +247,15 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
+ 
          if ax_bp_x_parent:
              hist_x_pos = ax_bp_x_parent.get_position()
-             ax_bp_x = pl.axes( [hist_x_pos.x0,    hist_x_pos.y0 + hist_x_pos.height * 0.9,
+-            ax_bp_x = pl.axes( [hist_x_pos.x0,    hist_x_pos.y0 + hist_x_pos.height * 0.9,
 -                                hist_x_pos.width, hist_x_pos.height * 0.1],  axisbg='y' )
++            ax_bp_x = pl_axes( [hist_x_pos.x0,    hist_x_pos.y0 + hist_x_pos.height * 0.9,
 +                                hist_x_pos.width, hist_x_pos.height * 0.1],  facecolor='y' )
  
          if ax_bp_y_parent:
              hist_y_pos = ax_bp_y_parent.get_position()
-             ax_bp_y = pl.axes( [hist_y_pos.x0 + hist_y_pos.width*0.9,  hist_y_pos.y0,
+-            ax_bp_y = pl.axes( [hist_y_pos.x0 + hist_y_pos.width*0.9,  hist_y_pos.y0,
 -                                hist_y_pos.width * 0.1, hist_y_pos.height],  axisbg='y' )
++            ax_bp_y = pl_axes( [hist_y_pos.x0 + hist_y_pos.width*0.9,  hist_y_pos.y0,
 +                                hist_y_pos.width * 0.1, hist_y_pos.height],  facecolor='y' )
  
 -        # ax_bp_y = pl.axes( [left + width * 0.9, bottom, width/10, height], axisbg='y' ) if ax_hist_y else None
-+        # ax_bp_y = pl.axes( [left + width * 0.9, bottom, width/10, height], facecolor='y' ) if ax_hist_y else None
++        # ax_bp_y = pl_axes( [left + width * 0.9, bottom, width/10, height], facecolor='y' ) if ax_hist_y else None
  
  
      sc_kwargs = dict(facecolors='none', s=1, rasterized=rasterized) # common kwargs
-@@ -294,7 +294,7 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
+@@ -293,8 +305,8 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
+             if hint_opacity:
                  # now we need to plot that zdim_max slice taking into account our colormap
                  # create new axes
-                 axslice = pl.axes([left, bottom+height * 0.72, width/4., height/5.],
+-                axslice = pl.axes([left, bottom+height * 0.72, width/4., height/5.],
 -                                  axisbg='y')
++                axslice = pl_axes([left, bottom+height * 0.72, width/4., height/5.],
 +                                  facecolor='y')
                  axslice.axis('off')
                  sslice = np.zeros(dataXd.shape[1:3]) # XXX hardcoded assumption on dimcolor =1

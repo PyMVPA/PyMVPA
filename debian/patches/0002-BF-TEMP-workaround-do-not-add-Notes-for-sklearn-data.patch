@@ -1,7 +1,7 @@
 From 135c808ff92ed785f12e35e05936a06b27db657b Mon Sep 17 00:00:00 2001
 From: Yaroslav Halchenko <debian@onerussian.com>
 Date: Tue, 26 Jun 2018 13:49:41 -0400
-Subject: [PATCH 2/2] BF(TEMP workaround): do not add Notes for sklearn
+Subject: [PATCH 2/4] BF(TEMP workaround): do not add Notes for sklearn
  datasets if doc already has Notes
 
 Otherwise sphinx blows
