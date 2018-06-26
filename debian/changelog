@@ -1,3 +1,9 @@
+pymvpa2 (2.6.5-1) unstable; urgency=medium
+
+  * Fresh minor upstream release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 25 Jun 2018 22:03:05 -0400
+
 pymvpa2 (2.6.4-2) unstable; urgency=medium
 
   * patches to fortify scatter code and tests against degenerate cases which
