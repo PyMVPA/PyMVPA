@@ -14,7 +14,10 @@ This directive can be used to add exercise boxes to tutorials.
 __docformat__ = 'restructuredtext'
 
 from sphinx import addnodes
-from sphinx.util.compat import Directive
+try:
+    from sphinx.util.compat import Directive
+except ImportError:
+    from docutils.parsers.rst import Directive
 # DeprecationWarning: make_admonition is deprecated, use docutils.parsers.rst.directives.admonitions.BaseAdmonition instead
 try:
     from sphinx.util.compat import make_admonition
