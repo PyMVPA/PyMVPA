@@ -37,6 +37,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 import h5py
+import h5py.highlevel  # >= 2.8.0, https://github.com/h5py/h5py/issues/1063
 
 import os
 import os.path as osp
