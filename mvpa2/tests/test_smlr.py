@@ -63,4 +63,5 @@ def test_smlr_sensitivities(clf):
     # now ask for the sensitivities WITHOUT having to pass the dataset
     # again
     sens = clf.get_sensitivity_analyzer(force_train=False)(None)
+
     assert_equal(sens.shape, (len(data.UT) - 1, data.nfeatures))
