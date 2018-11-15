@@ -28,13 +28,13 @@ from mvpa2.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa2.base.param import Parameter
 from mvpa2.base.state import ConditionalAttribute
 from mvpa2.base.constraints import EnsureChoice
-#from mvpa2.measures.base import Sensitivity
-
+from mvpa2.measures.base import Sensitivity
+from mvpa2.datasets.base import Dataset
 
 if __debug__:
     from mvpa2.base import debug
 
-__all__ = [ "GNB" ]
+__all__ = [ "GNB", "GNBWeights"]
 
 class GNB(Classifier):
     """Gaussian Naive Bayes `Classifier`.
