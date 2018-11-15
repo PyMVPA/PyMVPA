@@ -25,9 +25,9 @@ class GNBTests(unittest.TestCase):
         gnb_nc = GNB(common_variance=False)
         gnb_n = GNB(normalize=True)
         gnb_n_nc = GNB(normalize=True, common_variance=False)
+        gnb_lin = GNB(common_variance=True)
 
         ds = datasets['uni2medium']
-
         # Generic silly coverage just to assure that it works in all
         # possible scenarios:
         bools = (True, False)
@@ -56,6 +56,40 @@ class GNBTests(unittest.TestCase):
                             v = np.exp(v)
                         d1 = np.sum(v, axis=1) - 1.0
                         self.assertTrue(np.max(np.abs(d1)) < 1e-5)
+                    if cv:
+                        assert 'has_sensitivity' in gnb_.__tags__
+                        gnb_.get_sensitivity_analyzer()
+                    if not cv:
+                        with self.assertRaises(TypeError):
+                            gnb_.get_sensitivity_analyzer()
+
+
+
+def test_gnb_sensitivities():
+    gnb = GNB(common_variance=True)
+    ds_train, ds_test_A, ds_test_B, ds_test_both  = two_feat_two_class()
+    gnb.train(ds_train)
+
+    #test classifier on two datasets with only one of the two targets present
+    predictions_A = gnb.predict(ds_test_A)
+    predictions_B = gnb.predict(ds_test_B)
+
+    #test classifier on dataset with both targets present
+    predictions_both = gnb.predict(ds_test_both)
+
+    #does the classifier in single-target case classify at least 90% correct?
+    assert_approx_equal(np.mean(predictions_A), 1, significant=2)
+    assert_approx_equal(np.mean(predictions_B), 0, significant=2)
+    assert_array_almost_equal(predictions_both, ds_train.targets)
+
+    sens = gnb.get_sensitivity_analyzer(force_train=False)
+
+    #TODO: if I dont call sens with the classifier instance, it will return only an instance of
+    #TODO: GNBWeights instead of a dataset with the weights. This does not mirror what smlr does,
+    #TODO: What am I missing?
+    print(sens(gnb).samples[0])
+    #print(sens.shape)
+    #assert_equal(sens(gnb).shape, (len(ds_train.UT) - 1, ds_train.nfeatures))
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(GNBTests)
