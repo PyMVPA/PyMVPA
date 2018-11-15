@@ -308,22 +308,29 @@ class GNB(Classifier):
                             "common_variances = True. Did you forget to specify this parameter?")
 
 
+class GNBWeights(Sensitivity):
+    """
+    `SensitivityAnalyzer` that reports the weights GNB trained
+    on a given `Dataset`.
+    """
 
-## class GNBWeights(Sensitivity):
-##     """`SensitivityAnalyzer` that reports the weights GNB trained
-##     on a given `Dataset`.
+    _LEGAL_CLFS = [ GNB ]
 
-##     """
+    def _call(self, dataset=None):
+        clf=self.clf #clf is a <GNB> instance
 
-##     _LEGAL_CLFS = [ GNB ]
+        #get means of all attributes given class label
+        means = clf.means
+        nfeat = clf.means.shape[1]
 
-##     def _call(self, dataset=None):
-##         """Extract weights from GNB classifier.
+        #compute weights as difference between observed value and attribute mean given class
+        #this is only the weight for one class label when comparing probs of 2 though - how do I do more than 2 classes??
+        weights=[]
+        for i in range(0, nfeat):
+            w = means[0,i]- means[1,i]
+            weights.append(w)
+        ds = Dataset(weights,
+                     sa={clf.get_space(): clf.ulabels[:len(weights)]})
 
-##         GNB always has weights available, so nothing has to be computed here.
-##         """
-##         clf = self.clf
-##         means = clf.means
-##           XXX we can do something better ;)
-##         return means
+        return ds
 
