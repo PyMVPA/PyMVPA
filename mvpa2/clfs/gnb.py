@@ -298,18 +298,14 @@ class GNB(Classifier):
 
         return predictions
 
-
-    # XXX Later come up with some
-    #     could be a simple t-test maps using distributions
-    #     per each class
-    #def get_sensitivity_analyzer(self, **kwargs):
-    #    """Returns a sensitivity analyzer for GNB."""
-    #    return GNBWeights(self, **kwargs)
-
-
-    # XXX Is there any reason to use properties?
-    #means = property(lambda self: self.__biases)
-    #variances = property(lambda self: self.__weights)
+    def get_sensitivity_analyzer(self, **kwargs):
+        """Returns a sensitivity analyzer for GNB if GNB is linear (i.e. if common_variance=True)."""
+        params = self.params
+        if params.common_variance: # == True:
+            return GNBWeights(self, **kwargs)
+        else:
+            raise NotImplementedError("Sensitivity calculation is only sensible for a linear GNB, which is true when "
+                            "common_variances = True. Did you forget to specify this parameter?")
 
 
 
