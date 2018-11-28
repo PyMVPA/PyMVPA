@@ -317,21 +317,35 @@ class GNBWeights(Sensitivity):
 
     _LEGAL_CLFS = [ GNB ]
 
-    def _call(self, dataset=None):
-        clf=self.clf #clf is a <GNB> instance
-
-        #get means of all attributes given class label
+    def _call(self, dataset):
+    # compute weights as difference between observed value and attribute mean given class
+    # for decision in all pairwise combinations of labels
+        import itertools
+        clf=self.clf
+        # get means of all attributes given class label
         means = clf.means
+        # number of features
         nfeat = clf.means.shape[1]
 
-        #compute weights as difference between observed value and attribute mean given class
-        #this is only the weight for one class label when comparing probs of 2 though - how do I do more than 2 classes??
-        weights=[]
-        for i in range(0, nfeat):
-            w = means[0,i]- means[1,i]
-            weights.append(w)
+        # make sure labels are numeric
+        am = AttributeMap()
+        ulab = am.to_numeric(clf.ulabels)
+        # all pairwise combinations of labels
+        lcomb = list(itertools.combinations(ulab, 2))
+
+        weights = np.empty([len(lcomb), nfeat])
+        for pair in lcomb:
+            for i in range(0, nfeat):
+                var_idx = np.where(ulab == pair[0])[0][0]
+                var = clf.variances[var_idx, i]
+                row_idx = lcomb.index(pair)
+                weights[row_idx, i] = (means[pair[0], i] - means[pair[1],i])/var
+
+        # put everything into a Dataset
         ds = Dataset(weights,
-                     sa={clf.get_space(): clf.ulabels[:len(weights)]})
+                     sa={clf.get_space(): list(itertools.combinations(clf.ulabels, 2))})
+        # ds = Dataset(weights,
+        #             sa={clf.get_space(): clf.ulabels[:len(weights)]})
 
         return ds
 
