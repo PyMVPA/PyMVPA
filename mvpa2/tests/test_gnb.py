@@ -16,6 +16,7 @@ from mvpa2.testing.datasets import *
 from mvpa2.clfs.gnb import GNB
 from mvpa2.measures.base import TransferMeasure
 from mvpa2.generators.splitters import Splitter
+from mvpa2.misc.data_generators import normal_feature_dataset
 
 class GNBTests(unittest.TestCase):
 
@@ -59,36 +60,23 @@ class GNBTests(unittest.TestCase):
                         assert 'has_sensitivity' in gnb_.__tags__
                         gnb_.get_sensitivity_analyzer()
                     if not cv:
-                        with self.assertRaises(TypeError):
+                        with self.assertRaises(NotImplementedError):
                             gnb_.get_sensitivity_analyzer()
-
 
 
 def test_gnb_sensitivities():
     gnb = GNB(common_variance=True)
-    ds_train, ds_test_A, ds_test_B, ds_test_both  = two_feat_two_class()
-    gnb.train(ds_train)
+    ds = normal_feature_dataset(perlabel=4,
+                                nlabels=3,
+                                nfeatures=5,
+                                nchunks=4,
+                                snr=10
+                                )
 
-    #test classifier on two datasets with only one of the two targets present
-    predictions_A = gnb.predict(ds_test_A)
-    predictions_B = gnb.predict(ds_test_B)
+    s = gnb.get_sensitivity_analyzer()(ds)
+    assert 'targets' in s.sa
+    assert s.shape == (((len(ds.uniquetargets) * (len(ds.uniquetargets) - 1))/2), ds.nfeatures)
 
-    #test classifier on dataset with both targets present
-    predictions_both = gnb.predict(ds_test_both)
-
-    #does the classifier in single-target case classify at least 90% correct?
-    assert_approx_equal(np.mean(predictions_A), 1, significant=2)
-    assert_approx_equal(np.mean(predictions_B), 0, significant=2)
-    assert_array_almost_equal(predictions_both, ds_train.targets)
-
-    sens = gnb.get_sensitivity_analyzer(force_train=False)
-
-    #TODO: if I dont call sens with the classifier instance, it will return only an instance of
-    #TODO: GNBWeights instead of a dataset with the weights. This does not mirror what smlr does,
-    #TODO: What am I missing?
-    print(sens(gnb).samples[0])
-    #print(sens.shape)
-    #assert_equal(sens(gnb).shape, (len(ds_train.UT) - 1, ds_train.nfeatures))
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(GNBTests)
