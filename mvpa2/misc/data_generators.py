@@ -581,21 +581,3 @@ def local_random_affine_transformations(
         # put the freshly distorted data back
         ds_distorted.samples[:, distort_ids] = ds_d.samples
     return ds_distorted
-
-def two_feat_two_class():
-    """ create a linearly seperatable mock dataset with two features and classes. """
-    feat_A = np.random.randn(2, 400)
-    feat_B = np.random.randn(2, 400)
-    feat_B[0, :] += 5
-    feat_B[1, :] += 5
-    patternsA = dataset_wizard(samples=feat_A.T, targets=1)
-    patternsB = dataset_wizard(samples=feat_B.T, targets=0)
-    feat_train = vstack((patternsA, patternsB))
-    test_A = np.random.randn(2, 400)
-    test_B = np.random.randn(2, 400)
-    test_B[0, :] += 5
-    test_B[1, :] += 5
-    feat_test_A = test_A
-    feat_test_B = test_B
-    feat_test_both = np.concatenate((feat_test_A, feat_test_B), axis=1)
-    return feat_train, feat_test_A.T, feat_test_B.T, feat_test_both.T

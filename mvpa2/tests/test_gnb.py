@@ -16,7 +16,6 @@ from mvpa2.testing.datasets import *
 from mvpa2.clfs.gnb import GNB
 from mvpa2.measures.base import TransferMeasure
 from mvpa2.generators.splitters import Splitter
-from mvpa2.misc.data_generators import two_feat_two_class
 
 class GNBTests(unittest.TestCase):
 
