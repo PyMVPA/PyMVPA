@@ -336,10 +336,10 @@ class GNBWeights(Sensitivity):
         weights = np.empty([len(lcomb), nfeat])
         for pair in lcomb:
             for i in range(0, nfeat):
-                var_idx = np.where(ulab == pair[0])[0][0]
+                var_idx = np.where(ulab == int(pair[0]))[0][0]
                 var = clf.variances[var_idx, i]
                 row_idx = lcomb.index(pair)
-                weights[row_idx, i] = (means[pair[0], i] - means[pair[1],i])/var
+                weights[row_idx, i] = (means[int(pair[0]), i] - means[int(pair[1]),i])/var
 
         # put everything into a Dataset
         ds = Dataset(weights,
