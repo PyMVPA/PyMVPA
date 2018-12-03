@@ -333,11 +333,16 @@ class GNBWeights(Sensitivity):
         # all pairwise combinations of labels
         lcomb = list(itertools.combinations(ulab, 2))
 
-        weights = np.empty([len(lcomb), nfeat])
+        weights = np.zeros([len(lcomb), nfeat])
+        # do not compute sensitivity for features with variance 0 as this would implicate
+        # a division by zero
+        zero_vars = clf.variances==0
         for pair in lcomb:
             for i in range(0, nfeat):
                 var_idx = np.where(ulab == int(pair[0]))[0][0]
                 var = clf.variances[var_idx, i]
+                if zero_vars[var_idx, i]:
+                    continue
                 row_idx = lcomb.index(pair)
                 weights[row_idx, i] = (means[int(pair[0]), i] - means[int(pair[1]),i])/var
 
