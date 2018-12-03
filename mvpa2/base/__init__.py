@@ -337,6 +337,7 @@ if __debug__:
     debug.register('HPAL',   "Hyperalignment")
     debug.register('HPAL_',  "Hyperalignment (verbose)")
     debug.register('SHPAL',  "Searchlight Hyperalignment")
+    debug.register('CHPAL',  "Connectivity Hyperalignment")
     debug.register('GCTHR', "Group cluster threshold")
     debug.register('ATL', "Atlases")
     debug.register('ATL_', "Atlases (verbose)")
