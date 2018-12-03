@@ -76,6 +76,17 @@ def test_gnb_sensitivities():
     s = gnb.get_sensitivity_analyzer()(ds)
     assert 'targets' in s.sa
     assert s.shape == (((len(ds.uniquetargets) * (len(ds.uniquetargets) - 1))/2), ds.nfeatures)
+    # test zero variance case
+    # set variance of feature to zero
+    ds.samples[:,1]=0.3
+    s_zerovar = gnb.get_sensitivity_analyzer()
+    sens = s_zerovar(ds)
+    assert_true(all(sens.samples[:,1]==0))
+
+    # test whether tagging and untagging works
+    assert 'has_sensitivity' in gnb.__tags__
+    gnb.untrain()
+    assert 'has_sensitivity' not in gnb.__tags__
 
 
 def suite():  # pragma: no cover
