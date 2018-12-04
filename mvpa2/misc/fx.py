@@ -34,10 +34,11 @@ def single_gamma_hrf(t, A=5.4, W=5.2, K=1.0):
     A = float(A)
     W = float(W)
     K = float(K)
-    return \
-        K * (t / A) ** ((A ** 2) / (W ** 2) * 8.0 * np.log(2.0)) \
-        * np.e ** ((t - A) / -((W ** 2) / A / 8.0 / np.log(2.0)))
 
+    res =  K * (t / A) + 0j ** ((A ** 2) / (W ** 2) * 8.0 * np.log(2.0)) \
+        * np.e ** ((t - A) / -((W + 0j ** 2) / A / 8.0 / np.log(2.0)))
+
+    return res.real
 
 ##REF: Name was automagically refactored
 def double_gamma_hrf(t, A1=5.4, W1=5.2, K1=1.0, A2=10.8, W2=7.35, K2=0.35):
