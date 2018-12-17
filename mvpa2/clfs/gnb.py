@@ -328,30 +328,20 @@ class GNBWeights(Sensitivity):
         # number of features
         nfeat = clf.means.shape[1]
 
-        # make sure labels are numeric
-        am = AttributeMap()
-        ulab = am.to_numeric(clf.ulabels)
         # all pairwise combinations of labels
-        lcomb = list(itertools.combinations(ulab, 2))
+        pairs = list(itertools.combinations(range(len(clf.ulabels)), 2))
 
-        weights = np.zeros([len(lcomb), nfeat])
+        weights = np.zeros([len(pairs), nfeat])
         # do not compute sensitivity for features with variance 0 as this would implicate
         # a division by zero
-        zero_vars = clf.variances==0
-        for pair in lcomb:
-            for i in range(0, nfeat):
-                var_idx = np.where(ulab == int(pair[0]))[0][0]
-                var = clf.variances[var_idx, i]
-                if zero_vars[var_idx, i]:
-                    continue
-                row_idx = lcomb.index(pair)
-                weights[row_idx, i] = (means[int(pair[0]), i] - means[int(pair[1]),i])/var
+        nonzero_vars = clf.variances!=0
+        for idx, pair in enumerate(pairs):
+            weights[idx, nonzero_vars[0, :]] = (means[pair[0], nonzero_vars[0, :]] -
+                                                  means[pair[1], nonzero_vars[0, :]]) / \
+                                                 clf.variances[pair[0], nonzero_vars[0, :]]
 
         # put everything into a Dataset
         ds = Dataset(weights,
-                     sa={clf.get_space(): list(itertools.combinations(clf.ulabels, 2))})
-        # ds = Dataset(weights,
-        #             sa={clf.get_space(): clf.ulabels[:len(weights)]})
-
+                     sa={clf.get_space(): [(clf.ulabels[p1], clf.ulabels[p2]) for p1, p2 in pairs]})
         return ds
 
