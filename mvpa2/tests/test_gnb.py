@@ -57,6 +57,9 @@ class GNBTests(unittest.TestCase):
                             v = np.exp(v)
                         d1 = np.sum(v, axis=1) - 1.0
                         self.assertTrue(np.max(np.abs(d1)) < 1e-5)
+                    # smoke test to see whether invocation of sensitivity analyser blows
+                    # if gnb classifier isn't linear, and to see whether it doesn't blow
+                    # when it is linear.
                     if cv:
                         assert 'has_sensitivity' in gnb_.__tags__
                         gnb_.get_sensitivity_analyzer()
@@ -71,23 +74,28 @@ def test_gnb_sensitivities():
                                 nlabels=3,
                                 nfeatures=5,
                                 nchunks=4,
-                                snr=10
+                                snr=10,
+                                nonbogus_features=[0, 1, 2]
                                 )
 
     s = gnb.get_sensitivity_analyzer()(ds)
-    assert 'targets' in s.sa
-    assert s.shape == (((len(ds.uniquetargets) * (len(ds.uniquetargets) - 1))/2), ds.nfeatures)
+    assert_in('targets', s.sa)
+    assert_equal(s.shape, (((len(ds.uniquetargets) * (len(ds.uniquetargets) - 1))/2), ds.nfeatures))
     # test zero variance case
     # set variance of feature to zero
-    ds.samples[:,1]=0.3
+    ds.samples[:,3]=0.3
     s_zerovar = gnb.get_sensitivity_analyzer()
     sens = s_zerovar(ds)
-    assert_true(all(sens.samples[:,1]==0))
+    assert_true(all(sens.samples[:, 3] == 0))
 
     # test whether tagging and untagging works
     assert 'has_sensitivity' in gnb.__tags__
     gnb.untrain()
     assert 'has_sensitivity' not in gnb.__tags__
+
+    # test whether content of sensitivities makes rough sense
+    # e.g.: sensitivity of first feature should be larger than of bogus last feature
+    assert_true(abs(sens.samples[i, 0]) > abs(sens.samples[i, 4]) for i in range(np.shape(sens.samples)[0]))
 
 
 def suite():  # pragma: no cover
