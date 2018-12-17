@@ -47,6 +47,7 @@ def multiple_chunks(func, n_chunks, *args, **kwargs):
 
     return vstack(dss)
 
+
 def dumb_feature_dataset():
     """Create a very simple dataset with 2 features and 3 labels
     """

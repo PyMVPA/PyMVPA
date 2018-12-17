@@ -28,6 +28,7 @@ class GNBTests(unittest.TestCase):
         gnb_lin = GNB(common_variance=True)
 
         ds = datasets['uni2medium']
+
         # Generic silly coverage just to assure that it works in all
         # possible scenarios:
         bools = (True, False)
