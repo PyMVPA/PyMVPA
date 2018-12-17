@@ -303,7 +303,7 @@ class GNB(Classifier):
     def get_sensitivity_analyzer(self, **kwargs):
         """Returns a sensitivity analyzer for GNB if GNB is linear (i.e. if common_variance=True)."""
         params = self.params
-        if params.common_variance: # == True:
+        if params.common_variance:
             return GNBWeights(self, **kwargs)
         else:
             raise NotImplementedError("Sensitivity calculation is only sensible for a linear GNB, which is true when "
@@ -312,17 +312,17 @@ class GNB(Classifier):
 
 class GNBWeights(Sensitivity):
     """
-    `SensitivityAnalyzer` that reports the weights GNB trained
+    `SensitivityAnalyzer` that reports the weights for a GNB classifier trained
     on a given `Dataset`.
     """
 
     _LEGAL_CLFS = [ GNB ]
 
     def _call(self, dataset):
-    # compute weights as difference between observed value and attribute mean given class
-    # for decision in all pairwise combinations of labels
-        import itertools
-        clf=self.clf
+        # for a binary decision between two labels, for all pairwise combinations of labels in
+        # the dataset, compute weights per feature as the difference between means given label
+        # divided by the variance.
+        clf = self.clf
         # get means of all attributes given class label
         means = clf.means
         # number of features
