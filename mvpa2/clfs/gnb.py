@@ -31,6 +31,7 @@ from mvpa2.base.constraints import EnsureChoice
 from mvpa2.measures.base import Sensitivity
 from mvpa2.datasets.base import Dataset
 from mvpa2.misc.attrmap import AttributeMap
+import itertools
 
 if __debug__:
     from mvpa2.base import debug
