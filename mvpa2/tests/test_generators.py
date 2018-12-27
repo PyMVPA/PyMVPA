@@ -25,7 +25,7 @@ from mvpa2.generators.partition import OddEvenPartitioner, NFoldPartitioner, \
      ExcludeTargetsCombinationsPartitioner, FactorialPartitioner
 from mvpa2.generators.permutation import AttributePermutator
 from mvpa2.generators.base import  Repeater, Sifter
-from mvpa2.generators.resampling import Balancer
+from mvpa2.generators.resampling import Balancer, NonContiguous
 from mvpa2.misc.data_generators import normal_feature_dataset
 from mvpa2.misc.support import get_nelements_per_value
 
@@ -321,6 +321,18 @@ def test_balancer():
     assert_equal(get_nelements_per_value(res.fa.one).values(),
                  [4] * 2)
 
+
+def test_noncontiguous():
+    ds = give_data()
+    dist = 2
+    chunk = 4
+    nc = NonContiguous(dist=2)
+    ds.sa['partitions'] = (ds.chunks==chunk)+1
+    res = nc(ds)
+    trim_mask = np.logical_and(ds.sa.partitions==1, np.abs(ds.chunks-chunk)<=dist)
+    assert_array_equal(res.sa.partitions[trim_mask], 3)
+    assert_array_equal(res.sa.partitions[np.logical_not(trim_mask)], 
+                       ds.sa.partitions[np.logical_not(trim_mask)])
 
 def test_repeater():
     reps = 4

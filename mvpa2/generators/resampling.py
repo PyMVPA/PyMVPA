@@ -203,3 +203,74 @@ class Balancer(Node):
     def __str__(self):
         return _str(self, str(self._amount), n=self._attr, count=self.count,
                     apply_selection=self._apply_selection)
+
+
+class NonContiguous(Node):
+    """Generator to remove samples too close as measured with a sample attribute
+    ``` partitioner = ChainNode([NFoldPartitioner(),
+                                 NonContiguous(attr='time', dist=60, partition_keep=2, partition_trim=1)])
+    ```
+    if sa.time in sec then all the training samples in partition(_keep)=1
+    that are less than 60 secs distant from partition(_trim)=2 
+    will be assigned to another partition to be excluded from cross-validation fold
+    with appropriate splitter
+    """
+    def __init__(self,
+                 dist_attr='chunks',
+                 dist=1,
+                 split_attr='partitions',
+                 split_keep=[2],
+                 split_trim=[1],
+                 split_assign=[3],
+                 **kwargs):
+        """
+        Parameters
+        ----------
+        dist_attr : str
+          the attribute to measures distance
+        dist : all type of value that can be compared to dist_attr
+          the minimum distance between the samples to the 2 splits of data
+        split_attr : str
+          the attribute describing the split, default "partitions"
+        split_keep : list
+          the list of splits that are to be kept : default [2] (testing)
+        split_trim : list
+          the list of splits to be trimmed : default [1] (training)
+        split_assign : value of type of split_attr
+          the value to be assigned to trim samples
+        """
+        Node.__init__(self, **kwargs)
+        self.dist_attr = dist_attr
+        self.dist = dist
+        self.split_attr = split_attr
+        self.split_keep = split_keep
+        self.split_trim = split_trim
+        self.split_assign = split_assign
+        
+    def _call(self,ds):
+        attr, collection = ds.get_attr(self.dist_attr)
+        orig_spliting = ds.sa[self.split_attr].value
+        
+        keep_mask = reduce(lambda m,s:np.logical_or(m, orig_spliting==s),
+                           self.split_keep,
+                           np.zeros(orig_spliting.shape, dtype=np.bool))
+
+        trim_mask = reduce(lambda m,s:np.logical_or(m, orig_spliting==s),
+                           self.split_trim,
+                           np.zeros(orig_spliting.shape, dtype=np.bool))
+        new_spliting = orig_spliting.copy()
+        attr_keep = np.unique(attr[keep_mask])
+        for a in attr_keep:
+            # remove samples which are too close
+            new_spliting[np.logical_and(trim_mask,np.abs(attr-a)<=self.dist)] = self.split_assign
+
+        out = ds.copy(deep=False)
+        if collection is ds.sa:
+            out.sa[self.split_attr] = new_spliting
+        elif collection is ds.fa:
+            out.fa[self.split_attr] = new_spliting
+        return out
+         
+
+    def generate(self, ds):
+        yield self(ds)
