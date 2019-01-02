@@ -360,6 +360,8 @@ if externals.exists('skl'):
     else:
         sklLDA = _skl_import('lda', 'LDA')
 
+    sklSGDClassifier = _skl_import('linear_model', 'SGDClassifier')
+
     from mvpa2.clfs.skl.base import SKLLearnerAdapter
     clfswh += SKLLearnerAdapter(sklLDA(),
                                 tags=['lda', 'linear', 'multiclass', 'binary'],
