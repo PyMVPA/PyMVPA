@@ -1200,6 +1200,22 @@ class MulticlassClassifier(CombinedClassifier):
             return super(MulticlassClassifier, self).get_sensitivity_analyzer(**kwargs)
 
 
+class MulticlassClassifierSensitivity(BoostedClassifierSensitivityAnalyzer):
+    """
+    `SensitivityAnalyzer` that reports the weights for a classifier trained
+    on a given `Dataset`.
+    """
+
+    def _call(self, dataset):
+        senses = super(MulticlassClassifierSensitivity, self)._call(dataset)
+
+        clf = self.clf
+        # now we only need the labels of the comparison and store them as a sample attribute
+        senses.sa[clf.get_space()] = [(clf.clfs[i].poslabels[0], clf.clfs[i].neglabels[0]) for i in range(len(clf.clfs))]
+
+        return senses
+
+
 class SplitClassifier(CombinedClassifier):
     """`BoostedClassifier` to work on splits of the data
 
