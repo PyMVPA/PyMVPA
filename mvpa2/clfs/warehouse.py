@@ -367,6 +367,11 @@ if externals.exists('skl'):
                                 tags=['lda', 'linear', 'multiclass', 'binary'],
                                 descr='skl.LDA()')
 
+
+    clfswh += MulticlassClassifier(SKLLearnerAdapter(sklSGDClassifier(),
+                                                     tags = ['sgd', 'linear', 'multiclass', 'binary'],
+                                                     descr='skl.SGDClassifier()'))
+
     if _skl_version >= '0.10':
         # Out of Bag Estimates
         sklRandomForestClassifier = _skl_import('ensemble', 'RandomForestClassifier')
