@@ -103,6 +103,12 @@ class SKLLearnerAdapter(Classifier):
                   "Failed to train %s on %s. Got '%s' during call to fit()." \
                   % (self, dataset, e)
 
+        # Add 'has_sensitivity' tag if classifier is SGD. This is pretty crude, but
+        # at least works without the classifier being trained.
+        if 'SGDClassifier' in str(self._skl_learner):
+            self.__tags__ += ['linear', 'has_sensitivity']
+            # TODO: It should loose this tag once untrained, but there is not untrain method yet?
+
     @accepts_dataset_as_samples
     def _predict(self, data):
         """Predict using the skl learner
