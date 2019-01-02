@@ -140,3 +140,11 @@ class SKLLearnerAdapter(Classifier):
                         " estimates could be extracted" % self._skl_learner)
         self.ca.estimates = res
         return res
+
+    def get_sensitivity_analyzer(self, **kwargs):
+        """Returns a sensitivity analyzer if Stochastic Gradient Descent is used"""
+        if 'linear' in self.__tags__:
+            return SKLLearnerAdapterWeights(self, **kwargs)
+        else:
+            raise NotImplementedError('Only linear skl classifiers for now')
+
