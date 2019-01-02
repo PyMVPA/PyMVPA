@@ -1193,6 +1193,12 @@ class MulticlassClassifier(CombinedClassifier):
         else:
             return predictions
 
+    def get_sensitivity_analyzer(self, **kwargs):
+        if self.__bclf_type == '1-vs-1':
+            return MulticlassClassifierSensitivity(self, **kwargs)
+        else:
+            return super(MulticlassClassifier, self).get_sensitivity_analyzer(**kwargs)
+
 
 class SplitClassifier(CombinedClassifier):
     """`BoostedClassifier` to work on splits of the data
