@@ -148,3 +148,18 @@ class SKLLearnerAdapter(Classifier):
         else:
             raise NotImplementedError('Only linear skl classifiers for now')
 
+
+class SKLLearnerAdapterWeights(Sensitivity):
+    """
+    `SensitivityAnalyzer` that reports the weights for a SGD classifier trained
+    on a given `Dataset`.
+    """
+    _LEGAL_CLFS = [ SKLLearnerAdapter ]
+
+    def _call(self, dataset):
+
+        clf = self.clf._skl_learner
+
+        weights = clf.coef_
+        ds = Dataset(weights)
+        return ds
