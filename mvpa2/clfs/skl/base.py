@@ -17,6 +17,8 @@ from mvpa2.base.dochelpers import _repr_attrs
 from mvpa2.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa2.base.learner import FailedToTrainError, FailedToPredictError, \
         DegenerateInputError
+from mvpa2.measures.base import Sensitivity
+from mvpa2.datasets.base import Dataset
 
 
 # do conditional to be able to build module reference
