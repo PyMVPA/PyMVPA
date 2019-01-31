@@ -28,13 +28,15 @@ from mvpa2.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa2.base.param import Parameter
 from mvpa2.base.state import ConditionalAttribute
 from mvpa2.base.constraints import EnsureChoice
-#from mvpa2.measures.base import Sensitivity
-
+from mvpa2.measures.base import Sensitivity
+from mvpa2.datasets.base import Dataset
+from mvpa2.misc.attrmap import AttributeMap
+import itertools
 
 if __debug__:
     from mvpa2.base import debug
 
-__all__ = [ "GNB" ]
+__all__ = [ "GNB", "GNBWeights"]
 
 class GNB(Classifier):
     """Gaussian Naive Bayes `Classifier`.
@@ -200,6 +202,12 @@ class GNB(Classifier):
         else:
             self._norm_weight = 1.0/np.sqrt(2*np.pi*variances)
 
+        # Add 'has_sensitivity' tag if classifier is linear
+        if params.common_variance \
+            and 'has_sensitivity' not in self.__tags__:
+            self.__tags__ += ['has_sensitivity']
+
+
         if __debug__ and 'GNB' in debug.active:
             debug('GNB', "training finished on data.shape=%s " % (X.shape, )
                   + "min:max(data)=%f:%f" % (np.min(X), np.max(X)))
@@ -213,6 +221,9 @@ class GNB(Classifier):
         self.ulabels = None
         self.priors = None
         super(GNB, self)._untrain()
+        # Remove 'has_sensitivity' tag
+        if 'has_sensitivity' in self.__tags__:
+            self.__tags__.remove('has_sensitivity')
 
 
     @accepts_dataset_as_samples
@@ -289,36 +300,48 @@ class GNB(Classifier):
 
         return predictions
 
-
-    # XXX Later come up with some
-    #     could be a simple t-test maps using distributions
-    #     per each class
-    #def get_sensitivity_analyzer(self, **kwargs):
-    #    """Returns a sensitivity analyzer for GNB."""
-    #    return GNBWeights(self, **kwargs)
-
-
-    # XXX Is there any reason to use properties?
-    #means = property(lambda self: self.__biases)
-    #variances = property(lambda self: self.__weights)
+    def get_sensitivity_analyzer(self, **kwargs):
+        """Returns a sensitivity analyzer for GNB if GNB is linear (i.e. if common_variance=True)."""
+        params = self.params
+        if params.common_variance:
+            return GNBWeights(self, **kwargs)
+        else:
+            raise NotImplementedError("Sensitivity calculation is only sensible for a linear GNB, which is true when "
+                            "common_variances = True. Did you forget to specify this parameter?")
 
 
+class GNBWeights(Sensitivity):
+    """
+    `SensitivityAnalyzer` that reports the weights for a GNB classifier trained
+    on a given `Dataset`.
+    """
 
-## class GNBWeights(Sensitivity):
-##     """`SensitivityAnalyzer` that reports the weights GNB trained
-##     on a given `Dataset`.
+    _LEGAL_CLFS = [ GNB ]
 
-##     """
+    def _call(self, dataset):
+        # for a binary decision between two labels, for all pairwise combinations of labels in
+        # the dataset, compute weights per feature as the difference between means given label
+        # divided by the variance.
+        clf = self.clf
+        # get means of all attributes given class label
+        means = clf.means
+        # number of features
+        nfeat = clf.means.shape[1]
 
-##     _LEGAL_CLFS = [ GNB ]
+        # all pairwise combinations of labels
+        pairs = list(itertools.combinations(range(len(clf.ulabels)), 2))
 
-##     def _call(self, dataset=None):
-##         """Extract weights from GNB classifier.
+        weights = np.zeros([len(pairs), nfeat])
+        # do not compute sensitivity for features with variance 0 as this would implicate
+        # a division by zero
+        nonzero_vars = clf.variances!=0
+        for idx, pair in enumerate(pairs):
+            weights[idx, nonzero_vars[0, :]] = (means[pair[0], nonzero_vars[0, :]] -
+                                                  means[pair[1], nonzero_vars[0, :]]) / \
+                                                 clf.variances[pair[0], nonzero_vars[0, :]]
 
-##         GNB always has weights available, so nothing has to be computed here.
-##         """
-##         clf = self.clf
-##         means = clf.means
-##           XXX we can do something better ;)
-##         return means
+        # put everything into a Dataset
+        ds = Dataset(weights,
+                     sa={clf.get_space(): [(clf.ulabels[p1], clf.ulabels[p2]) for p1, p2 in pairs]})
+        return ds
 
