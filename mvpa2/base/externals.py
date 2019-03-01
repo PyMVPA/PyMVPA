@@ -170,9 +170,10 @@ def __check_pywt(features=None):
          0.72436454,  0.2193098,  -0.0135051,   0.34283984,  0.65596245,
          0.49598417,  0.39935064,  0.26370727,  0.05572373,  0.40194438,
          0.47004551,  0.60327258,  0.25628266,  0.32964893,  0.24009889])
-    mode = 'per'
-    wp = pywt.WaveletPacket(data, 'sym2', mode)
-    wp2 = pywt.WaveletPacket(data=None, wavelet='sym2', mode=mode)
+    # default one is the per or periodization
+    DEFAULT_MODE = 'per' if 'per' in pywt.MODES.modes else 'periodization'
+    wp = pywt.WaveletPacket(data, 'sym2', DEFAULT_MODE)
+    wp2 = pywt.WaveletPacket(data=None, wavelet='sym2', mode=DEFAULT_MODE)
     try:
         for node in wp.get_level(2): wp2[node.path] = node.data
     except:
@@ -462,17 +463,24 @@ def __check_reportlab():
 
 def __check(name, a='__version__'):
     exec("import %s" % name)
+    # it might be lxml.etree, so take only first module
+    topmodname = name.split('.')[0]
     try:
         v = getattr(sys.modules[name], '__version__')
-        # it might be lxml.etree, so take only first module
-        versions[name.split('.')[0]] = SmartVersion(v)
     except Exception as e:
         # we can't assign version but it is there
         if __debug__:
             debug('EXT', 'Failed to acquire a version of %(name)s: %(e)s'
                   % locals())
-        pass
-    return True
+        # if module is present but does not bear __version__
+        try:
+            import pkg_resources
+            v = pkg_resources.get_distribution(topmodname).version
+        except Exception as e:
+            # and if all that failed -- just assign '0'
+            v = '0'
+    versions[topmodname] = SmartVersion(v)
+    return True  # we did manage to import it -- so it is there
 
 def __check_h5py():
     __check('h5py', 'version.version')

@@ -47,7 +47,7 @@ class SingleDimensionSimilarity(Similarity):
         self.d = d
 
     def computed(self, data1, data2=None):
-        if data2 == None: data2 = data1
+        if data2 is None: data2 = data1
         self.similarity_matrix = np.exp(-np.abs(data1[:, self.d],
                                               data2[:, self.d]))
         return self.similarity_matrix
@@ -72,7 +72,7 @@ class StreamlineSimilarity(Similarity):
 
 
     def computed(self, data1, data2=None):
-        if data2 == None:
+        if data2 is None:
             data2 = data1
         self.distance_matrix = np.zeros((len(data1), len(data2)))
 

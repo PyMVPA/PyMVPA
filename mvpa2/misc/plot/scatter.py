@@ -16,7 +16,8 @@ import pylab as pl
 import nibabel as nb
 import numpy as np
 
-from mvpa2.base import verbose
+from mvpa2.base import verbose, warning
+from mvpa2.base import externals
 
 __all__ = ['plot_scatter']
 
@@ -30,6 +31,17 @@ def fill_nonfinites(a, fill=0, inplace=True):
             a = a.copy()
         a[nonfinites] = fill
     return a
+
+
+if externals.versions['matplotlib'] >= '2':
+    pl_axes = pl.axes
+else:
+    # older versions, e.g. 1.3, do not understand facecolor
+    def pl_axes(*args, **kwargs):
+        if 'facecolor' in kwargs:
+            kwargs['axisbg'] = kwargs.pop('facecolor')
+        return pl.axes(*args, **kwargs)
+    pl_axes.__doc__ = pl.axes.__doc__
 
 
 def plot_scatter(dataXd, mask=None, masked_opacity=0.,
@@ -134,6 +146,18 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
     x, y = datainter = data[:, intersection]
 
     if mask is not None:
+        if mask.size * ntimepoints == intersection.size:
+            # we have got a single mask applicable to both x and y
+            pass
+        elif mask.size * ntimepoints == 2 * intersection.size:
+            # we have got a mask per each, let's get an intersection
+            assert mask.shape[0] == 2, "had to get 1 for x, 1 for y"
+            mask = np.logical_and(mask[0], mask[1])
+        else:
+            raise ValueError(
+                "mask of shape %s. data of shape %s. ntimepoints=%d.  "
+                "Teach me how to apply it" % (mask.shape, data.shape, ntimepoints)
+            )
         # replicate mask ntimepoints times
         mask = np.repeat(mask.ravel(), ntimepoints)[intersection] != 0
         x_masked = x[mask]
@@ -223,15 +247,15 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
 
         if ax_bp_x_parent:
             hist_x_pos = ax_bp_x_parent.get_position()
-            ax_bp_x = pl.axes( [hist_x_pos.x0,    hist_x_pos.y0 + hist_x_pos.height * 0.9,
-                                hist_x_pos.width, hist_x_pos.height * 0.1],  axisbg='y' )
+            ax_bp_x = pl_axes( [hist_x_pos.x0,    hist_x_pos.y0 + hist_x_pos.height * 0.9,
+                                hist_x_pos.width, hist_x_pos.height * 0.1],  facecolor='y' )
 
         if ax_bp_y_parent:
             hist_y_pos = ax_bp_y_parent.get_position()
-            ax_bp_y = pl.axes( [hist_y_pos.x0 + hist_y_pos.width*0.9,  hist_y_pos.y0,
-                                hist_y_pos.width * 0.1, hist_y_pos.height],  axisbg='y' )
+            ax_bp_y = pl_axes( [hist_y_pos.x0 + hist_y_pos.width*0.9,  hist_y_pos.y0,
+                                hist_y_pos.width * 0.1, hist_y_pos.height],  facecolor='y' )
 
-        # ax_bp_y = pl.axes( [left + width * 0.9, bottom, width/10, height], axisbg='y' ) if ax_hist_y else None
+        # ax_bp_y = pl_axes( [left + width * 0.9, bottom, width/10, height], facecolor='y' ) if ax_hist_y else None
 
 
     sc_kwargs = dict(facecolors='none', s=1, rasterized=rasterized) # common kwargs
@@ -263,32 +287,37 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
                                   **sc_kwargs)
 
             # Plot (on top) those which are not masked-out
-            x_plot, y_plot, edgecolors_plot = x[mask], y[mask], edgecolors[mask]
+            if mask.size:
+                x_plot, y_plot, edgecolors_plot = x[mask], y[mask], edgecolors[mask]
+            else:
+                # older numpys blow here
+                x_plot, y_plot, edgecolors_plot = (np.array([]),) * 3
         else:
             # Just plot all of them at once
             x_plot, y_plot, edgecolors_plot = x, y, edgecolors
 
         if len(x_plot):
             ax_scatter.scatter(x_plot, y_plot, edgecolors=edgecolors_plot,
-                              **sc_kwargs)
+                             **sc_kwargs)
 
         # for orientation we need to plot 1 slice... assume that the last dimension is z -- figure out a slice with max # of non-zeros
         zdim_entries = ndindices_nz[:, -1]
-        zdim_counts, _ = np.histogram(zdim_entries, bins=np.arange(0, np.max(zdim_entries)+1))
-        zdim_max = np.argmax(zdim_counts)
+        if np.size(zdim_entries):
+            zdim_counts, _ = np.histogram(zdim_entries, bins=np.arange(0, np.max(zdim_entries)+1))
+            zdim_max = np.argmax(zdim_counts)
 
-        if hint_opacity:
-            # now we need to plot that zdim_max slice taking into account our colormap
-            # create new axes
-            axslice = pl.axes([left, bottom+height * 0.72, width/4., height/5.],
-                              axisbg='y')
-            axslice.axis('off')
-            sslice = np.zeros(dataXd.shape[1:3]) # XXX hardcoded assumption on dimcolor =1
-            sslice[:, : ] = np.arange(dimcolor_len)[None, :]
-            # if there is time dimension -- choose minimal value across all values
-            dataXd_mint = np.min(dataXd, axis=-1) if dataXd.ndim == 5 else dataXd
-            sslice[dataXd_mint[0, ..., zdim_max] == 0] = -1 # reset those not in the picture to be "under" range
-            axslice.imshow(sslice, alpha=hint_opacity, cmap=cm)
+            if hint_opacity:
+                # now we need to plot that zdim_max slice taking into account our colormap
+                # create new axes
+                axslice = pl_axes([left, bottom+height * 0.72, width/4., height/5.],
+                                  facecolor='y')
+                axslice.axis('off')
+                sslice = np.zeros(dataXd.shape[1:3]) # XXX hardcoded assumption on dimcolor =1
+                sslice[:, : ] = np.arange(dimcolor_len)[None, :]
+                # if there is time dimension -- choose minimal value across all values
+                dataXd_mint = np.min(dataXd, axis=-1) if dataXd.ndim == 5 else dataXd
+                sslice[dataXd_mint[0, ..., zdim_max] == 0] = -1 # reset those not in the picture to be "under" range
+                axslice.imshow(sslice, alpha=hint_opacity, cmap=cm)
     else:
         # the scatter plot without colors to distinguish location
         ax_scatter.scatter(x, y, **sc_kwargs)
@@ -310,11 +339,16 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
 
 
     # Axes
-    ax_scatter.plot((np.min(x), np.max(x)), (0, 0), 'r', alpha=0.5)
-    ax_scatter.plot((0,0), (np.min(y), np.max(y)), 'r', alpha=0.5)
+    if np.size(x):
+        ax_scatter.plot((np.min(x), np.max(x)), (0, 0), 'r', alpha=0.5)
+    else:
+        warning("There is nothing to plot, returning early")
+        return pl.gcf()
 
-    if (mask is not None and not masked_opacity):
-        # if there is a mask which was not intended to be plotted,
+    ax_scatter.plot((0, 0), (np.min(y), np.max(y)), 'r', alpha=0.5)
+
+    if (mask is not None and not masked_opacity and np.sum(mask)):
+        # if there is a non-degenerate mask which was not intended to be plotted,
         # take those values away while estimating min/max range
         _ = x[mask]; minx, maxx = np.min(_), np.max(_)
         _ = y[mask]; miny, maxy = np.min(_), np.max(_)
@@ -383,8 +417,18 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
         binwidthx = (maxx - minx)/51.
         binwidthy = (maxy - miny)/51.
 
-        binsx = np.arange(minx, maxx + binwidthx, binwidthx)
-        binsy = np.arange(miny, maxy + binwidthy, binwidthy)
+        try:
+            binsx = np.arange(minx, maxx + binwidthx, binwidthx)
+            binsy = np.arange(miny, maxy + binwidthy, binwidthy)
+        except Exception as exc:
+            warning(
+                "Received following exception while trying to get bins for "
+                "minx=%(minx)f maxx=%(maxx)f binwidthx=%(binwidthx)s "
+                "miny=%(miny)f maxy=%(maxy)f binwidthy=%(binwidthy)s: %(exc)s. "
+                "Returning early"
+                % locals()
+            )
+            return pl.gcf()
 
     if xlim is not None:
         ax_scatter.set_xlim( xlim )
@@ -392,15 +436,15 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
         ax_scatter.set_ylim( ylim )
 
     # get values to plot for histogram and boxplot
-    x_hist, y_hist = (x, y) if mask is None else (x_masked, y_masked)
+    x_hist, y_hist = (x, y) if (mask is None or not np.sum(mask)) else (x_masked, y_masked)
 
-    if ax_hist_x is not None:
+    if np.any(binsx) and ax_hist_x is not None:
         ax_hist_x.xaxis.set_major_formatter(nullfmt)
         histx = ax_hist_x.hist(x_hist, bins=binsx, facecolor='b')
         ax_hist_x.set_xlim( ax_scatter.get_xlim() )
         ax_hist_x.vlines(0, 0, 0.9*np.max(histx[0]), 'r')
 
-    if ax_hist_y is not None:
+    if np.any(binsy) and ax_hist_y is not None:
         ax_hist_y.yaxis.set_major_formatter(nullfmt)
         histy = ax_hist_y.hist(y_hist, bins=binsy,
                                orientation='horizontal', facecolor='g')

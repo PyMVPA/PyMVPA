@@ -347,11 +347,11 @@ experiments.
 **Hastie, T., Tibshirani, R. & Friedman, J. H.** (2009). The Elements of Statistical Learning: Data Mining, Inference, and Prediction. Springer: New York.
   *Excellent summary of virtually all techniques relevant to the field. A free PDF
   version of this book is available from the authors' website at
-  http://www-stat.stanford.edu/%7Etibs/ElemStatLearn/*
+  http://web.stanford.edu/%7Ehastie/ElemStatLearn/*
 
   DOI: http://dx.doi.org/10.1007/b94608
 
-  URL: http://www-stat.stanford.edu/%7Etibs/ElemStatLearn/
+  URL: http://web.stanford.edu/%7Ehastie/ElemStatLearn/
 
 
 .. _HCG14:

@@ -54,7 +54,7 @@ Forward-mapping
 
 Reverse-mapping
   If a mapper supports reversing a transformation, dataset and plain data
-  arrays can be reverse-mapped with the corresponding methdod.
+  arrays can be reverse-mapped with the corresponding method.
   `~mvpa2.mappers.base.Mapper.reverse()` and
   `~mvpa2.mappers.base.Mapper.reverse1()` behave analogous to the respective
   forward-mapping functions, and also have the same requirement for their input

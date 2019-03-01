@@ -21,12 +21,12 @@ from glob import glob
 from mock import patch
 from os.path import join as pjoin
 
-data2d = np.random.randn(2, 4, 4)
-data3d = np.random.randn(3, 4, 4)
+data2d = np.random.randn(2, 2, 2)
+data3d = np.random.randn(3, 2, 2)
 
-data2d_3d = np.random.randn(2, 4, 4, 4)
-data2d_4d = np.random.randn(2, 4, 4, 4, 2)
-data2d_5d = np.random.randn(2, 4, 4, 4, 2, 3)
+data2d_3d = np.random.randn(2, 2, 2, 2)
+data2d_4d = np.random.randn(2, 2, 2, 2, 2)
+data2d_5d = np.random.randn(2, 2, 2, 2, 2, 2)
 
 
 def test_fill_nonfinites():
@@ -56,13 +56,21 @@ def test_plot_scatter():
     fig = plot_scatter(data2d, mask=mask)
     fig = plot_scatter(data2d, mask=mask, masked_opacity=0.42)
 
+    data2d_nan = np.empty(data2d.shape)
+    data2d_nan[:, :] = np.nan
+    # must not blow
+    fig = plot_scatter(data2d_nan, mask=mask)
+
     # smoke test with threshold
     fig = plot_scatter(data2d, thresholds=[0.2])
     fig = plot_scatter(data2d, thresholds=[0.2, 0.4])
 
+    # smoke test for having a degenerate mask
+    fig = plot_scatter(data2d, thresholds=[10000])
+
     # smoke tests with stats
     fig = plot_scatter(data2d, include_stats=True)
-
+    pl.close('all')
     # test when it should fail
     assert_raises(ValueError, plot_scatter, data3d)
     assert_raises(ValueError, plot_scatter, data2d_5d)

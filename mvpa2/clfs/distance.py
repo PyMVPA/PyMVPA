@@ -295,7 +295,7 @@ def pnorm_w_python(data1, data2=None, weight=None, p=2,
     use_sq_euclidean : bool
       Either to use squared_euclidean_distance_matrix for computation if p==2
     """
-    if weight == None:
+    if weight is None:
         weight = np.ones(data1.shape[1], 'd')
         pass
 
@@ -303,7 +303,7 @@ def pnorm_w_python(data1, data2=None, weight=None, p=2,
         return np.sqrt(squared_euclidean_distance(data1=data1, data2=data2,
                                                  weight=weight**2))
 
-    if data2 == None:
+    if data2 is None:
         data2 = data1
         pass
 
@@ -374,12 +374,12 @@ if externals.exists('weave') or externals.exists('scipy.weave') :
           Power
         """
 
-        if weight == None:
+        if weight is None:
             weight = np.ones(data1.shape[1], 'd')
             pass
         S1, F1 = data1.shape[:2]
         code = ""
-        if data2 == None or id(data1)==id(data2):
+        if data2 is None or id(data1)==id(data2):
             if not (F1==weight.size):
                 raise ValueError("Dataset should have same #columns == #weights. Got " \
                       "%d %d" % (F1, weight.size))

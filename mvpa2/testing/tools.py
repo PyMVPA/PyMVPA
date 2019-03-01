@@ -28,6 +28,12 @@ import mvpa2
 from mvpa2.base import externals, warning
 from mvpa2.base.dochelpers import strip_strid
 
+import platform
+platform_system = platform.system().lower()
+on_windows = platform_system == 'windows'
+on_osx = platform_system == 'darwin'
+on_linux = platform_system == 'linux'
+
 if __debug__:
     from mvpa2.base import debug
 

@@ -246,7 +246,7 @@ class SequenceCollectable(Collectable):
 
                 # Get a 1-D array
                 #  list around set is required for Python3
-                value_unique = list(set(np.asanyarray(self.value).ravel()))
+                value_unique = sorted(set(np.asanyarray(self.value).ravel()))
                 try:
                     self._unique_values = np.array(value_unique)
                 except ValueError:

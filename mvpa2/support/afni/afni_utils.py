@@ -144,7 +144,7 @@ def which(f, env=None):
         Full path of 'f' if 'f' is executable and in the path, 'f' itself
         if 'f' is a path, None otherwise
     '''
-    if env == None:
+    if env is None:
         env = os.environ
 
     def is_executable(fullpath):

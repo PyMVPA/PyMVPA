@@ -138,7 +138,7 @@ class SurfingSurfaceTests(unittest.TestCase):
     @staticmethod
     def set_nan_to_surface_vertices(s, nan_ratio=.05):
         # make some vertices NaN (as might be the case for flat surfaces)
-        nan_count = np.ceil(s.nvertices * nan_ratio)
+        nan_count = int(np.ceil(s.nvertices * nan_ratio))
         nan_vertices_ids = np.random.random_integers(s.nvertices,
                                                      size=(nan_count,)) - 1
         vertices_noisy = s.vertices + 0.

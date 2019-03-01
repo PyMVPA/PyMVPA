@@ -37,6 +37,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 import h5py
+import h5py.highlevel  # >= 2.8.0, https://github.com/h5py/h5py/issues/1063
 
 import os
 import os.path as osp
@@ -906,7 +907,26 @@ def h5save(filename, data, name=None, mode='w', mkdir=True, **kwargs):
         target_dir = osp.dirname(filename)
         if target_dir and not osp.exists(target_dir):
             os.makedirs(target_dir)
-    hdf = h5py.File(filename, mode)
+
+    retries = 30
+    while retries:
+        try:
+            hdf = h5py.File(filename, mode)
+            break
+        except IOError as e:
+            # sadly this test is not reliable
+            #if e.errno == 11:
+            if retries > 1 and 'resource temporarily unavailable' in str(e):
+                # cannot lock the file: possibly concurrent use, but also
+                # seems to happen spuriously with HDF5 1.10
+                # give it a second and try once more
+                import time
+                time.sleep(1.0)
+                print "'%s' cannot be locked, will try again in a second" % filename
+                retries -= 1
+            else:
+                raise
+
     hdf.attrs.create('__pymvpa_hdf5_version__', '2'.encode())
     hdf.attrs.create('__pymvpa_version__', mvpa2.__version__.encode())
     try:

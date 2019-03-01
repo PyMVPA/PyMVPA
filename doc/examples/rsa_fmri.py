@@ -15,7 +15,7 @@ Representational similarity analysis (RSA) on fMRI data
 
 In this example we are going to take a look at representational similarity
 analysis (RSA). This term was coined by :ref:`Kriegeskorte et al. (2008)
-<KMB08>` and refers to a technique were data samples are converted into a
+<KMB08>` and refers to a technique where data samples are converted into a
 self-referential distance space, in order to aid comparison across domains. The
 premise is that whenever no appropriate transformation is known to directly
 compare two types of data directly (1st-level), it is still useful to compare

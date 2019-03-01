@@ -492,9 +492,9 @@ class ConditionalAttributesCollection(Collection):
 
         `other` can be a ClassWithCollections object or ConditionalAttributesCollection
         """
-        if enable_ca == None:
+        if enable_ca is None:
             enable_ca = []
-        if disable_ca == None:
+        if disable_ca is None:
             disable_ca = []
         self.__storedTemporarily.append(self.enabled)
         other_ = other
