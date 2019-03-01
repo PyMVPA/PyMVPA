@@ -283,10 +283,6 @@ class AltConstraints(Constraint):
     order in which they were specified. The value returned by the first
     constraint that does not raise an exception is the global return value.
     
-    An arbitrary number of constraints can be given. They are evaluated in the
-    order in which they were specified. The value returned by the first
-    constraint that does not raise an exception is the global return value.
-    
     Documentation is aggregated for all alternative constraints.
     """
 
