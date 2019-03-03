@@ -10,8 +10,8 @@ cache:
   - apt
 env:
  global:
-    - PY=python PYSUF='' PYPI=0 COVERAGE="coverage run --rcfile=.travis_coveragerc"
-    # - PYTHON=python3 PYSUF=3 : python3-numpy not currently available
+    - PY=python PYSUF='' PYPI=0 COVERAGE="coverage run --rcfile=.travis_coveragerc" TESTFILES=mvpa2
+    - PY=python3 PYSUF=3 PYPI=0 COVERAGE="later!" TESTFILES=mvpa2/tests/test_base.py
  matrix:
     - PYTHON=$PY DOCTESTS=--with-doctest PYPI=1
     - PYTHON="$PY -O" DOCTESTS=--with-doctest
@@ -36,7 +36,6 @@ before_install:
     - travis_retry sudo pip install -e git://github.com/mdp-toolkit/mdp-toolkit#egg=MDP
     - travis_retry sudo apt-get install liblapack-dev $PY-statsmodels $PY-reportlab ipython
     - travis_retry sudo apt-get install $PY-pywt $PY-lxml $PY-pprocess $PY-nipy $PY-joblib
-    - travis_retry sudo apt-get install python3-dev   # for rudimentary testing of conversion
     # Very optional R interfaces via rpy2
     - travis_retry sudo apt-get install $PY-rpy2
     - mkdir -p $PWD/R-libs
@@ -53,12 +52,12 @@ script:
     - export PATH=$HOME/.local/bin:$PATH  PYTHONPATH=.:$PYTHONPATH  R_LIBS=$PWD/R-libs
     # Temp disable lars tests -- fails across the board but does not replicate locally
     - export MVPA_EXTERNALS_HAVE_LARS=no
-    - export NOSETESTS=$(which nosetests)
-    - eval   $COVERAGE $NOSETESTS -v mvpa2 $DOCTESTS -s
+    # Temp: bring back coverage etc consistently
+    #- export NOSETESTS=$(which nosetests)
+    - eval $PY -m nose -s -v $TESTFILES $DOCTESTS -s
     - make testsuite  # test that all imports are available within the suite. adjust Makefile or suite.py to fix if fails
     # we cannot run those in badexternals "mode"
     - if [ ! -z "$COVERAGE" ] && [ "$DOCTESTS" = "--with-doctest" ]; then make coveragecmdline; fi
-    - make build PYTHON=python3
 after_success:
     - if [ ! -z "$COVERAGE" ]; then coveralls; codecov; fi
 deploy:
