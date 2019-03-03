@@ -8,13 +8,15 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Provide system and PyMVPA information useful while reporting bugs
 """
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
+__docformat__ = 'restructuredtext'
 
 from future import standard_library
+from builtins import (
+    object,
+    str,
+)
 standard_library.install_aliases()
-from builtins import str
-from builtins import object
-__docformat__ = 'restructuredtext'
 
 import time, sys, subprocess
 import os
@@ -222,7 +224,9 @@ class WTF(object):
         """
         out = StringIO()
 
-        out.write("Current date:   %s\n" % time.strftime("%Y-%m-%d %H:%M"))
+        out.write(
+            "Current date:   %s\n" % time.strftime("%Y-%m-%d %H:%M")
+        )
 
         # Little silly communicator/
         if 'sources' in self._report_items:
