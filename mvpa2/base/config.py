@@ -13,7 +13,7 @@ standard_library.install_aliases()
 from builtins import object
 __docformat__ = 'restructuredtext'
 
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 import os
 from os.path import join as pathjoin
 
