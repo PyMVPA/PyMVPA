@@ -9,19 +9,20 @@
 """Support function -- little helpers in everyday life"""
 from __future__ import division
 
-from past.builtins import cmp
+__docformat__ = 'restructuredtext'
+
 from future import standard_library
 standard_library.install_aliases()
-from builtins import next
-from builtins import map
-from builtins import zip
-from builtins import bytes
-from builtins import str
-from builtins import range
-from past.builtins import basestring
+from builtins import (
+    bytes,
+    map,
+    next,
+    object,
+    range,
+    str,
+    zip,
+)
 from past.utils import old_div
-from builtins import object
-__docformat__ = 'restructuredtext'
 
 import itertools
 import math
@@ -353,7 +354,7 @@ def version_to_tuple(v):
     Tuple of integers constructed by splitting at '.' or interleaves
     of numerics and alpha numbers
     """
-    if isinstance(v, basestring):
+    if isinstance(v, (bytes, str)):
         v = list(map(str, v.split('.')))
     elif isinstance(v, (tuple, list)):
         # assure tuple
@@ -428,7 +429,7 @@ class SmartVersion(Version):
             return ""
 
     def __cmp__(self, other):
-        if isinstance(other, (str, tuple, list)):
+        if isinstance(other, (bytes, str, tuple, list)):
             other = SmartVersion(other)
         elif isinstance(other, SmartVersion):
             pass
@@ -438,16 +439,10 @@ class SmartVersion(Version):
             raise ValueError("Do not know how to treat version %s"
                              % str(other))
 
-        if sys.version >= '3':
-            def cmp(a, b):
-                """Compatibility with Python3 -- regular (deprecated
-                in 3) cmp operation should be sufficient for our needs"""
-                return (a > b) - (a < b)
-        else:
-            # having above cmp overloads builtin cmp for this function so we
-            # need manually rebind it or just resort to above cmp in general
-            # (why not?)
-            from builtins import cmp
+        def cmp(a, b):
+            """Compatibility with Python3 -- regular (deprecated
+            in 3) cmp operation should be sufficient for our needs"""
+            return (a > b) - (a < b)
 
         # Do ad-hoc comparison of strings
         i = 0
