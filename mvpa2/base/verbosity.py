@@ -473,7 +473,11 @@ if __debug__:
             rss_max = max(rss, rss_max)
             vms_max = max(vms, vms_max)
             yield "max RSS/VMS: %d/%d kB" % (rss_max, vms_max)
-    get_vmem_max_str = _get_vmem_max_str_gen().__next__
+
+    # To avoid binding py2/3 dependent .next vs .__next__ we get the
+    # generator and then create lambda for the next on it
+    get_vmem_max_str_gen_ = _get_vmem_max_str_gen()
+    get_vmem_max_str = lambda : next(get_vmem_max_str_gen_)
 
     def mbasename(s):
         """Custom function to include directory name if filename is too common
