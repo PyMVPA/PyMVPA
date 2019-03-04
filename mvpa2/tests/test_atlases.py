@@ -7,6 +7,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA atlases"""
+from builtins import range
 
 import unittest, re
 import numpy as np
@@ -27,16 +28,16 @@ shipped with FSL
 
 def test_transformations():
     """TODO"""
-    raise SkipTest, "Please test application of transformations"
+    raise SkipTest("Please test application of transformations")
 
-@sweepargs(name=KNOWN_ATLASES.keys())
+@sweepargs(name=list(KNOWN_ATLASES.keys()))
 def test_atlases(name):
     """Basic testing of atlases"""
 
     #filename = KNOWN_ATLASES[name] % {'name': name}
     try:
         atlas = Atlas(name=name)
-    except IOError, e:
+    except IOError as e:
         # so we just don't have it
         raise SkipTest('Skipped atlas %s due to %s' % (name, e))
     #print isinstance(atlas.atlas, objectify.ObjectifiedElement)
@@ -61,7 +62,7 @@ def test_atlases(name):
     # test explicit level specification via slice, although bogus here
     # XXX levels in queries should be deprecated -- too much of
     # performance hit
-    res0 = atlas(coord, range(atlas.nlevels))
+    res0 = atlas(coord, list(range(atlas.nlevels)))
     ok_(res0 == res)
 
     #print atlas[ 0, -7, 20, [1,2,3] ]
@@ -87,7 +88,7 @@ def test_fsl_hox_queries():
 
     ms = atl.get_maps('Fusiform')
     assert_equal(len(ms), 4)
-    for l, m in ms.iteritems():
+    for l, m in ms.items():
         assert_equal(m.shape, tshape)
 
     ms = atl.get_maps('ZaZaZa')
@@ -146,8 +147,8 @@ def test_fsl_hox_queries():
     maps = atl.get_maps('Fusiform')
     maps_max = atl.get_maps('Fusiform', overlaps='max')
 
-    mk = maps.keys()
-    ok_(set(mk) == set(maps_max.keys()))
+    mk = list(maps)
+    ok_(set(mk) == set(maps_max))
 
     maps_ab = np.array([maps[k]!=0 for k in mk])
     maps_max_ab = np.array([maps_max[k]!=0 for k in mk])
