@@ -53,8 +53,9 @@ before_install:
         $PY-psutil $PY-sklearn $PY-mdp liblapack-dev $PY-reportlab ipython
         $PY-lxml $PY-joblib
         $DEB_PKGS
-    - mkdir -p $PWD/R-libs
-    - echo "install.packages(c('energy', 'elasticnet'), '$PWD/R-libs', repos='http://cran.r-project.org')" | R --no-save
+    # TODO: reincarnate - possible dependent on 3py being instaalled above
+    #- mkdir -p $PWD/R-libs
+    #- echo "install.packages(c('energy', 'elasticnet'), '$PWD/R-libs', repos='http://cran.r-project.org')" | R --no-save
 install:
     - make PYTHON=$PY
     - if [ ! -z "$COVERAGE" ]; then pip install --user -v coveralls codecov; fi
