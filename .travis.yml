@@ -14,6 +14,8 @@ env:
     - PY=python3 PYSUF=3 COVERAGE="later!"
     - DOCTESTS=--with-doctest
     - PYPI=0
+    # For now test both py2 and py3 on subset
+    - TESTFILES="mvpa2/tests/test_{arraymapper,base,compound,config,constraints,errorfx,externals,filters,progress,state}.py"
  matrix:
     # Later , may be
     # - PYTHON=$PY PYPI=1
@@ -31,12 +33,10 @@ env:
     - PYSUF='' DUECREDIT_ENABLE=yes
 before_install:
     - PY=python$PYSUF
-    # PY 2 vs 3 specifics
+    # PY 2 vs 3 specifics.
     - if [ "$PYSUF" = '' ]; then
-        TESTFILES=mvpa2;
-        DEB_PKGS=$PY-statsmodels $PY-pywt $PY-pprocess $PY-nipy $PY-rpy2;
+        DEB_PKGS="$PY-statsmodels $PY-pywt $PY-pprocess $PY-nipy $PY-rpy2";
       else
-        TESTFILES=mvpa2/tests/test_base.py;
         DEB_PKGS=;
       fi
     # to prevent IPv6 being used for APT
