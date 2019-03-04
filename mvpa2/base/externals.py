@@ -708,7 +708,10 @@ def exists(dep, force=False, raise_=False, issueWarning=None,
                 # Add known ones by their names so we don't need to
                 # actually import anything manually to get those classes
                 if e.__class__.__name__ in ['RPy_Exception', 'RRuntimeError',
-                                            'RPy_RException']:
+                                            'RPy_RException',
+                                            # TODO - remove when done with 2to3
+                                            'SyntaxError'
+                                            ]:
                     _caught_exceptions += [e.__class__]
                     error_str = ". Caught exception was: " + str(e)
                 else:
