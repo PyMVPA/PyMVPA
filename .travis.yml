@@ -74,9 +74,10 @@ script:
     - eval $PY -m nose -s -v $DOCTESTS $TESTFILES
     - make testsuite  # test that all imports are available within the suite. adjust Makefile or suite.py to fix if fails
     # we cannot run those in badexternals "mode"
-    - if [ ! -z "$COVERAGE" ] && [ "$DOCTESTS" = "--with-doctest" ]; then make coveragecmdline; fi
+    # TODO: reincarnate
+    #- if [ ! -z "$COVERAGE" ] && [ "$DOCTESTS" = "--with-doctest" ]; then make coveragecmdline; fi
 after_success:
-    - if [ ! -z "$COVERAGE" ]; then coveralls; codecov; fi
+    #- if [ ! -z "$COVERAGE" ]; then coveralls; codecov; fi
 deploy:
   provider: pypi
   distributions: sdist
