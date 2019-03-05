@@ -7,9 +7,11 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA verbose and debug output"""
+from future import standard_library
+standard_library.install_aliases()
 
 import unittest, re
-from StringIO import StringIO
+from io import StringIO
 
 from mvpa2.base.verbosity import OnceLogger
 
@@ -140,7 +142,7 @@ class VerboseOutputTest(unittest.TestCase):
         def test_debug(self):
             verbose.handlers = []           # so debug doesn't spoil it
             debug.active = ['1', '2', 'SLC']
-            debug.metrics = debug._known_metrics.keys()
+            debug.metrics = list(debug._known_metrics.keys())
             # do not offset for this test
             debug('SLC', self.msg, lf=False)
             self.assertRaises(ValueError, debug, 3, 'bugga')
@@ -167,8 +169,7 @@ class VerboseOutputTest(unittest.TestCase):
                                  set(debug.registered.keys()))
             debug.active = ['S.*', 'CLF']
             self.assertEqual(set(debug.active),
-                                 set(filter(lambda x:x.startswith('S'),
-                                            debug.registered.keys())+['CLF']))
+                                 set([x for x in list(debug.registered.keys()) if x.startswith('S')]+['CLF']))
             debug.active = ['SG', 'CLF']
             self.assertEqual(set(debug.active), set(['SG', 'CLF']),
                                  msg="debug should do full line matching")

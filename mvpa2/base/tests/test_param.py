@@ -7,6 +7,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA Parameter class."""
+from builtins import str
 
 import unittest, copy
 
@@ -86,7 +87,7 @@ class ParamsTests(unittest.TestCase):
     def test_simple(self):
         simple  = SimpleClass()
 
-        self.assertEqual(len(simple.params.items()), 1)
+        self.assertEqual(len(list(simple.params.items())), 1)
         self.assertRaises(AttributeError, simple.__getattribute__, 'dummy')
         self.assertRaises(AttributeError, simple.__getattribute__, '')
 
@@ -131,8 +132,8 @@ class ParamsTests(unittest.TestCase):
     def test_mixed(self):
         mixed  = MixedClass()
 
-        self.assertEqual(len(mixed.params.items()), 2)
-        self.assertEqual(len(mixed.ca.items()), 1)
+        self.assertEqual(len(list(mixed.params.items())), 2)
+        self.assertEqual(len(list(mixed.ca.items())), 1)
         self.assertRaises(AttributeError, mixed.__getattribute__, 'kernel_params')
 
         self.assertEqual(mixed.params.C, 1.0)
@@ -147,12 +148,12 @@ class ParamsTests(unittest.TestCase):
 
     def test_classifier(self):
         clf  = ParametrizedClassifier()
-        self.assertEqual(len(clf.params.items()), 2) # + retrainable
-        self.assertEqual(len(clf.kernel_params.items()), 1)
+        self.assertEqual(len(list(clf.params.items())), 2) # + retrainable
+        self.assertEqual(len(list(clf.kernel_params.items())), 1)
 
         clfe  = ParametrizedClassifierExtended()
-        self.assertEqual(len(clfe.params.items()), 2)
-        self.assertEqual(len(clfe.kernel_params.items()), 2)
+        self.assertEqual(len(list(clfe.params.items())), 2)
+        self.assertEqual(len(list(clfe.kernel_params.items())), 2)
         self.assertEqual(len(clfe.kernel_params.listing), 2)
 
         # check assignment once again
@@ -172,7 +173,7 @@ class ParamsTests(unittest.TestCase):
             spl = NFoldPartitioner(1, incorrect=None)
             raise AssertionError("Must have failed with an exception here "
                                  "due to incorrect parameter")
-        except Exception, e:
+        except Exception as e:
             estr = str(e)
         self.assertTrue(not "calling_time" in estr,
              msg="must give valid parameters for partitioner, "

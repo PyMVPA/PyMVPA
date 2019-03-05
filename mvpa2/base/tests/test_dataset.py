@@ -7,6 +7,12 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Tests for the dataset implementation'''
+from __future__ import division
+from past.builtins import cmp
+from builtins import str
+from builtins import range
+from past.utils import old_div
+from builtins import object
 
 from mvpa2.testing import *
 from mvpa2.testing.datasets import datasets
@@ -40,7 +46,7 @@ class myarray(np.ndarray):
 #      attributes work and adjust docs to mention that we support such
 def test_from_wizard():
     samples = np.arange(12).reshape((4, 3)).view(myarray)
-    labels = range(4)
+    labels = list(range(4))
     chunks = [1, 1, 2, 2]
 
     ds = Dataset(samples, sa={'targets': labels, 'chunks': chunks})
@@ -72,24 +78,24 @@ def test_from_wizard():
     assert_array_equal(ds.targets, labels)
     assert_array_equal(ds.chunks, chunks)
 
-    ok_(sorted(ds.sa.keys()) == ['chunks', 'origids', 'targets'])
-    ok_(sorted(ds.fa.keys()) == ['origids'])
+    ok_(sorted(ds.sa) == ['chunks', 'origids', 'targets'])
+    ok_(sorted(ds.fa) == ['origids'])
     # add some more
     ds.a['random'] = 'blurb'
 
     # check stripping attributes from a copy
     cds = ds.copy() # full copy
-    ok_(sorted(cds.sa.keys()) == ['chunks', 'origids', 'targets'])
-    ok_(sorted(cds.fa.keys()) == ['origids'])
-    ok_(sorted(cds.a.keys()) == ['random'])
+    ok_(sorted(cds.sa) == ['chunks', 'origids', 'targets'])
+    ok_(sorted(cds.fa) == ['origids'])
+    ok_(sorted(cds.a) == ['random'])
     cds = ds.copy(sa=[], fa=[], a=[]) # plain copy
-    ok_(cds.sa.keys() == [])
-    ok_(cds.fa.keys() == [])
-    ok_(cds.a.keys() == [])
+    ok_(list(cds.sa) == [])
+    ok_(list(cds.fa) == [])
+    ok_(list(cds.a) == [])
     cds = ds.copy(sa=['targets'], fa=None, a=['random']) # partial copy
-    ok_(cds.sa.keys() == ['targets'])
-    ok_(cds.fa.keys() == ['origids'])
-    ok_(cds.a.keys() == ['random'])
+    ok_(list(cds.sa) == ['targets'])
+    ok_(list(cds.fa) == ['origids'])
+    ok_(list(cds.a) == ['random'])
 
     # there is not necessarily a mapper present
     ok_(not 'mapper' in ds.a)
@@ -115,7 +121,7 @@ def test_from_wizard():
 
 def test_labelschunks_access():
     samples = np.arange(12).reshape((4, 3)).view(myarray)
-    labels = range(4)
+    labels = list(range(4))
     chunks = [1, 1, 2, 2]
     ds = Dataset.from_wizard(samples, labels, chunks)
 
@@ -205,7 +211,7 @@ def test_shape_conversion():
 
     assert_equal(ds.nsamples, 2)
     assert_equal(ds.samples.shape, (2, 12))
-    assert_array_equal(ds.samples, [range(12), range(12, 24)])
+    assert_array_equal(ds.samples, [list(range(12)), list(range(12, 24))])
 
 
 @reseed_rng()
@@ -334,7 +340,7 @@ def test_ds_deepcopy():
     #ok_(np.any(ds.uniquetargets != ds_.uniquetargets))
     #ok_(np.any(ds.uniquechunks != ds_.uniquechunks))
 
-@sweepargs(dsp=datasets.items())
+@sweepargs(dsp=list(datasets.items()))
 def test_ds_array(dsp):
     # When dataset
     dsname, ds = dsp
@@ -407,7 +413,7 @@ def test_hstack():
     nf3 = 3 * nf1
     ds3dstacked = hstack((ds3d, ds3d, ds3d))
     ok_(ds3dstacked.nfeatures == nf3)
-    for fav in ds3dstacked.fa.itervalues():
+    for fav in ds3dstacked.fa.values():
         v = fav.value
         ok_(len(v) == nf3)
         assert_array_equal(v[:nf1], v[nf1:2 * nf1])
@@ -418,13 +424,13 @@ def test_stack_add_dataset_attributes():
     data0.a['one'] = np.ones(2)
     data0.a['two'] = 2
     data0.a['three'] = 'three'
-    data0.a['common'] = range(10)
+    data0.a['common'] = list(range(10))
     data0.a['array'] = np.arange(10)
     data1 = Dataset.from_wizard(np.ones((5, 5)), targets=1)
     data1.a['one'] = np.ones(3)
     data1.a['two'] = 3
     data1.a['four'] = 'four'
-    data1.a['common'] = range(10)
+    data1.a['common'] = list(range(10))
     data1.a['array'] = np.arange(10)
 
 
@@ -445,26 +451,26 @@ def test_stack_add_dataset_attributes():
                 assert_array_equal(data1.a.one, r.a.one)
                 assert_equal(r.a.two, 3)
                 assert_equal(r.a.four, 'four')
-                assert_true('three' not in r.a.keys())
-                assert_true('array' in r.a.keys())
+                assert_true('three' not in list(r.a))
+                assert_true('array' in list(r.a))
             elif add_param == 'uniques':
-                assert_equal(set(r.a.keys()),
+                assert_equal(set(r.a),
                              set(['one', 'two', 'three',
                                   'four', 'common', 'array']))
                 assert_equal(r.a.two, (2, 3))
                 assert_equal(r.a.four, ('four',))
             elif add_param == 'all':
-                assert_equal(set(r.a.keys()),
+                assert_equal(set(r.a),
                              set(['one', 'two', 'three',
                                   'four', 'common', 'array']))
                 assert_equal(r.a.two, (2, 3))
                 assert_equal(r.a.three, ('three', None))
             elif add_param == 'drop_nonunique':
-                assert_equal(set(r.a.keys()),
+                assert_equal(set(r.a),
                              set(['common', 'three', 'four', 'array']))
                 assert_equal(r.a.three, 'three')
                 assert_equal(r.a.four, 'four')
-                assert_equal(r.a.common, range(10))
+                assert_equal(r.a.common, list(range(10)))
                 assert_array_equal(r.a.array, np.arange(10))
 
 def test_stack_add_attributes():
@@ -488,8 +494,8 @@ def test_stack_add_attributes():
 
             # in any scenario, the other collection should have got
             # both names and be just fine
-            assert_array_equal(ocol['nok'].value, [0] * 5 + range(5))
-            assert_array_equal(ocol['ok'].value, range(5) * 2)
+            assert_array_equal(ocol['nok'].value, [0] * 5 + list(range(5)))
+            assert_array_equal(ocol['ok'].value, list(range(5)) * 2)
 
             if add_param in ('update',):
                 # will be of the last dataset
@@ -518,8 +524,8 @@ def test_unique_stack():
     #assert_array_equal(fa_stack.fa.y,[''])
 
     # check values match the fa or sa
-    for i in xrange(4):
-        for j in xrange(6):
+    for i in range(4):
+        for j in range(6):
             d = data[i, j]
             for k, other in enumerate((sa_stack, fa_stack)):
                 msk = other.samples == d.samples
@@ -540,7 +546,7 @@ def test_unique_stack():
 def test_mergeds2():
     """Test composition of new datasets by addition of existing ones
     """
-    data = dataset_wizard([range(5)], targets=1, chunks=1)
+    data = dataset_wizard([list(range(5))], targets=1, chunks=1)
 
     assert_array_equal(data.UT, [1])
 
@@ -632,8 +638,8 @@ def test_combined_samplesfeature_selection():
 
 @reseed_rng()
 def test_labelpermutation_randomsampling():
-    ds = vstack([Dataset.from_wizard(np.ones((5, 10)), targets=range(5), chunks=i)
-                    for i in xrange(1, 6)])
+    ds = vstack([Dataset.from_wizard(np.ones((5, 10)), targets=list(range(5)), chunks=i)
+                    for i in range(1, 6)])
     # assign some feature attributes
     ds.fa['roi'] = np.repeat(np.arange(5), 2)
     ds.fa['lucky'] = np.arange(10) % 2
@@ -642,8 +648,8 @@ def test_labelpermutation_randomsampling():
 
     ok_(ds.get_nsamples_per_attr('targets') == {0:5, 1:5, 2:5, 3:5, 4:5})
     sample = ds.random_samples(2)
-    ok_(sample.get_nsamples_per_attr('targets').values() == [ 2, 2, 2, 2, 2 ])
-    ok_((ds.sa['chunks'].unique == range(1, 6)).all())
+    ok_(list(sample.get_nsamples_per_attr('targets').values()) == [ 2, 2, 2, 2, 2 ])
+    ok_((ds.sa['chunks'].unique == list(range(1, 6))).all())
 
 @reseed_rng()
 def test_masked_featureselection():
@@ -785,7 +791,7 @@ def test_idhash():
 
     origid = ds.idhash
     orig_labels = ds.targets #.copy()
-    ds.sa.targets = range(len(ds))
+    ds.sa.targets = list(range(len(ds)))
     ok_(origid != ds.idhash,
         msg="Chaging attribute also changes idhash")
 
@@ -796,7 +802,7 @@ def test_idhash():
 
 def test_arrayattributes():
     samples = np.arange(12).reshape((4, 3))
-    labels = range(4)
+    labels = list(range(4))
     chunks = [1, 1, 2, 2]
     ds = dataset_wizard(samples, labels, chunks)
 
@@ -846,8 +852,8 @@ def test_repr():
     if cfg_repr == 'full':
         try:
             ok_(repr(eval(ds_repr)) == ds_repr)
-        except SyntaxError, e:
-            raise AssertionError, "%r cannot be evaluated" % ds_repr
+        except SyntaxError as e:
+            raise AssertionError("%r cannot be evaluated" % ds_repr)
     elif cfg_repr == 'str':
         ok_(str(ds) == ds_repr)
     else:
@@ -856,7 +862,7 @@ def test_repr():
 
 def test_str():
     args = (np.arange(12, dtype=np.int8).reshape((4, 3)),
-             range(4),
+             list(range(4)),
              [1, 1, 2, 2])
     for iargs in range(1, len(args)):
         ds = dataset_wizard(*(args[:iargs]))
@@ -949,7 +955,7 @@ def test_other_samples_dtypes():
 
 
         # what we don't do
-        class voodoo:
+        class voodoo(object):
             dtype = 'fancy'
         # voodoo
         assert_raises(ValueError, Dataset, voodoo())
@@ -958,7 +964,7 @@ def test_other_samples_dtypes():
 
         # things that might behave in surprising ways
         # lists -- first axis is samples, hence single feature
-        ds = Dataset(range(5))
+        ds = Dataset(list(range(5)))
         assert_equal(ds.nfeatures, 1)
         assert_equal(ds.shape, (5, 1))
         # arrays of objects
@@ -970,7 +976,7 @@ def test_other_samples_dtypes():
         assert_equal(ds.nfeatures, 1)
 
 
-@sweepargs(ds=datasets.values() + [
+@sweepargs(ds=list(datasets.values()) + [
     Dataset(np.array([None], dtype=object)),
     dataset_wizard(np.arange(3), targets=['a', 'bc', 'd'], chunks=np.arange(3)),
     dataset_wizard(np.arange(4), targets=['a', 'bc', 'a', 'bc'], chunks=[1, 1, 2, 2]),
@@ -1092,7 +1098,7 @@ def test_all_equal():
 def test_hollow_samples():
     sshape = (10, 5)
     ds = Dataset(HollowSamples(sshape, dtype=int),
-                 sa={'targets': np.tile(['one', 'two'], sshape[0] / 2)})
+                 sa={'targets': np.tile(['one', 'two'], old_div(sshape[0], 2))})
     assert_equal(ds.shape, sshape)
     assert_equal(ds.samples.dtype, int)
     # should give us features [1,3] and samples [2,3,5]
@@ -1107,22 +1113,22 @@ def test_hollow_samples():
 
 def test_assign_sa():
     # https://github.com/PyMVPA/PyMVPA/issues/149
-    ds = Dataset(np.arange(6).reshape((2,-1)), sa=dict(targets=range(2)))
+    ds = Dataset(np.arange(6).reshape((2,-1)), sa=dict(targets=list(range(2))))
     ds.sa['task'] = ds.sa['targets']
     # so it should be a new collectable now
     assert_equal(ds.sa['task'].name, 'task')
     assert_equal(ds.sa['targets'].name, 'targets') # this lead to issue reported in 149
-    assert('task' in ds.sa.keys())
-    assert('targets' in ds.sa.keys())
+    assert('task' in list(ds.sa))
+    assert('targets' in list(ds.sa))
     ds1 = ds[:, 1]
-    assert('task' in ds1.sa.keys())
-    assert('targets' in ds1.sa.keys()) # issue reported in 149
+    assert('task' in list(ds1.sa))
+    assert('targets' in list(ds1.sa)) # issue reported in 149
     assert_equal(ds1.sa['task'].name, 'task')
     assert_equal(ds1.sa['targets'].name,'targets')
 
 def test_dataset_select_getitem():
-    ds = Dataset(np.arange(15).reshape((5,-1)),
-                 sa=dict(targets=range(5),
+    ds = Dataset(np.arange(15).reshape((5, -1)),
+                 sa=dict(targets=list(range(5)),
                          chunks=['a', 'b', 'a', 'b', 'a']),
                  fa=dict(voxel_indices=[[1, 2], [2, 1], [0, 0]],
                          roi=['x', 'x', 'z']))
@@ -1131,7 +1137,7 @@ def test_dataset_select_getitem():
     assert_raises(RuntimeError, ds.select)
     assert_raises(RuntimeError, ds.select, strict=False)
 
-    sd = {'targets': range(3), 'chunks': 'a'}
+    sd = {'targets': list(range(3)), 'chunks': 'a'}
     for ds_ in (ds[sd], ds.select(sd), ds.select(sd, strict=False)):
         assert(ds_.shape == (2, 3))
         assert_array_equal(ds_.chunks, ['a', 'a'])

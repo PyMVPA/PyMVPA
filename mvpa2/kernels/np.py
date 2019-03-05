@@ -204,8 +204,10 @@ class GeneralizedLinearKernel(NumpyKernel):
             # with scalar above
             data2_sc = np.dot(Sigma_p, data2.T)
         else:
-            raise ValueError, "Please provide Sigma_p as a scalar, vector, " \
-                  "or square (diagonal) matrix."
+            raise ValueError(
+                "Please provide Sigma_p as a scalar, vector, or square "
+                "(diagonal) matrix."
+            )
 
         # XXX if Sigma_p is changed a warning should be issued!
         # XXX other cases of incorrect Sigma_p could be catched

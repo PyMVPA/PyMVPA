@@ -11,6 +11,7 @@
 Also performs testing of storing/reloading datasets into hdf5 file if
 cfg.getboolean('tests', 'use hdf datasets'
 """
+from builtins import range
 
 __docformat__ = 'restructuredtext'
 
@@ -54,7 +55,7 @@ def generate_testing_datasets(specs):
     # use a partitioner to flag odd/even samples as training and test
     ttp = OddEvenPartitioner(space='train', count=1)
 
-    for kind, spec in specs.iteritems():
+    for kind, spec in specs.items():
         # set of univariate datasets
         for nlabels in [ 2, 3, 4 ]:
             basename = 'uni%d%s' % (nlabels, kind)
@@ -75,7 +76,7 @@ def generate_testing_datasets(specs):
         labels = np.concatenate( ( np.repeat( 0, spec['perlabel'] ),
                                   np.repeat( 1, spec['perlabel'] ) ) )
         data[:, 1, 0, 0] += 2*labels           # add some signal
-        chunks = np.asarray(range(nchunks)*(total//nchunks))
+        chunks = np.asarray(list(range(nchunks))*(total//nchunks))
         mask = np.ones((3, 6, 6), dtype='bool')
         mask[0, 0, 0] = 0
         mask[1, 3, 2] = 0
@@ -154,4 +155,4 @@ if cfg.getboolean('tests', 'use hdf datasets', False):
             "because 'h5py' is not available")
 
     datasets = saveload_warehouse()
-    print "Replaced all dataset warehouse for HDF5 loaded alternative."
+    print("Replaced all dataset warehouse for HDF5 loaded alternative.")

@@ -7,6 +7,11 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Tests for HDF5 converter'''
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+from builtins import object
 
 import numpy as np
 
@@ -38,7 +43,7 @@ from mvpa2.testing.regress import get_testing_fmri_dataset_filename
 class HDFDemo(object):
     pass
 
-class CustomOldStyle:
+class CustomOldStyle(object):
     pass
 
 @nodebug(['ID_IN_REPR', 'MODULE_IN_REPR'])
@@ -176,7 +181,7 @@ def test_dataset_without_chunks(fname):
 
 @with_tempfile()
 def test_recursion(fname):
-    obj = range(2)
+    obj = list(range(2))
     obj.append(HDFDemo())
     obj.append(obj)
     h5save(fname, obj)
@@ -368,11 +373,11 @@ def saveload(obj, f, backend='hdf5'):
         obj_ = h5load(f)
     else:
         #check pickle -- does it correctly
-        import cPickle
-        with open(f, 'w') as f_:
-            cPickle.dump(obj, f_)
-        with open(f) as f_:
-            obj_ = cPickle.load(f_)
+        import pickle
+        with open(f, 'wb') as f_:
+            pickle.dump(obj, f_)
+        with open(f, 'rb') as f_:
+            obj_ = pickle.load(f_)
     return obj_
 
 # Test some nasty nested constructs of mutable beasts

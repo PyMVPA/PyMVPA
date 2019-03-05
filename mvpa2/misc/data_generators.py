@@ -7,6 +7,9 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Miscellaneous data generators for unittests and demos"""
+from __future__ import division
+from builtins import range
+from past.utils import old_div
 
 __docformat__ = 'restructuredtext'
 
@@ -36,7 +39,7 @@ def multiple_chunks(func, n_chunks, *args, **kwargs):
     ds : `mvpa2.datasets.base.Dataset`
     """
     dss = []
-    for chunk in xrange(n_chunks):
+    for chunk in range(n_chunks):
         ds_ = func(*args, **kwargs)
         # might not have chunks at all
         if not 'chunks' in ds_.sa:
@@ -57,7 +60,8 @@ def dumb_feature_dataset():
             [12, 1]]
     regs = ([1] * 8) + ([2] * 8) + ([3] * 8)
 
-    return dataset_wizard(samples=np.array(data), targets=regs, chunks=range(len(regs)))
+    return dataset_wizard(
+        samples=np.array(data), targets=regs, chunks=np.arange(len(regs)))
 
 
 def dumb_feature_binary_dataset():
@@ -69,7 +73,8 @@ def dumb_feature_binary_dataset():
             [12, 1]]
     regs = ([0] * 12) + ([1] * 12)
 
-    return dataset_wizard(samples=np.array(data), targets=regs, chunks=range(len(regs)))
+    return dataset_wizard(
+        samples=np.array(data), targets=regs, chunks=np.arange(len(regs)))
 
 
 def normal_feature_dataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
@@ -126,7 +131,7 @@ def normal_feature_dataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
         data = 1.0 / (np.max(np.abs(data))) * data
     labels = np.concatenate([np.repeat('L%d' % i, perlabel)
                              for i in range(nlabels)])
-    chunks = np.concatenate([np.repeat(range(nchunks),
+    chunks = np.concatenate([np.repeat(np.arange(nchunks),
                                        perlabel // nchunks)
                              for i in range(nlabels)])
     ds = dataset_wizard(data, targets=labels, chunks=chunks)
@@ -186,7 +191,7 @@ def pure_multivariate_signal(patterns, signal2noise=1.5, chunks=None,
     regs = np.array((targets[0:1] * patterns) + (targets[1:2] * 2 * patterns) + (targets[0:1] * patterns))
 
     if chunks is None:
-        chunks = range(len(data))
+        chunks = np.arange(len(data))
     return dataset_wizard(samples=data, targets=regs, chunks=chunks)
 
 
@@ -225,7 +230,7 @@ def wr1996(size=200):
     x *= np.array(intervals[:, 1] - intervals[:, 0])
     x += np.array(intervals[:, 0])
     if __debug__:
-        for i in xrange(2):
+        for i in range(2):
             debug('DG', '%d columnt Min: %g Max: %g' %
                   (i, x[:, i].min(), x[:, i].max()))
     y = r[0] * np.cos(x[:, 0] + r[1] * np.cos(x.sum(1))) + \
@@ -245,7 +250,7 @@ def sin_modulated(n_instances, n_features,
     uniform noise
     """
     if flat:
-        data = (np.arange(0.0, 1.0, 1.0 / n_instances) * np.pi)
+        data = (np.arange(0.0, 1.0, old_div(1.0, n_instances)) * np.pi)
         data.resize(n_instances, n_features)
     else:
         data = np.random.rand(n_instances, n_features) * np.pi
@@ -266,7 +271,7 @@ def chirp_linear(n_instances, n_features=4, n_nonbogus_features=2,
     y = np.sin((10 * np.pi * x ** 2))
 
     data = np.random.normal(size=(n_instances, n_features)) * data_noise
-    for i in xrange(n_nonbogus_features):
+    for i in range(n_nonbogus_features):
         data[:, i] += y[:]
 
     labels = y + np.random.normal(size=(n_instances,)) * noise
@@ -363,7 +368,7 @@ def autocorrelated_noise(ds, sr, cutoff, lfnl=3.0, bord=10, hfnl=None, add_basel
     msample = fds.samples.mean(axis=0)
 
     # noise/signal amplitude relative to each feature mean signal
-    noise_amps = msample * (lfnl / 100.)
+    noise_amps = msample * (old_div(lfnl, 100.))
 
     # generate gaussian noise for the full dataset
     nsamples = np.random.standard_normal(fds.samples.shape)
@@ -371,10 +376,10 @@ def autocorrelated_noise(ds, sr, cutoff, lfnl=3.0, bord=10, hfnl=None, add_basel
     nsamples *= noise_amps
 
     # nyquist frequency
-    nf = sr / 2.0
+    nf = old_div(sr, 2.0)
 
     # along samples low-pass filtering
-    fb, fa = butter(bord, cutoff / nf)
+    fb, fa = butter(bord, old_div(cutoff, nf))
     nsamples = lfilter(fb, fa, nsamples, axis=0)
 
     # add the pedestal
@@ -383,7 +388,7 @@ def autocorrelated_noise(ds, sr, cutoff, lfnl=3.0, bord=10, hfnl=None, add_basel
 
     # HF noise
     if hfnl is not None:
-        noise_amps = msample * (hfnl / 100.)
+        noise_amps = msample * (old_div(hfnl, 100.))
         nsamples += np.random.standard_normal(nsamples.shape) * noise_amps
 
     fds.samples = nsamples
@@ -461,16 +466,16 @@ def simple_hrf_dataset(
     if not nsamples:
         # estimate number of samples needed if not provided
         max_onset = max([e['onset'] for e in events])
-        nsamples = int(max_onset / tres + len(hrf_x) * 1.5)
+        nsamples = int(old_div(max_onset, tres) + len(hrf_x) * 1.5)
 
     # come up with an experimental design
     fast_er = np.zeros(nsamples)
     for e in events:
-        on = int(e['onset'] / float(tres))
-        off = int((e['onset'] + e.get('duration', 1.)) / float(tres))
+        on = int(old_div(e['onset'], float(tres)))
+        off = int(old_div((e['onset'] + e.get('duration', 1.)), float(tres)))
         if off == on:
             off += 1                      # so we have at least 1 point
-        assert(range(on, off))
+        assert(list(range(on, off)))
         fast_er[on:off] = e.get('intensity', 1)
     # high resolution model of the convolved regressor
     model_hr = np.convolve(fast_er, hrf)[:nsamples]
@@ -513,7 +518,7 @@ def simple_hrf_dataset(
     if noise == 'autocorrelated':
         # this one seems to be quite unstable and can provide really
         # funky noise at times
-        noise = autocorrelated_noise(ds, 1 / tr, 1 / (2 * tr),
+        noise = autocorrelated_noise(ds, old_div(1, tr), old_div(1, (2 * tr)),
                                      lfnl=noise_level, hfnl=noise_level,
                                      add_baseline=False)
     elif noise == 'normal':

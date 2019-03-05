@@ -92,9 +92,10 @@ class GDA(Classifier):
         elif prior == 'ratio':
             priors = np.squeeze(nsamples_per_class) / float(nsamples)
         else:
-            raise ValueError, \
-                  "No idea on how to handle '%s' way to compute priors" \
+            raise ValueError(
+                  "No idea on how to handle '%s' way to compute priors"
                   % self.params.prior
+            )
         return np.atleast_1d(priors)
 
 
@@ -179,15 +180,16 @@ class GDA(Classifier):
     def _inv(self, cov):
         try:
             return np.linalg.inv(cov)
-        except Exception, e:
+        except Exception as e:
             if self.params.allow_pinv:
                 try:
                     return np.linalg.pinv(cov)
-                except Exception, e:
+                except Exception as e:
                     pass
-            raise DegenerateInputError, \
-              "Data is probably singular, since inverse fails. Got %s"\
+            raise DegenerateInputError(
+              "Data is probably singular, since inverse fails. Got %s"
               % (e,)
+            )
 
 
 class LDA(GDA):

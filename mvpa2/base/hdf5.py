@@ -32,6 +32,9 @@ help with disassembling are also handled.
   is possible, it might not be implemented yet. The current focus lies on
   storage of PyMVPA datasets and their attributes (e.g. Mappers).
 """
+from builtins import str
+from builtins import zip
+from builtins import range
 
 __docformat__ = 'restructuredtext'
 
@@ -134,7 +137,7 @@ def hdf2obj(hdf, memo=None):
                 "Found hdf group without class instance "
                 "information (group: %s). Cannot convert it into an "
                 "object (content: '%s', attributes: '%s')."
-                % (hdf.name, hdf.keys(), hdf.attrs.keys()))
+                % (hdf.name, list(hdf.keys()), list(hdf.attrs.keys())))
 
         mod_name = hdf.attrs['module'].decode()
 
@@ -486,7 +489,7 @@ def _hdf_list_to_obj(hdf, memo, target_container=None):
                       objref)
             memo[objref] = target_container
     # for all expected items
-    for i in xrange(length):
+    for i in range(length):
         if __debug__:
             debug('HDF5', "Item %i" % i)
         str_i = str(i)
@@ -549,7 +552,7 @@ def _hdf_to_ndarray(hdf):
             assert('dtype' not in hdf.attrs)
             names = [x for x in hdf.attrs['dtype_names']]
             dtypes = [x.decode() for x in hdf.attrs['dtype_types']]
-            dtype = zip(names, dtypes)
+            dtype = list(zip(names, dtypes))
         else:
             assert('dtype' in hdf.attrs)
             dtype = hdf.attrs['dtype'].decode()
@@ -665,7 +668,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
             # recent (>= 2.0.0) h5py is strict not allowing
             # compression to be set for scalar types or anything with
             # shape==() ... TODO: check about is_objarrays ;-)
-            kwargs = dict([(k, v) for (k, v) in kwargs.iteritems()
+            kwargs = dict([(k, v) for (k, v) in kwargs.items()
                            if k != 'compression'])
 
         is_a_view = False
@@ -847,7 +850,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
             if __debug__:
                 debug('HDF5', "Store dict as zipped list")
             # need to set noid since outer tuple containers are temporary
-            _seqitems_to_hdf(zip(obj.keys(), obj.values()), grp, memo,
+            _seqitems_to_hdf(list(zip(list(obj.keys()), list(obj.values()))), grp, memo,
                              noid=True, **kwargs)
             grp['items'].attrs.create('__keys_in_tuple__', 1)
 
@@ -922,7 +925,7 @@ def h5save(filename, data, name=None, mode='w', mkdir=True, **kwargs):
                 # give it a second and try once more
                 import time
                 time.sleep(1.0)
-                print "'%s' cannot be locked, will try again in a second" % filename
+                print("'%s' cannot be locked, will try again in a second" % filename)
                 retries -= 1
             else:
                 raise

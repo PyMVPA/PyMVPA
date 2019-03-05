@@ -95,7 +95,7 @@ class ReportTest(unittest.TestCase):
         report.text("Dugi bugi")
         # make sure we don't puke on xml like text with crap
         report.text("<kaj>$lkj&*()^$%#%</kaj>")
-        report.text("locals:\n%s globals:\n%s" % (`locals()`, `globals()`))
+        report.text("locals:\n%s globals:\n%s" % (repr(locals()), repr(globals())))
         # bloody XML - just to check that there is no puke
         report.xml("<b>Dugi bugi</b>")
         report.save()

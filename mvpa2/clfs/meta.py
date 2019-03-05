@@ -405,8 +405,10 @@ class MaximalVote(PredictionsCombiner):
         for clf in clfs:
             # Lets check first if necessary conditional attribute is enabled
             if not clf.ca.is_enabled("predictions"):
-                raise ValueError, "MaximalVote needs classifiers (such as " + \
-                      "%s) with state 'predictions' enabled" % clf
+                raise ValueError(
+                    "MaximalVote needs classifiers (such as "
+                    "%s) with state 'predictions' enabled" % clf
+                )
             predictions = clf.ca.predictions
             if all_label_counts is None:
                 all_label_counts = [ {} for i in xrange(len(predictions)) ]
@@ -478,8 +480,10 @@ class MeanPrediction(PredictionsCombiner):
         for clf in clfs:
             # Lets check first if necessary conditional attribute is enabled
             if not clf.ca.is_enabled("predictions"):
-                raise ValueError, "MeanPrediction needs learners (such " \
-                      " as %s) with state 'predictions' enabled" % clf
+                raise ValueError(
+                    "MeanPrediction needs learners (such "
+                    "as %s) with state 'predictions' enabled" % clf
+                )
             all_predictions.append(clf.ca.predictions)
 
         # compute mean
@@ -825,9 +829,11 @@ class TreeClassifier(ProxyClassifier):
             ls = groups[gk][0]
             known_already = known.intersection(ls)
             if len(known_already):
-                raise ValueError, "Grouping of labels is not appropriate. " \
-                      "Got labels %s already among known in %s. " % \
-                       (known_already, known  )
+                raise ValueError(
+                    "Grouping of labels is not appropriate. "
+                    "Got labels %s already among known in %s. " %
+                    (known_already, known)
+                )
             groups_labels[gk] = ls      # needed? XXX
             for l in ls :
                 label2index[l] = gi
@@ -839,10 +845,11 @@ class TreeClassifier(ProxyClassifier):
         # Check if none of the labels is missing from known groups
         dsul = set(targets_sa.unique)
         if known.intersection(dsul) != dsul:
-            raise ValueError, \
-                  "Dataset %s had some labels not defined in groups: %s. " \
+            raise ValueError(
+                  "Dataset %s had some labels not defined in groups: %s. "
                   "Known are %s" % \
                   (dataset, dsul.difference(known), known)
+            )
 
         # We can operate on the same dataset here 
         # Nope: doesn't work nicely with the classifier like kNN
@@ -1244,9 +1251,10 @@ class SplitClassifier(CombinedClassifier):
         """Store sample instance of basic classifier"""
 
         if isinstance(splitter, type):
-            raise ValueError, \
-                  "Please provide an instance of a splitter, not a type." \
+            raise ValueError(
+                  "Please provide an instance of a splitter, not a type."
                   " Got %s" % splitter
+            )
 
         self.__partitioner = partitioner
         self.__splitter = splitter
@@ -1531,10 +1539,11 @@ class RegressionAsClassifier(ProxyClassifier):
         else:
             # verify centroids and assign
             if not set(self.centroids.keys()).issuperset(ul):
-                raise ValueError, \
-                      "Provided centroids with keys %s do not cover all " \
-                      "labels provided during training: %s" \
+                raise ValueError(
+                      "Provided centroids with keys %s do not cover all "
+                      "labels provided during training: %s"
                       % (self.centroids.keys(), ul)
+                )
             # override with superset
             ul = self.centroids.keys()
             centers = np.array([self.centroids[k] for k in ul])
@@ -1587,6 +1596,7 @@ class RegressionAsClassifier(ProxyClassifier):
 
     def _set_retrainable(self, value, **kwargs):
         if value:
-            raise NotImplementedError, \
+            raise NotImplementedError(
                   "RegressionAsClassifier wrappers are not yet retrainable"
+            )
         ProxyClassifier._set_retrainable(self, value, **kwargs)

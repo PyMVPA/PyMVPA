@@ -7,6 +7,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Wrapper for sklearn datasets/data generators."""
+from builtins import zip
 
 __docformat__ = 'restructuredtext'
 
@@ -29,7 +30,7 @@ if externals.exists('skl', raise_=True):
                           'load_svmlight_files', 'load_svmlight_file']:
             continue
         fx = getattr(sklds, fx)
-        argnames, varargs, varkw, defaults = inspect.getfullargspec(fx)
+        argnames, varargs, varkw, defaults = inspect.getargspec(fx)
         if defaults is not None:
             kwargs = list(zip(argnames[::-1], defaults[::-1]))[::-1]
         else:
@@ -100,6 +101,6 @@ def %s(%s):
                notes_sec,
                fx.__name__,
                ', '.join(argnames))
-        exec fxdef
+        exec(fxdef)
         __all__.append(pymvpa_fxname)
 

@@ -7,6 +7,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA dochelpers"""
+from builtins import object
 
 from mvpa2.base.dochelpers import single_or_plural, borrowdoc, borrowkwargs
 from mvpa2.base.dochelpers import strip_strid

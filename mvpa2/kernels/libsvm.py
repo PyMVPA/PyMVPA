@@ -47,8 +47,10 @@ class LSKernel(Kernel):
         return self
 
     def as_raw_np(self):
-        raise ValueError, 'LibSVM calculates kernels internally; they ' +\
-              'cannot be converted to Numpy'
+        raise ValueError(
+            'LibSVM calculates kernels internally; they '
+            'cannot be converted to Numpy'
+        )
 
 # Conversion methods
 def _as_ls(kernel):

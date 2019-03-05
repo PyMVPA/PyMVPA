@@ -21,6 +21,7 @@ import numpy as np
 
 from mvpa2.base.dochelpers import _str, borrowdoc
 from mvpa2.base.types import is_sequence_type
+from mvpa2.support.utils import get_unique_ordered
 
 if __debug__:
     # we could live without, but it would be nicer with it
@@ -252,11 +253,7 @@ class SequenceCollectable(Collectable):
                 except TypeError:
                     # so even this is not sortable, let's pair with their types
                     # which should prevent comparison between different types
-                    value_unique = [
-                        t[1]
-                        for t in sorted(set((type(v).__name__, v)
-                                            for v in raveled))
-                    ]
+                    value_unique = get_unique_ordered(raveled)
                 try:
                     self._unique_values = np.array(value_unique)
                 except ValueError:
@@ -266,7 +263,6 @@ class SequenceCollectable(Collectable):
                     # which was fixed recently...
                     self._unique_values = np.array(value_unique, dtype=object)
         return self._unique_values
-
 
     def set_length_check(self, value):
         """Set a target length of the value in this collectable.

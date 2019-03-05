@@ -166,11 +166,11 @@ class kNN(Classifier):
         # checks only in debug mode
         if __debug__:
             if not data.ndim == 2:
-                raise ValueError, "Data array must be two-dimensional."
+                raise ValueError("Data array must be two-dimensional.")
 
             if not data.shape[1] == self.__data.nfeatures:
-                raise ValueError, "Length of data samples (features) does " \
-                                  "not match the classifier."
+                raise ValueError("Length of data samples (features) does "
+                                 "not match the classifier.")
 
         # compute the distance matrix between training and test data with
         # distances stored row-wise, i.e. distances between test sample [0]
@@ -199,8 +199,10 @@ class kNN(Classifier):
                 for ul in uniquelabels:
                     votes[ul] *= self.__weights[ul]
             else:
-                raise ValueError, "kNN told to perform unknown voting '%s'." \
-                      % self.__voting
+                raise ValueError(
+                    "kNN told to perform unknown voting '%s'."
+                    % self.__voting
+                )
 
             # reverse dictionary items and sort them to get the
             # winners
