@@ -283,7 +283,7 @@ class StateTests(unittest.TestCase):
         # validate that string representation of the object is valid and consistent
         a_str = repr(a)
         try:
-            import mvpa2.tests.test_state as test_state
+            import mvpa2.base.tests.test_state as test_state
             exec("a2=%s" % a_str)
         except Exception as e:
             self.fail(msg="Failed to generate an instance out of "
@@ -303,7 +303,7 @@ class StateTests(unittest.TestCase):
         # Test at least that repr of collection is of correct syntax
         aparams_str = repr(a.params)
         try:
-            import mvpa2.tests.test_state as test_state
+            import mvpa2.base.tests.test_state as test_state
             exec("aparams2=%s" % aparams_str)
         except Exception as e:
             self.fail(msg="Failed to generate an instance out of "
