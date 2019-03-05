@@ -15,7 +15,7 @@ env:
     - DOCTESTS=--with-doctest
     - PYPI=0
     # For now test both py2 and py3 on subset
-    - TESTFILES="mvpa2/tests/test_{arraymapper,base,compound,config,constraints,errorfx,externals,filters,progress,state}.py"
+    - TESTFILES="mvpa2/base/tests"
  matrix:
     # Later , may be
     # - PYTHON=$PY PYPI=1
