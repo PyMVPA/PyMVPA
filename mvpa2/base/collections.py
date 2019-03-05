@@ -246,7 +246,17 @@ class SequenceCollectable(Collectable):
 
                 # Get a 1-D array
                 #  list around set is required for Python3
-                value_unique = sorted(set(np.asanyarray(self.value).ravel()))
+                raveled = np.asanyarray(self.value).ravel()
+                try:
+                    value_unique = sorted(set(raveled))
+                except TypeError:
+                    # so even this is not sortable, let's pair with their types
+                    # which should prevent comparison between different types
+                    value_unique = [
+                        t[1]
+                        for t in sorted(set((type(v).__name__, v)
+                                            for v in raveled))
+                    ]
                 try:
                     self._unique_values = np.array(value_unique)
                 except ValueError:

@@ -7,6 +7,10 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Tests for attribute collections and their collectables'''
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
 
 import numpy as np
 import copy
@@ -125,17 +129,12 @@ def test_array_collectable_unique(a):
     # And sort since order of those is not guaranteed (failed test
     # on squeeze)
     def repr_(x):
-        x_ = set(x)
-        if sys.version_info[0] < 3:
-            x_ = list(x_)
-            return repr(sorted(x_))
-        else:
-            return repr(np.sort(x_))
+        return sorted(set(map(repr, x)))
 
+    assert_equal(len(a_flat), len(c.unique))
     assert_equal(repr_(a_flat), repr_(c.unique))
     # even if we request it 2nd time ;)
     assert_equal(repr_(a_flat), repr_(c.unique))
-    assert_equal(len(a_flat), len(c.unique))
 
     c2 = ArrayCollectable(list(a_flat) + [float('nan')])
     # and since nan != nan, we should get new element
@@ -147,14 +146,14 @@ def test_collections():
     assert_equal(len(sa), 0)
 
     assert_raises(ValueError, sa.__setitem__, 'test', 0)
-    l = range(5)
+    l = list(range(5))
     sa['test'] = l
     # auto-wrapped
     assert_true(isinstance(sa['test'], ArrayCollectable))
     assert_equal(len(sa), 1)
 
     # names which are already present in dict interface
-    assert_raises(ValueError, sa.__setitem__, 'values', range(5))
+    assert_raises(ValueError, sa.__setitem__, 'values', l)
 
     sa_c = copy.deepcopy(sa)
     assert_equal(len(sa), len(sa_c))
@@ -172,10 +171,11 @@ class TestNodeOnDefault(Node):
 
 def test_conditional_attr():
     import copy
-    import _pickle as cPickle
+    import pickle
     for node in (TestNodeOnDefault(enable_ca=['test', 'stats']),
                  TestNodeOffDefault(enable_ca=['test', 'stats'])):
-        node.ca.test = range(5)
+        l = list(range(5))
+        node.ca.test = l
         node.ca.stats = ConfusionMatrix(labels=['one', 'two'])
         node.ca.stats.add(('one', 'two', 'one', 'two'),
                     ('one', 'two', 'two', 'one'))
@@ -189,8 +189,8 @@ def test_conditional_attr():
         assert_array_equal(node.ca['stats'].value.matrix, dc_node.ca['stats'].value.matrix)
 
         # check whether values survive pickling
-        pickled = cPickle.dumps(node)
-        up_node = cPickle.loads(pickled)
-        assert_array_equal(up_node.ca['test'].value, range(5))
+        pickled = pickle.dumps(node)
+        up_node = pickle.loads(pickled)
+        assert_array_equal(up_node.ca['test'].value, l)
         assert_array_equal(up_node.ca['stats'].value.matrix, node.ca['stats'].value.matrix)
 
