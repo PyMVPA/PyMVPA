@@ -460,7 +460,7 @@ def run(args):
             niftiInput = nb.load(infile)
             if __debug__:
                 debug('ATL', "Yes it is")
-        except Exception, e:
+        except Exception as e:
             if __debug__:
                 debug('ATL', "No it is not due to %s. Trying to parse the file" % e)
 
@@ -779,7 +779,7 @@ def run(args):
                 ni_dump_data[coord_orig[0], coord_orig[1], coord_orig[2]] = \
                   [voxel['labels'][i]['label'].index
                    for i,ind in enumerate(args.levels)]
-            except Exception, e:
+            except Exception as e:
                 import pydb
                 pydb.debugger()
 

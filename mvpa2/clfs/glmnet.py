@@ -202,7 +202,7 @@ class _GLMNET(Classifier):
                          pmax=pmax,
                          maxit=self.params.maxit,
                          type=self.params.model_type)
-        except RRuntimeError, e:
+        except RRuntimeError as e:
             raise FailedToTrainError, \
                   "Failed to train %s on %s. Got '%s' during call r.glmnet()." \
                   % (self, dataset, e)

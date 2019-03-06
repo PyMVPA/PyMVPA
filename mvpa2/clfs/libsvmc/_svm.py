@@ -420,7 +420,7 @@ class SVMModel:
         try:
             svmc.svm_destroy_model_helper(self.model)
             del self.model
-        except Exception, e:
+        except Exception as e:
             # blind way to overcome problem of already deleted model and
             # "SVMModel instance has no attribute 'model'" in  ignored
             if __debug__:

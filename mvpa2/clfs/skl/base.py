@@ -86,8 +86,9 @@ class SKLLearnerAdapter(Classifier):
         # puke meaningless exceptions
         if 'lda' in self.__tags__:
             if not dataset.nsamples > len(targets_sa.unique):
-                raise DegenerateInputError, \
+                raise DegenerateInputError(
                       "LDA requires # of samples exceeding # of classes"
+                )
 
         # we better map into numeric labels if it is not a regression
         if not 'regression' in self.__tags__:
@@ -96,10 +97,11 @@ class SKLLearnerAdapter(Classifier):
         try:
             # train underlying learner
             self._skl_learner.fit(dataset.samples, targets)
-        except (ValueError, np.linalg.LinAlgError), e:
-            raise FailedToTrainError, \
+        except (ValueError, np.linalg.LinAlgError) as e:
+            raise FailedToTrainError(
                   "Failed to train %s on %s. Got '%s' during call to fit()." \
                   % (self, dataset, e)
+            )
 
     @accepts_dataset_as_samples
     def _predict(self, data):
@@ -107,10 +109,11 @@ class SKLLearnerAdapter(Classifier):
         """
         try:
             res = self._skl_learner.predict(data)
-        except Exception, e:
-            raise FailedToPredictError, \
+        except Exception as e:
+            raise FailedToPredictError(
                   "Failed to predict %s on data of shape %s. Got '%s' during" \
                   " call to predict()." % (self, data.shape, e)
+            )
 
         if self.enforce_dim:
             res_dim = len(res.shape)

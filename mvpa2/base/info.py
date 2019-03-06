@@ -146,7 +146,7 @@ class WTF(object):
                         if len(outlines):
                             out.write('  %s:\n   %s' % (scmd, '   '.join(outlines)))
                         os.remove(tmpn)
-                    #except Exception, e:
+                    #except Exception as e:
                     #    pass
             else:
                 raise RuntimeError("%s is not under GIT" % gitpath)

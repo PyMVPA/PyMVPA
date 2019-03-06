@@ -172,7 +172,7 @@ class LARS(Classifier):
         Cp_vals = None
         try:
             Cp_vals = np.asanyarray(Rrx2(trained_model, 'Cp'))
-        except TypeError, e:
+        except TypeError as e:
             raise FailedToTrainError, \
                   "Failed to train %s on %s. Got '%s' while trying to access " \
                   "trained model %s" % (self, data, e, trained_model)
@@ -211,7 +211,7 @@ class LARS(Classifier):
                             s=self.__lowest_Cp_step)
                             #s=self.__trained_model['beta'].shape[0])
             fit = np.atleast_1d(Rrx2(res, 'fit'))
-        except RRuntimeError, e:
+        except RRuntimeError as e:
             raise FailedToPredictError, \
                   "Failed to predict on %s using %s. Exceptions was: %s" \
                   % (data, self, e)

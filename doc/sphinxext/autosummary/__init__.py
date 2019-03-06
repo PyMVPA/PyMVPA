@@ -275,7 +275,7 @@ class Autosummary(Directive):
                 # parse right now, to get PycodeErrors on parsing (results will
                 # be cached anyway)
                 documenter.analyzer.find_attr_docs()
-            except PycodeError, err:
+            except PycodeError as err:
                 documenter.env.app.debug(
                     '[autodoc] module analyzer failed: %s', err)
                 # no source file -- e.g. for builtin and C modules

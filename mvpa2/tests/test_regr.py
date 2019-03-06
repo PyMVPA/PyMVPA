@@ -145,7 +145,7 @@ class RegressionsTests(unittest.TestCase):
         #try:
         if True:
             res = sa(myds)
-        #except Exception, e:
+        #except Exception as e:
         #    self.fail('Failed to obtain a sensitivity due to %r' % (e,))
         self.assertTrue(res.shape == (1, myds.nfeatures))
         # TODO: extend the test -- checking for validity of sensitivities etc

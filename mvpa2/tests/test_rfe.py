@@ -416,7 +416,7 @@ class RFETests(unittest.TestCase):
         #cv = SplitClassifier(clf)
         try:
             error = cv(dataset).samples.squeeze()
-        except Exception, e:
+        except Exception as e:
             self.fail('CrossValidation cannot handle classifier with RFE '
                       'feature selection. Got exception: %s' % (e,))
 
@@ -472,7 +472,7 @@ class RFETests(unittest.TestCase):
         #cv = SplitClassifier(clf)
         try:
             error = cv(dataset).samples.squeeze()
-        except Exception, e:
+        except Exception as e:
             self.fail('CrossValidation cannot handle classifier with RFE '
                       'feature selection. Got exception: %s' % (e,))
         #print "ERROR: ", error

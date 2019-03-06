@@ -89,7 +89,7 @@ def seed(random_seed):
     try:
         # reuse the same seed for shogun
         shogun.Library.Math_init_random(random_seed)
-    except Exception, e:
+    except Exception as e:
         warning('Shogun cannot be seeded due to %s' % (e,))
 
 seed(_random_seed)
@@ -130,7 +130,7 @@ def _setdebug(obj, partname):
     if __debug__ and 'SG_LINENO' in debug.active:
         try:
             obj.io.enable_file_and_line()
-        except AttributeError, e:
+        except AttributeError as e:
             warning("Cannot enable SG_LINENO debug target for shogun %s"
                     % externals.versions['shogun'])
     try:
@@ -280,7 +280,7 @@ class SVM(_SVM):
         #if self._svm_impl in ['svrlight', 'lightsvm']:
             #try:
                 #kernel.set_precompute_matrix(True, True)
-            #except Exception, e:
+            #except Exception as e:
                 ## N/A in shogun 0.9.1... TODO: RF
                 #if __debug__:
                     #debug('SG_', "Failed call to set_precompute_matrix for %s: %s"

@@ -40,14 +40,14 @@ def test_h5py_clfs(fname, lrn):
     # Store/reload untrained learner
     try:
         h5save(fname, lrn)
-    except Exception, e:
+    except Exception as e:
         raise AssertionError, \
               "Failed to store due to %r" % (e,)
 
     try:
         lrn_ = h5load(fname)
         pass
-    except Exception, e:
+    except Exception as e:
         raise AssertionError, \
               "Failed to load due to %r" % (e,)
 
@@ -78,14 +78,14 @@ def test_h5py_clfs(fname, lrn):
     # now lets store/reload the trained one
     try:
         h5save(fname, lrn_)
-    except Exception, e:
+    except Exception as e:
         raise AssertionError, \
               "Failed to store trained lrn due to %r" % (e,)
 
     # This lrn__ is doubly stored/loaded ;-)
     try:
         lrn__ = h5load(fname)
-    except Exception, e:
+    except Exception as e:
         raise AssertionError, \
               "Failed to load trained lrn due to %r" % (e,)
 

@@ -243,7 +243,7 @@ class BibTeX(dict):
                 value = _bibtex.expand(file, v,  0)[2]
                 try:
                     value = unicode(value, 'utf-8')
-                except UnicodeDecodeError, e:
+                except UnicodeDecodeError as e:
                     print "ERROR: Failed to decode string '%s'" % value
                     raise
                 if k.lower() == 'author':

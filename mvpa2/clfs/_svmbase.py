@@ -166,7 +166,7 @@ class _SVM(Classifier):
         try:
             Classifier.__init__(self, **kwargs)
             
-        except TypeError, e:
+        except TypeError as e:
             if "__init__() got an unexpected keyword argument " in e.args[0]:
                 # TODO: make it even more specific -- if that argument is listed
                 # within _SVM_PARAMS

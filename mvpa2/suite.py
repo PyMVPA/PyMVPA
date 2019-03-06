@@ -288,7 +288,7 @@ if externals.exists("running ipython env"):
     try:
         from mvpa2.support.ipython import *
         ipy_activate_pymvpa_goodies()
-    except Exception, e:
+    except Exception as e:
         warning("Failed to activate custom IPython completions due to %s" % e)
 
 def suite_stats(scope_dict=None):

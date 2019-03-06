@@ -446,7 +446,7 @@ def process_common_dsattr_opts(ds, args):
                 attr = loader(spec[1:])
                 try:
                     dst_collection[attr_name] = attr
-                except ValueError, e:
+                except ValueError as e:
                     # try making the exception more readable
                     e_str = str(e)
                     if e_str.startswith('Collectable'):

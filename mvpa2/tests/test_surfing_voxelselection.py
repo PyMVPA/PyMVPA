@@ -586,7 +586,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         i = qe.ids[0]
         try:
             m = qe[i]
-        except ValueError, e:
+        except ValueError as e:
             raise AssertionError(
                 'Failed to query %r from %r after training on %r. '
                 'Exception was: %r'

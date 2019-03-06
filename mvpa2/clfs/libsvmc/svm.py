@@ -193,7 +193,7 @@ class SVM(_SVM):
 
         try:
             self.__model = _svm.SVMModel(svmprob, libsvm_param)
-        except Exception, e:
+        except Exception as e:
             raise FailedToTrainError(str(e))
 
 

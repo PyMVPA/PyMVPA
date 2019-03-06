@@ -65,7 +65,7 @@ def _SLcholesky_autoreg(C, nsteps=None, **kwargs):
         epsilon = epsilon_value * np.eye(C.shape[0])
         try:
             result = SLcholesky(C + epsilon, lower=True)
-        except SLAError, e:
+        except SLAError as e:
             warning("Cholesky decomposition lead to failure: %s.  "
                     "As requested, performing auto-regularization but "
                     "for better control you might prefer to regularize "

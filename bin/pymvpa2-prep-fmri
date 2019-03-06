@@ -135,7 +135,7 @@ def main():
     else:
         try:
             exfuncid = int(exfunc)
-        except ValueError, e:
+        except ValueError as e:
             error("Failed to convert '%s' into numerical id of "
                   "volume." % (exfunc))
 

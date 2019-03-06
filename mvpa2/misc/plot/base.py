@@ -431,7 +431,7 @@ def plot_decision_boundary_2d(dataset, clf=None,
             a.imshow(map_values.T, **imshow_kwargs)
             CS = a.contour(x, y, map_values, vals, zorder=6,
                            linestyles=linestyles, extent=extent, colors='k')
-        except ValueError, e:
+        except ValueError as e:
             print "Sorry - plotting of estimates isn't full supported for %s. " \
                   "Got exception %s" % (clf, e)
     elif maps == 'targets':

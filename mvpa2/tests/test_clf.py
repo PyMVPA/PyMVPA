@@ -186,7 +186,7 @@ class ClassifiersTests(unittest.TestCase):
         ds = datasets['uni%d%s' % (nclasses, self._get_clf_ds(clf))]
         try:
             cve = te(ds).samples.squeeze()
-        except Exception, e:
+        except Exception as e:
             self.fail("Failed with %s" % e)
 
         if cfg.getboolean('tests', 'labile', default='yes'):
@@ -239,7 +239,7 @@ class ClassifiersTests(unittest.TestCase):
 
             mvpa2.seed()
             cve_ = te_(ds_)
-        except Exception, e:
+        except Exception as e:
             self.fail("Failed with %r" % e)
 
         assert_array_almost_equal(cve, cve_)
@@ -313,7 +313,7 @@ class ClassifiersTests(unittest.TestCase):
             try:
                 try:
                     clf.train(ds)                   # should not crash or stall
-                except (ValueError), e:
+                except (ValueError) as e:
                     self.fail("Failed to train on degenerate data. Error was %r" % e)
                 except DegenerateInputError:
                     # so it realized that data is degenerate and puked
@@ -350,7 +350,7 @@ class ClassifiersTests(unittest.TestCase):
                                                       'targets'))
         try:
             err = np.asscalar(trerr(ds_))
-        except Exception, e:
+        except Exception as e:
             self.fail(str(e))
         self.assertTrue(err == 0.)
 

@@ -255,7 +255,7 @@ class StatsTestsScipy(unittest.TestCase):
         try:
             # actually I haven't managed to cause this error
             scipy.stats.rdist(1.32, 0, 1).pdf(-1.0 + np.finfo(float).eps)
-        except Exception, e:
+        except Exception as e:
             self.fail('Failed to compute rdist.pdf due to numeric'
                       ' loss of precision. Exception was %s' % e)
 
@@ -278,10 +278,10 @@ class StatsTestsScipy(unittest.TestCase):
             #import pydb
             #pydb.debugger(dbg_cmds=['bt', 'l', 's']*300 + ['c'])
             scipy.stats.rdist(1.32, 0, 1).cdf(-1.0 + np.finfo(float).eps)
-        except IndexError, e:
+        except IndexError as e:
             self.fail('Failed due to bug which leads to InvalidIndex if only'
                       ' scalar is provided to cdf')
-        except Exception, e:
+        except Exception as e:
             self.fail('Failed to compute rdist.cdf due to numeric'
                       ' loss of precision. Exception was %s' % e)
 

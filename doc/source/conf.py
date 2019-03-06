@@ -338,7 +338,7 @@ def fetch_intersphinx_objects(mapping):
             f = get_intersphinx_file(url)
             urllib.urlretrieve(objects_url, f)
             print("D: fetched %s" % f)
-        except Exception, e:
+        except Exception as e:
             print("D: failed to retrieve from %s: %s" % (objects_url, e))
 
 if __name__ == '__main__':

@@ -145,7 +145,7 @@ class ENET(Classifier):
                        intercept=self.__intercept,
                        trace=self.__trace,
                        **enet_kwargs)
-        except RRuntimeError, e:
+        except RRuntimeError as e:
             raise FailedToTrainError, \
                   "Failed to predict on %s using %s. Exceptions was: %s" \
                   % (data, self, e)
@@ -180,7 +180,7 @@ class ENET(Classifier):
                             type='fit',
                             s=rpy2.robjects.IntVector(self.__beta_pure_shape))
             fit = np.asanyarray(Rrx2(res, 'fit'))[:, -1]
-        except RRuntimeError, e:
+        except RRuntimeError as e:
             raise FailedToPredictError, \
                   "Failed to predict on %s using %s. Exceptions was: %s" \
                   % (data, self, e)
