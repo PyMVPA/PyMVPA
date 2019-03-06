@@ -53,7 +53,7 @@ def sweepargs(**kwargs):
 
             failed_tests = {}
             skipped_tests = []
-            report_progress = cfg.get('tests', 'verbosity', default=1) > 1
+            report_progress = cfg.get_as_dtype('tests', 'verbosity', int, default=1) > 1
             for argname in list(kwargs.keys()):
                 for argvalue in kwargs[argname]:
                     if isinstance(argvalue, Classifier):
