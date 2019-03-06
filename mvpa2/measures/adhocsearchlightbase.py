@@ -82,7 +82,7 @@ def inds_to_coo(inds, shape=None):
     elif isinstance(inds, list):
         return _inds_list_to_coo(inds, shape)
     else:
-        raise NotImplementedError, "add conversion here"
+        raise NotImplementedError("add conversion here")
 
 def lastdim_columnsums_spmatrix(a, inds, out):
     # inds is a 2D array or list or already a sparse matrix, with each

@@ -197,7 +197,7 @@ def seq_to_svm_node(x):
         iter_range = range(length)
         iter_values = np.asarray(x)
     else:
-        raise TypeError, "data must be a mapping or an ndarray or a sequence"
+        raise TypeError("data must be a mapping or an ndarray or a sequence")
 
     # allocate c struct
     data = svmc.svm_node_array(length + 1)
@@ -275,7 +275,7 @@ class SVMModel:
                 param.gamma = 1.0/prob.maxlen
             msg = svmc.svm_check_parameter(prob.prob, param.param)
             if msg:
-                raise ValueError, msg
+                raise ValueError(msg)
             self.model = svmc.svm_train(prob.prob, param.param)
 
         #setup some classwide variables
@@ -322,7 +322,7 @@ class SVMModel:
         if self.svm_type == NU_SVR \
            or self.svm_type == EPSILON_SVR \
            or self.svm_type == ONE_CLASS:
-            raise TypeError, "Unable to get label from a SVR/ONE_CLASS model"
+            raise TypeError("Unable to get label from a SVR/ONE_CLASS model")
         return self.labels
 
 
@@ -373,7 +373,7 @@ class SVMModel:
                              "problem"
         #only C_SVC, NU_SVC goes in
         if not self.probability:
-            raise TypeError, "model does not support probability estimates"
+            raise TypeError("model does not support probability estimates")
 
         #convert x into SVMNode, alloc a double array to receive probabilities
         data = seq_to_svm_node(x)

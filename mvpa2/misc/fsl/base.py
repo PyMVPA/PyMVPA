@@ -245,7 +245,7 @@ class FslGLMDesign(object):
             ticks = np.arange(1, self.mat.shape[1] + 1)
             pl.xticks(ticks - 0.5, ticks)
         else:
-            raise ValueError, "Unknown plotting style '%s'" % style
+            raise ValueError("Unknown plotting style '%s'" % style)
 
         # labels and turn y-axis upside down
         pl.ylabel('Samples (top to bottom)')

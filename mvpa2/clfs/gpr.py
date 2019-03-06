@@ -308,7 +308,7 @@ class GPR(Classifier):
                       "due to not available 'openopt' module"
             return GPRWeights(self, **kwargs)
         else:
-            raise ValueError, "Flavor %s is not recognized" % flavor
+            raise ValueError("Flavor %s is not recognized" % flavor)
 
 
     def _train(self, data):

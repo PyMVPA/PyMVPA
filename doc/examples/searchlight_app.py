@@ -93,7 +93,7 @@ def main():
     elif options.clf == 'rbf_nu_svmc':
         clf = RbfNuSVMC(nu=options.svm_nu)
     else:
-        raise ValueError, 'Unknown classifier type: %s' % `options.clf`
+        raise ValueError('Unknown classifier type: %s' % `options.clf`)
     verbose(3, "Using '%s' classifier" % options.clf)
 
     verbose(1, "Computing")

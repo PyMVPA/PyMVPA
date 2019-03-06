@@ -327,7 +327,7 @@ def suite_stats(scope_dict=None):
         elif hasattr(e, '__class__'):
             return _get_path(e.__class__)
         else:
-            raise RuntimeError, "Could not figure out path for %s" % e
+            raise RuntimeError("Could not figure out path for %s" % e)
 
 
     class EnvironmentStatistics(dict):

@@ -123,7 +123,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             else:
                 arg = arg[..., 0]
         elif len(argshape) != 3:
-            raise ValueError, "For now just handling 3D volumes"
+            raise ValueError("For now just handling 3D volumes")
         return arg
 
     bg = handle_arg(background)

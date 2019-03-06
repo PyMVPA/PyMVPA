@@ -592,7 +592,7 @@ class SVM(_SVM):
             debug("SG_", "Classifying testing data")
 
         if values_ is None:
-            raise RuntimeError, "We got empty list of values from %s" % self
+            raise RuntimeError("We got empty list of values from %s" % self)
 
         values = values_.get_labels()
 

@@ -120,7 +120,7 @@ class ProcrusteanMapper(ProjectionMapper):
         for i in xrange(2):
             if np.all(ssqs[i] <= np.abs((np.finfo(datas[i].dtype).eps
                                        * sn * means[i] )**2)):
-                raise ValueError, "For now do not handle invariant in time datasets"
+                raise ValueError("For now do not handle invariant in time datasets")
 
         norms = [ np.sqrt(np.sum(ssq)) for ssq in ssqs ]
         normed = [ data/norm for (data, norm) in zip(datas, norms) ]

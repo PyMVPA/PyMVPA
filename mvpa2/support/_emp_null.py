@@ -99,10 +99,10 @@ class FDR(object):
         pv = np.squeeze(pv)
         if pv.min()<0:
             print pv.min()
-            raise ValueError, "Negative p-values"
+            raise ValueError("Negative p-values")
         if pv.max()>1:
             print pv.max()
-            raise ValueError, "P-values greater than 1!"
+            raise ValueError("P-values greater than 1!")
         return pv
 
     def pth_from_pvals(self, pv, alpha=0.05):

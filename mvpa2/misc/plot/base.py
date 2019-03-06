@@ -201,7 +201,7 @@ def plot_err_line_missing(data, x=None, errtype='ste', curves=None,
     elif errtype == 'std':
         err = [np.std(i) for i in data]
     else:
-        raise ValueError, "Unknown error type '%s'" % errtype
+        raise ValueError("Unknown error type '%s'" % errtype)
 
     # plot datapoints with error bars
     lines.append(pl.errorbar(x, md, err, fmt=fmt, linestyle=linestyle, **kwargs))
@@ -567,7 +567,7 @@ def inverse_cmap(cmap_name):
     try:
         cmap_data = eval('_cm._%s_data' % cmap_name)
     except:
-        raise ValueError, "Cannot obtain data for the colormap %s" % cmap_name
+        raise ValueError("Cannot obtain data for the colormap %s" % cmap_name)
     new_data = dict( [(k, [(vi[0], v[-(i+1)][1], v[-(i+1)][2])
                            for i, vi in enumerate(v)])
                       for k,v in cmap_data.iteritems()] )

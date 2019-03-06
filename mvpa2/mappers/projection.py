@@ -103,7 +103,7 @@ class ProjectionMapper(Mapper):
 
     def _forward_data(self, data):
         if self._proj is None:
-            raise RuntimeError, "Mapper needs to be train before used."
+            raise RuntimeError("Mapper needs to be train before used.")
 
         # local binding
         demean = self._demean
@@ -126,7 +126,7 @@ class ProjectionMapper(Mapper):
 
     def _reverse_data(self, data):
         if self._proj is None:
-            raise RuntimeError, "Mapper needs to be trained before used."
+            raise RuntimeError("Mapper needs to be trained before used.")
         d = np.asmatrix(data)
         # Remove offset if present in output space
         if self._demean and self._offset_out is not None:

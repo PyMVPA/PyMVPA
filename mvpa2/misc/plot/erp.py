@@ -117,7 +117,7 @@ def _make_centeredaxis(ax, loc, offset=5, ai=0, mult=1.0,
         lx, ly = 0, ymax
         ticklength = ax.yaxis.get_ticklines()[0]._markersize
     else:
-        raise ValueError, "Illegal ai=%s" % ai
+        raise ValueError("Illegal ai=%s" % ai)
 
     args = [ (locs, [loc] * len(locs)),
              (vrange, [loc, loc]),
@@ -312,7 +312,7 @@ def plot_erp(data, SR=500, onsets=None,
         elif et == 'std':
             erp_stderr = erp_data.std(axis=0)
         else:
-            raise ValueError, "Unknown error type '%s'" % errtype
+            raise ValueError("Unknown error type '%s'" % errtype)
 
         time_points2w = np.hstack((time_points, time_points[::-1]))
 
