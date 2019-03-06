@@ -131,7 +131,7 @@ class Logger(object):
 
         for handler in self.__handlers:
             try:
-                handler.write(msg)
+                handler.write(str(msg))
             except:
                 print("Failed writing on handler %s" % handler)
                 raise
