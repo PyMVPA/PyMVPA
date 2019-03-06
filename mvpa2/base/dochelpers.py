@@ -412,7 +412,7 @@ def table2string(table, out=None):
     atable = np.asarray(table).astype(str)
     # eat whole entry while computing width for @w (for wide)
     markup_strip = re.compile('^@([lrc]|w.*)')
-    col_width = [ max( [len(markup_strip.sub('', x))
+    col_width = [ max( [len(markup_strip.sub('', str(x)))  # x could be None
                         for x in column] ) for column in atable.T ]
     string = ""
     for i, table_ in enumerate(table):
