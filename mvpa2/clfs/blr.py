@@ -9,6 +9,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Bayesian Linear Regression (BLR)."""
 
+from __future__ import print_function
+
 __docformat__ = 'restructuredtext'
 
 
@@ -164,8 +166,8 @@ if __name__ == "__main__":
 
     slope = np.random.rand(F)
     intercept = np.random.rand(1)
-    print "True slope:",slope
-    print "True intercept:",intercept
+    print("True slope:", slope)
+    print("True intercept:", intercept)
 
     dataset_train = linear_awgn(train_size, intercept=intercept, slope=slope)
 
@@ -178,7 +180,7 @@ if __name__ == "__main__":
     b.ca.enable("predicted_variances")
     b.train(dataset_train)
     predictions = b.predict(dataset_test.samples)
-    print "Predicted slope and intercept:",b.w
+    print("Predicted slope and intercept:", b.w)
 
     if F==1:
         pylab.plot(dataset_train.samples,

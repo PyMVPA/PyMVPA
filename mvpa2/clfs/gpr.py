@@ -303,9 +303,10 @@ class GPR(Classifier):
         elif flavor == 'model_select':
             # sanity check
             if not ('has_sensitivity' in self.__tags__):
-                raise ValueError, \
-                      "model_select flavor is not available probably " \
+                raise ValueError(
+                      "model_select flavor is not available probably "
                       "due to not available 'openopt' module"
+                )
             return GPRWeights(self, **kwargs)
         else:
             raise ValueError("Flavor %s is not recognized" % flavor)
