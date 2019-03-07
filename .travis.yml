@@ -10,8 +10,8 @@ cache:
   - apt
 env:
  global:
-    - COVERAGE="coverage run --rcfile=.travis_coveragerc"
-    - PY=python3 PYSUF=3 COVERAGE="later!"
+    - COVERAGE="--with-cov --cover-package mvpa2"
+    - PY=python3 PYSUF=3
     - DOCTESTS=--with-doctest
     - PYPI=0
     # For now test both py2 and py3 on subset
@@ -43,7 +43,7 @@ before_install:
     - sudo bash -c "echo 'Acquire::ForceIPv4 \"true\";' > /etc/apt/apt.conf.d/99force-ipv4"
     # The ultimate one-liner setup for NeuroDebian repository
     - bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
-    # - sudo apt-get install $PYTHON-dev
+    - sudo apt-get install $PY-pip
     - travis_retry sudo apt-get install swig
         $PY-numpy $PY-scipy $PY-matplotlib $PY-h5py $PY-nose $PY-nibabel $PY-mock
     # Optional Python modules
@@ -58,7 +58,7 @@ before_install:
     #- echo "install.packages(c('energy', 'elasticnet'), '$PWD/R-libs', repos='http://cran.r-project.org')" | R --no-save
 install:
     - make PYTHON=$PY
-    - if [ ! -z "$COVERAGE" ]; then pip install --user -v coveralls codecov; fi
+    - if [ ! -z "$COVERAGE" ]; then pip$PYSUF install --user -v coveralls codecov; fi
     - if [ ! -z "$DUECREDIT_ENABLE"]; then sudo apt-get install $PY-duecredit ; fi
 script:
     # Run only nonlabile tests
@@ -70,14 +70,13 @@ script:
     - export MVPA_EXTERNALS_HAVE_LARS=no
     # Temp: bring back coverage etc consistently
     #- export NOSETESTS=$(which nosetests)
-    - echo $PY -m nose -s -v $DOCTESTS $TESTFILES
-    - eval $PY -m nose -s -v $DOCTESTS $TESTFILES
+    - eval $PY -m nose -s -v $DOCTESTS $COVERAGE $TESTFILES
     - make testsuite  # test that all imports are available within the suite. adjust Makefile or suite.py to fix if fails
     # we cannot run those in badexternals "mode"
     # TODO: reincarnate
     #- if [ ! -z "$COVERAGE" ] && [ "$DOCTESTS" = "--with-doctest" ]; then make coveragecmdline; fi
 after_success:
-    #- if [ ! -z "$COVERAGE" ]; then coveralls; codecov; fi
+    - if [ ! -z "$COVERAGE" ]; then $PY `which coveralls`;  $PY `which codecov`; fi
 deploy:
   provider: pypi
   distributions: sdist
