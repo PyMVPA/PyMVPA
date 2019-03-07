@@ -405,8 +405,17 @@ def table2string(table, out=None):
     Nelements_max = len(table) \
                     and max(len(x) for x in table)
 
-    for i, table_ in enumerate(table):
-        table[i] += [''] * (Nelements_max - len(table_))
+    # make a copy to not affect outside
+    table = table[:]
+    for i, row in enumerate(table):
+        # With futurization somehow if table containing None
+        # atable would become dtype object even with astype(str).
+        # So we explicitely str each element in the table first
+        table[i] = row[:]
+        for j, val in enumerate(row):
+            row[j] = str(val)
+        # equalize the sizes of rows
+        table[i] += [''] * (Nelements_max - len(row))
 
     # figure out lengths within each column
     atable = np.asarray(table).astype(str)
@@ -415,9 +424,9 @@ def table2string(table, out=None):
     col_width = [ max( [len(markup_strip.sub('', str(x)))  # x could be None
                         for x in column] ) for column in atable.T ]
     string = ""
-    for i, table_ in enumerate(table):
+    for i, row in enumerate(table):
         string_ = ""
-        for j, item in enumerate(table_):
+        for j, item in enumerate(row):
             item = str(item)
             if item.startswith('@'):
                 align = item[1]
