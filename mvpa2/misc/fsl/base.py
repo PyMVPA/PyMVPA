@@ -11,6 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as np
+import os.path as op
 
 from mvpa2.misc.io import ColumnData
 from mvpa2.misc.support import Event
@@ -305,3 +306,37 @@ def read_fsl_design(fsf_file):
                 fsl[key] = value.strip('"')
 
     return fsl
+
+
+def load_stats(feat_dir, stat="cope", suffix='.nii.gz', **kwargs):
+    """Load results of FSL stat analyses from .feat directory
+
+    Parameters
+    ----------
+    kwargs: dict
+      To be passed into fmri_dataset
+    """
+    design = read_fsl_design(op.join(feat_dir, 'design.fsf'))
+    ncon_orig = design['fmri(ncon_orig)']
+    ncon_real = design['fmri(ncon_real)']
+    if ncon_orig != ncon_real:
+        raise ValueError(
+            "For now supporting only the cases where ncon_orig (%d) == ncon_real (%d).",
+            ncon_orig, ncon_real
+        )
+
+    statdir = op.join(feat_dir, 'stats')
+    con_indexes = list(range(1, ncon_real + 1))
+    files = [
+        op.join(statdir, '%s%d%s' % (stat, con, suffix))
+        for con in con_indexes
+    ]
+    targets = [
+        design['fmri(conname_real.%d)' % con]
+        for con in con_indexes
+    ]
+    from mvpa2.datasets.mri import fmri_dataset
+    ds = fmri_dataset(files, targets=targets, **kwargs)
+    ds.sa['contrast_index'] = con_indexes
+    ds.sa['stat'] = [stat] * len(con_indexes)
+    return ds
