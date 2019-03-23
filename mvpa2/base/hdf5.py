@@ -56,6 +56,7 @@ universal_classname_remapper = {
                                                    'StaticFeatureSelection'),
 }
 
+_hdf5_version = externals.versions['hdf5']
 
 # Comment: H5Py defines H5Error
 class HDF5ConversionError(Exception):
@@ -121,7 +122,7 @@ def hdf2obj(hdf, memo=None):
             # and coerce it back into the native Python type if necessary
             if issubclass(type(obj), np.generic):
                 obj = np.asscalar(obj)
-        elif 'is_numpy_scalar' in hdf.attrs:
+        elif 'is_numpy_scalar' in hdf.attrs and 'is_a_view' not in hdf.attrs:
             # extract the scalar from the 0D array as is
             obj = hdf[()]
         else:
@@ -540,11 +541,12 @@ def _hdf_to_ndarray(hdf):
 
     if 'is_a_view' in hdf.attrs:
         assert ('c_order' in hdf.attrs)
-        if externals.versions['hdf5'] < '1.8.7' and not 'shape' in hdf.attrs:
+        if _hdf5_version < '1.8.7' and not 'shape' in hdf.attrs:
             shape = tuple()
-        else:
-            assert ('shape' in hdf.attrs)
+        elif 'shape' in hdf.attrs:
             shape = hdf.attrs['shape']
+        else:  # numpy scalar
+            shape = None
         if 'dtype_names' in hdf.attrs:
             assert('dtype' not in hdf.attrs)
             names = [x for x in hdf.attrs['dtype_names']]
@@ -553,8 +555,12 @@ def _hdf_to_ndarray(hdf):
         else:
             assert('dtype' in hdf.attrs)
             dtype = hdf.attrs['dtype'].decode()
-        obj = np.frombuffer(obj.data, dtype=dtype, count=int(np.prod(shape)))
+        kw = dict() if shape is not None else {}
+        obj = np.frombuffer(obj.data, dtype=dtype, **kw)
         obj = obj.reshape(shape, order=['F', 'C'][int(hdf.attrs['c_order'])])
+        if shape is None and isinstance(obj, np.ndarray):  # numpy scalar
+            assert obj.size == 1
+            obj = obj[0]
     return obj
 
 
@@ -625,6 +631,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
     #
     is_objarray = False                # assume the bright side ;-)
     is_ndarray = isinstance(obj, np.ndarray)
+    shape = None
     if is_ndarray:
         shape = obj.shape
         if obj.dtype == np.object:
@@ -670,7 +677,15 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
 
         is_a_view = False
         try:
-            hdf.create_dataset(name, None, None, obj, **kwargs)
+            if is_numpy_scalar and type(obj) == np.float128 and _hdf5_version < '2.9.0':
+                # h5py cannot do full round trip on this dtype
+                # see https://github.com/h5py/h5py/commit/6b6880b40ae1ac014fad6f1d6eaa1f0388e76160
+                # Store as a view - should work for any.  With new version of
+                # h5py will store as a regular scalar.  Worked for Yarik
+                # on Debian with 2.8.0-3 and 2.9.0-1
+                is_a_view = True
+            else:
+                hdf.create_dataset(name, None, None, obj, **kwargs)
         except TypeError as exc:
             exc_str = str(exc)
             if ("No conversion path for dtype" in exc_str):
@@ -683,7 +698,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
         # we would need to save a view of the bytes and other
         # parameters (shape, dtype, order) to reconstruct later
         if is_a_view:
-            assert(is_ndarray)
+            assert(is_ndarray or is_numpy_scalar)
             # do conversion to pure byte array, by using array's buffer
             if not ((obj.flags.c_contiguous or obj.flags.f_contiguous)
                     and obj.flags.aligned):
@@ -721,7 +736,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
             # we need to confess the true origin
             hdf[name].attrs.create('is_objarray', True)
 
-        if is_objarray or is_a_view:
+        if shape is not None and (is_objarray or is_a_view):
             # it was of more than 1 dimension or it was a scalar
             if not len(shape) and externals.versions['hdf5'] < '1.8.7':
                 if __debug__:

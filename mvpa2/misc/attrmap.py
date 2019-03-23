@@ -150,7 +150,7 @@ class AttributeMap(object):
         attr = np.asanyarray(attr)
 
         # no mapping if already numeric
-        if not np.issubdtype(attr.dtype, str) and not self.mapnumeric:
+        if attr.dtype.kind in 'iuf' and not self.mapnumeric:
             return attr
 
         if self._nmap is None:
