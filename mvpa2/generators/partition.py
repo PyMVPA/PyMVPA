@@ -319,8 +319,8 @@ class HalfPartitioner(Partitioner):
         list of tuples (None, list of int)
           2 items: first half of samples into 1st split
         """
-        return [(None, uniqueattrs[:len(uniqueattrs)/2]),
-                (None, uniqueattrs[len(uniqueattrs)/2:])]
+        return [(None, uniqueattrs[:len(uniqueattrs)//2]),
+                (None, uniqueattrs[len(uniqueattrs)//2:])]
 
 
 
