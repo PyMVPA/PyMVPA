@@ -236,11 +236,16 @@ class ENN(object):
         step = 3.5*np.std(self.x)/np.exp(np.log(self.n)/3)
         bins = int(max(10, (self.x.max() - self.x.min())/step))
         hist, ledge = np.histogram(x, bins=bins)
-        step = ledge[1]-ledge[0]
+        # I think there was a change in some numpy version on what to return
+        assert len(ledge) in (bins, bins + 1)
+        if len(ledge) == bins + 1:
+            # we are interested in left edges
+            ledge = ledge[:bins]
+        step = ledge[1] - ledge[0]
         medge = ledge + 0.5*step
-    
+
         # remove null bins
-        whist = hist>0
+        whist = hist > 0
         hist = hist[whist]
         medge = medge[whist]
         hist = hist.astype('f')
