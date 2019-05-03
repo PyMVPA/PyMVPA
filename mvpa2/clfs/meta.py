@@ -1187,10 +1187,14 @@ class MulticlassClassifier(CombinedClassifier):
 
             # for consistency -- place into object array of tuples
             # (Sensitivity analyzers already do the same)
-            # NOTE from archaeological expedition: here we place neglabels first
-            #      although everywhere else poslabels seems to be coming first!
-            pairs = zip(np.array([np.squeeze(clf.neglabels) for clf in self.clfs]).tolist(),
-                        np.array([np.squeeze(clf.poslabels) for clf in self.clfs]).tolist())
+            # NOTE from archaeological expedition:
+            #   although we specify poslabels in constructor first, here we
+            #   place neglabels first since that is how we treat pairs e.g.
+            #   in sensitivities -- from neg (or 0) to positive (or 1)
+            pairs = zip(
+                np.array([np.squeeze(clf.neglabels) for clf in self.clfs]).tolist(),
+                np.array([np.squeeze(clf.poslabels) for clf in self.clfs]).tolist()
+            )
             ca.raw_predictions_ds = raw_predictions_ds = \
                 Dataset(np.array(raw_predictions).T,
                         fa={self.space: asobjarray(pairs)})
