@@ -170,9 +170,11 @@ class LinearSVMWeights(Sensitivity):
             # and we should have prepared the labels
             assert(sens_labels is not None)
 
+            # Assure that our tuples for pairs do not get converted to list
+            if isinstance(sens_labels[0], tuple):
+                sens_labels = asobjarray(sens_labels)
+
             if len(clf._attrmap):
-                if isinstance(sens_labels[0], tuple):
-                    sens_labels = asobjarray(sens_labels)
                 sens_labels = clf._attrmap.to_literal(sens_labels, recurse=True)
 
             # NOTE: `weights` is already and always 2D
