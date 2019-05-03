@@ -215,9 +215,13 @@ class SensitivityAnalysersTests(unittest.TestCase):
                 lndim = labels1.ndim
                 label = labels1[0]      # current label
 
-                # XXX whole lndim comparison should be gone after
-                #     things get fixed and we arrive here with a tuple!
-                if lndim == 1: # just a single label
+                # There should be either one per class, or array of tuples
+                # for pairs
+                assert lndim == 1
+
+                # A single label -  e.g. in the case of SMLR which provides
+                # sensitivity per class, and not a tuple
+                if not isinstance(label, tuple):
                     self.assertTrue(label in ulabels)
 
                     ilabel_all = np.where(ds.fa.nonbogus_targets == label)[0]
@@ -230,7 +234,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
                         "Maximal sensitivity for %s was found in %i whenever"
                         " original feature was %i for nonbogus features %s"
                         % (labels1, maxsensi, ilabel, ds.a.nonbogus_features))
-                elif lndim == 2 and labels1.shape[1] == 2: # pair of labels
+                else:  # pairs!
+                    assert_equal(len(label), 2)
                     # we should have highest (in abs) coefficients in
                     # those two labels
                     maxsensi2 = np.argsort(np.abs(sens1))[0][-2:]
@@ -256,11 +261,6 @@ class SensitivityAnalysersTests(unittest.TestCase):
                     self.assertTrue(sens1.samples[0, ilabel2[1]] > 0,
                         "With %i classes in pair %s got feature %i for %r <= 0"
                         % (nlabels, label, ilabel2[1], label[1]))
-                else:
-                    # yoh could be wrong at this assumption... time will show
-                    self.fail("Got unknown number labels per sensitivity: %s."
-                              " Should be either a single label or a pair"
-                              % labels1)
 
 
     @sweepargs(clf=clfswh['has_sensitivity'])
