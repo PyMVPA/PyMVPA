@@ -121,6 +121,11 @@ class GNB(Classifier):
         # Define internal state of classifier
         self._norm_weight = None
 
+        # Add 'has_sensitivity' tag if classifier is linear
+        if self.params.common_variance:
+            self.__tags__ = self.__tags__ + ['has_sensitivity']
+
+
     def _get_priors(self, nlabels, nsamples, nsamples_per_class):
         """Return prior probabilities given data
         """
@@ -203,11 +208,7 @@ class GNB(Classifier):
         else:
             self._norm_weight = 1.0/np.sqrt(2*np.pi*variances)
 
-        # Add 'has_sensitivity' tag if classifier is linear
-        if params.common_variance \
-            and 'has_sensitivity' not in self.__tags__:
-            self.__tags__ += ['has_sensitivity']
-
+        assert params.common_variance == ('has_sensitivity' in self.__tags__)
 
         if __debug__ and 'GNB' in debug.active:
             debug('GNB', "training finished on data.shape=%s " % (X.shape, )
@@ -222,9 +223,6 @@ class GNB(Classifier):
         self.ulabels = None
         self.priors = None
         super(GNB, self)._untrain()
-        # Remove 'has_sensitivity' tag
-        if 'has_sensitivity' in self.__tags__:
-            self.__tags__.remove('has_sensitivity')
 
 
     @accepts_dataset_as_samples

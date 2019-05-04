@@ -119,7 +119,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         sens = sana(ds)
         assert('nonbogus_targets' in sens.fa) # were they passsed?
         # TODO: those few do not expose biases
-        if not len(set(clf.__tags__).intersection(('lars', 'glmnet', 'gpr'))):
+        if not len(set(clf.__tags__).intersection(('lars', 'glmnet', 'gpr', 'gnb'))):
             assert('biases' in sens.sa)
             # print sens.sa.biases
         # It should return either ...

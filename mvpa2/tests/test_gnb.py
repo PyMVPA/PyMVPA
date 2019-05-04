@@ -90,10 +90,7 @@ def test_gnb_sensitivities():
     assert_equal(sens.T[0], ('L0', 'L1'))
     assert_true(all(sens.samples[:, 3] == 0))
 
-    # test whether tagging and untagging works
-    assert 'has_sensitivity' in gnb.__tags__
     gnb.untrain()
-    assert 'has_sensitivity' not in gnb.__tags__
 
     # test whether content of sensitivities makes rough sense
     # First feature has information only about L0, so it would be of
