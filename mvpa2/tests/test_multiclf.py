@@ -22,6 +22,7 @@ from mvpa2.base.dataset import vstack
 from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner
 from mvpa2.generators.splitters import Splitter
 
+from mvpa2.clfs.gnb import GNB
 from mvpa2.clfs.meta import CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
      MaximalVote
@@ -219,11 +220,12 @@ def test_multiclass_without_combiner():
             assert_equal(len(cm.sets), len(ds.UC))
 
 
-def test_multiclass_without_combiner_sens():
-    from mvpa2.clfs.gnb import GNB
-    # TODO: its sensitivity differs between clf and mclf
-    # clf = GNB(common_variance=True)
-    clf = LinearCSVMC(C=1)
+# Sweep through some representative interesting classifiers
+@sweepargs(clf=[
+    LinearCSVMC(C=1),
+    GNB(common_variance=True),
+])
+def test_multiclass_without_combiner_sens(clf):
     ds = datasets['uni3small'].copy()
     # do the clone since later we will compare sensitivities and need it
     # independently trained etc
@@ -233,7 +235,7 @@ def test_multiclass_without_combiner_sens():
     #    Multiclass.clfs -> [BinaryClassifier] -> clf
     # where BinaryClassifier's estimates are binarized.
     # Let's also check that we are getting sensitivities correctly.
-    # With addition of MulticlassClassifierSensitivity we managed to break
+    # With addition of MulticlassClassifierSensitivityAnalyzer we managed to break
     # it and none tests picked it up, so here we will test that sensitivities
     # are computed and labeled correctly
 

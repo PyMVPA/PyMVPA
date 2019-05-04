@@ -1158,7 +1158,7 @@ class MulticlassClassifier(CombinedClassifier):
         """
         # construct binary classifiers
         biclfs = []
-        for poslabels, neglabels in self._get_binary_pairs(dataset):
+        for neglabels, poslabels in self._get_binary_pairs(dataset):
             biclfs.append(
                 BinaryClassifier(self.__clf.clone(),
                                  poslabels=poslabels,
