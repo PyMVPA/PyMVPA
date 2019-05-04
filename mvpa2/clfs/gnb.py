@@ -25,6 +25,7 @@ import numpy as np
 from numpy import ones, zeros, sum, abs, isfinite, dot
 from mvpa2.base import warning, externals
 from mvpa2.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa2.base.types import asobjarray
 from mvpa2.base.param import Parameter
 from mvpa2.base.state import ConditionalAttribute
 from mvpa2.base.constraints import EnsureChoice
@@ -316,7 +317,7 @@ class GNBWeights(Sensitivity):
     on a given `Dataset`.
     """
 
-    _LEGAL_CLFS = [ GNB ]
+    _LEGAL_CLFS = [GNB]
 
     def _call(self, dataset):
         # for a binary decision between two labels, for all pairwise combinations of labels in
@@ -332,16 +333,26 @@ class GNBWeights(Sensitivity):
         pairs = list(itertools.combinations(range(len(clf.ulabels)), 2))
 
         weights = np.zeros([len(pairs), nfeat])
-        # do not compute sensitivity for features with variance 0 as this would implicate
-        # a division by zero
-        nonzero_vars = clf.variances!=0
+        # do not compute sensitivity for features with variance 0 as this would
+        # implicate a division by zero
+        nonzero_vars = clf.variances != 0
+        assert clf.params.common_variance
+        nonzero_vars0 = nonzero_vars[0, :]
         for idx, pair in enumerate(pairs):
-            weights[idx, nonzero_vars[0, :]] = (means[pair[0], nonzero_vars[0, :]] -
-                                                  means[pair[1], nonzero_vars[0, :]]) / \
-                                                 clf.variances[pair[0], nonzero_vars[0, :]]
+            # two-class sensitivity for (L0, L1) assumes that L1 is the
+            # "positive one"
+            weights[idx, nonzero_vars0] = (means[pair[1], nonzero_vars0] -
+                                           means[pair[0], nonzero_vars0]) / \
+                                          clf.variances[pair[0], nonzero_vars0]
 
         # put everything into a Dataset
-        ds = Dataset(weights,
-                     sa={clf.get_space(): [(clf.ulabels[p1], clf.ulabels[p2]) for p1, p2 in pairs]})
+        ds = Dataset(
+            weights,
+            sa={
+                clf.get_space(): asobjarray([
+                    (clf.ulabels[p1], clf.ulabels[p2]) for p1, p2 in pairs]
+                )
+            }
+        )
         return ds
 
