@@ -209,7 +209,7 @@ def test_multiclass_without_combiner():
         # we must have received a dictionary per each pair
         training_stats = mcv.ca.training_stats
         assert_equal(set(training_stats.keys()),
-                     set([('L1', 'L0'), ('L2', 'L1'), ('L2', 'L0')]))
+                     set([('L0', 'L1'), ('L0', 'L2'), ('L1', 'L2')]))
         for pair, cm in training_stats.iteritems():
             assert_array_equal(cm.labels, ds.UT)
             # we should have no predictions for absent label
