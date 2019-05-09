@@ -175,7 +175,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
             # is expected to suck in general
             return
 
-        if cfg.getboolean('tests', 'labile', default='yes'):
+        #if cfg.getboolean('tests', 'labile', default='yes'):
+        if True:
             for conf_matrix in [sana.clf.ca.training_stats] \
                               + sana.clf.ca.stats.matrices:
                 self.assertTrue(
@@ -198,7 +199,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
         selected = FixedNElementTailSelector(
             len(ds.a.bogus_features))(sensgm.samples[0])
 
-        if cfg.getboolean('tests', 'labile', default='yes'):
+        #if cfg.getboolean('tests', 'labile', default='yes'):
+        if True:
 
             self.assertEqual(
                 set(selected), set(ds.a.nonbogus_features),
