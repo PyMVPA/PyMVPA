@@ -47,6 +47,7 @@ __version__ = '2.6.5.dev1'
 
 import os
 from os.path import join as pathjoin
+import sys
 import random
 import numpy as np
 from mvpa2.base import cfg, warning
@@ -140,7 +141,6 @@ externals.exists('matplotlib', force=True, raise_=False)
 
 # Attach custom top-level exception handler
 if cfg.getboolean('debug', 'wtf', default=False):
-    import sys
     _sys_excepthook = sys.excepthook
     def _pymvpa_excepthook(*args):
         """Custom exception handler to report also pymvpa's wtf
@@ -158,7 +158,6 @@ if cfg.getboolean('debug', 'wtf', default=False):
 
 # Attach custom top-level exception handler
 if cfg.getboolean('debug', 'pdb', default=False):
-    import sys
     _sys_excepthook = sys.excepthook
     def _pymvpa_pdb_excepthook(type, value, tb):
         if hasattr(sys, 'ps1') or not sys.stderr.isatty():
