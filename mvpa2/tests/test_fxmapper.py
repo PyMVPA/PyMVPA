@@ -16,6 +16,9 @@ import numpy as np
 from mvpa2.mappers.fx import *
 from mvpa2.datasets.base import dataset_wizard, Dataset
 
+from mvpa2.base.types import asobjarray
+from mvpa2.mappers.fx import _uniquemerge2literal as u2l
+
 from mvpa2.testing.tools import *
 
 
@@ -237,14 +240,15 @@ def test_fx_native_calls(f):
 
 
 def test_uniquemerge2literal():
-    from mvpa2.mappers.fx import _uniquemerge2literal
-    assert_equal(_uniquemerge2literal(range(3)), ['0+1+2'])
-    assert_equal(_uniquemerge2literal(
+    assert_equal(u2l(range(3)), ['0+1+2'])
+    assert_equal(u2l(
         np.arange(6).reshape(2, 3)), ['[0 1 2]+[3 4 5]'])
-    assert_array_equal(_uniquemerge2literal([[2, 3, 4]]), [[2, 3, 4]])
-    assert_array_equal(_uniquemerge2literal([[2, 3, 4], [2, 3, 4]]), [[2, 3, 4]])
-    assert_equal(_uniquemerge2literal([2, 2, 2]), [2])
-    assert_array_equal(_uniquemerge2literal(['L1', 'L1']), ['L1'])
+    assert_array_equal(u2l([[2, 3, 4]]), [[2, 3, 4]])
+    assert_array_equal(u2l([[2, 3, 4], [2, 3, 4]]), [[2, 3, 4]])
+    assert_equal(u2l([2, 2, 2]), [2])
+    assert_array_equal(u2l(['L1', 'L1']), ['L1'])
+    # we should not loose our precious "tuples"
+    assert_equal(u2l(asobjarray([('1', '0'), ('1', '0')])), asobjarray([('1', '0')]))
 
 
 def test_bin_prop_ci():

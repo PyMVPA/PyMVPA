@@ -15,6 +15,7 @@ import inspect
 
 from mvpa2.base import warning
 from mvpa2.base.node import Node
+from mvpa2.base.types import asobjarray
 from mvpa2.base.param import Parameter
 from mvpa2.base.constraints import *
 from mvpa2.datasets import Dataset
@@ -511,7 +512,13 @@ def _uniquemerge2literal(attrs):
         if isinstance(attrs[0], basestring):
             # do not try to disassemble sequences of strings
             raise TypeError
-        unq = [np.array(u) for u in set([tuple(p) for p in attrs])]
+        uvalues = set(map(tuple, attrs))
+        # if we were provided array of object type, most likely because
+        # we had tuples or other objects, we must produce also object array
+        if isinstance(attrs, np.ndarray) and attrs.dtype == 'O':
+            unq = asobjarray(list(uvalues))
+        else:
+            unq = list(map(np.array, uvalues))
     except TypeError:
         # either no 2d-iterable...
         try:

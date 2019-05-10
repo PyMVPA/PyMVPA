@@ -22,6 +22,7 @@ from mvpa2.base.dataset import vstack
 from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner
 from mvpa2.generators.splitters import Splitter
 
+from mvpa2.clfs.gnb import GNB
 from mvpa2.clfs.meta import CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
      MaximalVote
@@ -194,6 +195,7 @@ def test_multiclass_without_combiner():
     ds = datasets['uni3small'].copy()
     ds.sa['ids'] = np.arange(len(ds))
     mclf = MulticlassClassifier(clf, combiner=None)
+
     # without combining results at all
     mcv = CrossValidation(mclf, NFoldPartitioner(), errorfx=None)
     res = mcv(ds)
@@ -207,7 +209,7 @@ def test_multiclass_without_combiner():
         # we must have received a dictionary per each pair
         training_stats = mcv.ca.training_stats
         assert_equal(set(training_stats.keys()),
-                     set([('L1', 'L0'), ('L2', 'L1'), ('L2', 'L0')]))
+                     set([('L0', 'L1'), ('L0', 'L2'), ('L1', 'L2')]))
         for pair, cm in training_stats.iteritems():
             assert_array_equal(cm.labels, ds.UT)
             # we should have no predictions for absent label
@@ -216,3 +218,81 @@ def test_multiclass_without_combiner():
             assert_array_equal(cm.stats['P'], len(ds))
             # and number of sets should be equal number of chunks here
             assert_equal(len(cm.sets), len(ds.UC))
+
+
+# Sweep through some representative interesting classifiers
+@sweepargs(clf=[
+    LinearCSVMC(C=1),
+    GNB(common_variance=True),
+])
+def test_multiclass_without_combiner_sens(clf):
+    ds = datasets['uni3small'].copy()
+    # do the clone since later we will compare sensitivities and need it
+    # independently trained etc
+    mclf = MulticlassClassifier(clf.clone(), combiner=None)
+
+    # We have lots of sandwiching
+    #    Multiclass.clfs -> [BinaryClassifier] -> clf
+    # where BinaryClassifier's estimates are binarized.
+    # Let's also check that we are getting sensitivities correctly.
+    # With addition of MulticlassClassifierSensitivityAnalyzer we managed to break
+    # it and none tests picked it up, so here we will test that sensitivities
+    # are computed and labeled correctly
+
+
+    # verify that all kinds of results on two classes are identical to the ones
+    # if obtained running it without MulticlassClassifier
+    # ds = ds[:, 0]  #  uncomment out to ease/speed up troubleshooting
+    ds2 = ds.select(sadict=dict(targets=['L1', 'L2']))
+    # we will train only on one chunk so we could get "realistic" (not just
+    # overfit) predictions
+    ds2_train = ds2.select(sadict=dict(chunks=ds.UC[:1]))
+
+    # also consider simpler BinaryClassifier to easier pin point the problem
+    # and be explicit about what is positive and what is negative label(s)
+    bclf = BinaryClassifier(clf.clone(), poslabels=['L2'], neglabels=['L1'])
+
+    predictions = []
+    clfs = [clf, bclf, mclf]
+    for c in clfs:
+        c.ca.enable('all')
+        c.train(ds2_train)
+        predictions.append(c.predict(ds2))
+    p1, bp1, mp1 = predictions
+
+    assert_equal(p1, bp1)
+
+    # ATM mclf.predict returns dataset (with fa.targets to list pairs of targets
+    # used I guess) while p1 is just a list.
+    def assert_list_equal_to_ds(l, ds):
+        assert_equal(ds.shape, (len(l), 1))
+        assert_array_equal(l, ds.samples[:, 0])
+    assert_list_equal_to_ds(p1, mp1)
+
+    # but if we look at sensitivities
+    s1, bs1, ms1 = [
+        c.get_sensitivity_analyzer()(ds2)
+        for c in clfs
+    ]
+    # Do ground checks for s1
+    nonbogus_target = ds2.fa.nonbogus_targets[0]
+
+    # if there was a feature with signal, we know what to expect!:
+    # such assignments are randomized, so we might not have signal in that
+    # single feature we chose to test with
+    if nonbogus_target and nonbogus_target in ds2.UT:
+        # that in the pair of labels it would be 2nd one if positive sensitivity
+        # or 1st one is negative
+        # with classifier we try (SVM) should be pairs of labels
+        assert isinstance(s1.T[0], tuple)
+        assert_equal(len(s1), 1)
+        assert_equal(s1.T[0][int(s1.samples[0, 0] > 0)], nonbogus_target)
+
+    # And in either case we could check that we are getting identical results!
+    # lrn_index is unique to ms1 and "ignore_sa" to assert_datasets_equal still
+    # compares for the keys to be present in both, so does not help
+    ms1.sa.pop('lrn_index')
+
+    assert_datasets_equal(s1, bs1)
+    # and here we get a "problem"!
+    assert_datasets_equal(s1, ms1)
