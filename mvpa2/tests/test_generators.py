@@ -8,9 +8,11 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for generators."""
 
+import os
 import itertools
 import numpy as np
 from time import time
+import tempfile
 
 from mvpa2.testing.tools import ok_, assert_array_equal, assert_true, \
         assert_false, assert_equal, assert_raises, assert_almost_equal, \
@@ -25,7 +27,7 @@ from mvpa2.generators.partition import OddEvenPartitioner, NFoldPartitioner, \
      ExcludeTargetsCombinationsPartitioner, FactorialPartitioner
 from mvpa2.generators.permutation import AttributePermutator
 from mvpa2.generators.base import  Repeater, Sifter
-from mvpa2.generators.resampling import Balancer
+from mvpa2.generators.resampling import Balancer, LogExclusions, ApplySelection
 from mvpa2.misc.data_generators import normal_feature_dataset
 from mvpa2.misc.support import get_nelements_per_value
 
@@ -320,6 +322,51 @@ def test_balancer():
     res = bal(ds)
     assert_equal(get_nelements_per_value(res.fa.one).values(),
                  [4] * 2)
+
+
+def test_log_exclusions():
+    ds = give_data()
+    ds.sa['time_coords'] = np.arange(len(ds))
+
+    # only mark the selection in an attribute
+    bal = Balancer()
+    balanced = bal(ds)
+
+    tmpfile = tempfile.mktemp()
+    logex = LogExclusions(tmpfile, append=False)
+
+    logged = logex(balanced)
+
+    subds = balanced[~balanced.sa['balanced_set'].value]
+
+    assert_true(logged is balanced)
+    with open(tmpfile, 'r') as fobj:
+        assert_true(fobj.readline().startswith('# New entry'))
+
+    excluded = np.genfromtxt(tmpfile, dtype='u1', delimiter=',')
+    assert_array_equal(excluded[:, 0], subds.sa.chunks)
+    assert_array_equal(excluded[:, 1], subds.sa.targets)
+    assert_array_equal(excluded[:, 2], subds.sa.time_coords)
+
+    os.unlink(tmpfile)
+
+
+def test_apply_selection():
+    ds = give_data()
+
+    seed = np.random.randint(low=0, high=2**32)
+
+    # Two balancers with same random seed, one with deferred application
+    bal1 = Balancer(apply_selection=True, rng=seed)
+    bal2 = Balancer(apply_selection=False, rng=seed)
+
+    # Compare Balancer(apply_selection=True) to Balancer -> ApplySelection
+    balanced1 = bal1(ds)
+    balanced2 = ApplySelection()(bal2(ds))
+
+    assert_array_equal(balanced1.samples, balanced2.samples)
+    assert_array_equal(balanced1.sa['targets'], balanced2.sa['targets'])
+    assert_array_equal(balanced1.sa['chunks'], balanced2.sa['chunks'])
 
 
 def test_repeater():

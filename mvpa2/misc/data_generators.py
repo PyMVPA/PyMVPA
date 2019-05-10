@@ -129,7 +129,7 @@ def normal_feature_dataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
         # bring it 'under 1', since otherwise some classifiers have difficulties
         # during optimization
         data = 1.0 / (np.max(np.abs(data))) * data
-    labels = np.concatenate([np.repeat('L%d' % i, perlabel)
+    labels = np.concatenate([np.repeat(u'L%d' % i, perlabel)
                              for i in range(nlabels)])
     chunks = np.concatenate([np.repeat(np.arange(nchunks),
                                        perlabel // nchunks)

@@ -125,6 +125,9 @@ def test_nifti_mapper(filename):
     vol = map2nifti(data, np.ones((294912,), dtype='int16'))
     assert_equal(vol.shape, (128, 96, 24))
     assert_true((vol.get_data() == 1).all())
+    # We record the affine we know
+    assert_array_equal(vol.affine, data.a.imgaffine)
+
     # test mapping of the dataset
     vol = map2nifti(data)
     assert_equal(vol.shape, (128, 96, 24, 2))

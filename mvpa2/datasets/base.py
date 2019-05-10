@@ -87,7 +87,7 @@ class Dataset(AttrDataset):
 
         Parameters
         ----------
-        sa, fa : dict, optional
+        sadict, fadict : dict, optional
           Dictionaries describing selection for samples/features
           correspondingly.
         strict : bool, optional

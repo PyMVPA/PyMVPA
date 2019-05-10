@@ -74,7 +74,7 @@ def test_gnb_sensitivities():
                                 nlabels=3,
                                 nfeatures=5,
                                 nchunks=4,
-                                snr=10,
+                                snr=20,
                                 nonbogus_features=[0, 1, 2]
                                 )
 
@@ -83,19 +83,28 @@ def test_gnb_sensitivities():
     assert_equal(s.shape, (((len(ds.uniquetargets) * (len(ds.uniquetargets) - 1))/2), ds.nfeatures))
     # test zero variance case
     # set variance of feature to zero
-    ds.samples[:,3]=0.3
+    ds.samples[:, 3] = 0.3
     s_zerovar = gnb.get_sensitivity_analyzer()
     sens = s_zerovar(ds)
+    assert_equal(sens.T.dtype, 'O')  # we store pairs
+    assert_equal(sens.T[0], ('L0', 'L1'))
     assert_true(all(sens.samples[:, 3] == 0))
 
-    # test whether tagging and untagging works
-    assert 'has_sensitivity' in gnb.__tags__
     gnb.untrain()
-    assert 'has_sensitivity' not in gnb.__tags__
 
     # test whether content of sensitivities makes rough sense
-    # e.g.: sensitivity of first feature should be larger than of bogus last feature
-    assert_true(abs(sens.samples[i, 0]) > abs(sens.samples[i, 4]) for i in range(np.shape(sens.samples)[0]))
+    # First feature has information only about L0, so it would be of
+    # no use for L1 -vs- L2 classification, so we will go through each pair
+    # and make sure that signs etc all correct for each pair.
+    # This in principle should be a generic test for multiclass sensitivities
+    abssens = abs(sens.samples)
+    for (t1, t2), t1t2sens in zip(sens.T, sens.samples):
+        # go from literal L1 to 1, L0 to 0 - corresponds to feature
+        i1 = int(t1[1])
+        i2 = int(t2[1])
+        assert t1t2sens[i1] < 0
+        assert t1t2sens[i2] > 0
+        assert t1t2sens[i2] > t1t2sens[4]
 
 
 def suite():  # pragma: no cover

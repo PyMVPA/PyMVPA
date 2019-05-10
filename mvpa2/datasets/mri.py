@@ -176,9 +176,8 @@ def map2nifti(dataset, data=None, imghdr=None, imgtype=None):
     if issubclass(imgtype, nibabel.spatialimages.SpatialImage) \
             and (imghdr is None or hasattr(imghdr, 'get_data_dtype')):
         # we can handle the desired image type and hdr with nibabel
-        # use of `None` for the affine should cause to pull it from
-        # the header
-        return imgtype(_get_xyzt_shaped(dsarray), None, imghdr)
+        imgaffine = getattr(dataset.a, 'imgaffine', None)
+        return imgtype(_get_xyzt_shaped(dsarray), imgaffine, imghdr)
     else:
         raise ValueError(
             "Got imgtype=%s and imghdr=%s -- cannot generate an Image"

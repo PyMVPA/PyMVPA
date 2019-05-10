@@ -328,6 +328,12 @@ _numpy_objs = [
     np.array(list('abcdef')),
     np.array("string"),
     np.array(u"ы"),
+    # not an array but just an instance of that type
+    np.float64(1),
+    # problematic prior h5py 2.9.0
+    np.float128(1),
+    np.unicode(u"ы"),
+    np.unicode_(u"ы"),
   ] \
   + _unicode_arrays \
   + [a[:, ::2] for a in _unicode_arrays]
@@ -344,7 +350,11 @@ _numpy_objs += [
 def test_save_load_python_objs(fname, obj):
     """Test saving objects of various types
     """
-    # print obj, obj.shape
+    # try:
+    #     print type(obj), " ",
+    #     print obj # , obj.shape
+    # except Exception as e:
+    #     print e
     # save/reload
     try:
         h5save(fname, obj)

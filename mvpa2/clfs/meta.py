@@ -1144,16 +1144,19 @@ class MulticlassClassifier(CombinedClassifier):
 
         if self.__bclf_type == "1-vs-1":
             # generate pairs and corresponding classifiers
-            # could use _product but let's stay inline with previuos
+            # could use _product but let's stay inline with previous
             # implementation
-            label_pairs = [([ulabels[i]], [ulabels[j]])
-                           for i in xrange(len(ulabels))
-                           for j in xrange(i+1, len(ulabels))]
-            if __debug__:
-                debug("CLFMC", "Created %d label pairs for original %d labels",
-                      (len(label_pairs), len(ulabels)))
+            label_pairs = [
+                ([ul1], [ul2])
+                for i, ul1 in enumerate(ulabels)
+                for ul2 in ulabels[i+1:]
+            ]
         elif self.__bclf_type == "1-vs-all":
             raise NotImplementedError
+
+        if __debug__:
+            debug("CLFMC", "Created %d label pairs for original %d labels",
+                  (len(label_pairs), len(ulabels)))
 
         return label_pairs
 
@@ -1162,7 +1165,7 @@ class MulticlassClassifier(CombinedClassifier):
         """
         # construct binary classifiers
         biclfs = []
-        for poslabels, neglabels in self._get_binary_pairs(dataset):
+        for neglabels, poslabels in self._get_binary_pairs(dataset):
             biclfs.append(
                 BinaryClassifier(self.__clf.clone(),
                                  poslabels=poslabels,
@@ -1191,10 +1194,17 @@ class MulticlassClassifier(CombinedClassifier):
 
             # for consistency -- place into object array of tuples
             # (Sensitivity analyzers already do the same)
-            pairs = zip(np.array([np.squeeze(clf.neglabels) for clf in self.clfs]).tolist(),
-                        np.array([np.squeeze(clf.poslabels) for clf in self.clfs]).tolist())
+            # NOTE from archaeological expedition:
+            #   although we specify poslabels in constructor first, here we
+            #   place neglabels first since that is how we treat pairs e.g.
+            #   in sensitivities -- from neg (or 0) to positive (or 1)
+            pairs = zip(
+                np.array([np.squeeze(clf.neglabels) for clf in self.clfs]).tolist(),
+                np.array([np.squeeze(clf.poslabels) for clf in self.clfs]).tolist()
+            )
             ca.raw_predictions_ds = raw_predictions_ds = \
-                Dataset(np.array(raw_predictions).T, fa={self.space: asobjarray(pairs)})
+                Dataset(np.array(raw_predictions).T,
+                        fa={self.space: asobjarray(pairs)})
         if self.combiner is None:
             return raw_predictions_ds
         else:

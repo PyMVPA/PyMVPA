@@ -14,8 +14,8 @@ PDF_DIR=$(BUILDDIR)/pdf
 LATEX_DIR=$(BUILDDIR)/latex
 WWW_DIR=$(BUILDDIR)/website
 SWARM_DIR=$(BUILDDIR)/swarm
-WWW_UPLOAD_URI=www.pymvpa.org:/home/www/www.pymvpa.org/pymvpa
-WWW_UPLOAD_URI_DEV=dev.pymvpa.org:/home/www/dev.pymvpa.org/pymvpa
+WWW_UPLOAD_URI=www.pymvpa.org:/srv/pymvpa.org/www
+WWW_UPLOAD_URI_DEV=dev.pymvpa.org:/srv/dev.pymvpa.org/www
 DATA_HOST=data.pymvpa.org
 DATA_DIR=datadb
 DATA_SUBDIRS='$(DATA_DIR)/tutorial_data \
@@ -23,7 +23,7 @@ DATA_SUBDIRS='$(DATA_DIR)/tutorial_data \
                   $(DATA_DIR)/face_inversion_demo \
                   $(DATA_DIR)/hyperalignment_tutorial_data \
                   $(DATA_DIR)/haxby2001'
-DATA_UPLOAD_URI=$(DATA_HOST):/home/www/data.pymvpa.org/www/datasets
+DATA_UPLOAD_URI=$(DATA_HOST):/srv/data.pymvpa.org/www/datasets
 SWARMTOOL_DIR=tools/codeswarm
 SWARMTOOL_DIRFULL=$(CURDIR)/$(SWARMTOOL_DIR)
 RSYNC_OPTS=-az -H --no-perms --no-owner --verbose --progress --no-g --exclude prev/
