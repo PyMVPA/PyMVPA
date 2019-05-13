@@ -12,6 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import copy
 import numpy as np
+from collections import OrderedDict
 from mvpa2.misc.support import Event, value2idx
 from mvpa2.datasets import Dataset
 from mvpa2.base.dataset import _expand_attribute
@@ -601,8 +602,10 @@ def fit_event_hrf_model(
         regressor_names = model_params.sa[glm_condition_attr].value
 
     # now define proper condition sa's
+    import pdb; pdb.set_trace()
     for con, con_map in glm_condition_attr_map.iteritems():
         model_params.sa[con] = [con_map[v] for v in regressor_names]
+    import pdb; pdb.set_trace()
     model_params.sa.pop(glm_condition_attr) # remove generated one
     return model_params
 
@@ -641,3 +644,56 @@ def eventrelated_dataset(ds, events, time_attr=None, match='prev',
                     regr_attrs=regr_attrs)
     else:
         raise ValueError("unknown event model '%s'" % model)
+
+
+def get_contrasts(hrf_estimates, contrasts=None,
+                  condition_attr='targets',
+                  fxname="z_score"):
+    """A helper to obtain contrasts from the fit NiPy GLM model
+
+    .a.model
+
+    Parameters
+    ----------
+    hrf_estimates: Dataset
+      Output from `fit_event_hrf_model` ran with return_model=True
+    contrasts: dict, optional
+      name: dict of coefficients per condition. If None, value is returned for
+      each condition
+    """
+    conditions = hrf_estimates.sa[condition_attr].value
+    model = hrf_estimates.a.model
+    # additional regressors which were added to the model by us (e.g. "const")
+    # but estimates for which are not present
+    nadd_regs = len(hrf_estimates.a.add_regs.sa.regressor_names)
+
+    if contrasts is None:
+        contrasts = OrderedDict(
+            (c, {c: 1})
+            for c in conditions
+        )
+
+    out = Dataset(
+        np.empty((len(contrasts), hrf_estimates.nfeatures)),
+        "TODO"
+    )
+    out.sa.update(hrf_estimates.sa)
+    out.fa.update(hrf_estimates.fa)
+    for i, contrast in enumerate(contrasts):
+        # convert our presentation for contrasts into NiPy's
+        for c, v in contrast.items():
+            condition_index = [conditions == c]
+            if not any(condition_index):
+                raise ValueError(
+                    "Found no condition %s among available: %s  in the contrast %s"
+                    % (c, conditions, contrast)
+                )
+            assert sum(condition_index) == 1
+        # and add complementary regressors
+        nipy_contrast_spec = "TODO" + (0,) * nadd_regs
+        nipy_contrast = model.contrast(nipy_contrast_spec)
+        fx = getattr(nipy_contrast, fxname)
+        out.samples[i] = fx(nipy_contrast)
+
+    return out
+
