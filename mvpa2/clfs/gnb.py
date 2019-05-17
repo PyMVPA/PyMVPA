@@ -25,6 +25,7 @@ import numpy as np
 from numpy import ones, zeros, sum, abs, isfinite, dot
 from mvpa2.base import warning, externals
 from mvpa2.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa2.base.learner import DegenerateInputError
 from mvpa2.base.types import asobjarray
 from mvpa2.base.param import Parameter
 from mvpa2.base.state import ConditionalAttribute
@@ -206,6 +207,12 @@ class GNB(Classifier):
             variances[:] = cvar
         else:
             variances[non0labels] /= nsamples_per_class[non0labels]
+
+        if len(np.unique(means)) <= 1 and len(np.unique(variances)) <= 1:
+            raise DegenerateInputError(
+                "All means and variances are identical, cannot train GNB to "
+                "produce meaningful results"
+            )
 
         # Precompute and store weighting coefficient for Gaussian
         if params.logprob:
