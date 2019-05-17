@@ -81,6 +81,8 @@ class GNBTests(unittest.TestCase):
             probabilities["GNB(space='targets', normalize=True, prior='uniform')"]
         )
 
+
+@reseed_rng()
 def test_gnb_sensitivities():
     gnb = GNB(common_variance=True)
     ds = normal_feature_dataset(perlabel=4,
@@ -120,6 +122,7 @@ def test_gnb_sensitivities():
         assert t1t2sens[i2] > t1t2sens[4]
 
 
+@reseed_rng()
 def test_gnb_overflow():
     # https://github.com/PyMVPA/PyMVPA/issues/581
     gnb = GNB(enable_ca='estimates',
