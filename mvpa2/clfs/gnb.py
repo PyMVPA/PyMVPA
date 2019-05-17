@@ -101,6 +101,12 @@ class GNB(Classifier):
              disabled by default since does not impact classification output.
              """)
 
+    guard_overflows = Parameter(True, constraints='bool',
+            doc="""Computation of marginals could experience under and overflows
+            causing NaNs and Infs to emerge.  When enabled, GNB will verify
+            having finite numbers and mitigate the issue while computing
+            (ATM only in logprob=True mode). """)
+
     def __init__(self, **kwargs):
         """Initialize an GNB classifier.
         """
@@ -230,6 +236,7 @@ class GNB(Classifier):
         """Predict the output for the provided data.
         """
         params = self.params
+        guard_overflows = params.guard_overflows
         # argument of exponentiation
         scaled_distances = \
             -0.5 * (((data - self.means[:, np.newaxis, ...])**2) \
@@ -256,7 +263,8 @@ class GNB(Classifier):
 
             # Incorporate class probabilities:
             prob_cs_cp = lprob_cs + np.log(self.priors[:, np.newaxis])
-
+            if guard_overflows:
+                assert np.all(np.isfinite(lprob_cs))
         else:
             # Just a regular Normal distribution with per
             # feature/class mean and variances
@@ -268,23 +276,43 @@ class GNB(Classifier):
             ## First we need to reshape to get class x samples x features
             prob_csf = prob_csfs.reshape(
                 prob_csfs.shape[:2] + (-1,))
+
             ## Now -- product across features
             prob_cs = prob_csf.prod(axis=2)
+            if guard_overflows:
+                assert np.all(np.isfinite(prob_cs))  # use logprob version then
+                assert np.any(prob_cs)
 
             # Incorporate class probabilities:
             prob_cs_cp = prob_cs * self.priors[:, np.newaxis]
 
+        assert np.all(np.isfinite(prob_cs_cp)) # before normalize
+
         # Normalize by evidence P(data)
         if params.normalize:
             if params.logprob:
-                prob_cs_cp_real = np.exp(prob_cs_cp)
+                # to avoid overunderflows offset all the values
+                # (identical to multiplying by a number), and later
+                # remove (divide by it). Do it per each sample separately
+                underflow_offset = -np.ceil(np.max(prob_cs_cp, axis=0)) \
+                    if guard_overflows else 0
+                prob_cs_cp_real = np.exp(prob_cs_cp + underflow_offset)
             else:
                 prob_cs_cp_real = prob_cs_cp
+
             prob_s_cp_marginals = np.sum(prob_cs_cp_real, axis=0)
+
+            if guard_overflows:
+                assert np.all(np.isfinite(prob_cs_cp_real))
+                assert np.all(np.isfinite(prob_s_cp_marginals))  # no overflows
+                assert np.any(prob_s_cp_marginals)  # .inf down the road
+
             if params.logprob:
-                prob_cs_cp -= np.log(prob_s_cp_marginals)
+                prob_cs_cp -= np.log(prob_s_cp_marginals) - underflow_offset
             else:
                 prob_cs_cp /= prob_s_cp_marginals
+
+        assert np.all(np.isfinite(prob_cs_cp))
 
         # Take the class with maximal (log)probability
         winners = prob_cs_cp.argmax(axis=0)
