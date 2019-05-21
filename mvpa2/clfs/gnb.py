@@ -245,9 +245,27 @@ class GNB(Classifier):
         params = self.params
         guard_overflows = params.guard_overflows
         # argument of exponentiation
-        scaled_distances = \
-            -0.5 * (((data - self.means[:, np.newaxis, ...])**2) \
-                          / self.variances[:, np.newaxis, ...])
+        distances = (data - self.means[:, np.newaxis, ...])**2
+        # If feature has no variance in any category, it would lead to /0 division
+        # When distance == 0 for those, distance should remain 0. If not --
+        # scaled distance should be set to ... ?
+        scaled_distances = -0.5 * distances / self.variances[:, np.newaxis, ...]
+
+        variances0_mask = self.variances == 0  # class x feature
+
+        ## If we had features without any variance in a given class,
+        ## then we can say that:
+        ##  if distance is 0 and there were no variance -- probability is 1
+        if np.any(variances0_mask):
+            prob1_csf = np.logical_and(
+                distances == 0,  # class x sample x feature
+                variances0_mask[:, None, :]
+            )
+        else:
+            prob1_csf = None
+
+        del variances0_mask  # no need for it
+
         if params.logprob:
             # if self.params.common_variance:
             # XXX YOH:
@@ -265,6 +283,11 @@ class GNB(Classifier):
             ## First we need to reshape to get class x samples x features
             lprob_csf = lprob_csfs.reshape(
                 lprob_csfs.shape[:2] + (-1,))
+
+            if prob1_csf is not None:
+                # log(1) == 0
+                lprob_csf[prob1_csf] = 0
+
             ## Now -- sum across features
             lprob_cs = lprob_csf.sum(axis=2)
 
@@ -284,6 +307,9 @@ class GNB(Classifier):
             prob_csf = prob_csfs.reshape(
                 prob_csfs.shape[:2] + (-1,))
 
+            if prob1_csf is not None:
+                prob_csf[prob1_csf] = 1
+
             ## Now -- product across features
             prob_cs = prob_csf.prod(axis=2)
             if guard_overflows:
@@ -293,7 +319,8 @@ class GNB(Classifier):
             # Incorporate class probabilities:
             prob_cs_cp = prob_cs * self.priors[:, np.newaxis]
 
-        assert np.all(np.isfinite(prob_cs_cp)) # before normalize
+        if guard_overflows:
+            assert np.all(np.isfinite(prob_cs_cp)) # before normalize
 
         # Normalize by evidence P(data)
         if params.normalize:
@@ -319,7 +346,8 @@ class GNB(Classifier):
             else:
                 prob_cs_cp /= prob_s_cp_marginals
 
-        assert np.all(np.isfinite(prob_cs_cp))
+        if guard_overflows:
+            assert np.all(np.isfinite(prob_cs_cp))
 
         # Take the class with maximal (log)probability
         winners = prob_cs_cp.argmax(axis=0)

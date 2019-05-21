@@ -83,8 +83,9 @@ class GNBTests(unittest.TestCase):
 
 
 @reseed_rng()
-def test_gnb_sensitivities():
-    gnb = GNB(common_variance=True)
+@sweepargs(logprob=[True, False])
+def test_gnb_sensitivities(logprob):
+    gnb = GNB(common_variance=True, logprob=logprob)
     ds = normal_feature_dataset(perlabel=4,
                                 nlabels=3,
                                 nfeatures=5,
