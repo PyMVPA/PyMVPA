@@ -29,6 +29,9 @@ class GNBTests(unittest.TestCase):
 
         ds = datasets['uni2medium']
 
+        # Store probabilities for further comparison
+        probabilities = {}
+
         # Generic silly coverage just to assure that it works in all
         # possible scenarios:
         bools = (True, False)
@@ -57,6 +60,7 @@ class GNBTests(unittest.TestCase):
                             v = np.exp(v)
                         d1 = np.sum(v, axis=1) - 1.0
                         self.assertTrue(np.max(np.abs(d1)) < 1e-5)
+                        probabilities[repr(gnb_)] = v
                     # smoke test to see whether invocation of sensitivity analyser blows
                     # if gnb classifier isn't linear, and to see whether it doesn't blow
                     # when it is linear.
@@ -67,9 +71,21 @@ class GNBTests(unittest.TestCase):
                         with self.assertRaises(NotImplementedError):
                             gnb_.get_sensitivity_analyzer()
 
+        # Verify that probabilities are identical when we use logprob or not
+        assert_array_almost_equal(
+            probabilities["GNB(space='targets', normalize=True, logprob=False)"],
+            probabilities["GNB(space='targets', normalize=True)"]
+        )
+        assert_array_almost_equal(
+            probabilities["GNB(space='targets', normalize=True, logprob=False, prior='uniform')"],
+            probabilities["GNB(space='targets', normalize=True, prior='uniform')"]
+        )
 
-def test_gnb_sensitivities():
-    gnb = GNB(common_variance=True)
+
+@reseed_rng()
+@sweepargs(logprob=[True, False])
+def test_gnb_sensitivities(logprob):
+    gnb = GNB(common_variance=True, logprob=logprob)
     ds = normal_feature_dataset(perlabel=4,
                                 nlabels=3,
                                 nfeatures=5,
@@ -105,6 +121,91 @@ def test_gnb_sensitivities():
         assert t1t2sens[i1] < 0
         assert t1t2sens[i2] > 0
         assert t1t2sens[i2] > t1t2sens[4]
+
+
+@reseed_rng()
+def test_gnb_overflow():
+    # https://github.com/PyMVPA/PyMVPA/issues/581
+    gnb = GNB(enable_ca='estimates',
+              #logprob=True,  # implemented only for True ATM
+              normalize=True,
+              # uncomment if interested to trigger:
+              # guard_overflows=False,
+              )
+
+    # Having lots of features could trigger under/overflows
+    ds = normal_feature_dataset(perlabel=4,
+                                nlabels=2,
+                                nfeatures=100000,
+                                nchunks=2,
+                                snr=5,
+                                nonbogus_features=[0, 1]
+                                )
+
+    ds_train = ds[ds.chunks == ds.UC[0]]
+    ds_test = ds[ds.chunks == ds.UC[1]]
+
+    gnb.train(ds_train)
+    res = gnb.predict(ds_test)
+    res_est = gnb.ca.estimates
+
+    probs = np.exp(res_est) if gnb.params.logprob else res_est
+
+    assert np.all(np.isfinite(res_est))
+    assert np.all(np.isfinite(probs))
+    assert_equal(sorted(np.unique(probs)), [0, 1]) # quantized into 0, 1 given this many samples
+
+
+def _test_gnb_overflow_haxby():   # pragma: no cover
+    # example from https://github.com/PyMVPA/PyMVPA/issues/581
+    # a heavier version of the above test
+    import os
+    import numpy as np
+
+    from mvpa2.datasets.sources.native import load_tutorial_data
+    from mvpa2.clfs.gnb import GNB
+    from mvpa2.measures.base import CrossValidation
+    from mvpa2.generators.partition import HalfPartitioner
+    from mvpa2.mappers.zscore import zscore
+    from mvpa2.mappers.detrend import poly_detrend
+    from mvpa2.datasets.miscfx import remove_invariant_features
+    from mvpa2.testing.datasets import *
+
+    datapath = '/usr/share/data/pymvpa2-tutorial/'
+    haxby = load_tutorial_data(datapath,
+                               roi='vt',
+                               add_fa={'vt_thr_glm': os.path.join(datapath,
+                                                                  'haxby2001',
+                                                                  'sub001',
+                                                                  'masks',
+                                                                  'orig',
+                                                                  'vt.nii.gz')})
+    # poly_detrend(haxby, polyord=1, chunks_attr='chunks')
+    haxby = haxby[np.array([l in ['rest', 'scrambled'] # ''house', 'face']
+                            for l in haxby.targets], dtype='bool')]
+    #zscore(haxby, chunks_attr='chunks', param_est=('targets', ['rest']),
+    #       dtype='float32')
+    # haxby = haxby[haxby.sa.targets != 'rest']
+    haxby = remove_invariant_features(haxby)
+
+    clf = GNB(enable_ca='estimates',
+              logprob=True,
+              normalize=True)
+
+    #clf.train(haxby)
+    #clf.predict(haxby)
+    # estimates a bit "overfit" to judge in the train/predict on the same data
+
+    cv = CrossValidation(clf,
+                         HalfPartitioner(attr='chunks'),
+                         postproc=None,
+                         enable_ca=['stats'])
+
+    cv_results = cv(haxby)
+    res1_est = clf.ca.estimates
+    print "Estimates:\n", res1_est
+    print "Exp(estimates):\n", np.round(np.exp(res1_est), 3)
+    assert np.all(np.isfinite(res1_est))
 
 
 def suite():  # pragma: no cover

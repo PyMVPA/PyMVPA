@@ -25,6 +25,7 @@ import numpy as np
 from numpy import ones, zeros, sum, abs, isfinite, dot
 from mvpa2.base import warning, externals
 from mvpa2.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa2.base.learner import DegenerateInputError
 from mvpa2.base.types import asobjarray
 from mvpa2.base.param import Parameter
 from mvpa2.base.state import ConditionalAttribute
@@ -100,6 +101,12 @@ class GNB(Classifier):
              for `logprob` case would require exponentiation of 'logprob's, thus
              disabled by default since does not impact classification output.
              """)
+
+    guard_overflows = Parameter(True, constraints='bool',
+            doc="""Computation of marginals could experience under and overflows
+            causing NaNs and Infs to emerge.  When enabled, GNB will verify
+            having finite numbers and mitigate the issue while computing
+            (ATM only in logprob=True mode). """)
 
     def __init__(self, **kwargs):
         """Initialize an GNB classifier.
@@ -201,6 +208,12 @@ class GNB(Classifier):
         else:
             variances[non0labels] /= nsamples_per_class[non0labels]
 
+        if len(np.unique(means)) <= 1 and len(np.unique(variances)) <= 1:
+            raise DegenerateInputError(
+                "All means and variances are identical, cannot train GNB to "
+                "produce meaningful results"
+            )
+
         # Precompute and store weighting coefficient for Gaussian
         if params.logprob:
             # it would be added to exponent
@@ -230,10 +243,29 @@ class GNB(Classifier):
         """Predict the output for the provided data.
         """
         params = self.params
+        guard_overflows = params.guard_overflows
         # argument of exponentiation
-        scaled_distances = \
-            -0.5 * (((data - self.means[:, np.newaxis, ...])**2) \
-                          / self.variances[:, np.newaxis, ...])
+        distances = (data - self.means[:, np.newaxis, ...])**2
+        # If feature has no variance in any category, it would lead to /0 division
+        # When distance == 0 for those, distance should remain 0. If not --
+        # scaled distance should be set to ... ?
+        scaled_distances = -0.5 * distances / self.variances[:, np.newaxis, ...]
+
+        variances0_mask = self.variances == 0  # class x feature
+
+        ## If we had features without any variance in a given class,
+        ## then we can say that:
+        ##  if distance is 0 and there were no variance -- probability is 1
+        if np.any(variances0_mask):
+            prob1_csf = np.logical_and(
+                distances == 0,  # class x sample x feature
+                variances0_mask[:, None, :]
+            )
+        else:
+            prob1_csf = None
+
+        del variances0_mask  # no need for it
+
         if params.logprob:
             # if self.params.common_variance:
             # XXX YOH:
@@ -251,12 +283,18 @@ class GNB(Classifier):
             ## First we need to reshape to get class x samples x features
             lprob_csf = lprob_csfs.reshape(
                 lprob_csfs.shape[:2] + (-1,))
+
+            if prob1_csf is not None:
+                # log(1) == 0
+                lprob_csf[prob1_csf] = 0
+
             ## Now -- sum across features
             lprob_cs = lprob_csf.sum(axis=2)
 
             # Incorporate class probabilities:
             prob_cs_cp = lprob_cs + np.log(self.priors[:, np.newaxis])
-
+            if guard_overflows:
+                assert np.all(np.isfinite(lprob_cs))
         else:
             # Just a regular Normal distribution with per
             # feature/class mean and variances
@@ -268,23 +306,48 @@ class GNB(Classifier):
             ## First we need to reshape to get class x samples x features
             prob_csf = prob_csfs.reshape(
                 prob_csfs.shape[:2] + (-1,))
+
+            if prob1_csf is not None:
+                prob_csf[prob1_csf] = 1
+
             ## Now -- product across features
             prob_cs = prob_csf.prod(axis=2)
+            if guard_overflows:
+                assert np.all(np.isfinite(prob_cs))  # use logprob version then
+                assert np.any(prob_cs)
 
             # Incorporate class probabilities:
             prob_cs_cp = prob_cs * self.priors[:, np.newaxis]
 
+        if guard_overflows:
+            assert np.all(np.isfinite(prob_cs_cp)) # before normalize
+
         # Normalize by evidence P(data)
         if params.normalize:
             if params.logprob:
-                prob_cs_cp_real = np.exp(prob_cs_cp)
+                # to avoid overunderflows offset all the values
+                # (identical to multiplying by a number), and later
+                # remove (divide by it). Do it per each sample separately
+                underflow_offset = -np.ceil(np.max(prob_cs_cp, axis=0)) \
+                    if guard_overflows else 0
+                prob_cs_cp_real = np.exp(prob_cs_cp + underflow_offset)
             else:
                 prob_cs_cp_real = prob_cs_cp
+
             prob_s_cp_marginals = np.sum(prob_cs_cp_real, axis=0)
+
+            if guard_overflows:
+                assert np.all(np.isfinite(prob_cs_cp_real))
+                assert np.all(np.isfinite(prob_s_cp_marginals))  # no overflows
+                assert np.any(prob_s_cp_marginals)  # .inf down the road
+
             if params.logprob:
-                prob_cs_cp -= np.log(prob_s_cp_marginals)
+                prob_cs_cp -= np.log(prob_s_cp_marginals) - underflow_offset
             else:
                 prob_cs_cp /= prob_s_cp_marginals
+
+        if guard_overflows:
+            assert np.all(np.isfinite(prob_cs_cp))
 
         # Take the class with maximal (log)probability
         winners = prob_cs_cp.argmax(axis=0)
