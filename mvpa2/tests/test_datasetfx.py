@@ -10,6 +10,7 @@
 
 import unittest
 from mvpa2.testing.tools import ok_, assert_equal, assert_array_equal, reseed_rng
+from mvpa2.testing import sweepargs, skip_if_no_external
 
 import numpy as np
 
@@ -20,6 +21,7 @@ from mvpa2.datasets.miscfx import remove_invariant_features, coarsen_chunks, \
 
 
 from mvpa2.misc.data_generators import normal_feature_dataset
+from mvpa2.testing.datasets import datasets
 
 class MiscDatasetFxTests(unittest.TestCase):
 
@@ -137,6 +139,12 @@ class MiscDatasetFxTests(unittest.TestCase):
             # Check if str works fine
             sr = str(r)
             # TODO: check the content
+
+    @sweepargs(ds=datasets.itervalues())
+    def test_to_df_smoke(self, ds):
+        skip_if_no_external('pandas')
+        df = ds.to_df()
+        print(df)
 
 
 
