@@ -602,10 +602,8 @@ def fit_event_hrf_model(
         regressor_names = model_params.sa[glm_condition_attr].value
 
     # now define proper condition sa's
-    import pdb; pdb.set_trace()
     for con, con_map in glm_condition_attr_map.iteritems():
         model_params.sa[con] = [con_map[v] for v in regressor_names]
-    import pdb; pdb.set_trace()
     model_params.sa.pop(glm_condition_attr) # remove generated one
     return model_params
 
@@ -660,8 +658,16 @@ def get_contrasts(hrf_estimates, contrasts=None,
     contrasts: dict, optional
       name: dict of coefficients per condition. If None, value is returned for
       each condition
+    condition_attr: str, optional
+      name of the sample attribute containing the condition.
+    fxname: str, optional
+      name of the method implemented by nipy's contrast object, e.g.
+      "p_value"
     """
     conditions = hrf_estimates.sa[condition_attr].value
+    # assert that they are all unique!
+    assert len(conditions) == len(hrf_estimates.sa[condition_attr].unique)
+
     model = hrf_estimates.a.model
     # additional regressors which were added to the model by us (e.g. "const")
     # but estimates for which are not present
@@ -674,26 +680,34 @@ def get_contrasts(hrf_estimates, contrasts=None,
         )
 
     out = Dataset(
-        np.empty((len(contrasts), hrf_estimates.nfeatures)),
-        "TODO"
+        np.empty((len(contrasts), hrf_estimates.nfeatures))
     )
-    out.sa.update(hrf_estimates.sa)
+    # we could embed function name as well into the condition_attr
+    # ["%s(%s)" % (fxname, contrasts.keys())]
+    # but since we typically do not encode semantic in there, keep it to just
+    # contrast values
+    out.sa[condition_attr] = list(contrasts)
     out.fa.update(hrf_estimates.fa)
-    for i, contrast in enumerate(contrasts):
-        # convert our presentation for contrasts into NiPy's
-        for c, v in contrast.items():
-            condition_index = [conditions == c]
-            if not any(condition_index):
+
+    for i, (contrast, condition_weights) in enumerate(contrasts.items()):
+        # convert our presentation for contrasts into NiPy's and
+        # add 0s for add_regs
+        nipy_contrast_spec = np.zeros(len(conditions) + nadd_regs)
+
+        for condition, weight in condition_weights.items():
+            condition_index = conditions == condition
+            if not np.any(condition_index):
                 raise ValueError(
                     "Found no condition %s among available: %s  in the contrast %s"
-                    % (c, conditions, contrast)
+                    % (condition, conditions, contrast)
                 )
-            assert sum(condition_index) == 1
-        # and add complementary regressors
-        nipy_contrast_spec = "TODO" + (0,) * nadd_regs
-        nipy_contrast = model.contrast(nipy_contrast_spec)
+            assert sum(condition_index) == 1  # paranoia!
+            nipy_contrast_spec[np.where(condition_index)] = weight
+
+        nipy_contrast = model.contrast(tuple(nipy_contrast_spec))
+
         fx = getattr(nipy_contrast, fxname)
-        out.samples[i] = fx(nipy_contrast)
+        out.samples[i] = fx()
 
     return out
 
