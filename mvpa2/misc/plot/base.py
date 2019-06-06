@@ -7,11 +7,16 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Misc. plotting helpers."""
+from __future__ import division
 
+from builtins import str
+from builtins import zip
+from builtins import range
 __docformat__ = 'restructuredtext'
 
 from mvpa2.base import externals
 externals._set_matplotlib_backend()
+from mvpa2.base import warning
 
 import numpy as np
 
@@ -176,8 +181,8 @@ def plot_err_line_missing(data, x=None, errtype='ste', curves=None,
         x = np.arange(len(md))
     else:
         if not len(md) == len(x):
-            raise ValueError, "The length of `x` (%i) has to match the 2nd " \
-                              "axis of the data array (%i)" % (len(x), len(md))
+            raise ValueError("The length of `x` (%i) has to match the 2nd " \
+                              "axis of the data array (%i)" % (len(x), len(md)))
 
     # collect pylab things that are plotted for later modification
     lines = []
@@ -404,8 +409,7 @@ def plot_decision_boundary_2d(dataset, clf=None,
 
     if maps is not None:
         if clf is None:
-            raise ValueError, \
-                  "Please provide classifier for plotting maps of %s" % maps
+            raise ValueError("Please provide classifier for plotting maps of %s" % maps)
         predictions_new = clf.predict(news)
 
     if maps == 'estimates':
@@ -432,8 +436,10 @@ def plot_decision_boundary_2d(dataset, clf=None,
             CS = a.contour(x, y, map_values, vals, zorder=6,
                            linestyles=linestyles, extent=extent, colors='k')
         except ValueError as e:
-            print "Sorry - plotting of estimates isn't full supported for %s. " \
-                  "Got exception %s" % (clf, e)
+            warning(
+                "Sorry - plotting of estimates isn't full supported for %s. "
+                "Got exception %s" % (clf, e)
+            )
     elif maps == 'targets':
         map_values = attrmap.to_numeric(predictions_new).reshape(x.shape)
         a.imshow(map_values.T, **imshow_kwargs)
@@ -546,7 +552,7 @@ def plot_bars(data, labels=None, title=None, ylim=None, ylabel=None,
         pl.title(title)
 
     if labels:
-        pl.xticks(xloc + width / 2, labels)
+        pl.xticks(xloc + width / 2., labels)
 
     if ylabel:
         pl.ylabel(ylabel)
@@ -568,9 +574,11 @@ def inverse_cmap(cmap_name):
         cmap_data = eval('_cm._%s_data' % cmap_name)
     except:
         raise ValueError("Cannot obtain data for the colormap %s" % cmap_name)
-    new_data = dict( [(k, [(vi[0], v[-(i+1)][1], v[-(i+1)][2])
-                           for i, vi in enumerate(v)])
-                      for k,v in cmap_data.iteritems()] )
+    new_data = dict([
+        (k, [(vi[0], v[-(i+1)][1], v[-(i+1)][2])
+        for i, vi in enumerate(v)])
+        for k,v in cmap_data.items()]
+    )
     return mpl.colors.LinearSegmentedColormap('%s_rev' % cmap_name,
                                               new_data, _cm.LUTSIZE)
 
@@ -598,7 +606,7 @@ def plot_dataset_chunks(ds, clf_labels=None):
         chunk_text = str(chunk)
         ids = ds.C == chunk
         ds_chunk = ds[ids]
-        for i in xrange(ds_chunk.nsamples):
+        for i in range(ds_chunk.nsamples):
             s = ds_chunk.samples[i]
             l = ds_chunk.targets[i]
             format = ''
@@ -668,14 +676,14 @@ def timeseries_boxplot(median, mean=None, std=None, n=None, min=None, max=None,
       Additional keyword arguments that are uniformly passed on to any
       utilized plotting function.
     """
-    x = range(len(mean))
+    x = list(range(len(mean)))
     err = std / np.sqrt(n)
     for run, ol in enumerate(outlierd):
         if ol is None:
             continue
-        pl.plot(range(
+        pl.plot(list(range(
                     sum([len(d) for d in outlierd[:run]]),
-                    sum([len(d) for d in outlierd[:run+1]])),
+                    sum([len(d) for d in outlierd[:run+1]]))),
                 ol, color='red', zorder=1, **kwargs)
     if not (min is None or max is None):
         pl.fill_between(x, max, min, color='0.8', alpha=.5, lw=0, zorder=2,
