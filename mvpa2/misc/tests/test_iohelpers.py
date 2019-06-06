@@ -15,7 +15,7 @@ import unittest
 from tempfile import mkstemp
 import numpy as np
 
-from mvpa2.testing.tools import ok_, assert_equal, with_tempfile
+from mvpa2.testing.tools import ok_, eq_, assert_equal, with_tempfile
 
 from mvpa2 import pymvpa_dataroot
 from mvpa2.datasets.eventrelated import find_events
@@ -40,26 +40,26 @@ class IOHelperTests(unittest.TestCase):
         d = ColumnData(fpath, header=True)
 
         # check header (sort because order in dict is unpredictable)
-        self.assertTrue(sorted(d.keys()) == ['drei', 'eins', 'zwei'])
+        self.assertEqual(sorted(d.keys()), ['drei', 'eins', 'zwei'])
 
-        self.assertTrue(d['eins'] == [0, 3])
-        self.assertTrue(d['zwei'] == [1, 4])
-        self.assertTrue(d['drei'] == [2, 5])
+        self.assertEqual(d['eins'], [0, 3])
+        self.assertEqual(d['zwei'], [1, 4])
+        self.assertEqual(d['drei'], [2, 5])
 
         # make a copy
         d2 = ColumnData(d)
 
         # check if identical
-        self.assertTrue(sorted(d2.keys()) == ['drei', 'eins', 'zwei'])
-        self.assertTrue(d2['eins'] == [0, 3])
-        self.assertTrue(d2['zwei'] == [1, 4])
-        self.assertTrue(d2['drei'] == [2, 5])
+        self.assertEqual(sorted(d2.keys()), ['drei', 'eins', 'zwei'])
+        self.assertEqual(d2['eins'], [0, 3])
+        self.assertEqual(d2['zwei'], [1, 4])
+        self.assertEqual(d2['drei'], [2, 5])
 
         # now merge back
         d += d2
 
         # same columns?
-        self.assertTrue(sorted(d.keys()) == ['drei', 'eins', 'zwei'])
+        self.assertEqual(sorted(d.keys()), ['drei', 'eins', 'zwei'])
 
         # but more data
         self.assertEqual(d['eins'], [0, 3, 0, 3])
@@ -101,18 +101,19 @@ class IOHelperTests(unittest.TestCase):
                                            'attributes_literal.txt'),
                               literallabels=True)
 
-        ok_(sa.nrows == 1452, msg='There should be 1452 samples')
+        eq_(sa.nrows, 1452)  # 1452 samples
 
         # convert to event list, with some custom attr
         ev = find_events(**sa)
-        ok_(len(ev) == 17 * (max(sa.chunks) + 1),
+        eq_(len(ev), 17 * (max(sa.chunks) + 1),
             msg='Not all events got detected.')
 
-        ok_(ev[0]['targets'] == ev[-1]['targets'] == 'rest',
-            msg='First and last event are rest condition.')
+        # First and last event are rest condition
+        eq_(ev[0]['targets'], 'rest')
+        eq_(ev[0]['targets'], ev[-1]['targets'])
 
-        ok_(ev[-1]['onset'] + ev[-1]['duration'] == sa.nrows,
-            msg='Something is wrong with the timiing of the events')
+        # Something is wrong with the timing of the events
+        eq_(ev[-1]['onset'] + ev[-1]['duration'], sa.nrows)
 
 
     @with_tempfile('mvpa', 'sampleattr')
