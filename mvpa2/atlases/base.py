@@ -36,6 +36,10 @@ if externals.exists('lxml', raise_=True, exception=ImportError):
 from mvpa2.base.dochelpers import enhanced_doc_string
 
 import re
+import sys
+
+rePatternType = re._pattern_type if sys.version_info[0] == 2 else re.Pattern
+
 import numpy as np
 from numpy.linalg import norm
 
@@ -566,7 +570,7 @@ class LabelsLevel(Level):
           If True, raise exception if none or more than 1 was found. Return
           just a single item if found (not list).
         """
-        if isinstance(target, re._pattern_type):
+        if isinstance(target, rePatternType):
             res = [l for l in self.__labels if target.search(l.abbr)]
         else:
             res = [l for l in self.__labels if target in l.abbr]
