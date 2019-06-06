@@ -9,6 +9,10 @@
 """Helpers to build PyMVPA dataset instances from openfmri.org dataset
 """
 
+from builtins import zip
+from builtins import range
+from past.builtins import basestring
+from builtins import object
 __docformat__ = 'restructuredtext'
 
 __all__ = [ 'OpenFMRIDataset']
@@ -311,7 +315,7 @@ class OpenFMRIDataset(object):
         data = [None] * nruns
 
         # over all possible run ids
-        for run in xrange(nruns):
+        for run in range(nruns):
             # for all actual subjects
             for subj in sorted(tbri.keys()):
                 if subj in exclude_subjs:
@@ -421,7 +425,7 @@ class OpenFMRIDataset(object):
             if len(attrs.shape) == 1:
                 ds.sa[sa] = attrs
             else:
-                for col in xrange(attrs.shape[1]):
+                for col in range(attrs.shape[1]):
                     ds.sa['%s_%i' % (sa, col)] = attrs[:, col]
         return ds
 
@@ -541,8 +545,8 @@ class OpenFMRIDataset(object):
                         % (cond['name'], run))
                 continue
             for i, ev in enumerate(evdata):
-                evdict = dict(zip(ev_fields,
-                                  [ev[field] for field in ev_fields]))
+                evdict = dict(list(zip(ev_fields,
+                                  [ev[field] for field in ev_fields])))
                 evdict['task'] = task_id
                 evdict['condition'] = cond['name']
                 evdict['run'] = run
@@ -650,7 +654,7 @@ class OpenFMRIDataset(object):
                     if preproc_ds is not None:
                         d = preproc_ds(d)
                     d = modelfx(
-                        d, events, **dict([(k, v) for k, v in kwargs.iteritems()
+                        d, events, **dict([(k, v) for k, v in kwargs.items()
                                           if not k in ('preproc_img', 'preproc_ds',
                                                        'modelfx', 'stack', 'flavor',
                                                        'mask', 'add_fa', 'add_sa')]))
