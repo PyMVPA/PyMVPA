@@ -13,8 +13,13 @@ from mvpa2.datasets import dataset_wizard
 from mvpa2.mappers.flatten import FlattenMapper
 from mvpa2.mappers.boxcar import BoxcarMapper
 from mvpa2.mappers.fx import FxMapper
-from mvpa2.datasets.eventrelated import find_events, eventrelated_dataset, \
-        extract_boxcar_event_samples
+from mvpa2.datasets.eventrelated import (
+    find_events,
+    eventrelated_dataset,
+    fit_event_hrf_model,
+    extract_boxcar_event_samples,
+    get_contrasts,
+)
 from mvpa2.datasets.sources import load_example_fmri_dataset
 from mvpa2.mappers.zscore import zscore
 
@@ -260,4 +265,53 @@ def test_hrf_modeling():
     #import pydb; pydb.debugger()
     #pass
     #i = 1
+
+
+def test_get_contrasts():
+    # preamble borrowed from the previous test
+    skip_if_no_external('nibabel')
+    skip_if_no_external('nipy')  # ATM relies on NiPy's GLM implementation
+    # taking subset of the dataset to speed testing up
+    ds = load_example_fmri_dataset('25mm', literal=True)[{'chunks': [0, 1]}, :3]
+    # TODO: simulate short dataset with known properties and use it
+    # for testing
+    events = find_events(targets=ds.sa.targets, chunks=ds.sa.chunks)
+    tr = ds.a.imghdr['pixdim'][4]
+    for ev in events:
+        for a in ('onset', 'duration'):
+            ev[a] = ev[a] * tr
+    evds = fit_event_hrf_model(
+        ds, events=events, time_attr='time_coords',
+        condition_attr='targets',
+        design_kwargs=dict(drift_model='blank'),
+        glmfit_kwargs=dict(model='ols'),
+        return_model=True,
+    )
+    # Simple one -- stat per each condition
+    cons = get_contrasts(evds)
+    # and let's get p-values
+    cons_p = get_contrasts(evds, fxname='p_value')
+    # Without contrasts explicitly prescribed -- there will be one per each
+    # condition
+    assert_array_equal(cons.UT, evds.UT)
+    # and per each feature
+    assert_equal(cons.shape, (len(evds.UT), evds.nfeatures))
+    assert_array_less(cons_p, 1)
+    assert_array_less(0, cons_p)
+
+    cons_fh = get_contrasts(
+        evds,
+        contrasts={
+            'face-house': {'face': 1, 'house': -1},
+            'betterface': {'face': 1, 'house': -0.5, 'scrambledpix': -0.5}
+        },
+    )
+
+    # print(cons_fh.samples)
+    assert_array_equal(cons_fh.UT, ['betterface', 'face-house'])
+
+    # and nipy does one tailed test so all p-values should correspond to z-s
+    skip_if_no_external('scipy')
+    import scipy.stats.distributions as ssd
+    assert_array_almost_equal(ssd.norm().isf(cons_p), cons)
 

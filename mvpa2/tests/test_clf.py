@@ -313,7 +313,7 @@ class ClassifiersTests(unittest.TestCase):
             try:
                 try:
                     clf.train(ds)                   # should not crash or stall
-                except (ValueError) as e:
+                except (ValueError, AssertionError) as e:
                     self.fail("Failed to train on degenerate data. Error was %r" % e)
                 except DegenerateInputError:
                     # so it realized that data is degenerate and puked
@@ -848,9 +848,10 @@ class ClassifiersTests(unittest.TestCase):
             clf_re.params.sigma_noise *= 100
             batch_test()
         else:
-            raise RuntimeError, \
-                  'Please implement testing while changing some of the ' \
+            raise RuntimeError(
+                  'Please implement testing while changing some of the '
                   'params for clf %s' % clf
+            )
 
         # should retrain nicely if we change kernel parameter
         if hasattr(clf, 'kernel_params') and len(clf.kernel_params):
@@ -953,8 +954,8 @@ class ClassifiersTests(unittest.TestCase):
         for traindata in traindatas:
             clf.train(traindata)
             self.assertEqual(clf.ca.training_stats.percent_correct, 100.0,
-                "Classifier %s must have 100%% correct learning on %s. Has %f" %
-                (`clf`, traindata.samples, clf.ca.training_stats.percent_correct))
+                "Classifier %r must have 100%% correct learning on %s. Has %f" %
+                (clf, traindata.samples, clf.ca.training_stats.percent_correct))
 
             # and we must be able to predict every original sample thus
             for i in xrange(traindata.nsamples):
@@ -962,7 +963,7 @@ class ClassifiersTests(unittest.TestCase):
                 predicted = clf.predict([sample])
                 self.assertEqual([predicted], traindata.targets[i],
                     "We must be able to predict sample %s using " % sample +
-                    "classifier %s" % `clf`)
+                    "classifier %r" % (clf,))
         clf.ca.reset_changed_temporarily()
 
 
