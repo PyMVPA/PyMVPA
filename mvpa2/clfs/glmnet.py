@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """GLM-Net (GLMNET) regression and classifier."""
 
+from builtins import str
 __docformat__ = 'restructuredtext'
 
 # system imports
@@ -203,9 +204,8 @@ class _GLMNET(Classifier):
                          maxit=self.params.maxit,
                          type=self.params.model_type)
         except RRuntimeError as e:
-            raise FailedToTrainError, \
-                  "Failed to train %s on %s. Got '%s' during call r.glmnet()." \
-                  % (self, dataset, e)
+            raise FailedToTrainError("Failed to train %s on %s. Got '%s' during call r.glmnet()." \
+                  % (self, dataset, e))
 
         self.__last_lambda = last_lambda = \
                              np.asanyarray(Rrx2(trained_model, 'lambda'))[-1]
@@ -218,9 +218,8 @@ class _GLMNET(Classifier):
         elif self.params.family == 'gaussian':
             self.__weights = np.array(r['as.matrix'](weights))[1:, 0]
         else:
-            raise NotImplementedError, \
-                  "Somehow managed to get here with family %s." % \
-                  (self.params.family,)
+            raise NotImplementedError("Somehow managed to get here with family %s." % \
+                  (self.params.family,))
 
     @accepts_dataset_as_samples
     def _predict(self, data):
