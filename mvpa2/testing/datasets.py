@@ -15,6 +15,7 @@ from builtins import range
 
 __docformat__ = 'restructuredtext'
 
+from collections import OrderedDict
 import tempfile
 import shutil
 import traceback as tbm
@@ -50,12 +51,12 @@ def generate_testing_datasets(specs):
     # trigger some funny cases
     nonbogus_pool = np.random.permutation([0, 1, 3, 5])
 
-    datasets = {}
+    datasets = OrderedDict()
 
     # use a partitioner to flag odd/even samples as training and test
     ttp = OddEvenPartitioner(space='train', count=1)
 
-    for kind, spec in specs.items():
+    for kind, spec in sorted(specs.items()):
         # set of univariate datasets
         for nlabels in [ 2, 3, 4 ]:
             basename = 'uni%d%s' % (nlabels, kind)

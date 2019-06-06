@@ -379,8 +379,8 @@ def summary_targets(dataset, targets_attr='targets', chunks_attr='chunks',
     spcl = get_samples_per_chunk_target(
         dataset, targets_attr=targets_attr, chunks_attr=chunks_attr)
     # XXX couldn't they be unordered?
-    ul = dataset.sa[targets_attr].unique.tolist()
-    uc = dataset.sa[chunks_attr].unique.tolist()
+    ul = list(dataset.sa[targets_attr].unique)
+    uc = list(dataset.sa[chunks_attr].unique)
     s = ""
     if len(ul) < maxt and len(uc) < maxc:
         s += "\nCounts of targets in each chunk:"
@@ -522,8 +522,10 @@ class SequenceStats(dict):
             for i, j in zip(*ind):
                 t[1+i][1+cb*(ntargets+1)+j] = '%d' % m[i, j]
 
+        # list(map()) below for consistent presentation (no u'' strings)
+        # between py2 and py3
         sout = "Sequence statistics for %d entries" \
-               " from set %s\n" % (len(seq), utargets) + \
+               " from set %s\n" % (len(seq), list(map(str, utargets))) + \
                "Counter-balance table for orders up to %d:\n" % order \
                + table2string(t)
         if len(corr):
