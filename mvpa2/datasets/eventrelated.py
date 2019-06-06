@@ -12,6 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import copy
 import numpy as np
+from collections import OrderedDict
 from mvpa2.misc.support import Event, value2idx
 from mvpa2.datasets import Dataset
 from mvpa2.base.dataset import _expand_attribute
@@ -641,3 +642,72 @@ def eventrelated_dataset(ds, events, time_attr=None, match='prev',
                     regr_attrs=regr_attrs)
     else:
         raise ValueError("unknown event model '%s'" % model)
+
+
+def get_contrasts(hrf_estimates, contrasts=None,
+                  condition_attr='targets',
+                  fxname="z_score"):
+    """A helper to obtain contrasts from the fit NiPy GLM model
+
+    .a.model
+
+    Parameters
+    ----------
+    hrf_estimates: Dataset
+      Output from `fit_event_hrf_model` ran with return_model=True
+    contrasts: dict, optional
+      name: dict of coefficients per condition. If None, value is returned for
+      each condition
+    condition_attr: str, optional
+      name of the sample attribute containing the condition.
+    fxname: str, optional
+      name of the method implemented by nipy's contrast object, e.g.
+      "p_value"
+    """
+    conditions = hrf_estimates.sa[condition_attr].value
+    # assert that they are all unique!
+    assert len(conditions) == len(hrf_estimates.sa[condition_attr].unique)
+
+    model = hrf_estimates.a.model
+    # additional regressors which were added to the model by us (e.g. "const")
+    # but estimates for which are not present
+    nadd_regs = len(hrf_estimates.a.add_regs.sa.regressor_names)
+
+    if contrasts is None:
+        contrasts = OrderedDict(
+            (c, {c: 1})
+            for c in conditions
+        )
+
+    out = Dataset(
+        np.empty((len(contrasts), hrf_estimates.nfeatures))
+    )
+    # we could embed function name as well into the condition_attr
+    # ["%s(%s)" % (fxname, contrasts.keys())]
+    # but since we typically do not encode semantic in there, keep it to just
+    # contrast values
+    out.sa[condition_attr] = list(contrasts)
+    out.fa.update(hrf_estimates.fa)
+
+    for i, (contrast, condition_weights) in enumerate(contrasts.items()):
+        # convert our presentation for contrasts into NiPy's and
+        # add 0s for add_regs
+        nipy_contrast_spec = np.zeros(len(conditions) + nadd_regs)
+
+        for condition, weight in condition_weights.items():
+            condition_index = conditions == condition
+            if not np.any(condition_index):
+                raise ValueError(
+                    "Found no condition %s among available: %s  in the contrast %s"
+                    % (condition, conditions, contrast)
+                )
+            assert sum(condition_index) == 1  # paranoia!
+            nipy_contrast_spec[np.where(condition_index)] = weight
+
+        nipy_contrast = model.contrast(tuple(nipy_contrast_spec))
+
+        fx = getattr(nipy_contrast, fxname)
+        out.samples[i] = fx()
+
+    return out
+
