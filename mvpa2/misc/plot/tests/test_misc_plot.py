@@ -7,6 +7,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA misc.plot"""
+from __future__ import print_function
 
 from mvpa2.testing import *
 skip_if_no_external('pylab')
@@ -29,7 +30,7 @@ data2d_5d = np.random.randn(2, 4, 4, 4, 2, 3)
 
 from mvpa2.testing.datasets import datasets
 
-@sweepargs(dsp=datasets.items())
+@sweepargs(dsp=list(datasets.items()))
 def test_plot_dataset_chunks(dsp):
     dsname, ds = dsp
     if ds.targets.dtype.kind == 'f':
@@ -37,7 +38,7 @@ def test_plot_dataset_chunks(dsp):
     # smoke test for now
     if 'chunks' not in ds.sa:
         return  # nothing to plot in this one
-    print dsname
+    print(dsname)
     plot_dataset_chunks(ds[:, :2])  # could only plot two
     pl.close(pl.gcf())
     if ds.nfeatures > 2:

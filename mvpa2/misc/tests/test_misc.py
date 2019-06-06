@@ -7,7 +7,10 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA misc stuff"""
+from __future__ import division
 
+from builtins import zip
+from builtins import range
 from mvpa2.testing import *
 
 from mvpa2.datasets import Dataset
@@ -110,7 +113,7 @@ def test_ttest_1samp_masked():
     ##assert_raises(AssertionError, ttest_1samp_masked, d[None,...], 0)
 
     # basic test different alternatives
-    d = range(10)
+    d = list(range(10))
     tl, pl = ttest_1samp_masked(d, 0, alternative='greater')
 
     tr, pr = ttest_1samp_masked(d, 0, alternative='less')
