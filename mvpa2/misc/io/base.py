@@ -398,7 +398,7 @@ class ColumnData(dict):
             return 0
         # otherwise first key is as good as any other
         else:
-            return len(next(iter(self)))
+            return len(next(iter(self.values())))
 
 
 
