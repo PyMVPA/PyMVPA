@@ -32,8 +32,19 @@ if exists('rpy2', raise_=True):
         def Rrx2(self, x):
             return self.r[x][0]
     else:
-        raise ValueError, \
-              "We do not have support for rpy2 version %(rpy2)s" % versions
+        raise ValueError("We do not have support for rpy2 version %(rpy2)s" % versions)
 
     Rrx.__doc__ = "Access delegator for R function ["
     Rrx2.__doc__ = "Access delegator for R function [["
+
+    # RRuntimeError has disappeared from the top level interface as eg in 3.0.4
+    try:  # 3.0.4-1
+        import rpy2.rinterface_lib.embedded as _rpy_ri_embedded;
+        RRuntimeError = _rpy_ri_embedded.RRuntimeError
+    except (ImportError, AttributeError):
+        # Let's try to find in previously known locations
+        try:
+            import rpy2.robjects.rinterface as _rpy_ri
+            RRuntimeError = _rpy_ri.RRuntimeError
+        except (ImportError, AttributeError):  # 2.8.6-2+b2
+            from rpy2.rinterface import RRuntimeError
