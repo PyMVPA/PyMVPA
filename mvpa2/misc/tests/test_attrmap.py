@@ -95,7 +95,7 @@ def test_attrmap():
     # dict-like interface
     am = AttributeMap()
 
-    ok_([(k, v) for k, v in am.iteritems()] == [])
+    ok_([(k, v) for k, v in am.items()] == [])
 
 
 def test_attrmap_conflicts():

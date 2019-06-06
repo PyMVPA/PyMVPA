@@ -130,9 +130,7 @@ class AttributeMap(object):
 
     def iteritems(self):
         """Dict-like generator yielding literal/numerical pairs."""
-        if self._nmap is None:
-            raise StopIteration
-        else:
+        if self._nmap is not None:
             for k, v in self._nmap:
                 yield k, v
 
@@ -190,10 +188,12 @@ class AttributeMap(object):
                 count = counts.get(v, 0)
                 if count:               # we saw it already
                     if cr is None:
-                        raise ValueError("Numeric value %r was already reverse mapped to " \
-                            "%r.  Now trying to remap into %r.  Please adjust" \
-                            " your mapping or change collissions_resolution" \
-                            " parameter" % (v, lmap[v], k))
+                        raise ValueError(
+                            "Numeric value %r was already reverse mapped to "
+                            "%r.  Now trying to remap into %r.  Please adjust"
+                            " your mapping or change collissions_resolution"
+                            " parameter" % (v, lmap[v], k)
+                        )
                     else:
                         if count == 1:
                             lmap[v] = (lmap[v], k)
