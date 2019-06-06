@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Tests for basic mappers'''
 
+from builtins import zip
+from builtins import range
 import numpy as np
 # for repr
 
@@ -29,6 +31,7 @@ import itertools
 import operator
 
 from mvpa2.base import externals
+from functools import reduce
 
 
 # arbitrary ndarray subclass for testing
@@ -132,7 +135,7 @@ def test_product_flatten():
 
     shape = (nsamples,) + tuple(len(v) for _, v in product_name_values)
 
-    sample_names = ['samp%d' % i for i in xrange(nsamples)]
+    sample_names = ['samp%d' % i for i in range(nsamples)]
 
     # generate random data in four dimensions
     data = np.random.normal(size=shape)
@@ -141,7 +144,7 @@ def test_product_flatten():
         ds.a[n] = v
 
     # apply flattening to ds
-    names, values = zip(*(product_name_values))
+    names, values = list(zip(*(product_name_values)))
 
     flattened_ds = None
 
@@ -182,8 +185,8 @@ def test_product_flatten():
     # ensure the size is ok
     assert_equal(mds.shape, (nsamples,) + (prod(shape[1:]),))
 
-    idxs = [range(len(v)) for v in values]
-    for si in xrange(nsamples):
+    idxs = [list(range(len(v))) for v in values]
+    for si in range(nsamples):
         for fi, p in enumerate(itertools.product(*idxs)):
             data_tup = (si,) + p
 
@@ -340,7 +343,7 @@ def test_chainmapper():
     cm.train(data)
 
     # a new mapper should appear when doing feature selection
-    cm.append(StaticFeatureSelection(range(1, 16)))
+    cm.append(StaticFeatureSelection(list(range(1, 16))))
     assert_equal(cm.forward1(data[0]).shape, (15,))
     assert_equal(len(cm), 2)
     # multiple slicing
@@ -466,7 +469,7 @@ def test_addaxis():
 
 @sweepargs(
     s=('i_am_the_test',
-       range(5),
+       list(range(5)),
        np.arange(12).reshape(4, 3),
        Dataset(np.arange(12).reshape(4, 3))))
 def test_identity_mapper(s):
