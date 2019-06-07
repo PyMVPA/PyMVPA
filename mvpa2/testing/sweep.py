@@ -9,7 +9,6 @@
 """Submodule to provide sweepargs decorator for unittests"""
 
 from builtins import str
-from six import reraise as raise_
 __docformat__ = 'restructuredtext'
 
 import sys
@@ -18,6 +17,7 @@ import traceback as tbm
 from mvpa2 import cfg
 from mvpa2.base.dochelpers import safe_str
 from mvpa2.testing.tools import SkipTest
+# from mvpa2.misc.support import PY2
 
 if __debug__:
     from mvpa2.base import debug
@@ -74,6 +74,7 @@ def sweepargs(**kwargs):
                         skipped_tests += [e]
                         status = 'S'
                     except AssertionError as e:
+                        # sample_exc = e
                         status = 'F'
                         estr = str(e)
                         etype, value, tb = sys.exc_info()
@@ -126,7 +127,7 @@ def sweepargs(**kwargs):
                 estr = ""
                 cestr = "lead to failures of unittest %s" % method.__name__
                 if multiple:
-                    estr += "\n Different scenarios %s "\
+                    estr += "\n Different scenarios %s " \
                             "(specific tracebacks are below):" % cestr
                 else:
                     estr += "\n Single scenario %s:" % cestr
@@ -135,15 +136,23 @@ def sweepargs(**kwargs):
                     if multiple:
                         estr += ek
                     estr += "  on\n    %s" % ("    ".join(
-                            ["%s=%s%s\n" %
-                             (ea, eav,
-                              # Why didn't I just do regular for loop? ;)
-                              ":\n     ".join([xx for xx in [' ', es]
-                                               if xx != '']))
-                             for ea, eav, etb, es in els]))
-                    # take first one... they all should be identical
-                    etb = els[0][2]
-                raise_(AssertionError(estr), None, etb)
+                        ["%s=%s%s\n" %
+                         (ea, eav,
+                          # Why didn't I just do regular for loop? ;)
+                          ":\n     ".join([xx for xx in [' ', es]
+                                           if xx != '']))
+                         for ea, eav, etb, es in els]))
+                    # take the last one... they all should be identical
+                    etb = els[-1][2]
+                raise AssertionError(estr)
+                # We used to provide traceback details.  Hard to RF for
+                # both 2 and 3 - TODO later if needed at all
+                # new_exc = AssertionError(estr)
+                # if PY2:
+                #     raise (new_exc, None, etb)
+                # else:
+                #     raise new_exc from sample_exc
+
             if len(skipped_tests):
                 # so if nothing has failed, lets at least report that some were
                 # skipped -- for now just  a simple SkipTest message
