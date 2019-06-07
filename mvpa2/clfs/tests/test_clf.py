@@ -1136,6 +1136,3 @@ def suite():  # pragma: no cover
     return unittest.makeSuite(ClassifiersTests)
 
 
-if __name__ == '__main__':  # pragma: no cover
-    from . import runner
-    runner.run()

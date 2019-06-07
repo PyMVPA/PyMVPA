@@ -418,7 +418,3 @@ def suite():  # pragma: no cover
     return unittest.makeSuite(SplitterTests)
 
 
-if __name__ == '__main__':  # pragma: no cover
-    import runner
-    runner.run()
-

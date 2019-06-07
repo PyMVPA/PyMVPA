@@ -774,7 +774,3 @@ def suite():  # pragma: no cover
     return unittest.makeSuite(ErrorsTests)
 
 
-if __name__ == '__main__':  # pragma: no cover
-    import runner
-    runner.run()
-

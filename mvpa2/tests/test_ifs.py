@@ -92,7 +92,3 @@ def suite():  # pragma: no cover
     return unittest.makeSuite(IFSTests)
 
 
-if __name__ == '__main__':  # pragma: no cover
-    import runner
-    runner.run()
-
