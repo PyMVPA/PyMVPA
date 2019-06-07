@@ -14,6 +14,7 @@ used kernels are provided with convenience classes: `LinearSGKernel`,
 kernel, use `CustomSGKernel` to define one.
 """
 
+from builtins import object
 __docformat__ = 'restructuredtext'
 
 import numpy as np
@@ -100,9 +101,8 @@ class _BasicSGKernel(SGKernel):
         """
         SGKernel.__init__(self, **kwargs)
         if (normalizer_cls is not None) and (versions['shogun:rev'] < 3377):
-            raise ValueError, \
-               "Normalizer specification is supported only for sg >= 0.6.5. " \
-               "Please upgrade shogun python modular bindings."
+            raise ValueError("Normalizer specification is supported only for sg >= 0.6.5. " \
+               "Please upgrade shogun python modular bindings.")
 
         if normalizer_cls is None and exists('sg ge 0.6.5'):
             normalizer_cls = sgk.IdentityKernelNormalizer
@@ -119,7 +119,7 @@ class _BasicSGKernel(SGKernel):
             order = self.__kp_order__
         except AttributeError:
             # XXX may be we could use param.index to have them sorted?
-            order = self.params.keys()
+            order = list(self.params.keys())
         kvals = [self.params[kp].value for kp in order]
         self._k = self.__kernel_cls__(d1, d2, *kvals)
 
@@ -222,9 +222,8 @@ class PrecomputedSGKernel(SGKernel):
         if versions['shogun:rev'] >= 4455:
             self._k = sgk.CustomKernel(k)
         else:
-            raise RuntimeError, \
-                  "Cannot create PrecomputedSGKernel using current version" \
-                  " of shogun -- please upgrade"
+            raise RuntimeError("Cannot create PrecomputedSGKernel using current version" \
+                  " of shogun -- please upgrade")
             # Following lines are not effective since we should have
             # also provided data for CK in those earlier versions
             #self._k = sgk.CustomKernel()
