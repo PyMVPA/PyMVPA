@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA kNN classifier"""
 
+from builtins import range
 import numpy as np
 
 from mvpa2.testing import *
@@ -24,7 +25,7 @@ class KNNTests(unittest.TestCase):
         uv_perf = []
 
         clf = kNN(k=10)
-        for i in xrange(20):
+        for i in range(20):
             train = pure_multivariate_signal( 20, 3 )
             test = pure_multivariate_signal( 20, 3 )
             clf.train(train)

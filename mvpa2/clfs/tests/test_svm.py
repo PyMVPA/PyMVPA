@@ -7,7 +7,9 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for SVM classifier"""
+from __future__ import division
 
+from builtins import range
 import numpy as np
 import gc
 from mvpa2.datasets import dataset_wizard
@@ -59,7 +61,7 @@ class SVMTests(unittest.TestCase):
         except:
             self.fail(msg="Failed to deepcopy not-yet trained SVM %s" % nl_clf)
 
-        for i in xrange(20):
+        for i in range(20):
             train = pure_multivariate_signal( 20, 3 )
             test = pure_multivariate_signal( 20, 3 )
 
@@ -110,7 +112,7 @@ class SVMTests(unittest.TestCase):
         # disballanced set
         # lets overpopulate label 0
         times = 20
-        ds_ = ds[(range(ds.nsamples) + range(ds.nsamples//2) * times)]
+        ds_ = ds[(list(range(ds.nsamples)) + list(range(ds.nsamples//2)) * times)]
         ds_.samples += 0.5 * np.random.normal(size=(ds_.samples.shape))
         spl = get_nsamples_per_attr(ds_, 'targets') #_.samplesperlabel
 

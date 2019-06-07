@@ -7,7 +7,10 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA GNB classifier"""
+from __future__ import division
+from __future__ import print_function
 
+from builtins import zip
 import numpy as np
 
 from mvpa2.testing import *
@@ -43,11 +46,13 @@ class GNBTests(unittest.TestCase):
             for n in bools:             # normalized?
               for ls in bools:          # logspace?
                 for es in ((), ('estimates')):
-                    gnb_ = GNB(common_variance=cv,
-                               prior=prior,
-                               normalize=n,
-                               logprob=ls,
-                               enable_ca=es)
+                    params = dict(
+                        common_variance=cv,
+                        prior=prior,
+                        normalize=n,
+                        logprob=ls,
+                    )
+                    gnb_ = GNB(enable_ca=es, **params)
                     tm = TransferMeasure(gnb_, Splitter('train'))
                     predictions = tm(ds).samples[:,0]
                     if tp is None:
@@ -60,7 +65,9 @@ class GNBTests(unittest.TestCase):
                             v = np.exp(v)
                         d1 = np.sum(v, axis=1) - 1.0
                         self.assertTrue(np.max(np.abs(d1)) < 1e-5)
-                        probabilities[repr(gnb_)] = v
+                        # params is a dict, so order is not guaranteed, we will
+                        # store using sorted items as a key for comparison later on
+                        probabilities[tuple(sorted(params.items()))] = v
                     # smoke test to see whether invocation of sensitivity analyser blows
                     # if gnb classifier isn't linear, and to see whether it doesn't blow
                     # when it is linear.
@@ -72,13 +79,16 @@ class GNBTests(unittest.TestCase):
                             gnb_.get_sensitivity_analyzer()
 
         # Verify that probabilities are identical when we use logprob or not
+        for params in probabilities:
+            params_dict = dict(params)
+            if not params_dict['logprob']:
+                continue
+            params_logprob = params_dict.copy()
+            params_logprob['logprob'] = True
+
         assert_array_almost_equal(
-            probabilities["GNB(space='targets', normalize=True, logprob=False)"],
-            probabilities["GNB(space='targets', normalize=True)"]
-        )
-        assert_array_almost_equal(
-            probabilities["GNB(space='targets', normalize=True, logprob=False, prior='uniform')"],
-            probabilities["GNB(space='targets', normalize=True, prior='uniform')"]
+            probabilities[params],
+            probabilities[tuple(sorted(params_logprob.items()))]
         )
 
 
@@ -96,7 +106,7 @@ def test_gnb_sensitivities(logprob):
 
     s = gnb.get_sensitivity_analyzer()(ds)
     assert_in('targets', s.sa)
-    assert_equal(s.shape, (((len(ds.uniquetargets) * (len(ds.uniquetargets) - 1))/2), ds.nfeatures))
+    assert_equal(s.shape, (((len(ds.uniquetargets) * (len(ds.uniquetargets) - 1))//2), ds.nfeatures))
     # test zero variance case
     # set variance of feature to zero
     ds.samples[:, 3] = 0.3
@@ -169,7 +179,9 @@ def _test_gnb_overflow_haxby():   # pragma: no cover
     from mvpa2.mappers.zscore import zscore
     from mvpa2.mappers.detrend import poly_detrend
     from mvpa2.datasets.miscfx import remove_invariant_features
-    from mvpa2.testing.datasets import *
+    # Commented out to please PY3 - if to be enabled, extend list of imports
+    # above:
+    # from mvpa2.testing.datasets import *
 
     datapath = '/usr/share/data/pymvpa2-tutorial/'
     haxby = load_tutorial_data(datapath,
@@ -203,8 +215,8 @@ def _test_gnb_overflow_haxby():   # pragma: no cover
 
     cv_results = cv(haxby)
     res1_est = clf.ca.estimates
-    print "Estimates:\n", res1_est
-    print "Exp(estimates):\n", np.round(np.exp(res1_est), 3)
+    print("Estimates:\n", res1_est)
+    print("Exp(estimates):\n", np.round(np.exp(res1_est), 3))
     assert np.all(np.isfinite(res1_est))
 
 
