@@ -9,6 +9,8 @@
 """Generator nodes to permute datasets.
 """
 
+from builtins import zip
+from builtins import range
 __docformat__ = 'restructuredtext'
 
 import numpy as np
@@ -131,7 +133,7 @@ class AttributePermutator(Node):
         if self.chunk_attr is not None:
             permute_kwargs['chunks'] = ds.sa[self.chunk_attr].value
 
-        for i in xrange(10):  # for the case of assure_permute
+        for i in range(10):  # for the case of assure_permute
             # shallow copy of the dataset for output
             out = ds.copy(deep=False)
 
@@ -199,7 +201,7 @@ class AttributePermutator(Node):
         # Select given limit_idx
         pattrs_lim = [p.value[limit_idx] for p in in_pattrs]
         # convert to list of tuples
-        pattrs_lim_zip = zip(*pattrs_lim)
+        pattrs_lim_zip = list(zip(*pattrs_lim))
         # find unique groups
         unique_groups = list(set(pattrs_lim_zip))
         # now we need to permute the groups to generate remapping
@@ -260,7 +262,7 @@ class AttributePermutator(Node):
         """Generate the desired number of permuted datasets."""
         # figure out permutation setup once for all runs
         # permute as often as requested
-        for i in xrange(self.count):
+        for i in range(self.count):
             kwargs = self._get_call_kwargs(ds)
             ## if __debug__:
             ##     debug('APERM', "%s generating %i-th permutation", (self, i))
