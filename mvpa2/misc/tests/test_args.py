@@ -22,12 +22,12 @@ class ArgsHelpersTest(unittest.TestCase):
 
         res = split_kwargs(kwargs, ['slave_'])
         self.assertTrue('slave_' in res and '' in res)
-        self.assertTrue(res['slave_'] == {'a':3, 'z':4, 'slave_z':5})
-        self.assertTrue(res[''] == {'a':1, 'c':3})
+        self.assertEqual(res['slave_'], {'a':3, 'z':4, 'slave_z':5})
+        self.assertEqual(res[''], {'a':1, 'c':3})
 
         res = split_kwargs(kwargs)
-        self.assertTrue(res.keys() == [''])
-        self.assertTrue(res[''] == kwargs)
+        self.assertEqual(list(res.keys()), [''])
+        self.assertEqual(res[''], kwargs)
 
 
     def test_decorator(self):
