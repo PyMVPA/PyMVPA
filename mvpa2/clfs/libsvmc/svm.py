@@ -285,8 +285,10 @@ class SVM(_SVM):
         if __debug__ and "SVM" in debug.active:
             debug("SVM", "Untraining %s and destroying libsvm model" % self)
         super(SVM, self)._untrain()
-        del self.__model
-        self.__model = None
+        if self.__model:
+            self.__model.destroy()
+            del self.__model
+            self.__model = None
 
     model = property(fget=lambda self: self.__model)
     """Access to the SVM model."""

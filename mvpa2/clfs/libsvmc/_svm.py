@@ -247,10 +247,9 @@ class SVMProblem(object):
 
 
     def __repr__(self):
-        return "<SVMProblem: size = %s>" % (self.size)
+        return "<SVMProblem: size = %s>" % (getattr(self, 'size', 'UNKNOWN'))
 
-
-    def __del__(self):
+    def destroy(self):
         if __debug__ and debug is not None:
             debug('SVM_', 'Destroying libsvm.SVMProblem %s' % repr(self))
 
@@ -263,6 +262,11 @@ class SVMProblem(object):
         del self.data
         del self.x_matrix
 
+    def __del__(self):
+        try:
+            self.destroy()
+        except:
+            pass
 
 
 class SVMModel(object):
@@ -271,6 +275,7 @@ class SVMModel(object):
             # create model from file
             filename = arg1
             self.model = svmc.svm_load_model(filename)
+            self.prob = None
         else:
             # create model from problem and parameter
             prob, param = arg1, arg2
@@ -412,8 +417,7 @@ class SVMModel(object):
     def save(self, filename):
         svmc.svm_save_model(filename, self.model)
 
-
-    def __del__(self):
+    def destroy(self):
         if __debug__ and debug:
             # TODO: place libsvm versioning information into externals
             debug('SVM_', 'Destroying libsvm v. %s SVMModel %s',
@@ -421,15 +425,23 @@ class SVMModel(object):
                    and hasattr(svmc, '__version__') \
                    and svmc.__version__ or "unknown",
                    repr(self)))
+
+        svmc.svm_destroy_model_helper(self.model)
+        if self.prob:
+            self.prob.destroy()
+            del self.prob
+        del self.model
+
+    def __del__(self):
         try:
-            svmc.svm_destroy_model_helper(self.model)
-            del self.model
+            # if we are not too late
+            if getattr(self, 'destroy', None):
+                self.destroy()
         except Exception as e:
             # blind way to overcome problem of already deleted model and
             # "SVMModel instance has no attribute 'model'" in  ignored
-            if __debug__:
+            if __debug__ and debug:
                 debug('SVM_', 'Failed to destroy libsvm.SVMModel due to %s' % (e,))
-            pass
 
 
     ##REF: Name was automagically refactored
