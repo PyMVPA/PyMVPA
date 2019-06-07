@@ -8,6 +8,9 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA serial feature inclusion algorithm"""
 
+from builtins import str
+from builtins import map
+from builtins import range
 from itertools import product as iterprod
 
 from mvpa2.testing import *
@@ -64,10 +67,10 @@ class SupportFxTests(unittest.TestCase):
         ev = Event(onset=2.5)
 
         # all there?
-        self.assertTrue(ev.items() == [('onset', 2.5)])
+        self.assertTrue(list(ev.items()) == [('onset', 2.5)])
 
         # conversion
-        self.assertTrue(ev.as_descrete_time(dt=2).items() == [('onset', 1)])
+        self.assertTrue(list(ev.as_descrete_time(dt=2).items()) == [('onset', 1)])
         evc = ev.as_descrete_time(dt=2, storeoffset=True)
         self.assertTrue('offset' in evc)
         self.assertTrue(evc['offset'] == 0.5)
@@ -79,15 +82,15 @@ class SupportFxTests(unittest.TestCase):
 
     def test_mof_n_combinations(self):
         self.assertEqual(
-            unique_combinations(range(3), 1), [[0], [1], [2]])
+            unique_combinations(list(range(3)), 1), [[0], [1], [2]])
         self.assertEqual(
             unique_combinations(
-                        range(4), 2),
+                        list(range(4)), 2),
                         [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]]
                         )
         self.assertEqual(
             unique_combinations(
-                        range(4), 3),
+                        list(range(4)), 3),
                         [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]])
 
 
@@ -95,12 +98,12 @@ class SupportFxTests(unittest.TestCase):
     def test_xrandom_unique_combinations(self):
         for n in [4, 5, 10]:
             limit = 4
-            limited = list(xrandom_unique_combinations(range(n), 3, limit))
+            limited = list(xrandom_unique_combinations(list(range(n)), 3, limit))
             self.assertEqual(len(limited), limit)
             # See if we would obtain the same
             for k in [1, 2, 3, int(n / 2), n]:
-                all_random = list(xrandom_unique_combinations(range(n), k))
-                all_ = list(xunique_combinations(range(n), k))
+                all_random = list(xrandom_unique_combinations(list(range(n)), k))
+                all_ = list(xunique_combinations(list(range(n)), k))
                 self.assertEqual(sorted(all_random), sorted(all_))
 
         # test that we are not sampling the same space -- two
@@ -108,8 +111,8 @@ class SupportFxTests(unittest.TestCase):
         # have more than few overlapping samples
         iter_count = 100
         overlapping_count = 0
-        for k in xrange(iter_count):
-            c1, c2 = xrandom_unique_combinations(range(1000), 10, 2)
+        for k in range(iter_count):
+            c1, c2 = xrandom_unique_combinations(list(range(1000)), 10, 2)
             if len(set(c1).intersection(c2)) == 2:
                 overlapping_count += 1
 
@@ -184,7 +187,7 @@ class SupportFxTests(unittest.TestCase):
             # for the second element), and thus np.all(i==i_con) fails.
             # Instead here each element is tested for equality seperately
             # XXX is this an issue?
-            self.assertTrue(np.all((i[j] == i_con[j]) for j in xrange(len(i))))
+            self.assertTrue(np.all((i[j] == i_con[j]) for j in range(len(i))))
 
     @reseed_rng()
     def test_correlation(self):
@@ -239,8 +242,8 @@ class SupportFxTests(unittest.TestCase):
             ('0.0.1~prior.1.2', '0.0.1'),
             ):
           for v1, v2 in itertools.product(
-                  (v1_, unicode(v1_)),
-                  (v2_, unicode(v2_))):
+                  (v1_, str(v1_)),
+                  (v2_, str(v2_))):
             self.assertTrue(SV(v1) < SV(v2),
                             msg="Failed to compare %s to %s" % (v1, v2))
             self.assertTrue(SV(v2) > SV(v1),
@@ -312,13 +315,13 @@ def test_xrandom_iterprod():
     assert_equal(sorted(xrandom_iterprod(10, [1, 2], 'ab')), all_12ab)
 
     # Let's do a few of some long ones, random ones and verify that come out correctly
-    for i in xrange(10):
+    for i in range(10):
         ns = random.randint(1, 5)
-        seqs = [range(random.randint(1, 5)) for i in range(ns)]
+        seqs = [list(range(random.randint(1, 5))) for i in range(ns)]
         all_prods = set(map(tuple, iterprod(*seqs)))
 
         for count in [random.randint(0, 8) for i in range(3)]:
-            real_count = min(count, np.prod(map(len, seqs)))
+            real_count = min(count, np.prod(list(map(len, seqs))))
             r_prods = set(map(tuple, xrandom_iterprod(count, *seqs)))
             assert_equal(len(r_prods), real_count)
 
