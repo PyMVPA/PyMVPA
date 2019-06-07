@@ -770,7 +770,4 @@ def test_bayes_confusion_hyp():
     assert(post_prob[3] - np.sum(post_prob[1:3]) < 0.02)
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(ErrorsTests)
-
 

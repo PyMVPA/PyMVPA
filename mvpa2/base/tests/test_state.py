@@ -332,7 +332,4 @@ class StateTests(unittest.TestCase):
             self.assertEqual(sv.name, sv_dc.name)
             self.assertEqual(sv._instance_index, sv_dc._instance_index)
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(StateTests)
-
 

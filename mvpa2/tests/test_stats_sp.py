@@ -426,8 +426,5 @@ def test_binomial_proportion_ci():
     vec = binomial_proportion_ci(1000, [600,100,900])
     assert_equal(vec.shape, (2, 3))
 
-def suite():  # pragma: no cover
-    """Create the suite"""
-    return unittest.makeSuite(StatsTestsScipy)
 
 

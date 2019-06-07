@@ -599,7 +599,4 @@ class RFETests(unittest.TestCase):
         assert_equal(len(nested_errors), 1)
         assert_equal(len(nested_nfeatures), 1)
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(RFETests)
-
 

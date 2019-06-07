@@ -107,7 +107,4 @@ class CompoundTests(unittest.TestCase):
 
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(CompoundTests)
-
 

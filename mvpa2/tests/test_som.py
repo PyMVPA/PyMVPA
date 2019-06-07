@@ -68,7 +68,4 @@ class SOMMapperTests(unittest.TestCase):
                 self.assertTrue((np.round(rmapped) == colors).all())
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(SOMMapperTests)
-
 

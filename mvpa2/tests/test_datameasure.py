@@ -663,7 +663,4 @@ class SensitivityAnalysersTests(unittest.TestCase):
         assert_array_equal(res.fa.transposed.T, ds.samples)
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(SensitivityAnalysersTests)
-
 

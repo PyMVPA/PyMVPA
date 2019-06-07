@@ -36,7 +36,4 @@ class ProgressTests(unittest.TestCase):
             assert_equal(s, pre + infix + post)
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(SensitivityAnalysersTests)
-
 

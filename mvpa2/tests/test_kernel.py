@@ -345,7 +345,4 @@ class KernelTests(unittest.TestCase):
                             % (did, iid, p, dnorm))
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(KernelTests)
-
 

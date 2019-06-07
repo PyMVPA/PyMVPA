@@ -145,7 +145,4 @@ class CrossValidationTests(unittest.TestCase):
         assert_array_equal(res, [[1]])  # failed perfectly ;-)
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(CrossValidationTests)
-
 

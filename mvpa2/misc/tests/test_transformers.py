@@ -130,7 +130,4 @@ class TransformerTests(unittest.TestCase):
             self.assertEqual(distPValue.ca.positives_recovered[1], 0)
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(TransformerTests)
-
 

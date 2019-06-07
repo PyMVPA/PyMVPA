@@ -279,7 +279,4 @@ class IOHelperTests(unittest.TestCase):
                     "Got the non-unique beast %s" % k)
                     """
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(IOHelperTests)
-
 

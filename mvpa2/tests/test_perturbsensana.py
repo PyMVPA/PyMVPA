@@ -50,7 +50,4 @@ class PerturbationSensitivityAnalyzerTests(unittest.TestCase):
         self.assertTrue(-0.2 < np.mean(map) < 0.2)
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(PerturbationSensitivityAnalyzerTests)
-
 

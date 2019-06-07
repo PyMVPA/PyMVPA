@@ -442,7 +442,4 @@ class HyperAlignmentTests(unittest.TestCase):
         pass
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(HyperAlignmentTests)
-
 

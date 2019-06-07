@@ -226,7 +226,4 @@ class ParamsTests(unittest.TestCase):
         self.assertRaises(ValueError, Parameter, 1.0, constraints='str')
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(ParamsTests)
-
 

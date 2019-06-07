@@ -883,9 +883,6 @@ class _Voxel_Count_Measure(Measure):
 
 
 
-def suite():  # pragma: no cover
-    """Create the suite"""
-    return unittest.makeSuite(SurfVoxelSelectionTests)
 
 
 

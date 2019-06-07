@@ -208,7 +208,4 @@ def _test_gnb_overflow_haxby():   # pragma: no cover
     assert np.all(np.isfinite(res1_est))
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(GNBTests)
-
 

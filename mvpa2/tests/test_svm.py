@@ -214,7 +214,4 @@ class SVMTests(unittest.TestCase):
                         msg="Memory consumption was %d, became %d"
                             % (mem0[1], mem1[1]))
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(SVMTests)
-
 

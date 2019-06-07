@@ -63,7 +63,4 @@ class KNNTests(unittest.TestCase):
         self.assertTrue(not (clf.ca.distances.fa['chunks'] is train.sa['chunks']))
         self.assertTrue(not (clf.ca.distances.fa.chunks is train.sa.chunks))
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(KNNTests)
-
 

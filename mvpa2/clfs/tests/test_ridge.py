@@ -57,7 +57,4 @@ class RidgeRegTests(unittest.TestCase):
         self.assertTrue((p == clf.ca.predictions).all())
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(RidgeRegTests)
-
 

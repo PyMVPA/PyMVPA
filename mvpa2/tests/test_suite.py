@@ -96,7 +96,4 @@ class SuiteTest(unittest.TestCase):
             self.fail('\n'.join(sfailures))
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(SuiteTest)
-
 

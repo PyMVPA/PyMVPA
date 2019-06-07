@@ -74,7 +74,4 @@ class ArgsHelpersTest(unittest.TestCase):
         self.assertTrue(c1.method_decorated() == 124)
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(ArgsHelpersTest)
-
 

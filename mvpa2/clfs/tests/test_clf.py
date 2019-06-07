@@ -1132,7 +1132,4 @@ class ClassifiersTests(unittest.TestCase):
         assert(np.all(np.unique(predictions) == ds.uniquetargets))
 
         
-def suite():  # pragma: no cover
-    return unittest.makeSuite(ClassifiersTests)
-
 

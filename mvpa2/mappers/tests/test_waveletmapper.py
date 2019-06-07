@@ -152,7 +152,4 @@ class WaveletMappersTests(unittest.TestCase):
                     "Got %s and %s" % (d3d_wd, d3d_wd_))
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(WaveletMappersTests)
-
 

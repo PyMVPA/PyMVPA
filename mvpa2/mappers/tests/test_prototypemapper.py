@@ -127,7 +127,4 @@ class PrototypeMapperTests(unittest.TestCase):
         assert_array_equal(self.pm.proj.shape, (len(self.dataset.samples), len(self.prototypes_random)*len(self.similarities)))
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(PrototypeMapperTests)
-
 

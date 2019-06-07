@@ -94,7 +94,4 @@ class TestExternals(unittest.TestCase):
         self.assertEqual(externals.versions['shogun'], None)
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(TestExternals)
-
 

@@ -869,7 +869,4 @@ class SearchlightTests(unittest.TestCase):
             assert_array_equal(out.samples, out_inplace.samples)
             assert_array_equal(out.fa.center_ids, out_inplace.fa.center_ids)
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(SearchlightTests)
-
 

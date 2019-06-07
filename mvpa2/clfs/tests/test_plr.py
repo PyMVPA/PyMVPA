@@ -47,7 +47,4 @@ class PLRTests(unittest.TestCase):
         self.assertTrue(np.array(clf.ca.estimates).shape == np.array(p).shape)
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(PLRTests)
-
 

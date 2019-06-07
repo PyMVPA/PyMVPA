@@ -118,7 +118,4 @@ class ReportTest(unittest.TestCase):
         shutil.rmtree(dirname, ignore_errors=True)
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(ReportTest)
-
 

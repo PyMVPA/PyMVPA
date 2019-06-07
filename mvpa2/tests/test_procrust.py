@@ -164,6 +164,3 @@ class ProcrusteanMapperTests(unittest.TestCase):
                             'but %f > %f' % (norm4, norm2))
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(ProcrusteanMapperTests)
-

@@ -88,7 +88,4 @@ class IFSTests(unittest.TestCase):
         self.assertTrue((resds.samples[:,0] == signal.samples[:,0]).all())
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(IFSTests)
-
 

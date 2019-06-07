@@ -414,7 +414,4 @@ class SplitterTests(unittest.TestCase):
             assert_true(is_the_same_base(s[1].samples, step_ds.samples))
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(SplitterTests)
-
 

@@ -181,7 +181,4 @@ class DochelpersTests(unittest.TestCase):
         self.assertEqual(strip_strid("a#140136298269872 b#140136298269872"), "a b") # multiple
 
 # TODO: more unittests
-def suite():  # pragma: no cover
-    return unittest.makeSuite(DochelpersTests)
-
 

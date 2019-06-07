@@ -345,7 +345,4 @@ def test_get_rng():
     assert(some_rng is get_rng(some_rng))
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(SupportFxTests)
-
 

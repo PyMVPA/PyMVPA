@@ -36,7 +36,4 @@ class CmdlineHelpersTest(unittest.TestCase):
         v = split_comma_semicolon_lists(s, dtype=dtype)
         assert_equal(v, t)
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(CmdlineHelpersTest)
-
 

@@ -175,8 +175,5 @@ def test_tsboxplot():
     assert_equal(outlier.mask.sum(), np.prod(outlier.shape) - 1)
     assert_true(outlier.mask[2,-1] == False)
 
-def suite():  # pragma: no cover
-    """Create the suite"""
-    return unittest.makeSuite(StatsTests)
 
 

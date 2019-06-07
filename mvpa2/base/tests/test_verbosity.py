@@ -179,7 +179,4 @@ class VerboseOutputTest(unittest.TestCase):
 
         # TODO: More tests needed for debug output testing
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(VerboseOutputTest)
-
 

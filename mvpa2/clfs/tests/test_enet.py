@@ -70,7 +70,4 @@ class ENETTests(unittest.TestCase):
         self.assertTrue(sens.shape == (data.nfeatures,))
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(ENETTests)
-
 

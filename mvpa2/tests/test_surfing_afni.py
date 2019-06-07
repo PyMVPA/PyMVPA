@@ -680,9 +680,6 @@ class SurfTests(unittest.TestCase):
 
 
 
-def suite():  # pragma: no cover
-    """Create the suite"""
-    return unittest.makeSuite(SurfTests)
 
 
 

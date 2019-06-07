@@ -151,7 +151,4 @@ class RegressionsTests(unittest.TestCase):
         # TODO: extend the test -- checking for validity of sensitivities etc
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(RegressionsTests)
-
 
