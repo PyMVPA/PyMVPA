@@ -195,7 +195,7 @@ def collect_nose_tests(verbosity=1):
         ]
     """Return list of tests which are pure nose-based
     """
-
+    from mvpa2.base import cfg
     if not cfg.getboolean('tests', 'lowmem', default='no'):
         tests += ['test_atlases']
 
