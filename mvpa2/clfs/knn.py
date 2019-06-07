@@ -7,7 +7,11 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """k-Nearest-Neighbour classifier."""
+from __future__ import division
 
+from builtins import str
+from builtins import zip
+from past.utils import old_div
 __docformat__ = 'restructuredtext'
 
 import sys
@@ -138,7 +142,7 @@ class kNN(Classifier):
             # compute the relative proportion of samples belonging to each
             # class (do it in one loop to improve speed and reduce readability
             weights = \
-                [ 1.0 - ((labels == label).sum() / Nlabels) \
+                [ 1.0 - (old_div((labels == label).sum(), Nlabels)) \
                     for label in uniquelabels ]
             self.__weights = dict(zip(uniquelabels, weights))
         else:
@@ -210,7 +214,7 @@ class kNN(Classifier):
             # the maximum, but this piece should be the least
             # cpu-intensive while distances computation should consume
             # the most. Also it would allow to look and break the ties
-            votes_reversed = sorted([(v, k) for k, v in votes.iteritems()],
+            votes_reversed = sorted([(v, k) for k, v in votes.items()],
                                     reverse=True)
             # check for ties
             max_vote, max_vote_label = votes_reversed[0]

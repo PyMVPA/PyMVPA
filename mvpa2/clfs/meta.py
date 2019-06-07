@@ -19,6 +19,10 @@ Meta Classifiers can be grouped according to their function as
 
 """
 
+from builtins import str
+from builtins import zip
+from builtins import range
+from past.builtins import basestring
 __docformat__ = 'restructuredtext'
 
 import numpy as np
@@ -411,10 +415,10 @@ class MaximalVote(PredictionsCombiner):
                 )
             predictions = clf.ca.predictions
             if all_label_counts is None:
-                all_label_counts = [ {} for i in xrange(len(predictions)) ]
+                all_label_counts = [ {} for i in range(len(predictions)) ]
 
             # for every sample
-            for i in xrange(len(predictions)):
+            for i in range(len(predictions)):
                 prediction = predictions[i]
                 # XXX fishy location due to literal labels,
                 # TODO simplify assumptions and logic
@@ -430,13 +434,13 @@ class MaximalVote(PredictionsCombiner):
 
         predictions = []
         # select maximal vote now for each sample
-        for i in xrange(len(all_label_counts)):
+        for i in range(len(all_label_counts)):
             label_counts = all_label_counts[i]
             # lets do explicit search for max so we know
             # if it is unique
             maxk = []                   # labels of elements with max vote
             maxv = -1
-            for k, v in label_counts.iteritems():
+            for k, v in label_counts.items():
                 if v > maxv:
                     maxk = [k]
                     maxv = v
@@ -770,7 +774,7 @@ class TreeClassifier(ProxyClassifier):
         # accordingly
 
         self._groups = groups
-        self._index2group = groups.keys()
+        self._index2group = list(groups.keys())
 
         # All processing of groups needs to be handled within _train
         # since labels_map is not available here and definition
@@ -780,7 +784,7 @@ class TreeClassifier(ProxyClassifier):
         #     no longer the case?
 
         # We can only assign respective classifiers
-        self.clfs = dict([(gk, c) for gk, (ls, c) in groups.iteritems()])
+        self.clfs = dict([(gk, c) for gk, (ls, c) in groups.items()])
         """Dictionary of classifiers used by the groups"""
 
 
@@ -794,7 +798,7 @@ class TreeClassifier(ProxyClassifier):
 
     def __str__(self, *args, **kwargs):
         return super(TreeClassifier, self).__str__(
-            ', '.join(['%s: %s' % i for i in self.clfs.iteritems()]),
+            ', '.join(['%s: %s' % i for i in self.clfs.items()]),
             *args, **kwargs)
 
     def summary(self):
@@ -803,7 +807,7 @@ class TreeClassifier(ProxyClassifier):
         s = super(TreeClassifier, self).summary()
         if self.trained:
             s += "\n Node classifiers summaries:"
-            for i, (clfname, clf) in enumerate(self.clfs.iteritems()):
+            for i, (clfname, clf) in enumerate(self.clfs.items()):
                 s += '\n + %d %s clf: %s' % \
                      (i, clfname, clf.summary().replace('\n', '\n |'))
         return s
@@ -879,7 +883,7 @@ class TreeClassifier(ProxyClassifier):
         #     signal contain all the other categories data? probably not
         #     since then it would lead to undetermined prediction (which
         #     might be not a bad thing altogether...)
-        for gk in groups.iterkeys():
+        for gk in groups.keys():
             clf = clfs[gk]
             group_labels = groups_labels[gk]
             if clf is None: # Trailing node
@@ -1031,7 +1035,7 @@ class BinaryClassifier(ProxyClassifier):
         # data, an just store/restore labels. But it really should be done
         # within Dataset.select_samples
         if len(idlabels) == dataset.nsamples \
-            and [x[0] for x in idlabels] == range(dataset.nsamples):
+            and [x[0] for x in idlabels] == list(range(dataset.nsamples)):
             # the last condition is not even necessary... just overly
             # cautious
             datasetselected = dataset.copy(deep=False)   # no selection is needed
@@ -1198,10 +1202,10 @@ class MulticlassClassifier(CombinedClassifier):
             #   although we specify poslabels in constructor first, here we
             #   place neglabels first since that is how we treat pairs e.g.
             #   in sensitivities -- from neg (or 0) to positive (or 1)
-            pairs = zip(
+            pairs = list(zip(
                 np.array([np.squeeze(clf.neglabels) for clf in self.clfs]).tolist(),
                 np.array([np.squeeze(clf.poslabels) for clf in self.clfs]).tolist()
-            )
+            ))
             ca.raw_predictions_ds = raw_predictions_ds = \
                 Dataset(np.array(raw_predictions).T,
                         fa={self.space: asobjarray(pairs)})
@@ -1552,10 +1556,10 @@ class RegressionAsClassifier(ProxyClassifier):
                 raise ValueError(
                       "Provided centroids with keys %s do not cover all "
                       "labels provided during training: %s"
-                      % (self.centroids.keys(), ul)
+                      % (list(self.centroids.keys()), ul)
                 )
             # override with superset
-            ul = self.centroids.keys()
+            ul = list(self.centroids.keys())
             centers = np.array([self.centroids[k] for k in ul])
 
         #self._trained_ul = ul

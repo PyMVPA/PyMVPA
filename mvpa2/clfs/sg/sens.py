@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Provide sensitivity measures for sg's SVM."""
 
+from builtins import range
 __docformat__ = 'restructuredtext'
 
 import numpy as np
@@ -74,8 +75,8 @@ class LinearSVMWeights(Sensitivity):
             sens_labels = []
             isvm = 0                    # index for svm among known
 
-            for i in xrange(nclabels):
-                for j in xrange(i+1, nclabels):
+            for i in range(nclabels):
+                for j in range(i+1, nclabels):
                     sgsvmi = sgsvm.get_svm(isvm)
                     labels_tuple = (clabels[i], clabels[j])
                     # Since we gave the labels in incremental order,

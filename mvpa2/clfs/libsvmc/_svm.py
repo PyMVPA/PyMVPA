@@ -7,7 +7,11 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Python interface to the SWIG-wrapped libsvm"""
+from __future__ import division
 
+from builtins import str
+from builtins import range
+from builtins import object
 __docformat__ = 'restructuredtext'
 
 
@@ -57,11 +61,11 @@ def free_double_array(x):
 
 
 def int_array_to_list(x, n):
-    return [svmc.int_getitem(x, i) for i in xrange(n)]
+    return [svmc.int_getitem(x, i) for i in range(n)]
 
 
 def double_array_to_list(x, n):
-    return [svmc.double_getitem(x, i) for i in xrange(n)]
+    return [svmc.double_getitem(x, i) for i in range(n)]
 
 
 class SVMParameter(object):
@@ -92,7 +96,7 @@ class SVMParameter(object):
 
         def __init__(self, params):
             self.param = svmc.svm_parameter()
-            for attr, val in params.items():
+            for attr, val in list(params.items()):
                 # adjust val if necessary
                 if attr == 'weight_label':
                     #self.__weight_label_len = len(val)
@@ -130,7 +134,7 @@ class SVMParameter(object):
         return self._params
 
     def __str__(self):
-        return "SVMParameter: %s" % `self._params`
+        return "SVMParameter: %s" % repr(self._params)
 
     def __copy__(self):
         out = SVMParameter()
@@ -169,11 +173,11 @@ class SVMParameter(object):
 
     @classmethod
     def _register_properties(cls):
-        for key in cls.default_parameters.keys():
-            exec "%s.%s = property(fget=%s, fset=%s)"  % \
+        for key in list(cls.default_parameters.keys()):
+            exec("%s.%s = property(fget=%s, fset=%s)"  % \
                  (cls.__name__, key,
                   "lambda self:self._params['%s']" % key,
-                  "lambda self,val:self._set_parameter('%s', val)" % key)
+                  "lambda self,val:self._set_parameter('%s', val)" % key))
 
 
 SVMParameter._register_properties()
@@ -188,13 +192,13 @@ def seq_to_svm_node(x):
     # YYY Use isinstance  instead of type...is so we could
     #     easily use derived subclasses
     if isinstance(x, np.ndarray):
-        iter_range = range(length)
+        iter_range = list(range(length))
         iter_values = x
     elif isinstance(x, dict):
         iter_range = list(x).sort()
-        iter_values = np.ndarray(x.values())
+        iter_values = np.ndarray(list(x.values()))
     elif is_sequence_type(x):
-        iter_range = range(length)
+        iter_range = list(range(length))
         iter_values = np.asarray(x)
     else:
         raise TypeError("data must be a mapping or an ndarray or a sequence")
@@ -210,20 +214,20 @@ def seq_to_svm_node(x):
 
 
 
-class SVMProblem:
+class SVMProblem(object):
     def __init__(self, y, x):
         assert len(y) == len(x)
         self.prob = prob = svmc.svm_problem()
         self.size = size = len(y)
 
         self.y_array = y_array = svmc.new_double(size)
-        for i in xrange(size):
+        for i in range(size):
             svmc.double_setitem(y_array, i, y[i])
 
         self.x_matrix = x_matrix = svmc.svm_node_matrix(size)
-        data = [None for i in xrange(size)]
+        data = [None for i in range(size)]
         maxlen = 0
-        for i in xrange(size):
+        for i in range(size):
             x_i = x[i]
             lx_i = len(x_i)
             data[i] = d = seq_to_svm_node(x_i)
@@ -248,7 +252,7 @@ class SVMProblem:
 
     def __del__(self):
         if __debug__ and debug is not None:
-            debug('SVM_', 'Destroying libsvm.SVMProblem %s' % `self`)
+            debug('SVM_', 'Destroying libsvm.SVMProblem %s' % repr(self))
 
         del self.prob
         if svmc is not None:
@@ -261,7 +265,7 @@ class SVMProblem:
 
 
 
-class SVMModel:
+class SVMModel(object):
     def __init__(self, arg1, arg2=None):
         if arg2 is None:
             # create model from file
@@ -297,9 +301,9 @@ class SVMModel:
         """
         ret = '<SVMModel:'
         try:
-            ret += ' type = %s, ' % `self.svm_type`
+            ret += ' type = %s, ' % repr(self.svm_type)
             ret += ' number of classes = %d (%s), ' \
-                   % ( self.nr_class, `self.labels` )
+                   % ( self.nr_class, repr(self.labels) )
         except:
             pass
         return ret+'>'
@@ -366,11 +370,11 @@ class SVMModel:
     def predict_probability(self, x):
         #c code will do nothing on wrong type, so we have to check ourself
         if self.svm_type == NU_SVR or self.svm_type == EPSILON_SVR:
-            raise TypeError, "call get_svr_probability or get_svr_pdf " \
-                             "for probability output of regression"
+            raise TypeError("call get_svr_probability or get_svr_pdf " \
+                             "for probability output of regression")
         elif self.svm_type == ONE_CLASS:
-            raise TypeError, "probability not supported yet for one-class " \
-                             "problem"
+            raise TypeError("probability not supported yet for one-class " \
+                             "problem")
         #only C_SVC, NU_SVC goes in
         if not self.probability:
             raise TypeError("model does not support probability estimates")
@@ -393,8 +397,8 @@ class SVMModel:
         #leave the Error checking to svm.cpp code
         ret = svmc.svm_get_svr_probability(self.model)
         if ret == 0:
-            raise TypeError, "not a regression model or probability " \
-                             "information not available"
+            raise TypeError("not a regression model or probability " \
+                             "information not available")
         return ret
 
 
@@ -416,7 +420,7 @@ class SVMModel:
                   (svmc is not None \
                    and hasattr(svmc, '__version__') \
                    and svmc.__version__ or "unknown",
-                   `self`))
+                   repr(self)))
         try:
             svmc.svm_destroy_model_helper(self.model)
             del self.model

@@ -12,6 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
+from itertools import chain
 import operator
 
 from mvpa2.base import warning
@@ -150,8 +151,7 @@ class SVM(_SVM):
         TRANSLATEDICT = {'epsilon': 'eps',
                          'tube_epsilon': 'p'}
         args = []
-        for paramname, param in self.params.items() \
-                + self.kernel_params.items():
+        for paramname, param in chain(self.params.items(), self.kernel_params.items()):
             if paramname in TRANSLATEDICT:
                 argname = TRANSLATEDICT[paramname]
             elif paramname in _svm.SVMParameter.default_parameters:

@@ -7,7 +7,11 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA basic Classifiers"""
+from __future__ import division
+from __future__ import absolute_import
 
+from builtins import str
+from builtins import range
 import numpy as np
 
 from mvpa2.testing import *
@@ -663,7 +667,7 @@ class ClassifiersTests(unittest.TestCase):
         _ = cv(ds)
         #print clf.descr, clf.values[0]
         # basic test either we get 1 set of values per each sample
-        self.assertEqual(len(clf.ca.estimates), ds.nsamples/2)
+        self.assertEqual(len(clf.ca.estimates), ds.nsamples//2)
 
         clf.ca.reset_changed_temporarily()
 
@@ -739,7 +743,7 @@ class ClassifiersTests(unittest.TestCase):
     @sweepargs(clf=clfswh['svm', '!meta'])
     def test_svms(self, clf):
         knows_probabilities = \
-            'probabilities' in clf.ca.keys() and clf.params.probability
+            'probabilities' in list(clf.ca.keys()) and clf.params.probability
         enable_ca = ['estimates']
         if knows_probabilities:
             enable_ca += ['probabilities']
@@ -831,7 +835,7 @@ class ClassifiersTests(unittest.TestCase):
                     " than to old one. Got corrcoef=%s" % (corr_old))
 
         # Check sequential retraining/retesting
-        for i in xrange(3):
+        for i in range(3):
             flag = bool(i!=0)
             # ok - on 1st call we should train/test, then retrain/retest
             # and we can't compare for closinest to old result since
@@ -958,7 +962,7 @@ class ClassifiersTests(unittest.TestCase):
                 (clf, traindata.samples, clf.ca.training_stats.percent_correct))
 
             # and we must be able to predict every original sample thus
-            for i in xrange(traindata.nsamples):
+            for i in range(traindata.nsamples):
                 sample = traindata.samples[i,:]
                 predicted = clf.predict([sample])
                 self.assertEqual([predicted], traindata.targets[i],
@@ -993,7 +997,7 @@ class ClassifiersTests(unittest.TestCase):
             self.assertTrue(repr(clf) != "")
 
             self.assertEqual(clf.ca.distances.shape,
-                                 (ds.nsamples / 2, nlabels))
+                                 (ds.nsamples // 2, nlabels))
 
             #print "Using %s " % regr, error
             # Just validate that everything is ok
@@ -1020,7 +1024,7 @@ class ClassifiersTests(unittest.TestCase):
         accs = []
         k = 1                           # for kNN
         nf = 1                          # for NFoldPartitioner
-        for i in xrange(1):          # # of random runs
+        for i in range(1):          # # of random runs
             ds.samples = np.random.randn(*ds.shape)
             #
             # There are 3 ways to accomplish needed goal
@@ -1133,5 +1137,5 @@ def suite():  # pragma: no cover
 
 
 if __name__ == '__main__':  # pragma: no cover
-    import runner
+    from . import runner
     runner.run()

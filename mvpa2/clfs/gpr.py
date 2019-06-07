@@ -8,7 +8,9 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Gaussian Process Regression (GPR)."""
+from __future__ import division
 
+from builtins import range
 __docformat__ = 'restructuredtext'
 
 
@@ -60,7 +62,7 @@ def _SLcholesky_autoreg(C, nsteps=None, **kwargs):
     if nsteps is None:
         nsteps = -int(np.floor(np.log10(np.finfo(float).eps)))
     result = None
-    for step in xrange(nsteps):
+    for step in range(nsteps):
         epsilon_value = (10**step) * np.finfo(C.dtype).eps
         epsilon = epsilon_value * np.eye(C.shape[0])
         try:
