@@ -7,7 +7,10 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Procrustean rotation mapper"""
+from __future__ import division
 
+from builtins import zip
+from builtins import range
 __docformat__ = 'restructuredtext'
 
 import numpy as np
@@ -108,16 +111,16 @@ class ProcrusteanMapper(ProjectionMapper):
 
         # Check the sizes
         if sn != tn:
-            raise ValueError, "Data for both spaces should have the same " \
+            raise ValueError("Data for both spaces should have the same " \
                   "number of samples. Got %d in source and %d in target space" \
-                  % (sn, tn)
+                  % (sn, tn))
 
         # Sums of squares
         ssqs = [np.sum(d**2, axis=0) for d in datas]
 
         # XXX check for being invariant?
         #     needs to be tuned up properly and not raise but handle
-        for i in xrange(2):
+        for i in range(2):
             if np.all(ssqs[i] <= np.abs((np.finfo(datas[i].dtype).eps
                                        * sn * means[i] )**2)):
                 raise ValueError("For now do not handle invariant in time datasets")
@@ -133,10 +136,10 @@ class ProcrusteanMapper(ProjectionMapper):
             if params.reduction:
                 normed[1] = np.hstack( (normed[1], np.zeros((sn, sm-tm))) )
             else:
-                raise ValueError, "reduction=False, so mapping from " \
+                raise ValueError("reduction=False, so mapping from " \
                       "higher dimensionality " \
                       "source space is not supported. Source space had %d " \
-                      "while target %d dimensions (features)" % (sm, tm)
+                      "while target %d dimensions (features)" % (sm, tm))
 
         source, target = normed
         if params.oblique:

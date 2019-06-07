@@ -7,7 +7,11 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA ..."""
+from __future__ import division
+from __future__ import print_function
 
+from builtins import zip
+from builtins import range
 import unittest
 import numpy as np
 
@@ -57,7 +61,7 @@ class HyperAlignmentTests(unittest.TestCase):
 
         # now lets compose derived datasets by using some random
         # rotation(s)
-        for i in xrange(n):
+        for i in range(n):
             ## if False: # i == ref_ds:
             #     # Do not rotate the target space so we could check later on
             #     # if we transform back nicely
@@ -194,7 +198,7 @@ class HyperAlignmentTests(unittest.TestCase):
         # rotate data
         nf = dss_rotated[0].nfeatures
         dss_rotated = [random_affine_transformation(dss_rotated[i])
-                       for i in xrange(n)]
+                       for i in range(n)]
         # Test if it is close to doing hpal+SVD in sequence outside hpal
         # First, as we do in sequence outside hpal
         ha = Hyperalignment()
@@ -331,12 +335,12 @@ class HyperAlignmentTests(unittest.TestCase):
         mean2 = arr[0]
         for num in arr[1:]:
             mean2 = mean_xy(mean2, num)
-        np.testing.assert_allclose(mean2, sum(arr * weights) / np.sum(weights))
+        np.testing.assert_allclose(mean2, sum(arr * weights) / float(np.sum(weights)))
 
 
     def _test_on_swaroop_data(self):  # pragma: no cover
         #
-        print "Running swaroops test on data we don't have"
+        print("Running swaroops test on data we don't have")
         #from mvpa2.datasets.miscfx import zscore
         #from mvpa2.featsel.helpers import FixedNElementTailSelector
         #   or just for lazy ones like yarik atm
@@ -396,7 +400,7 @@ class HyperAlignmentTests(unittest.TestCase):
         for sub in subj:
             mkdg_ds.append(fmri_dataset(
                 samples=sub+'_mkdg.nii.gz', targets=md_labels,
-                chunks=np.repeat(range(8), 192), mask=sub+'_mask_vt.nii.gz'))
+                chunks=np.repeat(list(range(8)), 192), mask=sub+'_mask_vt.nii.gz'))
 
         m = mean_group_sample(['targets', 'chunks'])
 
@@ -426,19 +430,19 @@ class HyperAlignmentTests(unittest.TestCase):
             wsc = cvterr(sd)
             within_acc_mapped.append(1-np.mean(wsc))
 
-        print np.mean(within_acc)
-        print np.mean(within_acc_mapped)
+        print(np.mean(within_acc))
+        print(np.mean(within_acc_mapped))
 
         mkdg_ds_all = vstack(mkdg_ds_mapped)
-        mkdg_ds_all.sa['subject'] = np.repeat(range(10), 56)
+        mkdg_ds_all.sa['subject'] = np.repeat(list(range(10)), 56)
         mkdg_ds_all.sa['chunks'] = mkdg_ds_all.sa['subject']
 
         bsc = cvterr(mkdg_ds_all)
-        print 1-np.mean(bsc)
+        print(1-np.mean(bsc))
         mkdg_all = vstack(mkdg_ds_fs)
-        mkdg_all.sa['chunks'] = np.repeat(range(10), 56)
+        mkdg_all.sa['chunks'] = np.repeat(list(range(10)), 56)
         bsc_orig = cvterr(mkdg_all)
-        print 1-np.mean(bsc_orig)
+        print(1-np.mean(bsc_orig))
         pass
 
 

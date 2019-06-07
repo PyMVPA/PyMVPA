@@ -1,7 +1,7 @@
 """ctypes wrapper for LAPACK svd implementation - DGESVD"""
 import numpy
 
-from mvpa2.base import externals
+from mvpa2.base import externals, warning
 from mvpa2.base.types import as_char
 
 if externals.exists('ctypes', raise_=True):
@@ -80,9 +80,9 @@ def svd(a, full_matrices=True, algo='svd', **kwargs):
                 byref(ldvt), work, byref(lwork), iwork, byref(info))
         
     if info.value >= 1:
-        print "DBSQR did not converge for %i superdiagonals"%(info.value)
+        warning("DBSQR did not converge for %i superdiagonals" % (info.value))
     #    raise LinAlgError
     #if info.value <= -1:
-    #    print "Interesting!!! \nQuick, go find swaroop"
+    #    warning("Interesting!!! \nQuick, go find swaroop")
     if info.value == 0:
         return vt, numpy.frombuffer(s), u
