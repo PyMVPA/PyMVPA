@@ -34,7 +34,10 @@ from mvpa2.base.dochelpers import safe_str
 from mvpa2.datasets.sources import load_example_fmri_dataset
 from mvpa2.mappers.fx import mean_sample
 from mvpa2.mappers.boxcar import BoxcarMapper
-from mvpa2.misc.support import SmartVersion
+from mvpa2.misc.support import (
+    PY2,
+    SmartVersion,
+)
 
 from mvpa2 import pymvpa_dataroot
 from mvpa2.testing import sweepargs
@@ -150,6 +153,8 @@ def test_various_special_cases(fname):
 
 @with_tempfile()
 def test_class_oldstyle(fname):
+    if not PY2:
+        raise SkipTest("all classes are 'new' style in python3")
     # AttributeError: CustomOld instance has no attribute '__reduce__'
 
     # old style classes do not define reduce -- sure thing we might
