@@ -9,6 +9,14 @@
 """Support function -- little helpers in everyday life"""
 from __future__ import division
 
+from past.builtins import cmp
+from builtins import map
+from builtins import next
+from builtins import zip
+from builtins import bytes
+from builtins import str
+from builtins import range
+from builtins import object
 __docformat__ = 'restructuredtext'
 
 from future import standard_library
