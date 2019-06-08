@@ -7,7 +7,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Convinience functions to generate/update datasets for regression testing
+"""Convenience functions to generate/update datasets for regression testing
 """
 
 __docformat__ = 'restructuredtext'
