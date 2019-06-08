@@ -793,6 +793,13 @@ class ClassWithCollections(with_metaclass(AttributesCollector, object)):
           be 'doc' -- no need to drag classes docstring imho.
     """
 
+    # Even though we are using future's hack `with_metaclass` to provide
+    # PY23 compatibility, our code in hdf5.py depends on being able to tell
+    # if the class name (AttributesCollector here) is a metaclass, so we
+    # just override it to be a "type". __metaclass__ here shouldn't (?) be used
+    # by PY3
+    __metaclass__ = AttributesCollector
+
     def __new__(cls, *args, **kwargs):
         """Instantiate ClassWithCollections object
         """
