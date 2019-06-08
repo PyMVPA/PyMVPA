@@ -48,7 +48,7 @@ import os.path as osp
 import mvpa2
 from mvpa2.base import externals
 from mvpa2.base.types import asobjarray
-from mvpa2.misc.support import builtins_mod
+from mvpa2.misc.support import builtins_mod, PY2
 
 if __debug__:
     from mvpa2.base import debug
@@ -301,8 +301,6 @@ def _recon_customobj_customrecon(hdf, memo):
 
 
 def _import_from_thin_air(mod_name, importee, cls_name=None):
-    # to overcome  TypeError: Item in ``from list'' must be str, not unicode
-    importee = str(importee)
     if cls_name is None:
         cls_name = importee
     try:
@@ -310,6 +308,10 @@ def _import_from_thin_air(mod_name, importee, cls_name=None):
             # we might have got it from the hdf saved using another version
             # of python, so let's map
             mod_name = builtins_mod
+        if PY2 and isinstance(importee, unicode):
+            # to overcome  TypeError: Item in ``from list'' must be str, not unicode
+            importee = importee.encode()
+
         mod = __import__(mod_name, fromlist=[importee])
     except ImportError as e:
         if mod_name.startswith('mvpa') and not mod_name.startswith('mvpa2'):
@@ -328,7 +330,7 @@ def _import_from_thin_air(mod_name, importee, cls_name=None):
 
 
 def _recon_customobj_defaultrecon(hdf, memo):
-    """Reconstruct a custom object from HDF using the default recontructor"""
+    """Reconstruct a custom object from HDF using the default reconstructor"""
     cls_name = hdf.attrs['class'].decode()
     mod_name = hdf.attrs['module'].decode()
     if __debug__:
@@ -338,7 +340,7 @@ def _recon_customobj_defaultrecon(hdf, memo):
 
     # create the object
     # use specialized __new__ if necessary or beneficial
-    pcls, = _get_subclass_entry(cls, ((dict,), (list,), (tuple,), (object,)),
+    pcls, = _get_subclass_entry(cls, ((dict,), (list,), (tuple,), (str,), (object,)),
                                 "Do not know how to create instance of %(cls)s")
     obj = pcls.__new__(cls)
     # insert any stored object state
