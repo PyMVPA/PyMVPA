@@ -43,7 +43,7 @@ from mvpa2.testing.regress import get_testing_fmri_dataset_filename
 class HDFDemo(object):
     pass
 
-class CustomOldStyle(object):
+class CustomOldStyle:
     pass
 
 @nodebug(['ID_IN_REPR', 'MODULE_IN_REPR'])
@@ -348,8 +348,8 @@ _numpy_objs += [
 @sweepargs(obj=_python_objs + _numpy_objs)
 @with_tempfile()
 def test_save_load_python_objs(fname, obj):
-    """Test saving objects of various types
-    """
+    # Test saving objects of various types
+
     # try:
     #     print type(obj), " ",
     #     print obj # , obj.shape
@@ -482,8 +482,9 @@ def test_save_load_FlattenMapper(f):
 def test_versions(f):
     h5save(f, [])
     hdf = h5py.File(f, 'r')
-    assert_equal(hdf.attrs.get('__pymvpa_hdf5_version__'), '2')
-    assert_equal(hdf.attrs.get('__pymvpa_version__'), mvpa2.__version__)
+    # we store them encoded
+    assert_equal(hdf.attrs.get('__pymvpa_hdf5_version__'), '2'.encode())
+    assert_equal(hdf.attrs.get('__pymvpa_version__'), mvpa2.__version__.encode())
 
 def test_present_fmri_dataset():
     skip_if_no_external('nibabel')
