@@ -38,6 +38,7 @@ from builtins import range
 
 __docformat__ = 'restructuredtext'
 
+import inspect
 import numpy as np
 import h5py
 import h5py.highlevel  # >= 2.8.0, https://github.com/h5py/h5py/issues/1063
@@ -48,6 +49,7 @@ import os.path as osp
 import mvpa2
 from mvpa2.base import externals
 from mvpa2.base.types import asobjarray
+from mvpa2.base.dochelpers import safe_str
 from mvpa2.misc.support import builtins_mod, PY2
 
 if __debug__:
@@ -245,6 +247,36 @@ def _update_obj_state_from_hdf(obj, hdf, memo):
         if __debug__:
             debug('HDF5', "Updated %i state items." % len(state))
 
+    if 'reduce_items' in hdf:
+        if __debug__:
+            debug('HDF5', "Populating instance items.")
+        items = _hdf_list_to_obj(hdf['reduce_items'], memo)
+        if items:
+            if hasattr(obj, 'extend'):
+                obj.extend(items)
+            elif hasattr(obj, 'append'):
+                for item in items:
+                    obj.append(item)
+            else:
+                raise TypeError(
+                    '%s has neither .extend nor .append so cannot add %d items'
+                    % (safe_str(obj), len(items))
+                )
+
+    if 'reduce_pairs' in hdf:
+        if __debug__:
+            debug('HDF5', "Populating instance reduce_pairs.")
+        items = _hdf_list_to_obj(hdf['reduce_pairs'], memo)
+        if items:
+            if hasattr(obj, '__setitem__'):
+                for k, v in items:
+                    obj.__setitem__(k, v)
+            else:
+                raise TypeError(
+                    '%s has no __setitem__ so cannot set %d items'
+                    % (safe_str(obj), len(items))
+                )
+
 
 def _recon_customobj_customrecon(hdf, memo):
     """Reconstruct a custom object from HDF using a custom recontructor"""
@@ -377,7 +409,7 @@ def _hdf_dict_to_obj(hdf, memo, skip=None):
     if skip is None:
         skip = []
     # legacy compat code
-    if not 'items' in hdf:
+    if 'items' not in hdf:
         items_container = hdf
     # end of legacy compat code
     else:
@@ -693,7 +725,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
                 hdf.create_dataset(name, None, None, obj, **kwargs)
         except TypeError as exc:
             exc_str = str(exc)
-            if ("No conversion path for dtype" in exc_str):
+            if "No conversion path for dtype" in exc_str:
                 is_a_view = True
             else:
                 # we know no better
@@ -884,18 +916,33 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
         args = grp.create_group('rcargs')
         _seqitems_to_hdf(pieces[1], args, memo, **kwargs)
 
-    # pull all remaining data from __reduce__
-    if pieces is not None and len(pieces) > 2:
-        # there is something in the state
-        state = pieces[2]
+    if pieces and len(pieces) > 5:
+        raise NotImplementedError(
+            "__reduce__ returned %d components, ATM we know only how to handle "
+            "up to 5"
+            % len(pieces)
+        )
+    # pull all remaining data from __reduce__ pieces
+    # see https://docs.python.org/3/library/pickle.html#object.__reduce__
+    # for more info
+    # Adding reduce_ prefix to avoid conflict with 'items', and retaining
+    # 'state' for compatibility
+    for idx, thing in enumerate(['state', 'reduce_items', 'reduce_pairs'], 2):
+        if pieces is None or len(pieces) <= idx:
+            break
+        values = pieces[idx]
+        if values is None:
+            continue  # Do not bother with None
+        if thing in ['reduce_items', 'reduce_pairs']:
+            # must be a generator -- get all the items
+            values = list(values)
         if __debug__:
-            if state is not None:
-                debug('HDF5', "Store object state (%i items)." % len(state))
-            else:
-                debug('HDF5', "Storing object with None state")
+            debug('HDF5', "Store object %s (%i values)." % (thing, len(values)))
         # need to set noid since state dict is unique to an object
-        obj2hdf(grp, state, name='state', memo=memo, noid=True,
-                **kwargs)
+        # But in principle may be we should not set noid for any of them
+        # and rely for the recursive call to figure it out since those
+        # could be potentially reused across instances
+        obj2hdf(grp, values, name=thing, memo=memo, noid=True, **kwargs)
 
 
 def h5save(filename, data, name=None, mode='w', mkdir=True, **kwargs):
