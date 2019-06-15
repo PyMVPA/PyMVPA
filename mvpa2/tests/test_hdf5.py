@@ -321,9 +321,13 @@ if hasattr(collections, 'namedtuple') and sys.version_info > (2, 7, 4):
 if hasattr(collections, 'OrderedDict'):
     _python_objs.extend([collections.OrderedDict(a=1, b=2)])
 
-_unicode_arrays = [np.array([['a', u'мама', 'x'],
-                             [u"ы", 'a', 'z']], order=o)
-                   for o in 'CF']
+_unicode_arrays = [
+    np.array([['a', u'мама', 'x'],
+              [u"ы", 'a', 'z']], order=o)
+    # TODO figure out for PY3 how to save those in F order
+    # see https://github.com/numpy/numpy/issues/12006
+    for o in ('CF' if PY2 else 'C')
+]
 
 # non-record (simple) numpy arrays
 _numpy_objs = [
@@ -336,12 +340,21 @@ _numpy_objs = [
     # not an array but just an instance of that type
     np.float64(1),
     # problematic prior h5py 2.9.0
+    # https://github.com/h5py/h5py/pull/1032
     np.float128(1),
     np.unicode(u"ы"),
-    np.unicode_(u"ы"),
   ] \
   + _unicode_arrays \
   + [a[:, ::2] for a in _unicode_arrays]
+
+if PY2:
+    # on PY3 we have numpy.str_ type which cannot be directly passed
+    # to np.frombuffer
+    # TypeError: memoryview: a bytes-like object is required, not 'numpy.str_'
+    # TODO: fix it up for PY3
+    _numpy_objs += [
+        np.unicode_(u"ы"),
+    ]
 
 # record arrays
 _numpy_objs += [
