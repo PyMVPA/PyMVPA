@@ -6,6 +6,7 @@
 # travis-ci; it uses virtualenvs, they do not have numpy, scipy, matplotlib,
 # and it is impractical to build them
 language: java
+dist: trusty
 cache:
   - apt
 env:
