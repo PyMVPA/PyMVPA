@@ -269,7 +269,7 @@ def test_gifti_dataset_with_anatomical_surface(fn, format_, include_nodes):
     ds = _get_test_dataset(include_nodes)
 
     nsamples, nfeatures = ds.shape
-    vertices = np.random.normal(size=(nfeatures, 3))
+    vertices = np.round(np.random.normal(size=(nfeatures, 3)), decimals=5)
     faces = np.asarray([i + np.arange(3) for i in xrange(2 * nfeatures)]) % nfeatures
     surf = Surface(vertices, faces)
 
