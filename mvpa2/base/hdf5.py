@@ -41,6 +41,13 @@ __docformat__ = 'restructuredtext'
 import inspect
 import numpy as np
 import h5py
+
+import warnings
+warnings.filterwarnings(
+    'ignore',
+    '.*The h5py.highlevel module is deprecated.*',
+    Warning  # h5py has all its warnings UserWarnings
+)
 import h5py.highlevel  # >= 2.8.0, https://github.com/h5py/h5py/issues/1063
 
 import os
