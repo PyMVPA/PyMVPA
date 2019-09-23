@@ -82,7 +82,20 @@ from numpy.testing import (
     assert_array_almost_equal, assert_array_equal, assert_array_less,
     assert_string_equal)
 
-from numpy.testing.decorators import skipif
+try:
+    from numpy.testing import dec
+    skipif = dec.skipif
+except (ImportError, AttributeError):
+    # DeprecationWarning: Importing from numpy.testing.decorators is deprecated
+    # since numpy 1.15.0, import from numpy.testing instead.
+    # But there is no skipif under .testing as of 1:1.16.2-1, so ignore it!
+    import warnings
+    warnings.filterwarnings(
+        'ignore',
+        '.*Importing from numpy.testing.decorators is deprecated.*',
+        DeprecationWarning
+    )
+    from numpy.testing.decorators import skipif
 
 def assert_array_lequal(x, y):
     assert_array_less(-y, -x)
