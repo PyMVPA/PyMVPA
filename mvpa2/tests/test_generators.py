@@ -8,13 +8,17 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for generators."""
 
+import os
 import itertools
 import numpy as np
+from time import time
+import tempfile
 
 from mvpa2.testing.tools import ok_, assert_array_equal, assert_true, \
         assert_false, assert_equal, assert_raises, assert_almost_equal, \
         reseed_rng, assert_not_equal, assert_in, assert_not_in
 from mvpa2.testing.tools import assert_warnings
+from mvpa2.testing.tools import assert_datasets_equal
 
 from mvpa2.datasets import dataset_wizard, Dataset
 from mvpa2.generators.splitters import Splitter
@@ -23,16 +27,16 @@ from mvpa2.generators.partition import OddEvenPartitioner, NFoldPartitioner, \
      ExcludeTargetsCombinationsPartitioner, FactorialPartitioner
 from mvpa2.generators.permutation import AttributePermutator
 from mvpa2.generators.base import  Repeater, Sifter
-from mvpa2.generators.resampling import Balancer
+from mvpa2.generators.resampling import Balancer, LogExclusions, ApplySelection
 from mvpa2.misc.data_generators import normal_feature_dataset
 from mvpa2.misc.support import get_nelements_per_value
 
 
 def give_data():
     # 100x10, 10 chunks, 4 targets
-    return dataset_wizard(np.random.normal(size=(100,10)),
-                          targets=[ i%4 for i in range(100) ],
-                          chunks=[ i//10 for i in range(100)])
+    return dataset_wizard(np.random.normal(size=(100, 10)),
+                          targets=[i % 4 for i in range(100)],
+                          chunks=[i//10 for i in range(100)])
 
 
 @reseed_rng()
@@ -151,12 +155,29 @@ def test_attrpermute():
 
     # and now try generating more permutations
     nruns = 2
+    def assert_all_different_permutations(pds):
+        assert_equal(len(pds), nruns)
+        for i, p in enumerate(pds):
+            assert_false(np.all(p.sa.ids == ds.sa.ids))
+            for p_ in pds[i+1:]:
+                assert_false(np.all(p.sa.ids == p_.sa.ids))
+
     permutation = AttributePermutator(['targets', 'ids'],
                                       assure=True, count=nruns)
     pds = list(permutation.generate(ds))
-    assert_equal(len(pds), nruns)
-    for p in pds:
-        assert_false(np.all(p.sa.ids == ds.sa.ids))
+    assert_all_different_permutations(pds)
+
+    # if we provide seeding, and generate, it should also return different datasets
+    permutation = AttributePermutator(['targets', 'ids'],
+                                      count=nruns, rng=1)
+    pds1 = list(permutation.generate(ds))
+    assert_all_different_permutations(pds)
+
+    # but if we regenerate -- should all be the same to before
+    pds2 = list(permutation.generate(ds))
+    assert_equal(len(pds1), len(pds2))
+    for p1, p2 in zip(pds1, pds2):
+        assert_datasets_equal(p1, p2)
 
     # permute feature attrs
     ds.fa['ids'] = range(ds.shape[1])
@@ -201,6 +222,8 @@ def test_attrpermute():
 @reseed_rng()
 def test_balancer():
     ds = give_data()
+    ds.sa['ids'] = np.arange(len(ds))  # some sa to ease tracking of samples
+
     # only mark the selection in an attribute
     bal = Balancer()
     res = bal(ds)
@@ -220,6 +243,51 @@ def test_balancer():
     # now use it as a generator
     dses = list(bal.generate(ds))
     assert_equal(len(dses), 5)
+
+    # if we rerun again, it would be a different selection
+    res2 = bal(ds)
+    assert_true(np.any(res.sa.ids != bal(ds).sa.ids))
+
+    # but if we create a balancer providing seed rng int,
+    # should be identical results
+    bal = Balancer(apply_selection=True, count=5, rng=1)
+    assert_false(np.any(bal(ds).sa.ids != bal(ds).sa.ids))
+
+    # But results should differ if we use .generate to produce those multiple
+    # balanced datasets
+    b = Balancer(apply_selection=True, count=3, rng=1)
+    balanced = list(b.generate(ds))
+    assert_false(all(balanced[0].sa.ids == balanced[1].sa.ids))
+    assert_false(all(balanced[0].sa.ids == balanced[2].sa.ids))
+    assert_false(all(balanced[1].sa.ids == balanced[2].sa.ids))
+
+    # And should be exactly the same
+    for ds_a, ds_b in zip(balanced, b.generate(ds)):
+        assert_datasets_equal(ds_a, ds_b)
+
+    # Contribution by Chris Markiewicz
+    # And interleaving __call__ and generator fetches
+    gen1 = b.generate(ds)
+    gen2 = b.generate(ds)
+
+    seq1, seq2, seq3 = [], [], []
+
+    for i in xrange(3):
+        seq1.append(gen1.next())
+        seq2.append(gen2.next())
+        seq3.append(b(ds))
+
+    # Produces expected sequences
+
+    for i in xrange(3):
+        assert_datasets_equal(balanced[i], seq1[i])
+        assert_datasets_equal(balanced[i], seq2[i])
+
+    # And all __call__s return the same result
+    ds_a = seq3[0]
+    for ds_b in seq3[1:]:
+        assert_array_equal(ds_a.sa.ids, ds_b.sa.ids)
+
     # with limit
     bal = Balancer(limit={'chunks': 3}, apply_selection=True)
     res = bal(ds)
@@ -248,12 +316,57 @@ def test_balancer():
             np.round(np.array(get_nelements_per_value(ds.sa.targets).values()) * 0.5),
             np.array(get_nelements_per_value(res.sa.targets).values()))
     # check on feature attribute
-    ds.fa['one'] = np.tile([1,2], 5)
-    ds.fa['chk'] = np.repeat([1,2], 5)
+    ds.fa['one'] = np.tile([1, 2], 5)
+    ds.fa['chk'] = np.repeat([1, 2], 5)
     bal = Balancer(attr='one', amount=2, limit='chk', apply_selection=True)
     res = bal(ds)
     assert_equal(get_nelements_per_value(res.fa.one).values(),
                  [4] * 2)
+
+
+def test_log_exclusions():
+    ds = give_data()
+    ds.sa['time_coords'] = np.arange(len(ds))
+
+    # only mark the selection in an attribute
+    bal = Balancer()
+    balanced = bal(ds)
+
+    tmpfile = tempfile.mktemp()
+    logex = LogExclusions(tmpfile, append=False)
+
+    logged = logex(balanced)
+
+    subds = balanced[~balanced.sa['balanced_set'].value]
+
+    assert_true(logged is balanced)
+    with open(tmpfile, 'r') as fobj:
+        assert_true(fobj.readline().startswith('# New entry'))
+
+    excluded = np.genfromtxt(tmpfile, dtype='u1', delimiter=',')
+    assert_array_equal(excluded[:, 0], subds.sa.chunks)
+    assert_array_equal(excluded[:, 1], subds.sa.targets)
+    assert_array_equal(excluded[:, 2], subds.sa.time_coords)
+
+    os.unlink(tmpfile)
+
+
+def test_apply_selection():
+    ds = give_data()
+
+    seed = np.random.randint(low=0, high=2**32)
+
+    # Two balancers with same random seed, one with deferred application
+    bal1 = Balancer(apply_selection=True, rng=seed)
+    bal2 = Balancer(apply_selection=False, rng=seed)
+
+    # Compare Balancer(apply_selection=True) to Balancer -> ApplySelection
+    balanced1 = bal1(ds)
+    balanced2 = ApplySelection()(bal2(ds))
+
+    assert_array_equal(balanced1.samples, balanced2.samples)
+    assert_array_equal(balanced1.sa['targets'], balanced2.sa['targets'])
+    assert_array_equal(balanced1.sa['chunks'], balanced2.sa['chunks'])
 
 
 def test_repeater():
@@ -451,37 +564,69 @@ def test_factorialpartitioner():
                 ]),
     ], space='partitions')
 
+    def partition(partitioner, ds_=ds):
+        return [p.sa.partitions for p in partitioner.generate(ds_)]
+
     # now the new implementation
-    factpart = FactorialPartitioner(
-        NFoldPartitioner(attr='subord'),
-        attr='superord'
-    )
+    # common kwargs
+    factkw = dict(partitioner=NFoldPartitioner(attr='subord'), attr='superord')
 
-    partitions_npart = [p.sa.partitions for p in npart.generate(ds)]
-    partitions_factpart = [p.sa.partitions for p in factpart.generate(ds)]
+    fpart = FactorialPartitioner(**factkw)
+    p_npart = partition(npart)
+    p_fpart = partition(fpart)
 
-    assert_array_equal(np.sort(partitions_npart), np.sort(partitions_factpart))
+    assert_array_equal(np.sort(p_npart), np.sort(p_fpart))
+
+    fpart2 = FactorialPartitioner(count=2, selection_strategy='first', **factkw)
+    p_fpart2 = partition(fpart2)
+    assert_equal(len(p_fpart), 8)
+    assert_equal(len(p_fpart2), 2)
+    assert_array_equal(p_fpart[:2], p_fpart2)
+
+    # 1 equidistant -- should be the first one
+    fpart1 = FactorialPartitioner(count=1, **factkw)
+    p_fpart1 = partition(fpart1)
+    assert_equal(len(p_fpart1), 1)
+    assert_array_equal(p_fpart[:1], p_fpart1)
+
+    # 2 equidistant
+    fpart2 = FactorialPartitioner(count=2, **factkw)
+    p_fpart2 = partition(fpart2)
+    assert_equal(len(p_fpart2), 2)
+    assert_array_equal(p_fpart[::4], p_fpart2)
+
+    # without count -- should be all of them in original order
+    fpartr = FactorialPartitioner(selection_strategy='random', **factkw)
+    assert_array_equal(p_fpart, partition(fpartr))
+
+    # but if with a count we should get some selection
+    fpartr2 = FactorialPartitioner(selection_strategy='random', count=2, **factkw)
+    # Let's generate a number of random selections:
+    rand2_partitions = [partition(fpartr2) for i in xrange(10)]
+    for p in rand2_partitions:
+        assert_equal(len(p), 2)
+    # majority of them must be different
+    assert len(set([tuple(map(tuple, x)) for x in rand2_partitions])) >= 5
 
     # now let's check it behaves correctly if we have only one superord class
     nfold = NFoldPartitioner(attr='subord')
-    partitions_nfold = [p.sa.partitions for p in nfold.generate(ds_1super)]
-    partitions_factpart = [p.sa.partitions for p in factpart.generate(ds_1super)]
-    assert_array_equal(np.sort(partitions_nfold), np.sort(partitions_factpart))
+    p_nfold = partition(nfold, ds_1super)
+    p_fpart = partition(fpart, ds_1super)
+    assert_array_equal(np.sort(p_nfold), np.sort(p_fpart))
 
     # smoke test for unbalanced subord classes
     warning_msg = 'One or more superordinate attributes do not have the same '\
                   'number of subordinate attributes. This could yield to '\
                   'unbalanced partitions.'
     with assert_warnings([(RuntimeWarning, warning_msg)]):
-        partitions_factpart = [p.sa.partitions
-                               for p in factpart.generate(ds_unbalanced)]
+        p_fpart = partition(fpart, ds_unbalanced)
 
-    partitions_unbalanced = [np.array([2, 2, 2, 1]), np.array([2, 2, 1, 2])]
+    p_unbalanced = [np.array([2, 2, 2, 1]), np.array([2, 2, 1, 2])]
     superord_unbalanced = [([2], [1, 1, 2]), ([2], [1, 1, 2])]
     subord_unbalanced = [([2], [0, 0, 1]), ([1], [0, 0, 2])]
 
     for out_part, true_part, super_out, sub_out in \
-            zip(partitions_factpart, partitions_unbalanced,
+            zip(p_fpart, p_unbalanced,
                 superord_unbalanced, subord_unbalanced):
         assert_array_equal(out_part, true_part)
         assert_array_equal((ds_unbalanced[out_part == 1].sa.superord.tolist(),
@@ -494,9 +639,37 @@ def test_factorialpartitioner():
     # now let's test on a dummy dataset
     ds_dummy = Dataset(range(4), sa={'subord': range(4),
                                      'superord': [1,2]*2})
-    partitions_factpart = [p.sa.partitions for p in factpart.generate(ds_dummy)]
-    assert_array_equal(partitions_factpart,
+    p_fpart = partition(fpart, ds_dummy)
+    assert_array_equal(p_fpart,
                        [[2, 2, 1, 1],
                         [2, 1, 1, 2],
                         [1, 2, 2, 1],
                         [1, 1, 2, 2]])
+
+def test_factorialpartitioner_big():
+    # just to see that we can cope with relatively large datasets/numbers
+    ds = normal_feature_dataset(nlabels=6,
+                                perlabel=66,
+                                nfeatures=2,
+                                nchunks=11)
+
+    # and now let's do factorial partitioner
+
+    def partition(ds_=ds, **kwargs):
+        partitioner = FactorialPartitioner(
+            partitioner=NFoldPartitioner(attr='targets'),
+            attr='chunks',
+            **kwargs)
+        return [p.sa.partitions for p in partitioner.generate(ds_)]
+
+    # prohibitively large
+    # print len(partition(ds))
+    t0 = time()
+    assert_equal(len(partition(ds, count=2, selection_strategy='first')), 2)
+    # Those time limits are really a stretch. on a any reasonable box not too busy
+    # should be done in fraction of a second, but allow to catch "naive"
+    # implementation
+    assert(time() - t0 < 3)
+
+    assert_equal(len(partition(ds, count=2, selection_strategy='random')), 2)
+    assert(time() - t0 < 3)

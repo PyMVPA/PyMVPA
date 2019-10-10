@@ -13,15 +13,16 @@ import numpy as np
 
 from mvpa2.base import cfg
 from mvpa2.datasets.base import Dataset
+from mvpa2.base.dataset import hstack
 
-# See other tests and test_procrust.py for some example on what to do ;)
-from mvpa2.algorithms.hyperalignment import Hyperalignment
+from mvpa2.algorithms.hyperalignment import Hyperalignment, mean_xy
 from mvpa2.mappers.zscore import zscore
 from mvpa2.misc.support import idhash
 from mvpa2.misc.data_generators import random_affine_transformation
+from mvpa2.mappers.svd import SVDMapper
 
 # Somewhat slow but provides all needed ;)
-from mvpa2.testing import sweepargs, reseed_rng
+from mvpa2.testing import *
 from mvpa2.testing.datasets import datasets
 
 from mvpa2.generators.partition import NFoldPartitioner
@@ -35,11 +36,13 @@ class HyperAlignmentTests(unittest.TestCase):
     @sweepargs(zscore_all=(False, True))
     @sweepargs(zscore_common=(False, True))
     @sweepargs(ref_ds=(None, 2))
+    @sweepargs(level1_equal_weight=(False, True))
     @reseed_rng()
-    def test_basic_functioning(self, ref_ds, zscore_common, zscore_all):
+    def test_basic_functioning(self, ref_ds, zscore_common, zscore_all, level1_equal_weight):
         ha = Hyperalignment(ref_ds=ref_ds,
                             zscore_all=zscore_all,
-                            zscore_common=zscore_common)
+                            zscore_common=zscore_common,
+                            level1_equal_weight=level1_equal_weight)
         if ref_ds is None:
             ref_ds = 0                      # by default should be this one
 
@@ -172,6 +175,89 @@ class HyperAlignmentTests(unittest.TestCase):
         rerrors = ha.ca.residual_errors.samples
         self.assertEqual(rerrors.shape, (1, n))
 
+    def test_hpal_svd_combo(self):
+        # get seed dataset
+        ds4l = datasets['uni4large']
+        ds_orig = ds4l[:, ds4l.a.nonbogus_features]
+        # XXX Is this SVD mapping required?
+        svm = SVDMapper()
+        svm.train(ds_orig)
+        ds_svs = svm.forward(ds_orig)
+        ds_orig.samples = ds_svs.samples
+        nf_true = ds_orig.nfeatures
+        n = 4  # # of datasets to generate
+        # Adding non-shared dimensions for each subject
+        dss_rotated = [[]]*n
+        for i in range(n):
+            dss_rotated[i] = hstack(
+                (ds_orig, ds4l[:, ds4l.a.bogus_features[i * 4: i * 4 + 4]]))
+        # rotate data
+        nf = dss_rotated[0].nfeatures
+        dss_rotated = [random_affine_transformation(dss_rotated[i])
+                       for i in xrange(n)]
+        # Test if it is close to doing hpal+SVD in sequence outside hpal
+        # First, as we do in sequence outside hpal
+        ha = Hyperalignment()
+        mappers_orig = ha(dss_rotated)
+        dss_back = [m.forward(ds_)
+                    for m, ds_ in zip(mappers_orig, dss_rotated)]
+        dss_mean = np.mean([sd.samples for sd in dss_back], axis=0)
+        svm = SVDMapper()
+        svm.train(dss_mean)
+        dss_sv = [svm.forward(sd) for sd in dss_back]
+        # Test for SVD dimensionality reduction even with 2 training subjects
+        for output_dim in [1, 4]:
+            ha = Hyperalignment(output_dim=output_dim)
+            ha.train(dss_rotated[:2])
+            mappers = ha(dss_rotated)
+            dss_back = [m.forward(ds_)
+                        for m, ds_ in zip(mappers, dss_rotated)]
+            for sd in dss_back:
+                assert (sd.nfeatures == output_dim)
+        # Check if combined hpal+SVD works as expected
+        sv_corrs = []
+        for sd1, sd2 in zip(dss_sv, dss_back):
+            ndcs = np.diag(np.corrcoef(sd1.samples.T, sd2.samples.T)[nf:, :nf],
+                           k=0)
+            sv_corrs.append(ndcs)
+        self.assertTrue(
+            np.all(np.abs(np.array(sv_corrs)) >= 0.95),
+            msg="Hyperalignment with dimensionality reduction should have "
+                "reconstructed SVD dataset. Got correlations %s."
+                % sv_corrs)
+        # Check if it recovers original SVs
+        sv_corrs_orig = []
+        for sd in dss_back:
+            ndcs = np.diag(
+                np.corrcoef(sd.samples.T, ds_orig.samples.T)[nf_true:, :nf_true],
+                k=0)
+            sv_corrs_orig.append(ndcs)
+        self.assertTrue(
+            np.all(np.abs(np.array(sv_corrs_orig)) >= 0.9),
+            msg="Expected original dimensions after "
+                "SVD. Got correlations %s."
+                % sv_corrs_orig)
+
+    def test_hpal_joblib(self):
+        skip_if_no_external('joblib')
+        # get seed dataset
+        ds4l = datasets['uni4large']
+        dss_rotated = [random_affine_transformation(ds4l, scale_fac=100, shift_fac=10)
+                       for i in range(4)]
+        ha = Hyperalignment(nproc=1, enable_ca=['residual_errors'])
+        ha.train(dss_rotated[:2])
+        mappers = ha(dss_rotated)
+        ha_proc = Hyperalignment(nproc=2, enable_ca=['residual_errors'])
+        ha_proc.train(dss_rotated[:2])
+        mappers_nproc = ha_proc(dss_rotated)
+        # not sure yet why on windows only is not precise
+        cmp_ = assert_array_equal if (not on_windows) else assert_array_almost_equal
+        [cmp_(m.proj, mp.proj) for m, mp in zip(mappers, mappers_nproc)]  # "Mappers differ when using nproc>1."
+        cmp_(ha.ca.residual_errors.samples, ha_proc.ca.residual_errors.samples)
+        # smoke test
+        ha = Hyperalignment(nproc=0)
+        mappers = ha(dss_rotated)
+
     def test_hypal_michael_caused_problem(self):
         from mvpa2.misc import data_generators
         from mvpa2.mappers.zscore import zscore
@@ -182,7 +268,7 @@ class HyperAlignmentTests(unittest.TestCase):
         # Making random data per subject for testing with bias added to first subject
         ds_test = [np.random.rand(1, ds.nfeatures) for i in range(len(ds_all))]
         ds_test[0] += np.arange(1, ds.nfeatures + 1) * 100
-        assert(np.corrcoef(ds_test[2], ds_test[1])[0, 1] < 0.99)  # that would have been rudiculous if it was
+        assert(np.corrcoef(ds_test[2], ds_test[1])[0, 1] < 0.99)  # that would have been ridiculous if it was
 
         # Test with varying alpha so we for sure to not have that issue now
         for alpha in (0, 0.01, 0.5, 0.99, 1.0):
@@ -206,6 +292,47 @@ class HyperAlignmentTests(unittest.TestCase):
         ds_all = [datasets['uni4small'] for i in range(3)]
         # Making sure it raises error if ref_ds is out of range
         self.assertRaises(ValueError, ha, ds_all)
+
+    def test_hyper_input_dataset_check(self):
+        # If supplied with only one dataset during training,
+        # make sure it doesn't run multiple levels and crap out
+        ha = Hyperalignment()
+        ds_all = [datasets['uni4small'] for i in range(3)]
+        # Make sure it raises TypeError if a list is not passed
+        self.assertRaises(TypeError, ha, ds_all[0])
+        self.assertRaises(TypeError, ha.train, ds_all[0])
+        # And it doesn't crap out with a single dataset for training
+        ha.train([ds_all[0]])
+        zscore(ds_all[0], chunks_attr=None)
+        assert_array_equal(ha.commonspace, ds_all[0].samples)
+        # make sure it accepts tuple of ndarray
+        ha = Hyperalignment()
+        m = ha(tuple(ds_all))
+        ha = Hyperalignment()
+        dss_arr = np.empty(len(ds_all), dtype=object)
+        for i in range(len(ds_all)):
+            dss_arr[i] = ds_all[i]
+        m = ha(dss_arr)
+
+    def test_mean_xy(self):
+        arr = np.random.random((10, ))
+
+        # Mean with equal weights
+        mean = arr[0]
+        counts = 1
+        for num in arr[1:]:
+            mean = mean_xy(mean, num, weights=(float(counts), 1.0))
+            counts += 1
+        np.testing.assert_allclose(mean, np.mean(arr))
+
+        # Mean with unequal weights, weights are like 1, 1, 2, 4, 8, 16, ...
+        weights = 0.5**np.arange(10)[::-1]
+        weights[0] = weights[1]
+        mean2 = arr[0]
+        for num in arr[1:]:
+            mean2 = mean_xy(mean2, num)
+        np.testing.assert_allclose(mean2, sum(arr * weights) / np.sum(weights))
+
 
     def _test_on_swaroop_data(self):  # pragma: no cover
         #

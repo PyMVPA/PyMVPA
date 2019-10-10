@@ -467,7 +467,7 @@ def plot_erps(erps, data=None, ax=None, pre=0.2, post=None,
     def set_limits():
         """Helper to set x and y limits"""
         ax.set_xlim((-pre, post))
-        if ylim != None:
+        if ylim is not None:
             ax.set_ylim(*ylim)
 
     set_limits()

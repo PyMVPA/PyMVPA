@@ -61,15 +61,19 @@ Datasets: Input, Output, Storage and Preprocessing
 
    base.dataset
    datasets.base
+   datasets.channel
    datasets.eventrelated
    datasets.eep
    datasets.formats
+   datasets.gifti
    datasets.mri
    datasets.niml
    datasets.cosmo
    datasets.eeglab
    datasets.miscfx
+   datasets.sources
    datasets.sources.native
+   datasets.sources.bids
    datasets.sources.openfmri
    datasets.sources.skl_data
 
@@ -134,6 +138,7 @@ Classifiers and Errors
    clfs.gpr
    clfs.knn
    clfs.lars
+   clfs.mass
    clfs.model_selector
    clfs.plr
    clfs.ridge
@@ -171,6 +176,8 @@ Measures: Searchlights and Sensitivties
 
    measures.base
    measures.anova
+   measures.corrstability
+   measures.corrcoef
    measures.irelief
    measures.noiseperturbation
    measures.gnbsearchlight
@@ -199,8 +206,20 @@ Additional Algorithms
 .. autosummary::
    :toctree: generated
 
+   algorithms
    algorithms.hyperalignment
+   algorithms.searchlight_hyperalignment
    algorithms.group_clusterthr
+
+
+Algorithm benchmarks
+====================
+
+.. autosummary::
+   :toctree: generated
+
+   algorithms.benchmarks
+   algorithms.benchmarks.hyperalignment
 
 
 Miscellaneous
@@ -224,6 +243,7 @@ Miscellaneous
    misc.sampleslookup
    misc.stats
    misc.support
+   misc.support.afni
    misc.surfing
    misc.surfing.queryengine
    misc.surfing.surf_voxel_selection
@@ -232,6 +252,7 @@ Miscellaneous
    misc.surfing.volume_mask_dict
    misc.transformers
    misc.vproperty
+   support.bayes
 
 Testing
 =======
@@ -260,6 +281,7 @@ Basic Plotting Utilities
    misc.plot.flat_surf
    misc.plot.lightbox
    misc.plot.topo
+   misc.plot.scatter
 
 
 3rd-party Interfaces

@@ -59,7 +59,10 @@ else:
 
 __sdebug('algorithms')
 from mvpa2.algorithms.hyperalignment import *
-if externals.exists('scipy') :
+if externals.exists('scipy'):
+    # Some pieces do not demand scipy, but for now let's just do this way
+    from mvpa2.algorithms.searchlight_hyperalignment import *
+    from mvpa2.algorithms.connectivity_hyperalignment import *
     from mvpa2.algorithms.group_clusterthr import *
 
 __sdebug('clfs')
@@ -124,6 +127,7 @@ if externals.exists('nibabel') :
     from mvpa2.datasets.gifti import map2gifti, gifti_dataset
 from mvpa2.datasets.sources import *
 from mvpa2.datasets.sources.native import *
+from mvpa2.datasets.sources.bids import *
 from mvpa2.datasets.sources.openfmri import *
 from mvpa2.datasets import niml
 from mvpa2.datasets.niml import from_niml, to_niml
@@ -218,7 +222,9 @@ if externals.exists("nibabel"):
 if externals.exists("pylab"):
     from mvpa2.viz import *
     from mvpa2.misc.plot import *
+    from mvpa2.misc.plot.base import *
     from mvpa2.misc.plot.erp import *
+    from mvpa2.misc.plot.scatter import *
     if externals.exists(['griddata', 'scipy']):
         from mvpa2.misc.plot.topo import *
     from mvpa2.misc.plot.lightbox import plot_lightbox
@@ -268,6 +274,13 @@ from mvpa2.support.nibabel import afni_niml_dset, afni_suma_1d, \
                                   afni_niml_roi, afni_niml_annot
 if externals.exists('nibabel'):
     from mvpa2.support.nibabel import surf_gifti
+
+
+__sdebug("cmdline")
+if externals.exists("nibabel") and externals.exists("scipy") \
+        and externals.exists('ctypes') \
+        and externals.exists('h5py'):
+    from mvpa2.cmdline.cmd_ttest import *
 
 
 __sdebug("ipython goodies")

@@ -31,7 +31,192 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
-* 2.4.2 (???)
+* 2.6.6 (???, ??? ?? 2018)
+
+  A bugfix release
+
+  * Fixes
+    -
+
+  * New functionality
+    -
+
+  * Enhancements
+    -
+
+* 2.6.5 (Tue, Jun 26, 2018)
+
+  A minor release with some bugfixes and new exciting functionality
+
+  * Fixes
+    - Exception message handling in niml module
+    - Sort unique values in the fallback handling of AttrCollection.unique
+    - prep-afni-surf should be compatible with matplotlib 2.0.0
+    - Scatter plot should be more robust to degenerate data
+
+  * New functionality
+    - :class:`~mvpa2.algorithms.connectivity_hyperalignment.ConnectivityHyperalignment`
+
+  * Enhancements
+    - `preallocate_output` parameter for :class:`~mvpa2.measures.searchlight.Searchlight`
+
+* 2.6.4 (Mon, Jan 29 2018)
+
+  A bugfix release
+
+  * Fixes
+    - compatibility with :mod:`pywt` >= 0.4
+    - compatibility with :mod:`scipy.stats` >= 0.17.0 for `chisqprob`
+
+  * Enhancements
+    - make `h5save` "robust" in the presence of file locks - wait for a while
+      to acquire the lock
+    - consult :mod:`pkg_resources` about versions of external packages if no
+      `__version__` was found
+
+
+* 2.6.3 (Fri, Nov 03 2017)
+
+  Minor bugfix release -- getting ready for conda-forge
+
+  * Fixes
+    - variety of tune ups to test to pass all around
+    - minor fixes to scatter and chunks plots
+
+
+* 2.6.2 (Tue, Oct 31 2017)
+
+  Primarily a bugfix release
+
+  * Fixes
+    - fixed scaling in ProcrusteanMapper (gh-545). So if you are using
+      Hyperalignment, you better re-pre-process, and do not mix results/transformations
+      across versions of the PyMVPA
+    - numpy 1.13.1 compatibility fixes
+    - documentation: urls and building fix ups
+    - some fixes for Python3 compatibility in hdf5 (h5save/h5load) support
+    - use single line affine matrix representation in pymvpa2-prep-afni-surf
+    - saving large .niml files should not crash now
+
+  * New functionality
+    - :func:`~mvpa2.misc.errorfx.mean_tpr` and :func:`~mvpa2.misc.errorfx.mean_fnr`
+      error functions (to be used in disbalanced datasets)
+
+
+* 2.6.1 (Fri, Apr 14 2017)
+
+  Primarily a bugfix release
+
+  * Fixes
+
+    - Deprecation: fixed typo in `manhattan_distance`
+    - Documentation: various outdated links and project names fixed
+    - Removed spurious quote within command line invocation of `prep-afni-surf`
+    - Fixed computation of the edge lengths on the surface, which could have
+      resulted in slightly incorrect surface searchlight sizes
+
+  * New functionality
+
+    - :class:`~mvpa2.measures.rsa.CDist` for cross-validated dissimilarity
+      measures computation
+
+  * Enhancements
+
+    - :class:`~mvpa2.algorithms.hyperalignment.Hyperalignment`
+      - `output_dim` option could be used to perform dimensionality reduction
+        via SVD while composing the common space
+      - `nproc` and `joblib_backend` parameters could be used to parallelize the
+        last step of the alignment
+
+* 2.6.0 (Sat, 26 Aug 2016)
+
+  Primarily a bugfix release with some added new functionality.  People contributed
+  code to the release: Matteo Visconti dOC, Yaroslav Halchenko, Nikolaas N. Oosterhof,
+  Feilong Ma, Christopher J. Markiewicz, Swaroop Guntupalli.
+
+  * **IMPORTANT** possibly backward-incompatible fixes
+
+    - Dataset's :func:`~mvpa2.base.dataset.vstack` and :func:`~mvpa2.base.dataset.hstack`
+      now by default would drop those feature or sample (`fa`, `sa`) attributes
+      which do not have the same value across all datasets ("drop_nonunique").
+      Previous behaviour was to update aggregated collections, so the attribute
+      value of the last dataset would have been stored in the stacked dataset.
+      Such behaviour could be brought back by `fa="update"` for `vstack` or
+      similar value for `sa="update"` for `hstack` calls.
+      If you find that some `sa`/`fa` you have relied on using in your code is no
+      longer available after stacking, verify that you did intend to maintain the
+      "last known" value, and adjust argument in stacking function to "update".
+
+  * Fixes
+
+    - Fixed minor bug in computing ico linear divisions while working with surfaces
+    - Handling of `ref_ds` in :class:`~mvpa2.algorithms.searchlight_hyperalignment.SearchlightHyperalignment`
+    - Compatibility fixes for :mod:`scipy` 0.18.0 and :mod:`nibabel` 2.1.0.
+
+
+  * New functionality
+
+    - `pymvpa2 scatter` command line and :mod:`~mvpa2.misc.plot.scatter` module to scatter plot
+      datasets and nifti volumes, with coloring based on spatial location (see
+      e.g. `OHBM12 poster <http://haxbylab.dartmouth.edu/publications/HGG+12_sfn12_famfaces.png>`__
+      for an example, proper demo is coming)
+
+  * Enhancements
+
+    - Allow for "4D" mri mask volumes with degenerate time dimension (e.g. coming
+      from AFNI)
+    - `pymvpa2 ttest` could operate now on h5save'd datasets
+    - It is possible now to `h5save` trained Hyperalignment instances
+    - :class:`~mvpa2.generators.resampling.Balancer` and
+      :class:`~mvpa2.generators.permutation.AttributePermutator` now got `rng`
+      argument to seed RNG.  Please use an `int` as a seed specification if you
+      want random selections/permutations be consistent across searchlights
+
+
+* 2.5.0 (Thu, 12 May 2016)
+
+  * Fixes
+
+    - Various python3 related small fixes
+    - Minor fix allowing adhoc searchlights (e.g. gnbsearchlight) to work with
+      CustomPartitioner
+    - Fixed SmartVersion to not infinitely loop upon receiving an awkward
+      version string
+
+  * New functionality
+
+    - :class:`~mvpa2.algorithms.searchlight_hyperalignment.SearchlightHyperalignment`
+      to carry out full-datset/brain hyperalignment of functional data while
+      honoring spatial neighborhoods.
+      See :ref:`Guntupalli et al., Cerebral Cortex (2016) <GHH+16>` A Model of
+      Representational Spaces in Human Cortex for more information
+    - :class:`~mvpa2.measures.rsa.Regression` measure to compute regularized
+      regression (Ridge or Lasso) on the computed neural dissimilarity matrix
+    - :class:`~mvpa2.misc.surfing.queryengine.SurfaceRingQueryEngine`
+
+
+  * Enhancements
+
+    - The ``ofmotionqc`` command line command has been renamed to
+      ``plotmotionqc``. It no longer requires a dataset formatted in
+      OpenFMRI-style, but works with any organization of input data
+    - SplitRFE docstring example reordered suggested mappers (l2 -> abs -> mean)
+    - Show only summary of representation of internal _src2aux of
+      VolumeMaskDictionary object, which otherwise could be too big to print
+
+* 2.4.3 (Tue, 15 Mar 2016)
+
+  * Fixes
+
+    - Fixed memory leaking in libsvm bindings introduced in 2.4.2 (gh-443)
+    - Avoid overriding parameters defined in subclasses with the ones from
+      super class
+    - Address freshish deprecations (warnings) in sklearn, scipy, etc
+    - Workaround in the test for numpy's corrcoef issue resulting in corrcoef
+      a bit outside of [-1, 1] range
+
+
+* 2.4.2 (Tue, 8 Mar 2016)
 
   * Fixes
 
@@ -45,6 +230,17 @@ Releases
     - ad-hoc searchlights (gnb, m1nn) can now operate with partitioners which
       leave some samples out of training and testing sets.  Also `splitter` argument
       was added to them for greater flexibility
+    - Due to the bug in OpenfMRI datasets' TR within NIfTIs being hardcoded to
+      wrong 1.0, so `scan_key.txt` will now be consulted if TR is 1 in the .nii*
+    - Compatibility with :mod:`~numpy` 1.10 fixes
+    - :class:`CachedQueryEngine` acquired .ids making it compatible with some
+      ad-hoc searchlights
+    - `FeatureSelection` acquired `__iadd__` fixing the incorrect behavior upon
+      reverse after a sequence of feature selections
+
+  * Deprecations/removal
+
+    - `Hamster` is gone.
 
   * Enhancements
 
@@ -52,9 +248,20 @@ Releases
       setting which prevents infinite looping which can happen in some rare cases
     - A swarm of stylistic improvements ("is not", PEP8, etc) which should not
       affect functionality but could result in more robust operation
-    - Crossvalidation can now operate with a None generator (i.e. partitioner) using
-      solely Splitter to generate a single split on original dataset.  Provides easier
+    - `CrossValidation` can now operate with a None generator (i.e. partitioner) using
+      solely `Splitter` to generate a single split on original dataset.  Provides easier
       means for "cross-classification"
+    - :class:`~mvpa2.measures.nnsearchlight.M1NNSearchlight` can now do classification
+      based on correlation distance (just provide `dfx=one_minus_correlation` to kNN)
+    - libsvm bindings for SVM were refactored to interface via svmc not _svmc interface,
+      which made them also compatible with swig 3.x
+    - :meth:`~mvpa2.base.dataset.AttrDataset.to_npz` and :meth:`~mvpa2.base.dataset.AttrDataset.from_npz`
+      to interface Datasets through NumPy's npz files
+    - Variety of PEP8 and other tune ups for more readable code
+    - :class:`~mvpa.featsel.rfe.SplitRFE` can now work with static measures (e.g.
+      `OneWayAnova`) and `BinaryFxFeaturewiseMeasure`.  So do feature selection
+      with nested cross-validation without double-dipping!
+
 
   * New functionality
 

@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Classifiers provied by LibSVM library"""
+"""Classifiers provided by LibSVM library"""
 
 __docformat__ = 'restructuredtext'
 

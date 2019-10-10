@@ -126,6 +126,8 @@ def collect_unit_tests(verbosity=1):
         'test_svdmapper',
         'test_procrust',
         'test_hyperalignment',
+        'test_benchmarks_hyperalignment',
+        'test_searchlight_hyperalignment',
         'test_transformers',
         'test_searchlight',
         'test_rfe',
@@ -180,6 +182,8 @@ def collect_nose_tests(verbosity=1):
         'test_constraints',
 
         # Datasets
+        'test_bids',
+        'test_giftidataset',
         'test_datasetng',
         'test_datasetfx',
         'test_dataset_formats',
@@ -243,6 +247,10 @@ def collect_nose_tests(verbosity=1):
         'test_rsa',
 
         # Misc
+        'test_cmdline_ttest',
+        'test_lib_afni',
+        'test_misc_scatter',
+        'test_misc_plot',
         'test_misc',
         'test_errorfx',
         'test_testing',
@@ -250,6 +258,7 @@ def collect_nose_tests(verbosity=1):
         'test_surfing',
         'test_surfing_afni',
         'test_surfing_voxelselection',
+        'test_surfing_surface',
         'test_eeglab',
         'test_progress',
         'test_winner',

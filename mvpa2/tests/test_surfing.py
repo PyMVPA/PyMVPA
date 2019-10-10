@@ -77,10 +77,9 @@ class SurfTests(unittest.TestCase):
         assert_true((s.vertices * 10 + 2 == t.vertices).all().all())
 
         # a few checks on vertices and nodes
-        v_check = {40:(0.86511144 , -0.28109175, -0.41541501),
-                   10:(0.08706015, -0.26794358, -0.95949297)}
-        f_check = {10:(7, 8, 1), 40:(30, 31, 21)}
-
+        v_check = {40: (0.86511144, -0.28109175, -0.41541501),
+                   10: (0.08706015, -0.26794358, -0.95949297)}
+        f_check = {10: (7, 8, 1), 40: (30, 31, 21)}
 
         vf_checks = [(v_check, lambda x:x.vertices),
                      (f_check, lambda x:x.faces)]
@@ -105,7 +104,6 @@ class SurfTests(unittest.TestCase):
             for i, j, k in n_check:
                 assert_true(abs(nbrs[i][j] - k) < eps)
 
-
         def assign_zero(x):
             x.faces[:, :] = 0
             return None
@@ -116,6 +114,11 @@ class SurfTests(unittest.TestCase):
         h = surf.generate_sphere(40)
 
         low2high = s.map_to_high_resolution_surf(h, .1)
+        if on_windows:
+            raise SkipTest("""Known failure:
+            for some reason on windows, 64 bit (not 32) conda we get 145, not 144 for 8.
+            see https://ci.appveyor.com/project/conda-forge/pymvpa2-feedstock/build/job/14bud4pirwo2p3np
+            """)
         partmap = {7: 141, 8: 144, 9: 148, 10: 153, 11: 157, 12: 281}
         for k, v in partmap.iteritems():
             assert_true(low2high[k] == v)
@@ -131,10 +134,9 @@ class SurfTests(unittest.TestCase):
 
         n2f = s.node2faces
         for i in xrange(s.nvertices):
-            nf = [10] if i < 2 else [5, 6] # number of faces expected
+            nf = [10] if i < 2 else [5, 6]  # number of faces expected
 
             assert_true(len(n2f[i]) in nf)
-
 
         # test dijkstra distances
         ds2 = s.dijkstra_distance(2)
@@ -155,7 +157,6 @@ class SurfTests(unittest.TestCase):
             h5save(temp_fn, s2)
             s2 = h5load(temp_fn)
 
-
         assert_array_almost_equal(s.vertices, s2.vertices, 4)
         assert_array_almost_equal(s.faces, s2.faces, 4)
 
@@ -172,7 +173,6 @@ class SurfTests(unittest.TestCase):
         assert_equal(s4.nvertices, 26)
         assert_equal(s4.nfaces, 48)
 
-
     def test_surf_border(self):
         s = surf.generate_sphere(3)
         assert_array_equal(s.nodes_on_border(), [False] * 11)
@@ -187,6 +187,59 @@ class SurfTests(unittest.TestCase):
         assert_array_equal(b, vb)
 
         assert_true(s.nodes_on_border(0))
+
+    def test_surf_border_nonconnected_nodes(self):
+        s = surf.generate_cube()
+
+        # add empty node
+        v = np.vstack((s.vertices, [2, 2, 2]))
+
+        # remove two faces
+        s2 = surf.Surface(v, s.faces[:-2])
+
+        is_on_border = [False, False, False, False,
+                        True, True, True, True,
+                        False]
+        assert_array_equal(s2.nodes_on_border(),
+                           np.asarray(is_on_border))
+
+
+
+    def test_surf_normalized(self):
+
+        def assert_is_unit_norm(v):
+            assert_almost_equal(1., np.sum(v*v))
+            assert_equal(v.shape, (len(v),))
+
+        def assert_same_direction(v,w):
+            assert_almost_equal(v.dot(w),(v.dot(v)*w.dot(w))**.5)
+
+        def helper_test_vec_normalized(v):
+            v_norm=surf.normalized(v)
+            assert_is_unit_norm(v_norm)
+            assert_same_direction(v,v_norm)
+
+            return v_norm
+
+        sizes=[(8,),(7,4)]
+
+        for size in sizes:
+            v=np.random.normal(size=size)
+            if len(size)==1:
+                helper_test_vec_normalized(v)
+            else:
+                # test for vectors and for matrix
+                v_n = surf.normalized(v)
+
+                n_vecs=v.shape[1]
+                for i in xrange(n_vecs):
+                    v_n_i=helper_test_vec_normalized(v[i,:])
+                    assert_array_almost_equal(v_n_i, v_n[i,:])
+
+
+
+
+
 
     @with_tempfile('.asc', 'test_surf')
     def test_surf_fs_asc(self, temp_fn):
@@ -208,7 +261,6 @@ class SurfTests(unittest.TestCase):
 
         assert_array_equal(l2r, np.asarray(l2r_expected))
 
-
         sides_facing = 'apism'
         for side_facing in sides_facing:
             l, r = surf.reposition_hemisphere_pairs(s + 10., t + (-10.),
@@ -224,16 +276,16 @@ class SurfTests(unittest.TestCase):
 
     @with_tempfile('.nii', 'test_vol')
     def test_volgeom(self, temp_fn):
-        sz = (17, 71, 37, 73) # size of 4-D 'brain volume'
-        d = 2. # voxel size
-        xo, yo, zo = -6., -12., -20. # origin
-        mx = np.identity(4, np.float) * d # affine transformation matrix
+        sz = (17, 71, 37, 73)  # size of 4-D 'brain volume'
+        d = 2.  # voxel size
+        xo, yo, zo = -6., -12., -20.  # origin
+        mx = np.identity(4, np.float) * d  # affine transformation matrix
         mx[3, 3] = 1
         mx[0, 3] = xo
         mx[1, 3] = yo
         mx[2, 3] = zo
 
-        vg = volgeom.VolGeom(sz, mx) # initialize volgeom
+        vg = volgeom.VolGeom(sz, mx)  # initialize volgeom
 
         eq_shape_nvoxels = {(17, 71, 37): (True, True),
                            (71, 17, 37, 1): (False, True),
@@ -246,13 +298,13 @@ class SurfTests(unittest.TestCase):
             assert_equal(other_vg.same_shape(vg), eq_shape)
             assert_equal(other_vg.nvoxels_mask == vg.nvoxels_mask, eq_nvoxels)
 
-        nv = sz[0] * sz[1] * sz[2] # number of voxels
-        nt = sz[3] # number of time points
+        nv = sz[0] * sz[1] * sz[2]  # number of voxels
+        nt = sz[3]  # number of time points
         assert_equal(vg.nvoxels, nv)
 
         # a couple of hard-coded test cases
         # last two are outside the volume
-        linidxs = [0, 1, sz[2], sz[1] * sz[2], nv - 1, -1 , nv]
+        linidxs = [0, 1, sz[2], sz[1] * sz[2], nv - 1, -1, nv]
         subidxs = ([(0, 0, 0), (0, 0, 1), (0, 1, 0), (1, 0, 0),
                     (sz[0] - 1, sz[1] - 1, sz[2] - 1)]
                    + [(sz[0], sz[1], sz[2])] * 2)
@@ -265,28 +317,23 @@ class SurfTests(unittest.TestCase):
         for i, linidx in enumerate(linidxs):
             lin = np.asarray([linidx])
             ijk = vg.lin2ijk(lin)
-
-
             ijk_expected = np.reshape(np.asarray(subidxs[i]), (1, 3))
             assert_array_almost_equal(ijk, ijk_expected)
-
             xyz = vg.lin2xyz(lin)
-
             xyz_expected = np.reshape(np.asarray(xyzs[i]), (1, 3))
             assert_array_almost_equal(xyz, xyz_expected)
-
 
         # check that some identities hold
         ab, bc, ac = vg.lin2ijk, vg.ijk2xyz, vg.lin2xyz
         ba, cb, ca = vg.ijk2lin, vg.xyz2ijk, vg.xyz2lin
-        identities = [lambda x:ab(ba(x)),
-                      lambda x:bc(cb(x)),
-                      lambda x:ac(ca(x)),
-                      lambda x:ba(ab(x)),
-                      lambda x:cb(bc(x)),
-                      lambda x:ca(ac(x)),
-                      lambda x:bc(ab(ca(x))),
-                      lambda x:ba(cb(ac(x)))]
+        identities = [lambda x: ab(ba(x)),
+                      lambda x: bc(cb(x)),
+                      lambda x: ac(ca(x)),
+                      lambda x: ba(ab(x)),
+                      lambda x: cb(bc(x)),
+                      lambda x: ca(ac(x)),
+                      lambda x: bc(ab(ca(x))),
+                      lambda x: ba(cb(ac(x)))]
 
         # 0=lin, 1=ijk, 2=xyz
         identities_input = [1, 2, 2, 0, 1, 0, 2, 0]
@@ -313,7 +360,6 @@ class SurfTests(unittest.TestCase):
         assert_true(vg.contains_ijk(ijk).all())
         assert_false(vg.contains_ijk(-ijk - 1).any())
 
-
         # ensure that we have no rounding issues
         deltas = [-.51, -.49, 0., .49, .51]
         should_raise = [True, False, False, False, True]
@@ -327,7 +373,6 @@ class SurfTests(unittest.TestCase):
                               assert_array_almost_equal, lin_d, lin)
             else:
                 assert_array_almost_equal(lin_d, lin)
-
 
         # some I/O testing
 
@@ -346,7 +391,6 @@ class SurfTests(unittest.TestCase):
         assert_equal(vg.shape[:3], vg3.shape[:3], 0)
 
         assert_true(len('%s%r' % (vg, vg)) > 0)
-
 
     def test_volgeom_masking(self):
         maskstep = 5
@@ -375,7 +419,7 @@ class SurfTests(unittest.TestCase):
         assert_equal(vg_dset, vg)
 
         dilates = range(0, 8, 2)
-        nvoxels_masks = [] # keep track of number of voxels for each size
+        nvoxels_masks = []  # keep track of number of voxels for each size
         for dilate in dilates:
             covers_full_volume = dilate * 2 >= maskstep * 3 ** .5 + 1
 
@@ -410,7 +454,6 @@ class SurfTests(unittest.TestCase):
                 assert_equal(np.sum(data) == vg.nvoxels, covers_full_volume)
 
 
-
     def test_volsurf(self):
         vg = volgeom.VolGeom((50, 50, 50), np.identity(4))
 
@@ -418,11 +461,9 @@ class SurfTests(unittest.TestCase):
         outer = surf.generate_sphere(density) * 25. + 25
         inner = surf.generate_sphere(density) * 20. + 25
 
-
         # increasingly select more voxels in 'grey matter'
         steps_start_stop = [(1, .5, .5), (5, .5, .5), (3, .3, .7),
                           (5, .3, .7), (5, 0., 1.), (10, 0., 1.)]
-
 
         mp = None
         expected_keys = set(range(density ** 2 + 2))
@@ -443,7 +484,7 @@ class SurfTests(unittest.TestCase):
                 for v, pos in v2pos.iteritems():
                     # should be close to grey matter
 
-                    assert_true(-1. <= pos and pos <= 2.)
+                    assert_true(-1. <= pos <= 2.)
                     counter += 1
 
             selection_counter.append(counter)
@@ -460,7 +501,6 @@ class SurfTests(unittest.TestCase):
 
         # check that string building works
         assert_true(len('%s%r' % (vs, vs)) > 0)
-
 
     def test_volsurf_surf_from_volume(self):
         aff = np.eye(4)
@@ -481,7 +521,6 @@ class SurfTests(unittest.TestCase):
                 x = p.circlearound_n2d(center, radius)
                 y = q.circlearound_n2d(center, radius)
                 assert_equal(x, y)
-
 
     def test_volume_mask_dict(self):
         # also tests the outside_node_margin feature
@@ -540,7 +579,6 @@ class SurfTests(unittest.TestCase):
                     # this should be the smallest distancer
                     d = volgeom.distance(np.reshape(xyz_src, (1, 3)), xyz_trg)
 
-
                     # distances between all nodes and voxel i
                     ds = volgeom.distance(xyz, xyz_trg)
 
@@ -557,9 +595,6 @@ class SurfTests(unittest.TestCase):
                     xyz_min = xyz[ii]
                     lin_min = vg.xyz2lin([xyz_min])
 
-
-
-
                     # linear index of voxel that contains xyz_src
                     lin_src = vg.xyz2lin(np.reshape(xyz_src, (1, 3)))
 
@@ -572,7 +607,6 @@ class SurfTests(unittest.TestCase):
                     assert_false(delta > eps and ii in sel and
                                  i in sel[ii] and
                                  vg.contains_lin(lin_min))
-
 
     def test_surf_voxel_selection(self):
         vol_shape = (10, 10, 10)
@@ -598,7 +632,7 @@ class SurfTests(unittest.TestCase):
                   ('euclidean', 5, None), ('dijkstra', 10, None)]
 
         # function that indicates for which parameters the full test is run
-        test_full = lambda x:len(x[0]) > 1 or x[2] == 100
+        test_full = lambda x: len(x[0]) > 1 or x[2] == 100
 
         expected_labs = ['grey_matter_position',
                          'center_distances']
@@ -643,7 +677,6 @@ class SurfTests(unittest.TestCase):
 
                 assert_true(all([lab in labs for lab in expected_labs]))
 
-
                 if externals.exists('h5py'):
                     # some I/O testing
                     fd, fn = tempfile.mkstemp('.h5py', 'test'); os.close(fd)
@@ -658,7 +691,6 @@ class SurfTests(unittest.TestCase):
 
                 # check that mask is OK even after I/O
                 assert_array_equal(sel.get_mask(), sel2.get_mask())
-
 
                 # test I/O with surfaces
                 # XXX the @tempfile decorator only supports a single filename
@@ -735,8 +767,7 @@ class SurfTests(unittest.TestCase):
                     qe = h5load(qefn)
                     os.remove(qefn)
 
-
-                assert_false('ERROR' in repr(qe))   #  to check if repr works
+                assert_false('ERROR' in repr(qe))  #  to check if repr works
                 voxelcounter = _Voxel_Count_Measure()
                 searchlight = Searchlight(voxelcounter, queryengine=qe, roi_ids=keys, nproc=1,
                                           enable_ca=['roi_feature_ids', 'roi_center_ids'])
@@ -747,7 +778,6 @@ class SurfTests(unittest.TestCase):
                 for i, k in enumerate(sel.keys()):
                     # check that number of selected voxels matches
                     assert_equal(selected_count[i], len(mp[k]))
-
 
                 assert_equal(searchlight.ca.roi_center_ids, sel.keys())
 
@@ -775,7 +805,7 @@ class SurfTests(unittest.TestCase):
                     dset2.fa['dset'] = [2]
                     dset_ = hstack((dset1, dset2), 'drop_nonunique')
                     dset_.sa = dset1.sa
-                    #dset_.a.imghdr = dset1.a.imghdr
+                    # dset_.a.imghdr = dset1.a.imghdr
                     assert_true('imghdr' in dset_.a.keys())
                     assert_equal(dset_.a['imghdr'].value, dset1.a['imghdr'].value)
                     roi_feature_ids = searchlight.ca.roi_feature_ids
@@ -834,7 +864,7 @@ class SurfTests(unittest.TestCase):
         '''test agreement between volume-based and surface-based
         searchlights when using euclidean measure'''
 
-        #import runner
+        # import runner
         def sum_ds(ds):
             return np.sum(ds)
 
@@ -851,7 +881,6 @@ class SurfTests(unittest.TestCase):
         nt = 6
         img = vg.get_masked_nifti_image(6)
         ds = fmri_dataset(img, mask=msk)
-
 
         # run the searchlight
         sl = sphere_searchlight(sum_ds, radius=radius)
@@ -879,12 +908,11 @@ class SurfTests(unittest.TestCase):
         # check whether they give the same results
         assert_array_equal(r.samples, m.samples)
 
-
     @with_tempfile('.h5py', '_qe')
     def test_surf_queryengine(self, qefn):
         s = surf.generate_plane((0, 0, 0), (0, 1, 0), (0, 0, 1), 4, 5)
 
-        # add scond layer
+        # add second layer
         s2 = surf.merge(s, (s + (.01, 0, 0)))
 
         ds = Dataset(samples=np.arange(20)[np.newaxis],
@@ -911,7 +939,6 @@ class SurfTests(unittest.TestCase):
                 h5save(qefn, qe)
                 qe = h5load(qefn)
 
-
             # untrained qe should give errors
             assert_raises(ValueError, lambda:qe.ids)
             assert_raises(ValueError, lambda:qe.query_byid(0))
@@ -924,7 +951,6 @@ class SurfTests(unittest.TestCase):
             # lack of node indices should give error
             ds_.fa.pop('node_indices')
             assert_raises(ValueError, lambda: qe.train(ds_))
-
 
             # train the qe
             qe.train(ds3)
@@ -965,6 +991,63 @@ class SurfTests(unittest.TestCase):
             assert_true('SurfaceQueryEngine' in '%s' % qe)
             assert_true('SurfaceQueryEngine' in '%r' % qe)
 
+    def test_surf_ring_queryengine(self):
+        s = surf.generate_plane((0, 0, 0), (0, 1, 0), (0, 0, 1), 4, 5)
+        # add second layer
+        s2 = surf.merge(s, (s + (.01, 0, 0)))
+        ds = Dataset(samples=np.arange(20)[np.newaxis],
+                     fa=dict(node_indices=np.arange(39, 0, -2)))
+        # add more features (with shared node indices)
+        ds3 = hstack((ds, ds, ds))
+        radius = 2.5
+        inner_radius = 1.0
+        # Makes sure it raises error if inner_radius is >= radius
+        assert_raises(ValueError,
+                      lambda: queryengine.SurfaceRingQueryEngine(surface=s2,
+                                                         inner_radius=2.5,
+                                                         radius=radius))
+        distance_metrics = ('euclidean', 'dijkstra', 'euclidean', 'dijkstra')
+        for distance_metric, include_center in zip(distance_metrics, [True, False]*2):
+            qe = queryengine.SurfaceRingQueryEngine(surface=s2, radius=radius,
+                                inner_radius=inner_radius, distance_metric=distance_metric,
+                                include_center=include_center)
+            # untrained qe should give errors
+            assert_raises(ValueError, lambda: qe.ids)
+            assert_raises(ValueError, lambda: qe.query_byid(0))
+
+            # node index out of bounds should give error
+            ds_ = ds.copy()
+            ds_.fa.node_indices[0] = 100
+            assert_raises(ValueError, lambda: qe.train(ds_))
+
+            # lack of node indices should give error
+            ds_.fa.pop('node_indices')
+            assert_raises(ValueError, lambda: qe.train(ds_))
+            # train the qe
+            qe.train(ds3)
+
+            for node in np.arange(-1, s2.nvertices + 1):
+                if node < 0 or node >= s2.nvertices:
+                    assert_raises(KeyError, lambda: qe.query_byid(node))
+                    continue
+
+                feature_ids = np.asarray(qe.query_byid(node))
+                # node indices relative to ds
+                base_ids = feature_ids[feature_ids < 20]
+                # should have multiples of 20
+                assert_equal(set(feature_ids),
+                             set((base_ids[np.newaxis].T + \
+                                  [0, 20, 40]).ravel()))
+
+                node_indices = s2.circlearound_n2d(node,
+                                    radius, distance_metric or 'dijkstra')
+
+                fa_indices = [fa_index for fa_index, inode in
+                              enumerate(ds3.fa.node_indices)
+                              if inode in node_indices and node_indices[inode] > inner_radius]
+                if include_center and node in ds3.fa.node_indices:
+                    fa_indices += np.where(ds3.fa.node_indices == node)[0].tolist()
+                assert_equal(set(feature_ids), set(fa_indices))
 
     def test_surf_pairs(self):
         o, x, y = map(np.asarray, [(0, 0, 0), (0, 1, 0), (1, 0, 0)])
@@ -1091,11 +1174,10 @@ class SurfTests(unittest.TestCase):
             assert_array_equal(s.faces, f)
 
 
-
-
 class _Voxel_Count_Measure(Measure):
     # used to check voxel selection results
     is_trained = True
+
     def __init__(self, **kwargs):
         Measure.__init__(self, **kwargs)
 

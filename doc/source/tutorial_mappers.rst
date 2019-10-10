@@ -136,7 +136,7 @@ manipulate datasets with mappers.
 
 Now our goal is to combine all these little pieces into the code that produces
 a dataset like the one used in the seminal work by :ref:`Haxby et al. (2001)
-<HGF+01>` -- a study were participants passively watched gray scale images of
+<HGF+01>` -- a study where participants passively watched gray scale images of
 eight object categories in a block-design experiment. From the raw BOLD time
 series, of which we have the full 12 recording runs of the first subject, they
 computed:

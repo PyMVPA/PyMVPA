@@ -10,6 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
+from os.path import lexists
 import numpy as np
 import copy
 
@@ -603,6 +604,74 @@ class AttrDataset(object):
             hdf.close()
         return res
 
+    def to_npz(self, filename, compress=True):
+        """Save dataset to a .npz file storing all fa/sa/a which are ndarrays
+
+        Parameters
+        ----------
+        filename : str
+        compress : bool, optional
+          If True, savez_compressed is used
+        """
+        savez = np.savez_compressed if compress else np.savez
+        if not filename.endswith('.npz'):
+            filename += '.npz'
+        entries = {'samples': self.samples}
+        skipped = []
+        for c in ('a', 'fa', 'sa'):
+            col = getattr(self, c)
+            for k in col:
+                v = col[k].value
+                e = '%s.%s' % (c, k)
+                if isinstance(v, np.ndarray):
+                    entries[e] = v
+                else:
+                    skipped.append(e)
+        if skipped:
+            warning("Skipping %s since not ndarrays" % (', '.join(skipped)))
+        return savez(filename, **entries)
+
+    @classmethod
+    def from_npz(cls, filename):
+        """Load dataset from NumPy's .npz file, as e.g. stored by to_npz
+
+        File expected to have 'samples' item, which serves as samples, and
+        other items prefixed with the corresponding collection (e.g. 'sa.' or
+        'fa.').  All other entries are skipped
+
+        Parameters
+        ----------
+        filename: str
+          Filename for the .npz file.  Can be specified without .npz suffix
+
+        """
+        # some sugaring
+        filename_npz = filename + '.npz'
+        if not lexists(filename) and not filename.endswith('.npz') and lexists(filename_npz):
+            filename = filename_npz
+
+        entries = np.load(filename)
+
+        cols = {'a': {}, 'fa': {}, 'sa': {}}
+        skipped = []
+        for e, v in entries.items():
+            if e == 'samples':
+                samples = v
+            else:
+                if '.' not in e:
+                    skipped.append(e)
+                    continue
+                c, k = e.split('.', 1)
+                if c not in cols:
+                    skipped.append(e)
+                    continue
+                cols[c][k] = v
+        if skipped:
+            warning("Skipped following items since do not belong to any of "
+                    "known collections: %s" % (", ".join(sorted(skipped))))
+        return cls(samples, **cols)
+
+
     # shortcut properties
     nsamples = property(fget=len)
     nfeatures = property(fget=lambda self: self.shape[1])
@@ -623,20 +692,14 @@ def datasetmethod(func):
     return func
 
 
-def vstack(datasets, a=None):
+def vstack(datasets, a=None, fa='drop_nonunique'):
     """Stacks datasets vertically (appending samples).
 
-    Feature attribute collections are merged incrementally, attribute with
-    identical keys overwriting previous ones in the stacked dataset. All
-    datasets must have an identical set of sample attributes (matching keys,
-    not values), otherwise a ValueError will be raised.
-    No dataset attributes from any source dataset will be transferred into the
-    stacked dataset. If all input dataset have common dataset attributes that
-    are also valid for the stacked dataset, they can be moved into the output
-    dataset like this::
-
-      ds_merged = vstack((ds1, ds2, ds3))
-      ds_merged.a.update(ds1.a)
+    All datasets must have an identical set of sample attributes (matching
+    keys, not values), otherwise a ValueError will be raised. See `a` argument
+    documentation for transferring dataset attributes, and `fa` argument for
+    feature attributes -- by default feature attributes which differ in any
+    input dataset from the others would be dropped.
 
     Parameters
     ----------
@@ -655,6 +718,11 @@ def vstack(datasets, a=None):
         missing values are replaced by None. If None (the default) then no
         attributes are stored in merged_dataset. True is equivalent to
         'drop_nonunique'. False is equivalent to None.
+    fa: {'update', 'drop_nonunique'}, (default: 'drop_nonunique')
+        Indicate which feature attributes are stored in merged dataset.
+        If 'update' - attributes are updated while growing the dataset.
+        If 'drop_nonunique', attribute would be dropped from the dataset if its
+        value differs across datasets for any feature.
 
     Returns
     -------
@@ -684,22 +752,19 @@ def vstack(datasets, a=None):
     # create the dataset
     merged = datasets[0].__class__(stacked_samp, sa=stacked_sa)
 
-    for ds in datasets:
-        merged.fa.update(ds.fa)
-
+    _stack_add_equal_attributes(merged, datasets, fa, 'fa')
     _stack_add_equal_dataset_attributes(merged, datasets, a)
     return merged
 
 
-def hstack(datasets, a=None):
+def hstack(datasets, a=None, sa='drop_nonunique'):
     """Stacks datasets horizontally (appending features).
 
-    Sample attribute collections are merged incrementally, attribute with
-    identical keys overwriting previous ones in the stacked dataset. All
-    datasets must have an identical set of feature attributes (matching keys,
-    not values), otherwise a ValueError will be raised.
-    No dataset attributes from any source dataset will be transferred into the
-    stacked dataset.
+    All datasets must have an identical set of sample attributes (matching
+    keys, not values), otherwise a ValueError will be raised. See `a` argument
+    documentation for transferring dataset attributes, and `sa` argument for
+    sample attributes -- by default sample attributes which differ in any
+    input dataset from the others would be dropped.
 
     Parameters
     ----------
@@ -718,6 +783,11 @@ def hstack(datasets, a=None):
         missing values are replaced by None. If None (the default) then no
         attributes are stored in merged_dataset. True is equivalent to
         'drop_nonunique'. False is equivalent to None.
+    sa: {'update', 'drop_nonunique'}, (default: 'update')
+        Indicate which feature attributes are stored in merged dataset.
+        If 'update' - attributes are updated while growing the dataset.
+        If 'drop_nonunique', attribute would be dropped from the dataset if its
+        value differs across datasets for any sample.
 
     Returns
     -------
@@ -753,12 +823,48 @@ def hstack(datasets, a=None):
     # create the dataset
     merged = datasets[0].__class__(stacked_samp, fa=stacked_fa)
 
-    for ds in datasets:
-        merged.sa.update(ds.sa)
-
+    _stack_add_equal_attributes(merged, datasets, sa, 'sa')
     _stack_add_equal_dataset_attributes(merged, datasets, a)
 
     return merged
+
+
+def _stack_add_equal_attributes(merged, datasets, strategy, colname):
+    """Helper function for vstack and hstack to perform update of the
+    corresponding collection according to the strategy
+    """
+    mergedcol = getattr(merged, colname)
+
+    if strategy == 'update':
+        for ds in datasets:
+            mergedcol.update(getattr(ds, colname))
+
+    elif strategy == 'drop_nonunique':
+        # discover those attributes which differ
+        drop = set()
+        ds0 = datasets[0]
+        ds0col = getattr(ds0, colname)
+        for ds in datasets[1:]:
+            dscol = getattr(ds, colname)
+            for attr, v in dscol.iteritems():
+                if ((attr not in ds0col) or
+                        np.any(ds0col[attr].value != v.value)):
+                    drop.add(attr)
+            # and ds0 might have some attributes which others don't
+            for attr in ds0col:
+                if attr not in dscol:
+                    drop.add(attr)
+
+        # now update but only those which to not drop
+        for ds in datasets:
+            mergedcol.update(
+                {attr: v for attr, v in getattr(ds, colname).items()
+                 if attr not in drop}
+            )
+
+    else:
+        raise ValueError("Unknown strategy %s on how to deal with %s collection"
+                         % (strategy, colname))
 
 
 def all_equal(x, y):
@@ -974,7 +1080,6 @@ def stack_by_unique_sample_attribute(dataset, sa_label):
         ds.append(d)
 
     stacked_ds = hstack(ds, True)
-    stacked_ds.sa.pop(sa_label)
 
     return stacked_ds
 
@@ -1008,7 +1113,6 @@ def stack_by_unique_feature_attribute(dataset, fa_label):
         ds.append(d)
 
     stacked_ds = vstack(ds, True)
-    stacked_ds.fa.pop(fa_label)
 
     return stacked_ds
 

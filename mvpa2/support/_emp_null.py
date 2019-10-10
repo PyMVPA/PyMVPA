@@ -234,13 +234,18 @@ class ENN(object):
     
         # generate the histogram
         step = 3.5*np.std(self.x)/np.exp(np.log(self.n)/3)
-        bins = max(10, (self.x.max() - self.x.min())/step)
+        bins = int(max(10, (self.x.max() - self.x.min())/step))
         hist, ledge = np.histogram(x, bins=bins)
-        step = ledge[1]-ledge[0]
+        # I think there was a change in some numpy version on what to return
+        assert len(ledge) in (bins, bins + 1)
+        if len(ledge) == bins + 1:
+            # we are interested in left edges
+            ledge = ledge[:bins]
+        step = ledge[1] - ledge[0]
         medge = ledge + 0.5*step
-    
+
         # remove null bins
-        whist = hist>0
+        whist = hist > 0
         hist = hist[whist]
         medge = medge[whist]
         hist = hist.astype('f')
@@ -383,7 +388,7 @@ class ENN(object):
         ax.set_xticklabels(ax.get_xticks(), fontsize=16)
         ax.set_yticklabels(ax.get_yticks(), fontsize=16)
 
-        if efp != None:
+        if efp is not None:
             ax.plot(self.x, np.minimum(alpha, efp), 'k')
     
 

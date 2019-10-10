@@ -36,6 +36,7 @@ _RE_FLAGS = re.DOTALL  # regular expression matching spans across new lines
 from mvpa2.base import warning
 
 from mvpa2.base import debug
+from mvpa2.misc.io import safe_write
 
 if __debug__:
     if not "NIML" in debug.registered:
@@ -713,10 +714,4 @@ def write(fnout, niml, form='binary', prefunction=None):
         niml = prefunction(niml)
 
     s = rawniml2string(niml, form=form)
-
-    import io
-
-    with io.FileIO(fnout, 'w') as f:
-        n = f.write(s)
-    if n != len(s):
-        raise ValueError("Not all bytes written to %s" % fnout)
+    safe_write(fnout, s)

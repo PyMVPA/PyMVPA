@@ -575,31 +575,34 @@ def inverse_cmap(cmap_name):
                                               new_data, _cm.LUTSIZE)
 
 
-##REF: Name was automagically refactored
 def plot_dataset_chunks(ds, clf_labels=None):
-    """Quick plot to see chunk sctructure in dataset with 2 features
+    """Quick plot to see chunk structure in dataset with 2 features
 
     if clf_labels is provided for the predicted labels, then
     incorrectly labeled samples will have 'x' in them
     """
     if ds.nfeatures != 2:
-        raise ValueError, "Can plot only in 2D, ie for datasets with 2 features"
+        raise ValueError("Can plot only in 2D, ie for datasets with 2 features")
     if pl.matplotlib.get_backend() == 'TkAgg':
         pl.ioff()
     if clf_labels is not None and len(clf_labels) != ds.nsamples:
         clf_labels = None
     colors = ('b', 'g', 'r', 'c', 'm', 'y', 'k', 'w')
     labels = ds.uniquetargets
+    if labels.dtype.kind == 'f' and len(labels) > len(colors):
+        raise NotImplementedError(
+            "Cannot plot with labels being floats and more than 7 "
+            "of the unique values")
     labels_map = dict(zip(labels, colors[:len(labels)]))
-    for chunk in ds.uniquechunks:
+    for chunk in ds.UC:
         chunk_text = str(chunk)
-        ids = ds.where(chunks=chunk)
+        ids = ds.C == chunk
         ds_chunk = ds[ids]
         for i in xrange(ds_chunk.nsamples):
             s = ds_chunk.samples[i]
             l = ds_chunk.targets[i]
             format = ''
-            if clf_labels != None:
+            if clf_labels is not None:
                 if clf_labels[i] != ds_chunk.targets[i]:
                     pl.plot([s[0]], [s[1]], 'x' + labels_map[l])
             pl.text(s[0], s[1], chunk_text, color=labels_map[l],
@@ -612,7 +615,8 @@ def plot_dataset_chunks(ds, clf_labels=None):
             1.1 * np.max(dss[:, 0]),
             1.1 * np.min(dss[:, 1])))
     pl.draw()
-    pl.ion()
+    if pl.matplotlib.get_backend() == 'TkAgg':
+        pl.ion()
 
 
 def timeseries_boxplot(median, mean=None, std=None, n=None, min=None, max=None,

@@ -400,7 +400,7 @@ If no error messages appear, you have succesfully installed PyMVPA.
   
   For other distributions use the respective package managers (e.g. Yum) to setup
   the repository URL.  The repositories include all core dependencies of PyMVPA
-  (usually Numpy and PyNIfTI), if they are not available from other repositories
+  (usually Numpy and NiBabel), if they are not available from other repositories
   of the respective distribution. There are two different repository groups, one
   for `SUSE-related packages`_ and another one for `Fedora, Redhat
   and CentOS-related packages`_.

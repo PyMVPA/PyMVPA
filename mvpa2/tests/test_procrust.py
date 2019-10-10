@@ -116,6 +116,53 @@ class ProcrusteanMapperTests(unittest.TestCase):
                                     msg="%s: Failed to reconstruct into source space correctly."
                                         " normed error=%g" % (sdim, ndsfr))
 
+    @reseed_rng()
+    def test_reflection(self, rep=10):
+        for i in range(rep):
+            from mvpa2.testing.datasets import get_random_rotation
+            d = np.random.random((100, 2))
+            T = get_random_rotation(d.shape[1])
+            d2 = np.dot(d, T)
+            # scale it up a bit
+            d2 *= 1.2
+            # add a reflection by flipping the first dimension
+            d2[:, 0] *= -1
+            ds = dataset_wizard(samples=d, targets=d2)
+
+            norm0 = np.linalg.norm(d - d2)
+
+            mapper = ProcrusteanMapper(scaling=False, reflection=False)
+            mapper.train(ds)
+            norm1 = np.linalg.norm(d2 - mapper.forward(ds).samples)
+            eps = 1e-7
+            self.assertLess(norm1, norm0 + eps,
+                            msg='Procrustes should reduce difference, '
+                            'but %f > %f' % (norm1, norm0))
+
+            mapper = ProcrusteanMapper(scaling=True, reflection=False)
+            mapper.train(ds)
+            norm2 = np.linalg.norm(d2 - mapper.forward(ds).samples)
+            self.assertLess(norm2, norm1 + eps,
+                            msg='Procrustes with scaling should work better, '
+                            'but %f > %f' % (norm2, norm1))
+
+            mapper = ProcrusteanMapper(scaling=False, reflection=True)
+            mapper.train(ds)
+            norm3 = np.linalg.norm(d2 - mapper.forward(ds).samples)
+            self.assertLess(norm3, norm1 + eps,
+                            msg='Procrustes with reflection should work better, '
+                            'but %f > %f' % (norm3, norm1))
+
+            mapper = ProcrusteanMapper(scaling=True, reflection=True)
+            mapper.train(ds)
+            norm4 = np.linalg.norm(d2 - mapper.forward(ds).samples)
+            self.assertLess(norm4, norm3 + eps,
+                            msg='Procrustes with scaling should work better, '
+                            'but %f > %f' % (norm4, norm3))
+            self.assertLess(norm4, norm2 + eps,
+                            msg='Procrustes with reflection should work better, '
+                            'but %f > %f' % (norm4, norm2))
+
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(ProcrusteanMapperTests)
@@ -123,4 +170,3 @@ def suite():  # pragma: no cover
 if __name__ == '__main__':  # pragma: no cover
     import runner
     runner.run()
-

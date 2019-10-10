@@ -264,7 +264,7 @@ class RFE(IterativeFeatureSelection):
             ca.history[orig_feature_ids] = step
 
             # Compute sensitivity map
-            if self.__update_sensitivity or sensitivity == None:
+            if self.__update_sensitivity or sensitivity is None:
                 sensitivity = self._fmeasure(wdataset)
                 if len(sensitivity) > 1:
                     raise ValueError(
@@ -417,13 +417,11 @@ class SplitRFE(RFE):
     >>> rfe = SplitRFE(
     ...           LinearCSVMC(),
     ...           OddEvenPartitioner(),
-    ...           # take sensitivities per each split, L2 norm, mean, abs them
+    ...           # take sensitivities per each split, L2 norm, abs, mean them
     ...           fmeasure_postproc=ChainMapper([
     ...               FxMapper('features', l2_normed),
-    ...               FxMapper('samples', np.mean),
-    ...               FxMapper('samples', np.abs)]),
-    ...           # use the error stored in the confusion matrix of split classifier
-    ...           errorfx=ConfusionBasedError(rfesvm_split, confusion_state='stats'),
+    ...               FxMapper('samples', np.abs),
+    ...               FxMapper('samples', np.mean)]),
     ...           # select 50% of the best on each step
     ...           fselector=FractionTailSelector(
     ...               0.50,

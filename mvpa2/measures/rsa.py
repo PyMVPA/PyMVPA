@@ -10,17 +10,77 @@
 
 __docformat__ = 'restructuredtext'
 
-from itertools import combinations
+from itertools import combinations, product
 import numpy as np
 from mvpa2.measures.base import Measure
 from mvpa2.datasets.base import Dataset
 from mvpa2.base import externals
 from mvpa2.base.param import Parameter
 from mvpa2.base.constraints import EnsureChoice
+from mvpa2.mappers.fx import mean_group_sample
 
 if externals.exists('scipy', raise_=True):
-    from scipy.spatial.distance import pdist, squareform
+    from scipy.spatial.distance import pdist, squareform, cdist
     from scipy.stats import rankdata, pearsonr
+
+
+class CDist(Measure):
+    """Compute cross-validated dissimiliarity matrix for samples in a dataset
+
+    This `Measure` can be trained on part of the dataset (for example,
+    a partition) and called on another partition. It can be used in
+    cross-validation to generate cross-validated RSA.
+    Returns flattened dissimilarity values.
+    """
+    pairwise_metric = Parameter('correlation', constraints='str',
+            doc="""Distance metric to use for calculating pairwise vector distances for
+            dissimilarity matrix (DSM).  See scipy.spatial.distance.cdist for
+            all possible metrics.""")
+
+    pairwise_metric_kwargs = Parameter({},
+            doc="""kwargs dictionary passed to cdist. For example,
+            if `pairwise_metric='mahalanobis'`, `pairwise_metric_kwargs`
+            might contain the inverse of the covariance matrix.""")
+
+    sattr = Parameter(['targets'],
+            doc="""List of sample attributes whose unique values will be used to
+            identify the samples groups. Typically your category labels or targets.""")
+
+    def __init__(self, **kwargs):
+        Measure.__init__(self, **kwargs)
+        self._train_ds = None
+
+    def _prepare_ds(self, ds):
+        if self.params.sattr is not None:
+            mgs = mean_group_sample(attrs=self.params.sattr)
+            ds_ = mgs(ds)
+        else:
+            ds_ = ds.copy()
+        return ds_
+
+    def _train(self, ds):
+        self._train_ds = self._prepare_ds(ds)
+        self.is_trained = True
+
+    def _call(self, ds):
+        test_ds = self._prepare_ds(ds)
+        if test_ds.nsamples != self._train_ds.nsamples:
+            raise ValueError('Datasets should have same sample size for dissimilarity, '\
+                             'nsamples for train: %d, test: %d'%(self._train_ds.nsamples,
+                                                                 test_ds.nsamples))
+        # Call actual distance metric
+        distds = cdist(self._train_ds.samples, test_ds.samples,
+                       metric=self.params.pairwise_metric,
+                       **self.params.pairwise_metric_kwargs)
+        # Make target pairs
+        sa_dict = dict()
+        for k in self._train_ds.sa:
+            if k in test_ds.sa:
+                sa_dict[k] = list(product(self._train_ds.sa.get(k).value,
+                                                   test_ds.sa.get(k).value))
+
+        distds = Dataset(samples=distds.ravel()[:, None], sa=sa_dict)
+        return distds
 
 
 class PDist(Measure):
@@ -39,7 +99,7 @@ class PDist(Measure):
           all possible metrics.""")
 
     center_data = Parameter(False, constraints='bool', doc="""\
-          If True then center each column of the data matrix by subtracing the
+          If True then center each column of the data matrix by subtracting the
           column mean from each element. This is recommended especially when
           using pairwise_metric='correlation'.""")
 
@@ -59,7 +119,7 @@ class PDist(Measure):
           and the entire sample attributes collection of the input dataset.
         """
 
-        Measure.__init__(self, **kwargs)
+        super(PDist, self).__init__(**kwargs)
 
     def _call(self, ds):
 
@@ -113,7 +173,7 @@ class PDistConsistency(Measure):
           matrices.""")
 
     center_data = Parameter(False, constraints='bool', doc="""\
-          If True then center each column of the data matrix by subtracing the
+          If True then center each column of the data matrix by subtracting the
           column mean from each element. This is recommended especially when
           using pairwise_metric='correlation'.""")
 
@@ -134,7 +194,7 @@ class PDistConsistency(Measure):
         # TODO: Another metric for consistency metric could be the "Rv"
         # coefficient...  (ac)
         # init base classes first
-        Measure.__init__(self, **kwargs)
+        super(PDistConsistency, self).__init__(**kwargs)
 
     def _call(self, dataset):
         """Computes the average correlation in similarity structure across chunks."""
@@ -192,7 +252,7 @@ class PDistTargetSimilarity(Measure):
           target DSM.""")
 
     center_data = Parameter(False, constraints='bool', doc="""\
-          If True then center each column of the data matrix by subtracing the
+          If True then center each column of the data matrix by subtracting the
           column mean from each element. This is recommended especially when
           using pairwise_metric='correlation'.""")
 
@@ -214,7 +274,7 @@ class PDistTargetSimilarity(Measure):
           coefficient (rho); or otherwise two-features: rho plus p.
         """
         # init base classes first
-        Measure.__init__(self, **kwargs)
+        super(PDistTargetSimilarity, self).__init__(**kwargs)
         self.target_dsm = target_dsm
         if self.params.comparison_metric == 'spearman':
             self.target_dsm = rankdata(target_dsm)
@@ -231,3 +291,124 @@ class PDistTargetSimilarity(Measure):
             return Dataset([rho], fa={'metrics': ['rho']})
         else:
             return Dataset([[rho, p]], fa={'metrics': ['rho', 'p']})
+
+
+class Regression(Measure):
+    """
+    Given a dataset, compute regularized regression (Ridge or Lasso) on the
+    computed neural dissimilarity matrix using an arbitrary number of predictors
+    (model dissimilarity matrices).
+
+    Requires scikit-learn
+    """
+
+    is_trained = True
+    """Indicate that this measure is always trained."""
+
+    # copied from PDist class XXX: ok or pass it in kwargs?
+    pairwise_metric = Parameter('correlation', constraints='str', doc="""\
+          Distance metric to use for calculating pairwise vector distances for
+          dissimilarity matrix (DSM).  See scipy.spatial.distance.pdist for
+          all possible metrics.""")
+
+    center_data = Parameter(False, constraints='bool', doc="""\
+          If True then center each column of the data matrix by subtracting the
+          column mean from each element. This is recommended especially when
+          using pairwise_metric='correlation'.""")
+
+    method = Parameter('ridge', constraints=EnsureChoice('ridge', 'lasso'),
+                       doc='Compute Ridge (l2) or Lasso (l1) regression')
+
+    alpha = Parameter(1.0, constraints='float', doc='alpha parameter for lasso'
+                                                    'regression')
+
+    fit_intercept = Parameter(True, constraints='bool', doc='whether to fit the'
+                                                            'intercept')
+
+    rank_data = Parameter(True, constraints='bool', doc='whether to rank the neural dsm and the '
+                                                        'predictor dsms before running the regression model')
+
+    normalize = Parameter(False, constraints='bool', doc='if True the predictors and neural dsm will be'
+                                                        'normalized (z-scored) prior to the regression (and after '
+                                                        'the data ranking, if rank_data=True)')
+
+
+    def __init__(self, predictors, keep_pairs=None, **kwargs):
+        """
+        Parameters
+        ----------
+        predictors : array (N*(N-1)/2, n_predictors)
+            array containing the upper triangular matrix in vector form of the
+            predictor Dissimilarity Matrices. Each column is a predictor dsm.
+
+        keep_pairs : None or list or array
+            indices in range(N*(N-1)/2) to keep before running the regression.
+            All other elements will be removed. If None, the regression is run
+            on the entire DSM.
+
+        Returns
+        -------
+        Dataset
+            a dataset with n_predictors samples and one feature. If fit_intercept
+            is True, the last sample is the intercept.
+        """
+        super(Regression, self).__init__(**kwargs)
+
+        if len(predictors.shape) == 1:
+            raise ValueError('predictors have shape {0}. Make sure the array '
+                             'is at least 2d and transposed correctly'.format(predictors.shape))
+        self.predictors = predictors
+        self.keep_pairs = keep_pairs
+
+    def _call(self, dataset):
+        externals.exists('skl', raise_=True)
+        from sklearn.linear_model import Lasso, Ridge
+        from sklearn.preprocessing import scale
+
+        # first run PDist
+        compute_dsm = PDist(pairwise_metric=self.params.pairwise_metric,
+                            center_data=self.params.center_data)
+        dsm = compute_dsm(dataset)
+        dsm_samples = dsm.samples
+
+        if self.params.rank_data:
+            dsm_samples = rankdata(dsm_samples)
+            predictors = np.apply_along_axis(rankdata, 0, self.predictors)
+        else:
+            predictors = self.predictors
+
+        if self.params.normalize:
+            predictors = scale(predictors, axis=0)
+            dsm_samples = scale(dsm_samples, axis=0)
+
+        # keep only the item we want
+        if self.keep_pairs is not None:
+            dsm_samples = dsm_samples[self.keep_pairs]
+            predictors = predictors[self.keep_pairs, :]
+
+        # check that predictors and samples have the correct dimensions
+        if dsm_samples.shape[0] != predictors.shape[0]:
+            raise ValueError('computed dsm has {0} rows, while predictors have'
+                             '{1} rows. Check that predictors have the right'
+                             'shape'.format(dsm_samples.shape[0],
+                                            predictors.shape[0]))
+
+        # now fit the regression
+        if self.params.method == 'lasso':
+            reg = Lasso
+        elif self.params.method == 'ridge':
+            reg = Ridge
+        else:
+            raise ValueError('I do not know method {0}'.format(self.params.method))
+        reg_ = reg(alpha=self.params.alpha, fit_intercept=self.params.fit_intercept)
+        reg_.fit(predictors, dsm_samples)
+
+        coefs = reg_.coef_.reshape(-1, 1)
+
+        sa = ['coef' + str(i) for i in range(len(coefs))]
+
+        if self.params.fit_intercept:
+            coefs = np.vstack((coefs, reg_.intercept_))
+            sa += ['intercept']
+
+        return Dataset(coefs, sa={'coefs': sa})

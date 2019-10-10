@@ -14,9 +14,10 @@ from mvpa2.base import externals
 if externals.exists("nibabel", raise_=True):
     from nibabel.gifti import gifti, giftiio
 
-import numpy as np, os, datetime, re
+import numpy as np, os, re
 
 from mvpa2.support.nibabel import surf
+from mvpa2.misc.io import safe_write
 import io
 
 
@@ -157,9 +158,11 @@ def to_gifti_image(s, add_indices=False, swap_LPI_RAI=False):
     for arr in (vertices, faces) + ((indices,) if add_indices else ()):
         arr.ind_ord = 1
         arr.encoding = 3
-        arr.endian = 'LittleEndian' # XXX this does not work (see below)
+        arr.endian = 'LittleEndian'  # XXX this does not work (see below)
         arr.dims = list(arr.data.shape)
-        arr.num_dim = len(arr.dims)
+        if externals.versions['nibabel'] < '2.1':
+            # in later versions it is a computed property
+            arr.num_dim = len(arr.dims)
 
     # make the image
     meta = gifti.GiftiMetaData()
@@ -250,10 +253,5 @@ def write(fn, s, overwrite=True):
         raise ValueError("Filename %s does not end with required"
                          " extension %s" % (fn, EXT))
 
-
     xml = to_xml(s, fn)
-
-    with io.FileIO(fn, 'wb') as f:
-        n = f.write(xml)
-    if n != len(xml):
-        raise ValueError("Not all bytes written to %s" % fn)
+    safe_write(fn, xml)

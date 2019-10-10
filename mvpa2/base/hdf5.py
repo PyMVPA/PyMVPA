@@ -37,6 +37,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 import h5py
+import h5py.highlevel  # >= 2.8.0, https://github.com/h5py/h5py/issues/1063
 
 import os
 import os.path as osp
@@ -44,6 +45,7 @@ import os.path as osp
 import mvpa2
 from mvpa2.base import externals
 from mvpa2.base.types import asobjarray
+from mvpa2.misc.support import builtins_mod
 
 if __debug__:
     from mvpa2.base import debug
@@ -54,6 +56,7 @@ universal_classname_remapper = {
                                                    'StaticFeatureSelection'),
 }
 
+_hdf5_version = externals.versions['hdf5']
 
 # Comment: H5Py defines H5Error
 class HDF5ConversionError(Exception):
@@ -119,7 +122,7 @@ def hdf2obj(hdf, memo=None):
             # and coerce it back into the native Python type if necessary
             if issubclass(type(obj), np.generic):
                 obj = np.asscalar(obj)
-        elif 'is_numpy_scalar' in hdf.attrs:
+        elif 'is_numpy_scalar' in hdf.attrs and 'is_a_view' not in hdf.attrs:
             # extract the scalar from the 0D array as is
             obj = hdf[()]
         else:
@@ -134,7 +137,7 @@ def hdf2obj(hdf, memo=None):
                 "object (content: '%s', attributes: '%s')."
                 % (hdf.name, hdf.keys(), hdf.attrs.keys()))
 
-        mod_name = hdf.attrs['module']
+        mod_name = hdf.attrs['module'].decode()
 
         if __debug__:
             if 'class' in hdf.attrs:
@@ -147,9 +150,9 @@ def hdf2obj(hdf, memo=None):
         if 'recon' in hdf.attrs:
             # Custom objects custom reconstructor
             obj = _recon_customobj_customrecon(hdf, memo)
-        elif mod_name != '__builtin__':
+        elif mod_name != builtins_mod:
             # Custom objects default reconstructor
-            cls_name = hdf.attrs['class']
+            cls_name = hdf.attrs['class'].decode()
             if cls_name in ('function', 'type', 'builtin_function_or_method'):
                 # Functions and types
                 obj = _recon_functype(hdf)
@@ -158,7 +161,7 @@ def hdf2obj(hdf, memo=None):
                 obj = _recon_customobj_defaultrecon(hdf, memo)
         else:
             # Built-in objects
-            cls_name = hdf.attrs['class']
+            cls_name = hdf.attrs['class'].decode()
             if __debug__:
                 debug('HDF5', "Reconstructing built-in object '%s'." % cls_name)
             # built in type (there should be only 'list', 'dict' and 'None'
@@ -203,9 +206,9 @@ def hdf2obj(hdf, memo=None):
 
 def _recon_functype(hdf):
     """Reconstruct a function or type from HDF"""
-    cls_name = hdf.attrs['class']
-    mod_name = hdf.attrs['module']
-    ft_name = hdf.attrs['name']
+    cls_name = hdf.attrs['class'].decode()
+    mod_name = hdf.attrs['module'].decode()
+    ft_name = hdf.attrs['name'].decode()
     if __debug__:
         debug('HDF5', "Load '%s.%s.%s' [%s]"
                       % (mod_name, cls_name, ft_name, hdf.name))
@@ -244,8 +247,8 @@ def _recon_customobj_customrecon(hdf, memo):
     """Reconstruct a custom object from HDF using a custom recontructor"""
     # we found something that has some special idea about how it wants
     # to be reconstructed
-    mod_name = hdf.attrs['module']
-    recon_name = hdf.attrs['recon']
+    mod_name = hdf.attrs['module'].decode()
+    recon_name = hdf.attrs['recon'].decode()
     if __debug__:
         debug('HDF5', "Load from custom reconstructor '%s.%s' [%s]"
                       % (mod_name, recon_name, hdf.name))
@@ -295,9 +298,15 @@ def _recon_customobj_customrecon(hdf, memo):
 
 
 def _import_from_thin_air(mod_name, importee, cls_name=None):
+    # to overcome  TypeError: Item in ``from list'' must be str, not unicode
+    importee = str(importee)
     if cls_name is None:
         cls_name = importee
     try:
+        if mod_name in ('builtins', '__builtin__'):
+            # we might have got it from the hdf saved using another version
+            # of python, so let's map
+            mod_name = builtins_mod
         mod = __import__(mod_name, fromlist=[importee])
     except ImportError as e:
         if mod_name.startswith('mvpa') and not mod_name.startswith('mvpa2'):
@@ -317,8 +326,8 @@ def _import_from_thin_air(mod_name, importee, cls_name=None):
 
 def _recon_customobj_defaultrecon(hdf, memo):
     """Reconstruct a custom object from HDF using the default recontructor"""
-    cls_name = hdf.attrs['class']
-    mod_name = hdf.attrs['module']
+    cls_name = hdf.attrs['class'].decode()
+    mod_name = hdf.attrs['module'].decode()
     if __debug__:
         debug('HDF5', "Load class instance '%s.%s' instance [%s]"
                       % (mod_name, cls_name, hdf.name))
@@ -532,21 +541,26 @@ def _hdf_to_ndarray(hdf):
 
     if 'is_a_view' in hdf.attrs:
         assert ('c_order' in hdf.attrs)
-        if externals.versions['hdf5'] < '1.8.7' and not 'shape' in hdf.attrs:
+        if _hdf5_version < '1.8.7' and not 'shape' in hdf.attrs:
             shape = tuple()
-        else:
-            assert ('shape' in hdf.attrs)
+        elif 'shape' in hdf.attrs:
             shape = hdf.attrs['shape']
+        else:  # numpy scalar
+            shape = None
         if 'dtype_names' in hdf.attrs:
             assert('dtype' not in hdf.attrs)
-            names = hdf.attrs['dtype_names']
-            dtypes = hdf.attrs['dtype_types']
+            names = [x for x in hdf.attrs['dtype_names']]
+            dtypes = [x.decode() for x in hdf.attrs['dtype_types']]
             dtype = zip(names, dtypes)
         else:
             assert('dtype' in hdf.attrs)
-            dtype = hdf.attrs['dtype']
-        obj = np.frombuffer(obj.data, dtype=dtype, count=int(np.prod(shape)))
+            dtype = hdf.attrs['dtype'].decode()
+        kw = dict() if shape is not None else {}
+        obj = np.frombuffer(obj.data, dtype=dtype, **kw)
         obj = obj.reshape(shape, order=['F', 'C'][int(hdf.attrs['c_order'])])
+        if shape is None and isinstance(obj, np.ndarray):  # numpy scalar
+            assert obj.size == 1
+            obj = obj[0]
     return obj
 
 
@@ -617,6 +631,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
     #
     is_objarray = False                # assume the bright side ;-)
     is_ndarray = isinstance(obj, np.ndarray)
+    shape = None
     if is_ndarray:
         shape = obj.shape
         if obj.dtype == np.object:
@@ -662,7 +677,15 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
 
         is_a_view = False
         try:
-            hdf.create_dataset(name, None, None, obj, **kwargs)
+            if is_numpy_scalar and type(obj) == np.float128 and _hdf5_version < '2.9.0':
+                # h5py cannot do full round trip on this dtype
+                # see https://github.com/h5py/h5py/commit/6b6880b40ae1ac014fad6f1d6eaa1f0388e76160
+                # Store as a view - should work for any.  With new version of
+                # h5py will store as a regular scalar.  Worked for Yarik
+                # on Debian with 2.8.0-3 and 2.9.0-1
+                is_a_view = True
+            else:
+                hdf.create_dataset(name, None, None, obj, **kwargs)
         except TypeError as exc:
             exc_str = str(exc)
             if ("No conversion path for dtype" in exc_str):
@@ -675,7 +698,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
         # we would need to save a view of the bytes and other
         # parameters (shape, dtype, order) to reconstruct later
         if is_a_view:
-            assert(is_ndarray)
+            assert(is_ndarray or is_numpy_scalar)
             # do conversion to pure byte array, by using array's buffer
             if not ((obj.flags.c_contiguous or obj.flags.f_contiguous)
                     and obj.flags.aligned):
@@ -693,9 +716,9 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
                 dtype = obj_.dtype
                 hdf[name].attrs.create('dtype_names', dtype.names)
                 hdf[name].attrs.create('dtype_types',
-                                       [dtype[i].str for i, _ in enumerate(dtype.names)])
+                                       [dtype[i].str.encode() for i, _ in enumerate(dtype.names)])
             else:
-                hdf[name].attrs.create('dtype', obj_.dtype.str)
+                hdf[name].attrs.create('dtype', obj_.dtype.str.encode())
                 # shape is handled later
 
         if not noid and not is_scalar:
@@ -713,7 +736,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
             # we need to confess the true origin
             hdf[name].attrs.create('is_objarray', True)
 
-        if is_objarray or is_a_view:
+        if shape is not None and (is_objarray or is_a_view):
             # it was of more than 1 dimension or it was a scalar
             if not len(shape) and externals.versions['hdf5'] < '1.8.7':
                 if __debug__:
@@ -780,7 +803,9 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
 
     # common container handling, either __reduce__ was not possible
     # or it was the default implementation
-    if pieces is None or pieces[0].__name__ == '_reconstructor':
+    # _reconstructor could be overloaded by e.g. shogun with _sg_reconstructor
+    # which makes our tender piece of magic fail
+    if pieces is None or pieces[0].__name__.endswith('_reconstructor'):
         # figure out the source module
         if hasattr(obj, '__module__'):
             src_module = obj.__module__
@@ -791,17 +816,16 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
         # special case: metaclass types NOT instance of a class with metaclass
         if hasattr(obj, '__metaclass__') and hasattr(obj, '__base__'):
             cls_name = 'type'
-
-        if src_module != '__builtin__':
+        if src_module != builtins_mod:
             if hasattr(obj, '__name__'):
-                if not obj.__name__ in dir(__import__(src_module,
+                if obj.__name__ not in dir(__import__(src_module,
                                                       fromlist=[obj.__name__])):
                     raise HDF5ConversionError("Cannot store locally defined "
                                               "function '%s'" % cls_name)
             else:
                 mod_content = dir(__import__(src_module,
                                              fromlist=[cls_name]))
-                if not cls_name in mod_content:
+                if cls_name not in mod_content:
                     # sometimes the class name is not the name of the type
                     # instance imported from the module, e.g. NamedTuple
                     # stored with a different object name
@@ -819,8 +843,8 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
                         raise HDF5ConversionError("Cannot store locally defined "
                                                   "class '%s'" % cls_name)
         # store class info (fully-qualified)
-        grp.attrs.create('class', cls_name)
-        grp.attrs.create('module', src_module)
+        grp.attrs.create('class', cls_name.encode())
+        grp.attrs.create('module', src_module.encode())
         if __debug__:
             debug('HDF5', "Stored class info: %s.%s"
                           % (src_module, cls_name))
@@ -831,7 +855,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
             if oname == '<lambda>':
                 raise HDF5ConversionError(
                     "Can't obj2hdf lambda functions. Got %r" % (obj,))
-            grp.attrs.create('name', oname)
+            grp.attrs.create('name', oname.encode())
         if isinstance(obj, (list, tuple)):
             _seqitems_to_hdf(obj, grp, memo, **kwargs)
         elif isinstance(obj, dict):
@@ -846,8 +870,8 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
         if __debug__:
             debug('HDF5', "Use custom __reduce__ for storage: (%i arguments)."
                           % len(pieces[1]))
-        grp.attrs.create('recon', pieces[0].__name__)
-        grp.attrs.create('module', pieces[0].__module__)
+        grp.attrs.create('recon', pieces[0].__name__.encode())
+        grp.attrs.create('module', pieces[0].__module__.encode())
         if __debug__:
             debug('HDF5', "Stored reconstructor info: %s.%s"
                           % (pieces[0].__module__, pieces[0].__name__))
@@ -898,9 +922,28 @@ def h5save(filename, data, name=None, mode='w', mkdir=True, **kwargs):
         target_dir = osp.dirname(filename)
         if target_dir and not osp.exists(target_dir):
             os.makedirs(target_dir)
-    hdf = h5py.File(filename, mode)
-    hdf.attrs.create('__pymvpa_hdf5_version__', '2')
-    hdf.attrs.create('__pymvpa_version__', mvpa2.__version__)
+
+    retries = 30
+    while retries:
+        try:
+            hdf = h5py.File(filename, mode)
+            break
+        except IOError as e:
+            # sadly this test is not reliable
+            #if e.errno == 11:
+            if retries > 1 and 'resource temporarily unavailable' in str(e):
+                # cannot lock the file: possibly concurrent use, but also
+                # seems to happen spuriously with HDF5 1.10
+                # give it a second and try once more
+                import time
+                time.sleep(1.0)
+                print "'%s' cannot be locked, will try again in a second" % filename
+                retries -= 1
+            else:
+                raise
+
+    hdf.attrs.create('__pymvpa_hdf5_version__', '2'.encode())
+    hdf.attrs.create('__pymvpa_version__', mvpa2.__version__.encode())
     try:
         obj2hdf(hdf, data, name, **kwargs)
     finally:

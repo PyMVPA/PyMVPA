@@ -32,6 +32,9 @@ from mvpa2.base.types import is_sequence_type
 if __debug__:
     from mvpa2.base import debug
 
+PY2 = sys.version_info[0] == 2
+PY3 = sys.version_info[0] == 3
+builtins_mod = '__builtin__' if PY2 else 'builtins'
 
 ##REF: Name was automagically refactored
 def reuse_absolute_path(file1, file2, force=False):
@@ -234,6 +237,20 @@ def unique_combinations(L, n, sort=False):
     return res
 
 
+def xrandom_iterprod(n, *seq):
+    """Generate n random iterprod's from given sequences"""
+    ls = map(len, seq)
+    seen = set()
+    if n > np.prod(ls):
+        n = np.prod(ls)
+    while len(seen) < n:
+        sel = tuple(random.randint(0, l - 1) for l in ls)
+        if sel in seen:
+            continue
+        seen.add(sel)
+        yield [s[i] for s, i in zip(seq, sel)]
+
+
 ##REF: Name was automagically refactored
 def indent_doc(v):
     """Given a `value` returns a string where each line is indented
@@ -343,18 +360,24 @@ def version_to_tuple(v):
         except ValueError:
             # try to split into sequences of literals and numerics
             suffix = x
+            resd_prev = {}
             while suffix != '':
                 res = regex.search(suffix)
                 if res:
                     resd = res.groupdict()
+                    if resd == resd_prev:
+                        # we are in a loop, nothing meaningful would come out
+                        vres += [suffix]
+                        break
+                    resd_prev = resd
                     if resd['numeric'] != '':
                         vres += [int(resd['numeric'])]
                     if resd['alpha'] != '':
                         vres += [resd['alpha']]
                     suffix = resd['suffix']
                 else:
-                    # We can't detech anything meaningful -- let it go as is
-                    resd += [suffix]
+                    # We can't detect anything meaningful -- let it go as is
+                    vres += [suffix]
                     break
     v = tuple(vres)
 
@@ -795,7 +818,7 @@ def get_limit_filter(limit, collection):
             else:
                 limit_filter[collection[a].value == limit[a]] = True
     else:
-        raise RuntimeError("Unhandle condition")
+        raise RuntimeError("Unhandled condition")
 
     return limit_filter
 
@@ -831,3 +854,26 @@ def get_nelements_per_value(data):
 
     return result
 
+
+# inspired by get_random_state function/approach in scikit.learn
+def get_rng(r=None):
+    """Return instantiated numpy.random.RandomState given r.
+
+    If r is None, return numpy.random singleton, so it will not be reinitialized
+    for each invocation of `get_random_state`.
+
+    If r is int, it is used to seed a new numpy.random.RandomState, so you would
+    be guaranteed to get reproducible random operations upon each invocation
+    of the function using get_random_state
+
+    If r is an existing numpy.random.RandomState instance, it simply will be
+    returned and thus reused, possibly across multiple calls to the object using
+    this get_random_state.
+    """
+    if isinstance(r, np.random.RandomState):
+        return r
+    elif r is None or r is np.random:
+        return np.random
+    else:
+        # try to seed a new state
+        return np.random.RandomState(r)

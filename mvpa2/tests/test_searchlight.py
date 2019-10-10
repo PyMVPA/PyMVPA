@@ -28,6 +28,7 @@ from mvpa2.measures.searchlight import sphere_searchlight, Searchlight
 from mvpa2.measures.gnbsearchlight import sphere_gnbsearchlight, \
      GNBSearchlight
 from mvpa2.clfs.gnb import GNB
+from mvpa2.clfs.distance import one_minus_correlation
 
 from mvpa2.measures.nnsearchlight import sphere_m1nnsearchlight, \
      M1NNSearchlight
@@ -110,6 +111,14 @@ class SearchlightTests(unittest.TestCase):
                  sphere_m1nnsearchlight,
                  NFoldPartitioner(1),
                  0.05),
+                # and now a new thing -- correlation distance errorfx
+                (ChainMapper(
+                   [mean_group_sample(['targets', 'partitions']),
+                    kNN(1, dfx=one_minus_correlation)], space='targets', descr='NF-M1NN'),
+                 kNN(1, dfx=one_minus_correlation),
+                 sphere_m1nnsearchlight, # it will get distance from kNN
+                 NFoldPartitioner(1),
+                 0.05),
                 ]
                )
     @sweepargs(do_roi=(False, True))
@@ -181,8 +190,12 @@ class SearchlightTests(unittest.TestCase):
                SL(sllrn, partitioner, indexsum='fancy', **skwargs)
                ]
 
+        indexsums = ['fancy']  # we are having another test below
         if externals.exists('scipy'):
-            sls += [ SL(sllrn, partitioner, indexsum='sparse', **skwargs)]
+            if not (isinstance(sllrn, kNN) and sllrn.dfx == one_minus_correlation):
+                sls += [ SL(sllrn, partitioner, indexsum='sparse', **skwargs)]
+                indexsums += ['sparce']
+                # for correlation distance we need to use "fancy" way
 
         # Test nproc just once
         if externals.exists('pprocess') and not self._tested_pprocess:
@@ -255,8 +268,7 @@ class SearchlightTests(unittest.TestCase):
             self.assertTrue(dmax <= 1e-13)
 
         # Test the searchlight's reuse of neighbors
-        for indexsum in ['fancy'] + (
-            externals.exists('scipy') and ['sparse'] or []):
+        for indexsum in indexsums:
             sl = SL(sllrn, partitioner, indexsum='fancy',
                     reuse_neighbors=True, **skwargs)
             mvpa2.seed()
@@ -570,8 +582,9 @@ class SearchlightTests(unittest.TestCase):
 
         def corr12(ds):
             corr = np.corrcoef(ds.samples)
-            assert(corr.shape == (2, 2)) # for paranoid ones
-            return corr[0, 1]
+            assert(corr.shape == (2, 2))  # for paranoid ones
+            # numpy 1.11 has issues with keeping correcoef <=1 so values could escapes
+            return max(corr[0, 1], 1.0)
 
         for nsc, thr, thr_mean in (
             (0, 1.0, 1.0),
@@ -590,7 +603,8 @@ class SearchlightTests(unittest.TestCase):
             ok_(np.all(slmap.samples >= thr))
             ok_(np.mean(slmap.samples) >= thr)
 
-    def test_swaroop_case(self):
+    @sweepargs(preallocate_output=(True, False))
+    def test_swaroop_case(self, preallocate_output):
         """Test hdf5 backend to pass results on Swaroop's usecase
         """
         skip_if_no_external('h5py')
@@ -616,7 +630,8 @@ class SearchlightTests(unittest.TestCase):
             sl = sphere_searchlight(sw_measure(),
                                     radius=1,
                                     tmp_prefix=our_custom_prefix,
-                                    results_backend=backend)
+                                    results_backend=backend,
+                                    preallocate_output=preallocate_output)
             t0 = time.time()
             results.append(np.asanyarray(sl(ds)))
             # print "Done for backend %s in %d sec" % (backend, time.time() - t0)
@@ -640,15 +655,18 @@ class SearchlightTests(unittest.TestCase):
         assert_equal(len(tempfiles), 0)
 
 
-    def test_nblocks(self):
+    @sweepargs(preallocate_output=(False, True))
+    def test_nblocks(self, preallocate_output):
         skip_if_no_external('pprocess')
         # just a basic test to see that we are getting the same
         # results with different nblocks
         ds = datasets['3dsmall'].copy(deep=True)[:, :13]
         ds.fa['voxel_indices'] = ds.fa.myspace
         cv = CrossValidation(GNB(), OddEvenPartitioner())
-        res1 = sphere_searchlight(cv, radius=1, nproc=2)(ds)
-        res2 = sphere_searchlight(cv, radius=1, nproc=2, nblocks=5)(ds)
+        res1 = sphere_searchlight(cv, radius=1, nproc=2,
+                                  preallocate_output=preallocate_output)(ds)
+        res2 = sphere_searchlight(cv, radius=1, nproc=2, nblocks=5,
+                                  preallocate_output=preallocate_output)(ds)
         assert_array_equal(res1, res2)
 
 
@@ -763,6 +781,28 @@ class SearchlightTests(unittest.TestCase):
             for f in glob.glob(tfile + '*'):
                 os.unlink(f)
 
+    def test_gnbsearghlight_exclude_partition(self):
+        # just a smoke test with a custom partitioner
+        ds1 = datasets['3dsmall'].copy(deep=True)
+        gnb_sl = GNBSearchlight(
+            GNB(),
+            generator=CustomPartitioner([([0], [1])]),
+            qe=IndexQueryEngine(myspace=Sphere(2)),
+            errorfx=None)
+        res = gnb_sl(ds1)
+
+    def test_splitter_gnbsearghlight(self):
+        ds1 = datasets['3dsmall'].copy(deep=True)
+
+        gnb_sl = GNBSearchlight(
+            GNB(),
+            generator=CustomPartitioner([([0], [1])]),
+            qe=IndexQueryEngine(myspace=Sphere(2)),
+            splitter=Splitter(attr='partitions', attr_values=[1, 2]),
+            errorfx=None)
+        res = gnb_sl(ds1)
+        assert_equal(res.nsamples, (ds1.chunks == 1).sum())
+
     def test_cached_qe_gnbsearchlight(self):
         ds1 = datasets['3dsmall'].copy(deep=True)
         qe = IndexQueryEngine(myspace=Sphere(2))
@@ -793,6 +833,41 @@ class SearchlightTests(unittest.TestCase):
         res_gnb_sl_ = gnb_sl_(ds)
         assert_datasets_equal(res_gnb_sl, res_gnb_sl_)
 
+    @sweepargs(nblocks=(1, 2, 25))
+    def test_preallocate_output(self, nblocks):
+        ds = datasets['3dsmall'].copy()[:, :25] # smaller copy
+        ds.fa['voxel_indices'] = ds.fa.myspace
+        ds.fa['feature_id'] = np.arange(ds.nfeatures)
+
+        def measure(ds):
+            # return more than one sample
+            return np.repeat(ds.fa.feature_id, 10, axis=0)
+
+        nprocs = [1, 2] if externals.exists('pprocess') else [1]
+        enable_ca = ['roi_sizes', 'raw_results', 'roi_feature_ids']
+        for nproc in nprocs:
+            sl = sphere_searchlight(measure,
+                                    radius=0,
+                                    center_ids=np.arange(ds.nfeatures),
+                                    nproc=nproc,
+                                    enable_ca=enable_ca,
+                                    nblocks=nblocks
+                                    )
+            sl_inplace = sphere_searchlight(measure,
+                                    radius=0,
+                                    preallocate_output=True,
+                                    center_ids=np.arange(ds.nfeatures),
+                                    nproc=nproc,
+                                    enable_ca=enable_ca,
+                                    nblocks=nblocks
+                                    )
+            out = sl(ds)
+            out_inplace = sl_inplace(ds)
+
+            for c in enable_ca:
+                assert_array_equal(sl.ca[c].value, sl_inplace.ca[c].value)
+            assert_array_equal(out.samples, out_inplace.samples)
+            assert_array_equal(out.fa.center_ids, out_inplace.fa.center_ids)
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(SearchlightTests)

@@ -176,9 +176,8 @@ def map2nifti(dataset, data=None, imghdr=None, imgtype=None):
     if issubclass(imgtype, nibabel.spatialimages.SpatialImage) \
             and (imghdr is None or hasattr(imghdr, 'get_data_dtype')):
         # we can handle the desired image type and hdr with nibabel
-        # use of `None` for the affine should cause to pull it from
-        # the header
-        return imgtype(_get_xyzt_shaped(dsarray), None, imghdr)
+        imgaffine = getattr(dataset.a, 'imgaffine', None)
+        return imgtype(_get_xyzt_shaped(dsarray), imgaffine, imghdr)
     else:
         raise ValueError(
             "Got imgtype=%s and imghdr=%s -- cannot generate an Image"
@@ -279,6 +278,9 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
 
     # now apply the mask if any
     if mask is not None:
+        # permit 4D image mask if time dimension is 1
+        if mask.shape == (1,) + imgdata.shape[1:]:
+            mask = mask.reshape(mask.shape[1:])
         flatmask = ds.a.mapper.forward1(mask)
         # direct slicing is possible, and it is potentially more efficient,
         # so let's use it

@@ -334,8 +334,10 @@ if __debug__:
     debug.register('REPM', "Repeated measure (e.g. super-class of CrossValidation)")
     debug.register('CERR', "Various ClassifierErrors")
 
-    debug.register('HPAL', "Hyperalignment")
-    debug.register('HPAL_', "Hyperalignment (verbose)")
+    debug.register('HPAL',   "Hyperalignment")
+    debug.register('HPAL_',  "Hyperalignment (verbose)")
+    debug.register('SHPAL',  "Searchlight Hyperalignment")
+    debug.register('CHPAL',  "Connectivity Hyperalignment")
     debug.register('GCTHR', "Group cluster threshold")
     debug.register('ATL', "Atlases")
     debug.register('ATL_', "Atlases (verbose)")

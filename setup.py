@@ -29,6 +29,13 @@ libsvmc_libraries = []
 extra_link_args = []
 libsvmc_library_dirs = []
 
+requires = {
+    'core': [
+        'scipy',
+        'nibabel'
+    ]
+}
+
 # platform-specific settings
 if sys.platform == "darwin":
     extra_link_args.append("-bundle")
@@ -154,12 +161,27 @@ def setup_package():
         py3tool.sync_2to3('mvpa2', os.path.join(src_path, 'mvpa2'))
         py3tool.sync_2to3('3rd', os.path.join(src_path, '3rd'))
 
+        # Borrowed from NumPy before this code was deprecated (everyone
+        # else moved on from 2to3)
+        # Ugly hack to make pip work with Python 3, see NumPy #1857.
+        # Explanation: pip messes with __file__ which interacts badly with the
+        # change in directory due to the 2to3 conversion.  Therefore we restore
+        # __file__ to what it would have been otherwise.
+        global __file__
+        __file__ = os.path.join(os.curdir, os.path.basename(__file__))
+        if '--egg-base' in sys.argv:
+            # Change pip-egg-info entry to absolute path, so pip can find it
+            # after changing directory.
+            idx = sys.argv.index('--egg-base')
+            if sys.argv[idx + 1] == 'pip-egg-info':
+                sys.argv[idx + 1] = os.path.join(local_path, 'pip-egg-info')
+
     # Run build
     os.chdir(src_path)
     sys.path.insert(0, src_path)
 
     setup(name='pymvpa2',
-          version='2.4.1',
+          version='2.6.5.dev1',
           author='Michael Hanke, Yaroslav Halchenko, Nikolaas N. Oosterhof',
           author_email='pkg-exppsy-pymvpa@lists.alioth.debian.org',
           license='MIT License',
@@ -173,9 +195,11 @@ def setup_package():
               "it is eminently suited for such datasets.\n"
               "PyMVPA is truly free software (in every respect) and "
               "additionally requires nothing but free-software to run.",
+          setup_requires=['numpy'],
           # please maintain alphanumeric order
           packages=[ 'mvpa2',
                      'mvpa2.algorithms',
+                     'mvpa2.algorithms.benchmarks',
                      'mvpa2.atlases',
                      'mvpa2.base',
                      'mvpa2.clfs',
@@ -211,6 +235,7 @@ def setup_package():
                      'mvpa2.tests.badexternals',
                      'mvpa2.viz',
                    ],
+          install_requires=requires['core'],
           data_files=[('mvpa2', [os.path.join('mvpa2', 'COMMIT_HASH')])]
                      + find_data_files(os.path.join('mvpa2', 'data'),
                                        '*.txt', '*.nii.gz', '*.rtc', 'README', '*.bin',

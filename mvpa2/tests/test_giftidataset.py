@@ -34,7 +34,7 @@ from mvpa2.testing import sweepargs
 
 def _get_test_sample_node_data(format_=None):
     # returns test data in various formats
-    if format_ == None:
+    if format_ is None:
         samples = np.asarray(
             [[2.032, -0.892, -0.826, 1.163],
              [0.584, 1.844, 1.166, -0.848],
@@ -269,7 +269,7 @@ def test_gifti_dataset_with_anatomical_surface(fn, format_, include_nodes):
     ds = _get_test_dataset(include_nodes)
 
     nsamples, nfeatures = ds.shape
-    vertices = np.random.normal(size=(nfeatures, 3))
+    vertices = np.round(np.random.normal(size=(nfeatures, 3)), decimals=5)
     faces = np.asarray([i + np.arange(3) for i in xrange(2 * nfeatures)]) % nfeatures
     surf = Surface(vertices, faces)
 

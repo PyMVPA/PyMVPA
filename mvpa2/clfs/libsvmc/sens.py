@@ -118,7 +118,7 @@ class LinearSVMWeights(Sensitivity):
                 # structure of bloody storage
 
                 # total # of pairs
-                npairs = nr_class * (nr_class-1)/2
+                npairs = (nr_class * (nr_class-1))//2
                 # # of SVs in each class
                 NSVs_perclass = model.get_n_sv()
                 # indices where each class starts in each row of SVs
@@ -170,9 +170,11 @@ class LinearSVMWeights(Sensitivity):
             # and we should have prepared the labels
             assert(sens_labels is not None)
 
+            # Assure that our tuples for pairs do not get converted to list
+            if isinstance(sens_labels[0], tuple):
+                sens_labels = asobjarray(sens_labels)
+
             if len(clf._attrmap):
-                if isinstance(sens_labels[0], tuple):
-                    sens_labels = asobjarray(sens_labels)
                 sens_labels = clf._attrmap.to_literal(sens_labels, recurse=True)
 
             # NOTE: `weights` is already and always 2D

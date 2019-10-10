@@ -313,7 +313,7 @@ class ClassifiersTests(unittest.TestCase):
             try:
                 try:
                     clf.train(ds)                   # should not crash or stall
-                except (ValueError), e:
+                except (ValueError, AssertionError) as e:
                     self.fail("Failed to train on degenerate data. Error was %r" % e)
                 except DegenerateInputError:
                     # so it realized that data is degenerate and puked

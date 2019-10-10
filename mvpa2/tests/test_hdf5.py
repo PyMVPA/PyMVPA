@@ -107,43 +107,44 @@ def test_matfile_v73_compat():
     assert_array_equal(mat['y'], np.array([(1,0,1)], dtype='uint8').T)
 
 
-def test_directaccess():
-    f = tempfile.NamedTemporaryFile()
-    h5save(f.name, 'test')
-    assert_equal(h5load(f.name), 'test')
-    f.close()
-    f = tempfile.NamedTemporaryFile()
-    h5save(f.name, datasets['uni4medium'])
-    assert_array_equal(h5load(f.name).samples,
+@with_tempfile()
+def test_directaccess(fname):
+    h5save(fname, 'test')
+    assert_equal(h5load(fname), 'test')
+    h5save(fname, datasets['uni4medium'])
+    assert_array_equal(h5load(fname).samples,
                        datasets['uni4medium'].samples)
 
-def test_function_ptrs():
+@with_tempfile()
+def test_function_ptrs(fname):
     skip_if_no_external('nibabel')
     ds = load_example_fmri_dataset()
     # add a mapper with a function ptr inside
     ds = ds.get_mapped(mean_sample())
-    f = tempfile.NamedTemporaryFile()
-    h5save(f.name, ds)
-    ds_loaded = h5load(f.name)
+    h5save(fname, ds)
+    ds_loaded = h5load(fname)
     fresh = load_example_fmri_dataset().O
     # check that the reconstruction function pointer in the FxMapper points
     # to the right one
     assert_array_equal(ds_loaded.a.mapper.forward(fresh),
                        ds.samples)
 
-def test_various_special_cases():
+
+@with_tempfile()
+def test_various_special_cases(fname):
     # 0d object ndarray
-    f = tempfile.NamedTemporaryFile()
     a = np.array(0, dtype=object)
-    h5save(f.name, a)
-    a_ = h5load(f.name)
+    h5save(fname, a)
+    a_ = h5load(fname)
     ok_(a == a_)
     # slice
-    h5save(f.name, slice(2,5,3))
-    sl = h5load(f.name)
+    h5save(fname, slice(2,5,3))
+    sl = h5load(fname)
     ok_(sl == slice(2,5,3))
 
-def test_class_oldstyle():
+
+@with_tempfile()
+def test_class_oldstyle(fname):
     # AttributeError: CustomOld instance has no attribute '__reduce__'
 
     # old style classes do not define reduce -- sure thing we might
@@ -151,37 +152,40 @@ def test_class_oldstyle():
     # exception should be thrown
     co = CustomOldStyle()
     co.v = 1
-    f = tempfile.NamedTemporaryFile()
-    assert_raises(HDF5ConversionError, save, co, f.name, compression='gzip')
+    assert_raises(HDF5ConversionError, save, co, fname, compression='gzip')
 
-def test_locally_defined_class():
+
+@with_tempfile()
+def test_locally_defined_class(fname):
     # cannot store locally defined classes
     class Custom(object):
         pass
     c = Custom()
-    f = tempfile.NamedTemporaryFile()
-    assert_raises(HDF5ConversionError, h5save, f.name, c, compression='gzip')
+    assert_raises(HDF5ConversionError, h5save, fname, c, compression='gzip')
 
-def test_dataset_without_chunks():
+
+@with_tempfile()
+def test_dataset_without_chunks(fname):
     #  ValueError: All chunk dimensions must be positive (Invalid arguments to routine: Out of range)
     # MH: This is not about Dataset chunks, but about an empty samples array
-    f = tempfile.NamedTemporaryFile()
     ds = AttrDataset([8], a=dict(custom=1))
-    save(ds, f.name, compression='gzip')
-    ds_loaded = h5load(f.name)
+    save(ds, fname, compression='gzip')
+    ds_loaded = h5load(fname)
     ok_(ds_loaded.a.custom == ds.a.custom)
 
-def test_recursion():
+
+@with_tempfile()
+def test_recursion(fname):
     obj = range(2)
     obj.append(HDFDemo())
     obj.append(obj)
-    f = tempfile.NamedTemporaryFile()
-    h5save(f.name, obj)
-    lobj = h5load(f.name)
+    h5save(fname, obj)
+    lobj = h5load(fname)
     assert_equal(obj[:2], lobj[:2])
     assert_equal(type(obj[2]), type(lobj[2]))
     ok_(obj[3] is obj)
     ok_(lobj[3] is lobj)
+
 
 @with_tempfile()
 def test_h5save_mkdir(dirname):
@@ -204,33 +208,35 @@ def test_h5save_mkdir(dirname):
     finally:
         os.chdir(cwd)
 
-def test_state_cycle_with_custom_reduce():
+@with_tempfile()
+def test_state_cycle_with_custom_reduce(fname):
     # BoxcarMapper has a custom __reduce__ implementation . The 'space'
     # setting will only survive a svae/load cycle if the state is correctly
     # handle for custom reduce iplementations.
     bm = BoxcarMapper([0], 1, space='boxy')
-    f = tempfile.NamedTemporaryFile()
-    h5save(f.name, bm)
-    bm_rl = h5load(f.name)
+    h5save(fname, bm)
+    bm_rl = h5load(fname)
     assert_equal(bm_rl.get_space(), 'boxy')
 
-def test_store_metaclass_types():
-    f = tempfile.NamedTemporaryFile()
+
+@with_tempfile()
+def test_store_metaclass_types(fname):
     from mvpa2.kernels.base import Kernel
     allowedtype=Kernel
-    h5save(f.name, allowedtype)
-    lkrn = h5load(f.name)
+    h5save(fname, allowedtype)
+    lkrn = h5load(fname)
     assert_equal(lkrn, Kernel)
     assert_equal(lkrn.__metaclass__, Kernel.__metaclass__)
 
-def test_state_setter_getter():
+
+@with_tempfile()
+def test_state_setter_getter(fname):
     # make sure the presence of custom __setstate__, __getstate__ methods
     # is honored -- numpy's RNGs have it
     from numpy.random.mtrand import RandomState
-    f = tempfile.NamedTemporaryFile()
     r = RandomState()
-    h5save(f.name, r)
-    rl = h5load(f.name)
+    h5save(fname, r)
+    rl = h5load(fname)
     rl_state = rl.get_state()
     for i, v in enumerate(r.get_state()):
         assert_array_equal(v, rl_state[i])
@@ -251,7 +257,8 @@ def test_state_setter_getter():
              dtype=object),
     np.array([], dtype='int64'),
     ))
-def test_save_load_object_dtype_ds(obj=None):
+@with_tempfile()
+def test_save_load_object_dtype_ds(fname, obj=None):
     """Test saving of custom object ndarray (GH #84)
     """
     aobjf = np.asanyarray(obj).flatten()
@@ -259,11 +266,8 @@ def test_save_load_object_dtype_ds(obj=None):
     if not aobjf.size and externals.versions['hdf5'] < '1.8.7':
         raise SkipTest("Versions of hdf5 before 1.8.7 have problems with empty arrays")
 
-    # print obj, obj.shape
-    f = tempfile.NamedTemporaryFile()
-
     # save/reload
-    obj_ = saveload(obj, f.name)
+    obj_ = saveload(obj, fname)
 
     # and compare
     # neh -- not versatile enough
@@ -319,6 +323,12 @@ _numpy_objs = [
     np.array(list('abcdef')),
     np.array("string"),
     np.array(u"ы"),
+    # not an array but just an instance of that type
+    np.float64(1),
+    # problematic prior h5py 2.9.0
+    np.float128(1),
+    np.unicode(u"ы"),
+    np.unicode_(u"ы"),
   ] \
   + _unicode_arrays \
   + [a[:, ::2] for a in _unicode_arrays]
@@ -331,19 +341,22 @@ _numpy_objs += [
 ]
 
 @sweepargs(obj=_python_objs + _numpy_objs)
-def test_save_load_python_objs(obj):
+@with_tempfile()
+def test_save_load_python_objs(fname, obj):
     """Test saving objects of various types
     """
-    # print obj, obj.shape
-    f = tempfile.NamedTemporaryFile()
-
+    # try:
+    #     print type(obj), " ",
+    #     print obj # , obj.shape
+    # except Exception as e:
+    #     print e
     # save/reload
     try:
-        h5save(f.name, obj)
+        h5save(fname, obj)
     except Exception as e:
         raise AssertionError("Failed to h5save %s: %s" % (safe_str(obj), e))
     try:
-        obj_ = h5load(f.name)
+        obj_ = h5load(fname)
     except Exception as e:
         raise AssertionError("Failed to h5load %s: %s" % (safe_str(obj), e))
 
@@ -382,6 +395,7 @@ _nested_d[1][2] = ['crap', _nested_d]   # 3rd level of nastiness
 _nested_l = [2, None]
 _nested_l[1] = [{3: 4}, _nested_l, None]
 _nested_l[1][2] = ['crap', _nested_l]   # 3rd level of nastiness
+
 
 @sweepargs(obj=[_nested_d, _nested_l])
 @sweepargs(backend=['hdf5', 'pickle'])

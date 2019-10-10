@@ -39,7 +39,8 @@ enabled_cmds = [
   'select',
   'atlaslabeler',
   'exec',
-  'ofmotionqc',
+  'scatter',
+  'plotmotionqc',
   'ttest',
 ]
 
@@ -142,9 +143,10 @@ for cmd_name in enabled_cmds:
                                        globals(), locals(),
                                        [cmd], -1),
                             cmd)
-    except ImportError:
+    except Exception as exc:
+        verbose(0, "%s not available: %s" % (cmd_name, exc))
         cmd_short_description.append(('(%s)' % cmd_name,
-                                      'not available in this installation'))
+                                      'not available in this installation: %s' % str(exc)))
         continue
     # deal with optional parser args
     if 'parser_args' in subcmdmod.__dict__:

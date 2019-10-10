@@ -21,7 +21,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa2.base.dochelpers import _repr_attrs
+from mvpa2.base.dochelpers import _repr_attrs, borrowkwargs
 
 from mvpa2.base.dataset import AttrDataset
 from mvpa2.misc.neighborhood import QueryEngineInterface
@@ -46,8 +46,8 @@ class SurfaceQueryEngine(QueryEngineInterface):
 
         Parameters
         ----------
-        surface: surf.Surface or str
-            surface object, or filename of a surface
+        surface: surf.Surface
+            surface object
         radius: float
             size of neighborhood.
         distance_metric: str
@@ -118,7 +118,7 @@ class SurfaceQueryEngine(QueryEngineInterface):
 
     def train(self, ds):
         '''
-        Train the queryengine
+        Train the query-engine
 
         Parameters
         ----------
@@ -130,10 +130,9 @@ class SurfaceQueryEngine(QueryEngineInterface):
 
         fa_key = self.fa_node_key
         nvertices = self.surface.nvertices
-        nfeatures = ds.nfeatures
 
-        if not fa_key in ds.fa.keys():
-            raise ValueError('Attribute .fa.%s not found.', fa_key)
+        if fa_key not in ds.fa.keys():
+            raise ValueError('Attribute .fa.%s not found.' % fa_key)
 
         vertex_ids = ds.fa[fa_key].value.ravel()
 
@@ -144,11 +143,11 @@ class SurfaceQueryEngine(QueryEngineInterface):
             raise ValueError("Vertex id '%s' found that is not in "
                              "np.arange(%d)" % (delta[0], nvertices))
 
-        # vertex_ids can have multiple occurences of the same node index
+        # vertex_ids can have multiple occurrences of the same node index
         # for different features, hence use a list.
         # initialize each vertex with an empty list
-        self._vertex2feature_map = v2f = dict((vertex_id, list())
-                                            for vertex_id in xrange(nvertices))
+        self._vertex2feature_map = v2f = dict(
+            (vertex_id, list()) for vertex_id in xrange(nvertices))
 
         for feature_id, vertex_id in enumerate(vertex_ids):
             v2f[vertex_id].append(feature_id)
@@ -187,6 +186,110 @@ class SurfaceQueryEngine(QueryEngineInterface):
         v2f = self._vertex2feature_map
         return sum((v2f[node] for node in nearby_nodes), [])
 
+
+class SurfaceRingQueryEngine(SurfaceQueryEngine):
+    '''
+
+    Query-engine that maps center nodes to indices of features
+    (nodes) that are inside a ring around each center node.
+
+    '''
+    @borrowkwargs(SurfaceQueryEngine)
+    def __init__(self, inner_radius, include_center=False, **kwargs):
+        '''Make a new SurfaceRingQueryEngine
+
+        Parameters
+        ----------
+        inner_radius: float
+            size of inner neighborhood to avoid.
+        include_center: bool
+            whether to include center node in the neighborhood.
+            If True, first element of the neighborhood will be the
+            center node, or nearest to center node if center node
+            is not in the dataset. Default: False
+
+        '''
+
+        self.inner_radius = inner_radius
+        self.include_center = include_center
+        SurfaceQueryEngine.__init__(self, **kwargs)
+        if self.inner_radius >= self.radius:
+            raise ValueError("Inner radius has to be smaller than radius.")
+
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
+        return super(SurfaceRingQueryEngine, self).__repr__(
+                   prefixes=prefixes
+                   + _repr_attrs(self, ['inner_radius'])
+                   + _repr_attrs(self, ['include_center']))
+
+    def _check_trained(self):
+        if self._vertex2feature_map is None:
+            raise ValueError('Not trained on dataset: %s' % self)
+
+
+    @property
+    def ids(self):
+        self._check_trained()
+        return self._vertex2feature_map.keys()
+
+    def untrain(self):
+        self._vertex2feature_map = None
+
+    def train(self, ds):
+        '''
+        Train the queryengine
+
+        Parameters
+        ----------
+        ds: Dataset
+            dataset with surface data. It should have a field
+            .fa.node_indices that indicates the node index of each
+            feature.
+        '''
+        super(SurfaceRingQueryEngine, self).train(ds)
+
+
+    def query(self, **kwargs):
+        raise NotImplementedError
+
+
+    def query_byid(self, vertex_id):
+        '''
+        Return feature ids of features near a vertex
+
+        Parameters
+        ----------
+        vertex_id: int
+            Index of vertex (i.e. node) on the surface
+
+        Returns
+        -------
+        feature_ids: list of int
+            Indices of features in the neighborhood of the vertex indexed
+            by 'vertex_id'
+        '''
+        self._check_trained()
+
+        if vertex_id < 0 or vertex_id >= self.surface.nvertices or \
+                        round(vertex_id) != vertex_id:
+            raise KeyError('vertex_id should be integer in range(%d)' %
+                                                self.surface.nvertices)
+
+        nearby_nodes = self.surface.circlearound_n2d(vertex_id,
+                                                    self.radius,
+                                                    self.distance_metric)
+
+        v2f = self._vertex2feature_map
+        # Sorting nodes based on distance to center node to work around
+        # the problem with add_center_fa in Searchlight
+        nearby_nodes_keys = sorted(nearby_nodes, key=nearby_nodes.__getitem__)
+        neighborhood = []
+        if self.include_center and vertex_id in nearby_nodes_keys:
+            neighborhood = v2f[vertex_id]
+        return sum((v2f[node] for node in nearby_nodes_keys
+                    if nearby_nodes[node] > self.inner_radius), neighborhood)
 
 
 class SurfaceVerticesQueryEngine(QueryEngineInterface):
@@ -270,7 +373,7 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
                                  "(%s,%s,%s)" %
                                         (vg_ds.shape[:3], vg.shape[:3]))
         else:
-            warning("Could not find dataset volume geometry for %r" % dataset)
+            warning("Could not find dataset volume geometry for %s" % dataset)
 
 
         self._map_voxel_coord = map_voxel_coord = {}

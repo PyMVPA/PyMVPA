@@ -404,7 +404,7 @@ def summary_targets(dataset, targets_attr='targets', chunks_attr='chunks',
             d = {'  ' + name1 : l}
             d.update(dict([ (k, stats[k][i]) for k in stats.keys()]))
             table.append( [ ('%.3g', '%s')[isinstance(d[e], basestring)
-                                           or d[e] == None]
+                                           or d[e] is None]
                             % d[e] for e in entries] )
         return '\nSummary for %s across %s\n' % (name1, name2) \
                + table2string(table)
@@ -537,3 +537,39 @@ class SequenceStats(dict):
         pl.xlabel('Offset')
         pl.ylabel('Correlation Coefficient')
         pl.show()
+
+
+@datasetmethod
+def to_df(ds, sas=None, fas=None):
+    """Return pandas DataFrame corresponding to the dataset
+
+    Parameters
+    ----------
+    sas: list, optional
+      List of sample-attribute names to be used/returned to define rows index.
+    fas: list, optional
+      List of feature-attribute names to be used/returned to define rows index.
+
+    """
+    import pandas as pd
+
+    def col_to_index(col, col_abbrev, names):
+        """Collection to Pandas's index conversion
+
+        """
+        attrs = sorted(col.keys()) if names is None else names
+        if not attrs:
+            return None
+        return pd.MultiIndex.from_tuples(
+            # force convert to str for now since needs to be hashable
+            zip(*[map(str, col[a].value) for a in attrs]),
+            names=['%s.%s' % (col_abbrev, fa) for fa in attrs]
+        )
+
+    df = pd.DataFrame(
+        np.asanyarray(ds.samples),
+        columns=col_to_index(ds.fa, 'fa', names=fas)
+    )
+    # Ideally here should be leveled if chunks/targets present
+    df = df.set_index(col_to_index(ds.sa, 'sa', names=sas))
+    return df

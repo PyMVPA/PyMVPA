@@ -245,6 +245,14 @@ experiments.
   URL: http://arxiv.org/abs/1505.01157
 
 
+.. _GHH+16:
+
+**Guntupalli, J. S., Hanke, M., Halchenko, Y. O., Connolly, A. C., Ramadge, P. J. & Haxby, J. V.** (2016). A Model of Representational Spaces in Human Cortex. *Cerebral Cortex*.
+  Keywords: :keyword:`pymvpa`, :keyword:`hyperalignment`
+
+  DOI: http://dx.doi.org/10.1093/cercor/bhw068
+
+
 .. _GM15:
 
 **Guo, B. & Meng, M.** (2015). The encoding of category-specific versus nonspecific information in human inferior temporal cortex. *NeuroImage*.
@@ -339,11 +347,11 @@ experiments.
 **Hastie, T., Tibshirani, R. & Friedman, J. H.** (2009). The Elements of Statistical Learning: Data Mining, Inference, and Prediction. Springer: New York.
   *Excellent summary of virtually all techniques relevant to the field. A free PDF
   version of this book is available from the authors' website at
-  http://www-stat.stanford.edu/%7Etibs/ElemStatLearn/*
+  http://web.stanford.edu/%7Ehastie/ElemStatLearn/*
 
   DOI: http://dx.doi.org/10.1007/b94608
 
-  URL: http://www-stat.stanford.edu/%7Etibs/ElemStatLearn/
+  URL: http://web.stanford.edu/%7Ehastie/ElemStatLearn/
 
 
 .. _HCG14:
@@ -363,6 +371,8 @@ experiments.
 .. _HGC+11:
 
 **Haxby, J. V., Guntupalli, J. S., Connolly, A. C., Halchenko, Y. O., Conroy, B. R., Gobbini, M. I., Hanke, M. & Ramadge, P. J.** (2011). A Common, High-Dimensional Model of the Representational Space in Human Ventral Temporal Cortex. *Neuron*, *72*, 404–416.
+  Keywords: :keyword:`pymvpa`, :keyword:`hyperalignment`
+
   DOI: http://dx.doi.org/10.1016/j.neuron.2011.08.026
 
   URL: http://www.cell.com/neuron/abstract/S0896-6273%2811%2900781-1

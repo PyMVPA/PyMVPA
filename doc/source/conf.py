@@ -58,12 +58,19 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.coverage',
               'sphinx.ext.ifconfig',
               'sphinx.ext.inheritance_diagram',
-              'sphinx.ext.pngmath',
               # we have a local copy of the extension, imported from NumPy 1.3
               # this also includes the docscrape* extensions
               externals.exists('numpydoc') and 'numpydoc.numpydoc' or 'sphinxext.numpydoc',
               # finally our own little thingie to display tasks
               'sphinxext.exercise_directive']
+
+# Things change across sphinx versions
+try:
+    import sphinx.ext.imgmath
+    extensions.append('sphinx.ext.imgmath')
+except ImportError:
+    import sphinx.ext.pngmath
+    extensions.append('sphinx.ext.pngmath')
 
 # we have a local copy of autosummary from the unreleased sphinx
 # 1.0 -- reason: the 0.6 extension creates half-empty summaries
@@ -89,7 +96,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'PyMVPA'
-copyright = '2006-2015, PyMVPA Authors'
+copyright = '2006-2016, PyMVPA Authors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

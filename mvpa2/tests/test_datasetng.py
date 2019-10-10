@@ -385,7 +385,7 @@ def test_mergeds():
     merged = vstack(datasets)
     assert_equal(merged.shape,
                  (np.sum([len(ds) for ds in datasets]), data1.nfeatures))
-    assert_true('test' in merged.fa)
+    assert_false('test' in merged.fa)
     assert_array_equal(merged.sa.targets, [1] * 5 + [2] * 3 + [3] * 2)
 
     #
@@ -396,7 +396,7 @@ def test_mergeds():
     merged = hstack(datasets)
     assert_equal(merged.shape,
                  (len(data1), np.sum([ds.nfeatures for ds in datasets])))
-    assert_true('chunks' in merged.sa)
+    assert_false('chunks' in merged.sa)
     assert_array_equal(merged.fa.one, [1] * 5 + [0] * 5)
 
 def test_hstack():
@@ -467,6 +467,39 @@ def test_stack_add_dataset_attributes():
                 assert_equal(r.a.common, range(10))
                 assert_array_equal(r.a.array, np.arange(10))
 
+def test_stack_add_attributes():
+    data0 = Dataset.from_wizard(np.ones((5, 5)), targets=1)
+    data1 = Dataset.from_wizard(np.ones((5, 5)), targets=1)
+    data0.fa['ok'] = data0.sa['ok'] = np.arange(5)
+    data1.fa['ok'] = data1.sa['ok'] = np.arange(5)
+    data0.fa['nok'] = data0.sa['nok'] = [0]
+    data1.fa['nok'] = data1.sa['nok'] = np.arange(5)
+
+    # function, collection name, the other collection name
+    for xstack, colname, ocolname in ((vstack, 'fa', 'sa'),
+                                      (hstack, 'sa', 'fa')):
+        for add_param in None, 'update', 'drop_nonunique':
+
+            kw = {colname: add_param} if add_param else {}
+            r = xstack((data0, data1), **kw)
+            COL = lambda x: getattr(x, colname)
+            col = COL(r)
+            ocol = getattr(r, ocolname)
+
+            # in any scenario, the other collection should have got
+            # both names and be just fine
+            assert_array_equal(ocol['nok'].value, [0] * 5 + range(5))
+            assert_array_equal(ocol['ok'].value, range(5) * 2)
+
+            if add_param in ('update',):
+                # will be of the last dataset
+                assert_array_equal(col['nok'].value, COL(data1)['nok'].value)
+                assert_array_equal(col['ok'].value, COL(data1)['ok'].value)
+            elif add_param in (None, 'drop_nonunique'):
+                assert('nok' not in col)  # must be dropped since not unique
+                # both the same but let's check ;)
+                assert_array_equal(col['ok'].value, COL(data0)['ok'].value)
+                assert_array_equal(col['ok'].value, COL(data1)['ok'].value)
 
 def test_unique_stack():
     data = Dataset(np.reshape(np.arange(24), (4, 6)),
@@ -976,6 +1009,9 @@ def test_h5py_io(dsfile):
 
     # reload and check for identity
     ds2 = Dataset.from_hdf5(dsfile)
+
+    assert_datasets_equal(ds, ds2)
+    # Old tests -- better more than less ;)
     assert_array_equal(ds.samples, ds2.samples)
     for attr in ds.sa:
         assert_array_equal(ds.sa[attr].value, ds2.sa[attr].value)
@@ -997,6 +1033,29 @@ def test_h5py_io(dsfile):
         #assert_equal('#'.join(repr(ds.a.mapper).split('#')[:-1]),
         #             '#'.join(repr(ds2.a.mapper).split('#')[:-1]))
         pass
+
+
+@nodebug(['ID_IN_REPR', 'MODULE_IN_REPR'])
+@with_tempfile(suffix='.npz')
+def test_npz_io(dsfile):
+
+    # store random dataset to file
+    ds = datasets['3dlarge'].copy()
+
+    ds.a.pop('mapper')  # can't be saved
+    ds.to_npz(dsfile)
+
+    # reload and check for identity
+    ds2 = Dataset.from_npz(dsfile)
+    assert_datasets_equal(ds, ds2)
+
+    assert_array_equal(ds.samples, ds2.samples)
+
+    # But if we try to save with mapper -- it just gets ignored (warning is
+    # issued)
+    datasets['3dlarge'].to_npz(dsfile)
+    ds2_ = Dataset.from_npz(dsfile)
+    assert_datasets_equal(ds2, ds2_)
 
 
 def test_all_equal():

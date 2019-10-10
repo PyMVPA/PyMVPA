@@ -18,6 +18,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 from mvpa2.base import externals
+from mvpa2.support.utils import deprecated
 
 if __debug__:
     from mvpa2.base import debug, warning
@@ -39,10 +40,15 @@ def absmin_distance(a, b):
     return max(abs(a-b))
 
 
-def manhatten_distance(a, b):
-    """Return Manhatten distance between a and b
+def manhattan_distance(a, b):
+    """Return Manhattan distance between a and b
     """
     return sum(abs(a-b))
+
+
+@deprecated("Use correctly spelled manhattan_distance instead")
+def manhatten_distance(a, b):
+    return manhattan_distance(a, b)
 
 
 def mahalanobis_distance(x, y=None, w=None):
@@ -286,7 +292,7 @@ def pnorm_w_python(data1, data2=None, weight=None, p=2,
     use_sq_euclidean : bool
       Either to use squared_euclidean_distance_matrix for computation if p==2
     """
-    if weight == None:
+    if weight is None:
         weight = np.ones(data1.shape[1], 'd')
         pass
 
@@ -294,7 +300,7 @@ def pnorm_w_python(data1, data2=None, weight=None, p=2,
         return np.sqrt(squared_euclidean_distance(data1=data1, data2=data2,
                                                  weight=weight**2))
 
-    if data2 == None:
+    if data2 is None:
         data2 = data1
         pass
 
@@ -341,9 +347,13 @@ def pnorm_w_python(data1, data2=None, weight=None, p=2,
     return af(d)
 
 
-if externals.exists('weave'):
-    from scipy import weave
-    from scipy.weave import converters
+if externals.exists('weave') or externals.exists('scipy.weave') :
+    if externals.exists('weave'):
+        import weave
+        from weave import converters
+    else:
+        from scipy import weave
+        from scipy.weave import converters
 
     def pnorm_w(data1, data2=None, weight=None, p=2):
         """Weighted p-norm between two datasets (scipy.weave implementation)
@@ -362,12 +372,12 @@ if externals.exists('weave'):
           Power
         """
 
-        if weight == None:
+        if weight is None:
             weight = np.ones(data1.shape[1], 'd')
             pass
         S1, F1 = data1.shape[:2]
         code = ""
-        if data2 == None or id(data1)==id(data2):
+        if data2 is None or id(data1)==id(data2):
             if not (F1==weight.size):
                 raise ValueError, \
                       "Dataset should have same #columns == #weights. Got " \

@@ -12,7 +12,10 @@
 __docformat__ = 'restructuredtext'
 
 import os
+import sys
 import numpy as np                      # NumPy is required anyways
+import warnings
+import subprocess
 
 from mvpa2.base import warning
 from mvpa2 import cfg
@@ -90,13 +93,14 @@ def _suppress_scipy_warnings():
     scipy_ver = versions['scipy']
     # There is way too much deprecation warnings spit out onto the
     # user. Lets assume that they should be fixed by scipy 0.7.0 time
-    if scipy_ver >= "0.6.0" and scipy_ver < "0.7.0" \
-        and numpy_ver > "1.1.0":
-        import warnings
-        if not __debug__ or (__debug__ and not 'PY' in debug.active):
+    if not __debug__ or (__debug__ and 'PY' not in debug.active):
+        filter_lines = []
+        if "0.6.0" <= scipy_ver and scipy_ver < "0.7.0" \
+            and numpy_ver > "1.1.0":
             if __debug__:
-                debug('EXT', "Setting up filters for numpy DeprecationWarnings")
-            filter_lines = [
+                debug('EXT', "Setting up filters for numpy DeprecationWarnings "
+                      "regarding scipy < 0.7.0")
+            filter_lines += [
                 ('NumpyTest will be removed in the next release.*',
                  DeprecationWarning),
                 ('PyArray_FromDims: use PyArray_SimpleNew.',
@@ -106,8 +110,15 @@ def _suppress_scipy_warnings():
                 # Trick re.match, since in warnings absent re.DOTALL in re.compile
                 ('[\na-z \t0-9]*The original semantics of histogram is scheduled to be.*'
                  '[\na-z \t0-9]*', Warning) ]
-            for f, w in filter_lines:
-                warnings.filterwarnings('ignore', f, w)
+        if scipy_ver >= "0.15":
+            filter_lines += [("`scipy.weave` is deprecated, use `weave` instead!",
+                              DeprecationWarning)]
+        if scipy_ver >= "0.16":
+            # scipy deprecated it but statsmodels still import it for now
+            filter_lines += [("`scipy.linalg.calc_lwork` is deprecated!",
+                              DeprecationWarning)]
+        for f, w in filter_lines:
+            warnings.filterwarnings('ignore', f, w)
 
 
 def __assign_mdp_version():
@@ -155,9 +166,10 @@ def __check_pywt(features=None):
          0.72436454,  0.2193098,  -0.0135051,   0.34283984,  0.65596245,
          0.49598417,  0.39935064,  0.26370727,  0.05572373,  0.40194438,
          0.47004551,  0.60327258,  0.25628266,  0.32964893,  0.24009889])
-    mode = 'per'
-    wp = pywt.WaveletPacket(data, 'sym2', mode)
-    wp2 = pywt.WaveletPacket(data=None, wavelet='sym2', mode=mode)
+    # default one is the per or periodization
+    DEFAULT_MODE = 'per' if 'per' in pywt.MODES.modes else 'periodization'
+    wp = pywt.WaveletPacket(data, 'sym2', DEFAULT_MODE)
+    wp2 = pywt.WaveletPacket(data=None, wavelet='sym2', mode=DEFAULT_MODE)
     try:
         for node in wp.get_level(2): wp2[node.path] = node.data
     except:
@@ -175,9 +187,9 @@ def __check_pywt(features=None):
 def __check_libsvm_verbosity_control():
     """Check for available verbose control functionality
     """
-    import mvpa2.clfs.libsvmc._svmc as _svmc
+    from mvpa2.clfs.libsvmc import svmc
     try:
-        _svmc.svm_set_verbosity(0)
+        svmc.svm_set_verbosity(0)
     except:
         raise ImportError(
             "Provided version of libsvm has no way to control "
@@ -236,7 +248,7 @@ def __assign_skl_version():
                               "was installed without the native Python modules")
     versions['skl'] = SmartVersion(skl.__version__)
 
-def __check_weave():
+def __check_scipy_weave():
     """Apparently presence of scipy is not sufficient since some
     versions experience problems. E.g. in Sep,Oct 2008 lenny's weave
     failed to work. May be some other converter could work (? See
@@ -447,17 +459,24 @@ def __check_reportlab():
 
 def __check(name, a='__version__'):
     exec "import %s" % name
+    # it might be lxml.etree, so take only first module
+    topmodname = name.split('.')[0]
     try:
-        exec "v = %s.%s" % (name, a)
-        # it might be lxml.etree, so take only first module
-        versions[name.split('.')[0]] = SmartVersion(v)
+        v = getattr(sys.modules[name], '__version__')
     except Exception as e:
         # we can't assign version but it is there
         if __debug__:
             debug('EXT', 'Failed to acquire a version of %(name)s: %(e)s'
                   % locals())
-        pass
-    return True
+        # if module is present but does not bear __version__
+        try:
+            import pkg_resources
+            v = pkg_resources.get_distribution(topmodname).version
+        except Exception as e:
+            # and if all that failed -- just assign '0'
+            v = '0'
+    versions[topmodname] = SmartVersion(v)
+    return True  # we did manage to import it -- so it is there
 
 def __check_h5py():
     __check('h5py', 'version.version')
@@ -515,6 +534,14 @@ def __check_liblapack_so():
         # reraise with exception type we catch/handle while testing externals
         raise RuntimeError("Failed to import liblapack.so: %s" % e)
 
+def __check_subprocess_call(args):
+    """Executes the command using subprocess"""
+    try:
+        subprocess.check_output(args)
+    except Exception, e:
+        raise ImportError('The following command gave an error: "%s"' % args)
+
+
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm': 'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'libsvm verbosity control': '__check_libsvm_verbosity_control();',
@@ -534,7 +561,8 @@ _KNOWN = {'libsvm': 'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node'
           'good scipy.stats.rdist': "__check_stablerdist()",
           'good scipy.stats.rv_discrete.ppf': "__check_rv_discrete_ppf()",
           'good scipy.stats.rv_continuous._reduce_func(floc,fscale)': "__check_rv_continuous_reduce_func()",
-          'weave': "__check_weave()",
+          'weave': '__check("weave")',
+          'scipy.weave': '__check_scipy_weave()',
           'pywt': "__check('pywt')",
           'pywt wp reconstruct': "__check_pywt(['wp reconstruct'])",
           'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",
@@ -575,6 +603,7 @@ _KNOWN = {'libsvm': 'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node'
           'reportlab': "__check('reportlab', 'Version')",
           'nose': "import nose as __",
           'pprocess': "__check('pprocess')",
+          'pandas': "__check('pandas')",
           'joblib': "__check('joblib')",
           'h5py': "__check_h5py()",
           'hdf5': "__check_h5py()",
@@ -582,6 +611,8 @@ _KNOWN = {'libsvm': 'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node'
           'nipy.neurospin': "__check_nipy_neurospin()",
           'statsmodels': 'import statsmodels.api as __',
           'mock': "__check('mock')",
+          'datalad': "__check('datalad')",
+          'afni-3dinfo': "__check_subprocess_call(['3dinfo','-h'])"
           }
 
 
@@ -684,8 +715,9 @@ def exists(dep, force=False, raise_=False, issueWarning=None,
             np.seterr(**old_handling)
 
         if __debug__:
-            debug('EXT', "Presence of %s is%s verified%s" %
-                  (dep, {True:'', False:' NOT'}[result], error_str))
+            vstr = ' (%s)' % versions[dep] if dep in versions else ''
+            debug('EXT', "Presence of %s%s is%s verified%s" %
+                  (dep, vstr, {True: '', False: ' NOT'}[result], error_str))
 
     if not result:
         if raise_:
