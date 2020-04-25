@@ -78,7 +78,12 @@ from numpy.testing import (
     assert_array_almost_equal, assert_array_equal, assert_array_less,
     assert_string_equal)
 
-from numpy.testing.decorators import skipif
+try:
+    from numpy.testing.decorators import skipif
+except ModuleNotFoundError:
+    from numpy.testing import dec
+    skipif = dec.skipif
+
 
 def assert_array_lequal(x, y):
     assert_array_less(-y, -x)
