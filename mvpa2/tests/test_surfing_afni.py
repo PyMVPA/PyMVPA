@@ -680,13 +680,6 @@ class SurfTests(unittest.TestCase):
 
 
 
-def suite():  # pragma: no cover
-    """Create the suite"""
-    return unittest.makeSuite(SurfTests)
 
 
 
-if __name__ == '__main__':  # pragma: no cover
-    import runner
-
-    runner.run()

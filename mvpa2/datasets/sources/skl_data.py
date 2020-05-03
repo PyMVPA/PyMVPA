@@ -7,6 +7,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Wrapper for sklearn datasets/data generators."""
+from builtins import zip
 
 __docformat__ = 'restructuredtext'
 
@@ -100,6 +101,6 @@ def %s(%s):
                notes_sec,
                fx.__name__,
                ', '.join(argnames))
-        exec fxdef
+        exec(fxdef)
         __all__.append(pymvpa_fxname)
 

@@ -12,6 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
+from itertools import chain
 import operator
 
 from mvpa2.base import warning
@@ -150,8 +151,7 @@ class SVM(_SVM):
         TRANSLATEDICT = {'epsilon': 'eps',
                          'tube_epsilon': 'p'}
         args = []
-        for paramname, param in self.params.items() \
-                + self.kernel_params.items():
+        for paramname, param in chain(self.params.items(), self.kernel_params.items()):
             if paramname in TRANSLATEDICT:
                 argname = TRANSLATEDICT[paramname]
             elif paramname in _svm.SVMParameter.default_parameters:
@@ -193,7 +193,7 @@ class SVM(_SVM):
 
         try:
             self.__model = _svm.SVMModel(svmprob, libsvm_param)
-        except Exception, e:
+        except Exception as e:
             raise FailedToTrainError(str(e))
 
 
@@ -285,8 +285,10 @@ class SVM(_SVM):
         if __debug__ and "SVM" in debug.active:
             debug("SVM", "Untraining %s and destroying libsvm model" % self)
         super(SVM, self)._untrain()
-        del self.__model
-        self.__model = None
+        if self.__model:
+            self.__model.destroy()
+            del self.__model
+            self.__model = None
 
     model = property(fget=lambda self: self.__model)
     """Access to the SVM model."""

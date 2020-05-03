@@ -38,6 +38,7 @@ The mvpa2 package contains the following subpackages and modules:
 
 .. |copy| unicode:: 0xA9 .. copyright sign
 """
+from builtins import str
 
 __docformat__ = 'restructuredtext'
 
@@ -46,9 +47,10 @@ __version__ = '2.6.5.dev1'
 
 import os
 from os.path import join as pathjoin
+import sys
 import random
 import numpy as np
-from mvpa2.base import cfg
+from mvpa2.base import cfg, warning
 from mvpa2.base import externals
 from mvpa2.base.info import wtf
 
@@ -139,7 +141,6 @@ externals.exists('matplotlib', force=True, raise_=False)
 
 # Attach custom top-level exception handler
 if cfg.getboolean('debug', 'wtf', default=False):
-    import sys
     _sys_excepthook = sys.excepthook
     def _pymvpa_excepthook(*args):
         """Custom exception handler to report also pymvpa's wtf
@@ -157,7 +158,6 @@ if cfg.getboolean('debug', 'wtf', default=False):
 
 # Attach custom top-level exception handler
 if cfg.getboolean('debug', 'pdb', default=False):
-    import sys
     _sys_excepthook = sys.excepthook
     def _pymvpa_pdb_excepthook(type, value, tb):
         if hasattr(sys, 'ps1') or not sys.stderr.isatty():
@@ -186,3 +186,73 @@ due.cite(
     description="Demonstration of PyMVPA capabilities concerning multi-modal or modality-agnostic data analysis",
     tags=["edu,use"],
     path="mvpa2")
+_sys_settings = {}
+
+
+def _get_verbosity(verbosity):
+    if verbosity is None:
+        return int(cfg.get('tests', 'verbosity', default=1))
+    return verbosity
+
+
+def setup_module(module, verbosity=None):
+    "set up test fixtures for testing"
+
+    if __debug__:
+        from mvpa2.base import debug
+        # Lets add some targets which provide additional testing
+        debug.active += ['CHECK_.*']
+
+    verbosity = _get_verbosity(verbosity)
+
+    # provide people with a hint about the warnings that might show up in a
+    # second
+    if verbosity:
+        print("T: MVPA_SEED=%s" % _random_seed)
+        if verbosity > 1:
+            print('T: Testing for availability of external software packages.')
+
+    # fully test of externals
+    verbosity_dependencies = max(0, verbosity - 1)
+    if verbosity_dependencies:
+        externals.check_all_dependencies(verbosity=verbosity_dependencies)
+    elif __debug__ and verbosity: # pragma: no cover
+        print('T: Skipping testing of all dependencies since verbosity '
+              '(MVPA_TESTS_VERBOSITY) is too low')
+
+    # So we could see all warnings about missing dependencies
+    _sys_settings['maxcount'] = warning.maxcount
+    warning.maxcount = 1000
+
+    if verbosity < 3:
+        # no MVPA warnings during whole testsuite (but restore handlers later on)
+        _sys_settings['handlers'] = warning.handlers
+        warning.handlers = []
+
+        # No python warnings (like ctypes version for slmr)
+        import warnings
+        warnings.simplefilter('ignore')
+
+    if verbosity < 4:
+        # No NumPy
+        _sys_settings['np_errsettings'] = np.geterr()
+        np.seterr(**dict([(x, 'ignore') for x in _sys_settings['np_errsettings']]))
+
+
+def teardown_module(module, verbosity=None):
+    "tear down test fixtures"
+    verbosity = _get_verbosity(verbosity)
+
+    # restore warning handlers
+    warning.maxcount = _sys_settings['maxcount']
+
+    if verbosity < 3:
+        # restore warning handlers
+        warning.handlers = _sys_settings['handlers']
+
+    if verbosity < 4:
+        # restore numpy settings
+        np.seterr(**_sys_settings['np_errsettings'])
+
+    if cfg.getboolean('tests', 'wtf', default='no'):
+        sys.stderr.write(str(wtf()))

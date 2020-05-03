@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Ridge regression classifier."""
 
+from builtins import str
 __docformat__ = 'restructuredtext'
 
 
@@ -90,8 +91,8 @@ class RidgeReg(Classifier):
             # perform the least sq regression and save the weights
             self.w = lstsq(a, b)[0]
         else:
-            raise ValueError, "Unknown implementation '%s'" \
-                              % self.__implementation
+            raise ValueError("Unknown implementation '%s'" \
+                              % self.__implementation)
 
 
     @accepts_dataset_as_samples

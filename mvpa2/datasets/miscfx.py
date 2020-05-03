@@ -11,6 +11,10 @@
 All the functions defined in this module must accept dataset as the
 first argument since they are bound to Dataset class in the trailer.
 """
+from builtins import zip
+from builtins import str
+from builtins import range
+from past.builtins import basestring
 
 __docformat__ = 'restructuredtext'
 
@@ -25,6 +29,7 @@ from mvpa2.misc.support import get_nelements_per_value
 
 from mvpa2.base import externals, warning
 from mvpa2.base.types import is_sequence_type
+from mvpa2.support.utils import get_unique_ordered
 
 if __debug__:
     from mvpa2.base import debug
@@ -102,12 +107,12 @@ def coarsen_chunks(source, nchunks=4):
     nchunks_orig = len(chunks_unique)
 
     if nchunks_orig < nchunks:
-        raise ValueError, \
-              "Original number of chunks is %d. Cannot coarse them " \
-              "to get %d chunks" % (nchunks_orig, nchunks)
+        raise ValueError(
+            "Original number of chunks is %d. Cannot coarse them "
+            "to get %d chunks" % (nchunks_orig, nchunks))
 
     # figure out number of samples per each chunk
-    counts = dict(zip(chunks_unique, [ 0 ] * len(chunks_unique)))
+    counts = dict(list(zip(chunks_unique, [ 0 ] * len(chunks_unique))))
     for c in chunks:
         counts[c] += 1
 
@@ -115,7 +120,7 @@ def coarsen_chunks(source, nchunks=4):
     # of samples per chunk. No sophistication is done -- just
     # consecutively group to get close to desired number of samples
     # per chunk
-    avg_chunk_size = np.sum(counts.values())*1.0/nchunks
+    avg_chunk_size = np.sum(counts.values())/float(nchunks)
     chunks_groups = []
     cur_chunk = []
     nchunks = 0
@@ -339,7 +344,7 @@ def summary(dataset, stats=True, lstats='auto', sstats='auto', idhash=False,
             s += dataset.summary_targets(
                 targets_attr=targets_attr, chunks_attr=chunks_attr,
                 maxc=maxc, maxt=maxt)
-        except KeyError, e:
+        except KeyError as e:
             s += 'No per %s/%s due to %r' % (targets_attr, chunks_attr, e)
 
     if sstats and targets_attr is not None:
@@ -374,8 +379,8 @@ def summary_targets(dataset, targets_attr='targets', chunks_attr='chunks',
     spcl = get_samples_per_chunk_target(
         dataset, targets_attr=targets_attr, chunks_attr=chunks_attr)
     # XXX couldn't they be unordered?
-    ul = dataset.sa[targets_attr].unique.tolist()
-    uc = dataset.sa[chunks_attr].unique.tolist()
+    ul = list(dataset.sa[targets_attr].unique)
+    uc = list(dataset.sa[chunks_attr].unique)
     s = ""
     if len(ul) < maxt and len(uc) < maxc:
         s += "\nCounts of targets in each chunk:"
@@ -402,8 +407,8 @@ def summary_targets(dataset, targets_attr='targets', chunks_attr='chunks',
         table = [ entries ]
         for i, l in enumerate(u):
             d = {'  ' + name1 : l}
-            d.update(dict([ (k, stats[k][i]) for k in stats.keys()]))
-            table.append( [ ('%.3g', '%s')[isinstance(d[e], basestring)
+            d.update(dict([(k, stats[k][i]) for k in stats]))
+            table.append( [('%.3g', '%s')[isinstance(d[e], basestring)
                                            or d[e] is None]
                             % d[e] for e in entries] )
         return '\nSummary for %s across %s\n' % (name1, name2) \
@@ -467,7 +472,7 @@ class SequenceStats(dict):
         order = self.order
         seq = list(self._seq)               # assure list
         nsamples = len(seq)                 # # of samples/targets
-        utargets = sorted(list(set(seq)))    # unique targets
+        utargets = get_unique_ordered(seq)    # unique targets
         ntargets = len(utargets)              # # of targets
 
         # mapping for targets
@@ -480,7 +485,7 @@ class SequenceStats(dict):
         res = dict(utargets=utargets)
         # Estimate counter-balance
         cbcounts = np.zeros((order, ntargets, ntargets), dtype=int)
-        for cb in xrange(order):
+        for cb in range(order):
             for i, j in zip(seqm[:-(cb+1)], seqm[cb+1:]):
                 cbcounts[cb, i, j] += 1
         res['cbcounts'] = cbcounts
@@ -492,7 +497,7 @@ class SequenceStats(dict):
         # Autocorrelation
         corr = []
         # for all possible shifts:
-        for shift in xrange(1, nsamples):
+        for shift in range(1, nsamples):
             shifted = seqm[shift:] + seqm[:shift]
             # ??? User pearsonsr with p may be?
             corr += [np.corrcoef(seqm, shifted)[0, 1]]
@@ -503,13 +508,13 @@ class SequenceStats(dict):
 
         # Assign textual summary
         # XXX move into a helper function and do on demand
-        t = [ [""] * (1 + self.order*(ntargets+1)) for i in xrange(ntargets+1) ]
+        t = [ [""] * (1 + self.order*(ntargets+1)) for i in range(ntargets+1) ]
         t[0][0] = "Targets/Order"
         for i, l  in enumerate(utargets):
             t[i+1][0] = '%s:' % l
-        for cb in xrange(order):
+        for cb in range(order):
             t[0][1+cb*(ntargets+1)] = "O%d" % (cb+1)
-            for i  in xrange(ntargets+1):
+            for i  in range(ntargets+1):
                 t[i][(cb+1)*(ntargets+1)] = " | "
             m = cbcounts[cb]
             # ??? there should be better way to get indexes
@@ -517,8 +522,10 @@ class SequenceStats(dict):
             for i, j in zip(*ind):
                 t[1+i][1+cb*(ntargets+1)+j] = '%d' % m[i, j]
 
+        # list(map()) below for consistent presentation (no u'' strings)
+        # between py2 and py3
         sout = "Sequence statistics for %d entries" \
-               " from set %s\n" % (len(seq), utargets) + \
+               " from set %s\n" % (len(seq), list(map(str, utargets))) + \
                "Counter-balance table for orders up to %d:\n" % order \
                + table2string(t)
         if len(corr):

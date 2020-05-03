@@ -824,7 +824,7 @@ def from_any(s, mask_volume=None):
 
                     for idx in mask_volume_indices.value:
                         mask[tuple(idx)] = 1
-        except Exception, e:
+        except Exception as e:
             #no idea what type of beast this is.
             raise ValueError(
                 'Unrecognized input %r - not a VolGeom, '

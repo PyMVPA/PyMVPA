@@ -10,6 +10,10 @@
 dedicated containers aka. `Collections`.
 """
 
+from builtins import str
+from past.builtins import basestring
+from builtins import object
+from functools import reduce
 __docformat__ = 'restructuredtext'
 
 import copy, re
@@ -17,6 +21,7 @@ import numpy as np
 
 from mvpa2.base.dochelpers import _str, borrowdoc
 from mvpa2.base.types import is_sequence_type
+from mvpa2.support.utils import get_unique_ordered
 
 if __debug__:
     # we could live without, but it would be nicer with it
@@ -129,13 +134,11 @@ class Collectable(object):
         if name is not None:
             if isinstance(name, basestring):
                 if name[0] == '_':
-                    raise ValueError, \
-                          "Collectable attribute name must not start " \
-                          "with _. Got %s" % name
+                    raise ValueError("Collectable attribute name must not start " \
+                          "with _. Got %s" % name)
             else:
-                raise ValueError, \
-                      "Collectable attribute name must be a string. " \
-                      "Got %s" % `name`
+                raise ValueError("Collectable attribute name must be a string. " \
+                      "Got %s" % repr(name))
         self.__name = name
 
 
@@ -244,7 +247,13 @@ class SequenceCollectable(Collectable):
 
                 # Get a 1-D array
                 #  list around set is required for Python3
-                value_unique = sorted(set(np.asanyarray(self.value).ravel()))
+                raveled = np.asanyarray(self.value).ravel()
+                try:
+                    value_unique = sorted(set(raveled))
+                except TypeError:
+                    # so even this is not sortable, let's pair with their types
+                    # which should prevent comparison between different types
+                    value_unique = get_unique_ordered(raveled)
                 try:
                     self._unique_values = np.array(value_unique)
                 except ValueError:
@@ -254,7 +263,6 @@ class SequenceCollectable(Collectable):
                     # which was fixed recently...
                     self._unique_values = np.array(value_unique, dtype=object)
         return self._unique_values
-
 
     def set_length_check(self, value):
         """Set a target length of the value in this collectable.
@@ -289,7 +297,7 @@ class ArrayCollectable(SequenceCollectable):
             if is_sequence_type(val):
                 try:
                     val = np.asanyarray(val)
-                except ValueError, e:
+                except ValueError as e:
                     if "setting an array element with a sequence" in str(e):
                         val = np.asanyarray(val, dtype=object)
                     else:
@@ -361,7 +369,7 @@ class Collection(dict):
         if a is None:
             aorig = self
         else:
-            aorig = dict([(k, v) for k, v in self.iteritems() if k in a])
+            aorig = dict([(k, v) for k, v in self.items() if k in a])
 
         # XXX copyvalues defaults to None which provides capability to
         #     just bind values (not even 'copy').  Might it need be
@@ -403,10 +411,9 @@ class Collection(dict):
         # Check if given key is not trying to override anything in
         # dict interface
         if key in _dict_api:
-            raise ValueError, \
-                  "Cannot add a collectable %r to collection %s since an " \
+            raise ValueError("Cannot add a collectable %r to collection %s since an " \
                   "attribute or a method with such a name is already present " \
-                  "in dict interface.  Choose some other name." % (key, self)
+                  "in dict interface.  Choose some other name." % (key, self))
         if not isinstance(value, Collectable):
             value = Collectable(value, name=key)
         else:
@@ -460,7 +467,7 @@ class Collection(dict):
                     raise ValueError("Unknown value ('%s') for copy argument."
                                      % copy)
         elif isinstance(source, dict):
-            for k, v in source.iteritems():
+            for k, v in source.items():
                 # expand the docs
                 if isinstance(v, tuple):
                     value = v[0]
@@ -497,7 +504,7 @@ class Collection(dict):
             self[key].value = value
         except KeyError:
             _object_setattr(self, key, value)
-        except Exception, e:
+        except Exception as e:
             # catch any other exception in order to provide a useful error message
             errmsg = "parameter '%s' cannot accept value `%r` (%s)" % (key, value, str(e))
             try:
@@ -513,7 +520,7 @@ class Collection(dict):
     # TODO: unify with the rest of __repr__ handling
     def __repr__(self):
         return "%s(items=%r)" \
-                  % (self.__class__.__name__, self.values())
+                  % (self.__class__.__name__, list(self.values()))
 
 
     def __str__(self):
@@ -540,7 +547,7 @@ class UniformLengthCollection(Collection):
 
     def __reduce__(self):
         return (self.__class__,
-                (self.items(), self._uniform_length))
+                (list(self.items()), self._uniform_length))
 
     @borrowdoc(Collection)
     def copy(self, *args, **kwargs):
@@ -564,7 +571,7 @@ class UniformLengthCollection(Collection):
           this length.
         """
         self._uniform_length = value
-        for v in self.values():
+        for v in list(self.values()):
             v.set_length_check(value)
 
 
@@ -677,8 +684,8 @@ class UniformLengthCollection(Collection):
         """
         mask = np.ones(self.attr_length, dtype=bool)
 
-        for k, target_values in d.iteritems():
-            if not k in self.keys():
+        for k, target_values in d.items():
+            if not k in list(self.keys()):
                 raise ValueError("%s is not known to %s" % (k, self))
             value = self[k].value
             target_values_mask = reduce(np.logical_or,

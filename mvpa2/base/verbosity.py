@@ -12,7 +12,14 @@ Examples:
 from verbosity import verbose, debug; debug.active = [1,2,3]; debug(1, "blah")
 
 """
+from __future__ import division
+from __future__ import print_function
 
+from builtins import filter
+from builtins import str
+from past.builtins import basestring
+from past.utils import old_div
+from builtins import object
 __docformat__ = 'restructuredtext'
 
 from sys import stdout, stderr
@@ -65,9 +72,8 @@ class Logger(object):
                         handler = open(handler, 'w')
                         self.__close_handlers.append(handler)
                     except:
-                        raise RuntimeError, \
-                              "Cannot open file %s for writing by the logger" \
-                              % handler
+                        raise RuntimeError("Cannot open file %s for writing by the logger" \
+                              % handler)
             handlers_.append(handler)
         self.__handlers = handlers_
 
@@ -125,9 +131,9 @@ class Logger(object):
 
         for handler in self.__handlers:
             try:
-                handler.write(msg)
+                handler.write(str(msg))
             except:
-                print "Failed writing on handler %s" % handler
+                print("Failed writing on handler %s" % handler)
                 raise
             try:
                 handler.flush()
@@ -174,9 +180,8 @@ class LevelLogger(Logger):
                 pass
         ilevel = int(level)
         if ilevel < 0:
-            raise ValueError, \
-                  "Negative verbosity levels (got %d) are not supported" \
-                  % ilevel
+            raise ValueError("Negative verbosity levels (got %d) are not supported" \
+                  % ilevel)
         self.__level = ilevel
 
 
@@ -265,7 +270,7 @@ class SetLogger(Logger):
         # but then smth like debug.active += ["BLAH"] would not work
         from mvpa2.base import verbose
         self.__active = []
-        registered_keys = self.__registered.keys()
+        registered_keys = list(self.__registered.keys())
         for item in list(set(active)):
             if item == '':
                 continue
@@ -282,33 +287,30 @@ class SetLogger(Logger):
                 try:
                     regexp = re.compile(regexp_str)
                 except:
-                    raise ValueError, \
-                          "Unable to create regular expression out of  %s" % item
-                matching_keys = filter(regexp.match, registered_keys)
+                    raise ValueError("Unable to create regular expression out of  %s" % item)
+                matching_keys = list(filter(regexp.match, registered_keys))
                 toactivate = matching_keys
                 if len(toactivate) == 0:
-                    ids = self.registered.keys()
+                    ids = list(self.registered.keys())
                     ids.sort()
-                    raise ValueError, \
-                          "Unknown debug ID '%s' was asked to become active," \
+                    raise ValueError("Unknown debug ID '%s' was asked to become active," \
                           " or regular expression '%s' did not get any match" \
                           " among known ids: %s" \
-                          % (item, regexp_str, ids)
+                          % (item, regexp_str, ids))
             else:
                 toactivate = [item]
 
             # Lets check if asked items are known
             for item_ in toactivate:
                 if not (item_ in registered_keys):
-                    raise ValueError, \
-                          "Unknown debug ID %s was asked to become active" \
-                          % item_
+                    raise ValueError("Unknown debug ID %s was asked to become active" \
+                          % item_)
             self.__active += toactivate
 
         self.__active = list(set(self.__active)) # select just unique ones
         self.__maxstrlength = max([len(str(x)) for x in self.__active] + [0])
         if len(self.__active):
-            verbose(2, "Enabling debug handlers: %s" % `self.__active`)
+            verbose(2, "Enabling debug handlers: %s" % repr(self.__active))
 
 
     ##REF: Name was automagically refactored
@@ -336,9 +338,8 @@ class SetLogger(Logger):
         """
 
         if setid in self.__registered:
-            raise ValueError, \
-                  "Setid %s is already known with description '%s'" % \
-                  (`setid`, self.__registered[setid])
+            raise ValueError("Setid %s is already known with description '%s'" % \
+                  (repr(setid), self.__registered[setid]))
         self.__registered[setid] = description
 
 
@@ -352,17 +353,17 @@ class SetLogger(Logger):
 
 
     def print_registered(self, detailed=True):
-        print "Registered debug entries: ",
+        print("Registered debug entries: ", end=' ')
         kd = self.registered
         rks = sorted(kd.keys())
         maxl = max([len(k) for k in rks])
         if not detailed:
             # short list
-            print ', '.join(rks)
+            print(', '.join(rks))
         else:
-            print
+            print()
             for k in rks:
-                print '%%%ds  %%s' % maxl % (k, kd[k])
+                print('%%%ds  %%s' % maxl % (k, kd[k]))
 
 
     printsetid = property(fget=lambda self: self.__printsetid, \
@@ -442,8 +443,8 @@ if __debug__:
             mi = __pymvpa_memory_info()
             # in later versions of psutil mi is a named tuple.
             # but that is not the case on Debian squeeze with psutil 0.1.3
-            rss = mi[0] / 1024
-            vms = mi[1] / 1024
+            rss = old_div(mi[0], 1024)
+            vms = old_div(mi[1], 1024)
             return (rss, vms)
 
     except ImportError:
@@ -472,7 +473,11 @@ if __debug__:
             rss_max = max(rss, rss_max)
             vms_max = max(vms, vms_max)
             yield "max RSS/VMS: %d/%d kB" % (rss_max, vms_max)
-    get_vmem_max_str = _get_vmem_max_str_gen().next
+
+    # To avoid binding py2/3 dependent .next vs .__next__ we get the
+    # generator and then create lambda for the next on it
+    get_vmem_max_str_gen_ = _get_vmem_max_str_gen()
+    get_vmem_max_str = lambda : next(get_vmem_max_str_gen_)
 
     def mbasename(s):
         """Custom function to include directory name if filename is too common
@@ -606,21 +611,20 @@ if __debug__:
 
             if isinstance(func, basestring):
                 if func in ['all', 'ALL']:
-                    func = self._known_metrics.keys()
+                    func = list(self._known_metrics.keys())
 
             if isinstance(func, basestring):
                 if func in DebugLogger._known_metrics:
                     func = DebugLogger._known_metrics[func]
                 else:
                     if func in ['?', 'list', 'help']:
-                        print 'Known debug metrics: ', \
-                              ', '.join(DebugLogger._known_metrics.keys())
+                        print('Known debug metrics: ', \
+                              ', '.join(list(DebugLogger._known_metrics.keys())))
                         raise SystemExit(0)
                     else:
-                        raise ValueError, \
-                              "Unknown name %s for metric in DebugLogger" % \
+                        raise ValueError("Unknown name %s for metric in DebugLogger" % \
                               func + " Known metrics are " + \
-                              `DebugLogger._known_metrics.keys()`
+                              repr(list(DebugLogger._known_metrics.keys())))
             elif isinstance(func, list):
                 self.__metrics = []     # reset
                 for item in func:
@@ -639,7 +643,7 @@ if __debug__:
         def __call__(self, setid, msg, *args, **kwargs):
 
             if setid not in self.registered:
-                raise ValueError, "Not registered debug ID %s" % setid
+                raise ValueError("Not registered debug ID %s" % setid)
 
             if not setid in self.active:
                 # don't even compute the metrics, since they might
@@ -705,4 +709,4 @@ if not __debug__:
             pass
 
         def print_registered(self, detailed=True):
-            print "BlackHoleLogger: nothing registered "
+            print("BlackHoleLogger: nothing registered ")

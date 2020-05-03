@@ -7,7 +7,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Convinience functions to generate/update datasets for regression testing
+"""Convenience functions to generate/update datasets for regression testing
 """
 
 __docformat__ = 'restructuredtext'
@@ -26,6 +26,7 @@ def get_testing_fmri_dataset_filename():
     versions_hash = hashlib.md5(
         "_".join(["%s:%s" % (k, externals.versions[k])
                   for k in sorted(externals.versions)])
+           .encode()
     ).hexdigest()[:6]
 
     filename = 'mvpa-%s_nibabel-%s-%s.hdf5' % (

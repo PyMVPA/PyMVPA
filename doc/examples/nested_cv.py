@@ -83,7 +83,7 @@ def select_best_clf(dataset_, clfs):
         # cv.transerror.clf = clf
         try:
             error = np.mean(cv(dataset_))
-        except LearnerError, e:
+        except LearnerError as e:
             # skip the classifier if data was not appropriate and it
             # failed to learn/predict at all
             continue

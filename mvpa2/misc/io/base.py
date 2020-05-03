@@ -8,6 +8,13 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Some little helper for reading (and writing) common formats from and to
 disk."""
+from builtins import zip
+from builtins import str
+from builtins import map
+from builtins import range
+from past.builtins import basestring
+from builtins import object
+from functools import reduce
 
 __docformat__ = 'restructuredtext'
 
@@ -119,20 +126,20 @@ class ColumnData(dict):
                            dtype=dtype, skiplines=skiplines)
 
         elif isinstance(source, dict):
-            for k, v in source.iteritems():
+            for k, v in source.items():
                 self[k] = v
             # check data integrity
             self._check()
 
         else:
-            raise ValueError, 'Unkown source for ColumnData [%r]' \
-                              % type(source)
+            raise ValueError('Unkown source for ColumnData [%r]' \
+                              % type(source))
 
         # generate missing properties for each item in the header
         classdict = self.__class__.__dict__
-        for k in self.keys():
-            if not k in classdict:
-                getter = "lambda self: self._get_attrib('%s')" % (k)
+        for k in self:
+            if k not in classdict:
+                getter = "lambda self: self._get_attrib('%s')" % (k,)
                 # Sanitarize the key, substitute ' []' with '_'
                 k_ = sub('[[\] ]', '_', k)
                 # replace multipe _s
@@ -145,10 +152,10 @@ class ColumnData(dict):
                 # make sure to import class directly into local namespace
                 # otherwise following does not work for classes defined
                 # elsewhere
-                exec 'from %s import %s' % (self.__module__,
-                                            self.__class__.__name__)
-                exec "%s.%s = property(fget=%s)" % \
-                     (self.__class__.__name__, k_, getter)
+                exec('from %s import %s' % (self.__module__,
+                                            self.__class__.__name__))
+                exec("%s.%s = property(fget=%s)" %
+                     (self.__class__.__name__, k_, getter))
                 # TODO!!! Check if it is safe actually here to rely on value of
                 #         k in lambda. May be it is treated as continuation and
                 #         some local space would override it????
@@ -179,13 +186,12 @@ class ColumnData(dict):
         if key in self:
             return self[key]
         else:
-            raise ValueError, "Instance %r has no data about %r" \
-                % (self, key)
+            raise ValueError("Instance %r has no data about %r" % (self, key))
 
 
     def __str__(self):
         s = self.__class__.__name__
-        if len(self.keys()) > 0:
+        if len(self) > 0:
             s += " %d rows, %d columns [" % \
                  (self.nrows, self.ncolumns)
             s += reduce(lambda x, y: x + " %s" % y, self.keys())
@@ -196,13 +202,13 @@ class ColumnData(dict):
         """Performs some checks for data integrity.
         """
         length = None
-        for k in self.keys():
+        for k in self:
             if length is None:
                 length = len(self[k])
             else:
                 if not len(self[k]) == length:
-                    raise ValueError, "Data integrity lost. Columns do not " \
-                                      "have equal length."
+                    raise ValueError("Data integrity lost. Columns do not "
+                                      "have equal length.")
 
 
     def _from_file(self, filename, header, sep, headersep,
@@ -228,14 +234,14 @@ class ColumnData(dict):
             elif isinstance(header, list):
                 hdr = header
             else:
-                hdr = [ str(i) for i in xrange(len(file_.readline().split(sep))) ]
+                hdr = [str(i) for i in range(len(file_.readline().split(sep)))]
                 # reset file to not miss the first line
                 file_.seek(0)
-                [ file_.readline() for x in range(skiplines) ]
+                [file_.readline() for x in range(skiplines)]
 
 
             # string in lists: one per column
-            tbl = [ [] for i in xrange(len(hdr)) ]
+            tbl = [ [] for i in range(len(hdr)) ]
 
             # store whether dtype should be determined automagically
             auto_dtype = dtype is None
@@ -254,9 +260,10 @@ class ColumnData(dict):
                 l = line.split(sep)
 
                 if not len(l) == len(hdr):
-                    raise RuntimeError, \
-                          "Number of entries in line [%i] does not match number " \
-                          "of columns in header [%i]." % (len(l), len(hdr))
+                    raise RuntimeError(
+                        "Number of entries in line [%i] does not match number "
+                        "of columns in header [%i]." % (len(l), len(hdr))
+                    )
 
                 for i, v in enumerate(l):
                     if dtype[i] is not None:
@@ -270,12 +277,12 @@ class ColumnData(dict):
             if auto_dtype:
                 attempt_convert_dtypes = (int, float)
 
-                for i in xrange(len(tbl)):
+                for i in range(len(tbl)):
                     values = tbl[i]
 
                     for attempt_convert_dtype in attempt_convert_dtypes:
                         try:
-                            values = map(attempt_convert_dtype, values)
+                            values = list(map(attempt_convert_dtype, values))
                             tbl[i] = values
                             break
                         except:
@@ -283,8 +290,8 @@ class ColumnData(dict):
 
             # check
             if not len(tbl) == len(hdr):
-                raise RuntimeError, "Number of columns read from file does not " \
-                                    "match the number of header entries."
+                raise RuntimeError("Number of columns read from file does not "
+                                    "match the number of header entries.")
 
             # fill dict
             for i, v in enumerate(hdr):
@@ -295,12 +302,12 @@ class ColumnData(dict):
         """Merge column data.
         """
         # for all columns in the other object
-        for k, v in other.iteritems():
-            if not k in self:
-                raise ValueError, 'Unknown key [%r].' % (k,)
+        for k, v in other.items():
+            if k not in self:
+                raise ValueError('Unknown key [%r].' % (k,))
             if not isinstance(v, list):
-                raise ValueError, 'Can only merge list data, but got [%r].' \
-                                  % type(v)
+                raise ValueError(
+                    'Can only merge list data, but got [%r].' % type(v))
             # now it seems to be ok
             # XXX check for datatype?
             self[k] += v
@@ -316,7 +323,7 @@ class ColumnData(dict):
         """Return new ColumnData with selected samples"""
 
         data = copy.deepcopy(self)
-        for k, v in data.iteritems():
+        for k, v in data.items():
             data[k] = [v[x] for x in selection]
 
         data._check()
@@ -326,7 +333,7 @@ class ColumnData(dict):
     def ncolumns(self):
         """Returns the number of columns.
         """
-        return len(self.keys())
+        return len(self)
 
 
     def tofile(self, filename, header=True, header_order=None, sep=' '):
@@ -356,7 +363,7 @@ class ColumnData(dict):
             # write header
             if header_order is None:
                 if self._header_order is None:
-                    col_hdr = self.keys()
+                    col_hdr = list(self.keys())
                 else:
                     # use stored order + newly added keys at the last columns
                     col_hdr = self._header_order + \
@@ -364,18 +371,18 @@ class ColumnData(dict):
                                                     set(self._header_order)))
             else:
                 if not len(header_order) == self.ncolumns:
-                    raise ValueError, 'Header list does not match number of ' \
-                                      'columns.'
+                    raise ValueError('Header list does not match number of ' \
+                                      'columns.')
                 for k in header_order:
                     if not k in self:
-                        raise ValueError, 'Unknown key [%r]' % (k,)
+                        raise ValueError('Unknown key [%r]' % (k,))
                 col_hdr = header_order
 
             if header == True:
                 file_.write(sep.join(col_hdr) + '\n')
 
             # for all rows
-            for r in xrange(self.nrows):
+            for r in range(self.nrows):
                 # get attributes for all keys
                 l = [str(self[k][r]) for k in col_hdr]
                 # write to file with proper separator
@@ -387,11 +394,11 @@ class ColumnData(dict):
         """Returns the number of rows.
         """
         # no data no rows (after Bob Marley)
-        if not len(self.keys()):
+        if not len(self):
             return 0
         # otherwise first key is as good as any other
         else:
-            return len(self[self.keys()[0]])
+            return len(next(iter(self.values())))
 
 
 
@@ -553,9 +560,9 @@ def design2labels(columndata, baseline_label=0,
     """
     # doing it simple naive way but it should be of better control if
     # we decide to process columndata with non-numeric entries etc
-    keys = columndata.keys()
+    keys = list(columndata.keys())
     labels = []
-    for row in xrange(columndata.nrows):
+    for row in range(columndata.nrows):
         entries = [ columndata[key][row] for key in keys ]
         # which entries get selected
         selected = [ x for x in zip(keys, entries) if func(x[1]) ]
@@ -563,9 +570,9 @@ def design2labels(columndata, baseline_label=0,
 
         if nselected > 1:
             # if there is more than a single one -- we are in problem
-            raise ValueError, "Row #%i with items %s has multiple entries " \
-                  "meeting the criterion. Cannot decide on the label" % \
-                  (row, entries)
+            raise ValueError("Row #%i with items %s has multiple entries "
+                  "meeting the criterion. Cannot decide on the label" %
+                  (row, entries))
         elif nselected == 1:
             label = selected[0][0]
         else:
@@ -605,9 +612,9 @@ def labels2chunks(labels, method="alllabels", ignore_labels=None):
         chunks = list(chunks)
     else:
         errmsg = "Unknown method to derive chunks is requested. Known are:\n"
-        for method, descr in __known_chunking_methods.iteritems():
+        for method, descr in __known_chunking_methods.items():
             errmsg += "  %s : %s\n" % (method, descr)
-        raise ValueError, errmsg
+        raise ValueError(errmsg)
     return chunks
 
 labels2chunks.__doc__ = \
@@ -624,7 +631,7 @@ labels2chunks.__doc__ = \
       seek for such labels in chunks. E.g. some 'reject' samples
 
     :rtype: list
-    """ % __known_chunking_methods.keys()
+    """ % list(__known_chunking_methods.keys())
 
 
 def safe_write(fnout, s, mode='wb'):

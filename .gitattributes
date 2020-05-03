@@ -1,2 +1,4 @@
 mvpa2/COMMIT_HASH export-subst
 /.gitattributes export-ignore
+* annex.largefiles=(not(mimetype=text/*))
+*.py annex.largefiles=nothing

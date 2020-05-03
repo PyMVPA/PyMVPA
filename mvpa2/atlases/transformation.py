@@ -7,13 +7,15 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Coordinate transformations"""
+from __future__ import print_function
+from builtins import object
 
 import numpy as np
 
 if __debug__:
     from mvpa2.base import debug
 
-class TypeProxy:
+class TypeProxy(object):
     """
     Simple class to convert from and then back to original type
     working with list, tuple, ndarray and having
@@ -25,13 +27,16 @@ class TypeProxy:
         elif isinstance(value, tuple): self.__type = tuple
         elif isinstance(value, np.ndarray): self.__type = np.array
         else:
-            raise IndexError("Not understood format of coordinates '%s' for the transformation" % `coord`)
+            raise IndexError(
+                "Not understood format of coordinates %s for the transformation"
+                % repr(value)
+            )
 
     def __call__(self, value):    return self.__type(value)
 #   def __getitem__(self, value): return self.__type(value)
 
 
-class TransformationBase:
+class TransformationBase(object):
     """
     Basic class to describe a transformation. Pretty much an interface
     """
@@ -107,7 +112,7 @@ class SpaceTransformation(TransformationBase):
         coord /= self.voxelSize
         #speed if not self.origin is None:
         coord += self.origin
-        return map(lambda x:int(round(x)), coord)
+        return [int(round(x)) for x in coord]
 
 
 class Linear(TransformationBase):
@@ -272,9 +277,9 @@ if __name__ == '__main__':
     tli = mni_to_tal_lancaster07_fsl()
     tml = mni_to_tal_meyer_lindenberg98()
     #print t[1,3,2]
-    print tl[(1,3,2)]
-    print tli[[1,3,2]]
-    print tml[[1,3,2]]
+    print(tl[(1,3,2)])
+    print(tli[[1,3,2]])
+    print(tml[[1,3,2]])
     t = MNI2Tal_MatthewBrett()([10, 12, 14])
-    print t, Tal2MNI_MatthewBrett()(t)
+    print(t, Tal2MNI_MatthewBrett()(t))
 #   print t[(1,3,2,2)]

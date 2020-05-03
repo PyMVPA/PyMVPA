@@ -99,7 +99,7 @@ def main():
                 print "%5.1f%%       -   \t %.2fs  %.2fs   %.2fs" % \
                       (confusion.percent_correct, times[0], times[1], tfull)
                 #TODO      (confusion.percent_correct, nf, times[0], times[1], tfull)
-            except LearnerError, e:
+            except LearnerError as e:
                 print " skipped due to '%s'" % e
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Wrap the libsvm package into a very simple class interface."""
+from __future__ import absolute_import
 
 __docformat__ = 'restructuredtext'
 
@@ -75,7 +76,7 @@ from mvpa2.clfs._svmbase import _SVM
 from mvpa2.base.state import ConditionalAttribute
 from mvpa2.measures.base import Sensitivity
 
-from sens import *
+from .sens import *
 
 from mvpa2.support.due import due, BibTeX
 
@@ -89,7 +90,7 @@ def seed(random_seed):
     try:
         # reuse the same seed for shogun
         shogun.Library.Math_init_random(random_seed)
-    except Exception, e:
+    except Exception as e:
         warning('Shogun cannot be seeded due to %s' % (e,))
 
 seed(_random_seed)
@@ -124,17 +125,17 @@ def _setdebug(obj, partname):
 
     if __debug__ and 'SG_' in debug.active:
         debug("SG_", "Setting verbosity for shogun.%s instance: %s to %s" %
-              (partname, `obj`, slevel))
+              (partname, repr(obj), slevel))
     if sglevel is not None:
         obj.io.set_loglevel(sglevel)
     if __debug__ and 'SG_LINENO' in debug.active:
         try:
             obj.io.enable_file_and_line()
-        except AttributeError, e:
+        except AttributeError as e:
             warning("Cannot enable SG_LINENO debug target for shogun %s"
                     % externals.versions['shogun'])
     try:
-        exec "obj.io.%s_progress()" % progressfunc
+        exec("obj.io.%s_progress()" % progressfunc)
     except:
         warning("Shogun version %s has no way to enable progress" +
                 " reports" % externals.versions['shogun'])
@@ -280,7 +281,7 @@ class SVM(_SVM):
         #if self._svm_impl in ['svrlight', 'lightsvm']:
             #try:
                 #kernel.set_precompute_matrix(True, True)
-            #except Exception, e:
+            #except Exception as e:
                 ## N/A in shogun 0.9.1... TODO: RF
                 #if __debug__:
                     #debug('SG_', "Failed call to set_precompute_matrix for %s: %s"
@@ -350,8 +351,7 @@ class SVM(_SVM):
                 # assure that we have -1/+1
                 _labels_dict = {ul[0]:-1.0, ul[1]:+1.0}
             elif len(ul) < 2:
-                raise FailedToTrainError, \
-                      "We do not have 1-class SVM brought into SG yet"
+                raise FailedToTrainError("We do not have 1-class SVM brought into SG yet")
             else:
                 # can't use plain enumerate since we need them swapped
                 _labels_dict = dict([ (u, i) for i, u in enumerate(ul)])
@@ -436,7 +436,7 @@ class SVM(_SVM):
             svm_impl_class = self.__get_implementation(ul)
 
             if __debug__:
-                debug("SG", "Creating SVM instance of %s" % `svm_impl_class`)
+                debug("SG", "Creating SVM instance of %s" % repr(svm_impl_class))
 
             if self._svm_impl in ['libsvr', 'svrlight']:
                 # for regressions constructor a bit different
@@ -592,7 +592,7 @@ class SVM(_SVM):
             debug("SG_", "Classifying testing data")
 
         if values_ is None:
-            raise RuntimeError, "We got empty list of values from %s" % self
+            raise RuntimeError("We got empty list of values from %s" % self)
 
         values = values_.get_labels()
 
@@ -612,7 +612,7 @@ class SVM(_SVM):
         if (self.__is_regression__):
             predictions = values
         else:
-            if len(self._attrmap.keys()) == 2:
+            if len(list(self._attrmap.keys())) == 2:
                 predictions = np.sign(values)
                 # since np.sign(0) == 0
                 predictions[predictions==0] = 1
@@ -704,11 +704,10 @@ class SVM(_SVM):
             elif self._svm_impl == 'gmnp':
                 svm_impl_class = shogun.Classifier.GMNPSVM
             else:
-                raise RuntimeError, \
-                      "Shogun: Implementation %s doesn't handle multiclass " \
+                raise RuntimeError("Shogun: Implementation %s doesn't handle multiclass " \
                       "data. Got labels %s. Use some other classifier" % \
                       (self._svm_impl,
-                       self.__traindataset.sa[self.get_space()].unique)
+                       self.__traindataset.sa[self.get_space()].unique))
             if __debug__:
                 debug("SG_", "Using %s for multiclass data of %s" %
                       (svm_impl_class, self._svm_impl))
@@ -742,8 +741,8 @@ if externals.exists('shogun'):
               "SVM with OCAS (Optimized Cutting Plane Algorithm) solver"),
              ]:
         if externals.exists('shogun.%s' % name):
-            exec "SVM._KNOWN_IMPLEMENTATIONS[\"%s\"] = (%s, %s, \"%s\")" \
-                 % (name, item, params, descr)
+            exec("SVM._KNOWN_IMPLEMENTATIONS[\"%s\"] = (%s, %s, \"%s\")" \
+                 % (name, item, params, descr))
 
 # Assign SVM class to limited set of LinearSVMWeights
 LinearSVMWeights._LEGAL_CLFS = [SVM]

@@ -7,7 +7,10 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Common to all SVM implementations functionality. For internal use only"""
+from __future__ import division
 
+from builtins import range
+from builtins import object
 __docformat__ = 'restructuredtext'
 
 import numpy as np
@@ -125,10 +128,9 @@ class _SVM(Classifier):
         # Check if requested implementation is known
         svm_impl = kwargs.get('svm_impl', None)
         if not svm_impl in self._KNOWN_IMPLEMENTATIONS:
-            raise ValueError, \
-                  "Unknown SVM implementation '%s' is requested for %s." \
+            raise ValueError("Unknown SVM implementation '%s' is requested for %s." \
                   "Known are: %s" % (svm_impl, self.__class__,
-                                     self._KNOWN_IMPLEMENTATIONS.keys())
+                                     list(self._KNOWN_IMPLEMENTATIONS.keys())))
         self._svm_impl = svm_impl
 
         impl, add_params, add_internals, descr = \
@@ -166,7 +168,7 @@ class _SVM(Classifier):
         try:
             Classifier.__init__(self, **kwargs)
             
-        except TypeError, e:
+        except TypeError as e:
             if "__init__() got an unexpected keyword argument " in e.args[0]:
                 # TODO: make it even more specific -- if that argument is listed
                 # within _SVM_PARAMS
@@ -180,8 +182,8 @@ class _SVM(Classifier):
         for paramfamily, paramset in ( (self._KNOWN_PARAMS, self.params),):
             for paramname in paramfamily:
                 if not (paramname in self._SVM_PARAMS):
-                    raise ValueError, "Unknown parameter %s" % paramname + \
-                          ". Known SVM params are: %s" % self._SVM_PARAMS.keys()
+                    raise ValueError("Unknown parameter %s" % paramname + \
+                          ". Known SVM params are: %s" % list(self._SVM_PARAMS.keys()))
                 param = deepcopy(self._SVM_PARAMS[paramname])
                 if paramname in _args:
                     param.value = _args[paramname]
@@ -203,8 +205,8 @@ class _SVM(Classifier):
         # Some postchecks
         if 'weight' in self.params and 'weight_label' in self.params:
             if not len(self.params.weight_label) == len(self.params.weight):
-                raise ValueError, "Lenghts of 'weight' and 'weight_label' lists " \
-                      "must be equal."
+                raise ValueError("Lenghts of 'weight' and 'weight_label' lists " \
+                      "must be equal.")
 
             
         if __debug__:
@@ -227,7 +229,7 @@ class _SVM(Classifier):
         sep = ", "
         # XXX TODO: we should have no kernel_params any longer
         for col in [self.params]:#, self.kernel_params]:
-            for k in col.keys():
+            for k in list(col.keys()):
                 # list only params with not default values
                 if col[k].is_default: continue
                 res += "%s%s=%r" % (sep, k, col[k].value)
@@ -246,8 +248,7 @@ class _SVM(Classifier):
         """Estimate default and return scaled by it negative user's C values
         """
         if not 'C' in self.params:#svm_type in [_svm.svmc.C_SVC]:
-            raise RuntimeError, \
-                  "Requested estimation of default C whenever C was not set"
+            raise RuntimeError("Requested estimation of default C whenever C was not set")
 
         C = self.params.C
         if not is_sequence_type(C):
@@ -255,7 +256,7 @@ class _SVM(Classifier):
             C = [C]
 
         Cs = list(C[:])               # copy
-        for i in xrange(len(Cs)):
+        for i in range(len(Cs)):
             if Cs[i] < 0:
                 Cs[i] = self._get_default_c(data.samples)*abs(Cs[i])
                 if __debug__:
@@ -349,9 +350,8 @@ class _SVM(Classifier):
         if sana:
             return sana(self, **kwargs)
         else:
-            raise NotImplementedError, \
-                  "Sensitivity analyzers for kernel %s is unknown" % \
-                  self.params.kernel
+            raise NotImplementedError("Sensitivity analyzers for kernel %s is unknown" % \
+                  self.params.kernel)
 
 
     @classmethod
@@ -400,7 +400,7 @@ parameters), and what tasks it is capable to deal with
              + NOS(v[1], "\n" + _rst_indentstr + "  Parameters: %s")
              + NOS(v[2], "%s" % _rst(('','\n')[int(len(v[1])>0)], '')
                    + _rst_indentstr + "  Capabilities: %s")
-             for k,v in cls._KNOWN_IMPLEMENTATIONS.iteritems()])
+             for k,v in cls._KNOWN_IMPLEMENTATIONS.items()])
 
         # Describe kernels
         idoc += """
@@ -424,13 +424,13 @@ sensitivity.
 
         idoc += '\n' + _rst_section('Parameters') + '\n' + '\n'.join(
             [v._paramdoc()
-             for k,v in cls._SVM_PARAMS.iteritems()
+             for k,v in cls._SVM_PARAMS.items()
              if k in NOS.seen])
 
         cls.__dict__['__init__'].__doc__ = handle_docstring(idoc_old) + idoc
 
 
 # populate names in parameters
-for k, v in _SVM._SVM_PARAMS.iteritems():
+for k, v in _SVM._SVM_PARAMS.items():
     v._set_name(k)
 

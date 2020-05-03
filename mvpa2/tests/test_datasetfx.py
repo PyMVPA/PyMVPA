@@ -148,11 +148,4 @@ class MiscDatasetFxTests(unittest.TestCase):
 
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(MiscDatasetFxTests)
-
-
-if __name__ == '__main__':  # pragma: no cover
-    import runner
-    runner.run()
 

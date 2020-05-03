@@ -28,7 +28,7 @@ if externals.exists('mass', raise_=True):
     import rpy2.robjects.numpy2ri
     if hasattr(rpy2.robjects.numpy2ri,'activate'):
         rpy2.robjects.numpy2ri.activate()
-    RRuntimeError = rpy2.robjects.rinterface.RRuntimeError
+    from mvpa2.support.rpy2_addons import RRuntimeError
     r = rpy2.robjects.r
     r.library('MASS')
     from mvpa2.support.rpy2_addons import Rrx, Rrx2
@@ -100,7 +100,7 @@ class MASSLearnerAdapter(Classifier):
                 dataset.samples,
                 targets,
                 **self._kwargs)
-        except RRuntimeError, e:
+        except RRuntimeError as e:
             raise FailedToTrainError, \
                   "Failed to train %s on %s. Got '%s' during call to fit()." \
                   % (self, dataset, e)
@@ -123,7 +123,7 @@ class MASSLearnerAdapter(Classifier):
             if 'posterior' in output.names:
                 self.ca.posterior = np.asarray(Rrx2(output, 'posterior'))
             res = np.asarray(classes)
-        except Exception, e:
+        except Exception as e:
             raise FailedToPredictError, \
                   "Failed to predict %s on data of shape %s. Got '%s' during" \
                   " call to predict()." % (self, data.shape, e)

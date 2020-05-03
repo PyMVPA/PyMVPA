@@ -13,6 +13,7 @@ they are not translateable to other kernel types.  They are implemented solely
 to standardize the interface between other kernel machines.
 """
 
+from builtins import object
 __docformat__ = 'restructuredtext'
 
 from mvpa2.kernels.base import Kernel
@@ -47,8 +48,10 @@ class LSKernel(Kernel):
         return self
 
     def as_raw_np(self):
-        raise ValueError, 'LibSVM calculates kernels internally; they ' +\
-              'cannot be converted to Numpy'
+        raise ValueError(
+            'LibSVM calculates kernels internally; they '
+            'cannot be converted to Numpy'
+        )
 
 # Conversion methods
 def _as_ls(kernel):

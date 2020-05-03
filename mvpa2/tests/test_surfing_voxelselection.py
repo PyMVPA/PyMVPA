@@ -586,7 +586,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         i = qe.ids[0]
         try:
             m = qe[i]
-        except ValueError, e:
+        except ValueError as e:
             raise AssertionError(
                 'Failed to query %r from %r after training on %r. '
                 'Exception was: %r'
@@ -883,13 +883,6 @@ class _Voxel_Count_Measure(Measure):
 
 
 
-def suite():  # pragma: no cover
-    """Create the suite"""
-    return unittest.makeSuite(SurfVoxelSelectionTests)
 
 
 
-if __name__ == '__main__':  # pragma: no cover
-    import runner
-
-    runner.run()

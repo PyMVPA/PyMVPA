@@ -61,8 +61,9 @@ def chisquare(obs, exp='uniform'):
             # just evenly distribute
             exp = nobs * np.ones(obs.shape, dtype=float) / np.prod(obs.shape)
         else:
-            raise ValueError, \
+            raise ValueError(
                   "Unknown specification of expected values exp=%r" % (exp,)
+            )
     else:
         assert(exp.shape == obs.shape)
 
@@ -73,9 +74,10 @@ def chisquare(obs, exp='uniform'):
     exp_zeros = exp == 0
     exp_nonzeros = np.logical_not(exp_zeros)
     if np.sum(exp_zeros) != 0 and (obs[exp_zeros] != 0).any():
-        raise ValueError, \
-              "chisquare: Expected values have 0-values, but there are actual" \
+        raise ValueError(
+              "chisquare: Expected values have 0-values, but there are actual"
               " observations -- chi^2 cannot be computed"
+        )
     chisq = np.sum(((obs - exp) ** 2)[exp_nonzeros] / exp[exp_nonzeros])
 
     # return chisq and probability (upper tail)

@@ -10,6 +10,10 @@
 
 Primarily the ones from nose.tools
 """
+from builtins import zip
+from builtins import str
+from builtins import range
+from six import reraise as raise_
 __docformat__ = 'restructuredtext'
 
 import glob, os, sys, shutil
@@ -115,7 +119,7 @@ def assert_collections_equal(x, y, ignore=None):
     from mvpa2.base.collections import Collectable
 
     assert_dict_keys_equal(x, y)
-    for k in x.keys():
+    for k in list(x.keys()):
         v1, v2 = x[k], y[k]
         assert_equal(type(v1), type(v2),
                      msg="Values for key %s have different types: %s and %s"
@@ -220,7 +224,7 @@ else:
     @contextmanager
     def assert_warnings(messages):
         yield
-        raise SkipTest, "install python-mock for testing either warnings were issued"
+        raise SkipTest("install python-mock for testing either warnings were issued")
 
 
 
@@ -241,23 +245,20 @@ def skip_if_no_external(dep, ver_dep=None, min_version=None, max_version=None):
     """
 
     if not externals.exists(dep):
-        raise SkipTest, \
-            "External %s is not present thus tests battery skipped" % dep
+        raise SkipTest("External %s is not present thus tests battery skipped" % dep)
 
     if ver_dep is None:
         ver_dep = dep
 
     if min_version is not None and externals.versions[ver_dep] < min_version:
-        raise SkipTest, \
-            "Minimal version %s of %s is required. Present version is %s" \
+        raise SkipTest("Minimal version %s of %s is required. Present version is %s" \
             ". Test was skipped." \
-            % (min_version, ver_dep, externals.versions[ver_dep])
+            % (min_version, ver_dep, externals.versions[ver_dep]))
 
     if max_version is not None and externals.versions[ver_dep] > max_version:
-        raise SkipTest, \
-            "Maximal version %s of %s is required. Present version is %s" \
+        raise SkipTest("Maximal version %s of %s is required. Present version is %s" \
             ". Test was skipped." \
-            % (min_version, ver_dep, externals.versions[ver_dep])
+            % (min_version, ver_dep, externals.versions[ver_dep]))
 
 
 
@@ -283,7 +284,7 @@ def with_tempfile(*targs, **tkwargs):
             if len(targs) < 2 and not 'prefix' in tkwargs:
                 try:
                     tkwargs['prefix'] = 'tempfile_%s.%s' \
-                                        % (func.__module__, func.func_name)
+                                        % (func.__module__, func.__name__)
                 except:
                     # well -- if something wrong just proceed with defaults
                     pass
@@ -424,14 +425,14 @@ def labile(niter=3, nfailures=1):
     def decorate(func):
         def newfunc(*arg, **kwargs):
             nfailed, i = 0, 0  # define i just in case
-            for i in xrange(niter):
+            for i in range(niter):
                 try:
                     ret = func(*arg, **kwargs)
                     if i + 1 - nfailed >= niter - nfailures:
                         # so we know already that we wouldn't go over
                         # nfailures
                         break
-                except AssertionError, e:
+                except AssertionError as e:
                     nfailed += 1
                     if __debug__:
                         debug('TEST', "Upon %i-th run, test %s failed with %s",
@@ -444,7 +445,7 @@ def labile(niter=3, nfailures=1):
                                           "-- re-throwing the last failure %s",
                                   (func.__name__, i + 1, nfailed, nfailures, e))
                         exc_info = sys.exc_info()
-                        raise exc_info[1], None, exc_info[2]
+                        raise_(exc_info[1], None, exc_info[2])
             if __debug__:
                 debug('TEST', "Ran %s %i times. Got %d failures.",
                       (func.__name__, i + 1, nfailed))
@@ -475,7 +476,7 @@ def assert_objectarray_equal(x, y, xorig=None, yorig=None, strict=True):
     """
     try:
         assert_array_equal(x, y)
-    except AssertionError, e:
+    except AssertionError as e:
         if not ((x.dtype == object) and (y.dtype == object)):
             raise
         # pass inside original arrays for a meaningful assertion
@@ -493,7 +494,7 @@ def assert_objectarray_equal(x, y, xorig=None, yorig=None, strict=True):
                     raise AssertionError("dtypes %r and %r do not match" %
                                          (x_.dtype, y_.dtype))
                 assert_objectarray_equal(x_, y_, xorig, yorig)
-        except Exception, e:
+        except Exception as e:
             if not isinstance(e, AssertionError):
                 raise AssertionError("%r != %r, thus %s != %s" %
                                      (x, y, xorig, yorig))

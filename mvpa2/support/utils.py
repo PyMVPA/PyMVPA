@@ -103,3 +103,14 @@ class deprecated(object):
         if olddoc:
             newdoc = "%s\n\n%s" % (newdoc, olddoc)
         return newdoc
+
+
+def get_unique_ordered(iterable):
+    """Get a list of unique values (sorted), which would work even in Py3
+    with non-comparable data types"""
+    return [
+        t[1]
+        for t in sorted(set((type(v).__name__, v)
+                            for v in iterable))
+    ]
+

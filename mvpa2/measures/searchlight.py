@@ -7,7 +7,10 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Searchlight implementation for arbitrary measures and spaces"""
+from __future__ import division
 
+from builtins import str
+from past.utils import old_div
 __docformat__ = 'restructuredtext'
 
 if __debug__:
@@ -95,8 +98,7 @@ class BaseSearchlight(Measure):
         self._queryengine = queryengine
         if roi_ids is not None and not isinstance(roi_ids, str) \
                 and not len(roi_ids):
-            raise ValueError, \
-                  "Cannot run searchlight on an empty list of roi_ids"
+            raise ValueError("Cannot run searchlight on an empty list of roi_ids")
         self.__roi_ids = roi_ids
         self.nproc = nproc
 
@@ -412,7 +414,7 @@ class Searchlight(BaseSearchlight):
         if not is_datasetlike(result_ds):
             try:
                 result_a = np.atleast_1d(result_ds)
-            except ValueError, e:
+            except ValueError as e:
                 if 'setting an array element with a sequence' in str(e):
                     # try forcing object array.  Happens with
                     # test_custom_results_fx_logic on numpy 1.4.1 on Debian

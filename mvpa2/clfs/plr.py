@@ -71,10 +71,10 @@ class PLR(Classifier):
         X = data.samples.T
         d = self._attrmap.to_numeric(data.sa[self.get_space()].value)
         if set(d) != set([0, 1]):
-            raise ValueError, \
+            raise ValueError(
                   "Regressors for logistic regression should be [0,1]. Got %s" \
                   %(set(d),)
-
+            )
         if self.__reduced != 0 :
             # Data have reduced rank
             from scipy.linalg import svd
@@ -120,13 +120,14 @@ class PLR(Classifier):
             w += dw
             k += 1
             if k > self.__maxiter:
-                raise ConvergenceError, \
-                      "More than %d Iterations without convergence" % \
+                raise ConvergenceError(
+                      "More than %d Iterations without convergence" %
                       (self.__maxiter)
+                )
 
         if __debug__:
-            debug("PLR", \
-                  "PLR converged after %d steps. Error: %g" % \
+            debug("PLR",
+                  "PLR converged after %d steps. Error: %g" %
                   (k, np.sum(np.ravel(dw.A ** 2))))
 
         if self.__reduced:

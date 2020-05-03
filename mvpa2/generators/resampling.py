@@ -8,6 +8,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Dataset content resampling (e.g. balance number of samples per condition)"""
 
+from builtins import str
+from builtins import map
+from builtins import zip
+from builtins import range
 __docformat__ = 'restructuredtext'
 
 import time
@@ -199,7 +203,7 @@ class Balancer(Node):
         # figure out filter for all runs at once
         # permute as often as requested, reusing the same kwargs
         kwargs = self._get_call_kwargs(ds)
-        for i in xrange(self.count):
+        for i in range(self.count):
             yield self(ds, _call_kwargs=kwargs)
 
     def __str__(self):
@@ -239,8 +243,8 @@ class LogExclusions(Node):
 
         if collection is ds.sa:
             excluded = ds[~battr]
-            desc = zip(excluded.sa.chunks, excluded.sa.targets,
-                       excluded.sa.time_coords)
+            desc = list(zip(excluded.sa.chunks, excluded.sa.targets,
+                       excluded.sa.time_coords))
         elif collection is ds.fa:
             desc = ds[:, ~battr].fa.voxel_indices
         else:

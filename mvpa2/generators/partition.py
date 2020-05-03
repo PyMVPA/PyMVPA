@@ -7,6 +7,11 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Dataset partitioning strategies"""
+from __future__ import division
+from builtins import zip
+from builtins import str
+from builtins import map
+from builtins import range
 
 __docformat__ = 'restructuredtext'
 
@@ -230,9 +235,9 @@ class Partitioner(Node):
                 # accommodate the `count` number
                 step = float(n_cfgs) / count
                 assert (step >= 1.0)
-                indexes = [int(round(step * i)) for i in xrange(count)]
+                indexes = [int(round(step * i)) for i in range(count)]
             elif strategy == 'random':
-                indexes = np.random.permutation(range(n_cfgs))[:count]
+                indexes = np.random.permutation(list(range(n_cfgs)))[:count]
                 # doesn't matter much but lets keep them in the original
                 # order at least
                 indexes.sort()
@@ -319,8 +324,9 @@ class HalfPartitioner(Partitioner):
         list of tuples (None, list of int)
           2 items: first half of samples into 1st split
         """
-        return [(None, uniqueattrs[:len(uniqueattrs)/2]),
-                (None, uniqueattrs[len(uniqueattrs)/2:])]
+        nhalf = len(uniqueattrs) // 2
+        return [(None, uniqueattrs[:nhalf]),
+                (None, uniqueattrs[nhalf:])]
 
 
 
@@ -587,7 +593,7 @@ class FactorialPartitioner(Partitioner):
         selected_indexes = None
         if self.count is not None:
             if self.selection_strategy in ['equidistant', 'random']:
-                all_partitionings = map(list, all_partitionings)
+                all_partitionings = [list(p) for p in  all_partitionings]
 
             if self.selection_strategy == 'equidistant':
                 # we need to figure out total number and/or all partitionings

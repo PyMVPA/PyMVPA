@@ -1,0 +1,168 @@
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Unit tests for PyMVPA Procrustean mapper"""
+from __future__ import division
+
+
+from builtins import range
+import unittest
+import numpy as np
+import itertools
+from numpy.linalg import norm
+from mvpa2.base import externals
+from mvpa2.datasets.base import dataset_wizard
+from mvpa2.testing import *
+from mvpa2.testing.datasets import *
+from mvpa2.mappers.procrustean import ProcrusteanMapper
+
+svds = ['numpy']
+if externals.exists('liblapack.so'):
+    svds += ['dgesvd']
+if externals.exists('scipy'):
+    svds += ['scipy']
+
+class ProcrusteanMapperTests(unittest.TestCase):
+
+    @sweepargs(oblique=(False,True))
+    @sweepargs(svd=svds)
+    @reseed_rng()
+    def test_simple(self, svd, oblique):
+        d_orig = datasets['uni2large'].samples
+        d_orig2 = datasets['uni4large'].samples
+        for sdim, nf_s, nf_t, full_test \
+                in (('Same 2D',  2,  2,  True),
+                    ('Same 10D', 10, 10, True),
+                    ('2D -> 3D', 2,  3,  True),
+                    ('3D -> 2D', 3,  2,  False)):
+            # figure out some "random" rotation
+            d = max(nf_s, nf_t)
+            R = get_random_rotation(nf_s, nf_t, d_orig)
+            if nf_s == nf_t:
+                adR = np.abs(1.0 - np.linalg.det(R))
+                self.assertTrue(adR < 1e-10,
+                                "Determinant of rotation matrix should "
+                                "be 1. Got it 1+%g" % adR)
+                self.assertTrue(norm(np.dot(R, R.T)
+                                     - np.eye(R.shape[0])) < 1e-10)
+            for (s, scaling), demean in itertools.product(
+                    ((0.3, True), (1.0, False)),
+                    (False, True)):
+                pm = ProcrusteanMapper(scaling=scaling, oblique=oblique,
+                                       svd=svd, demean=demean)
+                # pm2 = ProcrusteanMapper(scaling=scaling, oblique=oblique)
+                if demean:
+                    t1, t2 = d_orig[23, 1], d_orig[22, 1]
+                else:
+                    t1, t2 = 0, 0
+                    full_test = False # although runs, not intended to perform properly
+
+                # Create source/target data
+                d = d_orig[:, :nf_s]
+                d_s = d + t1
+                d_t = np.dot(s * d, R) + t2
+
+                # train bloody mapper(s)
+                ds = dataset_wizard(samples=d_s, targets=d_t)
+                pm.train(ds)
+                ## not possible with new interface
+                #pm2.train(d_s, d_t)
+
+                ## verify that both created the same transformation
+                #npm2proj = norm(pm.proj - pm2.proj)
+                #self.assertTrue(npm2proj <= 1e-10,
+                #                msg="Got transformation different by norm %g."
+                #                " Had to be less than 1e-10" % npm2proj)
+                #self.assertTrue(norm(pm._offset_in - pm2._offset_in) <= 1e-10)
+                #self.assertTrue(norm(pm._offset_out - pm2._offset_out) <= 1e-10)
+
+                # do forward transformation on the same source data
+                d_s_f = pm.forward(d_s)
+
+                self.assertEqual(d_s_f.shape, d_t.shape,
+                                 msg="Mapped shape should be identical to the d_t")
+
+                dsf = d_s_f - d_t
+                ndsf = norm(dsf)/norm(d_t)
+                if full_test:
+                    dsR = norm(s*R - pm.proj)
+
+                    if not oblique:
+                        self.assertTrue(dsR <= 1e-12,
+                                        msg="We should have got reconstructed rotation+scaling "
+                                            "perfectly. Now got d scale*R=%g" % dsR)
+
+                        self.assertTrue(np.abs(s - pm._scale) < 1e-12,
+                                        msg="We should have got reconstructed scale "
+                                            "perfectly. Now got %g for %g" % (pm._scale, s))
+
+                    self.assertTrue(ndsf <= 1e-12,
+                                    msg="%s: Failed to get to the target space correctly."
+                                        " normed error=%g" % (sdim, ndsf))
+
+                # Test if we get back
+                d_s_f_r = pm.reverse(d_s_f)
+                # Test if recon proj is true inverse except for high->low projection
+                if nf_s <= nf_t:
+                    assert_almost_equal(np.dot(pm._proj, pm._recon),np.eye(pm._proj.shape[0]),
+                                             err_msg="Deviation from identity matrix is too large")
+                dsfr = d_s_f_r - d_s
+                ndsfr = norm(dsfr)/norm(d_s)
+                if full_test:
+                    self.assertTrue(ndsfr <= 1e-12,
+                                    msg="%s: Failed to reconstruct into source space correctly."
+                                        " normed error=%g" % (sdim, ndsfr))
+
+    @reseed_rng()
+    def test_reflection(self, rep=10):
+        for i in range(rep):
+            from mvpa2.testing.datasets import get_random_rotation
+            d = np.random.random((100, 2))
+            T = get_random_rotation(d.shape[1])
+            d2 = np.dot(d, T)
+            # scale it up a bit
+            d2 *= 1.2
+            # add a reflection by flipping the first dimension
+            d2[:, 0] *= -1
+            ds = dataset_wizard(samples=d, targets=d2)
+
+            norm0 = np.linalg.norm(d - d2)
+
+            mapper = ProcrusteanMapper(scaling=False, reflection=False)
+            mapper.train(ds)
+            norm1 = np.linalg.norm(d2 - mapper.forward(ds).samples)
+            eps = 1e-7
+            self.assertLess(norm1, norm0 + eps,
+                            msg='Procrustes should reduce difference, '
+                            'but %f > %f' % (norm1, norm0))
+
+            mapper = ProcrusteanMapper(scaling=True, reflection=False)
+            mapper.train(ds)
+            norm2 = np.linalg.norm(d2 - mapper.forward(ds).samples)
+            self.assertLess(norm2, norm1 + eps,
+                            msg='Procrustes with scaling should work better, '
+                            'but %f > %f' % (norm2, norm1))
+
+            mapper = ProcrusteanMapper(scaling=False, reflection=True)
+            mapper.train(ds)
+            norm3 = np.linalg.norm(d2 - mapper.forward(ds).samples)
+            self.assertLess(norm3, norm1 + eps,
+                            msg='Procrustes with reflection should work better, '
+                            'but %f > %f' % (norm3, norm1))
+
+            mapper = ProcrusteanMapper(scaling=True, reflection=True)
+            mapper.train(ds)
+            norm4 = np.linalg.norm(d2 - mapper.forward(ds).samples)
+            self.assertLess(norm4, norm3 + eps,
+                            msg='Procrustes with scaling should work better, '
+                            'but %f > %f' % (norm4, norm3))
+            self.assertLess(norm4, norm2 + eps,
+                            msg='Procrustes with reflection should work better, '
+                            'but %f > %f' % (norm4, norm2))
+
+

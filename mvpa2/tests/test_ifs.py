@@ -88,11 +88,4 @@ class IFSTests(unittest.TestCase):
         self.assertTrue((resds.samples[:,0] == signal.samples[:,0]).all())
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(IFSTests)
-
-
-if __name__ == '__main__':  # pragma: no cover
-    import runner
-    runner.run()
 

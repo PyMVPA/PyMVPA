@@ -8,6 +8,9 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Wavelet transformation"""
 
+from builtins import zip
+from builtins import str
+from builtins import range
 from mvpa2.base import externals
 
 if externals.exists('pywt', raise_=True):
@@ -58,16 +61,14 @@ class _WaveletMapper(Mapper):
         """Maximal level of decomposition. None for automatic"""
 
         if not wavelet in pywt.wavelist():
-            raise ValueError, \
-                  "Unknown family of wavelets '%s'. Please use one " \
-                  "available from the list %s" % (wavelet, pywt.wavelist())
+            raise ValueError("Unknown family of wavelets '%s'. Please use one " \
+                  "available from the list %s" % (wavelet, pywt.wavelist()))
         self._wavelet = wavelet
         """Wavelet family to use"""
 
         if not mode in pywt.MODES.modes:
-            raise ValueError, \
-                  "Unknown periodization mode '%s'. Please use one " \
-                  "available from the list %s" % (mode, pywt.MODES.modes)
+            raise ValueError("Unknown periodization mode '%s'. Please use one " \
+                  "available from the list %s" % (mode, pywt.MODES.modes))
         self._mode = mode
         """Periodization mode"""
 
@@ -102,14 +103,14 @@ def _get_indexes(shape, dim):
     XXX Somewhat sloppy implementation... but works...
     """
     if len(shape) < dim:
-        raise ValueError, "Dimension %d is incorrect for a shape %s" % \
-              (dim, shape)
+        raise ValueError("Dimension %d is incorrect for a shape %s" % \
+              (dim, shape))
     n = len(shape)
     curindexes = [0] * n
     curindexes[dim] = Ellipsis#slice(None)       # all elements for dimension dim
     while True:
         yield tuple(curindexes)
-        for i in xrange(n):
+        for i in range(n):
             if i == dim and dim == n-1:
                 return                  # we reached it -- thus time to go
             if curindexes[i] == shape[i] - 1:
@@ -201,7 +202,7 @@ class WaveletPacketMapper(_WaveletMapper):
                 levels_lengths = [None] * WP.maxlevel
 
             levels_datas = []
-            for level in xrange(WP.maxlevel):
+            for level in range(WP.maxlevel):
                 level_nodes = WP.get_level(level+1)
                 level_datas = [node.data for node in level_nodes]
 
@@ -211,16 +212,14 @@ class WaveletPacketMapper(_WaveletMapper):
                 if levels_lengths[level] is None:
                     levels_lengths[level] = level_lengths
                 elif levels_lengths[level] != level_lengths:
-                    raise RuntimeError, \
-                          "ADs of same level of different samples should have same number of elements." \
-                          " Got %s, was %s" % (level_lengths, levels_lengths[level])
+                    raise RuntimeError("ADs of same level of different samples should have same number of elements." \
+                          " Got %s, was %s" % (level_lengths, levels_lengths[level]))
 
                 if levels_length[level] is None:
                     levels_length[level] = level_length
                 elif levels_length[level] != level_length:
-                    raise RuntimeError, \
-                          "Levels of different samples should have same number of elements." \
-                          " Got %d, was %d" % (level_length, levels_length[level])
+                    raise RuntimeError("Levels of different samples should have same number of elements." \
+                          " Got %d, was %d" % (level_length, levels_length[level]))
 
                 level_data = np.hstack(level_datas)
                 levels_datas.append(level_data)
@@ -288,9 +287,8 @@ class WaveletPacketMapper(_WaveletMapper):
             raise NotImplementedError
         else:
             if not externals.exists('pywt wp reconstruct'):
-                raise NotImplementedError, \
-                      "Reconstruction for a single level for versions of " \
-                      "pywt < 0.1.7 (revision 103) is not supported"
+                raise NotImplementedError("Reconstruction for a single level for versions of " \
+                      "pywt < 0.1.7 (revision 103) is not supported")
             if not externals.exists('pywt wp reconstruct fixed'):
                 warning("%s: Reverse mapping with this version of 'pywt' might "
                         "result in incorrect data in the tails of the signal. "
@@ -364,7 +362,7 @@ class WaveletTransformationMapper(_WaveletMapper):
             if __debug__:
                 debug('MAP_', " %s" % (indexes,), lf=False, cr=True)
             wd_sample = wd[indexes]
-            wd_coeffs = [wd_sample[wd_offsets[i]:wd_offsets[i+1]] for i in xrange(nlevels)]
+            wd_coeffs = [wd_sample[wd_offsets[i]:wd_offsets[i+1]] for i in range(nlevels)]
             # need to compose original list
             time_points = pywt.waverec(
                 wd_coeffs, wavelet=self._wavelet, mode=self._mode)

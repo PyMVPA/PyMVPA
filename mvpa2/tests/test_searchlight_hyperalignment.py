@@ -421,10 +421,4 @@ class FancyQE(object):
         return self.results[i]
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(SearchlightHyperalignmentTests)
 
-
-if __name__ == '__main__':  # pragma: no cover
-    import runner
-    runner.run()

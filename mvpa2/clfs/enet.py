@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Elastic-Net (ENET) regression classifier."""
 
+from builtins import str
 __docformat__ = 'restructuredtext'
 
 # system imports
@@ -21,7 +22,7 @@ if externals.exists('elasticnet', raise_=True):
     import rpy2.robjects.numpy2ri
     if hasattr(rpy2.robjects.numpy2ri,'activate'):
         rpy2.robjects.numpy2ri.activate()
-    RRuntimeError = rpy2.robjects.rinterface.RRuntimeError
+    from mvpa2.support.rpy2_addons import RRuntimeError
     r = rpy2.robjects.r
     r.library('elasticnet')
     from mvpa2.support.rpy2_addons import Rrx2
@@ -145,10 +146,9 @@ class ENET(Classifier):
                        intercept=self.__intercept,
                        trace=self.__trace,
                        **enet_kwargs)
-        except RRuntimeError, e:
-            raise FailedToTrainError, \
-                  "Failed to predict on %s using %s. Exceptions was: %s" \
-                  % (data, self, e)
+        except RRuntimeError as e:
+            raise FailedToTrainError("Failed to predict on %s using %s. Exceptions was: %s" \
+                  % (data, self, e))
 
         # find the step with the lowest Cp (risk)
         # it is often the last step if you set a max_steps
@@ -180,10 +180,9 @@ class ENET(Classifier):
                             type='fit',
                             s=rpy2.robjects.IntVector(self.__beta_pure_shape))
             fit = np.asanyarray(Rrx2(res, 'fit'))[:, -1]
-        except RRuntimeError, e:
-            raise FailedToPredictError, \
-                  "Failed to predict on %s using %s. Exceptions was: %s" \
-                  % (data, self, e)
+        except RRuntimeError as e:
+            raise FailedToPredictError("Failed to predict on %s using %s. Exceptions was: %s" \
+                  % (data, self, e))
 
         if len(fit.shape) == 0:
             # if we just got 1 sample with a scalar

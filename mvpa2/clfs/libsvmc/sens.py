@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Provide sensitivity measures for libsvm's SVM."""
 
+from builtins import range
 __docformat__ = 'restructuredtext'
 
 import numpy as np
@@ -77,9 +78,8 @@ class LinearSVMWeights(Sensitivity):
 
         if self.params.split_weights:
             if nr_class != 2:
-                raise NotImplementedError, \
-                      "Cannot compute per-class weights for" \
-                      " non-binary classification task"
+                raise NotImplementedError("Cannot compute per-class weights for" \
+                      " non-binary classification task")
             # libsvm might have different idea on the ordering
             # of labels, so we would need to map them back explicitely
             ds_labels = list(dataset.sa[clf.get_space()].unique) # labels in the dataset
@@ -134,8 +134,8 @@ class LinearSVMWeights(Sensitivity):
 				// j are in sv_coef[i][nz_start[j]...]
                 """
                 sens_labels = []
-                for i in xrange(nr_class):
-                    for j in xrange(i+1, nr_class):
+                for i in range(nr_class):
+                    for j in range(i+1, nr_class):
                         weights[ipair, :] = np.asarray(
                             svcoef[j-1, nz_start[i]:nz_end[i]]
                             * svs[nz_start[i]:nz_end[i]]

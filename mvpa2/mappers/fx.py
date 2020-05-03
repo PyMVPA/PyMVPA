@@ -8,6 +8,11 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Transform data by applying a function along samples or feature axis."""
 
+from builtins import str
+from builtins import zip
+from builtins import range
+from past.builtins import basestring
+from functools import reduce
 __docformat__ = 'restructuredtext'
 
 import numpy as np
@@ -122,7 +127,7 @@ class FxMapper(Mapper):
             elif __debug__:
                 debug('FX', "Will apply %s via apply_along_axis",
                           (self.__fx))
-        except Exception, e:
+        except Exception as e:
             if __debug__:
                 debug('FX',
                       "Failed to deduce either %s has 'axis' argument: %s",
@@ -217,19 +222,19 @@ class FxMapper(Mapper):
         else:
             raise RuntimeError("This should not have happened!")
 
-        attrs = dict(zip(col.keys(), [[] for i in col]))
+        attrs = dict(list(zip(list(col.keys()), [[] for i in col])))
 
         # create a dictionary for all unique elements in all attribute this
         # mapper should operate on
-        self.__attrcombs = dict(zip(self.__uattrs,
-                                [col[attr].unique for attr in self.__uattrs]))
+        self.__attrcombs = dict(list(zip(self.__uattrs,
+                                [col[attr].unique for attr in self.__uattrs])))
         # let it generate all combinations of unique elements in any attr
         order = self.order
         order_keys = []
         for comb in _orthogonal_permutations(self.__attrcombs):
             selector = reduce(np.multiply,
                                 [array_whereequal(col[attr].value, value)
-                                 for attr, value in comb.iteritems()])
+                                 for attr, value in comb.items()])
 
             # process the samples
             if axis == 0:
@@ -269,7 +274,7 @@ class FxMapper(Mapper):
             mdata = [mdata[i] for i in order_idxs]
             # and attributes
             attrs = dict((k, [v[i] for i in order_idxs])
-                         for k,v in attrs.iteritems())
+                         for k,v in attrs.items())
 
         if axis == 0:
             mdata = np.vstack(mdata)
@@ -288,13 +293,13 @@ class FxMapper(Mapper):
 
         # and now all attributes
         if self.__axis == 'samples':
-            attrs = dict(zip(ds.sa.keys(),
+            attrs = dict(list(zip(list(ds.sa.keys()),
                               [self.__attrfx(ds.sa[attr].value)
-                                    for attr in ds.sa]))
+                                    for attr in ds.sa])))
         if self.__axis == 'features':
-            attrs = dict(zip(ds.fa.keys(),
+            attrs = dict(list(zip(list(ds.fa.keys()),
                               [self.__attrfx(ds.fa[attr].value)
-                                    for attr in ds.fa]))
+                                    for attr in ds.fa])))
         return mdata, attrs
 
     axis = property(fget=lambda self:self.__axis)
@@ -558,7 +563,7 @@ def argsort(seq, reverse=False):
     # Thanks!
 
     # cmp was not passed through since seems to be absent in python3
-    return sorted(range(len(seq)), key=seq.__getitem__, reverse=reverse)
+    return sorted(list(range(len(seq))), key=seq.__getitem__, reverse=reverse)
 
 def _orthogonal_permutations(a_dict):
     """
@@ -583,7 +588,7 @@ def _orthogonal_permutations(a_dict):
     # Taken from MDP (LGPL)
     pool = dict(a_dict)
     args = []
-    for func, all_args in pool.items():
+    for func, all_args in list(pool.items()):
         # check the size of the list in the second item of the tuple
         args_with_fun = [(func, arg) for arg in all_args]
         args.append(args_with_fun)

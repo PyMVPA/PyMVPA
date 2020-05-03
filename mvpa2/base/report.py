@@ -8,6 +8,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Creating simple PDF reports using reportlab
 """
+from __future__ import division
+from builtins import zip
+from builtins import str
+from builtins import object
 
 __docformat__ = 'restructuredtext'
 
@@ -132,9 +136,10 @@ class Report(object):
             styles = rpls.getSampleStyleSheet()
             self.style = styles.byName[style]
         except KeyError:
-            raise ValueError, \
-                  "Style %s is not know to reportlab. Known are %s" \
-                  % (styles.keys())
+            raise ValueError(
+                "Style %s is not know to reportlab. Known are %s"
+                % (style, list(styles))
+            )
 
         self._story = []
 
@@ -247,7 +252,7 @@ class Report(object):
         imsize = (im.drawWidth, im.drawHeight)
 
         # Reduce the size if necessary so reportlab does not puke later on
-        r = [float(d)/m for d,m in zip(imsize, self.pagesize)]
+        r = [float(d) / m for d, m in zip(imsize, self.pagesize)]
         maxr = max(r)
         if maxr > 1.0:
             if __debug__ and not self in debug.handlers:
@@ -270,7 +275,7 @@ class Report(object):
         figs = pl.matplotlib._pylab_helpers.Gcf.figs
         if __debug__ and not self in debug.handlers:
             debug('REP', "Saving all %d present figures" % len(figs))
-        for fid, f in figs.iteritems():
+        for fid, f in figs.items():
             self.figure(f.canvas.figure, *args, **kwargs)
 
     @property
@@ -316,7 +321,7 @@ class Report(object):
         def my_first_page(canvas, doc):
             canvas.saveState()
             canvas.setFont(self.font, 16)
-            canvas.drawCentredString(self.pagesize[0]/2.0,
+            canvas.drawCentredString(self.pagesize[0] / 2.0,
                                      self.pagesize[1]-108, title)
             canvas.setFont(self.font, 9)
             canvas.drawString(rplu.inch, 0.75 * rplu.inch,

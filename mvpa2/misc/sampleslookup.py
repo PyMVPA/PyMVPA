@@ -58,10 +58,11 @@ class SamplesLookup(object):
         if __debug__:
             # some sanity checks
             if len(self._map) != nsample_ids:
-                raise ValueError, \
-                    "Apparently samples' origids are not uniquely identifying" \
-                    " samples in %s.  You must change them so they are unique" \
+                raise ValueError(
+                    "Apparently samples' origids are not uniquely identifying"
+                    " samples in %s.  You must change them so they are unique" 
                     ". Use ds.init_origids('samples')" % ds
+                )
 
     def __call__(self, ds):
         """
@@ -70,8 +71,9 @@ class SamplesLookup(object):
            been mapped at all
            """
         if (not 'magic_id' in ds.a) or ds.a.magic_id != self._orig_ds_id:
-            raise KeyError, \
+            raise KeyError(
                   'Dataset %s is not indexed by %s' % (ds, self)
+            )
 
         _map = self._map
         _origids = ds.sa.origids

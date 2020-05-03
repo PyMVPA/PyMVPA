@@ -7,7 +7,13 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """ Neighborhood objects """
+from __future__ import division
 
+from builtins import zip
+from builtins import str
+from builtins import range
+from past.utils import old_div
+from builtins import object
 import numpy as np
 from numpy import array
 import sys
@@ -150,16 +156,15 @@ class Sphere(object):
             element_sizes = np.ones(ndim)
         else:
             if (ndim != len(element_sizes)):
-                raise ValueError, \
-                      "Dimensionality mismatch: element_sizes %s provided " \
+                raise ValueError("Dimensionality mismatch: element_sizes %s provided " \
                       "to constructor had %i dimensions, whenever queried " \
                       "coordinate had %i" \
-                      % (element_sizes, len(element_sizes), ndim)
+                      % (element_sizes, len(element_sizes), ndim))
         center = np.zeros(ndim)
 
         element_sizes = np.asanyarray(element_sizes)
         # What range for each dimension
-        erange = np.ceil(self._radius / element_sizes).astype(int)
+        erange = np.ceil(old_div(self._radius, element_sizes)).astype(int)
 
         tentative_increments = np.array(list(np.ndindex(tuple(erange*2 + 1)))) \
                                - erange
@@ -287,8 +292,8 @@ class HollowSphere(Sphere):
           See `Sphere` for additional keyword arguments
         """
         if inner_radius > radius:
-            raise ValueError, "inner_radius (got %g) should be smaller " \
-                  "than the radius (got %g)" % (inner_radius, radius)
+            raise ValueError("inner_radius (got %g) should be smaller " \
+                  "than the radius (got %g)" % (inner_radius, radius))
         Sphere.__init__(self, radius, **kwargs)
         self._inner_radius = inner_radius
         self.include_center = include_center
@@ -317,16 +322,15 @@ class HollowSphere(Sphere):
             element_sizes = np.ones(ndim)
         else:
             if (ndim != len(element_sizes)):
-                raise ValueError, \
-                      "Dimensionality mismatch: element_sizes %s provided " \
+                raise ValueError("Dimensionality mismatch: element_sizes %s provided " \
                       "to constructor had %i dimensions, whenever queried " \
                       "coordinate had %i" \
-                      % (element_sizes, len(element_sizes), ndim)
+                      % (element_sizes, len(element_sizes), ndim))
         center = np.zeros(ndim)
 
         element_sizes = np.asanyarray(element_sizes)
         # What range for each dimension
-        erange = np.ceil(self._radius / element_sizes).astype(int)
+        erange = np.ceil(old_div(self._radius, element_sizes)).astype(int)
 
         tentative_increments = np.array(list(np.ndindex(tuple(erange*2 + 1)))) \
                                - erange
@@ -409,7 +413,7 @@ class QueryEngine(QueryEngineInterface):
             prefixes = []
         return super(QueryEngine, self).__repr__(
             prefixes=prefixes
-            + ['%s=%r' % v for v in self._queryobjs.iteritems()])
+            + ['%s=%r' % v for v in self._queryobjs.items()])
 
     def __len__(self):
         return len(self._ids) if self._ids is not None else 0
@@ -429,7 +433,7 @@ class QueryEngine(QueryEngineInterface):
         # by default all QueryEngines should with all features of the dataset
         # Situation might be different in case of e.g. Surface-based
         # searchlights.
-        self._ids = range(dataset.nfeatures)
+        self._ids = list(range(dataset.nfeatures))
 
 
     def query_byid(self, fid):
@@ -488,7 +492,7 @@ class IndexQueryEngine(QueryEngine):
         qattrs = self._queryattrs
         # in addition to the base class functionality we need to store the
         # order of the query-spaces
-        self._spaceorder = qattrs.keys()
+        self._spaceorder = list(qattrs.keys())
         # type check and determine mask dimensions
         dims = []                       # dimensionality of each space
         lookups = self._lookups = {}
@@ -582,8 +586,8 @@ class IndexQueryEngine(QueryEngine):
                 slicer.append(self._sliceall[space])
         # check if query had only legal spaces specified
         if len(kwargs):
-            raise ValueError, "Do not know how to treat space(s) %s given " \
-                  "in parameters of the query" % (kwargs.keys())
+            raise ValueError("Do not know how to treat space(s) %s given " \
+                  "in parameters of the query" % (list(kwargs.keys())))
         # only ids are of interest -> flatten
         # and we need to back-transfer them into dataset ids by subtracting 1
         res = self._searcharray[np.ix_(*slicer)].flatten() - 1
@@ -658,11 +662,10 @@ class CachedQueryEngine(QueryEngineInterface):
             self._lookup = {}           # generic lookup
             self.ids = self.queryengine.ids # used in GNBSearchlight??
         elif self._trained_ds_fa_hash != ds_fa_hash:
-            raise ValueError, \
-                  "Feature attributes of %s (idhash=%r) were changed from " \
+            raise ValueError("Feature attributes of %s (idhash=%r) were changed from " \
                   "what this %s was trained on (idhash=%r). Untrain it " \
                   "explicitly if you like to reuse it on some other data." \
-                  % (dataset, ds_fa_hash, self, self._trained_ds_fa_hash)
+                  % (dataset, ds_fa_hash, self, self._trained_ds_fa_hash))
         else:
             pass
 
@@ -694,7 +697,7 @@ class CachedQueryEngine(QueryEngineInterface):
                 # keys are already hashable
                 # and sort for deterministic order
                 return tuple((k, to_hashable(v))
-                             for (k, v) in sorted(x.iteritems()))
+                             for (k, v) in sorted(x.items()))
             elif is_sequence_type(x):
                 return tuple(i for i in x)
             elif np.isscalar(x):
@@ -784,7 +787,7 @@ def scatter_neighborhoods(neighbor_gen, coords, deterministic=False):
         # store seed
         seeds.append((seed, idx))
     # unzip coords and idx again
-    coords, idx = zip(*seeds)
+    coords, idx = list(zip(*seeds))
     # we need a flat idx list
     # yoh: sum trick replaced list(itertools.chain.from_iterable(idx))
     #      which is not python2.5-compatible

@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Least angle regression (LARS)."""
 
+from builtins import str
 __docformat__ = 'restructuredtext'
 
 # system imports
@@ -22,7 +23,7 @@ if externals.exists('lars', raise_=True):
     import rpy2.robjects.numpy2ri
     if hasattr(rpy2.robjects.numpy2ri,'activate'):
         rpy2.robjects.numpy2ri.activate()
-    RRuntimeError = rpy2.robjects.rinterface.RRuntimeError
+    from mvpa2.support.rpy2_addons import RRuntimeError
     r = rpy2.robjects.r
     r.library('lars')
     from mvpa2.support.rpy2_addons import Rrx2
@@ -109,7 +110,7 @@ class LARS(Classifier):
 
         if not model_type in known_models:
             raise ValueError('Unknown model %s for LARS is specified. Known' %
-                             model_type + 'are %s' % `known_models`)
+                             model_type + 'are %s' % repr(known_models))
 
         # set up the params
         self.__type = model_type
@@ -172,10 +173,9 @@ class LARS(Classifier):
         Cp_vals = None
         try:
             Cp_vals = np.asanyarray(Rrx2(trained_model, 'Cp'))
-        except TypeError, e:
-            raise FailedToTrainError, \
-                  "Failed to train %s on %s. Got '%s' while trying to access " \
-                  "trained model %s" % (self, data, e, trained_model)
+        except TypeError as e:
+            raise FailedToTrainError("Failed to train %s on %s. Got '%s' while trying to access " \
+                  "trained model %s" % (self, data, e, trained_model))
 
         if Cp_vals is None:
             # if there were no any -- just choose 0th
@@ -211,10 +211,9 @@ class LARS(Classifier):
                             s=self.__lowest_Cp_step)
                             #s=self.__trained_model['beta'].shape[0])
             fit = np.atleast_1d(Rrx2(res, 'fit'))
-        except RRuntimeError, e:
-            raise FailedToPredictError, \
-                  "Failed to predict on %s using %s. Exceptions was: %s" \
-                  % (data, self, e)
+        except RRuntimeError as e:
+            raise FailedToPredictError("Failed to predict on %s using %s. Exceptions was: %s" \
+                  % (data, self, e))
 
         self.ca.estimates = fit
         return fit

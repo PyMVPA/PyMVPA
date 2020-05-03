@@ -8,6 +8,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Tiny snippets to interface with FSL easily."""
 
+from builtins import str
+from builtins import range
+from past.builtins import basestring
+from builtins import object
 __docformat__ = 'restructuredtext'
 
 import numpy as np
@@ -81,7 +85,7 @@ class FslEV3(ColumnData):
                    duration=self['durations'][i],
                    features=[self['intensities'][i]],
                    **kwargs)
-             for i in xrange(self.nevs)]
+             for i in range(self.nevs)]
 
 
     onsets = property(fget=lambda self: self['onsets'])
@@ -207,9 +211,9 @@ class FslGLMDesign(object):
 
         # checks
         if not self.mat.shape == (ntimepoints, nwaves):
-            raise IOError, "Design matrix file '%s' did not contain expected " \
+            raise IOError("Design matrix file '%s' did not contain expected " \
                            "matrix size (expected %s, got %s)" \
-                           % (fname, str((ntimepoints, nwaves)), self.mat.shape)
+                           % (fname, str((ntimepoints, nwaves)), self.mat.shape))
 
 
     def plot(self, style='lines', **kwargs):
@@ -234,18 +238,18 @@ class FslGLMDesign(object):
             col_offset = max(self.ppheights)
 
             # for all columns
-            for i in xrange(self.mat.shape[1]):
+            for i in range(self.mat.shape[1]):
                 axcenter = i * col_offset
                 pl.plot(self.mat[:, i] + axcenter, yax, **kwargs)
                 axcenters.append(axcenter)
 
-            pl.xticks(np.array(axcenters), range(self.mat.shape[1]))
+            pl.xticks(np.array(axcenters), list(range(self.mat.shape[1])))
         elif style == 'matrix':
             pl.pcolor(self.mat, **kwargs)
             ticks = np.arange(1, self.mat.shape[1] + 1)
             pl.xticks(ticks - 0.5, ticks)
         else:
-            raise ValueError, "Unknown plotting style '%s'" % style
+            raise ValueError("Unknown plotting style '%s'" % style)
 
         # labels and turn y-axis upside down
         pl.ylabel('Samples (top to bottom)')

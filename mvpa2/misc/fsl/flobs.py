@@ -7,7 +7,11 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Wrapper around FSLs halfcosbasis to generate HRF kernels"""
+from __future__ import division
+from __future__ import print_function
 
+from builtins import str
+from past.utils import old_div
 __docformat__ = 'restructuredtext'
 
 import os
@@ -109,8 +113,8 @@ def make_flobs(pre=0, rise=5, fall=5, undershoot=5, undershootamp=0.3,
                    + ' --res=' + str(resolution) )
     err = childerror.readlines()
     if len(err) > 0:
-        print err
-        raise RuntimeError, "Problem while running halfcosbasis."
+        print(err)
+        raise RuntimeError("Problem while running halfcosbasis.")
 
     # read samples from file into an array
     hrfs = np.fromfile( pathjoin( wdir, 'out', 'hrfsamps.txt' ),
@@ -119,7 +123,7 @@ def make_flobs(pre=0, rise=5, fall=5, undershoot=5, undershootamp=0.3,
     # reshape array to get one sample per row and 1d array only
     # for one sample hrf
     hrfs = \
-        hrfs.reshape( len(hrfs)/rnsamples, rnsamples).T[:nsamples].squeeze()
+        hrfs.reshape(len(hrfs)//rnsamples, rnsamples).T[:nsamples].squeeze()
 
     # cleanup working dir (ignore errors)
     shutil.rmtree( wdir, True )

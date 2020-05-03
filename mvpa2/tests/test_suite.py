@@ -22,7 +22,7 @@ class SuiteTest(unittest.TestCase):
         """
         try:
             exec "from mvpa2.suite import *"
-        except Exception, e: # pragma: no cover - should not be hit if ok_
+        except Exception as e: # pragma: no cover - should not be hit if ok_
             self.fail(msg="Cannot import everything from mvpa2.suite: %s" % e)
 
     def test_docstrings(self):
@@ -96,11 +96,4 @@ class SuiteTest(unittest.TestCase):
             self.fail('\n'.join(sfailures))
 
 
-def suite():  # pragma: no cover
-    return unittest.makeSuite(SuiteTest)
-
-
-if __name__ == '__main__':  # pragma: no cover
-    import runner
-    runner.run()
 

@@ -44,8 +44,8 @@ if _svm_backend == 'shogun':
     _svm_backend = 'sg'
 
 if not _svm_backend in _VALID_BACKENDS:
-    raise ValueError, 'Configuration option svm.backend got invalid value %s.' \
-          ' Valid choices are %s' % (_svm_backend, _VALID_BACKENDS)
+    raise ValueError('Configuration option svm.backend got invalid value %s.' \
+          ' Valid choices are %s' % (_svm_backend, _VALID_BACKENDS))
 
 if __debug__:
     debug('SVM', 'SVM backend is %s' % _svm_backend)

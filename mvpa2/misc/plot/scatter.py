@@ -7,7 +7,10 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Routines to scatterplot data"""
+from __future__ import division
 
+from builtins import zip
+from builtins import range
 __docformat__ = 'restructuredtext'
 
 
@@ -309,7 +312,7 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
             if hint_opacity:
                 # now we need to plot that zdim_max slice taking into account our colormap
                 # create new axes
-                axslice = pl_axes([left, bottom+height * 0.72, width/4., height/5.],
+                axslice = pl_axes([left, bottom + height * 0.72, width/4., height/5.],
                                   facecolor='y')
                 axslice.axis('off')
                 sslice = np.zeros(dataXd.shape[1:3]) # XXX hardcoded assumption on dimcolor =1
@@ -404,7 +407,7 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
         xyrange = maxxy - minxy
         xyamax = np.max( [np.max(np.fabs(x)), np.max(np.fabs(y))] )
         limn = sgn*( int(sgn*minxy/binwidth) - sgn) * binwidth
-        limp = ( int(maxxy/binwidth) + 1) * binwidth
+        limp = (maxxy//binwidth + 1) * binwidth
 
         ax_scatter.plot((limn*0.9, limp*0.9), (limn*0.9, limp*0.9), 'y--')
         if xlim is None:
@@ -466,7 +469,7 @@ def plot_scatter(dataXd, mask=None, masked_opacity=0.,
 
     if statsline:
         # draw the text based on gca
-        y1, y2 = ax_scatter.get_ylim(); x1, x2 = ax_scatter.get_xlim();
+        y1, y2 = ax_scatter.get_ylim(); x1, x2 = ax_scatter.get_xlim()
         ax_scatter.text(0.5*(x1+x2),            # center
                        y2 - 0.02*(y2-y1),
                        statsline,
@@ -497,13 +500,13 @@ def plot_scatter_matrix(d, style='full', labels=None, fig=None, width_=6, **kwar
     if style == 'upper_triang':
         # style with upper row -- hists
         # next -- upper triang only
-        for r in xrange(n):
-            for c in xrange(r, n):
+        for r in range(n):
+            for c in range(r, n):
                 sp = pl.subplot(n, n, r*n+c+1)
                 axes[r,c] = pl.gca()
 
-        for d1 in xrange(0, n-1):
-            for d2 in xrange(d1+1, n):
+        for d1 in range(0, n-1):
+            for d2 in range(d1+1, n):
                 # only upper triangle
                 plot_scatter([d[i] for i in [d2, d1]], ax_scatter=axes[d1+1, d2],
                              ax_hist_x=axes[0, d2] if d1==0 else None,
@@ -514,15 +517,15 @@ def plot_scatter_matrix(d, style='full', labels=None, fig=None, width_=6, **kwar
         nullfmt   = pl.NullFormatter()         # no labels
 
         # diagonal -- histograms
-        for r in xrange(n):
-            for c in xrange(n):
+        for r in range(n):
+            for c in range(n):
                 sp = pl.subplot(n, n, r*n+c+1)
                 axes[r, c] = pl.gca()
 
-        for d1 in xrange(0, n):
+        for d1 in range(0, n):
             # we should unify the ranges of values displayed
             ylim = np.min(d[d1]), np.max(d[d1])
-            for d2 in xrange(0, n):
+            for d2 in range(0, n):
                 if d1 == d2:
                     continue
                 xlim = np.min(d[d2]), np.max(d[d2])
@@ -672,7 +675,7 @@ def plot_scatter_files(files,
     kwargs_orig = kwargs
     figs = []
     if style == 'pair1':
-        for i in xrange(1, len(datas)):
+        for i in range(1, len(datas)):
             data4d = np.asarray([datas[0], datas[i]])
             #del datas               # free up memory because above made a copy
             kwargs = kwargs_orig.copy()

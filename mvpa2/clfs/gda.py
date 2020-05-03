@@ -12,6 +12,7 @@
    dimensionality reduction tricks are in place ATM
 """
 
+from __future__ import division
 """
 TODO:
 
@@ -23,6 +24,9 @@ TODO:
 Was based on GNB code
 """
 
+from builtins import zip
+from builtins import range
+from past.utils import old_div
 __docformat__ = 'restructuredtext'
 
 import numpy as np
@@ -92,9 +96,10 @@ class GDA(Classifier):
         elif prior == 'ratio':
             priors = np.squeeze(nsamples_per_class) / float(nsamples)
         else:
-            raise ValueError, \
-                  "No idea on how to handle '%s' way to compute priors" \
+            raise ValueError(
+                  "No idea on how to handle '%s' way to compute priors"
                   % self.params.prior
+            )
         return np.atleast_1d(priors)
 
 
@@ -128,7 +133,7 @@ class GDA(Classifier):
 
         # Estimate cov
         # better loop than repmat! ;)
-        for l, il in label2index.iteritems():
+        for l, il in label2index.items():
             Xl = X[labels == l]
             nsamples_per_class[il] = len(Xl)
             # TODO: degenerate case... no samples for known label for
@@ -179,15 +184,16 @@ class GDA(Classifier):
     def _inv(self, cov):
         try:
             return np.linalg.inv(cov)
-        except Exception, e:
+        except Exception as e:
             if self.params.allow_pinv:
                 try:
                     return np.linalg.pinv(cov)
-                except Exception, e:
+                except Exception as e:
                     pass
-            raise DegenerateInputError, \
-              "Data is probably singular, since inverse fails. Got %s"\
+            raise DegenerateInputError(
+              "Data is probably singular, since inverse fails. Got %s"
               % (e,)
+            )
 
 
 class LDA(GDA):
@@ -208,8 +214,7 @@ class LDA(GDA):
         nlabels = len(self.ulabels)
         # Sum and scale the covariance
         self.cov = cov = \
-            np.sum(self.cov, axis=0) \
-            / (np.sum(self.nsamples_per_class) - nlabels)
+            old_div(np.sum(self.cov, axis=0), (np.sum(self.nsamples_per_class) - nlabels))
 
         # For now as simple as that -- see notes on top
         covi = self._inv(cov)
@@ -217,7 +222,7 @@ class LDA(GDA):
         # Precompute and store the actual separating hyperplane and offset
         self._w = np.dot(covi, self.means.T)
         self._b = b = np.zeros((nlabels,))
-        for il in xrange(nlabels):
+        for il in range(nlabels):
             m = self.means[il]
             b[il] = np.log(self.priors[il]) - 0.5 * np.dot(np.dot(m.T, covi), m)
 

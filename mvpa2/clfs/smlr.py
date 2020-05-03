@@ -33,7 +33,7 @@ if externals.exists('ctypes'):
     try:
         from mvpa2.clfs.libsmlrc import stepwise_regression as _cStepwiseRegression
         _DEFAULT_IMPLEMENTATION = "C"
-    except OSError, e:
+    except OSError as e:
         warning("Failed to load fast implementation of SMLR.  May be you "
                 "forgotten to build it.  We will use much slower pure-Python "
                 "version. Original exception was %s" % (e,))
@@ -300,11 +300,10 @@ class SMLR(Classifier):
                     sum2_w_old = 0.0
                     wasted_basis = 0
 
-
         if not converged:
-            raise ConvergenceError, \
-                "More than %d Iterations without convergence" % \
-                (maxiter)
+            raise ConvergenceError(
+                "More than %d Iterations without convergence" % maxiter
+            )
 
         # calcualte the log likelihoods and posteriors for the training data
         #log_likelihood = x
@@ -549,8 +548,8 @@ class SMLR(Classifier):
         S = np.sum(E, 1)
 
         if __debug__:
-            debug('SMLR', "predict on data.shape=%s min:max(data)=%f:%f " %
-                  (`data.shape`, np.min(data), np.max(data)) +
+            debug('SMLR', "predict on data.shape=%r min:max(data)=%f:%f " %
+                  (data.shape, np.min(data), np.max(data)) +
                   "min:max(w)=%f:%f min:max(dot_prod)=%f:%f min:max(E)=%f:%f" %
                   (np.min(w), np.max(w), np.min(dot_prod), np.max(dot_prod),
                    np.min(E), np.max(E)))
