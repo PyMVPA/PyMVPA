@@ -14,6 +14,7 @@
 .. _dipy: http://nipy.sourceforge.net/dipy
 .. _`dipy github`: http://github.com/Garyfallidis/dipy
 .. _nibabel: http://nipy.sourceforge.net/nibabel
+.. _NiBabel: http://nipy.sourceforge.net/nibabel
 .. _dipy: http://nipy.sourceforge.net/dipy
 
 .. _Neuron: http://www.neuron.yale.edu/neuron
