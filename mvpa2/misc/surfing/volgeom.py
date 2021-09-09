@@ -625,7 +625,7 @@ class VolGeom(object):
             If a callable, it should be a a neighborhood function
             (like Sphere(..)) that can map a single voxel coordinate
             (represented as a triple of indices) to a list of voxel
-            coordinates that define the neighboorhood of that
+            coordinates that define the neighborhood of that
             coordinate. For example, Sphere(3) can be used to dilate the
             original mask by 3 voxels. If an int, then it uses
             Sphere(dilate) to dilate the mask. If set to None
@@ -705,7 +705,7 @@ class VolGeom(object):
             If a callable, it should be a a neighborhood function
             (like Sphere(..)) that can map a single voxel coordinate
             (represented as a triple of indices) to a list of voxel
-            coordinates that define the neighboorhood of that
+            coordinates that define the neighborhood of that
             coordinate. For example, Sphere(3) can be used to dilate the
             original mask by 3 voxels. If an int, then it uses
             Sphere(dilate) to dilate the mask. If set to None

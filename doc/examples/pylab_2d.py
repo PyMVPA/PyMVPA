@@ -113,7 +113,7 @@ for id, ds in datasets.iteritems():
         fig += 1
         pl.subplot(ny, nx, fig)
 
-        # select the clasifier
+        # select the classifier
         clf = clfs[c]
 
         # enable saving of the estimates used for the prediction

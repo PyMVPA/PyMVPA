@@ -1427,7 +1427,7 @@ class Surface(object):
 
         # add border nodes to all low-res surface
         # this is a bit inefficient
-        # TODO optimize to consider neighboorhood
+        # TODO optimize to consider neighborhood
         for x_tuple in x_tuples:
             x_tuple2near_indices[x_tuple] = list(on_borders)
 
@@ -1501,7 +1501,7 @@ class Surface(object):
             node on the low-res surface
         '''
 
-        # the set of indidces that will serve as keys in high2high_in_low
+        # the set of indices that will serve as keys in high2high_in_low
         if highres_indices is None:
             highres_indices = np.arange(highres_surf.nvertices)
         highres_indices = set(highres_indices)
@@ -1869,7 +1869,7 @@ def get_sphere_left_right_mapping(surf_left, surf_right, eps=.001):
     l2r = {pivotL: pivotR}
     to_visit = nL[pivotL].keys()
 
-    # for each node (in the left hemispehre) still to visit, keep track of its
+    # for each node (in the left hemisphere) still to visit, keep track of its
     # 'parent'
     to_visit2source = dict(zip(to_visit, [pivotL] * len(to_visit)))
 
@@ -1995,7 +1995,7 @@ def generate_sphere(density=10):
     sphere: surf.Surface
         A sphere with d**2+2 vertices and 2*d**2 faces. Seen as the planet
         Earth, node 0 and 1 correspond to the north and south poles.
-        The remaining d**2 vertices are in d circles of latitute, each with
+        The remaining d**2 vertices are in d circles of latitude, each with
         d vertices in them.
     '''
 

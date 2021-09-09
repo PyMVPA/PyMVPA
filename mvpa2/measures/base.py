@@ -551,7 +551,7 @@ class TransferMeasure(Measure):
 
     Upon calling a TransferMeasure instance with a dataset the input dataset
     is passed to a `Splitter` to will generate dataset subsets. The first
-    generated dataset is used to train an arbitray embedded `Measure. Once
+    generated dataset is used to train an arbitrary embedded `Measure. Once
     trained, the measure is then called with the second generated dataset
     and the result is returned.
     """

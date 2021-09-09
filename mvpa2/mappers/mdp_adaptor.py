@@ -26,7 +26,7 @@ from mvpa2.misc.support import is_in_volume
 
 
 class MDPNodeMapper(Mapper):
-    """Mapper encapsulating an arbitray MDP node.
+    """Mapper encapsulating an arbitrary MDP node.
 
     This mapper wraps an MDP node and uses it for forward and reverse data
     mapping (reverse is only available if the underlying MDP node supports
@@ -219,7 +219,7 @@ class ICAMapper(MDPNodeMapper):
 
 
 class MDPFlowMapper(Mapper):
-    """Mapper encapsulating an arbitray MDP flow.
+    """Mapper encapsulating an arbitrary MDP flow.
 
     This mapper wraps an MDP flow and uses it for forward and reverse data
     mapping (reverse is only available if the underlying MDP flow supports
