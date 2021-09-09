@@ -32,7 +32,7 @@ Usage
 =====
 
 Detailed information on the nature of the dataset is given in the data
-descriptor. In order to faciliate re-use of this dataset a reference
+descriptor. In order to facilitate re-use of this dataset a reference
 implementation of a data access module has been made available at:
 
   https://github.com/hanke/gumpdata
