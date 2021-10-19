@@ -969,6 +969,10 @@ class ConfusionMatrix(SummaryStatistics):
                     v = None
                     if l is not None: v = labels_map_full[l]
                     labels_plot += [v]
+            elif (len(labels) != labels_order_filtered_set) and \
+                    all(isinstance(x, str) for x in labels_order_filtered_set):
+                # get those items in provided label parameter that correspond to the existing labels
+                labels_plot = [label for label in labels_order_filtered_set if label in labels]
             else:
                 raise ValueError, \
                       "Provided labels %s do not match set of known " \
@@ -984,10 +988,13 @@ class ConfusionMatrix(SummaryStatistics):
         NlabelsNN = len(non_empty)
         Nlabels = len(labels_plot)
 
-        if matrix.shape != (NlabelsNN, NlabelsNN):
-            raise ValueError, \
-                  "Number of labels %d doesn't correspond the size" + \
-                  " of a confusion matrix %s" % (NlabelsNN, matrix.shape)
+        # I believe this Error is superfluous -- or rather: wouldn't let
+        # subsets of matrices be printed.
+
+        #if matrix.shape != (NlabelsNN, NlabelsNN):
+        #    raise ValueError, \
+        #          "Number of labels %d doesn't correspond the size" + \
+        #          " of a confusion matrix %s" % (NlabelsNN, matrix.shape)
 
         confusionmatrix = np.zeros((Nlabels, Nlabels))
         mask = confusionmatrix.copy()
