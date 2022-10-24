@@ -292,6 +292,12 @@ visualization. Finally print an informative message on how the
 generated data can be visualized using SUMA.
 """
 
+"""
+To maintain consistency with doc/examples/searchlight.py we transform the error maps into accuracies.
+"""
+sl_dset.samples *= -1
+sl_dset.samples += 1
+
 # save as NIML dataset
 fn = 'ico%d-%d_%sh_%dvx.niml.dset' % (lowres_ld, highres_ld, hemi, radius)
 path_fn = os.path.join(surfpath, fn)
