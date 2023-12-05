@@ -11,7 +11,7 @@
 import os
 import numpy as np
 
-from tempfile import mktemp
+from tempfile import mkstemp
 from numpy.linalg import LinAlgError
 
 import mvpa2
@@ -427,8 +427,9 @@ class SearchlightHyperalignment(ClassWithCollections):
             return projections
         elif self.params.results_backend == 'hdf5':
             # store results in a temporary file and return a filename
-            results_file = mktemp(prefix=self.params.tmp_prefix,
+            fd, results_file = mkstemp(prefix=self.params.tmp_prefix,
                                   suffix='-%s.hdf5' % iblock)
+            os.close(fd)
             if __debug__:
                 debug('SLC', "Storing results into %s" % results_file)
             h5save(results_file, projections)
