@@ -13,7 +13,8 @@
 .. _`Brain Imaging Center`: http://bic.berkeley.edu/
 .. _dipy: http://nipy.sourceforge.net/dipy
 .. _`dipy github`: http://github.com/Garyfallidis/dipy
-.. _nibabel: http://nipy.sourceforge.net/nibabel
+.. _nibabel: http://nipy.org/nibabel
+.. _NiBabel: http://nipy.org/nibabel
 .. _dipy: http://nipy.sourceforge.net/dipy
 
 .. _Neuron: http://www.neuron.yale.edu/neuron
