@@ -11,6 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as np
+import os.path as op
 
 from mvpa2.misc.io import ColumnData
 from mvpa2.misc.support import Event
@@ -305,3 +306,52 @@ def read_fsl_design(fsf_file):
                 fsl[key] = value.strip('"')
 
     return fsl
+
+
+def load_stats(feat_dir, stats=["cope"], suffix='.nii.gz', **kwargs):
+    """Load results of FSL stat analyses from .feat directory
+
+    Parameters
+    ----------
+    feat_dir: str
+      Path to the .feat directory which contains design.fsf and stats/
+    stats: list, optional
+      Which statistics to load.  Correspond to the filename prefixes under stats/
+    suffix: str, optional
+      If FSLOUTPUTTYPE was not set to NIFTI_GZ specify what extension to take
+    kwargs: dict
+      To be passed into fmri_dataset
+    """
+    from mvpa2.base.dataset import vstack
+    from mvpa2.datasets.mri import fmri_dataset
+
+    design = read_fsl_design(op.join(feat_dir, 'design.fsf'))
+    ncon_orig = design['fmri(ncon_orig)']
+    ncon_real = design['fmri(ncon_real)']
+    if ncon_orig != ncon_real:
+        raise ValueError(
+            "For now supporting only the cases where ncon_orig (%d) == ncon_real (%d).",
+            ncon_orig, ncon_real
+        )
+
+    statdir = op.join(feat_dir, 'stats')
+    con_indexes = list(range(1, ncon_real + 1))
+    targets = [
+        design['fmri(conname_real.%d)' % con]
+        for con in con_indexes
+    ]
+    dss = []
+    for stat in stats:
+        files = [
+            op.join(statdir, '%s%d%s' % (stat, con, suffix))
+            for con in con_indexes
+        ]
+        ds = fmri_dataset(files, targets=targets, **kwargs)
+        ds.sa['indexes'] = con_indexes
+        ds.sa['stats'] = [stat] * len(con_indexes)
+        # Remove any sa which relates to time -- there is none left
+        for a in ds.sa.keys():
+            if a.startswith('time_'):
+                ds.sa.pop(a)
+        dss.append(ds)
+    return vstack(dss)
