@@ -14,7 +14,8 @@ import numpy as np
 
 #from numpy import ones, zeros, sum, abs, isfinite, dot
 #from mvpa2.base import warning, externals
-from mvpa2.datasets.base import Dataset
+from mvpa2.datasets import Dataset, vstack
+from mvpa2.base.dataset import SampleAttributesCollection, FeatureAttributesCollection
 from mvpa2.misc.errorfx import mean_mismatch_error
 from mvpa2.measures.searchlight import BaseSearchlight
 from mvpa2.base import externals, warning
@@ -442,7 +443,13 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
             # Otherwise delay assembling the results
             results = []
 
-        all_targets, all_cvfolds = [], []
+        pass_sa_names = []
+        if self._Node__pass_attr:
+            pass_sa_names = [pa for pa in self._Node__pass_attr if \
+                             (isinstance(pa,tuple) and pa[0] in dataset.sa.keys() or pa in dataset.sa.keys())]
+        'targets' in pass_sa_names or pass_sa_names.append('targets')
+        all_testing_sa = dict([(sa_name,[]) for sa_name in pass_sa_names])
+        all_cvfolds = []
 
         # 4. Lets deduce all neighbors... might need to be RF into the
         #    parallel part later on
@@ -557,7 +564,8 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
                 # and if no errorfx -- we just need to assign original
                 # labels to the predictions BUT keep in mind that it is a matrix
                 results.append(assign_ulabels(predictions))
-                all_targets += [ulabels[i] for i in targets]
+                for sa_name in pass_sa_names:
+                    all_testing_sa[sa_name].append(split[1].sa[sa_name].value)
                 all_cvfolds += [isplit] * len(targets)
 
             pass  # end of the split loop
@@ -572,11 +580,23 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
                   (self.__class__.__name__, time.time() - time_start))
 
         out = Dataset(results)
-        if all_targets:
-            out.sa['targets'] = all_targets
+        self._all_testing_sa = all_testing_sa
         out.sa['cvfolds'] = all_cvfolds
         out.fa['center_ids'] = roi_ids
         return out
+
+    def _pass_attr(self, ds, result):
+        if self._all_testing_sa['targets']:
+            all_testing_sa = self._all_testing_sa
+            new_sas = {}
+            for attr, values in all_testing_sa.items():
+                new_sas[attr] = np.concatenate(values, 0)
+            mock_attr_ds = Dataset([], a=ds.a,)
+            mock_attr_ds.fa = ds.fa
+            mock_attr_ds.sa = SampleAttributesCollection(new_sas)
+            ds = mock_attr_ds
+            del self._all_testing_sa
+        return super(SimpleStatBaseSearchlight, self)._pass_attr(ds, result)
 
     generator = property(fget=lambda self: self._generator)
     splitter = property(fget=lambda self: self._splitter)
