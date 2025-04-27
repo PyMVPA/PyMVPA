@@ -44,7 +44,7 @@ _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'multiclass', 'non-linear', 'kernel-based', 'lars',
         'regression', 'regression_based', 'random_tie_breaking',
         'non-deterministic', 'needs_population',
-        'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
+        'libsvm', 'sg', 'sgd', 'meta', 'retrainable', 'gpr',
         'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet',
         'gnb', 'plr', 'rpy2', 'swig', 'skl', 'lda', 'qda',
         'random-forest', 'extra-trees', 'random',
@@ -360,10 +360,17 @@ if externals.exists('skl'):
     else:
         sklLDA = _skl_import('lda', 'LDA')
 
+    sklSGDClassifier = _skl_import('linear_model', 'SGDClassifier')
+
     from mvpa2.clfs.skl.base import SKLLearnerAdapter
     clfswh += SKLLearnerAdapter(sklLDA(),
                                 tags=['lda', 'linear', 'multiclass', 'binary'],
                                 descr='skl.LDA()')
+
+
+    clfswh += MulticlassClassifier(SKLLearnerAdapter(sklSGDClassifier(),
+                                                     tags = ['sgd', 'linear', 'multiclass', 'binary'],
+                                                     descr='skl.SGDClassifier()'))
 
     if _skl_version >= '0.10':
         # Out of Bag Estimates
