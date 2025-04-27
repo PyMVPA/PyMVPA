@@ -478,7 +478,7 @@ class CrossValidation(RepeatedMeasure):
                     attr_values=(1, 2))
         # transfer measure to wrap the learner
         # splitter used the output space of the generator to know what to split
-        tm = TransferMeasure(learner, splitter, postproc=enode)
+        tm = TransferMeasure(learner, splitter, postproc=enode, pass_attr=kwargs.pop('pass_attr',None))
 
         space = kwargs.pop('space', 'sa.cvfolds')
         # and finally the repeated measure to perform the x-val
@@ -638,6 +638,7 @@ class TransferMeasure(Measure):
             # will broadcast to desired length
             res.set_attr(space, ("%s->%s" % (train_chunks, test_chunks),))
         # cleanup to free memory
+        self._pass_attr(dstest, res)
         del dstest
 
         # compute measure stats
@@ -661,6 +662,11 @@ class TransferMeasure(Measure):
                 warning("'training_stats' conditional attribute was enabled, "
                         "but the assigned measure '%s' either doesn't support "
                         "it, or it is disabled" % measure)
+        return res
+
+    def _pass_attr(self, ds, res):
+        if ds.nsamples == res.nsamples:
+            super(TransferMeasure, self)._pass_attr(ds, res)
         return res
 
     measure = property(fget=lambda self:self.__measure)

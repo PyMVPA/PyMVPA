@@ -95,6 +95,19 @@ class CrossValidationTests(unittest.TestCase):
         # need to fail, because it can't be split into training and testing
         assert_raises(ValueError, cv, data)
 
+    def test_pass_sa_cv_raw(self):
+        # dataset with indices
+        data = get_mv_pattern(10)
+        data.sa['attr2bepassed'] = np.arange(data.nsamples)
+        # partitioner for cv on part of the data with raw
+        cv = CrossValidation(
+            sample_clf_nl,
+            NFoldPartitioner(count=2, selection_strategy='first'),
+            errorfx=None,
+            pass_attr=['attr2bepassed'])
+        res = cv(data)
+        assert_array_equal(res.sa.attr2bepassed,data.sa.attr2bepassed[data.sa.chunks<=2])
+
     def test_cv_no_generator(self):
         ds = Dataset(np.arange(4), sa={'partitions': [1, 1, 2, 2],
                                        'targets': ['a', 'b', 'c', 'd']})
@@ -143,7 +156,6 @@ class CrossValidationTests(unittest.TestCase):
         cv = CrossValidation(measure, splitter=Splitter('category', ['from', 'to']))
         res = cv(ds)
         assert_array_equal(res, [[1]])  # failed perfectly ;-)
-
 
 def suite():  # pragma: no cover
     return unittest.makeSuite(CrossValidationTests)
