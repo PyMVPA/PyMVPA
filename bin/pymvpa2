@@ -42,6 +42,7 @@ enabled_cmds = [
   'scatter',
   'plotmotionqc',
   'ttest',
+  'rendersurf',
 ]
 
 # what version are we talking
