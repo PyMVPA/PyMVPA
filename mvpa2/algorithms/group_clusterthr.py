@@ -22,7 +22,7 @@ from collections import Counter
 import numpy as np
 
 from scipy.ndimage import measurements
-from scipy.sparse import dok_matrix
+from scipy.sparse import dok_matrix, csgraph, coo_matrix
 
 from mvpa2.mappers.base import IdentityMapper, _verified_reverse1
 from mvpa2.datasets import Dataset
@@ -209,6 +209,11 @@ class GroupClusterThreshold(Learner):
         doc="""Number of parallel processes to use for computation.
             Requires `joblib` external module.""")
 
+    neighborhood = Parameter(
+        None, 
+        doc="""Neighborhood structure to compute clusters in the form
+            of a sparse matrix""")
+
     def __init__(self, **kwargs):
         # force disable auto-train: would make no sense
         Learner.__init__(self, auto_train=False, **kwargs)
@@ -311,7 +316,7 @@ class GroupClusterThreshold(Learner):
                 bds = Dataset(clustermap, a=dsa)
                 # this function reverse-maps every sample one-by-one, hence no need
                 # to collect chunks of bootstrapped maps
-                cluster_sizes = get_cluster_sizes(bds, cluster_sizes)
+                cluster_sizes = get_cluster_sizes(bds, cluster_sizes, self.params.neighborhood)
         else:
             # Parallel execution
             # same code as above, just restructured for joblib's Parallel
@@ -321,7 +326,7 @@ class GroupClusterThreshold(Learner):
                                        delayed(get_cluster_sizes)
                                   (Dataset(np.mean(ds_samples[sidx],
                                            axis=0)[None] > thrmap,
-                                           a=dsa))
+                                           a=dsa), None, self.params.neighborhood)
                                        for sidx in bcombos):
                 # aggregate
                 cluster_sizes += jobres
@@ -354,7 +359,10 @@ class GroupClusterThreshold(Learner):
         outds = ds.copy(deep=False)
         outds.fa['featurewise_thresh'] = self._thrmap
         # determine clusters
-        labels, num = measurements.label(othrd)
+        if self.params.neighborhood is None:
+            labels, num = measurements.label(othrd)
+        else:
+            labels, num = _clusterize_custom_neighborhood(othrd, self.params.neighborhood)
         area = measurements.sum(othrd,
                                 labels,
                                 index=np.arange(1, num + 1)).astype(int)
@@ -462,6 +470,36 @@ def get_thresholding_map(data, p=0.001):
     return data[thridx, np.arange(data.shape[1])]
 
 
+def _cluster_labels_custom_neighborhood(map_, neigh):
+    keep_edges = np.logical_and(map_[neigh.col], map_[neigh.row])
+    neigh_thr = coo_matrix(
+        (neigh.data[keep_edges],
+         (neigh.row[keep_edges],
+          neigh.col[keep_edges])),
+        neigh.shape)
+    return (csgraph.connected_components(neigh_thr, directed=False)[1]+1)*map_
+
+
+def _get_map_cluster_sizes_custom_neighborhood(map_, neigh):
+    cl_lbls = _cluster_labels_custom_neighborhood(map_, neigh)
+    labels, counts = np.unique(cl_lbls*map_, return_counts=True)
+    if labels[0] == 0:
+        counts = counts[1:]
+    return counts
+
+
+def _clusterize_custom_neighborhood(map_, neigh):
+    cl_lbls = _cluster_labels_custom_neighborhood(map_, neigh)
+    labels, counts = np.unique(cl_lbls*map_, return_counts=True)
+    if labels[0] == 0:
+        labels, counts = labels[1:], counts[1:]
+    new_labels = np.zeros(cl_lbls.shape, dtype=np.uint)
+    li = 0
+    for li,l in enumerate(labels):
+        new_labels[cl_lbls==l] = li+1
+    return new_labels, li+1
+
+
 def _get_map_cluster_sizes(map_):
     labels, num = measurements.label(map_)
     area = measurements.sum(map_, labels, index=np.arange(1, num + 1))
@@ -477,7 +515,7 @@ def _get_map_cluster_sizes(map_):
         return area.astype(int)
 
 
-def get_cluster_sizes(ds, cluster_counter=None):
+def get_cluster_sizes(ds, cluster_counter=None, neighborhood=None):
     """Compute cluster sizes from all samples in a boolean dataset.
 
     Individually for each sample, in the input dataset, clusters of non-zero
@@ -509,7 +547,10 @@ def get_cluster_sizes(ds, cluster_counter=None):
 
     for i in xrange(len(ds)):
         osamp = _verified_reverse1(mapper, data[i])
-        m_clusters = _get_map_cluster_sizes(osamp)
+        if not neighborhood is None:
+            m_clusters = _get_map_cluster_sizes_custom_neighborhood(osamp, neighborhood)
+        else:
+            m_clusters = _get_map_cluster_sizes(osamp)
         cluster_counter.update(m_clusters)
     return cluster_counter
 
