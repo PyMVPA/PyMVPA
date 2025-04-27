@@ -498,3 +498,23 @@ def assert_objectarray_equal(x, y, xorig=None, yorig=None, strict=True):
                 raise AssertionError("%r != %r, thus %s != %s" %
                                      (x, y, xorig, yorig))
             raise
+
+
+def assert_array_equal_up_to_reassignment(a, b, known={0: 0}):
+    a = np.asanyarray(a)
+    b = np.asanyarray(b)
+    assert_equal(a.shape, b.shape)
+    # we will not assume any logic
+    a_f = a.flatten(order='C')
+    b_f = b.flatten(order='C')
+    # silly implementation for now ;)
+    reas = known.copy()  # a->b
+    bs = set(known.values())
+    for a_, b_ in zip(a_f, b_f):
+        if a_ in reas:
+            # if not -- we encountered different assignment before -- FAIL
+            assert_equal(reas[a_], b_)
+        else:
+            assert(b_ not in bs)
+            bs.add(b_)
+            reas[a_] = b_

@@ -541,21 +541,21 @@ def test_simple_cluster_level_thresholding():
     skip_if_no_external('scipy')
     # Now we need to do our fancy cluster level madness
     from mvpa2.algorithms.group_clusterthr import \
-        get_cluster_sizes, _transform_to_pvals, get_cluster_pvals, \
+        get_cluster_metric_counts, _transform_to_pvals, get_cluster_pvals, \
         get_thresholding_map, repeat_cluster_vals
 
     rand_acc_p_thr = rand_acc_p < pthr_feature
     acc_p_thr = acc_p < pthr_feature
 
-    rand_cluster_sizes = get_cluster_sizes(rand_acc_p_thr)
-    acc_cluster_sizes = get_cluster_sizes(acc_p_thr)
+    rand_cluster_sizes = get_cluster_metric_counts(rand_acc_p_thr)
+    acc_cluster_sizes = get_cluster_metric_counts(acc_p_thr)
 
     # This is how we can compute it within present implementation.
     # It will be a bit different (since it doesn't account for target value if
     # I got it right), and would work only for accuracies
     thr_map = get_thresholding_map(rand_acc, pthr_feature)
-    rand_cluster_sizes_ = get_cluster_sizes(rand_acc > thr_map)
-    acc_cluster_sizes_ = get_cluster_sizes(acc > thr_map)
+    rand_cluster_sizes_ = get_cluster_metric_counts(rand_acc > thr_map)
+    acc_cluster_sizes_ = get_cluster_metric_counts(acc > thr_map)
 
     assert_equal(rand_cluster_sizes, rand_cluster_sizes_)
     assert_equal(acc_cluster_sizes, acc_cluster_sizes_)

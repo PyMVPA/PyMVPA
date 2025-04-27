@@ -186,3 +186,38 @@ def test_assert_datasets_almost_equal(digits, attribute):
             ds3 = remove_attribute(attribute)
             assert_datasets_not_equal(ds, ds3)
             assert_datasets_not_almost_equal(ds, ds3)
+
+
+def test_assert_array_equal_up_to_reassignment():
+    assert_array_equal_up_to_reassignment([0, 0], [0, 0])
+    assert_array_equal_up_to_reassignment([[0, 0]], [[0, 0]])
+    assert_raises(AssertionError, assert_array_equal_up_to_reassignment, [[0, 0]], [0, 0])
+
+    assert_array_equal_up_to_reassignment([0, 1], [0, 2])
+    assert_array_equal_up_to_reassignment([0, 1, 0, 1], [0, 2, 0, 2])
+    assert_array_equal_up_to_reassignment([0, 2, 0, 1], [0, 1, 0, 2])
+    # even this one would be ok if we don't force 0->0
+    assert_array_equal_up_to_reassignment([0, 1], [1, 0], known={})
+    assert_raises(AssertionError, assert_array_equal_up_to_reassignment, [0, 1], [1, 0])
+    assert_raises(AssertionError, assert_array_equal_up_to_reassignment,
+                  [0, 1, 2], [0, 2, 2])
+    assert_raises(AssertionError, assert_array_equal_up_to_reassignment,
+                  [0, 2, 2], [0, 1, 2])
+    assert_raises(AssertionError, assert_array_equal_up_to_reassignment,
+                  [0, 2, 2], [0, 2, 1])
+
+    # some very random one
+    a = np.random.randint(0, 10, size=(2, 4, 5))
+    assert_array_equal_up_to_reassignment(a, a)
+    # let's reassign
+    reas = {x:y for x, y in zip(range(1, 10), np.random.permutation(range(1, 10)))}
+    reas[0] = 0
+    b = np.array([reas[x] for x in a.flat]).reshape(a.shape)
+    assert_array_equal_up_to_reassignment(a, b)
+
+    # but if one assignment brakes
+    b[..., 0] += 1
+    assert_raises(AssertionError, assert_array_equal_up_to_reassignment, a, b)
+    b[..., 0] -= 1
+    assert_array_equal_up_to_reassignment(a, b)
+
