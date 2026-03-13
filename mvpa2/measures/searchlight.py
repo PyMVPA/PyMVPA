@@ -481,8 +481,9 @@ class Searchlight(BaseSearchlight):
             pass                        # nothing special
         elif self.results_backend == 'hdf5':
             # store results in a temporary file and return a filename
-            results_file = tempfile.mktemp(prefix=self.tmp_prefix,
+            fd, results_file = tempfile.mkstemp(prefix=self.tmp_prefix,
                                            suffix='-%s.hdf5' % iblock)
+            os.close(fd)
             if __debug__:
                 debug('SLC', "Storing results into %s" % results_file)
             h5save(results_file, results)
@@ -640,8 +641,9 @@ class Searchlight(BaseSearchlight):
             pass                        # nothing special
         elif self.results_backend == 'hdf5':
             # store results in a temporary file and return a filename
-            results_file = tempfile.mktemp(prefix=self.tmp_prefix,
+            fd, results_file = tempfile.mkstemp(prefix=self.tmp_prefix,
                                            suffix='-%s.hdf5' % iblock)
+            os.close(fd)
             if __debug__:
                 debug('SLC', "Storing results into %s" % results_file)
             h5save(results_file, results)
