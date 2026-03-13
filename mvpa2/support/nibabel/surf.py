@@ -996,7 +996,7 @@ class Surface(object):
         '''coordinate-wise scaling'''
         return Surface(v=self._v * other, f=self.faces, check=False)
 
-    def __neg__(self, other):
+    def __neg__(self):
         '''coordinate-wise inversion with respect to addition'''
         return Surface(v=-self.vertices, f=self.faces, check=False)
 
