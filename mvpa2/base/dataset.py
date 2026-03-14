@@ -552,7 +552,7 @@ class AttrDataset(object):
 
         Parameters
         ----------
-        source : string or h5py.highlevel.File
+        source : string or h5py.File
           Filename or HDF5's File to load dataset from
         name : string, optional
           If file contains multiple entries at the 1st level, if
@@ -575,7 +575,7 @@ class AttrDataset(object):
         from mvpa2.base.hdf5 import hdf2obj
 
         # look if we got an hdf file instance already
-        if isinstance(source, h5py.highlevel.File):
+        if isinstance(source, h5py.File):
             own_file = False
             hdf = source
         else:
@@ -655,7 +655,7 @@ class AttrDataset(object):
         if not lexists(filename) and not filename.endswith('.npz') and lexists(filename_npz):
             filename = filename_npz
 
-        entries = np.load(filename)
+        entries = np.load(filename, allow_pickle=True)
 
         cols = {'a': {}, 'fa': {}, 'sa': {}}
         skipped = []
@@ -1264,7 +1264,7 @@ def save(dataset, destination, name=None, compression=None):
     Parameters
     ----------
     dataset : `Dataset`
-    destination : `h5py.highlevel.File` or str
+    destination : `h5py.File` or str
     name : str, optional
     compression : None or int or {'gzip', 'szip', 'lzf'}, optional
       Level of compression for gzip, or another compression strategy.
@@ -1276,7 +1276,7 @@ def save(dataset, destination, name=None, compression=None):
     from mvpa2.base.hdf5 import obj2hdf
 
     # look if we got an hdf file instance already
-    if isinstance(destination, h5py.highlevel.File):
+    if isinstance(destination, h5py.File):
         own_file = False
         hdf = destination
     else:

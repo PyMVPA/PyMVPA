@@ -63,7 +63,11 @@ class Collectable(object):
                 doc = re.sub('[\n ]+', ' ', doc)
             except TypeError:
                 # catch some old datasets stored in HDF5
-                doc = re.sub('[\n ]+', ' ', np.asscalar(doc))
+                if isinstance(doc, bytes):
+                    doc = doc.decode()
+                elif hasattr(doc, 'item'):
+                    doc = doc.item()
+                doc = re.sub('[\n ]+', ' ', doc)
 
         self.__doc__ = doc
         self.__name = name
@@ -682,7 +686,11 @@ class UniformLengthCollection(Collection):
           not have matches, but if only a single value for a key is given or none
           of the values match -- you will end up with empty selection.
         """
-        mask = np.ones(self.attr_length, dtype=bool)
+        attr_length = self.attr_length
+        if attr_length is None:
+            # infer length from first attribute value
+            attr_length = len(next(iter(self.values())).value)
+        mask = np.ones(attr_length, dtype=bool)
 
         for k, target_values in d.items():
             if not k in list(self.keys()):
