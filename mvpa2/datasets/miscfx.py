@@ -327,7 +327,7 @@ def summary(dataset, stats=True, lstats='auto', sstats='auto', idhash=False,
 
     ## Possibly summarize attributes listed as having unique
     if stats:
-        if np.issctype(samples.dtype):
+        if hasattr(samples, 'dtype') and np.issubdtype(samples.dtype, np.number):
             # TODO -- avg per chunk?
             # XXX We might like to use scipy.stats.describe to get
             # quick summary statistics (mean/range/skewness/kurtosis)

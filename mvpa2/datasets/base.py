@@ -460,7 +460,7 @@ class HollowSamples(object):
     offers acces to the sample and feature IDs via its ``sid`` and ``fid``
     members.
     """
-    def __init__(self, shape=None, sid=None, fid=None, dtype=np.float):
+    def __init__(self, shape=None, sid=None, fid=None, dtype=float):
         """
         Parameters
         ----------

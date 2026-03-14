@@ -33,7 +33,7 @@ if externals.exists("scipy", raise_=True):
     from scipy.linalg import cholesky as SLcholesky
     import scipy.linalg as SL
     # Some local binding for bits of speed up
-    SLAError = SL.basic.LinAlgError
+    SLAError = SL.LinAlgError
 
 if __debug__:
     from mvpa2.base import debug
@@ -45,7 +45,7 @@ Ndot = np.dot
 Ndiag = np.diag
 NLAcholesky = np.linalg.cholesky
 NLAsolve = np.linalg.solve
-NLAError = np.linalg.linalg.LinAlgError
+NLAError = np.linalg.LinAlgError
 eps64 = np.finfo(np.float64).eps
 
 # Some precomputed items. log is relatively expensive

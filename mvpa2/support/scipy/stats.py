@@ -50,15 +50,8 @@ if not externals.exists('good scipy.stats.rdist') \
 
     # Lets try to avoid at least some of the numerical problems by removing points
     # around edges
-    rdist = rdist_gen(a=-1.0, b=1.0, name="rdist", longname="An R-distributed",
-                      shapes="c", extradoc="""
-
-    R-distribution
-
-    rdist.pdf(x,c) = (1-x**2)**(c/2-1) / B(1/2, c/2)
-    for -1 <= x <= 1, c > 0.
-    """
-                      )
+    rdist = rdist_gen(a=-1.0, b=1.0, name="rdist",
+                      shapes="c")
     # Fix up number of arguments for veccdf's vectorize
     # Sicne scipy 0.18.0 there is veccdf in rdist_gen
     if hasattr(rdist, 'veccdf') and (rdist.veccdf.nin == 1):

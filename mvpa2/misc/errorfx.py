@@ -16,7 +16,10 @@ __docformat__ = 'restructuredtext'
 
 
 import numpy as np
-from numpy import trapz
+try:
+    from numpy import trapezoid as trapz  # numpy 2.0+
+except ImportError:
+    from numpy import trapz
 
 from mvpa2.base import externals
 
@@ -140,11 +143,11 @@ def auc_error(predicted, target):
 
     # calculate the true positives
     tp = np.concatenate(
-        ([0], np.cumsum(t)/t.sum(dtype=np.float), [1]))
+        ([0], np.cumsum(t)/t.sum(dtype=float), [1]))
 
     # calculate the false positives
     fp = np.concatenate(
-        ([0], np.cumsum(~t)/(~t).sum(dtype=np.float), [1]))
+        ([0], np.cumsum(~t)/(~t).sum(dtype=float), [1]))
 
     return trapz(tp, fp)
 
