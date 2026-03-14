@@ -12,7 +12,6 @@
    dimensionality reduction tricks are in place ATM
 """
 
-from __future__ import division
 """
 TODO:
 
@@ -23,10 +22,6 @@ TODO:
 
 Was based on GNB code
 """
-
-from builtins import zip
-from builtins import range
-from past.utils import old_div
 __docformat__ = 'restructuredtext'
 
 import numpy as np
@@ -214,7 +209,7 @@ class LDA(GDA):
         nlabels = len(self.ulabels)
         # Sum and scale the covariance
         self.cov = cov = \
-            old_div(np.sum(self.cov, axis=0), (np.sum(self.nsamples_per_class) - nlabels))
+            np.sum(self.cov, axis=0) / (np.sum(self.nsamples_per_class) - nlabels)
 
         # For now as simple as that -- see notes on top
         covi = self._inv(cov)
@@ -251,7 +246,7 @@ class QDA(GDA):
         self._icov = np.zeros(self.cov.shape)
 
         for ic, cov in enumerate(self.cov):
-            cov /= float(self.nsamples_per_class[ic])
+            cov /= float(self.nsamples_per_class[ic].item())
             self._icov[ic] = self._inv(cov)
 
         self._b = np.array([np.log(p) - 0.5 * np.log(np.linalg.det(c))
