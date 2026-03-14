@@ -161,10 +161,13 @@ class WTF(object):
                             pl.system(),
                             pl.release(),
                             pl.version()]).rstrip())
+        dist_parts = []
+        if hasattr(pl, 'dist'):
+            dist_parts.append(_t2s(pl.dist()))
+        dist_parts.extend([_t2s(pl.mac_ver()),
+                           _t2s(pl.win32_ver())])
         out.write(' Distribution:  %s\n' %
-                  ' '.join([_t2s(pl.dist()),
-                            _t2s(pl.mac_ver()),
-                            _t2s(pl.win32_ver())]).rstrip())
+                  ' '.join(dist_parts).rstrip())
 
     def _acquire_externals(self, out):
         # Test and list all dependencies:
