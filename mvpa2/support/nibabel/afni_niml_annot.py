@@ -120,7 +120,7 @@ def merge(annots):
         columns = [d[i] for d in tables]
 
         if all(isinstance(d[i], np.ndarray) and \
-                    np.issubdtype(m.dtype, np.int) for m in columns):
+                    np.issubdtype(m.dtype, np.integer) for m in columns):
             to_add_table = _merge_indices_addition_values(columns)
 
             for j in xrange(n):

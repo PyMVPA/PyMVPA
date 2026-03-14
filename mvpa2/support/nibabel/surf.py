@@ -56,7 +56,7 @@ class Surface(object):
 
         # set faces
         if f is None:
-            f = np.zeros((0, 3), dtype=np.int)
+            f = np.zeros((0, 3), dtype=int)
         else:
             f = np.asarray(f)
             if len(f.shape) != 2 or f.shape[1] != 3:
@@ -564,7 +564,7 @@ class Surface(object):
         masked_idxs = all_idxs[node_mask_indices] if use_mask else all_idxs
 
         n = src_coords.shape[0]
-        idxs = np.zeros((n,), dtype=np.int)
+        idxs = np.zeros((n,), dtype=int)
         for i in xrange(n):
             delta = v - src_coords[i]
             minidx = np.argmin(np.sum(delta ** 2, 1))
@@ -1412,14 +1412,14 @@ class Surface(object):
             np.floor(y_boxed) - np.floor(y_boxed - delta) > 0))[0]
 
         # on_borders may have duplicates - so get rid of those.
-        msk = np.zeros((ny,), dtype=np.int)
+        msk = np.zeros((ny,), dtype=int)
         msk[on_borders] = 1
         on_borders = np.nonzero(msk)[0]
 
         # convert to tuples with integers for indexing
         # (tuples are hashable so can be used as keys in dictionary)
-        x_tuples = map(tuple, np.asarray(x_boxed, dtype=np.int))
-        y_tuples = map(tuple, np.asarray(y_boxed, dtype=np.int))
+        x_tuples = map(tuple, np.asarray(x_boxed, dtype=int))
+        y_tuples = map(tuple, np.asarray(y_boxed, dtype=int))
 
         # maps box indices in low-resolution surface to indices
         # of potentially nearby nodes in highres surface
@@ -1975,7 +1975,7 @@ def generate_cube():
              (3, 1, 5), (3, 5, 7), (3, 7, 6), (3, 6, 2),
              (2, 6, 0), (0, 6, 4), (5, 4, 6), (5, 6, 7)]
 
-    fs = np.asarray(trias, dtype=np.int)
+    fs = np.asarray(trias, dtype=int)
 
     return Surface(vs, fs)
 
@@ -2083,7 +2083,7 @@ def generate_plane(x00, x01, x10, n01, n10):
     x00, x01, x10 = map(as_three_vec, (x00, x01, x10))
 
     vs = np.zeros((n01 * n10, 3))
-    fs = np.zeros((2 * (n01 - 1) * (n10 - 1), 3), dtype=np.int)
+    fs = np.zeros((2 * (n01 - 1) * (n10 - 1), 3), dtype=int)
     for i in xrange(n01):
         for j in xrange(n10):
             vpos = i * n10 + j

@@ -69,7 +69,7 @@ def read(fn):
             else:
                 raise ValueError("Illegal line: %s" % line)
         else:
-            v = np.asarray(map(int, line.split()), dtype=np.int).ravel()
+            v = np.asarray(map(int, line.split()), dtype=int).ravel()
 
             tp = v[1]
             n = v[2]
@@ -113,7 +113,7 @@ def niml_roi2roi_mapping(rois):
     roi_mapping = dict()
     for roi in rois:
         key = roi['Label']
-        all_nodes = np.zeros((0,), dtype=np.int)
+        all_nodes = np.zeros((0,), dtype=int)
         for nodes in roi['areas']:
             all_nodes = np.union1d(all_nodes, nodes)
         roi_mapping[key] = all_nodes

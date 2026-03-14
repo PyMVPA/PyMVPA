@@ -44,7 +44,7 @@ def _label2indlist(labels, ulabels):
     """
 
     # allocate for the new one-of-M labels
-    new_labels = np.zeros(len(labels), dtype=np.int)
+    new_labels = np.zeros(len(labels), dtype=int)
 
     # loop and convert to one-of-M
     for i, c in enumerate(ulabels):

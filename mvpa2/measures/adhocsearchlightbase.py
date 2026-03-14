@@ -229,7 +229,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         pb.nsamples = np.zeros((nblocks,))
         pb.labels = [None] * nblocks
 
-        if np.issubdtype(X.dtype, np.int):
+        if np.issubdtype(X.dtype, np.integer):
             # might result in overflow e.g. while taking .square which
             # would result in negative variances etc, thus to be on a
             # safe side -- convert to float

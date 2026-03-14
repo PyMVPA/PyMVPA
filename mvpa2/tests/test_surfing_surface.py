@@ -214,7 +214,7 @@ class SurfingSurfaceTests(unittest.TestCase):
 
         # make some vertices NaN (as might be the case for flat surfaces)
         nan_count_float = plane.nvertices * nan_vertices_ratio
-        nan_count = np.ceil(nan_count_float).astype(np.int)
+        nan_count = np.ceil(nan_count_float).astype(int)
         nan_vertices = np.random.random_integers(plane.nvertices,
                                                  size=(nan_count,)) - 1
         vertices_noisy[nan_vertices, dim] = np.nan
@@ -272,8 +272,8 @@ class SurfingSurfaceTests(unittest.TestCase):
 
         # map vertex coordinates to indices in img_arr
         # (using nearest neighbor interpolation)
-        xs = (plane.vertices[:, 0] * img_side).astype(np.int)
-        ys = (plane.vertices[:, 1] * img_side).astype(np.int)
+        xs = (plane.vertices[:, 0] * img_side).astype(int)
+        ys = (plane.vertices[:, 1] * img_side).astype(int)
 
         # allocate space for rgb values
         img_rgb = np.zeros((plane.nvertices, 3))

@@ -845,7 +845,7 @@ class VolumeBasedSurface(surf.Surface):
 
         n = self._vg.nvoxels
         vertices = self._vg.lin2xyz(np.arange(n))
-        faces = np.zeros((0, 3), dtype=np.int)
+        faces = np.zeros((0, 3), dtype=int)
 
         # call the parent's class constructor
         super(VolumeBasedSurface, self).__init__(vertices, faces, check=False)
@@ -911,7 +911,7 @@ class VolumeBasedSurface(surf.Surface):
             sh = np.asarray(self._vg.shape[:3])
             mx[mx > sh] = sh[mx > sh]
 
-            msk_ijk = np.zeros(self._vg.shape[:3], np.int)
+            msk_ijk = np.zeros(self._vg.shape[:3], int)
             msk_ijk[mn[0]:mx[0], mn[1]:mx[1], mn[2]:mx[2]] = 1
 
             msk_lin = msk_ijk.ravel()

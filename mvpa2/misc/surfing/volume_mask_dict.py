@@ -151,7 +151,7 @@ class VolumeMaskDictionary(Mapping):
             raise ValueError('%s already in %s' % (src, self))
 
 
-        self._src2nbr[src] = np.asarray(nbrs, dtype=np.int)
+        self._src2nbr[src] = np.asarray(nbrs, dtype=int)
 
         if self._lazy_nbr2src is not None:
             self._add_target2source(src)

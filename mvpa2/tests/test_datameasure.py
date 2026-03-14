@@ -468,7 +468,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
         ds = datasets['uni4large'].copy()
         if do_int:
-            ds.samples = (ds.samples * 1000).astype(np.int)
+            ds.samples = (ds.samples * 1000).astype(int)
         ds_samples_orig = ds.samples.copy()  # to verify that nothing was modified
         ds_custom = Dataset(ds.samples, sa={'custom': ds.targets})
 
