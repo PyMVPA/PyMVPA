@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Submodule to provide sweepargs decorator for unittests"""
 
-from builtins import str
 __docformat__ = 'restructuredtext'
 
 import sys

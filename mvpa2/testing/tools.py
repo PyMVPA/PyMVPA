@@ -8,18 +8,18 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """A Collection of tools found useful in unittests.
 
-Primarily the ones from nose.tools
+Provides nose-compatible assertion helpers as thin wrappers so that
+existing test code continues to work under pytest without modification.
+Modeled on datalad's utils_pytest.py approach.
 """
-from builtins import zip
-from builtins import str
-from builtins import range
-from six import reraise as raise_
 __docformat__ = 'restructuredtext'
 
+import functools
 import glob, os, sys, shutil
 from os.path import join as pathjoin
 import tempfile
 import unittest
+from unittest import SkipTest
 from contextlib import contextmanager
 
 import numpy as np
@@ -37,44 +37,49 @@ on_linux = platform_system == 'linux'
 if __debug__:
     from mvpa2.base import debug
 
-if externals.exists('nose'):
-    # We use nose now
-    from nose import SkipTest
-    from nose.tools import (
-        ok_, eq_,
-        # Asserting (pep8-ed from unittest)
-        assert_true, assert_false, assert_raises,
-        assert_equal, assert_equals, assert_not_equal, assert_not_equals,
-        assert_in, assert_not_in,
-        # Decorators
-        timed, with_setup, raises, istest, nottest, make_decorator)
+# Nose-compatible assertion shims (thin wrappers over assert).
+# Keeps ~1300 call sites in test files unchanged.
+# Modeled on datalad's utils_pytest.py approach.
+import pytest
 
-    try:
-        # compatibility helpers for testing functions introduced in more recent versions
-        # of unittest/nose
-        from nose.tools import assert_is_instance
-    except ImportError:
-        def assert_is_instance(obj, cls, msg=None):
-            assert_true(isinstance(obj, cls), msg=msg)
-else:
-    # Lets make it possible to import testing.tools even if nose is
-    # NA, and run unittests which do not require nose yet
-    def _need_nose(*args, **kwargs):
-        """Catcher for unittests requiring nose functionality
-        """
-        raise unittest.TestCase.failureException(
-            "Unittest requires nose testing framework")
+def ok_(val, msg=None):
+    assert val, msg
 
+def eq_(a, b, msg=None):
+    assert a == b, msg or f"{a!r} != {b!r}"
 
-    ok_ = eq_ = assert_true = assert_false = assert_raises = \
-        assert_equal = assert_equals = assert_not_equal = asserte_not_equals = \
-        timed = with_setup = raises = istest = nottest = make_decorator = \
-        assert_is_instance = _need_nose
+def assert_true(val, msg=None):
+    assert val, msg
 
-    class SkipTest(Exception):
-        """Raise this exception to mark a test as skipped.
-        """
-        pass
+def assert_false(val, msg=None):
+    assert not val, msg
+
+def assert_equal(first, second, msg=None):
+    assert first == second, msg or f"{first!r} != {second!r}"
+
+assert_equals = assert_equal
+
+def assert_not_equal(first, second, msg=None):
+    assert first != second, msg
+
+assert_not_equals = assert_not_equal
+
+def assert_in(first, second, msg=None):
+    assert first in second, msg
+
+def assert_not_in(first, second, msg=None):
+    assert first not in second, msg
+
+def assert_is_instance(obj, cls, msg=None):
+    assert isinstance(obj, cls), msg
+
+def assert_greater(first, second, msg=None):
+    assert first > second, msg
+
+def assert_greater_equal(first, second, msg=None):
+    assert first >= second, msg
+
+assert_raises = pytest.raises
 
 # Some pieces are useful from numpy.testing
 from numpy.testing import (
@@ -82,20 +87,9 @@ from numpy.testing import (
     assert_array_almost_equal, assert_array_equal, assert_array_less,
     assert_string_equal)
 
-try:
-    from numpy.testing import dec
-    skipif = dec.skipif
-except (ImportError, AttributeError):
-    # DeprecationWarning: Importing from numpy.testing.decorators is deprecated
-    # since numpy 1.15.0, import from numpy.testing instead.
-    # But there is no skipif under .testing as of 1:1.16.2-1, so ignore it!
-    import warnings
-    warnings.filterwarnings(
-        'ignore',
-        '.*Importing from numpy.testing.decorators is deprecated.*',
-        DeprecationWarning
-    )
-    from numpy.testing.decorators import skipif
+# numpy.testing.decorators was removed in numpy 1.18+.
+# Use pytest.mark.skipif instead.
+skipif = pytest.mark.skipif
 
 def assert_array_lequal(x, y):
     assert_array_less(-y, -x)
@@ -208,31 +202,21 @@ def assert_datasets_equal(x, y, ignore_a=None, ignore_sa=None, ignore_fa=None):
 
 
 
-if externals.exists('mock'):
-    import mock
+from unittest import mock
 
-    @contextmanager
-    def assert_warnings(messages):
-        with mock.patch("warnings.warn") as mock_warnings:
-            yield
-
-            if externals.versions['mock'] >= '0.8.0':
-                mock_calls = mock_warnings.mock_calls
-            else:
-                # lacks leading element
-                mock_calls = [(None,) + mock_warnings.call_args]
-
-            warning_list = [(call[2]['category'], call[1][0])
-                            for call in mock_calls]
-            assert_equal(
-                messages,
-                warning_list
-            )
-else:
-    @contextmanager
-    def assert_warnings(messages):
+@contextmanager
+def assert_warnings(messages):
+    with mock.patch("warnings.warn") as mock_warnings:
         yield
-        raise SkipTest("install python-mock for testing either warnings were issued")
+
+        mock_calls = mock_warnings.mock_calls
+
+        warning_list = [(call[2]['category'], call[1][0])
+                        for call in mock_calls]
+        assert_equal(
+            messages,
+            warning_list
+        )
 
 
 
@@ -326,7 +310,13 @@ def with_tempfile(*targs, **tkwargs):
                         pass
 
 
-        newfunc = make_decorator(func)(newfunc)
+        newfunc = functools.wraps(func)(newfunc)
+        # prevent pytest from inspecting wrapped function's signature
+        # for fixture injection
+        try:
+            del newfunc.__wrapped__
+        except AttributeError:
+            pass
         return newfunc
 
 
@@ -358,7 +348,7 @@ def reseed_rng():
             return func(*arg, **kwargs)
 
 
-        newfunc = make_decorator(func)(newfunc)
+        newfunc = functools.wraps(func)(newfunc)
         return newfunc
 
 
@@ -401,7 +391,7 @@ def nodebug(entries=None):
                     debug.active = old_active
 
 
-        newfunc = make_decorator(func)(newfunc)
+        newfunc = functools.wraps(func)(newfunc)
         return newfunc
 
 
@@ -452,15 +442,14 @@ def labile(niter=3, nfailures=1):
                                           "while was allowed %d "
                                           "-- re-throwing the last failure %s",
                                   (func.__name__, i + 1, nfailed, nfailures, e))
-                        exc_info = sys.exc_info()
-                        raise_(exc_info[1], None, exc_info[2])
+                        raise
             if __debug__:
                 debug('TEST', "Ran %s %i times. Got %d failures.",
                       (func.__name__, i + 1, nfailed))
             return ret
 
 
-        newfunc = make_decorator(func)(newfunc)
+        newfunc = functools.wraps(func)(newfunc)
         return newfunc
 
 
