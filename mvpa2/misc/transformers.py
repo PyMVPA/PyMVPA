@@ -7,12 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Simply functors that transform something."""
-from __future__ import division
-
-from builtins import zip
-from builtins import range
-from builtins import object
-from past.utils import old_div
 _DEV_DOC = """
 Follow the convetion that functions start with lower case, and classes
 with uppercase letter.
@@ -112,13 +106,13 @@ def l2_normed(x, norm=1.0, reverse=False):
     returned vector becomes `norm`.
     """
     xnorm = np.linalg.norm(x)
-    return x * (old_div(norm,xnorm))
+    return x * (norm / xnorm)
 
 ##REF: Name was automagically refactored
 def l1_normed(x, norm=1.0, reverse=False):
     """Norm the values so that L_1 norm (sum|x|) becomes `norm`"""
     xnorm = np.sum(np.abs(x))
-    return x * (old_div(norm,xnorm))
+    return x * (norm / xnorm)
 
 
 ##REF: Name was automagically refactored
@@ -313,11 +307,11 @@ class DistPValue(ClassWithCollections):
                 """What features belong to Null-distribution"""
                 while True:
                     hist, bins = np.histogram(xxx, bins=nbins, density=False)
-                    pdf = old_div(hist.astype(float),Nxxx)
+                    pdf = hist.astype(float) / Nxxx
                     if not numpy_center_points:
                         # if we obtain edge points for bins -- take centers
                         bins = 0.5 * (bins[0:-1] + bins[1:])
-                    bins_halfstep = old_div((bins[1] - bins[2]),2.0)
+                    bins_halfstep = (bins[1] - bins[2]) / 2.0
 
                     # theoretical CDF
                     # was really unstable -- now got better ;)
@@ -337,7 +331,7 @@ class DistPValue(ClassWithCollections):
                         #dist_prevv = dist_cdf[j] = dist_prevv + dist_pdf[j]
 
                     # what bins fall into theoretical 'positives' in both tails
-                    p = (0.5 - np.abs(dist_cdf - 0.5) < old_div(fpp,2.0))
+                    p = (0.5 - np.abs(dist_cdf - 0.5) < fpp / 2.0)
 
                     # amount in empirical tails -- if we match theoretical, we
                     # should have total >= p
@@ -375,7 +369,7 @@ class DistPValue(ClassWithCollections):
                     # which should not belong to Null-dist
                     xxx, indexes = xxx[keep], indexes[keep]
                     # L2 renorm it
-                    xxx = old_div(xxx, np.linalg.norm(xxx))
+                    xxx = xxx / np.linalg.norm(xxx)
                     Nxxx = len(xxx)
                     dist = stats.rdist(Nxxx-1, 0, 1)
 
