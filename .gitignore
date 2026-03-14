@@ -55,3 +55,12 @@ _nno
 .pydevproject
 searchlight_surfnew.py
 /venv*
+/.venv
+/.tox
+/.cache
+/.hypothesis
+/.pytest_cache
+__pycache__/
+*.egg-info/
+.eggs/
+.npm/
