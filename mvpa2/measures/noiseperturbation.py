@@ -64,7 +64,7 @@ class NoisePerturbationSensitivity(FeaturewiseMeasure):
     def _call(self, dataset):
         # first cast to floating point dtype, because noise is most likely
         # floating point as well and '+=' on int would not do the right thing
-        if not np.issubdtype(dataset.samples.dtype, np.float):
+        if not np.issubdtype(dataset.samples.dtype, np.floating):
             ds = dataset.copy(deep=False)
             ds.samples = dataset.samples.astype('float32')
             dataset = ds

@@ -2074,7 +2074,7 @@ def generate_plane(x00, x01, x10, n01, n10):
     '''
 
     def as_three_vec(v):
-        a = np.reshape(np.asarray(v, dtype=np.float), (-1,))
+        a = np.reshape(np.asarray(v, dtype=float), (-1,))
         if len(a) != 3:
             raise ValueError('expected three values for %r' % v)
         return a

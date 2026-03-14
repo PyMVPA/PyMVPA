@@ -279,7 +279,7 @@ class SurfTests(unittest.TestCase):
         sz = (17, 71, 37, 73)  # size of 4-D 'brain volume'
         d = 2.  # voxel size
         xo, yo, zo = -6., -12., -20.  # origin
-        mx = np.identity(4, np.float) * d  # affine transformation matrix
+        mx = np.identity(4, float) * d  # affine transformation matrix
         mx[3, 3] = 1
         mx[0, 3] = xo
         mx[1, 3] = yo

@@ -888,7 +888,7 @@ class VolumeBasedSurface(surf.Surface):
                 src_coord = np.reshape(v[src, :], (1, 3))
 
             # ensure it is a float
-            src_coord = np.asanyarray(src_coord, dtype=np.float)
+            src_coord = np.asanyarray(src_coord, dtype=float)
 
             # make a mask around center
             voxel2world = self._vg.affine

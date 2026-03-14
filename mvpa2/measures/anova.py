@@ -83,7 +83,7 @@ class OneWayAnova(FeaturewiseMeasure):
         # total squares of sums
         # determine data-dtype for derived "sum of" measurements, which we need
         # to have as float for proper divisions
-        so_dtype = np.float if np.issubdtype(alldata.dtype, np.integer) else alldata.dtype
+        so_dtype = float if np.issubdtype(alldata.dtype, np.integer) else alldata.dtype
         bign = dataset.nsamples
 
         sostot = np.sum(alldata, axis=0, dtype=so_dtype)

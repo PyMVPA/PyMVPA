@@ -249,7 +249,7 @@ def matshow(matrix, xlabel_attr=None, ylabel_attr=None, numbers=None,
                     alpha = 1.0
                 else:
                     # scale non-linearly w.r.t. value
-                    alpha = 1 - np.array(1 - np.float(v)/maxv) ** numbers_alpha
+                    alpha = 1 - np.array(1 - float(v)/maxv) ** numbers_alpha
                 pl.text(j, i, numbers_format % v,
                         alpha=alpha, **numbers_kwargs_)
 

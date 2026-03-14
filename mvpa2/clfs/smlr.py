@@ -189,10 +189,10 @@ class SMLR(Classifier):
 
         # initialize the iterative optimization
         converged = False
-        incr = np.finfo(np.float).max
+        incr = np.finfo(float).max
         non_zero, basis, m, wasted_basis, cycles = 0, 0, 0, 0, 0
         sum2_w_diff, sum2_w_old, w_diff = 0.0, 0.0, 0.0
-        p_resamp = np.ones(w.shape, dtype=np.float)
+        p_resamp = np.ones(w.shape, dtype=float)
 
         if seed is not None:
             # set the random seed
@@ -281,7 +281,7 @@ class SMLR(Classifier):
 
                     # assess convergence
                     incr = np.sqrt(sum2_w_diff) / \
-                           (np.sqrt(sum2_w_old)+np.finfo(np.float).eps)
+                           (np.sqrt(sum2_w_old)+np.finfo(float).eps)
 
                     # save the new weights
                     converged = incr < convergence_tol
