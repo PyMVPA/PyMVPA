@@ -141,7 +141,7 @@ class ColumnData(dict):
             if k not in classdict:
                 getter = "lambda self: self._get_attrib('%s')" % (k,)
                 # Sanitarize the key, substitute ' []' with '_'
-                k_ = sub('[[\] ]', '_', k)
+                k_ = sub(r'[\[\] ]', '_', k)
                 # replace multipe _s
                 k_ = sub('__+', '_', k_)
                 # remove quotes

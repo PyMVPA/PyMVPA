@@ -134,6 +134,9 @@ def hdf2obj(hdf, memo=None):
             # and coerce it back into the native Python type if necessary
             if issubclass(type(obj), np.generic):
                 obj = obj.item()
+            # h5py 3.x may return bytes for strings saved in older formats;
+            # decode to str for PY3 compatibility
+            obj = _safe_decode(obj)
         elif 'is_numpy_scalar' in hdf.attrs and 'is_a_view' not in hdf.attrs:
             # extract the scalar from the 0D array as is
             obj = hdf[()]
@@ -429,6 +432,7 @@ def _hdf_dict_to_obj(hdf, memo, skip=None):
         items = _hdf_list_to_obj(hdf, memo, target_container=d)
         # some time back we had attribute names stored as arrays
         for k, v in items:
+            k = _safe_decode(k)
             if k in skip:
                 continue
             try:
@@ -443,7 +447,7 @@ def _hdf_dict_to_obj(hdf, memo, skip=None):
         return d
     else:
         # legacy files had keys as group names
-        return dict([(item, hdf2obj(items_container[item], memo=memo))
+        return dict([(_safe_decode(item), hdf2obj(items_container[item], memo=memo))
                      for item in items_container
                      if not item in skip])
 

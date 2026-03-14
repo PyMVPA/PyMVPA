@@ -233,6 +233,68 @@ Not yet in tox (need more work):
 - `generators/tests` — empty
 - `mappers/tests` — 1 error (needs investigation)
 
+### 1.6 Python 3.13 compatibility — ✅ DONE
+
+- [x] Wrapped stale `smlrc.so` (PY2 binary) import in `AttributeError` guard
+  in `mvpa2/clfs/libsmlrc/smlrc.py` (3254ecc3d)
+- [x] Fixed `conftest.py` to add `collect_ignore` for files with PY3 syntax errors
+  (`formats.py`, `som.py`) so collection doesn't crash
+- [x] Added `mvpa2/clfs/tests/test_svm.py` to `--ignore` in `tox.ini`
+
+### 1.7 Test stabilization — ✅ DONE
+
+Fixes for remaining real test failures (not flaky/extension-dependent):
+
+- [x] **NaN uniqueness test** (`test_collections.py:141`): numpy 2.x deduplicates
+  NaN in `np.unique()`. Updated assertion to expect 0 extra elements when NaN
+  already present on numpy >= 2.
+- [x] **HDF5 bytes/str roundtrip** (`hdf5.py:131-136,431,446`): Applied `_safe_decode()`
+  to dict keys in `_hdf_dict_to_obj()` (tuple-items and legacy paths) AND to scalar
+  values in `hdf2obj()` (the `is_scalar` loading path). h5py 3.x can return bytes for
+  strings stored in older formats or via certain storage paths.
+- [x] **Regex FutureWarning** (`misc/io/base.py:144`): Escaped inner brackets in
+  character class `'[[\] ]'` → `r'[\[\] ]'`
+
+**✓ CHECKPOINT: py39: 200+ passed, py313: 198+ passed (remaining failures are
+SVM C extension [B1], sklearn py313 bug [C1], and known flaky/labile tests [D*])**
+
+### Full Failure Inventory (post-stabilization)
+
+#### Category A: Fixed — real bugs in test/code
+
+| ID | Test | Fix |
+|---|---|---|
+| A1 | `test_array_collectable_unique` | Updated NaN assertion for numpy 2.x |
+| A2 | `test_h5py_io` | Decode dict keys with `_safe_decode()` |
+
+#### Category B: Missing C extension — deferred to Phase 6
+
+| ID | Test | Notes |
+|---|---|---|
+| B1 | `test_diff_len_labels_str_treeclassifier` | Needs `libsvmc` C ext (SVM) |
+
+#### Category C: py313-specific — upstream bug
+
+| ID | Test | Notes |
+|---|---|---|
+| C1 | `test_degenerate_usage` | sklearn QDA crashes on degenerate data on py313 |
+
+#### Category D: Flaky/labile — pre-existing, not regressions
+
+| ID | Test | Notes |
+|---|---|---|
+| D1 | `test_tree_classifier` | Borderline error threshold, has `@reseed_rng` |
+| D2 | `test_classifier_generalization` | Transfer error, has labile guard |
+| D3 | `test_dist_p_value` | Numerical precision, intermittent |
+
+#### Category E: Warnings — partially fixed
+
+| ID | Source | Status |
+|---|---|---|
+| E1 | `misc/io/base.py` regex FutureWarning | **Fixed** |
+| E2 | `Dataset.__array__` missing `copy` kwarg | Deferred to Phase 7 |
+| E3 | `np.matrix` deprecation warnings | Deferred to Phase 7 |
+
 ## Phase 2: Strip `future`/`six`/`past` — Pure Python 3
 
 Now that we have a green baseline, strip the compatibility layer incrementally.
