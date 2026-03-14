@@ -38,8 +38,6 @@ The mvpa2 package contains the following subpackages and modules:
 
 .. |copy| unicode:: 0xA9 .. copyright sign
 """
-from builtins import str
-
 __docformat__ = 'restructuredtext'
 
 # canonical PyMVPA version string
@@ -50,6 +48,10 @@ from os.path import join as pathjoin
 import sys
 import random
 import numpy as np
+
+# numpy 2.x compat: restore np.asscalar removed in numpy 1.23
+if not hasattr(np, 'asscalar'):
+    np.asscalar = lambda a: a.item()
 from mvpa2.base import cfg, warning
 from mvpa2.base import externals
 from mvpa2.base.info import wtf
