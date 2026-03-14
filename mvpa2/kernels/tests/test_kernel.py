@@ -149,7 +149,7 @@ class KernelTests(unittest.TestCase):
             rk.compute(chunk)
             ck.compute(chunk)
             self.kernel_equiv(rk, ck) #, accuracy=1e-12)
-            self.failIf(ck._recomputed,
+            self.assertFalse(ck._recomputed,
                         "CachedKernel incorrectly recomputed it's kernel")
 
         # Test what happens when a parameter changes

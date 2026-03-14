@@ -149,13 +149,10 @@ class ColumnData(dict):
                 if __debug__:
                     debug("IOH", "Registering property %s for ColumnData key %s"
                           % (k_, k))
-                # make sure to import class directly into local namespace
-                # otherwise following does not work for classes defined
-                # elsewhere
-                exec('from %s import %s' % (self.__module__,
-                                            self.__class__.__name__))
-                exec("%s.%s = property(fget=%s)" %
-                     (self.__class__.__name__, k_, getter))
+                # Use setattr instead of exec (exec scoping broke in Python 3.13)
+                # Capture k in default arg to avoid late-binding closure issue
+                setattr(self.__class__, k_,
+                        property(fget=lambda self, _k=k: self._get_attrib(_k)))
                 # TODO!!! Check if it is safe actually here to rely on value of
                 #         k in lambda. May be it is treated as continuation and
                 #         some local space would override it????

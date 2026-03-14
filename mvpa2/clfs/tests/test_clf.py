@@ -557,7 +557,7 @@ class ClassifiersTests(unittest.TestCase):
         clf_reg = FeatureSelectionClassifier(sample_clf_reg, feat_sel)
         clf_reg.train(dat)
         _ = clf_reg.predict(dat.samples)
-        self.failIf((np.array(clf_reg.ca.estimates)
+        self.assertFalse((np.array(clf_reg.ca.estimates)
                      - clf_reg.ca.predictions).sum()==0,
                     msg="Values were set to the predictions in %s." %
                     sample_clf_reg)

@@ -42,7 +42,31 @@ import sys
 
 from itertools import product
 # for SmartVersion
-from distutils.version import Version
+try:
+    from distutils.version import Version
+except ImportError:
+    # distutils removed in Python 3.12; provide minimal base
+    # with the rich-comparison protocol that SmartVersion needs
+    import functools
+
+    @functools.total_ordering
+    class Version:
+        def __init__(self, vstring=None):
+            if vstring is not None:
+                self.parse(vstring)
+
+        def parse(self, vstring):
+            self.vstring = vstring
+
+        def __eq__(self, other):
+            # SmartVersion overrides _cmp; delegate there
+            return self._cmp(other) == 0
+
+        def __lt__(self, other):
+            return self._cmp(other) < 0
+
+        def _cmp(self, other):
+            raise NotImplementedError
 
 import numpy as np
 #import numpy.random as npr

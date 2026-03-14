@@ -13,12 +13,12 @@ standard_library.install_aliases()
 from builtins import object
 __docformat__ = 'restructuredtext'
 
-from configparser import SafeConfigParser
+from configparser import ConfigParser
 import os
 from os.path import join as pathjoin
 
 
-class ConfigManager(SafeConfigParser):
+class ConfigManager(ConfigParser):
     """Central configuration registry for PyMVPA.
     
     The purpose of this class is to collect all configurable settings used by
@@ -79,7 +79,7 @@ class ConfigManager(SafeConfigParser):
         ----------
         filenames : list of filenames
         """
-        SafeConfigParser.__init__(self)
+        ConfigParser.__init__(self)
 
         # store additional config file names
         if filenames is not None:
@@ -174,7 +174,7 @@ class ConfigManager(SafeConfigParser):
 
 
     def get(self, section, option, default=None, **kwargs):
-        """Wrapper around SafeConfigParser.get() with a custom default value.
+        """Wrapper around ConfigParser.get() with a custom default value.
         
         This method simply wraps the base class method, but adds a `default`
         keyword argument. The value of `default` is returned whenever the
@@ -184,7 +184,7 @@ class ConfigManager(SafeConfigParser):
             return default
 
         try:
-            return SafeConfigParser.get(self, section, option, **kwargs)
+            return ConfigParser.get(self, section, option, **kwargs)
         except ValueError as e:
             # provide somewhat descriptive error
             raise ValueError(
@@ -193,7 +193,7 @@ class ConfigManager(SafeConfigParser):
 
 
     def getboolean(self, section, option, default=None):
-        """Wrapper around SafeConfigParser.getboolean() with a custom default.
+        """Wrapper around ConfigParser.getboolean() with a custom default.
         
         This method simply wraps the base class method, but adds a `default`
         keyword argument. The value of `default` is returned whenever the
@@ -212,7 +212,7 @@ class ConfigManager(SafeConfigParser):
                     raise ValueError('Not a boolean: %s' % default)
                 return boolean_states[default.lower()]
 
-        return SafeConfigParser.getboolean(self, section, option)
+        return ConfigParser.getboolean(self, section, option)
 
 
     def get_as_dtype(self, section, option, dtype, default=None):
@@ -226,7 +226,7 @@ class ConfigManager(SafeConfigParser):
         if not self.has_option(section, option):
             return default
         try:
-            return SafeConfigParser._get(self, section, dtype, option)
+            return ConfigParser._get(self, section, dtype, option)
         except ValueError as e:
             # provide somewhat descriptive error
             raise ValueError("Failed to obtain value from configuration for %s.%s. "

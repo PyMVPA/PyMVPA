@@ -284,18 +284,13 @@ class StateTests(unittest.TestCase):
         a_str = repr(a)
         try:
             import mvpa2.base.tests.test_state as test_state
-            exec("a2=%s" % a_str)
+            # Use eval with explicit namespace (exec scoping broke in Python 3.13)
+            a2 = eval(a_str, vars(test_state))
         except Exception as e:
             self.fail(msg="Failed to generate an instance out of "
                       "representation %s. Got exception: %s" % (a_str, e))
 
-        # For specifics of difference in exec keyword from exec() function in
-        # python3 see
-        # http://stackoverflow.com/questions/6561482/why-did-python-3-changes-to-exec-break-this-code
-        # which mandates us to use exec here around repr so it gets access to
-        # above a2 placed into locals()
-        exec('a2_str_=repr(a2)')
-        a2_str = locals()['a2_str_']       # crazy ha?  it must not be a2_str either
+        a2_str = repr(a2)
         self.assertTrue(a2_str == a_str,
             msg="Generated object must have the same repr. Got %s and %s" %
             (a_str, a2_str))
@@ -304,7 +299,7 @@ class StateTests(unittest.TestCase):
         aparams_str = repr(a.params)
         try:
             import mvpa2.base.tests.test_state as test_state
-            exec("aparams2=%s" % aparams_str)
+            eval(aparams_str, vars(test_state))
         except Exception as e:
             self.fail(msg="Failed to generate an instance out of "
                       "representation  %s of params. Got exception: %s" % (aparams_str, e))

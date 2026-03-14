@@ -33,7 +33,7 @@ if externals.exists('ctypes'):
     try:
         from mvpa2.clfs.libsmlrc import stepwise_regression as _cStepwiseRegression
         _DEFAULT_IMPLEMENTATION = "C"
-    except OSError as e:
+    except (OSError, AttributeError) as e:
         warning("Failed to load fast implementation of SMLR.  May be you "
                 "forgotten to build it.  We will use much slower pure-Python "
                 "version. Original exception was %s" % (e,))
