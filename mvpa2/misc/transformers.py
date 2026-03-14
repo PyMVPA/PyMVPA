@@ -312,7 +312,7 @@ class DistPValue(ClassWithCollections):
                 indexes = np.arange(Nxx)
                 """What features belong to Null-distribution"""
                 while True:
-                    hist, bins = np.histogram(xxx, bins=nbins, normed=False)
+                    hist, bins = np.histogram(xxx, bins=nbins, density=False)
                     pdf = old_div(hist.astype(float),Nxxx)
                     if not numpy_center_points:
                         # if we obtain edge points for bins -- take centers
