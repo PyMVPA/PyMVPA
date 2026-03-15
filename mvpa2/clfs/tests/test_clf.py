@@ -1119,6 +1119,7 @@ class ClassifiersTests(unittest.TestCase):
         # variable length
         # was failing on TreeClassifier due to np.str dtype being assumed from first
         # returned value
+        skip_if_no_external('libsvm')
         ds = datasets['uni4small'].copy()
         newlabels = dict([(l,l+'_'*li) for li,l in enumerate(ds.uniquetargets)])
         ds.targets = [newlabels[l] for l in ds.targets]

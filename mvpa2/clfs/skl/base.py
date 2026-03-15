@@ -97,7 +97,7 @@ class SKLLearnerAdapter(Classifier):
         try:
             # train underlying learner
             self._skl_learner.fit(dataset.samples, targets)
-        except (ValueError, np.linalg.LinAlgError) as e:
+        except (ValueError, IndexError, np.linalg.LinAlgError) as e:
             raise FailedToTrainError(
                   "Failed to train %s on %s. Got '%s' during call to fit()." \
                   % (self, dataset, e)
