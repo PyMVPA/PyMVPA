@@ -673,6 +673,26 @@ class ErrorsTests(unittest.TestCase):
                                       cvnp[(np.array([0,1]), np.array([1,0]))])
 
 
+def test_plotting_subset():
+    """ smoketest to see whether plotting only a subset of existing labels blows"""
+
+    from mvpa2.misc.data_generators import normal_feature_dataset
+    from mvpa2.clfs.gnb import GNB
+    ds = normal_feature_dataset(nlabels=4)
+    clf = GNB()
+    cv = CrossValidation(
+        clf, NFoldPartitioner(),
+        errorfx=None,
+        enable_ca=['stats'])
+    res = cv(ds)
+    # get all labels
+    labels = cv.ca.stats.labels
+    cv.ca.stats.plot(labels=labels, numbers=True)
+    # get n-1 labels
+    labels = cv.ca.stats.labels[1:]
+    cv.ca.stats.plot(labels=labels, numbers=True)
+
+
 def test_confusion_as_node():
     from mvpa2.misc.data_generators import normal_feature_dataset
     from mvpa2.clfs.gnb import GNB
