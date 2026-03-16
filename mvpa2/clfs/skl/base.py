@@ -17,6 +17,8 @@ from mvpa2.base.dochelpers import _repr_attrs
 from mvpa2.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa2.base.learner import FailedToTrainError, FailedToPredictError, \
         DegenerateInputError
+from mvpa2.measures.base import Sensitivity
+from mvpa2.datasets.base import Dataset
 
 
 # do conditional to be able to build module reference
@@ -101,6 +103,12 @@ class SKLLearnerAdapter(Classifier):
                   "Failed to train %s on %s. Got '%s' during call to fit()." \
                   % (self, dataset, e)
 
+        # Add 'has_sensitivity' tag if classifier is SGD. This is pretty crude, but
+        # at least works without the classifier being trained.
+        if 'SGDClassifier' in str(self._skl_learner):
+            self.__tags__ += ['linear', 'has_sensitivity']
+            # TODO: It should loose this tag once untrained, but there is not untrain method yet?
+
     @accepts_dataset_as_samples
     def _predict(self, data):
         """Predict using the skl learner
@@ -132,3 +140,26 @@ class SKLLearnerAdapter(Classifier):
                         " estimates could be extracted" % self._skl_learner)
         self.ca.estimates = res
         return res
+
+    def get_sensitivity_analyzer(self, **kwargs):
+        """Returns a sensitivity analyzer if Stochastic Gradient Descent is used"""
+        if 'linear' in self.__tags__:
+            return SKLLearnerAdapterWeights(self, **kwargs)
+        else:
+            raise NotImplementedError('Only linear skl classifiers for now')
+
+
+class SKLLearnerAdapterWeights(Sensitivity):
+    """
+    `SensitivityAnalyzer` that reports the weights for a SGD classifier trained
+    on a given `Dataset`.
+    """
+    _LEGAL_CLFS = [ SKLLearnerAdapter ]
+
+    def _call(self, dataset):
+
+        clf = self.clf._skl_learner
+
+        weights = clf.coef_
+        ds = Dataset(weights)
+        return ds
