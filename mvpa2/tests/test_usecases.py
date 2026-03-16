@@ -621,3 +621,67 @@ def test_permute_superord():
     for ds_perm in part.generate(ds):
         # it does permutation
         assert(np.sum(ds_perm.sa.superord != ds.sa.superord) != 0)
+
+
+@reseed_rng()
+def test_vec_targetrsa():
+    import numpy as np
+    import scipy.stats as ss
+    import scipy.stats.distributions as ssd
+    from mvpa2.datasets import Dataset
+    from mvpa2.measures.rsa import PDist
+    from mvpa2.measures.searchlight import sphere_searchlight
+    from mvpa2.mappers.fx import mean_group_sample
+    from mvpa2.datasets.mri import map2nifti
+    import time
+
+    nfeatures = 3
+    nsamples = 32
+    faces = ["F%d" % d for d in range(16)]
+    targets = faces * 2
+    chunks = np.repeat(np.arange(2), 16)
+
+    # should be distance
+    target_self_vs_others = Dataset.from_wizard(
+        np.random.randn(15),
+        targets=faces[1:]
+    )
+    ds = Dataset(np.random.randn(nsamples, nfeatures))
+    ds.sa['targets'] = targets
+    ds.sa['chunks'] = chunks
+    ds.fa['node_indices'] = np.arange(nfeatures)
+    ds = mean_group_sample(['targets'], order='occurrence'
+                           )(ds)
+
+
+    pdist = PDist()
+    nproc = 4
+
+    sl = sphere_searchlight(pdist,
+                            radius=0,
+                            center_ids=np.arange(ds.nfeatures),
+                            nproc=nproc,
+                            space='node_indices')
+    slres = sl(ds)
+    # Let's remap samples within .sa.pairs into actual targets for samples
+    slres.sa["target1"] = [ds.T[i] for i, j in slres.sa.pairs]
+    slres.sa["target2"] = [ds.T[j] for i, j in slres.sa.pairs]
+
+    self_vs_others = slres[slres.sa.target1 == 'F0']
+    assert np.all(target_self_vs_others.sa.targets == self_vs_others.sa.target2)
+
+    out = Dataset(np.empty((4, slres.nfeatures)))
+    out.sa["metric"] = ["corr", "p", "fisher(corr)", "z(p) rdist(15)"]
+    for ivoxel in range(self_vs_others.nfeatures):
+        corr, p = ss.spearmanr(
+            target_self_vs_others,
+            self_vs_others.samples[:, ivoxel])
+        out.samples[:, ivoxel] = [
+            corr, p, np.arctanh(corr), ssd.rdist(15).isf(p)]
+    print out.samples
+
+    assert np.all(-1 <= out.samples[0])
+    assert np.all(out.samples[0] <= 1)
+    assert np.all(0 <= out.samples[1])
+    assert np.all(out.samples[1] <= 1)
+    # map2nifti(ds, out)
