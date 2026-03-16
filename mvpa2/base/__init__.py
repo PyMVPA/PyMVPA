@@ -304,6 +304,8 @@ if __debug__:
 
     debug.register('GDA', "GDA - Gaussian Discriminant Analyses")
 
+    debug.register('ShrinkageLDA', "ShrinkageLDA - Shrinkage Linear Discriminant Analysis")
+
     debug.register('GPR', "GPR")
     debug.register('GPR_WEIGHTS', "Track progress of GPRWeights computation")
     debug.register('KRN', "Kernels module (mvpa2.kernels)")

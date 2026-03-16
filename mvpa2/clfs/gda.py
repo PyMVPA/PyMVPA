@@ -36,7 +36,6 @@ from mvpa2.base.constraints import EnsureChoice
 from mvpa2.base.state import ConditionalAttribute
 #from mvpa2.measures.base import Sensitivity
 
-
 if __debug__:
     from mvpa2.base import debug
 

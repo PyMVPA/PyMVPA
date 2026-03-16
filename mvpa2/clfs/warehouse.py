@@ -46,7 +46,7 @@ _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'non-deterministic', 'needs_population',
         'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
         'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet',
-        'gnb', 'plr', 'rpy2', 'swig', 'skl', 'lda', 'qda',
+        'gnb', 'plr', 'rpy2', 'swig', 'skl', 'lda', 'qda', 'shrinkage',
         'random-forest', 'extra-trees', 'random',
         # oneclass-binary can provide binary output for the labels
         # oneclass would always output a single label but with
@@ -244,7 +244,7 @@ if externals.exists('libsvm'):
 
 if externals.exists('shogun'):
     from mvpa2.clfs import sg
-    
+
     from mvpa2.kernels.sg import LinearSGKernel, PolySGKernel, RbfSGKernel
     clfswh._known_tags.update(sg.SVM._KNOWN_IMPLEMENTATIONS)
 
@@ -357,6 +357,8 @@ if externals.exists('skl'):
 
     if _skl_version >= "0.17":
         sklLDA = _skl_import('discriminant_analysis', 'LinearDiscriminantAnalysis')
+        from mvpa2.clfs.shrinklda import ShrinkageLDA
+        clfswh += ShrinkageLDA(descr='ShrinkageLDA()')
     else:
         sklLDA = _skl_import('lda', 'LDA')
 
@@ -708,4 +710,3 @@ if len(clfswh['linear', 'svm']) > 0:
     #        # update sensitivity at each step
     #   splitter = OddEvenSplitter(),
     #   descr='LinSVM+RFE(OddEven)')
-
