@@ -356,6 +356,8 @@ class QueryEngineInterface(object):
     def train(self, dataset):
         raise NotImplementedError
 
+    def untrain(self):
+        raise NotImplementedError
 
     def query_byid(self, fid):
         """Return feature ids of neighbors for a given feature id
@@ -431,6 +433,9 @@ class QueryEngine(QueryEngineInterface):
         # searchlights.
         self._ids = range(dataset.nfeatures)
 
+    def untrain(self):
+        self._queryattrs = {}
+        self._ids = None
 
     def query_byid(self, fid):
         """Return feature ids of neighbors for a given feature id
@@ -670,6 +675,7 @@ class CachedQueryEngine(QueryEngineInterface):
         """Forgetting that CachedQueryEngine was already trained
         """
         self._trained_ds_fa_hash = None
+        self._queryengine.untrain()
 
 
     @borrowdoc(QueryEngineInterface)
