@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Some little helper for reading (and writing) common formats from and to
 disk."""
-from past.builtins import basestring
 from functools import reduce
 
 __docformat__ = 'restructuredtext'
@@ -116,7 +115,7 @@ class ColumnData(dict):
         # intialize with default
         self._header_order = None
 
-        if isinstance(source, basestring):
+        if isinstance(source, str):
             self._from_file(source, header=header, sep=sep, headersep=headersep,
                            dtype=dtype, skiplines=skiplines)
 

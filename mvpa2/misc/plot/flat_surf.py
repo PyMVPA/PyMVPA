@@ -297,7 +297,7 @@ def _range2min_max(range_, xs):
             raise RuntimeError("Single value should be positive")
         return _range2min_max((-r, r), xs)
     except (ValueError, TypeError):
-        if isinstance(range_, basestring):
+        if isinstance(range_, str):
             pat = '(?P<mn>\d*)_?(?P<mx>\d+)?(?P<pct>%)?'
 
             m = re.match(pat, range_)
@@ -350,7 +350,7 @@ def flat_surface_data2rgba(data, range_='2_98%', threshold=None,
 
 def curvature_from_any(c):
     '''Reads curvature'''
-    if isinstance(c, basestring):
+    if isinstance(c, str):
         from mvpa2.support.nibabel import afni_suma_1d
 
         c = afni_suma_1d.from_any(c)

@@ -331,7 +331,7 @@ def rawniml2string(p, form='text'):
 
 def _data2string(data, form):
     '''Converts a data element to binary, text or base64 representation'''
-    if isinstance(data, basestring):
+    if isinstance(data, str):
         return ('"%s"' % encode_escape(data)).encode()
 
     elif type(data) is np.ndarray:

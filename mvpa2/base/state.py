@@ -11,7 +11,6 @@
 It was devised to provide conditional storage 
 """
 
-from past.builtins import basestring
 from future.utils import with_metaclass
 from functools import reduce
 _DEV_DOC = """
@@ -224,7 +223,7 @@ class Collection(BaseCollection):
           What items to check if they were set in the collection
         """
         if key is not None:
-            if isinstance(key, basestring):
+            if isinstance(key, str):
                 return self[key].is_set
             else:
                 items = key           # assume that we got some list
@@ -259,7 +258,7 @@ class Collection(BaseCollection):
         missingok : bool
           If True - do not complain about wrong key
         """
-        if isinstance(key, basestring):
+        if isinstance(key, str):
             if key.lower() == 'all':
                 for key_ in self:
                     self._action(key_, func, missingok=missingok, **kwargs)

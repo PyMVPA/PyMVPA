@@ -145,7 +145,7 @@ def write(fnout, niml_annot):
     fn = os.path.split(fnout)[1]
 
     if not type(fn) is str:
-        if not isinstance(fnout, basestring):
+        if not isinstance(fnout, str):
             raise ValueError("Filename %s should be string" % str)
         fn = str(fn) # ensure that unicode is converted to string
 

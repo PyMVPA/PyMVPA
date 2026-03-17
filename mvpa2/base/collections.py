@@ -10,7 +10,6 @@
 dedicated containers aka. `Collections`.
 """
 
-from past.builtins import basestring
 from functools import reduce
 __docformat__ = 'restructuredtext'
 
@@ -134,7 +133,7 @@ class Collectable(object):
         to a collection
         """
         if name is not None:
-            if isinstance(name, basestring):
+            if isinstance(name, str):
                 if name[0] == '_':
                     raise ValueError("Collectable attribute name must not start " \
                           "with _. Got %s" % name)

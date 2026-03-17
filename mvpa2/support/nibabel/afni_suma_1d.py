@@ -53,7 +53,7 @@ def read(fn):
 def from_any(s):
     if isinstance(s, np.ndarray):
         return s.copy()
-    elif isinstance(s, basestring):
+    elif isinstance(s, str):
         return read(s)
 
     raise TypeError("Not understood: %s" % s)

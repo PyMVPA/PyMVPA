@@ -143,7 +143,7 @@ class VolumeMaskDictionary(Mapping):
             the number of elements in nbrs or one.
         """
 
-        if not type(src) in [int, basestring]:
+        if not type(src) in [int, str]:
             # for now to avoid unhasbable type
             raise TypeError("src should be int or str")
 
@@ -1037,7 +1037,7 @@ def from_any(s):
 
     Parameters
     ----------
-    s: basestring or volume_mask_dict.VolumeMaskDictionary
+    s: str or volume_mask_dict.VolumeMaskDictionary
         if a string it is assumed to be a file name and loaded using h5load. If
         a volume_mask_dict.VolumeMaskDictionary then it is returned.
 
@@ -1045,7 +1045,7 @@ def from_any(s):
     -------
     r: volume_mask_dict.VolumeMaskDictionary
     """
-    if isinstance(s, basestring):
+    if isinstance(s, str):
         vs = h5load(s)
         return from_any(vs)
     elif isinstance(s, VolumeMaskDictionary):

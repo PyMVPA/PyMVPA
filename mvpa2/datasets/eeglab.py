@@ -42,7 +42,7 @@ def eeglab_dataset(samples):
     ds: mvpa2.base.dataset.Dataset
         Dataset with the contents of the input file
     '''
-    if not isinstance(samples, basestring):
+    if not isinstance(samples, str):
         raise ValueError("Samples should be a string")
 
     if _looks_like_filename(samples):

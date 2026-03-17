@@ -11,7 +11,6 @@
 All the functions defined in this module must accept dataset as the
 first argument since they are bound to Dataset class in the trailer.
 """
-from past.builtins import basestring
 
 __docformat__ = 'restructuredtext'
 
@@ -262,7 +261,7 @@ def get_samples_by_attr(dataset, attr, values, sort=True):
     """
 
     if not is_sequence_type(values) \
-           or isinstance(values, basestring):
+           or isinstance(values, str):
         values = [ values ]
 
     # TODO: compare to plain for loop through the targets
@@ -405,7 +404,7 @@ def summary_targets(dataset, targets_attr='targets', chunks_attr='chunks',
         for i, l in enumerate(u):
             d = {'  ' + name1 : l}
             d.update(dict([(k, stats[k][i]) for k in stats]))
-            table.append( [('%.3g', '%s')[isinstance(d[e], basestring)
+            table.append( [('%.3g', '%s')[isinstance(d[e], str)
                                            or d[e] is None]
                             % d[e] for e in entries] )
         return '\nSummary for %s across %s\n' % (name1, name2) \

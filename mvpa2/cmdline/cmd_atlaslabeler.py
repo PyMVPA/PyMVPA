@@ -635,7 +635,7 @@ def run(args):
             args.levels = str(min(4, atlas.nlevels-1))
     if args.levels is None:
         args.levels = range(atlas.nlevels)
-    elif isinstance(args.levels, basestring):
+    elif isinstance(args.levels, str):
         if args.levels == 'list':
             print "Known levels and their indicies:\n" + atlas.levels_listing()
             sys.exit(0)

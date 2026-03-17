@@ -2282,7 +2282,7 @@ def write(fn, s, overwrite=True):
 def from_any(s):
     if s is None or isinstance(s, Surface):
         return s
-    elif isinstance(s, basestring):
+    elif isinstance(s, str):
         return read(s)
     elif type(s) is tuple and len(s) == 2:
         return Surface(s[0], s[1])

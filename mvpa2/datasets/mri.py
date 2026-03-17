@@ -15,7 +15,6 @@ export PyMVPA datasets back into data formats supported by NiBabel_.
 .. _NiBabel: http://nipy.sourceforge.net/nibabel
 """
 
-from past.builtins import basestring
 __docformat__ = 'restructuredtext'
 
 from mvpa2.base import externals
@@ -68,7 +67,7 @@ def _img2data(src):
 
     # let's try whether we can get it done with nibabel
     import nibabel
-    if isinstance(src, basestring):
+    if isinstance(src, str):
         # filename
         img = nibabel.load(src)
     else:

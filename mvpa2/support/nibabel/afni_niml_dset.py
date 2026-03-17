@@ -266,7 +266,7 @@ def _dset2rawniml_complete(r):
             r['data'] = list(r['data'])
 
         elif tp is list:
-            if all(isinstance(d, basestring)  for d in data):
+            if all(isinstance(d, str)  for d in data):
                 r['data'] = ";".join(data)
             else:
                 tp = 'mixed'
@@ -283,9 +283,9 @@ def _dset2rawniml_complete(r):
         r['ni_dimen'] = str(nrows)
         tpstrs = []
         for d in data:
-            if isinstance(d, basestring) or \
+            if isinstance(d, str) or \
                     (type(d) is list and
-                            all(isinstance(di, basestring) for di in d)):
+                            all(isinstance(di, str) for di in d)):
                 tpstr = 'String'
             elif isinstance(d, np.ndarray):
                 tpstr = types.numpy_type2name(d.dtype)
@@ -294,7 +294,7 @@ def _dset2rawniml_complete(r):
             tpstrs.append(tpstr)
         r['ni_type'] = ','.join(tpstrs)
 
-    elif issubclass(tp, basestring):
+    elif issubclass(tp, str):
         r['ni_dimen'] = '1'
         r['ni_type'] = 'String'
     elif tp is np.ndarray:
@@ -365,7 +365,7 @@ def write(fnout, dset, form='binary'):
     fn = os.path.split(fnout)[1]
 
     if not type(fn) is str:
-        if not isinstance(fnout, basestring):
+        if not isinstance(fnout, str):
             raise ValueError("Filename %s should be string" % str)
         fn = str(fn) # ensure that unicode is converted to string
 
@@ -441,7 +441,7 @@ def sparse2full(dset, pad_to_ico_ld=None, pad_to_node=None,
 def from_any(s, itemifsingletonlist=True):
     if isinstance(s, dict) and 'data' in s:
         return s
-    elif isinstance(s, basestring):
+    elif isinstance(s, str):
         return read(s, itemifsingletonlist)
     elif isinstance(s, np.ndarray):
         return dict(data=s)

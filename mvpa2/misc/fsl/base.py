@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Tiny snippets to interface with FSL easily."""
 
-from past.builtins import basestring
 __docformat__ = 'restructuredtext'
 
 import numpy as np
@@ -263,7 +262,7 @@ def read_fsl_design(fsf_file):
     """
     # This function was originally contributed by Russell Poldrack
 
-    if isinstance(fsf_file, basestring):
+    if isinstance(fsf_file, str):
         infile = open(fsf_file, 'r')
     else:
         infile = fsf_file

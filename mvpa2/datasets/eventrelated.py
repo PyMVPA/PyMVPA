@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Functions for event segmentation or modeling of dataset."""
 
-from past.builtins import basestring
 __docformat__ = 'restructuredtext'
 
 import copy
@@ -498,7 +497,7 @@ def fit_event_hrf_model(
         from mvpa2.mappers.glm import NiPyGLMMapper
 
     # Decide/device condition attribute on which GLM will actually be done
-    if isinstance(condition_attr, basestring):
+    if isinstance(condition_attr, str):
         # must be a list/tuple/array for the logic below
         condition_attr = [condition_attr]
 

@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Various helpers to improve docstrings and textual output"""
 
-from past.builtins import basestring
 from past.utils import old_div
 __docformat__ = 'restructuredtext'
 
@@ -223,7 +222,7 @@ def enhanced_doc_string(item, *args, **kwargs):
     skip_params = kwargs.get('skip_params', [])
 
     # XXX make it work also not only with classes but with methods as well
-    if isinstance(item, basestring):
+    if isinstance(item, str):
         if len(args)<1 or not isinstance(args[0], dict):
             raise ValueError("Please provide locals for enhanced_doc_string of %s" % item)
         name = item
@@ -473,7 +472,7 @@ def _repr_attrs(obj, attrs, default=None, error_value='ERROR'):
     out = []
     for a in attrs:
         v = getattr(obj, a, error_value)
-        if not (v is default or isinstance(v, basestring) and v == default):
+        if not (v is default or isinstance(v, str) and v == default):
             out.append('%s=%s' % (a, _saferepr(v)))
     return out
 

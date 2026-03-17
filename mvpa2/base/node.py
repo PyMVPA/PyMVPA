@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Implementation of a common processing object (node)."""
 
-from past.builtins import basestring
 __docformat__ = 'restructuredtext'
 
 import time
@@ -100,7 +99,7 @@ class Node(ClassWithCollections):
                   (self.__class__.__name__, space, str(postproc)))
         self.set_space(space)
         self.set_postproc(postproc)
-        if isinstance(pass_attr, basestring):
+        if isinstance(pass_attr, str):
             pass_attr = (pass_attr,)
         self.__pass_attr = pass_attr
 

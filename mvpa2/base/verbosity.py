@@ -13,7 +13,6 @@ from verbosity import verbose, debug; debug.active = [1,2,3]; debug(1, "blah")
 
 """
 
-from past.builtins import basestring
 from past.utils import old_div
 __docformat__ = 'restructuredtext'
 
@@ -58,7 +57,7 @@ class Logger(object):
         handlers_ = []
         self._close_opened_handlers()
         for handler in handlers:
-            if isinstance(handler, basestring):
+            if isinstance(handler, str):
                 try:
                     handler = {'stdout' : stdout,
                                'stderr' : stderr}[handler.lower()]
@@ -269,7 +268,7 @@ class SetLogger(Logger):
         for item in list(set(active)):
             if item == '':
                 continue
-            if isinstance(item, basestring):
+            if isinstance(item, str):
                 if item in ['?', 'list', 'help']:
                     self.print_registered(detailed=(item != '?'))
                     raise SystemExit(0)
@@ -604,11 +603,11 @@ if __debug__:
             correspond to known metrics
             """
 
-            if isinstance(func, basestring):
+            if isinstance(func, str):
                 if func in ['all', 'ALL']:
                     func = list(self._known_metrics.keys())
 
-            if isinstance(func, basestring):
+            if isinstance(func, str):
                 if func in DebugLogger._known_metrics:
                     func = DebugLogger._known_metrics[func]
                 else:

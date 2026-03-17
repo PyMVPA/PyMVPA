@@ -156,7 +156,7 @@ def from_any(roi, postproc=None):
     if type(roi) is list:
         if not all(['Label' in r for r in roi]):
             raise ValueError("Not understood: list %r" % roi)
-    elif isinstance(roi, basestring):
+    elif isinstance(roi, str):
         roi = read(roi)
 
     if postproc is not None:

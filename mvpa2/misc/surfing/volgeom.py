@@ -751,7 +751,7 @@ def from_any(s, mask_volume=None):
     if s is None or isinstance(s, VolGeom):
         return s
 
-    if isinstance(s, basestring):
+    if isinstance(s, str):
         # try to find a function to load the data
         load_function = None
 
@@ -814,7 +814,7 @@ def from_any(s, mask_volume=None):
                 if mask_volume is None and (hasattr(s, 'fa') and
                                            hasattr(s.fa, 'voxel_indices')):
                     mask_volume_indices = s.fa['voxel_indices']
-                elif isinstance(mask_volume, basestring):
+                elif isinstance(mask_volume, str):
                     if not mask_volume in s.fa:
                         raise ValueError('Key not found in s.fa: %r' % mask_volume)
                     mask_volume_indices = s.fa[mask_volume]

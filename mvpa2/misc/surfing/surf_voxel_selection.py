@@ -883,7 +883,7 @@ def from_any(s):
 
     Parameters
     ----------
-    s: basestring or volume_mask_dict.VolumeMaskDictionary
+    s: str or volume_mask_dict.VolumeMaskDictionary
         if a string it is assumed to be a file name and loaded using h5load. If
         a volume_mask_dict.VolumeMaskDictionary then it is returned.
 

@@ -9,7 +9,6 @@
 """Helpers to build PyMVPA dataset instances from openfmri.org dataset
 """
 
-from past.builtins import basestring
 __docformat__ = 'restructuredtext'
 
 __all__ = [ 'OpenFMRIDataset']
@@ -45,7 +44,7 @@ def _taskrun(task, run):
 
 
 def _id2int(id_, strip=None):
-    if strip is None and isinstance(id_, basestring):
+    if strip is None and isinstance(id_, str):
         for s in ('sub', 'task', 'model', 'run', 'cond'):
             if id_.startswith(s):
                 id_ = id_[len(s):]
@@ -411,7 +410,7 @@ class OpenFMRIDataset(object):
         if add_sa is None:
             return ds
 
-        if isinstance(add_sa, basestring):
+        if isinstance(add_sa, str):
             add_sa = (add_sa,)
         for sa in add_sa:
             # TODO: come up with a fancy way of detecting what kind of thing
@@ -612,7 +611,7 @@ class OpenFMRIDataset(object):
         conds = self.get_model_conditions(model_id)
         # what tasks do we need to consider for this model
         tasks = np.unique([c['task'] for c in conds])
-        if isinstance(subj_id, (int, basestring)):
+        if isinstance(subj_id, (int, str)):
             subj_id = [subj_id]
         dss = []
         for sub in subj_id:

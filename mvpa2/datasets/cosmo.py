@@ -203,7 +203,7 @@ def _loadmat_internal(fn):
 
     Parameters
     ----------
-    fn: basestring
+    fn: str
         Filename of Matlab .mat file
 
     Returns
@@ -461,7 +461,7 @@ def _mat_make_saveable(x, fixer=_mat_replace_functions_by_string):
 
         return arr
 
-    elif isinstance(x, basestring):
+    elif isinstance(x, str):
         # anything else, e.g. __header__
         return x
 
@@ -527,7 +527,7 @@ def cosmo_dataset(cosmo):
         based on the input
     '''
 
-    if isinstance(cosmo, basestring):
+    if isinstance(cosmo, str):
         # load file
         cosmo = _loadmat_internal(cosmo)
 
@@ -553,7 +553,7 @@ def map2cosmo(ds, filename=None):
     ----------
     ds : Dataset
         PyMVPA dataset to be converted
-    filename: None or basestring
+    filename: None or str
         If not None, the conversion result is saved to the file named
         filename using scipy's savemat
 
@@ -589,8 +589,8 @@ def from_any(x):
 
     Parameters
     ----------
-    x : basestring or dict or Dataset or CosmoQueryEngine
-        If a basestring it is interpreted as a filename of a .mat file
+    x : str or dict or Dataset or CosmoQueryEngine
+        If a str it is interpreted as a filename of a .mat file
         with a CoSMoMVPA dataset or neighborhood struct, and the contents
         are returned.
         If a dict it is interpreted as the result from scipy's loadmat and its
@@ -606,7 +606,7 @@ def from_any(x):
         CosmoQueryEngine is returned.
     '''
 
-    if isinstance(x, basestring):
+    if isinstance(x, str):
         x = _loadmat_internal(x)
 
     if isinstance(x, dict):

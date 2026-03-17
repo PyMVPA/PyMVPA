@@ -384,7 +384,7 @@ def parser_add_optgroup_from_def(parser, defn, exclusive=False, prefix=None):
     for opt in defn[1]:
         namespec = opt[0]
         param = None
-        if len(namespec) == 2 and not isinstance(namespec[0], basestring) \
+        if len(namespec) == 2 and not isinstance(namespec[0], str) \
           and issubclass(namespec[0], ClassWithCollections):
             # parameter spec -> use its name
             param = namespec[0]._collections_template['params'][namespec[1]]

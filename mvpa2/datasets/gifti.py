@@ -73,7 +73,7 @@ def _gifti_intent_is_node_indices(intent_string):
 
 
 def _get_gifti_image(samples):
-    if isinstance(samples, basestring):
+    if isinstance(samples, str):
         samples = giftiio.read(samples)
 
     required_class = gifti.GiftiImage
@@ -144,7 +144,7 @@ def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ',
     ----------
     ds : AttrDataset or numpy.ndarray
       The data to be mapepd
-    filename : basestring or None, optional
+    filename : str or None, optional
       Filename to which the GiftiImage is stored
     encoding : "ASCII" or "Base64Binary" or "GZipBase64Binary", optional
       Encoding format of data
@@ -178,7 +178,7 @@ def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ',
 
         attr_collection = ds.__dict__.get(attr_name)
 
-        if isinstance(keys_, basestring):
+        if isinstance(keys_, str):
             keys_ = (keys_,)
 
         for key in keys_:

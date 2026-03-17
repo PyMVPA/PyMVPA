@@ -103,7 +103,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
         """
         if arg is None:
             return arg
-        if isinstance(arg, basestring):
+        if isinstance(arg, str):
             arg = nb.load(arg)
             argshape = arg.shape
             # Assure that we have 3D (at least)
@@ -180,7 +180,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
     vlim = list(vlim)
     vlim_orig = vlim[:]
     add_dist2hist = []
-    if isinstance(vlim_type, basestring):
+    if isinstance(vlim_type, str):
         if vlim_type == 'symneg_z':
             func_masked = func[func_mask]
             fnonpos = func_masked[func_masked<=0]

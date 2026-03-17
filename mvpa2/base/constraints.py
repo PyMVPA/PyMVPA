@@ -10,7 +10,6 @@
 
 # TODO: __str__ / __repr__'s
 
-from past.builtins import basestring
 __docformat__ = 'restructuredtext'
 
 import numpy as np
@@ -64,7 +63,7 @@ class EnsureDType(Constraint):
     def __call__(self, value):
         if hasattr(value, '__array__'):
             return np.asanyarray(value, dtype=self._dtype)
-        elif hasattr(value, '__iter__') and not isinstance(value, basestring):
+        elif hasattr(value, '__iter__') and not isinstance(value, str):
             return list(map(self._dtype, value))
         else:
             return self._dtype(value)
@@ -160,7 +159,7 @@ class EnsureBool(Constraint):
     def __call__(self, value):
         if isinstance(value, bool):
             return value
-        elif isinstance(value, basestring):
+        elif isinstance(value, str):
             value = value.lower()
             if value in ('0', 'no', 'off', 'disable', 'false'):
                 return False
@@ -181,7 +180,7 @@ class EnsureStr(Constraint):
     """
 
     def __call__(self, value):
-        if not isinstance(value, basestring):
+        if not isinstance(value, str):
             # do not perform a blind conversion ala str(), as almost
             # anything can be converted and the result is most likely
             # unintended

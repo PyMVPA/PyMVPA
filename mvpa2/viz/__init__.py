@@ -24,7 +24,7 @@ def _get_lim(data, lim):
     """
     if lim is None:
         return None
-    if isinstance(lim, basestring):
+    if isinstance(lim, str):
         lim = lim.lower()
         if lim == 'same':
             return (data.min(), data.max())
@@ -120,7 +120,7 @@ def hist(dataset, xgroup_attr=None, ygroup_attr=None,
             if xlim is not None:
                 pl.xlim(_get_lim(data, xlim))
             if ylim is not None:
-                if isinstance(ylim, basestring) and ylim.lower() == 'same':
+                if isinstance(ylim, str) and ylim.lower() == 'same':
                     ylim_ = (min(ylim_[0], min(n)), max(ylim_[1], max(n)))
                 else:
                     pl.ylim(ylim)

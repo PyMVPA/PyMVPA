@@ -210,7 +210,7 @@ def color_slice(data, cmap, min_max=None):
     # get colormap
     if type(cmap) is bool:
         cmap = 'hot' if cmap else 'gray'
-    if isinstance(cmap, basestring):
+    if isinstance(cmap, str):
         cmap = plt.get_cmap(cmap)
 
     if type(data) is list:
@@ -358,14 +358,14 @@ def make_plot(ulay, olay, dims, pos, title=None,
     bgcolor = 'black'
 
     # load underlay and overlay
-    if isinstance(ulay, basestring):
+    if isinstance(ulay, str):
         ulay_name = split(ulay)[1]
         u = load_vol(ulay)
     else:
         ulay_name = ''
         u = ulay
 
-    if isinstance(olay, basestring):
+    if isinstance(olay, str):
         olay_name = split(olay)[1]
         o = load_vol(olay)
     else:

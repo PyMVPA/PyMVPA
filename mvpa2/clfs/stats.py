@@ -9,7 +9,6 @@
 """Estimator for classifier error distributions."""
 
 
-from past.builtins import basestring
 from past.utils import old_div
 __docformat__ = 'restructuredtext'
 
@@ -920,7 +919,7 @@ if externals.exists('scipy'):
         results = []
         for d in distributions:
             dist_gen, loc_, scale_, args_ = None, loc, scale, args
-            if isinstance(d, basestring):
+            if isinstance(d, str):
                 dist_gen = d
                 dist_name = d
             elif isinstance(d, tuple):

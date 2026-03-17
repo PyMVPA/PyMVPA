@@ -19,7 +19,6 @@ Meta Classifiers can be grouped according to their function as
 
 """
 
-from past.builtins import basestring
 __docformat__ = 'restructuredtext'
 
 import numpy as np
@@ -419,7 +418,7 @@ class MaximalVote(PredictionsCombiner):
                 prediction = predictions[i]
                 # XXX fishy location due to literal labels,
                 # TODO simplify assumptions and logic
-                if isinstance(prediction, basestring) or \
+                if isinstance(prediction, str) or \
                        not is_sequence_type(prediction):
                     prediction = (prediction,)
                 for label in prediction: # for every label
@@ -595,7 +594,7 @@ class CombinedClassifier(BoostedClassifier):
         # Decide either we are dealing with regressions
         # by looking at 1st learner
         if self._combiner is None:
-            if isinstance(self.__combiner, basestring) and self.__combiner == 'auto':
+            if isinstance(self.__combiner, str) and self.__combiner == 'auto':
                 self._combiner = (
                     MaximalVote,
                     MeanPrediction)[int(self.clfs[0].__is_regression__)]()

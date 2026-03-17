@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Transform data by applying a function along samples or feature axis."""
 
-from past.builtins import basestring
 from functools import reduce
 __docformat__ = 'restructuredtext'
 
@@ -511,7 +510,7 @@ def _uniquemerge2literal(attrs):
     items is. None is returned in case of an empty sequence.
     """
     try:
-        if isinstance(attrs[0], basestring):
+        if isinstance(attrs[0], str):
             # do not try to disassemble sequences of strings
             raise TypeError
         uvalues = set(map(tuple, attrs))

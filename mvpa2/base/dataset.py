@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Multi-purpose dataset container with support for attributes."""
 
-from past.builtins import basestring
 __docformat__ = 'restructuredtext'
 
 from os.path import lexists
@@ -1040,7 +1039,7 @@ def _expand_attribute(attr, length, attr_name):
     try:
         # if we are initializing with a single string -- we should
         # treat it as a single label
-        if isinstance(attr, basestring):
+        if isinstance(attr, str):
             raise TypeError
         if len(attr) != length:
             raise ValueError("Length of attribute '%s' [%d] has to be %d."

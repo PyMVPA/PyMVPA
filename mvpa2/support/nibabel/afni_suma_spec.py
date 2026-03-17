@@ -458,7 +458,7 @@ def from_any(*args):
         a = args[0]
         if isinstance(a, SurfaceSpec):
             return a
-        if (isinstance(a, basestring)):
+        if (isinstance(a, str)):
             for ext in ['', '.spec']:
                 fn = a + ext
                 if os.path.isfile(fn):
@@ -471,7 +471,7 @@ def from_any(*args):
             icold = arg
         elif arg in ['l', 'r', 'b', 'm', 'lh', 'rh', 'bh', 'mh']:
             hemi = arg[0]
-        elif isinstance(arg, basestring):
+        elif isinstance(arg, str):
             if os.path.isdir(arg):
                 directory = arg
             else:

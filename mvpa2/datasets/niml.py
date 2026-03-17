@@ -136,7 +136,7 @@ def from_niml(dset, fa_labels=None, sa_labels=None, a_labels=None):
                         if isinstance(v, np.ndarray) and np.dtype == np.str_:
                             v = str(v)
 
-                        while isinstance(v, basestring):
+                        while isinstance(v, str):
                             # strings are seperated by ';'
                             # XXX what if this is part of the value
                             # intended by the user?
@@ -358,7 +358,7 @@ def _find_sample_labels(dset, sample_labels):
     for label in sample_labels:
         if label in dset_keys:
             sample_label = dset.sa[label].value
-            if isinstance(sample_label, basestring):
+            if isinstance(sample_label, str):
                 # split using
                 sample_label = sample_label.split(';')
 
@@ -490,7 +490,7 @@ def from_any(x):
     ds: mvpa2.base.Dataset
         Dataset instance
     '''
-    if isinstance(x, basestring):
+    if isinstance(x, str):
         return read(x)
     elif isinstance(x, dict):
         return from_niml(x)
