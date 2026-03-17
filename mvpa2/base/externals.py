@@ -457,9 +457,7 @@ _KNOWN = {'libsvm': 'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node'
           'pylab': "__check_pylab()",
           'pylab plottable': "__check_pylab_plottable()",
           'skl': "__assign_skl_version()",
-          'hcluster': "import hcluster as __",
           'griddata': "__check_griddata()",
-          'cPickle': "import cPickle as __",
           'gzip': "import gzip as __",
           'lxml': "__check('lxml.etree', '__version__');"
                   "from lxml import objectify as __",
@@ -476,7 +474,6 @@ _KNOWN = {'libsvm': 'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node'
           'nipy': "__check('nipy')",
           'nipy.neurospin': "__check_nipy_neurospin()",
           'statsmodels': 'import statsmodels.api as __',
-          'mock': "__check('mock')",
           'datalad': "__check('datalad')",
           'afni-3dinfo': "__check_subprocess_call(['3dinfo','-h'])"
           }
