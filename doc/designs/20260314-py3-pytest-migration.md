@@ -357,54 +357,35 @@ WITHOUT `future` or `six` installed.
 - [ ] Remove `cPickle`, clean up `SyntaxError` suppression in `externals.py`
   — deferred to Phase 3.6
 
-## Phase 3: Remove Dead Dependencies
+## Phase 3: Remove Dead Dependencies ✅ DONE
 
-Each removal is surgical and independently verifiable. Run the full test
-suite after each removal to catch any unexpected coupling.
+Surgically removed all dead/unmaintained dependencies. Each removal verified
+with `tox -e py313` (202 passed, 4 skipped, 0 failed throughout).
 
-- [ ] **3.1** Remove Shogun support entirely:
-  - [ ] `mvpa2/clfs/sg/` — entire directory (svm.py, sens.py, __init__.py)
-  - [ ] Remove all `shogun`/`sg*` entries from `mvpa2/base/externals.py`
-  - [ ] Remove shogun entries from `mvpa2/clfs/warehouse.py`
-  - [ ] Remove shogun from `mvpa2/testing/clfs.py`
-  - [ ] Remove `mvpa2/kernels/sg.py`
-  - [ ] Remove related tests: `test_svmkernels.py` shogun parts, `test_kernel.py` shogun parts
-  - [ ] Run: `pytest mvpa2/clfs/tests/ mvpa2/kernels/tests/`
-  - [ ] Commit: `RF: remove Shogun support (project unmaintained since 2019)`
+- [x] **3.1** Removed Shogun support — 50b0a11
+  - Deleted `mvpa2/clfs/sg/` directory, `mvpa2/kernels/sg.py`, `test_svmkernels.py`
+  - Removed all shogun/sg entries from externals, warehouse, testing/clfs, suite
+  - Fixed `test_absent_external_version` (registered temp `versions._KNOWN` entry)
+  - Fixed `test_debug_rgexp` (`'SG'` → `'CM'` debug channel)
+- [x] **3.2** Removed MDP support — d765901
+  - Deleted `mdp_adaptor.py`, `lle.py`, `test_mdp.py`, 2 example scripts
+  - Removed `mdp` entries from externals, suite, mappers docstring
+- [x] **3.3** Removed pprocess support — 148f33a
+  - Removed all pprocess codepaths from searchlight, voxel selection,
+    hyperalignment (10 files, -365 lines)
+  - `nproc` parameter kept; `nproc>1` raises `NotImplementedError`
+  - `nproc=None` defaults to 1
+- [x] **3.4** Removed OpenOpt support — d4094fa
+  - Deleted `model_selector.py`, removed `GPRWeights` class from gpr.py
+  - Removed `openopt`, `MOD_SEL`, `OPENOPT` debug channels
+- [x] **3.5** Removed scipy.weave support — fbc95b8
+  - Removed weave-accelerated `pnorm_w` from distance.py (kept pure Python version)
+  - Removed `__check_scipy_weave` and both weave entries from externals
+- [x] **3.6** Cleaned up dead externals — fb24ee2
+  - Removed `hcluster`, `cPickle`, `mock` from `_KNOWN` (all PY2-only or absorbed)
+  - Kept `nose` (still referenced in old test runner)
 
-- [ ] **3.2** Remove MDP support:
-  - [ ] `mvpa2/mappers/mdp_adaptor.py` — remove
-  - [ ] `mvpa2/mappers/lle.py` — remove (MDP-based LLE; sklearn has LLE)
-  - [ ] Remove `mdp`/`mdp ge 2.4` entries from externals
-  - [ ] Remove related tests
-  - [ ] Run: `pytest mvpa2/mappers/tests/`
-  - [ ] Commit: `RF: remove MDP support (project unmaintained since 2020)`
-
-- [ ] **3.3** Remove pprocess support:
-  - [ ] Remove pprocess codepaths in `mvpa2/measures/searchlight.py`,
-    `misc/surfing/surf_voxel_selection.py`, `algorithms/searchlight_hyperalignment.py`
-  - [ ] Remove `pprocess` from externals
-  - [ ] Run: `pytest mvpa2/measures/tests/ mvpa2/algorithms/tests/`
-  - [ ] Commit: `RF: remove pprocess support (use joblib instead)`
-
-- [ ] **3.4** Remove OpenOpt support:
-  - [ ] Remove openopt codepaths in `mvpa2/clfs/gpr.py`, `model_selector.py`
-  - [ ] Remove `openopt` from externals
-  - [ ] Run: `pytest mvpa2/clfs/tests/`
-  - [ ] Commit: `RF: remove OpenOpt support (project dead since ~2014)`
-
-- [ ] **3.5** Remove scipy.weave/weave support:
-  - [ ] Remove weave codepath in `mvpa2/clfs/distance.py`
-  - [ ] Remove `weave`/`scipy.weave` from externals
-  - [ ] Run: `pytest mvpa2/clfs/tests/`
-  - [ ] Commit: `RF: remove scipy.weave support (removed from scipy in 1.0)`
-
-- [ ] **3.6** Clean up remaining dead externals:
-  - [ ] Remove `cPickle`, `hcluster`, `nose`, `mock` (use `unittest.mock`) from externals
-  - [ ] Run all tests
-  - [ ] Commit: `RF: remove dead external checks`
-
-- [ ] **✓ CHECKPOINT: full test suite passes, dead code removed**
+**✓ CHECKPOINT: 202 passed, 4 skipped, 0 failed — all dead deps removed**
 
 ## Phase 4: Convert Remaining ~53 Unconverted Source Files
 
@@ -491,7 +472,7 @@ they crash on import under PY3.
 - [ ] `support/bayes/multivariate_polya.py` — 8 hits (print in `__main__`)
 - [ ] `support/bayes/partial_independence.py` — 6 hits (print in `__main__`)
 - [ ] `misc/plot/flat_surf.py` — 2 hits (basestring)
-- [ ] `clfs/model_selector.py` — 2 hits (print)
+- [x] `clfs/model_selector.py` — removed in Phase 3.4
 - [ ] `viz/__init__.py` — 2 hits (basestring)
 - [ ] `support/ipython/ipy_pymvpa_completer.py` — 1 hit (print)
 - [ ] Run relevant tests for each changed file
