@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """k-Nearest-Neighbour classifier."""
 
-from past.utils import old_div
 __docformat__ = 'restructuredtext'
 
 import sys
@@ -139,7 +138,7 @@ class kNN(Classifier):
             # compute the relative proportion of samples belonging to each
             # class (do it in one loop to improve speed and reduce readability
             weights = \
-                [ 1.0 - (old_div((labels == label).sum(), Nlabels)) \
+                [ 1.0 - ((labels == label).sum() / Nlabels) \
                     for label in uniquelabels ]
             self.__weights = dict(zip(uniquelabels, weights))
         else:

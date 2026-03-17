@@ -9,7 +9,6 @@
 """Distance functions to be used in kernels and elsewhere
 """
 
-from past.utils import old_div
 __docformat__ = 'restructuredtext'
 
 # TODO: Make all distance functions accept 2D matrices samples x features
@@ -210,7 +209,7 @@ def squared_euclidean_distance(data1, data2=None, weight=None):
         if less0num > 0:
             norm0 = np.linalg.norm(squared_euclidean_distance_matrix[less0])
             totalnorm = np.linalg.norm(squared_euclidean_distance_matrix)
-            if totalnorm != 0 and old_div(norm0, totalnorm) > 1e-8:
+            if totalnorm != 0 and norm0 / totalnorm > 1e-8:
                 warning("Found %d elements out of %d unstable (<0) in " \
                         "computation of squared_euclidean_distance_matrix. " \
                         "Their norm is %s when total norm is %s" % \
@@ -259,7 +258,7 @@ def one_minus_correlation(X, Y):
     Zy = Y - np.c_[Y.mean(axis=1)]
     Zy /= np.c_[Y.std(axis=1)]
 
-    C = (old_div((np.matrix(Zx) * np.matrix(Zy).T), Zx.shape[1])).A
+    C = ((np.matrix(Zx) * np.matrix(Zy).T) / Zx.shape[1]).A
 
     # let it behave like a distance, i.e. smaller is closer
     C -= 1.0
@@ -321,12 +320,12 @@ def pnorm_w_python(data1, data2=None, weight=None, p=2,
         af = lambda x:x
     else:
         pf = lambda x:x ** p
-        af = lambda x:x ** (old_div(1.0,p))
+        af = lambda x:x ** (1.0 / p)
 
     # heuristic 'auto' might need to be adjusted
     if heuristic == 'auto':
         heuristic = {False: 'samples',
-                     True: 'features'}[(old_div(F1,S1)) < 500]
+                     True: 'features'}[(F1 / S1) < 500]
 
     if heuristic == 'features':
         #  Efficient implementation if the feature size is little.
@@ -412,7 +411,7 @@ if externals.exists('weave') or externals.exists('scipy.weave') :
                                type_converters=converters.blitz,
                                compiler = 'gcc')
             d = d + np.triu(d).T # copy upper part to lower part
-            return d**(old_div(1.0,p))
+            return d ** (1.0 / p)
 
         S2, F2 = data2.shape[:2]
         if not (F1==F2==weight.size):
@@ -450,7 +449,7 @@ if externals.exists('weave') or externals.exists('scipy.weave') :
                                 'F', 'weight', 'd', 'p'],
                                type_converters=converters.blitz,
                                compiler = 'gcc')
-        return d**(old_div(1.0,p))
+        return d ** (1.0 / p)
 
 else:
     # Bind pure python implementation

@@ -13,7 +13,6 @@ from verbosity import verbose, debug; debug.active = [1,2,3]; debug(1, "blah")
 
 """
 
-from past.utils import old_div
 __docformat__ = 'restructuredtext'
 
 from sys import stdout, stderr
@@ -437,8 +436,8 @@ if __debug__:
             mi = __pymvpa_memory_info()
             # in later versions of psutil mi is a named tuple.
             # but that is not the case on Debian squeeze with psutil 0.1.3
-            rss = old_div(mi[0], 1024)
-            vms = old_div(mi[1], 1024)
+            rss = mi[0] / 1024
+            vms = mi[1] / 1024
             return (rss, vms)
 
     except ImportError:

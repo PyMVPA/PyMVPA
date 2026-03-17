@@ -9,7 +9,6 @@
 """Estimator for classifier error distributions."""
 
 
-from past.utils import old_div
 __docformat__ = 'restructuredtext'
 
 import warnings
@@ -94,7 +93,7 @@ class Nonparametric(object):
         res = operator(x)
         if self._correction == 'clip':
             nsamples = len(self._dist_samples)
-            np.clip(res, old_div(1.0,(nsamples+2)), old_div((nsamples+1.0),(nsamples+2)), res)
+            np.clip(res, 1.0 / (nsamples + 2), (nsamples + 1.0) / (nsamples + 2), res)
         elif self._correction is None:
             pass
         else:
@@ -628,7 +627,7 @@ class AdaptiveNormal(AdaptiveNullDist):
     """
 
     def _adapt(self, nfeatures, measure, wdata, vdata=None):
-        return (0, old_div(1.0,np.sqrt(nfeatures))), {}
+        return (0, 1.0 / np.sqrt(nfeatures)), {}
 
 
 if externals.exists('scipy'):
@@ -734,7 +733,7 @@ if externals.exists('scipy'):
                 raise ValueError("Not enough input arguments.")
             if not self._argcheck(*args) or scale <= 0:
                 return np.inf
-            x = np.asarray(old_div((x-loc), scale))
+            x = np.asarray((x - loc) / scale)
             cond0 = (x <= self.a) | (x >= self.b)
             if (np.any(cond0)):
                 return np.inf
@@ -1215,4 +1214,4 @@ def nanmean(x, axis=0):
     factor = 1.0 - np.sum(np.isnan(x), axis)*1.0/Norig
 
     x[np.isnan(x)] = 0
-    return old_div(np.mean(x, axis),factor)
+    return np.mean(x, axis) / factor

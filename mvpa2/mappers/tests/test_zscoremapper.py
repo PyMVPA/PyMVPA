@@ -9,7 +9,6 @@
 """Unit tests for PyMVPA ZScore mapper"""
 
 
-from past.utils import old_div
 from mvpa2.base import externals
 
 from mvpa2.support.copy import deepcopy
@@ -189,10 +188,10 @@ def test_zscore():
                       auto_train=True)
     dsz = zm(ds)
 
-    assert_array_almost_equal(old_div((np.mean(ds, axis=0) - np.asanyarray(means)),np.array(stds)),
+    assert_array_almost_equal((np.mean(ds, axis=0) - np.asanyarray(means)) / np.array(stds),
                               np.mean(dsz, axis=0))
 
-    assert_array_almost_equal(old_div(np.std(ds, axis=0),np.array(stds)),
+    assert_array_almost_equal(np.std(ds, axis=0) / np.array(stds),
                               np.std(dsz, axis=0))
 
 def test_zscore_withoutchunks():

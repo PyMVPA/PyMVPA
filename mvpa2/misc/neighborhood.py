@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """ Neighborhood objects """
 
-from past.utils import old_div
 import numpy as np
 from numpy import array
 import sys
@@ -159,7 +158,7 @@ class Sphere(object):
 
         element_sizes = np.asanyarray(element_sizes)
         # What range for each dimension
-        erange = np.ceil(old_div(self._radius, element_sizes)).astype(int)
+        erange = np.ceil(self._radius / element_sizes).astype(int)
 
         tentative_increments = np.array(list(np.ndindex(tuple(erange*2 + 1)))) \
                                - erange
@@ -325,7 +324,7 @@ class HollowSphere(Sphere):
 
         element_sizes = np.asanyarray(element_sizes)
         # What range for each dimension
-        erange = np.ceil(old_div(self._radius, element_sizes)).astype(int)
+        erange = np.ceil(self._radius / element_sizes).astype(int)
 
         tentative_increments = np.array(list(np.ndindex(tuple(erange*2 + 1)))) \
                                - erange

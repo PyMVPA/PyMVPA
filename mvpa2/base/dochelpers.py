@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Various helpers to improve docstrings and textual output"""
 
-from past.utils import old_div
 __docformat__ = 'restructuredtext'
 
 import re, textwrap
@@ -431,7 +430,7 @@ def table2string(table, out=None):
             else:
                 align = 'c'
 
-            NspacesL = max(ceil(old_div((col_width[j] - len(item)),2.0)), 0)
+            NspacesL = max(ceil((col_width[j] - len(item)) / 2.0), 0)
             NspacesR = max(col_width[j] - NspacesL - len(item), 0)
 
             if align in ['w', 'c']:

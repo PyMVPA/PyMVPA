@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Flatten multi-dimensional samples"""
 
-from past.utils import old_div
 __docformat__ = 'restructuredtext'
 
 import numpy as np
@@ -139,7 +138,7 @@ class FlattenMapper(Mapper):
                 maxdim = min(len(self.__origshape), self.__maxdims)
             else:
                 maxdim = len(self.__origshape)
-            multiplier = old_div(mds.nfeatures, np.prod(attr.shape[:maxdim]))
+            multiplier = mds.nfeatures // np.prod(attr.shape[:maxdim])
             if __debug__:
                 debug('MAP_', "Broadcasting fa '%s' %s %d times"
                         % (k, attr.shape, multiplier))

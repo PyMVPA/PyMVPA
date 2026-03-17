@@ -9,7 +9,6 @@
 """Utility class to compute the transfer error of classifiers."""
 
 from functools import reduce
-from past.utils import old_div
 __docformat__ = 'restructuredtext'
 
 import mvpa2.support.copy as copy
@@ -675,23 +674,23 @@ class ConfusionMatrix(SummaryStatistics):
         stats['N']  = np.sum(stats['P']) - stats['P']
         stats["P'"] = stats['TP'] + stats['FP']
         stats["N'"] = stats['TN'] + stats['FN']
-        stats['TPR'] = old_div(stats['TP'], (1.0*stats['P']))
+        stats['TPR'] = stats['TP'] / (1.0 * stats['P'])
         # reset nans in TPRs to 0s whenever there is no entries
         # for those labels among the targets
         stats['TPR'][stats['P'] == 0] = 0
-        stats['PPV'] = old_div(stats['TP'], (1.0*stats["P'"]))
-        stats['NPV'] = old_div(stats['TN'], (1.0*stats["N'"]))
-        stats['FDR'] = old_div(stats['FP'], (1.0*stats["P'"]))
-        stats['SPC'] = old_div((stats['TN']), (1.0*stats['FP'] + stats['TN']))
+        stats['PPV'] = stats['TP'] / (1.0 * stats["P'"])
+        stats['NPV'] = stats['TN'] / (1.0 * stats["N'"])
+        stats['FDR'] = stats['FP'] / (1.0 * stats["P'"])
+        stats['SPC'] = stats['TN'] / (1.0 * stats['FP'] + stats['TN'])
         stats['F1'] = 2.*stats['TP'] / (stats["P"] + stats["P'"])
 
         MCC_denom = np.sqrt(1.0*stats['P']*stats['N']*stats["P'"]*stats["N'"])
         nz = MCC_denom!=0.0
         stats['MCC'] = np.zeros(stats['TP'].shape)
         stats['MCC'][nz] = \
-                 old_div((stats['TP'] * stats['TN'] - stats['FP'] * stats['FN'])[nz], MCC_denom[nz])
+                 (stats['TP'] * stats['TN'] - stats['FP'] * stats['FN'])[nz] / MCC_denom[nz]
 
-        stats['ACC'] = old_div(np.sum(TP),(1.0*np.sum(stats['P'])))
+        stats['ACC'] = np.sum(TP) / (1.0 * np.sum(stats['P']))
         # TODO: STD of accuracy and corrected one according to
         #    Nadeau and Bengio [50]
         stats['ACC%'] = stats['ACC'] * 100.0
@@ -704,17 +703,17 @@ class ConfusionMatrix(SummaryStatistics):
             # (e.g. it goes down through splits)
 
             # simple linear regression
-            ACC_per_set = [old_div(np.sum(np.diag(m)),np.sum(m).astype(float))
+            ACC_per_set = [np.sum(np.diag(m)) / np.sum(m).astype(float)
                            for m in mat_all]
             stats['LOE(ACC):slope'], stats['LOE(ACC):inter'], \
                 stats['LOE(ACC):r'], stats['LOE(ACC):p'], _ = \
                 linregress(np.arange(Nsets), ACC_per_set)
 
-            TPRs_per_set = [old_div(np.diag(m),np.sum(m, axis=0).astype(float))
+            TPRs_per_set = [np.diag(m) / np.sum(m, axis=0).astype(float)
                             for m in mat_all]
             # Confusion ratios (both TPs or FPs)
             # we want to divide each column but sum in the column
-            CM_per_set = [np.ravel(old_div(m,np.sum(m, axis=0).astype(float)[None, :]))
+            CM_per_set = [np.ravel(m / np.sum(m, axis=0).astype(float)[None, :])
                           for m in mat_all]
 
             ## stats['Friedman(TPR):chi^2'], stats['Friedman(TPR):p'] = \
@@ -1038,9 +1037,9 @@ class ConfusionMatrix(SummaryStatistics):
                     alpha = 1.0
                 else:
                     # scale according to value
-                    alpha = 1 - np.array(1 - old_div(v, maxv)) ** numbers_alpha
+                    alpha = 1 - np.array(1 - v / maxv) ** numbers_alpha
                 y = {'lower':j, 'upper':Nlabels-j-1}[origin]
-                numbers_kwargs_['color'] = colors[int(v<old_div(maxv,2))]
+                numbers_kwargs_['color'] = colors[int(v < maxv / 2)]
                 numbers_kwargs_.update(numbers_kwargs)
                 pl.text(i+0.5, y+0.5, '%d' % v, alpha=alpha, **numbers_kwargs_)
 
@@ -1310,7 +1309,7 @@ class BayesConfusionHypothesis(Node):
 
         if self._prior_Hs is None:
             # default: uniform prior on hypotheses: p(H_i)
-            prior_Hs = old_div(np.ones(len(partitions)), len(partitions))
+            prior_Hs = np.ones(len(partitions)) / len(partitions)
         else:
             prior_Hs = self._prior_Hs
 

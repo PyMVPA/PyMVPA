@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Miscellaneous data generators for unittests and demos"""
-from past.utils import old_div
 
 __docformat__ = 'restructuredtext'
 
@@ -248,7 +247,7 @@ def sin_modulated(n_instances, n_features,
     uniform noise
     """
     if flat:
-        data = (np.arange(0.0, 1.0, old_div(1.0, n_instances)) * np.pi)
+        data = (np.arange(0.0, 1.0, 1.0 / n_instances) * np.pi)
         data.resize(n_instances, n_features)
     else:
         data = np.random.rand(n_instances, n_features) * np.pi
@@ -366,7 +365,7 @@ def autocorrelated_noise(ds, sr, cutoff, lfnl=3.0, bord=10, hfnl=None, add_basel
     msample = fds.samples.mean(axis=0)
 
     # noise/signal amplitude relative to each feature mean signal
-    noise_amps = msample * (old_div(lfnl, 100.))
+    noise_amps = msample * (lfnl / 100.)
 
     # generate gaussian noise for the full dataset
     nsamples = np.random.standard_normal(fds.samples.shape)
@@ -374,10 +373,10 @@ def autocorrelated_noise(ds, sr, cutoff, lfnl=3.0, bord=10, hfnl=None, add_basel
     nsamples *= noise_amps
 
     # nyquist frequency
-    nf = old_div(sr, 2.0)
+    nf = sr / 2.0
 
     # along samples low-pass filtering
-    fb, fa = butter(bord, old_div(cutoff, nf))
+    fb, fa = butter(bord, cutoff / nf)
     nsamples = lfilter(fb, fa, nsamples, axis=0)
 
     # add the pedestal
@@ -386,7 +385,7 @@ def autocorrelated_noise(ds, sr, cutoff, lfnl=3.0, bord=10, hfnl=None, add_basel
 
     # HF noise
     if hfnl is not None:
-        noise_amps = msample * (old_div(hfnl, 100.))
+        noise_amps = msample * (hfnl / 100.)
         nsamples += np.random.standard_normal(nsamples.shape) * noise_amps
 
     fds.samples = nsamples
@@ -464,13 +463,13 @@ def simple_hrf_dataset(
     if not nsamples:
         # estimate number of samples needed if not provided
         max_onset = max([e['onset'] for e in events])
-        nsamples = int(old_div(max_onset, tres) + len(hrf_x) * 1.5)
+        nsamples = int(max_onset / tres + len(hrf_x) * 1.5)
 
     # come up with an experimental design
     fast_er = np.zeros(nsamples)
     for e in events:
-        on = int(old_div(e['onset'], float(tres)))
-        off = int(old_div((e['onset'] + e.get('duration', 1.)), float(tres)))
+        on = int(e['onset'] / float(tres))
+        off = int((e['onset'] + e.get('duration', 1.)) / float(tres))
         if off == on:
             off += 1                      # so we have at least 1 point
         assert(list(range(on, off)))
@@ -516,7 +515,7 @@ def simple_hrf_dataset(
     if noise == 'autocorrelated':
         # this one seems to be quite unstable and can provide really
         # funky noise at times
-        noise = autocorrelated_noise(ds, old_div(1, tr), old_div(1, (2 * tr)),
+        noise = autocorrelated_noise(ds, 1 / tr, 1 / (2 * tr),
                                      lfnl=noise_level, hfnl=noise_level,
                                      add_baseline=False)
     elif noise == 'normal':

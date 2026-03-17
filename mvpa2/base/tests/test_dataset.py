@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Tests for the dataset implementation'''
-from past.utils import old_div
 
 from mvpa2.testing import *
 from mvpa2.testing.datasets import datasets
@@ -1093,7 +1092,7 @@ def test_all_equal():
 def test_hollow_samples():
     sshape = (10, 5)
     ds = Dataset(HollowSamples(sshape, dtype=int),
-                 sa={'targets': np.tile(['one', 'two'], old_div(sshape[0], 2))})
+                 sa={'targets': np.tile(['one', 'two'], sshape[0] // 2)})
     assert_equal(ds.shape, sshape)
     assert_equal(ds.samples.dtype, int)
     # should give us features [1,3] and samples [2,3,5]

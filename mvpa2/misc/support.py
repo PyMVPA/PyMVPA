@@ -10,8 +10,6 @@
 
 __docformat__ = 'restructuredtext'
 
-from past.utils import old_div
-
 import itertools
 import math
 import random
@@ -687,7 +685,7 @@ class Event(dict):
         out = copy(self)
 
         # get the timepoint just prior the onset
-        out['onset'] = int(np.floor(old_div(onset, dt)))
+        out['onset'] = int(np.floor(onset / dt))
 
         if storeoffset:
             # compute offset
@@ -697,7 +695,7 @@ class Event(dict):
         if 'duration' in out:
             # how many timepoint cover the event (from computed onset
             # to the one timepoint just after the end of the event
-            out['duration'] = int(np.ceil(old_div((onset + out['duration']), dt)) \
+            out['duration'] = int(np.ceil((onset + out['duration']) / dt) \
                                   - out['onset'])
 
         return out
