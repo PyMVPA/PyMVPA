@@ -11,10 +11,6 @@
 __docformat__ = 'restructuredtext'
 
 from future import standard_library
-from builtins import (
-    object,
-    str,
-)
 standard_library.install_aliases()
 
 import time, sys, subprocess

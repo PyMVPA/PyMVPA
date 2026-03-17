@@ -8,9 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Feature selection base class and related stuff base classes and helpers."""
 
-from builtins import map
-from builtins import zip
-from builtins import range
 __docformat__ = 'restructuredtext'
 
 import numpy as np

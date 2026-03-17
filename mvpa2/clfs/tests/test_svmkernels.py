@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for new Kernel-based SVMs"""
 
-from builtins import range
 import numpy as np
 from time import time
 

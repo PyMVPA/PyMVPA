@@ -8,10 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Tiny snippets to interface with FSL easily."""
 
-from builtins import str
-from builtins import range
 from past.builtins import basestring
-from builtins import object
 __docformat__ = 'restructuredtext'
 
 import numpy as np

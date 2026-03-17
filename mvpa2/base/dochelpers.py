@@ -10,7 +10,6 @@
 
 from future import standard_library
 standard_library.install_aliases()
-from builtins import str
 from past.builtins import basestring
 from past.utils import old_div
 __docformat__ = 'restructuredtext'

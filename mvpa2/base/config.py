@@ -10,7 +10,6 @@
 
 from future import standard_library
 standard_library.install_aliases()
-from builtins import object
 __docformat__ = 'restructuredtext'
 
 from configparser import ConfigParser

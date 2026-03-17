@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Data normalization by Z-Scoring."""
 
-from builtins import range
 __docformat__ = 'restructuredtext'
 
 import numpy as np

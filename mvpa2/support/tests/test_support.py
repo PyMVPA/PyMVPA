@@ -8,9 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA serial feature inclusion algorithm"""
 
-from builtins import str
-from builtins import map
-from builtins import range
 from itertools import product as iterprod
 
 from mvpa2.testing import *

@@ -8,8 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for dCOV and associated functions"""
 
-from builtins import zip
-from builtins import range
 from mvpa2.testing import *
 
 # For testing

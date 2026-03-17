@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA GNB classifier"""
 
-from builtins import zip
 import numpy as np
 
 from mvpa2.testing import *

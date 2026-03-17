@@ -7,10 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Dataset partitioning strategies"""
-from builtins import zip
-from builtins import str
-from builtins import map
-from builtins import range
 
 __docformat__ = 'restructuredtext'
 

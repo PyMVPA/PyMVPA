@@ -11,7 +11,6 @@
 Also performs testing of storing/reloading datasets into hdf5 file if
 cfg.getboolean('tests', 'use hdf datasets'
 """
-from builtins import range
 
 __docformat__ = 'restructuredtext'
 

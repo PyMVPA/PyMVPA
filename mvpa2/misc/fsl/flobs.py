@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Wrapper around FSLs halfcosbasis to generate HRF kernels"""
 
-from builtins import str
 from past.utils import old_div
 __docformat__ = 'restructuredtext'
 

@@ -8,9 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Creating simple PDF reports using reportlab
 """
-from builtins import zip
-from builtins import str
-from builtins import object
 
 __docformat__ = 'restructuredtext'
 

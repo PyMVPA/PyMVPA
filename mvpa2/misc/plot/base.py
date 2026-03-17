@@ -8,9 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Misc. plotting helpers."""
 
-from builtins import str
-from builtins import zip
-from builtins import range
 __docformat__ = 'restructuredtext'
 
 from mvpa2.base import externals

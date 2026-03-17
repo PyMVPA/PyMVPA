@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Searchlight implementation for arbitrary measures and spaces"""
 
-from builtins import str
 from past.utils import old_div
 __docformat__ = 'restructuredtext'
 

@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Coordinate transformations"""
-from builtins import object
 
 import numpy as np
 

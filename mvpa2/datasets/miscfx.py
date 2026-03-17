@@ -11,9 +11,6 @@
 All the functions defined in this module must accept dataset as the
 first argument since they are bound to Dataset class in the trailer.
 """
-from builtins import zip
-from builtins import str
-from builtins import range
 from past.builtins import basestring
 
 __docformat__ = 'restructuredtext'

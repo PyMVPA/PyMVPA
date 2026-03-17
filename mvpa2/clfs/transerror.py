@@ -11,11 +11,7 @@
 from future import standard_library
 from functools import reduce
 standard_library.install_aliases()
-from builtins import zip
-from builtins import str
-from builtins import range
 from past.utils import old_div
-from builtins import object
 __docformat__ = 'restructuredtext'
 
 import mvpa2.support.copy as copy

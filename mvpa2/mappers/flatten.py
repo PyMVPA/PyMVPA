@@ -8,9 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Flatten multi-dimensional samples"""
 
-from builtins import zip
-from builtins import str
-from builtins import range
 from past.utils import old_div
 __docformat__ = 'restructuredtext'
 

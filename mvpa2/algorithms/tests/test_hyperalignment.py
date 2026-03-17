@@ -8,8 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA ..."""
 
-from builtins import zip
-from builtins import range
 import unittest
 import numpy as np
 

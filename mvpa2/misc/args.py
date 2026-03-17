@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Helpers for arguments handling."""
 
-from builtins import zip
 __docformat__ = 'restructuredtext'
 
 def split_kwargs(kwargs, prefixes=None):

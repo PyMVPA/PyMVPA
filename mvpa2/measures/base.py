@@ -17,7 +17,6 @@ has to be in some iterable container.
 
 """
 
-from builtins import str
 __docformat__ = 'restructuredtext'
 
 import numpy as np

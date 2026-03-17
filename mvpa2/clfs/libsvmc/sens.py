@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Provide sensitivity measures for libsvm's SVM."""
 
-from builtins import range
 __docformat__ = 'restructuredtext'
 
 import numpy as np

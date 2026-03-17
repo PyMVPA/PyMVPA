@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Implementation of a common processing object (node)."""
 
-from builtins import str
 from past.builtins import basestring
 __docformat__ = 'restructuredtext'
 

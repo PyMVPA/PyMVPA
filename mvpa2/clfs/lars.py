@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Least angle regression (LARS)."""
 
-from builtins import str
 __docformat__ = 'restructuredtext'
 
 # system imports

@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA atlases"""
-from builtins import range
 
 import unittest, re
 import numpy as np

@@ -9,26 +9,10 @@
 """Support function -- little helpers in everyday life"""
 
 from past.builtins import cmp
-from builtins import map
-from builtins import next
-from builtins import zip
-from builtins import bytes
-from builtins import str
-from builtins import range
-from builtins import object
 __docformat__ = 'restructuredtext'
 
 from future import standard_library
 standard_library.install_aliases()
-from builtins import (
-    bytes,
-    map,
-    next,
-    object,
-    range,
-    str,
-    zip,
-)
 from past.utils import old_div
 
 import itertools

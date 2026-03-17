@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Ridge regression classifier."""
 
-from builtins import str
 __docformat__ = 'restructuredtext'
 
 

@@ -8,11 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """ Neighborhood objects """
 
-from builtins import zip
-from builtins import str
-from builtins import range
 from past.utils import old_div
-from builtins import object
 import numpy as np
 from numpy import array
 import sys

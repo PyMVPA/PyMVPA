@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for SVM classifier"""
 
-from builtins import range
 import numpy as np
 import gc
 from mvpa2.datasets import dataset_wizard

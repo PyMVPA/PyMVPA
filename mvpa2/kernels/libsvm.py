@@ -13,7 +13,6 @@ they are not translateable to other kernel types.  They are implemented solely
 to standardize the interface between other kernel machines.
 """
 
-from builtins import object
 __docformat__ = 'restructuredtext'
 
 from mvpa2.kernels.base import Kernel

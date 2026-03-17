@@ -8,10 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Dataset content resampling (e.g. balance number of samples per condition)"""
 
-from builtins import str
-from builtins import map
-from builtins import zip
-from builtins import range
 __docformat__ = 'restructuredtext'
 
 import time

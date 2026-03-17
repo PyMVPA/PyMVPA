@@ -8,9 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Wavelet transformation"""
 
-from builtins import zip
-from builtins import str
-from builtins import range
 from mvpa2.base import externals
 
 if externals.exists('pywt', raise_=True):

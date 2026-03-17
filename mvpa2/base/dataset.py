@@ -8,11 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Multi-purpose dataset container with support for attributes."""
 
-from builtins import zip
-from builtins import str
-from builtins import range
 from past.builtins import basestring
-from builtins import object
 __docformat__ = 'restructuredtext'
 
 from os.path import lexists

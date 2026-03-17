@@ -9,8 +9,6 @@
 """Generator nodes to permute datasets.
 """
 
-from builtins import zip
-from builtins import range
 __docformat__ = 'restructuredtext'
 
 import numpy as np

@@ -8,8 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Common to all SVM implementations functionality. For internal use only"""
 
-from builtins import range
-from builtins import object
 __docformat__ = 'restructuredtext'
 
 import numpy as np

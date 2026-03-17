@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA kernels"""
 
-from builtins import range
 import numpy as np
 
 from mvpa2.testing import *

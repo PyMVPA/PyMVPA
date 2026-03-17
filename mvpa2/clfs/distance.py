@@ -9,7 +9,6 @@
 """Distance functions to be used in kernels and elsewhere
 """
 
-from builtins import range
 from past.utils import old_div
 __docformat__ = 'restructuredtext'
 

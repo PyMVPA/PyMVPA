@@ -8,8 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Routines to scatterplot data"""
 
-from builtins import zip
-from builtins import range
 __docformat__ = 'restructuredtext'
 
 

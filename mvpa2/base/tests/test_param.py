@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA Parameter class."""
-from builtins import str
 
 import unittest, copy
 

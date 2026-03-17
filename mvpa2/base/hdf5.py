@@ -32,9 +32,6 @@ help with disassembling are also handled.
   is possible, it might not be implemented yet. The current focus lies on
   storage of PyMVPA datasets and their attributes (e.g. Mappers).
 """
-from builtins import str
-from builtins import zip
-from builtins import range
 
 __docformat__ = 'restructuredtext'
 

@@ -11,10 +11,7 @@
 It was devised to provide conditional storage 
 """
 
-from builtins import str
-from builtins import range
 from past.builtins import basestring
-from builtins import object
 from future.utils import with_metaclass
 from functools import reduce
 _DEV_DOC = """

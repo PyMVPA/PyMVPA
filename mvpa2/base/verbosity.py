@@ -13,11 +13,8 @@ from verbosity import verbose, debug; debug.active = [1,2,3]; debug(1, "blah")
 
 """
 
-from builtins import filter
-from builtins import str
 from past.builtins import basestring
 from past.utils import old_div
-from builtins import object
 __docformat__ = 'restructuredtext'
 
 from sys import stdout, stderr

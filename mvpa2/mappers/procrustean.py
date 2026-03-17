@@ -8,8 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Procrustean rotation mapper"""
 
-from builtins import zip
-from builtins import range
 __docformat__ = 'restructuredtext'
 
 import numpy as np

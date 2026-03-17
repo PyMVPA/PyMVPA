@@ -12,7 +12,6 @@
 from future import standard_library
 from functools import reduce
 standard_library.install_aliases()
-from builtins import str
 __docformat__ = 'restructuredtext'
 
 import os

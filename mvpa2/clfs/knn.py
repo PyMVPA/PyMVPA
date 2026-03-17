@@ -8,8 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """k-Nearest-Neighbour classifier."""
 
-from builtins import str
-from builtins import zip
 from past.utils import old_div
 __docformat__ = 'restructuredtext'
 

@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Miscellaneous data generators for unittests and demos"""
-from builtins import range
 from past.utils import old_div
 
 __docformat__ = 'restructuredtext'

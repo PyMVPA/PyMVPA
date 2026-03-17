@@ -14,7 +14,6 @@ used kernels are provided with convenience classes: `LinearSGKernel`,
 kernel, use `CustomSGKernel` to define one.
 """
 
-from builtins import object
 __docformat__ = 'restructuredtext'
 
 import numpy as np

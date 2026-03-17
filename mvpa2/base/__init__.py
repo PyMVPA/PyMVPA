@@ -14,7 +14,6 @@ PyMVPA code, and are generic building blocks
 :group Basic: externals, config, verbosity, dochelpers
 """
 
-from builtins import object
 from future.utils import with_metaclass
 from functools import reduce
 __docformat__ = 'restructuredtext'

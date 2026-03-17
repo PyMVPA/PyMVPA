@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Test some base functionality which did not make it into a separate unittests"""
-from builtins import str
 
 import os
 import unittest

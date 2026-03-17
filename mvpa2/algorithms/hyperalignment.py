@@ -15,8 +15,6 @@ cortex.*
 
 """
 
-from builtins import zip
-from builtins import range
 __docformat__ = 'restructuredtext'
 
 # don't leak the world

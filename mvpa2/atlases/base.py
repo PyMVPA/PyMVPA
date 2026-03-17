@@ -22,10 +22,6 @@ mvpa2.atlases.base module contains support for various atlases
 :group Exceptions: XMLAtlasException
 
 """
-from builtins import zip
-from builtins import str
-from builtins import range
-from builtins import object
 
 import os.path as osp
 from mvpa2.base import externals

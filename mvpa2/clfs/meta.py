@@ -19,9 +19,6 @@ Meta Classifiers can be grouped according to their function as
 
 """
 
-from builtins import str
-from builtins import zip
-from builtins import range
 from past.builtins import basestring
 __docformat__ = 'restructuredtext'
 

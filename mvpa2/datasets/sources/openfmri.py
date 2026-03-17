@@ -9,10 +9,7 @@
 """Helpers to build PyMVPA dataset instances from openfmri.org dataset
 """
 
-from builtins import zip
-from builtins import range
 from past.builtins import basestring
-from builtins import object
 __docformat__ = 'restructuredtext'
 
 __all__ = [ 'OpenFMRIDataset']

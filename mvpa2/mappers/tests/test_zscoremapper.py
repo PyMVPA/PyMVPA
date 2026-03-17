@@ -9,7 +9,6 @@
 """Unit tests for PyMVPA ZScore mapper"""
 
 
-from builtins import range
 from past.utils import old_div
 from mvpa2.base import externals
 

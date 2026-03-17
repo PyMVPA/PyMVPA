@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Wrapper for sklearn datasets/data generators."""
-from builtins import zip
 
 __docformat__ = 'restructuredtext'
 

@@ -8,12 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Some little helper for reading (and writing) common formats from and to
 disk."""
-from builtins import zip
-from builtins import str
-from builtins import map
-from builtins import range
 from past.builtins import basestring
-from builtins import object
 from functools import reduce
 
 __docformat__ = 'restructuredtext'

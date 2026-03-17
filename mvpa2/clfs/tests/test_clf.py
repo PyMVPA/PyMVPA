@@ -8,8 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA basic Classifiers"""
 
-from builtins import str
-from builtins import range
 import numpy as np
 
 from mvpa2.testing import *

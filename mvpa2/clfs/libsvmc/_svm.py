@@ -8,9 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Python interface to the SWIG-wrapped libsvm"""
 
-from builtins import str
-from builtins import range
-from builtins import object
 __docformat__ = 'restructuredtext'
 
 

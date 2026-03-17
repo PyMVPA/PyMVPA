@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Helpers for feature selection (scoring, selection strategies)"""
 
-from builtins import object
 __docformat__ = 'restructuredtext'
 
 from math import floor

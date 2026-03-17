@@ -10,7 +10,6 @@
 
 """
 from past.builtins import cmp
-from builtins import range
 
 from mvpa2.base import externals
 

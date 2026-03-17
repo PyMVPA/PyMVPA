@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Transform consecutive samples into individual multi-dimensional samples"""
-from builtins import str
 
 __docformat__ = 'restructuredtext'
 

@@ -9,8 +9,6 @@
 '''Tests for attribute collections and their collectables'''
 from future import standard_library
 standard_library.install_aliases()
-from builtins import str
-from builtins import range
 
 import numpy as np
 import copy

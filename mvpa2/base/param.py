@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##g
 """Parameter representation"""
 
-from builtins import str
 __docformat__ = 'restructuredtext'
 
 import re

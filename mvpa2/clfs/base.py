@@ -8,8 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Plumbing for all learners (classifiers and regressions)"""
 
-from builtins import zip
-from builtins import str
 __docformat__ = 'restructuredtext'
 
 import numpy as np

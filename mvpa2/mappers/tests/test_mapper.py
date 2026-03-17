@@ -8,8 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Tests for basic mappers'''
 
-from builtins import zip
-from builtins import range
 import numpy as np
 # for repr
 

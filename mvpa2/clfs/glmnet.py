@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """GLM-Net (GLMNET) regression and classifier."""
 
-from builtins import str
 __docformat__ = 'restructuredtext'
 
 # system imports

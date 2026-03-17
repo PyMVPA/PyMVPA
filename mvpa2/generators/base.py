@@ -8,8 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Repeat and filter as sequence of dataset"""
 
-from builtins import str
-from builtins import range
 __docformat__ = 'restructuredtext'
 
 import random

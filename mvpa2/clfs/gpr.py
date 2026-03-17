@@ -9,7 +9,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Gaussian Process Regression (GPR)."""
 
-from builtins import range
 __docformat__ = 'restructuredtext'
 
 

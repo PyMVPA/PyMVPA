@@ -8,8 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA misc stuff"""
 
-from builtins import zip
-from builtins import range
 from mvpa2.testing import *
 
 from mvpa2.datasets import Dataset

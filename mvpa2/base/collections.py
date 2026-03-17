@@ -10,9 +10,7 @@
 dedicated containers aka. `Collections`.
 """
 
-from builtins import str
 from past.builtins import basestring
-from builtins import object
 from functools import reduce
 __docformat__ = 'restructuredtext'
 

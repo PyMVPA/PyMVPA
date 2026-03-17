@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Elastic-Net (ENET) regression classifier."""
 
-from builtins import str
 __docformat__ = 'restructuredtext'
 
 # system imports

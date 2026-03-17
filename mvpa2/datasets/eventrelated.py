@@ -8,8 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Functions for event segmentation or modeling of dataset."""
 
-from builtins import str
-from builtins import range
 from past.builtins import basestring
 __docformat__ = 'restructuredtext'
 

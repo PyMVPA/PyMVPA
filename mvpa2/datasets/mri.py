@@ -15,7 +15,6 @@ export PyMVPA datasets back into data formats supported by NiBabel_.
 .. _NiBabel: http://nipy.sourceforge.net/nibabel
 """
 
-from builtins import str
 from past.builtins import basestring
 __docformat__ = 'restructuredtext'
 

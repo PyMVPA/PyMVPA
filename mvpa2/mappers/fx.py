@@ -8,9 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Transform data by applying a function along samples or feature axis."""
 
-from builtins import str
-from builtins import zip
-from builtins import range
 from past.builtins import basestring
 from functools import reduce
 __docformat__ = 'restructuredtext'
