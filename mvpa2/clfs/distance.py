@@ -17,7 +17,6 @@ __docformat__ = 'restructuredtext'
 #       If we would have that, we could make use of them in kNN.
 
 import numpy as np
-from mvpa2.base import externals
 from mvpa2.support.utils import deprecated
 
 if __debug__:
@@ -346,115 +345,7 @@ def pnorm_w_python(data1, data2=None, weight=None, p=2,
     return af(d)
 
 
-if externals.exists('weave') or externals.exists('scipy.weave') :
-    if externals.exists('weave'):
-        import weave
-        from weave import converters
-    else:
-        from scipy import weave
-        from scipy.weave import converters
-
-    def pnorm_w(data1, data2=None, weight=None, p=2):
-        """Weighted p-norm between two datasets (scipy.weave implementation)
-
-        ||x - x'||_w = (\sum_{i=1...N} (w_i*|x_i - x'_i|)**p)**(1/p)
-
-        Parameters
-        ----------
-        data1 : np.ndarray
-          First dataset
-        data2 : np.ndarray or None
-          Optional second dataset
-        weight : np.ndarray or None
-          Optional weights per 2nd dimension (features)
-        p
-          Power
-        """
-
-        if weight is None:
-            weight = np.ones(data1.shape[1], 'd')
-            pass
-        S1, F1 = data1.shape[:2]
-        code = ""
-        if data2 is None or id(data1)==id(data2):
-            if not (F1==weight.size):
-                raise ValueError("Dataset should have same #columns == #weights. Got " \
-                      "%d %d" % (F1, weight.size))
-            F = F1
-            d = np.zeros((S1, S1), 'd')
-            try:
-                code_peritem = \
-                    {1.0 : "tmp = tmp+weight(t)*fabs(data1(i,t)-data1(j,t))",
-                     2.0 : "tmp2 = weight(t)*(data1(i,t)-data1(j,t));" \
-                     " tmp = tmp + tmp2*tmp2"}[p]
-            except KeyError:
-                code_peritem = "tmp = tmp+pow(weight(t)*fabs(data1(i,t)-data1(j,t)),p)"
-
-            code = """
-            int i,j,t;
-            double tmp, tmp2;
-            for (i=0; i<S1-1; i++) {
-                for (j=i+1; j<S1; j++) {
-                    tmp = 0.0;
-                    for(t=0; t<F; t++) {
-                        %s;
-                        }
-                    d(i,j) = tmp;
-                    }
-                }
-            return_val = 0;
-            """ % code_peritem
-
-
-            counter = weave.inline(code,
-                               ['data1', 'S1', 'F', 'weight', 'd', 'p'],
-                               type_converters=converters.blitz,
-                               compiler = 'gcc')
-            d = d + np.triu(d).T # copy upper part to lower part
-            return d ** (1.0 / p)
-
-        S2, F2 = data2.shape[:2]
-        if not (F1==F2==weight.size):
-            raise ValueError("Datasets should have same #columns == #weights. Got " \
-                  "%d %d %d" % (F1, F2, weight.size))
-        F = F1
-        d = np.zeros((S1, S2), 'd')
-        try:
-            code_peritem = \
-                {1.0 : "tmp = tmp+weight(t)*fabs(data1(i,t)-data2(j,t))",
-                 2.0 : "tmp2 = weight(t)*(data1(i,t)-data2(j,t));" \
-                 " tmp = tmp + tmp2*tmp2"}[p]
-        except KeyError:
-            code_peritem = "tmp = tmp+pow(weight(t)*fabs(data1(i,t)-data2(j,t)),p)"
-            pass
-
-        code = """
-        int i,j,t;
-        double tmp, tmp2;
-        for (i=0; i<S1; i++) {
-            for (j=0; j<S2; j++) {
-                tmp = 0.0;
-                for(t=0; t<F; t++) {
-                    %s;
-                    }
-                d(i,j) = tmp;
-                }
-            }
-        return_val = 0;
-
-        """ % code_peritem
-
-        counter = weave.inline(code,
-                               ['data1', 'data2', 'S1', 'S2',
-                                'F', 'weight', 'd', 'p'],
-                               type_converters=converters.blitz,
-                               compiler = 'gcc')
-        return d ** (1.0 / p)
-
-else:
-    # Bind pure python implementation
-    pnorm_w = pnorm_w_python
-    pass
+pnorm_w = pnorm_w_python
 
 
 ### XXX EO: This is code to compute streamline-streamline distance.

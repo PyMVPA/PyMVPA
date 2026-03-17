@@ -111,9 +111,6 @@ def _suppress_scipy_warnings():
                 # Trick re.match, since in warnings absent re.DOTALL in re.compile
                 ('[\na-z \t0-9]*The original semantics of histogram is scheduled to be.*'
                  '[\na-z \t0-9]*', Warning) ]
-        if scipy_ver >= "0.15":
-            filter_lines += [("`scipy.weave` is deprecated, use `weave` instead!",
-                              DeprecationWarning)]
         if scipy_ver >= "0.16":
             # scipy deprecated it but statsmodels still import it for now
             filter_lines += [("`scipy.linalg.calc_lwork` is deprecated!",
@@ -198,61 +195,6 @@ def __assign_skl_version():
                               "docstring is empty -- could be that only -lib "
                               "was installed without the native Python modules")
     versions['skl'] = SmartVersion(skl.__version__)
-
-def __check_scipy_weave():
-    """Apparently presence of scipy is not sufficient since some
-    versions experience problems. E.g. in Sep,Oct 2008 lenny's weave
-    failed to work. May be some other converter could work (? See
-    http://lists.debian.org/debian-devel/2008/08/msg00730.html for a
-    similar report.
-
-    Following simple snippet checks compilation of the basic code using
-    weave
-    """
-    try:
-        from scipy import weave
-    except OSError as e:
-        raise ImportError(
-            "Weave cannot be used due to failure to import because of %s"
-            % e)
-    from scipy.weave import converters, build_tools
-    import numpy as np
-    # to shut weave up
-    import sys
-    # we can't rely on weave at all at the restoring argv. On etch box
-    # restore_sys_argv() is apparently is insufficient
-    oargv = sys.argv[:]
-    ostdout = sys.stdout
-    if not(__debug__ and 'EXT_' in debug.active):
-        from io import StringIO
-        sys.stdout = StringIO()
-        # *nix specific solution to shut weave up.
-        # Some users must complain and someone
-        # needs to fix this to become more generic.
-        compile_args = [">/dev/null", "2>&1"]
-    else:
-        compile_args = []
-    fmsg = None
-    try:
-        data = np.array([1, 2, 3])
-        counter = weave.inline("data[0]=fabs(-1);", ['data'],
-                               type_converters=converters.blitz,
-                               verbose=0,
-                               extra_compile_args=compile_args,
-                               compiler='gcc')
-    except Exception as e:
-        fmsg = "Failed to build simple weave sample." \
-               " Exception was %s" % str(e)
-
-    sys.stdout = ostdout
-    # needed to fix sweave which might "forget" to restore sys.argv
-    # build_tools.restore_sys_argv()
-    sys.argv = oargv
-    if fmsg is not None:
-        raise ImportError(fmsg)
-    else:
-        return "Everything is cool"
-
 
 def __check_atlas_family(family):
     # XXX I guess pylint will dislike it a lot
@@ -496,8 +438,6 @@ _KNOWN = {'libsvm': 'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node'
           'good scipy.stats.rdist': "__check_stablerdist()",
           'good scipy.stats.rv_discrete.ppf': "__check_rv_discrete_ppf()",
           'good scipy.stats.rv_continuous._reduce_func(floc,fscale)': "__check_rv_continuous_reduce_func()",
-          'weave': '__check("weave")',
-          'scipy.weave': '__check_scipy_weave()',
           'pywt': "__check('pywt')",
           'pywt wp reconstruct': "__check_pywt(['wp reconstruct'])",
           'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",
