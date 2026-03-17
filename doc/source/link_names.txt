@@ -111,7 +111,6 @@
 .. _3dsvm: http://afni.nimh.nih.gov/pub/dist/doc/program_help/3dsvm.html
 .. _Elefant: http://elefant.developer.nicta.com.au
 .. _LIBSVM: http://www.csie.ntu.edu.tw/~cjlin/libsvm
-.. _MDP: http://mdp-toolkit.sourceforge.net
 .. _Shogun: http://www.shogun-toolbox.org
 .. _Orange: http://magix.fri.uni-lj.si/orange
 .. _PyML: http://pyml.sourceforge.net

@@ -171,10 +171,6 @@ from mvpa2.mappers.zscore import *
 if externals.exists('scipy'):
     from mvpa2.mappers.detrend import *
     from mvpa2.mappers.filters import *
-if externals.exists('mdp'):
-    from mvpa2.mappers.mdp_adaptor import *
-if externals.exists('mdp ge 2.4'):
-    from mvpa2.mappers.lle import *
 from mvpa2.mappers.glm import *
 from mvpa2.mappers.skl_adaptor import *
 

@@ -32,8 +32,6 @@ Mappers
      detrend
      flatten
      fx
-     lle
-     mdp_adaptor
      procrustean
      projection
      prototype

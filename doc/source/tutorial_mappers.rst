@@ -33,13 +33,6 @@ reversible, others are not. Some are simple one-step computations, others
 are iterative algorithms that have to be trained on data before they can be
 used. In PyMVPA, all these transformations are :mod:`~mvpa2.mappers`.
 
-.. note::
-
-  If you are an MDP_-user you probably have realized the similarity of MDP's
-  nodes and PyMVPA's mappers.
-
-.. _MDP: http://mdp-toolkit.sourceforge.net/
-
 Let's create a dummy dataset (5 samples, 12 features). This time we will use a
 new method to create the dataset, the ``dataset_wizard``. Here it is, fully
 equivalent to a regular constructor call (i.e.

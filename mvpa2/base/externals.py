@@ -122,18 +122,6 @@ def _suppress_scipy_warnings():
             warnings.filterwarnings('ignore', f, w)
 
 
-def __assign_mdp_version():
-    """Check if mdp is present (it must be) an if it is -- store its version
-    """
-    import mdp
-    ver = mdp.__version__
-    if SmartVersion(ver) == "2.5" and not hasattr(mdp.nodes, 'IdentityNode'):
-        # Thanks to Yarik's shipment of svn snapshots into Debian we
-        # can't be sure if that was already released version, since
-        # mdp guys didn't use -dev suffix
-        ver += '-dev'
-    versions['mdp'] = SmartVersion(ver)
-
 def __assign_nibabel_version():
     try:
         import nibabel
@@ -540,8 +528,6 @@ _KNOWN = {'libsvm': 'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node'
           'pylab plottable': "__check_pylab_plottable()",
           'openopt': "__check_openopt()",
           'skl': "__assign_skl_version()",
-          'mdp': "__assign_mdp_version()",
-          'mdp ge 2.4': "from mdp.nodes import LLENode as __",
           'hcluster': "import hcluster as __",
           'griddata': "__check_griddata()",
           'cPickle': "import cPickle as __",

@@ -50,7 +50,7 @@ before_install:
     # Note: it looks like the line could be truncated, thus spreading them through multiple lines
     # yoh: hm???
     - travis_retry sudo apt-get install
-        $PY-psutil $PY-sklearn $PY-mdp liblapack-dev $PY-reportlab ipython
+        $PY-psutil $PY-sklearn liblapack-dev $PY-reportlab ipython
         $PY-lxml $PY-joblib
         $DEB_PKGS
     # TODO: reincarnate - possible dependent on 3py being instaalled above

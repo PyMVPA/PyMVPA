@@ -93,8 +93,6 @@ Mappers: Data Transformations
    mappers.fx
    mappers.fxy
    mappers.glm
-   mappers.lle
-   mappers.mdp_adaptor
    mappers.procrustean
    mappers.projection
    mappers.prototype
