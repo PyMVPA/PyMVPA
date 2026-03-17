@@ -341,13 +341,12 @@ class SearchlightHyperalignment(ClassWithCollections):
         self.projections = None
         # This option makes the roi_seed in each SL to be selected during feature selection
         self.force_roi_seed = True
-        if self.params.nproc is not None and self.params.nproc > 1 \
-                and not externals.exists('pprocess'):
-            raise RuntimeError("The 'pprocess' module is required for "
-                               "multiprocess searchlights. Please either "
-                               "install python-pprocess, or reduce `nproc` "
-                               "to 1 (got nproc=%i) or set to default None"
-                               % self.params.nproc)
+        if self.params.nproc is not None and self.params.nproc > 1:
+            raise NotImplementedError(
+                "Parallel execution via pprocess is no longer supported. "
+                "Please use nproc=1 (or None). Consider using joblib or "
+                "similar for parallelization. Got nproc=%i"
+                % self.params.nproc)
         if not externals.exists('scipy'):
             raise RuntimeError("The 'scipy' module is required for "
                                "searchlight hyperalignment.")
@@ -543,15 +542,8 @@ class SearchlightHyperalignment(ClassWithCollections):
 
         # Performing SL processing manually
         _shpaldebug("Setting up for searchlights")
-        if params.nproc is None and externals.exists('pprocess'):
-            import pprocess
-            try:
-                params.nproc = pprocess.get_number_of_cores() or 1
-            except AttributeError:
-                warning("pprocess version %s has no API to figure out maximal "
-                        "number of cores. Using 1"
-                        % externals.versions['pprocess'])
-                params.nproc = 1
+        if params.nproc is None:
+            params.nproc = 1
 
         # XXX I think this class should already accept a single dataset only.
         # It should have a ``space`` setting that names a sample attribute that
@@ -602,38 +594,13 @@ class SearchlightHyperalignment(ClassWithCollections):
             for isub in range(self.ndatasets)]
 
         # compute
-        if params.nproc is not None and params.nproc > 1:
-            # split all target ROIs centers into `nproc` equally sized blocks
-            nproc_needed = min(len(roi_ids), params.nproc)
-            params.nblocks = nproc_needed \
-                if params.nblocks is None else params.nblocks
-            params.nblocks = min(len(roi_ids), params.nblocks)
-            node_blocks = np.array_split(roi_ids, params.nblocks)
-            # the next block sets up the infrastructure for parallel computing
-            # this can easily be changed into a ParallelPython loop, if we
-            # decide to have a PP job server in PyMVPA
-            import pprocess
-            p_results = pprocess.Map(limit=nproc_needed)
-            if __debug__:
-                debug('SLC', "Starting off %s child processes for nblocks=%i"
-                      % (nproc_needed, params.nblocks))
-            compute = p_results.manage(
-                        pprocess.MakeParallel(self._proc_block))
-            seed = mvpa2.get_random_seed()
-            for iblock, block in enumerate(node_blocks):
-                # should we maybe deepcopy the measure to have a unique and
-                # independent one per process?
-                compute(block, datasets, copy.copy(hmeasure), queryengines,
-                        seed=seed, iblock=iblock)
-        else:
-            # otherwise collect the results in an 1-item list
-            _shpaldebug('Using 1 process to compute mappers.')
-            if params.nblocks is None:
-                params.nblocks = 1
-            params.nblocks = min(len(roi_ids), params.nblocks)
-            node_blocks = np.array_split(roi_ids, params.nblocks)
-            p_results = [self._proc_block(block, datasets, hmeasure, queryengines)
-                         for block in node_blocks]
+        _shpaldebug('Using 1 process to compute mappers.')
+        if params.nblocks is None:
+            params.nblocks = 1
+        params.nblocks = min(len(roi_ids), params.nblocks)
+        node_blocks = np.array_split(roi_ids, params.nblocks)
+        p_results = [self._proc_block(block, datasets, hmeasure, queryengines)
+                     for block in node_blocks]
         results_ds = self.__handle_all_results(p_results)
         # Dummy iterator for, you know, iteration
         list(results_ds)

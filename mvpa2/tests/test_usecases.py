@@ -196,7 +196,7 @@ def test_gnbsearchlight_permutations():
     # mvpa2.debug.active = ['APERM', 'SLC'] #, 'REPM']
     # mvpa2.debug.metrics += ['pid']
     count = 10
-    nproc = 1 + int(mvpa2.externals.exists('pprocess'))
+    nproc = 1
     ds = datasets['3dsmall'].copy()
     ds.fa['voxel_indices'] = ds.fa.myspace
 
@@ -237,7 +237,6 @@ def test_gnbsearchlight_permutations():
     repeater   = Repeater(count=count)
     permutator = AttributePermutator('targets', limit={'partitions': 1}, count=1)
     # rng=np.random.RandomState(0)) # to trigger failure since the same np.random state
-    # would be reused across all pprocesses
     null_cv = CrossValidation(clf, ChainNode([splt, permutator], space=splt.get_space()),
                               postproc=mean_sample())
     null_sl_normal = sphere_searchlight(null_cv, nproc=nproc, **slkwargs)
@@ -279,7 +278,7 @@ def test_multiclass_pairs_svm_searchlight():
     from mvpa2.sandbox.multiclass import get_pairwise_accuracies
 
     # Some parameters used in the test below
-    nproc = 1 + int(mvpa2.externals.exists('pprocess'))
+    nproc = 1
     ntargets = 4                                # number of targets
     npairs = ntargets*(ntargets-1)/2
     center_ids = [35, 55, 1]

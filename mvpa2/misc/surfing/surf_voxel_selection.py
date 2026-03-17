@@ -417,9 +417,8 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
     eta_step: int
         Report progress every eta_step (default: 10).
     nproc: int or None
-        Number of parallel threads. None means as many threads as the
-        system supports. The pprocess is required for parallel threads; if
-        it cannot be used, then a single thread is used.
+        Number of processes. Currently only nproc=1 is supported.
+        None defaults to 1.
     outside_node_margin: float or True or None (default)
         By default nodes outside the volume are skipped; using this
         parameter allows for a marign. If this value is a float (possibly
@@ -428,10 +427,10 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
         associated voxels. If outside_node_margin is True, then a node is
         always assigned voxels regardless of its position in the volume.
     results_backend : 'native' or 'hdf5' or None (default).
-        Specifies the way results are provided back from a processing block
-        in case of nproc > 1. 'native' is pickling/unpickling of results by
-        pprocess, while 'hdf5' would use h5save/h5load functionality.
-        'hdf5' might be more time and memory efficient in some cases.
+        Specifies the way results are provided back from a processing block.
+        'native' keeps results in memory, while 'hdf5' would use
+        h5save/h5load functionality. 'hdf5' might be more time and memory
+        efficient in some cases.
         If None, then 'hdf5' if used if available, else 'native'.
     tmp_prefix : str, optional
         If specified -- serves as a prefix for temporary files storage
@@ -515,28 +514,14 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
     srcs_order = [source_surf_nodes[node] for node in visitorder]
     src_trg_nodes = [(src, src2intermediate[src]) for src in srcs_order]
 
-    if nproc is not None and nproc > 1 and not externals.exists('pprocess'):
-        raise RuntimeError("The 'pprocess' module is required for "
-                           "multiprocess searchlights. Please either "
-                           "install python-pprocess, or reduce `nproc` "
-                           "to 1 (got nproc=%i) or set to default None"
-                           % nproc)
+    if nproc is not None and nproc > 1:
+        raise NotImplementedError(
+            "Parallel execution via pprocess is no longer supported. "
+            "Please use nproc=1 (or None). Consider using joblib or "
+            "similar for parallelization. Got nproc=%i" % nproc)
 
     if nproc is None:
-        if externals.exists('pprocess'):
-            try:
-                import pprocess
-                nproc = pprocess.get_number_of_cores() or 1
-                if _debug() :
-                    debug("SVS", 'Using pprocess with %d cores' % nproc)
-            except:
-                if _debug():
-                    debug("SVS", 'pprocess not available')
-
-        if nproc is None:
-            # importing pprocess failed - so use a single core
-            nproc = 1
-            debug("SVS", 'Using %d cores - pprocess not available' % nproc)
+        nproc = 1
 
     # get the the voxel selection parameters
     parameter_dict = vol_surf_mapping.get_parameter_dict()
@@ -551,89 +536,12 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
                                     intermediate_surf,
                                     meta=parameter_dict)
 
-    if nproc > 1:
-        if results_backend == 'hdf5':
-            externals.exists('h5py', raise_=True)
-        elif results_backend is None:
-            if externals.exists('h5py') and externals.versions['hdf5'] >= '1.8.7':
-                results_backend = 'hdf5'
-            else:
-                results_backend = 'native'
-        if _debug():
-            debug('SVS', "Using '%s' backend" % (results_backend,))
-
-        if not results_backend in ('native', 'hdf5'):
-            raise ValueError('Illegal results backend %r' % results_backend)
-
-        import pprocess
-        n_srcs = len(src_trg_nodes)
-        blocks = np.array_split(np.arange(n_srcs), nproc)
-
-        results = pprocess.Map(limit=nproc)
-        reducer = results.manage(pprocess.MakeParallel(_reduce_mapper))
-
-        if __debug__:
-            debug('SVS', "Starting %d child processes", (len(blocks),))
-
-        for i, block in enumerate(blocks):
-            empty_dict = init_output()
-
-            src_trg = []
-            for idx in block:
-                src_trg.append(src_trg_nodes[idx])
-
-            if _debug():
-                debug('SVS', "  starting block %d/%d: %d centers" %
-                            (i + 1, nproc, len(src_trg)), cr=True)
-
-            reducer(empty_dict, attribute_mapper, src_trg,
-                    eta_step=eta_step, proc_id='%d' % (i + 1,),
-                    results_backend=results_backend, tmp_prefix=tmp_prefix)
-        if _debug():
-            debug('SVS', '')
-            debug('SVS', 'Started all %d child processes' % (len(blocks)))
-            tstart = time.time()
-
-        node2volume_attributes = None
-        for i, result in enumerate(results):
-            if result is None:
-                continue
-
-            if results_backend == 'hdf5':
-                result_fn = result
-                result = h5load(result_fn)
-                os.remove(result_fn)
-
-            if node2volume_attributes is None:
-                # first time we have actual results.
-                # Use as a starting point
-                node2volume_attributes = result
-                if _debug():
-                    debug('SVS', '')
-                    debug('SVS', "Merging results from %d child "
-                                 "processes using '%s' backend" %
-                                 (len(blocks), results_backend))
-            else:
-                # merge new with current data
-                node2volume_attributes.merge(result)
-            if _debug():
-                debug('SVS', "  merged result block %d/%d" % (i + 1, nproc),
-                                cr=True)
-
-        if _debug():
-            telapsed = time.time() - tstart
-            debug('SVS', "")
-            debug('SVS', 'Merged results from %d child processed - '
-                         'took %s' %
-                         (len(blocks), seconds2prettystring(telapsed)))
-
-    else:
-        empty_dict = init_output()
-        node2volume_attributes = _reduce_mapper(empty_dict,
-                                                attribute_mapper,
-                                                src_trg_nodes,
-                                                eta_step=eta_step)
-        debug('SVS', "")
+    empty_dict = init_output()
+    node2volume_attributes = _reduce_mapper(empty_dict,
+                                            attribute_mapper,
+                                            src_trg_nodes,
+                                            eta_step=eta_step)
+    debug('SVS', "")
 
     if _debug():
         if node2volume_attributes is None:
@@ -772,9 +680,8 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
         After how many searchlights an estimate should be printed of the
         remaining time until completion of all searchlights
     nproc: int or None
-        Number of parallel threads. None means as many threads as the
-        system supports. The pprocess is required for parallel threads; if
-        it cannot be used, then a single thread is used.
+        Number of processes. Currently only nproc=1 is supported.
+        None defaults to 1.
     outside_node_margin: float or None (default)
         By default nodes outside the volume are skipped; using this
         parameter allows for a marign. If this value is a float (possibly
@@ -783,10 +690,10 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
         associated voxels. If outside_node_margin is True, then a node is
         always assigned voxels regardless of its position in the volume.
     results_backend : 'native' or 'hdf5' or None (default).
-        Specifies the way results are provided back from a processing block
-        in case of nproc > 1. 'native' is pickling/unpickling of results by
-        pprocess, while 'hdf5' would use h5save/h5load functionality.
-        'hdf5' might be more time and memory efficient in some cases.
+        Specifies the way results are provided back from a processing block.
+        'native' keeps results in memory, while 'hdf5' would use
+        h5save/h5load functionality. 'hdf5' might be more time and memory
+        efficient in some cases.
         If None, then 'hdf5' if used if available, else 'native'.
     tmp_prefix : str, optional
         If specified -- serves as a prefix for temporary files storage

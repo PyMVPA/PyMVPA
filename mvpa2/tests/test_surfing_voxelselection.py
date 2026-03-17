@@ -210,14 +210,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         # four versions: array, nifti image, file name, fmri dataset
         volarr = np.ones(vol_shape)
         volimg = nb.Nifti1Image(volarr, vol_affine)
-        # There is a detected problem with elderly NumPy's (e.g. 1.6.1
-        # on precise on travis) leading to segfaults while operating
-        # on memmapped volumes being forwarded to pprocess.
-        # Thus just making it compressed volume for those cases
-        suf = '.gz' \
-            if (externals.exists('pprocess') and
-                externals.versions['numpy'] < '1.6.2') \
-            else ''
+        suf = ''
         fd, volfn = tempfile.mkstemp('vol.nii' + suf, 'test');
         os.close(fd)
         volimg.to_filename(volfn)

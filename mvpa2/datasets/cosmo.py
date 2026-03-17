@@ -965,10 +965,10 @@ class CosmoSearchlight(Searchlight):
           post-processing which needs to be done in parallel instead of serial
           aggregation in results_fx.
         results_backend : ('native', 'hdf5'), optional
-          Specifies the way results are provided back from a processing block
-          in case of nproc > 1. 'native' is pickling/unpickling of results by
-          pprocess, while 'hdf5' would use h5save/h5load functionality.
-          'hdf5' might be more time and memory efficient in some cases.
+          Specifies the way results are provided back from a processing block.
+          'native' keeps results in memory, while 'hdf5' would use
+          h5save/h5load functionality. 'hdf5' might be more time and memory
+          efficient in some cases.
         results_fx : callable, optional
           Function to process/combine results of each searchlight
           block run.  By default it would simply append them all into

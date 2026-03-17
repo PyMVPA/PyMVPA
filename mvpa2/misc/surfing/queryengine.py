@@ -744,9 +744,8 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
         Feature attributes from a dataset that should be returned if the
         queryengine is called with a dataset.
     nproc: int or None
-        Number of parallel threads. None means as many threads as the
-        system supports. The pprocess is required for parallel threads; if
-        it cannot be used, then a single thread is used.
+        Number of processes. Currently only nproc=1 is supported.
+        None defaults to 1.
     outside_node_margin: float or None (default)
         By default nodes outside the volume are skipped; using this
         parameters allows for a marign. If this value is a float (possibly
@@ -755,10 +754,10 @@ def disc_surface_queryengine(radius, volume, white_surf, pial_surf,
         associated voxels. If outside_node_margin is True, then a node is
         always assigned voxels regardless of its position in the volume.
     results_backend : 'native' or 'hdf5' or None (default).
-        Specifies the way results are provided back from a processing block
-        in case of nproc > 1. 'native' is pickling/unpickling of results by
-        pprocess, while 'hdf5' would use h5save/h5load functionality.
-        'hdf5' might be more time and memory efficient in some cases.
+        Specifies the way results are provided back from a processing block.
+        'native' keeps results in memory, while 'hdf5' would use
+        h5save/h5load functionality. 'hdf5' might be more time and memory
+        efficient in some cases.
         If None, then 'hdf5' if used if available, else 'native'.
     tmp_prefix : str, optional
         If specified -- serves as a prefix for temporary files storage

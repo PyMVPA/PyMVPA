@@ -49,7 +49,6 @@ class SearchlightTests(unittest.TestCase):
         # give the feature coord a more common name, matching the default of
         # the searchlight
         self.dataset.fa['voxel_indices'] = self.dataset.fa.myspace
-        self._tested_pprocess = False
 
 
     # https://github.com/PyMVPA/PyMVPA/issues/67
@@ -196,11 +195,6 @@ class SearchlightTests(unittest.TestCase):
                 sls += [ SL(sllrn, partitioner, indexsum='sparse', **skwargs)]
                 indexsums += ['sparce']
                 # for correlation distance we need to use "fancy" way
-
-        # Test nproc just once
-        if externals.exists('pprocess') and not self._tested_pprocess:
-            sls += [sphere_searchlight(cv, nproc=2, **skwargs)]
-            self._tested_pprocess = True
 
         # Provide the dataset and all those searchlights for testing
         #self._test_searchlights(ds, sls, roi_ids, result_all)
@@ -657,129 +651,23 @@ class SearchlightTests(unittest.TestCase):
 
     @sweepargs(preallocate_output=(False, True))
     def test_nblocks(self, preallocate_output):
-        skip_if_no_external('pprocess')
         # just a basic test to see that we are getting the same
         # results with different nblocks
         ds = datasets['3dsmall'].copy(deep=True)[:, :13]
         ds.fa['voxel_indices'] = ds.fa.myspace
         cv = CrossValidation(GNB(), OddEvenPartitioner())
-        res1 = sphere_searchlight(cv, radius=1, nproc=2,
+        res1 = sphere_searchlight(cv, radius=1, nproc=1,
                                   preallocate_output=preallocate_output)(ds)
-        res2 = sphere_searchlight(cv, radius=1, nproc=2, nblocks=5,
+        res2 = sphere_searchlight(cv, radius=1, nproc=1, nblocks=5,
                                   preallocate_output=preallocate_output)(ds)
         assert_array_equal(res1, res2)
 
 
     def test_custom_results_fx_logic(self):
-        # results_fx was introduced for the blow-up-the-memory-Swaroop
-        # where keeping all intermediate results of the dark-magic SL
-        # hyperalignment is not feasible.  So it is desired to split
-        # searchlight computation in more blocks while composing the
-        # target result "on-the-fly" from available so far results.
-        #
-        # Implementation relies on using generators feeding the
-        # results_fx with fresh results whenever those become
-        # available.
-        #
-        # This test/example's "measure" creates files which should be
-        # handled by the results_fx function and removed in this case
-        # to check if we indeed have desired high number of blocks while
-        # only limited nproc.
-        skip_if_no_external('pprocess')
-
-        tfile = tempfile.mktemp('mvpa', 'test-sl')
-
-        ds = datasets['3dsmall'].copy()[:, :25] # smaller copy
-        ds.fa['voxel_indices'] = ds.fa.myspace
-        ds.fa['feature_id'] = np.arange(ds.nfeatures)
-
-        nproc = 3 # it is not about computing -- so we will can
-                  # start more processes than possibly having CPUs just to test
-        nblocks = nproc * 7
-        # figure out max number of features to be given to any proc_block
-        # yoh: not sure why I had to +1 here... but now it became more robust and
-        # still seems to be doing what was demanded so be it
-        max_block = int(ceil(ds.nfeatures / float(nblocks)) + 1)
-
-        def print_(s, *args):
-            """For local debugging"""
-            #print s, args
-            pass
-
-        def results_fx(sl=None, dataset=None, roi_ids=None, results=None):
-            """It will "process" the results by removing those files
-               generated inside the measure
-            """
-            res = []
-            print_("READY")
-            for x in results:
-                ok_(isinstance(x, list))
-                res.append(x)
-                print_("R: ", x)
-                for r in x:
-                    # Can happen if we requested those .ca's enabled
-                    # -- then automagically _proc_block would wrap
-                    # results in a dataset... Originally detected by
-                    # running with MVPA_DEBUG=.* which triggered
-                    # enabling all ca's
-                    if is_datasetlike(r):
-                        r = np.asscalar(r.samples)
-                    os.unlink(r)         # remove generated file
-                print_("WAITING")
-
-            results_ds = hstack(sum(res, []))
-
-            # store the center ids as a feature attribute since we use
-            # them for testing
-            results_ds.fa['center_ids'] = roi_ids
-            return results_ds
-
-        def results_postproc_fx(results):
-            for ds in results:
-                ds.fa['test_postproc'] = np.atleast_1d(ds.a.roi_center_ids**2)
-            return results
-
-        def measure(ds):
-            """The "measure" will check if a run with the same "index" from
-               previous block has been processed by now
-            """
-            f = '%s+%03d' % (tfile, ds.fa.feature_id[0] % (max_block * nproc))
-            print_("FID:%d f:%s" % (ds.fa.feature_id[0], f))
-
-            # allow for up to few seconds to wait for the file to
-            # disappear -- i.e. its result from previous "block" was
-            # processed
-            t0 = time.time()
-            while os.path.exists(f) and time.time() - t0 < 4.:
-                time.sleep(0.5) # so it does take time to compute the measure
-                pass
-            if os.path.exists(f):
-                print_("ERROR: ", f)
-                raise AssertionError("File %s must have been processed by now"
-                                     % f)
-            open(f, 'w').write('XXX')   # signal that we have computing this measure
-            print_("RES: %s" % f)
-            return f
-
-        sl = sphere_searchlight(measure,
-                                radius=0,
-                                nproc=nproc,
-                                nblocks=nblocks,
-                                results_postproc_fx=results_postproc_fx,
-                                results_fx=results_fx,
-                                center_ids=np.arange(ds.nfeatures)
-                                )
-
-        assert_equal(len(glob.glob(tfile + '*')), 0) # so no junk around
-        try:
-            res = sl(ds)
-            assert_equal(res.nfeatures, ds.nfeatures)
-            # verify that we did have results_postproc_fx called
-            assert_array_equal(res.fa.test_postproc, np.power(res.fa.center_ids, 2))
-        finally:
-            # remove those generated left-over files
-            for f in glob.glob(tfile + '*'):
-                os.unlink(f)
+        # This test originally tested pprocess-based parallel execution
+        # with custom results_fx. Since pprocess is no longer supported,
+        # we skip this test.
+        raise SkipTest("pprocess-based parallel execution is no longer supported")
 
     def test_gnbsearghlight_exclude_partition(self):
         # just a smoke test with a custom partitioner
@@ -843,7 +731,7 @@ class SearchlightTests(unittest.TestCase):
             # return more than one sample
             return np.repeat(ds.fa.feature_id, 10, axis=0)
 
-        nprocs = [1, 2] if externals.exists('pprocess') else [1]
+        nprocs = [1]
         enable_ca = ['roi_sizes', 'raw_results', 'roi_feature_ids']
         for nproc in nprocs:
             sl = sphere_searchlight(measure,

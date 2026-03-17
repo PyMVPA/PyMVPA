@@ -234,7 +234,7 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         projs = list()
         # run the algorithm with all combinations of the two major parameters
         # for projection calculation.
-        for kwargs in [{'combine_neighbormappers': True, 'nproc': 1 + int(externals.exists('pprocess'))},
+        for kwargs in [{'combine_neighbormappers': True, 'nproc': 1},
                        {'combine_neighbormappers': True, 'dtype': 'float64', 'compute_recon': True},
                        {'combine_neighbormappers': True, 'exclude_from_model': [2, 4]},
                        {'combine_neighbormappers': False},
