@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Tests for the dataset implementation'''
-from past.builtins import cmp
 from past.utils import old_div
 
 from mvpa2.testing import *

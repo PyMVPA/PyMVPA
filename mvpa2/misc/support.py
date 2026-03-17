@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Support function -- little helpers in everyday life"""
 
-from past.builtins import cmp
 __docformat__ = 'restructuredtext'
 
 from past.utils import old_div

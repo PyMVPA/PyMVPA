@@ -9,7 +9,6 @@
 """FSL atlases interfaces
 
 """
-from past.builtins import cmp
 
 from mvpa2.base import externals
 
