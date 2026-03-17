@@ -15,8 +15,8 @@ mvpa2.clfs module contains various classifiers
 :group Base: base
 :group Meta Classifiers: meta
 :group Specific Implementations: knn svm _svmbase plr ridge smlr libsmlrc gpr blr
-:group External Interfaces: lars libsvmc sg
-:group Utilities: transerror model_selector stats kernel distance
+:group External Interfaces: lars libsvmc
+:group Utilities: transerror stats kernel distance
 :group Warehouse of Classifiers: warehouse
 """
 

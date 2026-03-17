@@ -37,31 +37,6 @@ class GPRTests(unittest.TestCase):
     def test_linear(self):
         pass
 
-    def _test_gpr_model_selection(self):  # pragma: no cover
-        """Smoke test for running model selection while getting GPRWeights
-
-        TODO: DISABLED because setting of hyperparameters was not adopted for 0.6 (yet)
-        """
-        if not externals.exists('openopt'):
-            return
-        amap = AttributeMap()           # we would need to pass numbers into the GPR
-        dataset = datasets['uni2small'].copy() #data_generators.linear1d_gaussian_noise()
-        dataset.targets = amap.to_numeric(dataset.targets).astype(float)
-        k = GeneralizedLinearKernel()
-        clf = GPR(k, enable_ca=['log_marginal_likelihood'])
-        sa = clf.get_sensitivity_analyzer() # should be regular weights
-        sa_ms = clf.get_sensitivity_analyzer(flavor='model_select') # with model selection
-        def prints():
-            print clf.ca.log_marginal_likelihood, clf.kernel.Sigma_p, clf.kernel.sigma_0
-
-        sa(dataset)
-        lml = clf.ca.log_marginal_likelihood
-
-        sa_ms(dataset)
-        lml_ms = clf.ca.log_marginal_likelihood
-
-        self.assertTrue(lml_ms > lml)
-
 
 
 

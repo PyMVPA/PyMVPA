@@ -165,10 +165,6 @@ class GPR(Classifier):
         else:
             self.__tags__ += ['non-linear']
 
-        if externals.exists('openopt') \
-               and not 'has_sensitivity' in self.__tags__:
-            self.__tags__ += ['has_sensitivity']
-
         # No need to initialize conditional attributes. Unless they got set
         # they would raise an exception self.predicted_variances =
         # None self.log_marginal_likelihood = None
@@ -279,35 +275,17 @@ class GPR(Classifier):
         ----------
         flavor : str
           What sensitivity to provide. Valid values are
-          'linear', 'model_select', 'auto'.
-          In case of 'auto' selects 'linear' for linear kernel
-          and 'model_select' for the rest. 'linear' corresponds to
-          GPRLinearWeights and 'model_select' to GRPWeights
+          'linear' and 'auto'. 'auto' selects 'linear'.
+          'linear' corresponds to GPRLinearWeights.
         """
-        # XXX The following two lines does not work since
-        # self.__kernel is instance of LinearKernel and not
-        # just LinearKernel. How to fix?
-        # YYY yoh is not sure what is the problem... LinearKernel is actually
-        #     kernel.LinearKernel so everything shoudl be ok
         if flavor == 'auto':
-            flavor = ('model_select', 'linear')\
-                     [int(isinstance(self.__kernel, GeneralizedLinearKernel)
-                          or
-                          isinstance(self.__kernel, LinearKernel))]
+            flavor = 'linear'
             if __debug__:
                 debug("GPR", "Returning '%s' sensitivity analyzer" % flavor)
 
         # Return proper sensitivity
         if flavor == 'linear':
             return GPRLinearWeights(self, **kwargs)
-        elif flavor == 'model_select':
-            # sanity check
-            if not ('has_sensitivity' in self.__tags__):
-                raise ValueError(
-                      "model_select flavor is not available probably "
-                      "due to not available 'openopt' module"
-                )
-            return GPRWeights(self, **kwargs)
         else:
             raise ValueError("Flavor %s is not recognized" % flavor)
 
@@ -571,64 +549,4 @@ class GPRLinearWeights(Sensitivity):
                             Ndot(Kyinv,
                                   Ndot(train_fv, Sigma_p)))))
         return Dataset(np.atleast_2d(weights))
-
-
-if externals.exists('openopt'):
-
-    from mvpa2.clfs.model_selector import ModelSelector
-
-    class GPRWeights(Sensitivity):
-        """`SensitivityAnalyzer` that reports the weights GPR trained
-        on a given `Dataset`.
-        """
-
-        _LEGAL_CLFS = [ GPR ]
-
-        def _call(self, ds_):
-            """Extract weights from GPR
-
-            .. note:
-              Input dataset is not actually used. New dataset is
-              constructed from what is known to the classifier
-            """
-
-            clf = self.clf
-            # normalize data:
-            clf._train_labels = (clf._train_labels - clf._train_labels.mean()) \
-                                / clf._train_labels.std()
-            # clf._train_fv = (clf._train_fv-clf._train_fv.mean(0)) \
-            #                  /clf._train_fv.std(0)
-            ds = dataset_wizard(samples=clf._train_fv, targets=clf._train_labels)
-            clf.ca.enable("log_marginal_likelihood")
-            ms = ModelSelector(clf, ds)
-            # Note that some kernels does not have gradient yet!
-            # XXX Make it initialize to clf's current hyperparameter values
-            #     or may be add ability to specify starting points in the constructor
-            sigma_noise_initial = 1.0e-5
-            sigma_f_initial = 1.0
-            length_scale_initial = np.ones(ds.nfeatures)*1.0e4
-            # length_scale_initial = np.random.rand(ds.nfeatures)*1.0e4
-            hyp_initial_guess = np.hstack([sigma_noise_initial,
-                                          sigma_f_initial,
-                                          length_scale_initial])
-            fixedHypers = array([0]*hyp_initial_guess.size, dtype=bool)
-            fixedHypers = None
-            problem =  ms.max_log_marginal_likelihood(
-                hyp_initial_guess=hyp_initial_guess,
-                optimization_algorithm="scipy_lbfgsb",
-                ftol=1.0e-3, fixedHypers=fixedHypers,
-                use_gradient=True, logscale=True)
-            if __debug__ and 'GPR_WEIGHTS' in debug.active:
-                problem.iprint = 1
-            lml = ms.solve()
-            weights = 1.0/ms.hyperparameters_best[2:] # weight = 1/length_scale
-            if __debug__:
-                debug("GPR",
-                      "%s, train: shape %s, labels %s, min:max %g:%g, "
-                      "sigma_noise %g, sigma_f %g" %
-                      (clf, clf._train_fv.shape, np.unique(clf._train_labels),
-                       clf._train_fv.min(), clf._train_fv.max(),
-                       ms.hyperparameters_best[0], ms.hyperparameters_best[1]))
-
-            return weights
 

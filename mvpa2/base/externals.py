@@ -329,16 +329,6 @@ def __assign_ipython_version():
         pass
     versions['ipython'] = SmartVersion(ipy_version)
 
-def __check_openopt():
-    m = None
-    try:
-        import openopt as m
-    except ImportError:
-        import scikits.openopt as m
-    versions['openopt'] = m.__version__
-    return True
-
-
 def _set_matplotlib_backend():
     """Check if we have custom backend to set and it is different
     from current one
@@ -526,7 +516,6 @@ _KNOWN = {'libsvm': 'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node'
           'matplotlib': "__assign_matplotlib_version()",
           'pylab': "__check_pylab()",
           'pylab plottable': "__check_pylab_plottable()",
-          'openopt': "__check_openopt()",
           'skl': "__assign_skl_version()",
           'hcluster': "import hcluster as __",
           'griddata': "__check_griddata()",
