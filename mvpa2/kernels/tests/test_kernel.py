@@ -20,11 +20,6 @@ from mvpa2.clfs.distance import squared_euclidean_distance, \
 
 import mvpa2.kernels.np as npK
 from mvpa2.kernels.base import PrecomputedKernel, CachedKernel
-try:
-    import mvpa2.kernels.sg as sgK
-    _has_sg = exists('shogun')
-except RuntimeError:
-    _has_sg = False
 
 
 class KernelTests(unittest.TestCase):
@@ -169,95 +164,6 @@ class KernelTests(unittest.TestCase):
         self.assertTrue(ck._recomputed,
                         "CachedKernel did not recompute old data which had\n" + \
                         "previously been computed, but had the cache overriden")
-
-    if _has_sg:
-        # Unit tests which require shogun kernels
-        # Note - there is a loss of precision from double to float32 in SG
-        # Not clear if this is just for CustomKernels as there are some
-        # remaining innaccuracies in others, but this might be due to other
-        # sources of noise.  In all cases float32 should be identical
-
-        @reseed_rng()
-        def test_sg_conversions(self):
-            nk = PrecomputedKernel(matrix=np.random.randn(50, 50))
-            nk.compute()
-
-            skip_if_no_external('shogun',
-                                ver_dep='shogun:rev', min_version=4455)
-            sk = nk.as_sg()
-            sk.compute()
-            # CustomKernels interally store as float32 ??
-            self.assertTrue((nk._k.astype('float32') == \
-                             sk.as_raw_np().astype('float32')).all(),
-                            'Failure converting arrays between NP as SG')
-
-        @reseed_rng()
-        def test_linear_sg(self):
-            d1 = np.random.randn(105, 32)
-            d2 = np.random.randn(41, 32)
-
-            nk = npK.LinearKernel()
-            sk = sgK.LinearSGKernel()
-            nk.compute(d1, d2)
-            sk.compute(d1, d2)
-
-            self.kernel_equiv(nk, sk)
-
-        @reseed_rng()
-        @labile(5, 1)
-        def test_poly_sg(self):
-            d1 = np.random.randn(105, 32)
-            d2 = np.random.randn(41, 32)
-            sk = sgK.PolySGKernel()
-            nk = npK.PolyKernel(coef0=1)
-            ordervals = [1, 2, 3, 5, 7]
-            for p in ordervals:
-                sk.params.degree = p
-                nk.params.degree = p
-                sk.compute(d1, d2)
-                nk.compute(d1, d2)
-
-                self.kernel_equiv(nk, sk)
-
-        @reseed_rng()
-        def test_rbf_sg(self):
-            d1 = np.random.randn(105, 32)
-            d2 = np.random.randn(41, 32)
-            sk = sgK.RbfSGKernel()
-            nk = npK.RbfKernel()
-            sigmavals = np.logspace(-2, 5, num=10)
-            for s in sigmavals:
-                sk.params.sigma = s
-                nk.params.sigma = s
-                sk.compute(d1, d2)
-                nk.compute(d1, d2)
-
-                self.kernel_equiv(nk, sk)
-
-        @reseed_rng()
-        def test_custom_sg(self):
-            skip_if_no_external('shogun')
-            lk = sgK.LinearSGKernel()
-            cl = sgK.CustomSGKernel(sgK.sgk.LinearKernel)
-            poly = sgK.PolySGKernel()
-            poly_params = [('order', 2),
-                           ('inhomogenous', True)]
-            if not exists('sg ge 0.6.5'):
-                poly_params += [ ('use_normalization', False) ]
-
-            custom = sgK.CustomSGKernel(sgK.sgk.PolyKernel,
-                                        kernel_params=poly_params)
-
-            d = np.random.randn(253, 52)
-            lk.compute(d)
-            cl.compute(d)
-            poly.compute(d)
-            custom.compute(d)
-
-            self.assertTrue(np.all(lk.as_np()._k == cl.as_np()._k),
-                            'CustomSGKernel does not agree with Linear')
-            self.assertTrue(np.all(poly.as_np()._k == custom.as_np()._k),
-                            'CustomSGKernel does not agree with Poly')
 
     # Older kernel stuff (ie not mvpa2.kernel) - perhaps refactor?
     def test_euclid_dist(self):

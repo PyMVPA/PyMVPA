@@ -168,8 +168,8 @@ class VerboseOutputTest(unittest.TestCase):
             debug.active = ['S.*', 'CLF']
             self.assertEqual(set(debug.active),
                                  set([x for x in list(debug.registered.keys()) if x.startswith('S')]+['CLF']))
-            debug.active = ['SG', 'CLF']
-            self.assertEqual(set(debug.active), set(['SG', 'CLF']),
+            debug.active = ['CM', 'CLF']
+            self.assertEqual(set(debug.active), set(['CM', 'CLF']),
                                  msg="debug should do full line matching")
 
             debug.offsetbydepth = True

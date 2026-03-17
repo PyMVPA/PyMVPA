@@ -110,7 +110,7 @@ def test_multiclass_ties(clf):
     #       tests. For visibility decided to skip them instead of just
     #       exclusion and skipping only here to possibly catch crashes
     #       which might happen before
-    if len(set(('libsvm', 'sg', 'skl', 'gpr', 'blr')
+    if len(set(('libsvm', 'skl', 'gpr', 'blr')
                ).intersection(clf.__tags__)):
         raise SkipTest("Skipped %s because it is known to fail")
 

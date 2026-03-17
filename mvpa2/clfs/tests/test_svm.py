@@ -176,11 +176,6 @@ class SVMTests(unittest.TestCase):
             self.assertRaises(TypeError, LinearNuSVMC, C=2.3)
             self.assertRaises(TypeError, LinearCSVMC, nu=2.3)
 
-        if externals.exists('shogun'):
-            self.assertRaises(TypeError, sg.SVM, C=1.0, nu=2.3)
-            self.assertRaises(TypeError, sg.SVM, C=10, kernel_type='RBF',
-                                  coef0=3)
-
     @sweepargs(clf=clfswh['svm', 'linear', '!meta', 'C_SVC'][:1])
     def test_C_on_int_dataset(self, clf):
         a = np.arange(8, dtype=np.int16).reshape(4,-1)

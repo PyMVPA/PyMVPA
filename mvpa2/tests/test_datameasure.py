@@ -304,7 +304,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
     #     to be explicitely passed to the slave classifier's
     #     getSengetSensitivityAnalyzer
     # Note: only libsvm interface supports split_weights
-    @sweepargs(svm=clfswh['linear', 'svm', 'libsvm', '!sg', '!meta'])
+    @sweepargs(svm=clfswh['linear', 'svm', 'libsvm', '!meta'])
     def test_linear_svm_weights_per_class(self, svm):
         # assumming many defaults it is as simple as
         kwargs = dict(enable_ca=["sensitivities"])

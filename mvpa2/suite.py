@@ -97,7 +97,7 @@ from mvpa2.clfs.blr import *
 from mvpa2.clfs.gnb import *
 from mvpa2.clfs.stats import *
 from mvpa2.clfs.similarity import *
-if externals.exists('libsvm') or externals.exists('shogun'):
+if externals.exists('libsvm'):
     __sdebug('clfs svm')
     from mvpa2.clfs.svm import *
 from mvpa2.clfs.transerror import *
@@ -110,8 +110,6 @@ from mvpa2.kernels.base import *
 from mvpa2.kernels.np import *
 if externals.exists('libsvm'):
     from mvpa2.kernels.libsvm import *
-if externals.exists('shogun'):
-    from mvpa2.kernels.sg import *
 
 __sdebug('datasets')
 from mvpa2 import datasets

@@ -8,15 +8,11 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Importer for the available SVM and SVR machines.
 
-Multiple external libraries implementing Support Vector Machines
-(Classification) and Regressions are available: LIBSVM, and shogun.
+LIBSVM is used as the SVM implementation library.
 This module is just a helper to provide default implementation for SVM
-depending on the availability of external libraries. By default LIBSVM
-implementation is chosen by default, but in any case both libraries
-are available through importing from this module::
+depending on the availability of external libraries::
 
- > from mvpa2.clfs.svm import sg, libsvm
- > help(sg.SVM)
+ > from mvpa2.clfs.svm import libsvm
  > help(libsvm.SVM)
 
 Please refer to particular interface for more documentation about
@@ -37,45 +33,14 @@ SVM = None
 _NuSVM = None
 
 
-# TODO: handle choices within cfg
-_VALID_BACKENDS = ('libsvm', 'shogun', 'sg')
-_svm_backend = cfg.get('svm', 'backend', default='libsvm').lower()
-if _svm_backend == 'shogun':
-    _svm_backend = 'sg'
-
-if not _svm_backend in _VALID_BACKENDS:
-    raise ValueError('Configuration option svm.backend got invalid value %s.' \
-          ' Valid choices are %s' % (_svm_backend, _VALID_BACKENDS))
-
-if __debug__:
-    debug('SVM', 'SVM backend is %s' % _svm_backend)
-
-if externals.exists('shogun'):
-    from mvpa2.clfs import sg
-    SVM = sg.SVM
-    # Somewhat cruel hack -- define "SVM" family of kernels as binds
-    # to specific default SVM implementation
-    # XXX might need RF
-    from mvpa2.kernels import sg as ksg
-    LinearSVMKernel = ksg.LinearSGKernel
-    RbfSVMKernel = ksg.RbfSGKernel
-
-    #if not 'LinearCSVMC' in locals():
-    #    from mvpa2.clfs.sg.svm import *
-
 if externals.exists('libsvm'):
     # By default for now we want simply to import all SVMs from libsvm
     from mvpa2.clfs.libsvmc import svm as libsvm
     _NuSVM = libsvm.SVM
-    if _svm_backend == 'libsvm' or SVM is None:
-        if __debug__ and _svm_backend != 'libsvm' and SVM is None:
-            debug('SVM', 'SVM backend %s was not found, so using libsvm'
-                  % _svm_backend)
-        SVM = libsvm.SVM
-        from mvpa2.kernels import libsvm as kls
-        LinearSVMKernel = kls.LinearLSKernel
-        RbfSVMKernel = kls.RbfLSKernel
-    #from mvpa2.clfs.libsvm.svm import *
+    SVM = libsvm.SVM
+    from mvpa2.kernels import libsvm as kls
+    LinearSVMKernel = kls.LinearLSKernel
+    RbfSVMKernel = kls.RbfLSKernel
 
 if SVM is None:
     warning("None of SVM implementation libraries was found")

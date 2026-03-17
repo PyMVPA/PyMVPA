@@ -38,8 +38,7 @@ class Kernel(ClassWithCollections):
 
     Each instance has an internal representation self._k which might be of
     a different form depending on the intended use.  Some kernel types should
-    be translatable to other representations where possible, e.g., between
-    Numpy and Shogun-based kernels.
+    be translatable to other representations where possible.
 
     This class should not be used directly, but rather use a subclass which
     enforces a consistent internal representation, such as a NumpyKernel.
@@ -63,7 +62,7 @@ class Kernel(ClassWithCollections):
 
     Other kernel types should implement similar mechanisms to convert numpy
     arrays to their own internal representations.  See `add_conversion` for a
-    helper method, and examples in mvpa2.kernels.sg
+    helper method.
 
     Assuming such `Kernel.as_*` methods exist, all kernel types should be
     seamlessly convertable amongst each other.
@@ -78,11 +77,11 @@ class Kernel(ClassWithCollections):
 
     ::
 
-      k = SomeShogunKernel()
+      k = SomeKernel()
       k.compute(data1, data2)
 
       # Incorrect and unsupported use
-      k2 = k.as_cuda()
+      k2 = k.as_other()
       k2.compute(data3, data4) # Would require 'functional translation' to the new
                                # backend, which is impossible
 

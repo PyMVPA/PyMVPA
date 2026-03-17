@@ -47,8 +47,8 @@ class _SVM(Classifier):
       kernel, and sensitivity analyzer e.g.::
 
         _KERNELS = {
-             'linear': (shogun.Kernel.LinearKernel, (), LinearSVMWeights),
-             'rbf' :   (shogun.Kernel.GaussianKernel, ('gamma',), None),
+             'linear': (LinearKernel, (), LinearSVMWeights),
+             'rbf' :   (GaussianKernel, ('gamma',), None),
              ...
              }
 
@@ -90,7 +90,7 @@ class _SVM(Classifier):
         'tube_epsilon': Parameter(0.01,
                   doc='Epsilon in epsilon-insensitive loss function of '
                       'epsilon-SVM regression (SVR)'),
-        'tau': Parameter(1e-6, doc='TAU parameter of KRR regression in shogun'),
+        'tau': Parameter(1e-6, doc='TAU parameter of KRR regression'),
         'probability': Parameter(0,
                   doc='Flag to signal either probability estimate is obtained '
                       'within LIBSVM'),

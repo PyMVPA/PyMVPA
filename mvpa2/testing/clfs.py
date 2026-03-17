@@ -37,13 +37,10 @@ __all__ = ['clfswh', 'regrswh', 'Classifier', 'SameSignClassifier',
            'sample_clf_reg', 'cfg', 'SillySensitivityAnalyzer']
 
 # if have ANY svm implementation
-if externals.exists('libsvm') or externals.exists('shogun'):
+if externals.exists('libsvm'):
     from mvpa2.clfs.svm import *
     __all__ += ['LinearCSVMC']
-    if externals.exists('libsvm'):
-        __all__ += ['libsvm', 'LinearNuSVMC']
-    if externals.exists('shogun'):
-        __all__ += ['sg']
+    __all__ += ['libsvm', 'LinearNuSVMC']
 
 
 class SillySensitivityAnalyzer(FeaturewiseMeasure):
@@ -69,13 +66,8 @@ class SillySensitivityAnalyzer(FeaturewiseMeasure):
 # some higher level creations -- chosen so it is the fastest universal
 # one. Also it should not punch state.py in the face how it is
 # happening with kNN...
-sample_clf_lin = SMLR(lm=0.1)#sg.svm.LinearCSVMC(svm_impl='libsvm')
+sample_clf_lin = SMLR(lm=0.1)
 
-#if externals.exists('shogun'):
-#    sample_clf_nl = sg.SVM(kernel_type='RBF', svm_impl='libsvm')
-#else:
-#classical one which was used for a while
-#and surprisingly it is not bad at all for the unittests
 sample_clf_nl = kNN(k=5)
 
 # and also a regression-based classifier

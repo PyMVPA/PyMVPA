@@ -228,7 +228,7 @@ def skip_if_no_external(dep, ver_dep=None, min_version=None, max_version=None):
     dep : string
       Name of the external
     ver_dep : string, optional
-      If for version checking use some different key, e.g. shogun:rev.
+      If for version checking use some different key.
       If not specified, `dep` will be used.
     min_version : None or string or tuple
       Minimal required version

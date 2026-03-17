@@ -196,44 +196,6 @@ def __check_libsvm_verbosity_control():
             "Provided version of libsvm has no way to control "
             "its level of verbosity")
 
-def __assign_shogun_version():
-    """Assign shogun versions
-    """
-    if 'shogun' in versions:
-        return
-    import shogun.Classifier as __sc
-    versions['shogun:rev'] = __sc.Version_get_version_revision()
-    ver = __sc.Version_get_version_release().lstrip('v')
-    versions['shogun:full'] = ver
-    if '_' in ver:
-        ver = ver[:ver.index('_')]
-    versions['shogun'] = ver
-
-
-def __check_shogun(bottom_version, custom_versions=None):
-    """Check if version of shogun is high enough (or custom known) to
-    be enabled in the testsuite
-
-    Parameters
-    ----------
-    bottom_version : int
-      Bottom version which must be satisfied
-    custom_versions : list of int
-      Arbitrary list of versions which could got patched for
-      a specific issue
-    """
-    if custom_versions is None:
-        custom_versions = []
-    import shogun.Classifier as __sc
-    ver = __sc.Version_get_version_revision()
-    __assign_shogun_version()
-    if (ver in custom_versions) or (ver >= bottom_version):
-        return True
-    else:
-        raise ImportError(
-            'Version %s is smaller than needed %s'
-            % (ver, bottom_version))
-
 def __check_nipy_neurospin():
     from nipy.neurospin.utils import emp_nul
 
@@ -549,12 +511,6 @@ _KNOWN = {'libsvm': 'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node'
           'nibabel': '__assign_nibabel_version()',
           'ctypes': '__check("ctypes")',
           'liblapack.so': "__check_liblapack_so()",
-          'shogun': '__assign_shogun_version()',
-          'shogun.krr': '__assign_shogun_version(); import shogun.Regression as __; x=__.KRR',
-          'shogun.mpd': '__assign_shogun_version(); import shogun.Classifier as __; x=__.MPDSVM',
-          'shogun.lightsvm': '__assign_shogun_version(); import shogun.Classifier as __; x=__.SVMLight',
-          'shogun.svmocas': '__assign_shogun_version(); import shogun.Classifier as __; x=__.SVMOcas',
-          'shogun.svrlight': '__assign_shogun_version(); from shogun.Regression import SVRLight as __',
           'numpy': "__assign_numpy_version()",
           'numpy_correct_unique': "__check_numpy_correct_unique()",
           'numpydoc': "import numpydoc",
@@ -586,11 +542,6 @@ _KNOWN = {'libsvm': 'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node'
           'skl': "__assign_skl_version()",
           'mdp': "__assign_mdp_version()",
           'mdp ge 2.4': "from mdp.nodes import LLENode as __",
-          'sg_fixedcachesize': "__check_shogun(3043, [2456])",
-          #  3318 corresponds to release 0.6.4
-          'sg ge 0.6.4': "__check_shogun(3318)",
-          #  3377 corresponds to release 0.6.5
-          'sg ge 0.6.5': "__check_shogun(3377)",
           'hcluster': "import hcluster as __",
           'griddata': "__check_griddata()",
           'cPickle': "import cPickle as __",
@@ -742,14 +693,6 @@ def exists(dep, force=False, raise_=False, issueWarning=None,
         cfg.set('externals', 'have ' + dep, 'no')
 
     return result
-
-# Bind functions for some versions checks
-versions._KNOWN.update({
-    'shogun': __assign_shogun_version,
-    'shogun:rev': __assign_shogun_version,
-    'shogun:full': __assign_shogun_version,
-    })
-
 
 def check_all_dependencies(force=False, verbosity=1):
     """

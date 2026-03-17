@@ -44,7 +44,7 @@ _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'multiclass', 'non-linear', 'kernel-based', 'lars',
         'regression', 'regression_based', 'random_tie_breaking',
         'non-deterministic', 'needs_population',
-        'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
+        'libsvm', 'meta', 'retrainable', 'gpr',
         'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet',
         'gnb', 'plr', 'rpy2', 'swig', 'skl', 'lda', 'qda',
         'random-forest', 'extra-trees', 'random',
@@ -248,68 +248,6 @@ if externals.exists('libsvm'):
     regrswh._known_tags.update(['EPSILON_SVR', 'NU_SVR'])
     regrswh += [libsvm.SVM(svm_impl='EPSILON_SVR', descr='libsvm epsilon-SVR'),
                 libsvm.SVM(svm_impl='NU_SVR', descr='libsvm nu-SVR')]
-
-if externals.exists('shogun'):
-    from mvpa2.clfs import sg
-    
-    from mvpa2.kernels.sg import LinearSGKernel, PolySGKernel, RbfSGKernel
-    clfswh._known_tags.update(sg.SVM._KNOWN_IMPLEMENTATIONS)
-
-    # TODO: some classifiers are not yet ready to be used out-of-the-box in
-    # PyMVPA, thus we don't populate warehouse with their instances
-    bad_classifiers = [
-        'mpd',  # was segfault, now non-training on testcases, and XOR.
-                # and was described as "for educational purposes", thus
-                # shouldn't be used for real data ;-)
-        # Should be a drop-in replacement for lightsvm
-        'gpbt', # fails to train for testAnalyzerWithSplitClassifier
-                # also 'retraining' doesn't work -- fails to generalize
-        'gmnp', # would fail with 'assertion Cache_Size > 2'
-                # if shogun < 0.6.3, also refuses to train
-        'svrlight', # fails to 'generalize' as a binary classifier
-                    # after 'binning'
-        'krr', # fails to generalize
-        'svmocas', # fails to generalize
-        'libsvr'                        # XXXregr removing regressions as classifiers
-        ]
-    if not externals.exists('sg_fixedcachesize'):
-        # would fail with 'assertion Cache_Size > 2' if shogun < 0.6.3
-        bad_classifiers.append('gnpp')
-
-    for impl in sg.SVM._KNOWN_IMPLEMENTATIONS:
-        # Uncomment the ones to disable
-        if impl in bad_classifiers:
-            continue
-        clfswh += [
-            sg.SVM(
-                descr="sg.LinSVM(C=def)/%s" % impl, svm_impl=impl),
-            sg.SVM(
-                C=-10.0, descr="sg.LinSVM(C=10*def)/%s" % impl, svm_impl=impl),
-            sg.SVM(
-                C=1.0, descr="sg.LinSVM(C=1)/%s" % impl, svm_impl=impl),
-            ]
-        if not impl in ['svmocas']:     # inherently linear only
-            clfswh += [
-                sg.SVM(kernel=RbfSGKernel(),
-                       descr="sg.RbfSVM()/%s" % impl, svm_impl=impl),
-    #            sg.SVM(kernel=RbfSGKernel(),
-    #                   descr="sg.RbfSVM(gamma=0.1)/%s"
-    #                    % impl, svm_impl=impl, gamma=0.1),
-    #           sg.SVM(descr="sg.SigmoidSVM()/%s"
-    #                   % impl, svm_impl=impl, kernel=SigmoidSGKernel(),),
-                ]
-
-    _optional_regressions = []
-    if externals.exists('shogun.krr') and externals.versions['shogun'] >= '0.9':
-        _optional_regressions += ['krr']
-    for impl in ['libsvr'] + _optional_regressions:# \
-        # XXX svrlight sucks in SG -- dont' have time to figure it out
-        #+ ([], ['svrlight'])['svrlight' in sg.SVM._KNOWN_IMPLEMENTATIONS]:
-        regrswh._known_tags.update([impl])
-        regrswh += [ sg.SVM(svm_impl=impl, descr='sg.LinSVMR()/%s' % impl),
-                   #sg.SVM(svm_impl=impl, kernel_type='RBF',
-                   #       descr='sg.RBFSVMR()/%s' % impl),
-                   ]
 
 if len(clfswh['svm', 'linear']) > 0:
     # if any SVM implementation is known, import default ones

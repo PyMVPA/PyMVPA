@@ -86,10 +86,15 @@ class TestExternals(unittest.TestCase):
         externals._KNOWN.pop('checker2')
 
     def test_absent_external_version(self):
-        # should not blow, just return None
-        if externals.exists('shogun'):
-            raise SkipTest("shogun is present, can't test")
-        self.assertEqual(externals.versions['shogun'], None)
+        # versions[key] should return None for an absent external that has
+        # a registered version function in versions._KNOWN
+        def _assign_absent_version():
+            import nonexistent_module_for_testing  # noqa: F401
+        externals.versions._KNOWN['_absent_test'] = _assign_absent_version
+        try:
+            self.assertEqual(externals.versions['_absent_test'], None)
+        finally:
+            externals.versions._KNOWN.pop('_absent_test', None)
 
 
 

@@ -301,24 +301,9 @@ if __debug__:
     debug.register('GPR', "GPR")
     debug.register('GPR_WEIGHTS', "Track progress of GPRWeights computation")
     debug.register('KRN', "Kernels module (mvpa2.kernels)")
-    debug.register('KRN_SG', "Shogun kernels module (mvpa2.kernels.sg)")
     debug.register('SAL', "Samples lookup (for cached kernels)")
     debug.register('MOD_SEL', "Model Selector (also makes openopt's iprint=0)")
     debug.register('OPENOPT', "OpenOpt toolbox verbose (iprint=1)")
-
-    debug.register('SG', "PyMVPA SG wrapping")
-    debug.register('SG_', "PyMVPA SG wrapping verbose")
-    debug.register('SG__', "PyMVPA SG wrapping debug")
-    debug.register('SG_GC', "For all entities enable highest level"
-                            " (garbage collector)")
-    debug.register('SG_LINENO', "Enable printing of the file:lineno"
-                                " where SG_ERROR occurred.")
-    debug.register('SG_SVM', "Internal shogun debug output for SVM itself")
-    debug.register('SG_FEATURES', "Internal shogun debug output for features")
-    debug.register('SG_LABELS', "Internal shogun debug output for labels")
-    debug.register('SG_KERNELS', "Internal shogun debug output for kernels")
-    debug.register('SG_PROGRESS',
-                   "Internal shogun progress bar during computation")
 
     debug.register('IOH', "IO Helpers")
     debug.register('NIML', "NeuroImaging Markup Language")
