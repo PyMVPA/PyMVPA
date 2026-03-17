@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Utility class to compute the transfer error of classifiers."""
-from __future__ import division
 
 from future import standard_library
 from functools import reduce

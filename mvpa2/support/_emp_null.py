@@ -7,7 +7,6 @@ data behaves as a standard normal under H_0.
 Author : Bertrand Thirion, 2008-2009
 """
 # For scipy import
-from __future__ import absolute_import
 
 import numpy as np
 from numpy.linalg import pinv

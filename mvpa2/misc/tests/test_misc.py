@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA misc stuff"""
-from __future__ import division
 
 from builtins import zip
 from builtins import range

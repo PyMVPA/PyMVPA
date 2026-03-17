@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Miscellaneous data generators for unittests and demos"""
-from __future__ import division
 from builtins import range
 from past.utils import old_div
 

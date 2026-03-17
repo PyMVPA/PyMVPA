@@ -9,7 +9,6 @@
 """Fixer for rdist in scipy
 """
 # For scipy import
-from __future__ import absolute_import
 
 __docformat__ = 'restructuredtext'
 

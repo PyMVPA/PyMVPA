@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Wrap the libsvm package into a very simple class interface."""
-from __future__ import absolute_import
 
 __docformat__ = 'restructuredtext'
 

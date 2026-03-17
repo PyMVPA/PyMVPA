@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Tests for the dataset implementation'''
-from __future__ import division
 from past.builtins import cmp
 from builtins import str
 from builtins import range

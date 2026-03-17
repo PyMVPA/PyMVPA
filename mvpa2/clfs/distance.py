@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Distance functions to be used in kernels and elsewhere
 """
-from __future__ import division
 
 from builtins import range
 from past.utils import old_div

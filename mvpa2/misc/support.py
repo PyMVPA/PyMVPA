@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Support function -- little helpers in everyday life"""
-from __future__ import division
 
 from past.builtins import cmp
 from builtins import map

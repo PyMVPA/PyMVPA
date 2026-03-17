@@ -12,8 +12,6 @@ Examples:
 from verbosity import verbose, debug; debug.active = [1,2,3]; debug(1, "blah")
 
 """
-from __future__ import division
-from __future__ import print_function
 
 from builtins import filter
 from builtins import str

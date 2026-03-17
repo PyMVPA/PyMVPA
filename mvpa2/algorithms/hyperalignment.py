@@ -14,7 +14,6 @@ high-dimensional model of the representational space in human ventral temporal
 cortex.*
 
 """
-from __future__ import division
 
 from builtins import zip
 from builtins import range

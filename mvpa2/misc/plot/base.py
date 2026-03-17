@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Misc. plotting helpers."""
-from __future__ import division
 
 from builtins import str
 from builtins import zip

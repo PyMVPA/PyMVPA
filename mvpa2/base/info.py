@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Provide system and PyMVPA information useful while reporting bugs
 """
-from __future__ import print_function, unicode_literals
 __docformat__ = 'restructuredtext'
 
 from future import standard_library

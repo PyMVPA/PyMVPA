@@ -8,7 +8,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Gaussian Process Regression (GPR)."""
-from __future__ import division
 
 from builtins import range
 __docformat__ = 'restructuredtext'

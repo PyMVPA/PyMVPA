@@ -10,7 +10,6 @@
 
 It was devised to provide conditional storage 
 """
-from __future__ import absolute_import
 
 from builtins import str
 from builtins import range

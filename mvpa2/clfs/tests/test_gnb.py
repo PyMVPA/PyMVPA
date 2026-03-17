@@ -7,8 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA GNB classifier"""
-from __future__ import division
-from __future__ import print_function
 
 from builtins import zip
 import numpy as np

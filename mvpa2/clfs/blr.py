@@ -9,7 +9,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Bayesian Linear Regression (BLR)."""
 
-from __future__ import print_function
 
 __docformat__ = 'restructuredtext'
 

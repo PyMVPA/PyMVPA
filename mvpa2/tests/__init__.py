@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit test interface for PyMVPA"""
-from __future__ import print_function
 
 import unittest
 from mvpa2.base import externals, warning

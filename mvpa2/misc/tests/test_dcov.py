@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for dCOV and associated functions"""
-from __future__ import division
 
 from builtins import zip
 from builtins import range

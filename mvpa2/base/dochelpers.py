@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Various helpers to improve docstrings and textual output"""
-from __future__ import division
 
 from future import standard_library
 standard_library.install_aliases()

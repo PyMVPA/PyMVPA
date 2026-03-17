@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Searchlight implementation for arbitrary measures and spaces"""
-from __future__ import division
 
 from builtins import str
 from past.utils import old_div

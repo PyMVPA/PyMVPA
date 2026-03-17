@@ -8,8 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Estimator for classifier error distributions."""
 
-from __future__ import with_statement   # Let's start using with
-from __future__ import division
 
 from builtins import zip
 from builtins import map

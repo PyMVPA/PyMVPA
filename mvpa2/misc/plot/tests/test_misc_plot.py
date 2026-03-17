@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA misc.plot"""
-from __future__ import print_function
 
 from mvpa2.testing import *
 skip_if_no_external('pylab')

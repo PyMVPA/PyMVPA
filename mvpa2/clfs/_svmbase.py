@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Common to all SVM implementations functionality. For internal use only"""
-from __future__ import division
 
 from builtins import range
 from builtins import object

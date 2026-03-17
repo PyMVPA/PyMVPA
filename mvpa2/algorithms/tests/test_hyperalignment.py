@@ -7,8 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA ..."""
-from __future__ import division
-from __future__ import print_function
 
 from builtins import zip
 from builtins import range
