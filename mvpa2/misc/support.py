@@ -11,8 +11,6 @@
 from past.builtins import cmp
 __docformat__ = 'restructuredtext'
 
-from future import standard_library
-standard_library.install_aliases()
 from past.utils import old_div
 
 import itertools

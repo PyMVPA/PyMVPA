@@ -9,9 +9,7 @@
 """Helper to verify presence of external libraries and modules
 """
 
-from future import standard_library
 from functools import reduce
-standard_library.install_aliases()
 __docformat__ = 'restructuredtext'
 
 import os

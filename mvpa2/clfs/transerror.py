@@ -8,9 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Utility class to compute the transfer error of classifiers."""
 
-from future import standard_library
 from functools import reduce
-standard_library.install_aliases()
 from past.utils import old_div
 __docformat__ = 'restructuredtext'
 

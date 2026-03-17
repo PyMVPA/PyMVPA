@@ -7,8 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA verbose and debug output"""
-from future import standard_library
-standard_library.install_aliases()
 
 import unittest, re
 from io import StringIO

@@ -7,8 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Tests for HDF5 converter'''
-from future import standard_library
-standard_library.install_aliases()
 
 import numpy as np
 

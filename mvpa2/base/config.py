@@ -8,8 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Registry-like monster"""
 
-from future import standard_library
-standard_library.install_aliases()
 __docformat__ = 'restructuredtext'
 
 from configparser import ConfigParser
