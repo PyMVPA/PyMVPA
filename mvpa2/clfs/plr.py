@@ -87,36 +87,34 @@ class PLR(Classifier):
                     "Data provided to PLR seems to be degenerate -- "
                     "0-th singular value is 0")
             S /= S[0]
-            V = np.matrix(V[:, :np.max(np.where(S > self.__reduced)) + 1])
+            V = np.asarray(V[:, :np.max(np.where(S > self.__reduced)) + 1])
             # Map Data to the subspace spanned by the eigenvectors
-            X = (X.T * V).T
+            X = (X.T @ V).T
 
         nfeatures, npatterns = X.shape
 
         # Weighting vector
-        w  = np.matrix(np.zeros( (nfeatures + 1, 1), 'd'))
+        w  = np.zeros((nfeatures + 1, 1), 'd')
         # Error for convergence criterion
-        dw = np.matrix(np.ones(  (nfeatures + 1, 1), 'd'))
+        dw = np.ones((nfeatures + 1, 1), 'd')
         # Patterns of interest in the columns
-        X = np.matrix( \
-                np.concatenate((X, np.ones((1, npatterns), 'd')), 0) \
-                )
-        p = np.matrix(np.zeros((1, npatterns), 'd'))
+        X = np.concatenate((X, np.ones((1, npatterns), 'd')), 0)
+        p = np.zeros((1, npatterns), 'd')
         # Matrix implementation of penalty term
         Lambda = self.__lm * np.identity(nfeatures + 1, 'd')
         Lambda[nfeatures, nfeatures] = 0
         # Gradient
-        g = np.matrix(np.zeros((nfeatures + 1, 1), 'd'))
+        g = np.zeros((nfeatures + 1, 1), 'd')
         # Fisher information matrix
-        H = np.matrix(np.identity(nfeatures + 1, 'd'))
+        H = np.identity(nfeatures + 1, 'd')
 
         # Optimize
         k = 0
-        while np.sum(np.ravel(dw.A ** 2)) > self.__criterion:
-            p[:, :] = self.__f(w.T * X)
-            g[:, :] = X * (d - p).T - Lambda * w
-            H[:, :] = X * np.diag(p.A1 * (1 - p.A1)) * X.T + Lambda
-            dw[:, :] = H.I * g
+        while np.sum(dw ** 2) > self.__criterion:
+            p[:, :] = self.__f(w.T @ X)
+            g[:, :] = X @ (d - p).T - Lambda @ w
+            H[:, :] = X @ np.diag(p.ravel() * (1 - p.ravel())) @ X.T + Lambda
+            dw[:, :] = np.linalg.solve(H, g)
             w += dw
             k += 1
             if k > self.__maxiter:
@@ -128,12 +126,12 @@ class PLR(Classifier):
         if __debug__:
             debug("PLR",
                   "PLR converged after %d steps. Error: %g" %
-                  (k, np.sum(np.ravel(dw.A ** 2))))
+                  (k, np.sum(dw ** 2)))
 
         if self.__reduced:
             # We have computed in rank reduced space ->
             # Project to original space
-            self.w = V * w[:-1]
+            self.w = V @ w[:-1]
             self.bias = w[-1]
         else:
             self.w = w[:-1]
@@ -153,11 +151,11 @@ class PLR(Classifier):
 
         Returns a list of class labels
         """
-        # make sure the data are in matrix form
-        data = np.matrix(np.asarray(data))
+        # make sure the data are in array form
+        data = np.asarray(data)
 
         # get the values and then predictions
-        values = np.ravel(self.__f(self.bias + data * self.w))
+        values = np.ravel(self.__f(self.bias + data @ self.w))
         predictions = (values > 0.5).astype(int)
 
         # save the state if desired, relying on State._setitem_ to
