@@ -219,7 +219,7 @@ class ParamsTests(unittest.TestCase):
 
     def test_simple_specs(self):
         p = Parameter(1.0, constraints='int')
-        self.assertTrue(p.value is 1)
+        self.assertTrue(p.value == 1)
         self.assertTrue(p.constraints is constraint_spec_map['int'])
         self.assertRaises(ValueError, Parameter, 'a', constraints='int')
         self.assertRaises(ValueError, Parameter, 1.0, constraints='str')

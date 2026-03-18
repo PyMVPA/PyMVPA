@@ -30,7 +30,7 @@ def cartesian_distance(a, b):
 
 
 def absmin_distance(a, b):
-    """Returns dinstance max(\|a-b\|)
+    r"""Returns dinstance max(\|a-b\|)
     XXX There must be better name!
     XXX Actually, why is it absmin not absmax?
 
@@ -267,7 +267,7 @@ def one_minus_correlation(X, Y):
 
 def pnorm_w_python(data1, data2=None, weight=None, p=2,
                    heuristic='auto', use_sq_euclidean=True):
-    """Weighted p-norm between two datasets (pure Python implementation)
+    r"""Weighted p-norm between two datasets (pure Python implementation)
 
     ||x - x'||_w = (\sum_{i=1...N} (w_i*|x_i - x'_i|)**p)**(1/p)
 

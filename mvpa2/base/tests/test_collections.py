@@ -159,10 +159,12 @@ def test_collections():
 
 
 class TestNodeOffDefault(Node):
+   __test__ = False
    test = ConditionalAttribute(enabled=False, doc="OffTest")
    stats = ConditionalAttribute(enabled=False, doc="OffStats")
 
 class TestNodeOnDefault(Node):
+   __test__ = False
    test = ConditionalAttribute(enabled=True, doc="OnTest")
    stats = ConditionalAttribute(enabled=True, doc="OnStats")
 

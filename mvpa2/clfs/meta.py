@@ -668,7 +668,7 @@ class CombinedClassifier(BoostedClassifier):
 
 
 class TreeClassifier(ProxyClassifier):
-    """`TreeClassifier` which allows to create hierarchy of classifiers
+    r"""`TreeClassifier` which allows to create hierarchy of classifiers
 
     Functions by grouping some labels into a single "meta-label" and training
     classifier first to separate between meta-labels.  Then

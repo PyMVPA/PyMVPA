@@ -340,7 +340,7 @@ class HollowSphere(Sphere):
 
 
 class QueryEngineInterface(object):
-    """Very basic class for `QueryEngine`\s defining the interface
+    r"""Very basic class for `QueryEngine`\s defining the interface
 
     It should not be used directly, but is used to check either we are
     working with QueryEngine instances

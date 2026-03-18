@@ -20,7 +20,7 @@ from mvpa2.base.constraints import expand_contraint_spec
 if __debug__:
     from mvpa2.base import debug
 
-_whitespace_re = re.compile('\n\s+|^\s+')
+_whitespace_re = re.compile(r'\n\s+|^\s+')
 
 __all__ = [ 'Parameter', 'KernelParameter' ]
 

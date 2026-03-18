@@ -849,7 +849,7 @@ class ConfusionMatrix(SummaryStatistics):
             #     mean(FCC)
             mean_stats = np.mean(np.array([stats[k] for k in stats_perpredict]),
                                 axis=1)
-            printed.append(['@lSummary \ Means:'] + underscores
+            printed.append([r'@lSummary \ Means:'] + underscores
                            + [_p2(stats['mean(%s)' % x])
                               for x in stats_perpredict])
 
@@ -892,7 +892,7 @@ class ConfusionMatrix(SummaryStatistics):
     def plot(self, labels=None, numbers=False, origin='upper',
              numbers_alpha=None, xlabels_vertical=True, numbers_kwargs=None,
              **kwargs):
-        """Provide presentation of confusion matrix in image
+        r"""Provide presentation of confusion matrix in image
 
         Parameters
         ----------

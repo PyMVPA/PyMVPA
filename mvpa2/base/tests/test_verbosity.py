@@ -146,7 +146,7 @@ class VerboseOutputTest(unittest.TestCase):
             self.assertRaises(ValueError, debug, 3, 'bugga')
             #Should complain about unknown debug id
             svalue = self.sout.getvalue()
-            regexp = "\[SLC\] DBG(?:{.*})?: %s" % self.msg
+            regexp = r"\[SLC\] DBG(?:{.*})?: %s" % self.msg
             rematch = re.match(regexp, svalue)
             self.assertTrue(rematch, msg="Cannot match %s with regexp %s" %
                             (svalue, regexp))

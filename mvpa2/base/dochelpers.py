@@ -104,7 +104,7 @@ def _indent(text, istr=_rst_indentstr):
     return '\n'.join(istr + s for s in text.split('\n'))
 
 
-__parameters_str_re = re.compile("[\n^]\s*:?Parameters?:?\s*\n(:?\s*-+\s*\n)?")
+__parameters_str_re = re.compile(r"[\n^]\s*:?Parameters?:?\s*\n(:?\s*-+\s*\n)?")
 """regexp to match :Parameter: and :Parameters: stand alone in a line
 or
 Parameters
@@ -151,8 +151,8 @@ def _split_out_parameters(initdoc):
            textwrap.dedent(result[2]).strip('\n')
 
 
-__re_params = re.compile('(?:\n\S.*?)+$')
-__re_spliter1 = re.compile('\n(?=\S)')
+__re_params = re.compile(r'(?:\n\S.*?)+$')
+__re_spliter1 = re.compile(r'\n(?=\S)')
 __re_spliter2 = re.compile('[\n:]')
 def _parse_parameters(paramdoc):
     """Parse parameters and return list of (name, full_doc_string)
@@ -371,7 +371,7 @@ def enhanced_doc_string(item, *args, **kwargs):
 
     itemdoc = '\n\n'.join(docs)
     # remove some bogus new lines -- never 3 empty lines in doc are useful
-    result = re.sub("\s*\n\s*\n\s*\n", "\n\n", itemdoc)
+    result = re.sub(r"\s*\n\s*\n\s*\n", "\n\n", itemdoc)
 
     return result
 

@@ -49,7 +49,7 @@ class Partitioner(Node):
                  attr='chunks',
                  space='partitions',
                  **kwargs):
-        """
+        r"""
         Parameters
         ----------
         count : None or int

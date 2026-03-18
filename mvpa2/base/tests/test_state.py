@@ -24,32 +24,39 @@ if __debug__:
     from mvpa2.base import debug
 
 class TestClassEmpty(ClassWithCollections):
+    __test__ = False
     pass
 
 class TestClassBlank(ClassWithCollections):
+    __test__ = False
     # We can force to have 'ca' present even though we don't have
     # any ConditionalAttribute defined here -- it might be added later on at run time
     _ATTRIBUTE_COLLECTIONS = ['ca']
     pass
 
 class TestClassBlankNoExplicitStates(ClassWithCollections):
+    __test__ = False
     pass
 
 class TestClassProper(ClassWithCollections):
+    __test__ = False
 
     state1 = ConditionalAttribute(enabled=False, doc="state1 doc")
     state2 = ConditionalAttribute(enabled=True, doc="state2 doc")
 
 
 class TestClassProperChild(TestClassProper):
+    __test__ = False
 
     state4 = ConditionalAttribute(enabled=False, doc="state4 doc")
 
 class TestClassReadOnlyParameter(ClassWithCollections):
+    __test__ = False
     paramro = Parameter(0, doc="state4 doc", ro=True)
 
 
 class TestClassParametrized(TestClassProper, ClassWithCollections):
+    __test__ = False
     p1 = Parameter(0)
     state0 = ConditionalAttribute(enabled=False)
 
