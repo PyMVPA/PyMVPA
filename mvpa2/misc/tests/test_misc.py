@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA misc stuff"""
 
+import pytest
 from mvpa2.testing import *
 
 from mvpa2.datasets import Dataset
@@ -48,6 +49,8 @@ def test_random_affine_transformation():
 
 
 @reseed_rng()
+@pytest.mark.filterwarnings("ignore:.*too small.*:UserWarning")
+@pytest.mark.filterwarnings("ignore:.*too small.*")
 def test_ttest_1samp_masked():
     skip_if_no_external('scipy')
     import numpy as np
