@@ -417,8 +417,9 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
     eta_step: int
         Report progress every eta_step (default: 10).
     nproc: int or None
-        Number of processes. Currently only nproc=1 is supported.
-        None defaults to 1.
+        How many processes to use for computation.  Requires `joblib`
+        external module for nproc > 1.  If None -- all available cores
+        will be used if joblib is available, otherwise defaults to 1.
     outside_node_margin: float or True or None (default)
         By default nodes outside the volume are skipped; using this
         parameter allows for a marign. If this value is a float (possibly
@@ -427,11 +428,11 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
         associated voxels. If outside_node_margin is True, then a node is
         always assigned voxels regardless of its position in the volume.
     results_backend : 'native' or 'hdf5' or None (default).
-        Specifies the way results are provided back from a processing block.
-        'native' keeps results in memory, while 'hdf5' would use
-        h5save/h5load functionality. 'hdf5' might be more time and memory
-        efficient in some cases.
-        If None, then 'hdf5' if used if available, else 'native'.
+        Specifies the way results are provided back from a processing block
+        in case of nproc > 1.  'native' keeps results in memory, while
+        'hdf5' would use h5save/h5load functionality.  'hdf5' might be
+        more time and memory efficient in some cases.
+        If None, then 'hdf5' is used if available, else 'native'.
     tmp_prefix : str, optional
         If specified -- serves as a prefix for temporary files storage
         if results_backend == 'hdf5'.  Thus can specify the directory to use
@@ -514,14 +515,20 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
     srcs_order = [source_surf_nodes[node] for node in visitorder]
     src_trg_nodes = [(src, src2intermediate[src]) for src in srcs_order]
 
-    if nproc is not None and nproc > 1:
-        raise NotImplementedError(
-            "Parallel execution via pprocess is no longer supported. "
-            "Please use nproc=1 (or None). Consider using joblib or "
-            "similar for parallelization. Got nproc=%i" % nproc)
+    if nproc is not None and nproc > 1 and not externals.exists('joblib'):
+        raise RuntimeError(
+            "The 'joblib' module is required for "
+            "multiprocess voxel selection. Please either "
+            "install joblib, or reduce `nproc` "
+            "to 1 (got nproc=%i) or set to default None"
+            % nproc)
 
     if nproc is None:
-        nproc = 1
+        if externals.exists('joblib'):
+            import joblib
+            nproc = joblib.cpu_count() or 1
+        else:
+            nproc = 1
 
     # get the the voxel selection parameters
     parameter_dict = vol_surf_mapping.get_parameter_dict()
@@ -536,11 +543,67 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
                                     intermediate_surf,
                                     meta=parameter_dict)
 
-    empty_dict = init_output()
-    node2volume_attributes = _reduce_mapper(empty_dict,
-                                            attribute_mapper,
-                                            src_trg_nodes,
-                                            eta_step=eta_step)
+    if nproc > 1:
+        if results_backend == 'hdf5':
+            externals.exists('h5py', raise_=True)
+        elif results_backend is None:
+            if externals.exists('h5py') and externals.versions['hdf5'] >= '1.8.7':
+                results_backend = 'hdf5'
+            else:
+                results_backend = 'native'
+        if _debug():
+            debug('SVS', "Using '%s' backend" % (results_backend,))
+
+        if results_backend not in ('native', 'hdf5'):
+            raise ValueError('Illegal results backend %r' % results_backend)
+
+        from joblib import Parallel, delayed
+        n_srcs = len(src_trg_nodes)
+        blocks = np.array_split(np.arange(n_srcs), nproc)
+
+        if __debug__:
+            debug('SVS', "Starting %d child processes" % len(blocks))
+
+        block_results = Parallel(n_jobs=nproc)(
+            delayed(_reduce_mapper)(
+                init_output(), attribute_mapper,
+                [src_trg_nodes[idx] for idx in block],
+                eta_step=eta_step, proc_id='%d' % (i + 1,),
+                results_backend=results_backend, tmp_prefix=tmp_prefix)
+            for i, block in enumerate(blocks))
+
+        if _debug():
+            debug('SVS', '')
+            debug('SVS', "Merging results from %d child processes" % len(blocks))
+
+        node2volume_attributes = None
+        for i, result in enumerate(block_results):
+            if result is None:
+                continue
+
+            if results_backend == 'hdf5':
+                result_fn = result
+                result = h5load(result_fn)
+                os.remove(result_fn)
+
+            if node2volume_attributes is None:
+                node2volume_attributes = result
+            else:
+                node2volume_attributes.merge(result)
+            if _debug():
+                debug('SVS', "  merged result block %d/%d" % (i + 1, nproc),
+                                cr=True)
+
+        if _debug():
+            debug('SVS', "")
+            debug('SVS', "Merged results from %d child processes" % len(blocks))
+
+    else:
+        empty_dict = init_output()
+        node2volume_attributes = _reduce_mapper(empty_dict,
+                                                attribute_mapper,
+                                                src_trg_nodes,
+                                                eta_step=eta_step)
     debug('SVS', "")
 
     if _debug():
@@ -680,8 +743,9 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
         After how many searchlights an estimate should be printed of the
         remaining time until completion of all searchlights
     nproc: int or None
-        Number of processes. Currently only nproc=1 is supported.
-        None defaults to 1.
+        How many processes to use for computation.  Requires `joblib`
+        external module for nproc > 1.  If None -- all available cores
+        will be used if joblib is available, otherwise defaults to 1.
     outside_node_margin: float or None (default)
         By default nodes outside the volume are skipped; using this
         parameter allows for a marign. If this value is a float (possibly
@@ -690,11 +754,11 @@ def run_voxel_selection(radius, volume, white_surf, pial_surf,
         associated voxels. If outside_node_margin is True, then a node is
         always assigned voxels regardless of its position in the volume.
     results_backend : 'native' or 'hdf5' or None (default).
-        Specifies the way results are provided back from a processing block.
-        'native' keeps results in memory, while 'hdf5' would use
-        h5save/h5load functionality. 'hdf5' might be more time and memory
-        efficient in some cases.
-        If None, then 'hdf5' if used if available, else 'native'.
+        Specifies the way results are provided back from a processing block
+        in case of nproc > 1.  'native' keeps results in memory, while
+        'hdf5' would use h5save/h5load functionality.  'hdf5' might be
+        more time and memory efficient in some cases.
+        If None, then 'hdf5' is used if available, else 'native'.
     tmp_prefix : str, optional
         If specified -- serves as a prefix for temporary files storage
         if results_backend == 'hdf5'.  Thus can specify the directory to use

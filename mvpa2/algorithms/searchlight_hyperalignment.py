@@ -245,7 +245,9 @@ class SearchlightHyperalignment(ClassWithCollections):
     nproc = Parameter(
         1,
         constraints=EnsureInt() & EnsureRange(min=1) | EnsureNone(),
-        doc="""Number of cores to use.""")
+        doc="""How many processes to use for computation.  Requires `joblib`
+            external module for nproc > 1.  If None -- all available cores
+            will be used if joblib is available, otherwise defaults to 1.""")
 
     nblocks = Parameter(
         None,
@@ -341,12 +343,13 @@ class SearchlightHyperalignment(ClassWithCollections):
         self.projections = None
         # This option makes the roi_seed in each SL to be selected during feature selection
         self.force_roi_seed = True
-        if self.params.nproc is not None and self.params.nproc > 1:
-            raise NotImplementedError(
-                "Parallel execution via pprocess is no longer supported. "
-                "Please use nproc=1 (or None). Consider using joblib or "
-                "similar for parallelization. Got nproc=%i"
-                % self.params.nproc)
+        if self.params.nproc is not None and self.params.nproc > 1 \
+                and not externals.exists('joblib'):
+            raise RuntimeError(
+                "The 'joblib' module is required for "
+                "multiprocess searchlight hyperalignment. Please "
+                "install joblib, or reduce `nproc` to 1 (got "
+                "nproc=%i)" % self.params.nproc)
         if not externals.exists('scipy'):
             raise RuntimeError("The 'scipy' module is required for "
                                "searchlight hyperalignment.")
@@ -543,7 +546,11 @@ class SearchlightHyperalignment(ClassWithCollections):
         # Performing SL processing manually
         _shpaldebug("Setting up for searchlights")
         if params.nproc is None:
-            params.nproc = 1
+            if externals.exists('joblib'):
+                import joblib
+                params.nproc = joblib.cpu_count() or 1
+            else:
+                params.nproc = 1
 
         # XXX I think this class should already accept a single dataset only.
         # It should have a ``space`` setting that names a sample attribute that
@@ -594,13 +601,32 @@ class SearchlightHyperalignment(ClassWithCollections):
             for isub in range(self.ndatasets)]
 
         # compute
-        _shpaldebug('Using 1 process to compute mappers.')
-        if params.nblocks is None:
-            params.nblocks = 1
-        params.nblocks = min(len(roi_ids), params.nblocks)
-        node_blocks = np.array_split(roi_ids, params.nblocks)
-        p_results = [self._proc_block(block, datasets, hmeasure, queryengines)
-                     for block in node_blocks]
+        if params.nproc > 1:
+            # split all target ROIs centers into `nproc` equally sized blocks
+            nproc_needed = min(len(roi_ids), params.nproc)
+            params.nblocks = nproc_needed \
+                if params.nblocks is None else params.nblocks
+            params.nblocks = min(len(roi_ids), params.nblocks)
+            node_blocks = np.array_split(roi_ids, params.nblocks)
+
+            from joblib import Parallel, delayed
+            _shpaldebug('Using %d processes to compute mappers.' % nproc_needed)
+            if __debug__:
+                debug('SLC', "Starting off %s child processes for nblocks=%i"
+                      % (nproc_needed, params.nblocks))
+            p_results = Parallel(n_jobs=nproc_needed)(
+                delayed(self._proc_block)(
+                    block, datasets, copy.copy(hmeasure), queryengines,
+                    seed=mvpa2.get_random_seed(), iblock=iblock)
+                for iblock, block in enumerate(node_blocks))
+        else:
+            _shpaldebug('Using 1 process to compute mappers.')
+            if params.nblocks is None:
+                params.nblocks = 1
+            params.nblocks = min(len(roi_ids), params.nblocks)
+            node_blocks = np.array_split(roi_ids, params.nblocks)
+            p_results = [self._proc_block(block, datasets, hmeasure, queryengines)
+                         for block in node_blocks]
         results_ds = self.__handle_all_results(p_results)
         # Dummy iterator for, you know, iteration
         list(results_ds)

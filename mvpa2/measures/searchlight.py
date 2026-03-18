@@ -76,19 +76,22 @@ class BaseSearchlight(Measure):
           determine the feature ids (be careful to use it only with
           `IndexQueryEngine`).  By default all query engine ids will be used.
         nproc : None or int
-          How many processes to use for computation.  Currently only nproc=1
-          is supported.  If None -- defaults to 1.
+          How many processes to use for computation.  Requires `joblib`
+          external module for nproc > 1.  If None -- all available cores
+          will be used if joblib is available, otherwise defaults to 1.
         **kwargs
           In addition this class supports all keyword arguments of its
           base-class :class:`~mvpa2.measures.base.Measure`.
       """
         Measure.__init__(self, **kwargs)
 
-        if nproc is not None and nproc > 1:
-            raise NotImplementedError(
-                "Parallel execution via pprocess is no longer supported. "
-                "Please use nproc=1 (or None). Consider using joblib or "
-                "similar for parallelization. Got nproc=%i" % nproc)
+        if nproc is not None and nproc > 1 and not externals.exists('joblib'):
+            raise RuntimeError(
+                "The 'joblib' module is required for "
+                "multiprocess searchlights. Please either "
+                "install joblib, or reduce `nproc` "
+                "to 1 (got nproc=%i) or set to default None"
+                % nproc)
 
         self._queryengine = queryengine
         if roi_ids is not None and not isinstance(roi_ids, str) \
@@ -125,7 +128,11 @@ class BaseSearchlight(Measure):
         nproc = self.nproc
 
         if nproc is None:
-            nproc = 1
+            if externals.exists('joblib'):
+                import joblib
+                nproc = joblib.cpu_count() or 1
+            else:
+                nproc = 1
         # train the queryengine
         self._queryengine.train(dataset)
 
@@ -289,10 +296,10 @@ class Searchlight(BaseSearchlight):
           post-processing which needs to be done in parallel instead of serial
           aggregation in results_fx.
         results_backend : ('native', 'hdf5'), optional
-          Specifies the way results are provided back from a processing block.
-          'native' keeps results in memory, while 'hdf5' would use
-          h5save/h5load functionality. 'hdf5' might be more time and memory
-          efficient in some cases.
+          Specifies the way results are provided back from a processing block
+          in case of nproc > 1.  'native' keeps results in memory, while
+          'hdf5' would use h5save/h5load functionality.  'hdf5' might be
+          more time and memory efficient in some cases.
         results_fx : callable, optional
           Function to process/combine results of each searchlight
           block run.  By default it would simply append them all into
@@ -356,9 +363,27 @@ class Searchlight(BaseSearchlight):
         proc_block = self._proc_block_inplace if self.preallocate_output \
             else self._proc_block
         # compute
-        # collect the results in a 1-item list
-        p_results = [
-                proc_block(roi_ids, dataset, self.__datameasure)]
+        if nproc is not None and nproc > 1:
+            # split all target ROIs centers into `nproc` equally sized blocks
+            nproc_needed = min(len(roi_ids), nproc)
+            nblocks = nproc_needed \
+                      if self.nblocks is None else self.nblocks
+            roi_blocks = np.array_split(roi_ids, nblocks)
+
+            from joblib import Parallel, delayed
+            if __debug__:
+                debug('SLC', "Starting off %s child processes for nblocks=%i"
+                      % (nproc_needed, nblocks))
+            p_results = Parallel(n_jobs=nproc_needed)(
+                delayed(proc_block)(block, dataset,
+                                    copy.copy(self.__datameasure),
+                                    seed=mvpa2.get_random_seed(),
+                                    iblock=iblock)
+                for iblock, block in enumerate(roi_blocks))
+        else:
+            # otherwise collect the results in a 1-item list
+            p_results = [
+                    proc_block(roi_ids, dataset, self.__datameasure)]
 
         # Finally collect and possibly process results
         result_ds = self.results_fx(sl=self,

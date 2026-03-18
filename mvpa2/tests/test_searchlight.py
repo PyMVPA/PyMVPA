@@ -664,10 +664,47 @@ class SearchlightTests(unittest.TestCase):
 
 
     def test_custom_results_fx_logic(self):
-        # This test originally tested pprocess-based parallel execution
-        # with custom results_fx. Since pprocess is no longer supported,
-        # we skip this test.
-        raise SkipTest("pprocess-based parallel execution is no longer supported")
+        # Test parallel execution with custom results_fx using joblib.
+        # Originally tested with pprocess; now uses joblib.
+        skip_if_no_external('joblib')
+
+        ds = datasets['3dsmall'].copy()[:, :25] # smaller copy
+        ds.fa['voxel_indices'] = ds.fa.myspace
+        ds.fa['feature_id'] = np.arange(ds.nfeatures)
+
+        nproc = 2
+        nblocks = nproc * 3
+
+        def results_fx(sl=None, dataset=None, roi_ids=None, results=None):
+            """Process results by collecting them into a dataset"""
+            res = []
+            for x in results:
+                ok_(isinstance(x, list))
+                res.append(x)
+
+            results_ds = hstack(sum(res, []))
+            results_ds.fa['center_ids'] = roi_ids
+            return results_ds
+
+        def results_postproc_fx(results):
+            for ds in results:
+                ds.fa['test_postproc'] = np.atleast_1d(ds.a.roi_center_ids**2)
+            return results
+
+        cv = CrossValidation(GNB(), OddEvenPartitioner())
+        sl = sphere_searchlight(cv,
+                                radius=0,
+                                nproc=nproc,
+                                nblocks=nblocks,
+                                results_postproc_fx=results_postproc_fx,
+                                results_fx=results_fx,
+                                center_ids=np.arange(ds.nfeatures),
+                                enable_ca=['roi_center_ids']
+                                )
+        res = sl(ds)
+        assert_equal(res.nfeatures, ds.nfeatures)
+        # verify that we did have results_postproc_fx called
+        assert_array_equal(res.fa.test_postproc, np.power(res.fa.center_ids, 2))
 
     def test_gnbsearghlight_exclude_partition(self):
         # just a smoke test with a custom partitioner

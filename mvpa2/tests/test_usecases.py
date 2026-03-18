@@ -16,6 +16,7 @@ from mvpa2.testing.tools import ok_, assert_array_equal, assert_true, \
         assert_false, assert_equal, assert_not_equal, reseed_rng, assert_raises, \
         assert_array_almost_equal, SkipTest, assert_datasets_equal, assert_almost_equal
 from mvpa2.misc.data_generators import normal_feature_dataset
+from mvpa2.base import externals
 
 @reseed_rng()
 def _test_mcasey20120222():  # pragma: no cover
@@ -196,7 +197,7 @@ def test_gnbsearchlight_permutations():
     # mvpa2.debug.active = ['APERM', 'SLC'] #, 'REPM']
     # mvpa2.debug.metrics += ['pid']
     count = 10
-    nproc = 1
+    nproc = 1 + int(externals.exists('joblib'))
     ds = datasets['3dsmall'].copy()
     ds.fa['voxel_indices'] = ds.fa.myspace
 
@@ -278,7 +279,7 @@ def test_multiclass_pairs_svm_searchlight():
     from mvpa2.sandbox.multiclass import get_pairwise_accuracies
 
     # Some parameters used in the test below
-    nproc = 1
+    nproc = 1 + int(externals.exists('joblib'))
     ntargets = 4                                # number of targets
     npairs = ntargets*(ntargets-1)/2
     center_ids = [35, 55, 1]

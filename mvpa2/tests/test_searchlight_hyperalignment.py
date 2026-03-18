@@ -23,6 +23,7 @@ from mvpa2.testing import *
 from mvpa2.testing.datasets import datasets
 from mvpa2.base.dataset import hstack
 from mvpa2.datasets.base import Dataset
+from mvpa2.base import externals
 from mvpa2.mappers.staticprojection import StaticProjectionMapper
 
 
@@ -234,7 +235,7 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         projs = list()
         # run the algorithm with all combinations of the two major parameters
         # for projection calculation.
-        for kwargs in [{'combine_neighbormappers': True, 'nproc': 1},
+        for kwargs in [{'combine_neighbormappers': True, 'nproc': 1 + int(externals.exists('joblib'))},
                        {'combine_neighbormappers': True, 'dtype': 'float64', 'compute_recon': True},
                        {'combine_neighbormappers': True, 'exclude_from_model': [2, 4]},
                        {'combine_neighbormappers': False},
