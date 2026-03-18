@@ -879,7 +879,6 @@ def test_other_samples_dtypes():
     # and all sparse matrix types we know
     stypes = [np.arange(np.prod(dshape)).reshape(dshape),
               np.arange(np.prod(dshape)).reshape(dshape).view(myarray),
-              np.matrix(np.arange(np.prod(dshape)).reshape(dshape)),
               sparse.csc_matrix(np.arange(np.prod(dshape)).reshape(dshape)),
               sparse.csr_matrix(np.arange(np.prod(dshape)).reshape(dshape))]
     if hasattr(sparse, 'bsr_matrix'):

@@ -257,7 +257,7 @@ def one_minus_correlation(X, Y):
     Zy = Y - np.c_[Y.mean(axis=1)]
     Zy /= np.c_[Y.std(axis=1)]
 
-    C = ((np.matrix(Zx) * np.matrix(Zy).T) / Zx.shape[1]).A
+    C = (Zx @ Zy.T) / Zx.shape[1]
 
     # let it behave like a distance, i.e. smaller is closer
     C -= 1.0
