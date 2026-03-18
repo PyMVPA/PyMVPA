@@ -370,11 +370,13 @@ with `tox -e py313` (202 passed, 4 skipped, 0 failed throughout).
 - [x] **3.2** Removed MDP support — d765901
   - Deleted `mdp_adaptor.py`, `lle.py`, `test_mdp.py`, 2 example scripts
   - Removed `mdp` entries from externals, suite, mappers docstring
-- [x] **3.3** Removed pprocess support — 148f33a
+- [x] **3.3** Replaced pprocess with joblib — 148f33a, d541b8b
   - Removed all pprocess codepaths from searchlight, voxel selection,
-    hyperalignment (10 files, -365 lines)
-  - `nproc` parameter kept; `nproc>1` raises `NotImplementedError`
-  - `nproc=None` defaults to 1
+    searchlight hyperalignment (10 files, -365 lines)
+  - Added joblib-based parallelism following existing patterns in
+    hyperalignment.py and group_clusterthr.py
+  - `nproc=None` auto-detects via `joblib.cpu_count()`
+  - Re-enabled `test_custom_results_fx_logic` with joblib
 - [x] **3.4** Removed OpenOpt support — d4094fa
   - Deleted `model_selector.py`, removed `GPRWeights` class from gpr.py
   - Removed `openopt`, `MOD_SEL`, `OPENOPT` debug channels
