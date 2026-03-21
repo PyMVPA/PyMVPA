@@ -72,8 +72,8 @@ def run(args):
     res = cv(ds)
     # some meaningful output
     # XXX make condition on classification analysis only?
-    print cv.ca.stats
-    print 'Results\n-------'
+    print(cv.ca.stats)
+    print('Results\n-------')
     if args.permutations > 0:
         nprob =  cv.ca.null_prob.samples
     if res.shape[1] == 1:
@@ -82,13 +82,13 @@ def run(args):
             p=', p-value (%s tail)' % args.prob_tail
         else:
             p=''
-        print 'Fold, Result%s' % p
-        for i in xrange(len(res)):
+        print('Fold, Result%s' % p)
+        for i in range(len(res)):
             if args.permutations > 0:
                 p = ', %f' % nprob[i, 0]
             else:
                 p = ''
-            print '%s, %f%s' % (res.sa.cvfolds[i], res.samples[i, 0], p)
+            print('%s, %f%s' % (res.sa.cvfolds[i], res.samples[i, 0], p))
     # and store
     ds2hdf5(res, args.output, compression=args.hdf5_compression)
     if args.permutations > 0:

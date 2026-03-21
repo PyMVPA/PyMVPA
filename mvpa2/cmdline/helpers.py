@@ -59,7 +59,7 @@ class HelpAction(argparse.Action):
             usage_length = len(usagestr)
             usagestr = re.subn(r'\s+', ' ', usagestr.replace('\n', ' '))[0]
             helpstr = '%s\n%s' % (usagestr, helpstr[usage_length:])
-        print helpstr
+        print(helpstr)
         sys.exit(0)
 
 
@@ -201,7 +201,7 @@ def arg2learner(arg, index=0):
 
 def script2obj(filepath):
     locals = {}
-    execfile(filepath, locals, locals)
+    exec(compile(open(filepath).read(), filepath, 'exec'), locals, locals)
     if not len(locals):
         raise argparse.ArgumentTypeError(
             "executing script '%s' did not create at least one object" % filepath)
@@ -211,7 +211,7 @@ def script2obj(filepath):
             + "did create multiple objects %s " % locals.keys()
             + "but none is named 'obj' or 'fx'")
     if len(locals) == 1:
-        return locals.values()[0]
+        return list(locals.values())[0]
     else:
         if 'obj' in locals:
             return locals['obj']
@@ -501,12 +501,12 @@ def _load_csv_table(f):
     f.seek(0)
     reader = csv.DictReader(f, dialect=dialect)
     table = dict(zip(reader.fieldnames,
-                       [list() for i in xrange(len(reader.fieldnames))]))
+                       [list() for i in range(len(reader.fieldnames))]))
     for row in reader:
-        for k, v in row.iteritems():
+        for k, v in row.items():
             table[k].append(v)
     del_me = []
-    for k, v in table.iteritems():
+    for k, v in table.items():
         if not len(k) and len(v) and v[0] is None:
             # this is an artifact of a trailing delimiter
             del_me.append(k)

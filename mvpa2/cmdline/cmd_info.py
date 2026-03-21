@@ -34,11 +34,11 @@ def setup_parser(parser):
 
 def run(args):
     if args.externals:
-        print mvpa2.wtf(include=['externals'])
+        print(mvpa2.wtf(include=['externals']))
     elif args.debug:
         mvpa2.debug.print_registered()
     elif not args.learner_warehouse is False:
         from mvpa2.clfs.warehouse import clfswh
         clfswh.print_registered(*args.learner_warehouse)
     else:
-        print mvpa2.wtf()
+        print(mvpa2.wtf())

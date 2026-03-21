@@ -150,8 +150,8 @@ def run(args):
             csvt['onset'] = csvt[args.onset_column]
         nevents = len(csvt[csvt.keys()[0]])
         events = []
-        for ev in xrange(nevents):
-            events.append(dict([(k, v[ev]) for k, v in csvt.iteritems()]))
+        for ev in range(nevents):
+            events.append(dict([(k, v[ev]) for k, v in csvt.items()]))
     elif args.onsets is not None:
         if not len(args.onsets):
             args.onsets = [i for i in sys.stdin]

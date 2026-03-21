@@ -100,11 +100,11 @@ def run(args):
         pass
     for expr in args.eval:
         if expr == '-':
-            exec sys.stdin
+            exec(compile(sys.stdin.read(), '<stdin>', 'exec'))
         elif os.path.isfile(expr):
-            execfile(expr, globals(), locals())
+            exec(compile(open(expr).read(), expr, 'exec'), globals(), locals())
         else:
-            exec expr
+            exec(expr)
     if args.store is not None:
         out = {}
         for var in args.store:

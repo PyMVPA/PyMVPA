@@ -94,7 +94,7 @@ as the correspond mapper will be used to transform each individual dataset.""")
                     % _supported_cas[ca]['output_suffix'])
 
 def run(args):
-    print args.data
+    print(args.data)
     dss = [arg2ds(d)[:,:100] for d in args.data]
     verbose(1, "Loaded %i input datasets" % len(dss))
     if __debug__:

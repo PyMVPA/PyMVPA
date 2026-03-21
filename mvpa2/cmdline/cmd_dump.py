@@ -153,7 +153,7 @@ def run(args):
             # it could be something 1d that we can try to print
             if hasattr(dumpy, 'shape') and len(dumpy.shape) == 1:
                 for v in dumpy:
-                    print v
+                    print(v)
             else:
                 warning("conversion to plain text is not supported for "
                         "this data type")

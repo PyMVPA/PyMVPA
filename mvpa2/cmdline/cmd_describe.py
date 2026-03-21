@@ -78,7 +78,7 @@ def _describe_attr(attr, style):
         return 'IMPLEMENT ME\n'
 
 def txt_content_summary_terse(ds, args):
-    print ds.summary(targets_attr=args.target_attr)
+    print(ds.summary(targets_attr=args.target_attr))
     info = '\n\nDetails on dataset attributes:\n'
     for cdesc, col, describer in \
             (('sample', ds.sa, _describe_array_attr),
@@ -88,7 +88,7 @@ def txt_content_summary_terse(ds, args):
         for attr in sorted(col.values(),
                            cmp=lambda x, y: cmp(x.name, y.name)):
             info += '  %s\n' % describer(attr, 'terse')
-    print info
+    print(info)
 
 def sample_histogram(ds, args):
     import pylab as pl
