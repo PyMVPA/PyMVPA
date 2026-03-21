@@ -181,7 +181,7 @@ def augmentconfig(c):
         c['sid'] = sid
 
     if c['sid'] is None:
-        print"Warning: no subject id specified"
+        print("Warning: no subject id specified")
 
     c['prefix_sv2anat'] = 'SurfVol2anat'
 
@@ -254,7 +254,7 @@ def augmentconfig(c):
     surfdir = c.get('surfdir', None)
     if surfdir is not None and os.path.exists(surfdir):
         fs_log_fn = pathjoin(surfdir, '..', 'scripts', 'recon-all.done')
-        print "Looking in %s" % fs_log_fn
+        print("Looking in %s" % fs_log_fn)
         if os.path.exists(fs_log_fn):
             with open(fs_log_fn) as f:
                 lines = f.read().split('\n')
@@ -262,18 +262,18 @@ def augmentconfig(c):
                     if line.startswith('SUBJECT'):
                         fs_sid = line[8:]
                         c['fs_sid'] = fs_sid
-                        print "Found Freesurfer sid %s" % fs_sid
+                        print("Found Freesurfer sid %s" % fs_sid)
                         break
 
     if c['fs_sid'] is None:
         c['fs_sid'] = sid
-        print "Unable to find proper Freesurfer sid"
+        print("Unable to find proper Freesurfer sid")
 
     pathvars = ['anatvol', 'expvol', 'epivol', 'refdir', 'surfdir']
     for pathvar in pathvars:
         if pathvar in c and c[pathvar]:
             c[pathvar] = os.path.abspath(c[pathvar])
-            print "Set absolute path for %s: %s" % (pathvar, c[pathvar])
+            print("Set absolute path for %s: %s" % (pathvar, c[pathvar]))
 
     if c['template'] and c['notemplate']:
         raise ValueError('Cannot have both template and notemplate')
@@ -289,12 +289,12 @@ def augmentconfig(c):
             outvol_space = outvol_space.split('~')[0].strip()
             if len(outvol_space) and not c[
                 'notemplate'] and outvol_space.lower() != 'orig':
-                print "Detected TEMPLATE_SPACE=%s" % outvol_space
+                print("Detected TEMPLATE_SPACE=%s" % outvol_space)
                 c['outvol_space'] = outvol_space
                 if o == '+orig':
                     o = '+tlrc'
-                    print ("Template space '%s' detected: '"
-                           "output has extension %s" % (
+                    print("Template space '%s' detected: '"
+                          "output has extension %s" % (
                                outvol_space, o))
                 c['template'] = True
             else:
@@ -411,9 +411,9 @@ def run_toafni(config, env):
             'cd %(surfdir)s;@SUMA_Make_Spec_FS -sid %(sid)s -no_ld' % config)
         utils.run_cmds(cmds, env)
     else:
-        print ("SUMA conversion appears to have been "
-               "performed already for %s in %s") % (
-                  sid, sd)
+        print("SUMA conversion appears to have been "
+              "performed already for %s in %s" % (
+                  sid, sd))
 
 
 
@@ -456,8 +456,8 @@ def run_mapico(config, env):
 
             if config['overwrite'] or not os.path.exists(mappathfn):
                 eps = .001
-                print ("Computing bijection between nodes (ico=%d) - '"
-                       "this may take a while") % icold
+                print("Computing bijection between nodes (ico=%d) - '"
+                      "this may take a while" % icold)
                 bijection = surf.get_sphere_left_right_mapping(spheres[0],
                                                                spheres[1],
                                                                eps)
@@ -465,7 +465,7 @@ def run_mapico(config, env):
                 with open(mappathfn, 'w') as f:
                     f.write('\n'.join(map(str, bijection)))
 
-                    print "Written bijection to %s" % mappathfn
+                    print("Written bijection to %s" % mappathfn)
 
 
 
@@ -490,7 +490,7 @@ def run_moresurfs(config, env):
                 if config['overwrite'] or not os.path.exists(fns[2]):
                     average_fs_asc_surfs(fns[0], fns[1], fns[2])
                 else:
-                    print "%s already exists" % fns[2]
+                    print("%s already exists" % fns[2])
 
 
 
@@ -569,7 +569,7 @@ def run_skullstrip(config, env):
 
     for src, trg in zip(surfvol_srcs, surfvol_trgs):
         if os.path.exists(trg) and not overwrite:
-            print '%s already exists' % trg
+            print('%s already exists' % trg)
         else:
             t_p, t_n, t_o, t_e = utils.afni_fileparts(trg)
             trg_short = '%s%s' % (t_n, t_o)
@@ -589,7 +589,7 @@ def run_skullstrip(config, env):
 
     expvol_trg = '%s/%s%s' % (refdir, expvol_trg_prefix, fullext)
 
-    print "Attempt %s -> %s" % (expvol_src, expvol_trg)
+    print("Attempt %s -> %s" % (expvol_src, expvol_trg))
 
     ext = config['outvol_ext']
 
@@ -607,8 +607,8 @@ def run_skullstrip(config, env):
         cmds.append('rm %s/%s*' % (refdir, expvol_trg_tmp_prefix))
         cmds.append(_set_vol_space_cmd(expvol_trg, config))
     else:
-        print "No skull strip because already exists: %s%s" % (
-            expvol_trg_prefix, ext)
+        print("No skull strip because already exists: %s%s" % (
+            expvol_trg_prefix, ext))
 
     utils.run_cmds(cmds, env)
 
@@ -697,7 +697,7 @@ def run_alignment(config, env):
         utils.run_cmds(cmds, env)
 
     else:
-        print "Alignment already done - skipping"
+        print("Alignment already done - skipping")
 
         # run these commands first, then check if everything worked properly
 
@@ -732,7 +732,7 @@ def run_alignment(config, env):
             refdir, alprefix), config))
 
     else:
-        print '%s already exists - skipping Warp' % svalignedfn
+        print('%s already exists - skipping Warp' % svalignedfn)
 
     utils.run_cmds(cmds, env)
     cmds = []
@@ -821,7 +821,7 @@ def run_alignment(config, env):
             cmds = []
 
         else:
-            print "AddEdge seems to have been run already"
+            print("AddEdge seems to have been run already")
 
         sid = config['sid']
         plot_slice_fns = [
@@ -844,11 +844,11 @@ def run_alignment(config, env):
                 fn1, fn2, fnout = input_fns
                 if not os.path.exists(fnout):
                     _make_slice_plot(fn1, fn2, fnout)
-                    print "QA Image saved to %s" % fnout
+                    print("QA Image saved to %s" % fnout)
                 else:
-                    print "Already exists: %s" % fnout
+                    print("Already exists: %s" % fnout)
         else:
-            print "QA images already exist"
+            print("QA images already exist")
 
 
 
@@ -919,7 +919,7 @@ def _make_slice_plot(ulay, olay, fnout, raise_=False):
         try:
             from mvpa2.support.afni import lib_plot_slices
         except:
-            print "No slice plotting supported"
+            print("No slice plotting supported")
             return
 
     slice_dims = [0, 1, 2]
@@ -947,7 +947,7 @@ def run_makespec(config, env):
                 suma_makespec(refdir, surfprefix, config['surfformat'],
                               specpathfn, removepostfix=config['alsuffix'])
             else:
-                print "Skipping spec for %s" % specpathfn
+                print("Skipping spec for %s" % specpathfn)
 
             # make simple script to run afni and suma
             runsumafn = '%s/%sh_ico%d_runsuma.sh' % (refdir, hemi, icold)
@@ -990,7 +990,7 @@ def run_makespec_bothhemis(config, env):
                     raise ValueError('cannot find state %s' % add_state)
                 else:
                     # skip this state
-                    print "Optional state %s not found - skipping" % add_state
+                    print("Optional state %s not found - skipping" % add_state)
                     continue
 
             specs = afni_suma_spec.hemi_pairs_add_views(specs,
@@ -1020,7 +1020,7 @@ def run_makespec_bothhemis(config, env):
             spec_merged.write(specpathfn, overwrite=overwrite)
 
             full_path = lambda x: pathjoin(refdir, x)
-            for fn_out, fns_in in surfs_to_join.iteritems():
+            for fn_out, fns_in in surfs_to_join.items():
                 surfs_in = [surf.read(full_path(fn)) for fn in fns_in]
 
                 if all(['full.patch.flat' in fn for fn in fns_in]):
@@ -1035,7 +1035,7 @@ def run_makespec_bothhemis(config, env):
                 if config['overwrite'] or not os.path.exists(
                         full_path(fn_out)):
                     surf.write(full_path(fn_out), surf_merged)
-                    print "Merged surfaces written to %s" % fn_out
+                    print("Merged surfaces written to %s" % fn_out)
 
 
 
@@ -1055,12 +1055,12 @@ def run_makesurfmasks(config, env):
     qafn_path = '%s/%s.png' % (refdir, sumfn)
     checkfn_paths = (sumfn_path, qafn_path)
     if all(map(os.path.exists, checkfn_paths)) and not overwrite:
-        print "Already exist: %s" % (", ".join(checkfn_paths))
+        print("Already exist: %s" % (", ".join(checkfn_paths)))
         return
 
     icolds, hemis = _get_hemis_icolds(config)
 
-    volexts = ['%s%s' % (volor, e) for e in '.HEAD', '.BRIK*']
+    volexts = ['%s%s' % (volor, e) for e in ('.HEAD', '.BRIK*')]
 
     sssuffix = config['sssuffix'] if config['expvol_ss'] else ''
     expvol_fn = '%s%s%s' % (utils.afni_fileparts(config['expvol'])[1],
@@ -1096,7 +1096,7 @@ def run_makesurfmasks(config, env):
         specfn = afni_suma_spec.canonical_filename(icold, hemi,
                                                    config['alsuffix'])
 
-        for infix, val in infix2val.iteritems():
+        for infix, val in infix2val.items():
             fnprefix = '__m%d_%sh' % (val, hemi)
             cmd = s2v_cmd % (val, specfn, infix, fnprefix)
             utils.run_cmds('cd %s;%s' % (refdir, cmd))
@@ -1139,9 +1139,9 @@ def suma_makerunsuma(fnout, specfn, surfvol):
     with open(fnout, 'w') as f:
         f.write('\n'.join(lines))
         f.close()
-        os.chmod(fnout, 0777)
+        os.chmod(fnout, 0o777)
 
-    print 'Generated run suma file in %s' % fnout
+    print('Generated run suma file in %s' % fnout)
 
 
 
@@ -1210,9 +1210,9 @@ def suma_makespec(directory, surfprefix, surf_format, fnout=None,
         f = open(fnout, 'w')
         f.write('\n'.join(lines))
         f.close()
-        print 'Generated SUMA spec file in %s' % fnout
+        print('Generated SUMA spec file in %s' % fnout)
     else:
-        print "No output"
+        print("No output")
 
 
 
@@ -1239,7 +1239,7 @@ def run_all(config, env):
     '''run commands from all steps specified in config'''
     cmds = []
 
-    print config
+    print(config)
 
     steps = config['steps'].split('+')
     step2func = {'toafni': run_toafni,
@@ -1256,7 +1256,7 @@ def run_all(config, env):
 
     for step in steps:
         if step in step2func:
-            print "Running: %s" % step
+            print("Running: %s" % step)
             step2func[step](config, env)
         else:
             raise ValueError('Step not recognized: %r' % step)
@@ -1388,7 +1388,7 @@ def _test_me(config):
 
         env = getenv()
         c = augmentconfig(c)
-        print c
+        print(c)
         run_all(c, env)
 
 

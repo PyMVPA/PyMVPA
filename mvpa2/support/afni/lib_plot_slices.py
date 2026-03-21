@@ -139,7 +139,7 @@ def load_vol(fn, master_fn=None):
 
     if is_nifti:
         if master_fn is not None:
-            print "Warning: Ignoring master %s for %s" % (master_fn, fn)
+            print("Warning: Ignoring master %s for %s" % (master_fn, fn))
         return load_nii(fn)
     else:
         return load_afni(fn, master_fn)
@@ -402,8 +402,8 @@ def make_plot(ulay, olay, dims, pos, title=None,
     [f, axs] = plt.subplots(nrow, ncol, sharex=True, figsize=figsize)
     f.set_facecolor(bgcolor)
     counter = 0
-    for j in xrange(ncol):
-        for i in xrange(nrow):
+    for j in range(ncol):
+        for i in range(nrow):
             counter += 1
             ax = axs[i, j]
 
@@ -479,7 +479,7 @@ def make_scatter(ulay, olay, output_fn=None):
     #
     xyz = np.zeros((nf, ndim), dtype=u.dtype)
 
-    for dim in xrange(ndim):
+    for dim in range(ndim):
         r = np.arange(sh[dim])
         vec_dim = np.ones(ndim)
         vec_dim[dim] = sh[dim]

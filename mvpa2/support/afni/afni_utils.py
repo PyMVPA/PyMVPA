@@ -114,7 +114,7 @@ def run_cmds(cmds, env=None, dryrun=False):
     for cmd in cmds:
         print("** Will execute the following commands:")
         for c in cmd.split(';'):
-            print '** - %s' % c
+            print('** - %s' % c)
         if not dryrun:
             print("**>> Starting now:")
 
@@ -195,7 +195,7 @@ def _package_afni_nibabel_for_standalone(outputdir, rootname='python'):
     is_python_file = lambda fn: fn.endswith('.py') and not fn.endswith('__.py')
     input_path_fns = filter(is_python_file, input_path_fns)
 
-    print input_path_fns
+    print(input_path_fns)
 
     outputfns = []
     for path_fn in input_path_fns:
@@ -208,7 +208,7 @@ def _package_afni_nibabel_for_standalone(outputdir, rootname='python'):
         for line in lines:
             newline = None
 
-            for old, new in replacements.iteritems():
+            for old, new in replacements.items():
                 line = line.replace(old, new)
 
             if 'import' in line:
@@ -246,7 +246,7 @@ def _package_afni_nibabel_for_standalone(outputdir, rootname='python'):
             newlines.append(newline)
 
         if not len(newlines):
-            print "skipping %s" % fn
+            print("skipping %s" % fn)
             continue
 
         if fn.startswith('lib_'):
@@ -256,7 +256,7 @@ def _package_afni_nibabel_for_standalone(outputdir, rootname='python'):
                 srcbinfn = srcbinfn.replace(src, trg)
 
             parentfn = pathjoin(rootdir, '..', '..', 'bin', srcbinfn)
-            print parentfn
+            print(parentfn)
             if os.path.exists(parentfn):
                 with open(parentfn) as pf:
                     plines = pf.read().split('\n')
@@ -278,10 +278,10 @@ def _package_afni_nibabel_for_standalone(outputdir, rootname='python'):
             f.write('\n'.join(newlines))
 
         is_executable = newlines[0].startswith('#!')
-        chmod_ = 0777 if is_executable else 0666
+        chmod_ = 0o777 if is_executable else 0o666
         os.chmod(trgfn, chmod_)
 
-        print "Written file %s in %s" % (fn, outputdir_files)
+        print("Written file %s in %s" % (fn, outputdir_files))
         outputfns.append(os.path.split(trgfn)[1])
 
 

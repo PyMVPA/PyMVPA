@@ -113,7 +113,7 @@ def compute_fwhm(config):
     cmds.append('; echo > "%s"' % fwhm_fn)
 
     resid_fns = []
-    for i in xrange(len(c['data_files'])):
+    for i in range(len(c['data_files'])):
         fn = _fn(config, 'resid_%d' % i)
         cmds.append("; 3dcalc -overwrite -prefix %s -a %s -b %s'[%d]' -expr 'a-b'"
                     % (fn, mean_fn, buck_fn, i))
@@ -134,8 +134,8 @@ def compute_fwhm(config):
     with open(fwhm_fn) as f:
         fwhms = f.read().split()
 
-    print fwhms
-    print fwhm_fn
+    print(fwhms)
+    print(fwhm_fn)
 
     config['all_fwhms'] = fwhms # all FWHMs (for each participant)
     config['fwhm'] = sum(map(float, fwhms)) / len(fwhms) # average FWHM
@@ -147,8 +147,8 @@ def compute_fwhm(config):
         f.write('%.3f\n' % config['fwhm'])
 
     tmpfns = resid_fns + pad_files + [mean_fn]
-    print "TEMP"
-    print tmpfns
+    print("TEMP")
+    print(tmpfns)
     _remove_files(config, tmpfns)
 
 def null_clustersize(config):
@@ -170,7 +170,7 @@ def null_clustersize(config):
     # generate N random data files (N=number of participants)
     # use the output bucket to get datasets with the right size
     null_fns = []
-    for i in xrange(ns):
+    for i in range(ns):
         fn = _fn(config, 'rand_%d' % i, ext1D)
         if is_surf:
             cmds.append("; 1deval -ok_1D_text -a %s'[0]' -expr 'gran(0,1)' > '%s'" % (buck_fn_1D, fn))
@@ -234,7 +234,7 @@ def null_clustersize(config):
     except:
         sz = 0. # CHECKME whether this makes sense
 
-    print "Null data: maximum size %f" % sz
+    print("Null data: maximum size %f" % sz)
 
     if is_surf:
         smoothing_fn_rec = pathjoin(output_dir, _fn(config, 'rand_buck_smooth', '.1D.dset.1D.smrec'))
@@ -291,9 +291,9 @@ def critical_clustersize(config):
     # this takes a long time
     niter = config['niter']
     sz = []
-    for i in xrange(niter):
+    for i in range(niter):
         sz.append(null_clustersize(config))
-        print "Completed null iteration %d / %d" % (i + 1, niter)
+        print("Completed null iteration %d / %d" % (i + 1, niter))
 
     config['max_size'] = sz
 
@@ -357,7 +357,7 @@ def apply_clustersize(config):
     idx = _critical_size_index(config)
     critical_size = clsize[idx]
 
-    print "critical size %s (p=%s)" % (critical_size, pthr)
+    print("critical size %s (p=%s)" % (critical_size, pthr))
 
     # apply critical size to t-test of original data
     infix += '_clustp%s_%dit' % (pthr, niter)
@@ -397,7 +397,7 @@ def get_testing_config():
 
     if in_vol:
         d = '/Users/nick/organized/210_smoothness/afnidata/glm/'
-        sids = ['%02d' % i for i in xrange(1, 13)]
+        sids = ['%02d' % i for i in range(1, 13)]
         fn_pat = 'glm_SUB%s_REML+tlrc.HEAD'
         fns = ['%s/%s' % (d, fn_pat % sid) for sid in sids]
         c['output_dir'] = '/Users/nick/organized/210_smoothness/_tst'
@@ -518,7 +518,7 @@ def fix_options(config):
             raise ValueError("Not found: %s" % x)
         return y
 
-    for i in xrange(len(config['data_files'])):
+    for i in range(len(config['data_files'])):
         full_path=f(config['data_files'][i])
 
         if _extension_indicates_surface_file(full_path) and \

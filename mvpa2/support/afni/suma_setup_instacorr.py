@@ -111,7 +111,7 @@ def afni_niml_zscore_makefull_wizard(cfg):
     if group_postfix is None:
         group_postfix = _smart_filename_decode(fns, 'postfix')
         if group_postfix is not None:
-            print "Using automatic postfix %s" % group_postfix
+            print("Using automatic postfix %s" % group_postfix)
 
     overwrite = cfg['overwrite']
 
@@ -124,7 +124,7 @@ def afni_niml_zscore_makefull_wizard(cfg):
             pad_to_ico_ld = _smart_filename_decode(fns, 'pad_to_ico_ld')
             if pad_to_ico_ld is not None:
                 pad_to_node = pad_to_ico_ld * pad_to_ico_ld * 10 + 2
-                print "Using automatic pad_to_ico_ld=%r, pad_to_node=%r" % (pad_to_ico_ld, pad_to_node)
+                print("Using automatic pad_to_ico_ld=%r, pad_to_node=%r" % (pad_to_ico_ld, pad_to_node))
 
     if pad_to_node:
         pad_to_node = int(pad_to_node)
@@ -140,7 +140,7 @@ def afni_niml_zscore_makefull_wizard(cfg):
             print("Output file %s already exists, skipping (use '--overwrite' to override)" % fnout)
         else:
             afni_niml_zscore_makefull(fn, fnout, pad_to_node=pad_to_node)
-            print "Converted %s -> %s (in %s)" % (nm, prefix + nm, pth)
+            print("Converted %s -> %s (in %s)" % (nm, prefix + nm, pth))
 
         fnouts.append(fnout)
 
@@ -182,7 +182,7 @@ def afni_niml_zscore_makefull_wizard(cfg):
     "- in SUMA, select a node while holding down ctrl+shift" %
     (pth, fullprefix))
 
-    print msg
+    print(msg)
 
 
 
