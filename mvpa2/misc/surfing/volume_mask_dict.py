@@ -162,7 +162,7 @@ class VolumeMaskDictionary(Mapping):
             if expected_keys and (set(aux) != expected_keys):
                 raise ValueError("aux label mismatch: %s != %s" %
                                 (set(aux), expected_keys))
-            for k, v in aux.iteritems():
+            for k, v in aux.items():
                 if not k in self._src2aux:
                     self._src2aux[k] = dict()
 
@@ -170,7 +170,7 @@ class VolumeMaskDictionary(Mapping):
                 if len(self._src2aux[k]) == 0:
                     v_dtype = None
                 else:
-                    v_dtype = next(self._src2aux[k].itervalues()).dtype
+                    v_dtype = next(iter(self._src2aux[k].values())).dtype
 
                 if isinstance(v, (list, tuple, int, float, np.ndarray)):
                     v_arr = np.asanyarray(v, dtype=v_dtype).ravel()
@@ -944,7 +944,7 @@ def _dict_with_arrays2array_tuple(d):
     if all(type(v) is dict for v in d.values()):
         # probably src2aux, so run recursively
         return dict((k, _dict_with_arrays2array_tuple(v))
-                        for k, v in d.iteritems())
+                        for k, v in d.items())
 
     keys = np.asarray(d.keys())
 
@@ -1006,7 +1006,7 @@ def _array_tuple2dict_with_arrays(kld):
             if all(type(v) in (tuple, dict) for v in kld.values()):
                 # probably src2aux, so run recursively
                 return dict((k, _array_tuple2dict_with_arrays(v))
-                            for k, v in kld.iteritems())
+                            for k, v in kld.items())
             elif all(isinstance(v, np.ndarray) for v in kld.values()):
                 # old-style mapping
                 return kld

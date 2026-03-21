@@ -446,7 +446,7 @@ class VolSurfMapping(VolSurf):
 
         voldata = np.zeros((nv,), dtype=float)
 
-        for vx2d in n2v.itervalues():
+        for vx2d in n2v.values():
             if vx2d:
                 for vx in vx2d:
                     voldata[vx] += 1
@@ -503,11 +503,11 @@ class VolSurfMapping(VolSurf):
         v2ns = dict()
 
         # by default, no voxels associated with each node
-        for j in xrange(nv):
+        for j in range(nv):
             n2vs[j] = None
 
         # different 'layers' (depths) in the grey matter
-        for i in xrange(nsteps):
+        for i in range(nsteps):
             whiteweight = start_fr + step * float(i)  # ensure float
             pialweight = 1 - whiteweight
 
@@ -673,7 +673,7 @@ class VolSurfMinimalMapping(VolSurfMapping):
 
         if __debug__ and 'SVS' in debug.active:
             nnodes = len(n2vs_max)
-            nvoxels_max = sum(map(len, v2ns_max.itervalues()))
+            nvoxels_max = sum(map(len, v2ns_max.values()))
             nvoxels_max_per_node = float(nvoxels_max) / nnodes
             debug('SVS', 'Maximal node-to-voxel mapping: %d nodes, '
                             '%d voxels, %.2f voxels/node' %
@@ -683,13 +683,13 @@ class VolSurfMinimalMapping(VolSurfMapping):
 
         # initialize mapping
         n2vs_min = dict((n, None if vs is None else dict())
-                                    for n, vs in n2vs_max.iteritems())
+                                    for n, vs in n2vs_max.items())
         v2n_min = dict()
 
         # helper function to compute distance to intermediate surface
-        dist_func = lambda (_, p): abs(p - .5)
+        dist_func = lambda x: abs(x[1] - .5)
 
-        for v, ns in v2ns_max.iteritems():
+        for v, ns in v2ns_max.items():
             # get pairs os nodes and the voxel positions
             ns_pos = [(n, n2vs_max[n].get(v)) for n in ns]
 
@@ -783,7 +783,7 @@ class VolSurfMinimalLowresMapping(VolSurfMinimalMapping):
         n_in_low2v = dict()
         ds = []
 
-        for n, v2pos in n2v.iteritems():
+        for n, v2pos in n2v.items():
             (n_in_low, d) = high2high_in_low[n]
             if v2pos is None:
                 continue
@@ -802,7 +802,7 @@ class VolSurfMinimalLowresMapping(VolSurfMinimalMapping):
                     n_in_low2v[n_in_low] = v2pos
                 elif v2pos is not None:
                     # update
-                    for v, pos in v2pos.iteritems():
+                    for v, pos in v2pos.items():
                         # minimal mapping, so voxel should not be there already
                         assert(not v in n_in_low2v[n_in_low])
                         cur[v] = pos

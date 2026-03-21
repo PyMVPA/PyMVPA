@@ -162,7 +162,7 @@ class VoxelSelector(object):
         curchunk = []
         prevd = allds[0]
         chunkcount = 1
-        for i in xrange(n):
+        for i in range(n):
             d = allds[i] # distance
             if i > 0 and prevd != d:
                 if i >= count: # we're done, use the chunk we have now
@@ -243,7 +243,7 @@ class VoxelSelector(object):
                         debug("SVS", "")
                         debug("SVS", "node %s is outside - considering %d distances"
                                     " to other nodes that may be inside." % ((src,), len(node_distances)))
-                    for nd, d in node_distances.iteritems():
+                    for nd, d in node_distances.items():
                         if nd in n2v and n2v[nd] is not None and d <= outside_node_margin:
                             if __debug__:
                                 debug("SVS", "node #%s is distance %s <= %s from #%d "
@@ -264,7 +264,7 @@ class VoxelSelector(object):
         radius = self._targetradius
 
         maxiter = 100
-        for counter in xrange(maxiter):
+        for counter in range(maxiter):
             if radius_mm == 0:
                 # only the node itself.
                 # this should work except for very strange surfaces where
@@ -355,7 +355,7 @@ class VoxelSelector(object):
         v2dps = collections.defaultdict(set)
 
         # get node indices and associated (distance, grey matter positions)
-        for nd, d in n2d.iteritems():
+        for nd, d in n2d.items():
             if nd in n2v:
                 vps = n2v[nd] # all voxels associated with this node
                 if vps is not None:
@@ -371,7 +371,7 @@ class VoxelSelector(object):
 
 
         # make triples of (voxel index, distance to center node, relative position in grey matter)
-        vdp = [unpack_dp(vx, dp) for vx, dp in v2dps.iteritems()]
+        vdp = [unpack_dp(vx, dp) for vx, dp in v2dps.items()]
 
         # sort triples by distance to center node
         vdp.sort(key=operator.itemgetter(1))
@@ -385,7 +385,7 @@ class VoxelSelector(object):
         vdp_labels = (LINEAR_VOXEL_INDICES, CENTER_DISTANCES, GREY_MATTER_POSITION)
 
         voxel_attributes = dict()
-        for i in xrange(3):
+        for i in range(3):
             voxel_attributes[vdp_labels[i]] = np.asarray(vdp_tup[i], dtype=vdp_tps[i])
 
         return voxel_attributes
@@ -469,7 +469,7 @@ def voxel_selection(vol_surf_mapping, radius, source_surf=None, source_surf_node
         # this is *slow*
         n = source_surf.nvertices
         xyz = source_surf.vertices
-        src2intermediate = dict((i, tuple(xyz[i])) for i in xrange(n))
+        src2intermediate = dict((i, tuple(xyz[i])) for i in range(n))
     else:
         # find a mapping from nodes in source_surf to those in
         # intermediate surface

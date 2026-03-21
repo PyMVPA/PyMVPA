@@ -147,7 +147,7 @@ class SurfaceQueryEngine(QueryEngineInterface):
         # for different features, hence use a list.
         # initialize each vertex with an empty list
         self._vertex2feature_map = v2f = dict(
-            (vertex_id, list()) for vertex_id in xrange(nvertices))
+            (vertex_id, list()) for vertex_id in range(nvertices))
 
         for feature_id, vertex_id in enumerate(vertex_ids):
             v2f[vertex_id].append(feature_id)
@@ -476,7 +476,7 @@ class SurfaceVerticesQueryEngine(QueryEngineInterface):
         if type(feature_id) in (list, tuple):
             return map(self.feature_id2linear_voxel_ids, feature_id)
 
-        return [i for i, j in self._map_voxel_coord.iteritems()
+        return [i for i, j in self._map_voxel_coord.items()
                                   if feature_id in j]
 
     def feature_id2nearest_vertex_id(self, feature_id,
@@ -628,7 +628,7 @@ class SurfaceVoxelsQueryEngine(SurfaceVerticesQueryEngine):
         else:
             # see which feature ids were mapped to
             feature_ids = set()
-            for v in self._map_voxel_coord.itervalues():
+            for v in self._map_voxel_coord.values():
                 feature_ids.update(set(v))
 
         f = lambda x:self.feature_id2nearest_vertex_id(x, fallback)

@@ -685,7 +685,7 @@ class VolGeom(object):
         if nt is not None:
             sh = (sh[0], sh[1], sh[2], nt)
             data = np.zeros(sh, data_vec.dtype)
-            for t in xrange(nt):
+            for t in range(nt):
                 data[:, :, :, t] = data_t1
             return data
         else:
