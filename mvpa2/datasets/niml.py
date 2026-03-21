@@ -119,7 +119,7 @@ def from_niml(dset, fa_labels=None, sa_labels=None, a_labels=None):
 
     infix2length = {'sa': nsamples, 'fa': nfeatures}
 
-    for k, v in dset.iteritems():
+    for k, v in dset.items():
         if k in ignore_labels:
             continue
 
@@ -445,7 +445,7 @@ def read(fn):
     if externals.exists('h5py'):
         readers_converters[('.h5py', '.hdf')] = (h5load, None)
 
-    keys = [exts for exts in readers_converters.iterkeys()
+    keys = [exts for exts in readers_converters.keys()
             if any(fn.endswith(ext) for ext in exts)]
 
     n_keys = len(keys)
@@ -463,7 +463,7 @@ def read(fn):
     else:
         # unclear extension, try all readers and throw less informative
         # error message
-        for reader, converter in readers_converters.itervalues():
+        for reader, converter in readers_converters.values():
             try:
                 r = reader(fn)
                 if converter:

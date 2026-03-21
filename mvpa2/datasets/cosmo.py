@@ -244,7 +244,7 @@ def _attributes_cosmo2dict(cosmo):
     pymvpa_attributes = dict()
 
     # go over 'sa', 'fa' and 'a'
-    for fieldname, do_transpose in _attr_fieldname2do_transpose.iteritems():
+    for fieldname, do_transpose in _attr_fieldname2do_transpose.items():
         attrs = dict()
 
         if fieldname in cosmo:
@@ -317,7 +317,7 @@ def _attributes_dict2cosmo(ds):
     cosmo = dict()
 
     # go over 'sa', 'fa' and 'a'
-    for fieldname, do_transpose in _attr_fieldname2do_transpose.iteritems():
+    for fieldname, do_transpose in _attr_fieldname2do_transpose.items():
         attr_collection = getattr(ds, fieldname)
 
         if attr_collection:
@@ -431,7 +431,7 @@ def _mat_make_saveable(x, fixer=_mat_replace_functions_by_string):
     if type(x) is dict:
         # use recursion
         return dict((k, _mat_make_saveable(v, fixer=fixer))
-                    for k, v in x.iteritems())
+                    for k, v in x.items())
 
     elif isinstance(x, np.ndarray) and x.dtype.names is None:
         # standard array or object array
@@ -612,7 +612,7 @@ def from_any(x):
     if isinstance(x, dict):
         x_keys = x.keys()
         # remove private headers so that CosmoQueryEngine.from_mat won't choke
-        x = dict((k, v) for k, v in x.iteritems() if not _is_private_key(k))
+        x = dict((k, v) for k, v in x.items() if not _is_private_key(k))
 
         for depth in (0, 1):
             if 'samples' in x:
@@ -726,7 +726,7 @@ class CosmoQueryEngine(QueryEngineInterface):
         if not isinstance(mapping, dict):
             raise TypeError('Mapping must be dict, found %s' % type(mapping))
 
-        for k, v in mapping.iteritems():
+        for k, v in mapping.items():
             if not np.isscalar(k):
                 raise ValueError('Key %s not a scalar' % k)
             if not isinstance(k, int):

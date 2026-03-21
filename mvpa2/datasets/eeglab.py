@@ -102,7 +102,7 @@ def eeglab_dataset(samples):
     # make a list of all channels and timepoints
     channel_array = np.asarray(channel_labels)
     timepoint_array = np.asarray([samples[0][i][0]
-                                  for i in xrange(n_timepoints)])
+                                  for i in range(n_timepoints)])
 
     dts = timepoint_array[1:] - timepoint_array[:-1]
     if not np.all(dts == dts[0]):
