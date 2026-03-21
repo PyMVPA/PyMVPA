@@ -148,7 +148,7 @@ class SimpleSOMMapper(Mapper):
         unit_deltas = np.zeros(self._K.shape, dtype='float')
 
         # for all iterations
-        for it in xrange(1, self.niter + 1):
+        for it in range(1, self.niter + 1):
             # compute the neighborhood impact kernel for this iteration
             # has to be recomputed since kernel shrinks over time
             k = self._compute_influence_kernel(it, dqd)
@@ -276,9 +276,9 @@ class SimpleSOMMapper(Mapper):
         With some care.
         """
         if self._K is None:
-            raise RuntimeError, \
-                  'The SOM needs to be trained before access to the Kohonen ' \
-                  'layer is possible.'
+            raise RuntimeError(
+                  'The SOM needs to be trained before access to the Kohonen '
+                  'layer is possible.')
 
         return self._K
 
