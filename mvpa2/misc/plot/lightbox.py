@@ -29,9 +29,9 @@ else:
         nibabel module available for plotting regular 2D/3D images
         (ndarrays)"""
         def __init__(self, filename):
-            raise ValueError, "plot_lightbox was provided a filename %s.  " \
+            raise ValueError("plot_lightbox was provided a filename %s.  " \
                   "By now we only support loading data from Nifti/Analyze " \
-                  "files, but nibabel module is not available" % filename
+                  "files, but nibabel module is not available" % filename)
 
 
 def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
@@ -171,10 +171,10 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                 if np.all(np.array(v.shape[3:]) == 1):
                     v.shape = v.shape[:3]
                 else:
-                    raise ValueError, \
+                    raise ValueError(
                           "Original shape of some data is %s whenever we " \
                           "can accept only 3D images (or ND with degenerate " \
-                          "first dimensions)" % (v.shape,)
+                          "first dimensions)" % (v.shape,))
 
     # process vlim
     vlim = list(vlim)
@@ -199,8 +199,8 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                                         *np.exp(-(x**2)/(2*std**2)),
                               {})]
         else:
-            raise ValueError, 'Unknown specification of vlim=%s' % vlim + \
-                  ' Known is: symneg'
+            raise ValueError('Unknown specification of vlim=%s' % vlim + \
+                  ' Known is: symneg')
 
 
     class Plotter(object):
@@ -236,7 +236,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             invert = vlim[1] < vlim[0]
             if invert:
                 vlim = (vlim[1], vlim[0])
-                print "Not yet fully supported"
+                print("Not yet fully supported")
 
             # adjust lower bound if it is too low
             # and there are still multiple values ;)
@@ -304,7 +304,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             while ncolumns*nrows - (nslices + nadd) < 0:
                 ncolumns += 1
 
-            locs = ['' for i in xrange(ncolumns*nrows)]
+            locs = ['' for i in range(ncolumns*nrows)]
 
             # Fill in predefined locations
             for v,vl in ((add_hist, 'hist'),

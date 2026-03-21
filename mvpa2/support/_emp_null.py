@@ -97,10 +97,10 @@ class FDR(object):
         """
         pv = np.squeeze(pv)
         if pv.min()<0:
-            print pv.min()
+            print(pv.min())
             raise ValueError("Negative p-values")
         if pv.max()>1:
-            print pv.max()
+            print(pv.max())
             raise ValueError("P-values greater than 1!")
         return pv
 
@@ -296,8 +296,8 @@ class ENN(object):
             self.plot(efp, alpha)
     
         if efp[-1] > alpha:
-            print "the maximal value is %f , the corresponding fdr is %f " \
-                    % (self.x[-1], efp[-1])
+            print("the maximal value is %f , the corresponding fdr is %f " \
+                    % (self.x[-1], efp[-1]))
             return np.infty
         j = np.argmin(efp[::-1] < alpha) + 1
         return 0.5*(self.x[-j] + self.x[-j+1])

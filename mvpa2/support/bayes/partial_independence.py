@@ -65,8 +65,8 @@ if __name__ == '__main__':
     #               [ 0,  0,  0, 30,  0],
     #               [ 0,  0,  0,  0, 30]], dtype=np.float32)
 
-    print "X:"
-    print X
+    print("X:")
+    print(X)
 
     psi = [[0,1],[2]]
     # psi = [[0],[1],[2]]
@@ -79,12 +79,12 @@ if __name__ == '__main__':
     # psi = [[0,1,2],[3,4]]
     # psi = [[0,1,2,3,4]]
 
-    print "psi:", psi
+    print("psi:", psi)
 
     alpha = np.ones(X.shape)
-    print "alpha:"
-    print alpha
+    print("alpha:")
+    print(alpha)
 
     logp_H = compute_logp_H(X, psi, alpha)
 
-    print "Analytical estimate:", logp_H
+    print("Analytical estimate:", logp_H)

@@ -53,9 +53,9 @@ def _offset(ax, x, y):
         trans.set_offset((x, y), mlt.identity_transform())
         return trans
     else:
-        raise RuntimeError, \
+        raise RuntimeError(
               "Lacking needed functions in matplotlib.transform " \
-              "for _offset. Please upgrade"
+              "for _offset. Please upgrade")
 
 
 def _make_centeredaxis(ax, loc, offset=5, ai=0, mult=1.0,
@@ -225,8 +225,8 @@ def plot_erp(data, SR=500, onsets=None,
 
     if onsets is not None: # if we need to extract ERPs
         if post is None:
-            raise ValueError, \
-                  "Duration post onsets must be provided if onsets are given"
+            raise ValueError(
+                  "Duration post onsets must be provided if onsets are given")
         # trial timecourse duration
         duration = pre + post
 
@@ -263,10 +263,10 @@ def plot_erp(data, SR=500, onsets=None,
 
     # validity check -- we should have 2D matrix (trials x samples)
     if len(erp_data.shape) != 2:
-        raise RuntimeError, \
+        raise RuntimeError(
               "plot_erp() supports either 1D data with onsets, or 2D data " \
               "(trials x sample_points). Shape of the data at the point " \
-              "is %s" % erp_data.shape
+              "is %s" % (erp_data.shape,))
 
     if not (pre_mean == 0 or pre_mean is None):
         # mean of pre-onset signal accross trials
@@ -449,8 +449,8 @@ def plot_erps(erps, data=None, ax=None, pre=0.2, post=None,
         params.update(kwargs)
 
         if plot_data is None:
-            raise ValueError, "Channel %s got no data provided" \
-                  % params.get('label', 'UNKNOWN')
+            raise ValueError("Channel %s got no data provided" \
+                  % params.get('label', 'UNKNOWN'))
 
 
         plot_erp(plot_data, pre=pre, pre_onset=pre_onset, post=post, ax=ax,

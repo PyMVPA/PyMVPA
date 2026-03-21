@@ -101,9 +101,9 @@ class MASSLearnerAdapter(Classifier):
                 targets,
                 **self._kwargs)
         except RRuntimeError as e:
-            raise FailedToTrainError, \
+            raise FailedToTrainError(
                   "Failed to train %s on %s. Got '%s' during call to fit()." \
-                  % (self, dataset, e)
+                  % (self, dataset, e))
 
 
     @accepts_dataset_as_samples
@@ -124,8 +124,8 @@ class MASSLearnerAdapter(Classifier):
                 self.ca.posterior = np.asarray(Rrx2(output, 'posterior'))
             res = np.asarray(classes)
         except Exception as e:
-            raise FailedToPredictError, \
+            raise FailedToPredictError(
                   "Failed to predict %s on data of shape %s. Got '%s' during" \
-                  " call to predict()." % (self, data.shape, e)
+                  " call to predict()." % (self, data.shape, e))
 
         return res

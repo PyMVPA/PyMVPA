@@ -225,7 +225,7 @@ class GeneralizedLinearKernel(NumpyKernel):
                 gsize = (len(data1), len(data2), nfeat)
                 if do_g:  g_Sigma_p = np.empty(gsize)
                 if do_gl: gl_Sigma_p = np.empty(gsize)
-                for i in xrange(nfeat):
+                for i in range(nfeat):
                     outer = np.multiply.outer(data1[:, i], data2[:, i])
                     if do_g:  g_Sigma_p[:, :, i] = outer
                     if do_gl: gl_Sigma_p = Sigma_p[i] * outer

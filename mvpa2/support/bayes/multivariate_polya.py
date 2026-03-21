@@ -58,13 +58,13 @@ if __name__ == '__main__':
     x = np.array([100,0,0])
     # x = np.array([0,50,50])
     alpha = np.array([1,10,10])
-    print "x:", x
-    print "alpha:", alpha
-    print "Likelihood:"
-    print "log of the basic formula:", np.log(multivariate_polya(x, alpha))
-    print "log of the basic vectorized formula:", np.log(multivariate_polya_vectorized(x, alpha))
-    print "Log-scale stable formula:", log_multivariate_polya_vectorized(x, alpha)
-    print "Monte Carlo estimations in log-scale:"
+    print("x:", x)
+    print("alpha:", alpha)
+    print("Likelihood:")
+    print("log of the basic formula:", np.log(multivariate_polya(x, alpha)))
+    print("log of the basic vectorized formula:", np.log(multivariate_polya_vectorized(x, alpha)))
+    print("Log-scale stable formula:", log_multivariate_polya_vectorized(x, alpha))
+    print("Monte Carlo estimations in log-scale:")
     for i in range(5):
-        print "\t", i, log_multivariate_polya_mc(x, alpha, iterations=1e5)
+        print("\t", i, log_multivariate_polya_mc(x, alpha, iterations=1e5))
 

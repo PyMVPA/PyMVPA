@@ -329,7 +329,7 @@ def suite_stats(scope_dict=None):
             dict.__init__(self, foreign={})
             # compute cruel stats
             mvpa_str = '%smvpa' % os.path.sep
-            for k, e in d.iteritems():
+            for k, e in d.items():
                 found = False
                 for ty, tk, check_path in (
                     (list, "lists", False),
@@ -360,8 +360,8 @@ def suite_stats(scope_dict=None):
                             self[tk][k] = e
                         break
                 if not found:
-                    raise ValueError, \
-                          "Could not figure out placement for %s %s" % (k, e)
+                    raise ValueError(
+                          "Could not figure out placement for %s %s" % (k, e))
 
         def __str__(self):
             s = ""

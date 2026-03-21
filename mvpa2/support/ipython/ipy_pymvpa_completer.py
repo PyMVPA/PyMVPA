@@ -106,4 +106,4 @@ if __name__ == '__main__':
     assert ip.complete('t.ed') == []
     assert('targets' in  ip.complete('t.sa.'))
     assert('chunks' in  ip.complete('t.sa.'))
-    print 'Tests OK'
+    print('Tests OK')
