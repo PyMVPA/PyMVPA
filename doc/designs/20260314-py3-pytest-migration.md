@@ -175,7 +175,8 @@ pulled forward). `future`/`six` still needed temporarily.
 ### 1.3 conftest.py — ✅ DONE (minimal)
 
 - [x] Root `conftest.py` with `collect_ignore_glob` and PYTHONPATH setup
-- [ ] TODO: session fixtures for RNG seed / warning suppression
+- [x] Warning suppression via `pytest_configure()` (done in Phase 3.7)
+- [ ] TODO: session fixtures for RNG seed
 - [ ] TODO: custom markers (`labile`, `slow`, `ai_generated`)
 
 ### 1.4 numpy/scipy/h5py compat fixes (unplanned but required) — ✅ DONE
@@ -304,13 +305,13 @@ All remaining test failures mitigated:
 | D2 | `test_classifier_generalization` | `MVPA_TESTS_LABILE=no` in tox.ini |
 | D3 | `test_dist_p_value` | `MVPA_TESTS_LABILE=no` in tox.ini |
 
-#### Category E: Warnings — partially fixed
+#### Category E: Warnings — fixed in Phase 3.7
 
 | ID | Source | Status |
 |---|---|---|
-| E1 | `misc/io/base.py` regex FutureWarning | **Fixed** |
-| E2 | `Dataset.__array__` missing `copy` kwarg | Deferred to Phase 7 |
-| E3 | `np.matrix` deprecation warnings | Deferred to Phase 7 |
+| E1 | `misc/io/base.py` regex FutureWarning | **Fixed** (Phase 1.7) |
+| E2 | `Dataset.__array__` missing `copy` kwarg | **Suppressed** in conftest.py (Phase 3.7) |
+| E3 | `np.matrix` deprecation warnings | **Fixed** in source (Phase 3.7); remaining mapper usage suppressed |
 
 ## Phase 2: Strip `future`/`six`/`past` — Pure Python 3 ✅ DONE
 
@@ -388,6 +389,79 @@ with `tox -e py313` (202 passed, 4 skipped, 0 failed throughout).
   - Kept `nose` (still referenced in old test runner)
 
 **✓ CHECKPOINT: 202 passed, 4 skipped, 0 failed — all dead deps removed**
+
+## Phase 3.7: Eliminate Test Warnings ✅ DONE
+
+Cleaned up ~1867 warnings that cluttered tox output. Addressed all actionable
+categories: invalid escape sequences, pytest collection confusion, `np.matrix`
+deprecation, `is`-with-literal, and upstream library warnings.
+
+### 3.7.1 Fix PytestCollectionWarnings — ✅ DONE
+
+Added `__test__ = False` to fixture classes that pytest mistakes for test classes:
+- `test_state.py`: 7 classes (`TestClassEmpty`, `TestClassBlank`,
+  `TestClassBlankNoExplicitStates`, `TestClassProper`, `TestClassProperChild`,
+  `TestClassReadOnlyParameter`, `TestClassParametrized`)
+- `test_collections.py`: 2 classes (`TestNodeOffDefault`, `TestNodeOnDefault`)
+
+### 3.7.2 Fix invalid escape sequences — ✅ DONE
+
+Prefixed strings with `r` to make them raw strings:
+- `dochelpers.py` (3 regexes), `param.py` (1 regex), `neighborhood.py` (1 docstring),
+  `distance.py` (2 docstrings), `transerror.py` (1 string literal, 1 docstring),
+  `meta.py` (1 docstring), `partition.py` (1 docstring), `test_verbosity.py` (1 regex)
+
+### 3.7.3 Fix `is` with literal — ✅ DONE
+
+- `test_param.py:222`: `p.value is 1` → `p.value == 1`
+
+### 3.7.4 Replace `np.matrix` in PLR classifier — ✅ DONE
+
+Eliminated ~500 warnings. Replacement rules applied to `plr.py`:
+- `np.matrix(...)` → `np.zeros`/`np.ones`/`np.asarray`/`np.concatenate`
+- `A * B` (matrix multiply) → `A @ B`
+- `H.I * g` → `np.linalg.solve(H, g)` (more numerically stable)
+- `.A` (to array) → removed (already ndarray)
+- `.A1` (flatten) → `.ravel()`
+
+### 3.7.5 Replace `np.matrix` in hyperalignment.py and distance.py — ✅ DONE
+
+- `hyperalignment.py:397-398`: `np.matrix(np.diag(S))` → `np.diag(S)` + `@`
+- `distance.py:260`: `np.matrix(Zx) * np.matrix(Zy).T` → `Zx @ Zy.T`
+
+### 3.7.6 Handle `np.matrix` in test_dataset.py — ✅ DONE
+
+- Removed `np.matrix` from test input types (deprecated)
+
+### 3.7.7 Suppress upstream warnings in conftest.py — ✅ DONE
+
+Added `pytest_configure()` to `conftest.py` to suppress third-party warnings:
+- `PendingDeprecationWarning: matrix subclass` (from internal mappers via `np.asmatrix`)
+- `DeprecationWarning: __array__` copy kwarg (numpy 2.x)
+- `RuntimeWarning: invalid value encountered` (scipy)
+- `UserWarning: integral divergent` (scipy.integrate)
+- `DeprecationWarning: distutils` (Python 3.12+)
+- `ConstantInputWarning` (scipy.stats) — via `warnings.filterwarnings`
+
+Suppressed `SmallSampleWarning` (scipy.stats) locally on `test_ttest_1samp_masked`
+via `@pytest.mark.filterwarnings`.
+
+### Commits
+
+- d41be8519 `STY: fix pytest collection warnings, escape sequences, is-with-literal (Phase 3.7)`
+- 631277f99 `RF: replace np.matrix with ndarray in PLR classifier (Phase 3.7)`
+- cc8cce73c `RF: replace remaining np.matrix usage (Phase 3.7)`
+- dffbaeec6 `STY: suppress upstream warnings in conftest.py (Phase 3.7)`
+
+### Remaining `np.matrix` usage (not addressed)
+
+These are in code paths not exercised by the current test suite, or in deeper
+infrastructure that would require more invasive changes:
+- `mvpa2/mappers/projection.py:111` — `np.asmatrix(data)` in `ProjectionMapper._forward_data()`
+  (used by ProcrusteanMapper; ~1300 warnings from hyperalignment tests, suppressed in conftest)
+- `mvpa2/clfs/libsvmc/sens.py:74-75` — `np.matrix(model.get_sv_coef())` (needs C extension)
+
+**✓ CHECKPOINT: 202 passed, 4 skipped — 0 actionable warnings in tox output**
 
 ## Phase 4: Convert Remaining ~53 Unconverted Source Files
 
