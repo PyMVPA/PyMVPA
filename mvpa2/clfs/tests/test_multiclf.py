@@ -221,10 +221,13 @@ def test_multiclass_without_combiner():
 
 
 # Sweep through some representative interesting classifiers
-@sweepargs(clf=[
-    LinearCSVMC(C=1),
-    GNB(common_variance=True),
-])
+_multiclass_sens_clfs = [GNB(common_variance=True)]
+try:
+    _multiclass_sens_clfs.insert(0, LinearCSVMC(C=1))
+except NameError:
+    pass  # LinearCSVMC unavailable without libsvm C extension
+
+@sweepargs(clf=_multiclass_sens_clfs)
 def test_multiclass_without_combiner_sens(clf):
     ds = datasets['uni3small'].copy()
     # do the clone since later we will compare sensitivities and need it

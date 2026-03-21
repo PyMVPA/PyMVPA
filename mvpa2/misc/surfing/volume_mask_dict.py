@@ -21,7 +21,7 @@ and __getstate__ - have to flag somehow whether this mapping was present.
 
 __docformat__ = 'restructuredtext'
 
-from collections import Mapping
+from collections.abc import Mapping
 
 import numpy as np
 
