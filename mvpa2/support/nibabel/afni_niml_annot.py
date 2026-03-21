@@ -111,24 +111,24 @@ def merge(annots):
     idxs, tables, datas = map(list, zip(*map(annot2idx_table_data, annots)))
 
     to_add_idx = _merge_indices_addition_values(idxs)
-    idx = np.vstack(idxs[i] + to_add_idx[i] for i in xrange(n))
+    idx = np.vstack(idxs[i] + to_add_idx[i] for i in range(n))
 
     # join the table
     ncols = len(tables[0])
     table = []
-    for i in xrange(ncols):
+    for i in range(ncols):
         columns = [d[i] for d in tables]
 
         if all(isinstance(d[i], np.ndarray) and \
                     np.issubdtype(m.dtype, np.integer) for m in columns):
             to_add_table = _merge_indices_addition_values(columns)
 
-            for j in xrange(n):
+            for j in range(n):
                 columns[j] = columns[j] + to_add_table[j]
 
         table.append(np.hstack(columns))
 
-    data = np.vstack([datas[i] + to_add_table[i] for i in xrange(n)])
+    data = np.vstack([datas[i] + to_add_table[i] for i in range(n)])
 
     output = annots[0].copy()
     output['node_indices'] = idx

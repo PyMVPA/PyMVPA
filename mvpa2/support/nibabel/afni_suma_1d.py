@@ -37,7 +37,7 @@ def write(fnout, data, nodeidxs=None):
         fmt = []
 
     # 5 decimal places should be enough for everyone
-    fmt.extend(['%.5f' for _ in xrange(nt)])
+    fmt.extend(['%.5f' for _ in range(nt)])
 
     np.savetxt(fnout, data, fmt, ' ')
 

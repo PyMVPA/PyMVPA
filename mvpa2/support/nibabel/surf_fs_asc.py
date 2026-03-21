@@ -125,8 +125,8 @@ def write(fn, surface, overwrite=False, comment=None):
     s.append('%d %d' % (nv, nf))
 
     # add vertices and faces
-    s.extend('%f %f %f 0' % (v[i, 0], v[i, 1], v[i, 2]) for i in xrange(nv))
-    s.extend('%d %d %d 0' % (f[i, 0], f[i, 1], f[i, 2]) for i in xrange(nf))
+    s.extend('%f %f %f 0' % (v[i, 0], v[i, 1], v[i, 2]) for i in range(nv))
+    s.extend('%d %d %d 0' % (f[i, 0], f[i, 1], f[i, 2]) for i in range(nf))
 
     # write to file
     f = open(fn, 'w')

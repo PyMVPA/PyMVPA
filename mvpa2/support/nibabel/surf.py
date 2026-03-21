@@ -97,9 +97,9 @@ class Surface(object):
         if not hasattr(self, '_n2f'):
             # run the first time this function is called
             n2f = dict()
-            for i in xrange(self._nf):
+            for i in range(self._nf):
                 fi = self._f[i]
-                for j in xrange(3):
+                for j in range(3):
                     p = fi[j]
                     if not p in n2f:
                         n2f[p] = []
@@ -125,7 +125,7 @@ class Surface(object):
 
             f2el = np.zeros((n, 3))
             p = v[f[:, 0]]  # first coordinate
-            for i in xrange(3):
+            for i in range(3):
                 q = v[f[:, (i + 1) % 3]]  # second coordinate
                 d = p - q  # difference vector
 
@@ -155,7 +155,7 @@ class Surface(object):
             sum_dist = np.zeros((n,))
             count_dist = np.zeros((n,))
             a = f[:, 0]
-            for j in xrange(3):
+            for j in range(3):
                 b = f[:, (j + 1) % 3]
 
                 d = np.sum((v[a] - v[b]) ** 2, 1) ** .5
@@ -196,8 +196,8 @@ class Surface(object):
             faces = self.faces
 
             e2f = dict()
-            for i in xrange(self.nfaces):
-                for j in xrange(3):
+            for i in range(self.nfaces):
+                for j in range(3):
                     e = (faces[i, j], faces[i, (j + 1) % 3])
                     if e in e2f:
                         raise ValueError(
@@ -228,10 +228,10 @@ class Surface(object):
 
         if not hasattr(self, '_nbrs'):
             nbrs = dict()
-            for i in xrange(self._nf):
+            for i in range(self._nf):
                 fi = self._f[i]
 
-                for j in xrange(3):
+                for j in range(3):
                     p = fi[j]
                     q = fi[(j + 1) % 3]
 
@@ -284,7 +284,7 @@ class Surface(object):
 
         if shortmetric == 'e':
             ds = self.euclidean_distance(src)
-            c = dict((nd, d) for (nd, d) in zip(xrange(self._nv), ds)
+            c = dict((nd, d) for (nd, d) in zip(range(self._nv), ds)
                      if d <= radius)
 
         elif shortmetric == 'd':
@@ -565,7 +565,7 @@ class Surface(object):
 
         n = src_coords.shape[0]
         idxs = np.zeros((n,), dtype=int)
-        for i in xrange(n):
+        for i in range(n):
             delta = v - src_coords[i]
             minidx = np.argmin(np.sum(delta ** 2, 1))
             idxs[i] = masked_idxs[minidx]
@@ -630,7 +630,7 @@ class Surface(object):
             ipos, jpos = 0, 0
             a_init = a[ipos, jpos]
 
-            for j in xrange(nf):
+            for j in range(nf):
                 # go over the faces that contain node_index
                 # for each row take the other value, and try to match
                 # it to another face
@@ -671,8 +671,8 @@ class Surface(object):
         # for each edge, see which is the next edge
         # in the same triangle (clock-wise)
         edge2next = dict()
-        for i in xrange(self.nfaces):
-            for j in xrange(3):
+        for i in range(self.nfaces):
+            for j in range(3):
                 p, q, r = faces[i]
 
                 # make edges
@@ -1092,7 +1092,7 @@ class Surface(object):
             fxs = map(f, all)
 
             positions = [0]
-            for i in xrange(n):
+            for i in range(n):
                 positions.append(positions[i] + fxs[i])
 
             zeros_arr = np.zeros((positions[-1], xs[0].vertices.shape[1]),
@@ -1104,7 +1104,7 @@ class Surface(object):
         pos_f, all_f = border_positions(all, lambda x: x.nfaces,
                                         self.faces.dtype)
 
-        for i in xrange(n):
+        for i in range(n):
             all_v[pos_v[i]:pos_v[i + 1], :] = all[i].vertices
             all_f[pos_f[i]:pos_f[i + 1], :] = all[i].faces + pos_v[i]
 
@@ -1258,7 +1258,7 @@ class Surface(object):
         if self.same_topology(highres):
             d = np.sum((x - y) ** 2, axis=1) ** .5
             if all(d[np.logical_not(np.isnan(d))] < epsilon):
-                for i in xrange(nx):
+                for i in range(nx):
                     mapping[i] = i
                 return mapping
 
@@ -1267,7 +1267,7 @@ class Surface(object):
                 "Other surface has fewer nodes (%d) than this one (%d)" %
                 (nx, ny))
 
-        for i in xrange(nx):
+        for i in range(nx):
             ds = np.sum((x[i, :] - y) ** 2, axis=1)
             minpos = np.argmin(ds)
 
@@ -1385,7 +1385,7 @@ class Surface(object):
             d = np.sum((x - y) ** 2, axis=1) ** .5
 
             if all(d[np.logical_not(np.isnan(d))] < epsilon):
-                for i in xrange(nx):
+                for i in range(nx):
                     mapping[i] = i
                 return mapping
 
@@ -1513,7 +1513,7 @@ class Surface(object):
 
         # reverse mapping, only containing nodes that are both in
         # highres_indices and have a partner in self (lowres)
-        high2low = dict((v, k) for k, v in low2high.iteritems()
+        high2low = dict((v, k) for k, v in low2high.items()
                         if v in highres_indices)
 
         # node indices in high-res surface that have a mapping
@@ -1526,7 +1526,7 @@ class Surface(object):
         max_radius = radius * 10000.
 
         # set of node indices of low-res surface
-        lowres_node_set = set(xrange(self.nvertices))
+        lowres_node_set = set(range(self.nvertices))
 
         # space for output
         high2high_in_low = dict()
@@ -1547,7 +1547,7 @@ class Surface(object):
                 if len(common):
                     # keep only distances to allowed nodes
                     small_ds = dict(
-                        (k, v) for k, v in ds.iteritems() if k in common)
+                        (k, v) for k, v in ds.items() if k in common)
 
                     # find nearest node
                     nearest_node_highres = min(small_ds, key=small_ds.get)
@@ -1596,7 +1596,7 @@ class Surface(object):
 
             # area is one third of sum of faces that contain the node
             n2a = np.zeros((self.nvertices,))
-            for v, fs in self.node2faces.iteritems():
+            for v, fs in self.node2faces.items():
                 n2a[v] = sum(f2a[fs]) / 3.
 
             vw = n2a.view()
@@ -1640,8 +1640,8 @@ class Surface(object):
             f_nrm = self.face_normals
 
             v_sum = np.zeros(v.shape, dtype=v.dtype)
-            for i in xrange(3):
-                for j in xrange(n):
+            for i in range(3):
+                for j in range(n):
                     v_sum[f[j, i]] += f_nrm[j]
 
             v_nrm = normalized(v_sum)
@@ -1666,7 +1666,7 @@ class Surface(object):
         visited = set()
 
         nbrs = self.neighbors
-        for i in xrange(nv):
+        for i in range(nv):
             if i in visited:
                 continue
 
@@ -1704,7 +1704,7 @@ class Surface(object):
 
             return k, v
 
-        for i in xrange(nf):
+        for i in range(nf):
             p, q, r = f[i]
 
             pk, pv = index_component(p)
@@ -1760,7 +1760,7 @@ class Surface(object):
                             node2component[rk] = pk
 
         components = list()
-        for node in xrange(nv):
+        for node in range(nv):
             v = node2component[node]
             if type(v) is set:
                 components.append(v)
@@ -1809,11 +1809,11 @@ def reposition_hemisphere_pairs(surf_left, surf_right, facing_side,
     if rotate_axis is not None:
         theta = [0] * 3
 
-        for i in xrange(nsurfs):
+        for i in range(nsurfs):
             theta[rotate_axis] = rotate_angle * hemisigns[i] * rotatesign
             surfs[i] = surfs[i].rotate(theta, unit='deg')
 
-    for i in xrange(nsurfs):
+    for i in range(nsurfs):
         hemisign = hemisigns[i]
         sign = rotatesign * hemisign
         coords = surfs[i].vertices
@@ -1903,7 +1903,7 @@ def get_sphere_left_right_mapping(surf_left, surf_right, eps=.001):
 
     # store values in an array - this is easier for indexing
     l2r_arr = np.zeros((nv,), dtype=np.int32)
-    for p, q in l2r.iteritems():
+    for p, q in l2r.items():
         l2r_arr[p] = q
 
     v_range = np.arange(nv)
@@ -1967,7 +1967,7 @@ def generate_cube():
     f = lambda x: float(x) * 2 - 1
 
     # compute coordinates
-    cs = [[f(i / (2 ** j) % 2) for j in xrange(3)] for i in xrange(8)]
+    cs = [[f(i / (2 ** j) % 2) for j in range(3)] for i in range(8)]
     vs = np.asarray(cs)
 
     # manually set topology
@@ -2007,14 +2007,14 @@ def generate_sphere(density=10):
     fs = []
 
     # z values for each ring (excluding top and bottom), equally spaced
-    zs = [-1. + 2 * (1. / (vsteps + 1)) * (i + 1) for i in xrange(vsteps)]
+    zs = [-1. + 2 * (1. / (vsteps + 1)) * (i + 1) for i in range(vsteps)]
 
     # angles for x and y
     alphastep = 2. * math.pi / hsteps
-    alphas = [float(i) * alphastep for i in xrange(hsteps)]
+    alphas = [float(i) * alphastep for i in range(hsteps)]
 
     # generate coordinates, one ring at a time
-    for vi in xrange(vsteps):
+    for vi in range(vsteps):
         z = math.sin(zs[vi] * math.pi * .5)  # z coordinate
         scz = (1 - z * z) ** .5  # scaling for z
 
@@ -2025,17 +2025,17 @@ def generate_sphere(density=10):
         xs = map(lambda x: scz * math.cos(x + alphaplus), alphas)
         ys = map(lambda x: scz * math.sin(x + alphaplus), alphas)
 
-        vs.extend((xs[i], ys[i], z) for i in xrange(hsteps))
+        vs.extend((xs[i], ys[i], z) for i in range(hsteps))
 
     # set topology, one ring at a time
     top = [1] * hsteps
-    cur = [2 + i for i in xrange(hsteps)]
+    cur = [2 + i for i in range(hsteps)]
 
-    for vi in xrange(vsteps):
+    for vi in range(vsteps):
         bot = ([0] * hsteps if vi == vsteps - 1
                else map(lambda x: x + hsteps, cur))
 
-        for hi in xrange(hsteps):
+        for hi in range(hsteps):
             left = cur[hi]
             right = cur[(hi + 1) % hsteps]
 
@@ -2084,8 +2084,8 @@ def generate_plane(x00, x01, x10, n01, n10):
 
     vs = np.zeros((n01 * n10, 3))
     fs = np.zeros((2 * (n01 - 1) * (n10 - 1), 3), dtype=int)
-    for i in xrange(n01):
-        for j in xrange(n10):
+    for i in range(n01):
+        for j in range(n10):
             vpos = i * n10 + j
             vs[vpos, :] = x00 + i * x01 + j * x10
             if i < n01 - 1 and j < n10 - 1:  # not at upper borders
@@ -2163,7 +2163,7 @@ def generate_bar(start, stop, radius, poly=10):
     # set up faces
     nf = poly * 4
     faces = np.zeros((nf, 3), dtype=np.int_)
-    for i in xrange(poly):
+    for i in range(poly):
         j = i * 2
         faces[j + 0, :] = (j + 1, j + 2, j + 3)  # top part
         faces[j + 1, :] = (j + 2, j + 4, j + 3)  # side with top

@@ -155,7 +155,7 @@ def _dset2rawniml_nodeidxs(s):
         if v is None:
             return None
         n = len(v)
-        return n == 0 or all(v[i] <= v[i + 1] for i in xrange(n - 1))
+        return n == 0 or all(v[i] <= v[i + 1] for i in range(n - 1))
 
     return dict(data_type='Node_Bucket_node_indices',
                 name='INDEX_LIST',
@@ -171,7 +171,7 @@ def _dset2rawniml_datarange(s):
 
         f = types.numpy_data2printer(data) # formatter function
         r = []
-        for i in xrange(len(minpos)):
+        for i in range(len(minpos)):
             mnpos = minpos[i]
             mxpos = maxpos[i]
             r.append('%s %s %d %d' % (f(data[mnpos, i]), f(data[mxpos, i]), mnpos, mxpos))
@@ -188,7 +188,7 @@ def _dset2rawniml_labels(s):
 
     labels = s.get('labels', None)
     if labels is None:
-        labels = ['col_%d' % i for i in xrange(ncols)]
+        labels = ['col_%d' % i for i in range(ncols)]
     elif type(labels) != list:
         labels = list(labels)
     if len(labels) != ncols:
@@ -328,7 +328,7 @@ def _remove_empty_nodes(nodes):
             else:
                 i += 1
     elif tp is dict:
-        for v in nodes.itervalues():
+        for v in nodes.values():
             _remove_empty_nodes(v)
 
 

@@ -93,12 +93,12 @@ def filename2vertices_faces_metadata(fn):
                                 flat='Flat'))
 
     def just_one(dict_, fn=fn):
-        vs = [v for k, v in dict_.iteritems() if k in fn]
+        vs = [v for k, v in dict_.items() if k in fn]
         return vs[0] if len(vs) == 1 else None
 
     v_meta = [gifti.GiftiNVPairs('Name', fn)]
 
-    for key, dict_ in vertex_map.iteritems():
+    for key, dict_ in vertex_map.items():
         v = just_one(dict_)
         if v is not None:
             v_meta.append(gifti.GiftiNVPairs(key, v))

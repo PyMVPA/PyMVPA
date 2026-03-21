@@ -48,7 +48,7 @@ class SurfaceSpec(object):
         for s in self.surfaces:
             for src, trg in repls:
                 keys = s.keys()
-                for i in xrange(len(keys)):
+                for i in range(len(keys)):
                     key = keys[i]
                     if key.lower() == src:
                         v = s.pop(key)
@@ -77,7 +77,7 @@ class SurfaceSpec(object):
         lines.append('')
         for surface in self.surfaces:
             lines.append('NewSurface')
-            lines.extend('    %s = %s' % kv for kv in surface.iteritems())
+            lines.extend('    %s = %s' % kv for kv in surface.items())
             lines.append('')
 
         return "\n".join(lines)
@@ -120,7 +120,7 @@ class SurfaceSpec(object):
         '''
 
         if not overwrite and os.path.exists(fnout):
-            print '%s already exists - not overwriting' % fnout
+            print('%s already exists - not overwriting' % fnout)
         with open(fnout, 'w') as f:
             f.write(self.as_string())
 
@@ -258,7 +258,7 @@ def hemi_pairs_add_views(spec_both, state, ext, directory=None, overwrite=False)
             newfns.append(newfn)
 
         if all(map(os.path.exists, newfns)) and not overwrite:
-            print "Output already exist for %s" % longname
+            print("Output already exist for %s" % longname)
         else:
             surf_left, surf_right = map(surf.read, oldfns)
             surf_both_moved = surf.reposition_hemisphere_pairs(surf_left,
@@ -343,7 +343,7 @@ def merge_left_right(both):
                 for ii, surf_ in enumerate([left, right]):
                     newsurf = dict()
                     fns.append(surf_[_NAME])
-                    for k, v in surf_.iteritems():
+                    for k, v in surf_.items():
                         newsurf[k] = v.replace(lr_infixes[ii], m_infix)
 
                         # ensure that right hemi identical to left
