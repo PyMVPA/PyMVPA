@@ -41,15 +41,15 @@ def test_h5py_clfs(fname, lrn):
     try:
         h5save(fname, lrn)
     except Exception as e:
-        raise AssertionError, \
-              "Failed to store due to %r" % (e,)
+        raise AssertionError(
+              "Failed to store due to %r" % (e,))
 
     try:
         lrn_ = h5load(fname)
         pass
     except Exception as e:
-        raise AssertionError, \
-              "Failed to load due to %r" % (e,)
+        raise AssertionError(
+              "Failed to load due to %r" % (e,))
 
     ok_(isinstance(lrn_, Classifier))
     # Verify that we have the same ca enabled
@@ -79,15 +79,15 @@ def test_h5py_clfs(fname, lrn):
     try:
         h5save(fname, lrn_)
     except Exception as e:
-        raise AssertionError, \
-              "Failed to store trained lrn due to %r" % (e,)
+        raise AssertionError(
+              "Failed to store trained lrn due to %r" % (e,))
 
     # This lrn__ is doubly stored/loaded ;-)
     try:
         lrn__ = h5load(fname)
     except Exception as e:
-        raise AssertionError, \
-              "Failed to load trained lrn due to %r" % (e,)
+        raise AssertionError(
+              "Failed to load trained lrn due to %r" % (e,))
 
     # Verify that we have the same ca enabled
     # TODO

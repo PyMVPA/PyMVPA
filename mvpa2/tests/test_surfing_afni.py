@@ -36,7 +36,7 @@ class SurfTests(unittest.TestCase):
 
     def _get_rng(self):
         keys = [(17 * i ** 5 + 78234745 * i + 8934) % (2 ** 32 - 1)
-                for i in xrange(624)]
+                for i in range(624)]
         keys = np.asanyarray(keys, dtype=np.uint32)
         rng = np.random.RandomState()
         rng.set_state(('MT19937', keys, 0))
@@ -95,20 +95,20 @@ class SurfTests(unittest.TestCase):
             return np.all(p == q) if type(p) is np.ndarray else p == q
 
 
-        for fmt, data_repr in fmt_data_reprs.iteritems():
+        for fmt, data_repr in fmt_data_reprs.items():
             s = afni_niml.rawniml2string(minimal_niml_struct, fmt)
             d = afni_niml.string2rawniml(s)
 
             # ensure data was converted properly
 
-            for k, v in minimal_niml_struct[0].iteritems():
+            for k, v in minimal_niml_struct[0].items():
                 if k == 'nodes':
                     # at least in one of the data
                     for node in v:
-                        for kk, vv in node.iteritems():
+                        for kk, vv in node.items():
                             # at least one of the data fields should have a value matching
                             # that from the expected converted value
-                            dvals = [d[0]['nodes'][i].get(kk, None) for i in xrange(len(v))]
+                            dvals = [d[0]['nodes'][i].get(kk, None) for i in range(len(v))]
                             assert_true(any([_eq(vv, dval) for dval in dvals]))
 
                 elif k != 'name':
@@ -171,7 +171,7 @@ class SurfTests(unittest.TestCase):
             raise ValueError('not found: %s', name)
 
 
-        for name, expected_dtype in expected_dtypes.iteritems():
+        for name, expected_dtype in expected_dtypes.items():
             assert_has_expected_datatype(name, expected_dtype, niml)
 
 
@@ -253,7 +253,7 @@ class SurfTests(unittest.TestCase):
 
         # set labels for samples, and set node indices
         labels = ['lab_%d' % round(rng.uniform() * 1000)
-                  for _ in xrange(sz[1])]
+                  for _ in range(sz[1])]
         node_indices = np.argsort(rng.uniform(size=(sz[0],)))
         node_indices = np.reshape(node_indices, (sz[0], 1))
 
@@ -312,7 +312,7 @@ class SurfTests(unittest.TestCase):
                                 v2 = dset3['data'][idxs3, :]
                             else:
                                 # check that data is as expected
-                                for pos, val in expected_vals.iteritems():
+                                for pos, val in expected_vals.items():
                                     if val is None:
                                         assert_raises(IndexError, lambda x: x[pos], v2)
                                     else:
@@ -521,7 +521,7 @@ class SurfTests(unittest.TestCase):
                           arr([42954, 42953, 42952, 42951, 42950, 42949,
                                42948, 42947, 42946])]
 
-        for i in xrange(4):
+        for i in range(4):
             assert_array_equal(roi['edges'][i], expected_edges[i])
 
         # check nodes

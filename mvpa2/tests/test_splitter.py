@@ -328,8 +328,8 @@ class SplitterTests(unittest.TestCase):
                     self.assertTrue(len(set(chosenchunks)) == len(chosenchunks))
                     self.assertTrue(target == len(chosenchunks))
                 else:
-                    raise RuntimeError, "Add unittest for strategy %s" \
-                          % strategy
+                    raise RuntimeError("Add unittest for strategy %s"
+                          % strategy)
 
 
     def test_discarded_boundaries(self):

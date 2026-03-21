@@ -38,7 +38,7 @@ data = np.array([[ 0.22366105, 0.51562476, 0.62623543, 0.28081652, 0.56513533],
 
 
 def test_PDistConsistency():
-    targets = np.tile(xrange(3),2)
+    targets = np.tile(range(3),2)
     chunks = np.repeat(np.array((0,1)),3)
     # correct results
     cres1 = 0.41894348
@@ -140,7 +140,7 @@ def test_CDist_cval():
 
 
 def test_PDist():
-    targets = np.tile(xrange(3),2)
+    targets = np.tile(range(3),2)
     chunks = np.repeat(np.array((0,1)),3)
     ds = dataset_wizard(samples=data, targets=targets, chunks=chunks)
     data_c = data - np.mean(data,0)

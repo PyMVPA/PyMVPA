@@ -285,7 +285,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         def val2str(x):
             return '%r:%r' % (type(x), x)
 
-        for i in xrange(0, len(combis), combistep):
+        for i in range(0, len(combis), combistep):
             combi = combis[i]
 
             intermediate_ = combi['intermediate_']
@@ -356,7 +356,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         all_fns = [volfn, volfngz, outerfn, innerfn, intermediatefn]
         list(map(os.remove, all_fns))
 
-        for k, vs in params.iteritems():
+        for k, vs in params.items():
             if not k in tested_params:
                 raise ValueError("Missing key: %r" % k)
             for v in vs:
@@ -384,7 +384,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
 
         vs = volsurf.VolSurfMaximalMapping(vg, white, pial, nsteps=2)
         n2vs = vs.get_node2voxels_mapping()
-        assert_equal(n2vs, dict((i, {i: 0., i + 100: 1.}) for i in xrange(100)))
+        assert_equal(n2vs, dict((i, {i: 0., i + 100: 1.}) for i in range(100)))
 
         nd = 17
         ds_mm_expected = np.sum((above.vertices - pial.vertices[nd, :]) ** 2,
@@ -431,7 +431,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                         # it should have all the keys, but they should
                         # all be empty
                         assert_array_equal(sel.keys(), range(inner.nvertices))
-                        for k, v in sel.iteritems():
+                        for k, v in sel.items():
                             assert_equal(v, [])
                     else:
                         assert_array_equal(sel.keys(), [])
@@ -597,7 +597,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
         # end with both set to False so that VolumeMaskDictionary is back
         # in its original state
         # XXX is manipulating class methods this way too dangerous?
-        true_false_combis = [(i % 2 == 1, i // 2 == 0) for i in xrange(3, 7)]
+        true_false_combis = [(i % 2 == 1, i // 2 == 0) for i in range(3, 7)]
 
         # try different ways to load volume mask dictionaries
         # first argument is filename, second argument is volume mask dictionary
@@ -781,7 +781,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                                (205, 209, 210, 214): 36,
                                None: 126}}
 
-        for constructor, ids2nfeatures in qe_ids2nvoxels.iteritems():
+        for constructor, ids2nfeatures in qe_ids2nvoxels.items():
             qe = constructor(sel)
             qe.train(ds)
             img = qe.get_masked_nifti_image()
@@ -789,7 +789,7 @@ class SurfVoxelSelectionTests(unittest.TestCase):
                                qe.get_masked_nifti_image(qe.ids).get_data())
 
             img_getter = qe.get_masked_nifti_image
-            for ids, nfeatures in ids2nfeatures.iteritems():
+            for ids, nfeatures in ids2nfeatures.items():
 
                 ids_list = ids if ids is None else list(ids)
                 if nfeatures is None and ids is not None:

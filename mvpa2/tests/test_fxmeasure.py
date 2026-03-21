@@ -25,7 +25,7 @@ from mvpa2.testing import assert_array_almost_equal, assert_array_less, assert_e
 if __debug__:
     from mvpa2.base import debug
 
-@sweepargs(ds=tdatasets.itervalues())
+@sweepargs(ds=tdatasets.values())
 def test_BinaryFxFeatureMeasure(ds):
     if not isinstance(ds.samples, np.ndarray):
         return

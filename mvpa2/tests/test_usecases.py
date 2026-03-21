@@ -489,7 +489,7 @@ def test_searchlight_errors_per_trial():
     for res in (results, results_gnbsl):
         assert('targets' in res.sa.keys())  # should carry targets
         assert('cvfolds' in res.sa.keys())  # should carry cvfolds
-        for ipart in xrange(len(partitions)):
+        for ipart in range(len(partitions)):
             assert_array_equal(dataset[partitions[ipart].sa.partitions == 2].targets,
                                res.sa.targets[res.sa.cvfolds == ipart])
 

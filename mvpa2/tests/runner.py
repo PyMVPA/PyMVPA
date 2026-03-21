@@ -56,7 +56,7 @@ class TestProgramPyMVPA(unittest.TestProgram):
     ##REF: Name was automagically refactored
     def run_tests(self):
         if self.verbosity:
-            print "MVPA_SEED=%s:" % _random_seed,
+            print("MVPA_SEED=%s:" % _random_seed, end=' ')
             sys.stdout.flush()
         super(TestProgramPyMVPA, self).run_tests()
 
@@ -81,12 +81,12 @@ def run():
             benchtime, stones = prof.runcall( unittest.main )
         except SystemExit:
             pass
-        print "Saving profile data into %s" % pname
+        print("Saving profile data into %s" % pname)
         prof.close()
         if profilelevel > 0:
             # we wanted to see the summary right here
             # instead of just storing it into a file
-            print "Loading profile data from %s" % pname
+            print("Loading profile data from %s" % pname)
             stats = hotshot.stats.load(pname)
             stats.strip_dirs()
             stats.sort_stats('time', 'calls')

@@ -272,14 +272,14 @@ def test_balancer():
 
     seq1, seq2, seq3 = [], [], []
 
-    for i in xrange(3):
+    for i in range(3):
         seq1.append(gen1.next())
         seq2.append(gen2.next())
         seq3.append(b(ds))
 
     # Produces expected sequences
 
-    for i in xrange(3):
+    for i in range(3):
         assert_datasets_equal(balanced[i], seq1[i])
         assert_datasets_equal(balanced[i], seq2[i])
 
@@ -602,7 +602,7 @@ def test_factorialpartitioner():
     # but if with a count we should get some selection
     fpartr2 = FactorialPartitioner(selection_strategy='random', count=2, **factkw)
     # Let's generate a number of random selections:
-    rand2_partitions = [partition(fpartr2) for i in xrange(10)]
+    rand2_partitions = [partition(fpartr2) for i in range(10)]
     for p in rand2_partitions:
         assert_equal(len(p), 2)
     # majority of them must be different

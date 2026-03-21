@@ -41,7 +41,7 @@ class WinnerTests(unittest.TestCase):
                         group_sample_winner_measure:[0, 0, 0],
                         group_sample_loser_measure: [1, 0, 0]}
 
-        for m, out in measures2out.iteritems():
+        for m, out in measures2out.items():
             assert_array_equal(m()(ds).samples.ravel(), np.asarray(out))
 
 

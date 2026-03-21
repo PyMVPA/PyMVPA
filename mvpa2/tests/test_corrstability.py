@@ -16,7 +16,7 @@ from mvpa2.measures.corrstability import CorrStability
 from mvpa2.testing.datasets import datasets
 from mvpa2.testing import sweepargs
 
-@sweepargs(ds=datasets.itervalues())
+@sweepargs(ds=datasets.values())
 def test_corrstability_smoketest(ds):
     if not 'chunks' in ds.sa:
         return

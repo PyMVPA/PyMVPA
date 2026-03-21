@@ -70,7 +70,7 @@ def test_openfmri_dataset():
 
     orig_attrs = SampleAttributes(pathjoin(pymvpa_dataroot,
                                                'attributes_literal.txt'))
-    for subj, runs in task_runs.iteritems():
+    for subj, runs in task_runs.items():
         for run in runs:
             # load single run
             ds = of.get_bold_run_dataset(subj, task, run, flavor='1slice',

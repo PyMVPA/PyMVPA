@@ -140,7 +140,7 @@ class MiscDatasetFxTests(unittest.TestCase):
             sr = str(r)
             # TODO: check the content
 
-    @sweepargs(ds=datasets.itervalues())
+    @sweepargs(ds=datasets.values())
     def test_to_df_smoke(self, ds):
         skip_if_no_external('pandas')
         df = ds.to_df()

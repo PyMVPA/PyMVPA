@@ -142,7 +142,7 @@ def test_gifti_dataset(fn, format_, include_nodes):
 
     expected_ds_sa = expected_ds.copy(deep=True)
     expected_ds_sa.sa['chunks'] = [4, 3, 2, 1, 3, 2]
-    expected_ds_sa.sa['targets'] = ['t%d' % i for i in xrange(6)]
+    expected_ds_sa.sa['targets'] = ['t%d' % i for i in range(6)]
 
     # build GIFTI file from scratch
     gifti_string = _build_gifti_string(format_, include_nodes)
@@ -203,7 +203,7 @@ def test_gifti_dataset(fn, format_, include_nodes):
         narrays = nsamples
 
     assert_equal(len(img.darrays), narrays)
-    for i in xrange(nsamples):
+    for i in range(nsamples):
         arr = img2.darrays[i + first_data_array_pos]
 
         # check intent code
@@ -270,7 +270,7 @@ def test_gifti_dataset_with_anatomical_surface(fn, format_, include_nodes):
 
     nsamples, nfeatures = ds.shape
     vertices = np.random.normal(size=(nfeatures, 3))
-    faces = np.asarray([i + np.arange(3) for i in xrange(2 * nfeatures)]) % nfeatures
+    faces = np.asarray([i + np.arange(3) for i in range(2 * nfeatures)]) % nfeatures
     surf = Surface(vertices, faces)
 
     img = map2gifti(ds, surface=surf)

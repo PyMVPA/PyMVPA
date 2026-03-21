@@ -294,7 +294,7 @@ class ErrorsTests(unittest.TestCase):
         ds3 = datasets['uni3' + ds_size].copy()
         ul = ds3.sa['targets'].unique
         nl = ds3.targets.copy()
-        for l in xrange(3):
+        for l in range(3):
             nl[ds3.targets == ul[l]] = ul[(l+1)%3]
         ds3.sa.targets = nl
         for ds in [datasets['uni2' + ds_size], ds2,

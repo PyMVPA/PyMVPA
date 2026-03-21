@@ -128,8 +128,8 @@ class StatsTests(unittest.TestCase):
         ny = y.shape[1]
 
         c_np = np.zeros((nx, ny))
-        for k in xrange(nx):
-            for j in xrange(ny):
+        for k in range(nx):
+            for j in range(ny):
                 c_np[k, j] = np.corrcoef(x[:, k], y[:, j])[0, 1]
 
         c = pearson_correlation(x, y)

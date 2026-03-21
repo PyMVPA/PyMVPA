@@ -102,8 +102,8 @@ def test_multiclass_ties(clf):
     matrix_swapped = te_.ca.stats.matrix
 
     if False: #0 in hits:
-        print clf, matrix, matrix_swapped
-        print clf.ca.estimates[:, 2] - clf.ca.estimates[:,0]
+        print(clf, matrix, matrix_swapped)
+        print(clf.ca.estimates[:, 2] - clf.ca.estimates[:,0])
         #print clf.ca.estimates
 
     # TODO: for now disabled all the non-compliant ones to pass the
@@ -135,7 +135,7 @@ def test_multiclass_ties(clf):
     #ok_(hits_ndiff < thr)
 
 @sweepargs(clf=clfswh['linear', 'svm', 'libsvm', '!meta', 'multiclass'])
-@sweepargs(ds=[datasets['uni%dsmall' % i] for i in 2,3,4])
+@sweepargs(ds=[datasets['uni%dsmall' % i] for i in (2,3,4)])
 def test_multiclass_classifier_cv(clf, ds):
     # Extending test_clf.py:ClassifiersTests.test_multiclass_classifier
     # Compare performance with our MaximalVote to the one done natively
@@ -210,7 +210,7 @@ def test_multiclass_without_combiner():
         training_stats = mcv.ca.training_stats
         assert_equal(set(training_stats.keys()),
                      set([('L0', 'L1'), ('L0', 'L2'), ('L1', 'L2')]))
-        for pair, cm in training_stats.iteritems():
+        for pair, cm in training_stats.items():
             assert_array_equal(cm.labels, ds.UT)
             # we should have no predictions for absent label
             assert_array_equal(cm.matrix[~np.in1d(ds.UT, pair)], 0)

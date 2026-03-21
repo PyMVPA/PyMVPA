@@ -21,8 +21,8 @@ from mvpa2.testing import *
 from mvpa2.testing.datasets import datasets
 
 def _wipe_out_offdiag(a, window_size, value=np.inf):
-    for i in xrange(len(a)):
-        for j in xrange(len(a)):
+    for i in range(len(a)):
+        for j in range(len(a)):
             if abs(i - j) < window_size and i != j:
                 a[i, j] = value
     return a
@@ -37,7 +37,7 @@ def test_timesegments_classification():
     # so we could reuse it here and test classification performance
     ds_orig = datasets['uni4large']
     n = 3
-    dss = [ds_orig.copy(deep=True) for i in xrange(n)]
+    dss = [ds_orig.copy(deep=True) for i in range(n)]
 
     def nohyper(dss):
         return [IdentityMapper() for ds in dss]

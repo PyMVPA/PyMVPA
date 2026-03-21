@@ -252,7 +252,7 @@ def test_cached_query_engine():
         q.train(ds)
         # sequential train on the same should be ok in both cases
         q.train(ds)
-        res_ind = [q[fid] for fid in xrange(ds.nfeatures)]
+        res_ind = [q[fid] for fid in range(ds.nfeatures)]
         res_kw = [q(myspace=x) for x in ds.fa.myspace]
         # test if results match
         cmp_res(res_ind, res_kw)
@@ -270,7 +270,7 @@ def test_cached_query_engine():
     qec.untrain()
     qec.train(ds2)
     # should be the same results on the copy
-    cmp_res(results_ind[0], [qec[fid] for fid in xrange(ds.nfeatures)])
+    cmp_res(results_ind[0], [qec[fid] for fid in range(ds.nfeatures)])
     cmp_res(results_kw[0], [qec(myspace=x) for x in ds.fa.myspace])
     ok_(qec.train(ds2) is None)
     # unfortunately we are not catching those
