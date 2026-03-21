@@ -547,36 +547,17 @@ the test restructuring and tooling.
 - [ ] `mvpa2/tests/test_giftidataset.py` — same
 - [ ] Commit: `BF: use pytest.skip(allow_module_level=True) for module-level skips`
 
-### 5.3 Complete test file moves (remaining ~20 in `mvpa2/tests/`)
+### 5.3 Complete test file moves — ✅ DONE
 
-Each move via `git mv`, verified with test run. Batch by target module.
+Moved ~35 test files from `mvpa2/tests/` to submodule `tests/` directories
+via `git mv`. Created `__init__.py` in new directories. Updated cross-file
+import in `test_stats_sp.py`.
 
-- [ ] `test_benchmarks_hyperalignment.py` → `mvpa2/algorithms/tests/`
-- [ ] `test_corrstability.py` → `mvpa2/clfs/tests/` (or `measures/tests/`)
-- [ ] `test_fxmeasure.py` → `mvpa2/measures/tests/`
-- [ ] `test_generators.py` → `mvpa2/generators/tests/`
-- [ ] `test_giftidataset.py` → `mvpa2/datasets/tests/`
-- [ ] `test_group_clusterthr.py` → `mvpa2/algorithms/tests/`
-- [ ] `test_multiclf.py` → `mvpa2/clfs/tests/`
-- [ ] `test_neighborhood.py` → `mvpa2/misc/tests/`
-- [ ] `test_openfmri.py` → `mvpa2/datasets/tests/`
-- [ ] `test_perturbsensana.py` → `mvpa2/measures/tests/`
-- [ ] `test_rsa.py` → `mvpa2/measures/tests/`
-- [ ] `test_searchlight.py` → `mvpa2/measures/tests/`
-- [ ] `test_searchlight_hyperalignment.py` → `mvpa2/algorithms/tests/`
-- [ ] `test_senses.py` → `mvpa2/measures/tests/`
-- [ ] `test_som.py` → `mvpa2/mappers/tests/`
-- [ ] `test_splitter.py` → `mvpa2/generators/tests/`
-- [ ] `test_stats.py` → `mvpa2/misc/tests/`
-- [ ] `test_stats_sp.py` → `mvpa2/misc/tests/`
-- [ ] `test_surfing_surface.py` → `mvpa2/misc/surfing/tests/`
-- [ ] `test_surfing_voxelselection.py` → `mvpa2/misc/surfing/tests/`
-- [ ] `test_testing.py` → `mvpa2/testing/tests/`
-- [ ] `test_usecases.py` → `mvpa2/tests/` (keep — cross-cutting)
-- [ ] `test_viz.py` → `mvpa2/viz/tests/`
-- [ ] `test_winner.py` → `mvpa2/measures/tests/`
-- [ ] Create `__init__.py` in any new `tests/` subdirectories
-- [ ] Commit per batch: `RF: move <module> tests to <module>/tests/`
+- [x] Committed: 755085577 `RF: move test files from mvpa2/tests/ to submodule tests/ directories`
+
+Remaining in `mvpa2/tests/`: `__init__.py`, `runner.py`, `test_bids.py`,
+`test_cmdline.py`, `test_cmdline_ttest.py`, `test_suite.py`, `test_usecases.py`
+(cross-cutting integration tests).
 
 ### 5.4 Clean up old test infrastructure
 
