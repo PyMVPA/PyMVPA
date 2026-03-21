@@ -12,7 +12,7 @@ from mvpa2.testing import *
 skip_if_no_external('scipy')
 
 from scipy.stats import f_oneway
-from mvpa2.tests.test_stats import *
+from mvpa2.misc.tests.test_stats import *
 
 from mvpa2.clfs.stats import match_distribution, rv_semifrozen
 from mvpa2.misc.stats import chisquare, binomial_proportion_ci
