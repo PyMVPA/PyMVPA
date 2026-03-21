@@ -77,7 +77,7 @@ class CorrCoef(FeaturewiseMeasure):
         pvalue_index = self.__pvalue
         result = np.empty((dataset.nfeatures,), dtype=float)
 
-        for ifeature in xrange(dataset.nfeatures):
+        for ifeature in range(dataset.nfeatures):
             samples_ = samples[:, ifeature]
             corr = pearsonr(samples_, attrdata)
             corrv = corr[pvalue_index]

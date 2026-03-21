@@ -81,7 +81,7 @@ class NoisePerturbationSensitivity(FeaturewiseMeasure):
         orig_measure = self.__datameasure(dataset)
 
         # do for every _single_ feature in the dataset
-        for feature in xrange(dataset.nfeatures):
+        for feature in range(dataset.nfeatures):
             if __debug__:
                 debug('PSA', "Analyzing %i features: %i [%i%%]" \
                     % (nfeatures,

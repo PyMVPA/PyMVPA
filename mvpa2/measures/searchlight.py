@@ -493,7 +493,7 @@ class Searchlight(BaseSearchlight):
         # slice the dataset
         roi = ds[:, roi_fids]
         if is_datasetlike(roi_specs):
-            for n, v in roi_specs.fa.iteritems():
+            for n, v in roi_specs.fa.items():
                 roi.fa[n] = v
         if self.__add_center_fa:
             # add fa to indicate ROI seed if requested

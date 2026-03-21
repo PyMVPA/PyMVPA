@@ -106,10 +106,10 @@ class WinnerMeasure(Measure):
         fas = [ds.fa, wta.fa]
         sas = [ds.sa, wta.sa]
         fas_sas = [fas, sas]
-        to_copy, to_leave = [fas_sas[(i + axis) % 2] for i in xrange(2)]
+        to_copy, to_leave = [fas_sas[(i + axis) % 2] for i in range(2)]
 
         # copy each attribute
-        for k, v in to_copy[0].iteritems():
+        for k, v in to_copy[0].items():
             to_copy[1][k] = copy.copy(v)
 
         # set source and target. feature attributes become
@@ -117,7 +117,7 @@ class WinnerMeasure(Measure):
         src, _ = to_leave
         trg = to_copy[1]
         prefix = self.__other_axis_prefix
-        for k, v in src.iteritems():
+        for k, v in src.items():
             # set the prefix
             prek = ('' if prefix is None else prefix) + k
 
@@ -169,6 +169,6 @@ if __name__ == '__main__':
                     group_sample_winner_measure:[0, 0, 0],
                     group_sample_loser_measure: [1, 0, 0]}
 
-    for m, out in measures2out.iteritems():
-        print np.all(m()(ds).samples.ravel() == np.asarray(out))
+    for m, out in measures2out.items():
+        print(np.all(m()(ds).samples.ravel() == np.asarray(out)))
 

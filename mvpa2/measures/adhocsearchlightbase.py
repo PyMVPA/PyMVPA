@@ -184,8 +184,8 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         self._indexsum = indexsum
 
         if not self.nproc in (None, 1):
-            raise NotImplementedError, "For now only nproc=1 (or None for " \
-                  "autodetection) is supported by GNBSearchlight"
+            raise NotImplementedError("For now only nproc=1 (or None for " \
+                  "autodetection) is supported by GNBSearchlight")
 
         self.__pb = None            # statistics per each block/label
         self.__reuse_neighbors = reuse_neighbors
