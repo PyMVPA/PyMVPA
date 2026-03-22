@@ -84,7 +84,7 @@ def eeglab_dataset(samples):
 
     # get and verify number of elements in each dimension
     n_samples = len(samples)
-    n_timepoints_all = map(len, samples)
+    n_timepoints_all = list(map(len, samples))
 
     n_timepoints_unique = set(n_timepoints_all)
     if len(n_timepoints_unique) != 1:

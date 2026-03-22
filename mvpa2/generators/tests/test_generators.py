@@ -292,7 +292,7 @@ def test_balancer():
     bal = Balancer(limit={'chunks': 3}, apply_selection=True)
     res = bal(ds)
     assert_equal(res.sa['chunks'].unique, (3,))
-    assert_equal(get_nelements_per_value(res.sa.targets).values(),
+    assert_equal(list(get_nelements_per_value(res.sa.targets).values()),
                  [2] * 4)
     # same but include all offlimit samples
     bal = Balancer(limit={'chunks': 3}, include_offlimit=True,
@@ -548,7 +548,7 @@ def test_factorialpartitioner():
     #mask_superord = ds_unbalanced.sa.superord == 'super1'
     #uniq_subord = np.unique(ds_unbalanced.sa.subord[mask_superord])
     #ds_unbalanced.sa.subord[mask_superord] = [uniq_subord[0] for i in range(nsuper1)]
-    ds_unbalanced = Dataset(range(4), sa={'subord': [0, 0, 1, 2],
+    ds_unbalanced = Dataset(list(range(4)), sa={'subord': [0, 0, 1, 2],
                                           'superord': [1, 1, 2, 2]})
 
     npart = ChainNode([

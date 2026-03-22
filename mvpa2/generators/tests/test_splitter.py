@@ -300,7 +300,7 @@ class SplitterTests(unittest.TestCase):
                                        selection_strategy=strategy)
                 splits = [ list(spl.generate(p)) for p in nfs.generate(self.data) ]
                 self.assertTrue(len(splits) == target)
-                chosenchunks = [int(s[1].uniquechunks) for s in splits]
+                chosenchunks = [int(s[1].uniquechunks.item()) for s in splits]
 
                 # Test if configuration matches as well
                 nsplits_cfg = len(nfs.get_partition_specs(self.data))
