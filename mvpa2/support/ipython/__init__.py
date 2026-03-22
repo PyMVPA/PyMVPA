@@ -48,7 +48,7 @@ def _goodies_011():
     def complete_collection(obj, prev_completions):
         # Place all the keys into completion for the collection, be it
         # an .a, .sa, .fa, .ca, or .params
-        return obj.keys() + prev_completions
+        return list(obj.keys()) + prev_completions
 
 def ipy_activate_pymvpa_goodies():
     """Activate PyMVPA additions to IPython

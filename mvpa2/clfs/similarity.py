@@ -77,12 +77,12 @@ class StreamlineSimilarity(Similarity):
         self.distance_matrix = np.zeros((len(data1), len(data2)))
 
         # setup helpers to pull out content of object-type arrays
-        if isinstance(data1, np.ndarray) and np.issubdtype(data1.dtype, np.object):
+        if isinstance(data1, np.ndarray) and np.issubdtype(data1.dtype, object):
             d1extract = _pass_obj_content
         else:
             d1extract = lambda x: x
 
-        if isinstance(data2, np.ndarray) and np.issubdtype(data2.dtype, np.object):
+        if isinstance(data2, np.ndarray) and np.issubdtype(data2.dtype, object):
             d2extract = _pass_obj_content
         else:
             d2extract = lambda x: x

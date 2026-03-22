@@ -178,7 +178,7 @@ def _eeglab_set_attributes(ds):
             flist = f
             f = lambda x:x in flist
 
-        return np.nonzero(map(f, xs))[0]
+        return np.nonzero(list(map(f, xs)))[0]
 
     # attributes for getting certain time points or channels ids
     # the argument f should be either be a function, or a list or tuple

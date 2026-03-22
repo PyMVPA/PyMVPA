@@ -693,7 +693,7 @@ class CosmoQueryEngine(QueryEngineInterface):
         self._mapping = mapping
 
         # store center ids
-        self._ids = ids = np.asarray(mapping.keys())
+        self._ids = ids = np.asarray(list(mapping.keys()))
 
         # get feature and dataset attributes
         attributes = _attributes_cosmo2dict(dict(a=a, fa=fa))

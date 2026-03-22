@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA SplittingSensitivityAnalyzer"""
 
+from functools import reduce
+
 import numpy as np
 
 from mvpa2.testing import *

@@ -113,7 +113,7 @@ class IFS(IterativeFeatureSelection):
                 dsgen = self._splitter.generate(candidate_ds)
                 # and derived the dataset part that is used for computing the selection
                 # criterion
-                trainds = dsgen.next()
+                trainds = next(dsgen)
                 # compute data measure on the training part of this feature set
                 measures.append(fmeasure(trainds))
 

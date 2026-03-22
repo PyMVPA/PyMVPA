@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA surface searchlight and related utilities"""
 
+from functools import reduce
+
 from mvpa2.testing import *
 skip_if_no_external('nibabel')
 

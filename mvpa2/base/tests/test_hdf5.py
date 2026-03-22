@@ -436,7 +436,7 @@ _nested_a[1] = {1: 0, 2: _nested_a}
 @sweepargs(backend=['hdf5', 'pickle'])
 @with_tempfile()
 def test_nested_obj_arrays(f, backend, a):
-    assert_equal(a.dtype, np.object)
+    assert_equal(a.dtype, object)
     a_ = saveload(a, f, backend=backend)
     # import pydb; pydb.debugger()
     ok_(a_[1][2] is a_)

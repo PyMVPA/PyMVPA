@@ -273,8 +273,8 @@ def test_balancer():
     seq1, seq2, seq3 = [], [], []
 
     for i in range(3):
-        seq1.append(gen1.next())
-        seq2.append(gen2.next())
+        seq1.append(next(gen1))
+        seq2.append(next(gen2))
         seq3.append(b(ds))
 
     # Produces expected sequences

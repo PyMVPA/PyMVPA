@@ -89,8 +89,8 @@ class StatsTestsScipy(unittest.TestCase):
         # same test with just scalar measure/feature
         null.fit(CorrCoef(), ds[:, 0])
         p_100 = null.p(100)
-        self.failUnlessAlmostEqual(null.p(-100), p_100)
-        self.failUnlessAlmostEqual(p100[0], p_100)
+        self.assertAlmostEqual(null.p(-100), p_100)
+        self.assertAlmostEqual(p100[0], p_100)
 
 
     @sweepargs(nd=nulldist_sweep)

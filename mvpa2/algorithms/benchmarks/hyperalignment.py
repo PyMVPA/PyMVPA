@@ -87,7 +87,7 @@ def timesegments_classification(
 
     while True:
         try:
-            dss_partitioned = [p.next() for p in parts]
+            dss_partitioned = [next(p) for p in parts]
         except StopIteration:
             # we are done -- no more partitions
             break
@@ -173,4 +173,4 @@ def timesegments_classification(
 
 
 def _get_nonoverlapping_startpoints(n, window_size):
-    return range(0, n - window_size + 1, window_size)
+    return list(range(0, n - window_size + 1, window_size))

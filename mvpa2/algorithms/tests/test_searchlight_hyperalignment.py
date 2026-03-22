@@ -70,7 +70,7 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         # feature scores of excluded dataset should still make sense and be the same
         assert_array_equal(fs_noisy[3], fs_no4[3])
         # Not true for non-excluded datasets
-        assert(np.alltrue(np.asarray(fs_noisy)[:3, ] != np.asarray(fs_no4)[:3, ]))
+        assert(np.all(np.asarray(fs_noisy)[:3, ] != np.asarray(fs_no4)[:3, ]))
         fs_no34 = compute_feature_scores(dss_rotated, exclude_from_model=[2, 3])
         fs_2ds = compute_feature_scores(dss_rotated[:2])
         # feature scores of non-exluded datasets shouldn't change
@@ -157,22 +157,22 @@ class SearchlightHyperalignmentTests(unittest.TestCase):
         mappers_diffsizedss = fsha_fsf([sd[:, nfs] for nfs, sd in
             zip([np.arange(5), np.random.permutation(np.arange(8)), np.arange(8)[::-1], np.arange(8)], dss_rotated)])
         # Testing that most of noisy features are eliminated from reference data
-        assert_true(np.alltrue([np.sum(m[:4, :4].std(0) > 0) > 2 for m in mappers_fsf]))
+        assert_true(np.all([np.sum(m[:4, :4].std(0) > 0) > 2 for m in mappers_fsf]))
         # using same features make it most likely to eliminate all noisy features
-        assert_true(np.alltrue([np.sum(m[:4, :4].std(0) > 0) == 4 for m in mappers_fsf_same]))
-        assert_true(np.alltrue([np.sum(m[:4, :4].std(0) > 0) > 2 for m in mappers_fsn]))
+        assert_true(np.all([np.sum(m[:4, :4].std(0) > 0) == 4 for m in mappers_fsf_same]))
+        assert_true(np.all([np.sum(m[:4, :4].std(0) > 0) > 2 for m in mappers_fsn]))
         # And it correctly maps the selected features if they are selected
-        if np.alltrue([np.all(m[4:, :4] == 0) for m in mappers_fsf]):
+        if np.all([np.all(m[4:, :4] == 0) for m in mappers_fsf]):
             for m, mfs in zip(mappers, mappers_fsf):
                 assert_array_equal(m, mfs[:4, :4])
-        if np.alltrue([np.all(m[4:, :4] == 0) for m in mappers_fsf_same]):
+        if np.all([np.all(m[4:, :4] == 0) for m in mappers_fsf_same]):
             for m, mfs in zip(mappers, mappers_fsf_same):
                 assert_array_equal(m, mfs[:4, :4])
         # testing roi_seed forces feature selection
         dss_rotated[ref_ds].fa['roi_seed'] = [0, 0, 0, 0, 0, 0, 0, 1]
         fsha_fsf = FeatureSelectionHyperalignment(featsel=0.5)
         mappers_fsf = fsha_fsf(dss_rotated)
-        assert(np.alltrue([np.sum(m[7, :] == 0) == 4 for m in mappers_fsf]))
+        assert(np.all([np.sum(m[7, :] == 0) == 4 for m in mappers_fsf]))
 
     @reseed_rng()
     @with_tempfile('.hdf5')

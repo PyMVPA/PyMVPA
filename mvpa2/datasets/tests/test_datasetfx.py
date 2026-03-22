@@ -53,7 +53,7 @@ class MiscDatasetFxTests(unittest.TestCase):
     def test_nonfinite_features_removal(self):
         r = np.random.normal(size=(4, 5))
         ds = dataset_wizard(r, targets=1, chunks=1)
-        ds.samples[2,0]=np.NaN
+        ds.samples[2,0]=np.nan
         ds.samples[3,3]=np.Inf
 
         dsc = remove_nonfinite_features(ds)
@@ -113,8 +113,8 @@ class MiscDatasetFxTests(unittest.TestCase):
                       -1,  1, -1,  1, -1,  1,  1,  1, -1,  1,  1,
                       -1, -1, -1,  1,  1,  1,  1,  1, -1], dtype=int)
         rp = SequenceStats(sp, order=order)
-        self.failUnlessAlmostEqual(rp['sumabscorr'], 1.0)
-        self.failUnlessAlmostEqual(np.max(rp['corrcoef'] * (len(sp)-1) + 1.0), 0.0)
+        self.assertAlmostEqual(rp['sumabscorr'], 1.0)
+        self.assertAlmostEqual(np.max(rp['corrcoef'] * (len(sp)-1) + 1.0), 0.0)
 
         # Now some random but loong one still binary (boolean)
         sb = (np.random.random_sample((1000,)) >= 0.5)

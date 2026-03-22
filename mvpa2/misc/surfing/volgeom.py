@@ -22,6 +22,8 @@ Created on Feb 12, 2012
 __docformat__ = 'restructuredtext'
 
 
+from functools import reduce
+
 import numpy as np
 
 from mvpa2.base import warning, externals
@@ -425,7 +427,7 @@ class VolGeom(object):
         lin = self._ijk2lin_unmasked(ijk)
         self._outside_vol(ijk, lin)
 
-        xyz[self._outside_vol(ijk, lin), :] = np.NaN
+        xyz[self._outside_vol(ijk, lin), :] = np.nan
         return xyz
 
 
