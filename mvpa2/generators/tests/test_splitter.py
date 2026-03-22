@@ -227,7 +227,7 @@ class SplitterTests(unittest.TestCase):
         kwargs = dict(count=10)
         ds = dataset_wizard(np.arange(1000).reshape((-1, 1)),
                             targets=range(1000),
-                            chunks=range(500)*2)
+                            chunks=list(range(500))*2)
         split_partitions_random = [
             tuple(x.sa.partitions)
             for x in NFoldPartitioner(100,  selection_strategy='random',

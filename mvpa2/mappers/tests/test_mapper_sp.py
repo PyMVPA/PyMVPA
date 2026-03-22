@@ -72,7 +72,7 @@ def test_polydetrend():
     # we get the information where each sample is assumed to be in the
     # space spanned by the polynomials, which is the identical linspace in both
     # chunks
-    assert_array_equal(mds.sa.police, range(3) * 2)
+    assert_array_equal(mds.sa.police, list(range(3)) * 2)
     # non-matching number of samples cannot be mapped
     assert_raises(ValueError, dm.forward, ds[:-1])
     # however, if the dataset knows about the space it is possible

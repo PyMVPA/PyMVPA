@@ -116,7 +116,7 @@ def coarsen_chunks(source, nchunks=4):
     # of samples per chunk. No sophistication is done -- just
     # consecutively group to get close to desired number of samples
     # per chunk
-    avg_chunk_size = np.sum(counts.values())/float(nchunks)
+    avg_chunk_size = np.sum(list(counts.values()))/float(nchunks)
     chunks_groups = []
     cur_chunk = []
     nchunks = 0

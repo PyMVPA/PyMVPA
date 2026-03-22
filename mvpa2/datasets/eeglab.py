@@ -66,7 +66,7 @@ def eeglab_dataset(samples):
         else:
             # first value is the time point, the remainders the value 
             # for each channel
-            values = map(float, line.split())
+            values = list(map(float, line.split()))
             t = values[0]  # time 
             eeg = values[1:] # values for each electrode
 

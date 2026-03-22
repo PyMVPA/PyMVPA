@@ -77,7 +77,7 @@ class CorrStability(FeaturewiseMeasure):
                 for l in np.unique(labels):
                     v1 = np.where((chunks==c1)&(labels==l))[0]
                     v2 = np.where((chunks==c2)&(labels==l))[0]
-                    if labels[v1] == labels[v2]:
+                    if len(v1) and len(v2) and np.all(labels[v1] == labels[v2]):
                         # the labels match, so add them
                         ind1.extend(v1)
                         ind2.extend(v2)

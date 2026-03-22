@@ -685,8 +685,8 @@ class SplitSamplesProbabilityMapper(SliceMapper):
 
 
     def _forward_data(self, data):
-        sliced_data = [np.vstack(data[sample_id, feature_ids]
-                         for sample_id in sample_ids)
+        sliced_data = [np.vstack([data[sample_id, feature_ids]
+                         for sample_id in sample_ids])
                                 for sample_ids, feature_ids in
                                     zip(*(self._slice_sample_ids,
                                     self._slice_feature_ids))]

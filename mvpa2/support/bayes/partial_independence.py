@@ -40,7 +40,7 @@ def compute_logp_H(X, psi, alpha=None):
     for group in psi:
         if len(group) == 1: logp_H += log_multivariate_polya(X[group[0],:], alpha[group[0],:])
         else:
-            nogroup = filter(lambda a: a not in group, range(X.shape[1]))
+            nogroup = list(filter(lambda a: a not in group, range(X.shape[1])))
             logp_H += np.sum([log_multivariate_polya([X[i,group].sum()] + X[i,nogroup].tolist(),
                                                      [alpha[i,group].sum()] + alpha[i,nogroup].tolist())
                               for i in group])

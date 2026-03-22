@@ -294,7 +294,7 @@ def test_scattered_neighborhoods():
 
     # now the same for the case where a particular coordinate appears multiple
     # times
-    coords = range(10) + range(10)
+    coords = list(range(10)) + list(range(10))
     scoords, sidx = ne.scatter_neighborhoods(sphere, coords,
                                              deterministic=False)
     sidx = sorted(sidx)

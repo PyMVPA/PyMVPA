@@ -83,7 +83,7 @@ class IFS(IterativeFeatureSelection):
         # Computed error for each tested features set.
         errors = []
         # feature candidate are all features in the pattern object
-        candidates = range(ds.nfeatures)
+        candidates = list(range(ds.nfeatures))
         # initially empty list of selected features
         selected = []
         # results in here please

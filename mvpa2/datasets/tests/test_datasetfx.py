@@ -54,7 +54,7 @@ class MiscDatasetFxTests(unittest.TestCase):
         r = np.random.normal(size=(4, 5))
         ds = dataset_wizard(r, targets=1, chunks=1)
         ds.samples[2,0]=np.nan
-        ds.samples[3,3]=np.Inf
+        ds.samples[3,3]=np.inf
 
         dsc = remove_nonfinite_features(ds)
 
