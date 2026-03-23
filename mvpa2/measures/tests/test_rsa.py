@@ -201,6 +201,8 @@ def test_PDistTargetSimilarity():
     assert_array_equal(a4.fa.metrics, ['rho'])
 
 
+@reseed_rng()
+@labile(3, 1)
 def test_PDistTargetSimilaritySearchlight():
     # Test ability to use PDistTargetSimilarity in a searchlight
     from mvpa2.testing.datasets import datasets
