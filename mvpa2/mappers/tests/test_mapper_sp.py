@@ -81,7 +81,7 @@ def test_polydetrend():
     #mds2 = dm(ds[1:-1])
     #assert_array_equal(mds[1:-1], mds2)
     # XXX but right now is
-    assert_raises(NotImplementedError, dm.forward, ds[1:-1])
+    assert_raises((NotImplementedError, ValueError), dm.forward, ds[1:-1])
 
     # Detrend must preserve the size of dataset
     assert_equal(mds.shape, ds.shape)

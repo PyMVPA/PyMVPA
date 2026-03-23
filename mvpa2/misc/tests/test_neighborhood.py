@@ -289,8 +289,9 @@ def test_scattered_neighborhoods():
     assert_array_equal(scoords, sidx)
     # minimal difference of successive coordinates must be larger than the
     # radius of the spheres. Test only works for 1d coords and sorted return
-    # values
-    assert(np.diff(scoords).min() > radius)
+    # values.  Sort since dict popitem() order is LIFO in Python 3.
+    scoords_sorted = np.sort(scoords)
+    assert(np.diff(scoords_sorted).min() > radius)
 
     # now the same for the case where a particular coordinate appears multiple
     # times
@@ -298,5 +299,6 @@ def test_scattered_neighborhoods():
     scoords, sidx = ne.scatter_neighborhoods(sphere, coords,
                                              deterministic=False)
     sidx = sorted(sidx)
-    assert_array_equal(scoords, sidx[:5])
-    assert_array_equal(scoords, [i - 10 for i in sidx[5:]])
+    scoords_sorted = sorted(scoords)
+    assert_array_equal(scoords_sorted, sidx[:5])
+    assert_array_equal(scoords_sorted, [i - 10 for i in sidx[5:]])

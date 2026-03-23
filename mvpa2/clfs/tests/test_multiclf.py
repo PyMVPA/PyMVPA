@@ -11,6 +11,7 @@
 Pulled into a separate tests file for efficiency
 """
 
+import pytest
 import numpy as np
 
 from mvpa2.testing import *
@@ -166,7 +167,10 @@ def test_multiclass_classifier_cv(clf, ds):
 def test_multiclass_classifier_pass_ds_attributes():
     # TODO: replicate/extend basic testing of pass_attr
     #       in some more "basic" test_*
-    clf = LinearCSVMC(C=1)
+    try:
+        clf = LinearCSVMC(C=1)
+    except NameError:
+        raise pytest.skip("LinearCSVMC unavailable without libsvm C extension")
     ds = datasets['uni3small'].copy()
     ds.sa['ids'] = np.arange(len(ds))
     mclf = MulticlassClassifier(
@@ -191,7 +195,10 @@ def test_multiclass_classifier_pass_ds_attributes():
 def test_multiclass_without_combiner():
     # The goal is to obtain all pairwise results as the resultant dataset
     # avoiding even calling any combiner
-    clf = LinearCSVMC(C=1)
+    try:
+        clf = LinearCSVMC(C=1)
+    except NameError:
+        raise pytest.skip("LinearCSVMC unavailable without libsvm C extension")
     ds = datasets['uni3small'].copy()
     ds.sa['ids'] = np.arange(len(ds))
     mclf = MulticlassClassifier(clf, combiner=None)

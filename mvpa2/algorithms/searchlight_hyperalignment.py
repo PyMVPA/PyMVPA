@@ -641,11 +641,11 @@ class SearchlightHyperalignment(ClassWithCollections):
     def _get_verified_ids(self, queryengines):
         """Helper to return ids of queryengines, verifying that they are the same"""
         qe0 = queryengines[0]
-        roi_ids = qe0.ids
+        roi_ids = list(qe0.ids)
         for qe in queryengines:
             if qe is not qe0:
                 # if a different query engine (so wasn't just replicated)
-                if np.any(qe.ids != qe0.ids):
+                if np.any(list(qe.ids) != roi_ids):
                     raise RuntimeError(
                         "Query engine %s provided different ids than %s. Not supported"
                         % (qe0, qe))

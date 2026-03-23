@@ -971,7 +971,7 @@ if externals.exists('scipy'):
                     if __debug__:
                         res_sum = 'D=%.3f p=%.3f' % (D, p)
             except (TypeError, ValueError, AttributeError,
-                    NotImplementedError) as e:#Exception, e:
+                    NotImplementedError, RuntimeError) as e:#Exception, e:
                 if __debug__:
                     debug('STAT__',
                           'Testing for %s distribution failed due to %s',

@@ -319,7 +319,7 @@ class SplitterTests(unittest.TestCase):
 
                 # Check results of different strategies
                 if strategy == 'first':
-                    self.assertEqual(chosenchunks, range(target))
+                    self.assertEqual(chosenchunks, list(range(target)))
                 elif strategy == 'equidistant':
                     if target == 3:
                         self.assertEqual(chosenchunks, [0, 3, 7])

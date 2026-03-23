@@ -300,27 +300,27 @@ def test_balancer():
     res = bal(ds)
     assert_array_equal(res.sa['chunks'].unique, range(10))
     # chunk three still balanced, but the rest is not, i.e. all samples included
-    assert_equal(get_nelements_per_value(res[res.sa.chunks == 3].sa.targets).values(),
+    assert_equal(list(get_nelements_per_value(res[res.sa.chunks == 3].sa.targets).values()),
                  [2] * 4)
-    assert_equal(get_nelements_per_value(res.sa.chunks).values(),
+    assert_equal(list(get_nelements_per_value(res.sa.chunks).values()),
                  [10, 10, 10, 8, 10, 10, 10, 10, 10, 10])
     # fixed amount
     bal = Balancer(amount=1, limit={'chunks': 3}, apply_selection=True)
     res = bal(ds)
-    assert_equal(get_nelements_per_value(res.sa.targets).values(),
+    assert_equal(list(get_nelements_per_value(res.sa.targets).values()),
                  [1] * 4)
     # fraction
     bal = Balancer(amount=0.499, limit=None, apply_selection=True)
     res = bal(ds)
     assert_array_equal(
-            np.round(np.array(get_nelements_per_value(ds.sa.targets).values()) * 0.5),
-            np.array(get_nelements_per_value(res.sa.targets).values()))
+            np.round(np.array(list(get_nelements_per_value(ds.sa.targets).values())) * 0.5),
+            np.array(list(get_nelements_per_value(res.sa.targets).values())))
     # check on feature attribute
     ds.fa['one'] = np.tile([1, 2], 5)
     ds.fa['chk'] = np.repeat([1, 2], 5)
     bal = Balancer(attr='one', amount=2, limit='chk', apply_selection=True)
     res = bal(ds)
-    assert_equal(get_nelements_per_value(res.fa.one).values(),
+    assert_equal(list(get_nelements_per_value(res.fa.one).values()),
                  [4] * 2)
 
 
@@ -629,16 +629,18 @@ def test_factorialpartitioner():
             zip(p_fpart, p_unbalanced,
                 superord_unbalanced, subord_unbalanced):
         assert_array_equal(out_part, true_part)
-        assert_array_equal((ds_unbalanced[out_part == 1].sa.superord.tolist(),
-                            ds_unbalanced[out_part == 2].sa.superord.tolist()),
-                           super_out)
-        assert_array_equal((ds_unbalanced[out_part == 1].sa.subord.tolist(),
-                            ds_unbalanced[out_part == 2].sa.subord.tolist()),
-                           sub_out)
+        assert_equal(ds_unbalanced[out_part == 1].sa.superord.tolist(),
+                     super_out[0])
+        assert_equal(ds_unbalanced[out_part == 2].sa.superord.tolist(),
+                     super_out[1])
+        assert_equal(ds_unbalanced[out_part == 1].sa.subord.tolist(),
+                     sub_out[0])
+        assert_equal(ds_unbalanced[out_part == 2].sa.subord.tolist(),
+                     sub_out[1])
 
     # now let's test on a dummy dataset
-    ds_dummy = Dataset(range(4), sa={'subord': range(4),
-                                     'superord': [1,2]*2})
+    ds_dummy = Dataset(list(range(4)), sa={'subord': list(range(4)),
+                                           'superord': [1,2]*2})
     p_fpart = partition(fpart, ds_dummy)
     assert_array_equal(p_fpart,
                        [[2, 2, 1, 1],

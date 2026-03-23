@@ -134,7 +134,7 @@ class M1NNSearchlight(SimpleStatBaseSearchlight):
             dist_pl_pl2_sl = np.zeros(diff_pl_pl2.shape[:-1] + (nroi_fids,))
             indexsum_fx(diff_pl_pl2, roi_fids, out=dist_pl_pl2_sl)
         elif self._distance == 'correlation':
-            roi_nfids = np.array(map(len, roi_fids))  #  # voxels in each ROI
+            roi_nfids = np.array(list(map(len, roi_fids)))  #  # voxels in each ROI
 
             # estimate the means of each of the searchlight within each condition
             #   indexsum, divide by # of elements

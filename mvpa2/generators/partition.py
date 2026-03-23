@@ -593,7 +593,7 @@ class FactorialPartitioner(Partitioner):
             if self.selection_strategy == 'equidistant':
                 # we need to figure out total number and/or all partitionings
                 # ahead of time so we could randomly or equidistantly select
-                n_cfg = np.prod(map(len, all_partitionings))
+                n_cfg = np.prod(list(map(len, all_partitionings)))
                 selected_indexes = set(self.get_selected_indexes(n_cfg))
             elif self.selection_strategy == 'random':
                 # if no count is given, just return all as "random" ones ;-)
