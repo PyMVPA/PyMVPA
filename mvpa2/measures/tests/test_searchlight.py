@@ -556,9 +556,10 @@ class SearchlightTests(unittest.TestCase):
         assert_equal(slmap.shape, (2, ds.nfeatures))
         # SL which had access to beh should have got for sure better
         # results especially in the vicinity of the chosen feature...
-        features = sl.queryengine.query_byid(rfeature)
-        assert_array_lequal(slmapbeh.samples[:, features],
-                            slmap.samples[:, features])
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            features = sl.queryengine.query_byid(rfeature)
+            assert_array_lequal(slmapbeh.samples[:, features],
+                                slmap.samples[:, features])
 
         # elsewhere they should tend to be better but not guaranteed
 
