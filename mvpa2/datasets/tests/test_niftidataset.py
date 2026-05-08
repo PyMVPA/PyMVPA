@@ -9,12 +9,13 @@
 """Unit tests for PyMVPA nifti dataset"""
 
 import numpy as np
+import pytest
 from os.path import join as pathjoin
 
 from mvpa2.testing import *
 
 if not externals.exists('nibabel'):
-    raise SkipTest
+    pytest.skip("nibabel not available", allow_module_level=True)
 
 from mvpa2.base.dataset import vstack
 from mvpa2 import pymvpa_dataroot

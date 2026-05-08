@@ -8,11 +8,12 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA's GIFTI dataset"""
 
+import pytest
+
 from mvpa2.base import externals
-from mvpa2.testing import SkipTest
 
 if not externals.exists('nibabel'):
-    raise SkipTest
+    pytest.skip("nibabel not available", allow_module_level=True)
 
 from nibabel.gifti import giftiio as nb_giftiio
 from nibabel.gifti import gifti as nb_gifti
