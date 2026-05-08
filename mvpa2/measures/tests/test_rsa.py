@@ -202,7 +202,7 @@ def test_PDistTargetSimilarity():
 
 
 @reseed_rng()
-@labile(3, 1)
+@labile(5, 2)
 def test_PDistTargetSimilaritySearchlight():
     # Test ability to use PDistTargetSimilarity in a searchlight
     from mvpa2.testing.datasets import datasets
