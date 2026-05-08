@@ -12,7 +12,6 @@ from os.path import join as pathjoin
 
 from mvpa2 import pymvpa_dataroot
 from mvpa2.testing import *
-from nose.tools import *
 
 skip_if_no_external('pylab')
 

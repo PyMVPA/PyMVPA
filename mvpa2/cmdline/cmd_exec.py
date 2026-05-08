@@ -94,10 +94,7 @@ def run(args):
         if len(dss):
             # convenience short-cut
             ds = dss[0]
-    try:
-        import nose.tools as nt
-    except ImportError:
-        pass
+    from mvpa2.testing import tools as nt  # noqa: F841 — exposed to user exec()
     for expr in args.eval:
         if expr == '-':
             exec(compile(sys.stdin.read(), '<stdin>', 'exec'))

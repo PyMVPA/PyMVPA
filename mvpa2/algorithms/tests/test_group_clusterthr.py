@@ -20,10 +20,10 @@ import numpy as np
 import random
 
 from mvpa2.testing import assert_array_equal, assert_raises, assert_equal, \
-    assert_array_almost_equal, assert_almost_equal, assert_true, assert_false
+    assert_array_almost_equal, assert_almost_equal, assert_true, assert_false, \
+    assert_greater_equal, assert_greater
 import mvpa2.algorithms.group_clusterthr as gct
 from mvpa2.datasets import Dataset, dataset_wizard
-from nose.tools import assert_greater_equal, assert_greater
 from mvpa2.testing.sweep import sweepargs
 
 from scipy.ndimage import measurements

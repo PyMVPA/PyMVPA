@@ -11,7 +11,6 @@
 from mvpa2.testing import *
 
 # For testing
-from nose.tools import ok_
 from numpy.testing import assert_array_almost_equal
 from mvpa2.testing.datasets import get_random_rotation
 

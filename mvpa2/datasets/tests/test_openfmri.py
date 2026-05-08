@@ -11,9 +11,8 @@
 import numpy as np
 from os.path import join as pathjoin
 
-from nose.tools import assert_greater
-
 from mvpa2.testing import *
+from mvpa2.testing import assert_greater
 from mvpa2.testing.sweep import sweepargs
 
 from mvpa2 import pymvpa_dataroot
