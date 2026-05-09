@@ -30,7 +30,8 @@ from mvpa2.base import externals
 
 externals.exists('nibabel', raise_=True)
 
-from nibabel.gifti import gifti, giftiio
+import nibabel
+from nibabel.gifti import gifti
 
 from mvpa2.base.collections import FeatureAttributesCollection, \
     SampleAttributesCollection
@@ -74,7 +75,9 @@ def _gifti_intent_is_node_indices(intent_string):
 
 def _get_gifti_image(samples):
     if isinstance(samples, str):
-        samples = giftiio.read(samples)
+        # nibabel >=5 removed the giftiio submodule; nibabel.load dispatches
+        # to GiftiImage based on the .gii suffix.
+        samples = nibabel.load(samples)
 
     required_class = gifti.GiftiImage
     if not isinstance(samples, required_class):
@@ -190,8 +193,10 @@ def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ',
         is_integer = intent == 'NIFTI_INTENT_NODE_INDEX'
         dtype = np.int32 if is_integer else np.float32
 
-        arr = gifti.GiftiDataArray.from_array(data.astype(dtype), intent,
-                                              encoding=encoding)
+        # nibabel >=3 removed the from_array() classmethod; the constructor
+        # accepts the same arguments directly.
+        arr = gifti.GiftiDataArray(data.astype(dtype), intent=intent,
+                                   encoding=encoding)
         # Setting the coordsys argument the constructor would set the matrix
         # to the 4x4 identity matrix, which is not desired. Instead the
         # coordsys is explicitly set to None afterwards
@@ -223,7 +228,8 @@ def map2gifti(ds, filename=None, encoding='GIFTI_ENCODING_B64GZ',
     image = gifti.GiftiImage(darrays=darrays)
 
     if filename is not None:
-        giftiio.write(image, filename)
+        # nibabel >=5: write via image.to_filename / nibabel.save
+        nibabel.save(image, filename)
 
     return image
 

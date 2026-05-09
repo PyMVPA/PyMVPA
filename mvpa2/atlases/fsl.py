@@ -105,7 +105,7 @@ class FSLAtlas(XMLBasedAtlas):
         self._resolution = ni_image.header.get_zooms()[0]
         self._origin = np.abs(ni_image.header.get_qform()[:3,3])  # XXX
 
-        self._data   = self._image.get_data()
+        self._data   = np.asanyarray(self._image.dataobj)
         if len(self._data.shape) == 4:
             # want to have volume axis first
             self._data = np.rollaxis(self._data, -1)

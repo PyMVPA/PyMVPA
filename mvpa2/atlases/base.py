@@ -668,7 +668,7 @@ class PyMVPAAtlas(XMLBasedAtlas):
         except RuntimeError as e:
             raise RuntimeError(" Cannot open file %s due to %s" % (imagefilename, e))
 
-        self._data = self._image.get_data()
+        self._data = np.asanyarray(self._image.dataobj)
         # we get the data as x,y,z[,t] but we want to have the time axis first
         # if any
         if len(self._data.shape) == 4:

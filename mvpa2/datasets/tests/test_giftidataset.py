@@ -15,7 +15,7 @@ from mvpa2.base import externals
 if not externals.exists('nibabel'):
     pytest.skip("nibabel not available", allow_module_level=True)
 
-from nibabel.gifti import giftiio as nb_giftiio
+import nibabel as nb_giftiio  # nibabel >=5 dropped the giftiio submodule
 from nibabel.gifti import gifti as nb_gifti
 from nibabel.nifti1 import intent_codes, data_type_codes
 
@@ -155,12 +155,12 @@ def test_gifti_dataset(fn, format_, include_nodes):
     assert_datasets_almost_equal(ds, expected_ds)
 
     # test GiftiImage input
-    img = nb_giftiio.read(fn)
+    img = nb_giftiio.load(fn)
     ds2 = gifti_dataset(img)
     assert_datasets_almost_equal(ds2, expected_ds)
 
     # test using Nibabel's output from write
-    nb_giftiio.write(img, fn)
+    nb_giftiio.save(img, fn)
     ds3 = gifti_dataset(fn)
     assert_datasets_almost_equal(ds3, expected_ds)
 

@@ -109,13 +109,13 @@ def load_tutorial_data(path=None, roi='brain', add_fa=None, flavor=None):
         mask = pathjoin(maskpath, roi + '.nii.gz')
     elif isinstance(roi, int):
         nimg = nb.load(pathjoin(maskpath, 'hoc.nii.gz'))
-        tmpmask = nimg.get_data() == roi
+        tmpmask = np.asanyarray(nimg.dataobj) == roi
         mask = nb.Nifti1Image(tmpmask.astype(int), nimg.affine, nimg.header)
     elif isinstance(roi, (tuple, list)):
         nimg = nb.load(pathjoin(maskpath, 'hoc.nii.gz'))
         tmpmask = np.zeros(nimg.shape, dtype='bool')
         for r in roi:
-            tmpmask = np.logical_or(tmpmask, nimg.get_data() == r)
+            tmpmask = np.logical_or(tmpmask, np.asanyarray(nimg.dataobj) == r)
         mask = nb.Nifti1Image(tmpmask.astype(int), nimg.affine, nimg.header)
     elif isinstance(roi, nb.Nifti1Image):
         mask = roi

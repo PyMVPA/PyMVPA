@@ -75,7 +75,7 @@ def test_fmridataset():
     # full-blown fmri dataset testing
     import nibabel
     maskimg = nibabel.load(pathjoin(pymvpa_dataroot, 'mask.nii.gz'))
-    data = maskimg.get_data().copy()
+    data = np.asanyarray(maskimg.dataobj).copy()
     data[data > 0] = np.arange(1, np.sum(data) + 1)
     maskimg = nibabel.Nifti1Image(data, None, maskimg.header)
     ds = fmri_dataset(samples=pathjoin(pymvpa_dataroot, 'bold.nii.gz'),
@@ -125,7 +125,7 @@ def test_nifti_mapper(filename):
     # test mapping of ndarray
     vol = map2nifti(data, np.ones((294912,), dtype='int16'))
     assert_equal(vol.shape, (128, 96, 24))
-    assert_true((vol.get_data() == 1).all())
+    assert_true((np.asanyarray(vol.dataobj) == 1).all())
     # We record the affine we know
     assert_array_equal(vol.affine, data.a.imgaffine)
 
@@ -139,12 +139,13 @@ def test_nifti_mapper(filename):
     ok_(isinstance(vol, nibabel.Nifti1Pair))
 
     # Lets generate a dataset using an alternative format (MINC)
-    # and see if type persists
-    volminc = nibabel.MincImage(vol.get_data(), vol.affine, vol.header)
-    ok_(isinstance(volminc, nibabel.MincImage))
+    # and see if type persists.  nibabel >=5 renamed MincImage to Minc1Image
+    # (and removed the bare-name alias).
+    volminc = nibabel.Minc1Image(np.asanyarray(vol.dataobj), vol.affine, vol.header)
+    ok_(isinstance(volminc, nibabel.Minc1Image))
     dsminc = fmri_dataset(volminc, targets=1)
-    ok_(getattr(nibabel, dsminc.a.imgtype) is nibabel.MincImage)
-    assert_equal(dsminc.a.imgtype, nibabel.minc.MincImage.__name__)
+    ok_(getattr(nibabel, dsminc.a.imgtype) is nibabel.Minc1Image)
+    assert_equal(dsminc.a.imgtype, nibabel.minc1.Minc1Image.__name__)
 
     # Lets test if we could save/load now into Analyze volume/dataset
     if externals.versions['nibabel'] < '1.1.0':
@@ -255,9 +256,10 @@ def test_er_nifti_dataset_mapping():
     """
     # z,y,x
     sample_size = (4, 3, 2)
-    # t,z,y,x
-    samples = np.arange(120).reshape((5,) + sample_size)
-    dsmask = np.arange(24).reshape(sample_size) % 2
+    # t,z,y,x — cast to int32 explicitly: nibabel >=5 rejects int64 arrays
+    # for Nifti1Image without an explicit dtype/header.
+    samples = np.arange(120, dtype=np.int32).reshape((5,) + sample_size)
+    dsmask = (np.arange(24, dtype=np.int32).reshape(sample_size) % 2)
     import nibabel
     tds = fmri_dataset(nibabel.Nifti1Image(samples.T, None),
                        mask=nibabel.Nifti1Image(dsmask.T, None))
@@ -309,10 +311,10 @@ def test_nifti_dataset_from3_d():
     assert_equal(len(ds), 1)
 
     import nibabel
-    plain_data = nibabel.load(masrc).get_data()
+    plain_data = np.asanyarray(nibabel.load(masrc).dataobj)
     # Lets check if mapping back works as well
     assert_array_equal(plain_data,
-                       map2nifti(ds).get_data().reshape(plain_data.shape))
+                       np.asanyarray(map2nifti(ds).dataobj).reshape(plain_data.shape))
 
     # test loading from a list of filenames
 
@@ -383,7 +385,7 @@ def test_assumptions_on_nibabel_behavior(filename):
     masrc = pathjoin(pymvpa_dataroot, 'mask.nii.gz')
     ni = nb.load(masrc)
     hdr = ni.header
-    data = ni.get_data()
+    data = np.asanyarray(ni.dataobj)
     # operate in the native endianness so that symbolic type names (e.g. 'int16')
     # remain the same across platforms
     if hdr.endianness == nb.volumeutils.swapped_code:
@@ -409,14 +411,14 @@ def test_assumptions_on_nibabel_behavior(filename):
         # Header takes over and instructs to keep it int despite dtype
         assert_equal(nif.header.get_data_dtype(), t)
         # but does not cast the data (yet?) into int16 (in case of t==int16)
-        assert_equal(nif.get_data().dtype, dataf_dtype)
+        assert_equal(np.asanyarray(nif.dataobj).dtype, dataf_dtype)
         # nor changes somehow within dataf
         assert_equal(dataf.dtype, dataf_dtype)
 
         # save it back to the file and load
         nif.to_filename(filename)
         nif_ = nb.load(filename)
-        dataf_ = nif_.get_data()
+        dataf_ = np.asanyarray(nif_.dataobj)
         assert_equal(nif_.header.get_data_dtype(), t)
         assert_equal(dataf_.dtype, dataf_dtype)
         assert_array_almost_equal(dataf_, dataf, decimal=d)
