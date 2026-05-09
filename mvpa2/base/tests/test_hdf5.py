@@ -337,7 +337,7 @@ _numpy_objs = [
     # problematic prior h5py 2.9.0
     # https://github.com/h5py/h5py/pull/1032
     np.float128(1),
-    np.unicode(u"ы"),
+    np.str_(u"ы"),  # numpy >=2 removed np.unicode (alias of np.str_)
   ] \
   + _unicode_arrays \
   + [a[:, ::2] for a in _unicode_arrays]

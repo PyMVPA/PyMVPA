@@ -193,7 +193,9 @@ class OpenFMRIDataset(object):
         ev_fields = ('onset', 'duration', 'intensity')
 
         def _load_hlpr(fname):
-            return np.recfromtxt(fname, names=ev_fields)
+            # numpy 2.0 removed recfromtxt; genfromtxt with names= is the
+            # documented replacement and yields the same record array.
+            return np.genfromtxt(fname, names=ev_fields)
 
         return self._load_subj_data(
             subj,
