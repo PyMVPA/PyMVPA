@@ -668,15 +668,17 @@ files (currently in .gitignore via `/svmc.py`, `/svmc_wrap.c`).
 
 ## Phase 7: CI + API Modernization + Polish
 
-### 7.1 CI Modernization — Travis → GitHub Actions
+### 7.1 CI Modernization — Travis → GitHub Actions ✅ DONE
 
-- [ ] Create `.github/workflows/test.yml`:
-  - [ ] Matrix: Python 3.9, 3.10, 3.11, 3.12, 3.13
-  - [ ] Steps: checkout, setup-python, `pip install -e ".[ci]"`, `tox`
-  - [ ] Separate lint job
-- [ ] Add `[gh-actions]` mapping in `tox.ini` (tox-gh-actions)
-- [ ] Remove `.travis.yml`
-- [ ] Commit: `RF: replace Travis CI with GitHub Actions`
+- [x] `.github/workflows/test.yml`:
+  - Matrix: Python 3.10, 3.11, 3.12, 3.13 on ubuntu-latest
+  - Steps: checkout, setup-python, `pip install tox tox-uv tox-gh-actions`,
+    `tox` (which selects the right env via `[gh-actions]` mapping)
+  - Separate `lint` job running `tox -e lint`
+  - Concurrency-cancels in-progress runs on rebase
+- [x] tox.ini `[gh-actions]` mapping (3.12 also runs lint)
+- [x] `.travis.yml` removed
+- [x] Committed: 4f95d3801 `RF: replace Travis CI with GitHub Actions (Phase 7.1)`
 
 ### 7.2 API Modernization
 
@@ -687,8 +689,10 @@ files (currently in .gitignore via `/svmc.py`, `/svmc_wrap.c`).
 
 - [x] **7.2.2** `numpy.testing.decorators` — already addressed in Phase 1.1.1.
 
-- [ ] **7.2.3** `collections.MutableMapping` → `collections.abc.MutableMapping` (if any)
-- [ ] **7.2.4** `imp` module → `importlib` (if any)
+- [x] **7.2.3** `collections.MutableMapping` etc. — full grep returns
+      0 hits in `mvpa2/`.  The only `from collections import Mapping`
+      site was already fixed in Phase 5.1.
+- [x] **7.2.4** `imp` module — full grep returns 0 hits in `mvpa2/`.
 
 - [x] **nibabel >=5 API migration** (formerly part of 7.2; see commit
       630a8e075 `RF: nibabel >=5 API migration (Phase 7.2)`):
@@ -725,10 +729,15 @@ files (currently in .gitignore via `/svmc.py`, `/svmc_wrap.c`).
   - [ ] Check for deprecated parameter names, removed methods
   - [ ] Run tests; Commit: `RF: update for scikit-learn 1.x API changes`
 
-- [ ] **7.2.7** `griddata`:
-  - [ ] Replace `matplotlib.mlab.griddata` (removed mpl 3.1) with `scipy.interpolate.griddata`
-  - [ ] Update `mvpa2/support/griddata.py`
-  - [ ] Run tests; Commit: `RF: use scipy.interpolate.griddata (mpl.mlab.griddata removed)`
+- [x] **7.2.7** `griddata`:
+  - `mvpa2/support/griddata.py` now wraps `scipy.interpolate.griddata`
+    while keeping the historical 5-positional-arg signature
+    `griddata(x, y, z, xi, yi, interp=...)` so callers
+    (`mvpa2/misc/plot/topo.py`, user code) keep working unchanged.
+    `'nn'` (natural-neighbor) maps to `'linear'`.
+  - `mvpa2/base/externals.py::__check_griddata` simplified to probe
+    `scipy.interpolate.griddata`.
+  - Committed: 11cb87348 `RF: scipy.interpolate.griddata replaces matplotlib.mlab.griddata (Phase 7.2.7)`
 
 - [x] **7.2.8** Version constraints in pyproject.toml — done in Phase 6a.
 
