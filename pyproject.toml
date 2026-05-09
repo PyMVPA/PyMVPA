@@ -1,0 +1,73 @@
+[build-system]
+# Phase 6a: meson-python backend, pure-Python install only.
+# Phase 6b will add libsvmc/libsmlrc C extensions and re-enable
+# mvpa2/clfs/tests/test_svm.py.
+requires = [
+    "meson-python>=0.15",
+    "ninja",
+]
+build-backend = "mesonpy"
+
+[project]
+name = "pymvpa2"
+version = "2.6.5.dev1"
+description = "Multivariate pattern analysis"
+readme = { text = """\
+PyMVPA is a Python module intended to ease pattern classification analyses of
+large datasets. It provides high-level abstraction of typical processing steps
+and a number of implementations of some popular algorithms. While it is not
+limited to neuroimaging data it is eminently suited for such datasets.
+PyMVPA is truly free software (in every respect) and additionally requires
+nothing but free-software to run.""", content-type = "text/plain" }
+license = { text = "MIT" }
+authors = [
+    { name = "Michael Hanke" },
+    { name = "Yaroslav Halchenko", email = "yaroslav.o.halchenko@dartmouth.edu" },
+    { name = "Nikolaas N. Oosterhof" },
+]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.22",
+    "scipy>=1.7",
+    "nibabel>=3.0",
+    "h5py>=3.0",
+    "joblib>=1.0",
+    "scikit-learn>=1.0",
+]
+
+[project.urls]
+Homepage = "http://www.pymvpa.org"
+Repository = "https://github.com/PyMVPA/PyMVPA"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0",
+    "pytest-timeout>=2.0",
+]
+devel = [
+    "pymvpa2[test]",
+    "ruff>=0.1.0",
+    "tox>=4.0",
+    "tox-uv>=1.0",
+]
+ci = [
+    "pymvpa2[devel]",
+    "tox-gh-actions>=3.0",
+]
+
+[project.scripts]
+# bin/* shell entry points get installed by meson.build (kept as scripts
+# rather than entry points because they are user-facing CLIs that exec
+# python with a specific argv layout).
+
+[tool.pytest.ini_options]
+testpaths = ["mvpa2"]
+filterwarnings = [
+    # Application-level warnings we suppress are configured in the project
+    # conftest.py; this keeps a permissive default here so unknown
+    # categories from new deps do not turn into hard failures.
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

@@ -117,14 +117,12 @@ debian-build:
 
 build: build-stamp
 build-stamp: $(build_depends)
-	$(PYTHON) setup.py config --noisy
-	$(PYTHON) setup.py build_ext --inplace
+	$(PYTHON) -m pip install --no-build-isolation -e .
 	touch $@
 
 build3: build3-stamp
 build3-stamp: $(build_depends)
-	$(PYTHON3) setup.py config --noisy
-	$(PYTHON3) setup.py build_ext --inplace
+	$(PYTHON3) -m pip install --no-build-isolation -e .
 	touch $@
 
 #
