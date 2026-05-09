@@ -680,17 +680,38 @@ files (currently in .gitignore via `/svmc.py`, `/svmc_wrap.c`).
 
 ### 7.2 API Modernization
 
-- [ ] **7.2.1** `inspect.getargspec()` → `inspect.getfullargspec()`:
-  - [ ] Already shimmed in `mvpa2/support/utils.py`
-  - [ ] Ensure all callers use the shim (grep for `getargspec` outside `support/utils.py`)
-  - [ ] Run tests; Commit: `RF(PY3): ensure all getargspec callers use PY3 shim`
+- [x] **7.2.1** `inspect.getargspec()` → `inspect.getfullargspec()`:
+  - Single live call site in `mvpa2/datasets/sources/skl_data.py`
+    (no shim needed — destructure `FullArgSpec` namedtuple directly).
+  - Committed: f1d0effbe `RF(PY3): replace inspect.getargspec with getfullargspec (Phase 7.2.1)`
 
-- [ ] **7.2.2** `numpy.testing.decorators` → `pytest.mark.skipif`
-  - [ ] (Already addressed in Phase 1.1.1 for `tools.py`; grep for any remaining usages)
-  - [ ] Commit: `RF: replace deprecated numpy.testing.decorators with pytest.mark`
+- [x] **7.2.2** `numpy.testing.decorators` — already addressed in Phase 1.1.1.
 
 - [ ] **7.2.3** `collections.MutableMapping` → `collections.abc.MutableMapping` (if any)
 - [ ] **7.2.4** `imp` module → `importlib` (if any)
+
+- [x] **nibabel >=5 API migration** (formerly part of 7.2; see commit
+      630a8e075 `RF: nibabel >=5 API migration (Phase 7.2)`):
+  - `Image.get_data()` → `np.asanyarray(img.dataobj)` in production
+    (`datasets/sources/native.py`, `atlases/base.py`, `atlases/fsl.py`,
+    `datasets/mri.py`) and tests (`test_niftidataset.py`).
+  - `nibabel.gifti.giftiio` removed → use `nibabel.load`/`nibabel.save`
+    in `datasets/gifti.py`, `support/nibabel/surf_gifti.py`, and tests.
+  - `gifti.GiftiDataArray.from_array()` → constructor.
+  - `nibabel.MincImage` → `nibabel.Minc1Image`.
+  - Cast int64 arrays to int32 when constructing `Nifti1Image` in tests.
+
+- [x] **numpy 2.x compatibility leftovers** (see 1b0a352e6):
+  - `np.recfromtxt` → `np.genfromtxt(..., names=...)` in openfmri.py
+  - `np.unicode` → `np.str_` in test_hdf5.py
+
+- [x] **PY3 dict.keys subscripting** (see 1b0a352e6):
+  - `tasks.keys()[0]` → `list(tasks.keys())[0]` in test_openfmri.py
+  - `range(...)` wrapped in `list()` for assertions against list literals
+
+- [x] **nose-yield-style sub-tests** (see c6d3ef8e1):
+  - Converted `yield fn, args` to direct calls in test_openfmri.py and
+    test_mapper.py — pytest does not accept `yield` inside test functions.
 
 - [ ] **7.2.5** h5py 3.x compatibility:
   - [ ] Remove `import h5py.highlevel` (gone in h5py 3.0)
@@ -709,8 +730,17 @@ files (currently in .gitignore via `/svmc.py`, `/svmc_wrap.c`).
   - [ ] Update `mvpa2/support/griddata.py`
   - [ ] Run tests; Commit: `RF: use scipy.interpolate.griddata (mpl.mlab.griddata removed)`
 
-- [ ] **7.2.8** Version constraints in pyproject.toml:
-  - [ ] `numpy>=1.22`, `scipy>=1.7`, `h5py>=3.0`, `nibabel>=3.0`, `scikit-learn>=1.0`
+- [x] **7.2.8** Version constraints in pyproject.toml — done in Phase 6a.
+
+### Phase 7.2 tox.ini ignore-list shrunk (124e4f99e)
+
+After the 7.2.x fixes above, only two test files remain in the
+tox `--ignore` list:
+  - `mvpa2/base/tests/test_hdf5.py` — Phase 7.2.5 ⚠ CONSULT (h5py 3.x bytes/str)
+  - `mvpa2/clfs/tests/test_svm.py` — Phase 6b (libsvm C extension)
+
+**✓ CHECKPOINT (Phase 7.2 partial): 429 passed, 19 skipped, 0 failed
+at MVPA_TESTS_LABILE=no — up from 392/15/0 (+37 tests revived).**
 
 ### 7.3 Cleanup and Polish
 
