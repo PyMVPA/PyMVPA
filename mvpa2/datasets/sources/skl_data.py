@@ -29,7 +29,9 @@ if externals.exists('skl', raise_=True):
                           'load_svmlight_files', 'load_svmlight_file']:
             continue
         fx = getattr(sklds, fx)
-        argnames, varargs, varkw, defaults = inspect.getargspec(fx)
+        spec = inspect.getfullargspec(fx)
+        argnames, varargs, varkw, defaults = (
+            spec.args, spec.varargs, spec.varkw, spec.defaults)
         if defaults is not None:
             kwargs = list(zip(argnames[::-1], defaults[::-1]))[::-1]
         else:
