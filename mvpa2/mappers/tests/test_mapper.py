@@ -523,4 +523,4 @@ def test_static_reverse_doesnt_work_after_feature_selection_tuneup_2():
         ds_rev0 = ds.a.mapper.reverse1(ds.samples[0])
         # blow test fails since chain mapper thrown exception upon _oshape mismatch
         # but chain mapper silently proceeded forward doing nothing
-        yield assert_equal, ds_rev0.ndim, 3
+        assert_equal(ds_rev0.ndim, 3)

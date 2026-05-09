@@ -45,11 +45,11 @@ def test_openfmri_dataset():
     assert_equal(of.get_scan_properties(), {'TR': '2.5'})
     tasks = of.get_task_descriptions()
     assert_equal(tasks, {1: 'object viewing'})
-    task = tasks.keys()[0]
+    task = list(tasks.keys())[0]
     run_ids = of.get_bold_run_ids(sub_ids[0], task)
-    assert_equal(run_ids, range(1, 13))
+    assert_equal(run_ids, list(range(1, 13)))
     task_runs = of.get_task_bold_run_ids(task)
-    assert_equal(task_runs, {1: range(1, 13)})
+    assert_equal(task_runs, {1: list(range(1, 13))})
 
     # test access anatomy image
     assert_equal(of.get_anatomy_image(1, fname='lowres001.nii.gz').shape,
@@ -220,8 +220,7 @@ def test_datalad_openfmri_datasets():
     #  or eventually rely on datalad's API to deploy those
     TOPDIR = os.path.expanduser(pathjoin('~', 'datalad', 'crawl', 'openfmri'))
     dss = glob.glob(pathjoin(TOPDIR, 'ds*105'))
-    if dss:
-        for d in dss:  # for now just one
-            yield _test_datalad_openfmri_dataset, d
-    else:
+    if not dss:
         raise SkipTest("No datalad openfmri datasets were found under %s" % TOPDIR)
+    for d in dss:
+        _test_datalad_openfmri_dataset(d)
