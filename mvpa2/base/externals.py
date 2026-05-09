@@ -322,17 +322,13 @@ def __check_pylab_plottable():
 
 
 def __check_griddata():
-    """griddata might be independent module or part of mlab
+    """Check that 2-D scattered-data interpolation is available.
+
+    Historically pymvpa accepted either the standalone `griddata`
+    package or `matplotlib.mlab.griddata`; both are gone now.
+    `mvpa2.support.griddata` wraps `scipy.interpolate.griddata`.
     """
-
-    try:
-        from griddata import griddata as __
-        return True
-    except ImportError:
-        if __debug__:
-            debug('EXT_', 'No python-griddata available')
-
-    from matplotlib.mlab import griddata as __
+    from scipy.interpolate import griddata as __
     return True
 
 
