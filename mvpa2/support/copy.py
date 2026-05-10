@@ -6,21 +6,15 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Support for python's copy module.
+"""Re-export of the stdlib `copy` module.
 
+Historically pymvpa shipped a vendored PY2-era copy module
+(`mvpa2.support._copy`) as a fallback for Python <2.6.  That fallback
+is gone; this module simply re-exports `copy.copy` and `copy.deepcopy`
+under the legacy import path so existing call sites
+(`from mvpa2.support.copy import deepcopy`) keep working.
 """
 
 __docformat__ = 'restructuredtext'
 
-import sys
-
-# We have to use deepcopy from python 2.5, since otherwise it fails to
-# copy sensitivity analyzers with assigned combiners which are just
-# functions not functors
-if sys.version_info[:2] >= (2, 6):
-    # enforce absolute import
-    _copy = __import__('copy', globals(), locals(), [], 0)
-    copy = _copy.copy
-    deepcopy = _copy.deepcopy
-else:
-    from mvpa2.support._copy import copy, deepcopy
+from copy import copy, deepcopy  # noqa: F401  (re-exported)
