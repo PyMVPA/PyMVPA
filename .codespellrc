@@ -3,5 +3,12 @@
 skip = .git,__pycache__,*.po,*.ts,3rd,Changelog*,*.so,*.cpp,*.c,*.h,*.bin,*.dat,*.gz,*.mat,*.nii*,*.par,*.fsf,*.rtc,*.swc,doc/_build,doc/source/_build,build,dist,*.egg-info
 # Protect URLs from being "fixed" (typos in URLs are part of the URL).
 ignore-regex = https?://\S+
-# Short variable names + scientific terms commonly flagged as typos.
-ignore-words-list = nd,nin,arange,ist,assertin,upto,inout,whst,oce,anormal,fals,bu,expriment,smll,abl,blong,thi,mor,stati,mone,lik,wer,ist,unsave,withing
+# Short variable names + scientific terms + identifier names commonly
+# flagged as typos.  `datas` is a deliberate plural-form parameter name
+# (auto-renaming it to `data` collides with loop variables in
+# mvpa2/support/afni/lib_plot_slices.py::blend).  `som`/`SOM` is the
+# Self-Organizing Map module name; `fwe`/`FWE` is Family-Wise Error;
+# `coo`/`COO` is the sparse-matrix coordinate format; `ttest` is the
+# t-test command/function name; `te` is a common test-evaluator
+# variable name in tests.
+ignore-words-list = nd,nin,arange,ist,assertin,upto,inout,whst,oce,anormal,fals,bu,expriment,smll,abl,blong,thi,mor,stati,mone,lik,wer,unsave,withing,som,te,fwe,coo,ttest,datas
