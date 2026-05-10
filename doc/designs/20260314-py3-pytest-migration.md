@@ -760,13 +760,13 @@ at MVPA_TESTS_LABILE=no — up from 392/15/0 (+37 tests revived).**
 - [x] Final grep: 0 remaining `from future|from past|from builtins|from six|import six`
 - [x] Final grep: 0 remaining `from nose|import nose`
 - [ ] Update `mvpa2/base/info.py` version string — release decision, deferred
-- [ ] Run `ruff check --fix` on entire codebase — Phase 7.3 follow-up.
-      The strict syntax-only `tox -e lint` env reports 60 issues
-      (mostly F821 undefined-name and F822 stale `__all__` entries
-      in code paths not exercised by tests, plus a handful of PY2
-      leftovers like `unicode`, `StandardError`, `cmp`, `long`,
-      `xrange`, `buffer`).  Each fix is mechanical but the count is
-      large enough to deserve its own focused PR.
+- [x] `tox -e lint` (ruff syntax-only subset E9,F63,F7,F82) is clean.
+      All 60 F8 errors fixed across three commits:
+      - 08d768e5c — drop vendored PY2 `_copy.py` (closes Phase 2.2.6)
+      - e5a3a75c1 — mechanical PY2-leftover + missing-import sweep
+      - b1cff7f8c — real bugs surfaced by F821 (TransferError ref,
+        FFTResamplemapper typo, untrain(ds), comprehension-leak `d`,
+        broken format string, unimplemented demo refs, etc.)
 - [x] Codespell config (.codespellrc) added with sensible defaults
       (URL-protect regex, scientific-term ignore-words-list).
       Running `codespell mvpa2/` still reports ~379 typo candidates;
