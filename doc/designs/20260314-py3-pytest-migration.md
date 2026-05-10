@@ -725,9 +725,13 @@ files (currently in .gitignore via `/svmc.py`, `/svmc_wrap.c`).
     this but needs thorough testing with real saved datasets from PY2 era.
   - [ ] Run tests; Commit: `RF: update for h5py 3.x API (remove highlevel, fix string handling)`
 
-- [ ] **7.2.6** scikit-learn API updates:
-  - [ ] Check for deprecated parameter names, removed methods
-  - [ ] Run tests; Commit: `RF: update for scikit-learn 1.x API changes`
+- [x] **7.2.6** scikit-learn API updates:
+  - Verified clean against sklearn 1.8.0: full clfs/ + measures/ test
+    suite produces zero `DeprecationWarning` / `FutureWarning` from
+    sklearn (only one harmless `UserWarning` about regularization).
+  - All sklearn imports in `mvpa2/` use modern paths.
+  - The `LDA._solve_svd()` IndexError edge case was already handled in
+    Phase 1.8 (`SKLLearnerAdapter._train()`).
 
 - [x] **7.2.7** `griddata`:
   - `mvpa2/support/griddata.py` now wraps `scipy.interpolate.griddata`
@@ -753,19 +757,29 @@ at MVPA_TESTS_LABILE=no — up from 392/15/0 (+37 tests revived).**
 
 ### 7.3 Cleanup and Polish
 
-- [ ] Final grep: no remaining `from future`, `from past`, `from builtins`, `from six`
-- [ ] Final grep: no remaining `from nose`, `import nose`
-- [ ] Update `mvpa2/base/info.py` version string
-- [ ] Run `ruff check --fix` on entire codebase:
-  - [ ] Use `datalad run -m "STY: ruff auto-fix" -- ruff check --fix mvpa2/`
-- [ ] Run `codespell` (with `ignore-regex = https?://\S+` to protect URLs):
-  - [ ] Use `datalad run` to record
-- [ ] Verify full test suite: `tox -e py3`
-- [ ] Remove stale files:
-  - [ ] `Changelog.orig`, `Changelog.rej`
-  - [ ] Old `.so` files
-  - [ ] `py3tool.py` (confirm gone)
-  - [ ] `mvpa2/tests/runner.py` (if no longer needed)
+- [x] Final grep: 0 remaining `from future|from past|from builtins|from six|import six`
+- [x] Final grep: 0 remaining `from nose|import nose`
+- [ ] Update `mvpa2/base/info.py` version string — release decision, deferred
+- [ ] Run `ruff check --fix` on entire codebase — Phase 7.3 follow-up.
+      The strict syntax-only `tox -e lint` env reports 60 issues
+      (mostly F821 undefined-name and F822 stale `__all__` entries
+      in code paths not exercised by tests, plus a handful of PY2
+      leftovers like `unicode`, `StandardError`, `cmp`, `long`,
+      `xrange`, `buffer`).  Each fix is mechanical but the count is
+      large enough to deserve its own focused PR.
+- [x] Codespell config (.codespellrc) added with sensible defaults
+      (URL-protect regex, scientific-term ignore-words-list).
+      Running `codespell mvpa2/` still reports ~379 typo candidates;
+      manual review + `--write-changes` deferred to follow-up PR.
+      Committed: 7165ed145 `ENH: add .codespellrc with sensible defaults (Phase 7.3)`
+- [x] Full test suite verified post-Phase 7.2/7.1/7.2.7:
+      **429 passed, 19 skipped, 0 failed** at `MVPA_TESTS_LABILE=no`
+      (18:28 wall) — the same green-line as before this round of work.
+- [x] `py3tool.py` already gone (Phase 0)
+- [x] `mvpa2/tests/runner.py` removed in Phase 5.1 (da76771ab)
+- [x] Old `.so` files removed in Phase 6a
+- [ ] `Changelog.orig`, `Changelog.rej` — untracked working-tree
+      clutter; left for maintainer to review/discard manually.
 - [ ] Commit: `STY: final cleanup and polish`
 
 ---
