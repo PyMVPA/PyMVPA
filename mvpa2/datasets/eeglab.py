@@ -55,6 +55,7 @@ def eeglab_dataset(samples):
     lines = samples.split('\n')
     samples = []
     cur_sample = None
+    prev_t = None
 
     for i, line in enumerate(lines):
         if not line:
@@ -169,7 +170,7 @@ def _eeglab_set_attributes(ds):
             delta = ts[1:] - ts[:-1]
             if len(np.unique(delta)) == 1:
                 return delta[0]
-        return float(numpy.nan)
+        return float(np.nan)
 
     setattr(ds.__class__, 'dt', property(fget=lambda self: _get_dt(self)))
 

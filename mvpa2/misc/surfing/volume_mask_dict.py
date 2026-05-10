@@ -25,7 +25,7 @@ from collections.abc import Mapping
 
 import numpy as np
 
-from mvpa2.base import externals
+from mvpa2.base import externals, warning
 from mvpa2.misc.surfing import volgeom
 
 from mvpa2.support.utils import deprecated

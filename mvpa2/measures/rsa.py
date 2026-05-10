@@ -202,9 +202,9 @@ class PDistConsistency(Measure):
         chunks_attr = self.params.chunks_attr
         nchunks = len(dataset.sa[chunks_attr].unique)
         if nchunks < 2:
-            raise StandardError("This measure calculates similarity consistency across "
-                                "chunks and is not meaningful for datasets with only "
-                                "one chunk:")
+            raise RuntimeError("This measure calculates similarity consistency across "
+                               "chunks and is not meaningful for datasets with only "
+                               "one chunk:")
         dsms = []
         chunks = []
         for chunk in dataset.sa[chunks_attr].unique:

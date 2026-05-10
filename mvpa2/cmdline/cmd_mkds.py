@@ -78,7 +78,7 @@ from mvpa2.datasets import Dataset
 if __debug__:
     from mvpa2.base import debug
 from mvpa2.cmdline.helpers import process_common_dsattr_opts, \
-        hdf2ds, parser_add_common_opt
+        hdf2ds, parser_add_common_opt, _load_from_txt, _load_from_npy
 # necessary to enable dataset.summary()
 import mvpa2.datasets.miscfx
 

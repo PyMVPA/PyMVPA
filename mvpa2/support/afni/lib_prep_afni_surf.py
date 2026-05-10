@@ -82,7 +82,9 @@ import argparse
 import sys
 
 _VERSION = "0.1"
-__all__ = ['run_afni_anat_preproc']
+# Note: the historical entry-point `run_afni_anat_preproc` is gone;
+# this module now exposes its functions individually rather than via
+# a curated __all__ list.
 
 
 

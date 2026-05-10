@@ -657,14 +657,15 @@ class PyMVPAAtlas(XMLBasedAtlas):
 
         try:
             self._image = None
+            last_exc = None
             for ext in ['', '.nii.gz']:
                 try:
                     self._image  = nb.load(imagefilename + ext)
                     break
                 except Exception as e:
-                    pass
+                    last_exc = e
             if self._image is None:
-                raise e
+                raise last_exc
         except RuntimeError as e:
             raise RuntimeError(" Cannot open file %s due to %s" % (imagefilename, e))
 

@@ -38,7 +38,7 @@ if externals.exists('scipy'):
         True: 'shape',
         False: 'dims'} [externals.versions['scipy'] >= '0.7.0']
 
-__all__ = [ "SimpleStatSearchlight" ]
+__all__ = ["SimpleStatBaseSearchlight"]
 
 def lastdim_columnsums_fancy_indexing(a, inds, out):
     for i, inds_ in enumerate(inds):

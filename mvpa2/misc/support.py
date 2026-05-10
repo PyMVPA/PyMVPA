@@ -47,7 +47,7 @@ except ImportError:
             raise NotImplementedError
 
 import numpy as np
-#import numpy.random as npr
+import numpy.random as npr
 
 from mvpa2.base import warning
 from mvpa2.support.copy import copy, deepcopy
@@ -293,12 +293,9 @@ def idhash(val):
     elif isinstance(val, dict):
         val = tuple(val.items())
     try:
-        if sys.version_info[0] >= 3:
-            # TODO: bytes is just a workaround and is slower
-            # Anyway -- research joblib for hashing
-            res += ":%s" % hash(bytes(val))
-        else:
-            res += ":%s" % hash(buffer(val))
+        # bytes() is a workaround; joblib has a faster hasher worth
+        # adopting eventually.
+        res += ":%s" % hash(bytes(val))
     except:
         try:
             res += ":%s" % hash(val)

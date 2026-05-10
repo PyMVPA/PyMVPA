@@ -347,9 +347,8 @@ def _import_from_thin_air(mod_name, importee, cls_name=None):
             # we might have got it from the hdf saved using another version
             # of python, so let's map
             mod_name = builtins_mod
-        if PY2 and isinstance(importee, unicode):
-            # to overcome  TypeError: Item in ``from list'' must be str, not unicode
-            importee = importee.encode()
+        # PY3 always has str — the unicode/encode dance was only needed
+        # under PY2 where `from list` items couldn't be unicode.
 
         mod = __import__(mod_name, fromlist=[importee])
     except ImportError as e:

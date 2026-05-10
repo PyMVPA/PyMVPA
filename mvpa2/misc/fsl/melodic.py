@@ -10,6 +10,9 @@
 
 __docformat__ = 'restructuredtext'
 
+import os
+from os.path import join as pathjoin
+
 import numpy as np
 
 from mvpa2.base import externals
@@ -49,7 +52,7 @@ class MelodicResults( object ):
         # melodic's IC number is one-based, we do zero-based
         img = nb.load(pathjoin(self._rpath, 'stats',
                                    '%s%i' % (type, ic + 1) + self._fext))
-        return img.get_data()
+        return np.asanyarray(img.dataobj)
 
     def get_probmap(self, ic):
         return self._get_stat('probmap_', ic)
@@ -71,8 +74,8 @@ class MelodicResults( object ):
 
     # properties
     path     = property(fget=lambda self: self._rpath )
-    ic       = property(fget=lambda self: np.rollaxis(self._ic.get_data(), -1))
-    mask     = property(fget=lambda self: self._mask.get_data())
+    ic       = property(fget=lambda self: np.rollaxis(np.asanyarray(self._ic.dataobj), -1))
+    mask     = property(fget=lambda self: np.asanyarray(self._mask.dataobj))
     nic      = property(fget=lambda self: self._icshape()[3])
     extent   = property(fget=lambda self: self._icshape()[:3])
     tmodes   = property(fget=get_tmodes)

@@ -17,6 +17,8 @@ __docformat__ = 'restructuredtext'
 # PLEASE PORT substract_baseline() AND resample() TO WORK WITH ANY DATASET.
 #
 
+import numpy as np
+
 from mvpa2.base import warning
 
 warning("Deprecated: ChannelDataset has vanished already")

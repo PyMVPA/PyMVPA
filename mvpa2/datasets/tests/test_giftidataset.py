@@ -250,7 +250,7 @@ def test_gifti_dataset(fn, format_, include_nodes):
 @with_tempfile(suffix='.hdf5')
 def test_gifti_dataset_h5py(fn, include_nodes):
     if not externals.exists('h5py'):
-        raise SkipTest
+        pytest.skip("h5py not available")
 
     from mvpa2.base.hdf5 import h5save, h5load
 

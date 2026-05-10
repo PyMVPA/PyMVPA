@@ -18,9 +18,9 @@ if externals.exists('scipy', raise_=True):
         from scipy.signal import filtfilt
     else:
         if externals.versions['scipy'] >= '0.10':
-            from scipy.signal._arraytools import axis_reverse, axis_slice, odd_ext, const_ext
+            from scipy.signal._arraytools import axis_reverse, axis_slice, odd_ext, const_ext, even_ext
         else:
-            from ._arraytools import axis_reverse, axis_slice, odd_ext, const_ext
+            from ._arraytools import axis_reverse, axis_slice, odd_ext, const_ext, even_ext
 
         from scipy.signal import lfilter, lfilter_zi
 

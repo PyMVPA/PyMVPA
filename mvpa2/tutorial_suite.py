@@ -18,7 +18,7 @@ from mvpa2.suite import *
 tutorial_data_path = mvpa2.cfg.get('location', 'tutorial data', default=os.path.curdir)
 
 def get_raw_haxby2001_data(path=tutorial_data_path, roi='vt'):
-    if roi is 0:
+    if roi == 0:
         # this means something special in the searchlight tutorial
         maskpath = pathjoin(path, 'haxby2001', 'sub001', 'masks', 'orig')
         nimg = nb.load(pathjoin(maskpath, 'hoc.nii.gz'))

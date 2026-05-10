@@ -85,8 +85,7 @@ def txt_content_summary_terse(ds, args):
              ('feature', ds.fa, _describe_array_attr),
              ('dataset', ds.a, _describe_attr)):
         info += ' %s attributes:\n' % cdesc
-        for attr in sorted(col.values(),
-                           cmp=lambda x, y: cmp(x.name, y.name)):
+        for attr in sorted(col.values(), key=lambda a: a.name):
             info += '  %s\n' % describer(attr, 'terse')
     print(info)
 

@@ -112,8 +112,10 @@ def _get_superord_dataset():
 
 
 def _test_edmund_chong_20120907():  # pragma: no cover
-    # commented out to avoid syntax warnings while compiling
-    # from mvpa2.suite import *
+    from mvpa2.suite import (Repeater, ChainNode, NFoldPartitioner,
+                             Balancer, LinearCSVMC, AttributePermutator,
+                             CrossValidation, mean_mismatch_error,
+                             MCNullDist)
     from mvpa2.testing.datasets import datasets
     repeater = Repeater(count=20)
 
