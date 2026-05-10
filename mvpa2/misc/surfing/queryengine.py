@@ -643,7 +643,8 @@ class SurfaceVoxelsQueryEngine(SurfaceVerticesQueryEngine):
 
 
     def untrain(self):
-        super(SurfaceVoxelsQueryEngine, self).untrain(ds)
+        # parent's untrain() takes no args (the stale `ds` argument was a bug)
+        super(SurfaceVoxelsQueryEngine, self).untrain()
         self._feature_id2vertex_id = None
 
     def get_masked_nifti_image(self, center_ids=None):

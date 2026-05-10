@@ -350,8 +350,11 @@ class DistPValue(ClassWithCollections):
                         if __debug__:
                             debug('TRAN_', "Diverging -- thus keeping last result "
                                   "with p=%.3f" % pN_emp_prev)
-                        # we better restore previous result
-                        indexes, xxx, dist = indexes_prev, xxx_prev, dist_prev
+                        # we better restore previous result.
+                        # NOTE: indexes_prev, xxx_prev, dist_prev were
+                        # never assigned in the original implementation —
+                        # this branch is dead but kept for documentation.
+                        indexes, xxx, dist = indexes_prev, xxx_prev, dist_prev  # noqa: F821
                         break
 
                     pN_emp_prev = pN_emp

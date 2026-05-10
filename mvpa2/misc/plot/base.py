@@ -297,17 +297,13 @@ def plot_decision_boundary_2d(dataset, clf=None,
         vals = [-1, 0, 1]
 
     if False:
-        ## from mvpa2.misc.data_generators import *
-        ## from mvpa2.clfs.svm import *
-        ## from mvpa2.clfs.knn import *
-        ## ds = dumb_feature_binary_dataset()
+        # Dead `if False:` example block, kept for documentation.
+        from mvpa2.misc.data_generators import normal_feature_dataset  # noqa: F401
+        from mvpa2.clfs.knn import kNN  # noqa: F401
         dataset = normal_feature_dataset(nfeatures=2, nchunks=5,
                                          snr=10, nlabels=4, means=[ [0,1], [1,0], [1,1], [0,0] ])
         dataset.samples += dataset.sa.chunks[:, None]*0.1 # slight shifts for chunks ;)
-        #dataset = normal_feature_dataset(nfeatures=2, nlabels=3, means=[ [0,1], [1,0], [1,1] ])
-        #dataset = normal_feature_dataset(nfeatures=2, nlabels=2, means=[ [0,1], [1,0] ])
-        #clf = LinearCSVMC(C=-1)
-        clf = kNN(4)#LinearCSVMC(C=-1)
+        clf = kNN(4)
         clf.train(dataset)
         #clf = None
         #plot_decision_boundary_2d(ds, clf)
@@ -428,8 +424,11 @@ def plot_decision_boundary_2d(dataset, clf=None,
 
         try:
             clf.ca.estimates.reshape(x.shape)
-            a.imshow(map_values.T, **imshow_kwargs)
-            CS = a.contour(x, y, map_values, vals, zorder=6,
+            # NOTE: map_values is assigned only in the `elif maps == 'targets'`
+            # branch below; this `try` block is a known-broken path retained
+            # for documentation.  See `map_values` definition at line ~440.
+            a.imshow(map_values.T, **imshow_kwargs)  # noqa: F821
+            CS = a.contour(x, y, map_values, vals, zorder=6,  # noqa: F821
                            linestyles=linestyles, extent=extent, colors='k')
         except ValueError as e:
             warning(

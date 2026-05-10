@@ -76,7 +76,7 @@ class FFTResampleMapper(Mapper):
 
 
     def __repr__(self):
-        s = super(FFTResamplemapper, self).__repr__()
+        s = super(FFTResampleMapper, self).__repr__()
         return s.replace("(",
                          "(chunks_attr=%s, "
                           % (repr(self.__chunks_attr),),

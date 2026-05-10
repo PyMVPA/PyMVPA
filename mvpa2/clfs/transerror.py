@@ -1630,7 +1630,9 @@ class ClassifierError(ClassWithCollections):
 
     def __copy__(self):
         """TODO: think... may be we need to copy self.clf"""
-        out = ClassifierError.__new__(TransferError)
+        # TransferError class was removed; preserve original intent of
+        # producing an instance of self's runtime type.
+        out = type(self).__new__(type(self))
         ClassifierError.__init__(out, self.clf)
         return out
 

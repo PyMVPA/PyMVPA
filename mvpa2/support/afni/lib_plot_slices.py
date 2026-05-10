@@ -273,8 +273,8 @@ def blend(datas, weights=None):
 
         # ensure shape is the same for all inputs
         if data.shape != b.shape:
-            raise ValueError('Shape mismatch: %s %s %s' %
-                        slice_.shape, b.sh)
+            raise ValueError('Shape mismatch: data=%s b=%s' %
+                             (data.shape, b.shape))
         b += weight * data
 
     # clip range
