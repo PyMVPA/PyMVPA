@@ -1,0 +1,7 @@
+[codespell]
+# Skip generated/upstream/binary content
+skip = .git,__pycache__,*.po,*.ts,3rd,Changelog*,*.so,*.cpp,*.c,*.h,*.bin,*.dat,*.gz,*.mat,*.nii*,*.par,*.fsf,*.rtc,*.swc,doc/_build,doc/source/_build,build,dist,*.egg-info
+# Protect URLs from being "fixed" (typos in URLs are part of the URL).
+ignore-regex = https?://\S+
+# Short variable names + scientific terms commonly flagged as typos.
+ignore-words-list = nd,nin,arange,ist,assertin,upto,inout,whst,oce,anormal,fals,bu,expriment,smll,abl,blong,thi,mor,stati,mone,lik,wer,ist,unsave,withing
